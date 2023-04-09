@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Size } from "$lib/tidy/types/size.enum";
     import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-    import { generateBackgroudColor } from "$lib/utils";
+    import { generateBackgroudColor } from "$lib/tidy/utils";
     import { createEventDispatcher, onMount } from "svelte";
     export let item: string;
     export let size: Size;

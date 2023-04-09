@@ -1,7 +1,7 @@
 import { Cloud } from $lib / tidy / typescloud.enum";
 import { ObjectType } from $lib / tidy / typesobject.enum";
 import type { Session, Task } from $lib / tidy / typessession.type";
-import { checkDay } from "$lib/utils";
+import { checkDay } from "$lib/tidy/utils";
 import { get } from "svelte/store";
 import { persistLocally, retrieveLocally } from "./persistance";
 import { cloudProvider, userPreferences } from './stores'
