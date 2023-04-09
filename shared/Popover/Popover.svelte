@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { appearancePopover, windowObject } from "../../../stores/stores";
-  import { Size } from "../../types/size.enum";
+  import { windowObject } from "$lib/tidy/stores/stores";
+  import { Size } from "$lib/tidy/types/size.enum";
   import PopoverHeader from "./PopoverHeader.svelte";
   export let show = true;
   export let size: Size = Size.lg;

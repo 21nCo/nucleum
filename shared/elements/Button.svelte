@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Size } from "$lib/types/size.enum";
+  import { Size } from "$lib/tidy/types/size.enum";
   import { onMount } from "svelte";
 
   export let label: string;

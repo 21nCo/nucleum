@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Size } from "$lib/types/size.enum";
-    import { TextInputStyle } from "$lib/types/textinput.enum";
+    import { Size } from "$lib/tidy/types/size.enum";
+    import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
 
     import { createEventDispatcher, onMount } from "svelte";
     export let value: any;

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { Size } from "$lib/types/size.enum";
+    import { Size } from "$lib/tidy/types/size.enum";
     import {
         SelectionItemActiveStyle,
         SwitcherStyle,
-    } from "$lib/types/switcher.enum";
+    } from "$lib/tidy/types/switcher.enum";
     import { createEventDispatcher, onMount } from "svelte";
     import MenuItem from "./MenuItem.svelte";
     const dispatch = createEventDispatcher();

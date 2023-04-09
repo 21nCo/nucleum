@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { EventType } from "$lib/types/event.enum";
-    import type { CustomEvent } from "$lib/types/event.type";
+    import { EventType } from "$lib/tidy/types/event.enum";
+    import type { CustomEvent } from "$lib/tidy/types/event.type";
     import { onMount } from "svelte";
-    import { appEvents, userPreferences } from "../../stores/stores";
+    import { appEvents, userPreferences } from "../stores/stores";
 
     let src: string | null = null;
     let audio: any;

@@ -1,0 +1,9 @@
+export enum EventType {
+    NONE,
+    EVERY_SECOND,
+    INTERVAL_ENDED,
+    BREAK_ENDED,
+    SESSION_FINISHED,
+    SESSION_START,
+    SHOW_APPEARANCE_PREVIEW
+}
