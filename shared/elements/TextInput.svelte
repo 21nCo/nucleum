@@ -49,7 +49,7 @@
 
 <div class="flex flex-col gap-1">
     {#if label}
-        <div class="text-texts2">{label}</div>
+        <div class="text-fgs2">{label}</div>
     {/if}
     <div class="flex items-center">
         <input

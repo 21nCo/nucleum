@@ -122,9 +122,9 @@ const lightThemes = [
                 bgs2: "#BCEAD5",
                 bgs3: "#9ED5C5",
                 bgs4: "#97BAC4",
-                texts1: "#003947",
-                texts2: "#003D4D",
-                texts3: "#003D4D",
+                fgs1: "#003947",
+                fgs2: "#003D4D",
+                fgs3: "#003D4D",
                 accent1: "#8EC3B0",
                 accent2: "#FFF4D2"
             }
@@ -138,9 +138,9 @@ const lightThemes = [
                 bgs2: "#D2DAFF",
                 bgs3: "#AAC4FF",
                 bgs4: "#97BAC4",
-                texts1: "#003947",
-                texts2: "#003D4D",
-                texts3: "#003D4D",
+                fgs1: "#003947",
+                fgs2: "#003D4D",
+                fgs3: "#003D4D",
                 accent1: "#B1B2FF",
                 accent2: "#FFF4D2"
             }
@@ -154,9 +154,9 @@ const lightThemes = [
                 bgs2: "#F7ECDE",
                 bgs3: "#E9DAC1",
                 bgs4: "#97BAC4",
-                texts1: "#003947",
-                texts2: "#003D4D",
-                texts3: "#003D4D",
+                fgs1: "#003947",
+                fgs2: "#003D4D",
+                fgs3: "#003D4D",
                 accent1: "#54BAB9",
                 accent2: "#FFF4D2"
             }
@@ -170,9 +170,9 @@ const lightThemes = [
                 bgs2: "#DFD3C3",
                 bgs3: "#C7B198",
                 bgs4: "#97BAC4",
-                texts1: "#003947",
-                texts2: "#003D4D",
-                texts3: "#003D4D",
+                fgs1: "#003947",
+                fgs2: "#003D4D",
+                fgs3: "#003D4D",
                 accent1: "#A68DAD",
                 accent2: "#FFF4D2"
             }
@@ -196,9 +196,9 @@ const darkThemes = [
                 bgs2: "#4C3575",
                 bgs3: "#5B4B8A",
                 bgs4: "#7858A6",
-                texts1: "#F3F3F3",
-                texts2: "#CACACA",
-                texts3: "#D0D0D0",
+                fgs1: "#F3F3F3",
+                fgs2: "#CACACA",
+                fgs3: "#D0D0D0",
                 accent1: "#9147E6",
                 accent2: "#dbcfc1"
             }
@@ -218,9 +218,9 @@ const darkThemes = [
                 bgs2: "#553939",
                 bgs3: "#704F4F",
                 bgs4: "#A77979",
-                texts1: "#F3F3F3",
-                texts2: "#CACACA",
-                texts3: "#D0D0D0",
+                fgs1: "#F3F3F3",
+                fgs2: "#CACACA",
+                fgs3: "#D0D0D0",
                 accent1: "#D48585",
                 accent2: "#dbcfc1"
             }

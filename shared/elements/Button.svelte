@@ -11,7 +11,7 @@
     if (type == "secondary") {
       classList += " bg-bgs2 hover:bg-bgs3";
     } else {
-      classList += " bg-accent1 hover:opacity-80";
+      classList += " bg-accent1 text-bgs1 hover:opacity-80";
     }
   }
   onMount(() => {

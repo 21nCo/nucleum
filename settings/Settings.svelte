@@ -16,7 +16,7 @@
 </script>
 
 <div class="flex flex-col gap-4 w-full h-full overflow-y-auto p-4">
-    <div class="text-h1 pb-10 pt-2 item-start">
+    <div class="text-h1 pb-10 pt-2 item-start text-accent1">
         {menuItems[selectedMenuIndex]}
     </div>
     {#if selectedMenuIndex == 0}
@@ -32,4 +32,4 @@
     {/if}
 </div>
 
-<!-- <a href="/" class="text-texts2" on:click={onGoback}> go back </a> -->
+<!-- <a href="/" class="text-fgs2" on:click={onGoback}> go back </a> -->

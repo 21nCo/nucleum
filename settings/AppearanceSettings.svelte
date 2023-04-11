@@ -94,7 +94,7 @@
 
 <div class="flex flex-col gap-8 w-full">
     {#if isInPreviewMode}
-        <div class="text-xs text-center text-texts3 h-1">
+        <div class="text-xs text-center text-fgs3 h-1">
             {changesFeedback ? changesFeedback : ""}
         </div>
     {:else}
@@ -110,7 +110,7 @@
     {/if}
 
     <div class="flex flex-col gap-1 w-full">
-        <div class="text-texts2 text-h2">App mode</div>
+        <div class="text-fgs2 text-h2">App mode</div>
         <Switcher
             {parentBackgroundIndex}
             items={$appStore.appConstants.appModes}
@@ -119,7 +119,7 @@
     </div>
     <div class="flex flex-col gap-6 w-full">
         <div>
-            <div class="text-texts2 text-h2">Theme</div>
+            <div class="text-fgs2 text-h2">Theme</div>
             <Switcher
                 {parentBackgroundIndex}
                 items={$appStore.appConstants.themes}
@@ -130,7 +130,7 @@
         </div>
         <div class="flex flex-col gap-4 w-full">
             <div class="flex flex-col gap-2">
-                <div class="text-texts2">Color scheme</div>
+                <div class="text-fgs2">Color scheme</div>
                 <Switcher
                     {parentBackgroundIndex}
                     items={["light", "dark", "system"]}
@@ -163,7 +163,7 @@
     </div> -->
     {#if $userPreferences.isEnableAgeCounter}
         <div class="flex flex-col gap-1">
-            <div class="text-texts2">Birthday</div>
+            <div class="text-fgs2">Birthday</div>
             <div>
                 <DatePicker
                     date={new Date($userPreferences.birthday ?? new Date())}

@@ -14,9 +14,9 @@ export type ColorScheme = {
     bgs2?: string;
     bgs3?: string;
     bgs4?: string;
-    texts1?: string;
-    texts2?: string;
-    texts3?: string;
+    fgs1?: string;
+    fgs2?: string;
+    fgs3?: string;
     accent1?: string;
     accent2?: string;
     accent3?: string;

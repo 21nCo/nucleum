@@ -1,7 +1,7 @@
 export type WindowObject = {
     documentHeight: number;
     documentWidth: number;
-    aspectRatio: number;
+    landscapiness: number;
     scale: number;
     isMinimalTopBar?: boolean;
 }   

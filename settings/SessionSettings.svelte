@@ -11,7 +11,7 @@
     units={["minutes"]}
 />
 <div class="flex flex-col gap-1">
-    <div class="text-texts2">Interval Presets</div>
+    <div class="text-fgs2">Interval Presets</div>
     <div>
         <PresetsEditor />
     </div>

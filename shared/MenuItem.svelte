@@ -46,11 +46,11 @@
     <div class="flex gap-2 items-center">
         {#if selectionStyle === SelectionItemActiveStyle.CIRCLE}
             <div
-                class="relative rounded-full outline outline-2 outline-texts2 w-4 h-4"
+                class="relative rounded-full outline outline-2 outline-fgs2 w-4 h-4"
             >
                 {#if isActive}
                     <div
-                        class="absolute w-2 h-2 left-1/4 top-1/4 bg-texts2 rounded-full"
+                        class="absolute w-2 h-2 left-1/4 top-1/4 bg-fgs2 rounded-full"
                     />
                 {/if}
             </div>
@@ -61,7 +61,7 @@
     </div>
     {#if selectionStyle === SelectionItemActiveStyle.SIDEBAR && isActive}
         <div
-            class="absolute w-0.5 opacity-80 h-3/4 bg-texts2 rounded-md"
+            class="absolute w-0.5 opacity-80 h-3/4 bg-fgs2 rounded-md"
             style=" top: 12.5%; left: -2px"
         />
     {/if}

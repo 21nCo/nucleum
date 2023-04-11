@@ -13,26 +13,12 @@
     import Popover from "$lib/tidy/shared/Popover/Popover.svelte";
     import { Size } from "$lib/tidy/types/size.enum";
     import AppearanceSettings from "$lib/tidy/settings/AppearanceSettings.svelte";
+    import PageSwitcher from "../shared/elements/pageSwitcher/PageSwitcher.svelte";
     let pad: number;
     let isShowAppearancePopover: boolean = false;
-    $: if ($windowObject.aspectRatio) {
-        if ($windowObject.aspectRatio >= 3) {
-            pad = 10;
-        } else if ($windowObject.aspectRatio >= 2) {
-            pad = 20;
-        } else {
-            if ($windowObject.scale >= 2) {
-                pad = 120;
-            } else if ($windowObject.scale >= 1.5) {
-                pad = 80;
-            } else if ($windowObject.scale >= 1) {
-                pad = 60;
-            } else if ($windowObject.scale >= 0.5) {
-                pad = 50;
-            } else {
-                pad = 40;
-            }
-        }
+    $: if ($windowObject.documentHeight) {
+        let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
+        pad = rawPad > 200 ? 200 : rawPad;
     }
     onMount(() => {
         appEvents.subscribe((x: CustomEvent) => {
@@ -58,13 +44,19 @@
     <div class="flex justify-center h-full w-full items-center">
         <div class="flex h-full w-full">
             <div
-                class="bg-bgs2 max-w-md lg:max-w-lg flex flex-col items-center w-full px-4 gap-4 rounded-xl m-2"
-                style="padding-top: {pad}px; height: calc(100% - 1rem);"
+                class="relative bg-bgs2 max-w-md lg:max-w-lg flex flex-col items-center w-full px-4 gap-4 rounded-xl m-2"
+                style="padding-top: {pad / 2}px; padding-bottom: {pad /
+                    2}px; height: calc(100% - 1rem);"
             >
-                <div class="flex w-full px-4 pb-10">
+                <!-- <div class="flex w-full px-4 pb-10">
                     <TopBar />
-                </div>
+                </div> -->
                 <slot name="sidepanel" />
+                <div
+                    class="absolute bottom-2 left-0 flex justify-center w-full"
+                >
+                    <PageSwitcher parentBackgroundIndex={2} />
+                </div>
             </div>
             <div
                 class="flex justify-center items-center w-full p-4"

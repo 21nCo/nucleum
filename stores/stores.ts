@@ -116,7 +116,7 @@ function initUserPreferences(seed: UserPreferences) {
 
 
 
-export const windowObject = initWindow({ documentHeight: window.innerHeight, documentWidth: window.innerWidth, aspectRatio: window.innerWidth / window.innerHeight, scale: window.innerWidth / 100 })
+export const windowObject = initWindow({ documentHeight: window.innerHeight, documentWidth: window.innerWidth, landscapiness: window.innerWidth / window.innerHeight, scale: window.innerWidth / 100 })
 
 
 function initWindow(settings: WindowObject) {
@@ -128,7 +128,7 @@ function initWindow(settings: WindowObject) {
         },
         updateDoumentDimensions: (width: number, height: number) => {
             update((n: WindowObject) => {
-                n = { ...n, documentHeight: height, documentWidth: width, aspectRatio: width / height, scale: width / 1000 }
+                n = { ...n, documentHeight: height, documentWidth: width, landscapiness: width / height, scale: ((width / 1000) + (height /1000)) / 2 }
                 return n;
             })
         },

@@ -57,7 +57,7 @@
             {colorScheme.label}
             {#if selected === index}
                 <div
-                    class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-texts3"
+                    class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-fgs3"
                 />
             {/if}
         </button>
