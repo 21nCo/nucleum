@@ -79,7 +79,6 @@
             selectedThemeIndex != undefined
                 ? $appStore.appConstants.themes[selectedThemeIndex]
                 : $userPreferences.theme;
-        console.log($userPreferences);
         showChangesFeedback();
     }
     function showChangesFeedback() {
@@ -89,7 +88,6 @@
         }, 1500);
     }
     function onThemeChange() {
-        console.log("onThemeChange");
         refreshColorSchemes();
         saveTheme();
     }

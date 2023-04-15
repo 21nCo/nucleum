@@ -7,7 +7,7 @@
 
     export let items: PageMenuItem[] = [
         { label: "now", path: "/" },
-        { label: "flow", path: "/flow" },
+        { label: "flow", path: "/flow", icon: "bars5" },
         { label: "control", path: "/control" },
     ];
     export let parentBackgroundIndex: number;

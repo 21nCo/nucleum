@@ -71,7 +71,7 @@
     }
 </script>
 
-<div class="flex gap-4 bg-bgs1 h-screen w-screen text-fgs1">
+<div class="flex bg-bgs1 h-screen w-screen text-fgs1">
     <PowerPanel />
     <div class="flex overflow-auto scrollstyle h-full w-full">
         <slot />

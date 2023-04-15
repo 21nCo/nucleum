@@ -75,7 +75,9 @@ light = {
     fgs3: "#A8A8A8",
     fgs4: "#C4C4C4",
     accent1: "#A19BEC",
-    accent2: "#ad6c6c"
+    accent2: "#ad6c6c",
+    red: "#f77272",
+    green: "#4fbd88"
 }
 
 smooth = {

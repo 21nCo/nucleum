@@ -1,5 +1,5 @@
 import { onDestroy } from 'svelte';
-import type { Day, Session, UserDate } from './types/session.type';
+import type { TimePeriod, Session, UserDate } from './types/session.type';
 export function formatTime(date: Date) {
     let hours = date?.getHours().toString().padStart(2, "0");
     let minutes = date?.getMinutes().toString().padStart(2, "0");
@@ -35,9 +35,9 @@ export function formatSeconds(seconds: number) {
 }
 export function formatSecondsToTime(seconds: number, toFixed: number = 2, scale: string = 'hrs', isShowUnits: boolean = true) {
     if (scale === 'hrs') {
-        return `${(seconds / (60 * 60)).toFixed(toFixed)} ${isShowUnits ? 'hrs' : ''}`;
+        return `${(seconds / (60 * 60)).toFixed(toFixed)} ${isShowUnits ? 'hr' : ''}`;
     } else if (scale === 'min') {
-        return `${(seconds / (60)).toFixed(toFixed)} ${isShowUnits ? 'min' : ''}`;
+        return `${(seconds / (60)).toFixed(toFixed)} ${isShowUnits ? 'm' : ''}`;
     }
 }
 

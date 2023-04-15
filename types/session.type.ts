@@ -11,7 +11,7 @@ export type SessionStore = {
     isFocusRunning: boolean;
     //today: Session[],
     //sessions: Session[],
-    days: Day[],
+    days: TimePeriod[],
     currentTasks?: Task[],
     snapshot?: SessionSnapshot,
     streak: number,
@@ -51,10 +51,13 @@ export type SessionSnapshot = {
     isFocusRunning: boolean;
 }
 
-export type Day = {
+export type TimePeriod = {
     day: UserDate;
     focus: number;
-    sessions: Session[]
+    sessions: Session[];
+    isEmptyPeriod?: boolean;
+    startDate?: UserDate;
+    endDate?: UserDate;
 }
 
 export type UserDate = {
