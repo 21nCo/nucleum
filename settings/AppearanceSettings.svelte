@@ -8,10 +8,13 @@
         windowObject,
     } from "$lib/tidy/stores/stores";
     import { onMount } from "svelte";
-    import Switcher from "$lib/tidy/shared/MenuSwitcher.svelte";
+    import Switcher from "$lib/tidy/shared/elements/switcher/Switcher.svelte";
     import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
     import { Size } from "$lib/tidy/types/size.enum";
-    import { SwitcherStyle } from "$lib/tidy/types/switcher.enum";
+    import {
+        SelectionItemActiveStyle,
+        SwitcherStyle,
+    } from "$lib/tidy/types/switcher.enum";
     import Button from "$lib/tidy/shared/elements/Button.svelte";
     import { EventType } from "$lib/tidy/types/event.enum";
     import { goto } from "$app/navigation";
@@ -123,7 +126,7 @@
             <Switcher
                 {parentBackgroundIndex}
                 items={$appStore.appConstants.themes}
-                style={SwitcherStyle.Vertical}
+                selectionStyle={SelectionItemActiveStyle.CIRCLE}
                 on:switch={onThemeChange}
                 bind:selected={selectedThemeIndex}
             />

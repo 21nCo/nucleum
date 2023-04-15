@@ -5,7 +5,8 @@
         SwitcherStyle,
     } from "$lib/tidy/types/switcher.enum";
     import { createEventDispatcher, onMount } from "svelte";
-    import MenuItem from "./MenuItem.svelte";
+    import SwitchItem from "./SwitchItem.svelte";
+
     const dispatch = createEventDispatcher();
     export let items: string[];
     export let selected: number;
@@ -50,7 +51,7 @@
 
 <div class={classList}>
     {#each items as item, index}
-        <MenuItem
+        <SwitchItem
             {selectionStyle}
             {parentBackgroundIndex}
             {size}

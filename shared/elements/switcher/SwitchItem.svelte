@@ -36,6 +36,9 @@
         let colors = generateBackgroudColor(parentBackgroundIndex);
         activeBackgroundColor = colors.activeBackgroundColor;
         backgroundColor = colors.backgroundColor;
+        if (selectionStyle === SelectionItemActiveStyle.SIDEDOT) {
+            activeBackgroundColor = "";
+        }
     });
 </script>
 
@@ -46,7 +49,7 @@
     <div class="flex gap-2 items-center">
         {#if selectionStyle === SelectionItemActiveStyle.CIRCLE}
             <div
-                class="relative rounded-full outline outline-2 outline-fgs2 w-4 h-4"
+                class="relative rounded-lg outline outline-2 outline-fgs2 w-4 h-4"
             >
                 {#if isActive}
                     <div
@@ -55,7 +58,12 @@
                 {/if}
             </div>
         {/if}
-        <div class="truncate text-left">
+        <div
+            class="truncate text-left {selectionStyle ===
+                SelectionItemActiveStyle.SIDEDOT && isActive
+                ? 'text-accent1 text-b0'
+                : ''} "
+        >
             {item}
         </div>
     </div>
@@ -63,6 +71,11 @@
         <div
             class="absolute w-0.5 opacity-80 h-3/4 bg-fgs2 rounded-md"
             style=" top: 12.5%; left: -2px"
+        />
+    {:else if selectionStyle === SelectionItemActiveStyle.SIDEDOT && isActive}
+        <div
+            class="absolute opacity-80 w-2 rounded-full bg-accent1"
+            style="height: 20%; top: 40%; left: -2px"
         />
     {/if}
 </button>

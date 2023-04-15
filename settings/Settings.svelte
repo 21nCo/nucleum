@@ -15,7 +15,7 @@
     });
 </script>
 
-<div class="flex flex-col gap-4 w-full h-full overflow-y-auto p-4">
+<div class="flex flex-col gap-4 w-full h-full p-4">
     <div class="text-h1 pb-10 pt-2 item-start text-accent1">
         {menuItems[selectedMenuIndex]}
     </div>

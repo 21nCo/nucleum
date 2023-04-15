@@ -4,6 +4,7 @@ const { dark, dim, dracula, sea, forest, light, smooth, grainy } = require('./co
 const defaultFontSize = {
     'h1': '1.953rem',
     'h2': '1.25rem',
+    'b0': '1.1rem',
     base: '1rem',
     'b2': '0.8rem',
     '4xl': '2.441rem',

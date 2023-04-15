@@ -285,7 +285,8 @@ function initEventStore(seed: CustomEvent) {
 
 console.log(import.meta.env)
 export const appStore = initAppStore({
-    isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true", appName: "Pointron", appConstants: {
+    isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true", 
+    tailwindTheme: "clean light", appName: "Pointron", appConstants: {
         appModes: ["Minimal", "Journal"],
         themes: ["Clean", "Playful", "Neo brutal", "Glassmorphic"],
         colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
