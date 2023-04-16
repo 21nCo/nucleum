@@ -9,7 +9,7 @@
     export let isActive: boolean = false;
     export let selectionStyle: SelectionItemActiveStyle =
         SelectionItemActiveStyle.NONE;
-    export let parentBackgroundIndex: number = 0;
+    export let parentBackgroundIndex: number = 1;
     let activeBackgroundColor: string;
     let backgroundColor: string;
     onMount(() => {
@@ -63,11 +63,11 @@
 {:else}
     <div
         class={classList +
-            (classList.includes("bg-none")
+            (classList.includes("bg-")
                 ? ""
                 : $userPreferences.theme == "Colorful"
                 ? " glassactive"
-                : " bg-bgs2")}
+                : backgroundColor)}
     >
         <slot />
     </div>

@@ -138,6 +138,7 @@
             <div class="text-fgs2">Birthday</div>
             <div>
                 <DatePicker
+                    {parentBackgroundIndex}
                     date={new Date($userPreferences.birthday ?? new Date())}
                     on:change={onDateChange}
                 />

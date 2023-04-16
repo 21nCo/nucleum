@@ -16,6 +16,8 @@ import { SessionPersistance } from "./session.persistance"
 import type { ColorScheme } from "$lib/tidy/types/appConstants.type"
 //import * as colors from "$lib/theme/colors.cjs"
 import { colors } from "$lib/tidy/theme/colors"
+import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type"
+import { DragStatus } from "$lib/tidy/types/dragstatus.enum"
 
 export const cloudProvider = writable(Cloud.local)
 const sessionPersistance = new SessionPersistance();
@@ -143,6 +145,8 @@ function initWindow(settings: WindowObject) {
 }
 
 export const appearancePopover = writable({ visible: true });
+export const dragAndDropStore = writable<DragAndDrop>({ dragItem: {}, dropItem: {}, dragEnterItem: {}, dragStatus: DragStatus.NONE });
+
 export const windowClickEvent = writable(null);
 
 //todo - move this to notification store

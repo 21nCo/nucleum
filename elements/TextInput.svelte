@@ -57,6 +57,7 @@
             bind:value
             on:change
             on:keydown
+            on:blur
             {placeholder}
         />
         {#if units}

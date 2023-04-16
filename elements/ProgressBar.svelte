@@ -25,7 +25,7 @@
 </script>
 
 <div class="relative w-full rounded-full overflow-hidden mb-1 {sizeClasses}">
-    <Element isAction={false} classList="absolute bg-bgs3 w-full h-full" />
+    <Element isAction={false} classList="absolute w-full h-full bg-bgs4" />
     <!-- <div class="absolute bg-bgs3 w-full h-full" /> -->
     <div
         class="relative z-10 h-full bg-accent1 rounded-full"

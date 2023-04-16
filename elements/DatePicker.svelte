@@ -1,10 +1,14 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-
+    import { createEventDispatcher, onMount } from "svelte";
+    import { generateBackgroudColor } from "$lib/tidy/utils";
     const dispatch = createEventDispatcher();
-
+    export let parentBackgroundIndex: number = 1;
     export let date: Date;
-
+    let backgroundColor: string;
+    onMount(() => {
+        let colors = generateBackgroudColor(parentBackgroundIndex);
+        backgroundColor = colors.backgroundColor;
+    });
     function updateDate(e: any) {
         const newDate = new Date(e.target.value);
         date = newDate;
@@ -17,7 +21,7 @@
         type="date"
         on:input={updateDate}
         value={date.toISOString().substr(0, 10)}
-        class="mt-1 block w-full bg-bgs2 p-2 rounded-sm"
+        class="mt-1 block w-full {backgroundColor} p-2 rounded-sm"
     />
 </label>
 
