@@ -42,6 +42,8 @@
     on:dragover={onDragOver}
     on:dragenter={handleDragEnter}
     on:drop={handleDrop}
+    on:mouseenter
+    on:mouseleave
 >
     <slot />
 </div>
