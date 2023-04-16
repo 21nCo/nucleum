@@ -67,6 +67,7 @@ export type UserDate = {
 }
 
 export type Task = {
+    id: number;
     label: string;
     estimate: number;
     worked: number;

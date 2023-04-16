@@ -23,7 +23,7 @@
     });
 </script>
 
-<div class="flex flex-col min-w-min w-full rounded-lg {backgroundColor}">
+<div class="flex flex-col min-w-min w-full rounded-lg">
     {#each items as item, index}
         <PageSwitcherItem
             on:click={() => {

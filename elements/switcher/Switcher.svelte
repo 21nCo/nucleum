@@ -24,7 +24,7 @@
     onMount(() => {
         switch (style) {
             case SwitcherStyle.Vertical:
-                classList = "flex flex-col gap-2";
+                classList = "flex justify-start items-stretch flex-col gap-2";
                 selectionStyle =
                     selectionStyle === SelectionItemActiveStyle.UNKNOWN
                         ? SelectionItemActiveStyle.CIRCLE

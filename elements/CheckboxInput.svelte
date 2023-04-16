@@ -11,3 +11,9 @@
     />
     {label}
 </label>
+
+<style>
+    input[type="checkbox"] {
+        background-color: rgba(var(--colors-bgs2));
+    }
+</style>

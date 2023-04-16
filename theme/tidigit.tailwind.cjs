@@ -7,6 +7,7 @@ const defaultFontSize = {
     'b0': '1.1rem',
     base: '1rem',
     'b2': '0.8rem',
+    'b3': '0.7rem',
     '4xl': '2.441rem',
     '5xl': '3.052rem',
 }
@@ -22,7 +23,7 @@ const themes = [
         },
     },
     {
-        name: 'playful',
+        name: "Colorful",
         extend: {
             fontFamily: {
                 sans: ['Roboto', 'sans-serif'],
@@ -41,6 +42,7 @@ const scales = [
                 'h2': '0.75rem',
                 base: '0.5rem',
                 'b2': '0.4rem',
+                'b3': '0.3rem',
                 '4xl': '2rem',
                 '5xl': '2.5rem',
             }
@@ -54,6 +56,7 @@ const scales = [
                 'h2': '1rem',
                 base: '0.8rem',
                 'b2': '0.6rem',
+                'b3': '0.5rem',
                 '4xl': '2rem',
                 '5xl': '2.5rem',
             }
@@ -73,6 +76,7 @@ const scales = [
                 'h2': '1.5rem',
                 base: '1.2rem',
                 'b2': '1rem',
+                'b3': '0.8rem',
                 '4xl': '2.8rem',
                 '5xl': '3.4rem',
             }
@@ -86,6 +90,7 @@ const scales = [
                 'h2': '1.6rem',
                 base: '1.3rem',
                 'b2': '1rem',
+                'b3': '0.8rem',
                 '4xl': '3rem',
                 '5xl': '3.7rem',
             }

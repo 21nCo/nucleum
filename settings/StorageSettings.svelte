@@ -1,6 +1,7 @@
 <script lang="ts">
-    import Button from "$lib/tidy/shared/elements/Button.svelte";
+    import Button from "$lib/tidy/elements/Button.svelte";
     import { resetLocalStorage } from "$lib/tidy/stores/persistance";
+    import { appStore } from "../stores/stores";
     let clearMessage: string | undefined = undefined;
     function clearStorageHandler() {
         resetLocalStorage();
@@ -13,7 +14,7 @@
 
 <div class="flex flex-col gap-4 w-full">
     <div>
-        Pomotron uses your local browser to store your data. iCloud and other
+        {$appStore.appName} uses your local browser to store your data. iCloud and other
         private cloud storage will be available soon
     </div>
     <Button label="clear storage" on:click={clearStorageHandler} />

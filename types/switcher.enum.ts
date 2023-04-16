@@ -11,5 +11,6 @@ export enum SelectionItemActiveStyle {
     CIRCLE,
     SIDEBAR,
     SIDEDOT,
-    BOTTOMDOT
+    BOTTOMDOT,
+    ACCENT
 }

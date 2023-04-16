@@ -1,20 +1,14 @@
 <script lang="ts">
     import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
     import { generateBackgroudColor, generateUID } from "$lib/tidy/utils";
+    import Element from "$lib/tidy/elements/Element.svelte";
     import { createEventDispatcher, onMount } from "svelte";
     export let colorSchemes: ColorScheme[];
     export let parentBackgroundIndex: number;
     export let selected: number;
     let classList: string =
         "relative flex flex-col items-center gap-1 p-2 rounded-md";
-    let activeBackgroundColor: string;
-    let backgroundColor: string;
     const dispatch = createEventDispatcher();
-    onMount(() => {
-        let colors = generateBackgroudColor(parentBackgroundIndex);
-        activeBackgroundColor = colors.activeBackgroundColor;
-        backgroundColor = colors.backgroundColor;
-    });
     function getColors(colorScheme: ColorScheme) {
         return [
             colorScheme.bgs1 ?? "",
@@ -32,12 +26,13 @@
 
 <div class="flex flex-wrap gap-4">
     {#each colorSchemes as colorScheme, index}
-        <button
+        <Element
+            isActive={selected === index}
             on:click={() => {
                 onClicked(index);
             }}
-            class={classList +
-                (selected === index ? activeBackgroundColor : backgroundColor)}
+            {classList}
+            {parentBackgroundIndex}
         >
             {#if getColors(colorScheme)}
                 <div class="flex">
@@ -60,7 +55,7 @@
                     class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-fgs3"
                 />
             {/if}
-        </button>
+        </Element>
     {/each}
 </div>
 

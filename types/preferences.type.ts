@@ -18,5 +18,6 @@ export type UserPreferences = {
         presets: Preset[];
         isOnboardingComplete: boolean;
         isEnableAutoStartInterval: boolean;
-        appMode: AppMode
+        appMode: AppMode;
+        tempColorScheme: string;
 }

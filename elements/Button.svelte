@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
   import { onMount } from "svelte";
+  import { userPreferences } from "../stores/stores";
+  import Element from "$lib/tidy/elements/Element.svelte";
 
   export let label: string;
   export let type: string = "secondary";
@@ -9,7 +11,7 @@
   let classList = "flex flex-row px-6 rounded-md gap-4 max-w-fit";
   $: {
     if (type == "secondary") {
-      classList += " bg-bgs2 hover:bg-bgs3";
+      classList += " hover:bg-bgs3";
     } else {
       classList += " bg-accent1 text-bgs1 hover:opacity-80";
     }
@@ -24,9 +26,11 @@
 </script>
 
 {#if isCustomAttributes}
-  <div class={classList}>
+  <Element {classList}>
     <slot />
-  </div>
+  </Element>
 {:else}
-  <button class={classList} on:click>{label}</button>
+  <Element {classList} on:click>
+    {label}
+  </Element>
 {/if}

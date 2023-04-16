@@ -57,7 +57,8 @@ export const userPreferences = initUserPreferences({
     presets: seedPresets,
     isOnboardingComplete: false,
     isEnableAutoStartInterval: false,
-    appMode: AppMode.MINIMAL
+    appMode: AppMode.MINIMAL,
+    tempColorScheme: "scheme1"
 })
 
 function initUserPreferences(seed: UserPreferences) {
@@ -128,7 +129,7 @@ function initWindow(settings: WindowObject) {
         },
         updateDoumentDimensions: (width: number, height: number) => {
             update((n: WindowObject) => {
-                n = { ...n, documentHeight: height, documentWidth: width, landscapiness: width / height, scale: ((width / 1000) + (height /1000)) / 2 }
+                n = { ...n, documentHeight: height, documentWidth: width, landscapiness: width / height, scale: ((width / 1000) + (height / 1000)) / 2 }
                 return n;
             })
         },
@@ -284,13 +285,14 @@ function initEventStore(seed: CustomEvent) {
 
 
 export const appStore = initAppStore({
-    isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true", 
+    isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true",
     tailwindTheme: "clean light", appName: "Pointron", appConstants: {
         appModes: ["Minimal", "Journal"],
-        themes: ["Clean", "Playful", "Neo brutal", "Glassmorphic"],
+        themes: ["Clean", "Colorful", "3026"],
         colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
         focusPlaceholderText: ["cooking ice cream", "cleaning wordle", "coding dishes", "showering", "draining umbrella", "commanding alexa"],
-        runningOutDuration: 5
+        runningOutDuration: 5,
+        tempColorSchemes: ['scheme1', 'scheme2', 'scheme3', 'scheme4', 'scheme5', 'scheme6', 'scheme7', 'scheme8', 'scheme9', 'scheme10', 'scheme11']
     }
 })
 

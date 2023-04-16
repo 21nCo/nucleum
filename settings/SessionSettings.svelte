@@ -1,7 +1,7 @@
 <script lang="ts">
     import PresetsEditor from "$lib/presets/PresetsEditor.svelte";
-    import CheckboxInput from "$lib/tidy/shared/elements/CheckboxInput.svelte";
-    import TextInput from "$lib/tidy/shared/elements/TextInput.svelte";
+    import CheckboxInput from "$lib/tidy/elements/CheckboxInput.svelte";
+    import TextInput from "$lib/tidy/elements/TextInput.svelte";
     import { userPreferences } from "$lib/tidy/stores/stores";
 </script>
 

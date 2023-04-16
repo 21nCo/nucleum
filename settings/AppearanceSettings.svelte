@@ -1,6 +1,6 @@
 <script lang="ts">
-    import DatePicker from "$lib/tidy/shared/elements/DatePicker.svelte";
-    import TextInput from "$lib/tidy/shared/elements/TextInput.svelte";
+    import DatePicker from "$lib/tidy/elements/DatePicker.svelte";
+    import TextInput from "$lib/tidy/elements/TextInput.svelte";
     import {
         appEvents,
         appStore,
@@ -8,22 +8,24 @@
         windowObject,
     } from "$lib/tidy/stores/stores";
     import { onMount } from "svelte";
-    import Switcher from "$lib/tidy/shared/elements/switcher/Switcher.svelte";
+    import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
     import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
     import { Size } from "$lib/tidy/types/size.enum";
     import {
         SelectionItemActiveStyle,
         SwitcherStyle,
     } from "$lib/tidy/types/switcher.enum";
-    import Button from "$lib/tidy/shared/elements/Button.svelte";
+    import Button from "$lib/tidy/elements/Button.svelte";
     import { EventType } from "$lib/tidy/types/event.enum";
     import { goto } from "$app/navigation";
     import ColorSchemeSwitcher from "./ColorSchemeSwitcher.svelte";
+    import CheckboxInput from "$lib/tidy/elements/CheckboxInput.svelte";
     export let parentBackgroundIndex: number = 1;
     export let isInPreviewMode: boolean = false;
     let selectedThemeIndex: number = 0;
     let selectedColorSchemeIndex: number;
     let selectedLightnessIndex: number;
+    let selectedTempSchemeIndex: number = 0;
     let filteredColorSchemes: ColorScheme[] = [];
     let colorSchemeLabels: string[] = [];
     let changesFeedback = "";
@@ -91,6 +93,14 @@
         refreshColorSchemes();
         saveTheme();
     }
+    function onTempSchemeChange(event: any) {
+        $userPreferences.tempColorScheme =
+            selectedTempSchemeIndex != undefined
+                ? $appStore.appConstants.tempColorSchemes[
+                      selectedTempSchemeIndex
+                  ]
+                : $userPreferences.tempColorScheme;
+    }
 </script>
 
 <div class="flex flex-col gap-8 w-full">
@@ -109,7 +119,31 @@
             />
         </div>
     {/if}
-
+    <div class="flex flex-col gap-1">
+        <TextInput
+            label="Nickname"
+            bind:value={$userPreferences.nickName}
+            placeholder="nickname"
+            {backgroundColor}
+        />
+    </div>
+    <div class="flex gap-8">
+        <CheckboxInput
+            label="Enable Age Counter"
+            bind:checked={$userPreferences.isEnableAgeCounter}
+        />
+    </div>
+    {#if $userPreferences.isEnableAgeCounter}
+        <div class="flex flex-col gap-1">
+            <div class="text-fgs2">Birthday</div>
+            <div>
+                <DatePicker
+                    date={new Date($userPreferences.birthday ?? new Date())}
+                    on:change={onDateChange}
+                />
+            </div>
+        </div>
+    {/if}
     <div class="flex flex-col gap-1 w-full">
         <div class="text-fgs2 text-h2">App mode</div>
         <Switcher
@@ -147,30 +181,15 @@
                 on:switch={saveColorScheme}
             />
         </div>
-    </div>
-    <div class="flex flex-col gap-1">
-        <TextInput
-            label="Nickname"
-            bind:value={$userPreferences.nickName}
-            placeholder="nickname"
-            {backgroundColor}
-        />
-    </div>
-    <!-- <div class="flex gap-8">
-        <CheckboxInput
-            label="Enable Age Counter"
-            bind:checked={$userPreferences.isEnableAgeCounter}
-        />
-    </div> -->
-    {#if $userPreferences.isEnableAgeCounter}
-        <div class="flex flex-col gap-1">
-            <div class="text-fgs2">Birthday</div>
-            <div>
-                <DatePicker
-                    date={new Date($userPreferences.birthday ?? new Date())}
-                    on:change={onDateChange}
-                />
-            </div>
+        <div>
+            <div class="text-fgs2 text-h2">Colorful theme trails</div>
+            <Switcher
+                {parentBackgroundIndex}
+                items={$appStore.appConstants.tempColorSchemes}
+                selectionStyle={SelectionItemActiveStyle.SIDEBAR}
+                on:switch={onTempSchemeChange}
+                bind:selected={selectedTempSchemeIndex}
+            />
         </div>
-    {/if}
+    </div>
 </div>

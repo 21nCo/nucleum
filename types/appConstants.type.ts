@@ -4,6 +4,7 @@ export type AppConstants = {
     colorSchemes: ColorScheme[];
     focusPlaceholderText: string[];
     runningOutDuration: number;
+    tempColorSchemes: string[];
 }
 
 export type ColorScheme = {

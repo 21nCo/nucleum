@@ -3,14 +3,13 @@
     import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
     import { generateBackgroudColor } from "$lib/tidy/utils";
     import { createEventDispatcher, onMount } from "svelte";
+    import Element from "../Element.svelte";
     export let item: string;
     export let size: Size;
     export let parentBackgroundIndex: number;
     export let isActive: boolean = false;
     export let selectionStyle: SelectionItemActiveStyle;
     let classList: string = "relative max-w-full";
-    let activeBackgroundColor: string;
-    let backgroundColor: string;
 
     const dispatch = createEventDispatcher();
     function handleClick() {
@@ -33,18 +32,15 @@
                 classList += " p-2";
                 break;
         }
-        let colors = generateBackgroudColor(parentBackgroundIndex);
-        activeBackgroundColor = colors.activeBackgroundColor;
-        backgroundColor = colors.backgroundColor;
-        if (selectionStyle === SelectionItemActiveStyle.SIDEDOT) {
-            activeBackgroundColor = "";
-        }
     });
 </script>
 
-<button
+<Element
+    {classList}
     on:click={handleClick}
-    class={classList + (isActive ? activeBackgroundColor : backgroundColor)}
+    {parentBackgroundIndex}
+    {selectionStyle}
+    {isActive}
 >
     <div class="flex gap-2 items-center">
         {#if selectionStyle === SelectionItemActiveStyle.CIRCLE}
@@ -67,15 +63,4 @@
             {item}
         </div>
     </div>
-    {#if selectionStyle === SelectionItemActiveStyle.SIDEBAR && isActive}
-        <div
-            class="absolute w-0.5 opacity-80 h-3/4 bg-fgs2 rounded-md"
-            style=" top: 12.5%; left: -2px"
-        />
-    {:else if selectionStyle === SelectionItemActiveStyle.SIDEDOT && isActive}
-        <div
-            class="absolute opacity-80 w-2 rounded-full bg-accent1"
-            style="height: 20%; top: 40%; left: -2px"
-        />
-    {/if}
-</button>
+</Element>
