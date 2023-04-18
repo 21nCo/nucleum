@@ -4,9 +4,12 @@
     import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
     export let item: any;
     export let classList: string;
+    export let isDraggable: boolean = true;
+    export let isDragging: boolean = false;
 
     const handleDragStart = () => {
         console.log("drag started", item);
+        isDragging = true;
         dragAndDropStore.update((x: any) => {
             x = { ...x, dragStatus: DragStatus.STARTED, dragItem: item };
             return x;
@@ -19,7 +22,9 @@
             return x;
         });
     };
-    const handleDragEnd = () => {};
+    const handleDragEnd = () => {
+        isDragging = false;
+    };
 
     const handleDrop = () => {
         console.log("dropped", item);
@@ -35,8 +40,8 @@
 </script>
 
 <div
-    class="cursor-move {classList}"
-    draggable="true"
+    class="{isDraggable ? 'cursor-move' : ''} {classList}"
+    draggable={isDraggable}
     on:dragstart={handleDragStart}
     on:dragend={handleDragEnd}
     on:dragover={onDragOver}

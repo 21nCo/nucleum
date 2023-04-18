@@ -73,5 +73,6 @@ export type Task = {
     worked: number;
     checked: boolean;
     isInprogress?: boolean;
+    tags?: string[];
 }
 

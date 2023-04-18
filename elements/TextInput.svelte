@@ -10,6 +10,7 @@
     export let style: TextInputStyle = TextInputStyle.BOXED;
     export let size: Size = Size.xl;
     export let backgroundColor: string = "bgs2";
+    export let isDisabled = false;
     let inputClasses: string =
         "text-input w-full rounded-sm outline outline-bgs2 outline-2";
     let unitClasses: string = "outline outline-bgs2 outline-2 rounded-sm";
@@ -47,7 +48,7 @@
     }
 </script>
 
-<div class="flex flex-col gap-1 max-w-lg">
+<div class="flex flex-col gap-1 ">
     {#if label}
         <div class="text-fgs2">{label}</div>
     {/if}
@@ -59,6 +60,7 @@
             on:keydown
             on:blur
             {placeholder}
+            disabled={isDisabled}
         />
         {#if units}
             <div class={unitClasses}>
