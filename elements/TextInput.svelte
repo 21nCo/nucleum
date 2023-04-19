@@ -3,40 +3,43 @@
     import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
 
     import { createEventDispatcher, onMount } from "svelte";
+    import { generateBackgroudColor } from "$lib/tidy/utils";
     export let value: any;
     export let label: string | undefined = undefined;
     export let placeholder: string | undefined = undefined;
     export let units: string[] | undefined = undefined;
     export let style: TextInputStyle = TextInputStyle.BOXED;
     export let size: Size = Size.xl;
-    export let backgroundColor: string = "bgs2";
+    export let parentBackgroundIndex: number = 1;
+    let backgroundColor: string;
     export let isDisabled = false;
-    let inputClasses: string =
-        "text-input w-full rounded-sm outline outline-bgs2 outline-2";
+    let inputClasses: string = "text-input w-full rounded-sm";
     let unitClasses: string = "outline outline-bgs2 outline-2 rounded-sm";
     let currentUnit: string | undefined = undefined;
     const dispatch = createEventDispatcher();
     onMount(() => {
-        inputClasses = inputClasses + " bg-" + backgroundColor;
         if (!currentUnit) currentUnit = units ? units[0] : "";
-        if (style == TextInputStyle.BOXED) {
-            inputClasses = inputClasses + " p-2";
+        if (style == TextInputStyle.PLAIN) {
+            inputClasses += " bg-transparent";
+        } else {
+            let colors = generateBackgroudColor(parentBackgroundIndex);
+            backgroundColor = colors.backgroundColor;
+            inputClasses += ` bg-${backgroundColor} outline outline-bgs2 outline-2 p-2`;
             unitClasses = unitClasses + " p-2";
         }
         if (style == TextInputStyle.BOXED && units && units.length > 0) {
-            inputClasses = inputClasses + " rounded-r-none";
+            inputClasses += " rounded-r-none";
             unitClasses = unitClasses + " rounded-l-none";
         } else if (style === TextInputStyle.BOXED) {
-            inputClasses = inputClasses + " focus:outline-accent1";
+            inputClasses += " focus:outline-accent1";
         } else {
-            inputClasses =
-                inputClasses + " focus:border-none focus:outline-none";
+            inputClasses += " focus:border-none focus:outline-none";
         }
-        if (size == Size.xl) inputClasses = inputClasses + " text-h2";
-        else if (size == Size.lg) inputClasses = inputClasses + " text-lg";
-        else if (size == Size.md) inputClasses = inputClasses + " text-md";
-        else if (size == Size.sm) inputClasses = inputClasses + " text-b2";
-        else if (size == Size.xs) inputClasses = inputClasses + " text-xs";
+        if (size == Size.xl) inputClasses += " text-h2";
+        else if (size == Size.lg) inputClasses += " text-lg";
+        else if (size == Size.md) inputClasses += " text-md";
+        else if (size == Size.sm) inputClasses += " text-b2";
+        else if (size == Size.xs) inputClasses += " text-xs";
     });
     function onUnitClick() {
         if (units?.length == 2) {
@@ -48,7 +51,7 @@
     }
 </script>
 
-<div class="flex flex-col gap-1 ">
+<div class="flex flex-col gap-1">
     {#if label}
         <div class="text-fgs2">{label}</div>
     {/if}
@@ -59,6 +62,7 @@
             on:change
             on:keydown
             on:blur
+            on:focus
             {placeholder}
             disabled={isDisabled}
         />

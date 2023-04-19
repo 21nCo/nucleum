@@ -42,7 +42,7 @@
                         : activeBackgroundColor
                     : selectionStyle === SelectionItemActiveStyle.ACCENT
                     ? ""
-                    : backgroundColor
+                    : backgroundColor + " hover:" + activeBackgroundColor?.trim()
                 : "")}
         on:click
         on:pointerenter
