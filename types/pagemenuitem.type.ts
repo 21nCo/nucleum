@@ -3,3 +3,9 @@ export type PageMenuItem = {
     label: string;
     icon?: string;
 }
+
+export enum PageSwitcherStyle {
+    DEFAULT,
+    MINIMIZED,
+    MOBILE
+}

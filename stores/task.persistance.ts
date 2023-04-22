@@ -13,7 +13,7 @@ export class TaskPersistance {
         switch (get(cloudProvider)) {
             case Cloud.local:
                 let sessions = retrieveLocally(ObjectType.Sessions);
-                let sessionIndex = sessions.findIndex((session: { id: number; }) => session.id === sessionId);
+                let sessionIndex = sessions?.findIndex((session: { id: number; }) => session.id === sessionId);
                 if (sessions && sessionIndex >= 0) {
                     sessions[sessionIndex].tasks = tasks;
                     persistLocally(ObjectType.Sessions, sessions);
@@ -27,6 +27,7 @@ export class TaskPersistance {
                 let sessions = retrieveLocally(ObjectType.Sessions);
                 if (!sessions) return;
                 let sessionIndex = sessions.findIndex((session: { id: number; }) => session.id === sessionId);
+                if(sessionIndex === -1) return;
                 return sessions[sessionIndex].tasks;
             default:
                 return [];

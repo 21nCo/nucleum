@@ -188,3 +188,9 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
     }
     return { activeBackgroundColor, backgroundColor };
 }
+
+export function removeDuplicatesById(items: any[]) {
+    return items.filter((item, index, arr) => {
+        return index === arr.findIndex(other => other.id === item.id);
+    });
+}

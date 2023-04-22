@@ -8,7 +8,6 @@
     export let isDragging: boolean = false;
 
     const handleDragStart = () => {
-        console.log("drag started", item);
         isDragging = true;
         dragAndDropStore.update((x: any) => {
             x = { ...x, dragStatus: DragStatus.STARTED, dragItem: item };
@@ -16,7 +15,6 @@
         });
     };
     const handleDragEnter = () => {
-        console.log("drag entered", item);
         dragAndDropStore.update((x: any) => {
             x = { ...x, dragStatus: DragStatus.DRAGGING, dragEnterItem: item };
             return x;
@@ -27,14 +25,12 @@
     };
 
     const handleDrop = () => {
-        console.log("dropped", item);
         dragAndDropStore.update((x: any) => {
             x = { ...x, dragStatus: DragStatus.DROPPED, dropItem: item };
             return x;
         });
     };
     function onDragOver(event: any) {
-        //console.log({ event });
         event?.preventDefault();
     }
 </script>

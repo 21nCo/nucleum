@@ -10,7 +10,6 @@ export function handleDragNDrop(x: DragAndDrop, items: any, listId: any) {
     ) {
         let draggedItem = x.dragItem;
         let targetItem = x.dropItem;
-        console.log({ draggedItem, targetItem });
         if (
             !draggedItem ||
             !targetItem ||
@@ -30,7 +29,6 @@ export function handleDragNDrop(x: DragAndDrop, items: any, listId: any) {
         ) {
             targetIndex = items.indexOf(targetItem.task);
         }
-        console.log({ draggedIndex, targetIndex });
         if (
             draggedIndex >= 0 &&
             targetIndex >= 0 &&
@@ -40,9 +38,7 @@ export function handleDragNDrop(x: DragAndDrop, items: any, listId: any) {
                 ...items.slice(0, draggedIndex),
                 ...items.slice(draggedIndex + 1),
             ];
-            console.log("items after removing dragged", JSON.stringify(items));
             items.splice(targetIndex, 0, draggedItem.task);
-            console.log("items after inserting dragged at target", items);
         }
     }
     if (x.dragStatus == DragStatus.STARTED && x.dragItem) {

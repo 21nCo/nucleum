@@ -1,11 +1,15 @@
 <script lang="ts">
     import RiveAnimatedIcon from "$lib/tidy/icons/RiveAnimatedIcon.svelte";
-    import type { PageMenuItem } from "$lib/tidy/types/pagemenuitem.type";
+    import {
+        PageSwitcherStyle,
+        type PageMenuItem,
+    } from "$lib/tidy/types/pagemenuitem.type";
     import { createEventDispatcher } from "svelte";
     import Element from "../Element.svelte";
     import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
     const dispatch = createEventDispatcher();
     export let item: PageMenuItem;
+    export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
     export let isActive: boolean = false;
     let rive: any;
     function onClick() {

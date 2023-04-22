@@ -12,7 +12,6 @@
     import Popover from "$lib/tidy/shared/Popover/Popover.svelte";
     import { Size } from "$lib/tidy/types/size.enum";
     import AppearanceSettings from "$lib/tidy/settings/AppearanceSettings.svelte";
-    import PowerPanel from "$lib/tidy/components/powerPanel/PowerPanel.svelte";
     let isShowAppearancePopover: boolean = false;
     let scaleClass: string = "default";
     let fontFamily: string = "Avenir";
