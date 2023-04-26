@@ -11,7 +11,11 @@
     export let style: TextInputStyle = TextInputStyle.BOXED;
     export let size: Size = Size.xl;
     export let parentBackgroundIndex: number = 1;
+    export function focus() {
+        if (inputRef) inputRef.focus();
+    }
     let backgroundColor: string;
+    let inputRef: any;
     export let isDisabled = false;
     let inputClasses: string = "text-input w-full rounded-sm";
     let unitClasses: string = "outline outline-bgs2 outline-2 rounded-sm";
@@ -61,10 +65,12 @@
             bind:value
             on:change
             on:keydown
+            on:keyup
             on:blur
             on:focus
             {placeholder}
             disabled={isDisabled}
+            bind:this={inputRef}
         />
         {#if units}
             <div class={unitClasses}>

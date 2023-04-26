@@ -1,7 +1,7 @@
 import type { DragAndDrop } from "../types/draganddrop.type";
 import { DragStatus } from "../types/dragstatus.enum";
 
-export function handleDragNDrop(x: DragAndDrop, items: any, listId: any) {
+export function handleDragNDrop(x: DragAndDrop, items: any[], listId: any) {
     if (
         x.dragStatus == DragStatus.DROPPED &&
         x.dragItem &&
@@ -40,11 +40,15 @@ export function handleDragNDrop(x: DragAndDrop, items: any, listId: any) {
             ];
             items.splice(targetIndex, 0, draggedItem.task);
         }
+        items.forEach((item: any, index) => {
+            item.order = index
+        });
+        return items;
     }
     if (x.dragStatus == DragStatus.STARTED && x.dragItem) {
         //todo - remove dragged item from list
     }
     if (x.dragItem && x.dragEnterItem) {
     }
-    return items;
+    return null;
 }

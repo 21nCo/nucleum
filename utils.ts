@@ -170,7 +170,7 @@ export function getJustDate(date: Date) {
 }
 
 export function generateSessionId(timestamp: number) {
-    return Math.floor(timestamp)
+    return String(Math.floor(timestamp));
 }
 
 export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
@@ -193,4 +193,22 @@ export function removeDuplicatesById(items: any[]) {
     return items.filter((item, index, arr) => {
         return index === arr.findIndex(other => other.id === item.id);
     });
+}
+
+export function assignSatAndLight(userPreferences: any, selectableColorParams: any) {
+    let saturation;
+    let lightness;
+    if (!userPreferences || !selectableColorParams) return;
+    if (userPreferences.colorScheme.isDark) {
+        saturation =
+            selectableColorParams.darkSaturation;
+        lightness =
+            selectableColorParams.darkLightness;
+    } else {
+        saturation =
+            selectableColorParams.lightSaturation;
+        lightness =
+            selectableColorParams.lightLightness;
+    }
+    return { saturation, lightness }
 }

@@ -20,6 +20,7 @@
     import { goto } from "$app/navigation";
     import ColorSchemeSwitcher from "./ColorSchemeSwitcher.svelte";
     import CheckboxInput from "$lib/tidy/elements/CheckboxInput.svelte";
+    import ColorPicker from "../components/colorPicker/ColorPicker.svelte";
     export let parentBackgroundIndex: number = 1;
     export let isInPreviewMode: boolean = false;
     let selectedThemeIndex: number = 0;
@@ -124,7 +125,7 @@
             label="Nickname"
             bind:value={$userPreferences.nickName}
             placeholder="nickname"
-            {backgroundColor}
+            {parentBackgroundIndex}
         />
     </div>
     <div class="flex gap-8">
@@ -146,11 +147,11 @@
         </div>
     {/if}
     <div class="flex flex-col gap-1 w-full">
-        <div class="text-fgs2 text-h2">App mode</div>
+        <div class="text-fgs2 text-h2">Timer mode</div>
         <Switcher
             {parentBackgroundIndex}
-            items={$appStore.appConstants.appModes}
-            bind:selected={$userPreferences.appMode}
+            items={$appStore.appConstants.timerModes}
+            bind:selected={$userPreferences.timerMode}
         />
     </div>
     <div class="flex flex-col gap-6 w-full">

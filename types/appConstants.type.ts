@@ -1,10 +1,11 @@
 export type AppConstants = {
-    appModes: string[];
+    timerModes: string[];
     themes: string[];
     colorSchemes: ColorScheme[];
     focusPlaceholderText: string[];
     runningOutDuration: number;
     tempColorSchemes: string[];
+    selectableColorParams: selectableColorParams
 }
 
 export type ColorScheme = {
@@ -23,4 +24,11 @@ export type ColorScheme = {
     accent3?: string;
     red?: string;
     green?: string;
+}
+
+export type selectableColorParams = {
+    darkSaturation: number;
+    darkLightness: number;
+    lightSaturation: number;
+    lightLightness: number;
 }

@@ -1,8 +1,10 @@
 import { Cloud } from '$lib/tidy/types/cloud.enum'
 import type { JsonValue } from '$lib/tidy/types/json.type'
-import { ObjectType } from '$lib/tidy/types/object.enum'
+import { ItemType } from '$lib/tidy/types/item.enum'
 import { get, writable } from 'svelte/store'
 import { cloudProvider } from './stores'
+import type { Item } from '../types/item.type'
+import type { Tag } from '../types/tag.type'
 
 
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
@@ -31,12 +33,12 @@ export function resetLocalStorage() {
     window?.location.reload();
 }
 
-export function persistLocally<T extends JsonValue>(objectType: ObjectType, item: T) {
-    window?.localStorage.setItem(ObjectType[objectType], JSON.stringify(item))
+export function persistLocally<T extends JsonValue>(itemType: ItemType, item: T) {
+    window?.localStorage.setItem(ItemType[itemType], JSON.stringify(item))
 }
-export function retrieveLocally(objectType: ObjectType) {
+export function retrieveLocally(itemType: ItemType) {
     try {
-        let value = window?.localStorage.getItem(ObjectType[objectType])
+        let value = window?.localStorage.getItem(ItemType[itemType])
         if (value) {
             return JSON.parse(value);
         }
@@ -46,5 +48,82 @@ export function retrieveLocally(objectType: ObjectType) {
     }
     catch {
         return null;
+    }
+}
+
+export class Persistance {
+    create(item: Item, itemType: ItemType) {
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                let items = retrieveLocally(itemType);
+                if (!items) {
+                    items = [];
+                }
+                items.push(item);
+                persistLocally(itemType, items);
+                break;
+        }
+        return item.id;
+    }
+    update(item: Item, itemType: ItemType) {
+        console.log("updating", item)
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                let items: Item[] = retrieveLocally(itemType);
+                if (!items) {
+                    items = [];
+                }
+                items = items.filter((x: Item) => x.id != item.id);
+                items.push(item);
+                console.log("saving objects after updating", { items, item, itemType })
+                persistLocally(itemType, items);
+                window.localStorage.setItem("temp", JSON.stringify(items));
+                break;
+        }
+    }
+    delete(itemId: string, itemType: ItemType) {
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                let items = retrieveLocally(itemType);
+                items = items.filter((x: Item) => x.id != itemId);
+                persistLocally(itemType, items);
+                break;
+        }
+    }
+    retrieve(itemType: ItemType) {
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                let items = retrieveLocally(itemType);
+                return items;
+        }
+        return [];
+    }
+    search(query: string, itemType: ItemType) {
+        let results: Item[] = [];
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                switch (itemType) {
+                    case ItemType.ALL:
+                        const tagList = retrieveLocally(ItemType.Tag);
+                        const taskList = retrieveLocally(ItemType.Task);
+                        if (tagList) {
+                            const tagItems = tagList.filter((item: Item) => item.label.toLowerCase().includes(query.toLowerCase())).map((x: Item) => { return { label: x.label, id: x.id } });
+                            results = [...results, ...tagItems]
+                        }
+                        if (taskList) {
+                            const taskItems = taskList.filter((item: Item) => item.label.toLowerCase().includes(query.toLowerCase()))
+                            results = [...results, ...taskItems]
+                        }
+                        break;
+                    default:
+                        let items = retrieveLocally(itemType);
+                        if (!items) break;
+                        items = items.filter((item: Item) => item.label.toLowerCase().includes(query.toLowerCase()));
+                        results = items.map((x: Item) => { return { label: x.label, id: x.id } });
+                        break;
+                }
+
+        }
+        return results;
     }
 }

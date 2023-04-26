@@ -9,9 +9,9 @@
     import { goto } from "$app/navigation";
 
     export let items: PageMenuItem[] = [
-        { label: "now", path: "/" },
-        { label: "flow", path: "/flow", icon: "bars5" },
-        { label: "control", path: "/control" },
+        { label: "point", path: "/", icon: "point" },
+        { label: "flow", path: "/flow", icon: "flow" },
+        { label: "control", path: "/control", icon: "control" },
     ];
     export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
     export let parentBackgroundIndex: number;
@@ -32,6 +32,9 @@
         {#if style != PageSwitcherStyle.MINIMIZED || (style === PageSwitcherStyle.MINIMIZED && (isHovered || selected == index))}
             <PageSwitcherItem
                 {style}
+                isShowLabel={(style === PageSwitcherStyle.MINIMIZED &&
+                    isHovered) ||
+                    style === PageSwitcherStyle.DEFAULT}
                 on:click={() => {
                     selected = index;
                     goto(item.path);

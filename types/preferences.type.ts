@@ -1,5 +1,5 @@
 import type { ColorScheme } from "./appConstants.type";
-import type { AppMode } from "./appMode.enum";
+import type { TimerMode } from "./timerMode.enum";
 import type { Preset } from "./preset.type";
 
 export type UserPreferences = {
@@ -18,6 +18,6 @@ export type UserPreferences = {
         presets: Preset[];
         isOnboardingComplete: boolean;
         isEnableAutoStartInterval: boolean;
-        appMode: AppMode;
+        timerMode: TimerMode;
         tempColorScheme: string;
 }

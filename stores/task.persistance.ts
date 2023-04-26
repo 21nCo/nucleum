@@ -1,34 +1,64 @@
 import { Cloud } from "$lib/tidy/types/cloud.enum";
-import { ObjectType } from "$lib/tidy/types/object.enum";
-import type { Session, Task } from "$lib/tidy/types/session.type";
-import { checkDay } from "$lib/tidy/utils";
+import { ItemType } from "$lib/tidy/types/item.enum";
+import type { Task } from "$lib/tidy/types/session.type";
 import { get } from "svelte/store";
-import { persistLocally, retrieveLocally } from "./persistance";
-import { cloudProvider, userPreferences } from './stores'
+import { Persistance, persistLocally, retrieveLocally } from "./persistance";
+import { cloudProvider } from './stores'
 
 
-
+const persistance = new Persistance();
 export class TaskPersistance {
-    updateTasks(sessionId: number, tasks: Task[]) {
+    updateTasks(tasks: Task[]) {
         switch (get(cloudProvider)) {
             case Cloud.local:
-                let sessions = retrieveLocally(ObjectType.Sessions);
-                let sessionIndex = sessions?.findIndex((session: { id: number; }) => session.id === sessionId);
-                if (sessions && sessionIndex >= 0) {
-                    sessions[sessionIndex].tasks = tasks;
-                    persistLocally(ObjectType.Sessions, sessions);
-                }
+                let savedTasks = retrieveLocally(ItemType.Task);
+                if (!savedTasks || savedTasks.length < 1) return;
+                tasks.forEach((task: Task) => {
+                    if (savedTasks?.some((t: Task) => t.id === task.id)) {
+                        persistance.update(task, ItemType.Task);
+                    }
+                })
                 break;
         }
     }
-    retrieveTasks(sessionId: number) {
+    updateSessionId(tasks: Task[], sessionId: string) {
         switch (get(cloudProvider)) {
             case Cloud.local:
-                let sessions = retrieveLocally(ObjectType.Sessions);
-                if (!sessions) return;
-                let sessionIndex = sessions.findIndex((session: { id: number; }) => session.id === sessionId);
-                if(sessionIndex === -1) return;
-                return sessions[sessionIndex].tasks;
+                let savedTasks = retrieveLocally(ItemType.Task);
+                savedTasks.forEach((task: Task) => {
+                    if (tasks.some((x: Task) => x.id === task.id)) {
+                        task.sessionId = sessionId;
+                        persistance.update(task, ItemType.Task);
+                    }
+                });
+                break;
+        }
+    }
+    createTasks(tasks: Task[]) {
+        console.log("create tasks", tasks)
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                let savedTasks = retrieveLocally(ItemType.Task);
+                let newTasks: Task[] = [];
+                tasks.forEach((task: Task) => {
+                    if (savedTasks?.some((t: Task) => t.id === task.id)) {
+                        persistance.update(task, ItemType.Task);
+                    } else {
+                        newTasks.push(task);
+                    }
+                })
+                let refreshedTasks = retrieveLocally(ItemType.Task);
+                let allTasks = [...refreshedTasks ?? [], ...newTasks];
+                persistLocally(ItemType.Task, allTasks);
+                break;
+        }
+    }
+    retrieveTasks(sessionId: string) {
+        switch (get(cloudProvider)) {
+            case Cloud.local:
+                let savedTasks = retrieveLocally(ItemType.Task);
+                let filtered = savedTasks?.filter((task: Task) => task.sessionId === sessionId);
+                return filtered;
             default:
                 return [];
         }

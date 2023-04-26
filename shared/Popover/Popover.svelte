@@ -1,19 +1,25 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/stores";
+  import Button from "$lib/tidy/elements/Button.svelte";
+  import { appEvents, windowObject } from "$lib/tidy/stores/stores";
+  import { EventType } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
+  import { createEventDispatcher } from "svelte";
   import PopoverHeader from "./PopoverHeader.svelte";
   export let show = true;
   export let size: Size = Size.lg;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
   export let isOnRight: boolean = false;
+  export let primaryText: string | undefined = undefined;
+  export let secondaryText: string | undefined = undefined;
   let width: number;
   let height: number;
   let left: any;
   let top: any;
+  const dispatch = createEventDispatcher();
   const overlayClicked = (event: any) => {
     if (event.target.classList.contains("pop-overlay")) {
-      show = false;
+      close();
     }
   };
   $: {
@@ -38,6 +44,16 @@
     } else if (size == Size.lg) {
       height = 800;
     }
+  }
+  function onPrimaryActionClicked() {
+    dispatch("primary");
+  }
+  function onSecondaryActionClicked() {
+    dispatch("secondary");
+  }
+  function close() {
+    show = false;
+    appEvents.notify(EventType.POP_DISMISSED);
   }
 </script>
 
@@ -68,7 +84,7 @@
       </div>
     {:else}
       <div
-        class="popover-container absolute rounded-md shadow-lg bg-bgs1 z-100"
+        class="popover-container flex flex-col p-4 absolute rounded-md shadow-lg bg-bgs1 z-100"
         style="width: {width}px; height: {height}px; top: {top}px; left: {left}px;"
       >
         {#if title}
@@ -81,6 +97,20 @@
         {/if}
         <div class="popover-body h-full w-full">
           <slot />
+        </div>
+        <div class="flex gap-2 justify-center">
+          {#if primaryText}
+            <Button
+              label={primaryText}
+              on:click={onPrimaryActionClicked}
+              type="primary"
+            />
+          {/if}
+          {#if secondaryText}
+            <Button label={secondaryText} on:click={onSecondaryActionClicked} />
+          {:else}
+            <Button label="close" on:click={close} />
+          {/if}
         </div>
       </div>
     {/if}

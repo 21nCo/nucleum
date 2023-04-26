@@ -8,6 +8,7 @@
     import AccountSettings from "./AccountSettings.svelte";
     import AboutSettings from "./AboutSettings.svelte";
     import { EventType } from "$lib/tidy/types/event.enum";
+    import TagsAndRoutines from "$lib/settings/TagsAndRoutines.svelte";
     export let menuItems: any;
     export let selectedMenuIndex: number = 0;
     $: selected = menuItems[selectedMenuIndex];
@@ -33,6 +34,8 @@
         <StorageSettings />
     {:else if selected == "About"}
         <AboutSettings />
+    {:else if selected == "Tags & Routines"}
+        <TagsAndRoutines />
     {/if}
 </div>
 

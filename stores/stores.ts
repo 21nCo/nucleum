@@ -1,27 +1,29 @@
-import { AppMode } from "$lib/tidy/types/appMode.enum"
+import { TimerMode } from "$lib/tidy/types/timerMode.enum"
 import type { AppStore } from "$lib/tidy/types/appStore.type"
 import { Cloud } from "$lib/tidy/types/cloud.enum"
 import type { CustomEvent } from "$lib/tidy/types/event.type"
 import { EventType } from "$lib/tidy/types/event.enum"
-import { ObjectType } from "$lib/tidy/types/object.enum"
+import { ItemType } from "$lib/tidy/types/item.enum"
 import type { UserPreferences } from "$lib/tidy/types/preferences.type"
 import type { Preset } from "$lib/tidy/types/preset.type"
 import type { Session, SessionSnapshot, SessionStore, Task } from "$lib/tidy/types/session.type"
-import { TaskStatus } from "$lib/tidy/types/taskStatus.enum"
 import type { WindowObject } from "$lib/tidy/types/windowObject.type"
 import { generateUID, yesterday } from "$lib/tidy/utils"
 import { writable } from "svelte/store"
-import { persistLocally, retrieveLocally } from "./persistance"
+import { Persistance, persistLocally, retrieveLocally } from "./persistance"
 import { SessionPersistance } from "./session.persistance"
-import type { ColorScheme } from "$lib/tidy/types/appConstants.type"
+import type { ColorScheme, selectableColorParams } from "$lib/tidy/types/appConstants.type"
 //import * as colors from "$lib/theme/colors.cjs"
 import { colors } from "$lib/tidy/theme/colors"
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type"
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum"
+import type { Tag } from "../types/tag.type"
+import { TaskPersistance } from "./task.persistance"
 
 export const cloudProvider = writable(Cloud.local)
 const sessionPersistance = new SessionPersistance();
-
+const persistance = new Persistance();
+const taskPersistance = new TaskPersistance();
 const seedPresets = [
     // { id: generateUID(), rounds: 1, duration: 5, brek: 2 },
     { id: generateUID(), rounds: 3, duration: 10, brek: 2 },
@@ -49,7 +51,7 @@ const lightColorSchemes: ColorScheme[] = [
 
 export const userPreferences = initUserPreferences({
     nickName: "",
-    theme: "dark-forest",
+    theme: "Clean",
     colorScheme: lightColorSchemes[0],
     isEnableAgeCounter: false,
     isEnableDailyTarget: false,
@@ -59,12 +61,12 @@ export const userPreferences = initUserPreferences({
     presets: seedPresets,
     isOnboardingComplete: false,
     isEnableAutoStartInterval: false,
-    appMode: AppMode.MINIMAL,
+    timerMode: TimerMode.MINIMAL,
     tempColorScheme: "scheme1"
 })
 
 function initUserPreferences(seed: UserPreferences) {
-    const objectType = ObjectType.UserPreferences;
+    const objectType = ItemType.UserPreferences;
     let savedPreferences = retrieveLocally(objectType)
     const { subscribe, set, update } = writable<UserPreferences>(savedPreferences ?? seed);
     if (!savedPreferences) persistLocally(objectType, seed)
@@ -149,13 +151,33 @@ export const dragAndDropStore = writable<DragAndDrop>({ dragItem: {}, dropItem: 
 
 export const windowClickEvent = writable(null);
 
-//todo - move this to notification store
-export const sessionChangeEvent = writable({ id: 0 });
 
-export const sessionStore = initSessionStore({ currentSessionId: 0, todayFocus: 0, isFocusRunning: false, days: [], streak: 0, currentTasks: [] })
+
+
+export const todayFocusStore = initTodayFocus();
+
+
+function initTodayFocus() {
+    const { subscribe, set, update } = writable(0);
+    return {
+        subscribe,
+        set,
+        incrementTodayFocus: (x: number) => {
+            update((n: number) => {
+                n += x
+                return n;
+            })
+        },
+    }
+}
+
+//todo - move this to notification store
+export const sessionChangeEvent = writable<{ id: string | null }>({ id: null });
+
+export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, todayFocus: 0, isFocusRunning: false, days: [], streak: 0, currentTasks: [] })
 
 function initSessionStore(seed: SessionStore) {
-    const objectType = ObjectType.SessionStoreV2;
+    const objectType = ItemType.SessionStoreV2;
     let savedSessionStore = retrieveLocally(objectType)
     const { subscribe, set, update } = writable<SessionStore>(savedSessionStore ?? seed);
     if (!savedSessionStore) persistLocally(objectType, seed)
@@ -165,6 +187,19 @@ function initSessionStore(seed: SessionStore) {
         n.todayFocus = focus;
         n.streak = streak;
         return n;
+    }
+    const reset = (n: SessionStore) => {
+        n.currentSessionId = null;
+        n.isFocusRunning = false;
+        n.snapshot = undefined;
+        n.currentTasks = [];
+        n.currentTaskId = null;
+        n.currentTaskWorked = 0;
+        persistLocally(objectType, n);
+        return n;
+    }
+    const persist = (n: SessionStore) => {
+        persistLocally(objectType, n);
     }
 
     return {
@@ -179,11 +214,14 @@ function initSessionStore(seed: SessionStore) {
             let saved = retrieveLocally(objectType)
             set(saved);
         },
-        append: (m: Session) => {
+        finishSession: (m: Session) => {
             update((n: SessionStore) => {
-                sessionPersistance.createSession(m);
-                n.currentTasks = [];
-                n.currentSessionId = 0;
+                persistance.create(m, ItemType.Sessions);
+                const tasks = n.currentTasks?.map((t: Task) => { t.sessionId = m.id; return t; });
+                if (tasks && tasks.length > 0) {
+                    taskPersistance.createTasks(tasks);
+                }
+                n = reset(n);
                 return n;
             })
         },
@@ -201,28 +239,14 @@ function initSessionStore(seed: SessionStore) {
         },
         resetSession: () => {
             update((n: SessionStore) => {
-                n.currentSessionId = 0;
-                n.currentTask = "";
-                n.isFocusRunning = false;
-                n.snapshot = undefined;
-                sessionPersistance.resetSnapshot();
+                n = reset(n);
                 refreshTodayProgress(n)
                 return n;
             })
         },
-        resetSnapshot: () => {
+        deleteSession: (id: string) => {
             update((n: SessionStore) => {
-                n.currentSessionId = 0;
-                n.isFocusRunning = false;
-                n.snapshot = undefined;
-                sessionPersistance.resetSnapshot();
-                refreshTodayProgress(n)
-                return n;
-            })
-        },
-        deleteSession: (id: number) => {
-            update((n: SessionStore) => {
-                sessionPersistance.deleteSession(id);
+                persistance.delete(id, ItemType.Sessions);
                 refreshTodayProgress(n);
                 n.isFocusRunning = false;
                 return n;
@@ -236,28 +260,56 @@ function initSessionStore(seed: SessionStore) {
             })
         },
         snapshot: (snap: SessionSnapshot) => {
+            console.log("snapshot")
             update((n: SessionStore) => {
                 n.snapshot = snap;
-                sessionPersistance.saveSnapshot(snap);
+                if (n.currentTaskWorked != undefined) n.currentTaskWorked += 1;
+                persist(n);
                 return n;
             })
         },
-        resumeSession: (id: number) => {
+        startTask: (id: string, previousWorked: number) => {
             update((n: SessionStore) => {
-                n.currentSessionId = id;
+                if (n.currentTasks && n.currentTasks.length > 0) {
+                    n.currentTaskId = id;
+                    n.currentTaskWorked = previousWorked;
+                }
+                appEvents.notify(EventType.TASK_START);
+                persist(n);
                 return n;
             })
         },
-        incrementTodayFocus: (x: number) => {
+        stopTask: () => {
             update((n: SessionStore) => {
-                n.todayFocus += x
+                n.currentTaskId = null;
+                n.currentTaskWorked = 0;
+                persist(n);
                 return n;
             })
         },
-        updateSessionTasks: (id: any, tasks: Task[]) => {
+        deleteTask: (id: string) => {
             update((n: SessionStore) => {
-                //todo - update session tasks
-                persistLocally(objectType, n)
+                if (n.currentTasks && n.currentTasks.length > 0) {
+                    n.currentTasks = n.currentTasks.filter(t => t.id != id);
+                }
+                persist(n);
+                return n;
+            })
+        },
+        updateTask: (task: Task) => {
+            update((n: SessionStore) => {
+                if (n.currentTasks && n.currentTasks.length > 0) {
+                    n.currentTasks = n.currentTasks.filter(t => t.id != task.id);
+                    n.currentTasks.push(task);
+                }
+                persist(n);
+                return n;
+            })
+        },
+        updateCurrentTasks: (tasks: Task[]) => {
+            update((n: SessionStore) => {
+                n.currentTasks = tasks;
+                persist(n);
                 return n;
             })
         }
@@ -287,16 +339,37 @@ function initEventStore(seed: CustomEvent) {
 //App modes: minimal, journal, future (3026)
 //themes: clean, playful, neomorphic, neobrutal, glassmorphic
 
+const tempColorSchemes = ['scheme1', 'scheme2', 'scheme3', 'scheme4', 'scheme5', 'scheme6', 'scheme7', 'scheme8', 'scheme9', 'scheme10', 'scheme11']
+
+
+//HSL - dark: x, 30, 50   light: x, 60, 70
+const selectableColors = [
+    { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
+    { id: generateUID(), darkHex: "#85dde0", lightHex: "#59a3a6" },
+    { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
+    { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
+    { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
+    { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
+]
+
+const selectableColorParams: selectableColorParams = {
+    darkSaturation: 60,
+    darkLightness: 70,
+    lightSaturation: 30,
+    lightLightness: 50
+}
 
 export const appStore = initAppStore({
     isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true",
     tailwindTheme: "clean light", appName: "Pointron", appConstants: {
-        appModes: ["Minimal", "Journal"],
+        timerModes: ["Minimal", "Journal"],
         themes: ["Clean", "Colorful", "3026"],
         colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
         focusPlaceholderText: ["cooking ice cream", "cleaning wordle", "coding dishes", "showering", "draining umbrella", "commanding alexa"],
         runningOutDuration: 5,
-        tempColorSchemes: ['scheme1', 'scheme2', 'scheme3', 'scheme4', 'scheme5', 'scheme6', 'scheme7', 'scheme8', 'scheme9', 'scheme10', 'scheme11']
+        tempColorSchemes,
+        selectableColorParams
+
     }
 })
 
@@ -311,6 +384,50 @@ function initAppStore(seed: AppStore) {
     }
 }
 
+export const tagStore = initTagStore();
+
+function initTagStore() {
+    const objectType = ItemType.Tag;
+    const savedTags = persistance.retrieve(objectType);
+    const { subscribe, set, update } = writable<Tag[]>(savedTags ?? []);
+    const refresh = () => {
+        return persistance.retrieve(objectType);
+    }
+    return {
+        subscribe,
+        set,
+        create: (tag: Tag) => {
+            persistance.create(tag, objectType);
+            update((x: Tag[]) => {
+                x.push(tag);
+                return x;
+            })
+        },
+        update: (tag: Tag) => {
+            persistance.update(tag, objectType);
+            update((x: Tag[]) => {
+                x = x.filter(t => t.id != tag.id);
+                x.push(tag);
+                return x;
+            })
+        },
+        delete: (id: string) => {
+            persistance.delete(id, objectType);
+            update((x: Tag[]) => {
+                x = x.filter(t => t.id != id);
+                return x;
+            })
+        },
+        retrieve: () => {
+            subscribe((x: Tag[]) => {
+                return x;
+            });
+        },
+        search: (query: string) => {
+
+        }
+    }
+}
 
 export const oasisOidcConfig = {
     authority: "https://auth.oasislabs.com",

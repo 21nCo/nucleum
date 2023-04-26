@@ -6,7 +6,9 @@ import type { TaskStatus } from "./taskStatus.enum";
 
 
 export type SessionStore = {
-    currentSessionId: number,
+    currentSessionId: string | null,
+    currentTaskId: string | null,
+    currentTaskWorked?: number;
     todayFocus: number;
     isFocusRunning: boolean;
     //today: Session[],
@@ -15,7 +17,6 @@ export type SessionStore = {
     currentTasks?: Task[],
     snapshot?: SessionSnapshot,
     streak: number,
-    currentTask?: string
 }
 
 
@@ -26,7 +27,8 @@ export type Session = {
     focus: number;
     start: number;
     end: number;
-    id: number;
+    id: string;
+    label: string;
     intention: string;
     tasks?: Task[];
 }
@@ -47,7 +49,6 @@ export type SessionSnapshot = {
     bars: intervalbar[];
     sessionStartTime: Date;
     sessionEndTime: Date;
-    tasks: Task[];
     isFocusRunning: boolean;
 }
 
@@ -67,12 +68,13 @@ export type UserDate = {
 }
 
 export type Task = {
-    id: number;
+    id: string;
     label: string;
     estimate: number;
     worked: number;
     checked: boolean;
-    isInprogress?: boolean;
     tags?: string[];
+    sessionId: string;
+    order: number;
 }
 

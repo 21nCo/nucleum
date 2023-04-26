@@ -13,17 +13,21 @@
     } from "$lib/tidy/types/switcher.enum";
     import { PageSwitcherStyle } from "$lib/tidy/types/pagemenuitem.type";
     import { onMount } from "svelte";
+    import { Size } from "$lib/tidy/types/size.enum";
+    import Button from "$lib/tidy/elements/Button.svelte";
     let selectedSubMenu: number = 0;
     let isMinimized: boolean = false;
     let headerHeight: number = 150;
     let isHovered: boolean = false;
     function onMinimizeToggled() {
         isMinimized = !isMinimized;
+        if (isMinimized) isHovered = false;
     }
     onMount(() => {
         appStore.subscribe((x: any) => {
             if (x && x.powerSubMenu && x.powerSubMenu.length > 0) {
                 isMinimized = false;
+                selectedSubMenu = 0;
             }
         });
     });
@@ -31,8 +35,8 @@
 
 {#if isMinimized}
     <div
-        class="flex flex-col gap-4 absolute left-0 z-10 {isHovered
-            ? 'bg-bgs4'
+        class="flex flex-col gap-4 absolute left-1 z-10 {isHovered
+            ? 'bg-bgs4 rounded-lg p-2'
             : 'opacity-40'}"
         style="top: {headerHeight}px"
         on:mouseenter={() => (isHovered = true)}
@@ -44,7 +48,11 @@
             style={PageSwitcherStyle.MINIMIZED}
         />
         {#if isHovered}
-            <button on:click={onMinimizeToggled}>max</button>
+            <Button
+                on:click={onMinimizeToggled}
+                size={Size.xs}
+                label="switch to verbose"
+            />
         {/if}
     </div>
 {:else}
@@ -79,7 +87,11 @@
                 </div>
             </div>
 
-            <button on:click={onMinimizeToggled}>min</button>
+            <Button
+                on:click={onMinimizeToggled}
+                size={Size.xs}
+                label="switch to min mode"
+            />
         </div>
     </div>
 {/if}

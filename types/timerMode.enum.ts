@@ -1,4 +1,4 @@
-export enum AppMode {
+export enum TimerMode {
     MINIMAL,
     JOURNAL
 }
