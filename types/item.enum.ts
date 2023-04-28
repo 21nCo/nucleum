@@ -7,5 +7,6 @@ export enum ItemType {
     Task,
     Snapshot,
     Tag,
-    Routine
+    Routine,
+    CurrentTask
 }

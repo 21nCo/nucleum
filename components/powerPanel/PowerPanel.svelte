@@ -56,7 +56,7 @@
         {/if}
     </div>
 {:else}
-    <div class="flex justify-center items-center h-full w-1/6 ml-2">
+    <div class="flex justify-center items-center h-full w-56 ml-2">
         <div
             class="flex flex-col py-10 gap-4 items-center justify-between w-full rounded-lg {$userPreferences.theme ==
             'Colorful'

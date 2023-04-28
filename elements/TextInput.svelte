@@ -55,7 +55,7 @@
     }
 </script>
 
-<div class="flex flex-col gap-1">
+<div class="flex flex-col gap-1 w-full">
     {#if label}
         <div class="text-fgs2">{label}</div>
     {/if}

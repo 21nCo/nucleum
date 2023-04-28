@@ -35,20 +35,17 @@ export class TaskPersistance {
         }
     }
     createTasks(tasks: Task[]) {
-        console.log("create tasks", tasks)
         switch (get(cloudProvider)) {
             case Cloud.local:
                 let savedTasks = retrieveLocally(ItemType.Task);
                 let newTasks: Task[] = [];
                 tasks.forEach((task: Task) => {
                     if (savedTasks?.some((t: Task) => t.id === task.id)) {
-                        persistance.update(task, ItemType.Task);
-                    } else {
-                        newTasks.push(task);
+                        savedTasks = savedTasks.filter((t: Task) => t.id != task.id)
                     }
+                    newTasks.push(task);
                 })
-                let refreshedTasks = retrieveLocally(ItemType.Task);
-                let allTasks = [...refreshedTasks ?? [], ...newTasks];
+                let allTasks = [...savedTasks ?? [], ...newTasks];
                 persistLocally(ItemType.Task, allTasks);
                 break;
         }

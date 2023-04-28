@@ -66,7 +66,6 @@ export class Persistance {
         return item.id;
     }
     update(item: Item, itemType: ItemType) {
-        console.log("updating", item)
         switch (get(cloudProvider)) {
             case Cloud.local:
                 let items: Item[] = retrieveLocally(itemType);
@@ -75,9 +74,7 @@ export class Persistance {
                 }
                 items = items.filter((x: Item) => x.id != item.id);
                 items.push(item);
-                console.log("saving objects after updating", { items, item, itemType })
                 persistLocally(itemType, items);
-                window.localStorage.setItem("temp", JSON.stringify(items));
                 break;
         }
     }

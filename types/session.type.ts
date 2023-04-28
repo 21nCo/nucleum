@@ -14,7 +14,6 @@ export type SessionStore = {
     //today: Session[],
     //sessions: Session[],
     days: TimePeriod[],
-    currentTasks?: Task[],
     snapshot?: SessionSnapshot,
     streak: number,
 }

@@ -9,7 +9,7 @@ import type { Preset } from "$lib/tidy/types/preset.type"
 import type { Session, SessionSnapshot, SessionStore, Task } from "$lib/tidy/types/session.type"
 import type { WindowObject } from "$lib/tidy/types/windowObject.type"
 import { generateUID, yesterday } from "$lib/tidy/utils"
-import { writable } from "svelte/store"
+import { get, writable } from "svelte/store"
 import { Persistance, persistLocally, retrieveLocally } from "./persistance"
 import { SessionPersistance } from "./session.persistance"
 import type { ColorScheme, selectableColorParams } from "$lib/tidy/types/appConstants.type"
@@ -21,8 +21,8 @@ import type { Tag } from "../types/tag.type"
 import { TaskPersistance } from "./task.persistance"
 
 export const cloudProvider = writable(Cloud.local)
-const sessionPersistance = new SessionPersistance();
 const persistance = new Persistance();
+const sessionPersistance = new SessionPersistance();
 const taskPersistance = new TaskPersistance();
 const seedPresets = [
     // { id: generateUID(), rounds: 1, duration: 5, brek: 2 },
@@ -174,13 +174,19 @@ function initTodayFocus() {
 //todo - move this to notification store
 export const sessionChangeEvent = writable<{ id: string | null }>({ id: null });
 
-export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, todayFocus: 0, isFocusRunning: false, days: [], streak: 0, currentTasks: [] })
+export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, todayFocus: 0, isFocusRunning: false, days: [], streak: 0 })
 
 function initSessionStore(seed: SessionStore) {
     const objectType = ItemType.SessionStoreV2;
-    let savedSessionStore = retrieveLocally(objectType)
+    const persist = (n: SessionStore) => {
+        persistLocally(objectType, n);
+    }
+    const retrieve = () => {
+        return retrieveLocally(objectType);
+    }
+    let savedSessionStore = retrieve()
     const { subscribe, set, update } = writable<SessionStore>(savedSessionStore ?? seed);
-    if (!savedSessionStore) persistLocally(objectType, seed)
+    if (!savedSessionStore) persist(seed)
 
     const refreshTodayProgress = (n: SessionStore) => {
         const { focus, streak } = sessionPersistance.getProgress()
@@ -192,14 +198,11 @@ function initSessionStore(seed: SessionStore) {
         n.currentSessionId = null;
         n.isFocusRunning = false;
         n.snapshot = undefined;
-        n.currentTasks = [];
+        currentTaskStore.reset();
         n.currentTaskId = null;
         n.currentTaskWorked = 0;
-        persistLocally(objectType, n);
+        persist(n);
         return n;
-    }
-    const persist = (n: SessionStore) => {
-        persistLocally(objectType, n);
     }
 
     return {
@@ -211,13 +214,13 @@ function initSessionStore(seed: SessionStore) {
             set(seed);
         },
         reload: () => {
-            let saved = retrieveLocally(objectType)
+            let saved = retrieve()
             set(saved);
         },
         finishSession: (m: Session) => {
             update((n: SessionStore) => {
                 persistance.create(m, ItemType.Sessions);
-                const tasks = n.currentTasks?.map((t: Task) => { t.sessionId = m.id; return t; });
+                const tasks = get(currentTaskStore)?.map((t: Task) => { t.sessionId = m.id; return t; });
                 if (tasks && tasks.length > 0) {
                     taskPersistance.createTasks(tasks);
                 }
@@ -243,6 +246,7 @@ function initSessionStore(seed: SessionStore) {
                 refreshTodayProgress(n)
                 return n;
             })
+            appEvents.notify(EventType.REFRESH_TIMELINE);
         },
         deleteSession: (id: string) => {
             update((n: SessionStore) => {
@@ -260,20 +264,17 @@ function initSessionStore(seed: SessionStore) {
             })
         },
         snapshot: (snap: SessionSnapshot) => {
-            console.log("snapshot")
             update((n: SessionStore) => {
                 n.snapshot = snap;
-                if (n.currentTaskWorked != undefined) n.currentTaskWorked += 1;
+                if (n.currentTaskWorked != undefined && n.isFocusRunning) n.currentTaskWorked += 1;
                 persist(n);
                 return n;
             })
         },
         startTask: (id: string, previousWorked: number) => {
             update((n: SessionStore) => {
-                if (n.currentTasks && n.currentTasks.length > 0) {
-                    n.currentTaskId = id;
-                    n.currentTaskWorked = previousWorked;
-                }
+                n.currentTaskWorked = previousWorked;
+                n.currentTaskId = id;
                 appEvents.notify(EventType.TASK_START);
                 persist(n);
                 return n;
@@ -287,32 +288,57 @@ function initSessionStore(seed: SessionStore) {
                 return n;
             })
         },
-        deleteTask: (id: string) => {
-            update((n: SessionStore) => {
-                if (n.currentTasks && n.currentTasks.length > 0) {
-                    n.currentTasks = n.currentTasks.filter(t => t.id != id);
-                }
-                persist(n);
-                return n;
-            })
+
+    }
+}
+
+export const currentTaskStore = initCurrentTaskStore()
+
+function initCurrentTaskStore() {
+    const objectType = ItemType.CurrentTask;
+    const persist = (n: Task[]) => {
+        persistLocally(objectType, n);
+    }
+    const retrieve = () => {
+        return retrieveLocally(objectType);
+    }
+    const seed = retrieve();
+    const { subscribe, set, update } = writable<Task[]>(seed ?? []);
+    return {
+        subscribe,
+        set: (m: Task[]) => {
+            set(m);
+        },
+        reset: () => {
+            set([]);
+            persist([]);
         },
         updateTask: (task: Task) => {
-            update((n: SessionStore) => {
-                if (n.currentTasks && n.currentTasks.length > 0) {
-                    n.currentTasks = n.currentTasks.filter(t => t.id != task.id);
-                    n.currentTasks.push(task);
+            update((n: Task[]) => {
+                if (n && n.length > 0) {
+                    n = n.filter(t => t.id != task.id);
+                    n.push(task);
                 }
                 persist(n);
                 return n;
             })
         },
         updateCurrentTasks: (tasks: Task[]) => {
-            update((n: SessionStore) => {
-                n.currentTasks = tasks;
+            update((n: Task[]) => {
+                n = tasks;
                 persist(n);
                 return n;
             })
-        }
+        },
+        deleteTask: (id: string) => {
+            update((n: Task[]) => {
+                if (n && n.length > 0) {
+                    n = n.filter(t => t.id != id);
+                }
+                persist(n);
+                return n;
+            })
+        },
     }
 }
 

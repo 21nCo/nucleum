@@ -20,12 +20,13 @@
     <div class="flex justify-center h-full w-full items-center">
         <div class="flex h-full w-full">
             <div
-                class="relative max-w-md lg:max-w-lg flex flex-col items-center w-full px-4 gap-4 rounded-xl m-2 {$userPreferences.theme ==
+                class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
                 'Colorful'
                     ? 'glasspanel'
                     : 'bg-bgs2'}"
                 style="padding-top: {pad / 4}px; padding-bottom: {pad /
-                    4}px; height: calc(100% - 1rem);"
+                    4}px; padding-right: {pad / 8}px; padding-left: {pad /
+                    8}px; height: calc(100% - 1rem);"
             >
                 <!-- <div class="flex w-full px-4 pb-10">
                     <TopBar />
@@ -33,7 +34,7 @@
                 <slot name="sidepanel" />
             </div>
             <div
-                class="flex justify-center items-center w-full p-4"
+                class="flex justify-center items-center p-4 w-3/5"
                 style="padding-top: {pad}px; padding-bottom: {pad}px;"
             >
                 <slot name="main" />
