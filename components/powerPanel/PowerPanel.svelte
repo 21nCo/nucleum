@@ -16,7 +16,7 @@
     import { onMount } from "svelte";
     import { Size } from "$lib/tidy/types/size.enum";
     import Button from "$lib/tidy/elements/Button.svelte";
-    let selectedSubMenu: number = 0;
+    import PageMenuView from "./PageMenuView.svelte";
     let isMinimized: boolean = false;
     let headerHeight: number = 150;
     let isHovered: boolean = false;
@@ -24,14 +24,6 @@
         isMinimized = !isMinimized;
         if (isMinimized) isHovered = false;
     }
-    onMount(() => {
-        appStore.subscribe((x: any) => {
-            if (x && x.powerSubMenu && x.powerSubMenu.length > 0) {
-                isMinimized = false;
-                selectedSubMenu = 0;
-            }
-        });
-    });
 </script>
 
 {#if $windowObject.isInPortrait}
@@ -78,22 +70,7 @@
                 <slot name="header" />
                 <div class="flex flex-col gap-20 w-full p-2">
                     <PageSwitcher parentBackgroundIndex={1} />
-                    {#if $appStore.powerSubMenu && $appStore.powerSubMenu.length > 0}
-                        <div class="pl-4">
-                            <MenuSwitcher
-                                items={$appStore.powerSubMenu}
-                                style={SwitcherStyle.Vertical}
-                                selectionStyle={SelectionItemActiveStyle.SIDEDOT}
-                                bind:selected={selectedSubMenu}
-                                on:switch={() => {
-                                    appEvents.notify(
-                                        EventType.SUB_MENU_CHANGED,
-                                        selectedSubMenu
-                                    );
-                                }}
-                            />
-                        </div>
-                    {/if}
+                    <PageMenuView />
                 </div>
             </div>
 

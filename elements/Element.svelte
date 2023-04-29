@@ -4,6 +4,7 @@
     import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
     import { generateBackgroudColor } from "$lib/tidy/utils";
     export let classList: string;
+    export let styleList: string = "";
     export let isAction: boolean = true;
     //export let isMenuItem: boolean = false;
     export let isActive: boolean = false;
@@ -52,6 +53,7 @@
                 : "")}
         on:click
         on:pointerenter
+        style={styleList}
     >
         <slot />
         {#if selectionStyle === SelectionItemActiveStyle.SIDEBAR && isActive}
@@ -66,8 +68,8 @@
             />
         {:else if selectionStyle === SelectionItemActiveStyle.BOTTOMDOT && isActive}
             <div
-                class="absolute opacity-80 w-2 rounded-full bg-accent1"
-                style="height: 20%; left: 40%; bottom: -2px"
+                class="absolute opacity-80 w-4 rounded-lg bg-accent1"
+                style="height: 5%; left: 40%;"
             />
         {/if}
     </button>
@@ -79,6 +81,7 @@
                 : $userPreferences.theme == "Colorful"
                 ? " glassactive"
                 : backgroundColor)}
+        style={styleList}
     >
         <slot />
     </div>

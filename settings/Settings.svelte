@@ -11,14 +11,14 @@
     import TagsAndRoutines from "$lib/settings/TagsAndRoutines.svelte";
     export let menuItems: any;
     export let selectedMenuIndex: number = 0;
-    $: selected = menuItems[selectedMenuIndex];
+    $: selected = menuItems[selectedMenuIndex].label;
     onMount(() => {
         windowObject.toggleTopBar(true);
         appEvents.notify(EventType.SHOW_APPEARANCE_PREVIEW, false);
     });
 </script>
 
-<div class="flex flex-col gap-4 w-full h-full p-4">
+<div class="flex flex-col gap-4 w-full h-full">
     <div class="text-h1 pb-10 pt-2 item-start text-accent1">
         {selected}
     </div>

@@ -387,6 +387,12 @@ const selectableColorParams: selectableColorParams = {
     lightLightness: 50
 }
 
+const appMenu = [
+    { label: "point", path: "/", icon: "point" },
+    { label: "flow", path: "/flow", icon: "flow" },
+    { label: "control", path: "/control", icon: "control" },
+];
+
 export const appStore = initAppStore({
     isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true",
     tailwindTheme: "clean light", appName: "Pointron", appConstants: {
@@ -397,8 +403,8 @@ export const appStore = initAppStore({
         runningOutDuration: 5,
         tempColorSchemes,
         selectableColorParams
-
-    }
+    },
+    pages: appMenu
 })
 
 function initAppStore(seed: AppStore) {

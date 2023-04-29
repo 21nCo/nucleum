@@ -7,18 +7,15 @@
     import PageSwitcherItem from "./PageSwitcherItem.svelte";
     import { generateBackgroudColor } from "$lib/tidy/utils";
     import { goto } from "$app/navigation";
-
-    export let items: PageMenuItem[] = [
-        { label: "point", path: "/", icon: "point" },
-        { label: "flow", path: "/flow", icon: "flow" },
-        { label: "control", path: "/control", icon: "control" },
-    ];
+    import { appStore } from "$lib/tidy/stores/stores";
     export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
     export let parentBackgroundIndex: number;
     export let isHovered: boolean = false;
+    let items: PageMenuItem[] = [];
     let backgroundColor: string;
     let selected: number;
     onMount(() => {
+        items = $appStore.pages ?? [];
         let currentPath = window.location.pathname;
         let currentPage = items.find((item) => item.path === currentPath);
         selected = currentPage ? items.indexOf(currentPage) : 0;

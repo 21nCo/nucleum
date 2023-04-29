@@ -3,7 +3,8 @@ const { dark, dim, dracula, sea, forest, light, smooth, grainy } = require('./co
 
 const defaultFontSize = {
     'h1': '1.953rem',
-    'h2': '1.25rem',
+    'h2': '1.55rem',
+    'h3': '1.25rem',
     'b0': '1.1rem',
     base: '1rem',
     'b2': '0.8rem',
@@ -39,7 +40,8 @@ const scales = [
         extend: {
             fontSize: {
                 'h1': '1.5rem',
-                'h2': '0.75rem',
+                'h2': '1.25rem',
+                'h3': '0.75rem',
                 base: '0.5rem',
                 'b2': '0.4rem',
                 'b3': '0.3rem',
@@ -53,7 +55,8 @@ const scales = [
         extend: {
             fontSize: {
                 'h1': '1.8rem',
-                'h2': '1rem',
+                'h2': '1.4rem',
+                'h3': '1rem',
                 base: '0.8rem',
                 'b2': '0.6rem',
                 'b3': '0.5rem',
@@ -73,7 +76,8 @@ const scales = [
         extend: {
             fontSize: {
                 'h1': '2.1rem',
-                'h2': '1.5rem',
+                'h2': '1.8rem',
+                'h3': '1.5rem',
                 base: '1.2rem',
                 'b2': '1rem',
                 'b3': '0.8rem',
@@ -87,7 +91,8 @@ const scales = [
         extend: {
             fontSize: {
                 'h1': '2.2rem',
-                'h2': '1.6rem',
+                'h2': '1.9rem',
+                'h3': '1.6rem',
                 base: '1.3rem',
                 'b2': '1rem',
                 'b3': '0.8rem',
