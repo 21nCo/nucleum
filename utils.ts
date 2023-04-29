@@ -182,6 +182,9 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
     } else if (parentBackgroundIndex === 2) {
         activeBackgroundColor = " bg-bgs4";
         backgroundColor = " bg-bgs3";
+    } else if (parentBackgroundIndex === 3) {
+        activeBackgroundColor = " bg-bgs4";
+        backgroundColor = " bg-bgs4";
     } else {
         activeBackgroundColor = " bg-bgs2";
         backgroundColor = " bg-bgs1";

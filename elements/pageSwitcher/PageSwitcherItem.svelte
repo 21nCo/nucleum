@@ -1,5 +1,4 @@
 <script lang="ts">
-    import RiveAnimatedIcon from "$lib/tidy/icons/RiveAnimatedIcon.svelte";
     import {
         PageSwitcherStyle,
         type PageMenuItem,
@@ -13,6 +12,7 @@
     export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
     export let isActive: boolean = false;
     export let isShowLabel: boolean = true;
+    export let parentBackgroundIndex: number;
     let rive: any;
     function onClick() {
         rive?.fire();
@@ -25,18 +25,21 @@
 
 <Element
     classList="flex gap-2 items-center {isShowLabel
-        ? 'rounded-lg px-6 h-12'
+        ? style === PageSwitcherStyle.THIN
+            ? ' rounded-full px-6 h-12'
+            : 'rounded-lg px-6 h-12'
         : 'p-4 rounded-full'}"
-    {isActive}
+    {isActive}  
     on:click={onClick}
     on:pointerenter={onHover}
+    {parentBackgroundIndex}
     selectionStyle={SelectionItemActiveStyle.ACCENT}
 >
     {#if item.icon}
         <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
         <Icon icon={item.icon} {isActive} />
     {/if}
-    {#if style != PageSwitcherStyle.MINIMIZED || isShowLabel}
+    {#if isShowLabel}
         {item.label}
     {/if}
 </Element>

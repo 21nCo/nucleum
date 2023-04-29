@@ -55,9 +55,11 @@
             </div>
         {/if}
         <div
-            class="truncate text-left {selectionStyle ===
-                SelectionItemActiveStyle.SIDEDOT && isActive
-                ? 'text-accent1 text-b0'
+            class="truncate text-left {(selectionStyle ===
+                SelectionItemActiveStyle.SIDEDOT ||
+                selectionStyle === SelectionItemActiveStyle.BOTTOMDOT) &&
+            isActive
+                ? 'text-accent1'
                 : ''} "
         >
             {item}

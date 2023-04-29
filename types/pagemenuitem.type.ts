@@ -7,5 +7,5 @@ export type PageMenuItem = {
 export enum PageSwitcherStyle {
     DEFAULT,
     MINIMIZED,
-    MOBILE
+    THIN
 }

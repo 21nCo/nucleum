@@ -121,7 +121,7 @@ function initUserPreferences(seed: UserPreferences) {
 
 
 
-export const windowObject = initWindow({ documentHeight: window.innerHeight, documentWidth: window.innerWidth, landscapiness: window.innerWidth / window.innerHeight, scale: window.innerWidth / 100 })
+export const windowObject = initWindow({ documentHeight: window.innerHeight, documentWidth: window.innerWidth, landscapiness: window.innerWidth / window.innerHeight, scale: window.innerWidth / 100, isInPortrait: false, isInThinMode: false })
 
 
 function initWindow(settings: WindowObject) {
@@ -133,7 +133,9 @@ function initWindow(settings: WindowObject) {
         },
         updateDoumentDimensions: (width: number, height: number) => {
             update((n: WindowObject) => {
-                n = { ...n, documentHeight: height, documentWidth: width, landscapiness: width / height, scale: ((width / 1000) + (height / 1000)) / 2 }
+                n = { ...n, documentHeight: height, documentWidth: width, landscapiness: width / height, scale: ((width / 1000) + (height / 1000)) / 2, isInThinMode: false }
+                n.isInPortrait = n.landscapiness < 1;
+                n.isInThinMode = n.landscapiness < 0.75;
                 return n;
             })
         },

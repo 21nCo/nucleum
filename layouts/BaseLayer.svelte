@@ -80,16 +80,19 @@
 </div>
 {#if $appStore.isDebug}
     <div
-        class="absolute debug top-0 left-0 flex flex-col p-10 bg-bgs4 bg-opacity-60 text-fgs1 rounded-lg"
+        class="absolute debug bottom-0 right-0 flex flex-col p-10 bg-bgs4 bg-opacity-60 text-fgs1 rounded-lg"
     >
         <div>
             {"Dimensions (W x H): " +
                 $windowObject.documentWidth +
                 "x" +
-                $windowObject.documentHeight}}
+                $windowObject.documentHeight}
         </div>
         <div>
             {"Landscapiness: " + $windowObject.landscapiness.toFixed(2)}
+        </div>
+        <div>
+            {"Is in thin mode: " + $windowObject.isInThinMode}
         </div>
         <div>
             {"Scale: " + $windowObject.scale.toFixed(2)}

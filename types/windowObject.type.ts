@@ -4,4 +4,6 @@ export type WindowObject = {
     landscapiness: number;
     scale: number;
     isMinimalTopBar?: boolean;
+    isInPortrait: boolean;
+    isInThinMode: boolean;
 }   

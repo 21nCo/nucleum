@@ -27,14 +27,19 @@
     });
 </script>
 
-<div class="flex flex-col min-w-min w-full rounded-lg">
+<div
+    class="flex {style === PageSwitcherStyle.THIN
+        ? 'rounded-full'
+        : 'flex-col rounded-lg'} min-w-min w-full"
+>
     {#each items as item, index}
         {#if style != PageSwitcherStyle.MINIMIZED || (style === PageSwitcherStyle.MINIMIZED && (isHovered || selected == index))}
             <PageSwitcherItem
+                {parentBackgroundIndex}
                 {style}
                 isShowLabel={(style === PageSwitcherStyle.MINIMIZED &&
                     isHovered) ||
-                    style === PageSwitcherStyle.DEFAULT}
+                    style != PageSwitcherStyle.MINIMIZED}
                 on:click={() => {
                     selected = index;
                     goto(item.path);

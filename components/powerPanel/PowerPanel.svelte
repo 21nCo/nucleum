@@ -5,6 +5,7 @@
         appEvents,
         appStore,
         userPreferences,
+        windowObject,
     } from "$lib/tidy/stores/stores";
     import { EventType } from "$lib/tidy/types/event.enum";
     import {
@@ -33,7 +34,16 @@
     });
 </script>
 
-{#if isMinimized}
+{#if $windowObject.isInPortrait}
+    <div class="absolute bottom-0 flex justify-center z-10 w-full p-4">
+        <div class="bg-bgs4 rounded-full">
+            <PageSwitcher
+                style={PageSwitcherStyle.THIN}
+                parentBackgroundIndex={3}
+            />
+        </div>
+    </div>
+{:else if isMinimized}
     <div
         class="flex flex-col gap-4 absolute left-1 z-10 {isHovered
             ? 'bg-bgs4 rounded-lg p-2'

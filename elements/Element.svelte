@@ -16,7 +16,10 @@
         let colors = generateBackgroudColor(parentBackgroundIndex);
         activeBackgroundColor = colors.activeBackgroundColor;
         backgroundColor = colors.backgroundColor;
-        if (selectionStyle === SelectionItemActiveStyle.SIDEDOT) {
+        if (
+            selectionStyle === SelectionItemActiveStyle.SIDEDOT ||
+            selectionStyle === SelectionItemActiveStyle.BOTTOMDOT
+        ) {
             activeBackgroundColor = "";
         }
     });
@@ -40,9 +43,12 @@
                     ? selectionStyle === SelectionItemActiveStyle.ACCENT
                         ? " bg-accent1 text-bgs1"
                         : activeBackgroundColor
-                    : selectionStyle === SelectionItemActiveStyle.ACCENT
+                    : selectionStyle === SelectionItemActiveStyle.SIDEDOT ||
+                      selectionStyle === SelectionItemActiveStyle.BOTTOMDOT
                     ? ""
-                    : backgroundColor + " hover:" + activeBackgroundColor?.trim()
+                    : backgroundColor +
+                      " hover:" +
+                      activeBackgroundColor?.trim()
                 : "")}
         on:click
         on:pointerenter
@@ -57,6 +63,11 @@
             <div
                 class="absolute opacity-80 w-2 rounded-full bg-accent1"
                 style="height: 20%; top: 40%; left: -2px"
+            />
+        {:else if selectionStyle === SelectionItemActiveStyle.BOTTOMDOT && isActive}
+            <div
+                class="absolute opacity-80 w-2 rounded-full bg-accent1"
+                style="height: 20%; left: 40%; bottom: -2px"
             />
         {/if}
     </button>
