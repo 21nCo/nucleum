@@ -8,8 +8,8 @@
     let audio: any;
 
     onMount(() => {
-        appEvents.subscribe((value: CustomEvent) => {
-            switch (value.type) {
+        appEvents.subscribe((event: CustomEvent) => {
+            switch (event.type) {
                 case EventType.BREAK_ENDED:
                     src = $userPreferences.breakEndSound ?? "sounds/ping.wav";
                     break;
@@ -25,6 +25,9 @@
             if (src) {
                 setTimeout(() => {
                     audio?.play();
+                    setTimeout(() => {
+                        src = null;
+                    }, 500);
                 }, 200);
             }
         });

@@ -18,7 +18,6 @@
     let rive: any;
     $: if ($windowObject.documentHeight) {
         let rawPad = ($windowObject.documentWidth / 10) * $windowObject.scale;
-        console.log(rawPad)
         pad = rawPad > 30 ? 30 : rawPad;
     }
     function onClick() {

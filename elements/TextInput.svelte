@@ -59,7 +59,7 @@
     {#if label}
         <div class="text-fgs2">{label}</div>
     {/if}
-    <div class="flex items-center">
+    <div class="flex items-center w-full">
         <input
             class={inputClasses}
             bind:value

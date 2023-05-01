@@ -121,13 +121,14 @@ function initUserPreferences(seed: UserPreferences) {
 
 
 
-export const windowObject = initWindow({ documentHeight: window.innerHeight, documentWidth: window.innerWidth, landscapiness: window.innerWidth / window.innerHeight, scale: window.innerWidth / 100, isInPortrait: false, isInThinMode: false })
+export const windowObject = initWindow({ documentHeight: window.innerHeight, documentWidth: window.innerWidth, landscapiness: window.innerWidth / window.innerHeight, scale: window.innerWidth / 100, isInPortrait: false, isInThinMode: false, firstLoad: new Date().getTime() })
 
 
 function initWindow(settings: WindowObject) {
     const { subscribe, set, update } = writable<WindowObject>(settings);
     return {
         subscribe,
+        set,
         reset: (windowObject: WindowObject) => {
             set(windowObject)
         },
@@ -160,23 +161,37 @@ export const todayFocusStore = initTodayFocus();
 
 
 function initTodayFocus() {
-    const { subscribe, set, update } = writable(0);
+    const retrieve = () => {
+        return sessionPersistance.getProgress();
+    }
+    const { subscribe, set, update } = writable<{ focus: number, streak: number }>(retrieve());
     return {
         subscribe,
         set,
         incrementTodayFocus: (x: number) => {
-            update((n: number) => {
-                n += x
+            update((n: { focus: number, streak: number }) => {
+                n.focus += x
                 return n;
             })
         },
+        refresh: () => {
+            update((n: { focus: number, streak: number }) => {
+                const todayFocus = retrieve();
+                n.focus = todayFocus.focus;
+                n.streak = todayFocus.streak;
+                return n;
+            })
+        }
     }
 }
 
 //todo - move this to notification store
 export const sessionChangeEvent = writable<{ id: string | null }>({ id: null });
 
-export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, todayFocus: 0, isFocusRunning: false, days: [], streak: 0 })
+export const estimatedEndTimeStore = writable<{ endTime: Date }>({ endTime: new Date() });
+
+
+export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, isFocusRunning: false, days: [] })
 
 function initSessionStore(seed: SessionStore) {
     const objectType = ItemType.SessionStoreV2;
@@ -190,12 +205,6 @@ function initSessionStore(seed: SessionStore) {
     const { subscribe, set, update } = writable<SessionStore>(savedSessionStore ?? seed);
     if (!savedSessionStore) persist(seed)
 
-    const refreshTodayProgress = (n: SessionStore) => {
-        const { focus, streak } = sessionPersistance.getProgress()
-        n.todayFocus = focus;
-        n.streak = streak;
-        return n;
-    }
     const reset = (n: SessionStore) => {
         n.currentSessionId = null;
         n.isFocusRunning = false;
@@ -229,6 +238,7 @@ function initSessionStore(seed: SessionStore) {
                 n = reset(n);
                 return n;
             })
+            todayFocusStore.refresh();
         },
         resumeFocus: () => {
             update((n: SessionStore) => {
@@ -245,7 +255,6 @@ function initSessionStore(seed: SessionStore) {
         resetSession: () => {
             update((n: SessionStore) => {
                 n = reset(n);
-                refreshTodayProgress(n)
                 return n;
             })
             appEvents.notify(EventType.REFRESH_TIMELINE);
@@ -253,20 +262,14 @@ function initSessionStore(seed: SessionStore) {
         deleteSession: (id: string) => {
             update((n: SessionStore) => {
                 persistance.delete(id, ItemType.Sessions);
-                refreshTodayProgress(n);
                 n.isFocusRunning = false;
                 return n;
-            })
-        },
-        refreshTodayProgressAndStreak: () => {
-            update((n: SessionStore) => {
-                n.isFocusRunning = false;
-                refreshTodayProgress(n);
-                return n;
-            })
+            });
+            todayFocusStore.refresh();
         },
         snapshot: (snap: SessionSnapshot) => {
             update((n: SessionStore) => {
+                if (!n.isFocusRunning) return n;
                 n.snapshot = snap;
                 if (n.currentTaskWorked != undefined && n.isFocusRunning) n.currentTaskWorked += 1;
                 persist(n);
@@ -278,6 +281,7 @@ function initSessionStore(seed: SessionStore) {
                 n.currentTaskWorked = previousWorked;
                 n.currentTaskId = id;
                 appEvents.notify(EventType.TASK_START);
+                appEvents.notify(EventType.THINMODE_PANELSWITCH, 1)
                 persist(n);
                 return n;
             })
@@ -401,6 +405,7 @@ export const appStore = initAppStore({
         colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
         focusPlaceholderText: ["cooking ice cream", "cleaning wordle", "coding dishes", "showering", "draining umbrella", "commanding alexa"],
         runningOutDuration: 5,
+        gapThreshold: 60,
         tempColorSchemes,
         selectableColorParams
     },

@@ -1,7 +1,7 @@
 import { Cloud } from "$lib/tidy/types/cloud.enum";
 import { ItemType } from "$lib/tidy/types/item.enum";
 import type { Session, UserDate } from "$lib/tidy/types/session.type";
-import { checkDay, checkIsToday, checkIsTodayUsingTimestamp, getCurrentUserDate, getUserDate } from "$lib/tidy/utils";
+import { aggregateFocusFromSessions, checkDay, checkIsToday, checkIsTodayUsingTimestamp, getCurrentUserDate, getOneDayEarlier, getUserDate } from "$lib/tidy/utils";
 import { get } from "svelte/store";
 import { persistLocally, retrieveLocally } from "./persistance";
 import { cloudProvider, userPreferences } from './stores'
@@ -11,17 +11,17 @@ import { cloudProvider, userPreferences } from './stores'
 export class SessionPersistance {
     getProgress() {
         let focus = 0;
-        let streak = 0;
-
+        let streak = 1;
+        const userDayStartTime = get(userPreferences).dayStart;
+        const userFocusTarget = get(userPreferences).dailyFocusTarget ?? 0;
         switch (get(cloudProvider)) {
             case Cloud.local:
                 let sessions: Session[] = retrieveLocally(ItemType.Sessions);
                 if (!sessions || !sessions.length) break;
                 sessions = sessions.map(session => transformSession(session));
                 if (!sessions) break;
-                let today = new Date();
                 let todaySessions = sessions.filter((s: Session) => {
-                    return checkIsTodayUsingTimestamp(s.start, get(userPreferences).dayStart)
+                    return checkIsTodayUsingTimestamp(s.start, userDayStartTime)
                 });
                 if (todaySessions.length > 0) {
                     focus = todaySessions
@@ -29,10 +29,21 @@ export class SessionPersistance {
                         .reduce((agg: any, x: any) => agg + x);
                 }
                 if (get(userPreferences).isEnableDailyTarget) {
-                    //todo - calculate streak
-                    streak = 0;
+                    let current = getCurrentUserDate(userDayStartTime);
+                    let isEnd = false;
+                    while (isEnd) {
+                        let previous = getOneDayEarlier(current);
+                        let sessions = new SessionPersistance().retrieveSessions(previous);
+                        let focus = aggregateFocusFromSessions(sessions ?? []);
+                        if (focus && focus > userFocusTarget) {
+                            current = previous;
+                            streak++;
+                        }
+                        else {
+                            isEnd = true;
+                        }
+                    }
                 }
-
         }
         return { focus, streak };
     }

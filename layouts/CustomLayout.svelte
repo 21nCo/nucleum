@@ -26,10 +26,19 @@
     onMount(() => {
         isShowPageMenu = $windowObject.isInThinMode;
         appEvents.subscribe((x: CustomEvent) => {
+            console.log(x);
             if (x.type == EventType.PAGE_MENU_CHANGED) {
                 isShowPageMenu = false;
             }
+            if (
+                $windowObject.isInThinMode &&
+                x.type === EventType.THINMODE_PANELSWITCH &&
+                x.value != undefined
+            ) {
+                selectedPanel = x.value;
+            }
         });
+        console.log(selectedPanel,$windowObject.isInThinMode);
     });
 </script>
 
@@ -89,10 +98,22 @@
                     >
                         <slot name="main" />
                     </div>
-                {:else if selectedPanel == 0}
-                    <slot name="sidepanel" />
-                {:else if selectedPanel == 1}
-                    <slot name="main" />
+                {:else}
+                    <div
+                        class="flex w-full h-full {selectedPanel === 0
+                            ? ''
+                            : 'hidden'}"
+                    >
+                        <slot name="sidepanel" />
+                    </div>
+                    <div
+                        class="flex justify-center items-center w-full {selectedPanel ===
+                        1
+                            ? ''
+                            : 'hidden'}"
+                    >
+                        <slot name="main" />
+                    </div>
                 {/if}
             </div>
         </div>

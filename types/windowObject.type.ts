@@ -6,4 +6,5 @@ export type WindowObject = {
     isMinimalTopBar?: boolean;
     isInPortrait: boolean;
     isInThinMode: boolean;
+    firstLoad: number;
 }   

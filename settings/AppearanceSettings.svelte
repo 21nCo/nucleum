@@ -120,14 +120,12 @@
             />
         </div>
     {/if}
-    <div class="flex flex-col gap-1">
-        <TextInput
-            label="Nickname"
-            bind:value={$userPreferences.nickName}
-            placeholder="nickname"
-            {parentBackgroundIndex}
-        />
-    </div>
+    <TextInput
+        label="Nickname"
+        bind:value={$userPreferences.nickName}
+        placeholder="nickname"
+        {parentBackgroundIndex}
+    />
     <div class="flex gap-8">
         <CheckboxInput
             label="Enable Age Counter"

@@ -12,6 +12,7 @@
   export let isOnRight: boolean = false;
   export let primaryText: string | undefined = undefined;
   export let secondaryText: string | undefined = undefined;
+  export let isShowClose: boolean = true;
   let width: number;
   let height: number;
   let left: any;
@@ -84,7 +85,7 @@
       </div>
     {:else}
       <div
-        class="popover-container flex flex-col p-4 absolute rounded-md shadow-lg bg-bgs1 z-100"
+        class="popover-container flex flex-col p-4 absolute rounded-md shadow-lg bg-bgs1 z-100 overflow-y-auto"
         style="width: {width}px; height: {height}px; top: {top}px; left: {left}px;"
       >
         {#if title}
@@ -108,7 +109,7 @@
           {/if}
           {#if secondaryText}
             <Button label={secondaryText} on:click={onSecondaryActionClicked} />
-          {:else}
+          {:else if isShowClose}
             <Button label="close" on:click={close} />
           {/if}
         </div>

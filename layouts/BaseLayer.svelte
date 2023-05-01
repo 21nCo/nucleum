@@ -80,7 +80,7 @@
 </div>
 {#if $appStore.isDebug}
     <div
-        class="absolute debug bottom-0 right-0 flex flex-col p-10 bg-bgs4 bg-opacity-60 text-fgs1 rounded-lg"
+        class="absolute debug bottom-40 right-0 flex flex-col p-10 bg-bgs4 bg-opacity-60 text-fgs1 rounded-lg z-20"
     >
         <div>
             {"Dimensions (W x H): " +

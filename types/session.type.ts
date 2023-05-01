@@ -9,13 +9,9 @@ export type SessionStore = {
     currentSessionId: string | null,
     currentTaskId: string | null,
     currentTaskWorked?: number;
-    todayFocus: number;
     isFocusRunning: boolean;
-    //today: Session[],
-    //sessions: Session[],
     days: TimePeriod[],
     snapshot?: SessionSnapshot,
-    streak: number,
 }
 
 
