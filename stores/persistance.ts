@@ -2,9 +2,9 @@ import { Cloud } from '$lib/tidy/types/cloud.enum'
 import type { JsonValue } from '$lib/tidy/types/json.type'
 import { ItemType } from '$lib/tidy/types/item.enum'
 import { get, writable } from 'svelte/store'
-import { cloudProvider } from './stores'
+import { cloudProvider } from '../../pointron/stores/session.store'
 import type { Item } from '../types/item.type'
-import type { Tag } from '../types/tag.type'
+import type { Tag } from '../../pointron/types/tag.type'
 
 
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {

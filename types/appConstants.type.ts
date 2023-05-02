@@ -1,10 +1,6 @@
 export type AppConstants = {
-    timerModes: string[];
     themes: string[];
     colorSchemes: ColorScheme[];
-    focusPlaceholderText: string[];
-    runningOutDuration: number;
-    gapThreshold: number;
     tempColorSchemes: string[];
     selectableColorParams: selectableColorParams
 }

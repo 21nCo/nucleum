@@ -4,7 +4,9 @@ import type { Session, UserDate } from "$lib/tidy/types/session.type";
 import { aggregateFocusFromSessions, checkDay, checkIsToday, checkIsTodayUsingTimestamp, getCurrentUserDate, getOneDayEarlier, getUserDate } from "$lib/tidy/utils";
 import { get } from "svelte/store";
 import { persistLocally, retrieveLocally } from "./persistance";
-import { cloudProvider, userPreferences } from './stores'
+import { cloudProvider } from '../../pointron/stores/session.store'
+import { userPreferences } from "./app.store";
+import { userLocalPreferences } from "$lib/pointron/stores/pointron.store";
 
 
 
@@ -13,7 +15,7 @@ export class SessionPersistance {
         let focus = 0;
         let streak = 1;
         const userDayStartTime = get(userPreferences).dayStart;
-        const userFocusTarget = get(userPreferences).dailyFocusTarget ?? 0;
+        const userFocusTarget = get(userLocalPreferences).dailyFocusTarget ?? 0;
         switch (get(cloudProvider)) {
             case Cloud.local:
                 let sessions: Session[] = retrieveLocally(ItemType.Sessions);
@@ -28,7 +30,7 @@ export class SessionPersistance {
                         ?.map((x: { focus: any; }) => x.focus)
                         .reduce((agg: any, x: any) => agg + x);
                 }
-                if (get(userPreferences).isEnableDailyTarget) {
+                if (get(userLocalPreferences).isEnableDailyTarget) {
                     let current = getCurrentUserDate(userDayStartTime);
                     let isEnd = false;
                     while (isEnd) {

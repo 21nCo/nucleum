@@ -3,7 +3,7 @@ import { ItemType } from "$lib/tidy/types/item.enum";
 import type { Task } from "$lib/tidy/types/session.type";
 import { get } from "svelte/store";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
-import { cloudProvider } from './stores'
+import { cloudProvider } from '../../pointron/stores/session.store'
 
 
 const persistance = new Persistance();

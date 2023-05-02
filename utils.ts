@@ -1,4 +1,5 @@
 import { onDestroy } from 'svelte';
+import type { UserGlobalPreferences } from './types/preferences.type';
 import type { TimePeriod, Session, UserDate } from './types/session.type';
 export function formatTime(date: Date) {
     let hours = date?.getHours().toString().padStart(2, "0");
@@ -198,7 +199,7 @@ export function removeDuplicatesById(items: any[]) {
     });
 }
 
-export function assignSatAndLight(userPreferences: any, selectableColorParams: any) {
+export function assignSatAndLight(userPreferences: UserGlobalPreferences, selectableColorParams: any) {
     let saturation;
     let lightness;
     if (!userPreferences || !selectableColorParams) return;

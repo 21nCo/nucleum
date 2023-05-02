@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
   import { onMount } from "svelte";
-  import { userPreferences } from "../stores/stores";
   import Element from "$lib/tidy/elements/Element.svelte";
   export let parentBackgroundIndex: number = 2;
   export let label: string;

@@ -1,5 +1,5 @@
 import type { intervalbar } from "./intervalbar.type";
-import type { Preset } from "./preset.type";
+import type { Preset } from "../../pointron/types/preset.type";
 import type { SessionState } from "./sessionState.enum";
 import type { SessionType } from "./sessionType.enum";
 import type { TaskStatus } from "./taskStatus.enum";
@@ -21,6 +21,8 @@ export type SessionStore = {
     end: Date;
     timeElapsed: number;
     totalElapsed: number;
+    totalExtended: number;
+    sessionProgress: number;
 }
 
 
@@ -38,14 +40,9 @@ export type Session = {
 }
 
 export type Snapshot = {
-    sessionProgress: number;
-    totalElapsed: number;
     totalFocus: number;
     timeElapsed: number;
     focus: string;
-    currentBarIndex: number;
-    currentBarDuration: number;
-    totalExtended: number;
     bars: intervalbar[];
 }
 

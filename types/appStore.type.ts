@@ -1,5 +1,5 @@
-import type { AppConstants } from "./appConstants.type"
-import type { PageMenuItem } from "./pagemenuitem.type";
+import type { AppConstants } from "$lib/tidy/types/appConstants.type"
+import type { PageMenuItem } from "$lib/tidy/types/pagemenuitem.type";
 
 export type AppStore = {
     appConstants: AppConstants;

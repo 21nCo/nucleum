@@ -2,8 +2,8 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import { ItemType } from "$lib/tidy/types/item.enum";
 import { get } from "svelte/store";
 import { retrieveLocally } from "./persistance";
-import { cloudProvider } from './stores'
-import type { Tag } from "$lib/tidy/types/tag.type";
+import { cloudProvider } from '../../pointron/stores/session.store'
+import type { Tag } from "$lib/pointron/types/tag.type";
 
 export class TagPersistance {
     search(query: string) {

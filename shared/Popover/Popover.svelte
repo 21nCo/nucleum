@@ -1,10 +1,10 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/Button.svelte";
-  import { appEvents, windowObject } from "$lib/tidy/stores/stores";
   import { EventType } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { createEventDispatcher } from "svelte";
   import PopoverHeader from "./PopoverHeader.svelte";
+  import { appEvents, windowObject } from "$lib/tidy/stores/app.store";
   export let show = true;
   export let size: Size = Size.lg;
   export let title: string = "";

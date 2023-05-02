@@ -1,6 +1,7 @@
 export enum ItemType {
     ALL,
     UserPreferences,
+    UserLocalPreferences,
     SessionStore,
     SessionStoreV2,
     Sessions,
