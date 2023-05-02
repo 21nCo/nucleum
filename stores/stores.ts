@@ -6,9 +6,9 @@ import { EventType } from "$lib/tidy/types/event.enum"
 import { ItemType } from "$lib/tidy/types/item.enum"
 import type { UserPreferences } from "$lib/tidy/types/preferences.type"
 import type { Preset } from "$lib/tidy/types/preset.type"
-import type { Session, SessionSnapshot, SessionStore, Task } from "$lib/tidy/types/session.type"
+import type { Session, Snapshot, SessionStore, Task } from "$lib/tidy/types/session.type"
 import type { WindowObject } from "$lib/tidy/types/windowObject.type"
-import { generateUID, yesterday } from "$lib/tidy/utils"
+import { generateSessionId, generateUID, yesterday } from "$lib/tidy/utils"
 import { get, writable } from "svelte/store"
 import { Persistance, persistLocally, retrieveLocally } from "./persistance"
 import { SessionPersistance } from "./session.persistance"
@@ -19,6 +19,8 @@ import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type"
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum"
 import type { Tag } from "../types/tag.type"
 import { TaskPersistance } from "./task.persistance"
+import { SessionType } from "../types/sessionType.enum"
+import { SessionState } from "../types/sessionState.enum"
 
 export const cloudProvider = writable(Cloud.local)
 const persistance = new Persistance();
@@ -187,13 +189,17 @@ function initTodayFocus() {
 
 //todo - move this to notification store
 export const sessionChangeEvent = writable<{ id: string | null }>({ id: null });
+export const currentTime = writable<Date>(new Date());
 
 export const estimatedEndTimeStore = writable<{ endTime: Date }>({ endTime: new Date() });
 
 
-export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, isFocusRunning: false, days: [] })
+export const sessionStore = initSessionStore({ currentSessionId: null, currentTaskId: null, isFocusRunning: false, type: SessionType.COUNTUP, state: SessionState.NOT_STARTED, start: new Date(), end: new Date(), currentBarIndex: 0, timeElapsed: 0, currentBarDuration: 0, totalElapsed: 0 })
 
 function initSessionStore(seed: SessionStore) {
+    let timer;
+    let idleTimer: any;
+    let totalIdleElapsed: number;
     const objectType = ItemType.SessionStoreV2;
     const persist = (n: SessionStore) => {
         persistLocally(objectType, n);
@@ -215,7 +221,42 @@ function initSessionStore(seed: SessionStore) {
         persist(n);
         return n;
     }
-
+    function onTimeUp(n: SessionStore) {
+        stopInterval();
+        if (n.type === SessionType.DYNAMIC) {
+            n.state = SessionState.TIME_IS_UP;
+        } else if (n.currentBarIndex == bars.length - 1) {
+            finishSession();
+        } else if ($userPreferences.isEnableAutoStartInterval) {
+            n.currentBarIndex += 1;
+            continueSession();
+        } else {
+            n.state =
+                n.state === SessionState.INTERVAL_RUNNING
+                    ? SessionState.INTERVAL_COMPLETED
+                    : SessionState.BREAK_COMPLETED;
+            n.currentBarIndex += 1;
+            startIdleTime();
+        }
+    }
+    function continueSession(n: SessionStore) {
+        if (n.state == SessionState.INTERVAL_RUNNING) {
+            appEvents.notify(EventType.INTERVAL_ENDED);
+            n.state = SessionState.BREAK_RUNNING;
+        } else {
+            appEvents.notify(EventType.BREAK_ENDED);
+            n.state = SessionState.INTERVAL_RUNNING;
+        }
+        resumeTimer();
+    }
+    function startIdleTime() {
+        idleTimer = setInterval(() => {
+            totalIdleElapsed += 1;
+        }, 1000);
+    }
+    function stopIdleTime() {
+        clearInterval(idleTimer);
+    }
     return {
         subscribe,
         set: (m: SessionStore) => {
@@ -228,8 +269,22 @@ function initSessionStore(seed: SessionStore) {
             let saved = retrieve()
             set(saved);
         },
-        finishSession: (m: Session) => {
+        finishSession: () => {
             update((n: SessionStore) => {
+                stopInterval();
+                sessionChangeEvent.set({ id: null });
+                n.state = SessionState.FINISHED;
+                const m = {
+                    elapsed: totalElapsed,
+                    extended: totalExtended,
+                    brek: totalbrek,
+                    focus: totalFocus,
+                    start: n.sessionStartTime!.getTime(),
+                    end: sessionEndTime.getTime(),
+                    id: n.currentSessionId,
+                    intention: focus,
+                    label: "",
+                };
                 persistance.create(m, ItemType.Sessions);
                 const tasks = get(currentTaskStore)?.map((t: Task) => { t.sessionId = m.id; return t; });
                 if (tasks && tasks.length > 0) {
@@ -267,7 +322,7 @@ function initSessionStore(seed: SessionStore) {
             });
             todayFocusStore.refresh();
         },
-        snapshot: (snap: SessionSnapshot) => {
+        snapshot: (snap: Snapshot) => {
             update((n: SessionStore) => {
                 if (!n.isFocusRunning) return n;
                 n.snapshot = snap;
@@ -294,7 +349,83 @@ function initSessionStore(seed: SessionStore) {
                 return n;
             })
         },
-
+        resumeTimer: (isResetTimer: boolean = true) => {
+            update((n: SessionStore) => {
+                if (isResetTimer) n.timeElapsed = 0;
+                stopInterval();
+                timer = setInterval(() => {
+                    tick();
+                    totalElapsed += 1;
+                    n.timeElapsed += 1;
+                    if (
+                        n.state === SessionState.INTERVAL_RUNNING ||
+                        n.state === SessionState.TIME_IS_RUNNING_OUT
+                    )
+                        totalFocus += 1;
+                    if (n.state === SessionState.BREAK_RUNNING)
+                        totalbrek += 1;
+                    if (n.type === SessionType.COUNTUP) {
+                        refreshCountupBars();
+                    } else {
+                        refreshProgressOnBars();
+                        if (
+                            n.type == SessionType.DYNAMIC &&
+                            n.dynamicDuration &&
+                            n.dynamicDuration - totalElapsed < 1
+                        ) {
+                            n.state = SessionState.TIME_IS_UP;
+                        } else if (
+                            n.type == SessionType.DYNAMIC &&
+                            n.dynamicDuration &&
+                            n.dynamicDuration - totalElapsed <
+                            runningOutDurationSetting &&
+                            (n.state == SessionState.INTERVAL_RUNNING ||
+                                n.state == SessionState.TIME_IS_UP)
+                        ) {
+                            n.state = SessionState.TIME_IS_RUNNING_OUT;
+                        }
+                    }
+                    // sessionStore.snapshot({
+                    //     totalElapsed,
+                    //     totalFocus,
+                    //     timeElapsed,
+                    //     focus,
+                    //     currentBarIndex,
+                    //     currentBarDuration,
+                    //     totalExtended,
+                    //     bars,
+                    //     sessionProgress,
+                    // });
+                }, 1000);
+                if (n.state === SessionState.INTERVAL_RUNNING)
+                    sessionStore.resumeFocus();
+                return n;
+            })
+        },
+        stopIdleTime: () => { },
+        startBreak: () => { },
+        resumeSession: () => { },
+        extendSession: () => { },
+        onTimeUp: () => { },
+        onTaskStart: () => {
+            update((n: SessionStore) => {
+                if(n.state === SessionState.NOT_STARTED){
+                    startSession();
+                }
+                return n;
+            });
+         },
+        startSession: () => {
+            const sessionId = generateSessionId(new Date().getTime()
+            );
+            update((n: SessionStore) => {
+                n.state = SessionState.INTERVAL_RUNNING;
+                n.start = new Date();
+                sessionChangeEvent.set({ id: sessionId });
+                resumeTimer();
+                return n;
+            })
+        },
     }
 }
 
@@ -358,6 +489,9 @@ function initEventStore(seed: CustomEvent) {
             set(m);
         },
         notify: (m: EventType, value: any = undefined) => {
+            if(m === EventType.TASK_START){
+                sessionStore.onTaskStart();
+            }
             update((n: CustomEvent) => {
                 return { ...n, value, type: m };
             })
@@ -399,6 +533,7 @@ const appMenu = [
 
 export const appStore = initAppStore({
     isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true",
+    environment: window?.location.host.split(".")[0],
     tailwindTheme: "clean light", appName: "Pointron", appConstants: {
         timerModes: ["Minimal", "Journal"],
         themes: ["Clean", "Colorful", "3026"],

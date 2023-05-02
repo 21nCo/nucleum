@@ -9,9 +9,18 @@ export type SessionStore = {
     currentSessionId: string | null,
     currentTaskId: string | null,
     currentTaskWorked?: number;
+    currentBarIndex: number;
+    currentBarDuration: number;
     isFocusRunning: boolean;
-    days: TimePeriod[],
-    snapshot?: SessionSnapshot,
+    type: SessionType;
+    state: SessionState;
+    snapshot?: Snapshot;
+    selectedPreset?: Preset;
+    dynamicDuration?: number;
+    start: Date;
+    end: Date;
+    timeElapsed: number;
+    totalElapsed: number;
 }
 
 
@@ -28,9 +37,7 @@ export type Session = {
     tasks?: Task[];
 }
 
-export type SessionSnapshot = {
-    sessionState: SessionState;
-    sessionType: SessionType;
+export type Snapshot = {
     sessionProgress: number;
     totalElapsed: number;
     totalFocus: number;
@@ -38,13 +45,8 @@ export type SessionSnapshot = {
     focus: string;
     currentBarIndex: number;
     currentBarDuration: number;
-    dynamicDuration: number;
     totalExtended: number;
-    selectedPreset: Preset;
     bars: intervalbar[];
-    sessionStartTime: Date;
-    sessionEndTime: Date;
-    isFocusRunning: boolean;
 }
 
 export type TimePeriod = {

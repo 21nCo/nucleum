@@ -5,6 +5,7 @@ export type AppStore = {
     appConstants: AppConstants;
     appName: string;
     isDebug: boolean;
+    environment: any;
     pages?: PageMenuItem[];
     pageMenu?: PageMenuItem[];
     tailwindTheme: string;

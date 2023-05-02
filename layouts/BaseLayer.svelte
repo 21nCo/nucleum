@@ -1,105 +1,57 @@
 <script lang="ts">
     import Notifications from "$lib/tidy/shared/Notifications.svelte";
     import { EventType } from "$lib/tidy/types/event.enum";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import {
         appEvents,
         appStore,
+        currentTime,
         userPreferences,
-        windowObject,
     } from "$lib/tidy/stores/stores";
     import type { CustomEvent } from "$lib/tidy/types/event.type";
     import Popover from "$lib/tidy/shared/Popover/Popover.svelte";
     import { Size } from "$lib/tidy/types/size.enum";
     import AppearanceSettings from "$lib/tidy/settings/AppearanceSettings.svelte";
+    import DebugLayer from "./DebugLayer.svelte";
+    import ThemeLayer from "./ThemeLayer.svelte";
     let isShowAppearancePopover: boolean = false;
-    let scaleClass: string = "default";
-    let fontFamily: string = "Avenir";
-    function handleResize() {
-        windowObject.updateDoumentDimensions(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }
+    let environment: string;
+    let timer: any;
     onMount(() => {
         appEvents.subscribe((x: CustomEvent) => {
             if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
                 isShowAppearancePopover = x.value ?? false;
             }
         });
-        bootup();
-        window.addEventListener("resize", handleResize);
-        userPreferences.subscribe((userPreferences: any) => {
-            refreshTailwind();
-        });
-        windowObject.subscribe((windowObject: any) => {
-            refreshSizing();
-            refreshTailwind();
-        });
+        if ($appStore.environment) {
+            if ($appStore.environment == "pre") environment = "Preview";
+            else if ($appStore.environment == "dev") environment = "Dev";
+        }
+        clearInterval(timer);
+        timer = setInterval(() => {
+            tick();
+            $currentTime = new Date();
+        }, 1000);
         return () => {
-            window.removeEventListener("resize", handleResize);
+            clearInterval(timer);
         };
     });
-    function bootup() {
-        handleResize();
-        refreshSizing();
-        refreshTailwind();
-    }
-    function refreshSizing() {
-        if ($windowObject.scale) {
-            if ($windowObject.scale >= 2) {
-                scaleClass = "extralarge";
-            } else if ($windowObject.scale >= 1.5) {
-                scaleClass = "large";
-            } else if ($windowObject.scale >= 0.5) {
-                scaleClass = "default";
-            } else {
-                scaleClass = "small";
-            }
-        }
-    }
-    function refreshTailwind() {
-        fontFamily = $userPreferences.theme === "Clean" ? "Avenir" : "Avenir";
-        $appStore.tailwindTheme = `${
-            $userPreferences.theme.toLowerCase() ?? "clean"
-        } ${scaleClass} ${$userPreferences.colorScheme?.label ?? "light"}`;
-        document.documentElement.style.setProperty(
-            "--fontFamily-sans-0",
-            fontFamily
-        );
-    }
 </script>
 
-<div
-    class="flex bg-bgs1 h-screen w-screen text-fgs1 {$userPreferences.theme ==
-    'Colorful'
-        ? $userPreferences.tempColorScheme
-        : ''}"
->
-    <slot />
+<title>{$appStore.appName}</title>
+<div class="flex h-screen w-screen">
+    <ThemeLayer>
+        <slot />
+    </ThemeLayer>
 </div>
 {#if $appStore.isDebug}
+    <DebugLayer />
+{/if}
+{#if environment}
     <div
-        class="absolute debug bottom-40 right-0 flex flex-col p-10 bg-bgs4 bg-opacity-60 text-fgs1 rounded-lg z-20"
+        class="absolute right-0 top-20 text-bgs1 z-10 w-20 px-2 bg-accent1 opacity-50"
     >
-        <div>
-            {"Dimensions (W x H): " +
-                $windowObject.documentWidth +
-                "x" +
-                $windowObject.documentHeight}
-        </div>
-        <div>
-            {"Landscapiness: " + $windowObject.landscapiness.toFixed(2)}
-        </div>
-        <div>
-            {"Is in thin mode: " + $windowObject.isInThinMode}
-        </div>
-        <div>
-            {"Scale: " + $windowObject.scale.toFixed(2)}
-        </div>
-        <div>
-            {"Theme: " + $appStore.tailwindTheme}
-        </div>
+        {environment}
     </div>
 {/if}
 <Popover
@@ -114,62 +66,3 @@
     </div>
 </Popover>
 <Notifications />
-
-<style>
-    .glass {
-        background-image: url(back.png);
-    }
-    .scheme1 {
-        /* Created with https://www.css-gradient.com */
-        background: #1c684e;
-        background: -webkit-linear-gradient(top left, #1c684e, #76c574);
-        background: -moz-linear-gradient(top left, #1c684e, #76c574);
-        background: linear-gradient(to bottom right, #1c684e, #76c574);
-    }
-    .scheme2 {
-        /* https://www.css-gradient.com/?c1=4facaf&c2=3c3263&gt=l&gd=dtr */
-        background: #4facaf;
-        background: -webkit-linear-gradient(top right, #4facaf, #3c3263);
-        background: -moz-linear-gradient(top right, #4facaf, #3c3263);
-        background: linear-gradient(to bottom left, #4facaf, #3c3263);
-    }
-
-    .scheme3 {
-        /* Created with https://www.css-gradient.com */
-        background: #3c98a8;
-        background: -webkit-linear-gradient(bottom left, #3c98a8, #d700ae);
-        background: -moz-linear-gradient(bottom left, #3c98a8, #d700ae);
-        background: linear-gradient(to top right, #3c98a8, #d700ae);
-    }
-    .scheme4 {
-        /* https://www.css-gradient.com/?c1=8a8397&c2=11858a&gt=l&gd=dbl */
-        background: #8a8397;
-        background: -webkit-linear-gradient(bottom left, #8a8397, #11858a);
-        background: -moz-linear-gradient(bottom left, #8a8397, #11858a);
-        background: linear-gradient(to top right, #8a8397, #11858a);
-    }
-    .scheme5 {
-        /* https://www.css-gradient.com/?c1=246773&c2=969e53&gt=l&gd=dbl */
-        background: #246773;
-        background: -webkit-linear-gradient(bottom left, #246773, #969e53);
-        background: -moz-linear-gradient(bottom left, #246773, #969e53);
-        background: linear-gradient(to top right, #246773, #969e53);
-    }
-    .scheme6 {
-        /* light */
-        /* https://www.css-gradient.com/?c1=c8cbe6&c2=8afdbc&gt=l&gd=dbl */
-        /* Created with https://www.css-gradient.com */
-        background: #c8cbe6;
-        background: -webkit-linear-gradient(bottom left, #c8cbe6, #8afdbc);
-        background: -moz-linear-gradient(bottom left, #c8cbe6, #8afdbc);
-        background: linear-gradient(to top right, #c8cbe6, #8afdbc);
-    }
-    .scheme7 {
-        /* https://www.css-gradient.com/?c1=f63251&c2=eaac89&gt=l&gd=dbl */
-        /* Created with https://www.css-gradient.com */
-        background: #f63251;
-        background: -webkit-linear-gradient(bottom left, #f63251, #eaac89);
-        background: -moz-linear-gradient(bottom left, #f63251, #eaac89);
-        background: linear-gradient(to top right, #f63251, #eaac89);
-    }
-</style>
