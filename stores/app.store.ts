@@ -1,5 +1,5 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { generateUID, yesterday } from "$lib/tidy/utils";
 import { colors } from "$lib/tidy/theme/colors";
 import type {
@@ -139,13 +139,19 @@ const appMenu = [
   { label: "control", path: "/control", icon: "control" },
 ];
 
+const isDebugMode =
+  import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
+
+const themes = ["Clean"];
+if (isDebugMode) themes.concat(["Colorful", "3026"]);
+
 export const appStore = initAppStore({
-  isDebug: import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true",
+  isDebugMode,
   environment: window?.location.host.split(".")[0],
   tailwindTheme: "clean light",
   appName: "Pointron",
   appConstants: {
-    themes: ["Clean", "Colorful", "3026"],
+    themes,
     colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
     tempColorSchemes,
     selectableColorParams,

@@ -48,7 +48,7 @@
   </div>
 {:else}
   {#if $appStore.pageMenu && $appStore.pageMenu.length > 0 && $windowObject.isInThinMode}
-    <div style="margin: {pad / 4}px;">
+    <div style="padding: {pad / 4}px;">
       <Button
         label="go back"
         size={Size.sm}
@@ -59,7 +59,7 @@
     </div>
   {/if}
   {#if layoutType == LayoutType.ONEPANEL}
-    <div class="w-full h-full" style="margin: {pad / 4}px;">
+    <div class="w-full h-full" style="padding: {pad / 4}px;">
       <slot />
     </div>
   {:else if layoutType == LayoutType.TWOPANEL}

@@ -1,0 +1,4 @@
+export enum TextType {
+  SECTION_HEADING,
+  SECTION_DESCRIPTION,
+}

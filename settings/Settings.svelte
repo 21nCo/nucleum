@@ -30,11 +30,11 @@
     <SessionSettings />
   {:else if selected == "Tracking"}
     <DailyTargetSettings />
-  {:else if selected == "Storage & Sync"}
+  {:else if selected == "Data & Sync"}
     <StorageSettings />
   {:else if selected == "About"}
     <AboutSettings />
-  {:else if selected == "Tags & Routines"}
+  {:else if selected == "Tags"}
     <TagsAndRoutines />
   {/if}
 </div>

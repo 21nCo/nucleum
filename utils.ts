@@ -298,7 +298,7 @@ function appendPresetBars(bars: any, preset: Preset) {
     bars = [
       ...bars,
       {
-        duration: get(appStore).isDebug
+        duration: get(appStore).isDebugMode
           ? preset.duration
           : preset.duration * 60,
         progress: 0,
@@ -315,7 +315,7 @@ function appendPresetBars(bars: any, preset: Preset) {
       bars = [
         ...bars,
         {
-          duration: get(appStore).isDebug ? preset.brek : preset.brek * 60,
+          duration: get(appStore).isDebugMode ? preset.brek : preset.brek * 60,
           progress: 0,
           type: BarType.BREK,
         },

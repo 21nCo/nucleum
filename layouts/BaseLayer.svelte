@@ -40,7 +40,7 @@
     <slot />
   </ThemeLayer>
 </div>
-{#if $appStore.isDebug}
+{#if $appStore.isDebugMode}
   <DebugLayer />
 {/if}
 {#if environment}

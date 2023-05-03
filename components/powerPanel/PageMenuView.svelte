@@ -1,8 +1,9 @@
 <script lang="ts">
-  import MenuSwitcher from "$lib/tidy/elements/switcher/Switcher.svelte";
+  import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
   import { appEvents, appStore } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { EventType } from "$lib/tidy/types/event.enum";
+  import { Size } from "$lib/tidy/types/size.enum";
   import {
     SelectionItemActiveStyle,
     SwitcherStyle,
@@ -20,9 +21,10 @@
 
 {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
   <div class="pl-4">
-    <MenuSwitcher
+    <Switcher
       items={$appStore.pageMenu.map((t) => t.label)}
       style={SwitcherStyle.Vertical}
+      size={Size.sm}
       selectionStyle={SelectionItemActiveStyle.SIDEDOT}
       bind:selected
       on:switch={() => {

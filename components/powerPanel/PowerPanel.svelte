@@ -1,6 +1,10 @@
 <script lang="ts">
   import PageSwitcher from "$lib/tidy/elements/pageSwitcher/PageSwitcher.svelte";
-  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    appStore,
+    userPreferences,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import { PageSwitcherStyle } from "$lib/tidy/types/pagemenuitem.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "$lib/tidy/elements/Button.svelte";
@@ -51,19 +55,20 @@
         : 'bg-bgs2'}"
       style="height: calc(100% - 1rem);"
     >
-      <div class="w-full flex flex-col gap-4">
+      <div class="w-full flex flex-col gap-12">
         <slot name="header" />
-        <div class="flex flex-col gap-20 w-full p-2">
+        <div class="flex flex-col gap-12 w-full p-2">
           <PageSwitcher parentBackgroundIndex={1} />
           <PageMenuView />
         </div>
       </div>
-
-      <Button
-        on:click={onMinimizeToggled}
-        size={Size.xs}
-        label="switch to min mode"
-      />
+      {#if $appStore.isDebugMode}
+        <Button
+          on:click={onMinimizeToggled}
+          size={Size.xs}
+          label="switch to min mode"
+        />
+      {/if}
     </div>
   </div>
 {/if}

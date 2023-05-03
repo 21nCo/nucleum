@@ -30,7 +30,7 @@
 </script>
 
 <Element
-  classList="flex gap-2 items-center {isShowLabel
+  classList="flex gap-2 text-b2 items-center {isShowLabel
     ? style === PageSwitcherStyle.THIN
       ? ' rounded-full'
       : 'rounded-lg px-6 h-12'

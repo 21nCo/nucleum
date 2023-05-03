@@ -33,7 +33,7 @@
       />
     {/if}
     <ColorSlider bind:hue {saturation} {lightness} />
-    {#if $appStore.isDebug}
+    {#if $appStore.isDebugMode}
       <Button
         label={isDark ? "Dark" : "Light"}
         on:click={() => {

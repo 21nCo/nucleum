@@ -20,6 +20,8 @@
     pointronConstants,
     userLocalPreferences,
   } from "$lib/pointron/stores/pointron.store";
+  import Text from "../elements/text/Text.svelte";
+  import { TextType } from "../types/text.enum";
   export let parentBackgroundIndex: number = 1;
   export let isInPreviewMode: boolean = false;
   let selectedThemeIndex: number = 0;
@@ -115,41 +117,43 @@
       />
     </div>
   {/if}
-  <TextInput
-    label="Nickname"
-    bind:value={$userPreferences.nickName}
-    placeholder="nickname"
-    {parentBackgroundIndex}
-  />
-  <div class="flex gap-8">
-    <CheckboxInput
-      label="Enable Age Counter"
-      bind:checked={$userLocalPreferences.isEnableAgeCounter}
-    />
-  </div>
-  {#if $userLocalPreferences.isEnableAgeCounter}
-    <div class="flex flex-col gap-1">
-      <div class="text-fgs2">Birthday</div>
-      <div>
-        <DatePicker
-          {parentBackgroundIndex}
-          date={new Date($userPreferences.birthday ?? new Date())}
-          on:change={onDateChange}
-        />
-      </div>
-    </div>
-  {/if}
-  <div class="flex flex-col gap-1 w-full">
-    <div class="text-fgs2 text-h2">Timer mode</div>
-    <Switcher
+  <div class="flex flex-col gap-6 w-full">
+    <TextInput
+      label="Nickname"
+      bind:value={$userPreferences.nickName}
+      placeholder="nickname"
       {parentBackgroundIndex}
-      items={$pointronConstants.timerModes}
-      bind:selected={$userLocalPreferences.timerMode}
     />
+    <div class="flex gap-8">
+      <CheckboxInput
+        label="Enable Age Counter"
+        bind:checked={$userLocalPreferences.isEnableAgeCounter}
+      />
+    </div>
+    {#if $userLocalPreferences.isEnableAgeCounter}
+      <div class="flex flex-col gap-1">
+        <div class="text-fgs2">Birthday</div>
+        <div>
+          <DatePicker
+            {parentBackgroundIndex}
+            date={new Date($userPreferences.birthday ?? new Date())}
+            on:change={onDateChange}
+          />
+        </div>
+      </div>
+    {/if}
+    <div class="flex flex-col gap-1 w-full">
+      <div class="text-fgs2">Timer mode</div>
+      <Switcher
+        {parentBackgroundIndex}
+        items={$pointronConstants.timerModes}
+        bind:selected={$userLocalPreferences.timerMode}
+      />
+    </div>
   </div>
   <div class="flex flex-col gap-6 w-full">
     <div>
-      <div class="text-fgs2 text-h2">Theme</div>
+      <Text type={TextType.SECTION_HEADING}>THEME</Text>
       <Switcher
         {parentBackgroundIndex}
         items={$appStore.appConstants.themes}
@@ -163,8 +167,9 @@
         <div class="text-fgs2">Color scheme</div>
         <Switcher
           {parentBackgroundIndex}
-          items={["light", "dark", "system"]}
           size={Size.sm}
+          items={["light", "dark"]}
+          selectionStyle={SelectionItemActiveStyle.NONE}
           on:switch={refreshColorSchemes}
           bind:selected={selectedLightnessIndex}
         />
@@ -176,8 +181,11 @@
         on:switch={saveColorScheme}
       />
     </div>
+  </div>
+
+  {#if $appStore.isDebugMode}
     <div>
-      <div class="text-fgs2 text-h2">Colorful theme trails</div>
+      <Text type={TextType.SECTION_HEADING}>THEME TRAILS</Text>
       <Switcher
         {parentBackgroundIndex}
         items={$appStore.appConstants.tempColorSchemes}
@@ -186,5 +194,5 @@
         bind:selected={selectedTempSchemeIndex}
       />
     </div>
-  </div>
+  {/if}
 </div>
