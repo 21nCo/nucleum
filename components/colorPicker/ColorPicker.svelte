@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/Button.svelte";
 
-  import { assignSatAndLight } from "$lib/tidy/utils";
+  import { assignSatAndLight } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   import ColorSlider from "./ColorSlider.svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";

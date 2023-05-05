@@ -5,7 +5,7 @@
   } from "$lib/tidy/types/pagemenuitem.type";
   import { onMount } from "svelte";
   import PageSwitcherItem from "./PageSwitcherItem.svelte";
-  import { generateBackgroudColor } from "$lib/tidy/utils";
+  import { generateBackgroudColor } from "$lib/tidy/utils/utils";
   import { goto } from "$app/navigation";
   import { appStore } from "$lib/tidy/stores/app.store";
   export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;

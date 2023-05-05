@@ -1,5 +1,6 @@
 import type { AppConstants } from "$lib/tidy/types/appConstants.type";
 import type { PageMenuItem } from "$lib/tidy/types/pagemenuitem.type";
+import type { ComponentType } from "$lib/tidy/types/component.type";
 
 export type AppStore = {
   appConstants: AppConstants;
@@ -7,6 +8,6 @@ export type AppStore = {
   isDebugMode: boolean;
   environment: any;
   pages?: PageMenuItem[];
-  pageMenu?: PageMenuItem[];
+  pageMenu?: ComponentType[];
   tailwindTheme: string;
 };

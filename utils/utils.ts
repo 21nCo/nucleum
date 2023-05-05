@@ -1,10 +1,12 @@
-import type { Preset } from "$lib/pointron/types/preset.type";
+import type { Preset } from "$lib/local/types/preset.type";
 import { onDestroy } from "svelte";
 import { get } from "svelte/store";
-import { appStore } from "./stores/app.store";
-import { BarType, type intervalbar } from "./types/intervalbar.type";
-import type { UserGlobalPreferences } from "./types/preferences.type";
-import type { Session, UserDate } from "./types/session.type";
+import { appStore } from "../stores/app.store";
+import { BarType, type intervalbar } from "../types/intervalbar.type";
+import type { UserGlobalPreferences } from "../types/preferences.type";
+import type { Session, UserDate } from "../types/session.type";
+import { localComponents } from "$lib/local/stores/localComponentMap";
+import { components } from "$lib/tidy/layout/componentMap";
 export function formatTime(date: Date) {
   let hours = date?.getHours().toString().padStart(2, "0");
   let minutes = date?.getMinutes().toString().padStart(2, "0");
@@ -323,4 +325,15 @@ function appendPresetBars(bars: any, preset: Preset) {
     }
   }
   return bars;
+}
+
+export function getComponentFromPath(path: string) {
+  let currentComponent = components[0];
+  let component = localComponents.find((x) => x.path == path);
+  if (component) currentComponent = component;
+  else {
+    component = components.find((x) => x.path == path);
+    if (component) currentComponent = component;
+  }
+  return currentComponent;
 }

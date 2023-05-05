@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
   import { appEvents, appStore } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
@@ -12,24 +13,29 @@
   let selected: number = 0;
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
+      console.log(x.pageMenu);
       if (x && x.pageMenu && x.pageMenu.length > 0) {
+        console.log({ pageMenu: x.pageMenu });
         selected = 0;
       }
     });
   });
+  function onSwitch(event: any) {
+    if (!event.detail || !$appStore.pageMenu) return;
+    const path = $appStore.pageMenu[event.detail.selected].path;
+    goto("/" + path);
+  }
 </script>
 
 {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
   <div class="pl-4">
     <Switcher
-      items={$appStore.pageMenu.map((t) => t.label)}
+      items={$appStore.pageMenu.map((t) => t.label ?? "")}
       style={SwitcherStyle.Vertical}
       size={Size.sm}
       selectionStyle={SelectionItemActiveStyle.SIDEDOT}
       bind:selected
-      on:switch={() => {
-        appEvents.notify(EventType.PAGE_MENU_CHANGED, selected);
-      }}
+      on:switch={onSwitch}
     />
   </div>
 {/if}

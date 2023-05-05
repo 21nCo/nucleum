@@ -14,14 +14,16 @@
   import Button from "$lib/tidy/elements/Button.svelte";
   import { EventType } from "$lib/tidy/types/event.enum";
   import { goto } from "$app/navigation";
-  import ColorSchemeSwitcher from "./ColorSchemeSwitcher.svelte";
+
   import CheckboxInput from "$lib/tidy/elements/CheckboxInput.svelte";
   import {
     pointronConstants,
     userLocalPreferences,
-  } from "$lib/pointron/stores/pointron.store";
-  import Text from "../elements/text/Text.svelte";
-  import { TextType } from "../types/text.enum";
+  } from "$lib/local/stores/local.store";
+  import Text from "$lib/tidy/elements/text/Text.svelte";
+  import { TextType } from "$lib/tidy/types/text.enum";
+  import ColorSchemeSwitcher from "$lib/tidy/components/settings/ColorSchemeSwitcher.svelte";
+  import SizeFactorSetting from "$lib/tidy/components/settings/appearance/accessibility/sizeFactor/SizeFactorSetting.svelte";
   export let parentBackgroundIndex: number = 1;
   export let isInPreviewMode: boolean = false;
   let selectedThemeIndex: number = 0;
@@ -110,7 +112,7 @@
     <div>
       <Button
         on:click={() => {
-          appEvents.notify(EventType.SHOW_APPEARANCE_PREVIEW, true);
+          appEvents.publish(EventType.SHOW_APPEARANCE_PREVIEW, true);
           goto("/");
         }}
         label="Open Preview Mode"
@@ -182,7 +184,9 @@
       />
     </div>
   </div>
-
+  <div>
+    <SizeFactorSetting />
+  </div>
   {#if $appStore.isDebugMode}
     <div>
       <Text type={TextType.SECTION_HEADING}>THEME TRAILS</Text>

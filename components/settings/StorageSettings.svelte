@@ -1,11 +1,11 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/Button.svelte";
   import { resetLocalStorage } from "$lib/tidy/stores/persistance";
-  import { sessionStore } from "$lib/pointron/stores/session.store";
+  import { sessionStore } from "$lib/local/stores/session.store";
   import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
   import type { Session } from "$lib/tidy/types/session.type";
-  import { removeDuplicatesById } from "../utils";
-  import { appStore, userPreferences } from "../stores/app.store";
+  import { removeDuplicatesById } from "$lib/tidy/utils/utils";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   let clearMessage: string | undefined = undefined;
   let fileInput: HTMLInputElement;
   function clearStorageHandler() {

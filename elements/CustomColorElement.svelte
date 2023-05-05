@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
-  import { assignSatAndLight } from "$lib/tidy/utils";
+  import { assignSatAndLight } from "$lib/tidy/utils/utils";
   export let classList: string;
   export let hue: number | undefined;
   export let isOutline: boolean = false;

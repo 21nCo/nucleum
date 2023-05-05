@@ -54,7 +54,7 @@
   }
   function close() {
     show = false;
-    appEvents.notify(EventType.POP_DISMISSED);
+    appEvents.publish(EventType.POP_DISMISSED);
   }
 </script>
 

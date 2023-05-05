@@ -5,7 +5,7 @@
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
-  let scaleClass: string = "default";
+  let sizeFactor: string = "medium";
   let fontFamily: string = "Avenir";
   function handleResize() {
     windowObject.updateDoumentDimensions(window.innerWidth, window.innerHeight);
@@ -14,6 +14,7 @@
     bootup();
     window.addEventListener("resize", handleResize);
     userPreferences.subscribe((userPreferences: any) => {
+      refreshSizing();
       refreshTailwind();
     });
     windowObject.subscribe((windowObject: any) => {
@@ -30,15 +31,40 @@
     refreshTailwind();
   }
   function refreshSizing() {
+    console.log($userPreferences.accessibilitySizingFactor);
     if ($windowObject.scale) {
       if ($windowObject.scale >= 2) {
-        scaleClass = "extralarge";
+        if ($userPreferences.accessibilitySizingFactor == 0) {
+          sizeFactor = "large";
+        } else if ($userPreferences.accessibilitySizingFactor == 1) {
+          sizeFactor = "huge";
+        } else if ($userPreferences.accessibilitySizingFactor == 2) {
+          sizeFactor = "seriously?";
+        }
       } else if ($windowObject.scale >= 1.5) {
-        scaleClass = "large";
+        if ($userPreferences.accessibilitySizingFactor == 0) {
+          sizeFactor = "medium";
+        } else if ($userPreferences.accessibilitySizingFactor == 1) {
+          sizeFactor = "large";
+        } else if ($userPreferences.accessibilitySizingFactor == 2) {
+          sizeFactor = "huge";
+        }
       } else if ($windowObject.scale >= 0.5) {
-        scaleClass = "default";
+        if ($userPreferences.accessibilitySizingFactor == 0) {
+          sizeFactor = "small";
+        } else if ($userPreferences.accessibilitySizingFactor == 1) {
+          sizeFactor = "medium";
+        } else if ($userPreferences.accessibilitySizingFactor == 2) {
+          sizeFactor = "large";
+        }
       } else {
-        scaleClass = "small";
+        if ($userPreferences.accessibilitySizingFactor == 0) {
+          sizeFactor = "tiny";
+        } else if ($userPreferences.accessibilitySizingFactor == 1) {
+          sizeFactor = "small";
+        } else if ($userPreferences.accessibilitySizingFactor == 2) {
+          sizeFactor = "medium";
+        }
       }
     }
   }
@@ -46,7 +72,7 @@
     fontFamily = $userPreferences.theme === "Clean" ? "Avenir" : "Avenir";
     $appStore.tailwindTheme = `${
       $userPreferences.theme.toLowerCase() ?? "clean"
-    } ${scaleClass} ${$userPreferences.colorScheme?.label ?? "light"}`;
+    } ${sizeFactor} ${$userPreferences.colorScheme?.label ?? "light"}`;
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily

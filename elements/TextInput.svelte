@@ -3,7 +3,7 @@
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
 
   import { createEventDispatcher, onMount } from "svelte";
-  import { generateBackgroudColor } from "$lib/tidy/utils";
+  import { generateBackgroudColor } from "$lib/tidy/utils/utils";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;

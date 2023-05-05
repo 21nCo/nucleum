@@ -1,5 +1,5 @@
 import type { intervalbar } from "./intervalbar.type";
-import type { Preset } from "../../pointron/types/preset.type";
+import type { Preset } from "$lib/local/types/preset.type";
 import type { SessionState } from "./sessionState.enum";
 import type { SessionType } from "./sessionType.enum";
 import type { TaskStatus } from "./taskStatus.enum";

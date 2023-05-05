@@ -1,15 +1,16 @@
 <script lang="ts">
-  import Notifications from "$lib/pointron/Notifications.svelte";
+  import Notifications from "$lib/local/Notifications.svelte";
   import { EventType } from "$lib/tidy/types/event.enum";
   import { onMount, tick } from "svelte";
-  import { currentTime } from "$lib/pointron/stores/session.store";
+  import { currentTime } from "$lib/local/stores/session.store";
   import type { CustomEvent } from "$lib/tidy/types/event.type";
-  import Popover from "$lib/tidy/shared/Popover/Popover.svelte";
+  import Popover from "$lib/tidy/components/Popover/Popover.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import AppearanceSettings from "$lib/tidy/settings/AppearanceSettings.svelte";
+
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import { appEvents, appStore } from "../stores/app.store";
+  import AppearanceSettings from "$lib/tidy/components/settings/appearance/AppearanceSettings.svelte";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;

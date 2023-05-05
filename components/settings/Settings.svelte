@@ -1,20 +1,20 @@
 <script lang="ts">
   import { appEvents, windowObject } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
-  import AppearanceSettings from "./AppearanceSettings.svelte";
-  import DailyTargetSettings from "./DailyTargetSettings.svelte";
+  import AppearanceSettings from "./appearance/AppearanceSettings.svelte";
+  import DailyTargetSettings from "../../../local/components/settings/TrackingSettings.svelte";
   import SessionSettings from "./SessionSettings.svelte";
   import StorageSettings from "./StorageSettings.svelte";
   import AccountSettings from "./AccountSettings.svelte";
-  import AboutSettings from "./AboutSettings.svelte";
+  import AboutSettings from "../../../local/components/settings/AboutSettings.svelte";
   import { EventType } from "$lib/tidy/types/event.enum";
-  import TagsAndRoutines from "$lib/pointron/settings/TagsAndRoutines.svelte";
+  import TagsAndRoutines from "$lib/local/components/settings/TagsAndRoutines.svelte";
   export let menuItems: any;
   export let selectedMenuIndex: number = 0;
   $: selected = menuItems[selectedMenuIndex].label;
   onMount(() => {
     windowObject.toggleTopBar(true);
-    appEvents.notify(EventType.SHOW_APPEARANCE_PREVIEW, false);
+    appEvents.publish(EventType.SHOW_APPEARANCE_PREVIEW, false);
   });
 </script>
 

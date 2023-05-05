@@ -1,6 +1,6 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
 import { get, writable } from "svelte/store";
-import { generateUID, yesterday } from "$lib/tidy/utils";
+import { generateUID, yesterday } from "$lib/tidy/utils/utils";
 import { colors } from "$lib/tidy/theme/colors";
 import type {
   ColorScheme,
@@ -24,7 +24,7 @@ function initEventStore(seed: CustomEvent) {
     set: (m: CustomEvent) => {
       set(m);
     },
-    notify: (m: EventType, value: any = undefined) => {
+    publish: (m: EventType, value: any = undefined) => {
       update((n: CustomEvent) => {
         return { ...n, value, type: m };
       });
@@ -134,9 +134,9 @@ const lightColorSchemes: ColorScheme[] = [
 ];
 
 const appMenu = [
-  { label: "point", path: "/", icon: "point" },
+  { label: "point", path: "/point", icon: "point" },
   { label: "flow", path: "/flow", icon: "flow" },
-  { label: "control", path: "/control", icon: "control" },
+  { label: "control", path: "/settings", icon: "control" },
 ];
 
 const isDebugMode =
@@ -178,6 +178,7 @@ export const userPreferences = initUserPreferences({
   birthday: new Date(),
   isOnboardingComplete: false,
   tempColorScheme: "scheme1",
+  accessibilitySizingFactor: 1,
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {

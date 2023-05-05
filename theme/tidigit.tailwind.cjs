@@ -76,7 +76,7 @@ const scales = [
     },
   },
   {
-    name: "default",
+    name: "medium",
     extend: {
       fontSize: defaultFontSize,
     },
@@ -98,7 +98,7 @@ const scales = [
     },
   },
   {
-    name: "extralarge",
+    name: "huge",
     extend: {
       fontSize: {
         title: "5rem",

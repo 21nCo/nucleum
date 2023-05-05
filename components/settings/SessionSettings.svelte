@@ -1,6 +1,6 @@
 <script lang="ts">
-  import PresetsEditor from "$lib/pointron/presets/PresetsEditor.svelte";
-  import { userLocalPreferences } from "$lib/pointron/stores/pointron.store";
+  import PresetsEditor from "$lib/local/components/presets/PresetsEditor.svelte";
+  import { userLocalPreferences } from "$lib/local/stores/local.store";
   import CheckboxInput from "$lib/tidy/elements/CheckboxInput.svelte";
   import TextInput from "$lib/tidy/elements/TextInput.svelte";
 </script>
