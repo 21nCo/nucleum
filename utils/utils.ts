@@ -1,12 +1,8 @@
-import type { Preset } from "$lib/local/types/preset.type";
 import { onDestroy } from "svelte";
-import { get } from "svelte/store";
-import { appStore } from "../stores/app.store";
-import { BarType, type intervalbar } from "../types/intervalbar.type";
-import type { UserGlobalPreferences } from "../types/preferences.type";
-import type { Session, UserDate } from "../types/session.type";
+import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { localComponents } from "$lib/local/stores/localComponentMap";
 import { components } from "$lib/tidy/layout/componentMap";
+import type { UserDate } from "$lib/tidy/types/userDate.type";
 export function formatTime(date: Date) {
   let hours = date?.getHours().toString().padStart(2, "0");
   let minutes = date?.getMinutes().toString().padStart(2, "0");
@@ -217,14 +213,6 @@ export function getDateDifferenceFromToday(date: UserDate) {
   return Math.round((+inputDate - +today) / (1000 * 60 * 60 * 24));
 }
 
-export function aggregateFocusFromSessions(sessions: Session[]) {
-  let focus = 0;
-  sessions.forEach((session) => {
-    focus += session.focus;
-  });
-  return focus;
-}
-
 export function getCurrentUserDate(dayStart: string = "00:00") {
   const now = new Date().getTime();
   return getUserDate(now, dayStart);
@@ -277,54 +265,6 @@ export function assignSatAndLight(
     lightness = selectableColorParams.lightLightness;
   }
   return { saturation, lightness };
-}
-
-export function getTotalDurationFromPreset(preset: Preset) {
-  let bars: intervalbar[] = generateBarsFromPreset(preset);
-  return bars.reduce((sum, item) => sum + item.duration, 0);
-}
-
-export function generateBarsFromPreset(preset: Preset) {
-  let bars: intervalbar[] = [];
-  bars = appendPresetBars(bars, preset);
-  if (preset.additional && preset.additional.length > 0) {
-    preset.additional.forEach((p) => {
-      bars = appendPresetBars(bars, p);
-    });
-  }
-  return bars;
-}
-
-function appendPresetBars(bars: any, preset: Preset) {
-  for (let i = 0; i < preset.rounds; i++) {
-    bars = [
-      ...bars,
-      {
-        duration: get(appStore).isDebugMode
-          ? preset.duration
-          : preset.duration * 60,
-        progress: 0,
-        type: BarType.INTERVAL,
-      },
-    ];
-    if (
-      preset.brek > 0 &&
-      !(
-        i === preset.rounds - 1 &&
-        (preset.additional === undefined || preset.additional.length < 1)
-      )
-    ) {
-      bars = [
-        ...bars,
-        {
-          duration: get(appStore).isDebugMode ? preset.brek : preset.brek * 60,
-          progress: 0,
-          type: BarType.BREK,
-        },
-      ];
-    }
-  }
-  return bars;
 }
 
 export function getComponentFromPath(path: string) {

@@ -2,9 +2,8 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 import { ItemType } from "$lib/tidy/types/item.enum";
 import { get, writable } from "svelte/store";
-import { cloudProvider } from "$lib/local/stores/session.store";
-import type { Item } from "../types/item.type";
-import type { Tag } from "$lib/local/types/tag.type";
+import type { Item } from "../../local/types/item.type";
+import { cloudProvider } from "./app.store";
 
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   const toString = (value: T) => JSON.stringify(value, null, 2);

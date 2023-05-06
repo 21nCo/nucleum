@@ -14,8 +14,11 @@ import { persistLocally, retrieveLocally } from "./persistance";
 import { ItemType } from "../types/item.enum";
 import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
+import { Cloud } from "../types/cloud.enum";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
+export const currentTime = writable<Date>(new Date());
+export const cloudProvider = writable(Cloud.local);
 
 function initEventStore(seed: CustomEvent) {
   const { subscribe, set, update } = writable<CustomEvent>(seed);

@@ -1,15 +1,13 @@
 <script lang="ts">
-  import Notifications from "$lib/local/Notifications.svelte";
   import { EventType } from "$lib/tidy/types/event.enum";
   import { onMount, tick } from "svelte";
-  import { currentTime } from "$lib/local/stores/session.store";
   import type { CustomEvent } from "$lib/tidy/types/event.type";
   import Popover from "$lib/tidy/components/Popover/Popover.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
 
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
-  import { appEvents, appStore } from "../stores/app.store";
+  import { appEvents, appStore, currentTime } from "$lib/tidy/stores/app.store";
   import AppearanceSettings from "$lib/tidy/components/settings/appearance/AppearanceSettings.svelte";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
@@ -62,4 +60,3 @@
     <AppearanceSettings parentBackgroundIndex={2} isInPreviewMode={true} />
   </div>
 </Popover>
-<Notifications />
