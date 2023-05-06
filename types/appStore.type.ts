@@ -9,5 +9,8 @@ export type AppStore = {
   environment: any;
   pages?: PageMenuItem[];
   pageMenu?: ComponentType[];
+  players?: ComponentType[];
+  dynamicBlocks?: ComponentType[];
+  staticBlocks?: ComponentType[];
   tailwindTheme: string;
 };

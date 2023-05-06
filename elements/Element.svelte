@@ -32,20 +32,25 @@
       ($userPreferences.theme == "Colorful"
         ? selectionStyle != SelectionItemActiveStyle.SIDEDOT
           ? isActive
-            ? selectionStyle === SelectionItemActiveStyle.ACCENT
+            ? selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
               ? " bg-accent1 text-bgs1"
               : " glassactive"
-            : selectionStyle === SelectionItemActiveStyle.ACCENT
+            : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
             ? ""
             : " glass"
           : ""
         : $userPreferences.theme == "Clean"
         ? isActive
-          ? selectionStyle === SelectionItemActiveStyle.ACCENT
+          ? selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
             ? " bg-accent1 text-bgs1"
+            : selectionStyle === SelectionItemActiveStyle.SIDEDOT ||
+              selectionStyle === SelectionItemActiveStyle.BOTTOMDOT ||
+              selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
+            ? " text-accent1"
             : activeBackgroundColor
           : selectionStyle === SelectionItemActiveStyle.SIDEDOT ||
-            selectionStyle === SelectionItemActiveStyle.BOTTOMDOT
+            selectionStyle === SelectionItemActiveStyle.BOTTOMDOT ||
+            selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
           ? ""
           : backgroundColor + " hover:" + activeBackgroundColor?.trim()
         : "")}

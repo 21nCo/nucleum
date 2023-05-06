@@ -32,20 +32,28 @@
 <Element
   classList="flex gap-2 text-b2 items-center {isShowLabel
     ? style === PageSwitcherStyle.THIN
-      ? ' rounded-full'
+      ? 'rounded-full'
       : 'rounded-lg px-6 h-12'
     : 'p-4 rounded-full'}"
   {isActive}
   on:click={onClick}
   on:pointerenter={onHover}
   {parentBackgroundIndex}
-  selectionStyle={SelectionItemActiveStyle.ACCENT}
+  selectionStyle={style === PageSwitcherStyle.THIN
+    ? SelectionItemActiveStyle.ACCENT_COLOR
+    : SelectionItemActiveStyle.ACCENT_BACKGROUND}
   styleList="padding-top: {pad / 2}px;padding-bottom: {pad /
     2}px;padding-left: {pad}px;padding-right: {pad}px;"
 >
   {#if item.icon}
     <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
-    <Icon icon={item.icon} {isActive} />
+    <Icon
+      icon={item.icon}
+      {isActive}
+      selectionStyle={style === PageSwitcherStyle.THIN
+        ? SelectionItemActiveStyle.ACCENT_COLOR
+        : SelectionItemActiveStyle.NONE}
+    />
   {/if}
   {#if isShowLabel}
     {item.label}

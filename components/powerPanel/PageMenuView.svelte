@@ -3,7 +3,6 @@
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
   import { appEvents, appStore } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
-  import { EventType } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import {
     SelectionItemActiveStyle,
@@ -13,9 +12,7 @@
   let selected: number = 0;
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
-      console.log(x.pageMenu);
       if (x && x.pageMenu && x.pageMenu.length > 0) {
-        console.log({ pageMenu: x.pageMenu });
         selected = 0;
       }
     });

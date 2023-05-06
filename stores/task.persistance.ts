@@ -5,8 +5,8 @@ import { get } from "svelte/store";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { cloudProvider } from "$lib/local/stores/session.store";
 
-const persistance = new Persistance();
 export class TaskPersistance {
+  persistance = new Persistance();
   updateTasks(tasks: Task[]) {
     switch (get(cloudProvider)) {
       case Cloud.local:
@@ -14,7 +14,7 @@ export class TaskPersistance {
         if (!savedTasks || savedTasks.length < 1) return;
         tasks.forEach((task: Task) => {
           if (savedTasks?.some((t: Task) => t.id === task.id)) {
-            persistance.update(task, ItemType.Task);
+            this.persistance.update(task, ItemType.Task);
           }
         });
         break;
@@ -27,7 +27,7 @@ export class TaskPersistance {
         savedTasks.forEach((task: Task) => {
           if (tasks.some((x: Task) => x.id === task.id)) {
             task.sessionId = sessionId;
-            persistance.update(task, ItemType.Task);
+            this.persistance.update(task, ItemType.Task);
           }
         });
         break;

@@ -25,8 +25,8 @@
 </script>
 
 <div
-  class="flex {style === PageSwitcherStyle.THIN
-    ? 'rounded-full'
+  class="flex justify-center {style === PageSwitcherStyle.THIN
+    ? ''
     : 'flex-col rounded-lg'} min-w-min w-full"
 >
   {#each items as item, index}

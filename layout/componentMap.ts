@@ -1,6 +1,6 @@
 import AppearanceSettings from "$lib/tidy/components/settings/appearance/AppearanceSettings.svelte";
 import {
-  ThinPaintType,
+  ThinModeBehavior,
   PaintType,
   type ComponentType,
 } from "$lib/tidy/types/component.type";
@@ -17,7 +17,7 @@ export const components: ComponentType[] = [
     path: "settings",
     sections: ["appearance", "about"],
     pagePaint: PaintType.YMENU,
-    thingPagePaint: ThinPaintType.GRAND_CHILDREN_ON_MENU,
+    thinModeBehavior: ThinModeBehavior.GRAND_CHILDREN_ON_MENU,
   },
   {
     label: "Appearance",
@@ -25,7 +25,7 @@ export const components: ComponentType[] = [
     component: AppearanceSettings,
     sections: ["basics", "theme", "accessibility"],
     pagePaint: PaintType.YSTACK,
-    thingPagePaint: ThinPaintType.JUMP_TO_PARENT,
+    thinModeBehavior: ThinModeBehavior.JUMP_TO_PARENT,
   },
   {
     path: "settings/appearance/theme",

@@ -31,7 +31,6 @@
     refreshTailwind();
   }
   function refreshSizing() {
-    console.log($userPreferences.accessibilitySizingFactor);
     if ($windowObject.scale) {
       if ($windowObject.scale >= 2) {
         if ($userPreferences.accessibilitySizingFactor == 0) {

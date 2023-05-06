@@ -6,12 +6,16 @@
   import {
     PaintType,
     type ComponentType,
+    ThinModeBehavior,
   } from "$lib/tidy/types/component.type";
   import { getComponentFromPath } from "$lib/tidy/utils/utils";
-  import PanelOnLeft from "./painters/PanelOnLeft.svelte";
+  import PanelOnLeft from "./painters/WithPanelOnLeft.svelte";
   import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import { goto } from "$app/navigation";
+  import Button from "$lib/tidy/elements/Button.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
   let currentComponent = components[0];
+  let parentComponent: ComponentType | undefined;
   let pad: number;
   $: if ($windowObject.documentHeight) {
     let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
@@ -19,37 +23,51 @@
   }
   onMount(() => {
     page.subscribe(() => {
-      let component = getComponentFromPath($page.params.route);
-      if (
-        component &&
-        component.sections &&
-        component.sections.length > 0 &&
-        (component.pagePaint === PaintType.YMENU ||
-          component.pagePaint === PaintType.XMENU)
-      ) {
-        setPageMenu(component);
-        goto(component.path + "/" + component.sections[0], {
-          replaceState: true,
-        });
+      parentComponent = undefined;
+      const currentPath = $page.params.route;
+      currentComponent = getComponentFromPath(currentPath);
+      let parts = currentPath.split("/");
+      if (parts && parts.length > 1) {
+        const parent = parts.slice(0, parts.length - 1).join("/");
+        parentComponent = getComponentFromPath(parent);
+      }
+      console.log({ currentPath, parts, parentComponent });
+      if ($windowObject.isInThinMode) {
+        thinModePaint();
       } else {
-        currentComponent = component;
-        let parts = currentComponent.path.split("/");
-        if (
-          parts &&
-          parts.length > 1 &&
-          $appStore.pageMenu &&
-          $appStore.pageMenu.length < 1
-        ) {
-          const parent = parts.slice(0, parts.length - 1).join("/");
-          const component = getComponentFromPath(parent);
-          setPageMenu(component);
-        } else if (parts.length === 1) {
-          $appStore.pageMenu = [];
-        }
+        paint();
       }
     });
   });
-  function setPageMenu(component: ComponentType) {
+
+  function thinModePaint() {
+    if (
+      currentComponent.thinModeBehavior ===
+      ThinModeBehavior.RIGHT_PANEL_AS_PLAYER
+    ) {
+      //toggle player
+    }
+  }
+  function paint() {
+    const isSet = setPageMenuIfRequired(currentComponent);
+    if (isSet && currentComponent.sections) {
+      goto(currentComponent.path + "/" + currentComponent.sections[0], {
+        replaceState: true,
+      });
+    } else {
+      if (
+        parentComponent &&
+        $appStore.pageMenu &&
+        $appStore.pageMenu.length < 1
+      ) {
+        setPageMenuIfRequired(parentComponent);
+      } else if (!parentComponent) {
+        $appStore.pageMenu = [];
+      }
+    }
+  }
+
+  function setPageMenuIfRequired(component: ComponentType) {
     if (
       component &&
       component.sections &&
@@ -68,9 +86,24 @@
 </script>
 
 {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && currentComponent.sections && currentComponent.sections.length > 0}
-  <PanelOnLeft {currentComponent} />
+  {#if $windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
+    <div style="padding: {pad / 4}px;">
+      <ComponentResolver path={currentComponent.sections[0]} />
+    </div>
+  {:else}
+    <PanelOnLeft {currentComponent} />
+  {/if}
 {:else}
-  <div class="flex flex-col gap-4 w-full h-full" style="padding: {pad / 4}px;">
+  <div class="flex flex-col gap-4 w-full h-full">
+    {#if $windowObject.isInThinMode && parentComponent?.pagePaint === PaintType.YMENU}
+      <Button
+        label="go back"
+        size={Size.sm}
+        on:click={() => {
+          goto("/" + parentComponent?.path, { replaceState: true });
+        }}
+      />
+    {/if}
     <ComponentResolver {currentComponent} />
   </div>
 {/if}

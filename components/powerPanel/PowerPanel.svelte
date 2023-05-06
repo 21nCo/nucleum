@@ -19,9 +19,12 @@
 </script>
 
 {#if $windowObject.isInPortrait}
-  <div class="absolute bottom-0 flex justify-center z-10 w-full p-4">
-    <div class="bg-bgs4 rounded-full">
-      <PageSwitcher style={PageSwitcherStyle.THIN} parentBackgroundIndex={3} />
+  <div
+    class="absolute bottom-0 flex flex-col justify-center items-center z-10 w-full"
+  >
+    <div>Player</div>
+    <div class="bg-bgs2 rounded-t-md w-full min-w-min">
+      <PageSwitcher style={PageSwitcherStyle.THIN} parentBackgroundIndex={1} />
     </div>
   </div>
 {:else if isMinimized}
@@ -59,7 +62,10 @@
         <slot name="header" />
         <div class="flex flex-col gap-12 w-full p-2">
           <PageSwitcher parentBackgroundIndex={1} />
-          <PageMenuView />
+          {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
+            <PageMenuView />
+          {/if}
+          <!-- todo - dynamicsection rendering from dyanmic items -->
         </div>
       </div>
       {#if $appStore.isDebugMode}
@@ -69,6 +75,7 @@
           label="switch to min mode"
         />
       {/if}
+      <!-- todo - static section rendering from static items -->
     </div>
   </div>
 {/if}

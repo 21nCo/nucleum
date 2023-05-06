@@ -6,7 +6,7 @@ export type ComponentType = {
   sections?: string[];
   pagePaint?: PaintType;
   minPaintType?: PaintType;
-  thingPagePaint?: ThinPaintType;
+  thinModeBehavior?: ThinModeBehavior;
   type?: string;
 };
 
@@ -19,7 +19,8 @@ export enum PaintType {
   JUMP_TO_PARENT,
 }
 
-export enum ThinPaintType {
+export enum ThinModeBehavior {
   JUMP_TO_PARENT,
   GRAND_CHILDREN_ON_MENU,
+  RIGHT_PANEL_AS_PLAYER,
 }
