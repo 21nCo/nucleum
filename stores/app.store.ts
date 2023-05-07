@@ -37,10 +37,10 @@ function initEventStore(seed: CustomEvent) {
 }
 
 export const windowObject = initWindow({
-  documentHeight: window?.innerHeight,
-  documentWidth: window?.innerWidth,
-  landscapiness: window?.innerWidth / window?.innerHeight,
-  scale: window?.innerWidth / 100,
+  documentHeight: 0,
+  documentWidth: 0,
+  landscapiness: 0,
+  scale: 0,
   isInPortrait: false,
   isInThinMode: false,
   firstLoad: new Date().getTime(),
@@ -122,7 +122,7 @@ const selectableColorParams: selectableColorParams = {
   lightLightness: 50,
 };
 
-const darkColorSchemes: ColorScheme[] = [
+export const darkColorSchemes: ColorScheme[] = [
   { label: "dark", theme: "clean", isDark: true, ...colors.dark },
   { label: "dracula", theme: "clean", isDark: true, ...colors.dracula },
   { label: "forest", theme: "clean", isDark: true, ...colors.forest },
@@ -151,8 +151,8 @@ if (isDebugMode) themes.concat(["Colorful", "3026"]);
 
 export const appStore = initAppStore({
   isDebugMode,
-  environment: window?.location.host.split(".")[0],
-  tailwindTheme: "clean light",
+  environment: "", //todo - move to base -> window?.location.host.split(".")[0],
+  tailwindTheme: "",
   appName: "Pointron",
   appConstants: {
     themes,

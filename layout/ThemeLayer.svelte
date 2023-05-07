@@ -80,8 +80,7 @@
 </script>
 
 <div
-  class="flex h-screen w-screen bg-bgs1 text-fgs1 {$userPreferences.theme ==
-  'Colorful'
+  class="flex h-screen w-screen {$userPreferences.theme == 'Colorful'
     ? $userPreferences.tempColorScheme
     : ''}"
 >

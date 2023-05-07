@@ -3,7 +3,13 @@
     "name": "Pointron",
     "logo": "",
     "tagline": "The one focus time tracker that you will ever need",
-    "url": "pointron.io"
+    "url": "pointron.io",
+    "status": "beta",
+    "platforms": ["web", "desktop", "ios", "andriod", "extension", "linux"],
+    "releasedPlatforms": ["web", "desktop"],
+    "urls": {
+      "web": "https://pointron.run"
+    }
   },
   {
     "name": "Goaltron",

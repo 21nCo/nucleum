@@ -10,7 +10,7 @@ const {
 } = require("./colors.cjs");
 
 const defaultFontSize = {
-  title: "5rem",
+  title: "3rem",
   "2xl": "2.6rem",
   xl: "2.4rem",
   h1: "2.1rem",
@@ -47,7 +47,7 @@ const scales = [
     name: "tiny",
     extend: {
       fontSize: {
-        title: "5rem",
+        title: "2rem",
         "2xl": "2.2rem",
         xl: "2rem",
         h1: "1.8rem",
@@ -63,7 +63,7 @@ const scales = [
     name: "small",
     extend: {
       fontSize: {
-        title: "5rem",
+        title: "2rem",
         "2xl": "2.5rem",
         xl: "2.2rem",
         h1: "2rem",
@@ -85,7 +85,7 @@ const scales = [
     name: "large",
     extend: {
       fontSize: {
-        title: "5rem",
+        title: "3.5rem",
         "2xl": "2.8rem",
         xl: "2.6rem",
         h1: "2.4rem",
@@ -101,7 +101,7 @@ const scales = [
     name: "huge",
     extend: {
       fontSize: {
-        title: "5rem",
+        title: "4rem",
         "2xl": "3rem",
         xl: "2.8rem",
         h1: "2.5rem",
