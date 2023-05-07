@@ -4,6 +4,7 @@
   import { generateBackgroudColor } from "$lib/tidy/utils/utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   export let classList: string;
+  export let id: string = "";
   export let styleList: string = "";
   export let isAction: boolean = true;
   //export let isMenuItem: boolean = false;
@@ -56,6 +57,7 @@
         : "")}
     on:click
     on:pointerenter
+    {id}
     style={styleList}
   >
     <slot />

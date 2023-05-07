@@ -15,6 +15,7 @@ import { ItemType } from "../types/item.enum";
 import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
+import type { ComponentType } from "../types/component.type";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -35,15 +36,15 @@ function initEventStore(seed: CustomEvent) {
   };
 }
 
-// export const windowObject = initWindow({
-//   documentHeight: window?.innerHeight,
-//   documentWidth: window?.innerWidth,
-//   landscapiness: window?.innerWidth / window?.innerHeight,
-//   scale: window?.innerWidth / 100,
-//   isInPortrait: false,
-//   isInThinMode: false,
-//   firstLoad: new Date().getTime(),
-// });
+export const windowObject = initWindow({
+  documentHeight: window?.innerHeight,
+  documentWidth: window?.innerWidth,
+  landscapiness: window?.innerWidth / window?.innerHeight,
+  scale: window?.innerWidth / 100,
+  isInPortrait: false,
+  isInThinMode: false,
+  firstLoad: new Date().getTime(),
+});
 
 function initWindow(settings: WindowObject) {
   const { subscribe, set, update } = writable<WindowObject>(settings);
@@ -170,6 +171,26 @@ function initAppStore(seed: AppStore) {
       set(m);
     },
     update,
+    appendPlayer(path: string, params?: any) {
+      update((n: AppStore) => {
+        if (!path) return n;
+        if (n.players?.find((p) => p.componentPath === path)) return n;
+        if (n.players === undefined) n.players = [];
+        n.players?.push({ componentPath: path, isShow: true, params });
+        return n;
+      });
+    },
+    removePlayer(path: string) {
+      update((n: AppStore) => {
+        if (!n.players) return n;
+        let player = n.players?.find((p) => p.componentPath === path);
+        if (!player) {
+          return n;
+        }
+        n.players = n.players.filter((p) => p.componentPath !== path);
+        return n;
+      });
+    },
   };
 }
 

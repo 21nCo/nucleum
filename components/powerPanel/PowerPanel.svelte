@@ -9,6 +9,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "$lib/tidy/elements/Button.svelte";
   import PageMenuView from "./PageMenuView.svelte";
+  import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -22,7 +23,13 @@
   <div
     class="absolute bottom-0 flex flex-col justify-center items-center z-10 w-full"
   >
-    <div>Player</div>
+    <!-- todo - support for multiple players like music and timer at the same time -->
+    {#if $appStore.players && $appStore.players.length > 0 && $appStore.players[0].isShow}
+      <ComponentResolver
+        path={$appStore.players[0].componentPath}
+        params={$appStore.players[0].params}
+      />
+    {/if}
     <div class="bg-bgs2 rounded-t-md w-full min-w-min">
       <PageSwitcher style={PageSwitcherStyle.THIN} parentBackgroundIndex={1} />
     </div>

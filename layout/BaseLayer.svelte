@@ -9,6 +9,8 @@
   import ThemeLayer from "./ThemeLayer.svelte";
   import { appEvents, appStore, currentTime } from "$lib/tidy/stores/app.store";
   import AppearanceSettings from "$lib/tidy/components/settings/appearance/AppearanceSettings.svelte";
+  import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
+  import Collapse from "$lib/tidy/icons/Collapse.svelte";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;
@@ -47,6 +49,17 @@
     class="absolute right-0 top-20 text-bgs1 z-10 w-20 px-2 bg-accent1 opacity-50"
   >
     {environment}
+  </div>
+{/if}
+{#if $appStore.fullScreenComponentPath}
+  <div class="fixed left-0 top-0 w-full h-full z-10 px-2 py-4 bg-bgs1">
+    <button
+      class="mx-2"
+      on:click={() => {
+        $appStore.fullScreenComponentPath = undefined;
+      }}><Collapse /></button
+    >
+    <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}
 <Popover

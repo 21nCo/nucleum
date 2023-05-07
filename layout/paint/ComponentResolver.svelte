@@ -3,11 +3,13 @@
   import { getComponentFromPath } from "$lib/tidy/utils/utils";
   export let currentComponent: any = undefined;
   export let path: string = "";
+  export let params: any = {};
   onMount(() => {
+    console.log("path", path);
     if (currentComponent === undefined && path !== "") {
       currentComponent = getComponentFromPath(path);
     }
   });
 </script>
 
-<svelte:component this={currentComponent?.component} />
+<svelte:component this={currentComponent?.component} {...params} />

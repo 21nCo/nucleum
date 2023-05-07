@@ -277,3 +277,14 @@ export function getComponentFromPath(path: string) {
   }
   return currentComponent;
 }
+
+export function getAssociatedPlayerFromPath(path: string) {
+  let player = undefined;
+  let component = localComponents.find((x) => x.associatedPlayer == path);
+  if (component) player = component;
+  else {
+    component = components.find((x) => x.associatedPlayer == path);
+    if (component) player = component;
+  }
+  return player;
+}

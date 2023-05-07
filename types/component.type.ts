@@ -8,6 +8,7 @@ export type ComponentType = {
   minPaintType?: PaintType;
   thinModeBehavior?: ThinModeBehavior;
   type?: string;
+  associatedPlayer?: string;
 };
 
 export enum PaintType {
