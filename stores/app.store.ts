@@ -35,15 +35,15 @@ function initEventStore(seed: CustomEvent) {
   };
 }
 
-export const windowObject = initWindow({
-  documentHeight: window.innerHeight,
-  documentWidth: window.innerWidth,
-  landscapiness: window.innerWidth / window.innerHeight,
-  scale: window.innerWidth / 100,
-  isInPortrait: false,
-  isInThinMode: false,
-  firstLoad: new Date().getTime(),
-});
+// export const windowObject = initWindow({
+//   documentHeight: window?.innerHeight,
+//   documentWidth: window?.innerWidth,
+//   landscapiness: window?.innerWidth / window?.innerHeight,
+//   scale: window?.innerWidth / 100,
+//   isInPortrait: false,
+//   isInThinMode: false,
+//   firstLoad: new Date().getTime(),
+// });
 
 function initWindow(settings: WindowObject) {
   const { subscribe, set, update } = writable<WindowObject>(settings);
