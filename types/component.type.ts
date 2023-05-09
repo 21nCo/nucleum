@@ -1,14 +1,16 @@
 export type ComponentType = {
   path: string;
   component?: any;
-  label?: string;
+  heading?: string;
   icon?: string;
   sections?: string[];
   pagePaint?: PaintType;
-  minPaintType?: PaintType;
   thinModeBehavior?: ThinModeBehavior;
-  type?: string;
+  type?: BlockType;
   associatedPlayer?: string;
+  context?: string;
+  action?: () => void;
+  params?: any;
 };
 
 export enum PaintType {
@@ -24,4 +26,12 @@ export enum ThinModeBehavior {
   JUMP_TO_PARENT,
   GRAND_CHILDREN_ON_MENU,
   RIGHT_PANEL_AS_PLAYER,
+  HIDE,
+}
+
+export enum BlockType {
+  BLOCK,
+  SECTION,
+  BUTTON,
+  TOGGLE,
 }

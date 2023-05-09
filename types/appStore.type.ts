@@ -8,7 +8,7 @@ export type AppStore = {
   appName: string;
   isDebugMode: boolean;
   environment: any;
-  pages?: PageMenuItem[];
+  pages?: string[];
   pageMenu?: ComponentType[];
   players?: Player[];
   dynamicBlocks?: ComponentType[];

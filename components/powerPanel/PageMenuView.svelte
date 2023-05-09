@@ -27,7 +27,7 @@
 {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
   <div class="pl-4">
     <Switcher
-      items={$appStore.pageMenu.map((t) => t.label ?? "")}
+      items={$appStore.pageMenu.map((t) => t.heading ?? "")}
       style={SwitcherStyle.Vertical}
       size={Size.sm}
       selectionStyle={SelectionItemActiveStyle.SIDEDOT}

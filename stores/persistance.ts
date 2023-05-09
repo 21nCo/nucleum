@@ -27,7 +27,7 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
 };
 
 export function resetLocalStorage() {
-  if (import.meta.env.SSR) {
+  if (import.meta.env?.SSR) {
     return;
   }
   window?.localStorage.clear();
@@ -38,14 +38,14 @@ export function persistLocally<T extends JsonValue>(
   itemType: ItemType,
   item: T
 ) {
-  if (import.meta.env.SSR) {
+  if (import.meta.env?.SSR) {
     return;
   }
   window?.localStorage.setItem(ItemType[itemType], JSON.stringify(item));
 }
 export function retrieveLocally(itemType: ItemType) {
   try {
-    if (import.meta.env.SSR) {
+    if (import.meta.env?.SSR) {
       return null;
     }
     let value = window?.localStorage.getItem(ItemType[itemType]);

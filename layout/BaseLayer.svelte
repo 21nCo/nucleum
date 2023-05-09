@@ -8,9 +8,12 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import { appEvents, appStore, currentTime } from "$lib/tidy/stores/app.store";
-  import AppearanceSettings from "$lib/tidy/components/settings/appearance/AppearanceSettings.svelte";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import Collapse from "$lib/tidy/icons/Collapse.svelte";
+  import PagePainter from "./paint/PagePainter.svelte";
+  import WithYStack from "./paint/painters/YStack/WithYStack.svelte";
+  import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
+
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;
@@ -64,12 +67,13 @@
 {/if}
 <Popover
   size={Size.xl}
-  bind:show={isShowAppearancePopover}
+  bind:show={$isShowAppearancePreview}
   isOnRight={true}
   isShowOverlay={false}
   title={"Appearance"}
 >
-  <div class="flex flex-col gap-4">
-    <AppearanceSettings parentBackgroundIndex={2} isInPreviewMode={true} />
-  </div>
+  <WithYStack
+    path={"settings/appearance"}
+    params={{ parentBackgroundIndex: 2, hidePageHeading: true }}
+  />
 </Popover>

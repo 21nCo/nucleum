@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   export let factor: number;
   export let isActive: boolean = false;
+  export let parentBackgroundIndex: number = 1;
   let classList = "h-16 w-28 rounded-md";
   let label: string = "";
   onMount(() => {
@@ -20,6 +21,6 @@
 </script>
 
 <div class="flex flex-col items-center text-fgs2">
-  <Element on:click {classList} {isActive}>Abc</Element>
+  <Element on:click {classList} {isActive} {parentBackgroundIndex}>Abc</Element>
   <div>{label}</div>
 </div>

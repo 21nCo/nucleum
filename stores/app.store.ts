@@ -65,7 +65,7 @@ function initWindow(settings: WindowObject) {
           isInThinMode: false,
         };
         n.isInPortrait = n.landscapiness < 1;
-        n.isInThinMode = n.landscapiness < 0.75;
+        n.isInThinMode = n.landscapiness < 1;
         return n;
       });
     },
@@ -137,12 +137,6 @@ const lightColorSchemes: ColorScheme[] = [
   { label: "grainy", theme: "clean", isDark: false, ...colors.grainy },
 ];
 
-const appMenu = [
-  { label: "point", path: "/point", icon: "point" },
-  { label: "flow", path: "/flow", icon: "flow" },
-  { label: "control", path: "/settings", icon: "control" },
-];
-
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
@@ -160,7 +154,6 @@ export const appStore = initAppStore({
     tempColorSchemes,
     selectableColorParams,
   },
-  pages: appMenu,
 });
 
 function initAppStore(seed: AppStore) {
@@ -231,3 +224,5 @@ function initUserPreferences(seed: UserGlobalPreferences) {
     },
   };
 }
+
+export const isShowAppearancePreview = writable<boolean>(false);

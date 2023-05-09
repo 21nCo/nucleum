@@ -12,12 +12,12 @@
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let parentBackgroundIndex: number = 1;
-  let activeBackgroundColor: string;
-  let backgroundColor: string;
+  let activeBackgroundColor: string = "";
+  let backgroundColor: string = "";
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
-    backgroundColor = colors.backgroundColor;
+    if (!classList.includes("bg-")) backgroundColor = colors.backgroundColor;
     if (
       selectionStyle === SelectionItemActiveStyle.SIDEDOT ||
       selectionStyle === SelectionItemActiveStyle.BOTTOMDOT
@@ -81,11 +81,7 @@
 {:else}
   <div
     class={classList +
-      (classList.includes("bg-")
-        ? ""
-        : $userPreferences.theme == "Colorful"
-        ? " glassactive"
-        : backgroundColor)}
+      ($userPreferences.theme == "Colorful" ? " glassactive" : backgroundColor)}
     style={styleList}
   >
     <slot />

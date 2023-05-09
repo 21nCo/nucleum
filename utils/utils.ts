@@ -268,7 +268,7 @@ export function assignSatAndLight(
 }
 
 export function getComponentFromPath(path: string) {
-  let currentComponent = components[0];
+  let currentComponent;
   let component = localComponents.find((x) => x.path == path);
   if (component) currentComponent = component;
   else {

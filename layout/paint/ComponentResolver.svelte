@@ -1,15 +1,25 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { getComponentFromPath } from "$lib/tidy/utils/utils";
+  import { BlockType } from "$lib/tidy/types/component.type";
+  import Button from "$lib/tidy/elements/Button.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
   export let currentComponent: any = undefined;
   export let path: string = "";
   export let params: any = {};
   onMount(() => {
-    console.log("path", path);
     if (currentComponent === undefined && path !== "") {
       currentComponent = getComponentFromPath(path);
     }
   });
 </script>
 
-<svelte:component this={currentComponent?.component} {...params} />
+{#if currentComponent?.type === BlockType.BUTTON}
+  <Button
+    size={Size.sm}
+    label={currentComponent?.label}
+    on:click={currentComponent?.action}
+  />
+{:else}
+  <svelte:component this={currentComponent?.component} {...params} />
+{/if}

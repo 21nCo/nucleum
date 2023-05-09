@@ -8,8 +8,9 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/icons/Icon.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
+  import type { ComponentType } from "$lib/tidy/types/component.type";
   const dispatch = createEventDispatcher();
-  export let item: PageMenuItem;
+  export let item: ComponentType;
   export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
   export let isActive: boolean = false;
   export let isShowLabel: boolean = true;
@@ -56,6 +57,6 @@
     />
   {/if}
   {#if isShowLabel}
-    {item.label}
+    {item.icon}
   {/if}
 </Element>

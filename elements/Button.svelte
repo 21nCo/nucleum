@@ -20,7 +20,11 @@
   });
 </script>
 
-{#if isCustomAttributes}
+{#if type === "primary"}
+  <button class={classList} on:click>
+    {label}
+  </button>
+{:else if isCustomAttributes}
   <Element {parentBackgroundIndex} {classList}>
     <slot />
   </Element>

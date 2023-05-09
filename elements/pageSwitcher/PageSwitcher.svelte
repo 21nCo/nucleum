@@ -5,19 +5,29 @@
   } from "$lib/tidy/types/pagemenuitem.type";
   import { onMount } from "svelte";
   import PageSwitcherItem from "./PageSwitcherItem.svelte";
-  import { generateBackgroudColor } from "$lib/tidy/utils/utils";
+  import {
+    generateBackgroudColor,
+    getComponentFromPath,
+  } from "$lib/tidy/utils/utils";
   import { goto } from "$app/navigation";
   import { appStore } from "$lib/tidy/stores/app.store";
+  import type { ComponentType } from "$lib/tidy/types/component.type";
+  import { appMenu } from "$lib/local/stores/local.store";
   export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
-  let items: PageMenuItem[] = [];
+  let items: ComponentType[] = [];
   let backgroundColor: string;
   let selected: number;
   onMount(() => {
-    items = $appStore.pages ?? [];
-    let currentPath = window.location.pathname;
-    let currentPage = items.find((item) => item.path === currentPath);
+    appMenu.forEach((page) => {
+      const currentPage = getComponentFromPath(page);
+      if (currentPage) {
+        items.push(currentPage);
+      }
+    });
+    let currentPath = window.location.pathname.replace("/", "");
+    let currentPage = items.find((item) => currentPath.includes(item.path));
     selected = currentPage ? items.indexOf(currentPage) : 0;
     let colors = generateBackgroudColor(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
@@ -38,7 +48,7 @@
           style != PageSwitcherStyle.MINIMIZED}
         on:click={() => {
           selected = index;
-          goto(item.path);
+          goto("/" + item.path);
         }}
         {item}
         isActive={selected == index}

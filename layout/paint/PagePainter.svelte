@@ -9,13 +9,20 @@
     ThinModeBehavior,
   } from "$lib/tidy/types/component.type";
   import { getComponentFromPath } from "$lib/tidy/utils/utils";
-  import PanelOnLeft from "./painters/WithPanelOnLeft.svelte";
+  import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
   import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import { goto } from "$app/navigation";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  let currentComponent = components[0];
+  import WithYStack from "./painters/YStack/WithYStack.svelte";
+  import Text from "$lib/tidy/elements/text/Text.svelte";
+  import { TextType } from "$lib/tidy/types/text.enum";
+  import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
+  import { notFoundAction } from "$lib/tidy/utils/actions";
+  export let path: string | undefined = undefined;
+  let currentComponent: ComponentType | undefined;
   let parentComponent: ComponentType | undefined;
+  let grandPa: ComponentType | undefined;
   let pad: number;
   $: if ($windowObject.documentHeight) {
     let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
@@ -24,14 +31,27 @@
   onMount(() => {
     page.subscribe(() => {
       parentComponent = undefined;
+      grandPa = undefined;
       const currentPath = $page.params.route;
-      currentComponent = getComponentFromPath(currentPath);
+      currentComponent = getComponentFromPath(path ?? currentPath);
+      if (!currentComponent) {
+        notFoundAction();
+      }
+      if (currentComponent && currentComponent.action) {
+        currentComponent.action();
+      }
       let parts = currentPath.split("/");
       if (parts && parts.length > 1) {
         const parent = parts.slice(0, parts.length - 1).join("/");
         parentComponent = getComponentFromPath(parent);
+        if (parentComponent) {
+          parts = parent.split("/");
+          if (parts && parts.length > 1) {
+            const grandPaPath = parts.slice(0, parts.length - 1).join("/");
+            grandPa = getComponentFromPath(grandPaPath);
+          }
+        }
       }
-      console.log({ currentPath, parts, parentComponent });
       if ($windowObject.isInThinMode) {
         thinModePaint();
       } else {
@@ -42,15 +62,15 @@
 
   function thinModePaint() {
     if (
-      currentComponent.thinModeBehavior ===
+      currentComponent?.thinModeBehavior ===
       ThinModeBehavior.RIGHT_PANEL_AS_PLAYER
     ) {
       //toggle player
     }
   }
   function paint() {
-    const isSet = setPageMenuIfRequired(currentComponent);
-    if (isSet && currentComponent.sections) {
+    const isSet = setPageMenuIfRequired(currentComponent!);
+    if (isSet && currentComponent?.sections) {
       goto(currentComponent.path + "/" + currentComponent.sections[0], {
         replaceState: true,
       });
@@ -77,7 +97,8 @@
     ) {
       let children: ComponentType[] = [];
       component.sections!.forEach((element) => {
-        children.push(getComponentFromPath(component.path + "/" + element));
+        let child = getComponentFromPath(component.path + "/" + element);
+        if (child) children.push(child);
       });
       $appStore.pageMenu = children;
       return true;
@@ -85,24 +106,39 @@
   }
 </script>
 
-{#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && currentComponent.sections && currentComponent.sections.length > 0}
-  {#if $windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
-    <div style="padding: {pad / 4}px;">
-      <ComponentResolver path={currentComponent.sections[0]} />
-    </div>
+{#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
+  {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$windowObject.isInThinMode}
+    <WithPanelOnLeft {currentComponent} />
   {:else}
-    <PanelOnLeft {currentComponent} />
+    <div style="padding: {pad / 4}px;">
+      {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
+        <ComponentResolver path={currentComponent.sections[0]} />
+      {:else if currentComponent.pagePaint === PaintType.YSTACK}
+        <WithYStack {currentComponent} />
+      {:else if currentComponent.pagePaint === PaintType.YMENU && $windowObject.isInThinMode}
+        <WithYMenuThinMode {currentComponent} />
+      {/if}
+    </div>
   {/if}
 {:else}
-  <div class="flex flex-col gap-4 w-full h-full">
-    {#if $windowObject.isInThinMode && parentComponent?.pagePaint === PaintType.YMENU}
+  <div class="flex flex-col gap-4 w-full h-full p-4">
+    {#if $windowObject.isInThinMode && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
       <Button
         label="go back"
         size={Size.sm}
         on:click={() => {
-          goto("/" + parentComponent?.path, { replaceState: true });
+          goto(
+            "/" +
+              (parentComponent?.pagePaint === PaintType.YMENU
+                ? parentComponent?.path
+                : grandPa?.path),
+            { replaceState: true }
+          );
         }}
       />
+    {/if}
+    {#if currentComponent?.heading}
+      <Text type={TextType.PAGE_HEADING}>{currentComponent.heading}</Text>
     {/if}
     <ComponentResolver {currentComponent} />
   </div>
