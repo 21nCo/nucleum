@@ -5,18 +5,8 @@
     "tagline": "The one focus time tracker that you will ever need",
     "url": "pointron.io",
     "status": "beta",
-    "platforms": [
-      "web",
-      "desktop",
-      "ios",
-      "andriod",
-      "extension",
-      "linux"
-    ],
-    "releasedPlatforms": [
-      "web",
-      "desktop"
-    ],
+    "platforms": ["web", "desktop", "ios", "andriod", "extension", "linux"],
+    "releasedPlatforms": ["web", "desktop"],
     "urls": {
       "web": "https://dev.pointron.run"
     }
