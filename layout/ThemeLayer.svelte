@@ -89,6 +89,11 @@
       fontFamily
     );
     document.documentElement.style.fontSize = `${rootFontSize}px`;
+    sendMessageToParent();
+  }
+  function sendMessageToParent() {
+    const message = { theme: $appStore.tailwindTheme, rootFontSize };
+    parent.postMessage(message, "*");
   }
 </script>
 
