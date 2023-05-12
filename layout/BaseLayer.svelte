@@ -12,7 +12,7 @@
   import Collapse from "$lib/tidy/icons/Collapse.svelte";
   import WithYStack from "./paint/painters/YStack/WithYStack.svelte";
   import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
-  import { appName } from "$lib/local/stores/local.store";
+  import { localStore } from "$lib/local/stores/local.store";
 
   let isShowAppearancePopover: boolean = false;
   let environment: string;
@@ -38,7 +38,7 @@
   });
 </script>
 
-<title>{appName}</title>
+<title>{$localStore.appName}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>
     <slot />

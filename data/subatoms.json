@@ -6,9 +6,11 @@
     "url": "pointron.io",
     "status": "beta",
     "platforms": ["web", "desktop", "ios", "andriod", "extension", "linux"],
-    "releasedPlatforms": ["web", "desktop"],
+    "releasedPlatforms": ["web"],
     "urls": {
-      "web": "https://dev.pointron.run"
+      "web": "https://dev.pointron.run",
+      "roadmap": "https://blankcoop.notion.site/Pointron-roadmap-37e1f7599d8040c381b4712029db22cb",
+      "repository": "https://gitlab.com/blanklabs/tidigit/pointron"
     }
   },
   {
