@@ -31,7 +31,7 @@
       style={SwitcherStyle.Vertical}
       size={Size.sm}
       selectionStyle={SelectionItemActiveStyle.SIDEDOT}
-      bind:selected
+      bind:selectedIndex={selected}
       on:switch={onSwitch}
     />
   </div>

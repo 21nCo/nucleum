@@ -71,7 +71,7 @@
         <div>
           <Switcher
             items={panelTitles}
-            bind:selected={selectedPanel}
+            bind:selectedIndex={selectedPanel}
             selectionStyle={SelectionItemActiveStyle.BOTTOMDOT}
           />
         </div>

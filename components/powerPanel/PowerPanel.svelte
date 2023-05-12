@@ -30,7 +30,7 @@
         params={$appStore.players[0].params}
       />
     {/if}
-    <div class="bg-bgs2 rounded-t-md w-full min-w-min">
+    <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-4">
       <PageSwitcher style={PageSwitcherStyle.THIN} parentBackgroundIndex={1} />
     </div>
   </div>

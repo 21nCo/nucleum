@@ -9,7 +9,7 @@
 
   const dispatch = createEventDispatcher();
   export let items: string[];
-  export let selected: number;
+  export let selectedIndex: number;
   export let size: Size = Size.md;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.UNKNOWN;
@@ -19,8 +19,8 @@
   let classList: string;
   function handleClick(event: any) {
     let selectedMenuItem = event.detail.item;
-    selected = items.indexOf(selectedMenuItem!);
-    dispatch("switch", { selected });
+    selectedIndex = items.indexOf(selectedMenuItem!);
+    dispatch("switch", { selected: selectedIndex });
   }
   onMount(() => {
     switch (style) {
@@ -32,7 +32,7 @@
             : selectionStyle;
         break;
       case SwitcherStyle.Horizontal:
-        classList = "flex overflow-auto w-full pb-2";
+        classList = "flex w-full pb-2 gap-2";
         selectionStyle =
           selectionStyle === SelectionItemActiveStyle.UNKNOWN
             ? SelectionItemActiveStyle.SIDEBAR
@@ -61,7 +61,7 @@
         {parentBackgroundIndex}
         {size}
         {item}
-        isActive={selected === index}
+        isActive={selectedIndex === index}
         on:click={handleClick}
       />
     {/each}

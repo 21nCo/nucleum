@@ -7,6 +7,7 @@
   } from "$lib/tidy/stores/app.store";
   let sizeFactor: string = "medium";
   let fontFamily: string = "Avenir";
+  let rootFontSize: number = 16;
   function handleResize() {
     windowObject.updateDoumentDimensions(window.innerWidth, window.innerHeight);
   }
@@ -31,51 +32,63 @@
     refreshTailwind();
   }
   function refreshSizing() {
-    if ($windowObject.scale) {
-      if ($windowObject.scale >= 2) {
-        if ($userPreferences.accessibilitySizingFactor == 0) {
-          sizeFactor = "large";
-        } else if ($userPreferences.accessibilitySizingFactor == 1) {
-          sizeFactor = "huge";
-        } else if ($userPreferences.accessibilitySizingFactor == 2) {
-          sizeFactor = "seriously?";
-        }
-      } else if ($windowObject.scale >= 1.5) {
-        if ($userPreferences.accessibilitySizingFactor == 0) {
-          sizeFactor = "medium";
-        } else if ($userPreferences.accessibilitySizingFactor == 1) {
-          sizeFactor = "large";
-        } else if ($userPreferences.accessibilitySizingFactor == 2) {
-          sizeFactor = "huge";
-        }
-      } else if ($windowObject.scale >= 0.5) {
-        if ($userPreferences.accessibilitySizingFactor == 0) {
-          sizeFactor = "small";
-        } else if ($userPreferences.accessibilitySizingFactor == 1) {
-          sizeFactor = "medium";
-        } else if ($userPreferences.accessibilitySizingFactor == 2) {
-          sizeFactor = "large";
-        }
-      } else {
-        if ($userPreferences.accessibilitySizingFactor == 0) {
-          sizeFactor = "tiny";
-        } else if ($userPreferences.accessibilitySizingFactor == 1) {
-          sizeFactor = "small";
-        } else if ($userPreferences.accessibilitySizingFactor == 2) {
-          sizeFactor = "medium";
-        }
-      }
+    if ($userPreferences.accessibilitySizingFactor == 0) {
+      rootFontSize = 14;
+    } else if ($userPreferences.accessibilitySizingFactor == 1) {
+      rootFontSize = 16;
+    } else if ($userPreferences.accessibilitySizingFactor == 2) {
+      rootFontSize = 18;
     }
+    if ($windowObject.scale) {
+      rootFontSize = rootFontSize + 1 * $windowObject.scale;
+    }
+    // if ($windowObject.scale) {
+    //   if ($windowObject.scale >= 2) {
+    //     if ($userPreferences.accessibilitySizingFactor == 0) {
+    //       sizeFactor = "large";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
+    //       sizeFactor = "huge";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
+    //       sizeFactor = "seriously?";
+    //     }
+    //   } else if ($windowObject.scale >= 1.5) {
+
+    //     if ($userPreferences.accessibilitySizingFactor == 0) {
+    //       sizeFactor = "medium";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
+    //       sizeFactor = "large";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
+    //       sizeFactor = "huge";
+    //     }
+    //   } else if ($windowObject.scale >= 0.5) {
+    //     if ($userPreferences.accessibilitySizingFactor == 0) {
+    //       sizeFactor = "small";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
+    //       sizeFactor = "medium";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
+    //       sizeFactor = "large";
+    //     }
+    //   } else {
+    //     if ($userPreferences.accessibilitySizingFactor == 0) {
+    //       sizeFactor = "tiny";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
+    //       sizeFactor = "small";
+    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
+    //       sizeFactor = "medium";
+    //     }
+    //   }
+    // }
   }
   function refreshTailwind() {
     fontFamily = $userPreferences.theme === "Clean" ? "Avenir" : "Avenir";
     $appStore.tailwindTheme = `${
       $userPreferences.theme.toLowerCase() ?? "clean"
-    } ${sizeFactor} ${$userPreferences.colorScheme?.label ?? "light"}`;
+    } ${"medium"} ${$userPreferences.colorScheme?.label ?? "light"}`;
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
     );
+    document.documentElement.style.fontSize = `${rootFontSize}px`;
   }
 </script>
 

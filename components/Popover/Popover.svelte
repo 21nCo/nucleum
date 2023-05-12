@@ -85,8 +85,8 @@
       </div>
     {:else}
       <div
-        class="popover-container flex flex-col p-4 absolute rounded-md shadow-lg bg-bgs1 z-100 overflow-y-auto"
-        style="width: {width}px; height: {height}px; top: {top}px; left: {left}px;"
+        class="popover-container max-h-max flex flex-col p-4 absolute rounded-md shadow-lg bg-bgs1 z-100 overflow-y-auto"
+        style="width: {width}px;  top: {top}px; left: {left}px;"
       >
         {#if title}
           <PopoverHeader

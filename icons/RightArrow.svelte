@@ -1,5 +1,6 @@
 <script lang="ts">
   export let width: number = 15;
+  export let color: string = "fgs2";
 </script>
 
 <svg
@@ -11,7 +12,7 @@
 >
   <path
     d="M33 3L45.1142 13.7681C48.2468 16.5527 48.2468 21.4473 45.1142 24.2319L33 35M3 19H45.5"
-    class="stroke-fgs2"
+    class="stroke-{color}"
     stroke-width="5"
     stroke-linecap="round"
   />

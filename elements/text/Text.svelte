@@ -19,6 +19,6 @@
   });
 </script>
 
-<Element {classList} isAction={false}>
+<Element {classList} isAction={false} isForDebug={true}>
   <slot />
 </Element>

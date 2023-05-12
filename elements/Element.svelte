@@ -12,11 +12,14 @@
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let parentBackgroundIndex: number = 1;
+  export let isForDebug: boolean = false;
   let activeBackgroundColor: string = "";
   let backgroundColor: string = "";
+  $: if (classList.includes("bg-")) backgroundColor = "";
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
+    if (isForDebug) console.log({ classList, backgroundColor });
     if (!classList.includes("bg-")) backgroundColor = colors.backgroundColor;
     if (
       selectionStyle === SelectionItemActiveStyle.SIDEDOT ||
@@ -63,7 +66,7 @@
     <slot />
     {#if selectionStyle === SelectionItemActiveStyle.SIDEBAR && isActive}
       <div
-        class="absolute w-0.5 opacity-80 h-3/4 bg-fgs2 rounded-md"
+        class="absolute w-0.5 opacity-80 h-3/4 bg-fgs2 rounded-md z-20"
         style=" top: 12.5%; left: -2px"
       />
     {:else if selectionStyle === SelectionItemActiveStyle.SIDEDOT && isActive}

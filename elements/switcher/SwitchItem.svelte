@@ -3,7 +3,7 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import Element from "../Element.svelte";
-  export let item: string;
+  export let item: string | undefined = undefined;
   export let size: Size;
   export let parentBackgroundIndex: number;
   export let isActive: boolean = false;
@@ -48,7 +48,11 @@
       </div>
     {/if}
     <div class="truncate text-left">
-      {item}
+      {#if item}
+        {item}
+      {:else}
+        <slot />
+      {/if}
     </div>
   </div>
 </Element>

@@ -71,7 +71,7 @@
     items={$appStore.appConstants.themes}
     selectionStyle={SelectionItemActiveStyle.CIRCLE}
     on:switch={onThemeChange}
-    bind:selected={selectedThemeIndex}
+    bind:selectedIndex={selectedThemeIndex}
   />
   <Switcher
     title="Color scheme"
@@ -80,7 +80,7 @@
     items={["light", "dark"]}
     selectionStyle={SelectionItemActiveStyle.NONE}
     on:switch={refreshColorSchemes}
-    bind:selected={selectedLightnessIndex}
+    bind:selectedIndex={selectedLightnessIndex}
   />
   <ColorSchemeSwitcher
     {parentBackgroundIndex}
@@ -96,7 +96,7 @@
         items={$appStore.appConstants.tempColorSchemes}
         selectionStyle={SelectionItemActiveStyle.SIDEBAR}
         on:switch={onTempSchemeChange}
-        bind:selected={selectedTempSchemeIndex}
+        bind:selectedIndex={selectedTempSchemeIndex}
       />
     </div>
   {/if}
