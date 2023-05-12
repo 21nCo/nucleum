@@ -16,10 +16,16 @@ import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import type { ComponentType } from "../types/component.type";
+import blankJson from "$lib/tidy/data/blank.json";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.local);
+
+let blankDetails: any = blankJson.find(
+  (subatom: any) => subatom.url == "blank.coop"
+);
+export const blank = writable(blankDetails);
 
 function initEventStore(seed: CustomEvent) {
   const { subscribe, set, update } = writable<CustomEvent>(seed);
