@@ -8,13 +8,17 @@
   } from "$lib/tidy/types/component.type";
   import Element from "$lib/tidy/elements/Element.svelte";
   import ComponentResolver from "../../ComponentResolver.svelte";
+  import { onMount } from "svelte";
   export let path: string;
   const classList = "w-full text-start px-8 py-2 self-start";
   let currentComponent: ComponentType | undefined = getComponentFromPath(path);
+  onMount(() => {
+    console.log("currentComponent", currentComponent);
+  });
 </script>
 
 {#if currentComponent && currentComponent.thinModeBehavior != ThinModeBehavior.HIDE}
-  {#if currentComponent.type === BlockType.BUTTON}
+  {#if currentComponent.type === BlockType.INLINE}
     <div class="flex justify-center">
       <ComponentResolver {currentComponent} />
     </div>

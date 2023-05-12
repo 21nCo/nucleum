@@ -10,9 +10,9 @@
   import { appEvents, appStore, currentTime } from "$lib/tidy/stores/app.store";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import Collapse from "$lib/tidy/icons/Collapse.svelte";
-  import PagePainter from "./paint/PagePainter.svelte";
   import WithYStack from "./paint/painters/YStack/WithYStack.svelte";
   import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
+  import { appName } from "$lib/local/stores/local.store";
 
   let isShowAppearancePopover: boolean = false;
   let environment: string;
@@ -38,7 +38,7 @@
   });
 </script>
 
-<title>{$appStore.appName}</title>
+<title>{appName}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>
     <slot />
@@ -55,7 +55,7 @@
   </div>
 {/if}
 {#if $appStore.fullScreenComponentPath}
-  <div class="fixed left-0 top-0 w-full h-full z-10 px-2 py-4 bg-bgs1">
+  <div class="fixed left-0 top-0 w-full h-full z-50 px-2 py-4 bg-bgs1">
     <button
       class="mx-2"
       on:click={() => {

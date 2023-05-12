@@ -96,7 +96,7 @@
             }}
           />
         {/if}
-        <div class="popover-body h-full w-full">
+        <div class="popover-body h-full w-full mb-10">
           <slot />
         </div>
         <div class="flex gap-2 justify-center">

@@ -28,10 +28,14 @@
         </div>
       </div>
       <div
-        class="flex justify-center items-center p-4 w-3/5"
+        class="flex justify-center items-center p-4 gap-8 w-3/5"
         style="padding-top: {pad}px; padding-bottom: {pad}px;"
       >
-        <ComponentResolver path={currentComponent.sections[1]} />
+        {#each currentComponent.sections as section, index}
+          {#if index > 0}
+            <ComponentResolver path={section} />
+          {/if}
+        {/each}
       </div>
     </div>
   </div>

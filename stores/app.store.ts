@@ -147,7 +147,7 @@ export const appStore = initAppStore({
   isDebugMode,
   environment: "", //todo - move to base -> window?.location.host.split(".")[0],
   tailwindTheme: "",
-  appName: "Pointron",
+  appName: "",
   appConstants: {
     themes,
     colorSchemes: [...darkColorSchemes, ...lightColorSchemes],

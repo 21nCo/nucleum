@@ -21,7 +21,7 @@
 
 {#if $windowObject.isInPortrait}
   <div
-    class="absolute bottom-0 flex flex-col justify-center items-center z-10 w-full"
+    class="absolute bottom-0 flex flex-col justify-center items-center z-40 w-full"
   >
     <!-- todo - support for multiple players like music and timer at the same time -->
     {#if $appStore.players && $appStore.players.length > 0 && $appStore.players[0].isShow}
@@ -36,7 +36,7 @@
   </div>
 {:else if isMinimized}
   <div
-    class="flex flex-col gap-4 absolute left-1 z-10 {isHovered
+    class="flex flex-col gap-4 absolute left-1 z-40 {isHovered
       ? 'bg-bgs4 rounded-lg p-2'
       : 'opacity-40'}"
     style="top: {headerHeight}px"

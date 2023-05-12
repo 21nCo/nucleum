@@ -1,9 +1,13 @@
 <script lang="ts">
   import { getComponentFromPath } from "$lib/tidy/utils/utils";
   import { goto } from "$app/navigation";
-  import type { ComponentType } from "$lib/tidy/types/component.type";
+  import {
+    BlockType,
+    type ComponentType,
+  } from "$lib/tidy/types/component.type";
   import Element from "$lib/tidy/elements/Element.svelte";
   import YMenuSectionItem from "./YMenuSectionItem.svelte";
+  import ComponentResolver from "../../ComponentResolver.svelte";
 
   export let path: string;
   const classList = "w-full text-start px-8 py-4 rounded-md";
@@ -16,6 +20,10 @@
     {#each currentComponent.sections as section}
       <YMenuSectionItem path={path + "/" + section} />
     {/each}
+  </div>
+{:else if currentComponent && currentComponent.type === BlockType.INLINE}
+  <div class="flex justify-center">
+    <ComponentResolver {currentComponent} />
   </div>
 {:else}
   <Element {classList} on:click={() => goto(path)}>

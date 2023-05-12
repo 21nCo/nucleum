@@ -32,6 +32,7 @@ export enum ThinModeBehavior {
 export enum BlockType {
   BLOCK,
   SECTION,
+  INLINE,
   BUTTON,
   TOGGLE,
 }
