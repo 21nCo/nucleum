@@ -110,7 +110,10 @@
   {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$windowObject.isInThinMode}
     <WithPanelOnLeft {currentComponent} />
   {:else}
-    <div style="padding: {pad / 4}px;">
+    <div
+      class={$windowObject.isInThinMode ? "mb-40" : ""}
+      style="padding: {pad / 4}px;"
+    >
       {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
         <ComponentResolver path={currentComponent.sections[0]} />
       {:else if currentComponent.pagePaint === PaintType.YSTACK}
@@ -121,7 +124,11 @@
     </div>
   {/if}
 {:else}
-  <div class="flex flex-col gap-4 w-full h-full p-4">
+  <div
+    class="flex flex-col gap-4 w-full h-full p-4 {$windowObject.isInThinMode
+      ? 'mb-40'
+      : ''}"
+  >
     {#if $windowObject.isInThinMode && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
       <Button
         label="go back"

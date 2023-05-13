@@ -19,7 +19,7 @@
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
-    if (isForDebug) console.log({ classList, backgroundColor });
+    //if (isForDebug) console.log({ classList, backgroundColor });
     if (!classList.includes("bg-")) backgroundColor = colors.backgroundColor;
     if (
       selectionStyle === SelectionItemActiveStyle.SIDEDOT ||

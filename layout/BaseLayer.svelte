@@ -7,7 +7,12 @@
 
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
-  import { appEvents, appStore, currentTime } from "$lib/tidy/stores/app.store";
+  import {
+    appEvents,
+    appStore,
+    currentTime,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import Collapse from "$lib/tidy/icons/Collapse.svelte";
   import WithYStack from "./paint/painters/YStack/WithYStack.svelte";

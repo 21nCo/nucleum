@@ -59,13 +59,13 @@
 {:else}
   <div class="flex justify-center items-center h-full w-56 ml-2">
     <div
-      class="flex flex-col py-10 gap-4 items-center justify-between w-full rounded-lg {$userPreferences.theme ==
+      class="flex flex-col py-10 gap-4 items-center justify-between overflow-auto w-full rounded-lg {$userPreferences.theme ==
       'Colorful'
         ? 'glass'
         : 'bg-bgs2'}"
       style="height: calc(100% - 1rem);"
     >
-      <div class="w-full flex flex-col gap-12">
+      <div class="w-full flex flex-col gap-8 lg:gap-12">
         <slot name="header" />
         <div class="flex flex-col gap-12 w-full p-2">
           <PageSwitcher parentBackgroundIndex={1} />

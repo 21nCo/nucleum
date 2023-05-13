@@ -40,7 +40,7 @@
       rootFontSize = 18;
     }
     if ($windowObject.scale) {
-      rootFontSize = rootFontSize + 1 * $windowObject.scale;
+      rootFontSize = rootFontSize + 0.6 * $windowObject.scale;
     }
     // if ($windowObject.scale) {
     //   if ($windowObject.scale >= 2) {

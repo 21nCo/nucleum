@@ -12,9 +12,6 @@
   export let path: string;
   const classList = "w-full text-start px-8 py-2 self-start";
   let currentComponent: ComponentType | undefined = getComponentFromPath(path);
-  onMount(() => {
-    console.log("currentComponent", currentComponent);
-  });
 </script>
 
 {#if currentComponent && currentComponent.thinModeBehavior != ThinModeBehavior.HIDE}
