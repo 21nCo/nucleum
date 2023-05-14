@@ -62,7 +62,7 @@
 {/if}
 {#if $appStore.fullScreenComponentPath}
   <div
-    class="fixed left-0 top-0 w-full h-full z-50 px-2 py-4 bg-bgs1"
+    class="fixed left-0 top-0 w-full h-full z-40 px-2 py-4 bg-bgs1"
     transition:fly={{ y: 200, duration: 300 }}
   >
     <button

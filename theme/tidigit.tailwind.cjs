@@ -5,8 +5,9 @@ const {
   sea,
   forest,
   light,
-  smooth,
+  smoothy,
   grainy,
+  solarized,
 } = require("./colors.cjs");
 
 const defaultFontSize = {
@@ -123,15 +124,21 @@ const lightThemes = [
     },
   },
   {
-    name: "smooth",
+    name: "smoothy",
     extend: {
-      colors: smooth,
+      colors: smoothy,
     },
   },
   {
     name: "grainy",
     extend: {
       colors: grainy,
+    },
+  },
+  {
+    name: "solarized",
+    extend: {
+      colors: solarized,
     },
   },
   {

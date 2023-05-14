@@ -93,7 +93,7 @@ export const dragAndDropStore = writable<DragAndDrop>({
 
 //todo - generate cool placeholders for focus using AI
 //"three", "four", "wood","DEF5E5", "EEF1FF", "FBF8F1", "F0ECE3"
-//["light", "dark", "dracula", "dark-forest", "light-smooth", "light-grainy"]
+//["light", "dark", "dracula", "dark-forest", "light-smoothy", "light-grainy"]
 //App modes: minimal, journal, future (3026)
 //themes: clean, playful, neomorphic, neobrutal, glassmorphic
 
@@ -139,8 +139,9 @@ export const darkColorSchemes: ColorScheme[] = [
 //{ label: "FBF8F1", isDark: false }
 const lightColorSchemes: ColorScheme[] = [
   { label: "light", theme: "clean", isDark: false, ...colors.light },
-  { label: "smooth", theme: "clean", isDark: false, ...colors.smooth },
+  { label: "smoothy", theme: "clean", isDark: false, ...colors.smoothy },
   { label: "grainy", theme: "clean", isDark: false, ...colors.grainy },
+  { label: "solarized", theme: "clean", isDark: false, ...colors.solarized },
 ];
 
 const isDebugMode =

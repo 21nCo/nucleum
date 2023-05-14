@@ -14,7 +14,6 @@
       colorScheme.bgs2 ?? "",
       colorScheme.bgs3 ?? "",
       colorScheme.accent1 ?? "",
-      colorScheme.accent2 ?? "",
     ];
   }
   function onClicked(index: number) {
