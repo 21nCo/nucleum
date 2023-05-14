@@ -66,7 +66,7 @@
 
 <div class="flex flex-col gap-8 w-full">
   <Switcher
-    title="Theme"
+    label="Theme"
     {parentBackgroundIndex}
     items={$appStore.appConstants.themes}
     selectionStyle={SelectionItemActiveStyle.CIRCLE}
@@ -74,7 +74,7 @@
     bind:selectedIndex={selectedThemeIndex}
   />
   <Switcher
-    title="Color scheme"
+    label="Color scheme"
     {parentBackgroundIndex}
     size={Size.sm}
     items={["light", "dark"]}

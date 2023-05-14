@@ -4,6 +4,8 @@
 
   import { createEventDispatcher, onMount } from "svelte";
   import { generateBackgroudColor } from "$lib/tidy/utils/utils";
+  import InfoText from "./text/InfoText.svelte";
+  import FormControlLabel from "./text/FormControlLabel.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -11,6 +13,7 @@
   export let style: TextInputStyle = TextInputStyle.BOXED;
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
+  export let info: string | undefined = undefined;
   export function focus() {
     if (inputRef) inputRef.focus();
   }
@@ -57,7 +60,7 @@
 
 <div class="flex flex-col gap-1 w-full">
   {#if label}
-    <div class="text-fgs2">{label}</div>
+    <FormControlLabel {label} {info} />
   {/if}
   <div class="flex items-center w-full">
     <input

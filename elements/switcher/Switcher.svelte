@@ -6,6 +6,7 @@
   } from "$lib/tidy/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import SwitchItem from "./SwitchItem.svelte";
+  import FormControlLabel from "../text/FormControlLabel.svelte";
 
   const dispatch = createEventDispatcher();
   export let items: string[];
@@ -15,7 +16,8 @@
     SelectionItemActiveStyle.UNKNOWN;
   export let parentBackgroundIndex: number = 1;
   export let style: SwitcherStyle = SwitcherStyle.HorizontalAndWraps;
-  export let title: string | undefined = undefined;
+  export let label: string | undefined = undefined;
+  export let info: string | undefined = undefined;
   let classList: string;
   function handleClick(event: any) {
     let selectedMenuItem = event.detail.item;
@@ -51,8 +53,8 @@
 </script>
 
 <div class="flex flex-col gap-2">
-  {#if title}
-    <div class="text-fgs2">{title}</div>
+  {#if label}
+    <FormControlLabel {label} {info} />
   {/if}
   <div class={classList}>
     {#each items as item, index}

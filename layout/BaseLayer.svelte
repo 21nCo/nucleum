@@ -18,6 +18,7 @@
   import WithYStack from "./paint/painters/YStack/WithYStack.svelte";
   import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
   import { localStore } from "$lib/local/stores/local.store";
+  import { fade, fly, slide } from "svelte/transition";
 
   let isShowAppearancePopover: boolean = false;
   let environment: string;
@@ -60,7 +61,10 @@
   </div>
 {/if}
 {#if $appStore.fullScreenComponentPath}
-  <div class="fixed left-0 top-0 w-full h-full z-50 px-2 py-4 bg-bgs1">
+  <div
+    class="fixed left-0 top-0 w-full h-full z-50 px-2 py-4 bg-bgs1"
+    transition:fly={{ y: 200, duration: 300 }}
+  >
     <button
       class="mx-2"
       on:click={() => {
