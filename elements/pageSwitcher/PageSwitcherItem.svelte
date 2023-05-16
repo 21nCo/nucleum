@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import {
     PageSwitcherStyle,
     type PageMenuItem,
@@ -12,7 +13,7 @@
   const dispatch = createEventDispatcher();
   export let item: ComponentType;
   export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
-  export let isActive: boolean = false;
+  $: isActive = $page.params.route.includes(item.path);
   export let isShowLabel: boolean = true;
   export let parentBackgroundIndex: number;
   let pad: number;

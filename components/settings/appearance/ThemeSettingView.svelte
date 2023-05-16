@@ -65,14 +65,16 @@
 </script>
 
 <div class="flex flex-col gap-8 w-full">
-  <Switcher
-    label="Theme"
-    {parentBackgroundIndex}
-    items={$appStore.appConstants.themes}
-    selectionStyle={SelectionItemActiveStyle.CIRCLE}
-    on:switch={onThemeChange}
-    bind:selectedIndex={selectedThemeIndex}
-  />
+  {#if $appStore.isDebugMode}
+    <Switcher
+      label="Theme"
+      {parentBackgroundIndex}
+      items={$appStore.appConstants.themes}
+      selectionStyle={SelectionItemActiveStyle.CIRCLE}
+      on:switch={onThemeChange}
+      bind:selectedIndex={selectedThemeIndex}
+    />
+  {/if}
   <Switcher
     label="Color scheme"
     {parentBackgroundIndex}

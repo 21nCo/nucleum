@@ -9,8 +9,6 @@ import NotFound from "../components/error/404NotFound.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
 import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
-import { onCloseAppearancePreview, onOpenPreview } from "../utils/actions";
-
 export const components: ComponentType[] = [
   {
     path: "404",

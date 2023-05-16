@@ -3,7 +3,7 @@
   export let width: number;
 </script>
 
-<svg {width} height={width}>
+<!-- <svg {width} height={width}>
   <text
     x="34"
     y="34"
@@ -13,4 +13,10 @@
   >
     +{minutes}
   </text>
-</svg>
+</svg> -->
+<div
+  class="text-center flex items-center justify-center text-b1 text-bgs1"
+  style="width:{width}px; height: {width}px"
+>
+  +{minutes}
+</div>

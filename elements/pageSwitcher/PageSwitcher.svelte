@@ -10,7 +10,6 @@
     getComponentFromPath,
   } from "$lib/tidy/utils/utils";
   import { goto } from "$app/navigation";
-  import { appStore } from "$lib/tidy/stores/app.store";
   import type { ComponentType } from "$lib/tidy/types/component.type";
   import { appMenu } from "$lib/local/stores/local.store";
   export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
@@ -51,7 +50,6 @@
           goto("/" + item.path);
         }}
         {item}
-        isActive={selected == index}
       />
     {/if}
   {/each}

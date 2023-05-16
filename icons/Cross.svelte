@@ -1,6 +1,6 @@
 <svg
   width="20"
-  height="62"
+  height="20"
   viewBox="0 0 62 62"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
