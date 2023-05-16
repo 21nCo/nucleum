@@ -96,11 +96,14 @@
         </div>
       </div>
     {:else if useDialog}
-      <dialog bind:this={dialog} class="popover rounded-md flex flex-col p-0">
+      <dialog
+        bind:this={dialog}
+        class="popover rounded-md flex flex-col p-0 bg-bgs1 text-fgs1"
+      >
         <div class="popover-header px-4 py-2">
           <h2>{title}</h2>
           {#if secondaryText && isShowClose}
-            <div class="w-full flex justify-end">
+            <div class="w-full flex justify-end text-b2">
               <button on:click={close}>Close</button>
             </div>
           {/if}

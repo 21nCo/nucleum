@@ -7,77 +7,36 @@
   } from "$lib/tidy/stores/app.store";
   let sizeFactor: string = "medium";
   let fontFamily: string = "Avenir";
-  let rootFontSize: number = 16;
+  let defaultRootFontSize: number = 16;
+  $: rootFontSize = defaultRootFontSize + 0.6 * $windowObject.scale;
+  $: document.documentElement.style.fontSize = `${rootFontSize}px`;
+  $: console.log({ rootFontSize });
   function handleResize() {
     windowObject.updateDoumentDimensions(window.innerWidth, window.innerHeight);
   }
   onMount(() => {
-    bootup();
+    handleResize();
+    refreshTheme();
     window.addEventListener("resize", handleResize);
-    userPreferences.subscribe((userPreferences: any) => {
-      refreshSizing();
-      refreshTailwind();
-    });
-    windowObject.subscribe((windowObject: any) => {
-      refreshSizing();
-      refreshTailwind();
+    userPreferences.subscribe(() => {
+      refreshTheme();
     });
     return () => {
       window.removeEventListener("resize", handleResize);
     };
   });
-  function bootup() {
-    handleResize();
+  function refreshTheme() {
     refreshSizing();
     refreshTailwind();
   }
   function refreshSizing() {
     if ($userPreferences.accessibilitySizingFactor == 0) {
-      rootFontSize = 14;
+      defaultRootFontSize = 14;
     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-      rootFontSize = 16;
+      defaultRootFontSize = 16;
     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-      rootFontSize = 18;
+      defaultRootFontSize = 18;
     }
-    if ($windowObject.scale) {
-      rootFontSize = rootFontSize + 0.6 * $windowObject.scale;
-    }
-    // if ($windowObject.scale) {
-    //   if ($windowObject.scale >= 2) {
-    //     if ($userPreferences.accessibilitySizingFactor == 0) {
-    //       sizeFactor = "large";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-    //       sizeFactor = "huge";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-    //       sizeFactor = "seriously?";
-    //     }
-    //   } else if ($windowObject.scale >= 1.5) {
-
-    //     if ($userPreferences.accessibilitySizingFactor == 0) {
-    //       sizeFactor = "medium";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-    //       sizeFactor = "large";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-    //       sizeFactor = "huge";
-    //     }
-    //   } else if ($windowObject.scale >= 0.5) {
-    //     if ($userPreferences.accessibilitySizingFactor == 0) {
-    //       sizeFactor = "small";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-    //       sizeFactor = "medium";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-    //       sizeFactor = "large";
-    //     }
-    //   } else {
-    //     if ($userPreferences.accessibilitySizingFactor == 0) {
-    //       sizeFactor = "tiny";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-    //       sizeFactor = "small";
-    //     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-    //       sizeFactor = "medium";
-    //     }
-    //   }
-    // }
   }
   function refreshTailwind() {
     fontFamily = $userPreferences.theme === "Clean" ? "Avenir" : "Avenir";
@@ -88,7 +47,6 @@
       "--fontFamily-sans-0",
       fontFamily
     );
-    document.documentElement.style.fontSize = `${rootFontSize}px`;
     sendMessageToParent();
   }
   function sendMessageToParent() {
