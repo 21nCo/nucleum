@@ -22,6 +22,8 @@
 <button
   class={classList + (isOutline ? "" : " text-bgs1")}
   on:click
+  on:mouseenter
+  on:mouseleave
   style={isOutline
     ? `outline: 1px solid; outline-color: hsl(${hue}, ${saturation}%, ${lightness}%); color: hsl(${hue}, ${saturation}%, ${lightness}%);`
     : `background-color:hsl(${hue}, ${saturation}%, ${lightness}%)`}

@@ -71,6 +71,7 @@
       on:keyup
       on:blur
       on:focus
+      on:input
       {placeholder}
       disabled={isDisabled}
       bind:this={inputRef}
