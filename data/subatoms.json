@@ -8,10 +8,17 @@
     "platforms": ["web", "desktop", "ios", "andriod", "extension", "linux"],
     "releasedPlatforms": ["web"],
     "urls": {
-      "web": "https://dev.pointron.run",
+      "web": "https://pointron.run",
       "roadmap": "https://blankcoop.notion.site/Pointron-roadmap-37e1f7599d8040c381b4712029db22cb",
-      "repository": "https://gitlab.com/blanklabs/tidigit/pointron"
+      "repository": "https://gitlab.com/blanklabs/tidigit/pointron",
+      "sixtysec": "https://www.youtube.com/embed/MO1pbFI1OOo"
     }
+  },
+  {
+    "name": "Futuretron",
+    "logo": "",
+    "tagline": "Future sub atom - testing purposes only",
+    "url": "localhost"
   },
   {
     "name": "Goaltron",
