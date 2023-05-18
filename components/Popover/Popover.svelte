@@ -14,6 +14,7 @@
   export let primaryText: string | undefined = undefined;
   export let secondaryText: string | undefined = undefined;
   export let isShowClose: boolean = true;
+  export let isDismissable: boolean = true;
   let useDialog: boolean = true;
   let dialog: HTMLDialogElement;
   let width: number;
@@ -27,8 +28,9 @@
   const overlayClicked = (event: any) => {
     console.log(event.target);
     if (
-      event.target.classList.contains("pop-overlay") ||
-      event.target.classList.contains("popover")
+      (event.target.classList.contains("pop-overlay") ||
+        event.target.classList.contains("popover")) &&
+      isDismissable
     ) {
       close();
     }

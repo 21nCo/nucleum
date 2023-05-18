@@ -197,7 +197,7 @@ function initAppStore(seed: AppStore) {
 export const userPreferences = initUserPreferences({
   nickName: "",
   theme: "Clean",
-  colorScheme: lightColorSchemes[0],
+  colorScheme: darkColorSchemes[4],
   dayStart: "00:00",
   birthday: new Date(),
   isOnboardingComplete: false,
