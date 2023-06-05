@@ -10,7 +10,6 @@
   let defaultRootFontSize: number = 16;
   $: rootFontSize = defaultRootFontSize + 0.6 * $windowObject.scale;
   $: document.documentElement.style.fontSize = `${rootFontSize}px`;
-  $: console.log({ rootFontSize });
   function handleResize() {
     windowObject.updateDoumentDimensions(window.innerWidth, window.innerHeight);
   }

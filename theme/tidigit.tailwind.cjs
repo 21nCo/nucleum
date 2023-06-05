@@ -142,6 +142,23 @@ const lightThemes = [
     },
   },
   {
+    name: "blank",
+    extend: {
+      colors: {
+        bgs1: "#000000",
+        bgs2: "#0f0f0f",
+        bgs3: "#202020",
+        bgs4: "#202020",
+        fgs1: "#F3F3F3",
+        fgs2: "#CACACA",
+        fgs3: "#D0D0D0",
+        accent1: "#fa7089",
+        accent3: "#AE4EDE",
+        accent2: "#6566f1",
+      },
+    },
+  },
+  {
     name: "DEF5E5",
     extend: {
       colors: {

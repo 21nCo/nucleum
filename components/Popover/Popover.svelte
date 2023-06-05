@@ -21,9 +21,6 @@
   let height: number;
   let left: any;
   let top: any;
-  onMount(() => {
-    console.log("mounted");
-  });
   const dispatch = createEventDispatcher();
   const overlayClicked = (event: any) => {
     console.log(event.target);
