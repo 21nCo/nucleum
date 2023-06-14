@@ -23,7 +23,6 @@
   let top: any;
   const dispatch = createEventDispatcher();
   const overlayClicked = (event: any) => {
-    console.log(event.target);
     if (
       (event.target.classList.contains("pop-overlay") ||
         event.target.classList.contains("popover")) &&
