@@ -12,7 +12,7 @@
 </script>
 
 {#if currentComponent.sections && currentComponent.sections.length > 0}
-  <div class="flex justify-center w-full items-center overflow-auto">
+  <div class="flex justify-center h-full w-full items-center overflow-auto">
     <div class="flex h-full w-full">
       <div
         class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==

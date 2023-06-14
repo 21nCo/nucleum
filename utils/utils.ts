@@ -288,3 +288,12 @@ export function getAssociatedPlayerFromPath(path: string) {
   }
   return player;
 }
+
+export function isValidEmail(text: string) {
+  const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,}$/;
+  return emailRegex.test(text);
+}
+export function isValidParentDomain(text: string) {
+  const domainRegex = /^(?:[a-zA-Z0-9-]{1,}\.){1,}[a-zA-Z0-9]{2,}$/;
+  return domainRegex.test(text);
+}
