@@ -297,3 +297,17 @@ export function isValidParentDomain(text: string) {
   const domainRegex = /^(?:[a-zA-Z0-9-]{1,}\.){1,}[a-zA-Z0-9]{2,}$/;
   return domainRegex.test(text);
 }
+
+export function performApiCall(
+  endpoint: string,
+  method: string,
+  body: string = ""
+) {
+  return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
+    method: method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body,
+  });
+}

@@ -111,12 +111,12 @@
     <WithPanelOnLeft {currentComponent} />
   {:else}
     <div
-      class={$windowObject.isInThinMode ? "mb-40" : ""}
+      class="w-full {$windowObject.isInThinMode ? 'mb-40' : ''}"
       style="padding: {pad / 4}px;"
     >
       {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
         <ComponentResolver path={currentComponent.sections[0]} />
-      {:else if currentComponent.pagePaint === PaintType.YSTACK}
+      {:else if currentComponent.pagePaint === PaintType.YSTACK || ($windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.YSTACK)}
         <WithYStack {currentComponent} />
       {:else if currentComponent.pagePaint === PaintType.YMENU && $windowObject.isInThinMode}
         <WithYMenuThinMode {currentComponent} />

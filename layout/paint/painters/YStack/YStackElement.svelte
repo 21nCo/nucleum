@@ -11,14 +11,10 @@
 
   export let path: string;
   export let params: any = {};
-  let component: ComponentType = getComponentFromPath(path);
+  let component: ComponentType | undefined = getComponentFromPath(path);
 </script>
 
-<div>
-  {#if component.heading && component.type === BlockType.SECTION}
-    <Text type={TextType.SECTION_HEADING}
-      >{component.heading.toUpperCase()}</Text
-    >
-  {/if}
-  <ComponentResolver {path} {params} />
-</div>
+{#if component && component.heading && component.type === BlockType.SECTION}
+  <Text type={TextType.SECTION_HEADING}>{component.heading.toUpperCase()}</Text>
+{/if}
+<ComponentResolver {path} {params} />

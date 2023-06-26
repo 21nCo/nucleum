@@ -26,6 +26,7 @@ export enum ThinModeBehavior {
   JUMP_TO_PARENT,
   GRAND_CHILDREN_ON_MENU,
   RIGHT_PANEL_AS_PLAYER,
+  YSTACK,
   HIDE,
 }
 

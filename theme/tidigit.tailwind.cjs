@@ -159,6 +159,25 @@ const lightThemes = [
     },
   },
   {
+    name: "dapien",
+    extend: {
+      colors: {
+        bgs1: "#FCFCFC",
+        bgs2: "#F2F2F2",
+        bgs3: "#E6E6E6",
+        bgs4: "#D9D9D9",
+        fgs1: "#383838",
+        fgs2: "#545454",
+        fgs3: "#A8A8A8",
+        fgs4: "#C4C4C4",
+        accent1: "#47ccd9",
+        accent2: "#ad6c6c",
+        red: "#f77272",
+        green: "#4fbd88",
+      },
+    },
+  },
+  {
     name: "DEF5E5",
     extend: {
       colors: {

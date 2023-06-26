@@ -13,30 +13,29 @@
 
 {#if currentComponent.sections && currentComponent.sections.length > 0}
   <div class="flex justify-center h-full w-full items-center overflow-auto">
-    <div class="flex h-full w-full">
-      <div
-        class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
-        'Colorful'
-          ? 'glasspanel'
-          : 'bg-bgs2'}"
-        style="padding-top: {pad / 4}px; padding-bottom: {pad /
-          4}px; padding-right: {pad / 8}px; padding-left: {pad /
-          8}px; height: calc(100% - 1rem);"
-      >
-        <div class="overflow-auto h-full w-full">
-          <ComponentResolver path={currentComponent.sections[0]} />
-        </div>
-      </div>
-      <div
-        class="flex justify-center items-center p-4 gap-8 w-3/5"
-        style="padding-top: {pad}px; padding-bottom: {pad}px;"
-      >
-        {#each currentComponent.sections as section, index}
-          {#if index > 0}
-            <ComponentResolver path={section} />
-          {/if}
-        {/each}
-      </div>
+    <div
+      class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
+      'Colorful'
+        ? 'glasspanel'
+        : 'bg-bgs2'}"
+      style="padding-top: {pad / 4}px; padding-bottom: {pad /
+        4}px; padding-right: {pad / 8}px; padding-left: {pad /
+        8}px; height: calc(100% - 1rem);"
+    >
+      <!-- todo - add overflow accordingly - removed overflow-auto as it is cropping info texts -->
+      <ComponentResolver
+        path={currentComponent.path + "/" + currentComponent.sections[0]}
+      />
+    </div>
+    <div
+      class="flex justify-center items-center p-4 gap-8 w-3/5"
+      style="padding-top: {pad}px; padding-bottom: {pad}px;"
+    >
+      {#each currentComponent.sections as section, index}
+        {#if index > 0}
+          <ComponentResolver path={currentComponent.path + "/" + section} />
+        {/if}
+      {/each}
     </div>
   </div>
 {:else}

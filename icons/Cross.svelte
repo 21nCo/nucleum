@@ -12,7 +12,7 @@
 >
   <path
     d="M19 18L43.5 42.5M42.5 18.5L18 43M59 31C59 46.464 46.464 59 31 59C15.536 59 3 46.464 3 31C3 15.536 15.536 3 31 3C46.464 3 59 15.536 59 31Z"
-    class="stroke-{stroke}"
+    class="stroke-fgs3"
     stroke-width="5"
     stroke-linecap="round"
   />

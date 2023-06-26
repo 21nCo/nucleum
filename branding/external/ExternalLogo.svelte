@@ -11,6 +11,10 @@
   import Gitlab from "./logos/Gitlab.svelte";
   import Linkedin from "./logos/Linkedin.svelte";
   import Overflow from "./logos/Overflow.svelte";
+  import Substack from "./logos/Substack.svelte";
+  import Twitter from "./logos/Twitter.svelte";
+  import Youtube from "./logos/Youtube.svelte";
+  import Medium from "./logos/Medium.svelte";
   export let provider: IdentityProvider;
   export let width = "20";
   let selected: any = Link;
@@ -27,6 +31,10 @@
     else if (provider === IdentityProvider.Phone) selected = Phone;
     else if (provider === IdentityProvider.Email) selected = Email;
     else if (provider === IdentityProvider.Linkedin) selected = Linkedin;
+    else if (provider === IdentityProvider.Substack) selected = Substack;
+    else if (provider === IdentityProvider.Twitter) selected = Twitter;
+    else if (provider === IdentityProvider.Youtube) selected = Youtube;
+    else if (provider === IdentityProvider.Medium) selected = Medium;
     else selected = Link;
   }
 </script>
