@@ -311,3 +311,11 @@ export function performApiCall(
     body: body,
   });
 }
+
+export function getNextInLoop(list: any, index: number) {
+  const nextIndex = index + 1;
+  if (nextIndex < list.length) {
+    return list[nextIndex];
+  }
+  return list[0];
+}
