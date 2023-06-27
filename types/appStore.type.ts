@@ -6,6 +6,7 @@ import type { Player } from "./player.type";
 export type AppStore = {
   appConstants: AppConstants;
   appName: string;
+  appData: any;
   isDebugMode: boolean;
   environment: any;
   pages?: string[];

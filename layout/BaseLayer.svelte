@@ -8,6 +8,7 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
+    app,
     appEvents,
     appStore,
     currentTime,
@@ -17,13 +18,17 @@
   import Collapse from "$lib/tidy/icons/Collapse.svelte";
   import WithYStack from "./paint/painters/YStack/WithYStack.svelte";
   import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
-  import { localStore } from "$lib/local/stores/local.store";
   import { fade, fly, slide } from "svelte/transition";
-
+  import { dev } from "$app/environment";
+  import { inject } from "@vercel/analytics";
+  import { performApiCall } from "$lib/tidy/utils/utils";
+  import { defaultAppData } from "$lib/local/stores/local.store";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;
   onMount(() => {
+    retrieveAppData();
+    inject({ mode: dev ? "development" : "production" });
     appEvents.subscribe((x: CustomEvent) => {
       if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePopover = x.value ?? false;
@@ -42,9 +47,23 @@
       clearInterval(timer);
     };
   });
+  async function retrieveAppData() {
+    appStore.initiatizeAppData(defaultAppData);
+    let response = await performApiCall(
+      "appdata",
+      "POST",
+      JSON.stringify({ app })
+    );
+    if (response && response.ok) {
+      let jsonValue = await response.json();
+      if (jsonValue) {
+        appStore.initiatizeAppData(jsonValue);
+      }
+    }
+  }
 </script>
 
-<title>{$localStore.appName}</title>
+<title>{$appStore.appData.name}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>
     <slot />

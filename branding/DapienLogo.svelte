@@ -1,11 +1,15 @@
+<script lang="ts">
+  export let width = 1080;
+</script>
+
 <svg
-  width="1080"
-  height="1080"
+  {width}
+  height={width}
   viewBox="0 0 1080 1080"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <rect width="1080" height="1080" class="fill-bgs1" />
+  <rect {width} height={width} class="fill-bgs1" />
   <path
     d="M754 386.123C754 489.797 654.938 678.965 551.263 678.965C447.589 678.965 326 497.306 326 393.632C326 289.957 432.571 281 536.246 281C639.92 281 754 282.448 754 386.123Z"
     fill="url(#paint0_linear_102_2)"

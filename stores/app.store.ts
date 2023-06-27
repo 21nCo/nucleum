@@ -22,6 +22,11 @@ export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.local);
 
+export const app =
+  window.location.hostname === "localhost"
+    ? import.meta.env.VITE_APP
+    : window.location.hostname;
+
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
 );
@@ -155,6 +160,7 @@ export const appStore = initAppStore({
   environment: "", //todo - move to base -> window?.location.host.split(".")[0],
   tailwindTheme: "",
   appName: "",
+  appData: {},
   appConstants: {
     themes,
     colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
@@ -171,6 +177,12 @@ function initAppStore(seed: AppStore) {
       set(m);
     },
     update,
+    initiatizeAppData(appData: any) {
+      update((n: AppStore) => {
+        n.appData = appData;
+        return n;
+      });
+    },
     appendPlayer(path: string, params?: any) {
       update((n: AppStore) => {
         if (!path) return n;
