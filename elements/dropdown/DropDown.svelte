@@ -6,7 +6,7 @@
   import DropDownArrow from "$lib/tidy/icons/DropdownArrow.svelte";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
-  export let selectedOptionLabel: string = "select option";
+  export let selected: DropdownItem = items[0];
   export let parentBackgroundIndex: number = 0;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
@@ -31,7 +31,7 @@
         isShowOptions = !isShowOptions;
       }}
     >
-      {selectedOptionLabel}
+      {selected.label}
     </button>
     <div class="flex flex-col justify-center">
       <DropDownArrow direction={isShowOptions ? "up" : "down"} />
@@ -47,7 +47,7 @@
             : 'text-fgs1'}"
           on:click={() => {
             if (item.disabled) return;
-            selectedOptionLabel = item.label;
+            selected = item;
             isShowOptions = false;
             dispatch("select", item.value);
           }}
