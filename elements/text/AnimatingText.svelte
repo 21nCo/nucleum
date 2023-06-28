@@ -3,27 +3,37 @@
   import { onMount } from "svelte";
 
   export let roll = ["Auth provider", "Cloud provider", "Identity provider"];
+  export let width = 225;
+  export let isCentered: boolean = false;
   let activeTextIndex = 0;
+  let parentElement: HTMLElement;
+  let childElement: HTMLElement;
 
   onMount(() => {
     const interval = setInterval(() => {
       activeTextIndex = (activeTextIndex + 1) % roll.length;
     }, 2000);
-
     return () => clearInterval(interval);
   });
 </script>
 
-<span class="relative h-20 overflow-hidden">
+<div
+  bind:this={parentElement}
+  class="flex relative overflow-hidden px-2 {isCentered
+    ? 'justify-center'
+    : ''} text-accent1"
+  style="width: {width}px; height: {childElement?.offsetHeight}px;"
+>
   {#each roll as text, i}
     {#if i === activeTextIndex}
       <span
-        class="absolute text min-w-max"
-        in:fly={{ y: -50, duration: 500 }}
-        out:fly={{ y: 100, duration: 200 }}
+        bind:this={childElement}
+        class="absolute min-w-max"
+        in:fly={{ y: -20, duration: 500 }}
+        out:fly={{ y: 20, duration: 200 }}
       >
         {text}
       </span>
     {/if}
   {/each}
-</span>
+</div>
