@@ -182,7 +182,7 @@ const lightThemes = [
     extend: {
       colors: {
         bgs1: "#FAFFFE",
-        bgs2: "#F2F2F2",
+        bgs2: "#EFF5F4",
         bgs3: "#E6E6E6",
         bgs4: "#D9D9D9",
         fgs1: "#383838",

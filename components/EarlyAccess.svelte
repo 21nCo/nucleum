@@ -2,6 +2,7 @@
   import Button from "../elements/Button.svelte";
   import TextInput from "../elements/TextInput.svelte";
   import { app } from "../stores/app.store";
+  import { Size } from "../types/size.enum";
   import { performApiCall } from "../utils/utils";
   let email = "";
   let message = "";
@@ -27,10 +28,19 @@
 <div class="relative flex flex-col w-full items-center">
   <div class="flex gap-4 flex-wrap justify-center items-center">
     <div class="w-full md:w-96">
-      <TextInput placeholder="Enter your email address" bind:value={email} />
+      <TextInput
+        size={Size.sm}
+        placeholder="Your email address"
+        bind:value={email}
+      />
     </div>
     <div>
-      <Button on:click={onSubscribe} label="Get Early Access" type="primary" />
+      <Button
+        size={Size.sm}
+        on:click={onSubscribe}
+        label="Get Early Access"
+        type="primary"
+      />
     </div>
   </div>
   {#if message}
