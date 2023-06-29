@@ -303,7 +303,6 @@ export function performApiCall(
   method: string,
   body: string = ""
 ) {
-  if (!import.meta.env.VITE_API_URL) return;
   return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
     method: method,
     headers: {

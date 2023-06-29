@@ -15,7 +15,7 @@
   on:mouseenter={() => (isHovering = true)}
   on:mouseleave={() => (isHovering = false)}
   >{label}
-  {#if isHovering && feedback == "arrow"}
+  <!-- {#if isHovering && feedback == "arrow"}
     <div class="absolute -right-5 top-1 text-accent1 -rotate-45 text-b2">→</div>
-  {/if}
+  {/if} -->
 </a>
