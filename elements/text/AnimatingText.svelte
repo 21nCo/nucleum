@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
 
   export let roll = ["Auth provider", "Cloud provider", "Identity provider"];
-  export let width = 225;
+  export let width = 300;
   export let isCentered: boolean = false;
   let activeTextIndex = 0;
   let parentElement: HTMLElement;
