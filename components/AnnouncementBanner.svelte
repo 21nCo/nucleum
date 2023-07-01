@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { fade } from "svelte/transition";
-  import Button from "../elements/Button.svelte";
   import Link from "../elements/text/Link.svelte";
   export let body: string;
   export let actionLabel: string | undefined = undefined;

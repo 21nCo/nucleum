@@ -3,10 +3,20 @@
   import TextInput from "../elements/TextInput.svelte";
   import { app } from "../stores/app.store";
   import { Size } from "../types/size.enum";
-  import { performApiCall } from "../utils/utils";
+  import { isValidEmail, performApiCall } from "../utils/utils";
   let email = "";
   let message = "";
+  let error: string | null = null;
   async function onSubscribe() {
+    if (!email || !isValidEmail(email)) {
+      error = "Please enter a valid email address";
+      setTimeout(() => {
+        error = null;
+      }, 2000);
+      return;
+    } else {
+      error = null;
+    }
     let response = await performApiCall(
       "subscribe",
       "POST",
@@ -14,12 +24,15 @@
     );
     if (response && response.ok) {
       let jsonValue = await response.json();
-      if (jsonValue) {
+      if (jsonValue && !jsonValue.error) {
         message = "Subscribed successfully!";
+      } else {
+        error = jsonValue.error;
       }
       setTimeout(() => {
         message = "";
         email = "";
+        error = null;
       }, 2000);
     }
   }
@@ -43,7 +56,12 @@
       />
     </div>
   </div>
-  {#if message}
-    <div class="absolute text-fgs2 -bottom-1/2">{message}</div>
-  {/if}
+  <div class="absolute text-b2 top-full">
+    {#if message}
+      <div class="text-fgs2">{message}</div>
+    {/if}
+    {#if error}
+      <div class="text-red">{error}</div>
+    {/if}
+  </div>
 </div>
