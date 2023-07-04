@@ -16,7 +16,7 @@
 </script>
 
 {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
-  <div class="flex flex-col gap-10 w-full lg:mb-20">
+  <div class="flex flex-col gap-10 w-full h-full lg:mb-20 overflow-auto">
     {#if currentComponent.heading && (!params || (params && params.hidePageHeading !== true))}
       <Text type={TextType.PAGE_HEADING}>{currentComponent.heading}</Text>
     {/if}

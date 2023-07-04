@@ -21,7 +21,7 @@
   import { fade, fly, slide } from "svelte/transition";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
-  import { performApiCall } from "$lib/tidy/utils/utils";
+  import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
   import { defaultAppData } from "$lib/local/stores/local.store";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
@@ -49,7 +49,7 @@
   });
   async function retrieveAppData() {
     appStore.initiatizeAppData(defaultAppData);
-    let response = await performApiCall(
+    let response = await performBlankApiCall(
       "appdata",
       "POST",
       JSON.stringify({ app })

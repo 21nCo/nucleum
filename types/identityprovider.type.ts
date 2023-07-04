@@ -26,7 +26,8 @@ export enum IdentityProvider {
   Kaggle = "kaggle.com",
   Kaggle2 = "kaggle2",
   FiveHundredPx = "500px.com",
-  Spotify = "spotify.com",
+  Spotify = "open.spotify.com",
   SoundCloud = "soundcloud.com",
   Substack = "substack.com",
+  Unknown = "unknown",
 }

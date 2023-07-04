@@ -15,7 +15,7 @@
   export let secondaryText: string | undefined = undefined;
   export let isShowClose: boolean = true;
   export let isDismissable: boolean = true;
-  let useDialog: boolean = true;
+  export let isUseDialog: boolean = true;
   let dialog: HTMLDialogElement;
   let width: number;
   let height: number;
@@ -93,7 +93,7 @@
           <slot />
         </div>
       </div>
-    {:else if useDialog}
+    {:else if isUseDialog}
       <dialog
         bind:this={dialog}
         class="popover rounded-md flex flex-col p-0 bg-bgs1 text-fgs1"

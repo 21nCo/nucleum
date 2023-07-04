@@ -12,7 +12,7 @@
 </script>
 
 {#if currentComponent.sections && currentComponent.sections.length > 0}
-  <div class="flex justify-center h-full w-full items-center overflow-auto">
+  <div class="flex justify-center h-full w-full items-center">
     <div
       class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
       'Colorful'
@@ -27,10 +27,8 @@
         path={currentComponent.path + "/" + currentComponent.sections[0]}
       />
     </div>
-    <div
-      class="flex justify-center items-center p-4 gap-8 w-3/5"
-      style="padding-top: {pad}px; padding-bottom: {pad}px;"
-    >
+    <!-- todo - removed extra padding -> add locally -->
+    <div class="flex justify-center items-center p-4 gap-8 w-3/5 h-full">
       {#each currentComponent.sections as section, index}
         {#if index > 0}
           <ComponentResolver path={currentComponent.path + "/" + section} />

@@ -311,6 +311,19 @@ export function performApiCall(
     body: body,
   });
 }
+export function performBlankApiCall(
+  endpoint: string,
+  method: string,
+  body: string = ""
+) {
+  return fetch(import.meta.env.VITE_BLANK_API_URL + "/" + endpoint, {
+    method: method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body,
+  });
+}
 
 export function getNextInLoop(list: any, index: number) {
   const nextIndex = index + 1;

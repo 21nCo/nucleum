@@ -15,6 +15,7 @@
   import Twitter from "./logos/Twitter.svelte";
   import Youtube from "./logos/Youtube.svelte";
   import Medium from "./logos/Medium.svelte";
+  import Spotify from "./logos/Spotify.svelte";
   export let provider: IdentityProvider;
   export let width = "20";
   let selected: any = Link;
@@ -35,6 +36,7 @@
     else if (provider === IdentityProvider.Twitter) selected = Twitter;
     else if (provider === IdentityProvider.Youtube) selected = Youtube;
     else if (provider === IdentityProvider.Medium) selected = Medium;
+    else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Link;
   }
 </script>
