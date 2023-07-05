@@ -17,7 +17,7 @@
   import Medium from "./logos/Medium.svelte";
   import Spotify from "./logos/Spotify.svelte";
   export let provider: IdentityProvider;
-  export let width = "20";
+  export let width = 20;
   let selected: any = Link;
   $: {
     if (provider === IdentityProvider.GenericLink) selected = Link;
@@ -43,6 +43,7 @@
 
 <svg
   {width}
+  height={width}
   xmlns="http://www.w3.org/2000/svg"
   version="1.1"
   xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -51,7 +52,7 @@
   viewBox="0 0 512 512"
   style="enable-background:new 0 0 512 512"
   xml:space="preserve"
-  class="w-full h-full flex justify-center items-center"
+  class="flex justify-center items-center"
 >
   <svelte:component this={selected} />
 </svg>
