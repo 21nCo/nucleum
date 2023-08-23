@@ -66,7 +66,12 @@ export function getUserDate(timestamp: number, dayStart: string = "00:00") {
   let date = new Date(timestamp);
   let hours = date.getHours();
   let minutes = date.getMinutes();
-  let isSameDay = hours >= startHours && minutes >= startMinutes;
+  let isSameDay =
+    hours > startHours
+      ? true
+      : hours === startHours
+      ? minutes >= startMinutes
+      : false;
   let userDate = {
     day: date.getDate(),
     month: date.getMonth(),
