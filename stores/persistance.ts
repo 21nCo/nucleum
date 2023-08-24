@@ -4,7 +4,9 @@ import { ItemType } from "$lib/tidy/types/item.enum";
 import { get, writable } from "svelte/store";
 import type { Item } from "../../local/types/item.type";
 import { cloudProvider } from "./app.store";
+import { SurrealDatabase } from "../access/surrealHelper";
 
+const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   const toString = (value: T) => JSON.stringify(value, null, 2);
 
@@ -70,6 +72,9 @@ export class Persistance {
         items.push(item);
         persistLocally(itemType, items);
         break;
+      case Cloud.surreal:
+        surrealDb.create(ItemType[itemType], item);
+        break;
     }
     return item.id;
   }
@@ -84,6 +89,9 @@ export class Persistance {
         items.push(item);
         persistLocally(itemType, items);
         break;
+      case Cloud.surreal:
+        surrealDb.merge(ItemType[itemType] + `:${item.id}`, item);
+        break;
     }
   }
   delete(itemId: string, itemType: ItemType) {
@@ -93,6 +101,8 @@ export class Persistance {
         items = items.filter((x: Item) => x.id != itemId);
         persistLocally(itemType, items);
         break;
+      case Cloud.surreal:
+        surrealDb.delete(ItemType[itemType] + `:${itemId}`);
     }
   }
   retrieve(itemType: ItemType) {
@@ -100,17 +110,20 @@ export class Persistance {
       case Cloud.local:
         let items = retrieveLocally(itemType);
         return items;
+      case Cloud.surreal:
+        surrealDb.select(ItemType[itemType]);
+        break;
     }
     return [];
   }
-  search(query: string, itemType: ItemType) {
+  async searchByLabel(query: string, itemType: ItemType) {
     let results: Item[] = [];
     switch (get(cloudProvider)) {
       case Cloud.local:
         switch (itemType) {
           case ItemType.ALL:
-            const tagList = retrieveLocally(ItemType.Tag);
-            const taskList = retrieveLocally(ItemType.Task);
+            const tagList = retrieveLocally(ItemType.cronotag);
+            const taskList = retrieveLocally(ItemType.cronotask);
             if (tagList) {
               const tagItems = tagList
                 .filter((item: Item) =>
@@ -138,6 +151,20 @@ export class Persistance {
               return { label: x.label, id: x.id };
             });
             break;
+        }
+        break;
+      case Cloud.surreal:
+        if (itemType != ItemType.ALL) {
+          let searchResult = await surrealDb.query(
+            `select * from $tb where label CONTAINS $searchString`,
+            {
+              tb: ItemType[itemType],
+              searchString: query,
+            }
+          );
+          results = searchResult.map((x: Item) => {
+            return { label: x.label, id: x.id };
+          });
         }
     }
     return results;

@@ -1,5 +1,6 @@
 export enum Cloud {
-    local,
-    icloud,
-    google
+  local,
+  icloud,
+  google,
+  surreal,
 }
