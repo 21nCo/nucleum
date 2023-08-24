@@ -15,7 +15,6 @@ import { ItemType } from "../types/item.enum";
 import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
-import type { ComponentType } from "../types/component.type";
 import blankJson from "$lib/tidy/data/blank.json";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
@@ -152,8 +151,8 @@ const lightColorSchemes: ColorScheme[] = [
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
-const themes = ["Clean"];
-if (isDebugMode) themes.concat(["Colorful", "3026"]);
+let themes = ["Clean"];
+if (isDebugMode) themes = themes.concat(["Colorful", "3026"]);
 
 export const appStore = initAppStore({
   isDebugMode,
