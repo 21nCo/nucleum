@@ -26,11 +26,11 @@
 </script>
 
 {#if icon}
-  {#if icon === "point"}
+  {#if icon === "focus"}
     <Point {fg} {bg} {isActive} />
-  {:else if icon === "flow"}
+  {:else if icon === "insights"}
     <Flow {fg} {bg} {isActive} />
-  {:else if icon === "control"}
+  {:else if icon === "settings"}
     <Control {fg} {bg} {isActive} />
   {/if}
 {/if}
