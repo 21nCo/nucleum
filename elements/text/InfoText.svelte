@@ -10,7 +10,6 @@
 >
   i
   {#if isHovered}
-  
     <div
     class="absolute text-b2 text-fgs2 bg-bgs4 rounded-md p-4 z-30"
     style="right: -21rem; position:sticky;"
