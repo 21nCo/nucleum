@@ -9,6 +9,7 @@ import NotFound from "../components/error/404NotFound.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
 import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
+import AccountSettings from "../components/settings/account/AccountSettings.svelte";
 export const components: ComponentType[] = [
   {
     path: "404",
@@ -16,9 +17,14 @@ export const components: ComponentType[] = [
   },
   {
     path: "settings",
-    sections: ["appearance", "about"],
+    sections: ["account", "appearance", "about"],
     pagePaint: PaintType.YMENU,
     thinModeBehavior: ThinModeBehavior.GRAND_CHILDREN_ON_MENU,
+  },
+  {
+    heading: "Account",
+    path: "settings/account",
+    component: AccountSettings,
   },
   {
     heading: "Appearance",

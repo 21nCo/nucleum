@@ -16,6 +16,7 @@ import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
+import type { UserAccount } from "../types/account.type";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -244,3 +245,34 @@ function initUserPreferences(seed: UserGlobalPreferences) {
 }
 
 export const isShowAppearancePreview = writable<boolean>(false);
+
+export const account = initAccount({
+  isLoggedIn: false,
+  token: null,
+});
+
+function initAccount(seed: UserAccount) {
+  if (localStorage.getItem("surreal-token")) {
+    seed.token = localStorage.getItem("token");
+    seed.isLoggedIn = true;
+  }
+  const { subscribe, set, update } = writable<UserAccount>(seed);
+  return {
+    subscribe,
+    set,
+    signOut: () => {
+      update((n: UserAccount) => {
+        localStorage.removeItem("surreal-token");
+        n = { token: null, isLoggedIn: false };
+        return n;
+      });
+    },
+    signIn: (token: string) => {
+      update((n: UserAccount) => {
+        localStorage.setItem("surreal-token", token);
+        n = { token, isLoggedIn: true };
+        return n;
+      });
+    },
+  };
+}
