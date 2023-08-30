@@ -15,6 +15,7 @@
   export let parentBackgroundIndex: number = 1;
   export let info: string | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
+  export let type: string = "text";
   let isShowSaveFeedback: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -94,19 +95,37 @@
     <FormControlLabel {label} {info} />
   {/if}
   <div class="relative flex items-center w-full">
-    <input
-      class={inputClasses}
-      bind:value
-      on:change
-      on:keydown
-      on:keyup
-      on:blur
-      on:focus
-      on:input={onChange}
-      {placeholder}
-      disabled={isDisabled}
-      bind:this={inputRef}
-    />
+    {#if type === "password"}
+      <input
+        class={inputClasses}
+        bind:value
+        on:change
+        on:keydown
+        on:keyup
+        on:blur
+        on:focus
+        on:input={onChange}
+        type="password"
+        {placeholder}
+        disabled={isDisabled}
+        bind:this={inputRef}
+      />
+    {:else}
+      <input
+        class={inputClasses}
+        bind:value
+        on:change
+        on:keydown
+        on:keyup
+        on:blur
+        on:focus
+        on:input={onChange}
+        type="text"
+        {placeholder}
+        disabled={isDisabled}
+        bind:this={inputRef}
+      />
+    {/if}
     {#if isEnableSaveFeedback && isShowSaveFeedback}
       <div class="absolute right-0 text-b2 text-fgs2">saved</div>
     {/if}
