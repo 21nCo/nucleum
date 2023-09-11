@@ -2,7 +2,7 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
 
-  let isInThinMode = false;
+  let isInThinMode = true;
 </script>
 
 {#if !$windowObject.isInPortraitMode}
@@ -24,7 +24,9 @@
           }}
         />
       </div>
-      Right panel content
+      {#if !isInThinMode}
+        Right panel content
+      {/if}
     </div>
   </div>
 {/if}
