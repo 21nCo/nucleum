@@ -1,18 +1,15 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import {
-    PageSwitcherStyle,
-    type PageMenuItem,
-  } from "$lib/tidy/types/pagemenuitem.type";
+  import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { createEventDispatcher } from "svelte";
-  import Element from "../Element.svelte";
+  import Element from "../../../elements/Element.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import Icon from "$lib/tidy/icons/Icon.svelte";
+  import Icon from "$lib/tidy/elements/Icon.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
   import type { ComponentType } from "$lib/tidy/types/component.type";
   const dispatch = createEventDispatcher();
   export let item: ComponentType;
-  export let style: PageSwitcherStyle = PageSwitcherStyle.DEFAULT;
+  export let style: LayoutContext = LayoutContext.DEFAULT;
   $: isActive = $page.params.route.includes(item.path);
   export let isShowLabel: boolean = true;
   export let parentBackgroundIndex: number;
@@ -32,32 +29,35 @@
 </script>
 
 <Element
-  classList="flex gap-2 text-b2 items-center {isShowLabel
-    ? style === PageSwitcherStyle.THIN
-      ? 'rounded-full'
-      : 'rounded-lg px-6 h-12'
+  classList="flex text-b2 items-center {isShowLabel
+    ? style === LayoutContext.PORTRAIT
+      ? 'flex-col gap-1 text-b3 rounded-lg'
+      : 'gap-3 rounded-lg p-4 h-12'
     : 'p-4 rounded-full'}"
   {isActive}
   on:click={onClick}
   on:pointerenter={onHover}
   {parentBackgroundIndex}
-  selectionStyle={style === PageSwitcherStyle.THIN
+  selectionStyle={style === LayoutContext.PORTRAIT ||
+  style === LayoutContext.THIN
     ? SelectionItemActiveStyle.ACCENT_COLOR
     : SelectionItemActiveStyle.ACCENT_BACKGROUND}
-  styleList="padding-top: {pad / 2}px;padding-bottom: {pad /
-    2}px;padding-left: {pad}px;padding-right: {pad}px;"
 >
   {#if item.icon}
     <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
-    <Icon
-      icon={item.icon}
-      {isActive}
-      selectionStyle={style === PageSwitcherStyle.THIN
-        ? SelectionItemActiveStyle.ACCENT_COLOR
-        : SelectionItemActiveStyle.NONE}
-    />
+    <div class="w-6 flex justify-center">
+      <Icon
+        icon={item.icon}
+        {isActive}
+        hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
+        selectionStyle={style === LayoutContext.PORTRAIT ||
+        style === LayoutContext.THIN
+          ? SelectionItemActiveStyle.ACCENT_COLOR
+          : SelectionItemActiveStyle.NONE}
+      />
+    </div>
   {/if}
   {#if isShowLabel}
-    {item.icon}
+    {item.label}
   {/if}
 </Element>

@@ -15,10 +15,7 @@
     {"Landscapiness: " + $windowObject.landscapiness.toFixed(2)}
   </div>
   <div>
-    {"portriat mode: " + $windowObject.isInPortrait}
-  </div>
-  <div>
-    {"Is in thin mode: " + $windowObject.isInThinMode}
+    {"Is in portriat mode: " + $windowObject.isInPortraitMode}
   </div>
   <div>
     {"Scale: " + $windowObject.scale.toFixed(2)}

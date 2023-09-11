@@ -1,7 +1,7 @@
 export type ComponentType = {
   path: string;
   component?: any;
-  heading?: string;
+  label?: string;
   icon?: string;
   sections?: string[];
   pagePaint?: PaintType;

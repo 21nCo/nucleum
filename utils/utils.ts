@@ -3,6 +3,7 @@ import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { localComponents } from "$lib/local/stores/localComponentMap";
 import { components } from "$lib/tidy/layout/componentMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
+import { goto } from "$app/navigation";
 export function formatTime(date: Date) {
   let hours = date?.getHours().toString().padStart(2, "0");
   let minutes = date?.getMinutes().toString().padStart(2, "0");

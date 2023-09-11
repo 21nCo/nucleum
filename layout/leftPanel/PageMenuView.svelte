@@ -1,7 +1,11 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
-  import { appEvents, appStore } from "$lib/tidy/stores/app.store";
+  import {
+    appEvents,
+    appStore,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import {
@@ -19,15 +23,15 @@
   });
   function onSwitch(event: any) {
     if (!event.detail || !$appStore.pageMenu) return;
-    const path = $appStore.pageMenu[event.detail.selected].path;
-    goto("/" + path);
+    const path = $appStore.pageMenu[event.detail.selected];
+    windowObject.gotoPath("/" + path);
   }
 </script>
 
 {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
   <div class="pl-4">
     <Switcher
-      items={$appStore.pageMenu.map((t) => t.heading ?? "")}
+      items={$appStore.pageMenu.map((t) => t ?? "")}
       style={SwitcherStyle.Vertical}
       size={Size.sm}
       selectionStyle={SelectionItemActiveStyle.SIDEDOT}

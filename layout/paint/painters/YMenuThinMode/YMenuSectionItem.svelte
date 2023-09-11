@@ -9,6 +9,7 @@
   import Element from "$lib/tidy/elements/Element.svelte";
   import ComponentResolver from "../../ComponentResolver.svelte";
   import { onMount } from "svelte";
+  import { windowObject } from "$lib/tidy/stores/app.store";
   export let path: string;
   const classList = "w-full text-start px-8 py-2 self-start";
   let currentComponent: ComponentType | undefined = getComponentFromPath(path);
@@ -20,8 +21,11 @@
       <ComponentResolver {currentComponent} />
     </div>
   {:else}
-    <Element classList={classList + " text-b2"} on:click={() => goto(path)}>
-      {currentComponent.heading?.toLowerCase()}</Element
+    <Element
+      classList={classList + " text-b2"}
+      on:click={() => windowObject.gotoPath(path)}
+    >
+      {currentComponent.label?.toLowerCase()}</Element
     >
   {/if}
 {/if}
