@@ -2,7 +2,7 @@
   import { EventType } from "$lib/tidy/types/event.enum";
   import { onMount, tick } from "svelte";
   import type { CustomEvent } from "$lib/tidy/types/event.type";
-  import Popover from "$lib/tidy/components/Popover/Popover.svelte";
+  import Popover from "$lib/tidy/components/popover/Popover.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
 
   import DebugLayer from "./DebugLayer.svelte";
@@ -16,13 +16,13 @@
   } from "$lib/tidy/stores/app.store";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import Collapse from "$lib/tidy/icons/Collapse.svelte";
-  import WithYStack from "./paint/painters/YStack/WithYStack.svelte";
+  import WithYStack from "../paint/painters/YStack/WithYStack.svelte";
   import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
   import { fade, fly, slide } from "svelte/transition";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
   import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
-  import { defaultAppData } from "$lib/local/stores/local.store";
+  import { defaultAppStore } from "$lib/local/stores/local.store";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;
@@ -48,17 +48,21 @@
     };
   });
   async function retrieveAppData() {
-    appStore.initiatizeAppData(defaultAppData);
-    let response = await performBlankApiCall(
-      "appdata",
-      "POST",
-      JSON.stringify({ app })
-    );
-    if (response && response.ok) {
-      let jsonValue = await response.json();
-      if (jsonValue) {
-        appStore.initiatizeAppData(jsonValue);
+    appStore.initiatizeAppData(defaultAppStore.appData);
+    try {
+      let response = await performBlankApiCall(
+        "appdata",
+        "POST",
+        JSON.stringify({ app })
+      );
+      if (response && response.ok) {
+        let jsonValue = await response.json();
+        if (jsonValue) {
+          appStore.initiatizeAppData(jsonValue);
+        }
       }
+    } catch (err) {
+      console.error(err);
     }
   }
 </script>

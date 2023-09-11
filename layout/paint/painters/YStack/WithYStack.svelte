@@ -17,8 +17,8 @@
 
 {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
   <div class="flex flex-col gap-10 w-full h-full lg:mb-20 overflow-auto">
-    {#if currentComponent.heading && (!params || (params && params.hidePageHeading !== true))}
-      <Text type={TextType.PAGE_HEADING}>{currentComponent.heading}</Text>
+    {#if currentComponent.label && (!params || (params && params.hidePageHeading !== true))}
+      <Text type={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
     {/if}
     {#each currentComponent.sections as section}
       <YStackElement path={currentComponent.path + "/" + section} {params} />

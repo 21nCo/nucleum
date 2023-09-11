@@ -7,13 +7,13 @@
   } from "$lib/tidy/stores/app.store";
   import { LayoutType } from "$lib/tidy/types/layout.enum";
   import { onMount } from "svelte";
-  import PageMenuView from "../components/powerPanel/PageMenuView.svelte";
-  import Switcher from "../elements/switcher/Switcher.svelte";
-  import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import { EventType } from "../types/event.enum";
-  import type { CustomEvent } from "../types/event.type";
-  import Button from "../elements/Button.svelte";
-  import { Size } from "../types/size.enum";
+  import PageMenuView from "../leftPanel/PageMenuView.svelte";
+  import Switcher from "../../elements/switcher/Switcher.svelte";
+  import { SelectionItemActiveStyle } from "../../types/switcher.enum";
+  import { EventType } from "../../types/event.enum";
+  import type { CustomEvent } from "../../types/event.type";
+  import Button from "../../elements/Button.svelte";
+  import { Size } from "../../types/size.enum";
   export let layoutType: LayoutType = LayoutType.ONEPANEL;
   export let panelTitles: string[] = [];
   export let isShowPageMenu: boolean = true;
@@ -24,21 +24,21 @@
     pad = rawPad > 200 ? 200 : rawPad;
   }
   onMount(() => {
-    isShowPageMenu = $windowObject.isInThinMode;
+    isShowPageMenu = $windowObject.isInPortraitMode;
     appEvents.subscribe((x: CustomEvent) => {
       console.log(x);
       if (x.type == EventType.PAGE_MENU_CHANGED) {
         isShowPageMenu = false;
       }
       if (
-        $windowObject.isInThinMode &&
+        $windowObject.isInPortraitMode &&
         x.type === EventType.THINMODE_PANELSWITCH &&
         x.value != undefined
       ) {
         selectedPanel = x.value;
       }
     });
-    console.log(selectedPanel, $windowObject.isInThinMode);
+    console.log(selectedPanel, $windowObject.isInPortraitMode);
   });
 </script>
 
@@ -47,7 +47,7 @@
     <PageMenuView />
   </div>
 {:else}
-  {#if $appStore.pageMenu && $appStore.pageMenu.length > 0 && $windowObject.isInThinMode}
+  {#if $appStore.pageMenu && $appStore.pageMenu.length > 0 && $windowObject.isInPortraitMode}
     <div style="padding: {pad / 4}px;">
       <Button
         label="go back"
@@ -63,7 +63,7 @@
       <slot />
     </div>
   {:else if layoutType == LayoutType.TWOPANEL}
-    {#if $windowObject.isInThinMode}
+    {#if $windowObject.isInPortraitMode}
       <div
         class="flex w-full text-h2"
         style="margin-top: {pad / 4}px; margin-bottom: {pad / 4}px;"
@@ -79,7 +79,7 @@
     {/if}
     <div class="flex justify-center w-full items-center overflow-auto">
       <div class="flex h-full w-full">
-        {#if !$windowObject.isInThinMode}
+        {#if !$windowObject.isInPortraitMode}
           <div
             class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
             'Colorful'

@@ -17,6 +17,7 @@ import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount } from "../types/account.type";
+import { goto } from "$app/navigation";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -52,9 +53,9 @@ export const windowObject = initWindow({
   documentWidth: 0,
   landscapiness: 0,
   scale: 0,
-  isInPortrait: false,
-  isInThinMode: false,
+  isInPortraitMode: false,
   firstLoad: new Date().getTime(),
+  currentPath: "",
 });
 
 function initWindow(settings: WindowObject) {
@@ -73,10 +74,9 @@ function initWindow(settings: WindowObject) {
           documentWidth: width,
           landscapiness: width / height,
           scale: (width / 1000 + height / 1000) / 2,
-          isInThinMode: false,
+          isInPortraitMode: false,
         };
-        n.isInPortrait = n.landscapiness < 1;
-        n.isInThinMode = n.landscapiness < 1;
+        n.isInPortraitMode = n.landscapiness < 1;
         return n;
       });
     },
@@ -85,6 +85,15 @@ function initWindow(settings: WindowObject) {
         n = { ...n, isMinimalTopBar: isMinimal };
         return n;
       });
+    },
+    gotoPath: (path: string, params: any = null) => {
+      update((n: WindowObject) => {
+        n = { ...n, currentPath: path };
+        console.log({ n });
+        return n;
+      });
+      if (params) goto(path, params);
+      else goto(path);
     },
   };
 }
@@ -159,7 +168,6 @@ export const appStore = initAppStore({
   isDebugMode,
   environment: "", //todo - move to base -> window?.location.host.split(".")[0],
   tailwindTheme: "",
-  appName: "",
   appData: {},
   appConstants: {
     themes,

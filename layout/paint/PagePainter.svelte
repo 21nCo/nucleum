@@ -52,7 +52,7 @@
           }
         }
       }
-      if ($windowObject.isInThinMode) {
+      if ($windowObject.isInPortraitMode) {
         thinModePaint();
       } else {
         paint();
@@ -71,9 +71,12 @@
   function paint() {
     const isSet = setPageMenuIfRequired(currentComponent!);
     if (isSet && currentComponent?.sections) {
-      goto(currentComponent.path + "/" + currentComponent.sections[0], {
-        replaceState: true,
-      });
+      windowObject.gotoPath(
+        currentComponent.path + "/" + currentComponent.sections[0],
+        {
+          replaceState: true,
+        }
+      );
     } else {
       if (
         parentComponent &&
@@ -95,10 +98,9 @@
       (component.pagePaint === PaintType.YMENU ||
         component.pagePaint === PaintType.XMENU)
     ) {
-      let children: ComponentType[] = [];
+      let children: string[] = [];
       component.sections!.forEach((element) => {
-        let child = getComponentFromPath(component.path + "/" + element);
-        if (child) children.push(child);
+        children.push(component.path + "/" + element);
       });
       $appStore.pageMenu = children;
       return true;
@@ -107,34 +109,34 @@
 </script>
 
 {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
-  {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$windowObject.isInThinMode}
+  {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$windowObject.isInPortraitMode}
     <WithPanelOnLeft {currentComponent} />
   {:else}
     <div
-      class="w-full {$windowObject.isInThinMode ? 'mb-40' : ''}"
+      class="w-full {$windowObject.isInPortraitMode ? 'mb-40' : ''}"
       style="padding: {pad / 4}px;"
     >
-      {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
+      {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $windowObject.isInPortraitMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
         <ComponentResolver path={currentComponent.sections[0]} />
-      {:else if currentComponent.pagePaint === PaintType.YSTACK || ($windowObject.isInThinMode && currentComponent.thinModeBehavior === ThinModeBehavior.YSTACK)}
+      {:else if currentComponent.pagePaint === PaintType.YSTACK || ($windowObject.isInPortraitMode && currentComponent.thinModeBehavior === ThinModeBehavior.YSTACK)}
         <WithYStack {currentComponent} />
-      {:else if currentComponent.pagePaint === PaintType.YMENU && $windowObject.isInThinMode}
+      {:else if currentComponent.pagePaint === PaintType.YMENU && $windowObject.isInPortraitMode}
         <WithYMenuThinMode {currentComponent} />
       {/if}
     </div>
   {/if}
 {:else}
   <div
-    class="flex flex-col gap-4 w-full h-full p-4 {$windowObject.isInThinMode
+    class="flex flex-col gap-4 w-full h-full p-4 {$windowObject.isInPortraitMode
       ? 'mb-40'
       : ''}"
   >
-    {#if $windowObject.isInThinMode && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
+    {#if $windowObject.isInPortraitMode && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
       <Button
         label="go back"
         size={Size.sm}
         on:click={() => {
-          goto(
+          windowObject.gotoPath(
             "/" +
               (parentComponent?.pagePaint === PaintType.YMENU
                 ? parentComponent?.path
@@ -144,8 +146,8 @@
         }}
       />
     {/if}
-    {#if currentComponent?.heading}
-      <Text type={TextType.PAGE_HEADING}>{currentComponent.heading}</Text>
+    {#if currentComponent?.label}
+      <Text type={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
     {/if}
     <ComponentResolver {currentComponent} />
   </div>

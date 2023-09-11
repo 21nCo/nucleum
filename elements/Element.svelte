@@ -11,6 +11,8 @@
   export let isActive: boolean = false;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
+  export let hoverStyle: SelectionItemActiveStyle =
+    SelectionItemActiveStyle.NONE;
   export let parentBackgroundIndex: number = 1;
   export let isForDebug: boolean = false;
   let activeBackgroundColor: string = "";
@@ -33,6 +35,9 @@
 {#if isAction}
   <button
     class={classList +
+      (hoverStyle === SelectionItemActiveStyle.NONE
+        ? ""
+        : " hover:text-accent1") +
       ($userPreferences.theme == "Colorful"
         ? selectionStyle != SelectionItemActiveStyle.SIDEDOT
           ? isActive

@@ -14,7 +14,7 @@
   let component: ComponentType | undefined = getComponentFromPath(path);
 </script>
 
-{#if component && component.heading && component.type === BlockType.SECTION}
-  <Text type={TextType.SECTION_HEADING}>{component.heading.toUpperCase()}</Text>
+{#if component && component.label && component.type === BlockType.SECTION}
+  <Text type={TextType.SECTION_HEADING}>{component.label.toUpperCase()}</Text>
 {/if}
 <ComponentResolver {path} {params} />
