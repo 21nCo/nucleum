@@ -86,10 +86,15 @@ function initWindow(settings: WindowObject) {
         return n;
       });
     },
+    setCurrentPath: (path: string) => {
+      update((n: WindowObject) => {
+        n = { ...n, currentPath: path };
+        return n;
+      });
+    },
     gotoPath: (path: string, params: any = null) => {
       update((n: WindowObject) => {
         n = { ...n, currentPath: path };
-        console.log({ n });
         return n;
       });
       if (params) goto(path, params);

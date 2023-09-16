@@ -23,9 +23,9 @@
       if (!x.appMenu) return;
       if (layoutContext === LayoutContext.PORTRAIT) {
         items = x.appMenu.slice(0, 4);
-        items.push("settings");
+        items.push("cp");
       } else {
-        items = x.appMenu.filter((item) => item !== "settings");
+        items = x.appMenu.filter((item) => item !== "cp");
       }
       items.forEach((page: string) => {
         const currentPage = getComponentFromPath(page);

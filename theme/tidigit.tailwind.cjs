@@ -17,9 +17,10 @@ const defaultFontSize = {
   h1: "2.1rem",
   h2: "1.8rem",
   h3: "1.5rem",
-  base: "1.3rem",
-  b2: "1rem",
+  base: "1rem",
+  b2: "0.9rem",
   b3: "0.8rem",
+  b4: "0.7rem",
 };
 
 const themes = [

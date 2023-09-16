@@ -35,9 +35,13 @@
 {#if isAction}
   <button
     class={classList +
-      (hoverStyle === SelectionItemActiveStyle.NONE
-        ? ""
-        : " hover:text-accent1") +
+      (hoverStyle === SelectionItemActiveStyle.ACCENT_COLOR
+        ? " hover:text-accent1"
+        : hoverStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
+        ? " hover:bg-accent1 hover:text-bgs1"
+        : hoverStyle === SelectionItemActiveStyle.BG_COLOR && !isActive
+        ? " hover:bg-bgs3 hover:text-fgs1"
+        : "") +
       ($userPreferences.theme == "Colorful"
         ? selectionStyle != SelectionItemActiveStyle.SIDEDOT
           ? isActive

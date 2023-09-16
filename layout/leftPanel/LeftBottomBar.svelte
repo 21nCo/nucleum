@@ -4,7 +4,14 @@
   import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
+  import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
+  let isCpActive: boolean = false;
+  onMount(() => {
+    windowObject.subscribe((x) => {
+      isCpActive = x?.currentPath?.includes("/cp");
+    });
+  });
 </script>
 
 <div class="w-full bg-bgs3 {isInThinMode ? 'h-24' : 'h-12'}">
@@ -16,21 +23,21 @@
     >
       <Element
         parentBackgroundIndex={2}
-        isActive={$windowObject.currentPath?.includes("settings")}
+        isActive={isCpActive}
         selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-        classList="flex gap-2 h-full w-full items-center justify-center px-2 rounded-lg"
-        on:click={() => windowObject.gotoPath("/settings")}
+        classList="flex gap-2 h-full w-full items-center justify-center px-2 {!isInThinMode
+          ? 'rounded-bl-lg'
+          : ''}"
+        on:click={() => windowObject.gotoPath("/cp")}
       >
-        <Icon
-          icon="settings"
-          size={Size.lg}
-          isActive={$windowObject.currentPath?.includes("settings")}
-        />
+        <Icon icon="settings" size={Size.lg} isActive={isCpActive} />
       </Element>
       <Element
         parentBackgroundIndex={2}
         selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-        classList="flex h-full w-full justify-center px-2 items-center gap-1 rounded-lg"
+        classList="flex h-full w-full justify-center px-2 items-center gap-1  {isInThinMode
+          ? 'rounded-b-lg'
+          : 'rounded-br-lg'}"
         on:click={() => {
           if ($account.isLoggedIn) account.signOut();
           windowObject.gotoPath("/settings/account");

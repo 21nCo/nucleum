@@ -7,13 +7,16 @@
   onMount(() => {
     switch (type) {
       case TextType.PAGE_HEADING:
-        classList += " text-accent1 bg-none text-h1 my-10";
+        classList += " text-accent1 bg-none text-h1 my-4";
         break;
       case TextType.SECTION_HEADING:
         classList += " text-fgs3 font-bold p-2 my-6 max-w-3xl";
         break;
       case TextType.SECTION_DESCRIPTION:
         classList += " text-fgs3";
+        break;
+      case TextType.CP_SECTION:
+        classList += " text-fgs2 font-bold text-b2 max-w-3xl bg-none";
         break;
     }
   });

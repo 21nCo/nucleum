@@ -22,7 +22,7 @@
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
   import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
-  import { defaultAppStore } from "$lib/local/stores/local.store";
+  import { defaultAppData } from "$lib/local/stores/local.store";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;
@@ -48,7 +48,7 @@
     };
   });
   async function retrieveAppData() {
-    appStore.initiatizeAppData(defaultAppStore.appData);
+    appStore.initiatizeAppData(defaultAppData);
     try {
       let response = await performBlankApiCall(
         "appdata",

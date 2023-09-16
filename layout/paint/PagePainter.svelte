@@ -20,6 +20,7 @@
   import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
   import { notFoundAction } from "$lib/tidy/utils/actions";
   export let path: string | undefined = undefined;
+  export let prefix: string | undefined = undefined;
   let currentComponent: ComponentType | undefined;
   let parentComponent: ComponentType | undefined;
   let grandPa: ComponentType | undefined;
@@ -32,10 +33,14 @@
     page.subscribe(() => {
       parentComponent = undefined;
       grandPa = undefined;
-      const currentPath = $page.params.route;
+      let currentPath = $page.params.route;
+      console.log({ path, currentPath });
+      if (prefix) {
+        currentPath = prefix + "/" + currentPath;
+      }
       currentComponent = getComponentFromPath(path ?? currentPath);
       if (!currentComponent) {
-        notFoundAction();
+        //notFoundAction();
       }
       if (currentComponent && currentComponent.action) {
         currentComponent.action();
@@ -126,11 +131,7 @@
     </div>
   {/if}
 {:else}
-  <div
-    class="flex flex-col gap-4 w-full h-full p-4 {$windowObject.isInPortraitMode
-      ? 'mb-40'
-      : ''}"
-  >
+  <div class="flex flex-col gap-4 w-full h-full">
     {#if $windowObject.isInPortraitMode && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
       <Button
         label="go back"
@@ -146,9 +147,9 @@
         }}
       />
     {/if}
-    {#if currentComponent?.label}
+    <!-- {#if currentComponent?.label}
       <Text type={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
-    {/if}
+    {/if} -->
     <ComponentResolver {currentComponent} />
   </div>
 {/if}

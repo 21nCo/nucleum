@@ -10,6 +10,7 @@
   import ColorSchemeSwitcher from "$lib/tidy/components/settings/ColorSchemeSwitcher.svelte";
   import SizeFactorSetting from "$lib/tidy/components/settings/appearance/accessibility/sizeFactor/SizeFactorSetting.svelte";
   import OpenPreviewMode from "./OpenPreviewMode.svelte";
+  import ControlPanelLayout from "../ControlPanelLayout.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedThemeIndex: number = 0;
   let selectedColorSchemeIndex: number;
@@ -64,7 +65,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-8 w-full">
+<div class="flex flex-col gap-8">
   {#if $appStore.isDebugMode}
     <Switcher
       label="Theme"

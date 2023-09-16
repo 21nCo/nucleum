@@ -10,16 +10,18 @@ import AccessibilitySettings from "$lib/tidy/components/settings/appearance/acce
 import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
 import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
 import AccountSettings from "../components/settings/account/AccountSettings.svelte";
+import ControlPanel from "../components/settings/ControlPanel.svelte";
+import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 export const components: ComponentType[] = [
   {
     path: "404",
     component: NotFound,
   },
   {
-    path: "settings",
-    sections: ["account", "appearance", "about"],
-    pagePaint: PaintType.YMENU,
-    thinModeBehavior: ThinModeBehavior.GRAND_CHILDREN_ON_MENU,
+    path: "cp",
+    label: "Control",
+    icon: "settings",
+    component: ControlPanel,
   },
   {
     label: "Account",
@@ -42,17 +44,27 @@ export const components: ComponentType[] = [
     thinModeBehavior: ThinModeBehavior.HIDE,
   },
   {
-    label: "Theme",
-    path: "settings/appearance/theme",
-    component: ThemeSettingView,
-    pagePaint: PaintType.JUMP_TO_PARENT,
-    type: BlockType.SECTION,
+    label: "Accessibility",
+    path: "cp/accessibility",
+    icon: "cube",
+    component: AccessibilitySettings,
   },
   {
-    label: "Accessibility",
-    path: "settings/appearance/accessibility",
-    component: AccessibilitySettings,
-    pagePaint: PaintType.JUMP_TO_PARENT,
-    type: BlockType.SECTION,
+    label: "Theme",
+    path: "cp/theme",
+    icon: "palette",
+    component: ThemeSettingView,
+  },
+  {
+    label: "App Menu",
+    path: "cp/appMenu",
+    icon: "list",
+    component: AppMenuSettings,
+  },
+  {
+    label: "Keyboard shortcuts",
+    path: "cp/shortcuts",
+    icon: "command",
+    component: AppMenuSettings,
   },
 ];
