@@ -5,14 +5,25 @@
   import Bolt from "../icons/Bolt.svelte";
   import Home from "../icons/Home.svelte";
   import Stack from "../icons/Stack.svelte";
-  import { IconVariant } from "../types/icon.type";
+  import { ChatIconVariant, IconVariant } from "../types/icon.type";
   import ChevronDouble from "../icons/ChevronDouble.svelte";
   import { Direction } from "../types/direction.enum";
   import { Size } from "../types/size.enum";
   import Command from "../icons/Command.svelte";
+  import Chevron from "../icons/Chevron.svelte";
+  import Clock from "../icons/Clock.svelte";
+  import Bell from "../icons/Bell.svelte";
+  import Swatch from "../icons/Swatch.svelte";
+  import Cube from "../icons/Cube.svelte";
+  import Data from "../icons/Data.svelte";
+  import AcademicCap from "../icons/AcademicCap.svelte";
+  import Chat from "../icons/Chat.svelte";
+  import List from "../icons/List.svelte";
+  import Widget from "../icons/Widget.svelte";
+  import Fire from "../icons/Fire.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
-  export let size: Size = Size.sm;
+  export let size: Size = Size.md;
   export let isActive: boolean = false;
   export let color: string = "fgs1";
   export let selectionStyle: SelectionItemActiveStyle =
@@ -20,7 +31,9 @@
   export let hoverStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   $: variant =
-    isActive || icon == "chevdoubleleft" || icon == "chevdoubleright"
+    (isActive && icon != "chevright" && icon != "chevleft" && icon != "list") ||
+    icon == "chevdoubleleft" ||
+    icon == "chevdoubleright"
       ? IconVariant.Solid
       : IconVariant.Outline;
 </script>
@@ -30,8 +43,11 @@
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      class="{size == Size.sm ? 'w-6 h-6' : 'w-8 h-8'} {variant ===
-      IconVariant.Outline
+      class="{size == Size.md
+        ? 'w-5 h-5'
+        : size == Size.lg
+        ? 'w-6 h-6'
+        : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-accent1'
@@ -60,6 +76,30 @@
         <Stack {variant} />
       {:else if icon === "command"}
         <Command {variant} />
+      {:else if icon === "clock"}
+        <Clock {variant} />
+      {:else if icon === "bell"}
+        <Bell {variant} />
+      {:else if icon === "palette"}
+        <Swatch {variant} />
+      {:else if icon === "cube"}
+        <Cube {variant} />
+      {:else if icon === "data"}
+        <Data {variant} />
+      {:else if icon === "list"}
+        <List {variant} />
+      {:else if icon === "widget"}
+        <Widget {variant} />
+      {:else if icon === "fire"}
+        <Fire {variant} />
+      {:else if icon === "chatleftright"}
+        <Chat {variant} chatIconVariant={ChatIconVariant.LeftRight} />
+      {:else if icon === "academic-cap"}
+        <AcademicCap {variant} />
+      {:else if icon === "chevleft"}
+        <Chevron direction={Direction.Left} />
+      {:else if icon === "chevright"}
+        <Chevron direction={Direction.Right} />
       {:else if icon === "chevdoubleleft"}
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}

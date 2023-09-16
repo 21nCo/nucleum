@@ -4,3 +4,8 @@ export enum Direction {
   Left = "left",
   Right = "right",
 }
+
+export enum Orientation {
+  Horizontal = "horizontal",
+  Vertical = "vertical",
+}

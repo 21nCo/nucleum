@@ -7,10 +7,11 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
   import type { ComponentType } from "$lib/tidy/types/component.type";
+  import { Size } from "$lib/tidy/types/size.enum";
   const dispatch = createEventDispatcher();
   export let item: ComponentType;
   export let style: LayoutContext = LayoutContext.DEFAULT;
-  $: isActive = $page.params.route.includes(item.path);
+  $: isActive = $page.params.route?.includes(item.path);
   export let isShowLabel: boolean = true;
   export let parentBackgroundIndex: number;
   let pad: number;
@@ -32,7 +33,7 @@
   classList="flex text-b2 items-center {isShowLabel
     ? style === LayoutContext.PORTRAIT
       ? 'flex-col gap-1 text-b3 rounded-lg'
-      : 'gap-3 rounded-lg p-4 h-12'
+      : 'gap-3 rounded-lg p-4 h-10'
     : 'p-4 rounded-full'}"
   {isActive}
   on:click={onClick}
@@ -49,6 +50,7 @@
       <Icon
         icon={item.icon}
         {isActive}
+        size={style === LayoutContext.THIN ? Size.lg : Size.md}
         hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
         selectionStyle={style === LayoutContext.PORTRAIT ||
         style === LayoutContext.THIN

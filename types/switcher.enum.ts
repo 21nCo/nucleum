@@ -14,4 +14,5 @@ export enum SelectionItemActiveStyle {
   BOTTOMDOT,
   ACCENT_BACKGROUND,
   ACCENT_COLOR,
+  BG_COLOR,
 }
