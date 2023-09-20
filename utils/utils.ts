@@ -4,6 +4,8 @@ import { localComponents } from "$lib/local/stores/localComponentMap";
 import { components } from "$lib/tidy/layout/componentMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
 import { goto } from "$app/navigation";
+import { appStore, userPreferences } from "../stores/app.store";
+import { get } from "svelte/store";
 export function formatTime(date: Date) {
   let hours = date?.getHours().toString().padStart(2, "0");
   let minutes = date?.getMinutes().toString().padStart(2, "0");
@@ -234,20 +236,42 @@ export function generateSessionId(timestamp: number) {
 export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   let activeBackgroundColor;
   let backgroundColor;
+  let activeBackgroundColorHex;
+  let backgroundColorHex;
+  let currentColors = retrieveCurrentColors(get(userPreferences));
   if (parentBackgroundIndex === 1) {
     activeBackgroundColor = " bg-bgs3";
+    activeBackgroundColorHex = currentColors?.bgs3;
     backgroundColor = " bg-bgs2";
+    backgroundColorHex = currentColors?.bgs2;
   } else if (parentBackgroundIndex === 2) {
     activeBackgroundColor = " bg-bgs4";
+    activeBackgroundColorHex = currentColors?.bgs4;
     backgroundColor = " bg-bgs3";
+    backgroundColorHex = currentColors?.bgs3;
   } else if (parentBackgroundIndex === 3) {
     activeBackgroundColor = " bg-bgs4";
+    activeBackgroundColorHex = currentColors?.bgs4;
     backgroundColor = " bg-bgs4";
+    backgroundColorHex = currentColors?.bgs4;
   } else {
     activeBackgroundColor = " bg-bgs2";
+    activeBackgroundColorHex = currentColors?.bgs2;
     backgroundColor = " bg-bgs1";
+    backgroundColorHex = currentColors?.bgs1;
   }
-  return { activeBackgroundColor, backgroundColor };
+  return {
+    activeBackgroundColor,
+    backgroundColor,
+    activeBackgroundColorHex,
+    backgroundColorHex,
+  };
+}
+export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
+  let colorScheme = get(appStore).appConstants.colorSchemes.find((x: any) => {
+    return x.label === userPreferences.colorScheme.label;
+  });
+  return colorScheme;
 }
 
 export function removeDuplicatesById(items: any[]) {
