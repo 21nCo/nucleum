@@ -7,6 +7,7 @@
   export let size: Size;
   export let parentBackgroundIndex: number;
   export let isActive: boolean = false;
+  export let activeColor: string | undefined = undefined;
   export let selectionStyle: SelectionItemActiveStyle;
   let classList: string = "relative max-w-full";
 
@@ -20,10 +21,11 @@
         classList += " py-1 px-4 text-b2 rounded-full";
         break;
       case Size.md:
-        classList += " px-4 py-2 rounded-md text-base";
+        classList += " px-4 py-2 text-base";
         break;
       case Size.lg:
-        classList += " px-8 py-4 rounded-md text-lg";
+        //todo - add roman and medium font variants and use those instead of bold
+        classList += " px-8 py-4 text-lg font-bold";
         break;
       default:
         classList += " p-2";
@@ -38,6 +40,7 @@
   {parentBackgroundIndex}
   {selectionStyle}
   {isActive}
+  {activeColor}
 >
   <div class="flex gap-2 items-center">
     {#if selectionStyle === SelectionItemActiveStyle.CIRCLE}
