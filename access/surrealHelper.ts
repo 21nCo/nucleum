@@ -1,7 +1,12 @@
+import jwt_decode from "jwt-decode";
+
 export class SurrealDatabase {
   token: string;
+  userId: string;
   constructor(private instance: string = "") {
     this.token = localStorage.getItem("surreal-token") ?? "";
+    let decodedToken: any = jwt_decode(this.token);
+    this.userId = decodedToken?.user ?? "";
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
@@ -48,7 +53,7 @@ export class SurrealDatabase {
         Accept: "application/json",
         Authorization: "Bearer " + this.token,
       },
-      body: query,
+      body: `USE database ${this.userId};  ${query}`,
     });
     if (response.ok) return await response.json();
     else return null;
