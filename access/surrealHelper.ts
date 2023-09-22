@@ -2,12 +2,14 @@ import jwt_decode from "jwt-decode";
 import type { SurrealResponse } from "../types/surreal.type";
 
 export class SurrealDatabase {
-  token: string;
-  userId: string;
+  token: string | null;
+  userId: string | undefined;
   constructor(private instance: string = "") {
-    this.token = localStorage.getItem("surreal-token") ?? "";
-    let decodedToken: any = jwt_decode(this.token);
-    this.userId = decodedToken?.user ?? "";
+    this.token = localStorage.getItem("surreal-token");
+    if (this.token) {
+      let decodedToken: any = jwt_decode(this.token);
+      this.userId = decodedToken?.user ?? "";
+    }
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
@@ -65,6 +67,13 @@ export class SurrealDatabase {
   }
   async query(query: string, params: any) {
     try {
+      this.token = localStorage.getItem("surreal-token");
+      if (this.userId == undefined && this.token) {
+        let decodedToken: any = jwt_decode(this.token);
+        this.userId = decodedToken?.user ?? "";
+      } else if (this.userId == undefined) {
+        throw new Error("User not logged in");
+      }
       for (const key in params) {
         query = query.replaceAll("$" + key, params[key]);
       }

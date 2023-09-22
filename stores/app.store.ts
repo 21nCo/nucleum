@@ -21,7 +21,7 @@ import { goto } from "$app/navigation";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
-export const cloudProvider = writable(Cloud.surreal);
+export const cloudProvider = writable(Cloud.local);
 
 export const app =
   window.location.hostname === "localhost"
