@@ -11,7 +11,7 @@ import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { persistLocally, retrieveLocally } from "./persistance";
-import { ItemType } from "../types/item.enum";
+import { ItemType } from "$lib/local/types/item.enum";
 import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
