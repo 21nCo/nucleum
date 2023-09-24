@@ -34,10 +34,8 @@
     backgroundColor = colors.backgroundColor;
   });
   function handleClick(event: any) {
-    console.log({ event });
     let selectedMenuItem = event.detail.item;
     selectedIndex = items.indexOf(selectedMenuItem!);
-    console.log({ selectedIndex });
     dispatch("switch", { selected: selectedIndex });
   }
   onMount(() => {

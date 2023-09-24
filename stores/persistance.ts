@@ -90,6 +90,35 @@ export class Persistance {
     return item.id;
   }
   /**
+   * Creates a new Item. If Id is not provided, a new Id will be generated
+   * @param item Item to be created
+   * @param itemType ItemType
+   * @returns Id of the created Item
+   */
+  createMultiple(items: Item[], itemType: ItemType) {
+    switch (get(cloudProvider)) {
+      case Cloud.local:
+        let allItems = retrieveLocally(itemType);
+        if (!allItems) {
+          allItems = [];
+        }
+        allItems.push(items);
+        persistLocally(itemType, allItems);
+        break;
+      case Cloud.surreal:
+        //todo - replace with surreal query for bulk create
+        items.forEach((item: Item) => {
+          if (item.id) {
+            surrealDb.create(ItemType[itemType] + `:${item.id}`, item);
+          } else {
+            surrealDb.create(ItemType[itemType], item);
+          }
+        });
+        break;
+    }
+    return true;
+  }
+  /**
    * Pass only the updated fields as item along with item ID
    * @param item Item with updated fields and item Id
    * @param itemType ItemType
@@ -157,8 +186,8 @@ export class Persistance {
       case Cloud.local:
         switch (itemType) {
           case ItemType.ALL:
-            const tagList = retrieveLocally(ItemType.Cronotag);
-            const taskList = retrieveLocally(ItemType.Cronotask);
+            const tagList = retrieveLocally(ItemType.CronoTag);
+            const taskList = retrieveLocally(ItemType.CronoTask);
             if (tagList) {
               const tagItems = tagList
                 .filter((item: Item) =>

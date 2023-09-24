@@ -54,9 +54,11 @@ export class SurrealDatabase {
     });
   }
   async select(recordId: string) {
-    return this.query("select * from $tb;", {
+    let response: any = await this.query("select * from $tb;", {
       tb: recordId,
     });
+    if (response && response.length > 0) return response[1].result[0];
+    else return null;
   }
   async delete(recordId: string) {
     let response = await this.query("DELETE $record;", {

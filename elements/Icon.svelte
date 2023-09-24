@@ -21,6 +21,7 @@
   import List from "../icons/List.svelte";
   import Widget from "../icons/Widget.svelte";
   import Fire from "../icons/Fire.svelte";
+  import Arrow from "../icons/Arrow.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -33,7 +34,8 @@
   $: variant =
     (isActive && icon != "chevright" && icon != "chevleft" && icon != "list") ||
     icon == "chevdoubleleft" ||
-    icon == "chevdoubleright"
+    icon == "chevdoubleright" ||
+    icon?.includes("-mini")
       ? IconVariant.Solid
       : IconVariant.Outline;
 </script>
@@ -42,7 +44,7 @@
   <button on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
+      viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
       class="{size == Size.md
         ? 'w-5 h-5'
         : size == Size.lg
@@ -100,6 +102,12 @@
         <Chevron direction={Direction.Left} />
       {:else if icon === "chevright"}
         <Chevron direction={Direction.Right} />
+      {:else if icon === "arrow-left"}
+        <Arrow direction={Direction.Left} />
+      {:else if icon === "arrow-right"}
+        <Arrow direction={Direction.Right} />
+      {:else if icon === "arrow-right-mini"}
+        <Arrow direction={Direction.Right} variant={IconVariant.Mini} />
       {:else if icon === "chevdoubleleft"}
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}
