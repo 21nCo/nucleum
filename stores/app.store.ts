@@ -14,14 +14,16 @@ import { persistLocally, retrieveLocally } from "./persistance";
 import { ItemType } from "$lib/local/types/item.enum";
 import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
-import { Cloud } from "../types/cloud.enum";
+import type { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount } from "../types/account.type";
 import { goto } from "$app/navigation";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
-export const cloudProvider = writable(Cloud.local);
+export const cloudProvider = writable(
+  import.meta.env.VITE_CLOUDPROVIDER as Cloud
+);
 
 export const app =
   window.location.hostname === "localhost"
