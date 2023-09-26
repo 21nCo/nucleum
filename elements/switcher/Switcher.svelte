@@ -24,6 +24,7 @@
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
   export let activeColor: string | undefined = undefined;
+  export let isDisableEnabled: boolean = false;
   let backgroundColor: string = "";
   let classList: string;
   onMount(() => {
@@ -106,6 +107,7 @@
           {activeColor}
           isActive={selectedIndex === index}
           on:click={handleClick}
+          isDisabled={isDisableEnabled && selectedIndex !== index}
         />
       {/each}
     </div>

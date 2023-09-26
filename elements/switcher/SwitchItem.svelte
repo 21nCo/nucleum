@@ -7,6 +7,7 @@
   export let size: Size;
   export let parentBackgroundIndex: number;
   export let isActive: boolean = false;
+  export let isDisabled: boolean = false;
   export let activeColor: string | undefined = undefined;
   export let selectionStyle: SelectionItemActiveStyle;
   let classList: string = "relative max-w-full";
@@ -41,6 +42,7 @@
   {selectionStyle}
   {isActive}
   {activeColor}
+  {isDisabled}
 >
   <div class="flex gap-2 items-center">
     {#if selectionStyle === SelectionItemActiveStyle.CIRCLE}
