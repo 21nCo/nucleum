@@ -12,6 +12,7 @@
   export let isAction: boolean = true;
   //export let isMenuItem: boolean = false;
   export let isActive: boolean = false;
+  export let isDisabled: boolean = false;
   export let activeColor: string | undefined = undefined;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
@@ -76,7 +77,8 @@
             " rounded-md " +
             " hover:" +
             activeBackgroundColor?.trim()
-        : "")}
+        : "") +
+      (isDisabled ? " opacity-50" : "")}
     on:click
     on:pointerenter
     {id}
@@ -92,6 +94,7 @@
             selectionStyle === SelectionItemActiveStyle.SIDEBAR)
         ? `;background-color: ${activeColor ?? defaultActiveColor}`
         : "")}
+    disabled={isDisabled}
   >
     <slot />
     {#if selectionStyle === SelectionItemActiveStyle.SIDEBAR && isActive}
