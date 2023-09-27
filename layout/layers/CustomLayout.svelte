@@ -26,7 +26,6 @@
   onMount(() => {
     isShowPageMenu = $windowObject.isInPortraitMode;
     appEvents.subscribe((x: CustomEvent) => {
-      console.log(x);
       if (x.type == EventType.PAGE_MENU_CHANGED) {
         isShowPageMenu = false;
       }
@@ -38,7 +37,6 @@
         selectedPanel = x.value;
       }
     });
-    console.log(selectedPanel, $windowObject.isInPortraitMode);
   });
 </script>
 

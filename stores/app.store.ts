@@ -11,7 +11,7 @@ import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { persistLocally, retrieveLocally } from "./persistance";
-import { ItemType } from "../types/item.enum";
+import { ItemType } from "$lib/local/types/item.enum";
 import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
@@ -21,7 +21,7 @@ import { goto } from "$app/navigation";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
-export const cloudProvider = writable(Cloud.local);
+export const cloudProvider = writable(Cloud.surreal);
 
 export const app =
   window.location.hostname === "localhost"

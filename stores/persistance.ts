@@ -1,10 +1,11 @@
 import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
-import { ItemType } from "$lib/tidy/types/item.enum";
+
 import { get, writable } from "svelte/store";
 import type { Item } from "../../local/types/item.type";
 import { cloudProvider } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
+import { ItemType } from "$lib/local/types/item.enum";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
@@ -62,6 +63,12 @@ export function retrieveLocally(itemType: ItemType) {
 }
 
 export class Persistance {
+  /**
+   * Creates a new Item. If Id is not provided, a new Id will be generated
+   * @param item Item to be created
+   * @param itemType ItemType
+   * @returns Id of the created Item
+   */
   create(item: Item, itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
@@ -73,12 +80,51 @@ export class Persistance {
         persistLocally(itemType, items);
         break;
       case Cloud.surreal:
-        surrealDb.create(ItemType[itemType], item);
+        if (item.id) {
+          surrealDb.create(ItemType[itemType] + `:${item.id}`, item);
+        } else {
+          return surrealDb.create(ItemType[itemType], item);
+        }
         break;
     }
     return item.id;
   }
-  update(item: Item, itemType: ItemType) {
+  /**
+   * Creates a new Item. If Id is not provided, a new Id will be generated
+   * @param item Item to be created
+   * @param itemType ItemType
+   * @returns Id of the created Item
+   */
+  createMultiple(items: Item[], itemType: ItemType) {
+    switch (get(cloudProvider)) {
+      case Cloud.local:
+        let allItems = retrieveLocally(itemType);
+        if (!allItems) {
+          allItems = [];
+        }
+        allItems.push(items);
+        persistLocally(itemType, allItems);
+        break;
+      case Cloud.surreal:
+        //todo - replace with surreal query for bulk create
+        items.forEach((item: Item) => {
+          if (item.id) {
+            surrealDb.create(ItemType[itemType] + `:${item.id}`, item);
+          } else {
+            surrealDb.create(ItemType[itemType], item);
+          }
+        });
+        break;
+    }
+    return true;
+  }
+  /**
+   * Pass only the updated fields as item along with item ID
+   * @param item Item with updated fields and item Id
+   * @param itemType ItemType
+   * @returns complete modified item record
+   */
+  update(item: any, itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let items: Item[] = retrieveLocally(itemType);
@@ -90,10 +136,15 @@ export class Persistance {
         persistLocally(itemType, items);
         break;
       case Cloud.surreal:
-        surrealDb.merge(ItemType[itemType] + `:${item.id}`, item);
-        break;
+        return surrealDb.merge(item.id, item);
     }
   }
+  /**
+   *
+   * @param itemId Id of the Item to be deleted
+   * @param itemType ItemType
+   * @returns true if deleted successfully else false
+   */
   delete(itemId: string, itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
@@ -102,10 +153,23 @@ export class Persistance {
         persistLocally(itemType, items);
         break;
       case Cloud.surreal:
-        surrealDb.delete(ItemType[itemType] + `:${itemId}`);
+        return surrealDb.delete(itemId);
     }
   }
-  retrieve(itemType: ItemType) {
+  retrieve(itemId: string, itemType: ItemType) {
+    switch (get(cloudProvider)) {
+      case Cloud.local:
+        let items = retrieveLocally(itemType);
+        if (!items) {
+          items = [];
+        }
+        let item = items.find((x: Item) => x.id == itemId);
+        return item;
+      case Cloud.surreal:
+        return surrealDb.select(itemId);
+    }
+  }
+  retrieveAll(itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let items = retrieveLocally(itemType);
@@ -122,8 +186,8 @@ export class Persistance {
       case Cloud.local:
         switch (itemType) {
           case ItemType.ALL:
-            const tagList = retrieveLocally(ItemType.cronotag);
-            const taskList = retrieveLocally(ItemType.cronotask);
+            const tagList = retrieveLocally(ItemType.CronoTag);
+            const taskList = retrieveLocally(ItemType.CronoTask);
             if (tagList) {
               const tagItems = tagList
                 .filter((item: Item) =>
