@@ -30,15 +30,18 @@
 </script>
 
 <Element
-  classList="flex text-b2 items-center {isShowLabel
+  classList="flex items-center {isShowLabel
     ? style === LayoutContext.PORTRAIT
       ? 'flex-col gap-1 text-b3 rounded-lg'
-      : 'gap-3 rounded-lg p-4 h-10'
+      : 'text-b2 gap-3 rounded-lg p-3 h-10'
     : 'p-4 rounded-full'}"
   {isActive}
   on:click={onClick}
   on:pointerenter={onHover}
   {parentBackgroundIndex}
+  hoverStyle={!$windowObject.isInPortraitMode
+    ? SelectionItemActiveStyle.BG_COLOR
+    : SelectionItemActiveStyle.NONE}
   selectionStyle={style === LayoutContext.PORTRAIT ||
   style === LayoutContext.THIN
     ? SelectionItemActiveStyle.ACCENT_COLOR
@@ -51,7 +54,6 @@
         icon={item.icon}
         {isActive}
         size={style === LayoutContext.THIN ? Size.lg : Size.md}
-        hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
         selectionStyle={style === LayoutContext.PORTRAIT ||
         style === LayoutContext.THIN
           ? SelectionItemActiveStyle.ACCENT_COLOR

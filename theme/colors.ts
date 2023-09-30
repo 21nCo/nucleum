@@ -107,6 +107,18 @@ const solarized = {
   accent2: "#b58900",
 };
 
+const white = {
+  bgs1: "#FFFFFF",
+  bgs2: "#F2F2F2",
+  bgs3: "#E6E6E6",
+  bgs4: "#D9D9D9",
+  fgs1: "#383838",
+  fgs2: "#545454",
+  fgs3: "#545454",
+  accent1: "#2d2f32",
+  accent2: "#ad6c6c",
+};
+
 export const colors = {
   dark,
   forest,
@@ -117,4 +129,5 @@ export const colors = {
   smoothy,
   grainy,
   solarized,
+  white,
 };
