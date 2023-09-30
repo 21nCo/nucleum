@@ -5,7 +5,7 @@
     generateBackgroudColor,
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   export let classList: string;
   export let id: string = "";
   export let styleList: string = "";
@@ -49,7 +49,7 @@
         ? " hover:bg-accent1 hover:text-bgs1"
         : hoverStyle === SelectionItemActiveStyle.BG_COLOR && !isActive
         ? " hover:bg-bgs3 hover:text-fgs1"
-        : "") +
+        : " hover:bg-transparent active:bg-transparent") +
       ($userPreferences.theme == "Colorful"
         ? selectionStyle != SelectionItemActiveStyle.SIDEDOT
           ? isActive
@@ -73,10 +73,7 @@
             : activeBackgroundColor + " rounded-md"
           : selectionStyle === SelectionItemActiveStyle.BOTTOMBAR
           ? ""
-          : backgroundColor +
-            " rounded-md " +
-            " hover:" +
-            activeBackgroundColor?.trim()
+          : backgroundColor + " rounded-md "
         : "") +
       (isDisabled ? " opacity-50" : "")}
     on:click

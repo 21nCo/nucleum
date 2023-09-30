@@ -24,9 +24,11 @@
     {parentBackgroundIndex}
     isActive={$windowObject.currentPath === "/cp/" + path}
     selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-    hoverStyle={SelectionItemActiveStyle.BG_COLOR}
+    hoverStyle={!$windowObject.isInPortraitMode
+      ? SelectionItemActiveStyle.BG_COLOR
+      : SelectionItemActiveStyle.NONE}
     classList={orientation === Orientation.Vertical
-      ? "bg-bgs2 px-2 py-3 rounded-lg w-24"
+      ? "bg-bgs2 px-2 py-3 w-24"
       : "flex px-4 py-2 w-full items-center justify-between"}
     on:click={() => {
       windowObject.gotoPath("/cp/" + path);

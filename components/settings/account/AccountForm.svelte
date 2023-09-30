@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/Button.svelte";
-  import TextInput from "$lib/tidy/elements/TextInput.svelte";
+  import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account } from "$lib/tidy/stores/app.store";
   import { performApiCall } from "$lib/tidy/utils/utils";

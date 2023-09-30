@@ -4,8 +4,12 @@
 
   import { createEventDispatcher, onMount } from "svelte";
   import { generateBackgroudColor } from "$lib/tidy/utils/utils";
-  import InfoText from "./text/InfoText.svelte";
-  import FormControlLabel from "./text/FormControlLabel.svelte";
+  import FormControlLabel from "../text/FormControlLabel.svelte";
+  import SearchResultItem from "./SearchResultItem.svelte";
+  import type { Item } from "$lib/local/types/item.type";
+  import Element from "$lib/tidy/elements/Element.svelte";
+  import { Persistance } from "$lib/tidy/stores/persistance";
+  import type { ItemType } from "$lib/local/types/item.enum";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -16,9 +20,22 @@
   export let info: string | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
+  export let searchItemType: ItemType | undefined = undefined;
+  const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
+  let searchResults: Item[] = [];
+  let selectedIndex: number = 0;
+  let previousValue: string = "";
+  let currentValue: string;
   export function focus() {
     if (inputRef) inputRef.focus();
+  }
+  export function blur() {
+    if (inputRef) inputRef.blur();
+  }
+  export function reset() {
+    resetSearch();
+    value = "";
   }
   let backgroundColor: string;
   let inputRef: any;
@@ -88,6 +105,67 @@
       }, 2000);
     }
   }
+  function handleKeyUp(event: any) {
+    if (event.key === "Enter") {
+      dispatch("enter", { value });
+    } else if (event.key === "Escape") {
+      inputRef.blur();
+      dispatch("blur");
+    }
+    dispatch("keyup", { value });
+  }
+  function onSearchResultSelection(item: Item) {
+    dispatch("select", { item });
+  }
+  function resetSearch() {
+    searchResults = [];
+    selectedIndex = 0;
+  }
+  function handleKeyUpForSearch(event: any) {
+    if (event.key === "Escape") {
+      resetSearch();
+      inputRef.blur();
+      dispatch("blur");
+    } else if (event.key === "ArrowDown") {
+      selectedIndex = Math.min(selectedIndex + 1);
+      if (selectedIndex === searchResults?.length) {
+        selectedIndex = 0;
+      }
+    } else if (event.key === "ArrowUp") {
+      selectedIndex = Math.max(selectedIndex - 1, -1);
+      if (selectedIndex === -1) {
+        selectedIndex = searchResults?.length;
+      }
+    } else if (event.key === "Backspace") {
+      previousValue = currentValue;
+      currentValue = (event.target as HTMLInputElement).value;
+      if (previousValue?.length > currentValue.length) {
+        const deletedChar = previousValue.charAt(previousValue.length - 1);
+        if (deletedChar === "#") {
+          //
+        }
+      }
+      search();
+    } else if (event.key === "Enter" && value) {
+      if (searchResults && searchResults.length > 0) {
+        onSearchResultSelection(searchResults[selectedIndex]);
+      } else {
+        //save();
+      }
+    } else {
+      currentValue = (event.target as HTMLInputElement).value;
+      search();
+    }
+  }
+  async function search() {
+    if (!searchItemType) return;
+    selectedIndex = 0;
+    if (!value) {
+      searchResults = [];
+      return;
+    }
+    searchResults = await persistance.searchByLabel(value, searchItemType);
+  }
 </script>
 
 <div class="flex flex-col gap-1 w-full">
@@ -116,7 +194,7 @@
         bind:value
         on:change
         on:keydown
-        on:keyup
+        on:keyup={searchItemType ? handleKeyUpForSearch : handleKeyUp}
         on:blur
         on:focus
         on:input={onChange}
@@ -125,6 +203,28 @@
         disabled={isDisabled}
         bind:this={inputRef}
       />
+      {#if searchResults && searchResults.length > 0}
+        <div
+          class="search-results bg-bgs3 h-max max-h-60 overflow-auto rounded-md flex flex-col gap-1 items-start"
+        >
+          {#each searchResults as item, index}
+            <SearchResultItem
+              {item}
+              isActive={selectedIndex === index}
+              on:click={() => {
+                onSearchResultSelection(item);
+              }}
+            />
+          {/each}
+          <Element
+            classList="w-full rounded-b-md py-2 text-center mt-10"
+            parentBackgroundIndex={2}
+            on:click={() => {
+              resetSearch();
+            }}>close</Element
+          >
+        </div>
+      {/if}
     {/if}
     {#if isEnableSaveFeedback && isShowSaveFeedback}
       <div class="absolute right-0 text-b2 text-fgs2">saved</div>
@@ -145,3 +245,14 @@
 </div>
 
 <!-- placeholder={placeholder ?? ""} -->
+
+<style>
+  .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border-top: none;
+    z-index: 10;
+  }
+</style>

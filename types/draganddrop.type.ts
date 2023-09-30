@@ -1,8 +1,9 @@
 import type { DragStatus } from "./dragstatus.enum";
 
 export type DragAndDrop = {
-    dragItem: any;
-    dragEnterItem: any;
-    dropItem: any;
-    dragStatus: DragStatus;
-}
+  dragItem: any;
+  dragEnterItem: any;
+  dropItem: any;
+  dragStatus: DragStatus;
+  listId: any;
+};

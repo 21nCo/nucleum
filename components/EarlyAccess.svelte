@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "../elements/Button.svelte";
-  import TextInput from "../elements/TextInput.svelte";
+  import TextInput from "../elements/input/TextInput.svelte";
   import { app } from "../stores/app.store";
   import { Size } from "../types/size.enum";
   import { isValidEmail, performApiCall } from "../utils/utils";
