@@ -72,7 +72,9 @@
           />
         {/if}
         <div class="flex w-full justify-center text-fgs3 text-b3 pt-20">
-          {$appStore.appData.name + " v" + $appStore.appData.version}
+          {$appStore.appData?.name ??
+            "" + " v" + $appStore.appData?.version ??
+            ""}
         </div>
       </div>
     </div>

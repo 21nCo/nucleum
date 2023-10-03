@@ -15,7 +15,7 @@
   </div>
   <div
     class={orientation === Orientation.Horizontal
-      ? "flex flex-col -ml-4"
+      ? "flex flex-col "
       : "flex flex-wrap gap-2 pl-4"}
   >
     {#each items as item}

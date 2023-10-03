@@ -22,6 +22,10 @@
   import Widget from "../icons/Widget.svelte";
   import Fire from "../icons/Fire.svelte";
   import Arrow from "../icons/Arrow.svelte";
+  import Add from "../icons/Add.svelte";
+  import Cross from "../icons/Cross.svelte";
+  import { windowObject } from "../stores/app.store";
+  import Trash from "../icons/Trash.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -60,7 +64,7 @@
               ? 'fill-accent1'
               : 'fill-bgs1'
             : `fill-${color}`) + ' stroke-none'} {hoverStyle ===
-      SelectionItemActiveStyle.NONE
+        SelectionItemActiveStyle.NONE || $windowObject.isInPortraitMode
         ? ''
         : variant === IconVariant.Outline
         ? ' hover:stroke-accent1'
@@ -94,6 +98,14 @@
         <Widget {variant} />
       {:else if icon === "fire"}
         <Fire {variant} />
+      {:else if icon === "plus"}
+        <Add {variant} isCircled={true} />
+      {:else if icon === "cross-circled"}
+        <Cross {variant} isCircled={true} />
+      {:else if icon === "cross"}
+        <Cross {variant} isCircled={false} />
+      {:else if icon === "trash"}
+        <Trash {variant} />
       {:else if icon === "chatleftright"}
         <Chat {variant} chatIconVariant={ChatIconVariant.LeftRight} />
       {:else if icon === "academic-cap"}

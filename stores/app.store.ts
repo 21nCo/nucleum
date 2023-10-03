@@ -157,6 +157,7 @@ export const darkColorSchemes: ColorScheme[] = [
 
 //{ label: "FBF8F1", isDark: false }
 const lightColorSchemes: ColorScheme[] = [
+  { label: "white", theme: "clean", isDark: false, ...colors.white },
   { label: "light", theme: "clean", isDark: false, ...colors.light },
   { label: "smoothy", theme: "clean", isDark: false, ...colors.smoothy },
   { label: "grainy", theme: "clean", isDark: false, ...colors.grainy },
