@@ -26,7 +26,7 @@
         break;
       case Size.lg:
         //todo - add roman and medium font variants and use those instead of bold
-        classList += " px-8 py-4 text-lg font-bold";
+        classList += " px-2 py-4 text-lg font-medium";
         break;
       default:
         classList += " p-2";

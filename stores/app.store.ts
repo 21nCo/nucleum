@@ -217,6 +217,18 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
+    fullScreen(path: string) {
+      update((n: AppStore) => {
+        n.fullScreenComponentPath = path;
+        return n;
+      });
+    },
+    hideFullScreen() {
+      update((n: AppStore) => {
+        n.fullScreenComponentPath = undefined;
+        return n;
+      });
+    },
   };
 }
 

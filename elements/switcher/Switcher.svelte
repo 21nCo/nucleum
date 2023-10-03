@@ -57,7 +57,7 @@
         break;
       case SwitcherStyle.HorizontalAndWraps:
         if (selectionStyle === SelectionItemActiveStyle.BOTTOMBAR) {
-          classList = "flex flex-wrap w-full pb-2";
+          classList = "flex flex-wrap items-center w-full";
         } else if (
           selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND
         ) {
@@ -76,7 +76,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col h-full justify-center items-center">
   {#if label}
     <FormControlLabel {label} {info} />
   {/if}

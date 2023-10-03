@@ -71,7 +71,8 @@
               selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
             ? " rounded-md"
             : activeBackgroundColor + " rounded-md"
-          : selectionStyle === SelectionItemActiveStyle.BOTTOMBAR
+          : selectionStyle === SelectionItemActiveStyle.BOTTOMBAR ||
+            selectionStyle === SelectionItemActiveStyle.BOTTOMDOT
           ? ""
           : backgroundColor + " rounded-md "
         : "") +

@@ -39,6 +39,7 @@
     (isActive && icon != "chevright" && icon != "chevleft" && icon != "list") ||
     icon == "chevdoubleleft" ||
     icon == "chevdoubleright" ||
+    icon == "logout" ||
     icon?.includes("-mini")
       ? IconVariant.Solid
       : IconVariant.Outline;
@@ -49,10 +50,12 @@
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
-      class="{size == Size.md
-        ? 'w-5 h-5'
+      class="{size == Size.xl
+        ? 'w-8 h-8'
         : size == Size.lg
         ? 'w-6 h-6'
+        : size == Size.md
+        ? 'w-5 h-5'
         : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
@@ -114,6 +117,8 @@
         <Chevron direction={Direction.Left} />
       {:else if icon === "chevright"}
         <Chevron direction={Direction.Right} />
+      {:else if icon === "chevdown"}
+        <Chevron direction={Direction.Down} />
       {:else if icon === "arrow-left"}
         <Arrow direction={Direction.Left} />
       {:else if icon === "arrow-right"}
