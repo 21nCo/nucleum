@@ -113,11 +113,11 @@
 >
   <div class="realtive flex items-center">
     {#if icon || !hideSearchIcon}
-      <!-- Search as a fallback component just in case iconComponent is not found -->
+      <!-- Search is a fallback component just in case iconComponent is not found -->
       <div
         class="absolute ml-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
       >
-        <!-- Here if searchIconHidden is true and icon is provided but the dynamic import does not result in a component then there is a fallback of Search Icon -->
+        <!-- Here if hideSearchIcon is true and icon is provided but the dynamic import does not result in a component then there is a fallback of Search Icon -->
         {#if icon}
           <svelte:component this={iconComponent || Search} />
         {:else if !hideSearchIcon}
@@ -161,5 +161,5 @@
 </div>
 
 <!-- 
-  Note: Just need to implement on thing, which is if we navigate through the list using arrow keys then the list should scroll automatically to the selected item
+  Note: Just need to implement one thing, which is if we navigate through the list using arrow keys then the list should scroll automatically to the selected item
  -->
