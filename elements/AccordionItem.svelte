@@ -56,7 +56,7 @@
       <button
         on:keydown|stopPropagation
         on:click|stopPropagation={handleAccordionStateChange}
-        class={`custom-focus-outline py-2 px-1 ${iconButtonHoverStateClassList} rounded-full ${
+        class={`py-2 px-1 ${iconButtonHoverStateClassList} rounded-full ${
           iconRenderType === AccordionIconRenderType.VISIBLE
             ? `visible`
             : `invisible`
