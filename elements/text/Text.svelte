@@ -3,7 +3,8 @@
   import { onMount } from "svelte";
   import Element from "../Element.svelte";
   export let type: TextType;
-  let classList: string = "w-full ";
+  export let additionalClassList: string | undefined = "";
+  let classList: string = `w-full`;
   onMount(() => {
     switch (type) {
       case TextType.PAGE_HEADING:
@@ -22,6 +23,10 @@
   });
 </script>
 
-<Element {classList} isAction={false} isForDebug={true}>
+<Element
+  classList={`${classList} ${additionalClassList}`}
+  isAction={false}
+  isForDebug={true}
+>
   <slot />
 </Element>
