@@ -62,7 +62,7 @@
 </script>
 
 <div class="flex flex-col gap-8 justify-center items-center">
-  <div class="flex flex-col gap-4 w-96">
+  <div class="flex flex-col gap-4 w-96 px-4">
     <TextInput bind:value={email} label="Email address" />
     <TextInput bind:value={pass} label="Password" type="password" />
     <div class="w-full flex justify-end">

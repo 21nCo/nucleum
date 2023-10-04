@@ -1,0 +1,58 @@
+<script lang="ts">
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
+  import { retrieveCurrentColors } from "$lib/tidy/utils/utils";
+  import { createEventDispatcher } from "svelte";
+  export let item: string;
+  export let isActive: boolean = false;
+  export let isDisabled: boolean = false;
+  export let activeColor: string | undefined = undefined;
+  export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
+  const dispatch = createEventDispatcher();
+  let backgroundColor: string = "";
+  $: currentColors = retrieveCurrentColors($userPreferences);
+  $: defaultActiveColor = currentColors?.accent1;
+</script>
+
+{#if style === PanelSwitcherStyle.BOTTOMBAR}
+  <button
+    class="relative pl-2 pr-6"
+    on:click
+    style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
+    disabled={isDisabled}
+  >
+    <div class="text-h5 {isActive ? 'font-medium' : 'text-fgs3'}">
+      {item}
+    </div>
+    {#if isActive}
+      <div
+        class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1"
+        style="height: 5%; background-color: {activeColor ??
+          defaultActiveColor}"
+      />
+    {:else}
+      <div
+        class="absolute opacity-80 w-full bg-bgs3 left-0 -bottom-1"
+        style="height: 5%;"
+      />
+    {/if}
+  </button>
+{:else if style === PanelSwitcherStyle.BOTTOMDOT}
+  <button
+    class="relative"
+    on:click
+    style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
+    disabled={isDisabled}
+  >
+    <div class="text-h4 {isActive ? 'font-medium' : 'text-fgs3'}">
+      {item}
+    </div>
+    {#if isActive}
+      <div
+        class="absolute opacity-80 w-4 -bottom-1 rounded-full"
+        style="height: 10%; left: 40%; background-color: {activeColor ??
+          defaultActiveColor}"
+      />
+    {/if}
+  </button>
+{/if}

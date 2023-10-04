@@ -1,27 +1,26 @@
 <script lang="ts">
   import { TextType } from "$lib/tidy/types/text.enum";
   import { onMount } from "svelte";
-  import Element from "../Element.svelte";
-  export let type: TextType;
+  export let style: TextType;
   let classList: string = "w-full ";
   onMount(() => {
-    switch (type) {
+    switch (style) {
       case TextType.PAGE_HEADING:
         classList += " text-accent1 bg-none text-h1 my-4";
         break;
-      case TextType.SECTION_HEADING:
-        classList += " text-fgs3 font-bold p-2 my-6 max-w-3xl";
+      case TextType.PANEL_HEADING:
+        classList += " text-h3 font-medium p-2 ";
         break;
       case TextType.SECTION_DESCRIPTION:
         classList += " text-fgs3";
         break;
-      case TextType.CP_SECTION:
-        classList += " text-fgs2 font-bold text-b2 max-w-3xl bg-none";
+      case TextType.SECTION_HEADING:
+        classList += " text-fgs2 font-medium text-b2 max-w-3xl bg-none";
         break;
     }
   });
 </script>
 
-<Element {classList} isAction={false} isForDebug={true}>
+<div class={classList}>
   <slot />
-</Element>
+</div>

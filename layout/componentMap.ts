@@ -25,7 +25,7 @@ export const components: ComponentType[] = [
   },
   {
     label: "Account",
-    path: "settings/account",
+    path: "cp/account",
     component: AccountSettings,
   },
   {

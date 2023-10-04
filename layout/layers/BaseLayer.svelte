@@ -97,13 +97,13 @@
   >
     {#if $windowObject.isInPortraitMode}
       <button
-        class="pt-4 px-4 flex w-full justify-end bg-bgs1"
+        class="pt-4 pb-1 px-4 flex w-full justify-end bg-bgs1 -mb-1"
         on:click={() => {
-          $appStore.fullScreenComponentPath = undefined;
+          appStore.hideFullScreenPlayer();
         }}
       >
         <!-- <div class="border border-b-4 border-bgs4 w-1/4 rounded-full" /> -->
-        <Icon icon="chevdown" color="fgs2" size={Size.lg} />
+        <Icon icon="cross-circled" color="fgs2" size={Size.lg} />
       </button>
     {/if}
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
