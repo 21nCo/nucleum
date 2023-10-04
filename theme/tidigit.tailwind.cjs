@@ -24,6 +24,7 @@ const defaultFontSize = {
   b2: "0.9rem",
   b3: "0.8rem",
   b4: "0.7rem",
+  b5: "0.6rem",
 };
 
 const themes = [
@@ -61,6 +62,8 @@ const scales = [
         base: "0.8rem",
         b2: "0.6rem",
         b3: "0.5rem",
+        b4: "0.45rem",
+        b5: "0.4rem",
       },
     },
   },
@@ -77,6 +80,8 @@ const scales = [
         base: "1rem",
         b2: "0.8rem",
         b3: "0.7rem",
+        b4: "0.6rem",
+        b5: "0.5rem",
       },
     },
   },
@@ -99,6 +104,8 @@ const scales = [
         base: "1.5rem",
         b2: "1.2rem",
         b3: "1rem",
+        b4: "0.9rem",
+        b5: "0.8rem",
       },
     },
   },
@@ -115,6 +122,8 @@ const scales = [
         base: "1.7rem",
         b2: "1.5rem",
         b3: "1.2rem",
+        b4: "1rem",
+        b5: "0.9rem",
       },
     },
   },

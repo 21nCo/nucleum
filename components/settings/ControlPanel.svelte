@@ -9,5 +9,5 @@
     <div class="text-fgs3 text-b2 text-center mt-4">
       Please select an option from the left panel to get started
     </div>
-  </div></ControlPanelLayout
->
+  </div>
+</ControlPanelLayout>

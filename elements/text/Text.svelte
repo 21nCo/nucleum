@@ -1,8 +1,10 @@
 <script lang="ts">
   import { TextType } from "$lib/tidy/types/text.enum";
   import { onMount } from "svelte";
-  export let style: TextType;
-  let classList: string = "w-full ";
+  import Element from "../Element.svelte";
+  export let type: TextType;
+  export let additionalClassList: string | undefined = "";
+  let classList: string = `w-full`;
   onMount(() => {
     switch (style) {
       case TextType.PAGE_HEADING:
@@ -21,6 +23,10 @@
   });
 </script>
 
-<div class={classList}>
+<Element
+  classList={`${classList} ${additionalClassList}`}
+  isAction={false}
+  isForDebug={true}
+>
   <slot />
 </div>
