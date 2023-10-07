@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { swipe } from "svelte-gestures";
   import { EventType } from "$lib/tidy/types/event.enum";
   import { onMount, tick } from "svelte";
   import type { CustomEvent } from "$lib/tidy/types/event.type";
@@ -23,6 +24,7 @@
   import { inject } from "@vercel/analytics";
   import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
   import { defaultAppData } from "$lib/local/stores/local.store";
+  import Icon from "$lib/tidy/elements/Icon.svelte";
   let isShowAppearancePopover: boolean = false;
   let environment: string;
   let timer: any;
@@ -65,6 +67,9 @@
       console.error(err);
     }
   }
+  function onSwipe(event: any) {
+    console.log({ event });
+  }
 </script>
 
 <title>{$appStore.appData.name}</title>
@@ -85,15 +90,22 @@
 {/if}
 {#if $appStore.fullScreenComponentPath}
   <div
-    class="fixed left-0 top-0 w-full h-full z-40 px-2 py-4 bg-bgs1"
-    transition:fly={{ y: 200, duration: 300 }}
+    class="fixed left-0 top-0 w-full h-full flex flex-col z-40"
+    transition:fly={{ y: 200, duration: 100 }}
+    use:swipe={{ timeframe: 300, minSwipeDistance: 60 }}
+    on:swipe={onSwipe}
   >
-    <button
-      class="mx-2"
-      on:click={() => {
-        $appStore.fullScreenComponentPath = undefined;
-      }}><Collapse /></button
-    >
+    {#if $windowObject.isInPortraitMode}
+      <button
+        class="pt-4 pb-1 px-4 flex w-full justify-end bg-bgs1 -mb-1"
+        on:click={() => {
+          appStore.hideFullScreenPlayer();
+        }}
+      >
+        <!-- <div class="border border-b-4 border-bgs4 w-1/4 rounded-full" /> -->
+        <Icon icon="collapse" color="fgs2" />
+      </button>
+    {/if}
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}

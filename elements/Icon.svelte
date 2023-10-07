@@ -26,6 +26,12 @@
   import Cross from "../icons/Cross.svelte";
   import { windowObject } from "../stores/app.store";
   import Trash from "../icons/Trash.svelte";
+  import Play from "../icons/Play.svelte";
+  import Music from "../icons/Music.svelte";
+  import Pencil from "../icons/Pencil.svelte";
+  import Play2 from "../icons/Play2.svelte";
+  import ArrowsPointingOut from "../icons/ArrowsPointingOut.svelte";
+  import ArrowsPointingIn from "../icons/ArrowsPointingIn.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -39,6 +45,7 @@
     (isActive && icon != "chevright" && icon != "chevleft" && icon != "list") ||
     icon == "chevdoubleleft" ||
     icon == "chevdoubleright" ||
+    icon == "logout" ||
     icon?.includes("-mini")
       ? IconVariant.Solid
       : IconVariant.Outline;
@@ -49,9 +56,11 @@
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
-      class="{size == Size.md
-        ? 'w-5 h-5'
+      class="{size == Size.xl
+        ? 'w-10 h-10'
         : size == Size.lg
+        ? 'w-8 h-8'
+        : size == Size.md
         ? 'w-6 h-6'
         : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
@@ -84,6 +93,8 @@
         <Command {variant} />
       {:else if icon === "clock"}
         <Clock {variant} />
+      {:else if icon === "clock-mini"}
+        <Clock variant={IconVariant.Mini} />
       {:else if icon === "bell"}
         <Bell {variant} />
       {:else if icon === "palette"}
@@ -98,6 +109,18 @@
         <Widget {variant} />
       {:else if icon === "fire"}
         <Fire {variant} />
+      {:else if icon === "music"}
+        <Music {variant} />
+      {:else if icon === "pencil"}
+        <Pencil {variant} />
+      {:else if icon === "pencil-square"}
+        <Pencil {variant} isWithSquare={true} />
+      {:else if icon === "play"}
+        <Play2 {variant} />
+      {:else if icon === "play-circled"}
+        <Play2 {variant} isCircled={true} />
+      {:else if icon === "play-circled-mini"}
+        <Play2 variant={IconVariant.Mini} isCircled={true} />
       {:else if icon === "plus"}
         <Add {variant} isCircled={true} />
       {:else if icon === "cross-circled"}
@@ -114,12 +137,28 @@
         <Chevron direction={Direction.Left} />
       {:else if icon === "chevright"}
         <Chevron direction={Direction.Right} />
+      {:else if icon === "chevdown"}
+        <Chevron direction={Direction.Down} />
+      {:else if icon === "chevup"}
+        <Chevron direction={Direction.Up} />
       {:else if icon === "arrow-left"}
         <Arrow direction={Direction.Left} />
       {:else if icon === "arrow-right"}
         <Arrow direction={Direction.Right} />
+      {:else if icon === "arrow-right-circled"}
+        <Arrow direction={Direction.Right} isCircled={true} />
+      {:else if icon === "arrow-right-circled-mini"}
+        <Arrow
+          direction={Direction.Right}
+          isCircled={true}
+          variant={IconVariant.Mini}
+        />
       {:else if icon === "arrow-right-mini"}
         <Arrow direction={Direction.Right} variant={IconVariant.Mini} />
+      {:else if icon === "full-screen"}
+        <ArrowsPointingOut {variant} />
+      {:else if icon === "collapse"}
+        <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}

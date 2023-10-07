@@ -93,7 +93,7 @@
   />
   {#if $appStore.isDebugMode}
     <div>
-      <Text type={TextType.SECTION_HEADING}>THEME TRAILS</Text>
+      <Text style={TextType.SECTION_HEADING}>THEME TRAILS</Text>
       <Switcher
         {parentBackgroundIndex}
         items={$appStore.appConstants.tempColorSchemes}

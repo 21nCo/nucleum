@@ -43,7 +43,7 @@
         : 'w-96'} "
     >
       <div class="pl-4">
-        <Text type={TextType.PAGE_HEADING}>Control Panel</Text>
+        <Text style={TextType.PAGE_HEADING}>Control Panel</Text>
       </div>
       <div
         class="flex flex-col gap-8 flex-grow overflow-auto {$windowObject.isInPortraitMode

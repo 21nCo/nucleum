@@ -11,7 +11,7 @@
 
 <div class="flex flex-col gap-2">
   <div class="pl-4">
-    <Text type={TextType.CP_SECTION}>{section}</Text>
+    <Text style={TextType.SECTION_HEADING}>{section}</Text>
   </div>
   <div
     class={orientation === Orientation.Horizontal

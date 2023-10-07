@@ -3,13 +3,24 @@ import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { localComponents } from "$lib/local/stores/localComponentMap";
 import { components } from "$lib/tidy/layout/componentMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { goto } from "$app/navigation";
 import { appStore, userPreferences } from "../stores/app.store";
 import { get } from "svelte/store";
-export function formatTime(date: Date) {
-  let hours = date?.getHours().toString().padStart(2, "0");
-  let minutes = date?.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
+
+export function formatTime(date: Date, format: string | undefined = undefined) {
+  let userPreferredFormat = get(userPreferences).timeFormat;
+  format = format ? format : userPreferredFormat ?? "meridian";
+  if (format === "24") {
+    let hours = date?.getHours().toString().padStart(2, "0");
+    let minutes = date?.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  } else if (format === "meridian") {
+    let hours = date?.getHours();
+    let minutes = date?.getMinutes().toString().padStart(2, "0");
+    let ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
 }
 
 export function onInterval(
@@ -27,19 +38,28 @@ export function generateUID() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-export function formatSeconds(seconds: number) {
+export function formatSeconds(seconds: number, format: string = "verbose") {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-
-  const hh = hours.toString().padStart(2, "0");
-  const mm = minutes.toString().padStart(2, "0");
-  const secs = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0");
-  if (hours > 0) return `${hh}:${mm}:${secs}`;
-  else return `${mm}:${secs}`;
+  const secs = Math.floor(seconds % 60);
+  if (format === "verbose") {
+    if (hours > 0)
+      return (
+        `${hours}h` +
+        (minutes > 0 ? ` ${minutes}m` : "") +
+        (+secs > 0 ? ` ${secs}s` : "")
+      );
+    else if (minutes > 0) return `${minutes}m` + (+secs > 0 ? ` ${secs}s` : "");
+    else return `${secs}s`;
+  } else if (format === "colonic") {
+    const hh = hours.toString().padStart(2, "0");
+    const mm = minutes.toString().padStart(2, "0");
+    const ss = secs.toString().padStart(2, "0");
+    if (hours > 0) return `${hh}:${mm}:${ss}`;
+    else return `${mm}:${ss}`;
+  }
 }
-export function formatSecondsToTime(
+export function formatSecondsToTimeInDecimals(
   seconds: number,
   toFixed: number = 2,
   scale: string = "hrs",

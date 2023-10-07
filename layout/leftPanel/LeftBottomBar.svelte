@@ -40,7 +40,7 @@
           : 'rounded-br-lg'}"
         on:click={() => {
           if ($account.isLoggedIn) account.signOut();
-          windowObject.gotoPath("/settings/account");
+          windowObject.gotoPath("/cp/account");
         }}
       >
         <Icon icon={$account.isLoggedIn ? "logout" : "login"} />

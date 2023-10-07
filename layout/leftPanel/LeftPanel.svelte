@@ -27,12 +27,8 @@
   <div
     class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
   >
-    <!-- todo - support for multiple players like music and timer at the same time -->
-    {#if $appStore.players && $appStore.players.length > 0 && $appStore.players[0].isShow}
-      <ComponentResolver
-        path={$appStore.players[0].componentPath}
-        params={$appStore.players[0].params}
-      />
+    {#if $appStore.player}
+      <ComponentResolver path={$appStore.player} />
     {/if}
     <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-8 pt-4">
       <AppMenuSwitcher
@@ -128,7 +124,6 @@
             > for command bar
           </div>
         {/if}
-
         <LeftBottomBar {isInThinMode} />
       </div>
     </div>

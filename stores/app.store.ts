@@ -1,6 +1,10 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
 import { get, writable } from "svelte/store";
-import { generateUID, yesterday } from "$lib/tidy/utils/utils";
+import {
+  generateUID,
+  getComponentFromPath,
+  yesterday,
+} from "$lib/tidy/utils/utils";
 import { colors } from "$lib/tidy/theme/colors";
 import type {
   ColorScheme,
@@ -108,6 +112,7 @@ export const dragAndDropStore = writable<DragAndDrop>({
   dropItem: {},
   dragEnterItem: {},
   dragStatus: DragStatus.NONE,
+  listId: "",
 });
 
 //todo - generate cool placeholders for focus using AI
@@ -197,23 +202,34 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    appendPlayer(path: string, params?: any) {
+    showMiniPlayer(path: string, params: any = null) {
       update((n: AppStore) => {
-        if (!path) return n;
-        if (n.players?.find((p) => p.componentPath === path)) return n;
-        if (n.players === undefined) n.players = [];
-        n.players?.push({ componentPath: path, isShow: true, params });
+        n.player = path;
+        //n.playerParams = params;
         return n;
       });
     },
-    removePlayer(path: string) {
+    hideMiniPlayer() {
       update((n: AppStore) => {
-        if (!n.players) return n;
-        let player = n.players?.find((p) => p.componentPath === path);
-        if (!player) {
-          return n;
-        }
-        n.players = n.players.filter((p) => p.componentPath !== path);
+        n.player = undefined;
+        return n;
+      });
+    },
+    showFullScreenPlayer(path: string) {
+      update((n: AppStore) => {
+        n.fullScreenComponentPath = path;
+        n.player = undefined;
+        return n;
+      });
+    },
+    hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
+      update((n: AppStore) => {
+        if (n.fullScreenComponentPath && !isHideMiniPlayer)
+          n.player = getComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
+        else if (isHideMiniPlayer) n.player = undefined;
+        n.fullScreenComponentPath = undefined;
         return n;
       });
     },
@@ -229,6 +245,7 @@ export const userPreferences = initUserPreferences({
   isOnboardingComplete: false,
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
+  timeFormat: "meridian",
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {

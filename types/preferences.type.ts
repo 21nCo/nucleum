@@ -9,4 +9,5 @@ export type UserGlobalPreferences = {
   isOnboardingComplete: boolean;
   tempColorScheme: string;
   accessibilitySizingFactor: number;
+  timeFormat: string;
 };

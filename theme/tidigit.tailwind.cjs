@@ -18,6 +18,8 @@ const defaultFontSize = {
   h1: "2.1rem",
   h2: "1.8rem",
   h3: "1.5rem",
+  h4: "1.3rem",
+  h5: "1.2rem",
   base: "1rem",
   b2: "0.9rem",
   b3: "0.8rem",
