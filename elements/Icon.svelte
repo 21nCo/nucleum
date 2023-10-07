@@ -29,6 +29,9 @@
   import Play from "../icons/Play.svelte";
   import Music from "../icons/Music.svelte";
   import Pencil from "../icons/Pencil.svelte";
+  import Play2 from "../icons/Play2.svelte";
+  import ArrowsPointingOut from "../icons/ArrowsPointingOut.svelte";
+  import ArrowsPointingIn from "../icons/ArrowsPointingIn.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -54,11 +57,11 @@
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
       class="{size == Size.xl
-        ? 'w-8 h-8'
+        ? 'w-10 h-10'
         : size == Size.lg
-        ? 'w-6 h-6'
+        ? 'w-8 h-8'
         : size == Size.md
-        ? 'w-5 h-5'
+        ? 'w-6 h-6'
         : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
@@ -113,11 +116,11 @@
       {:else if icon === "pencil-square"}
         <Pencil {variant} isWithSquare={true} />
       {:else if icon === "play"}
-        <Play {variant} />
+        <Play2 {variant} />
       {:else if icon === "play-circled"}
-        <Play {variant} isCircled={true} />
+        <Play2 {variant} isCircled={true} />
       {:else if icon === "play-circled-mini"}
-        <Play variant={IconVariant.Mini} isCircled={true} />
+        <Play2 variant={IconVariant.Mini} isCircled={true} />
       {:else if icon === "plus"}
         <Add {variant} isCircled={true} />
       {:else if icon === "cross-circled"}
@@ -152,6 +155,10 @@
         />
       {:else if icon === "arrow-right-mini"}
         <Arrow direction={Direction.Right} variant={IconVariant.Mini} />
+      {:else if icon === "full-screen"}
+        <ArrowsPointingOut {variant} />
+      {:else if icon === "collapse"}
+        <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}

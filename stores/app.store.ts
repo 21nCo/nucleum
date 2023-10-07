@@ -245,6 +245,7 @@ export const userPreferences = initUserPreferences({
   isOnboardingComplete: false,
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
+  timeFormat: "meridian",
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {

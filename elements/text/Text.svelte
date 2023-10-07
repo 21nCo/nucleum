@@ -2,9 +2,9 @@
   import { TextType } from "$lib/tidy/types/text.enum";
   import { onMount } from "svelte";
   import Element from "../Element.svelte";
-  export let type: TextType;
+  export let style: TextType;
   export let additionalClassList: string | undefined = "";
-  let classList: string = `w-full`;
+  let classList: string = "";
   onMount(() => {
     switch (style) {
       case TextType.PAGE_HEADING:
@@ -17,7 +17,7 @@
         classList += " text-fgs3";
         break;
       case TextType.SECTION_HEADING:
-        classList += " text-fgs2 font-medium text-b2 max-w-3xl bg-none";
+        classList += " text-fgs2 font-medium text-base max-w-3xl bg-none";
         break;
     }
   });
@@ -29,4 +29,4 @@
   isForDebug={true}
 >
   <slot />
-</div>
+</Element>

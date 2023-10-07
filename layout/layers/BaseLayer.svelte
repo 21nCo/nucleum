@@ -103,7 +103,7 @@
         }}
       >
         <!-- <div class="border border-b-4 border-bgs4 w-1/4 rounded-full" /> -->
-        <Icon icon="cross-circled" color="fgs2" size={Size.lg} />
+        <Icon icon="collapse" color="fgs2" />
       </button>
     {/if}
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
