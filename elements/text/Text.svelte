@@ -11,7 +11,7 @@
         classList += " text-accent1 bg-none text-h1 my-4";
         break;
       case TextType.PANEL_HEADING:
-        classList += " text-h3 font-medium p-2 ";
+        classList += " text-h3 font-medium p-2 bg-none ";
         break;
       case TextType.SECTION_DESCRIPTION:
         classList += " text-fgs3";
