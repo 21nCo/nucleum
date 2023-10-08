@@ -13,7 +13,7 @@
   export let isOnRight: boolean = false;
   export let primaryText: string | undefined = undefined;
   export let secondaryText: string | undefined = undefined;
-  export let isShowClose: boolean = true;
+  export let isShowClose: boolean = false;
   export let isDismissable: boolean = true;
   export let isUseDialog: boolean = true;
   let dialog: HTMLDialogElement;
