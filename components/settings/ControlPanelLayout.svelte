@@ -38,7 +38,7 @@
 {:else if isCpHome || !$windowObject.isInPortraitMode}
   <div class="flex w-full h-full">
     <div
-      class="flex flex-col h-full pt-10 {$windowObject.isInPortraitMode
+      class="flex flex-col h-full {$windowObject.isInPortraitMode
         ? 'w-full'
         : 'w-96'} "
     >

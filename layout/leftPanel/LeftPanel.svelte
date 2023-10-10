@@ -30,7 +30,7 @@
     {#if $appStore.player}
       <ComponentResolver path={$appStore.player} />
     {/if}
-    <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-8 pt-4">
+    <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-4 pt-2">
       <AppMenuSwitcher
         layoutContext={LayoutContext.PORTRAIT}
         parentBackgroundIndex={1}
@@ -74,13 +74,12 @@
     >
       <div class="w-full flex flex-col gap-8 lg:gap-12">
         <div
-          class="w-full flex {isInThinMode
+          class="w-full flex opacity-50 {isInThinMode
             ? 'justify-center'
-            : 'justify-end'}  px-2"
+            : 'justify-center'}  px-2"
         >
           <Icon
-            icon={isInThinMode ? "chevdoubleright" : "chevdoubleleft"}
-            color="fgs2"
+            icon={isInThinMode ? "plus" : "minus-circled"}
             on:click={() => {
               isInThinMode = !isInThinMode;
             }}
