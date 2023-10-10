@@ -10,7 +10,3 @@ export function onOpenPreview() {
 export function onCloseAppearancePreview() {
   appEvents.publish(EventType.SHOW_APPEARANCE_PREVIEW, false);
 }
-
-export function notFoundAction() {
-  windowObject.gotoPath("/home");
-}

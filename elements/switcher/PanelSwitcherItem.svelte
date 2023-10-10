@@ -39,19 +39,18 @@
   </button>
 {:else if style === PanelSwitcherStyle.BOTTOMDOT}
   <button
-    class="relative"
+    class="relative min-w-fit"
     on:click
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h4 {isActive ? 'font-medium' : 'text-fgs3'}">
+    <div class="text-h4 {isActive ? '' : 'text-fgs3'}">
       {item}
     </div>
     {#if isActive}
       <div
-        class="absolute opacity-80 w-4 -bottom-1 rounded-full"
-        style="height: 10%; left: 40%; background-color: {activeColor ??
-          defaultActiveColor}"
+        class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full"
+        style="left: 40%; background-color: {activeColor ?? defaultActiveColor}"
       />
     {/if}
   </button>

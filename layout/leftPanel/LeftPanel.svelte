@@ -30,7 +30,7 @@
     {#if $appStore.player}
       <ComponentResolver path={$appStore.player} />
     {/if}
-    <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-4 pt-2">
+    <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-6 pt-2">
       <AppMenuSwitcher
         layoutContext={LayoutContext.PORTRAIT}
         parentBackgroundIndex={1}
