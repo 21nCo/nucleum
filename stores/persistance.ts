@@ -186,8 +186,8 @@ export class Persistance {
       case Cloud.local:
         switch (itemType) {
           case ItemType.ALL:
-            const tagList = retrieveLocally(ItemType.CronoTag);
-            const taskList = retrieveLocally(ItemType.CronoTask);
+            const tagList = retrieveLocally(ItemType.PointTag);
+            const taskList = retrieveLocally(ItemType.PointTask);
             if (tagList) {
               const tagItems = tagList
                 .filter((item: Item) =>

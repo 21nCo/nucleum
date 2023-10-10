@@ -30,7 +30,7 @@
           : ''}"
         on:click={() => windowObject.gotoPath("/cp")}
       >
-        <Icon icon="settings" size={Size.lg} isActive={isCpActive} />
+        <Icon icon="settings" isActive={isCpActive} />
       </Element>
       <Element
         parentBackgroundIndex={2}

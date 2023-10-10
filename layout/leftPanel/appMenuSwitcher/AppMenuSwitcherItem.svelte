@@ -11,7 +11,9 @@
   const dispatch = createEventDispatcher();
   export let item: ComponentType;
   export let style: LayoutContext = LayoutContext.DEFAULT;
-  $: isActive = $page.params.route?.includes(item.path);
+  $: isActive =
+    $page.params.route?.includes(item.path) ||
+    $page.route.id?.includes(item.path);
   export let isShowLabel: boolean = true;
   export let parentBackgroundIndex: number;
   let pad: number;
@@ -32,7 +34,7 @@
 <Element
   classList="flex items-center {isShowLabel
     ? style === LayoutContext.PORTRAIT
-      ? 'flex-col gap-1 text-b3 rounded-lg'
+      ? 'flex-col gap-1 text-b4 rounded-lg'
       : 'text-b2 gap-3 rounded-lg p-3 h-10'
     : 'p-4 rounded-full'}"
   {isActive}
@@ -53,7 +55,7 @@
       <Icon
         icon={item.icon}
         {isActive}
-        size={style === LayoutContext.THIN ? Size.lg : Size.md}
+        size={Size.md}
         selectionStyle={style === LayoutContext.PORTRAIT ||
         style === LayoutContext.THIN
           ? SelectionItemActiveStyle.ACCENT_COLOR

@@ -25,7 +25,6 @@
   $: if (classList.includes("bg-")) backgroundColor = "";
   $: currentColors = retrieveCurrentColors($userPreferences);
   $: defaultActiveColor = currentColors?.accent1;
-
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
@@ -86,7 +85,7 @@
         selectionStyle === SelectionItemActiveStyle.BOTTOMDOT ||
         selectionStyle === SelectionItemActiveStyle.BOTTOMBAR ||
         selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR)
-        ? "color: " + activeColor ?? defaultActiveColor
+        ? `;color: ${activeColor ?? defaultActiveColor}`
         : isActive &&
           (selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND ||
             selectionStyle === SelectionItemActiveStyle.SIDEBAR)

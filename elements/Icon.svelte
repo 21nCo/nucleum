@@ -22,7 +22,7 @@
   import Widget from "../icons/Widget.svelte";
   import Fire from "../icons/Fire.svelte";
   import Arrow from "../icons/Arrow.svelte";
-  import Add from "../icons/Add.svelte";
+  import Plus from "../icons/Plus.svelte";
   import Cross from "../icons/Cross.svelte";
   import { windowObject } from "../stores/app.store";
   import Trash from "../icons/Trash.svelte";
@@ -32,6 +32,7 @@
   import Play2 from "../icons/Play2.svelte";
   import ArrowsPointingOut from "../icons/ArrowsPointingOut.svelte";
   import ArrowsPointingIn from "../icons/ArrowsPointingIn.svelte";
+  import Minus from "../icons/Minus.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -122,7 +123,13 @@
       {:else if icon === "play-circled-mini"}
         <Play2 variant={IconVariant.Mini} isCircled={true} />
       {:else if icon === "plus"}
-        <Add {variant} isCircled={true} />
+        <Plus {variant} isCircled={false} />
+      {:else if icon === "plus-circled"}
+        <Plus {variant} isCircled={true} />
+      {:else if icon === "minus"}
+        <Minus {variant} isCircled={false} />
+      {:else if icon === "minus-circled"}
+        <Minus {variant} isCircled={true} />
       {:else if icon === "cross-circled"}
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
