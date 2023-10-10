@@ -3,7 +3,7 @@
   import ControlPanelLayout from "./ControlPanelLayout.svelte";
 </script>
 
-<ControlPanelLayout isCpHome={true}>
+<ControlPanelLayout>
   <div class="flex flex-col w-full h-full justify-center items-center">
     <EmptyStatus />
     <div class="text-fgs3 text-b2 text-center mt-4">
