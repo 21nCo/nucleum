@@ -177,7 +177,7 @@ if (isDebugMode) themes = themes.concat(["Colorful", "3026"]);
 
 export const appStore = initAppStore({
   isDebugMode,
-  environment: "", //todo - move to base -> window?.location.host.split(".")[0],
+  launchContext: "", //todo - move to base -> window?.location.host.split(".")[0],
   tailwindTheme: "",
   appData: {},
   appConstants: {
@@ -199,6 +199,46 @@ function initAppStore(seed: AppStore) {
     initiatizeAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
+        return n;
+      });
+    },
+    setLaunchContext(launchContext: string) {
+      update((n: AppStore) => {
+        n.launchContext = launchContext;
+        return n;
+      });
+    },
+    turnDebugMode(isDebugMode: boolean) {
+      update((n: AppStore) => {
+        n.isDebugMode = isDebugMode;
+        return n;
+      });
+    },
+    log(message: string, type: "error" | "info" | "warn" = "info") {
+      update((n: AppStore) => {
+        if (!n.debugLogs) n.debugLogs = [];
+        n.debugLogs.push({
+          message,
+          type,
+          timestamp: new Date().toLocaleTimeString(),
+        });
+        return n;
+      });
+    },
+    logError(message: any) {
+      update((n: AppStore) => {
+        if (!n.debugLogs) n.debugLogs = [];
+        n.debugLogs.push({
+          message,
+          type: "error",
+          timestamp: new Date().toLocaleTimeString(),
+        });
+        return n;
+      });
+    },
+    clearDebugLogs() {
+      update((n: AppStore) => {
+        n.debugLogs = [];
         return n;
       });
     },

@@ -34,6 +34,7 @@
   import ArrowsPointingIn from "../icons/ArrowsPointingIn.svelte";
   import Minus from "../icons/Minus.svelte";
   import History from "../icons/History.svelte";
+  import Code from "../icons/Code.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -98,6 +99,8 @@
         <Clock {variant} />
       {:else if icon === "history"}
         <History {variant} />
+      {:else if icon === "code"}
+        <Code {variant} />
       {:else if icon === "clock-mini"}
         <Clock variant={IconVariant.Mini} />
       {:else if icon === "bell"}
