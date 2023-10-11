@@ -124,7 +124,7 @@ const white = {
   bgs4: "#D9D9D9",
   fgs1: "#383838",
   fgs2: "#545454",
-  fgs3: "#545454",
+  fgs3: "#757474",
   accent1: "#2d2f32",
   accent2: "#ad6c6c",
 };

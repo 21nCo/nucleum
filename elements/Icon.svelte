@@ -33,6 +33,7 @@
   import ArrowsPointingOut from "../icons/ArrowsPointingOut.svelte";
   import ArrowsPointingIn from "../icons/ArrowsPointingIn.svelte";
   import Minus from "../icons/Minus.svelte";
+  import History from "../icons/History.svelte";
   import Code from "../icons/Code.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
@@ -47,6 +48,7 @@
     (isActive && icon != "chevright" && icon != "chevleft" && icon != "list") ||
     icon == "chevdoubleleft" ||
     icon == "chevdoubleright" ||
+    icon == "history" ||
     icon == "logout" ||
     icon?.includes("-mini")
       ? IconVariant.Solid
@@ -95,6 +97,8 @@
         <Command {variant} />
       {:else if icon === "clock"}
         <Clock {variant} />
+      {:else if icon === "history"}
+        <History {variant} />
       {:else if icon === "code"}
         <Code {variant} />
       {:else if icon === "clock-mini"}

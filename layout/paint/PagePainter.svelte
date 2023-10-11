@@ -2,7 +2,6 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import { components } from "$lib/tidy/layout/componentMap";
   import {
     PaintType,
     type ComponentType,
@@ -11,14 +10,10 @@
   import { getComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
   import { appStore, windowObject } from "$lib/tidy/stores/app.store";
-  import { goto } from "$app/navigation";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
-  import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { TextType } from "$lib/tidy/types/text.enum";
   import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
-  import { notFoundAction } from "$lib/tidy/utils/actions";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
   let currentComponent: ComponentType | undefined;
@@ -39,7 +34,12 @@
       }
       currentComponent = getComponentFromPath(path ?? currentPath);
       if (!currentComponent) {
-        //notFoundAction();
+        console.log({ currentPath, page: $page, appData: $appStore.appData });
+        if (currentPath == "") {
+          windowObject.gotoPath($appStore.appData.homePath ?? "/home");
+        } else {
+          windowObject.gotoPath($appStore.appData.notFoundPath ?? "/404");
+        }
       }
       if (currentComponent && currentComponent.action) {
         currentComponent.action();
