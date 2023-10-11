@@ -44,7 +44,7 @@
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h3 {isActive ? '' : 'text-fgs3'}">
+    <div class="text-h3 {isActive ? '' : 'text-fgs3 opacity-70'}">
       {item}
     </div>
     {#if isActive}
