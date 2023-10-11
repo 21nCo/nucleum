@@ -26,9 +26,14 @@
   import { defaultAppData } from "$lib/local/stores/local.store";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   let isShowAppearancePopover: boolean = false;
-  let environment: string;
+
   let timer: any;
   onMount(() => {
+    let subdomain = window?.location.host.split(".")[0];
+    console.log({ subdomain, location: window?.location });
+    if (subdomain) {
+      appStore.setLaunchContext("embed");
+    }
     retrieveAppData();
     inject({ mode: dev ? "development" : "production" });
     appEvents.subscribe((x: CustomEvent) => {
@@ -36,10 +41,7 @@
         isShowAppearancePopover = x.value ?? false;
       }
     });
-    if ($appStore.environment) {
-      if ($appStore.environment == "pre") environment = "Preview";
-      else if ($appStore.environment == "dev") environment = "Dev";
-    }
+
     clearInterval(timer);
     timer = setInterval(() => {
       tick();
@@ -64,7 +66,7 @@
         }
       }
     } catch (err) {
-      console.error(err);
+      appStore.logError(err);
     }
   }
   function onSwipe(event: any) {
@@ -80,13 +82,6 @@
 </div>
 {#if $appStore.isDebugMode}
   <DebugLayer />
-{/if}
-{#if environment}
-  <div
-    class="absolute right-0 top-20 text-bgs1 z-10 w-20 px-2 bg-accent1 opacity-50"
-  >
-    {environment}
-  </div>
 {/if}
 {#if $appStore.fullScreenComponentPath}
   <div

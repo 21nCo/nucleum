@@ -12,10 +12,16 @@ import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.s
 import AccountSettings from "../components/settings/account/AccountSettings.svelte";
 import ControlPanel from "../components/settings/ControlPanel.svelte";
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
+import DebugLogs from "../components/error/DebugLogs.svelte";
 export const components: ComponentType[] = [
   {
     path: "404",
     component: NotFound,
+  },
+  {
+    path: "debuglogs",
+    icon: "code",
+    component: DebugLogs,
   },
   {
     path: "cp",
