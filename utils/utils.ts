@@ -38,7 +38,11 @@ export function generateUID() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-export function formatSeconds(seconds: number, format: string = "verbose") {
+export function formatSeconds(
+  seconds: number,
+  format: string = "verbose",
+  isAlwaysShowSecs: boolean = false
+) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
@@ -47,7 +51,7 @@ export function formatSeconds(seconds: number, format: string = "verbose") {
       return (
         `${hours}h` +
         (minutes > 0 ? ` ${minutes}m` : "") +
-        (+secs > 0 ? ` ${secs}s` : "")
+        (+secs > 0 && isAlwaysShowSecs ? ` ${secs}s` : "")
       );
     else if (minutes > 0) return `${minutes}m` + (+secs > 0 ? ` ${secs}s` : "");
     else return `${secs}s`;

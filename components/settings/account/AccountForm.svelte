@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { localStore } from "$lib/local/stores/local.store";
   import Button from "$lib/tidy/elements/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
@@ -30,6 +31,7 @@
       showError();
       return;
     }
+    localStore.runSignupScripts();
     account.signIn(json.token);
   }
   async function onSignupClicked() {
@@ -52,6 +54,7 @@
       return;
     }
     account.signIn(json.token);
+    await localStore.runSignupScripts();
   }
   function showError(message: string | null = null) {
     error = message ?? "Something went wrong. Please try again later.";
