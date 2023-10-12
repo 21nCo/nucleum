@@ -16,12 +16,12 @@
 
 {#if style === PanelSwitcherStyle.BOTTOMBAR}
   <button
-    class="relative pl-2 pr-6"
+    class="relative px-6"
     on:click
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h5 {isActive ? 'font-medium' : 'text-fgs3'}">
+    <div class="text-h4 {isActive ? '' : 'text-fgs3 opacity-70'}">
       {item}
     </div>
     {#if isActive}

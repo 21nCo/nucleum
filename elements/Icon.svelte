@@ -87,7 +87,7 @@
         <Home {variant} />
       {:else if icon === "focus"}
         <Bolt {variant} />
-      {:else if icon === "insights"}
+      {:else if icon === "chart"}
         <Insights {variant} />
       {:else if icon === "settings"}
         <Settings {variant} />

@@ -24,16 +24,16 @@
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.BOTTOMBAR:
-        classList = "flex items-center w-full";
+        classList = "flex items-center";
         break;
       case PanelSwitcherStyle.BOTTOMDOT:
-        classList = "flex gap-6 items-center w-full";
+        classList = "flex gap-6 items-center";
         break;
       case PanelSwitcherStyle.DEFAULT:
-        classList = "flex gap-4 w-full rounded-full";
+        classList = "flex gap-4 rounded-full";
         break;
       default:
-        classList = "flex items-center w-full";
+        classList = "flex items-center";
         break;
     }
   });
@@ -48,6 +48,7 @@
       isActive={selectedIndex === index}
       isDisabled={isDisableEnabled && selectedIndex !== index}
       on:click={() => {
+        selectedIndex = index;
         dispatch("switch", { selected: index });
       }}
     />
