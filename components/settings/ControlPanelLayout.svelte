@@ -11,7 +11,7 @@
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
   import { page } from "$app/stores";
   // export let isCpHome = window.location.pathname === "/cp";
-  $: isCpHome = $page.url.pathname === "/cp";
+  $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: ControlPanelConfiguration;
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
@@ -72,9 +72,8 @@
           />
         {/if}
         <div class="flex w-full justify-center text-fgs3 text-b3 pt-20">
-          {$appStore.appData?.name ??
-            "" + " v" + $appStore.appData?.version ??
-            ""}
+          {($appStore.appData?.name ?? "") +
+            (" v" + $appStore.appData?.version ?? "")}
         </div>
       </div>
     </div>

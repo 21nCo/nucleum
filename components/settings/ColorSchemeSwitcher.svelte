@@ -10,10 +10,10 @@
   const dispatch = createEventDispatcher();
   function getColors(colorScheme: ColorScheme) {
     return [
-      colorScheme.bgs1 ?? "",
-      colorScheme.bgs2 ?? "",
-      colorScheme.bgs3 ?? "",
-      colorScheme.accent1 ?? "",
+      colorScheme.colors.bgs1 ?? "",
+      colorScheme.colors.bgs2 ?? "",
+      colorScheme.colors.bgs3 ?? "",
+      colorScheme.colors.accent1 ?? "",
     ];
   }
   function onClicked(index: number) {

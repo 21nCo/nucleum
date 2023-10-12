@@ -8,7 +8,7 @@ const {
   smoothy,
   grainy,
   solarized,
-  white,
+  bw,
 } = require("./colors.cjs");
 
 const defaultFontSize = {
@@ -131,9 +131,9 @@ const scales = [
 
 const lightThemes = [
   {
-    name: "light",
+    name: "grainy",
     extend: {
-      colors: light,
+      colors: grainy,
     },
   },
   {
@@ -143,9 +143,9 @@ const lightThemes = [
     },
   },
   {
-    name: "grainy",
+    name: "light",
     extend: {
-      colors: grainy,
+      colors: light,
     },
   },
   {
@@ -155,9 +155,9 @@ const lightThemes = [
     },
   },
   {
-    name: "white",
+    name: "bw",
     extend: {
-      colors: white,
+      colors: bw,
     },
   },
   {

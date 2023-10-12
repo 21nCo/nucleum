@@ -13,26 +13,35 @@
     LineChart,
     ScaleTypes,
     StackedAreaChart,
+    type ChartOptions,
   } from "@carbon/charts-svelte";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;
-  let options: any;
+  let options: ChartOptions;
   let isShow: boolean = false;
+  let stackedBarChartRef: any;
   let defaultOptions = {
     axes: {
       left: {
         mapsTo: "value",
-        // stacked: true,
         scaleType: ScaleTypes.LINEAR,
       },
       bottom: {
         mapsTo: "key",
-        scaleType: ScaleTypes.LABELS,
+        scaleType: ScaleTypes.TIME,
       },
     },
     height: "100%",
     width: "100%",
+    grid: false,
+    bars: {
+      width: 30,
+      maxWidth: 30,
+    },
+    labels: {
+      enabled: true,
+    },
     // alignment: "center",
     theme: $userPreferences.colorScheme.isDark
       ? ChartTheme.G100
@@ -49,6 +58,11 @@
       enabled: true,
       alignment: "center",
       position: "bottom",
+      clickable: true,
+      truncation: {
+        // threshold: 50,
+        numCharacter: 20,
+      },
     },
     toolbar: {
       enabled: false,
@@ -59,19 +73,47 @@
     initializeOptions();
     setTimeout(() => {
       manipulateCarbonToTidy();
+      if (type === ChartType.STACKEDBAR) {
+        paintAdditionalBarOptions();
+      }
     }, 10);
     setTimeout(() => {
       isShow = true;
     }, 100);
-    console.log({ options });
   });
 
   function initializeOptions() {
-    if (type === ChartType.BAR) {
-      options = { ...defaultOptions, ...additionalOptions };
-    } else if (type === ChartType.AREA) {
+    if (type === ChartType.STACKEDBAR) {
       options = {
         ...defaultOptions,
+        axes: {
+          left: {
+            mapsTo: "value",
+            stacked: true,
+            scaleType: ScaleTypes.LINEAR,
+          },
+          bottom: {
+            mapsTo: "key",
+            scaleType: ScaleTypes.TIME,
+          },
+        },
+        ...additionalOptions,
+      };
+    } else if (type === ChartType.STACKEDAREA) {
+      options = {
+        ...defaultOptions,
+        axes: {
+          left: {
+            mapsTo: "value",
+            stacked: true,
+            percentage: additionalOptions?.percentage,
+            scaleType: ScaleTypes.LINEAR,
+          },
+          bottom: {
+            mapsTo: "key",
+            scaleType: ScaleTypes.TIME,
+          },
+        },
         ...additionalOptions,
         curve: "curveMonotoneX",
       };
@@ -96,7 +138,7 @@
     let backdro = document.getElementsByClassName(
       "chart-grid-backdrop"
     )[1] as HTMLElement;
-    console.log({ backdro, backdrops });
+    // console.log({ backdro, backdrops });
     for (let i = 0; i < backdrops.length; i++) {
       let backdrop = backdrops[i] as HTMLElement;
       backdrop.style.fill = currentColors?.bgs1!;
@@ -112,6 +154,43 @@
     //   mainDonutFigure.style.fontSize = "5rem";
     // }
   }
+
+  function paintAdditionalBarOptions() {
+    if (stackedBarChartRef) {
+      console.log({ stackedBarChartRef });
+    }
+    // // Adding the totals on bars
+    // data.forEach((d: any, i: any) => {
+    //   const bar = stackedBarChartRef.getSVGRefs().nodes[i];
+
+    //   // Create text elements for the totals
+    //   const total = document.createElementNS(
+    //     "http://www.w3.org/2000/svg",
+    //     "text"
+    //   );
+    //   total.textContent = d.value;
+
+    //   // Position the totals on the top of the bars
+    //   const bbox = bar.getBBox();
+    //   const x = bbox.x + bbox.width / 2;
+    //   const y = bbox.y;
+
+    //   // Set attributes and append to the chart SVG
+    //   total.setAttribute("x", x);
+    //   //total.setAttribute("y", y - 5); // 5px offset to position it above the bar
+    //   stackedBarChartRef.getSVGRefs().holder.appendChild(total);
+    // });
+
+    // let sums = [1, 2, 3, 4];
+    // const chartSVG = document.querySelector(".bx--cc--chart-svg");
+    // sums.forEach((sum, idx) => {
+    //   let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    //   text.setAttribute("x" /* x-coordinate based on idx */);
+    //   text.setAttribute("y" /* y-coordinate based on sum or other measures */);
+    //   text.textContent = sum;
+    //   chartSVG?.appendChild(text);
+    // });
+  }
 </script>
 
 <div
@@ -120,13 +199,15 @@
     : 'opacity-0'}"
 >
   {#if data && options}
-    {#if type === ChartType.BAR}
-      <!-- <BarChartStacked {data} {options} /> -->
+    {#if type === ChartType.STACKEDBAR}
+      <BarChartStacked bind:this={stackedBarChartRef} {data} {options} />
+    {:else if type === ChartType.BAR}
       <BarChartSimple {data} {options} />
     {:else if type === ChartType.LINE}
       <LineChart {data} {options} />
+    {:else if type === ChartType.STACKEDAREA}
+      <StackedAreaChart {data} {options} />
     {:else if type === ChartType.AREA}
-      <!-- <StackedAreaChart {data} {options} style="padding:2rem;" /> -->
       <AreaChart {data} {options} />
     {:else if type === ChartType.PIE}
       <DonutChart {data} {options} />

@@ -2,7 +2,6 @@
   import Element from "$lib/tidy/elements/Element.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
-  import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;

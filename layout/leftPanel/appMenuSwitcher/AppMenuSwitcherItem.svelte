@@ -49,7 +49,7 @@
     ? SelectionItemActiveStyle.ACCENT_COLOR
     : SelectionItemActiveStyle.ACCENT_BACKGROUND}
 >
-  {#if item.icon}
+  {#if item.icon && item.icon != "initials"}
     <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
     <div class="w-6 flex justify-center">
       <Icon
@@ -61,6 +61,10 @@
           ? SelectionItemActiveStyle.ACCENT_COLOR
           : SelectionItemActiveStyle.NONE}
       />
+    </div>
+  {:else if item.icon == "initials"}
+    <div class=" w-6 flex justify-center {isActive ? 'font-medium' : ''}">
+      {"Pr"}
     </div>
   {/if}
   {#if isShowLabel}

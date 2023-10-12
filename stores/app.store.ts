@@ -5,7 +5,6 @@ import {
   getComponentFromPath,
   yesterday,
 } from "$lib/tidy/utils/utils";
-import { colors } from "$lib/tidy/theme/colors";
 import type {
   ColorScheme,
   selectableColorParams,
@@ -26,11 +25,6 @@ import { goto } from "$app/navigation";
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
-
-export const app =
-  window.location.hostname === "localhost"
-    ? import.meta.env.VITE_APP
-    : window.location.hostname;
 
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
@@ -152,23 +146,6 @@ const selectableColorParams: selectableColorParams = {
   lightLightness: 50,
 };
 
-export const darkColorSchemes: ColorScheme[] = [
-  { label: "dark", theme: "clean", isDark: true, ...colors.dark },
-  { label: "dracula", theme: "clean", isDark: true, ...colors.dracula },
-  { label: "forest", theme: "clean", isDark: true, ...colors.forest },
-  { label: "sea", theme: "clean", isDark: true, ...colors.sea },
-  { label: "dim", theme: "clean", isDark: true, ...colors.dim },
-];
-
-//{ label: "FBF8F1", isDark: false }
-const lightColorSchemes: ColorScheme[] = [
-  { label: "white", theme: "clean", isDark: false, ...colors.white },
-  { label: "light", theme: "clean", isDark: false, ...colors.light },
-  { label: "smoothy", theme: "clean", isDark: false, ...colors.smoothy },
-  { label: "grainy", theme: "clean", isDark: false, ...colors.grainy },
-  { label: "solarized", theme: "clean", isDark: false, ...colors.solarized },
-];
-
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
@@ -182,7 +159,7 @@ export const appStore = initAppStore({
   appData: {},
   appConstants: {
     themes,
-    colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
+    colorSchemes: [],
     tempColorSchemes,
     selectableColorParams,
   },
@@ -199,6 +176,7 @@ function initAppStore(seed: AppStore) {
     initiatizeAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
+        n.appConstants.colorSchemes = appData.colorschemes;
         return n;
       });
     },
@@ -279,13 +257,28 @@ function initAppStore(seed: AppStore) {
 export const userPreferences = initUserPreferences({
   nickName: "",
   theme: "Clean",
-  colorScheme: darkColorSchemes[4],
   dayStart: "00:00",
   birthday: new Date(),
   isOnboardingComplete: false,
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
   timeFormat: "meridian",
+  colorScheme: {
+    label: "bw",
+    theme: "clean",
+    isDark: false,
+    colors: {
+      bgs1: "#FFFFFF",
+      bgs2: "#F2F2F2",
+      bgs3: "#E6E6E6",
+      bgs4: "#D9D9D9",
+      fgs1: "#383838",
+      fgs2: "#545454",
+      fgs3: "#757474",
+      accent1: "#2d2f32",
+      accent2: "#ad6c6c",
+    },
+  },
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {

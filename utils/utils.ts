@@ -5,6 +5,11 @@ import { components } from "$lib/tidy/layout/componentMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
 import { appStore, userPreferences } from "../stores/app.store";
 import { get } from "svelte/store";
+import {
+  TimeScale,
+  type TimePeriodSelection,
+  TimePeriodType,
+} from "../types/analytics.type";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -292,9 +297,8 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   };
 }
 export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  let colorScheme = get(appStore).appConstants.colorSchemes.find((x: any) => {
-    return x.label === userPreferences.colorScheme.label;
-  });
+  //console.log({ userPreferences });
+  let colorScheme = userPreferences.colorScheme.colors;
   return colorScheme;
 }
 
@@ -385,4 +389,75 @@ export function getNextInLoop(list: any, index: number) {
     return list[nextIndex];
   }
   return list[0];
+}
+
+export function determineTimePeriod(
+  scale: TimeScale,
+  periodSelection: TimePeriodSelection
+) {
+  let begin = new Date();
+  let end = new Date();
+  let title;
+  if (scale === TimeScale.SINGLEDAY) {
+    if (periodSelection.type === TimePeriodType.HORIZON) {
+      if (periodSelection.horizons?.[0] == 0) {
+        begin.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        title = "Today";
+      } else if (periodSelection.horizons?.[0] < 0) {
+        const whileAgo = Math.abs(periodSelection.horizons?.[0]);
+        begin.setDate(begin.getDate() - whileAgo);
+        begin.setHours(0, 0, 0, 0);
+        end.setDate(end.getDate() - whileAgo);
+        end.setHours(23, 59, 59, 999);
+        if (whileAgo === 1) title = "Yesterday";
+        else if (whileAgo === 365) title = "Same day last year";
+        else title = `${whileAgo} days ago`;
+      }
+    }
+  } else if (scale === TimeScale.DAYS) {
+    if (periodSelection.type === TimePeriodType.LASTXSEGMENTS) {
+      begin.setDate(begin.getDate() - periodSelection.numberOfSegments);
+      title = `Last ${periodSelection.numberOfSegments} days`;
+    } else if (periodSelection.type === TimePeriodType.HORIZON) {
+      const year = periodSelection.horizons[0];
+      const month = periodSelection.horizons[1];
+      begin.setFullYear(year);
+      begin.setMonth(month);
+      begin.setDate(1);
+      end.setFullYear(year);
+      end.setMonth(month);
+      end.setDate(31);
+      title = `Days of ${months[month]} ${year}`;
+    }
+  } else if (scale === TimeScale.MONTHS) {
+    if (periodSelection.type === TimePeriodType.LASTXSEGMENTS) {
+      begin.setMonth(begin.getMonth() - periodSelection.numberOfSegments);
+      title = `Last ${periodSelection.numberOfSegments} months`;
+    } else if (periodSelection.type === TimePeriodType.HORIZON) {
+      const year = periodSelection.horizons[0];
+      begin.setFullYear(year);
+      begin.setMonth(0);
+      begin.setDate(1);
+      end.setFullYear(year);
+      end.setMonth(11);
+      end.setDate(31);
+      title = `Months of ${year}`;
+    }
+  } else if (scale === TimeScale.YEARS) {
+    if (periodSelection.type === TimePeriodType.LASTXSEGMENTS) {
+      begin.setFullYear(begin.getFullYear() - periodSelection.numberOfSegments);
+      title = `Last ${periodSelection.numberOfSegments} years`;
+    } else if (periodSelection.type === TimePeriodType.HORIZON) {
+      const year = periodSelection.horizons[0];
+      begin.setFullYear(year);
+      begin.setMonth(0);
+      begin.setDate(1);
+      end.setFullYear(year);
+      end.setMonth(11);
+      end.setDate(31);
+      title = `Year ${year}`;
+    }
+  }
+  return { begin, end, title };
 }

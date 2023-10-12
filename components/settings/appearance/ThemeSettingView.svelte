@@ -22,7 +22,7 @@
     refreshColorSchemes();
   });
   function refreshColorSchemes(e: any = undefined) {
-    filteredColorSchemes = $appStore.appConstants.colorSchemes.filter(
+    filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
       (x: ColorScheme) => {
         return (
           (selectedLightnessIndex == 0 && !x.isDark) ||
@@ -34,7 +34,7 @@
       selectedColorSchemeIndex = 0;
       saveColorScheme();
     } else {
-      selectedColorSchemeIndex = filteredColorSchemes.findIndex((x: any) => {
+      selectedColorSchemeIndex = filteredColorSchemes?.findIndex((x: any) => {
         return x.label === $userPreferences.colorScheme.label;
       });
     }

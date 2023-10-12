@@ -117,7 +117,7 @@ const solarized = {
   accent1: "#268bd2",
   accent2: "#b58900",
 };
-const white = {
+const bw = {
   bgs1: "#FFFFFF",
   bgs2: "#F2F2F2",
   bgs3: "#E6E6E6",
@@ -138,5 +138,5 @@ module.exports = {
   smoothy,
   grainy,
   solarized,
-  white,
+  bw,
 };

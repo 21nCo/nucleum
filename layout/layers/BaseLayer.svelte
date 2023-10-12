@@ -9,10 +9,10 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
-    app,
     appEvents,
     appStore,
     currentTime,
+    userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
@@ -30,11 +30,13 @@
   let timer: any;
   onMount(() => {
     let subdomain = window?.location.host.split(".")[0];
-    console.log({ subdomain, location: window?.location });
+    // console.log({ subdomain, location: window?.location });
     if (subdomain) {
       appStore.setLaunchContext("embed");
     }
+    //todo - retrieve User preferences
     retrieveAppData();
+    //window.webkit?.messageHandlers.iOSNative.postMessage({colorscheme: $userPreferences.colorScheme});
     inject({ mode: dev ? "development" : "production" });
     appEvents.subscribe((x: CustomEvent) => {
       if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
@@ -52,7 +54,9 @@
     };
   });
   async function retrieveAppData() {
+    const app = import.meta.env.VITE_APP ?? window.location.hostname;
     appStore.initiatizeAppData(defaultAppData);
+    if (!app) return;
     try {
       let response = await performBlankApiCall(
         "appdata",
