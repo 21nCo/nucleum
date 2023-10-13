@@ -67,14 +67,15 @@ const dim = {
 
 const light = {
   bgs1: "#FCFCFC",
-  bgs2: "#F2F2F2",
+  // bgs2: "#F2F2F2",
+  bgs2: "#f6f6f6",
   bgs3: "#E6E6E6",
   bgs4: "#D9D9D9",
   fgs1: "#383838",
   fgs2: "#545454",
   fgs3: "#A8A8A8",
   fgs4: "#C4C4C4",
-  accent1: "#A19BEC",
+  accent1: "#e5616e",
   accent2: "#ad6c6c",
   red: "#f77272",
   green: "#4fbd88",
@@ -107,7 +108,8 @@ const grainy = {
 };
 const solarized = {
   bgs1: "#fdf6e3",
-  bgs2: "#eee8d5",
+  // bgs2: "#eee8d5",
+  bgs2: "#f3eddd",
   bgs3: "#ddd6c1",
   bgs4: "#c9c3af",
   fgs1: "#073642",
@@ -119,9 +121,9 @@ const solarized = {
 };
 const bw = {
   bgs1: "#FFFFFF",
-  bgs2: "#F2F2F2",
-  bgs3: "#E6E6E6",
-  bgs4: "#D9D9D9",
+  bgs2: "#F6F6F6",
+  bgs3: "#e6e6e6",
+  bgs4: "#d9d9d9",
   fgs1: "#383838",
   fgs2: "#545454",
   fgs3: "#757474",

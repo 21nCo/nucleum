@@ -8,9 +8,6 @@
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { TextType } from "$lib/tidy/types/text.enum";
   import ColorSchemeSwitcher from "$lib/tidy/components/settings/ColorSchemeSwitcher.svelte";
-  import SizeFactorSetting from "$lib/tidy/components/settings/appearance/accessibility/sizeFactor/SizeFactorSetting.svelte";
-  import OpenPreviewMode from "./OpenPreviewMode.svelte";
-  import ControlPanelLayout from "../ControlPanelLayout.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedThemeIndex: number = 0;
   let selectedColorSchemeIndex: number;
@@ -21,6 +18,9 @@
     selectedLightnessIndex = $userPreferences.colorScheme?.isDark ? 1 : 0;
     refreshColorSchemes();
   });
+  $: if ($appStore.appConstants.colorSchemes) {
+    refreshColorSchemes();
+  }
   function refreshColorSchemes(e: any = undefined) {
     filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
       (x: ColorScheme) => {

@@ -13,6 +13,7 @@ export enum ChartType {
 }
 
 export type HorizonChart = {
+  id: string;
   scale: TimeScale;
   periodSelection: TimePeriodSelection;
   chartType: ChartType;

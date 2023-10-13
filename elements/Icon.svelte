@@ -1,7 +1,7 @@
 <script lang="ts">
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
   import Settings from "../icons/Settings.svelte";
-  import Insights from "../icons/Insights.svelte";
+  import PieChart from "../icons/PieChart.svelte";
   import Bolt from "../icons/Bolt.svelte";
   import Home from "../icons/Home.svelte";
   import Stack from "../icons/Stack.svelte";
@@ -35,6 +35,9 @@
   import Minus from "../icons/Minus.svelte";
   import History from "../icons/History.svelte";
   import Code from "../icons/Code.svelte";
+  import BarChart from "../icons/BarChart.svelte";
+  import LineChart from "../icons/LineChart.svelte";
+  import AreaChart from "../icons/AreaChart.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -88,7 +91,15 @@
       {:else if icon === "focus"}
         <Bolt {variant} />
       {:else if icon === "chart"}
-        <Insights {variant} />
+        <PieChart {variant} />
+      {:else if icon === "barchart"}
+        <BarChart {variant} />
+      {:else if icon === "barchart-presentation"}
+        <BarChart {variant} style="presentation" />
+      {:else if icon === "areachart"}
+        <AreaChart {variant} />
+      {:else if icon === "linechart"}
+        <LineChart {variant} />
       {:else if icon === "settings"}
         <Settings {variant} />
       {:else if icon === "goals"}

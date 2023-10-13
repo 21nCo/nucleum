@@ -1,7 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { retrieveCurrentColors } from "$lib/tidy/utils/utils";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
   import { ChartType } from "$lib/tidy/types/analytics.type";
   import {
@@ -14,14 +14,15 @@
     ScaleTypes,
     StackedAreaChart,
     type ChartOptions,
+    Alignments,
+    PieChart,
   } from "@carbon/charts-svelte";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;
-  let options: ChartOptions;
   let isShow: boolean = false;
   let stackedBarChartRef: any;
-  let defaultOptions = {
+  let defaultOptions: ChartOptions = {
     axes: {
       left: {
         mapsTo: "value",
@@ -34,15 +35,25 @@
     },
     height: "100%",
     width: "100%",
-    grid: false,
+    grid: {
+      x: {
+        enabled: false,
+      },
+      y: {
+        enabled: false,
+      },
+    },
+    resizable: false,
     bars: {
       width: 30,
       maxWidth: 30,
     },
-    labels: {
-      enabled: true,
+    pie: {
+      alignment: Alignments.CENTER,
     },
-    // alignment: "center",
+    donut: {
+      alignment: Alignments.CENTER,
+    },
     theme: $userPreferences.colorScheme.isDark
       ? ChartTheme.G100
       : ChartTheme.WHITE,
@@ -56,8 +67,7 @@
     },
     legend: {
       enabled: true,
-      alignment: "center",
-      position: "bottom",
+      alignment: Alignments.CENTER,
       clickable: true,
       truncation: {
         // threshold: 50,
@@ -68,15 +78,11 @@
       enabled: false,
     },
   };
+  let options: ChartOptions = defaultOptions;
   let currentColors = retrieveCurrentColors($userPreferences);
   onMount(() => {
     initializeOptions();
-    setTimeout(() => {
-      manipulateCarbonToTidy();
-      if (type === ChartType.STACKEDBAR) {
-        paintAdditionalBarOptions();
-      }
-    }, 10);
+    manipulateCarbonToTidy();
     setTimeout(() => {
       isShow = true;
     }, 100);
@@ -128,23 +134,23 @@
             // number: 100000,
           },
         },
-        width: "75%",
+        width: "100%",
       };
     }
   }
 
   function manipulateCarbonToTidy() {
     let backdrops = document.getElementsByClassName("chart-grid-backdrop");
-    let backdro = document.getElementsByClassName(
-      "chart-grid-backdrop"
-    )[1] as HTMLElement;
-    // console.log({ backdro, backdrops });
+    console.log({ backdrops });
     for (let i = 0; i < backdrops.length; i++) {
       let backdrop = backdrops[i] as HTMLElement;
       backdrop.style.fill = currentColors?.bgs1!;
     }
-    if (backdro) {
-      backdro.style.fill = currentColors?.bgs1!;
+    let skel = document.getElementsByClassName("cds--cc--skeleton");
+    console.log({ skel });
+    for (let i = 0; i < skel.length; i++) {
+      let sk = skel[i] as HTMLElement;
+      sk.style.width = "100%";
     }
     // let mainDonutFigure = document.getElementsByClassName(
     //   "donut-figure"
@@ -198,21 +204,19 @@
     ? ''
     : 'opacity-0'}"
 >
-  {#if data && options}
-    {#if type === ChartType.STACKEDBAR}
-      <BarChartStacked bind:this={stackedBarChartRef} {data} {options} />
-    {:else if type === ChartType.BAR}
-      <BarChartSimple {data} {options} />
-    {:else if type === ChartType.LINE}
-      <LineChart {data} {options} />
-    {:else if type === ChartType.STACKEDAREA}
-      <StackedAreaChart {data} {options} />
-    {:else if type === ChartType.AREA}
-      <AreaChart {data} {options} />
-    {:else if type === ChartType.PIE}
-      <DonutChart {data} {options} />
-    {:else}
-      <div>Chart type not supported yet</div>
-    {/if}
+  {#if type === ChartType.STACKEDBAR}
+    <BarChartStacked bind:this={stackedBarChartRef} {data} {options} />
+  {:else if type === ChartType.BAR}
+    <BarChartSimple {data} {options} />
+  {:else if type === ChartType.LINE}
+    <LineChart {data} {options} />
+  {:else if type === ChartType.STACKEDAREA}
+    <StackedAreaChart {data} {options} />
+  {:else if type === ChartType.AREA}
+    <AreaChart {data} {options} />
+  {:else if type === ChartType.PIE}
+    <DonutChart {data} {options} />
+  {:else}
+    <div>Chart type not supported yet</div>
   {/if}
 </div>
