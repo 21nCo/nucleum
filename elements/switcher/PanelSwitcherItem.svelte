@@ -8,31 +8,29 @@
   export let isDisabled: boolean = false;
   export let activeColor: string | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
-  const dispatch = createEventDispatcher();
-  let backgroundColor: string = "";
   $: currentColors = retrieveCurrentColors($userPreferences);
   $: defaultActiveColor = currentColors?.accent1;
 </script>
 
 {#if style === PanelSwitcherStyle.BOTTOMBAR}
   <button
-    class="relative px-6"
+    class="flex relative px-2"
     on:click
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h4 {isActive ? '' : 'text-fgs3 opacity-70'}">
+    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs3 opacity-70'}">
       {item}
     </div>
     {#if isActive}
       <div
-        class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1"
+        class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1 z-10"
         style="height: 5%; background-color: {activeColor ??
           defaultActiveColor}"
       />
     {:else}
       <div
-        class="absolute opacity-80 w-full bg-bgs3 left-0 -bottom-1"
+        class="absolute w-full bg-bgs3 left-0 -bottom-1"
         style="height: 5%;"
       />
     {/if}

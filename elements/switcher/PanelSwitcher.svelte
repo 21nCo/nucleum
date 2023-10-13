@@ -24,7 +24,7 @@
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.BOTTOMBAR:
-        classList = "flex items-center";
+        classList = "flex gap-4";
         break;
       case PanelSwitcherStyle.BOTTOMDOT:
         classList = "flex gap-6 items-center";
@@ -39,18 +39,21 @@
   });
 </script>
 
-<div class={classList}>
-  {#each items as item, index}
-    <PanelSwitcherItem
-      {item}
-      {activeColor}
-      {style}
-      isActive={selectedIndex === index}
-      isDisabled={isDisableEnabled && selectedIndex !== index}
-      on:click={() => {
-        selectedIndex = index;
-        dispatch("switch", { selected: index });
-      }}
-    />
-  {/each}
+<div class="relative w-full">
+  <div class={classList}>
+    {#each items as item, index}
+      <PanelSwitcherItem
+        {item}
+        {activeColor}
+        {style}
+        isActive={selectedIndex === index}
+        isDisabled={isDisableEnabled && selectedIndex !== index}
+        on:click={() => {
+          selectedIndex = index;
+          dispatch("switch", { selected: index });
+        }}
+      />
+    {/each}
+  </div>
+  <div class="absolute w-full bg-bgs3 left-0 -bottom-1" style="height: 5%;" />
 </div>

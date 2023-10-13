@@ -254,6 +254,18 @@ function initAppStore(seed: AppStore) {
   };
 }
 
+export const defaultColors = {
+  bgs1: "#FFFFFF",
+  bgs2: "#F2F2F2",
+  bgs3: "#E6E6E6",
+  bgs4: "#D9D9D9",
+  fgs1: "#383838",
+  fgs2: "#545454",
+  fgs3: "#757474",
+  accent1: "#2d2f32",
+  accent2: "#ad6c6c",
+};
+
 export const userPreferences = initUserPreferences({
   nickName: "",
   theme: "Clean",
@@ -267,17 +279,7 @@ export const userPreferences = initUserPreferences({
     label: "bw",
     theme: "clean",
     isDark: false,
-    colors: {
-      bgs1: "#FFFFFF",
-      bgs2: "#F2F2F2",
-      bgs3: "#E6E6E6",
-      bgs4: "#D9D9D9",
-      fgs1: "#383838",
-      fgs2: "#545454",
-      fgs3: "#757474",
-      accent1: "#2d2f32",
-      accent2: "#ad6c6c",
-    },
+    colors: defaultColors,
   },
 });
 
