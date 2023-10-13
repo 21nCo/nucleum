@@ -1,20 +1,4 @@
-export enum TimeScale {
-  SINGLEDAY = "day",
-  DAYS = "days",
-  MONTHS = "months",
-  YEARS = "years",
-}
-
-export enum TimePeriodType {
-  LASTXSEGMENTS = "lastXSegments",
-  HORIZON = "horizon",
-}
-
-export type TimePeriodSelection = {
-  type: TimePeriodType;
-  numberOfSegments: number;
-  horizons: number[];
-};
+import type { TimePeriodSelection, TimeScale } from "./time.type";
 
 export enum ChartType {
   LINE = "line",

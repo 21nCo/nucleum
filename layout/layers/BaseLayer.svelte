@@ -96,13 +96,13 @@
   >
     {#if $windowObject.isInPortraitMode}
       <button
-        class="pt-4 pb-1 px-4 flex w-full justify-end bg-bgs1 -mb-1"
+        class="pt-4 pb-6 px-4 flex w-full justify-center bg-bgs1 -mb-1"
         on:click={() => {
           appStore.hideFullScreenPlayer();
         }}
       >
-        <!-- <div class="border border-b-4 border-bgs4 w-1/4 rounded-full" /> -->
-        <Icon icon="collapse" color="fgs2" />
+        <div class="h-1 bg-bgs3 w-1/3 rounded-full" />
+        <!-- <Icon icon="collapse" color="fgs2" /> -->
       </button>
     {/if}
     <ComponentResolver path={$appStore.fullScreenComponentPath} />

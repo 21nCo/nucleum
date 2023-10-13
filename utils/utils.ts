@@ -9,7 +9,8 @@ import {
   TimeScale,
   type TimePeriodSelection,
   TimePeriodType,
-} from "../types/analytics.type";
+} from "../types/time.type";
+import { TimeFormat } from "../types/time.type";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -45,13 +46,13 @@ export function generateUID() {
 
 export function formatSeconds(
   seconds: number,
-  format: string = "verbose",
+  format: TimeFormat = TimeFormat.VERBOSE,
   isAlwaysShowSecs: boolean = false
 ) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  if (format === "verbose") {
+  if (format === TimeFormat.VERBOSE) {
     if (hours > 0)
       return (
         `${hours}h` +
@@ -60,7 +61,7 @@ export function formatSeconds(
       );
     else if (minutes > 0) return `${minutes}m` + (+secs > 0 ? ` ${secs}s` : "");
     else return `${secs}s`;
-  } else if (format === "colonic") {
+  } else if (format === TimeFormat.CLOCK) {
     const hh = hours.toString().padStart(2, "0");
     const mm = minutes.toString().padStart(2, "0");
     const ss = secs.toString().padStart(2, "0");
