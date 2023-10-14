@@ -44,6 +44,7 @@
       },
     },
     resizable: false,
+    animations: false,
     bars: {
       width: 30,
       maxWidth: 30,
@@ -85,7 +86,7 @@
     manipulateCarbonToTidy();
     setTimeout(() => {
       isShow = true;
-    }, 100);
+    }, 10);
   });
 
   function initializeOptions() {
@@ -141,13 +142,13 @@
 
   function manipulateCarbonToTidy() {
     let backdrops = document.getElementsByClassName("chart-grid-backdrop");
-    console.log({ backdrops });
+    // console.log({ backdrops });
     for (let i = 0; i < backdrops.length; i++) {
       let backdrop = backdrops[i] as HTMLElement;
       backdrop.style.fill = currentColors?.bgs1!;
     }
     let skel = document.getElementsByClassName("cds--cc--skeleton");
-    console.log({ skel });
+    // console.log({ skel });
     for (let i = 0; i < skel.length; i++) {
       let sk = skel[i] as HTMLElement;
       sk.style.width = "100%";

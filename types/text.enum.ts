@@ -4,4 +4,5 @@ export enum TextType {
   SECTION_HEADING,
   SECTION_DESCRIPTION,
   CP_SECTION,
+  FORM_LABEL,
 }

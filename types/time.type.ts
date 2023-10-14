@@ -1,16 +1,19 @@
 export enum TimeScale {
-  SINGLEDAY = "day",
-  DAYS = "days",
-  MONTHS = "months",
-  YEARS = "years",
+  SINGLEDAY,
+  DAYS,
+  WEEKS,
+  MONTHS,
+  QUARTERS,
+  YEARS,
 }
 
 export enum TimePeriodType {
-  LASTXSEGMENTS = "lastXSegments",
-  HORIZON = "horizon",
+  LASTXSEGMENTS,
+  UPPERHORIZON,
 }
 
-export type TimePeriodSelection = {
+export type TimePeriod = {
+  scale: TimeScale;
   type: TimePeriodType;
   numberOfSegments: number;
   horizons: number[];

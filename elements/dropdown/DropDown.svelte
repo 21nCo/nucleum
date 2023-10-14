@@ -2,7 +2,10 @@
   import { generateBackgroudColor } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
-  import type { DropdownItem } from "$lib/tidy/types/dropdownItem.type";
+  import {
+    DropDownStyle,
+    type DropdownItem,
+  } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   const dispatch = createEventDispatcher();
@@ -11,6 +14,7 @@
   export let parentBackgroundIndex: number = 0;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
+  export let style: DropDownStyle = DropDownStyle.DEFAULT;
   let isShowOptions: boolean = false;
   let backgroundColor: string;
   let activeBackgroundColor: string;
@@ -27,9 +31,13 @@
     <FormControlLabel {label} {info} />
   {/if}
   <button
-    class="flex w-full justify-between gap-4 items-center border border-bgs3 p-2 {isShowOptions
+    class="flex w-full justify-between gap-4 items-center p-2 {isShowOptions
       ? 'rounded-t-md'
-      : 'rounded-md'}"
+      : 'rounded-md'} {style === DropDownStyle.OUTLINED
+      ? 'border border-bgs3'
+      : style === DropDownStyle.PANEL_SWITCH
+      ? 'text-h4 font-medium'
+      : ''}"
     on:click={() => {
       isShowOptions = !isShowOptions;
     }}
@@ -56,7 +64,7 @@
             : ''}"
           on:click={() => {
             if (item.disabled) return;
-            selected = item;
+            selectedIndex = index;
             isShowOptions = false;
             dispatch("select", item.value);
           }}

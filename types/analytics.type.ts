@@ -1,4 +1,4 @@
-import type { TimePeriodSelection, TimeScale } from "./time.type";
+import type { TimePeriod } from "./time.type";
 
 export enum ChartType {
   LINE = "line",
@@ -14,8 +14,7 @@ export enum ChartType {
 
 export type HorizonChart = {
   id: string;
-  scale: TimeScale;
-  periodSelection: TimePeriodSelection;
+  period: TimePeriod;
   chartType: ChartType;
   chartOptions?: any;
 };
