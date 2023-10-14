@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import {
     appStore,
+    postMessageToParent,
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
@@ -46,11 +47,11 @@
       "--fontFamily-sans-0",
       fontFamily
     );
-    sendMessageToParent();
-  }
-  function sendMessageToParent() {
-    const message = { theme: $appStore.tailwindTheme, rootFontSize };
-    parent.postMessage(message, "*");
+    postMessageToParent({
+      colorscheme: JSON.stringify($userPreferences.colorScheme),
+      rootFontSize,
+    });
+    //postMessageToParent({ theme: $appStore.tailwindTheme, rootFontSize });
   }
 </script>
 

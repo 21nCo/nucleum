@@ -12,6 +12,7 @@
     appEvents,
     appStore,
     currentTime,
+    postMessageToParent,
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
@@ -36,7 +37,9 @@
     }
     //todo - retrieve User preferences
     retrieveAppData();
-    //window.webkit?.messageHandlers.iOSNative.postMessage({colorscheme: $userPreferences.colorScheme});
+    postMessageToParent({
+      colorscheme: JSON.stringify($userPreferences.colorScheme),
+    });
     inject({ mode: dev ? "development" : "production" });
     appEvents.subscribe((x: CustomEvent) => {
       if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {

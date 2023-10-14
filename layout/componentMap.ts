@@ -13,10 +13,15 @@ import AccountSettings from "../components/settings/account/AccountSettings.svel
 import ControlPanel from "../components/settings/ControlPanel.svelte";
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
+import Offline from "../components/error/Offline.svelte";
 export const components: ComponentType[] = [
   {
     path: "404",
     component: NotFound,
+  },
+  {
+    path: "offline",
+    component: Offline,
   },
   {
     path: "debuglogs",

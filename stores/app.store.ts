@@ -92,9 +92,13 @@ function initWindow(settings: WindowObject) {
     },
     gotoPath: (path: string, params: any = null) => {
       update((n: WindowObject) => {
+        console.log({ navigator });
         n = { ...n, currentPath: path };
         return n;
       });
+      if (!navigator.onLine) {
+        path = "offline";
+      }
       if (params) goto(path, params);
       else goto(path);
     },
@@ -341,4 +345,14 @@ function initAccount(seed: UserAccount) {
       });
     },
   };
+}
+
+export function postMessageToParent(message: any) {
+  try {
+    window?.parent?.postMessage(message, "*");
+    //@ts-ignore
+    window?.webkit?.messageHandlers.iOSNative.postMessage(message);
+  } catch (error) {
+    appStore.logError(error);
+  }
 }
