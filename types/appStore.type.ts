@@ -5,7 +5,7 @@ export type AppStore = {
   appConstants: AppConstants;
   appData: any;
   isDebugMode: boolean;
-  launchContext: any;
+  launchContext: LaunchContext;
   pageMenu?: string[];
   player?: string;
   //TACO - dynamic actions
@@ -20,3 +20,10 @@ export type DebugLog = {
   type: "error" | "info" | "warn";
   timestamp: string;
 };
+
+export enum LaunchContext {
+  DEFAULT,
+  EMBED,
+  PREVIEW,
+  DEV,
+}

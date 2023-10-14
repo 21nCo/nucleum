@@ -23,110 +23,112 @@
   }
 </script>
 
-{#if $windowObject.isInPortraitMode}
-  <div
-    class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
-  >
-    {#if $appStore.player}
-      <ComponentResolver path={$appStore.player} />
-    {/if}
-    <div class=" border-t border-bgs2 bg-bgs1 w-full min-w-min pb-6 pt-1">
-      <AppMenuSwitcher
-        layoutContext={LayoutContext.PORTRAIT}
-        parentBackgroundIndex={0}
-      />
-    </div>
-  </div>
-{:else if isMinimized}
-  <div
-    class="flex flex-col gap-4 absolute left-1 z-30 {isHovered
-      ? 'bg-bgs4 rounded-lg p-2'
-      : 'opacity-40'}"
-    style="top: {headerHeight}px"
-    on:mouseenter={() => (isHovered = true)}
-    on:mouseleave={() => (isHovered = false)}
-  >
-    <AppMenuSwitcher
-      {isHovered}
-      parentBackgroundIndex={1}
-      layoutContext={LayoutContext.MINIMIZED}
-    />
-    {#if isHovered}
-      <Button
-        on:click={onMinimizeToggled}
-        size={Size.xs}
-        label="switch to verbose"
-      />
-    {/if}
-  </div>
-{:else}
-  <div
-    class="flex justify-center items-center h-full {isInThinMode
-      ? 'w-16'
-      : 'w-56'} ml-2 flex-none"
-  >
+{#if !$windowObject.isHideMenu}
+  {#if $windowObject.isInPortraitMode}
     <div
-      class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full rounded-lg {$userPreferences.theme ==
-      'Colorful'
-        ? 'glass'
-        : 'bg-bgs2'}"
-      style="height: calc(100% - 1rem);"
+      class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
     >
-      <div class="w-full flex flex-col gap-8 lg:gap-12">
-        <div
-          class="w-full flex opacity-50 {isInThinMode
-            ? 'justify-center'
-            : 'justify-center'}  px-2"
-        >
-          <Icon
-            icon={isInThinMode ? "plus" : "minus-circled"}
-            on:click={() => {
-              isInThinMode = !isInThinMode;
-            }}
-          />
-        </div>
-        {#if !isInThinMode}
-          <slot name="header" />
-        {/if}
-        <div class="flex flex-col gap-12 items-center w-full p-2">
-          <AppMenuSwitcher
-            parentBackgroundIndex={1}
-            layoutContext={isInThinMode
-              ? LayoutContext.THIN
-              : LayoutContext.DEFAULT}
-          />
-          {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
-            <PageMenuView />
-          {/if}
-          <!-- todo - dynamicsection rendering from dyanmic items -->
-        </div>
-      </div>
-      <div class="w-full flex flex-col gap-2 items-center">
-        {#if $appStore.isDebugMode}
-          <Button
-            on:click={onMinimizeToggled}
-            size={Size.xs}
-            label="switch to min mode"
-          />
-        {/if}
-        {#if isInThinMode}
-          <!-- todo - on click - show command bar -->
-          <Icon
-            icon="command"
-            color="fgs2"
-            hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
-          />
-        {:else}
-          <div class="text-b3 text-fgs3 mb-4">
-            Press <span class="bg-bgs3 text-fgs2 px-2 py-0.5 rounded-md"
-              >Cmd + K</span
-            > for command bar
-          </div>
-        {/if}
-        <LeftBottomBar {isInThinMode} />
+      {#if $appStore.player}
+        <ComponentResolver path={$appStore.player} />
+      {/if}
+      <div class=" border-t border-bgs2 bg-bgs1 w-full min-w-min pb-6 pt-1">
+        <AppMenuSwitcher
+          layoutContext={LayoutContext.PORTRAIT}
+          parentBackgroundIndex={0}
+        />
       </div>
     </div>
-  </div>
+  {:else if isMinimized}
+    <div
+      class="flex flex-col gap-4 absolute left-1 z-30 {isHovered
+        ? 'bg-bgs4 rounded-lg p-2'
+        : 'opacity-40'}"
+      style="top: {headerHeight}px"
+      on:mouseenter={() => (isHovered = true)}
+      on:mouseleave={() => (isHovered = false)}
+    >
+      <AppMenuSwitcher
+        {isHovered}
+        parentBackgroundIndex={1}
+        layoutContext={LayoutContext.MINIMIZED}
+      />
+      {#if isHovered}
+        <Button
+          on:click={onMinimizeToggled}
+          size={Size.xs}
+          label="switch to verbose"
+        />
+      {/if}
+    </div>
+  {:else}
+    <div
+      class="flex justify-center items-center h-full {isInThinMode
+        ? 'w-16'
+        : 'w-56'} ml-2 flex-none"
+    >
+      <div
+        class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full rounded-lg {$userPreferences.theme ==
+        'Colorful'
+          ? 'glass'
+          : 'bg-bgs2'}"
+        style="height: calc(100% - 1rem);"
+      >
+        <div class="w-full flex flex-col gap-8 lg:gap-12">
+          <div
+            class="w-full flex opacity-50 {isInThinMode
+              ? 'justify-center'
+              : 'justify-center'}  px-2"
+          >
+            <Icon
+              icon={isInThinMode ? "plus" : "minus-circled"}
+              on:click={() => {
+                isInThinMode = !isInThinMode;
+              }}
+            />
+          </div>
+          {#if !isInThinMode}
+            <slot name="header" />
+          {/if}
+          <div class="flex flex-col gap-12 items-center w-full p-2">
+            <AppMenuSwitcher
+              parentBackgroundIndex={1}
+              layoutContext={isInThinMode
+                ? LayoutContext.THIN
+                : LayoutContext.DEFAULT}
+            />
+            {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
+              <PageMenuView />
+            {/if}
+            <!-- todo - dynamicsection rendering from dyanmic items -->
+          </div>
+        </div>
+        <div class="w-full flex flex-col gap-2 items-center">
+          {#if $appStore.isDebugMode}
+            <Button
+              on:click={onMinimizeToggled}
+              size={Size.xs}
+              label="switch to min mode"
+            />
+          {/if}
+          {#if isInThinMode}
+            <!-- todo - on click - show command bar -->
+            <Icon
+              icon="command"
+              color="fgs2"
+              hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
+            />
+          {:else}
+            <div class="text-b3 text-fgs3 mb-4">
+              Press <span class="bg-bgs3 text-fgs2 px-2 py-0.5 rounded-md"
+                >Cmd + K</span
+              > for command bar
+            </div>
+          {/if}
+          <LeftBottomBar {isInThinMode} />
+        </div>
+      </div>
+    </div>
+  {/if}
 {/if}
 
 <style>

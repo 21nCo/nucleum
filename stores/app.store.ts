@@ -9,7 +9,7 @@ import type {
   ColorScheme,
   selectableColorParams,
 } from "$lib/tidy/types/appConstants.type";
-import type { AppStore } from "$lib/tidy/types/appStore.type";
+import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
@@ -54,6 +54,7 @@ export const windowObject = initWindow({
   isInPortraitMode: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
+  isHideMenu: false,
 });
 
 function initWindow(settings: WindowObject) {
@@ -158,7 +159,7 @@ if (isDebugMode) themes = themes.concat(["Colorful", "3026"]);
 
 export const appStore = initAppStore({
   isDebugMode,
-  launchContext: "", //todo - move to base -> window?.location.host.split(".")[0],
+  launchContext: LaunchContext.DEFAULT,
   tailwindTheme: "",
   appData: {},
   appConstants: {
@@ -184,7 +185,7 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    setLaunchContext(launchContext: string) {
+    setLaunchContext(launchContext: LaunchContext) {
       update((n: AppStore) => {
         n.launchContext = launchContext;
         return n;
@@ -350,8 +351,13 @@ function initAccount(seed: UserAccount) {
 export function postMessageToParent(message: any) {
   try {
     window?.parent?.postMessage(message, "*");
+  } catch (error) {
+    appStore.logError(error);
+  }
+  try {
     //@ts-ignore
     window?.webkit?.messageHandlers.iOSNative.postMessage(message);
+    appStore.log("message sent to iOSNative" + JSON.stringify(message));
   } catch (error) {
     appStore.logError(error);
   }

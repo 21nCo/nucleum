@@ -1,15 +1,19 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { onMount } from "svelte";
   let environment: string;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
   onMount(() => {
     if ($appStore.launchContext) {
-      if ($appStore.launchContext == "pre") environment = "Preview";
-      else if ($appStore.launchContext == "dev") environment = "Dev";
-      else if ($appStore.launchContext == "embed") environment = "Embed";
+      if ($appStore.launchContext == LaunchContext.PREVIEW)
+        environment = "Preview";
+      else if ($appStore.launchContext == LaunchContext.DEV)
+        environment = "Dev";
+      else if ($appStore.launchContext == LaunchContext.EMBED)
+        environment = "Embed";
     }
   });
 </script>

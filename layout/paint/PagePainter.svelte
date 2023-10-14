@@ -41,6 +41,9 @@
           windowObject.gotoPath($appStore.appData.notFoundPath ?? "/404");
         }
       }
+      if (currentComponent && currentComponent.isHideMenu) {
+        $windowObject.isHideMenu = true;
+      }
       if (currentComponent && currentComponent.action) {
         currentComponent.action();
       }

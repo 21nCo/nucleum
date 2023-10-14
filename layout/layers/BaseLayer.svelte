@@ -26,6 +26,7 @@
   import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
   import { defaultAppData } from "$lib/local/stores/local.store";
   import Icon from "$lib/tidy/elements/Icon.svelte";
+  import { LaunchContext } from "$lib/tidy/types/appStore.type";
   let isShowAppearancePopover: boolean = false;
 
   let timer: any;
@@ -33,7 +34,7 @@
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
     if (subdomain) {
-      appStore.setLaunchContext("embed");
+      appStore.setLaunchContext(LaunchContext.EMBED);
     }
     //todo - retrieve User preferences
     retrieveAppData();
