@@ -29,6 +29,7 @@
       parentComponent = undefined;
       grandPa = undefined;
       let currentPath = $page.params.route;
+      //console.log({ page: $page });
       if (prefix) {
         currentPath = prefix + "/" + currentPath;
       }

@@ -21,6 +21,7 @@ import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount } from "../types/account.type";
 import { goto } from "$app/navigation";
+import type { PopupEvent } from "../types/popup.type";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -361,4 +362,31 @@ export function postMessageToParent(message: any) {
   } catch (error) {
     appStore.logError(error);
   }
+}
+
+const defaultPopup = {
+  path: "",
+  id: "",
+  isShow: false,
+};
+export const popupEvent = initPopupEventStore(defaultPopup);
+
+function initPopupEventStore(seed: PopupEvent) {
+  const { subscribe, set, update } = writable<PopupEvent>(seed);
+  return {
+    subscribe,
+    set: (m: PopupEvent) => {
+      set(m);
+    },
+    reset: () => {
+      update((n: PopupEvent) => {
+        return defaultPopup;
+      });
+    },
+    notify: (event: PopupEvent) => {
+      update((n: PopupEvent) => {
+        return { ...n, ...event };
+      });
+    },
+  };
 }
