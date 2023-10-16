@@ -25,7 +25,7 @@
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
     if (subdomain) {
-      appStore.setLaunchContext(LaunchContext.EMBED);
+      appStore.setLaunchContext(LaunchContext.DEFAULT);
     }
     //todo - retrieve User preferences
     retrieveAppData();
