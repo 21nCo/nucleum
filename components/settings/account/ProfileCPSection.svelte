@@ -1,8 +1,9 @@
 <script>
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { bg } from "$lib/tidy/utils/utils";
 </script>
 
-<div class="bg-bgs2 rounded-lg mx-4">
+<div class="rounded-lg mx-4 {bg($userPreferences.theme, 1)}">
   <div class="flex flex-col justify-center h-40 text-fgs3 items-center">
     Profile section
     <button

@@ -145,7 +145,8 @@
     // console.log({ backdrops });
     for (let i = 0; i < backdrops.length; i++) {
       let backdrop = backdrops[i] as HTMLElement;
-      backdrop.style.fill = currentColors?.bgs1!;
+      // backdrop.style.fill = currentColors?.bgs1!;
+      backdrop.style.fill = "transparent";
     }
     let skel = document.getElementsByClassName("cds--cc--skeleton");
     // console.log({ skel });

@@ -6,6 +6,7 @@
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { AppTheme } from "$lib/tidy/types/appConstants.type";
   export let classList: string;
   export let id: string = "";
   export let styleList: string = "";
@@ -49,7 +50,7 @@
         : hoverStyle === SelectionItemActiveStyle.BG_COLOR && !isActive
         ? " hover:bg-bgs4 hover:text-fgs1"
         : " hover:bg-opacity-60") +
-      ($userPreferences.theme == "Colorful"
+      ($userPreferences.theme == AppTheme.Glassy
         ? selectionStyle != SelectionItemActiveStyle.SIDEDOT
           ? isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
@@ -59,7 +60,7 @@
             ? ""
             : " glass"
           : ""
-        : $userPreferences.theme == "Clean"
+        : $userPreferences.theme == AppTheme.Clean
         ? isActive
           ? selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND ||
             selectionStyle === SelectionItemActiveStyle.SIDEBAR
@@ -130,7 +131,9 @@
 {:else}
   <div
     class={classList +
-      ($userPreferences.theme == "Colorful" ? " glassactive" : backgroundColor)}
+      ($userPreferences.theme == AppTheme.Glassy
+        ? " glassactive"
+        : backgroundColor)}
     style={styleList}
   >
     <slot />

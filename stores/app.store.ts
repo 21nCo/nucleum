@@ -5,9 +5,10 @@ import {
   getComponentFromPath,
   yesterday,
 } from "$lib/tidy/utils/utils";
-import type {
-  ColorScheme,
-  selectableColorParams,
+import {
+  AppTheme,
+  type ColorScheme,
+  type selectableColorParams,
 } from "$lib/tidy/types/appConstants.type";
 import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
@@ -160,8 +161,9 @@ const selectableColorParams: selectableColorParams = {
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
-let themes = ["Clean"];
-if (isDebugMode) themes = themes.concat(["Colorful", "3026"]);
+let themes = [AppTheme.Clean, AppTheme.Glassy];
+if (isDebugMode)
+  themes = themes.concat([AppTheme.Vibrant, AppTheme.Futuristic]);
 
 export const appStore = initAppStore({
   isDebugMode,
@@ -279,7 +281,7 @@ export const defaultColors = {
 
 export const userPreferences = initUserPreferences({
   nickName: "",
-  theme: "Clean",
+  theme: AppTheme.Clean,
   dayStart: "00:00",
   birthday: new Date(),
   isOnboardingComplete: false,
@@ -291,6 +293,7 @@ export const userPreferences = initUserPreferences({
     theme: "clean",
     isDark: false,
     colors: defaultColors,
+    tailwindSelector: "bw",
   },
 });
 

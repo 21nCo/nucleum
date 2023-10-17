@@ -2,6 +2,8 @@
   import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
   import Element from "$lib/tidy/elements/Element.svelte";
   import { createEventDispatcher, onMount } from "svelte";
+  import { bg } from "$lib/tidy/utils/utils";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
   export let colorSchemes: ColorScheme[];
   export let parentBackgroundIndex: number;
   export let selected: number;
@@ -27,10 +29,13 @@
         on:click={() => {
           onClicked(index);
         }}
-        class="relative flex flex-col items-center gap-1 p-2 rounded-md hover:bg-bgs3 {selected ===
-        index
-          ? 'bg-bgs3'
-          : 'bg-bgs2'}"
+        class="relative flex flex-col items-center gap-1 p-2 rounded-md hover:{bg(
+          $userPreferences.theme,
+          1,
+          true
+        )} {selected === index
+          ? bg($userPreferences.theme, 1, true)
+          : bg($userPreferences.theme, 1)}"
       >
         {#if getColors(colorScheme)}
           <div class="flex">

@@ -1,11 +1,11 @@
 <script lang="ts">
   import Element from "$lib/tidy/elements/Element.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import type { ComponentType } from "$lib/tidy/types/component.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { getComponentFromPath } from "$lib/tidy/utils/utils";
+  import { getComponentFromPath, bg } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let path: string;
   export let orientation: Orientation = Orientation.Vertical;
@@ -27,7 +27,7 @@
       : 'flex px-4 py-2 w-full items-center justify-between'} {isActive
       ? 'bg-accent1 text-bgs1'
       : !$windowObject.isInPortraitMode
-      ? 'hover:bg-bgs2'
+      ? 'hover:' + bg($userPreferences.theme, 1)
       : ''}"
     on:click={() => {
       windowObject.gotoPath("/cp/" + path);

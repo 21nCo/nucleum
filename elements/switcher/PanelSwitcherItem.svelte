@@ -1,7 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { retrieveCurrentColors } from "$lib/tidy/utils/utils";
+  import { bg, retrieveCurrentColors } from "$lib/tidy/utils/utils";
   import { createEventDispatcher } from "svelte";
   export let item: string;
   export let isActive: boolean = false;
@@ -30,7 +30,7 @@
       />
     {:else}
       <div
-        class="absolute w-full bg-bgs3 left-0 -bottom-1"
+        class="absolute w-full {bg($userPreferences.theme, 1)} left-0 -bottom-1"
         style="height: 5%;"
       />
     {/if}

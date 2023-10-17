@@ -7,6 +7,7 @@ import { appStore, userPreferences } from "../stores/app.store";
 import { get } from "svelte/store";
 import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
+import { AppTheme } from "../types/appConstants.type";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -259,6 +260,23 @@ export function generateSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 
+export function border(theme: string, parentBackgroundIndex: number = 1) {
+  const colors = generateBackgroudColor(parentBackgroundIndex);
+  return theme === AppTheme.Glassy ? "border-none" : "border-bgs3";
+}
+export function bg(
+  theme: string,
+  parentBackgroundIndex: number = 1,
+  isActive: boolean = false
+) {
+  const colors = generateBackgroudColor(parentBackgroundIndex);
+  return theme === AppTheme.Glassy
+    ? "glass"
+    : isActive
+    ? colors.activeBackgroundColor
+    : colors.backgroundColor;
+}
+
 export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   let activeBackgroundColor;
   let backgroundColor;
@@ -266,24 +284,24 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   let backgroundColorHex;
   let currentColors = retrieveCurrentColors(get(userPreferences));
   if (parentBackgroundIndex === 1) {
-    activeBackgroundColor = " bg-bgs3";
+    activeBackgroundColor = "bg-bgs3";
     activeBackgroundColorHex = currentColors?.bgs3;
-    backgroundColor = " bg-bgs2";
+    backgroundColor = "bg-bgs2";
     backgroundColorHex = currentColors?.bgs2;
   } else if (parentBackgroundIndex === 2) {
-    activeBackgroundColor = " bg-bgs4";
+    activeBackgroundColor = "bg-bgs4";
     activeBackgroundColorHex = currentColors?.bgs4;
-    backgroundColor = " bg-bgs3";
+    backgroundColor = "bg-bgs3";
     backgroundColorHex = currentColors?.bgs3;
   } else if (parentBackgroundIndex === 3) {
-    activeBackgroundColor = " bg-bgs4";
+    activeBackgroundColor = "bg-bgs4";
     activeBackgroundColorHex = currentColors?.bgs4;
-    backgroundColor = " bg-bgs4";
+    backgroundColor = "bg-bgs4";
     backgroundColorHex = currentColors?.bgs4;
   } else {
-    activeBackgroundColor = " bg-bgs2";
+    activeBackgroundColor = "bg-bgs2";
     activeBackgroundColorHex = currentColors?.bgs2;
-    backgroundColor = " bg-bgs1";
+    backgroundColor = "bg-bgs1";
     backgroundColorHex = currentColors?.bgs1;
   }
   return {
@@ -295,7 +313,7 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
 }
 export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
   //console.log({ userPreferences });
-  let colorScheme = userPreferences.colorScheme.colors;
+  let colorScheme = userPreferences.colorScheme?.colors;
   return colorScheme;
 }
 

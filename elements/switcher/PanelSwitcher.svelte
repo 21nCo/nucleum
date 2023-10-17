@@ -3,6 +3,7 @@
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import {
     generateBackgroudColor,
+    bg,
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
@@ -55,5 +56,8 @@
       />
     {/each}
   </div>
-  <div class="absolute w-full bg-bgs3 left-0 -bottom-1" style="height: 5%;" />
+  <div
+    class="absolute w-full left-0 -bottom-1 {bg($userPreferences.theme, 1)}"
+    style="height: 5%;"
+  />
 </div>

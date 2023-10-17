@@ -1,9 +1,16 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    account,
+    appStore,
+    userPreferences,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
+  import { bg } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
+  export let isRounded: boolean = false;
   //let isCpActive: boolean = false;
   $: isCpActive =
     $page.params.route?.includes("/cp") || $page.route.id?.includes("/cp");
@@ -15,7 +22,11 @@
   // });
 </script>
 
-<div class="w-full bg-bgs3 {isInThinMode ? 'h-24' : 'h-12'}">
+<div
+  class="w-full {bg($userPreferences.theme, 2)} {isInThinMode
+    ? 'h-24'
+    : 'h-12'}"
+>
   {#if $appStore.appData.leftPanelFooter === "simple"}
     <div
       class="w-full h-full flex {isInThinMode
@@ -23,7 +34,8 @@
         : 'flex-row'} justify-between items-center"
     >
       <button
-        class="flex gap-2 h-full w-full items-center justify-center px-2 {!isInThinMode
+        class="flex gap-2 h-full w-full items-center justify-center px-2 {!isInThinMode &&
+        isRounded
           ? 'rounded-bl-lg'
           : ''} {isCpActive ? 'bg-accent1' : ''}"
         on:click={() => windowObject.gotoPath("/cp")}

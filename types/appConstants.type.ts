@@ -1,14 +1,22 @@
 export type AppConstants = {
-  themes: string[];
+  themes: AppTheme[];
   colorSchemes: ColorScheme[];
   tempColorSchemes: string[];
   selectableColorParams: selectableColorParams;
 };
 
+export enum AppTheme {
+  Clean = "clean",
+  Glassy = "glassy",
+  Vibrant = "vibrant",
+  Futuristic = "futuristic",
+}
+
 export type ColorScheme = {
   label: string;
   theme: string;
   isDark: boolean;
+  tailwindSelector: string;
   colors: ColorSchemeColors;
 };
 

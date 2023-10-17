@@ -6,6 +6,7 @@
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
+  import { AppTheme } from "$lib/tidy/types/appConstants.type";
   let sizeFactor: string = "medium";
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -39,10 +40,11 @@
     }
   }
   function refreshTailwind() {
-    fontFamily = $userPreferences.theme === "Clean" ? "Avenir" : "Avenir";
-    $appStore.tailwindTheme = `${
-      $userPreferences.theme.toLowerCase() ?? "clean"
-    } ${"medium"} ${$userPreferences.colorScheme?.label ?? "light"}`;
+    fontFamily =
+      $userPreferences.theme === AppTheme.Clean ? "Avenir" : "Avenir";
+    $appStore.tailwindTheme = `${$userPreferences.theme} ${"medium"} ${
+      $userPreferences.colorScheme?.tailwindSelector
+    }`;
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
@@ -56,8 +58,8 @@
 </script>
 
 <div
-  class="flex h-screen w-screen {$userPreferences.theme == 'Colorful'
-    ? $userPreferences.tempColorScheme
+  class="flex h-screen w-screen {$userPreferences.theme == AppTheme.Glassy
+    ? 'glassy' + $userPreferences.colorScheme.label
     : ''}"
 >
   <slot />
@@ -67,14 +69,84 @@
   .glass {
     background-image: url(back.png);
   }
-  .scheme1 {
+
+  .glassylavendar {
+    background: linear-gradient(
+      to left bottom,
+      rgb(165, 180, 252),
+      rgb(192, 132, 252)
+    );
+  }
+  .glassytest {
+    background: linear-gradient(
+      to left bottom,
+      rgb(17, 24, 39),
+      rgb(75, 85, 99)
+    );
+  }
+  .glassysoftmetal {
+    background: conic-gradient(
+      at left bottom,
+      rgb(199, 210, 254),
+      rgb(71, 85, 105),
+      rgb(199, 210, 254)
+    );
+  }
+  .glassyice {
+    background: linear-gradient(
+      to left bottom,
+      rgb(255, 228, 230),
+      rgb(204, 251, 241)
+    );
+  }
+  .glassypowerpuff {
+    background: linear-gradient(
+      to left bottom,
+      rgb(56, 189, 248),
+      rgb(251, 113, 133),
+      rgb(163, 230, 53)
+    );
+  }
+  .glassymidnight {
+    background: linear-gradient(
+      to left bottom,
+      rgb(29, 78, 216),
+      rgb(30, 64, 175),
+      rgb(17, 24, 39)
+    );
+  }
+  .glassysunset {
+    background: linear-gradient(
+      to right top,
+      rgb(199, 210, 254),
+      rgb(254, 202, 202),
+      rgb(254, 249, 195)
+    );
+  }
+  .glassygunmetal {
+    background: linear-gradient(
+      to left bottom,
+      rgb(229, 231, 235),
+      rgb(156, 163, 175),
+      rgb(75, 85, 99)
+    );
+  }
+  .glassygotham {
+    background: linear-gradient(
+      to right top,
+      rgb(55, 65, 81),
+      rgb(17, 24, 39),
+      rgb(0, 0, 0)
+    );
+  }
+  .glassy5 {
     /* Created with https://www.css-gradient.com */
     background: #1c684e;
     background: -webkit-linear-gradient(top left, #1c684e, #76c574);
     background: -moz-linear-gradient(top left, #1c684e, #76c574);
     background: linear-gradient(to bottom right, #1c684e, #76c574);
   }
-  .scheme2 {
+  .glassyblue {
     /* https://www.css-gradient.com/?c1=4facaf&c2=3c3263&gt=l&gd=dtr */
     background: #4facaf;
     background: -webkit-linear-gradient(top right, #4facaf, #3c3263);
@@ -82,28 +154,35 @@
     background: linear-gradient(to bottom left, #4facaf, #3c3263);
   }
 
-  .scheme3 {
+  .glassyrainbow {
     /* Created with https://www.css-gradient.com */
     background: #3c98a8;
     background: -webkit-linear-gradient(bottom left, #3c98a8, #d700ae);
     background: -moz-linear-gradient(bottom left, #3c98a8, #d700ae);
     background: linear-gradient(to top right, #3c98a8, #d700ae);
   }
-  .scheme4 {
+  .glassy4old {
     /* https://www.css-gradient.com/?c1=8a8397&c2=11858a&gt=l&gd=dbl */
     background: #8a8397;
     background: -webkit-linear-gradient(bottom left, #8a8397, #11858a);
     background: -moz-linear-gradient(bottom left, #8a8397, #11858a);
     background: linear-gradient(to top right, #8a8397, #11858a);
   }
-  .scheme5 {
+  .glassy4 {
+    /* https://www.css-gradient.com/?c1=8a8397&c2=11858a&gt=l&gd=dbl */
+    background: #11858a;
+    background: -webkit-linear-gradient(bottom left, #11858a, #8a8397);
+    background: -moz-linear-gradient(bottom left, #11858a, #8a8397);
+    background: linear-gradient(to top right, #11858a, #8a8397);
+  }
+  .glassygreeny {
     /* https://www.css-gradient.com/?c1=246773&c2=969e53&gt=l&gd=dbl */
     background: #246773;
     background: -webkit-linear-gradient(bottom left, #246773, #969e53);
     background: -moz-linear-gradient(bottom left, #246773, #969e53);
     background: linear-gradient(to top right, #246773, #969e53);
   }
-  .scheme6 {
+  .glassygreenlight {
     /* light */
     /* https://www.css-gradient.com/?c1=c8cbe6&c2=8afdbc&gt=l&gd=dbl */
     /* Created with https://www.css-gradient.com */
@@ -112,7 +191,7 @@
     background: -moz-linear-gradient(bottom left, #c8cbe6, #8afdbc);
     background: linear-gradient(to top right, #c8cbe6, #8afdbc);
   }
-  .scheme7 {
+  .glassy7 {
     /* https://www.css-gradient.com/?c1=f63251&c2=eaac89&gt=l&gd=dbl */
     /* Created with https://www.css-gradient.com */
     background: #f63251;

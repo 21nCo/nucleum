@@ -3,6 +3,7 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { generateBackgroudColor } from "$lib/tidy/utils/utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { AppTheme } from "../types/appConstants.type";
   export let classList: string;
   export let styleList: string = "";
   export let selectionStyle: SelectionItemActiveStyle =
@@ -27,7 +28,9 @@
 
 <div
   class={classList +
-    ($userPreferences.theme == "Colorful" ? " glassactive" : backgroundColor)}
+    ($userPreferences.theme == AppTheme.Glassy
+      ? " glassactive"
+      : backgroundColor)}
   style={styleList}
 >
   <slot />

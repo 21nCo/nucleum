@@ -13,10 +13,13 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
+  import { bg } from "$lib/tidy/utils/utils";
+  import { AppTheme } from "$lib/tidy/types/appConstants.type";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
+  $: isRounded = $userPreferences.theme === AppTheme.Glassy ? true : false;
   function onMinimizeToggled() {
     isMinimized = !isMinimized;
     if (isMinimized) isHovered = false;
@@ -64,14 +67,13 @@
     <div
       class="flex justify-center items-center h-full {isInThinMode
         ? 'w-16'
-        : 'w-56'} ml-2 flex-none"
+        : 'w-56'} flex-none {isRounded ? 'ml-2' : ''}"
     >
       <div
-        class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full rounded-lg {$userPreferences.theme ==
-        'Colorful'
-          ? 'glass'
-          : 'bg-bgs2'}"
-        style="height: calc(100% - 1rem);"
+        class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
+          ? 'rounded-lg ' + bg($userPreferences.theme, 1)
+          : 'border-r border-bgs3'}"
+        style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
       >
         <div class="w-full flex flex-col gap-8 lg:gap-12">
           <div
@@ -119,12 +121,15 @@
             />
           {:else}
             <div class="text-b3 text-fgs3 mb-4">
-              Press <span class="bg-bgs3 text-fgs2 px-2 py-0.5 rounded-md"
-                >Cmd + K</span
+              Press <span
+                class="text-fgs2 px-2 py-0.5 rounded-md {bg(
+                  $userPreferences.theme,
+                  1
+                )}">Cmd + K</span
               > for command bar
             </div>
           {/if}
-          <LeftBottomBar {isInThinMode} />
+          <LeftBottomBar {isInThinMode} {isRounded} />
         </div>
       </div>
     </div>

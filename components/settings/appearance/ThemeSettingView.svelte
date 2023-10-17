@@ -13,6 +13,9 @@
   let selectedTempSchemeIndex: number = 0;
   let filteredColorSchemes: ColorScheme[] = [];
   onMount(() => {
+    selectedThemeIndex = $appStore.appConstants.themes.findIndex(
+      (x) => x == $userPreferences.theme
+    );
     selectedLightnessIndex = $userPreferences.colorScheme?.isDark ? 1 : 0;
     refreshColorSchemes();
   });
@@ -21,13 +24,14 @@
   }
   function refreshColorSchemes(e: any = undefined) {
     filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
-      (x: ColorScheme) => {
-        return (
-          (selectedLightnessIndex == 0 && !x.isDark) ||
-          (selectedLightnessIndex == 1 && x.isDark)
-        );
-      }
+      (x) => x.theme == $userPreferences.theme
     );
+    filteredColorSchemes = filteredColorSchemes?.filter((x: ColorScheme) => {
+      return (
+        (selectedLightnessIndex == 0 && !x.isDark) ||
+        (selectedLightnessIndex == 1 && x.isDark)
+      );
+    });
     if (e) {
       selectedColorSchemeIndex = 0;
       saveColorScheme();
@@ -64,16 +68,14 @@
 </script>
 
 <div class="flex flex-col gap-8">
-  {#if $appStore.isDebugMode}
-    <Switcher
-      label="Theme"
-      {parentBackgroundIndex}
-      items={$appStore.appConstants.themes}
-      selectionStyle={SelectionItemActiveStyle.CIRCLE}
-      on:switch={onThemeChange}
-      bind:selectedIndex={selectedThemeIndex}
-    />
-  {/if}
+  <Switcher
+    label="Theme"
+    {parentBackgroundIndex}
+    items={$appStore.appConstants.themes}
+    selectionStyle={SelectionItemActiveStyle.CIRCLE}
+    on:switch={onThemeChange}
+    bind:selectedIndex={selectedThemeIndex}
+  />
   <Switcher
     label="Color scheme"
     {parentBackgroundIndex}

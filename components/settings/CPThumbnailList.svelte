@@ -1,7 +1,9 @@
 <script lang="ts">
   import Text from "$lib/tidy/elements/text/Text.svelte";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextType } from "$lib/tidy/types/text.enum";
+  import { border } from "$lib/tidy/utils/utils";
   import CpThumbnail from "./CPThumbnail.svelte";
   export let items: string[] = [];
   export let section: string;
@@ -20,7 +22,7 @@
     {#each items as item}
       <CpThumbnail {orientation} path={item} />
       {#if orientation === Orientation.Horizontal}
-        <div class="border-b border-bgs2 w-full" />
+        <div class="border-b w-full {border($userPreferences.theme)}" />
       {/if}
     {/each}
   </div>
