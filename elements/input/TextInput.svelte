@@ -216,12 +216,11 @@
               }}
             />
           {/each}
-          <Element
-            classList="w-full rounded-b-md py-2 text-center mt-10"
-            parentBackgroundIndex={2}
+          <button
+            class="w-full rounded-b-md py-2 text-center mt-10"
             on:click={() => {
               resetSearch();
-            }}>close</Element
+            }}>close</button
           >
         </div>
       {/if}

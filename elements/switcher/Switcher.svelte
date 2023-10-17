@@ -76,9 +76,11 @@
   });
 </script>
 
-<div class="flex flex-col h-full justify-center items-center">
+<div class="flex flex-col h-full gap-2 justify-center items-center">
   {#if label}
-    <FormControlLabel {label} {info} />
+    <div class="self-start">
+      <FormControlLabel {label} {info} />
+    </div>
   {/if}
   {#if selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND}
     <div class={classList}>

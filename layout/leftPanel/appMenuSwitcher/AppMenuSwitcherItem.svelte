@@ -10,7 +10,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   const dispatch = createEventDispatcher();
   export let item: ComponentType;
-  export let style: LayoutContext = LayoutContext.DEFAULT;
+  export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   $: isActive =
     $page.params.route?.includes(item.path) ||
     $page.route.id?.includes(item.path);
@@ -31,21 +31,24 @@
   }
 </script>
 
-<Element
-  classList="flex items-center {isShowLabel
-    ? style === LayoutContext.PORTRAIT
+<button
+  class="flex items-center {isShowLabel
+    ? layoutContext === LayoutContext.PORTRAIT
       ? 'flex-col gap-1 text-b4 rounded-lg'
       : 'text-b2 gap-3 rounded-lg p-3 h-10'
-    : 'p-4 rounded-full'}"
-  {isActive}
+    : 'p-4 rounded-full'} {isActive
+    ? layoutContext === LayoutContext.PORTRAIT ||
+      layoutContext === LayoutContext.THIN
+      ? 'text-accent1'
+      : 'bg-accent1 text-bgs1'
+    : ''}"
   on:click={onClick}
   on:pointerenter={onHover}
-  {parentBackgroundIndex}
   hoverStyle={!$windowObject.isInPortraitMode
     ? SelectionItemActiveStyle.BG_COLOR
     : SelectionItemActiveStyle.NONE}
-  selectionStyle={style === LayoutContext.PORTRAIT ||
-  style === LayoutContext.THIN
+  selectionStyle={layoutContext === LayoutContext.PORTRAIT ||
+  layoutContext === LayoutContext.THIN
     ? SelectionItemActiveStyle.ACCENT_COLOR
     : SelectionItemActiveStyle.ACCENT_BACKGROUND}
 >
@@ -56,8 +59,8 @@
         icon={item.icon}
         {isActive}
         size={Size.md}
-        selectionStyle={style === LayoutContext.PORTRAIT ||
-        style === LayoutContext.THIN
+        selectionStyle={layoutContext === LayoutContext.PORTRAIT ||
+        layoutContext === LayoutContext.THIN
           ? SelectionItemActiveStyle.ACCENT_COLOR
           : SelectionItemActiveStyle.NONE}
       />
@@ -70,4 +73,4 @@
   {#if isShowLabel}
     {item.label}
   {/if}
-</Element>
+</button>

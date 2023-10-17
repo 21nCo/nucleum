@@ -455,3 +455,7 @@ export function determineTimePeriod(period: TimePeriod) {
   }
   return { begin, end, title };
 }
+
+export function properCase(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}

@@ -2,7 +2,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import Element from "../Element.svelte";
+  import SwitcherBase from "./SwitcherBase.svelte";
   export let item: string | undefined = undefined;
   export let size: Size;
   export let parentBackgroundIndex: number;
@@ -35,7 +35,7 @@
   });
 </script>
 
-<Element
+<SwitcherBase
   {classList}
   on:click={handleClick}
   {parentBackgroundIndex}
@@ -60,4 +60,4 @@
       {/if}
     </div>
   </div>
-</Element>
+</SwitcherBase>

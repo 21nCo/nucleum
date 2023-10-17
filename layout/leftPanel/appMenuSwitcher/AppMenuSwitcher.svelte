@@ -52,7 +52,7 @@
     {#if layoutContext != LayoutContext.MINIMIZED || (layoutContext === LayoutContext.MINIMIZED && (isHovered || selected == index))}
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
-        style={layoutContext}
+        {layoutContext}
         isShowLabel={layoutContext == LayoutContext.DEFAULT}
         on:click={() => {
           selected = index;

@@ -5,8 +5,6 @@
   import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { TextType } from "$lib/tidy/types/text.enum";
   import ColorSchemeSwitcher from "$lib/tidy/components/settings/ColorSchemeSwitcher.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedThemeIndex: number = 0;
@@ -93,8 +91,8 @@
   />
   {#if $appStore.isDebugMode}
     <div>
-      <Text style={TextType.SECTION_HEADING}>THEME TRAILS</Text>
       <Switcher
+        label="Glassy theme trails"
         {parentBackgroundIndex}
         items={$appStore.appConstants.tempColorSchemes}
         selectionStyle={SelectionItemActiveStyle.SIDEBAR}

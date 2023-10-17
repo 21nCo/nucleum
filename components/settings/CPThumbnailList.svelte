@@ -1,6 +1,5 @@
 <script lang="ts">
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextType } from "$lib/tidy/types/text.enum";
   import CpThumbnail from "./CPThumbnail.svelte";

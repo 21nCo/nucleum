@@ -5,8 +5,6 @@
   export let colorSchemes: ColorScheme[];
   export let parentBackgroundIndex: number;
   export let selected: number;
-  let classList: string =
-    "relative flex flex-col items-center gap-1 p-2 rounded-md";
   const dispatch = createEventDispatcher();
   function getColors(colorScheme: ColorScheme) {
     return [
@@ -25,13 +23,14 @@
 {#if colorSchemes && colorSchemes.length > 0}
   <div class="flex flex-wrap gap-4">
     {#each colorSchemes as colorScheme, index}
-      <Element
-        isActive={selected === index}
+      <button
         on:click={() => {
           onClicked(index);
         }}
-        {classList}
-        {parentBackgroundIndex}
+        class="relative flex flex-col items-center gap-1 p-2 rounded-md hover:bg-bgs3 {selected ===
+        index
+          ? 'bg-bgs3'
+          : 'bg-bgs2'}"
       >
         {#if getColors(colorScheme)}
           <div class="flex">
@@ -53,7 +52,7 @@
             class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-fgs3"
           />
         {/if}
-      </Element>
+      </button>
     {/each}
   </div>
 {/if}

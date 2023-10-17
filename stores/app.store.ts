@@ -21,7 +21,7 @@ import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount } from "../types/account.type";
 import { goto } from "$app/navigation";
-import type { PopupEvent } from "../types/popup.type";
+import type { ModalEvent } from "../types/popup.type";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -94,8 +94,13 @@ function initWindow(settings: WindowObject) {
     },
     gotoPath: (path: string, params: any = null) => {
       update((n: WindowObject) => {
-        console.log({ navigator });
-        n = { ...n, currentPath: path };
+        // console.log({ navigator });
+        n = {
+          ...n,
+          isHideMenu: false,
+          currentPath: path,
+        };
+        console.log({ n });
         return n;
       });
       if (!navigator.onLine) {
@@ -364,27 +369,27 @@ export function postMessageToParent(message: any) {
   }
 }
 
-const defaultPopup = {
+const defaultModal = {
   path: "",
   id: "",
   isShow: false,
 };
-export const popupEvent = initPopupEventStore(defaultPopup);
+export const modalEvent = initModalStore(defaultModal);
 
-function initPopupEventStore(seed: PopupEvent) {
-  const { subscribe, set, update } = writable<PopupEvent>(seed);
+function initModalStore(seed: ModalEvent) {
+  const { subscribe, set, update } = writable<ModalEvent>(seed);
   return {
     subscribe,
-    set: (m: PopupEvent) => {
+    set: (m: ModalEvent) => {
       set(m);
     },
     reset: () => {
-      update((n: PopupEvent) => {
-        return defaultPopup;
+      update((n: ModalEvent) => {
+        return defaultModal;
       });
     },
-    notify: (event: PopupEvent) => {
-      update((n: PopupEvent) => {
+    notify: (event: ModalEvent) => {
+      update((n: ModalEvent) => {
         return { ...n, ...event };
       });
     },

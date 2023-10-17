@@ -131,10 +131,10 @@
   {/if}
 {/if}
 
-<style>
+<!-- <style>
   .glass {
     background: rgba(204, 204, 214, 0.2);
     /* border: 1px solid white; */
     backdrop-filter: blur(25px);
   }
-</style>
+</style> -->

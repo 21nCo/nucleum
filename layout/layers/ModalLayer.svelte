@@ -1,9 +1,8 @@
 <script lang="ts">
-  import Popover from "$lib/tidy/components/popover/Popover.svelte";
-
+  import Modal from "$lib/tidy/components/modal/Modal.svelte";
   import {
     appStore,
-    popupEvent,
+    modalEvent as modalEvent,
     postMessageToParent,
     windowObject,
   } from "$lib/tidy/stores/app.store";
@@ -14,18 +13,17 @@
   import { swipe } from "svelte-gestures";
   import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
-  import type { PopupEvent } from "$lib/tidy/types/popup.type";
+  import type { ModalEvent } from "$lib/tidy/types/popup.type";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
-  import Popup from "$lib/tidy/components/popover/Popup.svelte";
-  let popups: PopupEvent[] = [];
+  let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   function onSwipe(event: any) {
     console.log({ event });
   }
   $: if (dialogRef) dialogRef.showModal();
   onMount(() => {
-    popupEvent.subscribe((x: PopupEvent) => {
-      console.log({ x });
+    modalEvent.subscribe((x: ModalEvent) => {
+      // console.log({ x });
       if ($appStore.launchContext == LaunchContext.EMBED) {
         appStore.log("is embed");
         postMessageToParent({
@@ -33,10 +31,10 @@
         });
       } else {
         if (x.path && x.isShow) {
-          popups = [...popups, x];
-          console.log({ popups });
+          modals = [...modals, x];
+          // console.log({ modals });
         } else {
-          popups = popups.filter((y) => y.path != x.path);
+          modals = modals.filter((y) => y.path != x.path);
         }
       }
     });
@@ -64,7 +62,7 @@
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}
-<Popover
+<Modal
   size={Size.xl}
   bind:show={$isShowAppearancePreview}
   isOnRight={true}
@@ -75,7 +73,9 @@
     path={"settings/appearance"}
     params={{ parentBackgroundIndex: 2, hidePageHeading: true }}
   />
-</Popover>
-{#each popups as popup}
-  <Popup {popup} />
+</Modal>
+{#each modals as modal}
+  <Modal show={modal.isShow}>
+    <ComponentResolver path={modal.path} params={{ id: modal.id }} />
+  </Modal>
 {/each}

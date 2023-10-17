@@ -1,3 +1,5 @@
+import type { ComponentType } from "./component.type";
+
 export type WindowObject = {
   documentHeight: number;
   documentWidth: number;
@@ -8,4 +10,5 @@ export type WindowObject = {
   isHideMenu: boolean;
   firstLoad: number;
   currentPath: string;
+  currentComponent?: ComponentType;
 };

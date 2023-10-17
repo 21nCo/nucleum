@@ -14,18 +14,18 @@
   } from "$lib/tidy/stores/app.store";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
-  import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
+  import { performBlankApiCall } from "$lib/tidy/utils/utils";
   import { defaultAppData } from "$lib/local/stores/local.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
-  import PopupLayer from "./PopupLayer.svelte";
+  import ModalLayer from "./ModalLayer.svelte";
   let isShowAppearancePopover: boolean = false;
 
   let timer: any;
   onMount(() => {
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
-    if (subdomain) {
-      appStore.setLaunchContext(LaunchContext.DEFAULT);
+    if (subdomain === "embed" || subdomain === "embeddev") {
+      appStore.setLaunchContext(LaunchContext.EMBED);
     }
     //todo - retrieve User preferences
     retrieveAppData();
@@ -79,4 +79,4 @@
 {#if $appStore.isDebugMode}
   <DebugLayer />
 {/if}
-<PopupLayer />
+<ModalLayer />
