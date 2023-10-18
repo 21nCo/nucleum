@@ -15,6 +15,6 @@
 </script>
 
 {#if component && component.label && component.type === BlockType.SECTION}
-  <Text type={TextType.SECTION_HEADING}>{component.label.toUpperCase()}</Text>
+  <Text style={TextType.SECTION_HEADING}>{component.label.toUpperCase()}</Text>
 {/if}
 <ComponentResolver {path} {params} />

@@ -12,10 +12,21 @@ import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.s
 import AccountSettings from "../components/settings/account/AccountSettings.svelte";
 import ControlPanel from "../components/settings/ControlPanel.svelte";
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
+import DebugLogs from "../components/error/DebugLogs.svelte";
+import Offline from "../components/error/Offline.svelte";
 export const components: ComponentType[] = [
   {
     path: "404",
     component: NotFound,
+  },
+  {
+    path: "offline",
+    component: Offline,
+  },
+  {
+    path: "debuglogs",
+    icon: "code",
+    component: DebugLogs,
   },
   {
     path: "cp",
@@ -25,7 +36,7 @@ export const components: ComponentType[] = [
   },
   {
     label: "Account",
-    path: "settings/account",
+    path: "cp/account",
     component: AccountSettings,
   },
   {

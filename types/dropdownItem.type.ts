@@ -1,7 +1,12 @@
 export type DropdownItem = {
   label: string;
-  value: string;
+  value: string | number;
   icon?: string;
-  active?: boolean;
   disabled?: boolean;
 };
+
+export enum DropDownStyle {
+  DEFAULT,
+  OUTLINED,
+  PANEL_SWITCH,
+}

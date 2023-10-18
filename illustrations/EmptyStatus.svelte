@@ -1,3 +1,4 @@
+<!-- source: https://illustrationkit.com/illustrations/halo -->
 <svg
   width="143"
   height="156"

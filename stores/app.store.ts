@@ -1,12 +1,16 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
 import { get, writable } from "svelte/store";
-import { generateUID, yesterday } from "$lib/tidy/utils/utils";
-import { colors } from "$lib/tidy/theme/colors";
-import type {
-  ColorScheme,
-  selectableColorParams,
+import {
+  generateUID,
+  getComponentFromPath,
+  yesterday,
+} from "$lib/tidy/utils/utils";
+import {
+  AppTheme,
+  type ColorScheme,
+  type selectableColorParams,
 } from "$lib/tidy/types/appConstants.type";
-import type { AppStore } from "$lib/tidy/types/appStore.type";
+import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
@@ -18,15 +22,11 @@ import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount } from "../types/account.type";
 import { goto } from "$app/navigation";
+import type { ModalEvent } from "../types/popup.type";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
-
-export const app =
-  window.location.hostname === "localhost"
-    ? import.meta.env.VITE_APP
-    : window.location.hostname;
 
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
@@ -59,17 +59,24 @@ export const windowObject = initWindow({
   isMenuHidden: false,
 });
 
-function checkIfNeedToHideMenu(newPath: string) {
-  const listOfPathsToHideMenu = ["/goals/*"];
+function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
+  const listOfPathsToHideMenu = {
+    portrait: ["/goals/*"],
+    landscape: [],
+  };
   if (!newPath) return false;
   let pathParts = newPath.split("/").filter((p) => p);
-  if (listOfPathsToHideMenu.includes(newPath)) return true;
-  //currently only supports one level deep, but can be extended to support more
-  else if (
-    pathParts.length > 1 &&
-    listOfPathsToHideMenu.includes(`/${pathParts[0]}/*`)
-  )
-    return true;
+  if (n.isInPortraitMode) {
+    if (listOfPathsToHideMenu.portrait.includes(newPath)) return true;
+    //currently only supports one level deep, but can be extended to support more
+    else if (
+      pathParts.length > 1 &&
+      listOfPathsToHideMenu.portrait.includes(`/${pathParts[0]}/*`)
+    )
+      return true;
+  } else {
+    //check for landscape
+  }
   return false;
 }
 
@@ -103,11 +110,10 @@ function initWindow(settings: WindowObject) {
     },
     setCurrentPath: (path: string) => {
       update((n: WindowObject) => {
-        console.log({ path });
         n = {
           ...n,
           currentPath: path,
-          isMenuHidden: checkIfNeedToHideMenu(path),
+          isMenuHidden: checkIfNeedToHideMenu(path, n),
         };
         return n;
       });
@@ -117,10 +123,13 @@ function initWindow(settings: WindowObject) {
         n = {
           ...n,
           currentPath: path,
-          isMenuHidden: checkIfNeedToHideMenu(path),
+          isMenuHidden: checkIfNeedToHideMenu(path, n),
         };
         return n;
       });
+      if (!navigator.onLine) {
+        path = "offline";
+      }
       if (params) goto(path, params);
       else goto(path);
     },
@@ -132,6 +141,7 @@ export const dragAndDropStore = writable<DragAndDrop>({
   dropItem: {},
   dragEnterItem: {},
   dragStatus: DragStatus.NONE,
+  listId: "",
 });
 
 //todo - generate cool placeholders for focus using AI
@@ -171,37 +181,21 @@ const selectableColorParams: selectableColorParams = {
   lightLightness: 50,
 };
 
-export const darkColorSchemes: ColorScheme[] = [
-  { label: "dark", theme: "clean", isDark: true, ...colors.dark },
-  { label: "dracula", theme: "clean", isDark: true, ...colors.dracula },
-  { label: "forest", theme: "clean", isDark: true, ...colors.forest },
-  { label: "sea", theme: "clean", isDark: true, ...colors.sea },
-  { label: "dim", theme: "clean", isDark: true, ...colors.dim },
-];
-
-//{ label: "FBF8F1", isDark: false }
-const lightColorSchemes: ColorScheme[] = [
-  { label: "white", theme: "clean", isDark: false, ...colors.white },
-  { label: "light", theme: "clean", isDark: false, ...colors.light },
-  { label: "smoothy", theme: "clean", isDark: false, ...colors.smoothy },
-  { label: "grainy", theme: "clean", isDark: false, ...colors.grainy },
-  { label: "solarized", theme: "clean", isDark: false, ...colors.solarized },
-];
-
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
-let themes = ["Clean"];
-if (isDebugMode) themes = themes.concat(["Colorful", "3026"]);
+let themes = [AppTheme.Clean, AppTheme.Glassy];
+if (isDebugMode)
+  themes = themes.concat([AppTheme.Vibrant, AppTheme.Futuristic]);
 
 export const appStore = initAppStore({
   isDebugMode,
-  environment: "", //todo - move to base -> window?.location.host.split(".")[0],
+  launchContext: LaunchContext.DEFAULT,
   tailwindTheme: "",
   appData: {},
   appConstants: {
     themes,
-    colorSchemes: [...darkColorSchemes, ...lightColorSchemes],
+    colorSchemes: [],
     tempColorSchemes,
     selectableColorParams,
   },
@@ -218,41 +212,112 @@ function initAppStore(seed: AppStore) {
     initiatizeAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
+        n.appConstants.colorSchemes = appData.colorschemes;
         return n;
       });
     },
-    appendPlayer(path: string, params?: any) {
+    setLaunchContext(launchContext: LaunchContext) {
       update((n: AppStore) => {
-        if (!path) return n;
-        if (n.players?.find((p) => p.componentPath === path)) return n;
-        if (n.players === undefined) n.players = [];
-        n.players?.push({ componentPath: path, isShow: true, params });
+        n.launchContext = launchContext;
         return n;
       });
     },
-    removePlayer(path: string) {
+    turnDebugMode(isDebugMode: boolean) {
       update((n: AppStore) => {
-        if (!n.players) return n;
-        let player = n.players?.find((p) => p.componentPath === path);
-        if (!player) {
-          return n;
-        }
-        n.players = n.players.filter((p) => p.componentPath !== path);
+        n.isDebugMode = isDebugMode;
+        return n;
+      });
+    },
+    log(message: string, type: "error" | "info" | "warn" = "info") {
+      update((n: AppStore) => {
+        if (!n.debugLogs) n.debugLogs = [];
+        n.debugLogs.push({
+          message,
+          type,
+          timestamp: new Date().toLocaleTimeString(),
+        });
+        return n;
+      });
+    },
+    logError(message: any) {
+      update((n: AppStore) => {
+        if (!n.debugLogs) n.debugLogs = [];
+        n.debugLogs.push({
+          message,
+          type: "error",
+          timestamp: new Date().toLocaleTimeString(),
+        });
+        return n;
+      });
+    },
+    clearDebugLogs() {
+      update((n: AppStore) => {
+        n.debugLogs = [];
+        return n;
+      });
+    },
+    showMiniPlayer(path: string, params: any = null) {
+      update((n: AppStore) => {
+        n.player = path;
+        //n.playerParams = params;
+        return n;
+      });
+    },
+    hideMiniPlayer() {
+      update((n: AppStore) => {
+        n.player = undefined;
+        return n;
+      });
+    },
+    showFullScreenPlayer(path: string) {
+      update((n: AppStore) => {
+        n.fullScreenComponentPath = path;
+        n.player = undefined;
+        return n;
+      });
+    },
+    hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
+      update((n: AppStore) => {
+        if (n.fullScreenComponentPath && !isHideMiniPlayer)
+          n.player = getComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
+        else if (isHideMiniPlayer) n.player = undefined;
+        n.fullScreenComponentPath = undefined;
         return n;
       });
     },
   };
 }
 
+export const defaultColors = {
+  bgs1: "#FFFFFF",
+  bgs2: "#F2F2F2",
+  bgs3: "#E6E6E6",
+  bgs4: "#D9D9D9",
+  fgs1: "#383838",
+  fgs2: "#545454",
+  fgs3: "#757474",
+  accent1: "#2d2f32",
+  accent2: "#ad6c6c",
+};
+
 export const userPreferences = initUserPreferences({
   nickName: "",
-  theme: "Clean",
-  colorScheme: darkColorSchemes[4],
+  theme: AppTheme.Clean,
   dayStart: "00:00",
   birthday: new Date(),
   isOnboardingComplete: false,
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
+  timeFormat: "meridian",
+  colorScheme: {
+    label: "bw",
+    theme: "clean",
+    isDark: false,
+    colors: defaultColors,
+    tailwindSelector: "bw",
+  },
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {
@@ -310,6 +375,48 @@ function initAccount(seed: UserAccount) {
         localStorage.setItem("surreal-token", token);
         n = { token, isLoggedIn: true };
         return n;
+      });
+    },
+  };
+}
+
+export function postMessageToParent(message: any) {
+  try {
+    window?.parent?.postMessage(message, "*");
+  } catch (error) {
+    appStore.logError(error);
+  }
+  try {
+    //@ts-ignore
+    window?.webkit?.messageHandlers.iOSNative.postMessage(message);
+    appStore.log("message sent to iOSNative" + JSON.stringify(message));
+  } catch (error) {
+    appStore.logError(error);
+  }
+}
+
+const defaultModal = {
+  path: "",
+  id: "",
+  isShow: false,
+};
+export const modalEvent = initModalStore(defaultModal);
+
+function initModalStore(seed: ModalEvent) {
+  const { subscribe, set, update } = writable<ModalEvent>(seed);
+  return {
+    subscribe,
+    set: (m: ModalEvent) => {
+      set(m);
+    },
+    reset: () => {
+      update((n: ModalEvent) => {
+        return defaultModal;
+      });
+    },
+    notify: (event: ModalEvent) => {
+      update((n: ModalEvent) => {
+        return { ...n, ...event };
       });
     },
   };

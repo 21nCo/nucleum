@@ -21,11 +21,11 @@
       <ComponentResolver {currentComponent} />
     </div>
   {:else}
-    <Element
-      classList={classList + " text-b2"}
+    <button
+      class={classList + " text-b2"}
       on:click={() => windowObject.gotoPath(path)}
     >
-      {currentComponent.label?.toLowerCase()}</Element
+      {currentComponent.label?.toLowerCase()}</button
     >
   {/if}
 {/if}

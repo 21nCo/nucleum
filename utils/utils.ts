@@ -3,13 +3,27 @@ import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { localComponents } from "$lib/local/stores/localComponentMap";
 import { components } from "$lib/tidy/layout/componentMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { goto } from "$app/navigation";
 import { appStore, userPreferences } from "../stores/app.store";
 import { get } from "svelte/store";
-export function formatTime(date: Date) {
-  let hours = date?.getHours().toString().padStart(2, "0");
-  let minutes = date?.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
+import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
+import { TimeFormat } from "../types/time.type";
+import { AppTheme } from "../types/appConstants.type";
+
+export function formatTime(date: Date, format: string | undefined = undefined) {
+  let userPreferredFormat = get(userPreferences).timeFormat;
+  format = format ? format : userPreferredFormat ?? "meridian";
+  if (format === "24") {
+    let hours = date?.getHours().toString().padStart(2, "0");
+    let minutes = date?.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  } else if (format === "meridian") {
+    let hours = date?.getHours();
+    let minutes = date?.getMinutes().toString().padStart(2, "0");
+    let ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+  }
 }
 
 export function onInterval(
@@ -27,19 +41,32 @@ export function generateUID() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-export function formatSeconds(seconds: number) {
+export function formatSeconds(
+  seconds: number,
+  format: TimeFormat = TimeFormat.VERBOSE,
+  isAlwaysShowSecs: boolean = false
+) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-
-  const hh = hours.toString().padStart(2, "0");
-  const mm = minutes.toString().padStart(2, "0");
-  const secs = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0");
-  if (hours > 0) return `${hh}:${mm}:${secs}`;
-  else return `${mm}:${secs}`;
+  const secs = Math.floor(seconds % 60);
+  if (format === TimeFormat.VERBOSE) {
+    if (hours > 0)
+      return (
+        `${hours}h` +
+        (minutes > 0 ? ` ${minutes}m` : "") +
+        (+secs > 0 && isAlwaysShowSecs ? ` ${secs}s` : "")
+      );
+    else if (minutes > 0) return `${minutes}m` + (+secs > 0 ? ` ${secs}s` : "");
+    else return `${secs}s`;
+  } else if (format === TimeFormat.CLOCK) {
+    const hh = hours.toString().padStart(2, "0");
+    const mm = minutes.toString().padStart(2, "0");
+    const ss = secs.toString().padStart(2, "0");
+    if (hours > 0) return `${hh}:${mm}:${ss}`;
+    else return `${mm}:${ss}`;
+  }
 }
-export function formatSecondsToTime(
+export function formatSecondsToTimeInDecimals(
   seconds: number,
   toFixed: number = 2,
   scale: string = "hrs",
@@ -233,6 +260,23 @@ export function generateSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 
+export function border(theme: string, parentBackgroundIndex: number = 1) {
+  const colors = generateBackgroudColor(parentBackgroundIndex);
+  return theme === AppTheme.Glassy ? "border-none" : "border-bgs3";
+}
+export function bg(
+  theme: string,
+  parentBackgroundIndex: number = 1,
+  isActive: boolean = false
+) {
+  const colors = generateBackgroudColor(parentBackgroundIndex);
+  return theme === AppTheme.Glassy
+    ? "glass"
+    : isActive
+    ? colors.activeBackgroundColor
+    : colors.backgroundColor;
+}
+
 export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   let activeBackgroundColor;
   let backgroundColor;
@@ -240,24 +284,24 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   let backgroundColorHex;
   let currentColors = retrieveCurrentColors(get(userPreferences));
   if (parentBackgroundIndex === 1) {
-    activeBackgroundColor = " bg-bgs3";
+    activeBackgroundColor = "bg-bgs3";
     activeBackgroundColorHex = currentColors?.bgs3;
-    backgroundColor = " bg-bgs2";
+    backgroundColor = "bg-bgs2";
     backgroundColorHex = currentColors?.bgs2;
   } else if (parentBackgroundIndex === 2) {
-    activeBackgroundColor = " bg-bgs4";
+    activeBackgroundColor = "bg-bgs4";
     activeBackgroundColorHex = currentColors?.bgs4;
-    backgroundColor = " bg-bgs3";
+    backgroundColor = "bg-bgs3";
     backgroundColorHex = currentColors?.bgs3;
   } else if (parentBackgroundIndex === 3) {
-    activeBackgroundColor = " bg-bgs4";
+    activeBackgroundColor = "bg-bgs4";
     activeBackgroundColorHex = currentColors?.bgs4;
-    backgroundColor = " bg-bgs4";
+    backgroundColor = "bg-bgs4";
     backgroundColorHex = currentColors?.bgs4;
   } else {
-    activeBackgroundColor = " bg-bgs2";
+    activeBackgroundColor = "bg-bgs2";
     activeBackgroundColorHex = currentColors?.bgs2;
-    backgroundColor = " bg-bgs1";
+    backgroundColor = "bg-bgs1";
     backgroundColorHex = currentColors?.bgs1;
   }
   return {
@@ -268,9 +312,8 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   };
 }
 export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  let colorScheme = get(appStore).appConstants.colorSchemes.find((x: any) => {
-    return x.label === userPreferences.colorScheme.label;
-  });
+  //console.log({ userPreferences });
+  let colorScheme = userPreferences.colorScheme?.colors;
   return colorScheme;
 }
 
@@ -361,4 +404,76 @@ export function getNextInLoop(list: any, index: number) {
     return list[nextIndex];
   }
   return list[0];
+}
+
+export function determineTimePeriod(period: TimePeriod) {
+  let begin = new Date();
+  let end = new Date();
+  let title;
+  if (period.scale === TimeScale.SINGLEDAY) {
+    if (period.type === TimePeriodType.UPPERHORIZON) {
+      if (period.horizons?.[0] == 0) {
+        begin.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        title = "Today";
+      } else if (period.horizons?.[0] < 0) {
+        const whileAgo = Math.abs(period.horizons?.[0]);
+        begin.setDate(begin.getDate() - whileAgo);
+        begin.setHours(0, 0, 0, 0);
+        end.setDate(end.getDate() - whileAgo);
+        end.setHours(23, 59, 59, 999);
+        if (whileAgo === 1) title = "Yesterday";
+        else if (whileAgo === 365) title = "Same day last year";
+        else title = `${whileAgo} days ago`;
+      }
+    }
+  } else if (period.scale === TimeScale.DAYS) {
+    if (period.type === TimePeriodType.LASTXSEGMENTS) {
+      begin.setDate(begin.getDate() - period.numberOfSegments);
+      title = `Last ${period.numberOfSegments} days`;
+    } else if (period.type === TimePeriodType.UPPERHORIZON) {
+      const year = period.horizons[0];
+      const month = period.horizons[1];
+      begin.setFullYear(year);
+      begin.setMonth(month);
+      begin.setDate(1);
+      end.setFullYear(year);
+      end.setMonth(month);
+      end.setDate(31);
+      title = `Days of ${months[month]} ${year}`;
+    }
+  } else if (period.scale === TimeScale.MONTHS) {
+    if (period.type === TimePeriodType.LASTXSEGMENTS) {
+      begin.setMonth(begin.getMonth() - period.numberOfSegments);
+      title = `Last ${period.numberOfSegments} months`;
+    } else if (period.type === TimePeriodType.UPPERHORIZON) {
+      const year = period.horizons[0];
+      begin.setFullYear(year);
+      begin.setMonth(0);
+      begin.setDate(1);
+      end.setFullYear(year);
+      end.setMonth(11);
+      end.setDate(31);
+      title = `Months of ${year}`;
+    }
+  } else if (period.scale === TimeScale.YEARS) {
+    if (period.type === TimePeriodType.LASTXSEGMENTS) {
+      begin.setFullYear(begin.getFullYear() - period.numberOfSegments);
+      title = `Last ${period.numberOfSegments} years`;
+    } else if (period.type === TimePeriodType.UPPERHORIZON) {
+      const year = period.horizons[0];
+      begin.setFullYear(year);
+      begin.setMonth(0);
+      begin.setDate(1);
+      end.setFullYear(year);
+      end.setMonth(11);
+      end.setDate(31);
+      title = `Year ${year}`;
+    }
+  }
+  return { begin, end, title };
+}
+
+export function properCase(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 }

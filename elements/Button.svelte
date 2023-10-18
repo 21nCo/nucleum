@@ -25,11 +25,11 @@
     {label}
   </button>
 {:else if isCustomAttributes}
-  <Element {parentBackgroundIndex} {classList}>
+  <button class={classList}>
     <slot />
-  </Element>
+  </button>
 {:else}
-  <Element {parentBackgroundIndex} {classList} on:click>
+  <button class={classList} on:click>
     {label}
-  </Element>
+  </button>
 {/if}

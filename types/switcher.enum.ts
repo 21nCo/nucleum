@@ -5,6 +5,13 @@ export enum SwitcherStyle {
   HorizontalAndWraps,
 }
 
+export enum PanelSwitcherStyle {
+  DEFAULT,
+  BOTTOMBAR,
+  BOTTOMDOT,
+  BOTTOMBAR_WITHBACKGROUND,
+}
+
 export enum SelectionItemActiveStyle {
   UNKNOWN,
   NONE,

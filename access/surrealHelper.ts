@@ -70,12 +70,9 @@ export class SurrealDatabase {
   async query(query: string, params: any) {
     try {
       this.token = localStorage.getItem("surreal-token");
-      if (this.userId == undefined && this.token) {
-        let decodedToken: any = jwt_decode(this.token);
-        this.userId = decodedToken?.user ?? "";
-      } else if (this.userId == undefined) {
-        throw new Error("User not logged in");
-      }
+      if (!this.token) throw new Error("User not logged in");
+      let decodedToken: any = jwt_decode(this.token);
+      this.userId = decodedToken?.user ?? "";
       for (const key in params) {
         query = query.replaceAll("$" + key, params[key]);
       }

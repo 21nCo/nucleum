@@ -45,15 +45,15 @@
 
 <div
   class="flex {layoutContext === LayoutContext.PORTRAIT
-    ? 'justify-around items-center'
+    ? 'justify-around items-center px-4'
     : 'flex-col justify-center rounded-lg'} min-w-min w-full"
 >
   {#each pages as item, index}
     {#if layoutContext != LayoutContext.MINIMIZED || (layoutContext === LayoutContext.MINIMIZED && (isHovered || selected == index))}
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
-        style={layoutContext}
-        isShowLabel={layoutContext != LayoutContext.THIN}
+        {layoutContext}
+        isShowLabel={layoutContext == LayoutContext.DEFAULT}
         on:click={() => {
           selected = index;
           windowObject.gotoPath("/" + item.path);

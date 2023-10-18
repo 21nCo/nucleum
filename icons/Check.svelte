@@ -1,5 +1,6 @@
 <script lang="ts">
   export let isChecked: boolean = false;
+  export let color: string = "fgs1";
 </script>
 
 <button on:click>
@@ -39,7 +40,7 @@
         width="14"
         height="14"
         rx="2.5"
-        class="stroke-fgs1"
+        class="stroke-{color}"
       />
     </svg>
   {/if}

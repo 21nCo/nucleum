@@ -27,7 +27,7 @@
     <ComponentResolver {currentComponent} />
   </div>
 {:else}
-  <Element {classList} on:click={() => windowObject.gotoPath(path)}>
-    {currentComponent?.label}</Element
+  <button class={classList} on:click={() => windowObject.gotoPath(path)}>
+    {currentComponent?.label}</button
   >
 {/if}

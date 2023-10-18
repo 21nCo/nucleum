@@ -2,42 +2,43 @@
   import { EventType } from "$lib/tidy/types/event.enum";
   import { onMount, tick } from "svelte";
   import type { CustomEvent } from "$lib/tidy/types/event.type";
-  import Popover from "$lib/tidy/components/popover/Popover.svelte";
-  import { Size } from "$lib/tidy/types/size.enum";
 
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
-    app,
     appEvents,
     appStore,
     currentTime,
-    windowObject,
+    postMessageToParent,
+    userPreferences,
   } from "$lib/tidy/stores/app.store";
-  import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import Collapse from "$lib/tidy/icons/Collapse.svelte";
-  import WithYStack from "../paint/painters/YStack/WithYStack.svelte";
-  import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
-  import { fade, fly, slide } from "svelte/transition";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
-  import { performApiCall, performBlankApiCall } from "$lib/tidy/utils/utils";
+  import { performBlankApiCall } from "$lib/tidy/utils/utils";
   import { defaultAppData } from "$lib/local/stores/local.store";
+  import { LaunchContext } from "$lib/tidy/types/appStore.type";
+  import ModalLayer from "./ModalLayer.svelte";
   let isShowAppearancePopover: boolean = false;
-  let environment: string;
+
   let timer: any;
   onMount(() => {
+    let subdomain = window?.location.host.split(".")[0];
+    // console.log({ subdomain, location: window?.location });
+    if (subdomain === "embed" || subdomain === "embeddev") {
+      appStore.setLaunchContext(LaunchContext.EMBED);
+    }
+    //todo - retrieve User preferences
     retrieveAppData();
+    postMessageToParent({
+      colorscheme: JSON.stringify($userPreferences.colorScheme),
+    });
     inject({ mode: dev ? "development" : "production" });
     appEvents.subscribe((x: CustomEvent) => {
       if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePopover = x.value ?? false;
       }
     });
-    if ($appStore.environment) {
-      if ($appStore.environment == "pre") environment = "Preview";
-      else if ($appStore.environment == "dev") environment = "Dev";
-    }
+
     clearInterval(timer);
     timer = setInterval(() => {
       tick();
@@ -48,7 +49,9 @@
     };
   });
   async function retrieveAppData() {
+    const app = import.meta.env.VITE_APP ?? window.location.hostname;
     appStore.initiatizeAppData(defaultAppData);
+    if (!app) return;
     try {
       let response = await performBlankApiCall(
         "appdata",
@@ -62,7 +65,7 @@
         }
       }
     } catch (err) {
-      console.error(err);
+      appStore.logError(err);
     }
   }
 </script>
@@ -76,36 +79,4 @@
 {#if $appStore.isDebugMode}
   <DebugLayer />
 {/if}
-{#if environment}
-  <div
-    class="absolute right-0 top-20 text-bgs1 z-10 w-20 px-2 bg-accent1 opacity-50"
-  >
-    {environment}
-  </div>
-{/if}
-{#if $appStore.fullScreenComponentPath}
-  <div
-    class="fixed left-0 top-0 w-full h-full z-40 px-2 py-4 bg-bgs1"
-    transition:fly={{ y: 200, duration: 300 }}
-  >
-    <button
-      class="mx-2"
-      on:click={() => {
-        $appStore.fullScreenComponentPath = undefined;
-      }}><Collapse /></button
-    >
-    <ComponentResolver path={$appStore.fullScreenComponentPath} />
-  </div>
-{/if}
-<Popover
-  size={Size.xl}
-  bind:show={$isShowAppearancePreview}
-  isOnRight={true}
-  isShowOverlay={false}
-  title={"Appearance"}
->
-  <WithYStack
-    path={"settings/appearance"}
-    params={{ parentBackgroundIndex: 2, hidePageHeading: true }}
-  />
-</Popover>
+<ModalLayer />

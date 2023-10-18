@@ -3,58 +3,122 @@
   import { IconVariant } from "../types/icon.type";
   export let direction: Direction = Direction.Left;
   export let variant: IconVariant = IconVariant.Outline;
+  export let isCircled: boolean = false;
 </script>
 
-{#if variant === IconVariant.Outline}
-  {#if direction === Direction.Left}
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M19.5 12h-15m0 0l6.75 6.75M4.5 12l6.75-6.75"
-    />
-  {:else if direction === Direction.Right}
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-    />
-  {:else if direction === Direction.Up}
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M12 19.5v-15m0 0l-6.75 6.75M12 4.5l6.75 6.75"
-    />
-  {:else if direction === Direction.Down}
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75"
-    />
+{#if isCircled}
+  {#if variant === IconVariant.Outline}
+    {#if direction === Direction.Left}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M11.25 9l-3 3m0 0l3 3m-3-3h7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    {:else if direction === Direction.Right}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12.75 15l3-3m0 0l-3-3m3 3h-7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    {:else if direction === Direction.Up}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M15 11.25l-3-3m0 0l-3 3m3-3v7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    {:else if direction === Direction.Down}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M9 12.75l3 3m0 0l3-3m-3 3v-7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    {/if}
+  {:else if variant === IconVariant.Mini}
+    {#if direction === Direction.Left}
+      <g clip-path="url(#clip0_9_2121)">
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.25-7.25a.75.75 0 000-1.5H8.66l2.1-1.95a.75.75 0 10-1.02-1.1l-3.5 3.25a.75.75 0 000 1.1l3.5 3.25a.75.75 0 001.02-1.1l-2.1-1.95h4.59z"
+          clip-rule="evenodd"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_9_2121">
+          <path d="M0 0h20v20H0z" />
+        </clipPath>
+      </defs>
+    {:else if direction === Direction.Right}
+      <path
+        fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.75 9.25a.75.75 0 000 1.5h4.59l-2.1 1.95a.75.75 0 001.02 1.1l3.5-3.25a.75.75 0 000-1.1l-3.5-3.25a.75.75 0 10-1.02 1.1l2.1 1.95H6.75z"
+        clip-rule="evenodd"
+      />
+    {:else if direction === Direction.Up}
+      <path
+        fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 001.5 0V8.66l1.95 2.1a.75.75 0 101.1-1.02l-3.25-3.5a.75.75 0 00-1.1 0L6.2 9.74a.75.75 0 101.1 1.02l1.95-2.1v4.59z"
+        clip-rule="evenodd"
+      />
+    {:else if direction === Direction.Down}
+      <path
+        fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z"
+        clip-rule="evenodd"
+      />
+    {/if}
   {/if}
-{:else if variant === IconVariant.Mini}
-  {#if direction === Direction.Left}
-    <path
-      fill-rule="evenodd"
-      d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
-      clip-rule="evenodd"
-    />
-  {:else if direction === Direction.Right}
-    <path
-      fill-rule="evenodd"
-      d="M5 10a.75.75 0 01.75-.75h6.638L10.23 7.29a.75.75 0 111.04-1.08l3.5 3.25a.75.75 0 010 1.08l-3.5 3.25a.75.75 0 11-1.04-1.08l2.158-1.96H5.75A.75.75 0 015 10z"
-      clip-rule="evenodd"
-    />
-  {:else if direction === Direction.Up}
-    <path
-      fill-rule="evenodd"
-      d="M10 15a.75.75 0 01-.75-.75V7.612L7.29 9.77a.75.75 0 01-1.08-1.04l3.25-3.5a.75.75 0 011.08 0l3.25 3.5a.75.75 0 11-1.08 1.04l-1.96-2.158v6.638A.75.75 0 0110 15z"
-      clip-rule="evenodd"
-    />
-  {:else if direction === Direction.Down}
-    <path
-      fill-rule="evenodd"
-      d="M10 5a.75.75 0 01.75.75v6.638l1.96-2.158a.75.75 0 111.08 1.04l-3.25 3.5a.75.75 0 01-1.08 0l-3.25-3.5a.75.75 0 111.08-1.04l1.96 2.158V5.75A.75.75 0 0110 5z"
-      clip-rule="evenodd"
-    />
+{:else if !isCircled}
+  {#if variant === IconVariant.Outline}
+    {#if direction === Direction.Left}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M19.5 12h-15m0 0l6.75 6.75M4.5 12l6.75-6.75"
+      />
+    {:else if direction === Direction.Right}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
+      />
+    {:else if direction === Direction.Up}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 19.5v-15m0 0l-6.75 6.75M12 4.5l6.75 6.75"
+      />
+    {:else if direction === Direction.Down}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75"
+      />
+    {/if}
+  {:else if variant === IconVariant.Mini}
+    {#if direction === Direction.Left}
+      <path
+        fill-rule="evenodd"
+        d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
+        clip-rule="evenodd"
+      />
+    {:else if direction === Direction.Right}
+      <path
+        fill-rule="evenodd"
+        d="M5 10a.75.75 0 01.75-.75h6.638L10.23 7.29a.75.75 0 111.04-1.08l3.5 3.25a.75.75 0 010 1.08l-3.5 3.25a.75.75 0 11-1.04-1.08l2.158-1.96H5.75A.75.75 0 015 10z"
+        clip-rule="evenodd"
+      />
+    {:else if direction === Direction.Up}
+      <path
+        fill-rule="evenodd"
+        d="M10 15a.75.75 0 01-.75-.75V7.612L7.29 9.77a.75.75 0 01-1.08-1.04l3.25-3.5a.75.75 0 011.08 0l3.25 3.5a.75.75 0 11-1.08 1.04l-1.96-2.158v6.638A.75.75 0 0110 15z"
+        clip-rule="evenodd"
+      />
+    {:else if direction === Direction.Down}
+      <path
+        fill-rule="evenodd"
+        d="M10 5a.75.75 0 01.75.75v6.638l1.96-2.158a.75.75 0 111.08 1.04l-3.25 3.5a.75.75 0 01-1.08 0l-3.25-3.5a.75.75 0 111.08-1.04l1.96 2.158V5.75A.75.75 0 0110 5z"
+        clip-rule="evenodd"
+      />
+    {/if}
   {/if}
 {/if}

@@ -2,7 +2,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import Element from "../Element.svelte";
+  import SwitcherBase from "./SwitcherBase.svelte";
   export let item: string | undefined = undefined;
   export let size: Size;
   export let parentBackgroundIndex: number;
@@ -26,7 +26,7 @@
         break;
       case Size.lg:
         //todo - add roman and medium font variants and use those instead of bold
-        classList += " px-8 py-4 text-lg font-bold";
+        classList += " px-2 py-4 text-lg font-medium";
         break;
       default:
         classList += " p-2";
@@ -35,7 +35,7 @@
   });
 </script>
 
-<Element
+<SwitcherBase
   {classList}
   on:click={handleClick}
   {parentBackgroundIndex}
@@ -60,4 +60,4 @@
       {/if}
     </div>
   </div>
-</Element>
+</SwitcherBase>

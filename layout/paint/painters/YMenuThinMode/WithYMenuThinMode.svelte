@@ -10,7 +10,7 @@
 {#if currentComponent.sections && currentComponent.sections.length > 0}
   <div class="flex flex-col w-full gap-4 mb-40 lg:mb-20">
     {#if currentComponent.label}
-      <Text type={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
+      <Text style={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
     {/if}
     {#each currentComponent.sections as section}
       <YMenuSection path={currentComponent.path + "/" + section} />

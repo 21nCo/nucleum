@@ -1,16 +1,16 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
-
   import { createEventDispatcher, onMount } from "svelte";
-  import { generateBackgroudColor } from "$lib/tidy/utils/utils";
+  import { bg, generateBackgroudColor } from "$lib/tidy/utils/utils";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
   import type { Item } from "$lib/local/types/item.type";
-  import Element from "$lib/tidy/elements/Element.svelte";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { ItemType } from "$lib/local/types/item.enum";
   import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import Element from "../Element.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -45,7 +45,6 @@
     resetSearch();
     value = "";
   }
-  let backgroundColor: string;
   let inputRef: any;
   export let isDisabled = false;
   let inputClasses: string = "text-input w-full rounded-sm";
@@ -55,13 +54,14 @@
   let changeElaspsedTime: number = 0;
   const dispatch = createEventDispatcher();
   onMount(() => {
-    let colors = generateBackgroudColor(parentBackgroundIndex);
-    backgroundColor = colors.backgroundColor;
     if (!currentUnit) currentUnit = units ? units[0] : "";
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
     } else if (style === TextInputStyle.BOXED) {
-      inputClasses += ` bg-${backgroundColor} outline outline-bgs2 outline-2 p-2`;
+      inputClasses += ` ${bg(
+        $userPreferences.theme,
+        1
+      )} outline outline-bgs2 outline-2 p-2`;
       unitClasses = unitClasses + " p-2";
     }
     if (style == TextInputStyle.BOXED && units && units.length > 0) {
@@ -201,7 +201,7 @@
         />
       {:else}
         <input
-        {id}
+          {id}
           style={customStyle}
           class={`${classList} ${inputClasses}`}
           bind:value

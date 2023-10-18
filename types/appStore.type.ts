@@ -1,16 +1,29 @@
 import type { AppConstants } from "$lib/tidy/types/appConstants.type";
 import type { ComponentType } from "$lib/tidy/types/component.type";
-import type { Player } from "./player.type";
 
 export type AppStore = {
   appConstants: AppConstants;
   appData: any;
   isDebugMode: boolean;
-  environment: any;
+  launchContext: LaunchContext;
   pageMenu?: string[];
-  players?: Player[];
+  player?: string;
   //TACO - dynamic actions
   dynamicBlocks?: ComponentType[];
   tailwindTheme: string;
   fullScreenComponentPath?: string;
+  debugLogs?: DebugLog[];
 };
+
+export type DebugLog = {
+  message: string;
+  type: "error" | "info" | "warn";
+  timestamp: string;
+};
+
+export enum LaunchContext {
+  DEFAULT,
+  EMBED,
+  PREVIEW,
+  DEV,
+}

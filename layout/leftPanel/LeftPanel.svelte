@@ -15,134 +15,133 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { afterUpdate } from "svelte";
 
+  import { bg } from "$lib/tidy/utils/utils";
+  import { AppTheme } from "$lib/tidy/types/appConstants.type";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
+  $: isRounded = $userPreferences.theme === AppTheme.Glassy ? true : false;
   function onMinimizeToggled() {
     isMinimized = !isMinimized;
     if (isMinimized) isHovered = false;
   }
 </script>
 
-{#if $windowObject.isInPortraitMode}
-  <div
-    class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
-  >
-    <!-- todo - support for multiple players like music and timer at the same time -->
-    {#if $appStore.players && $appStore.players.length > 0 && $appStore.players[0].isShow}
-      <ComponentResolver
-        path={$appStore.players[0].componentPath}
-        params={$appStore.players[0].params}
-      />
-    {/if}
-    {#if !$windowObject.isMenuHidden}
-      <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-8 pt-4">
+{#if !$windowObject.isMenuHidden}
+  {#if $windowObject.isInPortraitMode}
+    <div
+      class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
+    >
+      {#if $appStore.player}
+        <ComponentResolver path={$appStore.player} />
+      {/if}
+      <div class=" border-t border-bgs2 bg-bgs1 w-full min-w-min pb-6 pt-1">
         <AppMenuSwitcher
           layoutContext={LayoutContext.PORTRAIT}
-          parentBackgroundIndex={1}
+          parentBackgroundIndex={0}
         />
       </div>
-    {/if}
-  </div>
-{:else if isMinimized}
-  <div
-    class="flex flex-col gap-4 absolute left-1 z-30 {isHovered
-      ? 'bg-bgs4 rounded-lg p-2'
-      : 'opacity-40'}"
-    style="top: {headerHeight}px"
-    on:mouseenter={() => (isHovered = true)}
-    on:mouseleave={() => (isHovered = false)}
-  >
-    <AppMenuSwitcher
-      {isHovered}
-      parentBackgroundIndex={1}
-      layoutContext={LayoutContext.MINIMIZED}
-    />
-    {#if isHovered}
-      <Button
-        on:click={onMinimizeToggled}
-        size={Size.xs}
-        label="switch to verbose"
-      />
-    {/if}
-  </div>
-{:else}
-  <div
-    class="flex justify-center items-center h-full {isInThinMode
-      ? 'w-16'
-      : 'w-56'} ml-2 flex-none"
-  >
+    </div>
+  {:else if isMinimized}
     <div
-      class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full rounded-lg {$userPreferences.theme ==
-      'Colorful'
-        ? 'glass'
-        : 'bg-bgs2'}"
-      style="height: calc(100% - 1rem);"
+      class="flex flex-col gap-4 absolute left-1 z-30 {isHovered
+        ? 'bg-bgs4 rounded-lg p-2'
+        : 'opacity-40'}"
+      style="top: {headerHeight}px"
+      on:mouseenter={() => (isHovered = true)}
+      on:mouseleave={() => (isHovered = false)}
     >
-      <div class="w-full flex flex-col gap-8 lg:gap-12">
-        <div
-          class="w-full flex {isInThinMode
-            ? 'justify-center'
-            : 'justify-end'}  px-2"
-        >
-          <Icon
-            icon={isInThinMode ? "chevdoubleright" : "chevdoubleleft"}
-            color="fgs2"
-            on:click={() => {
-              isInThinMode = !isInThinMode;
-            }}
-          />
-        </div>
-        {#if !isInThinMode}
-          <slot name="header" />
-        {/if}
-        <div class="flex flex-col gap-12 items-center w-full p-2">
-          <AppMenuSwitcher
-            parentBackgroundIndex={1}
-            layoutContext={isInThinMode
-              ? LayoutContext.THIN
-              : LayoutContext.DEFAULT}
-          />
-          {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
-            <PageMenuView />
-          {/if}
-          <!-- todo - dynamicsection rendering from dyanmic items -->
-        </div>
-      </div>
-      <div class="w-full flex flex-col gap-2 items-center">
-        {#if $appStore.isDebugMode}
-          <Button
-            on:click={onMinimizeToggled}
-            size={Size.xs}
-            label="switch to min mode"
-          />
-        {/if}
-        {#if isInThinMode}
-          <!-- todo - on click - show command bar -->
-          <Icon
-            icon="command"
-            color="fgs2"
-            hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
-          />
-        {:else}
-          <div class="text-b3 text-fgs3 mb-4">
-            Press <span class="bg-bgs3 text-fgs2 px-2 py-0.5 rounded-md"
-              >Cmd + K</span
-            > for command bar
+      <AppMenuSwitcher
+        {isHovered}
+        parentBackgroundIndex={1}
+        layoutContext={LayoutContext.MINIMIZED}
+      />
+      {#if isHovered}
+        <Button
+          on:click={onMinimizeToggled}
+          size={Size.xs}
+          label="switch to verbose"
+        />
+      {/if}
+    </div>
+  {:else}
+    <div
+      class="flex justify-center items-center h-full {isInThinMode
+        ? 'w-16'
+        : 'w-56'} flex-none {isRounded ? 'ml-2' : ''}"
+    >
+      <div
+        class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
+          ? 'rounded-lg ' + bg($userPreferences.theme, 1)
+          : 'border-r border-bgs3'}"
+        style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
+      >
+        <div class="w-full flex flex-col gap-8 lg:gap-12">
+          <div
+            class="w-full flex opacity-50 {isInThinMode
+              ? 'justify-center'
+              : 'justify-center'}  px-2"
+          >
+            <Icon
+              icon={isInThinMode ? "plus" : "minus-circled"}
+              on:click={() => {
+                isInThinMode = !isInThinMode;
+              }}
+            />
           </div>
-        {/if}
-
-        <LeftBottomBar {isInThinMode} />
+          {#if !isInThinMode}
+            <slot name="header" />
+          {/if}
+          <div class="flex flex-col gap-12 items-center w-full p-2">
+            <AppMenuSwitcher
+              parentBackgroundIndex={1}
+              layoutContext={isInThinMode
+                ? LayoutContext.THIN
+                : LayoutContext.DEFAULT}
+            />
+            {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
+              <PageMenuView />
+            {/if}
+            <!-- todo - dynamicsection rendering from dyanmic items -->
+          </div>
+        </div>
+        <div class="w-full flex flex-col gap-2 items-center">
+          {#if $appStore.isDebugMode}
+            <Button
+              on:click={onMinimizeToggled}
+              size={Size.xs}
+              label="switch to min mode"
+            />
+          {/if}
+          {#if isInThinMode}
+            <!-- todo - on click - show command bar -->
+            <Icon
+              icon="command"
+              color="fgs2"
+              hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
+            />
+          {:else}
+            <div class="text-b3 text-fgs3 mb-4">
+              Press <span
+                class="text-fgs2 px-2 py-0.5 rounded-md {bg(
+                  $userPreferences.theme,
+                  1
+                )}">Cmd + K</span
+              > for command bar
+            </div>
+          {/if}
+          <LeftBottomBar {isInThinMode} {isRounded} />
+        </div>
       </div>
     </div>
-  </div>
+  {/if}
 {/if}
 
-<style>
+<!-- <style>
   .glass {
     background: rgba(204, 204, 214, 0.2);
     /* border: 1px solid white; */
     backdrop-filter: blur(25px);
   }
-</style>
+</style> -->

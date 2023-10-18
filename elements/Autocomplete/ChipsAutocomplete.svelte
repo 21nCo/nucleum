@@ -20,7 +20,7 @@
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
   export let style: string = "";
-  export let listContainerClassList: string = "bg-bgs2 shadow-sm shadow-bgs1";
+  export let listContainerClassList: string = "bg-bgs2 shadow-sm shadow-fgs3";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;

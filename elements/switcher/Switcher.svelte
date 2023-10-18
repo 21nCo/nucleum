@@ -59,7 +59,7 @@
         break;
       case SwitcherStyle.HorizontalAndWraps:
         if (selectionStyle === SelectionItemActiveStyle.BOTTOMBAR) {
-          classList = "flex flex-wrap w-full pb-2";
+          classList = "flex flex-wrap items-center w-full";
         } else if (
           selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND
         ) {
@@ -78,9 +78,14 @@
   });
 </script>
 
-<div style={wrapperStyle} class={`flex flex-col gap-2 ${wrapperClassList}`}>
+<div
+  style={wrapperStyle}
+  class={`flex flex-col h-full gap-2 justify-center items-center ${wrapperClassList}`}
+>
   {#if label}
-    <FormControlLabel {label} {info} />
+    <div class="self-start">
+      <FormControlLabel {label} {info} />
+    </div>
   {/if}
   {#if selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND}
     <div class={classList}>

@@ -2,17 +2,23 @@
   import { generateBackgroudColor } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
-  import type { DropdownItem } from "$lib/tidy/types/dropdownItem.type";
-  import DropDownArrow from "$lib/tidy/icons/DropdownArrow.svelte";
+  import {
+    DropDownStyle,
+    type DropdownItem,
+  } from "$lib/tidy/types/dropdownItem.type";
+  import Icon from "../Icon.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
-  export let selected: DropdownItem = items[0];
+  export let selectedIndex: number = 0;
   export let parentBackgroundIndex: number = 0;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
+  export let style: DropDownStyle = DropDownStyle.DEFAULT;
   let isShowOptions: boolean = false;
   let backgroundColor: string;
   let activeBackgroundColor: string;
+  $: selected = items[selectedIndex];
   onMount(() => {
     const colors = generateBackgroudColor(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
@@ -24,35 +30,51 @@
   {#if label}
     <FormControlLabel {label} {info} />
   {/if}
-  <div class="flex w-full outline outline-2 outline-fgs3 p-2 rounded-sm">
-    <button
-      class=" grow text-left"
-      on:click={() => {
-        isShowOptions = !isShowOptions;
-      }}
-    >
-      {selected.label}
-    </button>
-    <div class="flex flex-col justify-center">
-      <DropDownArrow direction={isShowOptions ? "up" : "down"} />
+  <button
+    class="flex w-full justify-between gap-4 items-center p-2 {isShowOptions
+      ? 'rounded-t-md'
+      : 'rounded-md'} {style === DropDownStyle.OUTLINED
+      ? 'border border-bgs3'
+      : style === DropDownStyle.PANEL_SWITCH
+      ? 'text-h4 font-medium'
+      : ''}"
+    on:click={() => {
+      isShowOptions = !isShowOptions;
+    }}
+  >
+    <div class="flex gap-2">
+      {#if selected.icon}
+        <Icon icon={selected.icon} size={Size.sm} />
+      {/if}
+      {selected?.label}
     </div>
-  </div>
+    <Icon icon={isShowOptions ? "chevup" : "chevdown"} size={Size.sm} />
+  </button>
 
   {#if isShowOptions}
-    <div class="flex flex-col items-start search-results {backgroundColor}">
-      {#each items as item}
+    <div
+      class="flex flex-col items-start rounded-b-md search-results {backgroundColor}"
+    >
+      {#each items as item, index}
         <button
           class="text-left px-4 py-2 hover:bg-bgs4 w-full {item.disabled
             ? 'text-fgs3'
-            : 'text-fgs1'}"
+            : 'text-fgs1'} {index === items.length - 1
+            ? 'hover:rounded-b-md'
+            : ''}"
           on:click={() => {
             if (item.disabled) return;
-            selected = item;
+            selectedIndex = index;
             isShowOptions = false;
             dispatch("select", item.value);
           }}
         >
-          {item.label}
+          <div class="flex gap-2">
+            {#if item.icon}
+              <Icon icon={item.icon} size={Size.sm} />
+            {/if}
+            {item.label}
+          </div>
         </button>
       {/each}
     </div>
