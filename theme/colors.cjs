@@ -65,10 +65,24 @@ const dim = {
   accent2: "#dbcfc1",
 };
 
+// const light = {
+//   bgs1: "#FCFCFC",
+//   // bgs2: "#F2F2F2",
+//   bgs2: "#f6f6f6",
+//   bgs3: "#E6E6E6",
+//   bgs4: "#D9D9D9",
+//   fgs1: "#383838",
+//   fgs2: "#545454",
+//   fgs3: "#A8A8A8",
+//   fgs4: "#C4C4C4",
+//   accent1: "#e5616e",
+//   accent2: "#ad6c6c",
+//   red: "#f77272",
+//   green: "#4fbd88",
+// };
 const light = {
-  bgs1: "#FCFCFC",
-  // bgs2: "#F2F2F2",
-  bgs2: "#f6f6f6",
+  bgs1: "#FFFFFF",
+  bgs2: "#Fafafa",
   bgs3: "#E6E6E6",
   bgs4: "#D9D9D9",
   fgs1: "#383838",
@@ -110,7 +124,8 @@ const solarized = {
   bgs1: "#fdf6e3",
   // bgs2: "#eee8d5",
   bgs2: "#f3eddd",
-  bgs3: "#ddd6c1",
+  // bgs3: "#ddd6c1",
+  bgs3: "#EEE5CE",
   bgs4: "#c9c3af",
   fgs1: "#073642",
   fgs2: "#6a868f",
@@ -125,8 +140,8 @@ const bw = {
   bgs3: "#e6e6e6",
   bgs4: "#d9d9d9",
   fgs1: "#383838",
-  fgs2: "#545454",
-  fgs3: "#757474",
+  fgs2: "#7E7C7C",
+  fgs3: "#9e9d9d",
   accent1: "#2d2f32",
   accent2: "#ad6c6c",
 };

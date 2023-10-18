@@ -74,7 +74,7 @@
       <div
         class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
           ? 'rounded-lg ' + bg($userPreferences.theme, 1)
-          : 'border-r border-bgs3'}"
+          : 'border-r border-bgs2 bg-bgs2'}"
         style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
       >
         <div class="w-full flex flex-col gap-8 lg:gap-12">
