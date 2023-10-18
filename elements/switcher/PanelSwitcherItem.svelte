@@ -19,7 +19,7 @@
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs3 opacity-70'}">
+    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs2'}">
       {item}
     </div>
     {#if isActive}
