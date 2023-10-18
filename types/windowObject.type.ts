@@ -7,4 +7,5 @@ export type WindowObject = {
   isInPortraitMode: boolean;
   firstLoad: number;
   currentPath: string;
+  isMenuHidden: boolean;
 };

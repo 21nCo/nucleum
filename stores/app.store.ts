@@ -56,7 +56,22 @@ export const windowObject = initWindow({
   isInPortraitMode: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
+  isMenuHidden: false,
 });
+
+function checkIfNeedToHideMenu(newPath: string) {
+  const listOfPathsToHideMenu = ["/goals/*"];
+  if (!newPath) return false;
+  let pathParts = newPath.split("/").filter((p) => p);
+  if (listOfPathsToHideMenu.includes(newPath)) return true;
+  //currently only supports one level deep, but can be extended to support more
+  else if (
+    pathParts.length > 1 &&
+    listOfPathsToHideMenu.includes(`/${pathParts[0]}/*`)
+  )
+    return true;
+  return false;
+}
 
 function initWindow(settings: WindowObject) {
   const { subscribe, set, update } = writable<WindowObject>(settings);
@@ -88,13 +103,22 @@ function initWindow(settings: WindowObject) {
     },
     setCurrentPath: (path: string) => {
       update((n: WindowObject) => {
-        n = { ...n, currentPath: path };
+        console.log({ path });
+        n = {
+          ...n,
+          currentPath: path,
+          isMenuHidden: checkIfNeedToHideMenu(path),
+        };
         return n;
       });
     },
     gotoPath: (path: string, params: any = null) => {
       update((n: WindowObject) => {
-        n = { ...n, currentPath: path };
+        n = {
+          ...n,
+          currentPath: path,
+          isMenuHidden: checkIfNeedToHideMenu(path),
+        };
         return n;
       });
       if (params) goto(path, params);

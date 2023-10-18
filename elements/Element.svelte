@@ -6,7 +6,7 @@
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
-  export let classList: string;
+  export let classList: string = "";
   export let id: string = "";
   export let styleList: string = "";
   export let isAction: boolean = true;

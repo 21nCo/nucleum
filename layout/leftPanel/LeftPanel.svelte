@@ -13,6 +13,8 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
+  import { afterUpdate } from "svelte";
+
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
@@ -34,12 +36,14 @@
         params={$appStore.players[0].params}
       />
     {/if}
-    <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-8 pt-4">
-      <AppMenuSwitcher
-        layoutContext={LayoutContext.PORTRAIT}
-        parentBackgroundIndex={1}
-      />
-    </div>
+    {#if !$windowObject.isMenuHidden}
+      <div class="bg-bgs2 rounded-t-md w-full min-w-min pb-8 pt-4">
+        <AppMenuSwitcher
+          layoutContext={LayoutContext.PORTRAIT}
+          parentBackgroundIndex={1}
+        />
+      </div>
+    {/if}
   </div>
 {:else if isMinimized}
   <div

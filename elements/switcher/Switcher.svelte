@@ -25,6 +25,8 @@
   export let info: string | undefined = undefined;
   export let activeColor: string | undefined = undefined;
   export let isDisableEnabled: boolean = false;
+  export let wrapperClassList: string = "";
+  export let wrapperStyle: string = "";
   let backgroundColor: string = "";
   let classList: string;
   onMount(() => {
@@ -76,7 +78,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2">
+<div style={wrapperStyle} class={`flex flex-col gap-2 ${wrapperClassList}`}>
   {#if label}
     <FormControlLabel {label} {info} />
   {/if}
