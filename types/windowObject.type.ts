@@ -7,8 +7,8 @@ export type WindowObject = {
   scale: number;
   isMinimalTopBar?: boolean;
   isInPortraitMode: boolean;
-  isHideMenu: boolean;
   firstLoad: number;
   currentPath: string;
+  isMenuHidden: boolean;
   currentComponent?: ComponentType;
 };

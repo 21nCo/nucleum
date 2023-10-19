@@ -8,7 +8,9 @@
   import type { Item } from "$lib/local/types/item.type";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { ItemType } from "$lib/local/types/item.enum";
+  import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import Element from "../Element.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -20,6 +22,13 @@
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
   export let searchItemType: ItemType | undefined = undefined;
+  export let variant: TextInputVariant = TextInputVariant.DEFAULT;
+  export let rows: number = 5;
+  export let resizable: boolean = false;
+  export let customStyle: string = "";
+  export let classList: string = "";
+  export let labelClassList: string = "";
+  export let id: string = "";
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
   let searchResults: Item[] = [];
@@ -169,12 +178,72 @@
 
 <div class="flex flex-col gap-1 w-full">
   {#if label}
-    <FormControlLabel {label} {info} />
+    <FormControlLabel classList={labelClassList} {label} {info} />
   {/if}
   <div class="relative flex items-center w-full">
-    {#if type === "password"}
-      <input
-        class={inputClasses}
+    {#if variant === TextInputVariant.DEFAULT}
+      {#if type === "password"}
+        <input
+          {id}
+          style={customStyle}
+          class={`${classList} ${inputClasses}`}
+          bind:value
+          on:change
+          on:keydown
+          on:keyup
+          on:blur
+          on:focus
+          on:input={onChange}
+          type="password"
+          {placeholder}
+          disabled={isDisabled}
+          bind:this={inputRef}
+        />
+      {:else}
+        <input
+          {id}
+          style={customStyle}
+          class={`${classList} ${inputClasses}`}
+          bind:value
+          on:change
+          on:keydown
+          on:keyup={searchItemType ? handleKeyUpForSearch : handleKeyUp}
+          on:blur
+          on:focus
+          on:input={onChange}
+          type="text"
+          {placeholder}
+          disabled={isDisabled}
+          bind:this={inputRef}
+        />
+        {#if searchResults && searchResults.length > 0}
+          <div
+            class="search-results bg-bgs3 h-max max-h-60 overflow-auto rounded-md flex flex-col gap-1 items-start"
+          >
+            {#each searchResults as item, index}
+              <SearchResultItem
+                {item}
+                isActive={selectedIndex === index}
+                on:click={() => {
+                  onSearchResultSelection(item);
+                }}
+              />
+            {/each}
+            <Element
+              classList="w-full rounded-b-md py-2 text-center mt-10"
+              parentBackgroundIndex={2}
+              on:click={() => {
+                resetSearch();
+              }}>close</Element
+            >
+          </div>
+        {/if}
+      {/if}
+    {:else if variant === TextInputVariant.TEXT_AREA}
+      <textarea
+        style={customStyle}
+        class={`${classList} ${resizable ? `` : `resize-none`} ${inputClasses}`}
+        {rows}
         bind:value
         on:change
         on:keydown
@@ -182,47 +251,10 @@
         on:blur
         on:focus
         on:input={onChange}
-        type="password"
         {placeholder}
         disabled={isDisabled}
         bind:this={inputRef}
       />
-    {:else}
-      <input
-        class={inputClasses}
-        bind:value
-        on:change
-        on:keydown
-        on:keyup={searchItemType ? handleKeyUpForSearch : handleKeyUp}
-        on:blur
-        on:focus
-        on:input={onChange}
-        type="text"
-        {placeholder}
-        disabled={isDisabled}
-        bind:this={inputRef}
-      />
-      {#if searchResults && searchResults.length > 0}
-        <div
-          class="search-results bg-bgs3 h-max max-h-60 overflow-auto rounded-md flex flex-col gap-1 items-start"
-        >
-          {#each searchResults as item, index}
-            <SearchResultItem
-              {item}
-              isActive={selectedIndex === index}
-              on:click={() => {
-                onSearchResultSelection(item);
-              }}
-            />
-          {/each}
-          <button
-            class="w-full rounded-b-md py-2 text-center mt-10"
-            on:click={() => {
-              resetSearch();
-            }}>close</button
-          >
-        </div>
-      {/if}
     {/if}
     {#if isEnableSaveFeedback && isShowSaveFeedback}
       <div class="absolute right-0 text-b2 text-fgs2">saved</div>

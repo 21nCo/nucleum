@@ -1,0 +1,13 @@
+export enum GeneralVariants {
+  NORMAL = "NORMAL",
+  PRIMARY = "PRIMARY",
+  SECONDARY = "SECONDARY",
+  TERTIARY = "TERTIARY",
+  SUCCESS = "SUCCESS",
+  DANGER = "DANGER",
+  WARNING = "WARNING",
+  INFO = "INFO",
+  LIGHT = "LIGHT",
+  DARK = "DARK",
+  ADD = "ADD",
+}

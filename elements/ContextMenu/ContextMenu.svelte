@@ -47,7 +47,7 @@
   }
   function closeContextMenu() {
     setToDefaultValue();
-    dispatch("close-context-menu");
+    dispatch("close");
   }
 
   function handleKeyDownInList(event: KeyboardEvent) {
@@ -92,12 +92,16 @@
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-<div {id} class="relative" on:keydown|stopPropagation={handleKeyDownInList}>
+<div
+  {id}
+  class="z-20 relative"
+  on:keydown|stopPropagation={handleKeyDownInList}
+>
   {#if icon && iconComponent && !hideIcon}
     <div
       style={iconStyle}
       tabindex="0"
-      class={`flex justify-center items-center w-4 h-4 ${iconClassList}`}
+      class={`flex justify-center cursor-pointer items-center w-4 h-4 ${iconClassList}`}
       on:click|stopPropagation={handleIconClick}
       on:keydown|stopPropagation={handleKeyDownInList}
       on:focusout={closeContextMenu}

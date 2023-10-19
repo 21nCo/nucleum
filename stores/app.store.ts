@@ -55,8 +55,29 @@ export const windowObject = initWindow({
   isInPortraitMode: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
-  isHideMenu: false,
+  isMenuHidden: false,
 });
+
+function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
+  const listOfPathsToHideMenu = {
+    portrait: ["/goals/*"],
+    landscape: [],
+  };
+  if (!newPath) return false;
+  let pathParts = newPath.split("/").filter((p) => p);
+  if (n.isInPortraitMode) {
+    if (listOfPathsToHideMenu.portrait.includes(newPath)) return true;
+    //currently only supports one level deep, but can be extended to support more
+    else if (
+      pathParts.length > 1 &&
+      listOfPathsToHideMenu.portrait.includes(`/${pathParts[0]}/*`)
+    )
+      return true;
+  } else {
+    //check for landscape
+  }
+  return false;
+}
 
 function initWindow(settings: WindowObject) {
   const { subscribe, set, update } = writable<WindowObject>(settings);
@@ -88,19 +109,21 @@ function initWindow(settings: WindowObject) {
     },
     setCurrentPath: (path: string) => {
       update((n: WindowObject) => {
-        n = { ...n, currentPath: path };
+        n = {
+          ...n,
+          currentPath: path,
+          isMenuHidden: checkIfNeedToHideMenu(path, n),
+        };
         return n;
       });
     },
     gotoPath: (path: string, params: any = null) => {
       update((n: WindowObject) => {
-        // console.log({ navigator });
         n = {
           ...n,
-          isHideMenu: false,
           currentPath: path,
+          isMenuHidden: checkIfNeedToHideMenu(path, n),
         };
-        console.log({ n });
         return n;
       });
       if (!navigator.onLine) {

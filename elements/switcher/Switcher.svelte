@@ -25,6 +25,8 @@
   export let info: string | undefined = undefined;
   export let activeColor: string | undefined = undefined;
   export let isDisableEnabled: boolean = false;
+  export let wrapperClassList: string = "";
+  export let wrapperStyle: string = "";
   let backgroundColor: string = "";
   let classList: string;
   onMount(() => {
@@ -76,7 +78,10 @@
   });
 </script>
 
-<div class="flex flex-col h-full gap-2 justify-center items-center">
+<div
+  style={wrapperStyle}
+  class={`flex flex-col h-full gap-2 justify-center items-center ${wrapperClassList}`}
+>
   {#if label}
     <div class="self-start">
       <FormControlLabel {label} {info} />

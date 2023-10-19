@@ -13,6 +13,8 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
+  import { afterUpdate } from "svelte";
+
   import { bg } from "$lib/tidy/utils/utils";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   let isMinimized: boolean = false;
@@ -26,7 +28,7 @@
   }
 </script>
 
-{#if !$windowObject.isHideMenu}
+{#if !$windowObject.isMenuHidden}
   {#if $windowObject.isInPortraitMode}
     <div
       class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"

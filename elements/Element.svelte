@@ -5,6 +5,8 @@
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "../types/theme.type";
   export let classList: string;
+  export let id: string = "";
+
   export let styleList: string = "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;

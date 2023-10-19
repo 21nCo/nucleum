@@ -149,10 +149,12 @@
       {#each list as listItem, index}
         <AutocompleteResultItem
           {...listItem}
-          classList={listItemClassList}
+          classList={{
+            common: listItemClassList,
+            active: activeListItemClassList,
+          }}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}
-          activeClassList={activeListItemClassList}
           on:click={handleResultItemClick}
         />
       {/each}
@@ -161,5 +163,5 @@
 </div>
 
 <!-- 
-  Note: Just need to implement one thing, which is if we navigate through the list using arrow keys then the list should scroll automatically to the selected item
+  Note: Just need to implement one thing, which is if we navigate in the list using arrow keys then the list should scroll automatically to the selected item
  -->
