@@ -55,7 +55,7 @@ export const windowObject = initWindow({
   isInPortraitMode: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
-  isHideMenu: false,
+  isMenuHidden: false,
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
@@ -112,7 +112,7 @@ function initWindow(settings: WindowObject) {
         n = {
           ...n,
           currentPath: path,
-          isHideMenu: checkIfNeedToHideMenu(path, n),
+          isMenuHidden: checkIfNeedToHideMenu(path, n),
         };
         return n;
       });
@@ -122,7 +122,7 @@ function initWindow(settings: WindowObject) {
         n = {
           ...n,
           currentPath: path,
-          isHideMenu: checkIfNeedToHideMenu(path, n),
+          isMenuHidden: checkIfNeedToHideMenu(path, n),
         };
         return n;
       });
