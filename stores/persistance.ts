@@ -220,7 +220,7 @@ export class Persistance {
       case Cloud.surreal:
         if (itemType != ItemType.ALL) {
           let searchResult = await surrealDb.query(
-            `select * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
+            `select meta::id(id) as id, * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
             {
               tb: ItemType[itemType],
               searchString: query,

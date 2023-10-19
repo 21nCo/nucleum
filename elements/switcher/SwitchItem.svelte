@@ -10,7 +10,8 @@
   export let isDisabled: boolean = false;
   export let activeColor: string | undefined = undefined;
   export let selectionStyle: SelectionItemActiveStyle;
-  let classList: string = "relative max-w-full";
+  let classList: string =
+    "relative max-w-full rounded-md" + (isDisabled ? " opacity-50" : "");
 
   const dispatch = createEventDispatcher();
   function handleClick() {

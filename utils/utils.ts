@@ -283,7 +283,9 @@ export function bg(
 ) {
   const colors = generateBackgroudColor(parentBackgroundIndex);
   return theme === AppTheme.Glassy
-    ? "glass"
+    ? isActive
+      ? "glassactive"
+      : "glass"
     : isActive
     ? colors.activeBackgroundColor
     : colors.backgroundColor;
