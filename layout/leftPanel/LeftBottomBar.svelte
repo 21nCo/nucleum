@@ -37,7 +37,7 @@
         class="flex gap-2 h-full w-full items-center justify-center px-2 {!isInThinMode &&
         isRounded
           ? 'rounded-bl-lg'
-          : ''} {isCpActive ? 'bg-accent1' : ''}"
+          : ''} {isCpActive ? 'bg-a1' : ''}"
         on:click={() => windowObject.gotoPath("/cp")}
       >
         <Icon icon="settings" isActive={isCpActive} />

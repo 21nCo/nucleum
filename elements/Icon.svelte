@@ -72,19 +72,19 @@
         : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-              ? 'stroke-accent1'
+              ? 'stroke-a1'
               : 'stroke-bgs1'
             : `stroke-${color}`) + ' stroke-[1.2] fill-none'
         : (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-              ? 'fill-accent1'
+              ? 'fill-a1'
               : 'fill-bgs1'
             : `fill-${color}`) + ' stroke-none'} {hoverStyle ===
         SelectionItemActiveStyle.NONE || $windowObject.isInPortraitMode
         ? ''
         : variant === IconVariant.Outline
-        ? ' hover:stroke-accent1'
-        : ' hover:fill-accent1'}"
+        ? ' hover:stroke-a1'
+        : ' hover:fill-a1'}"
     >
       {#if icon === "home"}
         <Home {variant} />

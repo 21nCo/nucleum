@@ -15,7 +15,7 @@
     else if (size == Size.sm) classList += " text-b2 py-2";
     else if (size == Size.xs) classList += " text-xs py-1.5 px-2";
     if (type == "primary") {
-      classList += " bg-accent1 text-bgs1 hover:opacity-80";
+      classList += " bg-a1 text-bgs1 hover:opacity-80";
     }
   });
 </script>

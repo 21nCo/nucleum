@@ -7,7 +7,7 @@ import { appStore, userPreferences } from "../stores/app.store";
 import { get } from "svelte/store";
 import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
-import { AppTheme } from "../types/appConstants.type";
+import { AppTheme, ColorStrength } from "../types/theme.type";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -260,9 +260,21 @@ export function generateSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 
-export function border(theme: string, parentBackgroundIndex: number = 1) {
-  const colors = generateBackgroudColor(parentBackgroundIndex);
-  return theme === AppTheme.Glassy ? "border-none" : "border-bgs3";
+export function borderColor(
+  theme: string,
+  colorStrength: ColorStrength = ColorStrength.Normal
+) {
+  if (theme === AppTheme.Glassy) return "border-none";
+  switch (colorStrength) {
+    case ColorStrength.Subtle:
+      return "border-brs1";
+    case ColorStrength.Normal:
+      return "border-brs2";
+    case ColorStrength.Strong:
+      return "border-brs3";
+    default:
+      return "border-brs2";
+  }
 }
 export function bg(
   theme: string,

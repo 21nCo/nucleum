@@ -14,7 +14,7 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { bg } from "$lib/tidy/utils/utils";
-  import { AppTheme } from "$lib/tidy/types/appConstants.type";
+  import { AppTheme } from "$lib/tidy/types/theme.type";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;

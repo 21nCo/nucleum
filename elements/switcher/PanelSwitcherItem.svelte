@@ -9,7 +9,7 @@
   export let activeColor: string | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
   $: currentColors = retrieveCurrentColors($userPreferences);
-  $: defaultActiveColor = currentColors?.accent1;
+  $: defaultActiveColor = currentColors?.a1;
 </script>
 
 {#if style === PanelSwitcherStyle.BOTTOMBAR}
@@ -19,7 +19,7 @@
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs2'}">
+    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs3'}">
       {item}
     </div>
     {#if isActive}
@@ -42,7 +42,7 @@
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h3 {isActive ? '' : 'text-fgs3 opacity-70'}">
+    <div class="text-h3 {isActive ? '' : 'text-fgs3'}">
       {item}
     </div>
     {#if isActive}

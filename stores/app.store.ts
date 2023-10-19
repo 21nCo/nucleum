@@ -7,9 +7,8 @@ import {
 } from "$lib/tidy/utils/utils";
 import {
   AppTheme,
-  type ColorScheme,
   type selectableColorParams,
-} from "$lib/tidy/types/appConstants.type";
+} from "$lib/tidy/types/theme.type";
 import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";

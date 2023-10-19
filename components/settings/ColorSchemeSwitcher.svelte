@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
+  import type { ColorScheme } from "$lib/tidy/types/theme.type";
   import Element from "$lib/tidy/elements/Element.svelte";
   import { createEventDispatcher, onMount } from "svelte";
   import { bg } from "$lib/tidy/utils/utils";
@@ -13,7 +13,7 @@
       colorScheme.colors.bgs1 ?? "",
       colorScheme.colors.bgs2 ?? "",
       colorScheme.colors.bgs3 ?? "",
-      colorScheme.colors.accent1 ?? "",
+      colorScheme.colors.a1 ?? "",
     ];
   }
   function onClicked(index: number) {

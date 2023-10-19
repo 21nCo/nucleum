@@ -1,4 +1,4 @@
-import type { AppTheme, ColorScheme } from "$lib/tidy/types/appConstants.type";
+import type { AppTheme, ColorScheme } from "$lib/tidy/types/theme.type";
 
 export type UserGlobalPreferences = {
   nickName: string;

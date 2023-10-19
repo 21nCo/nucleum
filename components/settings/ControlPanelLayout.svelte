@@ -11,6 +11,8 @@
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
+  import Divider from "$lib/tidy/elements/Divider.svelte";
+  import { ColorStrength } from "$lib/tidy/types/theme.type";
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: ControlPanelConfiguration;
   const sub = page.subscribe((x) => {
@@ -34,7 +36,7 @@
   <div class="flex flex-col gap-2 p-4">
     <div class="relative flex justify-center w-full min-h-[4rem]">
       <button
-        class="absolute left-0 flex gap-1 items-center min-w-fit py-1.5 h-2 text-accent1"
+        class="absolute left-0 flex gap-1 items-center min-w-fit py-1.5 h-2 text-a1"
         style="top: 1.75rem;"
         on:click={() => {
           windowObject.gotoPath("/cp");
@@ -92,7 +94,10 @@
       </div>
     </div>
     {#if !$windowObject.isInPortraitMode}
-      <div class="border-r-2 border-bgs2" />
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
+      />
       <div class="p-4 flex-grow flex flex-col gap-4 w-full items-start">
         {#if !isCpHome}
           <Text style={TextType.PANEL_HEADING}>

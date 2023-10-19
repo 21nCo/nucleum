@@ -86,9 +86,7 @@
   </div>
 {/if}
 {#if environment}
-  <div
-    class="fixed right-0 top-20 text-bgs1 z-50 w-20 px-2 bg-accent1 opacity-30"
-  >
+  <div class="fixed right-0 top-20 text-bgs1 z-50 w-20 px-2 bg-a1 opacity-30">
     {environment}
   </div>
 {/if}

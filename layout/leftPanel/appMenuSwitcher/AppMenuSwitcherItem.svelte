@@ -39,8 +39,8 @@
     : 'p-4 rounded-full'} {isActive
     ? layoutContext === LayoutContext.PORTRAIT ||
       layoutContext === LayoutContext.THIN
-      ? 'text-accent1'
-      : 'bg-accent1 text-bgs1'
+      ? 'text-a1'
+      : 'bg-a1 text-bgs1'
     : ''}"
   on:click={onClick}
   on:pointerenter={onHover}
