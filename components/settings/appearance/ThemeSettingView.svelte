@@ -81,7 +81,7 @@
     {parentBackgroundIndex}
     size={Size.sm}
     items={["light", "dark"]}
-    selectionStyle={SelectionItemActiveStyle.NONE}
+    selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
     on:switch={refreshColorSchemes}
     bind:selectedIndex={selectedLightnessIndex}
   />
