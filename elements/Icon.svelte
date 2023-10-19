@@ -59,7 +59,7 @@
 </script>
 
 {#if icon}
-  <button on:click|stopPropagation>
+  <button on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}

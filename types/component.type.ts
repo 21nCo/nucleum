@@ -11,7 +11,7 @@ export type ComponentType = {
   context?: string;
   action?: () => void;
   params?: any;
-  isHideMenu?: boolean;
+  isMenuHidden?: boolean;
 };
 
 export enum PaintType {

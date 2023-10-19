@@ -61,8 +61,8 @@
       }
     }
     $windowObject.currentComponent = currentComponent;
-    if (currentComponent && currentComponent.isHideMenu) {
-      $windowObject.isHideMenu = true;
+    if (currentComponent && currentComponent.isMenuHidden) {
+      $windowObject.isMenuHidden = true;
     }
     if (currentComponent && currentComponent.action) {
       currentComponent.action();
