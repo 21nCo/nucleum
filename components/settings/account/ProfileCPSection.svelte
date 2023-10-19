@@ -7,7 +7,7 @@
   <div class="flex flex-col justify-center h-40 text-fgs3 items-center">
     Profile section
     <button
-      class="text-accent1"
+      class="text-a1"
       on:click={() => windowObject.gotoPath("/cp/account")}
     >
       go to account</button

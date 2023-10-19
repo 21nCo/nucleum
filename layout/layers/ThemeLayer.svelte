@@ -6,7 +6,7 @@
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
-  import { AppTheme } from "$lib/tidy/types/appConstants.type";
+  import { AppTheme } from "$lib/tidy/types/theme.type";
   let sizeFactor: string = "medium";
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;

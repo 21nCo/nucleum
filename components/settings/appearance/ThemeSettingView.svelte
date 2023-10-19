@@ -2,7 +2,7 @@
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
-  import type { ColorScheme } from "$lib/tidy/types/appConstants.type";
+  import type { ColorScheme } from "$lib/tidy/types/theme.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import ColorSchemeSwitcher from "$lib/tidy/components/settings/ColorSchemeSwitcher.svelte";

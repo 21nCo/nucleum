@@ -25,7 +25,7 @@
     class="{orientation === Orientation.Vertical
       ? 'bg-bgs2 px-2 py-3 w-24'
       : 'flex px-4 py-2 w-full items-center justify-between'} {isActive
-      ? 'bg-accent1 text-bgs1'
+      ? 'bg-a1 text-bgs1'
       : !$windowObject.isInPortraitMode
       ? 'hover:' + bg($userPreferences.theme, 1)
       : ''}"

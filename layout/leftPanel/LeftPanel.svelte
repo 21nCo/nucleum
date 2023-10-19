@@ -16,7 +16,7 @@
   import { afterUpdate } from "svelte";
 
   import { bg } from "$lib/tidy/utils/utils";
-  import { AppTheme } from "$lib/tidy/types/appConstants.type";
+  import { AppTheme } from "$lib/tidy/types/theme.type";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;

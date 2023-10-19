@@ -33,7 +33,7 @@
     if (selectedIndex === undefined) selectedIndex = 0;
     let colors = generateBackgroudColor(parentBackgroundIndex);
     let currentColors = retrieveCurrentColors($userPreferences);
-    if (!activeColor && currentColors) activeColor = currentColors.accent1;
+    if (!activeColor && currentColors) activeColor = currentColors.a1;
     backgroundColor = colors.backgroundColor;
   });
   function handleClick(event: any) {

@@ -9,7 +9,7 @@
   onMount(() => {
     switch (style) {
       case TextType.PAGE_HEADING:
-        classList += " text-accent1 bg-none text-h1 my-4";
+        classList += " text-a1 bg-none text-h1 my-4";
         break;
       case TextType.PANEL_HEADING:
         classList += " text-h3 font-medium bg-none ";

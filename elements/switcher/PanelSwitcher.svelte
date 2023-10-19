@@ -3,11 +3,12 @@
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import {
     generateBackgroudColor,
-    bg,
+    borderColor,
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
+  import { ColorStrength } from "$lib/tidy/types/theme.type";
   const dispatch = createEventDispatcher();
   export let items: string[];
   export let selectedIndex: number | undefined = undefined;
@@ -21,7 +22,7 @@
     if (selectedIndex === undefined) selectedIndex = 0;
     let colors = generateBackgroudColor(parentBackgroundIndex);
     let currentColors = retrieveCurrentColors($userPreferences);
-    if (!activeColor && currentColors) activeColor = currentColors.accent1;
+    if (!activeColor && currentColors) activeColor = currentColors.a1;
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.BOTTOMBAR:
@@ -57,7 +58,9 @@
     {/each}
   </div>
   <div
-    class="absolute w-full left-0 -bottom-1 {bg($userPreferences.theme, 1)}"
-    style="height: 5%;"
+    class="absolute w-full left-0 -bottom-1 border-b {borderColor(
+      $userPreferences.theme,
+      ColorStrength.Strong
+    )}"
   />
 </div>

@@ -71,7 +71,7 @@
       style === TextInputStyle.BOXED ||
       style === TextInputStyle.OUTLINED
     ) {
-      inputClasses += " focus:outline-accent1";
+      inputClasses += " focus:outline-a1";
       if (style === TextInputStyle.OUTLINED)
         inputClasses += ` outline outline-2 outline-fgs3 p-2`;
     } else {

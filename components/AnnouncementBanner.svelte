@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class="flex flex-wrap items-center justify-center gap-4 rounded-md px-8 py-2 outline outline-1 outline-accent1 text-b2"
+  class="flex flex-wrap items-center justify-center gap-4 rounded-md px-8 py-2 outline outline-1 outline-a1 text-b2"
 >
   <div class="grow text-center">
     <span><b>New 🚀:</b></span>

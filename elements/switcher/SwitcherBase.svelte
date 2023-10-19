@@ -6,7 +6,7 @@
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
-  import { AppTheme } from "$lib/tidy/types/appConstants.type";
+  import { AppTheme } from "$lib/tidy/types/theme.type";
   export let classList: string;
   export let id: string = "";
   export let styleList: string = "";
@@ -25,7 +25,7 @@
   let backgroundColor: string = "";
   $: if (classList.includes("bg-")) backgroundColor = "";
   $: currentColors = retrieveCurrentColors($userPreferences);
-  $: defaultActiveColor = currentColors?.accent1;
+  $: defaultActiveColor = currentColors?.a1;
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
@@ -44,9 +44,9 @@
   <button
     class={classList +
       (hoverStyle === SelectionItemActiveStyle.ACCENT_COLOR
-        ? " hover:text-accent1"
+        ? " hover:text-a1"
         : hoverStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
-        ? " hover:bg-accent1 hover:text-bgs1"
+        ? " hover:bg-a1 hover:text-bgs1"
         : hoverStyle === SelectionItemActiveStyle.BG_COLOR && !isActive
         ? " hover:bg-bgs4 hover:text-fgs1"
         : " hover:bg-opacity-60") +
@@ -54,7 +54,7 @@
         ? selectionStyle != SelectionItemActiveStyle.SIDEDOT
           ? isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
-              ? " bg-accent1 text-bgs1"
+              ? " bg-a1 text-bgs1"
               : " glassactive"
             : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
             ? ""

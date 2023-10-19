@@ -37,7 +37,7 @@
     {#each scales as scale}
       <button
         class="rounded-md px-4 py-2 w-40 {TimeScale[selectedScale] === scale
-          ? 'bg-accent1 text-bgs1'
+          ? 'bg-a1 text-bgs1'
           : 'bg-bgs2'}"
         on:click={() => {
           selectedScale = TimeScale[scale];
@@ -60,7 +60,7 @@
       {#each horizonsForSingleDay as horizon}
         <button
           class="rounded-md px-4 py-2 w-48 {horizon == timePeriod.horizons[0]
-            ? 'bg-accent1 text-bgs1'
+            ? 'bg-a1 text-bgs1'
             : 'bg-bgs2'}"
           on:click={() => {
             timePeriod.type = TimePeriodType.UPPERHORIZON;
@@ -75,7 +75,7 @@
       {#each segemets as item}
         <button
           class="rounded-md px-4 py-2 w-48 {item == timePeriod.numberOfSegments
-            ? 'bg-accent1 text-bgs1'
+            ? 'bg-a1 text-bgs1'
             : 'bg-bgs2'}"
           on:click={() => {
             timePeriod.numberOfSegments = item;
@@ -91,7 +91,7 @@
     <!-- <button
       class="rounded-md px-4 py-2 w-48 {timePeriod.type ===
       TimePeriodType.UPPERHORIZON
-        ? 'bg-accent1 text-bgs1'
+        ? 'bg-a1 text-bgs1'
         : 'bg-bgs2'}"
       on:click={() => {
         timePeriod.type = TimePeriodType.UPPERHORIZON;

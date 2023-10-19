@@ -7,7 +7,7 @@
 </script>
 
 <a
-  class="relative hover:text-accent1 {feedback === 'underline'
+  class="relative hover:text-a1 {feedback === 'underline'
     ? 'hover:underline'
     : ''}"
   {href}
@@ -16,6 +16,6 @@
   on:mouseleave={() => (isHovering = false)}
   >{label}
   <!-- {#if isHovering && feedback == "arrow"}
-    <div class="absolute -right-5 top-1 text-accent1 -rotate-45 text-b2">→</div>
+    <div class="absolute -right-5 top-1 text-a1 -rotate-45 text-b2">→</div>
   {/if} -->
 </a>
