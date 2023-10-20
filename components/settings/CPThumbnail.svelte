@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Element from "$lib/tidy/elements/Element.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import type { ComponentType } from "$lib/tidy/types/component.type";
@@ -34,10 +33,11 @@
     }}
   >
     {#if orientation === Orientation.Horizontal}
-      <div class="flex gap-2 w-full pl-4">
+      <div class="flex gap-2 w-full">
         <Icon
           icon={component.icon}
           isActive={$windowObject.currentPath === "/cp/" + path}
+          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
         />
         <div>{component.label}</div>
       </div>
@@ -50,6 +50,7 @@
         <Icon
           icon={component.icon}
           isActive={$windowObject.currentPath === "/cp/" + path}
+          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
         />
         <div>{component.label}</div>
       </div>

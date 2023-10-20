@@ -1,11 +1,10 @@
 <script lang="ts">
   import { TextType } from "$lib/tidy/types/text.enum";
   import { onMount } from "svelte";
-  import Element from "../Element.svelte";
   export let style: TextType;
   export let customStyle: string = "";
   export let additionalClassList: string | undefined = "";
-  let classList: string = "w-full";
+  let classList: string = "";
   onMount(() => {
     switch (style) {
       case TextType.PAGE_HEADING:

@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    appStore,
+    userPreferences,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import type { ControlPanelConfiguration } from "$lib/tidy/types/controlpanel.type";
   import { onDestroy, onMount } from "svelte";
@@ -13,8 +17,10 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { retrieveCurrentColors } from "$lib/tidy/utils/utils";
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: ControlPanelConfiguration;
+  let color = retrieveCurrentColors($userPreferences).a1;
   const sub = page.subscribe((x) => {
     if (x?.url?.pathname === "/cp") {
       $windowObject.isHideMenu = false;
@@ -42,7 +48,7 @@
           windowObject.gotoPath("/cp");
         }}
       >
-        <Icon icon="chevleft" size={Size.sm} color="accent1" />
+        <Icon icon="chevleft" size={Size.sm} {color} />
         <div class="pr-1">Back</div>
       </button>
       <Text style={TextType.PANEL_HEADING}>

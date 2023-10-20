@@ -1,35 +1,106 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
   import { onMount } from "svelte";
-  import Element from "$lib/tidy/elements/Element.svelte";
+  import Icon from "./Icon.svelte";
+  import { SelectionItemActiveStyle } from "../types/switcher.enum";
+  import { retrieveCurrentColors } from "../utils/utils";
+  import { userPreferences } from "../stores/app.store";
+  import { ButtonStyle } from "../types/button.type";
   export let parentBackgroundIndex: number = 2;
-  export let label: string;
+  export let label: string | undefined = undefined;
   export let type: string = "secondary";
-  export let isCustomAttributes = false;
   export let size: Size = Size.md;
-  let classList = "flex flex-row px-6 rounded-md gap-4 max-w-fit";
+  export let width: string = "max-w-fit";
+  export let style: ButtonStyle = ButtonStyle.DEFAULT;
+  export let icon: string | undefined = undefined;
+  let isHovered: boolean = false;
+  let currentColors = retrieveCurrentColors($userPreferences);
+  $: if (!label && icon && style == ButtonStyle.DEFAULT)
+    style = ButtonStyle.PLAIN;
+  let classList =
+    "flex flex-row gap-2 justify-center " +
+    (style === ButtonStyle.ROUNDED || size === Size.xs
+      ? " rounded-full "
+      : " rounded-md ") +
+    width;
   onMount(() => {
-    if (size == Size.xl) classList += " text-h2 py-5";
-    else if (size == Size.lg) classList += " text-lg py-4";
-    else if (size == Size.md) classList += " text-md py-3";
-    else if (size == Size.sm) classList += " text-b2 py-2";
-    else if (size == Size.xs) classList += " text-xs py-1.5 px-2";
+    switch (size) {
+      case Size.xl:
+        classList += " text-h2";
+        break;
+      case Size.lg:
+        classList += " text-h5";
+        break;
+      case Size.md:
+        classList += " text-base";
+        break;
+      case Size.sm:
+        classList += " text-b2";
+        break;
+      case Size.xs:
+        classList += " text-xs";
+        break;
+    }
+    if (style != ButtonStyle.PLAIN) {
+      switch (size) {
+        case Size.xl:
+          classList += " py-5 px-6";
+          break;
+        case Size.lg:
+          classList += " py-4 px-6";
+          break;
+        case Size.md:
+          classList += " py-3 px-6";
+          break;
+        case Size.sm:
+          classList += " py-2 px-6";
+          break;
+        case Size.xs:
+          classList += " py-1.5 px-3";
+          break;
+      }
+    }
     if (type == "primary") {
-      classList += " bg-a1 text-bgs1 hover:opacity-80";
+      classList += " hover:opacity-90";
+      if (style != ButtonStyle.PLAIN) {
+        classList += " bg-a1 text-bgs1";
+      }
+    } else if (type == "secondary") {
+      classList += " text-fgs2 hover:text-a1";
+      if (style != ButtonStyle.PLAIN) {
+        classList += " bg-bgs2 ";
+      }
     }
   });
 </script>
 
-{#if type === "primary"}
-  <button class={classList} on:click>
+<button
+  class={classList}
+  on:click
+  on:pointerenter={() => {
+    isHovered = true;
+  }}
+  on:pointerleave={() => {
+    isHovered = false;
+  }}
+>
+  {#if icon}
+    <Icon
+      {icon}
+      {size}
+      color={type === "primary"
+        ? currentColors.bgs1
+        : isHovered
+        ? currentColors.a1
+        : currentColors.fgs2}
+      selectionStyle={type === "primary"
+        ? SelectionItemActiveStyle.ACCENT_BACKGROUND
+        : SelectionItemActiveStyle.NONE}
+    />
+  {/if}
+  {#if label}
     {label}
-  </button>
-{:else if isCustomAttributes}
-  <button class={classList}>
+  {:else}
     <slot />
-  </button>
-{:else}
-  <button class={classList} on:click>
-    {label}
-  </button>
-{/if}
+  {/if}
+</button>

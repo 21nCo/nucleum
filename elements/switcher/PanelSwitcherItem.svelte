@@ -2,7 +2,6 @@
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { bg, retrieveCurrentColors } from "$lib/tidy/utils/utils";
-  import { createEventDispatcher } from "svelte";
   export let item: string;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
@@ -19,7 +18,7 @@
     style={isActive ? "color: " + activeColor ?? defaultActiveColor : ""}
     disabled={isDisabled}
   >
-    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs3'}">
+    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs4'}">
       {item}
     </div>
     {#if isActive}

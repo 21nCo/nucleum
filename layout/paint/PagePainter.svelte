@@ -25,11 +25,10 @@
     pad = rawPad > 200 ? 200 : rawPad;
   }
   onMount(() => {
-    console.log("page painter");
     resolveComponent(resolveCurrentPath());
     const sub = page.subscribe(() => {
       let currentPath = resolveCurrentPath();
-      console.log({ currentPath, windowObject: $windowObject });
+      // console.log({ currentPath, windowObject: $windowObject });
       if ($windowObject.currentPath.includes(currentPath)) {
         resolveComponent(currentPath);
       }
@@ -42,7 +41,7 @@
   function resolveCurrentPath() {
     if (path) return path;
     let currentPath = $page.params.route;
-    console.log({ page: $page });
+    // console.log({ page: $page });
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
     }
