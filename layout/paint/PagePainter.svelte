@@ -60,8 +60,8 @@
       }
     }
     $windowObject.currentComponent = currentComponent ?? undefined;
-    if (currentComponent && currentComponent.isHideMenu) {
-      $windowObject.isHideMenu = true;
+    if (currentComponent && currentComponent.isMenuHidden) {
+      $windowObject.isMenuHidden = true;
     }
     if (currentComponent && currentComponent.fn) {
       currentComponent.fn();

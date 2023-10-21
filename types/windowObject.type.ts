@@ -9,6 +9,6 @@ export type WindowObject = {
   isInPortraitMode: boolean;
   firstLoad: number;
   currentPath: string;
-  isHideMenu: boolean;
+  isMenuHidden: boolean;
   currentComponent?: Action;
 };
