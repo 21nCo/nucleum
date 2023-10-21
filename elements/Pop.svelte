@@ -33,8 +33,12 @@
   }`}
 >
   {#if !hideHeader}
-    <div class="flex justify-between mb-4">
-      <span class="text-fgs1 text-base">{title}</span>
+    <div
+      class={`flex justify-between ${!title && hideCloseButton ? `` : `mb-4`}`}
+    >
+      {#if title}
+        <span class="text-fgs1 text-base">{title}</span>
+      {/if}
       {#if !hideCloseButton}
         <Icon on:click={handleClose} icon="cross" variant={IconVariant.Solid} />
       {/if}

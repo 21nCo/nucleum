@@ -28,7 +28,7 @@
   }
 </script>
 
-{#if !$windowObject.isHideMenu}
+{#if !$windowObject.isMenuHidden}
   {#if $windowObject.isInPortraitMode}
     <div
       class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
