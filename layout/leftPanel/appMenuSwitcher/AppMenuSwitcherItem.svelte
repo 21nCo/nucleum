@@ -41,16 +41,9 @@
       layoutContext === LayoutContext.THIN
       ? 'text-a1'
       : 'bg-a1 text-bgs1'
-    : ''}"
+    : 'text-fgs2'}"
   on:click={onClick}
   on:pointerenter={onHover}
-  hoverStyle={!$windowObject.isInPortraitMode
-    ? SelectionItemActiveStyle.BG_COLOR
-    : SelectionItemActiveStyle.NONE}
-  selectionStyle={layoutContext === LayoutContext.PORTRAIT ||
-  layoutContext === LayoutContext.THIN
-    ? SelectionItemActiveStyle.ACCENT_COLOR
-    : SelectionItemActiveStyle.ACCENT_BACKGROUND}
 >
   {#if item.icon && item.icon != "initials"}
     <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
@@ -62,7 +55,7 @@
         selectionStyle={layoutContext === LayoutContext.PORTRAIT ||
         layoutContext === LayoutContext.THIN
           ? SelectionItemActiveStyle.ACCENT_COLOR
-          : SelectionItemActiveStyle.NONE}
+          : SelectionItemActiveStyle.ACCENT_BACKGROUND}
       />
     </div>
   {:else if item.icon == "initials"}

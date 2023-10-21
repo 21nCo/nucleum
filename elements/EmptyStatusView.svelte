@@ -2,10 +2,12 @@
   import EmptyStatus from "../illustrations/EmptyStatus.svelte";
   import EmptyStatusInbox from "../illustrations/EmptyStatusInbox.svelte";
   import { Size } from "../types/size.enum";
+  import Button from "./Button.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
   export let isLoadingState: boolean = false;
+  export let actionText: string | undefined = undefined;
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center gap-2">
@@ -23,5 +25,8 @@
     <div class="text-fgs3 text-center text-b3">
       {subText ?? ""}
     </div>
+    {#if actionText}
+      <Button label={actionText} size={Size.xs} on:click />
+    {/if}
   {/if}
 </div>

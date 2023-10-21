@@ -7,6 +7,7 @@
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
+  import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { bg } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
@@ -40,7 +41,11 @@
           : ''} {isCpActive ? 'bg-a1' : ''}"
         on:click={() => windowObject.gotoPath("/cp")}
       >
-        <Icon icon="settings" isActive={isCpActive} />
+        <Icon
+          icon="settings"
+          isActive={isCpActive}
+          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+        />
       </button>
       <button
         class="flex h-full w-full justify-center px-2 items-center gap-1 {isInThinMode

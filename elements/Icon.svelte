@@ -24,9 +24,8 @@
   import Arrow from "../icons/Arrow.svelte";
   import Plus from "../icons/Plus.svelte";
   import Cross from "../icons/Cross.svelte";
-  import { windowObject } from "../stores/app.store";
+  import { userPreferences, windowObject } from "../stores/app.store";
   import Trash from "../icons/Trash.svelte";
-  import Play from "../icons/Play.svelte";
   import Music from "../icons/Music.svelte";
   import Pencil from "../icons/Pencil.svelte";
   import Play2 from "../icons/Play2.svelte";
@@ -38,11 +37,14 @@
   import BarChart from "../icons/BarChart.svelte";
   import LineChart from "../icons/LineChart.svelte";
   import AreaChart from "../icons/AreaChart.svelte";
+  import { retrieveCurrentColors } from "../utils/utils";
+  import IntervalClock from "../icons/IntervalClock.svelte";
+  import Folder from "../icons/Folder.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
-  export let color: string = "fgs1";
+  export let color: string = retrieveCurrentColors($userPreferences).fgs2 ?? "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
@@ -73,18 +75,27 @@
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
-              : 'stroke-bgs1'
-            : `stroke-${color}`) + ' stroke-[1.2] fill-none'
+              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
+              ? `stroke-bgs1`
+              : 'stroke-fgs1'
+            : `stroke-fgs3`) + ' stroke-[1.2] fill-none'
         : (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'fill-a1'
-              : 'fill-bgs1'
-            : `fill-${color}`) + ' stroke-none'} {hoverStyle ===
+              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
+              ? `fill-bgs1`
+              : 'fill-fgs1'
+            : `fill-fgs3`) + ' stroke-none'} {hoverStyle ===
         SelectionItemActiveStyle.NONE || $windowObject.isInPortraitMode
         ? ''
         : variant === IconVariant.Outline
         ? ' hover:stroke-a1'
         : ' hover:fill-a1'}"
+      style={!isActive
+        ? variant === IconVariant.Outline
+          ? `stroke: ${color}`
+          : `fill: ${color}`
+        : ""}
     >
       {#if icon === "home"}
         <Home {variant} />
@@ -108,12 +119,16 @@
         <Command {variant} />
       {:else if icon === "clock"}
         <Clock {variant} />
+      {:else if icon === "clock"}
+        <Clock {variant} />
+      {:else if icon === "clock-mini"}
+        <Clock variant={IconVariant.Mini} />
+      {:else if icon === "folder"}
+        <Folder {variant} />
       {:else if icon === "history"}
         <History {variant} />
       {:else if icon === "code"}
         <Code {variant} />
-      {:else if icon === "clock-mini"}
-        <Clock variant={IconVariant.Mini} />
       {:else if icon === "bell"}
         <Bell {variant} />
       {:else if icon === "palette"}
