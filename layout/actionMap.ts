@@ -14,6 +14,7 @@ import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
 import AboutSettings from "../components/settings/about/AboutSettings.svelte";
+import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -93,6 +94,13 @@ export const actions: Action[] = [
     action: "discord",
     label: "Join us on discord",
     link: "discord",
+  },
+  {
+    action: "share",
+    path: "cp/share",
+    label: "Refer a friend",
+    icon: "share",
+    component: ShareToFriends,
   },
   {
     action: "about",

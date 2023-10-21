@@ -15,11 +15,13 @@
 {#if component}
   <button
     class="{orientation === Orientation.Vertical
-      ? 'bg-bgs2 px-2 py-3 w-24'
+      ? 'px-2 py-3 w-24 rounded-md'
       : 'flex px-4 py-2 w-full items-center justify-between'} {isActive
       ? 'bg-a1 text-bgs1'
       : !$windowObject.isInPortraitMode
       ? 'hover:' + bg($userPreferences.theme, 1)
+      : ''} {orientation === Orientation.Vertical && !isActive
+      ? 'bg-bgs2'
       : ''}"
     on:click={() => {
       resolveAction(action);

@@ -81,7 +81,7 @@
         {#if cpConfiguration}
           {#each Object.keys(cpConfiguration) as item}
             <CpThumbnailList
-              section={item}
+              sectionName={cpConfiguration[item].isHideTitle ? "" : item}
               items={cpConfiguration[item].children}
               orientation={cpConfiguration[item].orientation
                 ? cpConfiguration[item].orientation

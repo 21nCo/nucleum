@@ -6,14 +6,16 @@
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   import CpThumbnail from "./CPThumbnail.svelte";
   export let items: string[] = [];
-  export let section: string;
+  export let sectionName: string;
   export let orientation: Orientation = Orientation.Horizontal;
 </script>
 
 <div class="flex flex-col gap-2">
-  <div class="pl-4">
-    <Text style={TextType.SECTION_HEADING}>{section.toUpperCase()}</Text>
-  </div>
+  {#if sectionName}
+    <div class="pl-4">
+      <Text style={TextType.SECTION_HEADING}>{sectionName.toUpperCase()}</Text>
+    </div>
+  {/if}
   <div
     class={orientation === Orientation.Horizontal
       ? "flex flex-col "
