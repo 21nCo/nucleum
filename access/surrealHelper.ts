@@ -40,6 +40,7 @@ export class SurrealDatabase {
    * @returns Updated record or null if failed
    */
   async merge(recordId: string, data: any) {
+    console.log(recordId, data);
     let response: any = await this.query("UPDATE $record MERGE $data;", {
       record: recordId,
       data: JSON.stringify(data),

@@ -243,7 +243,7 @@
 
 <div id={wrapperId} style={wrapperStyle} class={`relative ${wrapperClassList}`}>
   <div
-    class={`relative flex flex-col w-full items-start ${
+    class={`relative flex flex-col gap-1 w-full items-start ${
       containerClassList.common
     } ${isActive ? containerClassList.active : containerClassList.inactive}`}
   >
@@ -290,7 +290,7 @@
         on:input
         on:focus
         on:keydown={handleKeyDownInDropdown}
-        class={`bg-transparent pl-1 text-b3 min-w-[100px] flex-1 outline-none ${
+        class={`bg-transparent pl-1 py-1 text-b3 min-w-[100px] flex-1 outline-none ${
           mobileInputClassList.common
         } ${
           isActive ? mobileInputClassList.active : mobileInputClassList.inactive
