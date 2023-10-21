@@ -23,3 +23,15 @@ export enum TimeFormat {
   VERBOSE = "verbose",
   CLOCK = "clock",
 }
+
+export enum TimeUnit {
+  SECONDS = "seconds",
+  MINUTES = "minutes",
+  HOURS = "hours",
+}
+
+export type TimeSuggestion = {
+  label: string;
+  value: number;
+  unit: TimeUnit;
+};

@@ -4,10 +4,10 @@
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import {
     PaintType,
-    type ComponentType,
+    type Action,
     ThinModeBehavior,
-  } from "$lib/tidy/types/component.type";
-  import { getComponentFromPath } from "$lib/tidy/utils/utils";
+  } from "$lib/tidy/types/action.type";
+  import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
   import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/Button.svelte";
@@ -16,21 +16,21 @@
   import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
-  let currentComponent: ComponentType | undefined;
-  let parentComponent: ComponentType | undefined;
-  let grandPa: ComponentType | undefined;
+  let currentComponent: Action | null;
+  let parentComponent: Action | null;
+  let grandPa: Action | null;
   let pad: number;
   $: if ($windowObject.documentHeight) {
     let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
     pad = rawPad > 200 ? 200 : rawPad;
   }
   onMount(() => {
-    resolveComponent(resolveCurrentPath());
+    resolve(resolveCurrentPath());
     const sub = page.subscribe(() => {
       let currentPath = resolveCurrentPath();
       // console.log({ currentPath, windowObject: $windowObject });
       if ($windowObject.currentPath.includes(currentPath)) {
-        resolveComponent(currentPath);
+        resolve(currentPath);
       }
     });
     () => {
@@ -47,10 +47,10 @@
     }
     return currentPath;
   }
-  function resolveComponent(currentPath: string) {
-    parentComponent = undefined;
-    grandPa = undefined;
-    currentComponent = getComponentFromPath(currentPath);
+  function resolve(currentPath: string) {
+    parentComponent = null;
+    grandPa = null;
+    currentComponent = resolveComponentFromPath(currentPath);
     if (!currentComponent) {
       console.log({ currentPath, page: $page, appData: $appStore.appData });
       if (currentPath == "") {
@@ -59,22 +59,22 @@
         windowObject.gotoPath($appStore.appData.notFoundPath ?? "/404");
       }
     }
-    $windowObject.currentComponent = currentComponent;
+    $windowObject.currentComponent = currentComponent ?? undefined;
     if (currentComponent && currentComponent.isHideMenu) {
       $windowObject.isHideMenu = true;
     }
-    if (currentComponent && currentComponent.action) {
-      currentComponent.action();
+    if (currentComponent && currentComponent.fn) {
+      currentComponent.fn();
     }
     let parts = currentPath.split("/");
     if (parts && parts.length > 1) {
       const parent = parts.slice(0, parts.length - 1).join("/");
-      parentComponent = getComponentFromPath(parent);
+      parentComponent = resolveComponentFromPath(parent);
       if (parentComponent) {
         parts = parent.split("/");
         if (parts && parts.length > 1) {
           const grandPaPath = parts.slice(0, parts.length - 1).join("/");
-          grandPa = getComponentFromPath(grandPaPath);
+          grandPa = resolveComponentFromPath(grandPaPath);
         }
       }
     }
@@ -115,7 +115,7 @@
     }
   }
 
-  function setPageMenuIfRequired(component: ComponentType) {
+  function setPageMenuIfRequired(component: Action) {
     if (
       component &&
       component.sections &&

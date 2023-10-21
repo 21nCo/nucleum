@@ -6,7 +6,7 @@
   let dispatch = createEventDispatcher();
 </script>
 
-<div class="flex gap-2 flex-wrap">
+<div class="flex gap-4 flex-wrap">
   {#each [0, 1, 2] as factor, index (index)}
     <SizeFactorItem
       {factor}

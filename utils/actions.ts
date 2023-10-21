@@ -1,4 +1,3 @@
-import { goto } from "$app/navigation";
 import { appEvents, windowObject } from "$lib/tidy/stores/app.store";
 import { EventType } from "$lib/tidy/types/event.enum";
 

@@ -1,10 +1,14 @@
 <script lang="ts">
+  import { Size } from "../types/size.enum";
+
   export let fill = "fgs1";
+  export let size: Size = Size.md;
+  let height = size === Size.md ? 61 : size === Size.sm ? 20 : Size.xs ? 4 : 61;
 </script>
 
 <svg
-  width="217"
-  height="61"
+  {height}
+  width="100%"
   viewBox="0 0 217 61"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"

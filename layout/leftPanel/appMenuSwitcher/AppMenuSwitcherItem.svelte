@@ -6,14 +6,14 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
-  import type { ComponentType } from "$lib/tidy/types/component.type";
+  import type { Action } from "$lib/tidy/types/action.type";
   import { Size } from "$lib/tidy/types/size.enum";
   const dispatch = createEventDispatcher();
-  export let item: ComponentType;
+  export let item: Action;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   $: isActive =
-    $page.params.route?.includes(item.path) ||
-    $page.route.id?.includes(item.path);
+    $page.params.route?.includes(item.path ?? item.action) ||
+    $page.route.id?.includes(item.path ?? item.action);
   export let isShowLabel: boolean = true;
   export let parentBackgroundIndex: number;
   let pad: number;

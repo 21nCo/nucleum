@@ -18,7 +18,7 @@
   $: if (!label && icon && style == ButtonStyle.DEFAULT)
     style = ButtonStyle.PLAIN;
   let classList =
-    "flex flex-row gap-2 justify-center " +
+    "flex flex-row gap-2 justify-center items-center " +
     (style === ButtonStyle.ROUNDED || size === Size.xs
       ? " rounded-full "
       : " rounded-md ") +
@@ -66,7 +66,7 @@
         classList += " bg-a1 text-bgs1";
       }
     } else if (type == "secondary") {
-      classList += " text-fgs2 hover:text-a1";
+      classList += " text-fgs2 hover:text-fgs1";
       if (style != ButtonStyle.PLAIN) {
         classList += " bg-bgs2 ";
       }
@@ -91,7 +91,7 @@
       color={type === "primary"
         ? currentColors.bgs1
         : isHovered
-        ? currentColors.a1
+        ? currentColors.fgs1
         : currentColors.fgs2}
       selectionStyle={type === "primary"
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND

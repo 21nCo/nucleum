@@ -38,8 +38,10 @@
   import LineChart from "../icons/LineChart.svelte";
   import AreaChart from "../icons/AreaChart.svelte";
   import { retrieveCurrentColors } from "../utils/utils";
-  import IntervalClock from "../icons/IntervalClock.svelte";
   import Folder from "../icons/Folder.svelte";
+  import SidebarToggle from "../icons/SidebarToggle.svelte";
+  import Info from "../icons/Info.svelte";
+  import Link from "../icons/Link.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -55,6 +57,7 @@
     icon == "chevdoubleright" ||
     icon == "history" ||
     icon == "logout" ||
+    icon == "link" ||
     icon?.includes("-mini")
       ? IconVariant.Solid
       : IconVariant.Outline;
@@ -117,8 +120,12 @@
         <Stack {variant} />
       {:else if icon === "command"}
         <Command {variant} />
-      {:else if icon === "clock"}
-        <Clock {variant} />
+      {:else if icon === "sidebar-toggle"}
+        <SidebarToggle {variant} />
+      {:else if icon === "info"}
+        <Info {variant} />
+      {:else if icon === "link"}
+        <Link />
       {:else if icon === "clock"}
         <Clock {variant} />
       {:else if icon === "clock-mini"}

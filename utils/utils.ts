@@ -1,9 +1,9 @@
 import { onDestroy } from "svelte";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
-import { localComponents } from "$lib/local/stores/localComponentMap";
-import { components } from "$lib/tidy/layout/componentMap";
+import { localActions } from "$lib/local/stores/localActionMap";
+import { actions } from "$lib/tidy/layout/actionMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { appStore, userPreferences } from "../stores/app.store";
+import { appStore, userPreferences, windowObject } from "../stores/app.store";
 import { get } from "svelte/store";
 import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
@@ -354,23 +354,57 @@ export function assignSatAndLight(
   return { saturation, lightness };
 }
 
-export function getComponentFromPath(path: string) {
-  let currentComponent;
-  let component = localComponents.find((x) => x.path == path);
-  if (component) currentComponent = component;
-  else {
-    component = components.find((x) => x.path == path);
-    if (component) currentComponent = component;
+export function resolveComponent(action: string) {
+  let component = localActions.find((x) => x.action == action);
+  if (component) return component;
+  component = actions.find((x) => x.action == action);
+  if (component) return component;
+  return null;
+}
+
+export function resolveComponentFromPath(path: string) {
+  let component = localActions.find((x) => x.path == path);
+  if (component) return component;
+  component = localActions.find((x) => x.action == path);
+  if (component) return component;
+  component = actions.find((x) => x.path == path);
+  if (component) return component;
+  component = actions.find((x) => x.action == path);
+  if (component) return component;
+  return null;
+}
+
+export function openLink(url: string) {
+  let win = window?.open(url, "_blank");
+  if (win) {
+    win.focus();
   }
-  return currentComponent;
+}
+
+export function resolveAction(action: string) {
+  console.log({ action });
+  let component = resolveComponent(action);
+  console.log({ component });
+  if (!component) {
+    windowObject.gotoPath("404");
+    return;
+  }
+  if (component.link) {
+    const url = get(appStore).appData.urls[component.link];
+    if (url) openLink(url);
+    return;
+  } else if (component.component) {
+    windowObject.gotoPath("/" + (component.path ?? component.action));
+    return;
+  }
 }
 
 export function getAssociatedPlayerFromPath(path: string) {
   let player = undefined;
-  let component = localComponents.find((x) => x.associatedPlayer == path);
+  let component = localActions.find((x) => x.associatedPlayer == path);
   if (component) player = component;
   else {
-    component = components.find((x) => x.associatedPlayer == path);
+    component = actions.find((x) => x.associatedPlayer == path);
     if (component) player = component;
   }
   return player;
@@ -490,4 +524,39 @@ export function determineTimePeriod(period: TimePeriod) {
 
 export function properCase(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
+
+export function getTimeLabel(time: number) {
+  //time in minutes
+  const hours = Math.floor(time / 60);
+  const minutes = Math.floor(time % 60);
+  const seconds = Math.floor((time * 60) % 60);
+
+  const hoursLabel = hours > 1 ? "hrs" : "hr";
+  const minutesLabel = minutes > 1 ? "mins" : "min";
+  const secondsLabel = seconds > 1 ? "secs" : "sec";
+
+  if (hours > 0) {
+    //When more than 60 minutes (at least 1 hour)
+    if (minutes === 0) return `${hours} ${hoursLabel}`;
+    else return `${hours} ${hoursLabel} ${minutes} ${minutesLabel}`;
+  }
+  if (minutes > 0) {
+    //When between 1 and 60 minutes and hour is 0
+    if (minutes < 10 && seconds > 0)
+      //When minutes is less than 10 then we want to show seconds as well
+      return `${minutes} ${minutesLabel} ${seconds} ${secondsLabel}`;
+    return `${minutes} ${minutesLabel}`;
+  }
+  return `${seconds} ${secondsLabel}`;
+}
+
+export function sortPropertiesByOrder(obj: any) {
+  const entries = Object.entries(obj);
+  //@ts-ignore
+  const sortedEntries = entries
+    .filter(([, value]) => value.visibility !== false)
+    .sort(([, a], [, b]) => a.order - b.order);
+  const sortedObj = Object.fromEntries(sortedEntries);
+  return sortedObj;
 }

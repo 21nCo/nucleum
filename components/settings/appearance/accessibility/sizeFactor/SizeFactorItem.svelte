@@ -1,10 +1,9 @@
 <script lang="ts">
-  import Element from "$lib/tidy/elements/Element.svelte";
   import { onMount } from "svelte";
   export let factor: number;
   export let isActive: boolean = false;
   export let parentBackgroundIndex: number = 1;
-  let classList = "h-16 w-28 rounded-md";
+  let classList = "h-16 w-28 rounded-md ";
   let label: string = "";
   onMount(() => {
     if (factor === 0) {
@@ -20,7 +19,11 @@
   });
 </script>
 
-<div class="flex flex-col items-center text-fgs2">
-  <Element on:click {classList} {isActive} {parentBackgroundIndex}>Abc</Element>
-  <div>{label}</div>
+<div class="flex flex-col gap-1 items-center">
+  <button
+    on:click
+    class={classList + (isActive ? " bg-a1 text-bgs1" : " bg-bgs2 text-fgs3")}
+    >Abc</button
+  >
+  <div class={isActive ? "text-a1" : "text-fgs3"}>{label}</div>
 </div>

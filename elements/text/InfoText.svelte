@@ -1,18 +1,20 @@
 <script lang="ts">
+  import { Size } from "$lib/tidy/types/size.enum";
+  import Icon from "../Icon.svelte";
+
   export let info: string;
   let isHovered: boolean = false;
 </script>
 
 <div
-  class="relative rounded-full w-4 h-4 border-2 border-fgs3 flex justify-center items-center text-b3 text-fgs3 cursor-pointer"
+  class="relative rounded-full w-4 h-4 flex justify-center items-center text-b3 text-fgs3 cursor-pointer"
   on:mouseenter={() => (isHovered = true)}
   on:mouseleave={() => (isHovered = false)}
 >
-  i
+  <Icon icon="info" size={Size.sm} />
   {#if isHovered}
     <div
-    class="absolute text-b2 text-fgs2 bg-bgs4 rounded-md p-4 z-30 "
-    style="right: -21rem; ;"
+      class="absolute left-full text-b2 text-fgs2 bg-bgs3 rounded-md p-4 z-30 min-w-[15rem]"
     >
       {info}
     </div>

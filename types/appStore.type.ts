@@ -1,5 +1,5 @@
 import type { AppConstants } from "$lib/tidy/types/appConstants.type";
-import type { ComponentType } from "$lib/tidy/types/component.type";
+import type { Action } from "$lib/tidy/types/action.type";
 
 export type AppStore = {
   appConstants: AppConstants;
@@ -9,7 +9,7 @@ export type AppStore = {
   pageMenu?: string[];
   player?: string;
   //TACO - dynamic actions
-  dynamicBlocks?: ComponentType[];
+  dynamicBlocks?: Action[];
   tailwindTheme: string;
   fullScreenComponentPath?: string;
   debugLogs?: DebugLog[];

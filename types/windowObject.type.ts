@@ -1,4 +1,4 @@
-import type { ComponentType } from "./component.type";
+import type { Action } from "./action.type";
 
 export type WindowObject = {
   documentHeight: number;
@@ -10,5 +10,5 @@ export type WindowObject = {
   firstLoad: number;
   currentPath: string;
   isHideMenu: boolean;
-  currentComponent?: ComponentType;
+  currentComponent?: Action;
 };

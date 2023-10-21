@@ -1,22 +1,15 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
-  import type { ComponentType } from "$lib/tidy/types/component.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { getComponentFromPath, bg } from "$lib/tidy/utils/utils";
-  import { onMount } from "svelte";
-  export let path: string;
-  export let orientation: Orientation = Orientation.Vertical;
+  import { bg, resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
+  export let action: string;
+  export let orientation: Orientation = Orientation.Horizontal;
   export let parentBackgroundIndex: number = 0;
-  let component: ComponentType | undefined;
-  $: isActive = $windowObject.currentPath === "/cp/" + path;
-  onMount(() => {
-    component = getComponentFromPath("cp/" + path);
-    if (!component) {
-      component = getComponentFromPath(path);
-    }
-  });
+  let selectionStyle = SelectionItemActiveStyle.ACCENT_BACKGROUND;
+  let component = resolveComponent(action);
+  $: isActive = $windowObject.currentPath === "/" + component?.path;
 </script>
 
 {#if component}
@@ -29,29 +22,26 @@
       ? 'hover:' + bg($userPreferences.theme, 1)
       : ''}"
     on:click={() => {
-      windowObject.gotoPath("/cp/" + path);
+      resolveAction(action);
     }}
   >
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
         <Icon
-          icon={component.icon}
-          isActive={$windowObject.currentPath === "/cp/" + path}
-          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+          icon={component.icon ?? (component.link ? "link" : "info")}
+          {isActive}
+          {selectionStyle}
         />
         <div>{component.label}</div>
       </div>
       <Icon
-        icon="chevright"
-        isActive={$windowObject.currentPath === "/cp/" + path}
+        icon={!component.link ? "chevright" : ""}
+        {isActive}
+        {selectionStyle}
       />
     {:else}
       <div class="flex flex-col items-center gap-2">
-        <Icon
-          icon={component.icon}
-          isActive={$windowObject.currentPath === "/cp/" + path}
-          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-        />
+        <Icon icon={component.icon} {isActive} {selectionStyle} />
         <div>{component.label}</div>
       </div>
     {/if}

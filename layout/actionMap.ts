@@ -2,9 +2,8 @@ import AppearanceSettings from "$lib/tidy/components/settings/appearance/Appeara
 import {
   ThinModeBehavior,
   PaintType,
-  type ComponentType,
-  BlockType,
-} from "$lib/tidy/types/component.type";
+  type Action,
+} from "$lib/tidy/types/action.type";
 import NotFound from "../components/error/404NotFound.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
@@ -14,40 +13,43 @@ import ControlPanel from "../components/settings/ControlPanel.svelte";
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
-export const components: ComponentType[] = [
+import AboutSettings from "../components/settings/about/AboutSettings.svelte";
+export const actions: Action[] = [
   {
-    path: "404",
+    action: "404",
     component: NotFound,
   },
   {
-    path: "offline",
+    action: "offline",
     component: Offline,
   },
   {
-    path: "debuglogs",
+    action: "debuglogs",
     icon: "code",
     component: DebugLogs,
   },
   {
-    path: "cp",
+    action: "cp",
     label: "Control",
     icon: "settings",
     component: ControlPanel,
   },
   {
+    action: "account",
     label: "Account",
     path: "cp/account",
     component: AccountSettings,
   },
   {
     label: "Appearance",
-    path: "settings/appearance",
+    action: "settings/appearance",
     component: AppearanceSettings,
     sections: ["openPreviewMode", "basics", "theme", "accessibility"],
     pagePaint: PaintType.YSTACK,
     thinModeBehavior: ThinModeBehavior.JUMP_TO_PARENT,
   },
   {
+    action: "openPreviewMode",
     label: "Open Preview Mode",
     path: "settings/appearance/openPreviewMode",
     pagePaint: PaintType.JUMP_TO_PARENT,
@@ -55,27 +57,48 @@ export const components: ComponentType[] = [
     thinModeBehavior: ThinModeBehavior.HIDE,
   },
   {
+    action: "accessibility",
     label: "Accessibility",
     path: "cp/accessibility",
     icon: "cube",
     component: AccessibilitySettings,
   },
   {
+    action: "theme",
     label: "Theme",
     path: "cp/theme",
     icon: "palette",
     component: ThemeSettingView,
   },
   {
+    action: "appMenu",
     label: "App Menu",
     path: "cp/appMenu",
     icon: "list",
     component: AppMenuSettings,
   },
   {
-    label: "Keyboard shortcuts",
+    action: "shortcuts",
+    label: "Shortcuts",
     path: "cp/shortcuts",
     icon: "command",
     component: AppMenuSettings,
+  },
+  {
+    action: "productguide",
+    label: "Product guide",
+    link: "productguide",
+  },
+  {
+    action: "discord",
+    label: "Join us on discord",
+    link: "discord",
+  },
+  {
+    action: "about",
+    label: "About",
+    path: "cp/about",
+    icon: "info",
+    component: AboutSettings,
   },
 ];

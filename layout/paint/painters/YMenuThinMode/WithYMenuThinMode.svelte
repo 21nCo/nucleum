@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { ComponentType } from "$lib/tidy/types/component.type";
-  import { components } from "$lib/tidy/layout/componentMap";
+  import type { Action } from "$lib/tidy/types/action.type";
+  import { actions } from "$lib/tidy/layout/actionMap";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { TextType } from "$lib/tidy/types/text.enum";
   import YMenuSection from "./YMenuSection.svelte";
-  export let currentComponent: ComponentType = components[0];
+  export let currentComponent: Action = actions[0];
 </script>
 
 {#if currentComponent.sections && currentComponent.sections.length > 0}

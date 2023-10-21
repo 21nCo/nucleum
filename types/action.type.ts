@@ -1,5 +1,8 @@
-export type ComponentType = {
-  path: string;
+export type Action = {
+  action: string;
+  path?: string;
+  link?: string;
+  fn?: () => void;
   component?: any;
   label?: string;
   icon?: string;
@@ -9,7 +12,6 @@ export type ComponentType = {
   type?: BlockType;
   associatedPlayer?: string;
   context?: string;
-  action?: () => void;
   params?: any;
   isHideMenu?: boolean;
 };

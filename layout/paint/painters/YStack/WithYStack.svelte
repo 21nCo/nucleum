@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { components } from "$lib/tidy/layout/componentMap";
+  import { actions } from "$lib/tidy/layout/actionMap";
   import YStackElement from "./YStackElement.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { TextType } from "$lib/tidy/types/text.enum";
-  import type { ComponentType } from "$lib/tidy/types/component.type";
+  import type { Action } from "$lib/tidy/types/action.type";
   import { onMount } from "svelte";
-  import { getComponentFromPath } from "$lib/tidy/utils/utils";
-  export let currentComponent: ComponentType | undefined = undefined;
+  import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
+  export let currentComponent: Action | undefined = undefined;
   export let params: any = undefined;
   export let path: string | undefined = undefined;
   onMount(() => {
     if (!currentComponent && path)
-      currentComponent = getComponentFromPath(path);
+      currentComponent = resolveComponentFromPath(path);
   });
 </script>
 

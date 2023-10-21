@@ -1,0 +1,28 @@
+<script lang="ts">
+  import { IconVariant } from "../types/icon.type";
+  export let variant: IconVariant = IconVariant.Outline;
+</script>
+
+{#if variant === IconVariant.Outline}
+  <rect x="2.75" y="4.375" width="18.5" height="15.25" rx="2.5" />
+  <line x1="8.16663" y1="3.875" x2="8.16663" y2="20.125" />
+  <path d="M4.41663 7.9375H6.41663" stroke-width="0.5" stroke-linecap="round" />
+  <path d="M4.41663 9.4375H6.41663" stroke-width="0.5" stroke-linecap="round" />
+  <path
+    d="M4.41663 10.9375H6.41663"
+    stroke-width="0.5"
+    stroke-linecap="round"
+  />
+{:else if variant === IconVariant.Solid}
+  <path
+    fill-rule="evenodd"
+    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
+    clip-rule="evenodd"
+  />
+{:else if variant === IconVariant.Mini}
+  <path
+    fill-rule="evenodd"
+    d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+    clip-rule="evenodd"
+  />
+{/if}

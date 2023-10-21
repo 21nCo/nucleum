@@ -1,18 +1,15 @@
 <script lang="ts">
-  import { getComponentFromPath } from "$lib/tidy/utils/utils";
-  import { goto } from "$app/navigation";
+  import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import {
     BlockType,
-    type ComponentType,
+    type Action,
     ThinModeBehavior,
-  } from "$lib/tidy/types/component.type";
-  import Element from "$lib/tidy/elements/Element.svelte";
+  } from "$lib/tidy/types/action.type";
   import ComponentResolver from "../../ComponentResolver.svelte";
-  import { onMount } from "svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
   export let path: string;
   const classList = "w-full text-start px-8 py-2 self-start";
-  let currentComponent: ComponentType | undefined = getComponentFromPath(path);
+  let currentComponent: Action | null = resolveComponentFromPath(path);
 </script>
 
 {#if currentComponent && currentComponent.thinModeBehavior != ThinModeBehavior.HIDE}

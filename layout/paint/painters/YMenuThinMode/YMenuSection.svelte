@@ -1,18 +1,13 @@
 <script lang="ts">
-  import { getComponentFromPath } from "$lib/tidy/utils/utils";
-  import { goto } from "$app/navigation";
-  import {
-    BlockType,
-    type ComponentType,
-  } from "$lib/tidy/types/component.type";
-  import Element from "$lib/tidy/elements/Element.svelte";
+  import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
+  import { BlockType, type Action } from "$lib/tidy/types/action.type";
   import YMenuSectionItem from "./YMenuSectionItem.svelte";
   import ComponentResolver from "../../ComponentResolver.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
 
   export let path: string;
   const classList = "w-full text-start px-8 py-4 rounded-md";
-  let currentComponent: ComponentType | undefined = getComponentFromPath(path);
+  let currentComponent: Action | null = resolveComponentFromPath(path);
 </script>
 
 {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}

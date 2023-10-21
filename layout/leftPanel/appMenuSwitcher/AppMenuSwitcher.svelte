@@ -4,16 +4,16 @@
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import {
     generateBackgroudColor,
-    getComponentFromPath,
+    resolveAction,
+    resolveComponent,
   } from "$lib/tidy/utils/utils";
-  import type { ComponentType } from "$lib/tidy/types/component.type";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import type { Action } from "$lib/tidy/types/action.type";
   import { userLocalPreferences } from "$lib/local/stores/local.store";
   import type { UserLocalPreferences } from "$lib/local/types/userLocalPreferences.type";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
-  let pages: ComponentType[] = [];
+  let pages: Action[] = [];
   let backgroundColor: string;
   let selected: number;
   onMount(() => {
@@ -27,14 +27,16 @@
       } else {
         items = x.appMenu.filter((item) => item !== "cp");
       }
-      items.forEach((page: string) => {
-        const currentPage = getComponentFromPath(page);
+      items.forEach((action: string) => {
+        const currentPage = resolveComponent(action);
         if (currentPage) {
           pages.push(currentPage);
         }
       });
       let currentPath = window.location.pathname.replace("/", "");
-      let currentPage = pages.find((item) => currentPath.includes(item.path));
+      let currentPage = pages.find((item) =>
+        currentPath.includes(item.path ?? item.action)
+      );
       selected = currentPage ? pages.indexOf(currentPage) : 0;
     });
 
@@ -56,7 +58,7 @@
         isShowLabel={layoutContext == LayoutContext.DEFAULT}
         on:click={() => {
           selected = index;
-          windowObject.gotoPath("/" + item.path);
+          resolveAction(item.action);
         }}
         {item}
       />

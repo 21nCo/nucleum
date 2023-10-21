@@ -1,9 +1,9 @@
 <script lang="ts">
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
-  import type { ComponentType } from "$lib/tidy/types/component.type";
+  import type { Action } from "$lib/tidy/types/action.type";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import { components } from "$lib/tidy/layout/componentMap";
-  export let currentComponent: ComponentType = components[0];
+  import { actions } from "$lib/tidy/layout/actionMap";
+  export let currentComponent: Action = actions[0];
   let pad: number;
   $: if ($windowObject.documentHeight) {
     let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;

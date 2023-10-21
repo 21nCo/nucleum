@@ -1,10 +1,6 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { get, writable } from "svelte/store";
-import {
-  generateUID,
-  getComponentFromPath,
-  yesterday,
-} from "$lib/tidy/utils/utils";
+import { writable } from "svelte/store";
+import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
 import {
   AppTheme,
   type selectableColorParams,
@@ -278,7 +274,7 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = getComponentFromPath(
+          n.player = resolveComponentFromPath(
             n.fullScreenComponentPath
           )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;

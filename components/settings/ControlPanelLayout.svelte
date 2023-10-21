@@ -5,7 +5,6 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
-  import type { ControlPanelConfiguration } from "$lib/tidy/types/controlpanel.type";
   import { onDestroy, onMount } from "svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import CpThumbnailList from "./CPThumbnailList.svelte";
@@ -17,9 +16,13 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
-  import { retrieveCurrentColors } from "$lib/tidy/utils/utils";
+  import {
+    retrieveCurrentColors,
+    sortPropertiesByOrder,
+  } from "$lib/tidy/utils/utils";
+  import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   $: isCpHome = $page?.url.pathname === "/cp";
-  let cpConfiguration: ControlPanelConfiguration;
+  let cpConfiguration: any;
   let color = retrieveCurrentColors($userPreferences).a1;
   const sub = page.subscribe((x) => {
     if (x?.url?.pathname === "/cp") {
@@ -31,7 +34,9 @@
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
-        cpConfiguration = x.appData.cp;
+        let cp = x.appData.cp;
+        console.log({ cp });
+        if (cp) cpConfiguration = sortPropertiesByOrder(cp);
       }
     });
   });
@@ -73,30 +78,18 @@
           : 'pb-20'}"
       >
         <ProfileCpSection />
-        {#if cpConfiguration?.modules && cpConfiguration?.modules.length > 0}
-          <CpThumbnailList
-            items={cpConfiguration.modules}
-            section={"MODULES"}
-          />
+        {#if cpConfiguration}
+          {#each Object.keys(cpConfiguration) as item}
+            <CpThumbnailList
+              section={item}
+              items={cpConfiguration[item].children}
+              orientation={cpConfiguration[item].orientation
+                ? cpConfiguration[item].orientation
+                : Orientation.Horizontal}
+            />
+          {/each}
         {/if}
-        {#if cpConfiguration?.customization && cpConfiguration?.customization.length > 0}
-          <CpThumbnailList
-            items={cpConfiguration.customization}
-            orientation={Orientation.Horizontal}
-            section={"CUSTOMIZATION"}
-          />
-        {/if}
-        {#if cpConfiguration?.app && cpConfiguration?.app.length > 0}
-          <CpThumbnailList
-            items={cpConfiguration.app}
-            orientation={Orientation.Horizontal}
-            section={"APP"}
-          />
-        {/if}
-        <div class="flex w-full justify-center text-fgs3 text-b3 pt-20">
-          {($appStore.appData?.name ?? "") +
-            (" v" + $appStore.appData?.version ?? "")}
-        </div>
+        <ProductInfoFooter />
       </div>
     </div>
     {#if !$windowObject.isInPortraitMode}

@@ -13,7 +13,6 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { afterUpdate } from "svelte";
 
   import { bg } from "$lib/tidy/utils/utils";
   import { AppTheme } from "$lib/tidy/types/theme.type";
@@ -70,6 +69,8 @@
       class="flex justify-center items-center h-full {isInThinMode
         ? 'w-16'
         : 'w-56'} flex-none {isRounded ? 'ml-2' : ''}"
+      on:mouseenter={() => (isHovered = true)}
+      on:mouseleave={() => (isHovered = false)}
     >
       <div
         class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
@@ -79,16 +80,18 @@
       >
         <div class="w-full flex flex-col gap-8 lg:gap-12">
           <div
-            class="w-full flex opacity-50 {isInThinMode
+            class="w-full flex h-6 {isInThinMode
               ? 'justify-center'
-              : 'justify-center'}  px-2"
+              : 'justify-end'}  px-2"
           >
-            <Icon
-              icon={isInThinMode ? "plus" : "minus-circled"}
-              on:click={() => {
-                isInThinMode = !isInThinMode;
-              }}
-            />
+            {#if isHovered}
+              <Button
+                icon="sidebar-toggle"
+                on:click={() => {
+                  isInThinMode = !isInThinMode;
+                }}
+              />
+            {/if}
           </div>
           {#if !isInThinMode}
             <slot name="header" />
@@ -126,7 +129,7 @@
               Press <span
                 class="text-fgs2 px-2 py-0.5 rounded-md {bg(
                   $userPreferences.theme,
-                  1
+                  2
                 )}">Cmd + K</span
               > for command bar
             </div>

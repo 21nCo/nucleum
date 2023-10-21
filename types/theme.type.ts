@@ -1,6 +1,6 @@
 export enum AppTheme {
   Clean = "clean",
-  Glassy = "glassy",
+  Glassy = "glassy (Experimental)",
   Vibrant = "vibrant",
   Futuristic = "futuristic",
 }

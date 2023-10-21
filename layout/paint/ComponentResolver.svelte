@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getComponentFromPath } from "$lib/tidy/utils/utils";
-  import { BlockType } from "$lib/tidy/types/component.type";
+  import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
+  import { BlockType } from "$lib/tidy/types/action.type";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   export let currentComponent: any = undefined;
@@ -9,7 +9,7 @@
   export let params: any = {};
   onMount(() => {
     if (currentComponent === undefined && path !== "") {
-      currentComponent = getComponentFromPath(path);
+      currentComponent = resolveComponentFromPath(path);
     }
   });
 </script>

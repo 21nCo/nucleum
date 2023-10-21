@@ -7,12 +7,12 @@
   import CpThumbnail from "./CPThumbnail.svelte";
   export let items: string[] = [];
   export let section: string;
-  export let orientation: Orientation = Orientation.Vertical;
+  export let orientation: Orientation = Orientation.Horizontal;
 </script>
 
 <div class="flex flex-col gap-2">
   <div class="pl-4">
-    <Text style={TextType.SECTION_HEADING}>{section}</Text>
+    <Text style={TextType.SECTION_HEADING}>{section.toUpperCase()}</Text>
   </div>
   <div
     class={orientation === Orientation.Horizontal
@@ -20,7 +20,7 @@
       : "flex flex-wrap gap-2 pl-4"}
   >
     {#each items as item}
-      <CpThumbnail {orientation} path={item} />
+      <CpThumbnail {orientation} action={item} />
       {#if orientation === Orientation.Horizontal}
         <Divider colorStrength={ColorStrength.Subtle} />
       {/if}
