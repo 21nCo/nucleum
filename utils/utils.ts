@@ -8,6 +8,7 @@ import { get } from "svelte/store";
 import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
 import { AppTheme, ColorStrength } from "../types/theme.type";
+import { ItemType } from "$lib/local/types/item.enum";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -559,4 +560,12 @@ export function sortPropertiesByOrder(obj: any) {
     .sort(([, a], [, b]) => a.order - b.order);
   const sortedObj = Object.fromEntries(sortedEntries);
   return sortedObj;
+}
+
+export function prefix(id: string, itemType: ItemType) {
+  return `${ItemType[itemType]}:${id}`;
+}
+
+export function stripPrefix(id: string) {
+  return id.split(":")[1];
 }
