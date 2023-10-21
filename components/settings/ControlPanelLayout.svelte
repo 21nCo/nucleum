@@ -26,9 +26,9 @@
   let color = retrieveCurrentColors($userPreferences).a1;
   const sub = page.subscribe((x) => {
     if (x?.url?.pathname === "/cp") {
-      $windowObject.isHideMenu = false;
+      $windowObject.isMenuHidden = false;
     } else if ($windowObject.isInPortraitMode) {
-      $windowObject.isHideMenu = true;
+      $windowObject.isMenuHidden = true;
     }
   });
   onMount(() => {

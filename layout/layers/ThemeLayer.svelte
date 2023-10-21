@@ -59,7 +59,7 @@
 
 <div
   class="flex h-screen w-screen {$userPreferences.theme == AppTheme.Glassy
-    ? 'glassy' + $userPreferences.colorScheme.label
+    ? 'glassy' + $userPreferences.colorScheme?.label
     : ''}"
 >
   <slot />

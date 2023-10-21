@@ -13,7 +13,7 @@ export type Action = {
   associatedPlayer?: string;
   context?: string;
   params?: any;
-  isHideMenu?: boolean;
+  isMenuHidden?: boolean;
 };
 
 export enum PaintType {

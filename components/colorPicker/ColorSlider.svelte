@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
 
-  export let hue = 0;
+  export let hue: number | undefined | null = 0;
   export let saturation: number;
   export let lightness: number;
   const dispatch = createEventDispatcher();

@@ -124,9 +124,10 @@ export class Persistance {
    * @param itemType ItemType
    * @returns complete modified item record
    */
-  update(item: any, itemType: ItemType) {
+  update(item: any, itemType?: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
+        if (!itemType) break;
         let items: Item[] = retrieveLocally(itemType);
         if (!items) {
           items = [];
@@ -136,7 +137,10 @@ export class Persistance {
         persistLocally(itemType, items);
         break;
       case Cloud.surreal:
-        return surrealDb.merge(item.id, item);
+        return surrealDb.merge(
+          itemType ? `${ItemType[itemType]}:${item.id}` : item.id,
+          item
+        );
     }
   }
   /**
@@ -220,7 +224,7 @@ export class Persistance {
       case Cloud.surreal:
         if (itemType != ItemType.ALL) {
           let searchResult = await surrealDb.query(
-            `select meta::id(id) as id, * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
+            `select * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
             {
               tb: ItemType[itemType],
               searchString: query,

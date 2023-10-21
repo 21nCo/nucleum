@@ -6,7 +6,7 @@
   export let isDisabled: boolean = false;
 
   function handleClick() {
-    windowObject.gotoPath("/" + path);
+    windowObject.gotoPath(path);
   }
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") {
