@@ -48,7 +48,8 @@
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
-  export let color: string = retrieveCurrentColors($userPreferences).fgs2 ?? "";
+  export let color: string | undefined = undefined;
+  $: defaultColor = retrieveCurrentColors($userPreferences).fgs2 ?? "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
@@ -98,8 +99,8 @@
         : ' hover:fill-a1'}"
       style={!isActive
         ? variant === IconVariant.Outline
-          ? `stroke: ${color}`
-          : `fill: ${color}`
+          ? `stroke: ${color ?? defaultColor}`
+          : `fill: ${color ?? defaultColor}`
         : ""}
     >
       {#if icon === "home"}

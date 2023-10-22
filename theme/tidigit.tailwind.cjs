@@ -1,15 +1,180 @@
-const {
-  dark,
-  dim,
-  dracula,
-  sea,
-  forest,
-  light,
-  smoothy,
-  grainy,
-  solarized,
-  bw,
-} = require("./colors.cjs");
+const cs_tidigit_dark = {
+  bgs1: "#333333",
+  bgs2: "#414141",
+  bgs3: "#565656",
+  bgs4: "#696969",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "#D6E5C2",
+  a2: "#ad6c6c",
+  brs1: "#414141",
+  brs2: "#565656",
+  brs3: "#565656",
+};
+
+const cs_forest = {
+  bgs1: "#2C3639",
+  bgs2: "#3F4E4F",
+  bgs3: "#596D73",
+  bgs4: "#667D85",
+  fgs1: "#DCD7C9",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "#BF9E7C",
+  a2: "#ad6c6c",
+};
+
+const cs_dracula = {
+  bgs1: "#282A36",
+  bgs2: "#343746",
+  bgs3: "#565A73",
+  bgs4: "#707594",
+  fgs1: "#F9F9F9",
+  fgs2: "#C7C7C7",
+  fgs3: "#ADADAD",
+  fgs4: "#949494",
+  a1: "#A19BEC",
+  a2: "#ad6c6c",
+  brs1: "#343746",
+  brs2: "#565A73",
+  brs3: "#565A73",
+};
+
+const cs_sea = {
+  bgs1: "#0A2647",
+  bgs2: "#144272",
+  bgs3: "#205295",
+  bgs4: "#2C74B3",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "#59B2FF",
+  a2: "#dbcfc1",
+};
+
+const cs_dim = {
+  bgs1: "#404258",
+  bgs2: "#474E68",
+  bgs3: "#50577A",
+  bgs4: "#6B728E",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "#BAC1DB",
+  a2: "#dbcfc1",
+  brs1: "#474E68",
+  brs2: "#50577A",
+  brs3: "#50577A",
+};
+
+const cs_tidigit_light = {
+  bgs1: "hsl(0 0% 100%)",
+  bgs2: "hsl(0 0% 98%)",
+  bgs3: "hsl(0 0% 92%)",
+  bgs4: "hsl(0 0% 88%)",
+  bgs5: "hsl(0 0% 85%)",
+  fgs1: "hsl(0 0% 20%)",
+  fgs2: "hsl(0 0% 33%)",
+  fgs3: "hsl(0 0% 50%)",
+  fgs4: "hsl(0 0% 65%)",
+  a1: "hsl(354 72% 64%)",
+  a2: "hsl(0 28% 55%)",
+  ar: "hsl(0 89% 71%)",
+  ag: "hsl(151 45% 53%)",
+  bga1s1: "",
+  bga1s2: "",
+  bga2s1: "",
+  bga2s2: "",
+  brs1: "hsl(0 0% 97%)",
+  brs2: "hsl(0 0% 95%)",
+  brs3: "hsl(0 0% 90%)",
+};
+
+const cs_smoothy = {
+  bgs1: "#F9F5E7",
+  bgs2: "#F8EAD8",
+  bgs3: "#EDDBC7",
+  bgs4: "#E1C3A2",
+  fgs1: "#003947",
+  fgs2: "#003D4D",
+  fgs3: "#003D4D",
+  fgs4: "#D0D0D0",
+  a1: "#787168",
+  a2: "#d33682",
+};
+
+const cs_grainy = {
+  bgs1: "#FFFBEB",
+  bgs2: "#ECE8DD",
+  bgs3: "#E1D7C6",
+  bgs4: "#E1D7C6",
+  fgs1: "#003947",
+  fgs2: "#003D4D",
+  fgs3: "#003D4D",
+  fgs4: "#003D4D",
+  a1: "#2aa198",
+  a2: "#cb4b16",
+};
+const cs_solarized_light = {
+  bgs1: "hsl(44 87% 94%)",
+  bgs2: "hsl(46 42% 88%)",
+  bgs3: "hsl(46 35% 80%)",
+  bgs4: "hsl(46 30% 75%)",
+  bgs5: "hsl(46 30% 75%)",
+  fgs1: "hsl(192 100% 11%)",
+  fgs2: "hsl(192 81% 14%)",
+  fgs3: "hsl(192 75% 20%)",
+  fgs4: "hsl(192 73% 23%)",
+  a1: "hsl(205 69% 49%)",
+  a2: "hsl(45 100% 35%)",
+  ar: "hsl(18 80% 44%)",
+  ag: "hsl(175 59% 40%)",
+  bga1s1: "",
+  bga1s2: "",
+  bga2s1: "",
+  bga2s2: "",
+  brs1: "hsl(44 75% 90%)",
+  brs2: "hsl(44 75% 88%)",
+  brs3: "hsl(44 75% 87%)",
+};
+const cs_solarized_dark = {
+  bgs1: "hsl(192 100% 11%)",
+  bgs2: "hsl(192 81% 14%)",
+  bgs3: "hsl(192 75% 20%)",
+  bgs4: "hsl(192 73% 23%)",
+  bgs5: "hsl(192 71% 25%)",
+  fgs1: "hsl(180 7% 60%)",
+  fgs2: "hsl(186 8% 55%)",
+  fgs3: "hsl(196 13% 45%)",
+  fgs4: "hsl(194 14% 40%)",
+  a1: "hsl(175 59% 40%)",
+  a2: "hsl(237 43% 60%)",
+  ar: "hsl(1 71% 52%)",
+  ag: "hsl(68 100% 30%)",
+  bga1s1: "",
+  bga1s2: "",
+  bga2s1: "",
+  bga2s2: "",
+  brs1: "hsl(192 95% 13%)",
+  brs2: "hsl(192 95% 17%)",
+  brs3: "hsl(192 65% 22%)",
+};
+const cs_bw = {
+  bgs1: "#FFFFFF",
+  bgs2: "#F6F6F6",
+  bgs3: "#e6e6e6",
+  bgs4: "#d9d9d9",
+  fgs1: "#383838",
+  fgs2: "#7E7C7C",
+  fgs3: "#9e9d9d",
+  a1: "#2d2f32",
+  a2: "#ad6c6c",
+};
 
 const defaultFontSize = {
   title: "3rem",
@@ -131,37 +296,37 @@ const scales = [
 
 const lightThemes = [
   {
-    name: "grainy",
+    name: "cs_grainy",
     extend: {
-      colors: grainy,
+      colors: cs_grainy,
     },
   },
   {
-    name: "smoothy",
+    name: "cs_smoothy",
     extend: {
-      colors: smoothy,
+      colors: cs_smoothy,
     },
   },
   {
-    name: "light",
+    name: "cs_tidigit_light",
     extend: {
-      colors: light,
+      colors: cs_tidigit_light,
     },
   },
   {
-    name: "solarized",
+    name: "cs_solarized_light",
     extend: {
-      colors: solarized,
+      colors: cs_solarized_light,
     },
   },
   {
-    name: "bw",
+    name: "cs_bw",
     extend: {
-      colors: bw,
+      colors: cs_bw,
     },
   },
   {
-    name: "blank",
+    name: "cs_blank",
     extend: {
       colors: {
         bgs1: "#000000",
@@ -178,7 +343,7 @@ const lightThemes = [
     },
   },
   {
-    name: "dapien",
+    name: "cs_dapien",
     extend: {
       colors: {
         bgs1: "#FCFCFC",
@@ -197,7 +362,7 @@ const lightThemes = [
     },
   },
   {
-    name: "dapienlanding",
+    name: "cs_dapienlanding",
     extend: {
       colors: {
         bgs1: "#FAFFFE",
@@ -216,7 +381,7 @@ const lightThemes = [
     },
   },
   {
-    name: "DEF5E5",
+    name: "cs_DEF5E5",
     extend: {
       colors: {
         bgs1: "#DEF5E5",
@@ -232,7 +397,7 @@ const lightThemes = [
     },
   },
   {
-    name: "EEF1FF",
+    name: "cs_EEF1FF",
     extend: {
       colors: {
         bgs1: "#EEF1FF",
@@ -248,7 +413,7 @@ const lightThemes = [
     },
   },
   {
-    name: "FBF8F1",
+    name: "cs_FBF8F1",
     extend: {
       colors: {
         bgs1: "#FBF8F1",
@@ -264,7 +429,7 @@ const lightThemes = [
     },
   },
   {
-    name: "F0ECE3",
+    name: "cs_F0ECE3",
     extend: {
       colors: {
         bgs1: "#F0ECE3",
@@ -283,13 +448,19 @@ const lightThemes = [
 
 const darkThemes = [
   {
-    name: "dracula",
+    name: "cs_dracula",
     extend: {
-      colors: dracula,
+      colors: cs_dracula,
     },
   },
   {
-    name: "three",
+    name: "cs_solarized_dark",
+    extend: {
+      colors: cs_solarized_dark,
+    },
+  },
+  {
+    name: "cs_three",
     extend: {
       colors: {
         bgs1: "#371B58",
@@ -305,13 +476,13 @@ const darkThemes = [
     },
   },
   {
-    name: "dark",
+    name: "cs_tidigit_dark",
     extend: {
-      colors: dark,
+      colors: cs_tidigit_dark,
     },
   },
   {
-    name: "wood",
+    name: "cs_wood",
     extend: {
       colors: {
         bgs1: "#472D2D",
@@ -327,21 +498,21 @@ const darkThemes = [
     },
   },
   {
-    name: "forest",
+    name: "cs_forest",
     extend: {
-      colors: forest,
+      colors: cs_forest,
     },
   },
   {
-    name: "sea",
+    name: "cs_sea",
     extend: {
-      colors: sea,
+      colors: cs_sea,
     },
   },
   {
-    name: "dim",
+    name: "cs_dim",
     extend: {
-      colors: dim,
+      colors: cs_dim,
     },
   },
 ];
@@ -359,7 +530,7 @@ module.exports = {
             sans: ["Roboto", "sans-serif"],
             serif: ["Merriweather", "serif"],
           },
-          colors: light,
+          colors: cs_tidigit_light,
           rotate: {
             270: "270deg",
           },

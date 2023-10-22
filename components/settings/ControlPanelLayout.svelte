@@ -5,7 +5,7 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import CpThumbnailList from "./CPThumbnailList.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
@@ -24,13 +24,6 @@
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: any;
   let color = retrieveCurrentColors($userPreferences).a1;
-  const sub = page.subscribe((x) => {
-    if (x?.url?.pathname === "/cp") {
-      $windowObject.isMenuHidden = false;
-    } else if ($windowObject.isInPortraitMode) {
-      $windowObject.isMenuHidden = true;
-    }
-  });
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
@@ -40,7 +33,6 @@
       }
     });
   });
-  onDestroy(sub);
 </script>
 
 {#if $windowObject.isInPortraitMode && !isCpHome}

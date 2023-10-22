@@ -3,10 +3,10 @@
   import { onMount } from "svelte";
   import Icon from "./Icon.svelte";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import { retrieveCurrentColors } from "../utils/utils";
+  import { bg, retrieveCurrentColors } from "../utils/utils";
   import { userPreferences } from "../stores/app.store";
   import { ButtonStyle } from "../types/button.type";
-  export let parentBackgroundIndex: number = 2;
+  export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let type: string = "secondary";
   export let size: Size = Size.md;
@@ -66,9 +66,9 @@
         classList += " bg-a1 text-bgs1";
       }
     } else if (type == "secondary") {
-      classList += " text-fgs2 hover:text-fgs1";
+      classList += " text-fgs2 hover:text-a1";
       if (style != ButtonStyle.PLAIN) {
-        classList += " bg-bgs2 ";
+        classList += " " + bg($userPreferences.theme, parentBackgroundIndex);
       }
     }
   });
@@ -91,7 +91,7 @@
       color={type === "primary"
         ? currentColors.bgs1
         : isHovered
-        ? currentColors.fgs1
+        ? currentColors.a1
         : currentColors.fgs2}
       selectionStyle={type === "primary"
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND

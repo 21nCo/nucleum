@@ -3,13 +3,19 @@
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { bg, resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
+  import {
+    bg,
+    resolveAction,
+    resolveComponent,
+    retrieveCurrentColors,
+  } from "$lib/tidy/utils/utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let parentBackgroundIndex: number = 0;
   let selectionStyle = SelectionItemActiveStyle.ACCENT_BACKGROUND;
   let component = resolveComponent(action);
   $: isActive = $windowObject.currentPath === "/" + component?.path;
+  $: iconColor = retrieveCurrentColors($userPreferences).fgs1 ?? "";
 </script>
 
 {#if component}
@@ -33,6 +39,7 @@
           icon={component.icon ?? (component.link ? "link" : "info")}
           {isActive}
           {selectionStyle}
+          color={iconColor}
         />
         <div>{component.label}</div>
       </div>
@@ -43,7 +50,12 @@
       />
     {:else}
       <div class="flex flex-col items-center gap-2">
-        <Icon icon={component.icon} {isActive} {selectionStyle} />
+        <Icon
+          icon={component.icon}
+          {isActive}
+          {selectionStyle}
+          color={iconColor}
+        />
         <div>{component.label}</div>
       </div>
     {/if}

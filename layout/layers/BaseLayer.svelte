@@ -6,6 +6,7 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
+    account,
     appEvents,
     appStore,
     currentTime,
@@ -22,6 +23,7 @@
 
   let timer: any;
   onMount(() => {
+    account.checkIfIsLoggedIn();
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
     if (subdomain === "embed" || subdomain === "embeddev") {

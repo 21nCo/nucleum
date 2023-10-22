@@ -18,6 +18,7 @@ import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
+import jwt_decode from "jwt-decode";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -55,8 +56,10 @@ export const windowObject = initWindow({
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
+  let component = resolveComponentFromPath(newPath.split("/")[1]);
+  if (component?.isMenuHidden) return true;
   const listOfPathsToHideMenu = {
-    portrait: ["/goals/*"],
+    portrait: ["/goals/*", "/cp/*"],
     landscape: [],
   };
   if (!newPath) return false;
@@ -358,6 +361,25 @@ function initAccount(seed: UserAccount) {
   return {
     subscribe,
     set,
+    checkIfIsLoggedIn: () => {
+      update((n: UserAccount) => {
+        if (localStorage.getItem("surreal-token")) {
+          const token = localStorage.getItem("surreal-token");
+          if (token) {
+            let decodedToken: any = jwt_decode(token);
+            let exp = decodedToken?.exp ?? 0;
+            const currentTime = new Date().getTime() / 1000;
+            if (exp < currentTime) {
+              localStorage.removeItem("surreal-token");
+              n = { token: null, isLoggedIn: false };
+            } else {
+              n = { token, isLoggedIn: true };
+            }
+          }
+        }
+        return n;
+      });
+    },
     signOut: () => {
       update((n: UserAccount) => {
         localStorage.removeItem("surreal-token");

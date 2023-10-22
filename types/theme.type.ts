@@ -1,6 +1,6 @@
 export enum AppTheme {
   Clean = "clean",
-  Glassy = "glassy (Experimental)",
+  Glassy = "glassy",
   Vibrant = "vibrant",
   Futuristic = "futuristic",
 }
@@ -11,6 +11,7 @@ export type ColorScheme = {
   isDark: boolean;
   tailwindSelector: string;
   colors: ColorSchemeColors;
+  isExperimental?: boolean;
 };
 
 export type ColorSchemeColors = {
