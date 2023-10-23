@@ -15,7 +15,7 @@ import { EventType } from "../types/event.enum";
 import type { CustomEvent } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
-import type { UserAccount } from "../types/account.type";
+import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
 import jwt_decode from "jwt-decode";
@@ -358,6 +358,20 @@ function initAccount(seed: UserAccount) {
     seed.isLoggedIn = true;
   }
   const { subscribe, set, update } = writable<UserAccount>(seed);
+  const addSeedUserInfo = (n: UserAccount) => {
+    let seedUserInfo = {
+      email: "john.legend@gmail.com",
+      firstName: "John",
+      lastName: "Legend",
+      phone: "",
+      joinDate: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 200),
+      lastLogin: new Date(),
+      profilePicture: "",
+      id: "",
+    };
+    n.userInfo = seedUserInfo;
+    return n;
+  };
   return {
     subscribe,
     set,
@@ -373,7 +387,9 @@ function initAccount(seed: UserAccount) {
               localStorage.removeItem("surreal-token");
               n = { token: null, isLoggedIn: false };
             } else {
-              n = { token, isLoggedIn: true };
+              n = { token, isLoggedIn: true, userId: decodedToken?.user ?? "" };
+              const userInfo = localStorage.getItem("userInfo");
+              n = { ...n, userInfo: userInfo ? JSON.parse(userInfo) : null };
             }
           }
         }
@@ -383,14 +399,17 @@ function initAccount(seed: UserAccount) {
     signOut: () => {
       update((n: UserAccount) => {
         localStorage.removeItem("surreal-token");
+        localStorage.removeItem("userInfo");
         n = { token: null, isLoggedIn: false };
         return n;
       });
     },
-    signIn: (token: string) => {
+    signIn: (data: { userInfo: UserInformation; token: string }) => {
       update((n: UserAccount) => {
-        localStorage.setItem("surreal-token", token);
-        n = { token, isLoggedIn: true };
+        localStorage.setItem("surreal-token", data.token);
+        localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
+        n = { token: data.token, isLoggedIn: true, userId: data.userInfo.id };
+        n.userInfo = data.userInfo;
         return n;
       });
     },

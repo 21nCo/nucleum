@@ -29,6 +29,7 @@
   export let classList: string = "";
   export let labelClassList: string = "";
   export let id: string = "";
+  export let isRequired: boolean = false;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
   let searchResults: Item[] = [];
@@ -178,7 +179,7 @@
 
 <div class="flex flex-col gap-1 w-full">
   {#if label}
-    <FormControlLabel classList={labelClassList} {label} {info} />
+    <FormControlLabel classList={labelClassList} {label} {info} {isRequired} />
   {/if}
   <div class="relative flex items-center w-full">
     {#if variant === TextInputVariant.DEFAULT}

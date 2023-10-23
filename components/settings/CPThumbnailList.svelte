@@ -21,11 +21,13 @@
       ? "flex flex-col "
       : "flex flex-wrap gap-2 pl-4"}
   >
-    {#each items as item}
-      <CpThumbnail {orientation} action={item} />
-      {#if orientation === Orientation.Horizontal}
-        <Divider colorStrength={ColorStrength.Subtle} />
-      {/if}
-    {/each}
+    {#if items}
+      {#each items as item}
+        <CpThumbnail {orientation} action={item} />
+        {#if orientation === Orientation.Horizontal}
+          <Divider colorStrength={ColorStrength.Subtle} />
+        {/if}
+      {/each}
+    {/if}
   </div>
 </div>

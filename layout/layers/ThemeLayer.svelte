@@ -7,7 +7,7 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
-  let sizeFactor: string = "medium";
+  handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   $: rootFontSize = defaultRootFontSize + 0.6 * $windowObject.scale;
@@ -16,7 +16,6 @@
     windowObject.updateDoumentDimensions(window.innerWidth, window.innerHeight);
   }
   onMount(() => {
-    handleResize();
     refreshTheme();
     window.addEventListener("resize", handleResize);
     userPreferences.subscribe(() => {

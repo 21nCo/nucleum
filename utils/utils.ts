@@ -383,9 +383,7 @@ export function openLink(url: string) {
 }
 
 export function resolveAction(action: string) {
-  console.log({ action });
   let component = resolveComponent(action);
-  console.log({ component });
   if (!component) {
     windowObject.gotoPath("404");
     return;
@@ -568,4 +566,8 @@ export function prefix(id: string, itemType: ItemType) {
 
 export function stripPrefix(id: string) {
   return id.split(":")[1];
+}
+
+export function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text);
 }

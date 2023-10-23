@@ -88,12 +88,25 @@ export const actions: Action[] = [
   {
     action: "productguide",
     label: "Product guide",
+    icon: "academic-cap",
     link: "productguide",
   },
   {
     action: "discord",
     label: "Join us on discord",
+    icon: "users",
     link: "discord",
+  },
+  {
+    action: "privacy",
+    label: "Privacy policy",
+    link: "privacy",
+  },
+  {
+    action: "feedback",
+    label: "Give feedback",
+    icon: "chatleftright",
+    link: "feedback",
   },
   {
     action: "share",

@@ -18,9 +18,9 @@
 {#if message?.message}
   <div
     class="text-center {message?.type === StatusMessageType.ERROR
-      ? 'text-red'
+      ? 'text-ar'
       : message?.type === StatusMessageType.SUCCESS
-      ? 'text-green'
+      ? 'text-ag'
       : ''}"
   >
     {message?.message}

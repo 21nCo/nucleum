@@ -27,7 +27,7 @@
       : !$windowObject.isInPortraitMode
       ? 'hover:' + bg($userPreferences.theme, 1)
       : ''} {orientation === Orientation.Vertical && !isActive
-      ? 'bg-bgs2'
+      ? bg($userPreferences.theme, 1)
       : ''}"
     on:click={() => {
       resolveAction(action);
@@ -36,7 +36,7 @@
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
         <Icon
-          icon={component.icon ?? (component.link ? "link" : "info")}
+          icon={component.icon ?? "info"}
           {isActive}
           {selectionStyle}
           color={iconColor}
@@ -44,7 +44,7 @@
         <div>{component.label}</div>
       </div>
       <Icon
-        icon={!component.link ? "chevright" : ""}
+        icon={component.link ? "link" : "chevright"}
         {isActive}
         {selectionStyle}
       />

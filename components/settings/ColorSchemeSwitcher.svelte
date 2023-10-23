@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ColorScheme } from "$lib/tidy/types/theme.type";
+  import { AppTheme, type ColorScheme } from "$lib/tidy/types/theme.type";
   import Element from "$lib/tidy/elements/Element.svelte";
   import { createEventDispatcher, onMount } from "svelte";
   import { bg } from "$lib/tidy/utils/utils";
@@ -37,7 +37,7 @@
           ? bg($userPreferences.theme, 1, true)
           : bg($userPreferences.theme, 1)}"
       >
-        {#if getColors(colorScheme)}
+        {#if getColors(colorScheme) && $userPreferences.theme != AppTheme.Glassy}
           <div class="flex">
             {#each getColors(colorScheme) as color, colorIndex}
               <div

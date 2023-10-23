@@ -33,7 +33,7 @@
           pages.push(currentPage);
         }
       });
-      let currentPath = window.location.pathname.replace("/", "");
+      let currentPath = window?.location?.pathname?.replace("/", "");
       let currentPage = pages.find((item) =>
         currentPath.includes(item.path ?? item.action)
       );
