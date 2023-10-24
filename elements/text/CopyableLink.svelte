@@ -1,37 +1,34 @@
 <script lang="ts">
-  import { copyToClipboard } from "$lib/tidy/utils/utils";
-  import { onMount } from "svelte";
-
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { bg, copyToClipboard } from "$lib/tidy/utils/utils";
+  import Icon from "../Icon.svelte";
+  export let parentBackgroundIndex: number = 1;
   export let link: string = "";
-
   let copied = false;
-
   const copyLink = () => {
     copyToClipboard(link);
     copied = true;
     setTimeout(() => {
       copied = false;
-    }, 3000);
+    }, 1000);
   };
-
-  onMount(() => {
-    setTimeout(() => {
-      copied = false;
-    }, 3000);
-  });
 </script>
 
-<div class="relative">
-  <input
-    type="text"
-    value={link}
-    class="w-full px-3 py-2 text-fgs3 text-b2 rounded-md border-brs1 shadow-sm focus:border-a1 focus:ring-1 focus:ring-a1 focus:ring-opacity-50"
-    readonly
-  />
-  <button
-    class="absolute top-0 right-0 px-3 py-2 bg-a1 text-bgs1 rounded-md hover:bg-a1 focus:outline-none focus:bg-a1"
-    on:click={copyLink}
+<button class="relative text-b2 cursor-pointer w-full" on:click={copyLink}>
+  <div
+    class="flex justify-between w-full px-3 py-2 text-fgs3 rounded-md border-none outline-none {bg(
+      $userPreferences.theme,
+      parentBackgroundIndex
+    )}"
   >
-    {copied ? "Copied!" : "Copy"}
-  </button>
-</div>
+    {link}
+    <Icon icon="copy" />
+  </div>
+  {#if copied}
+    <div
+      class="absolute top-0 right-0 w-full bg-bgs4 bg-opacity-90 h-full flex items-center justify-center rounded-md"
+    >
+      copied!
+    </div>
+  {/if}
+</button>

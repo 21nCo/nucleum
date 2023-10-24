@@ -1,4 +1,5 @@
 import type { AppTheme, ColorScheme } from "$lib/tidy/types/theme.type";
+import type { TimeScale } from "./time.type";
 
 export type UserGlobalPreferences = {
   nickName: string;
@@ -10,4 +11,6 @@ export type UserGlobalPreferences = {
   tempColorScheme: string;
   accessibilitySizingFactor: number;
   timeFormat: string;
+  timeZone?: string;
+  timeScales?: TimeScale[];
 };

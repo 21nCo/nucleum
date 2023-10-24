@@ -126,7 +126,7 @@ function initWindow(settings: WindowObject) {
         return n;
       });
       if (!navigator.onLine) {
-        path = "offline";
+        path = "/offline";
       }
       if (params) goto(path, params);
       else goto(path);
@@ -338,6 +338,13 @@ function initUserPreferences(seed: UserGlobalPreferences) {
     updateDayStart: (m: string) => {
       update((n: UserGlobalPreferences) => {
         n = { ...n, dayStart: m };
+        persistLocally(objectType, n);
+        return n;
+      });
+    },
+    updateTimeZone: (m: string) => {
+      update((n: UserGlobalPreferences) => {
+        n = { ...n, timeZone: m };
         persistLocally(objectType, n);
         return n;
       });

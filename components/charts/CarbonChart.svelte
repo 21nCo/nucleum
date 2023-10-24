@@ -27,6 +27,7 @@
       left: {
         mapsTo: "value",
         scaleType: ScaleTypes.LINEAR,
+        thresholds: additionalOptions.yThresholds,
       },
       bottom: {
         mapsTo: "key",

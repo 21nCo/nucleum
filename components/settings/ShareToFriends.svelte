@@ -21,8 +21,10 @@
     </div>
     <div>
       <CopyableLink
+        parentBackgroundIndex={2}
         link={($appStore.appData?.urls?.landing ?? "") +
-          ($account.userId ? "?referral=" + $account.userId : "")}
+          "?referral=" +
+          ($account.userId ? $account.userId : "appuser")}
       />
     </div>
   </div>

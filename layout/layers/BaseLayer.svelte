@@ -23,7 +23,24 @@
 
   let timer: any;
   onMount(() => {
+    bootup();
+    appEvents.subscribe((x: CustomEvent) => {
+      if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
+        isShowAppearancePopover = x.value ?? false;
+      }
+    });
+    clearInterval(timer);
+    timer = setInterval(() => {
+      tick();
+      $currentTime = new Date();
+    }, 1000);
+    return () => {
+      clearInterval(timer);
+    };
+  });
+  function bootup() {
     account.checkIfIsLoggedIn();
+    //todo - check if the saved timezone is different from current user timezone
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
     if (subdomain === "embed" || subdomain === "embeddev") {
@@ -35,21 +52,7 @@
       colorscheme: JSON.stringify($userPreferences.colorScheme),
     });
     inject({ mode: dev ? "development" : "production" });
-    appEvents.subscribe((x: CustomEvent) => {
-      if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
-        isShowAppearancePopover = x.value ?? false;
-      }
-    });
-
-    clearInterval(timer);
-    timer = setInterval(() => {
-      tick();
-      $currentTime = new Date();
-    }, 1000);
-    return () => {
-      clearInterval(timer);
-    };
-  });
+  }
   async function retrieveAppData() {
     const app = import.meta.env.VITE_APP ?? window.location.hostname;
     appStore.initiatizeAppData(defaultAppData);

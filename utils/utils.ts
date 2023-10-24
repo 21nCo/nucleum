@@ -9,6 +9,7 @@ import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
 import { AppTheme, ColorStrength } from "../types/theme.type";
 import { ItemType } from "$lib/local/types/item.enum";
+import moment from "moment-timezone";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -570,4 +571,35 @@ export function stripPrefix(id: string) {
 
 export function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
+}
+
+export const getTimeZonesWithOffsets = () => {
+  const zones = moment.tz.names();
+  return zones.map((zone) => {
+    const offset = moment.tz(zone).utcOffset();
+    const formattedOffset =
+      (offset >= 0 ? "+" : "-") +
+      String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0") +
+      ":" +
+      String(Math.abs(offset) % 60).padStart(2, "0");
+    return {
+      name: zone,
+      offset: formattedOffset,
+    };
+  });
+};
+
+export function getCorrespoingHorizonFrequencyLabel(scale: TimeScale) {
+  switch (scale) {
+    case TimeScale.DAYS:
+      return "Daily";
+    case TimeScale.WEEKS:
+      return "Weekly";
+    case TimeScale.MONTHS:
+      return "Monthly";
+    case TimeScale.QUARTERS:
+      return "Quarterly";
+    case TimeScale.YEARS:
+      return "Yearly";
+  }
 }

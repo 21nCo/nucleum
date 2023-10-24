@@ -16,7 +16,7 @@
   let isUnitDropdownOpen: boolean;
   let selectedIndex: number = -1; // -1 means no item is selected
   let unitClasses: string =
-    "border rounded-sm text-[1.125rem] text-[0.875rem] leading-8 p-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none" +
+    "border border-brs1 rounded-sm text-[1.125rem] text-[0.875rem] leading-8 p-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none" +
     borderColor($userPreferences.theme, ColorStrength.Strong);
   const containerId = "units-dropdown-container";
 
