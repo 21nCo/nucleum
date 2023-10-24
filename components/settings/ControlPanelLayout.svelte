@@ -28,7 +28,6 @@
     appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
         let cp = x.appData.cp;
-        console.log({ cp });
         if (cp) cpConfiguration = sortPropertiesByOrder(cp);
       }
     });

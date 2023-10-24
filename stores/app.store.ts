@@ -1,5 +1,5 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
 import {
   AppTheme,
@@ -19,6 +19,7 @@ import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
 import jwt_decode from "jwt-decode";
+import type { HapticFeedback } from "../types/haptic.enum";
 
 export const appEvents = initEventStore({ type: EventType.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -463,4 +464,12 @@ function initModalStore(seed: ModalEvent) {
       });
     },
   };
+}
+
+export function hapticFeedback(haptic: HapticFeedback) {
+  if (get(appStore).launchContext == LaunchContext.EMBED) {
+    postMessageToParent({
+      haptic,
+    });
+  }
 }

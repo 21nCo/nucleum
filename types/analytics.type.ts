@@ -10,6 +10,7 @@ export enum ChartType {
   CALENDARHEATMAP = "calendarheatmap",
   STACKEDBAR = "stackedbar",
   STACKEDAREA = "stackedarea",
+  GUAGE = "guage",
 }
 
 export type HorizonChart = {

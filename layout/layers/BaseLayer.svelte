@@ -43,7 +43,9 @@
     //todo - check if the saved timezone is different from current user timezone
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
+    appStore.setLaunchContext(LaunchContext.EMBED);
     if (subdomain === "embed" || subdomain === "embeddev") {
+      appStore.setLaunchContext(LaunchContext.EMBED);
       appStore.setLaunchContext(LaunchContext.EMBED);
     }
     //todo - retrieve User preferences

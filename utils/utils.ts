@@ -3,13 +3,19 @@ import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { localActions } from "$lib/local/stores/localActionMap";
 import { actions } from "$lib/tidy/layout/actionMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { appStore, userPreferences, windowObject } from "../stores/app.store";
+import {
+  appStore,
+  postMessageToParent,
+  userPreferences,
+  windowObject,
+} from "../stores/app.store";
 import { get } from "svelte/store";
 import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
 import { AppTheme, ColorStrength } from "../types/theme.type";
 import { ItemType } from "$lib/local/types/item.enum";
 import moment from "moment-timezone";
+import { LaunchContext } from "../types/appStore.type";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -377,9 +383,15 @@ export function resolveComponentFromPath(path: string) {
 }
 
 export function openLink(url: string) {
-  let win = window?.open(url, "_blank");
-  if (win) {
-    win.focus();
+  if (get(appStore).launchContext == LaunchContext.EMBED) {
+    postMessageToParent({
+      link: url,
+    });
+  } else {
+    let win = window?.open(url, "_blank");
+    if (win) {
+      win.focus();
+    }
   }
 }
 
