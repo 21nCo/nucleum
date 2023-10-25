@@ -9,7 +9,7 @@
 
 <div
   style={containerStyle}
-  class={`flex w-full overflow-auto remove-scrollbar ${containerClassList}`}
+  class={`flex overflow-auto remove-scrollbar ${containerClassList}`}
 >
   {#each items as item}
     <BreadcrumbItem {...item} />

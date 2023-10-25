@@ -65,7 +65,7 @@
         <DropdownArrowAccordion isActive={isIconActive} width={20} {state} />
       </button>
     {/if}
-    <span>{title}</span>
+    <span class="">{title}</span>
     {#if endContent}
       {@html endContent}
     {/if}

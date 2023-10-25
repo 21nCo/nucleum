@@ -75,6 +75,7 @@
   />
 </Modal>
 {#each modals as modal}
+  {console.log({ modal })}
   <Modal show={modal.isShow}>
     <ComponentResolver path={modal.path} params={{ id: modal.id }} />
   </Modal>
