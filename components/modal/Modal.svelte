@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { EventType } from "$lib/tidy/types/event.enum";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { appEvents, windowObject } from "$lib/tidy/stores/app.store";
   import { fade } from "svelte/transition";
@@ -37,7 +37,7 @@
   }
   function close() {
     show = false;
-    appEvents.publish(EventType.POP_DISMISSED);
+    appEvents.publish(AppEvent.POP_DISMISSED);
   }
 </script>
 

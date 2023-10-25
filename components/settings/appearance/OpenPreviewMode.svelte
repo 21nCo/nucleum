@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import { goto } from "$app/navigation";
   import Button from "$lib/tidy/elements/Button.svelte";
   import {
@@ -22,4 +22,4 @@
     }}
     label="Open Preview Mode"
   />
-{/if}
+{/if} -->

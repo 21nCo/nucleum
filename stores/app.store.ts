@@ -11,8 +11,8 @@ import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { persistLocally, retrieveLocally } from "./persistance";
 import { ItemType } from "$lib/local/types/item.enum";
-import { EventType } from "../types/event.enum";
-import type { CustomEvent } from "../types/event.type";
+import { AppEvent } from "../types/event.enum";
+import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount, UserInformation } from "../types/account.type";
@@ -21,7 +21,7 @@ import type { ModalEvent } from "../types/popup.type";
 import jwt_decode from "jwt-decode";
 import type { HapticFeedback } from "../types/haptic.enum";
 
-export const appEvents = initEventStore({ type: EventType.NONE, value: false });
+export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -30,16 +30,16 @@ let blankDetails: any = blankJson.find(
 );
 export const blank = writable(blankDetails);
 
-function initEventStore(seed: CustomEvent) {
-  const { subscribe, set, update } = writable<CustomEvent>(seed);
+function initEventStore(seed: AppEventType) {
+  const { subscribe, set, update } = writable<AppEventType>(seed);
   return {
     subscribe,
-    set: (m: CustomEvent) => {
+    set: (m: AppEventType) => {
       set(m);
     },
-    publish: (m: EventType, value: any = undefined) => {
-      update((n: CustomEvent) => {
-        return { ...n, value, type: m };
+    publish: (m: AppEvent, value: any = undefined) => {
+      update((n: AppEventType) => {
+        return { ...n, value, event: m };
       });
     },
   };
@@ -353,8 +353,6 @@ function initUserPreferences(seed: UserGlobalPreferences) {
   };
 }
 
-export const isShowAppearancePreview = writable<boolean>(false);
-
 export const account = initAccount({
   isLoggedIn: false,
   token: null,
@@ -409,6 +407,7 @@ function initAccount(seed: UserAccount) {
         localStorage.removeItem("surreal-token");
         localStorage.removeItem("userInfo");
         n = { token: null, isLoggedIn: false };
+        appEvents.publish(AppEvent.USER_LOGIN, false);
         return n;
       });
     },
@@ -417,6 +416,7 @@ function initAccount(seed: UserAccount) {
         localStorage.setItem("surreal-token", data.token);
         localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
         n = { token: data.token, isLoggedIn: true, userId: data.userInfo.id };
+        appEvents.publish(AppEvent.USER_LOGIN, true);
         n.userInfo = data.userInfo;
         return n;
       });

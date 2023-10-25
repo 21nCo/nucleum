@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
+    appEvents,
     appStore,
     postMessageToParent,
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -17,13 +19,15 @@
   }
   onMount(() => {
     refreshTheme();
-    window.addEventListener("resize", handleResize);
+    appEvents.subscribe((e) => {
+      if (e.event == AppEvent.WINDOW_RESIZED) {
+        handleResize();
+      }
+    });
     userPreferences.subscribe(() => {
       refreshTheme();
     });
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => {};
   });
   function refreshTheme() {
     refreshSizing();

@@ -4,10 +4,6 @@
   import Dustbin from "../icons/Dustbin.svelte";
   import { IconVariant } from "../types/icon.type";
   import Icon from "./Icon.svelte";
-  import { pointronEvents } from "$lib/local/stores/local.store";
-  import type { PointronEvent } from "$lib/local/types/pointronEvent.type";
-  import { PointronEventEnum } from "$lib/local/types/pointronEvent.enum";
-  import { actIfClickedOutside } from "$lib/local/utils/local.utils";
   import { generateUID } from "../utils/utils";
 
   export let isVisible: boolean = false;

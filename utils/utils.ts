@@ -615,3 +615,13 @@ export function getCorrespoingHorizonFrequencyLabel(scale: TimeScale) {
       return "Yearly";
   }
 }
+
+export function actIfClickedOutside(
+  event: PointerEvent, //The event that is triggered when clicked (passed down from the event listener)
+  target: string, //This should be same as the class,id or tag(i.e target) of the div outside of which when clicked, an action is performed
+  action: any
+) {
+  const nodeTarget = document.querySelector(target);
+  !nodeTarget?.contains(event.target as Node) && action();
+  //Basically we are checking whether or not the clicked element is inside the task-text or is the task-text itself
+}
