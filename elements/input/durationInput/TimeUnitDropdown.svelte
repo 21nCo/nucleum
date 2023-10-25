@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { pointronEvents } from "$lib/local/stores/local.store";
-  import { PointronEventEnum } from "$lib/local/types/pointronEvent.enum";
-  import type { PointronEvent } from "$lib/local/types/pointronEvent.type";
-  import { actIfClickedOutside } from "$lib/local/utils/local.utils";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   import type { TimeUnit } from "$lib/tidy/types/time.type";
-  import { borderColor } from "$lib/tidy/utils/utils";
+  import { actIfClickedOutside, borderColor } from "$lib/tidy/utils/utils";
   import TimeUnitItem from "./TimeUnitItem.svelte";
   import { createEventDispatcher } from "svelte";
 
@@ -16,7 +14,7 @@
   let isUnitDropdownOpen: boolean;
   let selectedIndex: number = -1; // -1 means no item is selected
   let unitClasses: string =
-    "border rounded-sm text-[1.125rem] text-[0.875rem] leading-8 p-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none" +
+    "border border-brs1 rounded-sm text-[1.125rem] text-[0.875rem] leading-8 p-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none" +
     borderColor($userPreferences.theme, ColorStrength.Strong);
   const containerId = "units-dropdown-container";
 
@@ -59,9 +57,9 @@
     }
   }
 
-  pointronEvents.subscribe((x: PointronEvent) => {
+  appEvents.subscribe((x: AppEventType) => {
     if (
-      x.event === PointronEventEnum.WINDOW_CLICKED &&
+      x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {

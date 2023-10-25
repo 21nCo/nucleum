@@ -24,7 +24,10 @@
   }
   function refreshColorSchemes(e: any = undefined) {
     filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
-      (x) => x.theme == $userPreferences.theme
+      (x) =>
+        x.theme == $userPreferences.theme &&
+        (($appStore.isDebugMode && x.isExperimental == true) ||
+          !x.isExperimental)
     );
     filteredColorSchemes = filteredColorSchemes?.filter((x: ColorScheme) => {
       return (

@@ -1,10 +1,10 @@
 export enum TimeScale {
-  SINGLEDAY,
-  DAYS,
-  WEEKS,
-  MONTHS,
-  QUARTERS,
-  YEARS,
+  SINGLEDAY = "SINGLEDAY",
+  DAYS = "DAYS",
+  WEEKS = "WEEKS",
+  MONTHS = "MONTHS",
+  QUARTERS = "QUARTERS",
+  YEARS = "YEARS",
 }
 
 export enum TimePeriodType {

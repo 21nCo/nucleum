@@ -1,6 +1,7 @@
 <script lang="ts">
   import Modal from "$lib/tidy/components/modal/Modal.svelte";
   import {
+    appEvents,
     appStore,
     modalEvent as modalEvent,
     postMessageToParent,
@@ -11,17 +12,24 @@
   import ComponentResolver from "../paint/ComponentResolver.svelte";
   import WithYStack from "../paint/painters/YStack/WithYStack.svelte";
   import { swipe } from "svelte-gestures";
-  import { isShowAppearancePreview } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import type { ModalEvent } from "$lib/tidy/types/popup.type";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
+  let isShowAppearancePreview: boolean = false;
   function onSwipe(event: any) {
     console.log({ event });
   }
   $: if (dialogRef) dialogRef.showModal();
   onMount(() => {
+    appEvents.subscribe((x: AppEvent) => {
+      if (x.type == AppEvent.SHOW_APPEARANCE_PREVIEW) {
+        isShowAppearancePreview = x.value ?? false;
+      }
+    });
     modalEvent.subscribe((x: ModalEvent) => {
       // console.log({ x });
       if ($appStore.launchContext == LaunchContext.EMBED) {
@@ -64,7 +72,7 @@
 {/if}
 <Modal
   size={Size.xl}
-  bind:show={$isShowAppearancePreview}
+  show={isShowAppearancePreview}
   isOnRight={true}
   isShowOverlay={false}
   title={"Appearance"}

@@ -61,7 +61,7 @@
       <div class="text-fgs2">{message}</div>
     {/if}
     {#if error}
-      <div class="text-red">{error}</div>
+      <div class="text-ar">{error}</div>
     {/if}
   </div>
 </div>

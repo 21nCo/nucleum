@@ -2,6 +2,7 @@
   import InfoText from "./InfoText.svelte";
   export let label: string;
   export let info: string | undefined = undefined;
+  export let isRequired: boolean = false;
   export let classList: string = "";
 </script>
 
@@ -9,5 +10,8 @@
   <div class={`${classList} text-fgs2`}>{label}</div>
   {#if info}
     <InfoText {info} />
+  {/if}
+  {#if isRequired}
+    <div class="text-ar">*</div>
   {/if}
 </div>

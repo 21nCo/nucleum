@@ -14,6 +14,8 @@ import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
 import AboutSettings from "../components/settings/about/AboutSettings.svelte";
+import ShareToFriends from "../components/settings/ShareToFriends.svelte";
+import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -85,14 +87,41 @@ export const actions: Action[] = [
     component: AppMenuSettings,
   },
   {
+    action: "datetime-settings",
+    label: "Date & Time",
+    path: "cp/datetime-settings",
+    icon: "sun",
+    component: DateTimeSettings,
+  },
+  {
     action: "productguide",
     label: "Product guide",
+    icon: "academic-cap",
     link: "productguide",
   },
   {
     action: "discord",
     label: "Join us on discord",
+    icon: "users",
     link: "discord",
+  },
+  {
+    action: "privacy",
+    label: "Privacy policy",
+    link: "privacy",
+  },
+  {
+    action: "feedback",
+    label: "Give feedback",
+    icon: "chatleftright",
+    link: "feedback",
+  },
+  {
+    action: "share",
+    path: "cp/share",
+    label: "Refer a friend",
+    icon: "share",
+    component: ShareToFriends,
   },
   {
     action: "about",

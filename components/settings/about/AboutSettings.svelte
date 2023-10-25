@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/Button.svelte";
-  import { appStore, blank, windowObject } from "$lib/tidy/stores/app.store";
+  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { openLink } from "$lib/tidy/utils/utils";
   import ProductInfoFooter from "./ProductInfoFooter.svelte";
@@ -13,13 +13,6 @@
       {@html $appStore.appData.about}
     </div>
   {/if}
-  <!-- <div>
-    Pointron is built at <a href="https://blanklabs.org"><u>Blank labs</u></a>,
-    a self-funded organization with people and planet at its core. Pointron is
-    part of our mission to build
-    <a href="https://tidigit.com"><u>Tidy Digital Kit</u></a>, a suite of
-    software tools aimed to tidy the lives of current and next-gen humans.
-  </div> -->
   <div
     class="flex gap-4 w-full self-center {$windowObject.isInPortraitMode
       ? 'flex-col justify-center'

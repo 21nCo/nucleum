@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { bg, generateBackgroudColor } from "$lib/tidy/utils/utils";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { bg } from "$lib/tidy/utils/utils";
+  import { createEventDispatcher } from "svelte";
   import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
   import {
     DropDownStyle,
@@ -9,15 +9,28 @@
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import Check from "$lib/tidy/icons/Check.svelte";
   const dispatch = createEventDispatcher();
-  export let items: DropdownItem[];
-  export let selectedIndex: number = 0;
+  export let options: DropdownItem[];
+  export let selected: (string | number)[] = [];
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
   export let style: DropDownStyle = DropDownStyle.DEFAULT;
+  export let placeholder: string = "Plese select";
   let isShowOptions: boolean = false;
-  $: selected = items[selectedIndex];
+  $: selectedItems = options.filter((item) =>
+    selected.some((x) => x == item.value)
+  );
+  function onCheckClicked(item: DropdownItem) {
+    if (item.disabled) return;
+    if (selected.some((x) => x == item.value)) {
+      selected = selected.filter((x) => x != item.value);
+    } else {
+      selected = [...selected, item.value];
+    }
+    dispatch("select", selected);
+  }
 </script>
 
 <div class="relative flex flex-col items-start gap-1 w-full">
@@ -37,10 +50,19 @@
     }}
   >
     <div class="flex gap-2">
-      {#if selected.icon}
-        <Icon icon={selected.icon} size={Size.sm} />
+      {#if selectedItems.length > 0}
+        {#each selectedItems as item, index}
+          {#if item.icon}
+            <Icon icon={item.icon} size={Size.sm} />
+          {/if}
+          {item?.label}
+          {#if index != selectedItems.length - 1}
+            ,
+          {/if}
+        {/each}
+      {:else}
+        <span class="text-fgs3">{placeholder}</span>
       {/if}
-      {selected?.label}
     </div>
     <Icon icon={isShowOptions ? "chevup" : "chevdown"} size={Size.sm} />
   </button>
@@ -52,21 +74,24 @@
         parentBackgroundIndex
       )}"
     >
-      {#each items as item, index}
+      {#each options as item, index}
         <button
           class="text-left px-4 py-2 hover:bg-bgs4 w-full {item.disabled
             ? 'text-fgs3'
-            : 'text-fgs1'} {index === items.length - 1
+            : 'text-fgs1'} {index === options.length - 1
             ? 'hover:rounded-b-md'
             : ''}"
           on:click={() => {
-            if (item.disabled) return;
-            selectedIndex = index;
-            isShowOptions = false;
-            dispatch("select", item.value);
+            onCheckClicked(item);
           }}
         >
           <div class="flex gap-2">
+            <Check
+              isChecked={selected.some((x) => x == item.value)}
+              on:click={() => {
+                onCheckClicked(item);
+              }}
+            />
             {#if item.icon}
               <Icon icon={item.icon} size={Size.sm} />
             {/if}

@@ -3,11 +3,10 @@
   import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
   import ContextMenuItem from "./ContextMenuItem.svelte";
   import type { ClassListProp } from "$lib/tidy/types/classListProp.type";
-  import { generateUID } from "$lib/tidy/utils/utils";
-  import { pointronEvents } from "$lib/local/stores/local.store";
-  import type { PointronEvent } from "$lib/local/types/pointronEvent.type";
-  import { PointronEventEnum } from "$lib/local/types/pointronEvent.enum";
-  import { actIfClickedOutside } from "$lib/local/utils/local.utils";
+  import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
+  import { appEvents } from "$lib/tidy/stores/app.store";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
 
   export let icon: string = "";
   export let customIconPath: string | undefined = "";
@@ -80,9 +79,9 @@
       console.log(err);
     }
   });
-  pointronEvents.subscribe((x: PointronEvent) => {
+  appEvents.subscribe((x: AppEventType) => {
     if (
-      x.event === PointronEventEnum.WINDOW_CLICKED &&
+      x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {

@@ -3,11 +3,10 @@
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
   import Search from "$lib/tidy/icons/Search.svelte";
-  import { pointronEvents } from "$lib/local/stores/local.store";
-  import type { PointronEvent } from "$lib/local/types/pointronEvent.type";
-  import { PointronEventEnum } from "$lib/local/types/pointronEvent.enum";
-  import { actIfClickedOutside } from "$lib/local/utils/local.utils";
-  import { generateUID } from "$lib/tidy/utils/utils";
+  import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
+  import { appEvents } from "$lib/tidy/stores/app.store";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -95,9 +94,9 @@
     }
   });
 
-  pointronEvents.subscribe((x: PointronEvent) => {
+  appEvents.subscribe((x: AppEventType) => {
     if (
-      x.event === PointronEventEnum.WINDOW_CLICKED &&
+      x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {

@@ -20,27 +20,29 @@
   }
 </script>
 
-<FormControlLabel {label} {info} />
-<div class="flex items-center space-x-2">
-  <select
-    class="bg-bgs2 p-2 border rounded-lg"
-    bind:value={selectedHour}
-    on:change={onChange}
-  >
-    {#each hours as hour}
-      <option value={hour}>{hour}</option>
-    {/each}
-  </select>
+<div class="flex flex-col gap-2">
+  <FormControlLabel {label} {info} />
+  <div class="flex items-center space-x-2">
+    <select
+      class="bg-bgs2 p-2 border rounded-lg"
+      bind:value={selectedHour}
+      on:change={onChange}
+    >
+      {#each hours as hour}
+        <option value={hour}>{hour}</option>
+      {/each}
+    </select>
 
-  <span class="text-gray-400">:</span>
+    <span class="text-gray-400">:</span>
 
-  <select
-    class="bg-bgs2 p-2 border rounded-lg"
-    bind:value={selectedMinute}
-    on:change={onChange}
-  >
-    {#each minutes as minute}
-      <option value={minute}>{minute}</option>
-    {/each}
-  </select>
+    <select
+      class="bg-bgs2 p-2 border rounded-lg"
+      bind:value={selectedMinute}
+      on:change={onChange}
+    >
+      {#each minutes as minute}
+        <option value={minute}>{minute}</option>
+      {/each}
+    </select>
+  </div>
 </div>

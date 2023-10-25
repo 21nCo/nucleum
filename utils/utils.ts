@@ -3,12 +3,19 @@ import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { localActions } from "$lib/local/stores/localActionMap";
 import { actions } from "$lib/tidy/layout/actionMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { appStore, userPreferences, windowObject } from "../stores/app.store";
+import {
+  appStore,
+  postMessageToParent,
+  userPreferences,
+  windowObject,
+} from "../stores/app.store";
 import { get } from "svelte/store";
 import { TimeScale, type TimePeriod, TimePeriodType } from "../types/time.type";
 import { TimeFormat } from "../types/time.type";
 import { AppTheme, ColorStrength } from "../types/theme.type";
 import { ItemType } from "$lib/local/types/item.enum";
+import moment from "moment-timezone";
+import { LaunchContext } from "../types/appStore.type";
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
   let userPreferredFormat = get(userPreferences).timeFormat;
@@ -376,16 +383,20 @@ export function resolveComponentFromPath(path: string) {
 }
 
 export function openLink(url: string) {
-  let win = window?.open(url, "_blank");
-  if (win) {
-    win.focus();
+  if (get(appStore).launchContext == LaunchContext.EMBED) {
+    postMessageToParent({
+      link: url,
+    });
+  } else {
+    let win = window?.open(url, "_blank");
+    if (win) {
+      win.focus();
+    }
   }
 }
 
 export function resolveAction(action: string) {
-  console.log({ action });
   let component = resolveComponent(action);
-  console.log({ component });
   if (!component) {
     windowObject.gotoPath("404");
     return;
@@ -572,4 +583,48 @@ export function stripPrefix(id: string) {
 
 export function appendTableNameInId(id: string, tableName: ItemType) {
   return `${ItemType[tableName]}:${id}`;
+}
+export function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text);
+}
+
+export const getTimeZonesWithOffsets = () => {
+  const zones = moment.tz.names();
+  return zones.map((zone) => {
+    const offset = moment.tz(zone).utcOffset();
+    const formattedOffset =
+      (offset >= 0 ? "+" : "-") +
+      String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0") +
+      ":" +
+      String(Math.abs(offset) % 60).padStart(2, "0");
+    return {
+      name: zone,
+      offset: formattedOffset,
+    };
+  });
+};
+
+export function getCorrespoingHorizonFrequencyLabel(scale: TimeScale) {
+  switch (scale) {
+    case TimeScale.DAYS:
+      return "Daily";
+    case TimeScale.WEEKS:
+      return "Weekly";
+    case TimeScale.MONTHS:
+      return "Monthly";
+    case TimeScale.QUARTERS:
+      return "Quarterly";
+    case TimeScale.YEARS:
+      return "Yearly";
+  }
+}
+
+export function actIfClickedOutside(
+  event: PointerEvent, //The event that is triggered when clicked (passed down from the event listener)
+  target: string, //This should be same as the class,id or tag(i.e target) of the div outside of which when clicked, an action is performed
+  action: any
+) {
+  const nodeTarget = document.querySelector(target);
+  !nodeTarget?.contains(event.target as Node) && action();
+  //Basically we are checking whether or not the clicked element is inside the task-text or is the task-text itself
 }

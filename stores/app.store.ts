@@ -1,5 +1,5 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
 import {
   AppTheme,
@@ -11,15 +11,17 @@ import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { persistLocally, retrieveLocally } from "./persistance";
 import { ItemType } from "$lib/local/types/item.enum";
-import { EventType } from "../types/event.enum";
-import type { CustomEvent } from "../types/event.type";
+import { AppEvent } from "../types/event.enum";
+import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
-import type { UserAccount } from "../types/account.type";
+import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
+import jwt_decode from "jwt-decode";
+import type { HapticFeedback } from "../types/haptic.enum";
 
-export const appEvents = initEventStore({ type: EventType.NONE, value: false });
+export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -28,16 +30,16 @@ let blankDetails: any = blankJson.find(
 );
 export const blank = writable(blankDetails);
 
-function initEventStore(seed: CustomEvent) {
-  const { subscribe, set, update } = writable<CustomEvent>(seed);
+function initEventStore(seed: AppEventType) {
+  const { subscribe, set, update } = writable<AppEventType>(seed);
   return {
     subscribe,
-    set: (m: CustomEvent) => {
+    set: (m: AppEventType) => {
       set(m);
     },
-    publish: (m: EventType, value: any = undefined) => {
-      update((n: CustomEvent) => {
-        return { ...n, value, type: m };
+    publish: (m: AppEvent, value: any = undefined) => {
+      update((n: AppEventType) => {
+        return { ...n, value, event: m };
       });
     },
   };
@@ -55,8 +57,10 @@ export const windowObject = initWindow({
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
+  let component = resolveComponentFromPath(newPath.split("/")[1]);
+  if (component?.isMenuHidden) return true;
   const listOfPathsToHideMenu = {
-    portrait: ["/goals/*"],
+    portrait: ["/goals/*", "/cp/*"],
     landscape: [],
   };
   if (!newPath) return false;
@@ -123,7 +127,7 @@ function initWindow(settings: WindowObject) {
         return n;
       });
       if (!navigator.onLine) {
-        path = "offline";
+        path = "/offline";
       }
       if (params) goto(path, params);
       else goto(path);
@@ -339,10 +343,15 @@ function initUserPreferences(seed: UserGlobalPreferences) {
         return n;
       });
     },
+    updateTimeZone: (m: string) => {
+      update((n: UserGlobalPreferences) => {
+        n = { ...n, timeZone: m };
+        persistLocally(objectType, n);
+        return n;
+      });
+    },
   };
 }
-
-export const isShowAppearancePreview = writable<boolean>(false);
 
 export const account = initAccount({
   isLoggedIn: false,
@@ -355,20 +364,60 @@ function initAccount(seed: UserAccount) {
     seed.isLoggedIn = true;
   }
   const { subscribe, set, update } = writable<UserAccount>(seed);
+  const addSeedUserInfo = (n: UserAccount) => {
+    let seedUserInfo = {
+      email: "john.legend@gmail.com",
+      firstName: "John",
+      lastName: "Legend",
+      phone: "",
+      joinDate: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 200),
+      lastLogin: new Date(),
+      profilePicture: "",
+      id: "",
+    };
+    n.userInfo = seedUserInfo;
+    return n;
+  };
   return {
     subscribe,
     set,
-    signOut: () => {
+    checkIfIsLoggedIn: () => {
       update((n: UserAccount) => {
-        localStorage.removeItem("surreal-token");
-        n = { token: null, isLoggedIn: false };
+        if (localStorage.getItem("surreal-token")) {
+          const token = localStorage.getItem("surreal-token");
+          if (token) {
+            let decodedToken: any = jwt_decode(token);
+            let exp = decodedToken?.exp ?? 0;
+            const currentTime = new Date().getTime() / 1000;
+            if (exp < currentTime) {
+              localStorage.removeItem("surreal-token");
+              n = { token: null, isLoggedIn: false };
+            } else {
+              n = { token, isLoggedIn: true, userId: decodedToken?.user ?? "" };
+              const userInfo = localStorage.getItem("userInfo");
+              n = { ...n, userInfo: userInfo ? JSON.parse(userInfo) : null };
+            }
+          }
+        }
         return n;
       });
     },
-    signIn: (token: string) => {
+    signOut: () => {
       update((n: UserAccount) => {
-        localStorage.setItem("surreal-token", token);
-        n = { token, isLoggedIn: true };
+        localStorage.removeItem("surreal-token");
+        localStorage.removeItem("userInfo");
+        n = { token: null, isLoggedIn: false };
+        appEvents.publish(AppEvent.USER_LOGIN, false);
+        return n;
+      });
+    },
+    signIn: (data: { userInfo: UserInformation; token: string }) => {
+      update((n: UserAccount) => {
+        localStorage.setItem("surreal-token", data.token);
+        localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
+        n = { token: data.token, isLoggedIn: true, userId: data.userInfo.id };
+        appEvents.publish(AppEvent.USER_LOGIN, true);
+        n.userInfo = data.userInfo;
         return n;
       });
     },
@@ -415,4 +464,12 @@ function initModalStore(seed: ModalEvent) {
       });
     },
   };
+}
+
+export function hapticFeedback(haptic: HapticFeedback) {
+  if (get(appStore).launchContext == LaunchContext.EMBED) {
+    postMessageToParent({
+      haptic,
+    });
+  }
 }

@@ -17,8 +17,7 @@
   let activeBackgroundColor: string = "";
   let backgroundColor: string = "";
   $: if (classList.includes("bg-")) backgroundColor = "";
-  $: currentColors = retrieveCurrentColors($userPreferences);
-  $: defaultActiveColor = currentColors?.a1;
+  $: defaultActiveColor = retrieveCurrentColors($userPreferences).a1;
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;

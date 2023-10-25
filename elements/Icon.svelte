@@ -42,11 +42,18 @@
   import SidebarToggle from "../icons/SidebarToggle.svelte";
   import Info from "../icons/Info.svelte";
   import Link from "../icons/Link.svelte";
+  import Tag from "../icons/Tag.svelte";
+  import Share from "../icons/Share.svelte";
+  import Users from "../icons/Users.svelte";
+  import Copy from "../icons/Copy.svelte";
+  import ArrowPath from "../icons/ArrowPath.svelte";
+  import Sun from "../icons/Sun.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
-  export let color: string = retrieveCurrentColors($userPreferences).fgs2 ?? "";
+  export let color: string | undefined = undefined;
+  $: defaultColor = retrieveCurrentColors($userPreferences).fgs2 ?? "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
@@ -96,8 +103,8 @@
         : ' hover:fill-a1'}"
       style={!isActive
         ? variant === IconVariant.Outline
-          ? `stroke: ${color}`
-          : `fill: ${color}`
+          ? `stroke: ${color ?? defaultColor}`
+          : `fill: ${color ?? defaultColor}`
         : ""}
     >
       {#if icon === "home"}
@@ -126,6 +133,20 @@
         <Info {variant} />
       {:else if icon === "link"}
         <Link />
+      {:else if icon === "tag"}
+        <Tag {variant} />
+      {:else if icon === "share"}
+        <Share {variant} />
+      {:else if icon === "share-mini"}
+        <Share variant={IconVariant.Mini} />
+      {:else if icon === "users"}
+        <Users {variant} />
+      {:else if icon === "copy"}
+        <Copy {variant} />
+      {:else if icon === "sync"}
+        <ArrowPath {variant} />
+      {:else if icon === "sun"}
+        <Sun {variant} />
       {:else if icon === "clock"}
         <Clock {variant} />
       {:else if icon === "clock-mini"}

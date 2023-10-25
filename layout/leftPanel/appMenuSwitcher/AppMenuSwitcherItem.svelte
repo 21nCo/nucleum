@@ -5,9 +5,10 @@
   import Element from "../../../elements/Element.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { hapticFeedback, windowObject } from "$lib/tidy/stores/app.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import { Size } from "$lib/tidy/types/size.enum";
+  import { HapticFeedback } from "$lib/tidy/types/haptic.enum";
   const dispatch = createEventDispatcher();
   export let item: Action;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -23,6 +24,7 @@
     pad = rawPad > 30 ? 30 : rawPad;
   }
   function onClick() {
+    hapticFeedback(HapticFeedback.MENUITEM);
     rive?.fire();
     dispatch("click", {});
   }

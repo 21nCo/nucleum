@@ -1,18 +1,17 @@
 <script lang="ts">
   import {
+    actIfClickedOutside,
     borderColor,
     generateBackgroudColor,
     getTimeLabel,
   } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import TimeSuggestionsItem from "./TimeSuggestionsItem.svelte";
-  import { pointronEvents } from "$lib/local/stores/local.store";
-  import type { PointronEvent } from "$lib/local/types/pointronEvent.type";
-  import { PointronEventEnum } from "$lib/local/types/pointronEvent.enum";
-  import { actIfClickedOutside } from "$lib/local/utils/local.utils";
   import { TimeUnit, type TimeSuggestion } from "$lib/tidy/types/time.type";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   //todo - move clickoutside and pointron local code to tidy lib
   export let value: any;
   export let currentTimeUnit: TimeUnit;
@@ -27,7 +26,7 @@
   let backgroundColor: string;
   let inputRef: any;
   let inputClasses: string =
-    "w-full rounded-sm bg-none border p-2 text-[1.125rem] leading-8 rounded-r-none " +
+    "w-full rounded-sm bg-bgs2 border p-2 text-[1.125rem] leading-8 rounded-r-none " +
     borderColor($userPreferences.theme, ColorStrength.Strong);
 
   let changeTimer: any;
@@ -260,9 +259,9 @@
   }
 
   //To close the dropdown when clicked outside
-  pointronEvents.subscribe((x: PointronEvent) => {
+  appEvents.subscribe((x: AppEventType) => {
     if (
-      x.event === PointronEventEnum.WINDOW_CLICKED &&
+      x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {

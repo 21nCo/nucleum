@@ -8,11 +8,10 @@
 
 <svg
   {height}
-  width="100%"
+  width={height * 3.561}
   viewBox="0 0 217 61"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
-  class="w-full"
 >
   <rect y="12.0555" width="192.889" height="24.1111" class="fill-{fill}" />
   <rect

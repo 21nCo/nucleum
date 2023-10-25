@@ -10,8 +10,8 @@
   import PageMenuView from "../leftPanel/PageMenuView.svelte";
   import Switcher from "../../elements/switcher/Switcher.svelte";
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
-  import { EventType } from "../../types/event.enum";
-  import type { CustomEvent } from "../../types/event.type";
+  import { AppEvent } from "../../types/event.enum";
+  import type { AppEventType } from "../../types/event.type";
   import Button from "../../elements/Button.svelte";
   import { Size } from "../../types/size.enum";
   export let layoutType: LayoutType = LayoutType.ONEPANEL;
@@ -25,13 +25,13 @@
   }
   onMount(() => {
     isShowPageMenu = $windowObject.isInPortraitMode;
-    appEvents.subscribe((x: CustomEvent) => {
-      if (x.type == EventType.PAGE_MENU_CHANGED) {
+    appEvents.subscribe((x: AppEvent) => {
+      if (x.type == AppEvent.PAGE_MENU_CHANGED) {
         isShowPageMenu = false;
       }
       if (
         $windowObject.isInPortraitMode &&
-        x.type === EventType.THINMODE_PANELSWITCH &&
+        x.type === AppEvent.THINMODE_PANELSWITCH &&
         x.value != undefined
       ) {
         selectedPanel = x.value;

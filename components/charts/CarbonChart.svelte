@@ -13,6 +13,7 @@
     LineChart,
     ScaleTypes,
     StackedAreaChart,
+    GaugeChart,
     type ChartOptions,
     Alignments,
     PieChart,
@@ -27,6 +28,7 @@
       left: {
         mapsTo: "value",
         scaleType: ScaleTypes.LINEAR,
+        thresholds: additionalOptions?.yThresholds,
       },
       bottom: {
         mapsTo: "key",
@@ -81,8 +83,8 @@
   };
   let options: ChartOptions = defaultOptions;
   let currentColors = retrieveCurrentColors($userPreferences);
+  initializeOptions();
   onMount(() => {
-    initializeOptions();
     manipulateCarbonToTidy();
     setTimeout(() => {
       isShow = true;
@@ -134,8 +136,39 @@
             label: "Total hours",
             // number: 100000,
           },
+          alignment: Alignments.CENTER,
         },
         width: "100%",
+      };
+    } else if (type === ChartType.GUAGE) {
+      options = {
+        ...defaultOptions,
+        ...additionalOptions,
+        resizable: true,
+        gauge: {
+          type: additionalOptions?.guageType ?? "full",
+          arcWidth: additionalOptions?.arcWidth ?? 10,
+          alignment: Alignments.CENTER,
+          showPercentageSymbol: false,
+          numberFormatter: (d: any) => d.toFixed(0) + " %",
+          valueFontSize: (v: any) => {
+            if (v < 10) {
+              return 2;
+            } else if (v < 100) {
+              return 12;
+            } else {
+              return 2;
+            }
+          },
+        },
+        legend: {
+          enabled: false,
+        },
+        color: {
+          scale: {
+            value: currentColors?.a1!,
+          },
+        },
       };
     }
   }
@@ -218,6 +251,8 @@
     <AreaChart {data} {options} />
   {:else if type === ChartType.PIE}
     <DonutChart {data} {options} />
+  {:else if type === ChartType.GUAGE}
+    <GaugeChart {data} {options} />
   {:else}
     <div>Chart type not supported yet</div>
   {/if}

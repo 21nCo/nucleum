@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { EventType } from "$lib/tidy/types/event.enum";
   import { onMount, tick } from "svelte";
-  import type { CustomEvent } from "$lib/tidy/types/event.type";
-
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
+    account,
     appEvents,
     appStore,
     currentTime,
@@ -18,37 +16,32 @@
   import { defaultAppData } from "$lib/local/stores/local.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
-  let isShowAppearancePopover: boolean = false;
-
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   let timer: any;
-  onMount(() => {
-    let subdomain = window?.location.host.split(".")[0];
-    // console.log({ subdomain, location: window?.location });
-    if (subdomain === "embed" || subdomain === "embeddev") {
-      appStore.setLaunchContext(LaunchContext.EMBED);
-    }
+  bootup();
+  onMount(async () => {
+    await initialize();
+    return () => {
+      clearInterval(timer);
+      //remove window event listeners
+    };
+  });
+  function bootup() {
+    account.checkIfIsLoggedIn();
+    setLaunchContext();
+    addWindowEventListeners();
+    runCurrentTime();
+    inject({ mode: dev ? "development" : "production" });
+  }
+  async function initialize() {
+    //todo - check if the saved timezone is different from current user timezone
     //todo - retrieve User preferences
-    retrieveAppData();
+    await initializeAppData();
     postMessageToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
     });
-    inject({ mode: dev ? "development" : "production" });
-    appEvents.subscribe((x: CustomEvent) => {
-      if (x.type == EventType.SHOW_APPEARANCE_PREVIEW) {
-        isShowAppearancePopover = x.value ?? false;
-      }
-    });
-
-    clearInterval(timer);
-    timer = setInterval(() => {
-      tick();
-      $currentTime = new Date();
-    }, 1000);
-    return () => {
-      clearInterval(timer);
-    };
-  });
-  async function retrieveAppData() {
+  }
+  async function initializeAppData() {
     const app = import.meta.env.VITE_APP ?? window.location.hostname;
     appStore.initiatizeAppData(defaultAppData);
     if (!app) return;
@@ -67,6 +60,32 @@
     } catch (err) {
       appStore.logError(err);
     }
+  }
+  function runCurrentTime() {
+    clearInterval(timer);
+    timer = setInterval(() => {
+      tick();
+      $currentTime = new Date();
+    }, 1000);
+  }
+  function setLaunchContext() {
+    let subdomain = window?.location.host.split(".")[0];
+    // console.log({ subdomain, location: window?.location });
+    //appStore.setLaunchContext(LaunchContext.EMBED);
+    if (subdomain === "embed" || subdomain === "embeddev") {
+      appStore.setLaunchContext(LaunchContext.EMBED);
+    }
+  }
+  function addWindowEventListeners() {
+    window.addEventListener("visibilitychange", (event) => {
+      appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
+    });
+    window.addEventListener("resize", (event) => {
+      appEvents.publish(AppEvent.WINDOW_RESIZED, event);
+    });
+    window.addEventListener("click", (event: MouseEvent) => {
+      appEvents.publish(AppEvent.WINDOW_CLICKED, event);
+    });
   }
 </script>
 

@@ -16,11 +16,17 @@
 
   import { bg } from "$lib/tidy/utils/utils";
   import { AppTheme } from "$lib/tidy/types/theme.type";
+  import { onMount } from "svelte";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
   $: isRounded = $userPreferences.theme === AppTheme.Glassy ? true : false;
+  onMount(() => {
+    if ($windowObject.landscapiness < 1.25) {
+      isInThinMode = true;
+    }
+  });
   function onMinimizeToggled() {
     isMinimized = !isMinimized;
     if (isMinimized) isHovered = false;
