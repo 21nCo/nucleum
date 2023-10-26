@@ -171,15 +171,15 @@
         inputStyle === TextInputStyle.BOXED ||
         inputStyle === TextInputStyle.OUTLINED
       ) {
-        return `outline-accent1`;
+        return `outline-a1`;
       } else {
         return `border-none outline-none`;
       }
     } else if (classList.inactive) return classList.inactive;
     else if (inputStyle === TextInputStyle.BOXED) {
-      return `outline-fgs3 focus:outline-accent1`;
+      return `outline-fgs3 focus:outline-a1`;
     } else if (inputStyle === TextInputStyle.OUTLINED) {
-      return `outline-fgs3 focus:outline-accent1`;
+      return `outline-fgs3 focus:outline-a1`;
     } else {
       return `border-none outline-none`;
     }
