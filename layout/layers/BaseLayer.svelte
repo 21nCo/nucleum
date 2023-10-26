@@ -24,6 +24,9 @@
     return () => {
       clearInterval(timer);
       //remove window event listeners
+      window.removeEventListener("visibilitychange", () => {});
+      window.removeEventListener("resize", () => {});
+      window.removeEventListener("click", () => {});
     };
   });
   function bootup() {

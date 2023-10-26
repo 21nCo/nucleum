@@ -25,25 +25,24 @@
   }
   $: if (dialogRef) dialogRef.showModal();
   onMount(() => {
-    appEvents.subscribe((x: AppEvent) => {
-      if (x.type == AppEvent.SHOW_APPEARANCE_PREVIEW) {
+    appEvents.subscribe((x: AppEventType) => {
+      if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
       }
     });
     modalEvent.subscribe((x: ModalEvent) => {
-      // console.log({ x });
       if ($appStore.launchContext == LaunchContext.EMBED) {
         appStore.log("is embed");
         postMessageToParent({
           pop: JSON.stringify(x),
         });
       } else {
-        if (x.path && x.isShow) {
+        if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
           modals = [...modals, x];
-          // console.log({ modals });
-        } else {
+        } else if (!x.isShow) {
           modals = modals.filter((y) => y.path != x.path);
         }
+        console.log({ modals });
       }
     });
   });
@@ -83,8 +82,7 @@
   />
 </Modal>
 {#each modals as modal}
-  {console.log({ modal })}
-  <Modal show={modal.isShow}>
+  <Modal show={modal.isShow} id={modal.path}>
     <ComponentResolver path={modal.path} params={{ id: modal.id }} />
   </Modal>
 {/each}

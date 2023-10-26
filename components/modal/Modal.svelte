@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { appEvents, windowObject } from "$lib/tidy/stores/app.store";
+  import { modalEvent, windowObject } from "$lib/tidy/stores/app.store";
   import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
+  import { onMount } from "svelte";
+  import { generateUID } from "$lib/tidy/utils/utils";
   export let show = true;
   export let size: Size = Size.lg;
   export let title: string = "";
@@ -14,16 +15,19 @@
   let dialog: HTMLDialogElement;
   let width: number;
   let left: any;
+  export let id = generateUID();
+  $: if (show) dialog?.showModal();
   const overlayClicked = (event: any) => {
+    console.log({ event });
     if (
       (event.target.classList.contains("pop-overlay") ||
-        event.target.classList.contains("popover")) &&
+        event.target.classList.contains("popover") ||
+        event.target.id === id) &&
       isDismissable
     ) {
       close();
     }
   };
-  $: if (show) dialog?.showModal();
   $: {
     if (size == Size.xs) {
       width = 400;
@@ -37,17 +41,19 @@
   }
   function close() {
     show = false;
-    appEvents.publish(AppEvent.POP_DISMISSED);
+    modalEvent.notify({
+      path: id,
+      isShow: false,
+    });
   }
 </script>
 
 {#if show}
-  <div
+  <button
     class="pop-overlay fixed top-0 left-0 w-screen h-screen bg-black {isShowOverlay
       ? 'bg-opacity-50'
       : 'bg-opacity-0'} z-50"
     on:click={overlayClicked}
-    on:keydown={overlayClicked}
     transition:fade={{ duration: 200 }}
   >
     {#if isOnRight}
@@ -69,7 +75,8 @@
     {:else if isUseDialog}
       <dialog
         bind:this={dialog}
-        class="popover rounded-md flex flex-col p-0 bg-bgs1 text-fgs1"
+        {id}
+        class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1"
       >
         <slot />
         <!-- <div class="popover-content" style="max-height: 80vh;" /> -->
@@ -85,7 +92,7 @@
         </div>
       </div>
     {/if}
-  </div>
+  </button>
 {/if}
 
 <style>
