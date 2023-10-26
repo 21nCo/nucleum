@@ -103,7 +103,6 @@
       class={`flex justify-center cursor-pointer items-center w-4 h-4 ${iconClassList}`}
       on:click|stopPropagation={handleIconClick}
       on:keydown|stopPropagation={handleKeyDownInList}
-      on:focusout={closeContextMenu}
     >
       <svelte:component this={iconComponent} />
     </div>
@@ -113,12 +112,12 @@
       style={menuContainerStyle}
       class={`absolute top-0 left-10 bg-bgs4 ${menuContainerClassList}`}
     >
-      {#each items as menuItem, index}
+      {#each items as item, index}
         <ContextMenuItem
-          label={menuItem.label}
-          icon={menuItem.icon}
+          label={item.label}
+          icon={item.icon}
           isActive={selectedIndex === index}
-          on:click={handleMenuItemClick(menuItem)}
+          on:click={handleMenuItemClick(item)}
           style={menuItemStyle}
           classList={menuItemClassList}
         />

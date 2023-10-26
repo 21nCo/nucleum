@@ -48,6 +48,7 @@
   import Copy from "../icons/Copy.svelte";
   import ArrowPath from "../icons/ArrowPath.svelte";
   import Sun from "../icons/Sun.svelte";
+  import DropdownArrow from "../icons/DropdownArrow.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -71,11 +72,11 @@
 </script>
 
 {#if icon}
-  <button on:click>
+  <button class="flex items-center justify-center" on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
-      class="{size == Size.xl
+      class="flex items-center justify-center {size == Size.xl
         ? 'w-10 h-10'
         : size == Size.lg
         ? 'w-8 h-8'
