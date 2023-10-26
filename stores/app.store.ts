@@ -392,8 +392,11 @@ function initAccount(seed: UserAccount) {
             if (exp < currentTime) {
               localStorage.removeItem("surreal-token");
               n = { token: null, isLoggedIn: false };
+              postMessageToParent({ token: "expired" });
             } else {
               n = { token, isLoggedIn: true, userId: decodedToken?.user ?? "" };
+              postMessageToParent({ token: token });
+              postMessageToParent({ userId: decodedToken?.user });
               const userInfo = localStorage.getItem("userInfo");
               n = { ...n, userInfo: userInfo ? JSON.parse(userInfo) : null };
             }
@@ -414,6 +417,8 @@ function initAccount(seed: UserAccount) {
     signIn: (data: { userInfo: UserInformation; token: string }) => {
       update((n: UserAccount) => {
         localStorage.setItem("surreal-token", data.token);
+        postMessageToParent({ token: data.token });
+        postMessageToParent({ userId: data.userInfo.id });
         localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
         n = { token: data.token, isLoggedIn: true, userId: data.userInfo.id };
         appEvents.publish(AppEvent.USER_LOGIN, true);
@@ -432,7 +437,7 @@ export function postMessageToParent(message: any) {
   }
   try {
     //@ts-ignore
-    window?.webkit?.messageHandlers.iOSNative.postMessage(message);
+    window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
     appStore.log("message sent to iOSNative" + JSON.stringify(message));
   } catch (error) {
     appStore.logError(error);
@@ -467,9 +472,7 @@ function initModalStore(seed: ModalEvent) {
 }
 
 export function hapticFeedback(haptic: HapticFeedback) {
-  if (get(appStore).launchContext == LaunchContext.EMBED) {
-    postMessageToParent({
-      haptic,
-    });
-  }
+  postMessageToParent({
+    haptic,
+  });
 }
