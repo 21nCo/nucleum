@@ -581,6 +581,9 @@ export function stripPrefix(id: string) {
   return id.split(":")[1];
 }
 
+export function appendTableNameInId(id: string, tableName: ItemType) {
+  return `${ItemType[tableName]}:${id}`;
+}
 export function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
 }
