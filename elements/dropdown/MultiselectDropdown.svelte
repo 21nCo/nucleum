@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { bg } from "$lib/tidy/utils/utils";
-  import { createEventDispatcher } from "svelte";
+  import { actIfClickedOutside, bg, generateUID } from "$lib/tidy/utils/utils";
+  import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
   import {
     DropDownStyle,
@@ -8,8 +8,10 @@
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import Check from "$lib/tidy/icons/Check.svelte";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   const dispatch = createEventDispatcher();
   export let options: DropdownItem[];
   export let selected: (string | number)[] = [];
@@ -18,10 +20,24 @@
   export let info: string | undefined = undefined;
   export let style: DropDownStyle = DropDownStyle.DEFAULT;
   export let placeholder: string = "Plese select";
+  export let containerId = generateUID();
   let isShowOptions: boolean = false;
   $: selectedItems = options.filter((item) =>
     selected.some((x) => x == item.value)
   );
+  onMount(() => {
+    appEvents.subscribe((x: AppEventType) => {
+      if (
+        x.event === AppEvent.WINDOW_CLICKED &&
+        x.value &&
+        x.value instanceof PointerEvent
+      ) {
+        actIfClickedOutside(x.value, `#${containerId}`, () => {
+          isShowOptions = false;
+        });
+      }
+    });
+  });
   function onCheckClicked(item: DropdownItem) {
     if (item.disabled) return;
     if (selected.some((x) => x == item.value)) {
@@ -33,7 +49,7 @@
   }
 </script>
 
-<div class="relative flex flex-col items-start gap-1 w-full">
+<div id={containerId} class="relative flex flex-col items-start gap-1 w-full">
   {#if label}
     <FormControlLabel {label} {info} />
   {/if}
@@ -81,17 +97,13 @@
             : 'text-fgs1'} {index === options.length - 1
             ? 'hover:rounded-b-md'
             : ''}"
-          on:click={() => {
+          on:click={(event) => {
             onCheckClicked(item);
+            event.stopPropagation();
           }}
         >
           <div class="flex gap-2">
-            <Check
-              isChecked={selected.some((x) => x == item.value)}
-              on:click={() => {
-                onCheckClicked(item);
-              }}
-            />
+            <Check isChecked={selected.some((x) => x == item.value)} />
             {#if item.icon}
               <Icon icon={item.icon} size={Size.sm} />
             {/if}
