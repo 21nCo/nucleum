@@ -334,7 +334,6 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
   };
 }
 export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  //console.log({ userPreferences });
   let colorScheme = userPreferences.colorScheme?.colors;
   return colorScheme;
 }

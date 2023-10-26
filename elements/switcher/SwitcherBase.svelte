@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import {
+    bg,
     generateBackgroudColor,
     retrieveCurrentColors,
   } from "$lib/tidy/utils/utils";
@@ -34,7 +35,12 @@
 
 {#if selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND}
   <button
-    class={classList + (isActive ? " text-bgs1" : " bg-bgs2 hover:bg-bgs3")}
+    class={classList +
+      (isActive
+        ? " text-bgs1 "
+        : bg($userPreferences.theme, parentBackgroundIndex) +
+          " hover:" +
+          bg($userPreferences.theme, parentBackgroundIndex, true))}
     style={isActive
       ? `;background-color: ${activeColor ?? defaultActiveColor}`
       : ""}

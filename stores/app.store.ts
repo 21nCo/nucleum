@@ -290,15 +290,26 @@ function initAppStore(seed: AppStore) {
 }
 
 export const defaultColors = {
-  bgs1: "#FFFFFF",
-  bgs2: "#F2F2F2",
-  bgs3: "#E6E6E6",
-  bgs4: "#D9D9D9",
-  fgs1: "#383838",
-  fgs2: "#545454",
-  fgs3: "#757474",
-  accent1: "#2d2f32",
-  accent2: "#ad6c6c",
+  bgs1: "hsl(0 0% 100%)",
+  bgs2: "hsl(0 0% 98%)",
+  bgs3: "hsl(0 0% 92%)",
+  bgs4: "hsl(0 0% 88%)",
+  bgs5: "hsl(0 0% 85%)",
+  fgs1: "hsl(0 0% 20%)",
+  fgs2: "hsl(0 0% 33%)",
+  fgs3: "hsl(0 0% 50%)",
+  fgs4: "hsl(0 0% 65%)",
+  a1: "hsl(354 72% 64%)",
+  a2: "hsl(0 28% 55%)",
+  ar: "hsl(0 89% 71%)",
+  ag: "hsl(151 45% 53%)",
+  a1s1: "hsl(354 80% 90%)",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+  brs1: "hsl(0 0% 97%)",
+  brs2: "hsl(0 0% 95%)",
+  brs3: "hsl(0 0% 90%)",
 };
 
 export const userPreferences = initUserPreferences({

@@ -83,6 +83,9 @@
 </Modal>
 {#each modals as modal}
   <Modal show={modal.isShow} id={modal.path}>
-    <ComponentResolver path={modal.path} params={{ id: modal.id }} />
+    <ComponentResolver
+      path={modal.path}
+      params={{ id: modal.id, path: modal.path }}
+    />
   </Modal>
 {/each}
