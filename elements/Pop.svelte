@@ -25,7 +25,7 @@
 <div
   {style}
   class={`bg-bgs3 px-4 absolute py-6 rounded-sm transition-all motion-reduce:transition-none motion-reduce:hover:transition-none ${classList} ${
-    isVisible ? "opacity-1 scale-1 z-100" : "opacity-0 scale-[0.95] -z-10"
+    isVisible ? "visible scale-1 z-20" : "hidden scale-[0.95] -z-10"
   }`}
 >
   {#if !hideHeader}

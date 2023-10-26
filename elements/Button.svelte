@@ -70,6 +70,12 @@
       if (style != ButtonStyle.PLAIN) {
         classList += " " + bg($userPreferences.theme, parentBackgroundIndex);
       }
+    } else if (type == "tertiary") {
+      classList += " text-bgs1 hover:opacity-90";
+      if (style != ButtonStyle.PLAIN) {
+        // classList += " " + bg($userPreferences.theme, parentBackgroundIndex); we might look into that later so commenting for now
+        classList += " bg-fgs1";
+      }
     }
   });
 </script>
