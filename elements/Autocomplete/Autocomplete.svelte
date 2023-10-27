@@ -10,11 +10,11 @@
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
-  export let inputClassList: string = "";
+  export let inputClassList: string = "text-bgs2";
   export let inputStyle: string = "";
-  export let listContainerClassList: string = "";
+  export let listContainerClassList: string = "bg-bgs2";
   export let listContainerStyle: string = "";
-  export let listItemClassList: string = "";
+  export let listItemClassList: string = "hover:bg-bgs3";
   export let listItemStyle: string = "";
   export let activeListItemClassList: string = "bg-bgs3";
 

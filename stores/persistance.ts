@@ -179,8 +179,7 @@ export class Persistance {
         let items = retrieveLocally(itemType);
         return items;
       case Cloud.surreal:
-        surrealDb.select(ItemType[itemType]);
-        break;
+        return surrealDb.select(ItemType[itemType]);
     }
     return [];
   }
