@@ -18,6 +18,7 @@
   export let containerStyle = "";
   export let style = "";
   export let isIconActive: boolean = false;
+  export let headerContent: string = "";
 
   const dispatch = createEventDispatcher();
   const iconButtonHoverStateClassList = "hover:bg-bgs3 hover:bg-opacity-20";
@@ -50,25 +51,35 @@
         handleClickOnAccordionItem();
       }
     }}
-    class={`flex w-full items-center gap-1 py-3 px-2 ${classList}`}
+    class={`flex flex-col w-full items-center ${
+      headerContent ? `py-1 px-2` : `py-3 px-2`
+    } ${classList}`}
   >
-    {#if iconRenderType !== AccordionIconRenderType.NOT_MOUNTED}
-      <button
-        on:keydown|stopPropagation
-        on:click|stopPropagation={handleAccordionStateChange}
-        class={`py-2 px-1 ${iconButtonHoverStateClassList} rounded-full ${
-          iconRenderType === AccordionIconRenderType.VISIBLE
-            ? `visible`
-            : `invisible`
-        } ${iconClassList}`}
-      >
-        <DropdownArrowAccordion isActive={isIconActive} width={20} {state} />
-      </button>
-    {/if}
-    <span class="">{title}</span>
-    {#if endContent}
-      {@html endContent}
-    {/if}
+    <div class={`flex w-full items-center gap-1 ${classList}`}>
+      {#if iconRenderType !== AccordionIconRenderType.NOT_MOUNTED}
+        <button
+          on:keydown|stopPropagation
+          on:click|stopPropagation={handleAccordionStateChange}
+          class={`py-2 px-1 ${iconButtonHoverStateClassList} rounded-full ${
+            iconRenderType === AccordionIconRenderType.VISIBLE
+              ? `visible`
+              : `invisible`
+          } ${iconClassList}`}
+        >
+          <DropdownArrowAccordion isActive={isIconActive} width={20} {state} />
+        </button>
+      {/if}
+      <div>
+        {#if headerContent}
+          {@html headerContent}
+        {/if}
+        <span class="">{title}</span>
+      </div>
+
+      {#if endContent}
+        {@html endContent}
+      {/if}
+    </div>
   </div>
   {#if state === AccordionState.expanded}
     <slot />

@@ -10,15 +10,18 @@
 
   export let activeClassList: string = "";
   export let inActiveClassList: string = ""; // this is done because, if we have some classes which are going to be changing depending on the active state, and if we put their initial value in classList, then we won't be able to override it later
+  export let disabledClassList: string = "";
 
   export let isActive: boolean = false;
   export let style: string = "";
+  export let disabled: boolean = false;
 
   let iconComponent: typeof SvelteComponent | undefined;
 
   const dispatch = createEventDispatcher();
 
   function handleTagClick(e: any) {
+    if (disabled) return;
     dispatch("click", { label, id });
   }
 
@@ -44,7 +47,11 @@
   tabindex="0"
   on:click={handleTagClick}
   class={`w-fit flex items-center justify-center whitespace-nowrap ${classList} ${
-    isActive ? `${activeClassList}` : `${inActiveClassList}`
+    disabled
+      ? `${disabledClassList} cursor-not-allowed`
+      : isActive
+      ? activeClassList
+      : inActiveClassList
   }`}
 >
   {#if icon && iconComponent}
