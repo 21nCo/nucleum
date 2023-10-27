@@ -20,6 +20,7 @@ import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
 import jwt_decode from "jwt-decode";
 import type { HapticFeedback } from "../types/haptic.enum";
+import { sessionStore } from "$lib/local/stores/session.store";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -238,6 +239,7 @@ function initAppStore(seed: AppStore) {
     },
     log(message: string, type: "error" | "info" | "warn" = "info") {
       update((n: AppStore) => {
+        // console.log(message);
         if (!n.debugLogs) n.debugLogs = [];
         n.debugLogs.push({
           message,
@@ -432,6 +434,7 @@ function initAccount(seed: UserAccount) {
         localStorage.removeItem("surreal-token");
         localStorage.removeItem("userInfo");
         n = { token: null, isLoggedIn: false };
+        sessionStore.reset();
         appEvents.publish(AppEvent.USER_LOGIN, false);
         return n;
       });
@@ -452,6 +455,7 @@ function initAccount(seed: UserAccount) {
 }
 
 export function postMessageToParent(message: any) {
+  appStore.log("posting message to parent:" + JSON.stringify(message));
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
@@ -460,7 +464,6 @@ export function postMessageToParent(message: any) {
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
-    appStore.log("message sent to iOSNative" + JSON.stringify(message));
   } catch (error) {
     appStore.logError(error);
   }
