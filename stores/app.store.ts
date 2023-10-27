@@ -57,8 +57,12 @@ export const windowObject = initWindow({
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
-  let component = resolveComponentFromPath(newPath.split("/")[1]);
-  if (component?.isMenuHidden) return true;
+  console.log("checkIfNeedToHideMenu", newPath, newPath.split("/")[1]);
+  if (newPath.split("/")[1]) {
+    let component = resolveComponentFromPath(newPath.split("/")[1]);
+    console.log("component", component);
+    if (component?.isMenuHidden) return true;
+  }
   const listOfPathsToHideMenu = {
     portrait: ["/goals/*", "/cp/*"],
     landscape: [],
@@ -118,6 +122,7 @@ function initWindow(settings: WindowObject) {
       });
     },
     gotoPath: (path: string, params: any = null) => {
+      console.log("gotoPath", path);
       update((n: WindowObject) => {
         n = {
           ...n,
@@ -126,6 +131,10 @@ function initWindow(settings: WindowObject) {
         };
         return n;
       });
+      const isTokenExpired = account.checkIfLoginExpired();
+      if (isTokenExpired) {
+        path = "/expired";
+      }
       if (!navigator.onLine) {
         path = "/offline";
       }
@@ -392,7 +401,8 @@ function initAccount(seed: UserAccount) {
   return {
     subscribe,
     set,
-    checkIfIsLoggedIn: () => {
+    checkIfLoginExpired: () => {
+      let isExpired: boolean = false;
       update((n: UserAccount) => {
         if (localStorage.getItem("surreal-token")) {
           const token = localStorage.getItem("surreal-token");
@@ -404,7 +414,6 @@ function initAccount(seed: UserAccount) {
               localStorage.removeItem("surreal-token");
               n = { token: null, isLoggedIn: false };
               postMessageToParent({ token: "expired" });
-              windowObject.gotoPath("/expired");
             } else {
               n = { token, isLoggedIn: true, userId: decodedToken?.user ?? "" };
               postMessageToParent({ token: token });
@@ -413,12 +422,10 @@ function initAccount(seed: UserAccount) {
               n = { ...n, userInfo: userInfo ? JSON.parse(userInfo) : null };
             }
           }
-        } else {
-          n = { token: null, isLoggedIn: false };
-          windowObject.gotoPath("/cp/account?signup=true");
         }
         return n;
       });
+      return isExpired;
     },
     signOut: () => {
       update((n: UserAccount) => {
