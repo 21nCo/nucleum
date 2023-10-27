@@ -400,10 +400,11 @@ function initAccount(seed: UserAccount) {
             let decodedToken: any = jwt_decode(token);
             let exp = decodedToken?.exp ?? 0;
             const currentTime = new Date().getTime() / 1000;
-            if (exp < currentTime) {
+            if (currentTime > exp) {
               localStorage.removeItem("surreal-token");
               n = { token: null, isLoggedIn: false };
               postMessageToParent({ token: "expired" });
+              windowObject.gotoPath("/expired");
             } else {
               n = { token, isLoggedIn: true, userId: decodedToken?.user ?? "" };
               postMessageToParent({ token: token });
@@ -412,6 +413,9 @@ function initAccount(seed: UserAccount) {
               n = { ...n, userInfo: userInfo ? JSON.parse(userInfo) : null };
             }
           }
+        } else {
+          n = { token: null, isLoggedIn: false };
+          windowObject.gotoPath("/cp/account?signup=true");
         }
         return n;
       });

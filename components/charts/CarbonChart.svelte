@@ -1,6 +1,9 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
-  import { retrieveCurrentColors } from "$lib/tidy/utils/utils";
+  import {
+    determineCarbonChartTimeInterval,
+    retrieveCurrentColors,
+  } from "$lib/tidy/utils/utils";
   import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
   import { ChartType } from "$lib/tidy/types/analytics.type";
@@ -28,7 +31,6 @@
       left: {
         mapsTo: "value",
         scaleType: ScaleTypes.LINEAR,
-        thresholds: additionalOptions?.yThresholds,
       },
       bottom: {
         mapsTo: "key",
@@ -93,6 +95,7 @@
 
   function initializeOptions() {
     if (type === ChartType.STACKEDBAR) {
+      console.log({ additionalOptions });
       options = {
         ...defaultOptions,
         axes: {
@@ -100,11 +103,27 @@
             mapsTo: "value",
             stacked: true,
             scaleType: ScaleTypes.LINEAR,
+            thresholds: additionalOptions?.yThresholds,
           },
           bottom: {
             mapsTo: "key",
-            scaleType: ScaleTypes.TIME,
+            scaleType: additionalOptions?.xScale
+              ? additionalOptions?.xScale
+              : ScaleTypes.TIME,
+            // ticks: {
+            //   // formatter: function (date: any) {
+            //   //   return new Date(date).getDate();
+            //   // },
+            //   values: additionalOptions?.xTicks,
+            //   domain: additionalOptions?.xDomain,
+            // },
           },
+        },
+        timeScale: {
+          timeInterval:
+            additionalOptions?.timeInterval &&
+            determineCarbonChartTimeInterval(additionalOptions?.timeInterval),
+          timeIntervalFormats: additionalOptions?.timeIntervalFormats,
         },
         ...additionalOptions,
       };
@@ -117,6 +136,7 @@
             stacked: true,
             percentage: additionalOptions?.percentage,
             scaleType: ScaleTypes.LINEAR,
+            thresholds: additionalOptions?.yThresholds,
           },
           bottom: {
             mapsTo: "key",
@@ -133,8 +153,9 @@
         resizable: true,
         donut: {
           center: {
-            label: "Total hours",
-            // number: 100000,
+            label: additionalOptions?.donutLabel ?? "",
+            number: undefined,
+            numberFormatter: additionalOptions?.donutFormatter,
           },
           alignment: Alignments.CENTER,
         },

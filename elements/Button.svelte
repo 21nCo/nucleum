@@ -13,6 +13,7 @@
   export let width: string = "max-w-fit";
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
   export let icon: string | undefined = undefined;
+  export let isDisabled: boolean = false;
   let isHovered: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
   $: if (!label && icon && style == ButtonStyle.DEFAULT)
@@ -20,9 +21,9 @@
   let classList =
     "flex flex-row gap-2 justify-center items-center min-w-fit " +
     (style === ButtonStyle.ROUNDED || size === Size.xs
-      ? " rounded-full "
-      : " rounded-md ") +
-    width;
+      ? " rounded-full"
+      : " rounded-md") +
+    ` ${width} `;
   onMount(() => {
     switch (size) {
       case Size.xl:
@@ -81,7 +82,8 @@
 </script>
 
 <button
-  class={classList}
+  class={classList +
+    (isDisabled ? " opacity-50 cursor-not-allowed hover:opacity-50 " : "")}
   on:click
   on:pointerenter={() => {
     isHovered = true;
@@ -89,6 +91,7 @@
   on:pointerleave={() => {
     isHovered = false;
   }}
+  disabled={isDisabled}
 >
   {#if icon}
     <Icon

@@ -48,7 +48,6 @@
   import Copy from "../icons/Copy.svelte";
   import ArrowPath from "../icons/ArrowPath.svelte";
   import Sun from "../icons/Sun.svelte";
-  import DropdownArrow from "../icons/DropdownArrow.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;

@@ -14,12 +14,14 @@
   let firstName = "";
   let lastName = "";
   let error: string | null = null;
+  let actionInProgress = false;
   onMount(() => {
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
   });
   async function onSinginClicked() {
     if (!isValidSinginData()) return;
+    actionInProgress = true;
     const response = await performApiCall(
       "account/signin",
       "POST",
@@ -43,9 +45,11 @@
     }
     localStore.runSignupScripts();
     account.signIn(json);
+    actionInProgress = false;
   }
   async function onSignupClicked() {
     if (!isValidSignupData()) return;
+    actionInProgress = true;
     const response = await performApiCall(
       "account/signup",
       "POST",
@@ -66,6 +70,7 @@
     }
     account.signIn(json);
     await localStore.runSignupScripts();
+    actionInProgress = false;
   }
   function isValidSignupData() {
     if (!email || !pass || !confirmPass || !firstName || !lastName) {
@@ -122,6 +127,7 @@
     return true;
   }
   function showError(message: string | null = null) {
+    actionInProgress = false;
     error = message ?? "Something went wrong. Please try again later.";
     setTimeout(() => {
       error = null;
@@ -186,13 +192,22 @@
       </div>
     </div>
   {/if}
-  {#if error}
-    <div class="text-ar">{error}</div>
-  {/if}
+  <div class="h-6">
+    {#if error}
+      <div class="text-ar">{error}</div>
+    {/if}
+  </div>
   <div class="flex gap-2">
     <Button
-      label={isSignup ? "Signup" : "Signin"}
+      label={isSignup
+        ? actionInProgress
+          ? "Signing up..."
+          : "Signup"
+        : actionInProgress
+        ? "Signing in..."
+        : "Signin"}
       type="primary"
+      isDisabled={actionInProgress}
       on:click={isSignup ? onSignupClicked : onSinginClicked}
     />
     <Button

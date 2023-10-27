@@ -627,3 +627,18 @@ export function actIfClickedOutside(
   !nodeTarget?.contains(event.target as Node) && action();
   //Basically we are checking whether or not the clicked element is inside the task-text or is the task-text itself
 }
+
+export function determineCarbonChartTimeInterval(scale: TimeScale) {
+  switch (scale) {
+    case TimeScale.DAYS:
+      return "daily";
+    case TimeScale.WEEKS:
+      return "weekly";
+    case TimeScale.MONTHS:
+      return "monthly";
+    case TimeScale.QUARTERS:
+      return "quarterly";
+    case TimeScale.YEARS:
+      return "yearly";
+  }
+}
