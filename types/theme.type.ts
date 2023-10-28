@@ -49,3 +49,10 @@ export enum ColorStrength {
   Strong = "strong",
   ExtraStrong = "extraStrong",
 }
+
+export enum ColorType {
+  Bg = "background",
+  Fg = "foreground",
+  Outline = "outline",
+  Border = "border",
+}

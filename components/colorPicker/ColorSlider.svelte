@@ -1,15 +1,25 @@
 <script lang="ts">
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { assignSatAndLight } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
 
   export let hue: number | undefined | null = 0;
-  export let saturation: number;
-  export let lightness: number;
+  export let saturation: number = 50;
+  export let lightness: number = 50;
   const dispatch = createEventDispatcher();
   const handleHueChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     hue = parseInt(target.value);
     dispatch("value-change", hue);
   };
+  let values = assignSatAndLight(
+    $userPreferences,
+    $appStore.appConstants.selectableColorParams
+  );
+  if (values) {
+    saturation = values.saturation;
+    lightness = values.lightness;
+  }
 </script>
 
 <div class="hue-slider" style="--sat: {saturation}%; --lig: {lightness}%;">

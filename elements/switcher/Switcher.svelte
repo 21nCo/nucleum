@@ -8,10 +8,12 @@
   import SwitchItem from "./SwitchItem.svelte";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import {
+    customColor,
     generateBackgroudColor,
     retrieveCurrentColors,
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { ColorType } from "$lib/tidy/types/theme.type";
 
   const dispatch = createEventDispatcher();
   export let items: string[];
@@ -23,7 +25,7 @@
   export let style: SwitcherStyle = SwitcherStyle.HorizontalAndWraps;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
-  export let activeColor: string | undefined = undefined;
+  export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
   export let wrapperClassList: string = "";
   export let wrapperStyle: string = "";
@@ -32,8 +34,6 @@
   onMount(() => {
     if (selectedIndex === undefined) selectedIndex = 0;
     let colors = generateBackgroudColor(parentBackgroundIndex);
-    let currentColors = retrieveCurrentColors($userPreferences);
-    if (!activeColor && currentColors) activeColor = currentColors.a1;
     backgroundColor = colors.backgroundColor;
   });
   function handleClick(event: any) {
@@ -96,7 +96,7 @@
           }}
           class="flex rounded-full gap-2 py-3 px-4 {backgroundColor}"
           style={selectedIndex === index
-            ? `background-color: ${activeColor};`
+            ? customColor($userPreferences, ColorType.Bg, "a1", activeColor)
             : ""}
         >
           {item}

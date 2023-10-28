@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
 import type { UserGlobalPreferences } from "../types/preferences.type";
-import { AppTheme, ColorStrength } from "../types/theme.type";
-import { userPreferences } from "../stores/app.store";
+import { AppTheme, ColorStrength, ColorType } from "../types/theme.type";
+import { appStore, defaultColors, userPreferences } from "../stores/app.store";
 
 export function assignSatAndLight(
   userPreferences: UserGlobalPreferences,
@@ -18,6 +18,59 @@ export function assignSatAndLight(
     lightness = selectableColorParams.lightLightness;
   }
   return { saturation, lightness };
+}
+export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
+  let colorScheme = userPreferences.colorScheme?.colors;
+  return colorScheme;
+}
+
+function cssStyle(color: string, colorType: ColorType) {
+  switch (colorType) {
+    case ColorType.Bg:
+      return `background-color: ${color};`;
+    case ColorType.Fg:
+      return `color: ${color};`;
+    case ColorType.Outline:
+      return `outline-color: ${color};`;
+    case ColorType.Border:
+      return `border-color: ${color};`;
+    default:
+      return `background-color: ${color};`;
+  }
+}
+export function customColor(
+  userPreferences: UserGlobalPreferences,
+  colorType: ColorType[] | ColorType,
+  fallback: string,
+  hue: number | null | undefined = undefined
+) {
+  let style: string = "";
+  let color: string;
+  const currentColors = retrieveCurrentColors(userPreferences);
+  if (hue === undefined || hue === null || typeof hue !== "number") {
+    color = currentColors?.[fallback] ?? defaultColors[fallback];
+    console.log("color", color);
+  } else {
+    let saturation: number = 50;
+    let lightness: number = 50;
+    let values = assignSatAndLight(
+      userPreferences,
+      get(appStore).appConstants.selectableColorParams
+    );
+    if (values) {
+      saturation = values.saturation;
+      lightness = values.lightness;
+    }
+    color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  }
+  if (colorType instanceof Array) {
+    colorType.forEach((colorType) => {
+      style += cssStyle(color, colorType);
+    });
+  } else {
+    style = cssStyle(color, colorType);
+  }
+  return style;
 }
 
 export function borderColor(
@@ -85,9 +138,4 @@ export function generateBackgroudColor(parentBackgroundIndex: number = 1) {
     activeBackgroundColorHex,
     backgroundColorHex,
   };
-}
-
-export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  let colorScheme = userPreferences.colorScheme?.colors;
-  return colorScheme;
 }

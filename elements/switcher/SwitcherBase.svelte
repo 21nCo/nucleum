@@ -3,22 +3,28 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import {
     bg,
+    customColor,
     generateBackgroudColor,
-    retrieveCurrentColors,
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { ColorType } from "$lib/tidy/types/theme.type";
   export let classList: string;
   export let id: string = "";
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
-  export let activeColor: string | undefined = undefined;
+  export let activeColor: number | undefined = undefined;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let parentBackgroundIndex: number = 1;
   let activeBackgroundColor: string = "";
   let backgroundColor: string = "";
   $: if (classList.includes("bg-")) backgroundColor = "";
-  $: defaultActiveColor = retrieveCurrentColors($userPreferences).a1;
+  $: activeBgStyle = customColor(
+    $userPreferences,
+    ColorType.Bg,
+    "a1",
+    activeColor
+  );
   onMount(() => {
     let colors = generateBackgroudColor(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
@@ -41,9 +47,7 @@
         : bg($userPreferences.theme, parentBackgroundIndex) +
           " hover:" +
           bg($userPreferences.theme, parentBackgroundIndex, true))}
-    style={isActive
-      ? `;background-color: ${activeColor ?? defaultActiveColor}`
-      : ""}
+    style={isActive ? `;${activeBgStyle}` : ""}
     disabled={isDisabled}
     on:click
     on:pointerenter
@@ -56,7 +60,7 @@
     on:click
     on:pointerenter
     style={isActive && selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-      ? `;color: ${activeColor ?? defaultActiveColor}`
+      ? `;${customColor($userPreferences, ColorType.Fg, "a1", activeColor)}`
       : ""}
     disabled={isDisabled}
   >
@@ -69,7 +73,7 @@
     on:pointerenter
     {id}
     style={isActive && selectionStyle === SelectionItemActiveStyle.SIDEBAR
-      ? `;background-color: ${activeColor ?? defaultActiveColor}`
+      ? `;${activeBgStyle}`
       : ""}
     disabled={isDisabled}
   >
@@ -77,8 +81,7 @@
     {#if selectionStyle === SelectionItemActiveStyle.SIDEBAR && isActive}
       <div
         class="absolute w-0.5 opacity-80 h-3/4 rounded-md z-20"
-        style=" top: 12.5%; left: -2px; background-color: {activeColor ??
-          defaultActiveColor}"
+        style=" top: 12.5%; left: -2px; {activeBgStyle}"
       />
     {/if}
   </button>
