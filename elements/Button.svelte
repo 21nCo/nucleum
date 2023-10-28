@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import Icon from "./Icon.svelte";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import { bg, retrieveCurrentColors } from "../utils/utils";
+  import { bg, retrieveCurrentColors } from "../utils/theme.utils";
   import { userPreferences } from "../stores/app.store";
   import { ButtonStyle } from "../types/button.type";
   export let parentBackgroundIndex: number = 1;

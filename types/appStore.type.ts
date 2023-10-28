@@ -6,6 +6,7 @@ export type AppStore = {
   appData: any;
   isDebugMode: boolean;
   launchContext: LaunchContext;
+  embedContext?: EmbedContext;
   pageMenu?: string[];
   player?: string;
   //TACO - dynamic actions
@@ -26,4 +27,10 @@ export enum LaunchContext {
   EMBED,
   PREVIEW,
   DEV,
+}
+
+export enum EmbedContext {
+  DEFAULT,
+  APP,
+  SHEET,
 }

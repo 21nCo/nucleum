@@ -5,7 +5,7 @@
     generateBackgroudColor,
     borderColor,
     retrieveCurrentColors,
-  } from "$lib/tidy/utils/utils";
+  } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";

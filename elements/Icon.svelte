@@ -37,7 +37,7 @@
   import BarChart from "../icons/BarChart.svelte";
   import LineChart from "../icons/LineChart.svelte";
   import AreaChart from "../icons/AreaChart.svelte";
-  import { retrieveCurrentColors } from "../utils/utils";
+  import { retrieveCurrentColors } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
   import Info from "../icons/Info.svelte";

@@ -1,9 +1,5 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
-  import {
-    determineCarbonChartTimeInterval,
-    retrieveCurrentColors,
-  } from "$lib/tidy/utils/utils";
   import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
   import { ChartType } from "$lib/tidy/types/analytics.type";
@@ -21,6 +17,8 @@
     Alignments,
     PieChart,
   } from "@carbon/charts-svelte";
+  import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
+  import { determineCarbonChartTimeInterval } from "$lib/tidy/utils/time.utils";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;

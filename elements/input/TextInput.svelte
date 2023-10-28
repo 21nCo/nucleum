@@ -2,15 +2,15 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import { bg, generateBackgroudColor } from "$lib/tidy/utils/utils";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
   import type { Item } from "$lib/local/types/item.type";
   import { Persistance } from "$lib/tidy/stores/persistance";
-  import type { ItemType } from "$lib/local/types/item.enum";
+  import type { LocalItemType } from "$lib/local/types/item.enum";
   import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import Element from "../Element.svelte";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -21,7 +21,7 @@
   export let info: string | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
-  export let searchItemType: ItemType | undefined = undefined;
+  export let searchItemType: LocalItemType | undefined = undefined;
   export let variant: TextInputVariant = TextInputVariant.DEFAULT;
   export let rows: number = 5;
   export let resizable: boolean = false;

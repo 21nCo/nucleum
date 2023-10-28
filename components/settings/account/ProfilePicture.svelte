@@ -1,6 +1,6 @@
 <script lang="ts">
   import { account, userPreferences } from "$lib/tidy/stores/app.store";
-  import { bg } from "$lib/tidy/utils/utils";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   let initials: string | undefined = undefined;
   onMount(() => {

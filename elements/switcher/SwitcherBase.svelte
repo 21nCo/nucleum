@@ -5,7 +5,7 @@
     bg,
     generateBackgroudColor,
     retrieveCurrentColors,
-  } from "$lib/tidy/utils/utils";
+  } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   export let classList: string;
   export let id: string = "";

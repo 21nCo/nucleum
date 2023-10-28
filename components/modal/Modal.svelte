@@ -3,7 +3,6 @@
   import { modalEvent, windowObject } from "$lib/tidy/stores/app.store";
   import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
-  import { onMount } from "svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   export let show = true;
   export let size: Size = Size.lg;
@@ -18,11 +17,11 @@
   export let id = generateUID();
   $: if (show) dialog?.showModal();
   const overlayClicked = (event: any) => {
-    console.log({ event });
     if (
-      (event.target.classList.contains("pop-overlay") ||
-        event.target.classList.contains("popover") ||
-        event.target.id === id) &&
+      (event.target?.classList?.contains("pop-overlay") ||
+        event.target?.classList?.contains("popover") ||
+        event.target?.id === id) &&
+      event.pointerId != -1 &&
       isDismissable
     ) {
       close();

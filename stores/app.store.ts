@@ -10,7 +10,7 @@ import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
 import { persistLocally, retrieveLocally } from "./persistance";
-import { ItemType } from "$lib/local/types/item.enum";
+import { LocalItemType } from "$lib/local/types/item.enum";
 import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
@@ -225,12 +225,6 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    setLaunchContext(launchContext: LaunchContext) {
-      update((n: AppStore) => {
-        n.launchContext = launchContext;
-        return n;
-      });
-    },
     turnDebugMode(isDebugMode: boolean) {
       update((n: AppStore) => {
         n.isDebugMode = isDebugMode;
@@ -342,7 +336,7 @@ export const userPreferences = initUserPreferences({
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {
-  const objectType = ItemType.UserPreferences;
+  const objectType = LocalItemType.UserPreferences;
   let savedPreferences = retrieveLocally(objectType);
   const { subscribe, set, update } = writable<UserGlobalPreferences>(
     savedPreferences ?? seed

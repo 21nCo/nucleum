@@ -6,7 +6,8 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { bg, formatDate } from "$lib/tidy/utils/utils";
+  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
 </script>
 

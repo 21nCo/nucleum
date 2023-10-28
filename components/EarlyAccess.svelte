@@ -1,9 +1,9 @@
 <script lang="ts">
   import Button from "../elements/Button.svelte";
   import TextInput from "../elements/input/TextInput.svelte";
-  import { app } from "../stores/app.store";
   import { Size } from "../types/size.enum";
-  import { isValidEmail, performApiCall } from "../utils/utils";
+  import { isValidEmail } from "../utils/text.utils";
+  import { performApiCall } from "../utils/utils";
   let email = "";
   let message = "";
   let error: string | null = null;
@@ -20,7 +20,7 @@
     let response = await performApiCall(
       "subscribe",
       "POST",
-      JSON.stringify({ email, app, context: "earlyaccess" })
+      JSON.stringify({ email, context: "earlyaccess" })
     );
     if (response && response.ok) {
       let jsonValue = await response.json();

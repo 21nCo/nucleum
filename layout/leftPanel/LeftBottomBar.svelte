@@ -8,7 +8,7 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { bg } from "$lib/tidy/utils/utils";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;

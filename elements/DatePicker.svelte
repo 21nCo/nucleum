@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { generateBackgroudColor } from "$lib/tidy/utils/utils";
+  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date;

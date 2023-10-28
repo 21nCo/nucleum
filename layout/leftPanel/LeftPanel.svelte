@@ -14,7 +14,7 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
 
-  import { bg } from "$lib/tidy/utils/utils";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   import { onMount } from "svelte";
   let isMinimized: boolean = false;

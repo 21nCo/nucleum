@@ -1,5 +1,4 @@
 export enum TimeScale {
-  SINGLEDAY = "SINGLEDAY",
   DAYS = "DAYS",
   WEEKS = "WEEKS",
   MONTHS = "MONTHS",
@@ -8,15 +7,16 @@ export enum TimeScale {
 }
 
 export enum TimePeriodType {
-  LASTXSEGMENTS,
-  UPPERHORIZON,
+  RELATIVE,
+  CALENDAR_BOUND,
+  START_END,
 }
 
 export type TimePeriod = {
   scale: TimeScale;
   type: TimePeriodType;
-  numberOfSegments: number;
-  horizons: number[];
+  //relativity or calendar bounds or start/end
+  value: number | number[] | { start: Date; end: Date };
 };
 
 export enum TimeFormat {

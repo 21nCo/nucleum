@@ -6,7 +6,7 @@
     userPreferences,
   } from "$lib/tidy/stores/app.store";
 
-  import { bg } from "$lib/tidy/utils/utils";
+  import { bg } from "$lib/tidy/utils/theme.utils";
 </script>
 
 <div class="w-full h-full flex justify-center">

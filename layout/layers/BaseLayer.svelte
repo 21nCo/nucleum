@@ -14,7 +14,7 @@
   import { inject } from "@vercel/analytics";
   import { performBlankApiCall } from "$lib/tidy/utils/utils";
   import { defaultAppData } from "$lib/local/stores/local.store";
-  import { LaunchContext } from "$lib/tidy/types/appStore.type";
+  import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   let timer: any;
@@ -74,9 +74,13 @@
   function setLaunchContext() {
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
-    appStore.setLaunchContext(LaunchContext.EMBED);
-    if (subdomain === "embed" || subdomain === "embeddev") {
-      appStore.setLaunchContext(LaunchContext.EMBED);
+    //$appStore.launchContext = LaunchContext.EMBED;
+    //$appStore.embedContext = EmbedContext.SHEET;
+    if (subdomain?.includes("embed")) {
+      $appStore.launchContext = LaunchContext.EMBED;
+    }
+    if (subdomain?.includes("sheet")) {
+      $appStore.embedContext = EmbedContext.SHEET;
     }
   }
   function addWindowEventListeners() {

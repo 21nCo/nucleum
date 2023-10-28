@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { actIfClickedOutside, bg, generateUID } from "$lib/tidy/utils/utils";
+  import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
   import {
@@ -12,6 +12,7 @@
   import Check from "$lib/tidy/icons/Check.svelte";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   const dispatch = createEventDispatcher();
   export let options: DropdownItem[];
   export let selected: (string | number)[] = [];

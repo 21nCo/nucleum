@@ -1,8 +1,7 @@
 <script lang="ts">
   import { AppTheme, type ColorScheme } from "$lib/tidy/types/theme.type";
-  import Element from "$lib/tidy/elements/Element.svelte";
-  import { createEventDispatcher, onMount } from "svelte";
-  import { bg } from "$lib/tidy/utils/utils";
+  import { createEventDispatcher } from "svelte";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   export let colorSchemes: ColorScheme[];
   export let parentBackgroundIndex: number;

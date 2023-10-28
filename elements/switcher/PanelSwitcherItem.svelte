@@ -1,7 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { bg, retrieveCurrentColors } from "$lib/tidy/utils/utils";
+  import { bg, retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;

@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    actIfClickedOutside,
-    borderColor,
-    generateBackgroudColor,
-    getTimeLabel,
-  } from "$lib/tidy/utils/utils";
+  import { actIfClickedOutside } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import TimeSuggestionsItem from "./TimeSuggestionsItem.svelte";
   import { TimeUnit, type TimeSuggestion } from "$lib/tidy/types/time.type";
@@ -12,6 +7,11 @@
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { getTimeLabel } from "$lib/tidy/utils/time.utils";
+  import {
+    borderColor,
+    generateBackgroudColor,
+  } from "$lib/tidy/utils/theme.utils";
   //todo - move clickoutside and pointron local code to tidy lib
   export let value: any;
   export let currentTimeUnit: TimeUnit;

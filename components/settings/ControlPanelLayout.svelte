@@ -16,11 +16,9 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
-  import {
-    retrieveCurrentColors,
-    sortPropertiesByOrder,
-  } from "$lib/tidy/utils/utils";
+  import { sortPropertiesByOrder } from "$lib/tidy/utils/utils";
   import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
+  import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: any;
   let color = retrieveCurrentColors($userPreferences).a1;

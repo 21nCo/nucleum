@@ -10,7 +10,7 @@
   import {
     generateBackgroudColor,
     retrieveCurrentColors,
-  } from "$lib/tidy/utils/utils";
+  } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
 
   const dispatch = createEventDispatcher();

@@ -5,7 +5,8 @@
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account } from "$lib/tidy/stores/app.store";
-  import { isValidEmail, performApiCall } from "$lib/tidy/utils/utils";
+  import { isValidEmail } from "$lib/tidy/utils/text.utils";
+  import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isSignup = false;
   let email = "";
