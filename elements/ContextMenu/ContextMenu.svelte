@@ -7,6 +7,7 @@
   import { appEvents } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { Placement } from "$lib/tidy/types/placement.type";
 
   export let icon: string = "";
   export let customIconPath: string | undefined = "";
@@ -22,6 +23,8 @@
   export let menuContainerStyle: string = "";
   export let menuItemStyle = "";
   export let iconStyle: string = "";
+
+  export let placement: Placement = Placement.RIGHT;
 
   let selectedIndex: number = 0;
   const id = generateUID();
@@ -110,7 +113,9 @@
   {#if isContextMenuOpen}
     <div
       style={menuContainerStyle}
-      class={`absolute top-0 left-10 bg-bgs4 ${menuContainerClassList}`}
+      class={`absolute top-0 ${
+        placement === Placement.RIGHT ? `left-10` : `right-10`
+      } bg-bgs4 ${menuContainerClassList}`}
     >
       {#each items as item, index}
         <ContextMenuItem
