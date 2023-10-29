@@ -6,7 +6,7 @@
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   import TextInput from "../input/TextInput.svelte";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
-  import { LocalItemType } from "$lib/local/types/item.enum";
+  import { Item } from "$lib/local/types/item.enum";
   import Chip from "./Chip.svelte";
   import { ChipVariant } from "$lib/tidy/types/chipVariant.enum";
   import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";

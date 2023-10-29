@@ -4,13 +4,13 @@
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
-  import type { Item } from "$lib/local/types/item.type";
+  import type { ItemType } from "$lib/local/types/item.enum";
   import { Persistance } from "$lib/tidy/stores/persistance";
-  import type { LocalItemType } from "$lib/local/types/item.enum";
   import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import Element from "../Element.svelte";
   import { bg } from "$lib/tidy/utils/theme.utils";
+  import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -21,7 +21,7 @@
   export let info: string | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
-  export let searchItemType: LocalItemType | undefined = undefined;
+  export let searchItemType: ItemType | undefined = undefined;
   export let variant: TextInputVariant = TextInputVariant.DEFAULT;
   export let rows: number = 5;
   export let resizable: boolean = false;
@@ -32,7 +32,7 @@
   export let isRequired: boolean = false;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
-  let searchResults: Item[] = [];
+  let searchResults: DbRecordWithLabel[] = [];
   let selectedIndex: number = 0;
   let previousValue: string = "";
   let currentValue: string;
@@ -123,7 +123,7 @@
     }
     dispatch("keyup", { value });
   }
-  function onSearchResultSelection(item: Item) {
+  function onSearchResultSelection(item: DbRecordWithLabel) {
     dispatch("select", { item });
   }
   function resetSearch() {

@@ -1,15 +1,5 @@
-export enum ItemType {
+export enum GlobalItem {
   ALL,
   UserPreferences,
   UserLocalPreferences,
-  SessionStore,
-  SessionStoreV2,
-  Snapshot,
-  Routine,
-  CurrentTask,
-  cronosession,
-  cronotask,
-  cronotag,
-  cronolog,
-  cronotimer,
 }

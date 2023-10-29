@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { Item } from "$lib/local/types/item.type";
-
-  export let item: Item;
+  import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
+  export let item: DbRecordWithLabel;
   export let isActive: boolean = false;
 </script>
 
@@ -9,5 +8,5 @@
   on:click
   class="w-full p-2 rounded-md hover:bg-bgs4 flex {isActive ? ' bg-bgs4' : ''}"
 >
-  {item.label ?? item.name}
+  {item.label ?? ("name" in item ? item.name : "")}
 </button>

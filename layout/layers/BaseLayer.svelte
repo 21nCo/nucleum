@@ -74,7 +74,7 @@
   function setLaunchContext() {
     let subdomain = window?.location.host.split(".")[0];
     // console.log({ subdomain, location: window?.location });
-    //$appStore.launchContext = LaunchContext.EMBED;
+    $appStore.launchContext = LaunchContext.EMBED;
     //$appStore.embedContext = EmbedContext.SHEET;
     if (subdomain?.includes("embed")) {
       $appStore.launchContext = LaunchContext.EMBED;

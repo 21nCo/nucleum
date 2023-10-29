@@ -2,10 +2,11 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import type { Item } from "../../local/types/item.type";
 import { cloudProvider } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
-import { LocalItemType } from "$lib/local/types/item.enum";
+import { Item as ItemEnum, type ItemType } from "$lib/local/types/item.enum";
+import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
+import type { DbRecordType } from "$lib/local/types/item.type";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
@@ -38,20 +39,20 @@ export function resetLocalStorage() {
 }
 
 export function persistLocally<T extends JsonValue>(
-  itemType: LocalItemType,
+  itemType: ItemType,
   item: T
 ) {
   if (import.meta.env?.SSR) {
     return;
   }
-  window?.localStorage.setItem(LocalItemType[itemType], JSON.stringify(item));
+  window?.localStorage.setItem(ItemEnum[itemType], JSON.stringify(item));
 }
-export function retrieveLocally(itemType: LocalItemType) {
+export function retrieveLocally(itemType: ItemType) {
   try {
     if (import.meta.env?.SSR) {
       return null;
     }
-    let value = window?.localStorage.getItem(LocalItemType[itemType]);
+    let value = window?.localStorage.getItem(ItemEnum[itemType]);
     if (value) {
       return JSON.parse(value);
     } else {
@@ -69,7 +70,7 @@ export class Persistance {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  create(item: Item, itemType: LocalItemType) {
+  create(item: DbRecordType, itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let items = retrieveLocally(itemType);
@@ -81,9 +82,9 @@ export class Persistance {
         break;
       case Cloud.surreal:
         if (item.id) {
-          surrealDb.create(LocalItemType[itemType] + `:${item.id}`, item);
+          surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
         } else {
-          return surrealDb.create(LocalItemType[itemType], item);
+          return surrealDb.create(ItemEnum[itemType], item);
         }
         break;
     }
@@ -95,7 +96,7 @@ export class Persistance {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  createMultiple(items: Item[], itemType: LocalItemType) {
+  createMultiple<T extends DbRecordBase>(items: T[], itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let allItems = retrieveLocally(itemType);
@@ -107,11 +108,11 @@ export class Persistance {
         break;
       case Cloud.surreal:
         //todo - replace with surreal query for bulk create
-        items.forEach((item: Item) => {
+        items.forEach((item: T) => {
           if (item.id) {
-            surrealDb.create(LocalItemType[itemType] + `:${item.id}`, item);
+            surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
           } else {
-            surrealDb.create(LocalItemType[itemType], item);
+            surrealDb.create(ItemEnum[itemType], item);
           }
         });
         break;
@@ -124,21 +125,28 @@ export class Persistance {
    * @param itemType ItemType
    * @returns complete modified item record
    */
-  update(item: any, itemType?: LocalItemType) {
+  update(
+    item: Partial<DbRecordType> & Required<Pick<DbRecordType, "id">>,
+    itemType?: ItemType
+  ) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         if (!itemType) break;
-        let items: Item[] = retrieveLocally(itemType);
+        let items: DbRecordBase[] = retrieveLocally(itemType);
         if (!items) {
           items = [];
         }
-        items = items.filter((x: Item) => x.id != item.id);
+        items = items.filter((x: DbRecordBase) => x.id != item.id);
         items.push(item);
         persistLocally(itemType, items);
         break;
       case Cloud.surreal:
         return surrealDb.merge(
-          itemType ? `${LocalItemType[itemType]}:${item.id}` : item.id,
+          itemType
+            ? `${ItemEnum[itemType]}:${item.id}`
+            : typeof item.id === "string"
+            ? item.id
+            : "",
           item
         );
     }
@@ -149,60 +157,63 @@ export class Persistance {
    * @param itemType ItemType
    * @returns true if deleted successfully else false
    */
-  delete(itemId: string, itemType: LocalItemType) {
+  delete(itemId: string, itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let items = retrieveLocally(itemType);
-        items = items.filter((x: Item) => x.id != itemId);
+        items = items.filter((x: DbRecordBase) => x.id != itemId);
         persistLocally(itemType, items);
         break;
       case Cloud.surreal:
         return surrealDb.delete(itemId);
     }
   }
-  retrieve(itemId: string, itemType: LocalItemType) {
+  retrieve(itemId: string, itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let items = retrieveLocally(itemType);
         if (!items) {
           items = [];
         }
-        let item = items.find((x: Item) => x.id == itemId);
+        let item = items.find((x: DbRecordBase) => x.id == itemId);
         return item;
       case Cloud.surreal:
         return surrealDb.select(itemId);
     }
   }
-  retrieveAll(itemType: LocalItemType) {
+  retrieveAll(itemType: ItemType) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let items = retrieveLocally(itemType);
         return items;
       case Cloud.surreal:
-        return surrealDb.select(LocalItemType[itemType]);
+        return surrealDb.select(ItemEnum[itemType]);
     }
     return [];
   }
-  async searchByLabel(query: string, itemType: LocalItemType) {
-    let results: Item[] = [];
+  async searchByLabel(
+    query: string,
+    itemType: ItemType
+  ): Promise<DbRecordWithLabel[]> {
+    let results: DbRecordWithLabel[] = [];
     switch (get(cloudProvider)) {
       case Cloud.local:
         switch (itemType) {
-          case LocalItemType.ALL:
-            const tagList = retrieveLocally(LocalItemType.PointTag);
-            const taskList = retrieveLocally(LocalItemType.PointTask);
+          case ItemEnum.ALL:
+            const tagList = retrieveLocally(ItemEnum.PointTag);
+            const taskList = retrieveLocally(ItemEnum.PointTask);
             if (tagList) {
               const tagItems = tagList
-                .filter((item: Item) =>
+                .filter((item: DbRecordWithLabel) =>
                   item.label.toLowerCase().includes(query.toLowerCase())
                 )
-                .map((x: Item) => {
+                .map((x: DbRecordWithLabel) => {
                   return { label: x.label, id: x.id };
                 });
               results = [...results, ...tagItems];
             }
             if (taskList) {
-              const taskItems = taskList.filter((item: Item) =>
+              const taskItems = taskList.filter((item: DbRecordWithLabel) =>
                 item.label.toLowerCase().includes(query.toLowerCase())
               );
               results = [...results, ...taskItems];
@@ -211,21 +222,21 @@ export class Persistance {
           default:
             let items = retrieveLocally(itemType);
             if (!items) break;
-            items = items.filter((item: Item) =>
+            items = items.filter((item: DbRecordWithLabel) =>
               item.label.toLowerCase().includes(query.toLowerCase())
             );
-            results = items.map((x: Item) => {
+            results = items.map((x: DbRecordWithLabel) => {
               return { label: x.label, id: x.id };
             });
             break;
         }
         break;
       case Cloud.surreal:
-        if (itemType != LocalItemType.ALL) {
+        if (itemType != ItemEnum.ALL) {
           let searchResult = await surrealDb.query(
             `select * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
             {
-              tb: LocalItemType[itemType],
+              tb: ItemEnum[itemType],
               searchString: query,
             }
           );

@@ -1,5 +1,4 @@
-import { LocalItemType } from "$lib/local/types/item.enum";
-import type { ItemType } from "../types/item.enum";
+import { Item, type ItemType } from "$lib/local/types/item.enum";
 
 export function properCase(str: string) {
   return str.replace(/\w\S*/g, function (text) {
@@ -7,8 +6,8 @@ export function properCase(str: string) {
   });
 }
 
-export function prefix(id: string, itemType: LocalItemType | ItemType) {
-  return `${LocalItemType[itemType]}:${id}`;
+export function prefix(id: string, itemType: ItemType) {
+  return `${Item[itemType]}:${id}`;
 }
 
 export function stripPrefix(id: string) {

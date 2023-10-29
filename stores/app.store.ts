@@ -9,8 +9,7 @@ import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
-import { persistLocally, retrieveLocally } from "./persistance";
-import { LocalItemType } from "$lib/local/types/item.enum";
+import { Item } from "$lib/local/types/item.enum";
 import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
@@ -21,10 +20,13 @@ import type { ModalEvent } from "../types/popup.type";
 import jwt_decode from "jwt-decode";
 import type { HapticFeedback } from "../types/haptic.enum";
 import { sessionStore } from "$lib/local/stores/session.store";
+import { Persistance } from "./persistance";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
+
+let persistance = new Persistance();
 
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
@@ -233,7 +235,7 @@ function initAppStore(seed: AppStore) {
     },
     log(message: string, type: "error" | "info" | "warn" = "info") {
       update((n: AppStore) => {
-        // console.log(message);
+        console.log(message);
         if (!n.debugLogs) n.debugLogs = [];
         n.debugLogs.push({
           message,
@@ -336,33 +338,33 @@ export const userPreferences = initUserPreferences({
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {
-  const objectType = LocalItemType.UserPreferences;
-  let savedPreferences = retrieveLocally(objectType);
-  const { subscribe, set, update } = writable<UserGlobalPreferences>(
-    savedPreferences ?? seed
-  );
-  if (!savedPreferences) persistLocally(objectType, seed);
+  const { subscribe, set, update } = writable<UserGlobalPreferences>(seed);
+  let objectType = Item.UserPreferences;
+  const retrieve = () => {
+    persistance.retrieve("Preferences:global", objectType).then((m: any) => {
+      userPreferences.set(m);
+    });
+  };
+  const persist = (n: UserGlobalPreferences) => {};
   return {
     subscribe,
     set: (m: UserGlobalPreferences) => {
-      persistLocally(objectType, m);
       set(m);
     },
-    reload: () => {
-      let savedPreferences = retrieveLocally(objectType);
-      set(savedPreferences);
+    load: () => {
+      retrieve();
     },
     updateDayStart: (m: string) => {
       update((n: UserGlobalPreferences) => {
         n = { ...n, dayStart: m };
-        persistLocally(objectType, n);
+        persist(n);
         return n;
       });
     },
     updateTimeZone: (m: string) => {
       update((n: UserGlobalPreferences) => {
         n = { ...n, timeZone: m };
-        persistLocally(objectType, n);
+        persist(n);
         return n;
       });
     },
