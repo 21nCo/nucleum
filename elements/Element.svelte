@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { generateBackgroudColor } from "$lib/tidy/utils/utils";
+  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "../types/theme.type";
   export let classList: string;

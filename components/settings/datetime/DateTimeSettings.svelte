@@ -8,11 +8,12 @@
     DropDownStyle,
     type DropdownItem,
   } from "$lib/tidy/types/dropdownItem.type";
-  import { getTimeZonesWithOffsets, properCase } from "$lib/tidy/utils/utils";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { ButtonStyle } from "$lib/tidy/types/button.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TimeScale } from "$lib/tidy/types/time.type";
+  import { properCase } from "$lib/tidy/utils/text.utils";
+  import { getTimeZonesWithOffsets } from "$lib/tidy/utils/time.utils";
 
   export let selectedHour: any = "00";
   export let selectedMinute = "00";

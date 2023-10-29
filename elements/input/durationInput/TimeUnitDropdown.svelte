@@ -4,7 +4,8 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   import type { TimeUnit } from "$lib/tidy/types/time.type";
-  import { actIfClickedOutside, borderColor } from "$lib/tidy/utils/utils";
+  import { borderColor } from "$lib/tidy/utils/theme.utils";
+  import { actIfClickedOutside } from "$lib/tidy/utils/utils";
   import TimeUnitItem from "./TimeUnitItem.svelte";
   import { createEventDispatcher } from "svelte";
 

@@ -3,12 +3,8 @@
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import {
-    bg,
-    resolveAction,
-    resolveComponent,
-    retrieveCurrentColors,
-  } from "$lib/tidy/utils/utils";
+  import { retrieveCurrentColors, bg } from "$lib/tidy/utils/theme.utils";
+  import { resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let parentBackgroundIndex: number = 0;

@@ -9,7 +9,7 @@
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
-  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
@@ -48,6 +48,11 @@
     return currentPath;
   }
   function resolve(currentPath: string) {
+    const isTokenExpired = account.checkIfLoginExpired();
+    if (isTokenExpired) {
+      windowObject.gotoPath("/expired");
+      return;
+    }
     parentComponent = null;
     grandPa = null;
     currentComponent = resolveComponentFromPath(currentPath);

@@ -8,7 +8,7 @@
   export let parentBackgroundIndex: number;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
-  export let activeColor: string | undefined = undefined;
+  export let activeColor: number | undefined = undefined;
   export let selectionStyle: SelectionItemActiveStyle;
   export let width: string = "max-w-full";
   let classList: string =

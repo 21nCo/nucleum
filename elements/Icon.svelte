@@ -37,7 +37,7 @@
   import BarChart from "../icons/BarChart.svelte";
   import LineChart from "../icons/LineChart.svelte";
   import AreaChart from "../icons/AreaChart.svelte";
-  import { retrieveCurrentColors } from "../utils/utils";
+  import { retrieveCurrentColors } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
   import Info from "../icons/Info.svelte";
@@ -48,7 +48,6 @@
   import Copy from "../icons/Copy.svelte";
   import ArrowPath from "../icons/ArrowPath.svelte";
   import Sun from "../icons/Sun.svelte";
-  import DropdownArrow from "../icons/DropdownArrow.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;

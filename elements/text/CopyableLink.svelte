@@ -1,6 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
-  import { bg, copyToClipboard } from "$lib/tidy/utils/utils";
+  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { copyToClipboard } from "$lib/tidy/utils/utils";
   import Icon from "../Icon.svelte";
   export let parentBackgroundIndex: number = 1;
   export let link: string = "";

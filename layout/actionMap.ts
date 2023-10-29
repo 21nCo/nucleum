@@ -16,6 +16,7 @@ import Offline from "../components/error/Offline.svelte";
 import AboutSettings from "../components/settings/about/AboutSettings.svelte";
 import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
+import SessionExpired from "../components/error/SessionExpired.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -24,6 +25,11 @@ export const actions: Action[] = [
   {
     action: "offline",
     component: Offline,
+  },
+  {
+    action: "expired",
+    component: SessionExpired,
+    isMenuHidden: true,
   },
   {
     action: "debuglogs",

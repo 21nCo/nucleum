@@ -6,7 +6,7 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
-  import { properCase } from "$lib/tidy/utils/utils";
+  import { properCase } from "$lib/tidy/utils/text.utils";
   export let path: string = "";
   export let isShowClose: boolean = true;
 </script>

@@ -5,7 +5,8 @@
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account } from "$lib/tidy/stores/app.store";
-  import { isValidEmail, performApiCall } from "$lib/tidy/utils/utils";
+  import { isValidEmail } from "$lib/tidy/utils/text.utils";
+  import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isSignup = false;
   let email = "";
@@ -14,16 +15,19 @@
   let firstName = "";
   let lastName = "";
   let error: string | null = null;
+  let isTrusted = false;
+  let actionInProgress = false;
   onMount(() => {
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
   });
   async function onSinginClicked() {
     if (!isValidSinginData()) return;
+    actionInProgress = true;
     const response = await performApiCall(
       "account/signin",
       "POST",
-      JSON.stringify({ email, pass })
+      JSON.stringify({ email, pass, isTrusted })
     );
     if (!response || !response.ok) {
       showError();
@@ -43,9 +47,11 @@
     }
     localStore.runSignupScripts();
     account.signIn(json);
+    actionInProgress = false;
   }
   async function onSignupClicked() {
     if (!isValidSignupData()) return;
+    actionInProgress = true;
     const response = await performApiCall(
       "account/signup",
       "POST",
@@ -66,6 +72,7 @@
     }
     account.signIn(json);
     await localStore.runSignupScripts();
+    actionInProgress = false;
   }
   function isValidSignupData() {
     if (!email || !pass || !confirmPass || !firstName || !lastName) {
@@ -122,6 +129,7 @@
     return true;
   }
   function showError(message: string | null = null) {
+    actionInProgress = false;
     error = message ?? "Something went wrong. Please try again later.";
     setTimeout(() => {
       error = null;
@@ -184,15 +192,28 @@
       <div class="w-full flex justify-end">
         <Link href="forgot-password" label="Forgot password?" />
       </div>
+      <div class="flex items-center gap-2 w-full">
+        <input type="checkbox" class="h-4 w-4" bind:checked={isTrusted} />
+        <div class="text-fgs3">Trust this device for 30 days</div>
+      </div>
     </div>
   {/if}
-  {#if error}
-    <div class="text-ar">{error}</div>
-  {/if}
+  <div class="h-6">
+    {#if error}
+      <div class="text-ar">{error}</div>
+    {/if}
+  </div>
   <div class="flex gap-2">
     <Button
-      label={isSignup ? "Signup" : "Signin"}
+      label={isSignup
+        ? actionInProgress
+          ? "Signing up..."
+          : "Signup"
+        : actionInProgress
+        ? "Signing in..."
+        : "Signin"}
       type="primary"
+      isDisabled={actionInProgress}
       on:click={isSignup ? onSignupClicked : onSinginClicked}
     />
     <Button

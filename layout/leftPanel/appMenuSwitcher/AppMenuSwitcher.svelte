@@ -2,14 +2,11 @@
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { onMount } from "svelte";
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
-  import {
-    generateBackgroudColor,
-    resolveAction,
-    resolveComponent,
-  } from "$lib/tidy/utils/utils";
+  import { resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
   import type { Action } from "$lib/tidy/types/action.type";
   import { userLocalPreferences } from "$lib/local/stores/local.store";
   import type { UserLocalPreferences } from "$lib/local/types/userLocalPreferences.type";
+  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;

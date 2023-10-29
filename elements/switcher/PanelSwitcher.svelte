@@ -4,15 +4,14 @@
   import {
     generateBackgroudColor,
     borderColor,
-    retrieveCurrentColors,
-  } from "$lib/tidy/utils/utils";
+  } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   const dispatch = createEventDispatcher();
   export let items: string[];
   export let selectedIndex: number | undefined = undefined;
-  export let activeColor: string | undefined = undefined;
+  export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
   export let parentBackgroundIndex: number = 1;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
@@ -21,8 +20,6 @@
   onMount(() => {
     if (selectedIndex === undefined) selectedIndex = 0;
     let colors = generateBackgroudColor(parentBackgroundIndex);
-    let currentColors = retrieveCurrentColors($userPreferences);
-    if (!activeColor && currentColors) activeColor = currentColors.a1;
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.BOTTOMBAR:

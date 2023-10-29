@@ -9,8 +9,7 @@ import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
-import { persistLocally, retrieveLocally } from "./persistance";
-import { ItemType } from "$lib/local/types/item.enum";
+import { Item } from "$lib/local/types/item.enum";
 import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
@@ -20,10 +19,14 @@ import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
 import jwt_decode from "jwt-decode";
 import type { HapticFeedback } from "../types/haptic.enum";
+import { sessionStore } from "$lib/local/stores/session.store";
+import { Persistance } from "./persistance";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
+
+let persistance = new Persistance();
 
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
@@ -57,8 +60,12 @@ export const windowObject = initWindow({
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
-  let component = resolveComponentFromPath(newPath.split("/")[1]);
-  if (component?.isMenuHidden) return true;
+  console.log("checkIfNeedToHideMenu", newPath, newPath.split("/")[1]);
+  if (newPath.split("/")[1]) {
+    let component = resolveComponentFromPath(newPath.split("/")[1]);
+    console.log("component", component);
+    if (component?.isMenuHidden) return true;
+  }
   const listOfPathsToHideMenu = {
     portrait: ["/goals/*", "/cp/*"],
     landscape: [],
@@ -118,6 +125,7 @@ function initWindow(settings: WindowObject) {
       });
     },
     gotoPath: (path: string, params: any = null) => {
+      console.log("gotoPath", path);
       update((n: WindowObject) => {
         n = {
           ...n,
@@ -126,6 +134,10 @@ function initWindow(settings: WindowObject) {
         };
         return n;
       });
+      const isTokenExpired = account.checkIfLoginExpired();
+      if (isTokenExpired) {
+        path = "/expired";
+      }
       if (!navigator.onLine) {
         path = "/offline";
       }
@@ -215,12 +227,6 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    setLaunchContext(launchContext: LaunchContext) {
-      update((n: AppStore) => {
-        n.launchContext = launchContext;
-        return n;
-      });
-    },
     turnDebugMode(isDebugMode: boolean) {
       update((n: AppStore) => {
         n.isDebugMode = isDebugMode;
@@ -229,6 +235,7 @@ function initAppStore(seed: AppStore) {
     },
     log(message: string, type: "error" | "info" | "warn" = "info") {
       update((n: AppStore) => {
+        console.log(message);
         if (!n.debugLogs) n.debugLogs = [];
         n.debugLogs.push({
           message,
@@ -331,33 +338,33 @@ export const userPreferences = initUserPreferences({
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {
-  const objectType = ItemType.UserPreferences;
-  let savedPreferences = retrieveLocally(objectType);
-  const { subscribe, set, update } = writable<UserGlobalPreferences>(
-    savedPreferences ?? seed
-  );
-  if (!savedPreferences) persistLocally(objectType, seed);
+  const { subscribe, set, update } = writable<UserGlobalPreferences>(seed);
+  let objectType = Item.UserPreferences;
+  const retrieve = () => {
+    persistance.retrieve("Preferences:global", objectType).then((m: any) => {
+      userPreferences.set(m);
+    });
+  };
+  const persist = (n: UserGlobalPreferences) => {};
   return {
     subscribe,
     set: (m: UserGlobalPreferences) => {
-      persistLocally(objectType, m);
       set(m);
     },
-    reload: () => {
-      let savedPreferences = retrieveLocally(objectType);
-      set(savedPreferences);
+    load: () => {
+      retrieve();
     },
     updateDayStart: (m: string) => {
       update((n: UserGlobalPreferences) => {
         n = { ...n, dayStart: m };
-        persistLocally(objectType, n);
+        persist(n);
         return n;
       });
     },
     updateTimeZone: (m: string) => {
       update((n: UserGlobalPreferences) => {
         n = { ...n, timeZone: m };
-        persistLocally(objectType, n);
+        persist(n);
         return n;
       });
     },
@@ -392,7 +399,8 @@ function initAccount(seed: UserAccount) {
   return {
     subscribe,
     set,
-    checkIfIsLoggedIn: () => {
+    checkIfLoginExpired: () => {
+      let isExpired: boolean = false;
       update((n: UserAccount) => {
         if (localStorage.getItem("surreal-token")) {
           const token = localStorage.getItem("surreal-token");
@@ -400,7 +408,7 @@ function initAccount(seed: UserAccount) {
             let decodedToken: any = jwt_decode(token);
             let exp = decodedToken?.exp ?? 0;
             const currentTime = new Date().getTime() / 1000;
-            if (exp < currentTime) {
+            if (currentTime > exp) {
               localStorage.removeItem("surreal-token");
               n = { token: null, isLoggedIn: false };
               postMessageToParent({ token: "expired" });
@@ -415,12 +423,14 @@ function initAccount(seed: UserAccount) {
         }
         return n;
       });
+      return isExpired;
     },
     signOut: () => {
       update((n: UserAccount) => {
         localStorage.removeItem("surreal-token");
         localStorage.removeItem("userInfo");
         n = { token: null, isLoggedIn: false };
+        sessionStore.reset();
         appEvents.publish(AppEvent.USER_LOGIN, false);
         return n;
       });
@@ -441,6 +451,7 @@ function initAccount(seed: UserAccount) {
 }
 
 export function postMessageToParent(message: any) {
+  appStore.log("posting message to parent:" + JSON.stringify(message));
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
@@ -449,7 +460,6 @@ export function postMessageToParent(message: any) {
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
-    appStore.log("message sent to iOSNative" + JSON.stringify(message));
   } catch (error) {
     appStore.logError(error);
   }

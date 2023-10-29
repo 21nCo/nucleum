@@ -3,14 +3,10 @@
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
   import Search from "$lib/tidy/icons/Search.svelte";
-  import {
-    actIfClickedOutside,
-    generateBackgroudColor,
-    generateUID,
-  } from "$lib/tidy/utils/utils";
+  import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   import TextInput from "../input/TextInput.svelte";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
-  import { ItemType } from "$lib/local/types/item.enum";
+  import { Item } from "$lib/local/types/item.enum";
   import Chip from "./Chip.svelte";
   import { ChipVariant } from "$lib/tidy/types/chipVariant.enum";
   import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
@@ -19,6 +15,7 @@
   import { appEvents } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
