@@ -48,6 +48,11 @@
   import Copy from "../icons/Copy.svelte";
   import ArrowPath from "../icons/ArrowPath.svelte";
   import Sun from "../icons/Sun.svelte";
+  import Heart from "../icons/Heart.svelte";
+  import Rocket from "../icons/Rocket.svelte";
+  import Archive from "../icons/Archive.svelte";
+  import Dustbin from "../icons/Dustbin.svelte";
+  import ThreeVerticalDots from "../icons/ThreeVerticalDots.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -58,16 +63,22 @@
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
-  $: variant =
-    (isActive && icon != "chevright" && icon != "chevleft" && icon != "list") ||
-    icon == "chevdoubleleft" ||
-    icon == "chevdoubleright" ||
-    icon == "history" ||
-    icon == "logout" ||
-    icon == "link" ||
-    icon?.includes("-mini")
-      ? IconVariant.Solid
-      : IconVariant.Outline;
+  $: {
+    variant =
+      (isActive &&
+        icon != "chevright" &&
+        icon != "chevleft" &&
+        icon != "list") ||
+      icon == "chevdoubleleft" ||
+      icon == "chevdoubleright" ||
+      icon == "history" ||
+      icon == "logout" ||
+      icon == "link" ||
+      icon?.includes("-mini") ||
+      (variant && variant === IconVariant.Solid)
+        ? IconVariant.Solid
+        : IconVariant.Outline;
+  }
 </script>
 
 {#if icon}
@@ -231,6 +242,18 @@
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}
         <ChevronDouble direction={Direction.Right} />
+      {:else if icon === "heart"}
+        <Heart {variant} />
+      {:else if icon === "rocket"}
+        <Rocket {variant} />
+      {:else if icon === "archive"}
+        <Archive {variant} />
+      {:else if icon === "dustbin"}
+        <Dustbin {variant} />
+      {:else if icon === "archive"}
+        <Archive {variant} />
+      {:else if icon === "threeverticaldots"}
+        <ThreeVerticalDots {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"
