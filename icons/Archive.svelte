@@ -1,93 +1,29 @@
 <script lang="ts">
-  import { afterUpdate } from "svelte";
   import { IconVariant } from "../types/icon.type";
 
-  export let color: string = "";
-  export let opacity: number = 1;
-  export let classList: string = "";
-  export let isActive: boolean = false;
-  export let activeColor: string = "";
-
   export let variant: IconVariant = IconVariant.Outline;
-
-  let iconFinalColor: string = "";
-
-  function setColor() {
-    iconFinalColor = isActive
-      ? activeColor
-        ? activeColor
-        : color
-        ? color
-        : `rgba(var(--colors-bgs1),${opacity})`
-      : color
-      ? color
-      : `rgba(var(--colors-fgs1),${opacity})`;
-  }
-  afterUpdate(() => {
-    setColor();
-  });
 </script>
 
 {#if variant === IconVariant.Outline}
-  <!-- Need to add outlined version -->
-  <!-- <svg
-    width="18"
-    height="14"
-    viewBox="0 0 18 14"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  > -->
   <path
-    d="M1 0C0.447715 0 0 0.447715 0 1V2C0 2.55228 0.447716 3 1 3H17C17.5523 3 18 2.55228 18 2V1C18 0.447715 17.5523 0 17 0H1Z"
-    style={`opacity: ${opacity}; fill: ${iconFinalColor}`}
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
   />
-  <path
-    fill-rule="evenodd"
-    clip-rule="evenodd"
-    d="M1 4.5H17L16.1885 12.2094C16.0813 13.2273 15.223 14 14.1995 14H3.80052C2.77701 14 1.91866 13.2273 1.81151 12.2094L1 4.5ZM6 8C6 7.44771 6.44772 7 7 7H11C11.5523 7 12 7.44771 12 8C12 8.55228 11.5523 9 11 9H7C6.44772 9 6 8.55228 6 8Z"
-    style={`opacity: ${opacity}; fill: ${iconFinalColor}`}
-  />
-  <!-- </svg> -->
 {:else if variant === IconVariant.Solid}
-  <!-- <svg
-    width="18"
-    height="14"
-    viewBox="0 0 18 14"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  > -->
   <path
-    d="M1 0C0.447715 0 0 0.447715 0 1V2C0 2.55228 0.447716 3 1 3H17C17.5523 3 18 2.55228 18 2V1C18 0.447715 17.5523 0 17 0H1Z"
-    class={classList}
-    style={`opacity: ${opacity}; fill: ${iconFinalColor}`}
+    d="M3.375 3C2.339 3 1.5 3.84 1.5 4.875v.75c0 1.036.84 1.875 1.875 1.875h17.25c1.035 0 1.875-.84 1.875-1.875v-.75C22.5 3.839 21.66 3 20.625 3H3.375z"
   />
   <path
     fill-rule="evenodd"
+    d="M3.087 9l.54 9.176A3 3 0 006.62 21h10.757a3 3 0 002.995-2.824L20.913 9H3.087zm6.163 3.75A.75.75 0 0110 12h4a.75.75 0 010 1.5h-4a.75.75 0 01-.75-.75z"
     clip-rule="evenodd"
-    class={classList}
-    d="M1 4.5H17L16.1885 12.2094C16.0813 13.2273 15.223 14 14.1995 14H3.80052C2.77701 14 1.91866 13.2273 1.81151 12.2094L1 4.5ZM6 8C6 7.44771 6.44772 7 7 7H11C11.5523 7 12 7.44771 12 8C12 8.55228 11.5523 9 11 9H7C6.44772 9 6 8.55228 6 8Z"
-    style={`opacity: ${opacity}; fill: ${iconFinalColor}`}
   />
-  <!-- </svg> -->
 {:else if variant === IconVariant.Mini}
-  <!-- <svg
-    width="18"
-    height="14"
-    viewBox="0 0 18 14"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  > -->
-  <path
-    d="M1 0C0.447715 0 0 0.447715 0 1V2C0 2.55228 0.447716 3 1 3H17C17.5523 3 18 2.55228 18 2V1C18 0.447715 17.5523 0 17 0H1Z"
-    class={classList}
-    style={`opacity: ${opacity}; fill: ${iconFinalColor}`}
-  />
+  <path d="M2 3a1 1 0 00-1 1v1a1 1 0 001 1h16a1 1 0 001-1V4a1 1 0 00-1-1H2z" />
   <path
     fill-rule="evenodd"
+    d="M2 7.5h16l-.811 7.71a2 2 0 01-1.99 1.79H4.802a2 2 0 01-1.99-1.79L2 7.5zM7 11a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z"
     clip-rule="evenodd"
-    class={classList}
-    d="M1 4.5H17L16.1885 12.2094C16.0813 13.2273 15.223 14 14.1995 14H3.80052C2.77701 14 1.91866 13.2273 1.81151 12.2094L1 4.5ZM6 8C6 7.44771 6.44772 7 7 7H11C11.5523 7 12 7.44771 12 8C12 8.55228 11.5523 9 11 9H7C6.44772 9 6 8.55228 6 8Z"
-    style={`opacity: ${opacity}; fill: ${iconFinalColor}`}
   />
-  <!-- </svg> -->
 {/if}

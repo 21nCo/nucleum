@@ -53,6 +53,7 @@
   import Archive from "../icons/Archive.svelte";
   import Dustbin from "../icons/Dustbin.svelte";
   import ThreeVerticalDots from "../icons/ThreeVerticalDots.svelte";
+  import Search from "../icons/Search.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -63,8 +64,9 @@
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
+
   $: {
-    variant =
+    if (
       (isActive &&
         icon != "chevright" &&
         icon != "chevleft" &&
@@ -74,10 +76,10 @@
       icon == "history" ||
       icon == "logout" ||
       icon == "link" ||
-      icon?.includes("-mini") ||
-      (variant && variant === IconVariant.Solid)
-        ? IconVariant.Solid
-        : IconVariant.Outline;
+      icon?.includes("-mini")
+    ) {
+      variant = IconVariant.Solid;
+    }
   }
 </script>
 
@@ -242,6 +244,10 @@
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}
         <ChevronDouble direction={Direction.Right} />
+      {:else if icon === "search"}
+        <Search {variant} />
+      {:else if icon === "search-mini"}
+        <Search variant={IconVariant.Mini} />
       {:else if icon === "heart"}
         <Heart {variant} />
       {:else if icon === "rocket"}

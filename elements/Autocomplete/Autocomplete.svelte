@@ -7,6 +7,9 @@
   import { appEvents } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import Icon from "../Icon.svelte";
+  import { IconVariant } from "$lib/tidy/types/icon.type";
+  import { Size } from "$lib/tidy/types/size.enum";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -31,7 +34,7 @@
 
   const dispatch = createEventDispatcher();
   const containerId = generateUID();
-  let iconComponent: typeof SvelteComponent | undefined;
+  // let iconComponent: typeof SvelteComponent | undefined;
   let selectedListItemIndex: number = -1;
 
   function hideList() {
@@ -76,23 +79,23 @@
     }
   }
 
-  onMount(async () => {
-    // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
-    try {
-      if (icon) {
-        const { default: Icon } = await import(
-          `${
-            customIconPath
-              ? `../../../${customIconPath}`
-              : `../../../tidy/icons`
-          }/${icon}.svelte`
-        );
-        iconComponent = Icon;
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  });
+  // onMount(async () => {
+  //   // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
+  //   try {
+  //     if (icon) {
+  //       const { default: Icon } = await import(
+  //         `${
+  //           customIconPath
+  //             ? `../../../${customIconPath}`
+  //             : `../../../tidy/icons`
+  //         }/${icon}.svelte`
+  //       );
+  //       iconComponent = Icon;
+  //     }
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // });
 
   appEvents.subscribe((x: AppEventType) => {
     if (
@@ -112,15 +115,18 @@
 >
   <div class="realtive flex items-center">
     {#if icon || !hideSearchIcon}
-      <!-- Search is a fallback component just in case iconComponent is not found -->
       <div
         class="absolute ml-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
       >
-        <!-- Here if hideSearchIcon is true and icon is provided but the dynamic import does not result in a component then there is a fallback of Search Icon -->
         {#if icon}
-          <svelte:component this={iconComponent || Search} />
+          <!-- <svelte:component this={iconComponent || Search} /> -->
+          <Icon {icon} size={Size.sm} variant={IconVariant.Outline} />
         {:else if !hideSearchIcon}
-          <Search />
+          <Icon
+            size={Size.sm}
+            icon="search-mini"
+            variant={IconVariant.Outline}
+          />
         {/if}
       </div>
     {/if}

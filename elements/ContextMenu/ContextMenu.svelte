@@ -28,11 +28,12 @@
   export let placement: Placement = Placement.RIGHT;
 
   let selectedIndex: number = 0;
+
+  let visibleModalIndex: number = -1;
+
   const id = generateUID();
 
   const dispatch = createEventDispatcher();
-
-  let iconComponent: typeof SvelteComponent | undefined;
 
   function handleIconClick() {
     dispatch("icon-click");
@@ -40,12 +41,25 @@
 
   function setToDefaultValue() {
     selectedIndex = -1;
+    resetModalVisibility();
+  }
+
+  function resetModalVisibility() {
+    visibleModalIndex = -1;
   }
 
   function handleMenuItemClick(item: GoalContextMenuItem) {
     return () => {
-      dispatch("menu-item-click", item);
-      setToDefaultValue();
+      if (item.isModalConfirmation) {
+        if (visibleModalIndex === -1) visibleModalIndex = items.indexOf(item);
+        else if (visibleModalIndex === items.indexOf(item)) {
+          dispatch("menu-item-click", item);
+          setToDefaultValue();
+        }
+      } else {
+        dispatch("menu-item-click", item);
+        setToDefaultValue();
+      }
     };
   }
   function closeContextMenu() {
@@ -91,8 +105,8 @@
       on:click|stopPropagation={handleIconClick}
       on:keydown|stopPropagation={handleKeyDownInList}
     >
-      <!-- <Icon {icon} /> -->
-      <ThreeVerticalDots />
+      <Icon {icon} />
+      <!-- <ThreeVerticalDots /> -->
     </div>
   {/if}
   {#if isContextMenuOpen}
@@ -108,8 +122,13 @@
           icon={item.icon}
           isActive={selectedIndex === index}
           on:click={handleMenuItemClick(item)}
+          on:close-modal={resetModalVisibility}
           style={menuItemStyle}
           classList={menuItemClassList}
+          isModalConfirmation={item.isModalConfirmation}
+          modalConfirmationMessage={item.modalConfirmationMessage}
+          isModalVisible={item.isModalConfirmation &&
+            visibleModalIndex === index}
         />
       {/each}
     </div>

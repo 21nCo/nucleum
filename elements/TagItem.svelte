@@ -1,12 +1,14 @@
 <script lang="ts">
   import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
+  import Icon from "./Icon.svelte";
+  import { IconVariant } from "../types/icon.type";
+  import { SelectionItemActiveStyle } from "../types/switcher.enum";
 
   export let label: string;
   export let id: string;
   export let classList: string = "";
 
   export let icon: string | undefined = "";
-  export let customIconPath: string | undefined = "";
 
   export let activeClassList: string = "";
   export let inActiveClassList: string = ""; // this is done because, if we have some classes which are going to be changing depending on the active state, and if we put their initial value in classList, then we won't be able to override it later
@@ -16,30 +18,12 @@
   export let style: string = "";
   export let disabled: boolean = false;
 
-  let iconComponent: typeof SvelteComponent | undefined;
-
   const dispatch = createEventDispatcher();
 
   function handleTagClick(e: any) {
     if (disabled) return;
     dispatch("click", { label, id });
   }
-
-  onMount(async () => {
-    // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
-    try {
-      if (icon) {
-        const { default: Icon } = await import(
-          `${
-            customIconPath ? `../../${customIconPath}` : `../../tidy/icons`
-          }/${icon}.svelte`
-        );
-        iconComponent = Icon;
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  });
 </script>
 
 <button
@@ -54,9 +38,14 @@
       : inActiveClassList
   }`}
 >
-  {#if icon && iconComponent}
-    <div class="min-w-[1rem] mr-1 flex justify-center items-center w-4 h-4">
-      <svelte:component this={iconComponent} {isActive} />
+  {#if icon}
+    <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
+      <Icon
+        selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+        {isActive}
+        {icon}
+        variant={IconVariant.Outline}
+      />
     </div>
   {/if}
   {label}
