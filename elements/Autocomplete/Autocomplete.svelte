@@ -20,57 +20,88 @@
   export let listItemClassList: string = "hover:bg-bgs3";
   export let listItemStyle: string = "";
   export let activeListItemClassList: string = "bg-bgs3";
+  export let areOptionsVisible: boolean = false;
 
   export let escapeDefaultClickBehaviour: boolean = false; // this is used to escape the default behaviour of the list item click, if this is true then the default behaviour of the list item click will not be performed, for example if you don't want to hide the list on list item click then set this to true
 
   export let hideSearchIcon: boolean = false;
   export let icon: string = "";
-  export let customIconPath: string = ""; // customIconPath should be relative to the folder in which tidy folder is present, so if tidy folder is present in src/lib then customIconPath should be relative to src/lib folder like ./folderOrFileInsideLibFolder
 
-  export let list: AutocompleteListItemType[] = [];
+  export let options: AutocompleteListItemType[] = [];
 
   export let placeholder: string = "";
-  export let value: string;
+  export let inputValue: string;
+  export let value: AutocompleteListItemType;
 
   const dispatch = createEventDispatcher();
   const containerId = generateUID();
+
+  let inputRef: HTMLInputElement | undefined;
   // let iconComponent: typeof SvelteComponent | undefined;
   let selectedListItemIndex: number = -1;
 
-  function hideList() {
+  let tempOptions: AutocompleteListItemType[] = [];
+
+  // function hideList() {
+  //   selectedListItemIndex = -1;
+  //   if (options === undefined || options.length === 0) return;
+  //   options = [];
+
+  // }
+
+  function hideOptions() {
     selectedListItemIndex = -1;
-    if (list === undefined || list.length === 0) return;
-    list = [];
+    if (options === undefined || options.length === 0) return;
+    areOptionsVisible = false;
   }
 
   function performDefaultClickActions() {
-    hideList();
+    hideOptions();
   }
 
-  function handleResultItemClick({ detail }: CustomEvent) {
+  function updateValue(detail: { title: string; id: string }) {
+    value = detail;
+    inputValue = detail.title;
+  }
+
+  function handleResultItemClick(detail: { title: string; id: string }) {
     dispatch("list-item-click", detail);
+    updateValue(detail);
     if (!escapeDefaultClickBehaviour) {
       performDefaultClickActions();
+      // because since there are chips, we don't want to hide the list on click, because the user might want to select multiple items
     }
+  }
+
+  function handleResultItemClickViaCustomEvent({ detail }: CustomEvent) {
+    handleResultItemClick(detail);
+  }
+
+  function focusOnInput() {
+    if (inputRef) inputRef.focus();
+  }
+
+  function updateListVisibility(value: boolean) {
+    areOptionsVisible = value;
   }
 
   function handleKeyDownInDropdown(event: KeyboardEvent) {
     if (event.key === "Escape") {
-      hideList();
+      hideOptions();
     }
     if (event.key === "ArrowDown") {
-      if (selectedListItemIndex < list.length - 1) {
+      if (selectedListItemIndex < tempOptions.length - 1) {
         selectedListItemIndex++;
       }
     }
     if (event.key === "ArrowUp") {
-      if (selectedListItemIndex > 0) {
+      if (selectedListItemIndex > -1) {
         selectedListItemIndex--;
       }
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { title, id } = list[selectedListItemIndex];
+        const { title, id } = tempOptions[selectedListItemIndex];
         dispatch("list-item-click", { title, id });
         if (!escapeDefaultClickBehaviour) {
           performDefaultClickActions();
@@ -79,23 +110,33 @@
     }
   }
 
-  // onMount(async () => {
-  //   // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
-  //   try {
-  //     if (icon) {
-  //       const { default: Icon } = await import(
-  //         `${
-  //           customIconPath
-  //             ? `../../../${customIconPath}`
-  //             : `../../../tidy/icons`
-  //         }/${icon}.svelte`
-  //       );
-  //       iconComponent = Icon;
-  //     }
-  //   } catch (err) {
-  //     console.log(err);
+  // $: {
+  //   if (inputValue === "") {
+  //     tempOptions = options;
+  //   } else {
+  //     tempOptions = options.filter((goal: AutocompleteListItemType) => {
+  //       return goal.title.toLowerCase().includes(inputValue.toLowerCase());
+  //     });
   //   }
-  // });
+  // }
+
+  $: {
+    selectedListItemIndex = -1;
+    if (!inputValue) {
+      tempOptions = options;
+    }
+    if (
+      inputValue !== undefined &&
+      inputValue !== null &&
+      inputValue !== "" &&
+      options.length !== 0
+    ) {
+      updateListVisibility(true);
+      tempOptions = options.filter((x) =>
+        x.title.toLowerCase().includes(inputValue.toLowerCase())
+      );
+    }
+  }
 
   appEvents.subscribe((x: AppEventType) => {
     if (
@@ -103,7 +144,7 @@
       x.value &&
       x.value instanceof PointerEvent
     ) {
-      actIfClickedOutside(x.value, `#${containerId}`, hideList);
+      actIfClickedOutside(x.value, `#${containerId}`, hideOptions);
     }
   });
 </script>
@@ -134,7 +175,8 @@
     <input
       style={inputStyle}
       type="text"
-      bind:value
+      bind:this={inputRef}
+      bind:value={inputValue}
       on:input
       on:focus
       on:keydown={handleKeyDownInDropdown}
@@ -146,12 +188,12 @@
       aria-describedby="search-addon"
     />
   </div>
-  {#if list && list.length > 0}
+  {#if tempOptions && tempOptions.length > 0 && areOptionsVisible}
     <div
       style={listContainerStyle}
       class={`absolute w-full z-[10] max-h-[10rem] overflow-auto ${listContainerClassList}`}
     >
-      {#each list as listItem, index}
+      {#each tempOptions as listItem, index}
         <AutocompleteResultItem
           {...listItem}
           classList={{
@@ -160,7 +202,7 @@
           }}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}
-          on:click={handleResultItemClick}
+          on:click={handleResultItemClickViaCustomEvent}
         />
       {/each}
     </div>
