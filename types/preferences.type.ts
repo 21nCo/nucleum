@@ -11,6 +11,6 @@ export type UserGlobalPreferences = {
   tempColorScheme: string;
   accessibilitySizingFactor: number;
   timeFormat: string;
-  timeZone?: string;
+  timeZone: string;
   timeScales?: TimeScale[];
 };

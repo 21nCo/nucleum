@@ -21,7 +21,7 @@
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
   function onSwipe(event: any) {
-    console.log({ event });
+    appStore.log({ event });
   }
   $: if (dialogRef) dialogRef.showModal();
   onMount(() => {
@@ -42,7 +42,7 @@
         } else if (!x.isShow) {
           modals = modals.filter((y) => y.path != x.path);
         }
-        console.log({ modals });
+        appStore.log({ modals });
       }
     });
   });

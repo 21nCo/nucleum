@@ -82,7 +82,9 @@ export class Persistance {
         break;
       case Cloud.surreal:
         if (item.id) {
-          surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
+          const id = ItemEnum[itemType] + `:${item.id}`;
+          item.id = id;
+          surrealDb.create(id, item);
         } else {
           return surrealDb.create(ItemEnum[itemType], item);
         }
@@ -168,9 +170,10 @@ export class Persistance {
         return surrealDb.delete(itemId);
     }
   }
-  retrieve(itemId: string, itemType: ItemType) {
+  retrieve(itemId: string, itemType: ItemType | undefined = undefined) {
     switch (get(cloudProvider)) {
       case Cloud.local:
+        if (!itemType) break;
         let items = retrieveLocally(itemType);
         if (!items) {
           items = [];

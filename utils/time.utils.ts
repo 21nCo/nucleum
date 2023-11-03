@@ -207,21 +207,6 @@ export function determineTimePeriod(period: TimePeriod) {
   return { begin, end, title };
 }
 
-export function determineCarbonChartTimeInterval(scale: TimeScale) {
-  switch (scale) {
-    case TimeScale.DAYS:
-      return "daily";
-    case TimeScale.WEEKS:
-      return "weekly";
-    case TimeScale.MONTHS:
-      return "monthly";
-    case TimeScale.QUARTERS:
-      return "quarterly";
-    case TimeScale.YEARS:
-      return "yearly";
-  }
-}
-
 export function getCorrespoingHorizonFrequencyLabel(scale: TimeScale) {
   switch (scale) {
     case TimeScale.DAYS:
@@ -252,6 +237,18 @@ export const getTimeZonesWithOffsets = () => {
     };
   });
 };
+
+export function detectTimeZone() {
+  const timeZones = getTimeZonesWithOffsets();
+  try {
+    return (
+      Intl.DateTimeFormat().resolvedOptions().timeZone ?? timeZones[0].name
+    );
+  } catch (error) {
+    console.error("Could not detect time zone:", error);
+    return timeZones[0].name;
+  }
+}
 
 //todo cleanup - this is duplicate of formatSeconds
 export function getTimeLabel(time: number) {

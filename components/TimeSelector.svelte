@@ -1,13 +1,16 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   import FormControlLabel from "../elements/text/FormControlLabel.svelte";
-
-  export let selectedHour: string;
-  export let selectedMinute: string;
+  export let value: string;
   export let label: string;
   export let info: string | undefined = undefined;
+  let selectedHour: string = "00";
+  let selectedMinute: string = "00";
   let hours: any[] = [];
   let minutes: any[] = [];
+  let parts = value.split(":");
+  selectedHour = parts[0];
+  selectedMinute = parts[1];
   const dispatch = createEventDispatcher();
   $: {
     hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
@@ -16,6 +19,7 @@
     );
   }
   function onChange() {
+    value = selectedHour + ":" + selectedMinute;
     dispatch("change", { value: selectedHour + ":" + selectedMinute });
   }
 </script>

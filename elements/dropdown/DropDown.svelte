@@ -14,14 +14,14 @@
   import { bg } from "$lib/tidy/utils/theme.utils";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
-  export let selectedIndex: number = 0;
+  export let value: string | number;
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
   export let style: DropDownStyle = DropDownStyle.DEFAULT;
   export let containerId = generateUID();
   let isShowOptions: boolean = false;
-  $: selected = items[selectedIndex];
+  $: selected = items.find((x) => x.value === value) ?? items[0];
   onMount(() => {
     appEvents.subscribe((x: AppEventType) => {
       if (
@@ -78,7 +78,7 @@
             : ''}"
           on:click={() => {
             if (item.disabled) return;
-            selectedIndex = index;
+            value = item.value;
             isShowOptions = false;
             dispatch("select", item.value);
           }}

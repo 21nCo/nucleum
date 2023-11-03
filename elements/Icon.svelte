@@ -53,7 +53,7 @@
   export let size: Size = Size.md;
   export let isActive: boolean = false;
   export let color: string | undefined = undefined;
-  $: defaultColor = retrieveCurrentColors($userPreferences).fgs2 ?? "";
+  $: defaultColor = retrieveCurrentColors($userPreferences)?.fgs2 ?? "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =

@@ -143,12 +143,6 @@ export function generateSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 
-export function removeDuplicatesById(items: any[]) {
-  return items.filter((item, index, arr) => {
-    return index === arr.findIndex((other) => other.id === item.id);
-  });
-}
-
 export function resolveComponent(action: string) {
   let component = localActions.find((x) => x.action == action);
   if (component) return component;
@@ -234,24 +228,6 @@ export function performBlankApiCall(
     },
     body: body,
   });
-}
-
-export function getNextInLoop(list: any, index: number) {
-  const nextIndex = index + 1;
-  if (nextIndex < list.length) {
-    return list[nextIndex];
-  }
-  return list[0];
-}
-
-export function sortPropertiesByOrder(obj: any) {
-  const entries = Object.entries(obj);
-  //@ts-ignore
-  const sortedEntries = entries
-    .filter(([, value]) => value.visibility !== false)
-    .sort(([, a], [, b]) => a.order - b.order);
-  const sortedObj = Object.fromEntries(sortedEntries);
-  return sortedObj;
 }
 
 export function copyToClipboard(text: string) {
