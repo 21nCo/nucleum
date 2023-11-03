@@ -8,9 +8,10 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Placement } from "$lib/tidy/types/placement.type";
+  import Icon from "../Icon.svelte";
+  import ThreeVerticalDots from "$lib/tidy/icons/ThreeVerticalDots.svelte";
 
   export let icon: string = "";
-  export let customIconPath: string | undefined = "";
 
   export let items: GoalContextMenuItem[] = [];
   export let hideIcon: boolean = false;
@@ -65,23 +66,6 @@
     }
   }
 
-  onMount(async () => {
-    // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
-    try {
-      if (icon) {
-        const { default: Icon } = await import(
-          `${
-            customIconPath
-              ? `../../../${customIconPath}`
-              : `../../../tidy/icons`
-          }/${icon}.svelte`
-        );
-        iconComponent = Icon;
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  });
   appEvents.subscribe((x: AppEventType) => {
     if (
       x.event === AppEvent.WINDOW_CLICKED &&
@@ -99,7 +83,7 @@
   class="z-20 relative"
   on:keydown|stopPropagation={handleKeyDownInList}
 >
-  {#if icon && iconComponent && !hideIcon}
+  {#if icon && !hideIcon}
     <div
       style={iconStyle}
       tabindex="0"
@@ -107,7 +91,8 @@
       on:click|stopPropagation={handleIconClick}
       on:keydown|stopPropagation={handleKeyDownInList}
     >
-      <svelte:component this={iconComponent} />
+      <!-- <Icon {icon} /> -->
+      <ThreeVerticalDots />
     </div>
   {/if}
   {#if isContextMenuOpen}
