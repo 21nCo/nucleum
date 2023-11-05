@@ -6,6 +6,7 @@
   import Pop from "../Pop.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "../Button.svelte";
+  import { windowObject } from "$lib/tidy/stores/app.store";
 
   export let style: string = "";
   export let classList: ClassListProp | null = null;
@@ -14,10 +15,10 @@
   export let icon: DynamicIconProp | null = null;
   export let isActive: boolean = false;
 
-  export let isModalConfirmation: boolean = false; //this variable is responsible for confirming that modal will be needed as confirmation, so when the user clicks on the item, the modal will be visible if this variable is true
-  export let modalConfirmationMessage: string = ""; // this variable is responsible for the message that will be displayed in the modal
+  // export let isModalConfirmation: boolean = false; //this variable is responsible for confirming that modal will be needed as confirmation, so when the user clicks on the item, the modal will be visible if this variable is true
+  // export let modalConfirmationMessage: string = ""; // this variable is responsible for the message that will be displayed in the modal
 
-  export let isModalVisible: boolean = false; // this variable is to identify whether the modal will be visible or not,
+  // export let isModalVisible: boolean = false; // this variable is to identify whether the modal will be visible or not,
 
   const dispatch = createEventDispatcher();
 
@@ -25,17 +26,9 @@
     dispatch("click");
   }
 
-  function handleCloseModal() {
-    dispatch("close-modal");
-  }
-
   // function toggleModalVisibility(value?: boolean) {
   //   isModalVisible = value ?? !isModalVisible;
   // }
-
-  $: {
-    console.log({ isModalConfirmation, isModalVisible });
-  }
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -60,11 +53,15 @@
     <span>
       {label}
     </span>
-    {#if isModalConfirmation && isModalVisible}
+    <!-- {#if isModalConfirmation && isModalVisible}
       <Pop
         hideCloseButton
         size={Size.sm}
-        classList={`right-[calc(100%+10px)] gap-2 flex flex-col`}
+        classList={`${
+          $windowObject.isInPortraitMode
+            ? `top-[calc(100%+10px)]`
+            : `right-[calc(100%+10px)]`
+        } gap-2 flex flex-col`}
         isVisible
       >
         {modalConfirmationMessage}
@@ -83,7 +80,7 @@
           </Button>
         </div>
       </Pop>
-    {/if}
+    {/if} -->
   </div>
   <slot />
 </div>

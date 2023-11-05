@@ -25,13 +25,14 @@
   export let escapeDefaultClickBehaviour: boolean = false; // this is used to escape the default behaviour of the list item click, if this is true then the default behaviour of the list item click will not be performed, for example if you don't want to hide the list on list item click then set this to true
 
   export let hideSearchIcon: boolean = false;
+  export let hideResetIcon: boolean = false;
   export let icon: string = "";
 
   export let options: AutocompleteListItemType[] = [];
 
   export let placeholder: string = "";
   export let inputValue: string;
-  export let value: AutocompleteListItemType;
+  export let value: AutocompleteListItemType | null = null;
 
   const dispatch = createEventDispatcher();
   const containerId = generateUID();
@@ -60,8 +61,8 @@
   }
 
   function updateValue(detail: { title: string; id: string }) {
-    value = detail;
     inputValue = detail.title;
+    value = detail;
   }
 
   function handleResultItemClick(detail: { title: string; id: string }) {
@@ -81,8 +82,23 @@
     if (inputRef) inputRef.focus();
   }
 
+  function onFocus() {
+    updateListVisibility(true);
+    tempOptions = options;
+  }
+
+  function onReset() {
+    inputValue = "";
+    value = null;
+    dispatch("reset");
+  }
+
   function updateListVisibility(value: boolean) {
     areOptionsVisible = value;
+  }
+
+  function onInputChange() {
+    value = options.find((x) => x.title === inputValue) ?? null;
   }
 
   function handleKeyDownInDropdown(event: KeyboardEvent) {
@@ -125,7 +141,8 @@
     if (!inputValue) {
       tempOptions = options;
     }
-    if (
+    if (value) updateListVisibility(false);
+    else if (
       inputValue !== undefined &&
       inputValue !== null &&
       inputValue !== "" &&
@@ -137,6 +154,12 @@
       );
     }
   }
+
+  onMount(() => {
+    setTimeout(() => {
+      focusOnInput();
+    }, 0);
+  });
 
   appEvents.subscribe((x: AppEventType) => {
     if (
@@ -171,14 +194,26 @@
         {/if}
       </div>
     {/if}
+    {#if !hideResetIcon}
+      <div
+        class="absolute right-0 mr-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
+      >
+        <Icon
+          on:click={onReset}
+          size={Size.sm}
+          icon="cross"
+          variant={IconVariant.Outline}
+        />
+      </div>
+    {/if}
 
     <input
       style={inputStyle}
       type="text"
       bind:this={inputRef}
       bind:value={inputValue}
-      on:input
-      on:focus
+      on:input={onInputChange}
+      on:focus={onFocus}
       on:keydown={handleKeyDownInDropdown}
       class={`outline-none w-full py-2 px-2.5 text-b2 ${
         hideSearchIcon && !icon ? `` : `pl-8`

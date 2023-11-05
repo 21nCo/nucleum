@@ -41,27 +41,15 @@
 
   function setToDefaultValue() {
     selectedIndex = -1;
-    resetModalVisibility();
-  }
-
-  function resetModalVisibility() {
-    visibleModalIndex = -1;
   }
 
   function handleMenuItemClick(item: GoalContextMenuItem) {
     return () => {
-      if (item.isModalConfirmation) {
-        if (visibleModalIndex === -1) visibleModalIndex = items.indexOf(item);
-        else if (visibleModalIndex === items.indexOf(item)) {
-          dispatch("menu-item-click", item);
-          setToDefaultValue();
-        }
-      } else {
-        dispatch("menu-item-click", item);
-        setToDefaultValue();
-      }
+      dispatch("menu-item-click", item);
+      setToDefaultValue();
     };
   }
+
   function closeContextMenu() {
     setToDefaultValue();
     dispatch("close");
@@ -122,13 +110,8 @@
           icon={item.icon}
           isActive={selectedIndex === index}
           on:click={handleMenuItemClick(item)}
-          on:close-modal={resetModalVisibility}
           style={menuItemStyle}
           classList={menuItemClassList}
-          isModalConfirmation={item.isModalConfirmation}
-          modalConfirmationMessage={item.modalConfirmationMessage}
-          isModalVisible={item.isModalConfirmation &&
-            visibleModalIndex === index}
         />
       {/each}
     </div>
