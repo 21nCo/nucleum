@@ -51,7 +51,6 @@
   import Heart from "../icons/Heart.svelte";
   import Rocket from "../icons/Rocket.svelte";
   import Archive from "../icons/Archive.svelte";
-  import Dustbin from "../icons/Dustbin.svelte";
   import ThreeVerticalDots from "../icons/ThreeVerticalDots.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
@@ -74,8 +73,7 @@
       icon == "history" ||
       icon == "logout" ||
       icon == "link" ||
-      icon?.includes("-mini") ||
-      (variant && variant === IconVariant.Solid)
+      icon?.includes("-mini")
         ? IconVariant.Solid
         : IconVariant.Outline;
   }
@@ -246,10 +244,6 @@
         <Heart {variant} />
       {:else if icon === "rocket"}
         <Rocket {variant} />
-      {:else if icon === "archive"}
-        <Archive {variant} />
-      {:else if icon === "dustbin"}
-        <Dustbin {variant} />
       {:else if icon === "archive"}
         <Archive {variant} />
       {:else if icon === "threeverticaldots"}

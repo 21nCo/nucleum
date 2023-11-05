@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
+  import Icon from "./Icon.svelte";
+  import { SelectionItemActiveStyle } from "../types/switcher.enum";
 
   export let label: string;
   export let id: string;
@@ -16,37 +18,19 @@
   export let style: string = "";
   export let disabled: boolean = false;
 
-  let iconComponent: typeof SvelteComponent | undefined;
-
   const dispatch = createEventDispatcher();
 
   function handleTagClick(e: any) {
     if (disabled) return;
     dispatch("click", { label, id });
   }
-
-  onMount(async () => {
-    // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
-    try {
-      if (icon) {
-        const { default: Icon } = await import(
-          `${
-            customIconPath ? `../../${customIconPath}` : `../../tidy/icons`
-          }/${icon}.svelte`
-        );
-        iconComponent = Icon;
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  });
 </script>
 
 <button
   {style}
   tabindex="0"
   on:click={handleTagClick}
-  class={`w-fit flex items-center justify-center whitespace-nowrap ${classList} ${
+  class={`w-fit flex items-center justify-center gap-1 whitespace-nowrap ${classList} ${
     disabled
       ? `${disabledClassList} cursor-not-allowed`
       : isActive
@@ -54,10 +38,10 @@
       : inActiveClassList
   }`}
 >
-  {#if icon && iconComponent}
-    <div class="min-w-[1rem] mr-1 flex justify-center items-center w-4 h-4">
-      <svelte:component this={iconComponent} {isActive} />
-    </div>
-  {/if}
+  <Icon
+    {icon}
+    {isActive}
+    selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+  />
   {label}
 </button>

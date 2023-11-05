@@ -6,7 +6,7 @@ export function properCase(str: string) {
   });
 }
 
-export function prefix(id: string, itemType: ItemType) {
+export function prefix(id: string | number, itemType: ItemType) {
   return `${Item[itemType]}:${id}`;
 }
 

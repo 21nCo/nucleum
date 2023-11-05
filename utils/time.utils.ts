@@ -82,11 +82,9 @@ export function formatSecondsToTimeInDecimals(
   }
 }
 
-export function timePeriodLabel(
-  scale: TimeScale,
-  value: number,
-  type: TimePeriodType
-) {
+export function timePeriodLabel(period: TimePeriod) {
+  const { scale, type, value } = period;
+  if (typeof value != "number") return;
   if (type === TimePeriodType.RELATIVE) {
     if (value === 0) {
       if (scale === TimeScale.DAYS) return "Today";
@@ -140,7 +138,7 @@ export function determineTimePeriod(period: TimePeriod) {
       typeof period.value === "number"
     ) {
       begin.setDate(begin.getDate() + period.value);
-      title = timePeriodLabel(period.scale, period.value, period.type);
+      title = timePeriodLabel(period);
     } else if (
       period.type === TimePeriodType.CALENDAR_BOUND &&
       period.value instanceof Array
@@ -161,7 +159,7 @@ export function determineTimePeriod(period: TimePeriod) {
       typeof period.value === "number"
     ) {
       begin.setMonth(begin.getMonth() + period.value);
-      title = timePeriodLabel(period.scale, period.value, period.type);
+      title = timePeriodLabel(period);
       begin.setDate(1);
       end.setDate(31);
     } else if (
@@ -183,7 +181,7 @@ export function determineTimePeriod(period: TimePeriod) {
       typeof period.value === "number"
     ) {
       begin.setFullYear(begin.getFullYear() + period.value);
-      title = timePeriodLabel(period.scale, period.value, period.type);
+      title = timePeriodLabel(period);
       begin.setDate(1);
       end.setDate(31);
       begin.setMonth(0);

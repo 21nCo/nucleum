@@ -2,7 +2,7 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import { cloudProvider } from "./app.store";
+import { appStore, cloudProvider } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/local/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
@@ -185,14 +185,18 @@ export class Persistance {
     }
   }
   retrieveAll(itemType: ItemType) {
-    switch (get(cloudProvider)) {
-      case Cloud.local:
-        let items = retrieveLocally(itemType);
-        return items;
-      case Cloud.surreal:
-        return surrealDb.select(ItemEnum[itemType]);
+    try {
+      switch (get(cloudProvider)) {
+        case Cloud.local:
+          let items = retrieveLocally(itemType);
+          return items;
+        case Cloud.surreal:
+          return surrealDb.select(ItemEnum[itemType]);
+      }
+      return [];
+    } catch (error) {
+      appStore.logError(error);
     }
-    return [];
   }
   async searchByLabel(
     query: string,
@@ -237,14 +241,13 @@ export class Persistance {
       case Cloud.surreal:
         if (itemType != ItemEnum.ALL) {
           let searchResult = await surrealDb.query(
-            `select * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
+            `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString`,
             {
-              tb: ItemEnum[itemType],
               searchString: query,
             }
           );
           if (searchResult && searchResult.length > 0) {
-            results = searchResult[1].result;
+            results = searchResult[0];
           }
         }
     }

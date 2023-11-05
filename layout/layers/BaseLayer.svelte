@@ -23,7 +23,7 @@
   let isShowLoading = true;
   bootup();
   onMount(async () => {
-    await initialize();
+    await initializeData();
     isShowLoading = false;
     return () => {
       clearInterval(timer);
@@ -40,16 +40,15 @@
     runCurrentTime();
     inject({ mode: dev ? "development" : "production" });
   }
-  async function initialize() {
+  async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
-    //todo - retrieve User preferences
     await initializeAppData();
     if ($account.isLoggedIn) {
       await userPreferences.sync();
     }
-    // postMessageToParent({
-    //   colorscheme: JSON.stringify($userPreferences.colorScheme),
-    // });
+    postMessageToParent({
+      colorscheme: JSON.stringify($userPreferences.colorScheme),
+    });
   }
   async function initializeAppData() {
     const app = import.meta.env.VITE_APP ?? window.location.hostname;

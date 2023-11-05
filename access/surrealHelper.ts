@@ -1,6 +1,7 @@
 import jwt_decode from "jwt-decode";
 import type { SurrealResponse } from "../types/surreal.type";
 import { Surreal } from "surrealdb.js";
+import type { DbRecordType } from "$lib/local/types/item.type";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 export class SurrealDatabaseUsingHttp {
@@ -80,7 +81,7 @@ export class SurrealDatabaseUsingHttp {
   async query(
     query: string,
     params: {
-      [key: string]: string | number | boolean;
+      [key: string]: string | number | boolean | DbRecordType | DbRecordType[];
     }
   ) {
     try {
@@ -177,28 +178,39 @@ export class SurrealDatabaseUsingSdk {
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
       this.userId = decodedToken?.ID ?? "";
+      this.connect();
     }
   }
   async close() {
-    //todo - maintaining persistant connection vs closing connection
-    await this.db.close();
+    //todo urgent - maintaining persistant connection vs closing connection
+    //await this.db.close();
   }
   async connect() {
-    this.token = localStorage.getItem("surreal-token");
-    if (!this.token) throw new Error("User not logged in");
-    let decodedToken: any = jwt_decode(this.token);
-    this.userId = decodedToken?.ID ?? "";
-    //console.log({ userId: this.userId, url: `${this.instance}/rpc` });
-    await this.db.connect(`${this.instance}/rpc`, {
-      namespace: import.meta.env.VITE_SURREAL_USER_NS ?? "TIDIGIT",
-      database: this.userId ?? "",
-    });
-    return await this.db.authenticate(this.token ?? "");
+    try {
+      this.token = localStorage.getItem("surreal-token");
+      if (!this.token) throw new Error("User not logged in");
+      let decodedToken: any = jwt_decode(this.token);
+      this.userId = decodedToken?.ID ?? "";
+      //console.log({ userId: this.userId, url: `${this.instance}/rpc` });
+      await this.db.connect(`${this.instance}/rpc`, {
+        namespace: import.meta.env.VITE_SURREAL_USER_NS ?? "TIDIGIT",
+        database: this.userId ?? "",
+      });
+      return await this.db.authenticate(this.token ?? "");
+    } catch (error) {
+      console.error("Error in Surreal connect", JSON.stringify(error));
+      return null;
+    }
+  }
+  async reconnectIfRequired() {
+    console.log("reconnectIfRequired", this.db.status);
+    return this.db.status === 0 || (await this.connect());
   }
   async create(recordId: string, data: any) {
     try {
-      let isConnected = await this.connect();
+      let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
+      console.log("create", { recordId, data });
       let response = await this.db.create(recordId, data);
       return response;
     } catch (error) {
@@ -210,8 +222,9 @@ export class SurrealDatabaseUsingSdk {
   }
   async insert(tableName: string, data: any[]) {
     try {
-      let isConnected = await this.connect();
+      let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
+      console.log("insert", { tableName, data });
       let response = await this.db.insert(tableName, data);
       return response;
     } catch (error) {
@@ -223,7 +236,7 @@ export class SurrealDatabaseUsingSdk {
   }
   async merge(recordId: string, data: any) {
     try {
-      let isConnected = await this.connect();
+      let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
       console.log("merge", { recordId, data });
       let response = await this.db.merge(recordId, data);
@@ -237,7 +250,7 @@ export class SurrealDatabaseUsingSdk {
   }
   async update(recordId: string, data: any) {
     try {
-      let isConnected = await this.connect();
+      let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
       console.log("update", { recordId, data });
       let response = await this.db.update(recordId, data);
@@ -251,8 +264,9 @@ export class SurrealDatabaseUsingSdk {
   }
   async select(recordId: string) {
     try {
-      let isConnected = await this.connect();
+      let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
+      console.log("select", { recordId });
       let response = await this.db.select(recordId);
       return response;
     } catch (error) {
@@ -264,7 +278,7 @@ export class SurrealDatabaseUsingSdk {
   }
   async delete(recordId: string) {
     try {
-      this.connect();
+      // this.reconnectIfRequired();
       let response = await this.db.delete(recordId);
       return response;
     } catch (error) {
@@ -277,12 +291,13 @@ export class SurrealDatabaseUsingSdk {
   async query(
     query: string,
     params: {
-      [key: string]: string | number | boolean;
+      [key: string]: string | number | boolean | DbRecordType | DbRecordType[];
     } = {}
   ) {
     try {
-      let isConnected = await this.connect();
+      let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
+      console.log("query", { query, params });
       let response = await this.db.query(query, params);
       return response;
     } catch (error) {
@@ -328,7 +343,7 @@ export class SurrealDatabase {
   query(
     query: string,
     params: {
-      [key: string]: string | number | boolean;
+      [key: string]: string | number | boolean | DbRecordType | DbRecordType[];
     } = {}
   ) {
     return this.surreal.query(query, params);

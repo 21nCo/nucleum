@@ -1,10 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Cross from "../icons/Cross.svelte";
-  import Dustbin from "../icons/Dustbin.svelte";
   import { IconVariant } from "../types/icon.type";
   import Icon from "./Icon.svelte";
-  import { generateUID } from "../utils/utils";
 
   export let isVisible: boolean = false;
   export let hideCloseButton: boolean = false;
