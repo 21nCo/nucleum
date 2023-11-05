@@ -1,14 +1,14 @@
 <script lang="ts">
-  import type { DynamicIconProp } from "$lib/local/types/dynamicIconProp.type";
   import type { ClassListProp } from "$lib/tidy/types/classListProp.type";
-  import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
 
   export let style: string = "";
   export let classList: ClassListProp | null = null;
 
   export let label: string = "";
-  export let icon: DynamicIconProp | null = null;
+  export let icon: string | undefined = undefined;
   export let isActive: boolean = false;
 
   const dispatch = createEventDispatcher();
@@ -37,11 +37,11 @@
   }`}
 >
   <div class="whitespace-nowrap flex items-center justify-start">
-    <!-- {#if icon}
-      <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
-        <Icon icon={icon.name} variant={icon.variant} />
+    {#if icon}
+      <div class="min-w-[1rem] mr-2 flex justify-center items-center">
+        <Icon {icon} size={Size.sm} />
       </div>
-    {/if} -->
+    {/if}
     <span>
       {label}
     </span>

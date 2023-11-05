@@ -7,7 +7,7 @@
   import Stack from "../icons/Stack.svelte";
   import { ChatIconVariant, IconVariant } from "../types/icon.type";
   import ChevronDouble from "../icons/ChevronDouble.svelte";
-  import { Direction } from "../types/direction.enum";
+  import { Direction, Orientation } from "../types/direction.enum";
   import { Size } from "../types/size.enum";
   import Command from "../icons/Command.svelte";
   import Chevron from "../icons/Chevron.svelte";
@@ -51,7 +51,7 @@
   import Heart from "../icons/Heart.svelte";
   import Rocket from "../icons/Rocket.svelte";
   import Archive from "../icons/Archive.svelte";
-  import ThreeVerticalDots from "../icons/ThreeVerticalDots.svelte";
+  import Ellipsis from "../icons/Ellipsis.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -246,8 +246,12 @@
         <Rocket {variant} />
       {:else if icon === "archive"}
         <Archive {variant} />
-      {:else if icon === "threeverticaldots"}
-        <ThreeVerticalDots {variant} />
+      {:else if icon === "ellipsis"}
+        <Ellipsis orientation={Orientation.Horizontal} />
+      {:else if icon === "ellipsis-vertical"}
+        <Ellipsis orientation={Orientation.Vertical} />
+      {:else if icon === "ellipsis-circled"}
+        <Ellipsis orientation={Orientation.Horizontal} isCircled={true} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

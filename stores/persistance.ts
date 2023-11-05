@@ -199,7 +199,7 @@ export class Persistance {
     }
   }
   async searchByLabel(
-    query: string,
+    searchString: string,
     itemType: ItemType
   ): Promise<DbRecordWithLabel[]> {
     let results: DbRecordWithLabel[] = [];
@@ -212,7 +212,7 @@ export class Persistance {
             if (tagList) {
               const tagItems = tagList
                 .filter((item: DbRecordWithLabel) =>
-                  item.label.toLowerCase().includes(query.toLowerCase())
+                  item.label.toLowerCase().includes(searchString.toLowerCase())
                 )
                 .map((x: DbRecordWithLabel) => {
                   return { label: x.label, id: x.id };
@@ -221,7 +221,7 @@ export class Persistance {
             }
             if (taskList) {
               const taskItems = taskList.filter((item: DbRecordWithLabel) =>
-                item.label.toLowerCase().includes(query.toLowerCase())
+                item.label.toLowerCase().includes(searchString.toLowerCase())
               );
               results = [...results, ...taskItems];
             }
@@ -230,7 +230,7 @@ export class Persistance {
             let items = retrieveLocally(itemType);
             if (!items) break;
             items = items.filter((item: DbRecordWithLabel) =>
-              item.label.toLowerCase().includes(query.toLowerCase())
+              item.label.toLowerCase().includes(searchString.toLowerCase())
             );
             results = items.map((x: DbRecordWithLabel) => {
               return { label: x.label, id: x.id };
@@ -243,7 +243,7 @@ export class Persistance {
           let searchResult = await surrealDb.query(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString`,
             {
-              searchString: query,
+              searchString: searchString.toLowerCase(),
             }
           );
           if (searchResult && searchResult.length > 0) {

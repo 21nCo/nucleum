@@ -9,9 +9,8 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Placement } from "$lib/tidy/types/placement.type";
   import Icon from "../Icon.svelte";
-  import ThreeVerticalDots from "$lib/tidy/icons/ThreeVerticalDots.svelte";
 
-  export let icon: string = "";
+  export let icon: string = "ellipsis-vertical";
 
   export let items: GoalContextMenuItem[] = [];
   export let hideIcon: boolean = false;
@@ -31,8 +30,6 @@
   const id = generateUID();
 
   const dispatch = createEventDispatcher();
-
-  let iconComponent: typeof SvelteComponent | undefined;
 
   function handleIconClick() {
     dispatch("icon-click");
@@ -91,8 +88,7 @@
       on:click|stopPropagation={handleIconClick}
       on:keydown|stopPropagation={handleKeyDownInList}
     >
-      <!-- <Icon {icon} /> -->
-      <ThreeVerticalDots />
+      <Icon {icon} />
     </div>
   {/if}
   {#if isContextMenuOpen}
