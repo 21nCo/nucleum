@@ -17,10 +17,14 @@
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { page } from "$app/stores";
+  import LoadingView from "../paint/LoadingView.svelte";
   let timer: any;
+  let isShowLoading = true;
   bootup();
   onMount(async () => {
-    await initialize();
+    await initializeData();
+    isShowLoading = false;
     return () => {
       clearInterval(timer);
       //remove window event listeners
@@ -36,10 +40,12 @@
     runCurrentTime();
     inject({ mode: dev ? "development" : "production" });
   }
-  async function initialize() {
+  async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
-    //todo - retrieve User preferences
     await initializeAppData();
+    if ($account.isLoggedIn) {
+      await userPreferences.sync();
+    }
     postMessageToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
     });
@@ -73,13 +79,13 @@
   }
   function setLaunchContext() {
     let subdomain = window?.location.host.split(".")[0];
+    let isSheet = $page.url?.searchParams?.get("isSheet");
     // console.log({ subdomain, location: window?.location });
-    // $appStore.launchContext = LaunchContext.EMBED;
-    // $appStore.embedContext = EmbedContext.SHEET;
+    //$appStore.launchContext = LaunchContext.EMBED;
     if (subdomain?.includes("embed")) {
       $appStore.launchContext = LaunchContext.EMBED;
     }
-    if (subdomain?.includes("sheet")) {
+    if (isSheet) {
       $appStore.embedContext = EmbedContext.SHEET;
     }
   }
@@ -97,12 +103,16 @@
 </script>
 
 <title>{$appStore.appData.name}</title>
-<div class="flex h-screen w-screen">
-  <ThemeLayer>
-    <slot />
-  </ThemeLayer>
-</div>
-{#if $appStore.isDebugMode}
-  <DebugLayer />
+{#if isShowLoading}
+  <LoadingView />
+{:else}
+  <div class="flex h-screen w-screen">
+    <ThemeLayer>
+      <slot />
+    </ThemeLayer>
+  </div>
+  {#if $appStore.isDebugMode}
+    <DebugLayer />
+  {/if}
+  <ModalLayer />
 {/if}
-<ModalLayer />

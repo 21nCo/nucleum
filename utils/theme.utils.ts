@@ -20,7 +20,7 @@ export function assignSatAndLight(
   return { saturation, lightness };
 }
 export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  let colorScheme = userPreferences.colorScheme?.colors;
+  let colorScheme = userPreferences.colorScheme?.colors ?? defaultColors;
   return colorScheme;
 }
 
@@ -49,7 +49,6 @@ export function customColor(
   const currentColors = retrieveCurrentColors(userPreferences);
   if (hue === undefined || hue === null || typeof hue !== "number") {
     color = currentColors?.[fallback] ?? defaultColors[fallback];
-    console.log("color", color);
   } else {
     let saturation: number = 50;
     let lightness: number = 50;

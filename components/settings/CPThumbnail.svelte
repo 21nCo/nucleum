@@ -11,7 +11,7 @@
   let selectionStyle = SelectionItemActiveStyle.ACCENT_BACKGROUND;
   let component = resolveComponent(action);
   $: isActive = $windowObject.currentPath === "/" + component?.path;
-  $: iconColor = retrieveCurrentColors($userPreferences).fgs1 ?? "";
+  $: iconColor = retrieveCurrentColors($userPreferences)?.fgs1 ?? "";
 </script>
 
 {#if component}

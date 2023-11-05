@@ -13,12 +13,12 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { TimeScale } from "$lib/tidy/types/time.type";
   import { properCase } from "$lib/tidy/utils/text.utils";
-  import { getTimeZonesWithOffsets } from "$lib/tidy/utils/time.utils";
-
-  export let selectedHour: any = "00";
-  export let selectedMinute = "00";
-  let timeZones: DropdownItem[] = [];
-  let timeZoneSelectedIndex: number = -1;
+  import {
+    detectTimeZone,
+    getTimeZonesWithOffsets,
+  } from "$lib/tidy/utils/time.utils";
+  let timeZones: (Omit<DropdownItem, "value"> & { value: string })[];
+  let selectedTimezone: string | undefined = undefined;
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
       label: properCase(key),
@@ -34,38 +34,14 @@
       };
     });
     if ($userPreferences.timeZone) {
-      timeZoneSelectedIndex = timeZones.findIndex(
+      selectedTimezone = timeZones.find(
         (zone) => zone.value === $userPreferences.timeZone
-      );
+      )?.value;
     }
-    if (timeZoneSelectedIndex === -1) {
-      autoDetectTimeZone();
-    }
-
-    if ($userPreferences.dayStart) {
-      let parts = $userPreferences.dayStart?.split(":");
-      selectedHour = parts[0];
-      selectedMinute = parts[1];
+    if (selectedTimezone === undefined) {
+      $userPreferences.timeZone = detectTimeZone();
     }
   });
-
-  function autoDetectTimeZone() {
-    try {
-      timeZoneSelectedIndex = timeZones.findIndex(
-        (zone) =>
-          zone.value === Intl.DateTimeFormat().resolvedOptions().timeZone
-      );
-      userPreferences.updateTimeZone(
-        timeZones[timeZoneSelectedIndex].value as string
-      );
-    } catch (error) {
-      console.error("Could not detect time zone:", error);
-    }
-  }
-
-  function onChange(event: any) {
-    userPreferences.updateDayStart(event.detail.value);
-  }
 </script>
 
 <div class="flex flex-col max-w-lg gap-4">
@@ -82,24 +58,21 @@
       style={DropDownStyle.OUTLINED}
       info="The timezone used to calculate your daily target and streak."
       items={timeZones}
-      bind:selectedIndex={timeZoneSelectedIndex}
-      on:select={(event) => {
-        userPreferences.updateTimeZone(event.detail);
-      }}
+      bind:value={$userPreferences.timeZone}
     />
     <Button
       label="Auto detect time zone"
       icon="sync"
       style={ButtonStyle.PLAIN}
       size={Size.sm}
-      on:click={autoDetectTimeZone}
+      on:click={() => {
+        $userPreferences.timeZone = detectTimeZone();
+      }}
     />
   {/if}
   <TimeSelector
     label="Day starts at"
     info="The time at which your day starts. This is used to calculate your daily target and streak."
-    {selectedHour}
-    {selectedMinute}
-    on:change={onChange}
+    bind:value={$userPreferences.dayStart}
   />
 </div>

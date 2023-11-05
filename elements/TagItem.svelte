@@ -30,7 +30,7 @@
   {style}
   tabindex="0"
   on:click={handleTagClick}
-  class={`w-fit flex items-center justify-center whitespace-nowrap ${classList} ${
+  class={`w-fit flex items-center justify-center gap-1 whitespace-nowrap ${classList} ${
     disabled
       ? `${disabledClassList} cursor-not-allowed`
       : isActive

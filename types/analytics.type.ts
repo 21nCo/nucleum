@@ -16,6 +16,6 @@ export enum ChartType {
 export type HorizonChart = {
   id: string;
   period: TimePeriod;
-  chartType: ChartType;
+  type: ChartType;
   chartOptions?: any;
 };

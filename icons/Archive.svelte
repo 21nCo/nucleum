@@ -1,6 +1,5 @@
 <script lang="ts">
   import { IconVariant } from "../types/icon.type";
-
   export let variant: IconVariant = IconVariant.Outline;
 </script>
 

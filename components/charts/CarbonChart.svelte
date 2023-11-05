@@ -18,7 +18,8 @@
     PieChart,
   } from "@carbon/charts-svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
-  import { determineCarbonChartTimeInterval } from "$lib/tidy/utils/time.utils";
+  import { determineCarbonChartTimeInterval } from "$lib/tidy/utils/carbon.utils";
+  import { pieLabelFormatter } from "$lib/tidy/utils/carbon.utils";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;
@@ -29,10 +30,22 @@
       left: {
         mapsTo: "value",
         scaleType: ScaleTypes.LINEAR,
+        stacked: true,
+        percentage: additionalOptions?.percentage,
+        thresholds: additionalOptions?.yThresholds,
       },
       bottom: {
         mapsTo: "key",
-        scaleType: ScaleTypes.TIME,
+        scaleType:
+          additionalOptions?.xScale && additionalOptions.xScale === "labels"
+            ? ScaleTypes.LABELS
+            : ScaleTypes.TIME,
+        // ticks: {
+        //   formatter: function (date: any) {
+        //     return new Date(date).getDate();
+        //   },
+        //   values: additionalOptions?.xTicks,
+        // },
       },
     },
     height: "100%",
@@ -48,11 +61,14 @@
     resizable: false,
     animations: false,
     bars: {
-      width: 30,
+      width: additionalOptions?.barsWidth ?? 30,
       maxWidth: 30,
     },
     pie: {
       alignment: Alignments.CENTER,
+      labels: {
+        formatter: pieLabelFormatter,
+      },
     },
     donut: {
       alignment: Alignments.CENTER,
@@ -84,6 +100,7 @@
   let options: ChartOptions = defaultOptions;
   let currentColors = retrieveCurrentColors($userPreferences);
   initializeOptions();
+  type === ChartType.STACKEDBAR && console.log({ options });
   onMount(() => {
     manipulateCarbonToTidy();
     setTimeout(() => {
@@ -92,31 +109,16 @@
   });
 
   function initializeOptions() {
+    if (
+      additionalOptions?.xDomain &&
+      "axes" in options &&
+      options.axes?.bottom
+    ) {
+      options.axes.bottom.domain = additionalOptions?.xDomain;
+    }
     if (type === ChartType.STACKEDBAR) {
-      console.log({ additionalOptions });
       options = {
         ...defaultOptions,
-        axes: {
-          left: {
-            mapsTo: "value",
-            stacked: true,
-            scaleType: ScaleTypes.LINEAR,
-            thresholds: additionalOptions?.yThresholds,
-          },
-          bottom: {
-            mapsTo: "key",
-            scaleType: additionalOptions?.xScale
-              ? additionalOptions?.xScale
-              : ScaleTypes.TIME,
-            // ticks: {
-            //   // formatter: function (date: any) {
-            //   //   return new Date(date).getDate();
-            //   // },
-            //   values: additionalOptions?.xTicks,
-            //   domain: additionalOptions?.xDomain,
-            // },
-          },
-        },
         timeScale: {
           timeInterval:
             additionalOptions?.timeInterval &&
@@ -128,19 +130,6 @@
     } else if (type === ChartType.STACKEDAREA) {
       options = {
         ...defaultOptions,
-        axes: {
-          left: {
-            mapsTo: "value",
-            stacked: true,
-            percentage: additionalOptions?.percentage,
-            scaleType: ScaleTypes.LINEAR,
-            thresholds: additionalOptions?.yThresholds,
-          },
-          bottom: {
-            mapsTo: "key",
-            scaleType: ScaleTypes.TIME,
-          },
-        },
         ...additionalOptions,
         curve: "curveMonotoneX",
       };
@@ -269,6 +258,7 @@
   {:else if type === ChartType.AREA}
     <AreaChart {data} {options} />
   {:else if type === ChartType.PIE}
+    <!-- <PieChart {data} {options} /> -->
     <DonutChart {data} {options} />
   {:else if type === ChartType.GUAGE}
     <GaugeChart {data} {options} />

@@ -1,5 +1,5 @@
 export interface DbRecordBase {
-  id: string | number;
+  id?: string | number;
   created?: string;
 }
 

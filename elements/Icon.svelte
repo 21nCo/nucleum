@@ -7,7 +7,7 @@
   import Stack from "../icons/Stack.svelte";
   import { ChatIconVariant, IconVariant } from "../types/icon.type";
   import ChevronDouble from "../icons/ChevronDouble.svelte";
-  import { Direction } from "../types/direction.enum";
+  import { Direction, Orientation } from "../types/direction.enum";
   import { Size } from "../types/size.enum";
   import Command from "../icons/Command.svelte";
   import Chevron from "../icons/Chevron.svelte";
@@ -54,19 +54,20 @@
   import Dustbin from "../icons/Dustbin.svelte";
   import ThreeVerticalDots from "../icons/ThreeVerticalDots.svelte";
   import Search from "../icons/Search.svelte";
+  import Ellipsis from "../icons/Ellipsis.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
   export let color: string | undefined = undefined;
-  $: defaultColor = retrieveCurrentColors($userPreferences).fgs2 ?? "";
+  $: defaultColor = retrieveCurrentColors($userPreferences)?.fgs2 ?? "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
 
   $: {
-    if (
+    variant =
       (isActive &&
         icon != "chevright" &&
         icon != "chevleft" &&
@@ -77,9 +78,8 @@
       icon == "logout" ||
       icon == "link" ||
       icon?.includes("-mini")
-    ) {
-      variant = IconVariant.Solid;
-    }
+        ? IconVariant.Solid
+        : IconVariant.Outline;
   }
 </script>
 
@@ -254,12 +254,12 @@
         <Rocket {variant} />
       {:else if icon === "archive"}
         <Archive {variant} />
-      {:else if icon === "dustbin"}
-        <Dustbin {variant} />
-      {:else if icon === "archive"}
-        <Archive {variant} />
-      {:else if icon === "threeverticaldots"}
-        <ThreeVerticalDots {variant} />
+      {:else if icon === "ellipsis"}
+        <Ellipsis orientation={Orientation.Horizontal} />
+      {:else if icon === "ellipsis-vertical"}
+        <Ellipsis orientation={Orientation.Vertical} />
+      {:else if icon === "ellipsis-circled"}
+        <Ellipsis orientation={Orientation.Horizontal} isCircled={true} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

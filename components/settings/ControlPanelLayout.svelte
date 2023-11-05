@@ -16,12 +16,12 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
-  import { sortPropertiesByOrder } from "$lib/tidy/utils/utils";
+  import { sortPropertiesByOrder } from "$lib/tidy/utils/obj.utils";
   import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: any;
-  let color = retrieveCurrentColors($userPreferences).a1;
+  let color = retrieveCurrentColors($userPreferences)?.a1;
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {

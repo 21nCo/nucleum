@@ -58,7 +58,11 @@
           dispatch("update", timePeriod);
         }}
       >
-        {timePeriodLabel(timePeriod.scale, item, TimePeriodType.RELATIVE)}
+        {timePeriodLabel({
+          scale: timePeriod.scale,
+          value: item,
+          type: TimePeriodType.RELATIVE,
+        })}
       </button>
     {/each}
   </div>

@@ -9,7 +9,6 @@ import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
-import { Item } from "$lib/local/types/item.enum";
 import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
@@ -21,6 +20,9 @@ import jwt_decode from "jwt-decode";
 import type { HapticFeedback } from "../types/haptic.enum";
 import { sessionStore } from "$lib/local/stores/session.store";
 import { Persistance } from "./persistance";
+import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
+import { detectTimeZone } from "../utils/time.utils";
+import { init } from "svelte/internal";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -60,10 +62,8 @@ export const windowObject = initWindow({
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
-  console.log("checkIfNeedToHideMenu", newPath, newPath.split("/")[1]);
   if (newPath.split("/")[1]) {
     let component = resolveComponentFromPath(newPath.split("/")[1]);
-    console.log("component", component);
     if (component?.isMenuHidden) return true;
   }
   const listOfPathsToHideMenu = {
@@ -125,7 +125,7 @@ function initWindow(settings: WindowObject) {
       });
     },
     gotoPath: (path: string, params: any = null) => {
-      console.log("gotoPath", path);
+      appStore.log({ method: "gotoPath", path });
       update((n: WindowObject) => {
         n = {
           ...n,
@@ -233,12 +233,13 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    log(message: string, type: "error" | "info" | "warn" = "info") {
+    log(message: string | object, type: "error" | "info" | "warn" = "info") {
       update((n: AppStore) => {
-        console.log(message);
+        n.isDebugMode && console.log(message);
         if (!n.debugLogs) n.debugLogs = [];
         n.debugLogs.push({
-          message,
+          message:
+            typeof message === "string" ? message : JSON.stringify(message),
           type,
           timestamp: new Date().toLocaleTimeString(),
         });
@@ -328,6 +329,7 @@ export const userPreferences = initUserPreferences({
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
   timeFormat: "meridian",
+  timeZone: detectTimeZone(),
   colorScheme: {
     label: "bw",
     theme: "clean",
@@ -338,36 +340,42 @@ export const userPreferences = initUserPreferences({
 });
 
 function initUserPreferences(seed: UserGlobalPreferences) {
+  let previousValue: string;
   const { subscribe, set, update } = writable<UserGlobalPreferences>(seed);
-  let objectType = Item.UserPreferences;
-  const retrieve = () => {
-    persistance.retrieve("Preferences:global", objectType).then((m: any) => {
-      userPreferences.set(m);
-    });
+  const persist = (n: Partial<UserGlobalPreferences>) => {
+    persistance.update({ id: "Preferences:global", ...n });
   };
-  const persist = (n: UserGlobalPreferences) => {};
+  const retrieve = async () => {
+    let m = await persistance.retrieve("Preferences:global");
+    // console.log({ m });
+    if (m?.length > 0) {
+      set(m[0]);
+      previousValue = JSON.stringify(m[0]);
+    } else {
+      set(seed);
+      persist(seed);
+    }
+  };
   return {
     subscribe,
-    set: (m: UserGlobalPreferences) => {
-      set(m);
+    set: (newValue: UserGlobalPreferences) => {
+      let changedProperties: any = {};
+      if (previousValue) {
+        let differences = shallowDiff(newValue, JSON.parse(previousValue));
+        differences.forEach((key: string) => {
+          changedProperties[key] = newValue[key as keyof UserGlobalPreferences];
+        });
+      }
+      // console.log({
+      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
+      //   newValue,
+      //   changedProperties,
+      // });
+      set(newValue);
+      previousValue = JSON.stringify(newValue);
+      if (!objIsEmpty(changedProperties)) persist(changedProperties);
     },
-    load: () => {
-      retrieve();
-    },
-    updateDayStart: (m: string) => {
-      update((n: UserGlobalPreferences) => {
-        n = { ...n, dayStart: m };
-        persist(n);
-        return n;
-      });
-    },
-    updateTimeZone: (m: string) => {
-      update((n: UserGlobalPreferences) => {
-        n = { ...n, timeZone: m };
-        persist(n);
-        return n;
-      });
-    },
+    sync: retrieve,
   };
 }
 
@@ -443,6 +451,7 @@ function initAccount(seed: UserAccount) {
         localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
         n = { token: data.token, isLoggedIn: true, userId: data.userInfo.id };
         appEvents.publish(AppEvent.USER_LOGIN, true);
+        userPreferences.sync();
         n.userInfo = data.userInfo;
         return n;
       });

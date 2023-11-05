@@ -9,9 +9,8 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Placement } from "$lib/tidy/types/placement.type";
   import Icon from "../Icon.svelte";
-  import ThreeVerticalDots from "$lib/tidy/icons/ThreeVerticalDots.svelte";
 
-  export let icon: string = "";
+  export let icon: string = "ellipsis-vertical";
 
   export let items: GoalContextMenuItem[] = [];
   export let hideIcon: boolean = false;
@@ -94,7 +93,6 @@
       on:keydown|stopPropagation={handleKeyDownInList}
     >
       <Icon {icon} />
-      <!-- <ThreeVerticalDots /> -->
     </div>
   {/if}
   {#if isContextMenuOpen}

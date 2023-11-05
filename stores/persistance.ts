@@ -2,7 +2,7 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import { cloudProvider } from "./app.store";
+import { appStore, cloudProvider } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/local/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
@@ -82,7 +82,9 @@ export class Persistance {
         break;
       case Cloud.surreal:
         if (item.id) {
-          surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
+          const id = ItemEnum[itemType] + `:${item.id}`;
+          item.id = id;
+          surrealDb.create(id, item);
         } else {
           return surrealDb.create(ItemEnum[itemType], item);
         }
@@ -168,9 +170,10 @@ export class Persistance {
         return surrealDb.delete(itemId);
     }
   }
-  retrieve(itemId: string, itemType: ItemType) {
+  retrieve(itemId: string, itemType: ItemType | undefined = undefined) {
     switch (get(cloudProvider)) {
       case Cloud.local:
+        if (!itemType) break;
         let items = retrieveLocally(itemType);
         if (!items) {
           items = [];
@@ -182,17 +185,21 @@ export class Persistance {
     }
   }
   retrieveAll(itemType: ItemType) {
-    switch (get(cloudProvider)) {
-      case Cloud.local:
-        let items = retrieveLocally(itemType);
-        return items;
-      case Cloud.surreal:
-        return surrealDb.select(ItemEnum[itemType]);
+    try {
+      switch (get(cloudProvider)) {
+        case Cloud.local:
+          let items = retrieveLocally(itemType);
+          return items;
+        case Cloud.surreal:
+          return surrealDb.select(ItemEnum[itemType]);
+      }
+      return [];
+    } catch (error) {
+      appStore.logError(error);
     }
-    return [];
   }
   async searchByLabel(
-    query: string,
+    searchString: string,
     itemType: ItemType
   ): Promise<DbRecordWithLabel[]> {
     let results: DbRecordWithLabel[] = [];
@@ -205,7 +212,7 @@ export class Persistance {
             if (tagList) {
               const tagItems = tagList
                 .filter((item: DbRecordWithLabel) =>
-                  item.label.toLowerCase().includes(query.toLowerCase())
+                  item.label.toLowerCase().includes(searchString.toLowerCase())
                 )
                 .map((x: DbRecordWithLabel) => {
                   return { label: x.label, id: x.id };
@@ -214,7 +221,7 @@ export class Persistance {
             }
             if (taskList) {
               const taskItems = taskList.filter((item: DbRecordWithLabel) =>
-                item.label.toLowerCase().includes(query.toLowerCase())
+                item.label.toLowerCase().includes(searchString.toLowerCase())
               );
               results = [...results, ...taskItems];
             }
@@ -223,7 +230,7 @@ export class Persistance {
             let items = retrieveLocally(itemType);
             if (!items) break;
             items = items.filter((item: DbRecordWithLabel) =>
-              item.label.toLowerCase().includes(query.toLowerCase())
+              item.label.toLowerCase().includes(searchString.toLowerCase())
             );
             results = items.map((x: DbRecordWithLabel) => {
               return { label: x.label, id: x.id };
@@ -234,14 +241,13 @@ export class Persistance {
       case Cloud.surreal:
         if (itemType != ItemEnum.ALL) {
           let searchResult = await surrealDb.query(
-            `select * from $tb where string::lowercase(label) CONTAINS "$searchString"`,
+            `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString`,
             {
-              tb: ItemEnum[itemType],
-              searchString: query,
+              searchString: searchString.toLowerCase(),
             }
           );
           if (searchResult && searchResult.length > 0) {
-            results = searchResult[1].result;
+            results = searchResult[0];
           }
         }
     }

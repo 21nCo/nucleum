@@ -1,18 +1,19 @@
 <script lang="ts">
-  import type { DynamicIconProp } from "$lib/local/types/dynamicIconProp.type";
   import type { ClassListProp } from "$lib/tidy/types/classListProp.type";
-  import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import Pop from "../Pop.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "../Button.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
+  import type { DynamicIconProp } from "$lib/local/types/dynamicIconProp.type";
+  import { IconVariant } from "$lib/tidy/types/icon.type";
 
   export let style: string = "";
   export let classList: ClassListProp | null = null;
 
   export let label: string = "";
-  export let icon: DynamicIconProp | null = null;
+  export let icon: string | undefined = undefined;
   export let isActive: boolean = false;
 
   // export let isModalConfirmation: boolean = false; //this variable is responsible for confirming that modal will be needed as confirmation, so when the user clicks on the item, the modal will be visible if this variable is true
@@ -47,7 +48,7 @@
   <div class="whitespace-nowrap flex items-center justify-start">
     {#if icon}
       <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
-        <Icon icon={icon.name} size={Size.sm} variant={icon.variant} />
+        <Icon {icon} size={Size.sm} variant={IconVariant.Solid} />
       </div>
     {/if}
     <span>
