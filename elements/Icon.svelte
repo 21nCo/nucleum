@@ -51,8 +51,6 @@
   import Heart from "../icons/Heart.svelte";
   import Rocket from "../icons/Rocket.svelte";
   import Archive from "../icons/Archive.svelte";
-  import Dustbin from "../icons/Dustbin.svelte";
-  import ThreeVerticalDots from "../icons/ThreeVerticalDots.svelte";
   import Search from "../icons/Search.svelte";
   import Ellipsis from "../icons/Ellipsis.svelte";
   export let icon: string | undefined = undefined;

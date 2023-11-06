@@ -210,7 +210,7 @@ export class SurrealDatabaseUsingSdk {
     try {
       let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
-      console.log("create", { recordId, data });
+      // console.log("create", { recordId, data });
       let response = await this.db.create(recordId, data);
       return response;
     } catch (error) {
@@ -224,7 +224,7 @@ export class SurrealDatabaseUsingSdk {
     try {
       let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
-      console.log("insert", { tableName, data });
+      // console.log("insert", { tableName, data });
       let response = await this.db.insert(tableName, data);
       return response;
     } catch (error) {
@@ -238,7 +238,7 @@ export class SurrealDatabaseUsingSdk {
     try {
       let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
-      console.log("merge", { recordId, data });
+      // console.log("merge", { recordId, data });
       let response = await this.db.merge(recordId, data);
       return response;
     } catch (error) {
@@ -252,7 +252,7 @@ export class SurrealDatabaseUsingSdk {
     try {
       let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
-      console.log("update", { recordId, data });
+      // console.log("update", { recordId, data });
       let response = await this.db.update(recordId, data);
       return response;
     } catch (error) {
@@ -266,7 +266,7 @@ export class SurrealDatabaseUsingSdk {
     try {
       let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
-      console.log("select", { recordId });
+      // console.log("select", { recordId });
       let response = await this.db.select(recordId);
       return response;
     } catch (error) {
@@ -297,7 +297,7 @@ export class SurrealDatabaseUsingSdk {
     try {
       let isConnected = await this.reconnectIfRequired();
       if (!isConnected) return null;
-      console.log("query", { query, params });
+      // console.log("query", { query, params });
       let response = await this.db.query(query, params);
       return response;
     } catch (error) {

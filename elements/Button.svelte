@@ -6,6 +6,7 @@
   import { bg, retrieveCurrentColors } from "../utils/theme.utils";
   import { userPreferences } from "../stores/app.store";
   import { ButtonStyle } from "../types/button.type";
+  import type { Width } from "../types/width.enum";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let type: string = "secondary";
@@ -25,6 +26,23 @@
       : " rounded-md") +
     ` ${width} `;
   onMount(() => {
+    switch (size) {
+      case Size.xl:
+        classList += " text-h2";
+        break;
+      case Size.lg:
+        classList += " text-h5";
+        break;
+      case Size.md:
+        classList += " text-base";
+        break;
+      case Size.sm:
+        classList += " text-b2";
+        break;
+      case Size.xs:
+        classList += " text-xs";
+        break;
+    }
     switch (size) {
       case Size.xl:
         classList += " text-h2";

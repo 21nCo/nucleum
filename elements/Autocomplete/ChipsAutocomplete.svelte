@@ -233,10 +233,6 @@
       actIfClickedOutside(x.value, `#${wrapperId}`, actionsWhenClickOutside);
     }
   });
-
-  $: {
-    console.log({ tempOptions, isListVisible });
-  }
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
