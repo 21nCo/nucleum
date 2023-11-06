@@ -347,7 +347,7 @@ function initUserPreferences(seed: UserGlobalPreferences) {
   };
   const retrieve = async () => {
     let m = await persistance.retrieve("Preferences:global");
-    // console.log({ m });
+    //console.log("retrieved global preferences", { m });
     if (m?.length > 0) {
       set(m[0]);
       previousValue = JSON.stringify(m[0]);

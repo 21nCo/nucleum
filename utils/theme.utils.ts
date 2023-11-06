@@ -7,9 +7,15 @@ export function assignSatAndLight(
   userPreferences: UserGlobalPreferences,
   selectableColorParams: any
 ) {
+  console.log("assignSatAndLight", { userPreferences, selectableColorParams });
   let saturation;
   let lightness;
-  if (!userPreferences || !selectableColorParams) return;
+  if (
+    !userPreferences ||
+    !selectableColorParams ||
+    !userPreferences.colorScheme
+  )
+    return;
   if (userPreferences.colorScheme.isDark) {
     saturation = selectableColorParams.darkSaturation;
     lightness = selectableColorParams.darkLightness;
