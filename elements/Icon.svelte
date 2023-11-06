@@ -51,6 +51,7 @@
   import Heart from "../icons/Heart.svelte";
   import Rocket from "../icons/Rocket.svelte";
   import Archive from "../icons/Archive.svelte";
+  import Search from "../icons/Search.svelte";
   import Ellipsis from "../icons/Ellipsis.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
@@ -62,6 +63,7 @@
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
+
   $: {
     variant =
       (isActive &&
@@ -240,6 +242,10 @@
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}
         <ChevronDouble direction={Direction.Right} />
+      {:else if icon === "search"}
+        <Search {variant} />
+      {:else if icon === "search-mini"}
+        <Search variant={IconVariant.Mini} />
       {:else if icon === "heart"}
         <Heart {variant} />
       {:else if icon === "rocket"}

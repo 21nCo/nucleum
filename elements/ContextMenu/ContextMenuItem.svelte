@@ -3,6 +3,7 @@
   import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
+  import { IconVariant } from "$lib/tidy/types/icon.type";
 
   export let style: string = "";
   export let classList: ClassListProp | null = null;
@@ -13,22 +14,17 @@
 
   const dispatch = createEventDispatcher();
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === "Enter") {
-      dispatch("click");
-    }
-  }
-  $: {
-    console.log({ icon });
+  function handleClick() {
+    dispatch("click");
   }
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
-  on:click|stopPropagation
+  on:click|stopPropagation={handleClick}
   on:keydown={() => {}}
   {style}
-  class={`cursor-pointer w-full text-b3 py-2 px-4 hover:bg-bgs3 hover:bg-opacity-50 ${
+  class={`cursor-pointer relative w-full text-b3 py-2 px-4 hover:bg-bgs3 hover:bg-opacity-50 ${
     classList?.common
   } ${
     isActive
@@ -38,7 +34,7 @@
 >
   <div class="whitespace-nowrap flex items-center justify-start">
     {#if icon}
-      <div class="min-w-[1rem] mr-2 flex justify-center items-center">
+      <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
         <Icon {icon} size={Size.sm} />
       </div>
     {/if}

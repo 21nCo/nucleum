@@ -50,7 +50,6 @@ export function handleDragNDropForMultiList(
 }
 
 export function handleDragNDrop(x: DragAndDrop, items: any[]) {
-  console.log("handleDragNDrop", { x, items });
   if (x.dragStatus == DragStatus.DROPPED && x.dragItem && x.dropItem) {
     items = items.filter(
       (item) => item.order != x.dragItem.order && item.order != x.dropItem.order

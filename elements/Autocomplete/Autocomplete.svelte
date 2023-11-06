@@ -7,6 +7,9 @@
   import { appEvents } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import Icon from "../Icon.svelte";
+  import { IconVariant } from "$lib/tidy/types/icon.type";
+  import { Size } from "$lib/tidy/types/size.enum";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -17,57 +20,104 @@
   export let listItemClassList: string = "hover:bg-bgs3";
   export let listItemStyle: string = "";
   export let activeListItemClassList: string = "bg-bgs3";
+  export let areOptionsVisible: boolean = false;
 
   export let escapeDefaultClickBehaviour: boolean = false; // this is used to escape the default behaviour of the list item click, if this is true then the default behaviour of the list item click will not be performed, for example if you don't want to hide the list on list item click then set this to true
 
   export let hideSearchIcon: boolean = false;
+  export let hideResetIcon: boolean = false;
   export let icon: string = "";
-  export let customIconPath: string = ""; // customIconPath should be relative to the folder in which tidy folder is present, so if tidy folder is present in src/lib then customIconPath should be relative to src/lib folder like ./folderOrFileInsideLibFolder
 
-  export let list: AutocompleteListItemType[] = [];
+  export let options: AutocompleteListItemType[] = [];
 
   export let placeholder: string = "";
-  export let value: string;
+  export let inputValue: string;
+  export let value: AutocompleteListItemType | null = null;
 
   const dispatch = createEventDispatcher();
   const containerId = generateUID();
-  let iconComponent: typeof SvelteComponent | undefined;
+
+  let inputRef: HTMLInputElement | undefined;
+  // let iconComponent: typeof SvelteComponent | undefined;
   let selectedListItemIndex: number = -1;
 
-  function hideList() {
+  let tempOptions: AutocompleteListItemType[] = [];
+
+  // function hideList() {
+  //   selectedListItemIndex = -1;
+  //   if (options === undefined || options.length === 0) return;
+  //   options = [];
+
+  // }
+
+  function hideOptions() {
     selectedListItemIndex = -1;
-    if (list === undefined || list.length === 0) return;
-    list = [];
+    if (options === undefined || options.length === 0) return;
+    areOptionsVisible = false;
   }
 
   function performDefaultClickActions() {
-    hideList();
+    hideOptions();
   }
 
-  function handleResultItemClick({ detail }: CustomEvent) {
+  function updateValue(detail: { title: string; id: string }) {
+    inputValue = detail.title;
+    value = detail;
+  }
+
+  function handleResultItemClick(detail: { title: string; id: string }) {
     dispatch("list-item-click", detail);
+    updateValue(detail);
     if (!escapeDefaultClickBehaviour) {
       performDefaultClickActions();
+      // because since there are chips, we don't want to hide the list on click, because the user might want to select multiple items
     }
+  }
+
+  function handleResultItemClickViaCustomEvent({ detail }: CustomEvent) {
+    handleResultItemClick(detail);
+  }
+
+  function focusOnInput() {
+    if (inputRef) inputRef.focus();
+  }
+
+  function onFocus() {
+    updateListVisibility(true);
+    tempOptions = options;
+  }
+
+  function onReset() {
+    inputValue = "";
+    value = null;
+    dispatch("reset");
+  }
+
+  function updateListVisibility(value: boolean) {
+    areOptionsVisible = value;
+  }
+
+  function onInputChange() {
+    value = options.find((x) => x.title === inputValue) ?? null;
   }
 
   function handleKeyDownInDropdown(event: KeyboardEvent) {
     if (event.key === "Escape") {
-      hideList();
+      hideOptions();
     }
     if (event.key === "ArrowDown") {
-      if (selectedListItemIndex < list.length - 1) {
+      if (selectedListItemIndex < tempOptions.length - 1) {
         selectedListItemIndex++;
       }
     }
     if (event.key === "ArrowUp") {
-      if (selectedListItemIndex > 0) {
+      if (selectedListItemIndex > -1) {
         selectedListItemIndex--;
       }
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { title, id } = list[selectedListItemIndex];
+        const { title, id } = tempOptions[selectedListItemIndex];
         dispatch("list-item-click", { title, id });
         if (!escapeDefaultClickBehaviour) {
           performDefaultClickActions();
@@ -76,22 +126,39 @@
     }
   }
 
-  onMount(async () => {
-    // if icon is present then dynamically import it from the tidy icon folder or from the customIconPath
-    try {
-      if (icon) {
-        const { default: Icon } = await import(
-          `${
-            customIconPath
-              ? `../../../${customIconPath}`
-              : `../../../tidy/icons`
-          }/${icon}.svelte`
-        );
-        iconComponent = Icon;
-      }
-    } catch (err) {
-      console.log(err);
+  // $: {
+  //   if (inputValue === "") {
+  //     tempOptions = options;
+  //   } else {
+  //     tempOptions = options.filter((goal: AutocompleteListItemType) => {
+  //       return goal.title.toLowerCase().includes(inputValue.toLowerCase());
+  //     });
+  //   }
+  // }
+
+  $: {
+    selectedListItemIndex = -1;
+    if (!inputValue) {
+      tempOptions = options;
     }
+    if (value) updateListVisibility(false);
+    else if (
+      inputValue !== undefined &&
+      inputValue !== null &&
+      inputValue !== "" &&
+      options.length !== 0
+    ) {
+      updateListVisibility(true);
+      tempOptions = options.filter((x) =>
+        x.title.toLowerCase().includes(inputValue.toLowerCase())
+      );
+    }
+  }
+
+  onMount(() => {
+    setTimeout(() => {
+      focusOnInput();
+    }, 0);
   });
 
   appEvents.subscribe((x: AppEventType) => {
@@ -100,7 +167,7 @@
       x.value &&
       x.value instanceof PointerEvent
     ) {
-      actIfClickedOutside(x.value, `#${containerId}`, hideList);
+      actIfClickedOutside(x.value, `#${containerId}`, hideOptions);
     }
   });
 </script>
@@ -112,25 +179,41 @@
 >
   <div class="realtive flex items-center">
     {#if icon || !hideSearchIcon}
-      <!-- Search is a fallback component just in case iconComponent is not found -->
       <div
         class="absolute ml-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
       >
-        <!-- Here if hideSearchIcon is true and icon is provided but the dynamic import does not result in a component then there is a fallback of Search Icon -->
         {#if icon}
-          <svelte:component this={iconComponent || Search} />
+          <!-- <svelte:component this={iconComponent || Search} /> -->
+          <Icon {icon} size={Size.sm} variant={IconVariant.Outline} />
         {:else if !hideSearchIcon}
-          <Search />
+          <Icon
+            size={Size.sm}
+            icon="search-mini"
+            variant={IconVariant.Outline}
+          />
         {/if}
+      </div>
+    {/if}
+    {#if !hideResetIcon}
+      <div
+        class="absolute right-0 mr-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
+      >
+        <Icon
+          on:click={onReset}
+          size={Size.sm}
+          icon="cross"
+          variant={IconVariant.Outline}
+        />
       </div>
     {/if}
 
     <input
       style={inputStyle}
       type="text"
-      bind:value
-      on:input
-      on:focus
+      bind:this={inputRef}
+      bind:value={inputValue}
+      on:input={onInputChange}
+      on:focus={onFocus}
       on:keydown={handleKeyDownInDropdown}
       class={`outline-none w-full py-2 px-2.5 text-b2 ${
         hideSearchIcon && !icon ? `` : `pl-8`
@@ -140,12 +223,12 @@
       aria-describedby="search-addon"
     />
   </div>
-  {#if list && list.length > 0}
+  {#if tempOptions && tempOptions.length > 0 && areOptionsVisible}
     <div
       style={listContainerStyle}
       class={`absolute w-full z-[10] max-h-[10rem] overflow-auto ${listContainerClassList}`}
     >
-      {#each list as listItem, index}
+      {#each tempOptions as listItem, index}
         <AutocompleteResultItem
           {...listItem}
           classList={{
@@ -154,7 +237,7 @@
           }}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}
-          on:click={handleResultItemClick}
+          on:click={handleResultItemClickViaCustomEvent}
         />
       {/each}
     </div>

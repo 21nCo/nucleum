@@ -27,6 +27,9 @@
   export let placement: Placement = Placement.RIGHT;
 
   let selectedIndex: number = 0;
+
+  let visibleModalIndex: number = -1;
+
   const id = generateUID();
 
   const dispatch = createEventDispatcher();
@@ -45,6 +48,7 @@
       setToDefaultValue();
     };
   }
+
   function closeContextMenu() {
     setToDefaultValue();
     dispatch("close");
