@@ -4,6 +4,7 @@
   export let style: TextType;
   export let customStyle: string = "";
   export let additionalClassList: string | undefined = "";
+  export let width: string = "";
   let classList: string = "";
   onMount(() => {
     switch (style) {
@@ -23,6 +24,7 @@
         classList += " text-fgs2 font-medium text-b3 max-w-3xl bg-none";
         break;
     }
+    classList += ` ${width} `;
   });
 </script>
 

@@ -6,7 +6,6 @@
   import { bg, retrieveCurrentColors } from "../utils/theme.utils";
   import { userPreferences } from "../stores/app.store";
   import { ButtonStyle } from "../types/button.type";
-  import type { Width } from "../types/width.enum";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let type: string = "secondary";
