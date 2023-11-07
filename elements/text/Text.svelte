@@ -3,7 +3,6 @@
   import { onMount } from "svelte";
   export let style: TextType;
   export let customStyle: string = "";
-  export let additionalClassList: string | undefined = "";
   export let width: string = "";
   let classList: string = "";
   onMount(() => {
@@ -28,6 +27,6 @@
   });
 </script>
 
-<button style={customStyle} class={`${classList} ${additionalClassList}`}>
+<button style={customStyle} class={`${classList}`}>
   <slot />
 </button>
