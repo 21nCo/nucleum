@@ -26,8 +26,8 @@
   let backgroundColor: string;
   let inputRef: any;
   let inputClasses: string =
-    "w-full rounded-sm bg-bgs2 border p-2 text-[1.125rem] leading-8 rounded-r-none " +
-    borderColor($userPreferences.theme, ColorStrength.Strong);
+    "w-full rounded-sm bg-bgs2 border p-2 text-[1.125rem] rounded-r-none focus:outline-a1 " +
+    borderColor($userPreferences.theme);
 
   let changeTimer: any;
   let changeElapsedTime: number = 0;
