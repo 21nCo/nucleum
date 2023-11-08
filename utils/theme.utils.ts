@@ -82,7 +82,7 @@ export function borderColor(
   theme: string,
   colorStrength: ColorStrength = ColorStrength.Normal
 ) {
-  if (theme === AppTheme.Glassy) return "border-none";
+  // if (theme === AppTheme.Glassy) return "border-none";
   switch (colorStrength) {
     case ColorStrength.Subtle:
       return "border-brs1";

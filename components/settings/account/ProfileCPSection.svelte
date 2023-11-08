@@ -9,6 +9,7 @@
   import { bg } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
+  $: console.log($account.userInfo);
 </script>
 
 <div class="rounded-lg mx-4 h-40 min-h-[10rem] {bg($userPreferences.theme, 1)}">

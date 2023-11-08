@@ -14,8 +14,8 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
 
-  import { bg } from "$lib/tidy/utils/theme.utils";
-  import { AppTheme } from "$lib/tidy/types/theme.type";
+  import { bg, borderColor } from "$lib/tidy/utils/theme.utils";
+  import { AppTheme, ColorStrength } from "$lib/tidy/types/theme.type";
   import { onMount } from "svelte";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
@@ -41,7 +41,12 @@
       {#if $appStore.player}
         <ComponentResolver path={$appStore.player} />
       {/if}
-      <div class=" border-t border-bgs2 bg-bgs1 w-full min-w-min pb-6 pt-1">
+      <div
+        class=" border-t border-bgs2 w-full min-w-min pb-6 pt-1 {bg(
+          $userPreferences.theme,
+          0
+        )} {borderColor($userPreferences.theme, ColorStrength.Subtle)}"
+      >
         <AppMenuSwitcher
           layoutContext={LayoutContext.PORTRAIT}
           parentBackgroundIndex={0}

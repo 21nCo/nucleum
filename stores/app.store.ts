@@ -385,6 +385,9 @@ function initAccount(seed: UserAccount) {
     seed.token = localStorage.getItem("token");
     seed.isLoggedIn = true;
   }
+  if (localStorage.getItem("userInfo")) {
+    seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+  }
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const addSeedUserInfo = (n: UserAccount) => {
     let seedUserInfo = {
@@ -408,6 +411,7 @@ function initAccount(seed: UserAccount) {
     },
     isRefreshApp: boolean = false
   ) => {
+    console.log("signing in", { data });
     localStorage.setItem("surreal-token", data.token);
     localStorage.setItem("refresh-token", data.refreshToken);
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
