@@ -1,11 +1,11 @@
 import jwt_decode from "jwt-decode";
-import type { SurrealResponse } from "../types/surreal.type";
 import { Surreal } from "surrealdb.js";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
-import { account } from "../stores/app.store";
+import { loginStatusCheck } from "$lib/local/utils/local.utils";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
+
 export class SurrealDatabaseUsingRest {
   token: string | null;
   userId: string | undefined;
@@ -70,7 +70,8 @@ export class SurrealDatabaseUsingRest {
     } = {}
   ) {
     try {
-      if (await account.checkIfSessionExpired()) return null;
+      const isValid = await loginStatusCheck();
+      if (!isValid) return null;
       this.token = localStorage.getItem("surreal-token");
       let decodedToken: any = jwt_decode(this.token!);
       this.userId = decodedToken?.ID ?? "";
@@ -94,7 +95,7 @@ export class SurrealDatabaseUsingRest {
       });
       if (response.ok) {
         let result = await response.json();
-        console.log({ result });
+        //console.log({ result });
         if (result.length > 0) {
           return result.slice(1).map((item: any) => {
             return item.result;
@@ -146,7 +147,8 @@ export class SurrealDatabaseUsingSdk {
   }
   async reconnectIfRequired() {
     console.log("reconnectIfRequired", this.db.status);
-    if (await account.checkIfSessionExpired()) return null;
+    const isValid = await loginStatusCheck();
+    if (!isValid) return false;
     if (this.db.status === 0) return true;
     else {
       let isConnected = await this.connect();

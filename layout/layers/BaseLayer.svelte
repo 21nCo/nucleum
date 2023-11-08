@@ -7,8 +7,10 @@
     appEvents,
     appStore,
     currentTime,
+    isRefreshingToken,
     postMessageToParent,
     userPreferences,
+    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
@@ -19,6 +21,7 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { page } from "$app/stores";
   import LoadingView from "../paint/LoadingView.svelte";
+  import { loginStatusCheck } from "$lib/local/utils/local.utils";
   let timer: any;
   let isShowLoading = true;
   bootup();
@@ -34,7 +37,6 @@
     };
   });
   function bootup() {
-    account.checkIfSessionExpired();
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
@@ -43,7 +45,8 @@
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
     await initializeAppData();
-    if ($account.isLoggedIn) {
+    const isValid = await loginStatusCheck();
+    if (isValid) {
       await userPreferences.sync();
     }
     postMessageToParent({

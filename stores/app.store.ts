@@ -1,10 +1,6 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { get, writable } from "svelte/store";
-import {
-  generateUID,
-  performApiCall,
-  resolveComponentFromPath,
-} from "$lib/tidy/utils/utils";
+import { writable } from "svelte/store";
+import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
 import {
   AppTheme,
   type selectableColorParams,
@@ -20,17 +16,17 @@ import blankJson from "$lib/tidy/data/blank.json";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
-import jwt_decode from "jwt-decode";
 import type { HapticFeedback } from "../types/haptic.enum";
 import { sessionStore } from "$lib/local/stores/session.store";
 import { Persistance } from "./persistance";
 import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone } from "../utils/time.utils";
-import { init } from "svelte/internal";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
+
+export const isRefreshingToken = writable(false);
 
 let persistance = new Persistance();
 
@@ -138,10 +134,6 @@ function initWindow(settings: WindowObject) {
         };
         return n;
       });
-      const isTokenExpired = await account.checkIfSessionExpired();
-      if (isTokenExpired) {
-        path = "/expired";
-      }
       if (!navigator.onLine) {
         path = "/offline";
       }
@@ -441,64 +433,17 @@ function initAccount(seed: UserAccount) {
     });
   };
   const expire = () => {
-    localStorage.removeItem("surreal-token");
-    localStorage.removeItem("userInfo");
+    // localStorage.removeItem("surreal-token");
+    // localStorage.removeItem("userInfo");
     update((n: UserAccount) => {
       n = { token: null, isLoggedIn: false };
       appEvents.publish(AppEvent.USER_LOGIN, false);
       return n;
     });
   };
-  const refresh = async (token: string) => {
-    const response = await performApiCall(
-      "account/refresh",
-      "POST",
-      JSON.stringify({ token })
-    );
-    if (!response || !response.ok) {
-      return;
-    }
-    if (response.ok) {
-      const data = await response.json();
-      if (!data || data.token) return;
-      if (!data.userInfo)
-        data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
-      signin(data);
-      return true;
-    }
-  };
   return {
     subscribe,
     set,
-    checkIfSessionExpired: async () => {
-      let n: UserAccount = { token: null, isLoggedIn: false };
-      const token = localStorage.getItem("surreal-token");
-      if (!token) {
-        expire();
-        return true;
-      }
-      let decodedToken: any = jwt_decode(token);
-      let exp = decodedToken?.exp ?? 0;
-      const currentTime = new Date().getTime() / 1000;
-      if (currentTime > exp) {
-        const refreshToken = localStorage.getItem("refresh-token");
-        if (!refreshToken) {
-          expire();
-          return true;
-        } else {
-          let decodedRefreshToken: any = jwt_decode(refreshToken);
-          let refreshExp = decodedRefreshToken?.exp ?? 0;
-          if (currentTime > refreshExp) {
-            expire();
-            return true;
-          } else {
-            return await refresh(refreshToken);
-          }
-        }
-      } else {
-        return false;
-      }
-    },
     signOut: () => {
       update((n: UserAccount) => {
         localStorage.removeItem("surreal-token");
@@ -510,6 +455,7 @@ function initAccount(seed: UserAccount) {
       });
     },
     signIn: signin,
+    expire,
   };
 }
 

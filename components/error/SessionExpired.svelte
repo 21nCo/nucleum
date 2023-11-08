@@ -2,9 +2,7 @@
   import { account, windowObject } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import AccountForm from "../settings/account/AccountForm.svelte";
-  $: if ($account.isLoggedIn) {
-    windowObject.gotoPath("/");
-  }
+
   onMount(() => {
     const sub = account.subscribe((value) => {
       if (value.isLoggedIn) {
@@ -12,7 +10,7 @@
       }
     });
     return () => {
-      sub;
+      sub();
     };
   });
 </script>

@@ -9,11 +9,12 @@
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
-  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
   import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
+  import { loginStatusCheck } from "$lib/local/utils/local.utils";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
   let currentComponent: Action | null;
@@ -24,17 +25,16 @@
     let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
     pad = rawPad > 200 ? 200 : rawPad;
   }
-  onMount(() => {
-    resolve(resolveCurrentPath());
-    const sub = page.subscribe(() => {
+  onMount(async () => {
+    await resolve(resolveCurrentPath());
+    const sub = page.subscribe(async () => {
       let currentPath = resolveCurrentPath();
-      // console.log({ currentPath, windowObject: $windowObject });
       if ($windowObject.currentPath.includes(currentPath)) {
-        resolve(currentPath);
+        await resolve(currentPath);
       }
     });
-    () => {
-      sub;
+    return () => {
+      sub();
     };
   });
 
@@ -48,10 +48,12 @@
     return currentPath;
   }
   async function resolve(currentPath: string) {
-    if (!(currentPath === "expired")) {
-      const isTokenExpired = await account.checkIfSessionExpired();
-      if (isTokenExpired) {
-        windowObject.gotoPath("/expired");
+    if (!(currentPath === "expired" || currentPath === "signup")) {
+      const isValid = await loginStatusCheck();
+      console.log("isTokenExpired check page painter", {
+        isValid,
+      });
+      if (!isValid) {
         return;
       }
     }

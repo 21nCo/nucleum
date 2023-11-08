@@ -2,11 +2,12 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import { appStore, cloudProvider } from "./app.store";
+import { account, appStore, cloudProvider } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/local/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
 import type { DbRecordType } from "$lib/local/types/item.type";
+import { performApiCall } from "../utils/utils";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
@@ -64,6 +65,25 @@ export function retrieveLocally(itemType: ItemType) {
 }
 
 export class Persistance {
+  refreshToken = async () => {
+    const token = localStorage.getItem("refresh-token");
+    const response = await performApiCall(
+      "account/refreshToken",
+      "POST",
+      JSON.stringify({ token })
+    );
+    if (!response || !response.ok) {
+      return;
+    }
+    if (response.ok) {
+      const data = await response.json();
+      if (!data || !data.token) return;
+      if (!data.userInfo)
+        data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+      account.signIn(data);
+      return true;
+    }
+  };
   /**
    * Creates a new Item. If Id is not provided, a new Id will be generated
    * @param item Item to be created

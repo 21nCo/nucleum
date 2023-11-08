@@ -317,3 +317,7 @@ export function formatDateRelativeToToday(date: UserDate) {
     return formatUserDate(date);
   }
 }
+
+export function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
