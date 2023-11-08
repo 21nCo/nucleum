@@ -3,6 +3,7 @@ import type { SurrealResponse } from "../types/surreal.type";
 import { Surreal } from "surrealdb.js";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
+import { account } from "../stores/app.store";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 export class SurrealDatabaseUsingRest {
@@ -69,9 +70,9 @@ export class SurrealDatabaseUsingRest {
     } = {}
   ) {
     try {
+      if (await account.checkIfSessionExpired()) return null;
       this.token = localStorage.getItem("surreal-token");
-      if (!this.token) throw new Error("User not logged in");
-      let decodedToken: any = jwt_decode(this.token);
+      let decodedToken: any = jwt_decode(this.token!);
       this.userId = decodedToken?.ID ?? "";
       for (const key in params) {
         let replaceWith;
@@ -145,6 +146,7 @@ export class SurrealDatabaseUsingSdk {
   }
   async reconnectIfRequired() {
     console.log("reconnectIfRequired", this.db.status);
+    if (await account.checkIfSessionExpired()) return null;
     if (this.db.status === 0) return true;
     else {
       let isConnected = await this.connect();

@@ -34,7 +34,7 @@
     };
   });
   function bootup() {
-    account.checkIfLoginExpired();
+    account.checkIfSessionExpired();
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();

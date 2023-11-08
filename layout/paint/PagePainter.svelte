@@ -47,11 +47,13 @@
     }
     return currentPath;
   }
-  function resolve(currentPath: string) {
-    const isTokenExpired = account.checkIfLoginExpired();
-    if (isTokenExpired) {
-      windowObject.gotoPath("/expired");
-      return;
+  async function resolve(currentPath: string) {
+    if (!(currentPath === "expired")) {
+      const isTokenExpired = await account.checkIfSessionExpired();
+      if (isTokenExpired) {
+        windowObject.gotoPath("/expired");
+        return;
+      }
     }
     parentComponent = null;
     grandPa = null;

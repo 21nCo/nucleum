@@ -1,6 +1,10 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
 import { get, writable } from "svelte/store";
-import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
+import {
+  generateUID,
+  performApiCall,
+  resolveComponentFromPath,
+} from "$lib/tidy/utils/utils";
 import {
   AppTheme,
   type selectableColorParams,
@@ -124,7 +128,7 @@ function initWindow(settings: WindowObject) {
         return n;
       });
     },
-    gotoPath: (path: string, params: any = null) => {
+    gotoPath: async (path: string, params: any = null) => {
       appStore.log({ method: "gotoPath", path });
       update((n: WindowObject) => {
         n = {
@@ -134,7 +138,7 @@ function initWindow(settings: WindowObject) {
         };
         return n;
       });
-      const isTokenExpired = account.checkIfLoginExpired();
+      const isTokenExpired = await account.checkIfSessionExpired();
       if (isTokenExpired) {
         path = "/expired";
       }
@@ -404,34 +408,96 @@ function initAccount(seed: UserAccount) {
     n.userInfo = seedUserInfo;
     return n;
   };
+  const signin = async (
+    data: {
+      userInfo: UserInformation;
+      token: string;
+      refreshToken: string;
+    },
+    isRefreshApp: boolean = false
+  ) => {
+    localStorage.setItem("surreal-token", data.token);
+    localStorage.setItem("refresh-token", data.refreshToken);
+    localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
+    postMessageToParent({
+      account: {
+        userId: data.userInfo.id,
+        token: data.token,
+        refreshToken: data.refreshToken,
+      },
+    });
+    if (isRefreshApp) {
+      await userPreferences.sync();
+      appEvents.publish(AppEvent.USER_LOGIN, true);
+    }
+    update((n: UserAccount) => {
+      n = {
+        token: data.token,
+        isLoggedIn: true,
+        userId: data.userInfo.id,
+        userInfo: data.userInfo,
+      };
+      return n;
+    });
+  };
+  const expire = () => {
+    localStorage.removeItem("surreal-token");
+    localStorage.removeItem("userInfo");
+    update((n: UserAccount) => {
+      n = { token: null, isLoggedIn: false };
+      appEvents.publish(AppEvent.USER_LOGIN, false);
+      return n;
+    });
+  };
+  const refresh = async (token: string) => {
+    const response = await performApiCall(
+      "account/refresh",
+      "POST",
+      JSON.stringify({ token })
+    );
+    if (!response || !response.ok) {
+      return;
+    }
+    if (response.ok) {
+      const data = await response.json();
+      if (!data || data.token) return;
+      if (!data.userInfo)
+        data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+      signin(data);
+      return true;
+    }
+  };
   return {
     subscribe,
     set,
-    checkIfLoginExpired: () => {
-      let isExpired: boolean = false;
-      update((n: UserAccount) => {
-        if (localStorage.getItem("surreal-token")) {
-          const token = localStorage.getItem("surreal-token");
-          if (token) {
-            let decodedToken: any = jwt_decode(token);
-            let exp = decodedToken?.exp ?? 0;
-            const currentTime = new Date().getTime() / 1000;
-            if (currentTime > exp) {
-              localStorage.removeItem("surreal-token");
-              n = { token: null, isLoggedIn: false };
-              postMessageToParent({ token: "expired" });
-            } else {
-              n = { token, isLoggedIn: true, userId: decodedToken?.user ?? "" };
-              postMessageToParent({ token: token });
-              postMessageToParent({ userId: decodedToken?.user });
-              const userInfo = localStorage.getItem("userInfo");
-              n = { ...n, userInfo: userInfo ? JSON.parse(userInfo) : null };
-            }
+    checkIfSessionExpired: async () => {
+      let n: UserAccount = { token: null, isLoggedIn: false };
+      const token = localStorage.getItem("surreal-token");
+      if (!token) {
+        expire();
+        return true;
+      }
+      let decodedToken: any = jwt_decode(token);
+      let exp = decodedToken?.exp ?? 0;
+      const currentTime = new Date().getTime() / 1000;
+      if (currentTime > exp) {
+        const refreshToken = localStorage.getItem("refresh-token");
+        if (!refreshToken) {
+          expire();
+          return true;
+        } else {
+          let decodedRefreshToken: any = jwt_decode(refreshToken);
+          let refreshExp = decodedRefreshToken?.exp ?? 0;
+          if (currentTime > refreshExp) {
+            expire();
+            return true;
+          } else {
+            return await refresh(refreshToken);
           }
         }
-        return n;
-      });
-      return isExpired;
+      } else {
+        return false;
+      }
     },
     signOut: () => {
       update((n: UserAccount) => {
@@ -443,19 +509,7 @@ function initAccount(seed: UserAccount) {
         return n;
       });
     },
-    signIn: (data: { userInfo: UserInformation; token: string }) => {
-      update((n: UserAccount) => {
-        localStorage.setItem("surreal-token", data.token);
-        postMessageToParent({ token: data.token });
-        postMessageToParent({ userId: data.userInfo.id });
-        localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
-        n = { token: data.token, isLoggedIn: true, userId: data.userInfo.id };
-        appEvents.publish(AppEvent.USER_LOGIN, true);
-        userPreferences.sync();
-        n.userInfo = data.userInfo;
-        return n;
-      });
-    },
+    signIn: signin,
   };
 }
 
