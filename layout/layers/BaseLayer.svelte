@@ -22,7 +22,15 @@
     checkForUpdates,
     loginStatusCheck,
   } from "$lib/tidy/utils/account.utils";
-  import { Persistance } from "$lib/tidy/stores/persistance";
+  const visibilityChangeListener = (event: Event) => {
+    appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
+  };
+  const windowResizeListener = (event: Event) => {
+    appEvents.publish(AppEvent.WINDOW_RESIZED, event);
+  };
+  const windowClickEventListener = (event: MouseEvent) => {
+    appEvents.publish(AppEvent.WINDOW_CLICKED, event);
+  };
   let timer: any;
   let isShowLoading = true;
   postMessageToParent({
@@ -34,18 +42,20 @@
     isShowLoading = false;
     const appEventSub = appEvents.subscribe(async (e) => {
       if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
-        postMessageToParent({
-          ping: true,
-        });
+        if (e.value && !document.hidden) {
+          await checkForUpdates();
+          postMessageToParent({
+            ping: true,
+          });
+        }
       }
     });
     return () => {
       appEventSub();
       clearInterval(timer);
-      //remove window event listeners
-      window.removeEventListener("visibilitychange", () => {});
-      window.removeEventListener("resize", () => {});
-      window.removeEventListener("click", () => {});
+      window.removeEventListener("visibilitychange", visibilityChangeListener);
+      window.removeEventListener("resize", windowResizeListener);
+      window.removeEventListener("click", windowClickEventListener);
     };
   });
   function bootup() {
@@ -106,15 +116,9 @@
     }
   }
   function addWindowEventListeners() {
-    window.addEventListener("visibilitychange", (event) => {
-      appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
-    });
-    window.addEventListener("resize", (event) => {
-      appEvents.publish(AppEvent.WINDOW_RESIZED, event);
-    });
-    window.addEventListener("click", (event: MouseEvent) => {
-      appEvents.publish(AppEvent.WINDOW_CLICKED, event);
-    });
+    window.addEventListener("visibilitychange", visibilityChangeListener);
+    window.addEventListener("resize", windowResizeListener);
+    window.addEventListener("click", windowClickEventListener);
   }
 </script>
 

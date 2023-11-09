@@ -69,6 +69,7 @@ async function checkIfSessionExpired() {
 }
 
 export async function checkForUpdates() {
+  console.log("checking for updates");
   const appVersionOnClient = localStorage.getItem("appVersion");
   const currentVersion = get(appStore).appData.version;
   if (!appVersionOnClient) {
