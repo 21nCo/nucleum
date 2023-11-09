@@ -74,10 +74,10 @@
     >
       <Icon icon="minus-circled" />
     </button>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 overflow-y-auto">
       {#if $appStore.debugLogs && $appStore.debugLogs.length > 0}
         {#each $appStore.debugLogs as log}
-          <div>{log.message}</div>
+          <div>{log.type.toUpperCase()} -- {log.message}</div>
         {/each}
       {:else}
         <div>No logs</div>

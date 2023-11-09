@@ -44,13 +44,12 @@ function cssStyle(color: string, colorType: ColorType) {
       return `background-color: ${color};`;
   }
 }
+
 export function customColor(
   userPreferences: UserGlobalPreferences,
-  colorType: ColorType[] | ColorType,
   fallback: string,
   hue: number | null | undefined = undefined
 ) {
-  let style: string = "";
   let color: string;
   const currentColors = retrieveCurrentColors(userPreferences);
   if (hue === undefined || hue === null || typeof hue !== "number") {
@@ -66,8 +65,19 @@ export function customColor(
       saturation = values.saturation;
       lightness = values.lightness;
     }
-    color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    color = `hsl(${hue} ${saturation}% ${lightness}%)`;
   }
+  return color;
+}
+
+export function customColorStyle(
+  userPreferences: UserGlobalPreferences,
+  colorType: ColorType[] | ColorType,
+  fallback: string,
+  hue: number | null | undefined = undefined
+) {
+  let style: string = "";
+  const color = customColor(userPreferences, fallback, hue);
   if (colorType instanceof Array) {
     colorType.forEach((colorType) => {
       style += cssStyle(color, colorType);

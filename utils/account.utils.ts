@@ -77,6 +77,6 @@ export async function checkForUpdates() {
   } else if (appVersionOnClient != currentVersion) {
     await new Persistance().updateDefinitions();
     localStorage.setItem("appVersion", currentVersion);
-    window.location.reload();
+    window?.location?.reload();
   }
 }

@@ -8,7 +8,7 @@
   import SwitchItem from "./SwitchItem.svelte";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import {
-    customColor,
+    customColorStyle,
     generateBackgroudColor,
     retrieveCurrentColors,
   } from "$lib/tidy/utils/theme.utils";
@@ -96,7 +96,12 @@
           }}
           class="flex rounded-full gap-2 py-3 px-4 {backgroundColor}"
           style={selectedIndex === index
-            ? customColor($userPreferences, ColorType.Bg, "a1", activeColor)
+            ? customColorStyle(
+                $userPreferences,
+                ColorType.Bg,
+                "a1",
+                activeColor
+              )
             : ""}
         >
           {item}

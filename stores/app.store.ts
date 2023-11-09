@@ -191,12 +191,16 @@ const selectableColorParams: selectableColorParams = {
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
+const isDebugEmbedMode =
+  import.meta.env.DEV && import.meta.env.VITE_IS_DEBUG_EMBED === "true";
+
 let themes = [AppTheme.Clean, AppTheme.Glassy];
 if (isDebugMode)
   themes = themes.concat([AppTheme.Vibrant, AppTheme.Futuristic]);
 
 export const appStore = initAppStore({
   isDebugMode,
+  isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
   tailwindTheme: "",
   appData: {},
@@ -250,6 +254,11 @@ function initAppStore(seed: AppStore) {
           type: "error",
           timestamp: new Date().toLocaleTimeString(),
         });
+        if (n.isDebugEmbedMode) {
+          postMessageToParent({
+            error: message,
+          });
+        }
         return n;
       });
     },

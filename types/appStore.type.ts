@@ -5,6 +5,7 @@ export type AppStore = {
   appConstants: AppConstants;
   appData: any;
   isDebugMode: boolean;
+  isDebugEmbedMode: boolean;
   launchContext: LaunchContext;
   embedContext?: EmbedContext;
   pageMenu?: string[];

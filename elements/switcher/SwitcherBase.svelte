@@ -3,7 +3,7 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import {
     bg,
-    customColor,
+    customColorStyle,
     generateBackgroudColor,
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
@@ -19,7 +19,7 @@
   let activeBackgroundColor: string = "";
   let backgroundColor: string = "";
   $: if (classList.includes("bg-")) backgroundColor = "";
-  $: activeBgStyle = customColor(
+  $: activeBgStyle = customColorStyle(
     $userPreferences,
     ColorType.Bg,
     "a1",
@@ -60,7 +60,12 @@
     on:click
     on:pointerenter
     style={isActive && selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-      ? `;${customColor($userPreferences, ColorType.Fg, "a1", activeColor)}`
+      ? `;${customColorStyle(
+          $userPreferences,
+          ColorType.Fg,
+          "a1",
+          activeColor
+        )}`
       : ""}
     disabled={isDisabled}
   >

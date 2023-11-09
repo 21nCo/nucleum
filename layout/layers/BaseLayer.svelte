@@ -42,7 +42,7 @@
     isShowLoading = false;
     const appEventSub = appEvents.subscribe(async (e) => {
       if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
-        if (e.value && !document.hidden) {
+        if (e.value && !document?.hidden) {
           await checkForUpdates();
           postMessageToParent({
             ping: true,
@@ -53,9 +53,9 @@
     return () => {
       appEventSub();
       clearInterval(timer);
-      window.removeEventListener("visibilitychange", visibilityChangeListener);
-      window.removeEventListener("resize", windowResizeListener);
-      window.removeEventListener("click", windowClickEventListener);
+      window?.removeEventListener("visibilitychange", visibilityChangeListener);
+      window?.removeEventListener("resize", windowResizeListener);
+      window?.removeEventListener("click", windowClickEventListener);
     };
   });
   function bootup() {
@@ -108,7 +108,7 @@
     let isSheet = $page.url?.searchParams?.get("isSheet");
     // console.log({ subdomain, location: window?.location });
     //$appStore.launchContext = LaunchContext.EMBED;
-    if (subdomain?.includes("embed")) {
+    if (subdomain?.includes("embed") || $appStore.isDebugEmbedMode) {
       $appStore.launchContext = LaunchContext.EMBED;
     }
     if (isSheet) {
@@ -116,9 +116,9 @@
     }
   }
   function addWindowEventListeners() {
-    window.addEventListener("visibilitychange", visibilityChangeListener);
-    window.addEventListener("resize", windowResizeListener);
-    window.addEventListener("click", windowClickEventListener);
+    window?.addEventListener("visibilitychange", visibilityChangeListener);
+    window?.addEventListener("resize", windowResizeListener);
+    window?.addEventListener("click", windowClickEventListener);
   }
 </script>
 
