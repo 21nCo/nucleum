@@ -1,0 +1,6 @@
+export enum UploadStatus {
+  NOT_STARTED = "NOT_STARTED",
+  UPLOADING = "UPLOADING",
+  UPLOADED = "UPLOADED",
+  FAILED = "FAILED",
+}

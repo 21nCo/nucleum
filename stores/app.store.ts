@@ -379,6 +379,30 @@ function initUserPreferences(seed: UserGlobalPreferences) {
   };
 }
 
+export const isOnboardingComplete = initOnboardingComplete(false);
+
+function initOnboardingComplete(seed: boolean) {
+  const isOnboardingComplete = localStorage.getItem("isOnboardingComplete");
+  if (isOnboardingComplete !== "true") {
+    localStorage.setItem("isOnboardingComplete", "false");
+  }
+  isOnboardingComplete === "true" ? (seed = true) : (seed = false);
+
+  const { subscribe, set, update } = writable<boolean>(seed);
+  return {
+    subscribe,
+    set,
+    update,
+    complete: () => {
+      update((n: boolean) => {
+        localStorage.setItem("isOnboardingComplete", "true");
+        n = true;
+        return n;
+      });
+    },
+  };
+}
+
 export const account = initAccount({
   isLoggedIn: false,
   token: null,

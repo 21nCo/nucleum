@@ -43,6 +43,7 @@
   import Info from "../icons/Info.svelte";
   import Link from "../icons/Link.svelte";
   import Tag from "../icons/Tag.svelte";
+  import Image from "../icons/Image.svelte";
   import Share from "../icons/Share.svelte";
   import Users from "../icons/Users.svelte";
   import Copy from "../icons/Copy.svelte";
@@ -53,6 +54,7 @@
   import Archive from "../icons/Archive.svelte";
   import Search from "../icons/Search.svelte";
   import Ellipsis from "../icons/Ellipsis.svelte";
+  import Upload from "../icons/Upload.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -250,8 +252,12 @@
         <Heart {variant} />
       {:else if icon === "rocket"}
         <Rocket {variant} />
+      {:else if icon === "upload"}
+        <Upload {variant} />
       {:else if icon === "archive"}
         <Archive {variant} />
+      {:else if icon === "image"}
+        <Image {variant} />
       {:else if icon === "ellipsis"}
         <Ellipsis orientation={Orientation.Horizontal} />
       {:else if icon === "ellipsis-vertical"}

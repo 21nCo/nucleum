@@ -9,7 +9,13 @@
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
-  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    account,
+    appStore,
+    isOnboardingComplete,
+    userPreferences,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
@@ -56,10 +62,17 @@
     parentComponent = null;
     grandPa = null;
     currentComponent = resolveComponentFromPath(currentPath);
+    if (!$isOnboardingComplete) {
+      windowObject.gotoPath("/onboarding");
+      return;
+    }
     if (!currentComponent) {
-      console.log({ currentPath, page: $page, appData: $appStore.appData });
       if (currentPath == "") {
-        windowObject.gotoPath($appStore.appData.homePath ?? "/home");
+        windowObject.gotoPath(
+          $isOnboardingComplete
+            ? $appStore.appData.homePath ?? "/home"
+            : "/onboarding"
+        );
       } else {
         windowObject.gotoPath($appStore.appData.notFoundPath ?? "/404");
       }

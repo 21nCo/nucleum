@@ -4,7 +4,7 @@
   import Icon from "./Icon.svelte";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
   import { bg, retrieveCurrentColors } from "../utils/theme.utils";
-  import { userPreferences } from "../stores/app.store";
+  import { userPreferences, windowObject } from "../stores/app.store";
   import { ButtonStyle } from "../types/button.type";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
@@ -25,39 +25,59 @@
       : " rounded-md") +
     ` ${width} `;
   onMount(() => {
-    switch (size) {
-      case Size.xl:
-        classList += " text-h2";
-        break;
-      case Size.lg:
-        classList += " text-h5";
-        break;
-      case Size.md:
-        classList += " text-base";
-        break;
-      case Size.sm:
-        classList += " text-b2";
-        break;
-      case Size.xs:
-        classList += " text-xs";
-        break;
-    }
-    switch (size) {
-      case Size.xl:
-        classList += " text-h2";
-        break;
-      case Size.lg:
-        classList += " text-h5";
-        break;
-      case Size.md:
-        classList += " text-base";
-        break;
-      case Size.sm:
-        classList += " text-b2";
-        break;
-      case Size.xs:
-        classList += " text-xs";
-        break;
+    // switch (size) {
+    //   case Size.xl:
+    //     classList += " text-h2";
+    //     break;
+    //   case Size.lg:
+    //     classList += " text-h5";
+    //     break;
+    //   case Size.md:
+    //     classList += " text-base";
+    //     break;
+    //   case Size.sm:
+    //     classList += " text-b2";
+    //     break;
+    //   case Size.xs:
+    //     classList += " text-xs";
+    //     break;
+    // }
+    if ($windowObject.isInPortraitMode) {
+      switch (size) {
+        case Size.xl:
+          classList += " text-h2";
+          break;
+        case Size.lg:
+          classList += " text-h5";
+          break;
+        case Size.md:
+          classList += " text-b3";
+          break;
+        case Size.sm:
+          classList += " text-b2";
+          break;
+        case Size.xs:
+          classList += " text-xs";
+          break;
+      }
+    } else {
+      switch (size) {
+        case Size.xl:
+          classList += " text-h2";
+          break;
+        case Size.lg:
+          classList += " text-h5";
+          break;
+        case Size.md:
+          classList += " text-base";
+          break;
+        case Size.sm:
+          classList += " text-b2";
+          break;
+        case Size.xs:
+          classList += " text-xs";
+          break;
+      }
     }
     if (style != ButtonStyle.PLAIN) {
       switch (size) {
