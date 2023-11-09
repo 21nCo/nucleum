@@ -45,7 +45,7 @@
       showError();
       return;
     }
-    localStore.runSignupScripts();
+    //localStore.runSignupScripts();
     account.signIn(json);
     actionInProgress = false;
   }
@@ -71,7 +71,7 @@
       return;
     }
     account.signIn(json);
-    await localStore.runSignupScripts();
+    //await localStore.runSignupScripts();
     actionInProgress = false;
   }
   function isValidSignupData() {

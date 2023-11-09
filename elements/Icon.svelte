@@ -55,6 +55,8 @@
   import Search from "../icons/Search.svelte";
   import Ellipsis from "../icons/Ellipsis.svelte";
   import Upload from "../icons/Upload.svelte";
+  import Bars from "../icons/Bars.svelte";
+  import Squares from "../icons/Squares.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -264,6 +266,10 @@
         <Ellipsis orientation={Orientation.Vertical} />
       {:else if icon === "ellipsis-circled"}
         <Ellipsis orientation={Orientation.Horizontal} isCircled={true} />
+      {:else if icon === "bars"}
+        <Bars {variant} />
+      {:else if icon === "squares-2x2"}
+        <Squares {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

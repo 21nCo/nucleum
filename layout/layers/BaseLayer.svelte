@@ -3,7 +3,6 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
-    account,
     appEvents,
     appStore,
     currentTime,
@@ -19,22 +18,48 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { page } from "$app/stores";
   import LoadingView from "../paint/LoadingView.svelte";
+  import {
+    checkForUpdates,
+    loginStatusCheck,
+    onBoardingStatusCheck,
+  } from "$lib/tidy/utils/account.utils";
+  const visibilityChangeListener = (event: Event) => {
+    appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
+  };
+  const windowResizeListener = (event: Event) => {
+    appEvents.publish(AppEvent.WINDOW_RESIZED, event);
+  };
+  const windowClickEventListener = (event: MouseEvent) => {
+    appEvents.publish(AppEvent.WINDOW_CLICKED, event);
+  };
   let timer: any;
   let isShowLoading = true;
+  postMessageToParent({
+    ping: true,
+  });
   bootup();
   onMount(async () => {
     await initializeData();
     isShowLoading = false;
+    const appEventSub = appEvents.subscribe(async (e) => {
+      if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
+        if (e.value && !document?.hidden) {
+          await checkForUpdates();
+          postMessageToParent({
+            ping: true,
+          });
+        }
+      }
+    });
     return () => {
+      appEventSub();
       clearInterval(timer);
-      //remove window event listeners
-      window.removeEventListener("visibilitychange", () => {});
-      window.removeEventListener("resize", () => {});
-      window.removeEventListener("click", () => {});
+      window?.removeEventListener("visibilitychange", visibilityChangeListener);
+      window?.removeEventListener("resize", windowResizeListener);
+      window?.removeEventListener("click", windowClickEventListener);
     };
   });
   function bootup() {
-    account.checkIfLoginExpired();
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
@@ -43,8 +68,11 @@
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
     await initializeAppData();
-    if ($account.isLoggedIn) {
+    const isValid = await loginStatusCheck();
+    await onBoardingStatusCheck();
+    if (isValid) {
       await userPreferences.sync();
+      await checkForUpdates();
     }
     postMessageToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
@@ -82,7 +110,7 @@
     let isSheet = $page.url?.searchParams?.get("isSheet");
     // console.log({ subdomain, location: window?.location });
     //$appStore.launchContext = LaunchContext.EMBED;
-    if (subdomain?.includes("embed")) {
+    if (subdomain?.includes("embed") || $appStore.isDebugEmbedMode) {
       $appStore.launchContext = LaunchContext.EMBED;
     }
     if (isSheet) {
@@ -90,15 +118,9 @@
     }
   }
   function addWindowEventListeners() {
-    window.addEventListener("visibilitychange", (event) => {
-      appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
-    });
-    window.addEventListener("resize", (event) => {
-      appEvents.publish(AppEvent.WINDOW_RESIZED, event);
-    });
-    window.addEventListener("click", (event: MouseEvent) => {
-      appEvents.publish(AppEvent.WINDOW_CLICKED, event);
-    });
+    window?.addEventListener("visibilitychange", visibilityChangeListener);
+    window?.addEventListener("resize", windowResizeListener);
+    window?.addEventListener("click", windowClickEventListener);
   }
 </script>
 

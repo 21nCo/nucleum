@@ -4,6 +4,7 @@ export type QueryParams =
   | string
   | number
   | boolean
+  | string[]
   | DbRecordType
   | DbRecordType[]
   | MergeRecord;

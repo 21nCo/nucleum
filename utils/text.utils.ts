@@ -6,12 +6,15 @@ export function properCase(str: string) {
   });
 }
 
-export function prefix(id: string | number, itemType: ItemType) {
+export function prefixDb(id: string | number, itemType: ItemType) {
   return `${Item[itemType]}:${id}`;
 }
 
-export function stripPrefix(id: string) {
+export function stripDbPrefix(id: string) {
   return id.split(":")[1];
+}
+export function prefix(str: string, prefix: string) {
+  return `${prefix}${str}`;
 }
 
 export function isValidEmail(text: string) {

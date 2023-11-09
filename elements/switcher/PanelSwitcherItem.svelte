@@ -2,16 +2,16 @@
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { ColorType } from "$lib/tidy/types/theme.type";
-  import { bg, customColor } from "$lib/tidy/utils/theme.utils";
+  import { bg, customColorStyle } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
   export let activeColor: number | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
   $: fgColorStyle = isActive
-    ? customColor($userPreferences, ColorType.Fg, "a1", activeColor)
+    ? customColorStyle($userPreferences, ColorType.Fg, "a1", activeColor)
     : "";
-  $: bgColorStyle = customColor(
+  $: bgColorStyle = customColorStyle(
     $userPreferences,
     ColorType.Bg,
     "a1",

@@ -4,12 +4,13 @@
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
   import Search from "$lib/tidy/icons/Search.svelte";
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
-  import { appEvents } from "$lib/tidy/stores/app.store";
+  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import Icon from "../Icon.svelte";
   import { IconVariant } from "$lib/tidy/types/icon.type";
   import { Size } from "$lib/tidy/types/size.enum";
+  import { bg } from "$lib/tidy/utils/theme.utils";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -177,7 +178,7 @@
   style={wrapperStyle}
   class={`relative ${wrapperClassList}`}
 >
-  <div class="realtive flex items-center">
+  <div class="realtive flex items-center w-full">
     {#if icon || !hideSearchIcon}
       <div
         class="absolute ml-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
@@ -215,9 +216,10 @@
       on:input={onInputChange}
       on:focus={onFocus}
       on:keydown={handleKeyDownInDropdown}
+      on:keyup={() => dispatch("search")}
       class={`outline-none w-full py-2 px-2.5 text-b2 ${
         hideSearchIcon && !icon ? `` : `pl-8`
-      } ${inputClassList}`}
+      } ${inputClassList} ` + bg($userPreferences.theme, 1)}
       {placeholder}
       aria-label="Search"
       aria-describedby="search-addon"

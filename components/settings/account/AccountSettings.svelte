@@ -1,6 +1,5 @@
 <script>
   import Button from "$lib/tidy/elements/Button.svelte";
-  import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import { account } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import AccountForm from "./AccountForm.svelte";

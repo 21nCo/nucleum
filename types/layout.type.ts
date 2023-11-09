@@ -4,3 +4,8 @@ export enum LayoutContext {
   PORTRAIT,
   THIN,
 }
+
+export enum Layout {
+  LIST,
+  GRID,
+}
