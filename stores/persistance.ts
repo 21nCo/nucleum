@@ -72,17 +72,15 @@ export class Persistance {
       "POST",
       JSON.stringify({ token })
     );
-    if (!response || !response.ok) {
+    if (!response?.ok) {
       return;
     }
-    if (response.ok) {
-      const data = await response.json();
-      if (!data || !data.token) return;
-      if (!data.userInfo)
-        data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
-      account.signIn(data);
-      return true;
-    }
+    const data = await response.json();
+    if (!data?.token) return;
+    if (!data.userInfo)
+      data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+    account.signIn(data, false);
+    return true;
   };
   /**
    * Creates a new Item. If Id is not provided, a new Id will be generated

@@ -3,14 +3,11 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
-    account,
     appEvents,
     appStore,
     currentTime,
-    isRefreshingToken,
     postMessageToParent,
     userPreferences,
-    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
@@ -24,11 +21,22 @@
   import { loginStatusCheck } from "$lib/local/utils/local.utils";
   let timer: any;
   let isShowLoading = true;
+  postMessageToParent({
+    ping: true,
+  });
   bootup();
   onMount(async () => {
     await initializeData();
     isShowLoading = false;
+    const appEventSub = appEvents.subscribe(async (e) => {
+      if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
+        postMessageToParent({
+          ping: true,
+        });
+      }
+    });
     return () => {
+      appEventSub();
       clearInterval(timer);
       //remove window event listeners
       window.removeEventListener("visibilitychange", () => {});

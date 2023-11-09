@@ -372,6 +372,9 @@ function initUserPreferences(seed: UserGlobalPreferences) {
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
     },
     sync: retrieve,
+    load: (m: UserGlobalPreferences) => {
+      set(m);
+    },
   };
 }
 
@@ -382,12 +385,19 @@ export const account = initAccount({
 
 function initAccount(seed: UserAccount) {
   if (localStorage.getItem("surreal-token")) {
-    seed.token = localStorage.getItem("token");
+    seed.token = localStorage.getItem("surreal-token");
     seed.isLoggedIn = true;
   }
   if (localStorage.getItem("userInfo")) {
     seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
   }
+  postMessageToParent({
+    account: {
+      userId: seed.userInfo?.id.split("user:")[1],
+      token: seed.token,
+      isLoggedIn: true,
+    },
+  });
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const addSeedUserInfo = (n: UserAccount) => {
     let seedUserInfo = {
@@ -409,7 +419,7 @@ function initAccount(seed: UserAccount) {
       token: string;
       refreshToken: string;
     },
-    isRefreshApp: boolean = false
+    isRefreshApp: boolean = true
   ) => {
     console.log("signing in", { data });
     localStorage.setItem("surreal-token", data.token);
@@ -417,46 +427,47 @@ function initAccount(seed: UserAccount) {
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     postMessageToParent({
       account: {
-        userId: data.userInfo.id,
+        userId: data.userInfo.id.split("user:")[1],
         token: data.token,
         refreshToken: data.refreshToken,
+        isLoggedIn: true,
       },
     });
     if (isRefreshApp) {
       await userPreferences.sync();
       appEvents.publish(AppEvent.USER_LOGIN, true);
     }
-    update((n: UserAccount) => {
-      n = {
+    update(() => {
+      return {
         token: data.token,
         isLoggedIn: true,
         userId: data.userInfo.id,
         userInfo: data.userInfo,
       };
-      return n;
     });
   };
   const expire = () => {
     // localStorage.removeItem("surreal-token");
     // localStorage.removeItem("userInfo");
-    update((n: UserAccount) => {
-      n = { token: null, isLoggedIn: false };
-      appEvents.publish(AppEvent.USER_LOGIN, false);
+    sessionStore.reset();
+    update(() => {
+      const n = { token: null, isLoggedIn: false };
       return n;
+    });
+    appEvents.publish(AppEvent.USER_LOGIN, false);
+    postMessageToParent({
+      account: {
+        isLoggedIn: false,
+      },
     });
   };
   return {
     subscribe,
     set,
     signOut: () => {
-      update((n: UserAccount) => {
-        localStorage.removeItem("surreal-token");
-        localStorage.removeItem("userInfo");
-        n = { token: null, isLoggedIn: false };
-        sessionStore.reset();
-        appEvents.publish(AppEvent.USER_LOGIN, false);
-        return n;
-      });
+      expire();
+      localStorage.removeItem("surreal-token");
+      localStorage.removeItem("userInfo");
     },
     signIn: signin,
     expire,
@@ -465,6 +476,7 @@ function initAccount(seed: UserAccount) {
 
 export function postMessageToParent(message: any) {
   appStore.log("posting message to parent:" + JSON.stringify(message));
+  //console.log("posting message to parent:" + JSON.stringify(message));
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
