@@ -82,6 +82,20 @@ export class Persistance {
     account.signIn(data, false);
     return true;
   };
+  updateDefinitions = async () => {
+    const token = localStorage.getItem("refresh-token");
+    const response = await performApiCall(
+      "account/updateDefinitions",
+      "POST",
+      JSON.stringify({ token })
+    );
+    if (!response?.ok) {
+      return;
+    }
+    const data = await response.json();
+    console.log("updateDefinitions response", data);
+    return true;
+  };
   /**
    * Creates a new Item. If Id is not provided, a new Id will be generated
    * @param item Item to be created

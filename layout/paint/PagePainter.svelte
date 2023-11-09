@@ -14,7 +14,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
   import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
-  import { loginStatusCheck } from "$lib/local/utils/local.utils";
+  import { loginStatusCheck } from "$lib/tidy/utils/account.utils";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
   let currentComponent: Action | null;

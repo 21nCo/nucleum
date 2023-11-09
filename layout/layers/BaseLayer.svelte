@@ -18,7 +18,11 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { page } from "$app/stores";
   import LoadingView from "../paint/LoadingView.svelte";
-  import { loginStatusCheck } from "$lib/local/utils/local.utils";
+  import {
+    checkForUpdates,
+    loginStatusCheck,
+  } from "$lib/tidy/utils/account.utils";
+  import { Persistance } from "$lib/tidy/stores/persistance";
   let timer: any;
   let isShowLoading = true;
   postMessageToParent({
@@ -56,6 +60,7 @@
     const isValid = await loginStatusCheck();
     if (isValid) {
       await userPreferences.sync();
+      await checkForUpdates();
     }
     postMessageToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),

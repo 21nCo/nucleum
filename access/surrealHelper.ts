@@ -2,7 +2,7 @@ import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb.js";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
-import { loginStatusCheck } from "$lib/local/utils/local.utils";
+import { loginStatusCheck } from "$lib/tidy/utils/account.utils";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 
