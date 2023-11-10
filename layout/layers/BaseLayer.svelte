@@ -21,6 +21,7 @@
   import {
     checkForUpdates,
     loginStatusCheck,
+    onBoardingStatusCheck,
   } from "$lib/tidy/utils/account.utils";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
@@ -67,11 +68,13 @@
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
     await initializeAppData();
+    const currentVersion = $appStore.appData.version;
+    localStorage.setItem("appVersion", currentVersion);
     const isValid = await loginStatusCheck();
     if (isValid) {
-      await userPreferences.sync();
       await checkForUpdates();
     }
+    await onBoardingStatusCheck();
     postMessageToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
     });

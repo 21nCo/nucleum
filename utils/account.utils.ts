@@ -3,6 +3,7 @@ import {
   account,
   appStore,
   isRefreshingToken,
+  userPreferences,
   windowObject,
 } from "../stores/app.store";
 import { wait } from "./time.utils";
@@ -26,6 +27,14 @@ export async function loginStatusCheck() {
     windowObject.gotoPath("/expired");
     return false;
   } else return true;
+}
+
+export async function onBoardingStatusCheck() {
+  if (get(userPreferences).uiState?.isOnboardingComplete) return true;
+  else {
+    windowObject.gotoPath("/onboarding");
+    return false;
+  }
 }
 
 async function checkIfSessionExpired() {

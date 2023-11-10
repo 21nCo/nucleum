@@ -4,7 +4,7 @@ import type { JsonValue } from "$lib/tidy/types/json.type";
 import { get, writable } from "svelte/store";
 import { account, appStore, cloudProvider } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
-import { Item as ItemEnum, type ItemType } from "$lib/local/types/item.enum";
+import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import { performApiCall } from "../utils/utils";

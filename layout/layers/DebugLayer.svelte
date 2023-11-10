@@ -1,6 +1,10 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    appStore,
+    tailwindTheme,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { onMount } from "svelte";
   let environment: string;
@@ -44,7 +48,7 @@
       {"Scale: " + $windowObject.scale.toFixed(2)}
     </div>
     <div>
-      {"Theme: " + $appStore.tailwindTheme}
+      {"Theme: " + $tailwindTheme}
     </div>
     <button
       class="w-full border border-fgs1 rounded-lg p-2"

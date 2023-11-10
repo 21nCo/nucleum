@@ -1,7 +1,11 @@
 import { get } from "svelte/store";
 import type { UserGlobalPreferences } from "../types/preferences.type";
 import { AppTheme, ColorStrength, ColorType } from "../types/theme.type";
-import { appStore, defaultColors, userPreferences } from "../stores/app.store";
+import {
+  appStore,
+  defaultColorSchemeColors,
+  userPreferences,
+} from "../stores/app.store";
 
 export function assignSatAndLight(
   userPreferences: UserGlobalPreferences,
@@ -26,7 +30,8 @@ export function assignSatAndLight(
   return { saturation, lightness };
 }
 export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  let colorScheme = userPreferences.colorScheme?.colors ?? defaultColors;
+  let colorScheme =
+    userPreferences.colorScheme?.colors ?? defaultColorSchemeColors;
   return colorScheme;
 }
 
@@ -53,7 +58,7 @@ export function customColor(
   let color: string;
   const currentColors = retrieveCurrentColors(userPreferences);
   if (hue === undefined || hue === null || typeof hue !== "number") {
-    color = currentColors?.[fallback] ?? defaultColors[fallback];
+    color = currentColors?.[fallback] ?? defaultColorSchemeColors[fallback];
   } else {
     let saturation: number = 50;
     let lightness: number = 50;

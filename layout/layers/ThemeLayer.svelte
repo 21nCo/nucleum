@@ -2,13 +2,15 @@
   import { onMount } from "svelte";
   import {
     appEvents,
-    appStore,
     postMessageToParent,
+    tailwindTheme,
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { persistLocally } from "$lib/tidy/stores/persistance";
+  import { Item } from "$lib/tidy/types/item.enum";
   handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -45,9 +47,10 @@
   function refreshTailwind() {
     fontFamily =
       $userPreferences.theme === AppTheme.Clean ? "Avenir" : "Avenir";
-    $appStore.tailwindTheme = `${$userPreferences.theme} ${"medium"} ${
+    $tailwindTheme = `${$userPreferences.theme} ${"medium"} ${
       $userPreferences.colorScheme?.tailwindSelector ?? "cs_pointron_light"
     }`;
+    persistLocally(Item.TailwindTheme, $tailwindTheme);
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
