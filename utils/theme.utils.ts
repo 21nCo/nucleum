@@ -116,13 +116,13 @@ export function bg(
   isActive: boolean = false
 ) {
   const colors = generateBackgroudColor(parentBackgroundIndex);
-  return theme === AppTheme.Glassy
-    ? isActive
-      ? "glassactive"
-      : "glass"
-    : isActive
-    ? colors.activeBackgroundColor
-    : colors.backgroundColor;
+  let result = "";
+  if (theme === AppTheme.Glassy) {
+    result = isActive ? "glassactive" : "glass";
+  } else {
+    result = isActive ? colors.activeBackgroundColor : colors.backgroundColor;
+  }
+  return result;
 }
 
 export function generateBackgroudColor(parentBackgroundIndex: number = 1) {

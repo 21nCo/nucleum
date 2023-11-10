@@ -2,10 +2,12 @@
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
-  import type { ColorScheme } from "$lib/tidy/types/theme.type";
+  import { AppTheme, type ColorScheme } from "$lib/tidy/types/theme.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import ColorSchemeSwitcher from "$lib/tidy/components/settings/ColorSchemeSwitcher.svelte";
+  import { sortArrayByOrder } from "$lib/tidy/utils/obj.utils";
+  import { properCase } from "$lib/tidy/utils/text.utils";
   export let parentBackgroundIndex: number = 1;
   let selectedThemeIndex: number = 0;
   let selectedColorSchemeIndex: number;
@@ -19,9 +21,14 @@
     selectedLightnessIndex = $userPreferences.colorScheme?.isDark ? 1 : 0;
     refreshColorSchemes();
   });
-  $: if ($appStore.appConstants.colorSchemes) {
-    refreshColorSchemes();
+  // $: if ($appStore.appConstants.colorSchemes) {
+  //   refreshColorSchemes();
+  // }
+  $: if ($userPreferences.theme === AppTheme.Glassy) {
+    selectedLightnessIndex = 1;
+    refreshColorSchemes({});
   }
+  $: console.log({ selectedColorSchemeIndex });
   function refreshColorSchemes(e: any = undefined) {
     filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
       (x) =>
@@ -35,7 +42,9 @@
         (selectedLightnessIndex == 1 && x.isDark)
       );
     });
+    filteredColorSchemes = sortArrayByOrder(filteredColorSchemes);
     if (e) {
+      console.log(e);
       selectedColorSchemeIndex = 0;
       saveColorScheme();
     } else {
@@ -58,9 +67,9 @@
         : $userPreferences.theme;
     //showChangesFeedback();
   }
-  function onThemeChange() {
-    refreshColorSchemes();
+  function onThemeChange(e: any) {
     saveTheme();
+    refreshColorSchemes(e);
   }
   function onTempSchemeChange(event: any) {
     $userPreferences.tempColorScheme =
@@ -74,20 +83,24 @@
   <Switcher
     label="Theme"
     {parentBackgroundIndex}
-    items={$appStore.appConstants.themes}
+    items={$appStore.appConstants.themes.map((x) => properCase(x))}
     selectionStyle={SelectionItemActiveStyle.CIRCLE}
     on:switch={onThemeChange}
     bind:selectedIndex={selectedThemeIndex}
   />
-  <Switcher
-    label="Color scheme"
-    {parentBackgroundIndex}
-    size={Size.sm}
-    items={["light", "dark"]}
-    selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-    on:switch={refreshColorSchemes}
-    bind:selectedIndex={selectedLightnessIndex}
-  />
+  {#if $userPreferences.theme === AppTheme.Clean}
+    <Switcher
+      label="Color scheme"
+      {parentBackgroundIndex}
+      size={Size.sm}
+      items={["light", "dark"]}
+      selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+      on:switch={refreshColorSchemes}
+      bind:selectedIndex={selectedLightnessIndex}
+    />
+  {:else if $userPreferences.theme === AppTheme.Glassy}
+    <div class="text-b3 text-fgs2">{`[ Experimental theme ]`}</div>
+  {/if}
   <ColorSchemeSwitcher
     {parentBackgroundIndex}
     colorSchemes={filteredColorSchemes}

@@ -20,6 +20,7 @@
     checkForUpdates,
     loginStatusCheck,
     onBoardingStatusCheck,
+    runBackendUpdate,
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   const visibilityChangeListener = (event: Event) => {
@@ -68,10 +69,10 @@
     //todo - check if the saved timezone is different from current user timezone
     await initializeAppData();
     const currentVersion = $appStore.appData.version;
-    localStorage.setItem("appVersion", currentVersion);
     const isValid = await loginStatusCheck();
     if (isValid) {
-      await checkForUpdates(currentVersion);
+      let result = await checkForUpdates(currentVersion);
+      if (!result) await runBackendUpdate();
     }
     await onBoardingStatusCheck();
     postMessageToParent({

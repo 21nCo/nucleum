@@ -5,6 +5,7 @@
     appStore,
     modalEvent as modalEvent,
     postMessageToParent,
+    userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -17,6 +18,7 @@
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { bg } from "$lib/tidy/utils/theme.utils";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
@@ -55,17 +57,6 @@
     use:swipe={{ timeframe: 300, minSwipeDistance: 60 }}
     on:swipe={onSwipe}
   >
-    {#if $windowObject.isInPortraitMode}
-      <button
-        class="pt-4 pb-6 px-4 flex w-full justify-center bg-bgs1 -mb-1"
-        on:click={() => {
-          appStore.hideFullScreenPlayer();
-        }}
-      >
-        <div class="h-1 bg-bgs3 w-1/3 rounded-full" />
-        <!-- <Icon icon="collapse" color="fgs2" /> -->
-      </button>
-    {/if}
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}

@@ -77,22 +77,40 @@ async function checkIfSessionExpired() {
   }
 }
 
+export async function runBackendUpdate() {
+  console.log("running backend update");
+  return new Persistance().updateDefinitions();
+}
+
+function runClientUpdate() {
+  console.log("running client update");
+  //todo - show user a message that an update is available - auto updating for now
+  window?.location?.reload();
+}
+
 export async function checkForUpdates(
   latestVersion: string | undefined = undefined
 ) {
   console.log("checking for updates");
-  if (!latestVersion) {
-    const app = import.meta.env.VITE_APP ?? window.location.hostname;
-    if (!app) return;
-    latestVersion = await new Persistance().getLatestAppVersion(app);
+  try {
+    if (!latestVersion) {
+      const app = import.meta.env.VITE_APP ?? window.location.hostname;
+      if (!app) return;
+      latestVersion = await new Persistance().getLatestAppVersion(app);
+    }
+    if (!latestVersion) return;
+    const appVersionOnClient = localStorage.getItem("appVersion");
+    if (!appVersionOnClient) {
+      localStorage.setItem("appVersion", latestVersion);
+      await runBackendUpdate();
+      return true;
+    } else if (appVersionOnClient != latestVersion) {
+      localStorage.setItem("appVersion", latestVersion);
+      runClientUpdate();
+      return true;
+    }
+  } catch (e) {
+    appStore.logError(e);
   }
-  if (!latestVersion) return;
-  const appVersionOnClient = localStorage.getItem("appVersion");
-  if (!appVersionOnClient) {
-    localStorage.setItem("appVersion", latestVersion);
-  } else if (appVersionOnClient != latestVersion) {
-    await new Persistance().updateDefinitions();
-    localStorage.setItem("appVersion", latestVersion);
-    window?.location?.reload();
-  }
+  return false;
 }

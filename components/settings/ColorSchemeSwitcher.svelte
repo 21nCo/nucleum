@@ -3,6 +3,7 @@
   import { createEventDispatcher } from "svelte";
   import { bg } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { properCase } from "$lib/tidy/utils/text.utils";
   export let colorSchemes: ColorScheme[];
   export let parentBackgroundIndex: number;
   export let selected: number;
@@ -50,7 +51,7 @@
             {/each}
           </div>
         {/if}
-        {colorScheme.label}
+        {properCase(colorScheme.label)}
         {#if selected === index}
           <div
             class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-fgs4"

@@ -84,17 +84,21 @@ export class Persistance {
     return true;
   };
   updateDefinitions = async () => {
-    const token = localStorage.getItem("refresh-token");
-    const response = await performApiCall(
-      "account/updateDefinitions",
-      "POST",
-      JSON.stringify({ token })
-    );
-    if (!response?.ok) {
-      return;
+    try {
+      const token = localStorage.getItem("refresh-token");
+      const response = await performApiCall(
+        "account/updateDefinitions",
+        "POST",
+        JSON.stringify({ token })
+      );
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return isValidArray(data);
+    } catch (err) {
+      appStore.logError(err);
     }
-    const data = await response.json();
-    return isValidArray(data);
   };
   getLatestAppVersion = async (app: string) => {
     try {

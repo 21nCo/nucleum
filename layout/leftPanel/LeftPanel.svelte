@@ -42,10 +42,13 @@
         <ComponentResolver path={$appStore.player} />
       {/if}
       <div
-        class=" border-t border-bgs2 w-full min-w-min pb-6 pt-1 {bg(
+        class=" border-t border-bgs2 w-full min-w-min pb-6 pt-1 {$userPreferences.theme ===
+        AppTheme.Glassy
+          ? 'glassmenubar'
+          : bg($userPreferences.theme, 0)} {borderColor(
           $userPreferences.theme,
-          0
-        )} {borderColor($userPreferences.theme, ColorStrength.Subtle)}"
+          ColorStrength.Subtle
+        )}"
       >
         <AppMenuSwitcher
           layoutContext={LayoutContext.PORTRAIT}

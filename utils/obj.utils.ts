@@ -71,6 +71,15 @@ export function sortPropertiesByOrder(obj: any) {
   return sortedObj;
 }
 
+export function sortArrayByOrder(arr: any[]) {
+  console.log("sortArrayByOrder", arr);
+  arr = arr.map((item) => {
+    item.order = item.order || 1000;
+    return item;
+  });
+  return arr.sort((a, b) => a.order - b.order);
+}
+
 export function getNextInLoop(list: any, index: number) {
   const nextIndex = index + 1;
   if (nextIndex < list.length) {
