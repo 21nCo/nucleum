@@ -1,4 +1,4 @@
-import { Item, type ItemType } from "$lib/local/types/item.enum";
+import { Item, type ItemType } from "$lib/tidy/types/item.enum";
 
 export function properCase(str: string) {
   return str.replace(/\w\S*/g, function (text) {

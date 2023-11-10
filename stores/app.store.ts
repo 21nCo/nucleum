@@ -17,10 +17,10 @@ import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
 import type { HapticFeedback } from "../types/haptic.enum";
-import { sessionStore } from "$lib/local/stores/session.store";
-import { Persistance } from "./persistance";
+import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone } from "../utils/time.utils";
+import { Item } from "$lib/tidy/types/item.enum";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -202,7 +202,6 @@ export const appStore = initAppStore({
   isDebugMode,
   isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
-  tailwindTheme: "",
   appData: {},
   appConstants: {
     themes,
@@ -302,7 +301,8 @@ function initAppStore(seed: AppStore) {
   };
 }
 
-export const defaultColors = {
+const userPreferencesId = "Preferences:global";
+export const defaultColorSchemeColors = {
   bgs1: "hsl(0 0% 100%)",
   bgs2: "hsl(0 0% 98%)",
   bgs3: "hsl(0 0% 92%)",
@@ -325,12 +325,18 @@ export const defaultColors = {
   brs3: "hsl(0 0% 90%)",
 };
 
-export const userPreferences = initUserPreferences({
+const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
+
+export const tailwindTheme = writable<string>(
+  locallySyncedTailwindTheme || "clean cs_pointron_light"
+);
+
+const seedUserPreferences = {
+  id: userPreferencesId,
   nickName: "",
   theme: AppTheme.Clean,
   dayStart: "00:00",
   birthday: new Date(),
-  isOnboardingComplete: false,
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
   timeFormat: "meridian",
@@ -339,30 +345,43 @@ export const userPreferences = initUserPreferences({
     label: "bw",
     theme: "clean",
     isDark: false,
-    colors: defaultColors,
-    tailwindSelector: "bw",
+    colors: defaultColorSchemeColors,
+    tailwindSelector: "cs_pointron_light",
   },
-});
+  uiState: {
+    isOnboardingComplete: false,
+  },
+};
 
-function initUserPreferences(seed: UserGlobalPreferences) {
+const locallySyncedUserPreferences = retrieveLocally(Item.UserPreferences);
+export const userPreferences = initUserPreferences(
+  locallySyncedUserPreferences || seedUserPreferences
+);
+
+function initUserPreferences(initialValue: UserGlobalPreferences) {
   let previousValue: string;
-  const { subscribe, set, update } = writable<UserGlobalPreferences>(seed);
+  const { subscribe, set: setRaw } =
+    writable<UserGlobalPreferences>(initialValue);
   const persist = (n: Partial<UserGlobalPreferences>) => {
-    persistance.update({ id: "Preferences:global", ...n });
+    //console.log("persisting global preferences", { n });
+    persistance.update({ ...n, id: userPreferencesId });
+    persistLocally(Item.UserPreferences, n);
   };
-  const retrieve = async () => {
-    let m = await persistance.retrieve("Preferences:global");
-    //console.log("retrieved global preferences", { m });
-    if (m?.length > 0) {
-      set(m[0]);
-      previousValue = JSON.stringify(m[0]);
-    } else {
-      set(seed);
-      persist(seed);
-    }
+  const set = (x: UserGlobalPreferences) => {
+    setRaw(x);
+    previousValue = JSON.stringify(x);
   };
   return {
     subscribe,
+    loadFromCloud: (data: UserGlobalPreferences) => {
+      if (!data.uiState) data.uiState = seedUserPreferences.uiState;
+      set(data);
+      persistLocally(Item.UserPreferences, data);
+    },
+    loadSeedData: () => {
+      set(seedUserPreferences);
+      persist(seedUserPreferences);
+    },
     set: (newValue: UserGlobalPreferences) => {
       let changedProperties: any = {};
       if (previousValue) {
@@ -377,45 +396,7 @@ function initUserPreferences(seed: UserGlobalPreferences) {
       //   changedProperties,
       // });
       set(newValue);
-      previousValue = JSON.stringify(newValue);
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
-    },
-    sync: retrieve,
-    load: (m: UserGlobalPreferences) => {
-      set(m);
-    },
-  };
-}
-
-export const isOnboardingComplete = initOnboardingComplete(false);
-
-function initOnboardingComplete(seed: boolean) {
-  const isOnboardingComplete = localStorage.getItem("isOnboardingComplete");
-  if (isOnboardingComplete !== "true") {
-    localStorage.setItem("isOnboardingComplete", "false");
-  }
-  isOnboardingComplete === "true" ? (seed = true) : (seed = false);
-
-  const { subscribe, set, update } = writable<boolean>(seed);
-  return {
-    subscribe,
-    set,
-    update,
-    check: () => {
-      update((n: boolean) => {
-        n = localStorage.getItem("isOnboardingComplete") === "true";
-        if (!n) {
-          windowObject.gotoPath("/onboarding");
-        }
-        return n;
-      });
-    },
-    complete: () => {
-      update((n: boolean) => {
-        localStorage.setItem("isOnboardingComplete", "true");
-        n = true;
-        return n;
-      });
     },
   };
 }
@@ -477,7 +458,6 @@ function initAccount(seed: UserAccount) {
       },
     });
     if (isRefreshApp) {
-      await userPreferences.sync();
       appEvents.publish(AppEvent.USER_LOGIN, true);
     }
     update(() => {
@@ -492,7 +472,6 @@ function initAccount(seed: UserAccount) {
   const expire = () => {
     // localStorage.removeItem("surreal-token");
     // localStorage.removeItem("userInfo");
-    sessionStore.reset();
     update(() => {
       const n = { token: null, isLoggedIn: false };
       return n;

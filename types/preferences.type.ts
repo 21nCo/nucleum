@@ -7,10 +7,15 @@ export type UserGlobalPreferences = {
   colorScheme: ColorScheme;
   birthday?: Date;
   dayStart: string;
-  isOnboardingComplete: boolean;
   tempColorScheme: string;
   accessibilitySizingFactor: number;
   timeFormat: string;
   timeZone: string;
   timeScales?: TimeScale[];
+  uiState: GlobalUiState;
+  id: string;
+};
+
+export type GlobalUiState = {
+  isOnboardingComplete: boolean;
 };

@@ -4,7 +4,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
-  import type { ItemType } from "$lib/local/types/item.enum";
+  import type { ItemType } from "$lib/tidy/types/item.enum";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
   import { userPreferences } from "$lib/tidy/stores/app.store";

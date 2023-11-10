@@ -12,7 +12,6 @@ export type AppStore = {
   player?: string;
   //TACO - dynamic actions
   dynamicBlocks?: Action[];
-  tailwindTheme: string;
   fullScreenComponentPath?: string;
   debugLogs?: DebugLog[];
 };

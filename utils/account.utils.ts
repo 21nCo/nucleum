@@ -2,8 +2,8 @@ import { get } from "svelte/store";
 import {
   account,
   appStore,
-  isOnboardingComplete,
   isRefreshingToken,
+  userPreferences,
   windowObject,
 } from "../stores/app.store";
 import { wait } from "./time.utils";
@@ -30,9 +30,11 @@ export async function loginStatusCheck() {
 }
 
 export async function onBoardingStatusCheck() {
-  const isValid = await loginStatusCheck();
-  if (!isValid) return false;
-  isOnboardingComplete.check();
+  if (get(userPreferences).uiState?.isOnboardingComplete) return true;
+  else {
+    windowObject.gotoPath("/onboarding");
+    return false;
+  }
 }
 
 async function checkIfSessionExpired() {

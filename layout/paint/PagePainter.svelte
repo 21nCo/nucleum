@@ -9,13 +9,7 @@
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
-  import {
-    account,
-    appStore,
-    isOnboardingComplete,
-    userPreferences,
-    windowObject,
-  } from "$lib/tidy/stores/app.store";
+  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
@@ -57,9 +51,13 @@
     return currentPath;
   }
   async function resolve(currentPath: string) {
-    if (!(currentPath === "expired" || currentPath === "signup")) {
+    const excludedPaths = ["expired", "signup", "login", "404", "onboarding"];
+    if (!excludedPaths.includes(currentPath)) {
       const isValid = await loginStatusCheck();
-      await onBoardingStatusCheck();
+      const isOnboardingComplete = await onBoardingStatusCheck();
+      if (!isOnboardingComplete) {
+        return;
+      }
       console.log("isTokenExpired check page painter", {
         isValid,
       });
@@ -73,11 +71,7 @@
 
     if (!currentComponent) {
       if (currentPath == "") {
-        windowObject.gotoPath(
-          $isOnboardingComplete
-            ? $appStore.appData.homePath ?? "/home"
-            : "/onboarding"
-        );
+        windowObject.gotoPath($appStore.appData.homePath ?? "/home");
       } else {
         windowObject.gotoPath($appStore.appData.notFoundPath ?? "/404");
       }
