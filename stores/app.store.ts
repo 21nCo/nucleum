@@ -21,6 +21,7 @@ import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
+import { defaultAppData } from "$lib/local/stores/local.store";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -202,7 +203,7 @@ export const appStore = initAppStore({
   isDebugMode,
   isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
-  appData: {},
+  appData: defaultAppData,
   appConstants: {
     themes,
     colorSchemes: [],

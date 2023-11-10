@@ -44,7 +44,7 @@
         <div
           class="text-b3 bg-ag text-bgs1 px-3 py-1 rounded-br-md rounded-tl-md"
         >
-          Early adapter - lifetime license
+          Early adopter - lifetime license
         </div>
       </div>
     </button>

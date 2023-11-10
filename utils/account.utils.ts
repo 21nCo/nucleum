@@ -77,15 +77,22 @@ async function checkIfSessionExpired() {
   }
 }
 
-export async function checkForUpdates() {
+export async function checkForUpdates(
+  latestVersion: string | undefined = undefined
+) {
   console.log("checking for updates");
+  if (!latestVersion) {
+    const app = import.meta.env.VITE_APP ?? window.location.hostname;
+    if (!app) return;
+    latestVersion = await new Persistance().getLatestAppVersion(app);
+  }
+  if (!latestVersion) return;
   const appVersionOnClient = localStorage.getItem("appVersion");
-  const currentVersion = get(appStore).appData.version;
   if (!appVersionOnClient) {
-    localStorage.setItem("appVersion", currentVersion);
-  } else if (appVersionOnClient != currentVersion) {
+    localStorage.setItem("appVersion", latestVersion);
+  } else if (appVersionOnClient != latestVersion) {
     await new Persistance().updateDefinitions();
-    localStorage.setItem("appVersion", currentVersion);
+    localStorage.setItem("appVersion", latestVersion);
     window?.location?.reload();
   }
 }

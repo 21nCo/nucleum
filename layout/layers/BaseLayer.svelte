@@ -11,8 +11,6 @@
   } from "$lib/tidy/stores/app.store";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
-  import { performBlankApiCall } from "$lib/tidy/utils/utils";
-  import { defaultAppData } from "$lib/local/stores/local.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
   import { AppEvent } from "$lib/tidy/types/event.enum";
@@ -23,6 +21,7 @@
     loginStatusCheck,
     onBoardingStatusCheck,
   } from "$lib/tidy/utils/account.utils";
+  import { Persistance } from "$lib/tidy/stores/persistance";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -72,7 +71,7 @@
     localStorage.setItem("appVersion", currentVersion);
     const isValid = await loginStatusCheck();
     if (isValid) {
-      await checkForUpdates();
+      await checkForUpdates(currentVersion);
     }
     await onBoardingStatusCheck();
     postMessageToParent({
@@ -81,23 +80,8 @@
   }
   async function initializeAppData() {
     const app = import.meta.env.VITE_APP ?? window.location.hostname;
-    appStore.initiatizeAppData(defaultAppData);
     if (!app) return;
-    try {
-      let response = await performBlankApiCall(
-        "appdata",
-        "POST",
-        JSON.stringify({ app })
-      );
-      if (response && response.ok) {
-        let jsonValue = await response.json();
-        if (jsonValue) {
-          appStore.initiatizeAppData(jsonValue);
-        }
-      }
-    } catch (err) {
-      appStore.logError(err);
-    }
+    await new Persistance().initializeAppData(app);
   }
   function runCurrentTime() {
     clearInterval(timer);

@@ -7,7 +7,8 @@ import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
 import type { DbRecordType } from "$lib/local/types/item.type";
-import { performApiCall } from "../utils/utils";
+import { performApiCall, performBlankApiCall } from "../utils/utils";
+import { isValidArray } from "../utils/obj.utils";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
@@ -93,8 +94,39 @@ export class Persistance {
       return;
     }
     const data = await response.json();
-    console.log("updateDefinitions response", data);
-    return true;
+    return isValidArray(data);
+  };
+  getLatestAppVersion = async (app: string) => {
+    try {
+      let response = await performBlankApiCall(
+        "appdata",
+        "POST",
+        JSON.stringify({ app })
+      );
+      if (response?.ok) {
+        let jsonValue = await response.json();
+        if (!jsonValue) return;
+        return jsonValue.version;
+      }
+    } catch (err) {
+      appStore.logError(err);
+    }
+  };
+  initializeAppData = async (app: string) => {
+    try {
+      let response = await performBlankApiCall(
+        "appdata",
+        "POST",
+        JSON.stringify({ app })
+      );
+      if (response?.ok) {
+        let jsonValue = await response.json();
+        if (!jsonValue) return;
+        appStore.initiatizeAppData(jsonValue);
+      }
+    } catch (err) {
+      appStore.logError(err);
+    }
   };
   /**
    * Creates a new Item. If Id is not provided, a new Id will be generated
