@@ -46,9 +46,8 @@
   }
   function refreshTailwind() {
     fontFamily =
-      $userPreferences.theme === AppTheme.Clean
-        ? "BlinkMacSystemFont Cantarell Nunito"
-        : "Avenir";
+      $userPreferences.theme === AppTheme.Clean ? "Avenir" : "Avenir";
+    //BlinkMacSystemFont Cantarell Nunito sans-serif
     $tailwindTheme = `${$userPreferences.theme} ${"medium"} ${
       $userPreferences.colorScheme?.tailwindSelector ?? "cs_pointron_light"
     }`;

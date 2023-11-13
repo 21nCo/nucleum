@@ -4,6 +4,7 @@
   import {
     generateBackgroudColor,
     borderColor,
+    bg,
   } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
@@ -28,6 +29,11 @@
       case PanelSwitcherStyle.BOTTOMDOT:
         classList = "flex gap-6 items-center";
         break;
+      case PanelSwitcherStyle.ROUNDED:
+        classList =
+          "flex rounded-full " +
+          bg($userPreferences.theme, parentBackgroundIndex);
+        break;
       case PanelSwitcherStyle.DEFAULT:
         classList = "flex gap-4 rounded-full";
         break;
@@ -38,7 +44,7 @@
   });
 </script>
 
-<div class="relative w-full">
+<div class="relative {style === PanelSwitcherStyle.BOTTOMBAR && 'w-full'}">
   <div class={classList}>
     {#each items as item, index}
       <PanelSwitcherItem
@@ -54,10 +60,12 @@
       />
     {/each}
   </div>
-  <div
-    class="absolute w-full left-0 -bottom-1 border-b {borderColor(
-      $userPreferences.theme,
-      ColorStrength.Strong
-    )}"
-  />
+  {#if style === PanelSwitcherStyle.BOTTOMBAR}
+    <div
+      class="absolute w-full left-0 -bottom-1 border-b {borderColor(
+        $userPreferences.theme,
+        ColorStrength.Strong
+      )}"
+    />
+  {/if}
 </div>

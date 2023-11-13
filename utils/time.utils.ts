@@ -88,7 +88,7 @@ export function timePeriodLabel(period: TimePeriod) {
   if (type === TimePeriodType.RELATIVE) {
     if (value === 0) {
       if (scale === TimeScale.DAYS) return "Today";
-      else return `This ${scale.toLowerCase()}`;
+      else return `This ${scale.slice(0, scale.length - 1).toLowerCase()}`;
     } else if (value === 1) {
       if (scale === TimeScale.DAYS) return "Tomorrow";
       else return `Next ${scale.toLowerCase()}`;
@@ -239,13 +239,19 @@ export const getTimeZonesWithOffsets = () => {
 export function detectTimeZone() {
   const timeZones = getTimeZonesWithOffsets();
   try {
-    return (
-      Intl.DateTimeFormat().resolvedOptions().timeZone ?? timeZones[0].name
-    );
+    const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeZone = timeZones.find((x: any) => x.name === detectedTimeZone);
+    console.log({ detectedTimeZone, timeZone });
+    return timeZone ? timeZone : timeZones[0];
   } catch (error) {
     console.error("Could not detect time zone:", error);
-    return timeZones[0].name;
+    return timeZones[0];
   }
+}
+
+export function offsetInSeconds(offset: string) {
+  const [hours, minutes] = offset.split(":");
+  return parseInt(hours) * 60 * 60 + parseInt(minutes) * 60;
 }
 
 //todo cleanup - this is duplicate of formatSeconds

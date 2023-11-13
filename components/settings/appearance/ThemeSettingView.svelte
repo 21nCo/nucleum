@@ -21,13 +21,6 @@
     selectedLightnessIndex = $userPreferences.colorScheme?.isDark ? 1 : 0;
     refreshColorSchemes();
   });
-  // $: if ($appStore.appConstants.colorSchemes) {
-  //   refreshColorSchemes();
-  // }
-  $: if ($userPreferences.theme === AppTheme.Glassy) {
-    selectedLightnessIndex = 1;
-    refreshColorSchemes({});
-  }
   $: console.log({ selectedColorSchemeIndex });
   function refreshColorSchemes(e: any = undefined) {
     filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(

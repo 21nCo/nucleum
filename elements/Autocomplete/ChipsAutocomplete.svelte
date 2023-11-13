@@ -115,7 +115,7 @@
     if (values.some((x) => x.id === id)) {
       values = values.filter((x) => x.id !== id);
     } else {
-      values = [...values, { title, id }];
+      values = [...values, { label: title, id }];
     }
   }
 
@@ -148,7 +148,7 @@
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { title, id } = tempOptions[selectedListItemIndex];
+        const { label: title, id } = tempOptions[selectedListItemIndex];
         handleResultItemClick({ title, id });
         if (!escapeDefaultClickBehaviour) {
           performDefaultClickActions();
@@ -196,7 +196,7 @@
     ) {
       updateListVisibility(true);
       tempOptions = options.filter((x) =>
-        x.title.toLowerCase().includes(inputValue.toLowerCase())
+        x.label.toLowerCase().includes(inputValue.toLowerCase())
       );
     }
   }
@@ -270,7 +270,7 @@
           on:click
           hideCloseIcon
           classList={chipsClassList}
-          variant={chipsVariant}>{value.title}</Chip
+          variant={chipsVariant}>{value.label}</Chip
         >
       {/each}
 

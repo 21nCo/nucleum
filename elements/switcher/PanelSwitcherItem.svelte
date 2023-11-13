@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { ColorType } from "$lib/tidy/types/theme.type";
   import { bg, customColorStyle } from "$lib/tidy/utils/theme.utils";
@@ -57,5 +57,20 @@
         style="left: 40%; {bgColorStyle}"
       />
     {/if}
+  </button>
+{:else if style === PanelSwitcherStyle.ROUNDED}
+  <button
+    class="relative min-w-fit rounded-full px-6 py-2"
+    style={isActive ? bgColorStyle : ""}
+    on:click
+    disabled={isDisabled}
+  >
+    <div
+      class="{$windowObject.isInPortraitMode ? 'text-h5' : 'text-h4'} {isActive
+        ? 'text-bgs1'
+        : 'text-fgs3'}"
+    >
+      {item}
+    </div>
   </button>
 {/if}

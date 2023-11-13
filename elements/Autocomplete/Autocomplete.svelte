@@ -99,7 +99,7 @@
   }
 
   function onInputChange() {
-    value = options.find((x) => x.title === inputValue) ?? null;
+    value = options.find((x) => x.label === inputValue) ?? null;
   }
 
   function handleKeyDownInDropdown(event: KeyboardEvent) {
@@ -118,7 +118,7 @@
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { title, id } = tempOptions[selectedListItemIndex];
+        const { label: title, id } = tempOptions[selectedListItemIndex];
         dispatch("list-item-click", { title, id });
         if (!escapeDefaultClickBehaviour) {
           performDefaultClickActions();
@@ -151,7 +151,7 @@
     ) {
       updateListVisibility(true);
       tempOptions = options.filter((x) =>
-        x.title.toLowerCase().includes(inputValue.toLowerCase())
+        x.label.toLowerCase().includes(inputValue.toLowerCase())
       );
     }
   }

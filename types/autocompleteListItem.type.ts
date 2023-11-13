@@ -1,4 +1,4 @@
 export type AutocompleteListItemType = {
-  title: string;
+  label: string;
   id: string;
 };

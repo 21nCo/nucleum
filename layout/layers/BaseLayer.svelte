@@ -44,7 +44,8 @@
     const appEventSub = appEvents.subscribe(async (e) => {
       if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
         if (e.value && !document?.hidden) {
-          await checkForUpdates();
+          let isValid = await loginStatusCheck();
+          if (isValid) await checkForUpdates();
           postMessageToParent({
             ping: true,
           });

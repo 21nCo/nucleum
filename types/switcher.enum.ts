@@ -10,6 +10,7 @@ export enum PanelSwitcherStyle {
   BOTTOMBAR,
   BOTTOMDOT,
   BOTTOMBAR_WITHBACKGROUND,
+  ROUNDED,
 }
 
 export enum SelectionItemActiveStyle {

@@ -9,7 +9,8 @@
         //todo - retrieve profile picture from cloud
       } else if (x.userInfo?.firstName && x.userInfo?.lastName) {
         initials =
-          x.userInfo.firstName.charAt(0) + x.userInfo.lastName.charAt(0);
+          x.userInfo.firstName.charAt(0).toLocaleUpperCase() +
+          x.userInfo.lastName.charAt(0).toLocaleUpperCase();
       }
     });
   });

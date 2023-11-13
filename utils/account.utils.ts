@@ -16,14 +16,14 @@ export async function loginStatusCheck() {
     windowObject.gotoPath("/signup");
     return false;
   }
-  let isSessionExpired = await checkIfSessionExpired();
-  if (isSessionExpired && get(isRefreshingToken)) {
+  let isSessionExpiredOrRefreshing = await checkIfSessionExpired();
+  if (isSessionExpiredOrRefreshing && get(isRefreshingToken)) {
     while (get(isRefreshingToken)) {
       await wait(1000);
     }
   }
-  isSessionExpired = await checkIfSessionExpired();
-  if (isSessionExpired) {
+  isSessionExpiredOrRefreshing = await checkIfSessionExpired();
+  if (isSessionExpiredOrRefreshing) {
     windowObject.gotoPath("/expired");
     return false;
   } else return true;
@@ -71,9 +71,10 @@ async function checkIfSessionExpired() {
       return false;
     } else {
       isRefreshingToken.set(false);
-      account.expire();
       return true;
     }
+  } else {
+    return true;
   }
 }
 

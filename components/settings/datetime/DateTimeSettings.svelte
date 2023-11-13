@@ -16,9 +16,9 @@
   import {
     detectTimeZone,
     getTimeZonesWithOffsets,
+    offsetInSeconds,
   } from "$lib/tidy/utils/time.utils";
-  let timeZones: (Omit<DropdownItem, "value"> & { value: string })[];
-  let selectedTimezone: string | undefined = undefined;
+  let timeZones: (Omit<DropdownItem, "value"> & { value: number })[];
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
       label: properCase(key),
@@ -30,16 +30,19 @@
     timeZones = rawZones.map((zone) => {
       return {
         label: zone.name + " (UTC" + zone.offset + ")",
-        value: zone.name,
+        value: offsetInSeconds(zone.offset),
       };
     });
-    if ($userPreferences.timeZone) {
+    let selectedTimezone;
+    if ($userPreferences.timeZoneOffset) {
       selectedTimezone = timeZones.find(
-        (zone) => zone.value === $userPreferences.timeZone
+        (zone) => zone.value === $userPreferences.timeZoneOffset
       )?.value;
     }
     if (selectedTimezone === undefined) {
-      $userPreferences.timeZone = detectTimeZone();
+      $userPreferences.timeZoneOffset = offsetInSeconds(
+        detectTimeZone().offset
+      );
     }
   });
 </script>
@@ -58,7 +61,7 @@
       style={DropDownStyle.OUTLINED}
       info="The timezone used to calculate your daily target and streak."
       items={timeZones}
-      bind:value={$userPreferences.timeZone}
+      bind:value={$userPreferences.timeZoneOffset}
     />
     <Button
       label="Auto detect time zone"
@@ -66,13 +69,16 @@
       style={ButtonStyle.PLAIN}
       size={Size.sm}
       on:click={() => {
-        $userPreferences.timeZone = detectTimeZone();
+        $userPreferences.timeZoneOffset = offsetInSeconds(
+          detectTimeZone().offset
+        );
       }}
     />
   {/if}
   <TimeSelector
     label="Day starts at"
     info="The time at which your day starts. This is used to calculate your daily target and streak."
-    bind:value={$userPreferences.dayStart}
+    bind:hour={$userPreferences.dayStartHour}
+    bind:minute={$userPreferences.dayStartMinute}
   />
 </div>

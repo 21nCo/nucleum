@@ -67,21 +67,25 @@ export function retrieveLocally(itemType: ItemType) {
 
 export class Persistance {
   refreshToken = async () => {
-    const token = localStorage.getItem("refresh-token");
-    const response = await performApiCall(
-      "account/refreshToken",
-      "POST",
-      JSON.stringify({ token })
-    );
-    if (!response?.ok) {
-      return;
+    try {
+      const token = localStorage.getItem("refresh-token");
+      const response = await performApiCall(
+        "account/refreshToken",
+        "POST",
+        JSON.stringify({ token })
+      );
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      if (!data?.token) return;
+      if (!data.userInfo)
+        data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+      account.signIn(data, false);
+      return true;
+    } catch (err) {
+      appStore.logError(err);
     }
-    const data = await response.json();
-    if (!data?.token) return;
-    if (!data.userInfo)
-      data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
-    account.signIn(data, false);
-    return true;
   };
   updateDefinitions = async () => {
     try {

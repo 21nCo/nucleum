@@ -336,7 +336,8 @@ const seedUserPreferences = {
   id: userPreferencesId,
   nickName: "",
   theme: AppTheme.Clean,
-  dayStart: "00:00",
+  dayStartHour: 0,
+  dayStartMinute: 0,
   birthday: new Date(),
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
@@ -391,11 +392,11 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
           changedProperties[key] = newValue[key as keyof UserGlobalPreferences];
         });
       }
-      // console.log({
-      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
-      //   newValue,
-      //   changedProperties,
-      // });
+      console.log({
+        previousValue: previousValue ? JSON.parse(previousValue) : null,
+        newValue,
+        changedProperties,
+      });
       set(newValue);
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
     },

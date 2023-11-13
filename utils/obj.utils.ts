@@ -98,6 +98,6 @@ export function objIsEmpty(obj: any) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
-export function isValidArray(arr: any[]) {
+export function isValidArray(arr: any[] | undefined) {
   return arr && Array.isArray(arr) && arr.length > 0;
 }

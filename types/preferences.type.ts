@@ -6,11 +6,12 @@ export type UserGlobalPreferences = {
   theme: AppTheme;
   colorScheme: ColorScheme;
   birthday?: Date;
-  dayStart: string;
+  dayStartHour: number;
+  dayStartMinute: number;
   tempColorScheme: string;
   accessibilitySizingFactor: number;
   timeFormat: string;
-  timeZone: string;
+  timeZoneOffset: number;
   timeScales?: TimeScale[];
   uiState: GlobalUiState;
   id: string;
