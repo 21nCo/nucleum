@@ -75,7 +75,13 @@
       let result = await checkForUpdates(currentVersion);
       if (!result) await runBackendUpdate();
     }
-    await onBoardingStatusCheck();
+    if (
+      $appStore.launchContext != LaunchContext.EMBED ||
+      ($appStore.launchContext === LaunchContext.EMBED &&
+        $appStore.embedContext != EmbedContext.SHEET)
+    ) {
+      await onBoardingStatusCheck();
+    }
     postMessageToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
     });
