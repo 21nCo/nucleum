@@ -61,12 +61,12 @@
     hideOptions();
   }
 
-  function updateValue(detail: { title: string; id: string }) {
-    inputValue = detail.title;
+  function updateValue(detail: { label: string; id: string }) {
+    inputValue = detail.label;
     value = detail;
   }
 
-  function handleResultItemClick(detail: { title: string; id: string }) {
+  function handleResultItemClick(detail: { label: string; id: string }) {
     dispatch("list-item-click", detail);
     updateValue(detail);
     if (!escapeDefaultClickBehaviour) {
@@ -156,11 +156,11 @@
     }
   }
 
-  onMount(() => {
-    setTimeout(() => {
-      focusOnInput();
-    }, 0);
-  });
+  // onMount(() => {
+  //   setTimeout(() => {
+  //     focusOnInput();
+  //   }, 0);
+  // });
 
   appEvents.subscribe((x: AppEventType) => {
     if (

@@ -11,7 +11,7 @@
   $: fgColorStyle = isActive
     ? customColorStyle($userPreferences, ColorType.Fg, "a1", activeColor)
     : "";
-  $: bgColorStyle = customColorStyle(
+  $: activeBgColorStyle = customColorStyle(
     $userPreferences,
     ColorType.Bg,
     "a1",
@@ -21,7 +21,7 @@
 
 {#if style === PanelSwitcherStyle.BOTTOMBAR}
   <button
-    class="flex relative px-2"
+    class="flex relative px-2 bg-transparent"
     on:click
     style={fgColorStyle}
     disabled={isDisabled}
@@ -32,11 +32,14 @@
     {#if isActive}
       <div
         class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1 z-10"
-        style="height: 5%; {bgColorStyle}"
+        style="height: 5%; {activeBgColorStyle}"
       />
     {:else}
-      <div
-        class="absolute w-full {bg($userPreferences.theme, 1)} left-0 -bottom-1"
+      <button
+        class="absolute w-full {bg(
+          $userPreferences.theme,
+          2
+        )} left-0 -bottom-1 z-10"
         style="height: 5%;"
       />
     {/if}
@@ -54,14 +57,14 @@
     {#if isActive}
       <div
         class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full"
-        style="left: 40%; {bgColorStyle}"
+        style="left: 40%; {activeBgColorStyle}"
       />
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.ROUNDED}
   <button
     class="relative min-w-fit rounded-full px-6 py-2"
-    style={isActive ? bgColorStyle : ""}
+    style={isActive ? activeBgColorStyle : ""}
     on:click
     disabled={isDisabled}
   >

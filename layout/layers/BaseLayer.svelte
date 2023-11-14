@@ -6,8 +6,10 @@
     appEvents,
     appStore,
     currentTime,
+    excludedPathsForRedirectionCheck,
     postMessageToParent,
     userPreferences,
+    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { dev } from "$app/environment";
   import { inject } from "@vercel/analytics";
@@ -18,11 +20,11 @@
   import {
     checkForUpdates,
     performRedirectionChecks,
-    onBoardingStatusCheck,
     runBackendUpdate,
     performLoginStatusCheck,
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -39,19 +41,7 @@
   bootup();
   onMount(async () => {
     await initializeData();
-    const appEventSub = appEvents.subscribe(async (e) => {
-      if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
-        if (e.value && !document?.hidden) {
-          let isValid = await performLoginStatusCheck();
-          if (isValid) await checkForUpdates();
-          setTimeout(() => {
-            postMessageToParent({
-              ping: true,
-            });
-          }, 2500);
-        }
-      }
-    });
+    const appEventSub = appEvents.subscribe(windowVisibilityHandler);
     return () => {
       appEventSub();
       clearInterval(timer);
@@ -60,10 +50,28 @@
       window?.removeEventListener("click", windowClickEventListener);
     };
   });
+  async function windowVisibilityHandler(e: AppEventType) {
+    if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
+      if (e.value && !document?.hidden) {
+        if (
+          !excludedPathsForRedirectionCheck.includes($windowObject.currentPath)
+        ) {
+          let isValid = await performLoginStatusCheck();
+          if (isValid) await checkForUpdates();
+        }
+        setTimeout(() => {
+          postMessageToParent({
+            ping: true,
+          });
+        }, 2500);
+      }
+    }
+  }
   function bootup() {
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
+    windowObject.setCurrentPath(window.location.pathname);
     inject({ mode: dev ? "development" : "production" });
   }
   async function initializeData() {

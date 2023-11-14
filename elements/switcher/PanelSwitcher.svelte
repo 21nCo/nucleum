@@ -62,10 +62,8 @@
   </div>
   {#if style === PanelSwitcherStyle.BOTTOMBAR}
     <div
-      class="absolute w-full left-0 -bottom-1 border-b {borderColor(
-        $userPreferences.theme,
-        ColorStrength.Strong
-      )}"
+      class="absolute w-full left-0 -bottom-1 {bg($userPreferences.theme, 2)}"
+      style="height: 5%;"
     />
   {/if}
 </div>

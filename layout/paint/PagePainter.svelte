@@ -9,7 +9,11 @@
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
-  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    appStore,
+    excludedPathsForRedirectionCheck,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
@@ -48,13 +52,6 @@
     return currentPath;
   }
   async function resolve(currentPath: string) {
-    const excludedPathsForRedirectionCheck = [
-      "expired",
-      "signup",
-      "login",
-      "404",
-      "onboarding",
-    ];
     if (!excludedPathsForRedirectionCheck.includes(currentPath)) {
       const isProceed = await performRedirectionChecks();
       if (!isProceed) {

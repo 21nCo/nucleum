@@ -26,9 +26,16 @@ import { defaultAppData } from "$lib/local/stores/local.store";
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
-
 export const isRefreshingToken = writable(false);
 export const isAppInLoadingState = writable(true);
+
+export const excludedPathsForRedirectionCheck = [
+  "expired",
+  "signup",
+  "login",
+  "404",
+  "onboarding",
+];
 
 let persistance = new Persistance();
 
