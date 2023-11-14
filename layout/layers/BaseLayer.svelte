@@ -54,7 +54,9 @@
     if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
       if (e.value && !document?.hidden) {
         if (
-          !excludedPathsForRedirectionCheck.includes($windowObject.currentPath)
+          !excludedPathsForRedirectionCheck.includes(
+            $windowObject.currentPath.split("/")[1]
+          )
         ) {
           let isValid = await performLoginStatusCheck();
           if (isValid) await checkForUpdates();
