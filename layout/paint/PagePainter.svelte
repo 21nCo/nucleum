@@ -14,10 +14,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";
   import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
-  import {
-    loginStatusCheck,
-    onBoardingStatusCheck,
-  } from "$lib/tidy/utils/account.utils";
+  import { performRedirectionChecks } from "$lib/tidy/utils/account.utils";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
   let currentComponent: Action | null;
@@ -51,17 +48,16 @@
     return currentPath;
   }
   async function resolve(currentPath: string) {
-    const excludedPaths = ["expired", "signup", "login", "404", "onboarding"];
-    if (!excludedPaths.includes(currentPath)) {
-      const isValid = await loginStatusCheck();
-      const isOnboardingComplete = await onBoardingStatusCheck();
-      if (!isOnboardingComplete) {
-        return;
-      }
-      console.log("isTokenExpired check page painter", {
-        isValid,
-      });
-      if (!isValid) {
+    const excludedPathsForRedirectionCheck = [
+      "expired",
+      "signup",
+      "login",
+      "404",
+      "onboarding",
+    ];
+    if (!excludedPathsForRedirectionCheck.includes(currentPath)) {
+      const isProceed = await performRedirectionChecks();
+      if (!isProceed) {
         return;
       }
     }

@@ -2,7 +2,7 @@ import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb.js";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
-import { loginStatusCheck } from "$lib/tidy/utils/account.utils";
+import { performLoginStatusCheck } from "$lib/tidy/utils/account.utils";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -70,7 +70,7 @@ export class SurrealDatabaseUsingRest {
     } = {}
   ) {
     try {
-      const isValid = await loginStatusCheck();
+      const isValid = await performLoginStatusCheck();
       if (!isValid) return null;
       this.token = localStorage.getItem("surreal-token");
       let decodedToken: any = jwt_decode(this.token!);
@@ -147,7 +147,7 @@ export class SurrealDatabaseUsingSdk {
   }
   async reconnectIfRequired() {
     console.log("reconnectIfRequired", this.db.status);
-    const isValid = await loginStatusCheck();
+    const isValid = await performLoginStatusCheck();
     if (!isValid) return false;
     if (this.db.status === 0) return true;
     else {

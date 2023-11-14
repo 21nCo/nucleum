@@ -10,7 +10,13 @@ import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";
 import { Persistance } from "../stores/persistance";
 
-export async function loginStatusCheck() {
+export async function performRedirectionChecks() {
+  const isOnboardingComplete = await onBoardingStatusCheck();
+  if (!isOnboardingComplete) return false;
+  return await performLoginStatusCheck();
+}
+
+export async function performLoginStatusCheck() {
   const token = localStorage.getItem("surreal-token");
   if (!token) {
     windowObject.gotoPath("/signup");

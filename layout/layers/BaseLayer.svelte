@@ -15,12 +15,12 @@
   import ModalLayer from "./ModalLayer.svelte";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { page } from "$app/stores";
-  import LoadingView from "../paint/LoadingView.svelte";
   import {
     checkForUpdates,
-    loginStatusCheck,
+    performRedirectionChecks,
     onBoardingStatusCheck,
     runBackendUpdate,
+    performLoginStatusCheck,
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   const visibilityChangeListener = (event: Event) => {
@@ -33,18 +33,16 @@
     appEvents.publish(AppEvent.WINDOW_CLICKED, event);
   };
   let timer: any;
-  let isShowLoading = true;
   postMessageToParent({
     ping: true,
   });
   bootup();
   onMount(async () => {
     await initializeData();
-    isShowLoading = false;
     const appEventSub = appEvents.subscribe(async (e) => {
       if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
         if (e.value && !document?.hidden) {
-          let isValid = await loginStatusCheck();
+          let isValid = await performLoginStatusCheck();
           if (isValid) await checkForUpdates();
           setTimeout(() => {
             postMessageToParent({
@@ -72,21 +70,11 @@
     //todo - check if the saved timezone is different from current user timezone
     await initializeAppData();
     const currentVersion = $appStore.appData.version;
-    const isValid = await loginStatusCheck();
-    if (isValid) {
+    const isProceed = await performRedirectionChecks();
+    if (isProceed) {
       let result = await checkForUpdates(currentVersion);
       if (!result) await runBackendUpdate();
     }
-    if (
-      $appStore.launchContext != LaunchContext.EMBED ||
-      ($appStore.launchContext === LaunchContext.EMBED &&
-        $appStore.embedContext != EmbedContext.SHEET)
-    ) {
-      await onBoardingStatusCheck();
-    }
-    postMessageToParent({
-      colorscheme: JSON.stringify($userPreferences.colorScheme),
-    });
   }
   async function initializeAppData() {
     const app = import.meta.env.VITE_APP ?? window.location.hostname;
@@ -120,16 +108,12 @@
 </script>
 
 <title>{$appStore.appData.name}</title>
-{#if isShowLoading}
-  <LoadingView />
-{:else}
-  <div class="flex h-screen w-screen">
-    <ThemeLayer>
-      <slot />
-    </ThemeLayer>
-  </div>
-  {#if $appStore.isDebugMode}
-    <DebugLayer />
-  {/if}
-  <ModalLayer />
+<div class="flex h-screen w-screen">
+  <ThemeLayer>
+    <slot />
+  </ThemeLayer>
+</div>
+{#if $appStore.isDebugMode}
+  <DebugLayer />
 {/if}
+<ModalLayer />

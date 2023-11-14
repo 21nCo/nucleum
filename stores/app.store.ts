@@ -28,6 +28,7 @@ export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 
 export const isRefreshingToken = writable(false);
+export const isAppInLoadingState = writable(true);
 
 let persistance = new Persistance();
 
