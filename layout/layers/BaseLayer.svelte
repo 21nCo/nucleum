@@ -46,9 +46,11 @@
         if (e.value && !document?.hidden) {
           let isValid = await loginStatusCheck();
           if (isValid) await checkForUpdates();
-          postMessageToParent({
-            ping: true,
-          });
+          setTimeout(() => {
+            postMessageToParent({
+              ping: true,
+            });
+          }, 2500);
         }
       }
     });

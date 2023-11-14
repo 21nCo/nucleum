@@ -19,7 +19,7 @@ import type { ModalEvent } from "../types/popup.type";
 import type { HapticFeedback } from "../types/haptic.enum";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
-import { detectTimeZone } from "../utils/time.utils";
+import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 
@@ -192,8 +192,7 @@ const selectableColorParams: selectableColorParams = {
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 
-const isDebugEmbedMode =
-  import.meta.env.DEV && import.meta.env.VITE_IS_DEBUG_EMBED === "true";
+const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
 
 let themes = [AppTheme.Clean, AppTheme.Glassy];
 if (isDebugMode)
@@ -235,7 +234,7 @@ function initAppStore(seed: AppStore) {
     },
     log(message: string | object, type: "error" | "info" | "warn" = "info") {
       update((n: AppStore) => {
-        n.isDebugMode && console.log(message);
+        (n.isDebugMode || n.isDebugEmbedMode) && console.log(message);
         if (!n.debugLogs) n.debugLogs = [];
         n.debugLogs.push({
           message:
@@ -332,7 +331,7 @@ export const tailwindTheme = writable<string>(
   locallySyncedTailwindTheme || "clean cs_pointron_light"
 );
 
-const seedUserPreferences = {
+const seedUserPreferences: UserGlobalPreferences = {
   id: userPreferencesId,
   nickName: "",
   theme: AppTheme.Clean,
@@ -342,7 +341,7 @@ const seedUserPreferences = {
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
   timeFormat: "meridian",
-  timeZone: detectTimeZone(),
+  timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
   colorScheme: {
     label: "bw",
     theme: "clean",
@@ -392,11 +391,11 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
           changedProperties[key] = newValue[key as keyof UserGlobalPreferences];
         });
       }
-      console.log({
-        previousValue: previousValue ? JSON.parse(previousValue) : null,
-        newValue,
-        changedProperties,
-      });
+      // console.log({
+      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
+      //   newValue,
+      //   changedProperties,
+      // });
       set(newValue);
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
     },
@@ -501,7 +500,6 @@ function initAccount(seed: UserAccount) {
 
 export function postMessageToParent(message: any) {
   appStore.log("posting message to parent:" + JSON.stringify(message));
-  //console.log("posting message to parent:" + JSON.stringify(message));
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {

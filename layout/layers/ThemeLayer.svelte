@@ -21,16 +21,20 @@
   }
   onMount(() => {
     refreshTheme();
-    appEvents.subscribe((e) => {
+    const appEventSub = appEvents.subscribe((e) => {
       if (e.event == AppEvent.WINDOW_RESIZED) {
         handleResize();
       }
     });
-    userPreferences.subscribe(() => {
+    const userPrefSub = userPreferences.subscribe(() => {
       refreshTheme();
     });
-    return () => {};
+    return () => {
+      appEventSub();
+      userPrefSub();
+    };
   });
+
   function refreshTheme() {
     refreshSizing();
     refreshTailwind();

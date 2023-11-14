@@ -27,7 +27,7 @@
     const response = await performApiCall(
       "account/signin",
       "POST",
-      JSON.stringify({ email, pass, isTrusted })
+      JSON.stringify({ email: email.toLowerCase(), pass, isTrusted })
     );
     if (!response || !response.ok) {
       showError();
@@ -55,7 +55,7 @@
     const response = await performApiCall(
       "account/signup",
       "POST",
-      JSON.stringify({ email, pass, firstName, lastName })
+      JSON.stringify({ email: email.toLowerCase(), pass, firstName, lastName })
     );
     if (!response || !response.ok) {
       showError();
@@ -192,10 +192,15 @@
       <div class="w-full flex justify-end">
         <Link href="forgot-password" label="Forgot password?" />
       </div>
-      <div class="flex items-center gap-2 w-full">
+      <button
+        class="flex items-center gap-2 w-full"
+        on:click={() => {
+          isTrusted = !isTrusted;
+        }}
+      >
         <input type="checkbox" class="h-4 w-4" bind:checked={isTrusted} />
         <div class="text-fgs3">Trust this device for 30 days</div>
-      </div>
+      </button>
     </div>
   {/if}
   <div class="h-6">
