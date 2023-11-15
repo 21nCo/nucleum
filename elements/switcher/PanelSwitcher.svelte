@@ -1,14 +1,9 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import {
-    generateBackgroudColor,
-    borderColor,
-    bg,
-  } from "$lib/tidy/utils/theme.utils";
+  import { generateBackgroudColor, bg } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
   const dispatch = createEventDispatcher();
   export let items: string[];
   export let selectedIndex: number | undefined = undefined;

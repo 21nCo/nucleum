@@ -9,7 +9,7 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import CpThumbnailList from "./CPThumbnailList.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { TextType } from "$lib/tidy/types/text.enum";
+  import { TextStyle } from "$lib/tidy/types/text.enum";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
@@ -45,9 +45,10 @@
         <Icon icon="chevleft" size={Size.sm} {color} />
         <div class="pr-1">Back</div>
       </button>
-      <Text style={TextType.PANEL_HEADING}>
-        {$windowObject.currentComponent?.label}
-      </Text>
+      <Text
+        style={TextStyle.PANEL_HEADING}
+        content={$windowObject.currentComponent?.label ?? ""}
+      />
     </div>
     <slot />
   </div>
@@ -59,7 +60,7 @@
         : 'w-96 min-w-[24rem]'} "
     >
       <div class="pl-4">
-        <Text style={TextType.PAGE_HEADING}>Control Panel</Text>
+        <Text style={TextStyle.PAGE_HEADING} content="Settings" />
       </div>
       <div
         class="flex flex-col gap-8 flex-grow overflow-auto {$windowObject.isInPortraitMode
@@ -88,7 +89,7 @@
       />
       <div class="p-4 flex-grow flex flex-col gap-4 w-full items-start">
         {#if !isCpHome}
-          <Text style={TextType.PANEL_HEADING}>
+          <Text style={TextStyle.PANEL_HEADING}>
             {$windowObject.currentComponent?.label}
           </Text>
         {/if}

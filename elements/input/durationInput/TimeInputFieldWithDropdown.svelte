@@ -39,7 +39,12 @@
   const inputContainerId = "time-input-container";
 
   onMount(() => {
-    inputValue = value.toString();
+    inputValue =
+      value < 60
+        ? value.toString()
+        : value < 3600
+        ? (value / 60).toString()
+        : (value / 3600).toString();
     let colors = generateBackgroudColor(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
     inputClasses += ` bg-${backgroundColor}`;
@@ -206,16 +211,17 @@
   function handleClickOnTimeSuggestion(index: number) {
     return () => {
       selectedIndex = index;
-      value = timeSuggestions[index].value;
+      value = timeSuggestions[index].value * 60;
       if (currentTimeUnit !== timeSuggestions[index].unit) {
         currentTimeUnit = timeSuggestions[index].unit;
       }
 
-      if (currentTimeUnit === TimeUnit.MINUTES) inputValue = value.toString();
+      if (currentTimeUnit === TimeUnit.MINUTES)
+        inputValue = (value / 60).toString();
       //there is no need of setting this, since we are actually getting the value from this, but this is like a safety mechanism to make sure the code doesn't break, since if the inputValue changes we'll know that something is wrong
       else if (currentTimeUnit === TimeUnit.HOURS)
-        inputValue = (value / 60).toString();
-      else inputValue = Math.round(value * 60).toString();
+        inputValue = (value / (60 * 60)).toString();
+      else inputValue = Math.round(value).toString();
 
       resetTimeSuggestions();
     };
@@ -228,10 +234,10 @@
       if (selectedIndex === -1) {
         if (numberedInputValue === 0 || isNaN(numberedInputValue)) value = 0;
         else if (currentTimeUnit === TimeUnit.MINUTES)
-          value = numberedInputValue;
-        else if (currentTimeUnit === TimeUnit.HOURS)
           value = numberedInputValue * 60;
-        else value = numberedInputValue / 60;
+        else if (currentTimeUnit === TimeUnit.HOURS)
+          value = numberedInputValue * 60 * 60;
+        else value = numberedInputValue;
       } else {
         handleClickOnTimeSuggestion(selectedIndex)();
       }

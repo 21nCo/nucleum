@@ -5,8 +5,6 @@
     appStore,
     modalEvent as modalEvent,
     postMessageToParent,
-    userPreferences,
-    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly } from "svelte/transition";
@@ -18,7 +16,6 @@
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { bg } from "$lib/tidy/utils/theme.utils";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
@@ -45,6 +42,7 @@
           modals = modals.filter((y) => y.path != x.path);
         }
         appStore.log({ modals });
+        console.log({ modals });
       }
     });
   });

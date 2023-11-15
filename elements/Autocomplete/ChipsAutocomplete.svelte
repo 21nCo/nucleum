@@ -2,14 +2,10 @@
   import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
-  import Search from "$lib/tidy/icons/Search.svelte";
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
-  import TextInput from "../input/TextInput.svelte";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
-  import { Item } from "$lib/tidy/types/item.enum";
   import Chip from "./Chip.svelte";
   import { ChipVariant } from "$lib/tidy/types/chipVariant.enum";
-  import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
   import type { ClassListProp } from "$lib/tidy/types/classListProp.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { appEvents } from "$lib/tidy/stores/app.store";

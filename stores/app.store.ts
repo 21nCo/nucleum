@@ -5,7 +5,11 @@ import {
   AppTheme,
   type selectableColorParams,
 } from "$lib/tidy/types/theme.type";
-import { LaunchContext, type AppStore } from "$lib/tidy/types/appStore.type";
+import {
+  LaunchContext,
+  type AppStore,
+  EmbedContext,
+} from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
 import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
@@ -210,6 +214,7 @@ export const appStore = initAppStore({
   isDebugMode,
   isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
+  embedContext: EmbedContext.NONE,
   appData: defaultAppData,
   appConstants: {
     themes,

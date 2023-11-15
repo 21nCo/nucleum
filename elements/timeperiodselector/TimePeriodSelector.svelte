@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TextType } from "$lib/tidy/types/text.enum";
+  import { TextStyle } from "$lib/tidy/types/text.enum";
   import {
     type TimePeriod,
     TimeScale,
@@ -10,6 +10,7 @@
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { timePeriodLabel } from "$lib/tidy/utils/time.utils";
+  import FormControlLabel from "../text/FormControlLabel.svelte";
   const dispatch = createEventDispatcher();
   export let timePeriod: TimePeriod;
   let scales = $userPreferences.timeScales ?? Object.keys(TimeScale);
@@ -27,7 +28,7 @@
 
 <div class="flex gap-4 items-center h-96 w-1/2 p-8">
   <div class="flex flex-col gap-2 items-start">
-    <Text style={TextType.FORM_LABEL}>SELECT TIME SCALE</Text>
+    <FormControlLabel label="Select Time Scale" />
     {#each scales as scale}
       <button
         class="rounded-md px-4 py-2 w-40 {TimeScale[selectedScale] === scale
@@ -46,7 +47,7 @@
   </div>
   <div class="h-full w-1 border border-bgs3" />
   <div class="flex flex-col gap-2 items-start">
-    <Text style={TextType.FORM_LABEL}>SELECT TIME PERIOD</Text>
+    <FormControlLabel label="Select Time Period" />
     {#each segemets as item}
       <button
         class="rounded-md px-4 py-2 w-48 {item == timePeriod.value

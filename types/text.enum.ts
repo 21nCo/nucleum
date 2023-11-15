@@ -1,8 +1,7 @@
-export enum TextType {
+export enum TextStyle {
   PAGE_HEADING,
   PANEL_HEADING,
   SECTION_HEADING,
   SECTION_DESCRIPTION,
-  CP_SECTION,
   FORM_LABEL,
 }

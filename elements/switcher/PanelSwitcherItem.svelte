@@ -26,7 +26,13 @@
     style={fgColorStyle}
     disabled={isDisabled}
   >
-    <div class="text-h5 font-medium {isActive ? '' : 'text-fgs4'}">
+    <div
+      class="font-medium {isActive
+        ? ''
+        : 'text-fgs4'} {$windowObject.isInPortraitMode
+        ? 'text-base'
+        : 'text-h5'}"
+    >
       {item}
     </div>
     {#if isActive}
@@ -51,7 +57,11 @@
     style={fgColorStyle}
     disabled={isDisabled}
   >
-    <div class="text-h3 {isActive ? '' : 'text-fgs3'}">
+    <div
+      class="{$windowObject.isInPortraitMode
+        ? 'text-base'
+        : 'text-h3'} {isActive ? '' : 'text-fgs3'}"
+    >
       {item}
     </div>
     {#if isActive}

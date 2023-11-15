@@ -327,3 +327,16 @@ export function formatDateRelativeToToday(date: UserDate) {
 export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export function incrementTime(
+  dateTime: Date,
+  numberOfHours: number,
+  isRoundToNearestHour: boolean = false
+) {
+  if (isRoundToNearestHour) {
+    const minutes = dateTime.getMinutes();
+    const minutesRounded = Math.round(minutes / 60) * 60;
+    dateTime.setMinutes(minutesRounded);
+  }
+  return new Date(dateTime.getTime() + numberOfHours * 60 * 60 * 1000);
+}

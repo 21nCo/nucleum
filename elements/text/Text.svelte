@@ -1,25 +1,27 @@
 <script lang="ts">
-  import { TextType } from "$lib/tidy/types/text.enum";
+  import { TextStyle } from "$lib/tidy/types/text.enum";
+  import { properCase } from "$lib/tidy/utils/text.utils";
   import { onMount } from "svelte";
-  export let style: TextType;
+  export let content: string;
+  export let style: TextStyle;
   export let customStyle: string = "";
   export let width: string = "";
   let classList: string = "";
   onMount(() => {
     switch (style) {
-      case TextType.PAGE_HEADING:
+      case TextStyle.PAGE_HEADING:
         classList += " text-a1 bg-none text-h1 my-4";
         break;
-      case TextType.PANEL_HEADING:
-        classList += " text-h3 font-medium bg-none ";
+      case TextStyle.PANEL_HEADING:
+        classList += " text-h4 font-medium text-fgs2 bg-none ";
         break;
-      case TextType.SECTION_DESCRIPTION:
+      case TextStyle.SECTION_DESCRIPTION:
         classList += " text-fgs3";
         break;
-      case TextType.SECTION_HEADING:
+      case TextStyle.SECTION_HEADING:
         classList += " text-fgs3 font-medium text-b2 max-w-3xl bg-none";
         break;
-      case TextType.FORM_LABEL:
+      case TextStyle.FORM_LABEL:
         classList += " text-fgs2 font-medium text-b3 max-w-3xl bg-none";
         break;
     }
@@ -28,5 +30,10 @@
 </script>
 
 <button style={customStyle} class={`${classList}`}>
-  <slot />
+  {#if style === TextStyle.SECTION_HEADING}
+    {content.toUpperCase()}
+  {:else}
+    {properCase(content)}
+  {/if}
+  <!-- <slot /> -->
 </button>

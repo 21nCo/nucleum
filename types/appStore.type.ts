@@ -30,7 +30,7 @@ export enum LaunchContext {
 }
 
 export enum EmbedContext {
-  DEFAULT,
+  NONE,
   APP,
   SHEET,
 }

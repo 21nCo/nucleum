@@ -2,7 +2,7 @@
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import { TextType } from "$lib/tidy/types/text.enum";
+  import { TextStyle } from "$lib/tidy/types/text.enum";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   import CpThumbnail from "./CPThumbnail.svelte";
   export let items: string[] = [];
@@ -13,7 +13,7 @@
 <div class="flex flex-col gap-2">
   {#if sectionName}
     <div class="pl-4">
-      <Text style={TextType.SECTION_HEADING}>{sectionName.toUpperCase()}</Text>
+      <Text style={TextStyle.SECTION_HEADING} content={sectionName} />
     </div>
   {/if}
   <div

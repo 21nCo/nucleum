@@ -6,12 +6,12 @@
   import SearchResultItem from "./SearchResultItem.svelte";
   import type { ItemType } from "$lib/tidy/types/item.enum";
   import { Persistance } from "$lib/tidy/stores/persistance";
-  import { TextInputVariant } from "$lib/tidy/types/textInputVariant.enum";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import Element from "../Element.svelte";
   import { bg, borderColor } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
+  import FormControlLabelWrapper from "./FormControlLabelWrapper.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -23,14 +23,9 @@
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
   export let searchItemType: ItemType | undefined = undefined;
-  export let variant: TextInputVariant = TextInputVariant.DEFAULT;
-  export let rows: number = 5;
-  export let resizable: boolean = false;
-  export let customStyle: string = "";
-  export let classList: string = "";
-  export let labelClassList: string = "";
   export let id: string = "";
   export let isRequired: boolean = false;
+  export let labelOrientation: Orientation = Orientation.Vertical;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
   let searchResults: DbRecordWithLabel[] = [];
@@ -80,7 +75,12 @@
     }
     if (size == Size.xl) inputClasses += " text-h3";
     else if (size == Size.lg) inputClasses += " text-base";
-    else if (size == Size.md) inputClasses += " text-base max-w-md";
+    else if (size == Size.md)
+      inputClasses +=
+        " text-base " +
+        (labelOrientation === Orientation.Vertical
+          ? "max-w-md"
+          : "max-w-[16rem]");
     else if (size == Size.sm) inputClasses += " text-b2";
     else if (size == Size.xs) inputClasses += " text-b3";
   });
@@ -177,74 +177,12 @@
   }
 </script>
 
-<div class="flex flex-col gap-1 w-full">
-  {#if label}
-    <FormControlLabel classList={labelClassList} {label} {info} {isRequired} />
-  {/if}
-  <div class="relative flex items-center w-full">
-    {#if variant === TextInputVariant.DEFAULT}
-      {#if type === "password"}
-        <input
-          {id}
-          style={customStyle}
-          class={`${classList} ${inputClasses}`}
-          bind:value
-          on:change
-          on:keydown
-          on:keyup
-          on:blur
-          on:focus
-          on:input={onChange}
-          type="password"
-          {placeholder}
-          disabled={isDisabled}
-          bind:this={inputRef}
-        />
-      {:else}
-        <input
-          {id}
-          style={customStyle}
-          class={`${classList} ${inputClasses}`}
-          bind:value
-          on:change
-          on:keydown
-          on:keyup={searchItemType ? handleKeyUpForSearch : handleKeyUp}
-          on:blur
-          on:focus
-          on:input={onChange}
-          type="text"
-          {placeholder}
-          disabled={isDisabled}
-          bind:this={inputRef}
-        />
-        {#if searchResults && searchResults.length > 0}
-          <div
-            class="search-results bg-bgs3 h-max max-h-60 overflow-auto rounded-md flex flex-col gap-1 items-start"
-          >
-            {#each searchResults as item, index}
-              <SearchResultItem
-                {item}
-                isActive={selectedIndex === index}
-                on:click={() => {
-                  onSearchResultSelection(item);
-                }}
-              />
-            {/each}
-            <Element
-              classList="w-full rounded-b-md py-2 text-center mt-10"
-              parentBackgroundIndex={2}
-              on:click={() => {
-                resetSearch();
-              }}>close</Element
-            >
-          </div>
-        {/if}
-      {/if}
-    {:else if variant === TextInputVariant.TEXT_AREA}
-      <textarea
-        style={customStyle}
-        class={`${classList} ${resizable ? `` : `resize-none`} ${inputClasses}`}
-        {rows}
+<FormControlLabelWrapper {label} {info} orientation={labelOrientation}>
+  {#if type === "password"}
+    <div>
+      <input
+        {id}
+        class={inputClasses}
         bind:value
         on:change
         on:keydown
@@ -252,12 +190,68 @@
         on:blur
         on:focus
         on:input={onChange}
+        type="password"
         {placeholder}
         disabled={isDisabled}
         bind:this={inputRef}
       />
+    </div>
+  {:else if type === "number"}
+    <input
+      {id}
+      class={inputClasses}
+      bind:value
+      on:change
+      on:keydown
+      on:keyup
+      on:blur
+      on:focus
+      on:input={onChange}
+      type="number"
+      {placeholder}
+      disabled={isDisabled}
+      bind:this={inputRef}
+    />
+  {:else}
+    <input
+      {id}
+      class={inputClasses}
+      bind:value
+      on:change
+      on:keydown
+      on:keyup={searchItemType ? handleKeyUpForSearch : handleKeyUp}
+      on:blur
+      on:focus
+      on:input={onChange}
+      type="text"
+      {placeholder}
+      disabled={isDisabled}
+      bind:this={inputRef}
+    />
+    {#if searchResults && searchResults.length > 0}
+      <div
+        class="search-results bg-bgs3 h-max max-h-60 overflow-auto rounded-md flex flex-col gap-1 items-start"
+      >
+        {#each searchResults as item, index}
+          <SearchResultItem
+            {item}
+            isActive={selectedIndex === index}
+            on:click={() => {
+              onSearchResultSelection(item);
+            }}
+          />
+        {/each}
+        <Element
+          classList="w-full rounded-b-md py-2 text-center mt-10"
+          parentBackgroundIndex={2}
+          on:click={() => {
+            resetSearch();
+          }}>close</Element
+        >
+      </div>
     {/if}
-    {#if isEnableSaveFeedback && isShowSaveFeedback}
+  {/if}
+  <!-- {#if isEnableSaveFeedback && isShowSaveFeedback}
       <div class="absolute right-0 text-b2 text-fgs2">saved</div>
     {/if}
     {#if units}
@@ -271,9 +265,8 @@
       <div class="ml-4">
         <slot />
       </div>
-    {/if}
-  </div>
-</div>
+    {/if} -->
+</FormControlLabelWrapper>
 
 <!-- placeholder={placeholder ?? ""} -->
 

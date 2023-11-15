@@ -1,6 +1,7 @@
 import { Item, type ItemType } from "$lib/tidy/types/item.enum";
 
 export function properCase(str: string) {
+  if (!str) return str;
   return str.replace(/\w\S*/g, function (text) {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   });

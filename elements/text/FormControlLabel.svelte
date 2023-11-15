@@ -3,11 +3,10 @@
   export let label: string;
   export let info: string | undefined = undefined;
   export let isRequired: boolean = false;
-  export let classList: string = "";
 </script>
 
 <div class="flex gap-2 items-center">
-  <div class={`${classList} text-fgs2`}>{label}</div>
+  <div class="text-fgs2 min-w-fit text-left">{label}</div>
   {#if info}
     <InfoText {info} />
   {/if}
