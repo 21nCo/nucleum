@@ -24,27 +24,34 @@
   }
   $: if (dialogRef) dialogRef.showModal();
   onMount(() => {
-    appEvents.subscribe((x: AppEventType) => {
+    const appEventSub = appEvents.subscribe((x: AppEventType) => {
       if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
       }
     });
-    modalEvent.subscribe((x: ModalEvent) => {
-      if ($appStore.launchContext == LaunchContext.EMBED) {
+    const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
+      if (!x.isShow) {
+        modals = modals.filter((y) => y.path != x.path);
+        postMessageToParent({
+          pop: JSON.stringify(x),
+        });
+      } else if (
+        $appStore.launchContext == LaunchContext.EMBED &&
+        !x.isNonSheetModal
+      ) {
         appStore.log("is embed");
         postMessageToParent({
           pop: JSON.stringify(x),
         });
-      } else {
-        if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
-          modals = [...modals, x];
-        } else if (!x.isShow) {
-          modals = modals.filter((y) => y.path != x.path);
-        }
-        appStore.log({ modals });
-        console.log({ modals });
+      } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
+        modals = [...modals, x];
       }
+      appStore.log({ modals });
     });
+    () => {
+      appEventSub();
+      modalEventSub();
+    };
   });
 </script>
 

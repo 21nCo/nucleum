@@ -40,11 +40,11 @@
           break;
         case Size.lg:
           sizingClass =
-            "w-[22rem] sm:w-[28rem] md:w-[35rem] h-[45rem] min-h-[40rem]";
+            "w-[21rem] sm:w-[28rem] md:w-[35rem] h-[45rem] min-h-[40rem]";
           break;
         case Size.xl:
           sizingClass =
-            "w-[22rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
+            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
           break;
         default:
           sizingClass = "";

@@ -547,7 +547,7 @@ function initModalStore(seed: ModalEvent) {
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {
-        return { ...n, ...event };
+        return { ...event };
       });
     },
   };

@@ -29,13 +29,13 @@
     <div
       class="font-medium {isActive ? '' : 'text-fgs4'} {style ===
         PanelSwitcherStyle.BOTTOMBAR && $windowObject.isInPortraitMode
-        ? 'text-base'
+        ? 'text-h5'
         : style === PanelSwitcherStyle.BOTTOMBAR_MINI &&
           $windowObject.isInPortraitMode
         ? 'text-b3'
         : style === PanelSwitcherStyle.BOTTOMBAR_MINI
         ? 'text-b2'
-        : 'text-h5'}"
+        : 'text-h4'}"
     >
       {item}
     </div>
@@ -77,14 +77,14 @@
   </button>
 {:else if style === PanelSwitcherStyle.ROUNDED}
   <button
-    class="relative min-w-fit rounded-full px-6 py-2"
+    class="relative min-w-fit rounded-full px-6 py-3"
     style={isActive ? activeBgColorStyle : ""}
     on:click
     disabled={isDisabled}
   >
     <div
       class="{$windowObject.isInPortraitMode
-        ? 'text-b2'
+        ? 'text-base font-medium'
         : 'text-base'} {isActive ? 'text-bgs1' : 'text-fgs3'}"
     >
       {item}
