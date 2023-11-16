@@ -8,6 +8,7 @@ export enum SwitcherStyle {
 export enum PanelSwitcherStyle {
   DEFAULT,
   BOTTOMBAR,
+  BOTTOMBAR_MINI,
   BOTTOMDOT,
   BOTTOMBAR_WITHBACKGROUND,
   ROUNDED,

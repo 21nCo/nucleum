@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "../elements/Button.svelte";
+  import Button from "../elements/button/Button.svelte";
   import TextInput from "../elements/input/TextInput.svelte";
   import { Size } from "../types/size.enum";
   import { isValidEmail } from "../utils/text.utils";

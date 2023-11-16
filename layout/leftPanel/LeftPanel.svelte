@@ -7,7 +7,7 @@
   } from "$lib/tidy/stores/app.store";
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { Size } from "$lib/tidy/types/size.enum";
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import PageMenuView from "./PageMenuView.svelte";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";

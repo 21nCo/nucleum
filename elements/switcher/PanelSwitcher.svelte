@@ -19,14 +19,17 @@
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.BOTTOMBAR:
-        classList = "flex gap-4";
+        classList = "flex gap-6";
+        break;
+      case PanelSwitcherStyle.BOTTOMBAR_MINI:
+        classList = "flex gap-2";
         break;
       case PanelSwitcherStyle.BOTTOMDOT:
         classList = "flex gap-6 items-center";
         break;
       case PanelSwitcherStyle.ROUNDED:
         classList =
-          "flex rounded-full " +
+          "flex rounded-full min-w-fit " +
           bg($userPreferences.theme, parentBackgroundIndex);
         break;
       case PanelSwitcherStyle.DEFAULT:
@@ -39,7 +42,11 @@
   });
 </script>
 
-<div class="relative {style === PanelSwitcherStyle.BOTTOMBAR && 'w-full'}">
+<div
+  class="relative {style === PanelSwitcherStyle.BOTTOMBAR
+    ? 'w-full'
+    : 'max-w-fit'}"
+>
   <div class={classList}>
     {#each items as item, index}
       <PanelSwitcherItem
@@ -55,7 +62,7 @@
       />
     {/each}
   </div>
-  {#if style === PanelSwitcherStyle.BOTTOMBAR}
+  {#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
     <div
       class="absolute w-full left-0 -bottom-1 {bg($userPreferences.theme, 2)}"
       style="height: 5%;"

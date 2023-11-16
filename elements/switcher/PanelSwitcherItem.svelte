@@ -19,7 +19,7 @@
   );
 </script>
 
-{#if style === PanelSwitcherStyle.BOTTOMBAR}
+{#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
   <button
     class="flex relative px-2 bg-transparent"
     on:click
@@ -27,10 +27,14 @@
     disabled={isDisabled}
   >
     <div
-      class="font-medium {isActive
-        ? ''
-        : 'text-fgs4'} {$windowObject.isInPortraitMode
+      class="font-medium {isActive ? '' : 'text-fgs4'} {style ===
+        PanelSwitcherStyle.BOTTOMBAR && $windowObject.isInPortraitMode
         ? 'text-base'
+        : style === PanelSwitcherStyle.BOTTOMBAR_MINI &&
+          $windowObject.isInPortraitMode
+        ? 'text-b3'
+        : style === PanelSwitcherStyle.BOTTOMBAR_MINI
+        ? 'text-b2'
         : 'text-h5'}"
     >
       {item}
@@ -79,9 +83,9 @@
     disabled={isDisabled}
   >
     <div
-      class="{$windowObject.isInPortraitMode ? 'text-h5' : 'text-h4'} {isActive
-        ? 'text-bgs1'
-        : 'text-fgs3'}"
+      class="{$windowObject.isInPortraitMode
+        ? 'text-b2'
+        : 'text-base'} {isActive ? 'text-bgs1' : 'text-fgs3'}"
     >
       {item}
     </div>

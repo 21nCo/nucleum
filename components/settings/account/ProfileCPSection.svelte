@@ -1,5 +1,5 @@
 <script>
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import {
     account,
     userPreferences,

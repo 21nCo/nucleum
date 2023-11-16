@@ -1,11 +1,11 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
   import { onMount } from "svelte";
-  import Icon from "./Icon.svelte";
-  import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import { bg, retrieveCurrentColors } from "../utils/theme.utils";
-  import { userPreferences, windowObject } from "../stores/app.store";
-  import { ButtonStyle } from "../types/button.type";
+  import Icon from "../Icon.svelte";
+  import { SelectionItemActiveStyle } from "../../types/switcher.enum";
+  import { bg, retrieveCurrentColors } from "../../utils/theme.utils";
+  import { userPreferences, windowObject } from "../../stores/app.store";
+  import { ButtonStyle } from "../../types/button.type";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let type: string = "secondary";

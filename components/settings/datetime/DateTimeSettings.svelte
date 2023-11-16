@@ -8,7 +8,7 @@
     DropDownStyle,
     type DropdownItem,
   } from "$lib/tidy/types/dropdownItem.type";
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/tidy/types/button.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TimeScale } from "$lib/tidy/types/time.type";

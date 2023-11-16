@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import { modalEvent } from "$lib/tidy/stores/app.store";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

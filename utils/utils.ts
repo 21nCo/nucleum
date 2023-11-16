@@ -264,3 +264,19 @@ export function convertFileSize(
       return sizeInBytes;
   }
 }
+
+export function resolveUiState(uiStates: any, property: string) {
+  if (get(windowObject).isInPortraitMode) {
+    return uiStates["portrait"][property];
+  } else {
+    return uiStates["desktop"][property];
+  }
+}
+export function setUiState(uiStates: any, property: string, value: any) {
+  if (get(windowObject).isInPortraitMode) {
+    uiStates["portrait"][property] = value;
+  } else {
+    uiStates["desktop"][property] = value;
+  }
+  return uiStates;
+}

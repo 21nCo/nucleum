@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { localStore } from "$lib/local/stores/local.store";
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account } from "$lib/tidy/stores/app.store";

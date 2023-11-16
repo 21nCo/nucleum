@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import { appStore, windowObject } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { openLink } from "$lib/tidy/utils/utils";

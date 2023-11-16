@@ -174,10 +174,16 @@
       return;
     }
     searchResults = await persistance.searchByLabel(value, searchItemType);
+    console.log({ searchResults });
   }
 </script>
 
-<FormControlLabelWrapper {label} {info} orientation={labelOrientation}>
+<FormControlLabelWrapper
+  {label}
+  {info}
+  {isRequired}
+  orientation={labelOrientation}
+>
   {#if type === "password"}
     <div>
       <input

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { windowObject } from "$lib/tidy/stores/app.store";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import DropdownArrow from "$lib/tidy/icons/DropdownArrow.svelte";
   import DropdownArrowAccordion from "$lib/tidy/icons/DropdownArrowAccordion.svelte";
   import Element from "$lib/tidy/elements/Element.svelte";
@@ -52,7 +52,7 @@
       }
     }}
     class={`flex flex-col w-full items-center ${
-      headerContent ? `py-1 px-2` : `py-3 px-2`
+      headerContent ? `py-1 px-4` : `py-3 px-4`
     } ${classList}`}
   >
     <div class={`flex w-full items-center gap-1 ${classList}`}>

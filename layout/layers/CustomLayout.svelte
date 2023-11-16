@@ -12,7 +12,7 @@
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
   import { AppEvent } from "../../types/event.enum";
   import type { AppEventType } from "../../types/event.type";
-  import Button from "../../elements/Button.svelte";
+  import Button from "../../elements/button/Button.svelte";
   import { Size } from "../../types/size.enum";
   export let layoutType: LayoutType = LayoutType.ONEPANEL;
   export let panelTitles: string[] = [];

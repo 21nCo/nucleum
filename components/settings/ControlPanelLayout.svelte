@@ -19,6 +19,7 @@
   import { sortPropertiesByOrder } from "$lib/tidy/utils/obj.utils";
   import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
+  import Panel from "$lib/tidy/layout/paint/Panel.svelte";
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: any;
   let color = retrieveCurrentColors($userPreferences)?.a1;
@@ -54,15 +55,9 @@
   </div>
 {:else if isCpHome || !$windowObject.isInPortraitMode}
   <div class="flex w-full h-full">
-    <div
-      class="flex flex-col h-full {$windowObject.isInPortraitMode
-        ? 'w-full'
-        : 'w-96 min-w-[24rem]'} "
-    >
-      <div class="pl-4">
-        <Text style={TextStyle.PAGE_HEADING} content="Settings" />
-      </div>
+    <Panel title="Settings">
       <div
+        slot="nonpadded"
         class="flex flex-col gap-8 flex-grow overflow-auto {$windowObject.isInPortraitMode
           ? 'pb-40'
           : 'pb-20'}"
@@ -81,20 +76,17 @@
         {/if}
         <ProductInfoFooter />
       </div>
-    </div>
-    {#if !$windowObject.isInPortraitMode}
-      <Divider
-        orientation={Orientation.Vertical}
-        colorStrength={ColorStrength.Strong}
-      />
-      <div class="p-4 flex-grow flex flex-col gap-4 w-full items-start">
-        {#if !isCpHome}
-          <Text style={TextStyle.PANEL_HEADING}>
-            {$windowObject.currentComponent?.label}
-          </Text>
-        {/if}
-        <slot />
-      </div>
-    {/if}
+      <slot name="right" slot="right">
+        <div class="p-4 flex-grow flex flex-col gap-4 w-full items-start">
+          {#if !isCpHome}
+            <Text
+              style={TextStyle.PANEL_HEADING}
+              content={$windowObject.currentComponent?.label ?? ""}
+            />
+          {/if}
+          <slot />
+        </div>
+      </slot>
+    </Panel>
   </div>
 {/if}

@@ -3,3 +3,10 @@ export enum ButtonStyle {
   PLAIN = "plain",
   ROUNDED = "rounded",
 }
+
+export type ButtonType = {
+  label: string;
+  icon?: string;
+  action: () => void;
+  type?: string;
+};

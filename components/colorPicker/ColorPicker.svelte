@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "$lib/tidy/elements/Button.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
 
   import { assignSatAndLight } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";

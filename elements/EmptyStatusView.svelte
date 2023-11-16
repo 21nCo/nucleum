@@ -2,7 +2,7 @@
   import EmptyStatus from "../illustrations/EmptyStatus.svelte";
   import EmptyStatusInbox from "../illustrations/EmptyStatusInbox.svelte";
   import { Size } from "../types/size.enum";
-  import Button from "./Button.svelte";
+  import Button from "./button/Button.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
