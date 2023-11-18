@@ -54,7 +54,7 @@
         {/if}
       </div>
     {/if}
-    <div class="truncate text-left">
+    <div class="w-full truncate text-left">
       {#if item}
         {item}
       {:else}

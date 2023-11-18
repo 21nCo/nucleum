@@ -362,8 +362,17 @@ const seedUserPreferences: UserGlobalPreferences = {
     colors: defaultColorSchemeColors,
     tailwindSelector: "cs_pointron_light",
   },
-  uiState: {
-    isOnboardingComplete: false,
+  uiStates: {
+    all: {
+      isOnboardingComplete: false,
+      isInThinMode: false,
+    },
+    desktop: {
+      isInThinMode: false,
+    },
+    portrait: {
+      isInThinMode: false,
+    },
   },
 };
 
@@ -388,7 +397,7 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
   return {
     subscribe,
     loadFromCloud: (data: UserGlobalPreferences) => {
-      if (!data.uiState) data.uiState = seedUserPreferences.uiState;
+      if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
       set(data);
       persistLocally(Item.UserPreferences, data);
     },

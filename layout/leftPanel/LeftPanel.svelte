@@ -17,10 +17,16 @@
   import { bg, borderColor } from "$lib/tidy/utils/theme.utils";
   import { AppTheme, ColorStrength } from "$lib/tidy/types/theme.type";
   import { onMount } from "svelte";
+  import { resolveUiState, setUiState } from "$lib/tidy/utils/utils";
+  import { UiState } from "$lib/tidy/types/uiState.enum";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
+  $: isInThinMode = resolveUiState(
+    $userPreferences.uiStates,
+    UiState.isInThinMode
+  );
   $: isRounded = $userPreferences.theme === AppTheme.Glassy ? true : false;
   onMount(() => {
     if ($windowObject.landscapiness < 1.25) {
@@ -102,7 +108,11 @@
               <Button
                 icon="sidebar-toggle"
                 on:click={() => {
-                  isInThinMode = !isInThinMode;
+                  $userPreferences.uiStates = setUiState(
+                    $userPreferences.uiStates,
+                    UiState.isInThinMode,
+                    !isInThinMode
+                  );
                 }}
               />
             {/if}
@@ -139,14 +149,14 @@
               hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
             />
           {:else}
-            <div class="text-b3 text-fgs3 mb-4">
+            <!-- <div class="text-b3 text-fgs3 mb-4">
               Press <span
                 class="text-fgs2 px-2 py-0.5 rounded-md {bg(
                   $userPreferences.theme,
                   2
                 )}">Cmd + K</span
               > for command bar
-            </div>
+            </div> -->
           {/if}
           <LeftBottomBar {isInThinMode} {isRounded} />
         </div>

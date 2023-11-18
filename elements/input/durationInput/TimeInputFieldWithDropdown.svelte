@@ -295,7 +295,7 @@
     bind:this={inputRef}
   />
   <div
-    class="units-dropdown absolute bg-bgs2 top-[calc(100%+2px)] -left-[2px] w-[calc(100%+4px)] rounded-sm flex flex-col gap-1 z-20"
+    class="units-dropdown absolute bg-bgs2 top-full w-full rounded-sm flex flex-col gap-1 z-20"
   >
     {#if timeSuggestions && timeSuggestions.length > 0}
       {#each timeSuggestions as timeSuggestion, index}

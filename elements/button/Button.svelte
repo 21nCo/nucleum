@@ -128,7 +128,9 @@
     />
   {/if}
   {#if label}
-    {label}
+    <div class="min-w-fit">
+      {label}
+    </div>
   {:else}
     <slot />
   {/if}

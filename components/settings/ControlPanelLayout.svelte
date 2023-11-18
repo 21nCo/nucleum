@@ -34,8 +34,8 @@
 </script>
 
 {#if $windowObject.isInPortraitMode && !isCpHome}
-  <div class="flex flex-col gap-2 p-4">
-    <div class="relative flex justify-center w-full min-h-[4rem]">
+  <div class="flex flex-col h-full gap-2 p-4">
+    <div class="relative flex justify-center w-full h-16 min-h-[4rem]">
       <button
         class="absolute left-0 flex gap-1 items-center min-w-fit py-1.5 h-2 text-a1"
         style="top: 1.75rem;"
@@ -51,7 +51,9 @@
         content={$windowObject.currentComponent?.label ?? ""}
       />
     </div>
-    <slot />
+    <div class="flex flex-col flex-grow overflow-y-auto">
+      <slot />
+    </div>
   </div>
 {:else if isCpHome || !$windowObject.isInPortraitMode}
   <div class="flex w-full h-full">
@@ -77,14 +79,16 @@
         <ProductInfoFooter />
       </div>
       <slot name="right" slot="right">
-        <div class="p-4 flex-grow flex flex-col gap-4 w-full items-start">
+        <div class="p-4 flex flex-col gap-4 w-full h-full items-start">
           {#if !isCpHome}
             <Text
               style={TextStyle.PANEL_HEADING}
               content={$windowObject.currentComponent?.label ?? ""}
             />
           {/if}
-          <slot />
+          <div class="w-full flex-grow">
+            <slot />
+          </div>
         </div>
       </slot>
     </Panel>

@@ -57,6 +57,7 @@
   import Upload from "../icons/Upload.svelte";
   import Bars from "../icons/Bars.svelte";
   import Squares from "../icons/Squares.svelte";
+  import Pomodoro from "../icons/Pomodoro.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -124,7 +125,7 @@
     >
       {#if icon === "home"}
         <Home {variant} />
-      {:else if icon === "focus"}
+      {:else if icon === "bolt" || icon === "focus"}
         <Bolt {variant} />
       {:else if icon === "chart"}
         <PieChart {variant} />
@@ -270,6 +271,8 @@
         <Bars {variant} />
       {:else if icon === "squares-2x2"}
         <Squares {variant} />
+      {:else if icon === "pomodoro"}
+        <Pomodoro {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

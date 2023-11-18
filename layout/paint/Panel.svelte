@@ -25,7 +25,7 @@
   {#if $$slots.nonpadded}
     <slot name="nonpadded" />
   {:else}
-    <div class="p-4">
+    <div class="p-4 flex-grow">
       <slot />
     </div>
   {/if}
@@ -39,7 +39,7 @@
     orientation={Orientation.Vertical}
     colorStrength={ColorStrength.Strong}
   />
-  <div class="flex flex-grow">
+  <div class="flex flex-grow h-full">
     <slot name="right" />
   </div>
 {/if}

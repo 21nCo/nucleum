@@ -13,10 +13,15 @@ export type UserGlobalPreferences = {
   timeFormat: string;
   timeZoneOffset: number;
   timeScales?: TimeScale[];
-  uiState: GlobalUiState;
   id: string;
+  uiStates: {
+    all: UiState;
+    desktop: UiState;
+    portrait: UiState;
+  };
 };
 
-export type GlobalUiState = {
-  isOnboardingComplete: boolean;
+type UiState = {
+  isOnboardingComplete?: boolean;
+  isInThinMode: boolean;
 };

@@ -266,14 +266,26 @@ export function convertFileSize(
 }
 
 export function resolveUiState(uiStates: any, property: string) {
+  let value = undefined;
   if (get(windowObject).isInPortraitMode) {
-    return uiStates["portrait"][property];
+    value = uiStates["portrait"][property];
   } else {
-    return uiStates["desktop"][property];
+    value = uiStates["desktop"][property];
   }
+  if (value === undefined) {
+    value = uiStates["all"][property];
+  }
+  return value;
 }
-export function setUiState(uiStates: any, property: string, value: any) {
-  if (get(windowObject).isInPortraitMode) {
+export function setUiState(
+  uiStates: any,
+  property: string,
+  value: any,
+  isForAll: boolean = false
+) {
+  if (isForAll) {
+    uiStates["all"][property] = value;
+  } else if (get(windowObject).isInPortraitMode) {
     uiStates["portrait"][property] = value;
   } else {
     uiStates["desktop"][property] = value;

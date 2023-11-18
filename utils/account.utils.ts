@@ -9,6 +9,8 @@ import {
 import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";
 import { Persistance } from "../stores/persistance";
+import { resolveUiState } from "./utils";
+import { UiState } from "../types/uiState.enum";
 
 export async function performRedirectionChecks() {
   const isOnboardingComplete = await onBoardingStatusCheck();
@@ -36,7 +38,10 @@ export async function performLoginStatusCheck() {
 }
 
 export async function onBoardingStatusCheck() {
-  if (get(userPreferences).uiState?.isOnboardingComplete) return true;
+  if (
+    resolveUiState(get(userPreferences).uiStates, UiState.isOnboardingComplete)
+  )
+    return true;
   else {
     windowObject.gotoPath("/onboarding");
     return false;
