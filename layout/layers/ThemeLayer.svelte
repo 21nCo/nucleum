@@ -69,7 +69,7 @@
 </script>
 
 <div
-  class="flex h-screen w-screen {$userPreferences.theme == AppTheme.Glassy
+  class="flex h-full w-full {$userPreferences.theme == AppTheme.Glassy
     ? 'glassy' + $userPreferences.colorScheme?.label
     : ''}"
 >

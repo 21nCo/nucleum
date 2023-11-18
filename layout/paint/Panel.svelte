@@ -39,7 +39,7 @@
     orientation={Orientation.Vertical}
     colorStrength={ColorStrength.Strong}
   />
-  <div class="flex flex-grow h-full">
+  <div class="flex grow h-full">
     <slot name="right" />
   </div>
 {/if}
