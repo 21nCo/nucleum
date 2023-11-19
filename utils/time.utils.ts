@@ -137,10 +137,13 @@ export function determineTimePeriod(period: TimePeriod) {
   if (period.scale === TimeScale.DAYS) {
     if (
       period.value.type === TimePeriodType.RELATIVE &&
-      typeof period.value === "number"
+      typeof period.value.param === "number"
     ) {
-      begin.setDate(begin.getDate() + period.value);
+      begin.setDate(begin.getDate() + period.value.param);
       title = timePeriodLabel(period);
+      if (period.value.param === -1) {
+        end.setDate(end.getDate() - 1);
+      }
     } else if (
       period.value.type === TimePeriodType.CALENDAR_BOUND &&
       period.value instanceof Array
@@ -158,10 +161,13 @@ export function determineTimePeriod(period: TimePeriod) {
   } else if (period.scale === TimeScale.MONTHS) {
     if (
       period.value.type === TimePeriodType.RELATIVE &&
-      typeof period.value === "number"
+      typeof period.value.param === "number"
     ) {
-      begin.setMonth(begin.getMonth() + period.value);
+      begin.setMonth(begin.getMonth() + period.value.param);
       title = timePeriodLabel(period);
+      if (period.value.param === -1) {
+        end.setMonth(end.getMonth() - 1);
+      }
       begin.setDate(1);
       end.setDate(31);
     } else if (
@@ -180,10 +186,13 @@ export function determineTimePeriod(period: TimePeriod) {
   } else if (period.scale === TimeScale.YEARS) {
     if (
       period.value.type === TimePeriodType.RELATIVE &&
-      typeof period.value === "number"
+      typeof period.value.param === "number"
     ) {
-      begin.setFullYear(begin.getFullYear() + period.value);
+      begin.setFullYear(begin.getFullYear() + period.value.param);
       title = timePeriodLabel(period);
+      if (period.value.param === -1) {
+        end.setFullYear(end.getFullYear() - 1);
+      }
       begin.setDate(1);
       end.setDate(31);
       begin.setMonth(0);

@@ -44,9 +44,10 @@
           pop: JSON.stringify(x),
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
-        modals = [...modals, x];
+        modals = [x];
       }
       appStore.log({ modals });
+      console.log({ modals });
     });
     () => {
       appEventSub();

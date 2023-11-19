@@ -13,8 +13,12 @@
   export let secondaryText: string | undefined = undefined;
   export let size: Size = Size.md;
   export let orientation: Orientation = Orientation.Vertical;
+  let footerRef: any;
   let sizingClass = "";
   resolveSize();
+  export function close() {
+    footerRef.close();
+  }
   onMount(() => {
     let queryParamId = $page.url.searchParams.get("id");
     if (queryParamId && !id) {
@@ -64,5 +68,12 @@
   <div class="flex flex-col gap-4 w-full flex-grow">
     <slot />
   </div>
-  <ModalFooter {primaryText} {path} on:primary on:secondary {secondaryText} />
+  <ModalFooter
+    bind:this={footerRef}
+    {primaryText}
+    {path}
+    on:primary
+    on:secondary
+    {secondaryText}
+  />
 </div>
