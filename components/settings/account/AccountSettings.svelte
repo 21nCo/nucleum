@@ -1,17 +1,17 @@
-<script>
+<script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { account } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import AccountForm from "./AccountForm.svelte";
-  let firstName = "";
-  let lastName = "";
-  let email = "";
+  import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
+  import type { EmailParts } from "$lib/tidy/types/account.type";
+  let nickName = "";
+  let emailParts: EmailParts | undefined = undefined;
   onMount(() => {
     account.subscribe((value) => {
       if (value.isLoggedIn) {
-        firstName = value.userInfo?.firstName || "";
-        lastName = value.userInfo?.lastName || "";
-        email = value.userInfo?.email || "";
+        nickName = value.userInfo?.nickName || "";
+        emailParts = value.userInfo?.emailParts || undefined;
       }
     });
   });
@@ -19,8 +19,8 @@
 </script>
 
 {#if $account.isLoggedIn}
-  <div class="flex flex-col gap-12 items-center justify-center">
-    <div class="flex flex-col gap-4 w-96 px-4">
+  <div class="flex flex-col w-full gap-12 items-center justify-center">
+    <div class="flex flex-col gap-4 w-80 md:w-96 px-4">
       <!-- <TextInput bind:value={firstName} label="First name" placeholder="John" />
       <TextInput bind:value={lastName} label="Last name" placeholder="Legend" /> -->
       <!-- <TextInput
@@ -29,20 +29,18 @@
         placeholder="john@legend.com"
       /> -->
       <div>
-        <div>First name</div>
-        <div class="text-b2 text-fgs3">{firstName}</div>
+        <div>Nick name</div>
+        <div class="text-b2 text-fgs3">{nickName}</div>
       </div>
-      <div>
-        <div>Last name</div>
-        <div class="text-b2 text-fgs3">{lastName}</div>
-      </div>
-      <div>
-        <div>Email address</div>
-        <div class="text-b2 text-fgs3">{email}</div>
-      </div>
+      {#if emailParts}
+        <div>
+          <div>Email address</div>
+          <div class="text-b2 text-fgs3">{frameEmailFromParts(emailParts)}</div>
+        </div>
+      {/if}
     </div>
     <div class="flex justify-center w-full gap-4">
-      <Button label="Update" on:click={onUpdateClicked} />
+      <!-- <Button label="Update" on:click={onUpdateClicked} /> -->
       <Button
         label="Sign out"
         on:click={() => {

@@ -51,7 +51,7 @@
         content={$windowObject.currentComponent?.label ?? ""}
       />
     </div>
-    <div class="flex flex-col flex-grow overflow-y-auto">
+    <div class="flex flex-col flex-grow">
       <slot />
     </div>
   </div>
@@ -60,7 +60,7 @@
     <Panel title="Settings">
       <div
         slot="nonpadded"
-        class="flex flex-col gap-8 flex-grow overflow-auto {$windowObject.isInPortraitMode
+        class="flex flex-col gap-8 grow overflow-auto {$windowObject.isInPortraitMode
           ? 'pb-40'
           : 'pb-20'}"
       >

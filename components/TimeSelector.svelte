@@ -52,7 +52,11 @@
   }
 </script>
 
-<FormControlLabelWrapper {label} {info} orientation={labelOrientation}>
+<FormControlLabelWrapper
+  {label}
+  info={{ body: info ?? "" }}
+  orientation={labelOrientation}
+>
   <div class="flex items-center space-x-2">
     <select
       class="bg-bgs2 p-2 border rounded-lg"

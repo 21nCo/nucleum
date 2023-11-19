@@ -1,5 +1,5 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
 import {
   AppTheme,
@@ -26,6 +26,7 @@ import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
+import { TimeScale } from "../types/time.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -353,6 +354,7 @@ const seedUserPreferences: UserGlobalPreferences = {
   birthday: new Date(),
   tempColorScheme: "scheme1",
   accessibilitySizingFactor: 1,
+  timeScales: [TimeScale.DAYS, TimeScale.MONTHS, TimeScale.YEARS],
   timeFormat: "meridian",
   timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
   colorScheme: {
@@ -388,7 +390,7 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
   const persist = (n: Partial<UserGlobalPreferences>) => {
     //console.log("persisting global preferences", { n });
     persistance.update({ ...n, id: userPreferencesId });
-    persistLocally(Item.UserPreferences, n);
+    persistLocally(Item.UserPreferences, get(userPreferences));
   };
   const set = (x: UserGlobalPreferences) => {
     setRaw(x);
@@ -448,9 +450,8 @@ function initAccount(seed: UserAccount) {
   const addSeedUserInfo = (n: UserAccount) => {
     let seedUserInfo = {
       email: "john.legend@gmail.com",
-      firstName: "John",
-      lastName: "Legend",
       phone: "",
+      nickName: "",
       joinDate: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 200),
       lastLogin: new Date(),
       profilePicture: "",

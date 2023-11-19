@@ -3,14 +3,20 @@
   import { bg } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   let initials: string | undefined = undefined;
+  const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
+  function pickRandomEmoji() {
+    return Emojis[Math.floor(Math.random() * Emojis.length)];
+  }
   onMount(() => {
     account.subscribe((x) => {
       if (x.userInfo?.profilePicture) {
         //todo - retrieve profile picture from cloud
-      } else if (x.userInfo?.firstName && x.userInfo?.lastName) {
+      } else if (x.userInfo?.nickName) {
         initials =
-          x.userInfo.firstName.charAt(0).toLocaleUpperCase() +
-          x.userInfo.lastName.charAt(0).toLocaleUpperCase();
+          x.userInfo.nickName.charAt(0).toLocaleUpperCase() +
+          x.userInfo.nickName.charAt(1).toLocaleUpperCase();
+      } else {
+        initials = pickRandomEmoji();
       }
     });
   });

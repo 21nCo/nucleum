@@ -143,11 +143,11 @@
           {/if}
           {#if isInThinMode}
             <!-- todo - on click - show command bar -->
-            <Icon
+            <!-- <Icon
               icon="command"
               color="fgs2"
               hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
-            />
+            /> -->
           {:else}
             <!-- <div class="text-b3 text-fgs3 mb-4">
               Press <span

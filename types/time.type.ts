@@ -14,10 +14,13 @@ export enum TimePeriodType {
 
 export type TimePeriod = {
   scale: TimeScale;
-  type: TimePeriodType;
-  //relativity or calendar bounds or start/end
-  value: number | number[] | { start: Date; end: Date };
+  value: TimePeriodValue;
 };
+
+export type TimePeriodValue =
+  | { type: TimePeriodType.RELATIVE; param: number }
+  | { type: TimePeriodType.CALENDAR_BOUND; param: number[] }
+  | { type: TimePeriodType.START_END; param: { start: Date; end: Date } };
 
 export enum TimeFormat {
   VERBOSE = "verbose",

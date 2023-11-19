@@ -12,6 +12,7 @@
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import FormControlLabelWrapper from "./FormControlLabelWrapper.svelte";
+  import type { InfoTextParams } from "$lib/tidy/types/text.type";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -20,6 +21,7 @@
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
   export let info: string | undefined = undefined;
+  export let infoParams: InfoTextParams | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
   export let searchItemType: ItemType | undefined = undefined;
@@ -180,7 +182,7 @@
 
 <FormControlLabelWrapper
   {label}
-  {info}
+  info={info ? { body: info } : infoParams}
   {isRequired}
   orientation={labelOrientation}
 >

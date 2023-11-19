@@ -8,10 +8,17 @@ export type UserAccount = {
 export type UserInformation = {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  nickName: string;
   phone?: string;
   joinDate: Date;
   lastLogin: Date;
   profilePicture?: string;
+  emailParts?: EmailParts;
+};
+
+export type EmailParts = {
+  characterCount: number;
+  emailDomain: string;
+  firstFew: string;
+  lastFew?: string;
 };

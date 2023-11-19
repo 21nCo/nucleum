@@ -10,7 +10,7 @@
   export let actionText: string | undefined = undefined;
 </script>
 
-<div class="flex flex-col w-full h-full justify-center items-center gap-2">
+<div class="flex flex-col w-full h-full justify-center items-center gap-2 px-2">
   {#if isLoadingState}
     <div class="text-fgs2">Loading...</div>
   {:else}
