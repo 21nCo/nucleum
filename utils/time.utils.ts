@@ -83,21 +83,22 @@ export function formatSecondsToTimeInDecimals(
 }
 
 export function timePeriodLabel(period: TimePeriod) {
-  const { scale, type, value } = period;
-  if (typeof value != "number") return;
-  if (type === TimePeriodType.RELATIVE) {
-    if (value === 0) {
+  console.log("timePeriodLabel", { period });
+  const { scale, value } = period;
+  if (typeof value.param != "number") return;
+  if (value.type === TimePeriodType.RELATIVE) {
+    if (value.param === 0) {
       if (scale === TimeScale.DAYS) return "Today";
       else return `This ${scale.slice(0, scale.length - 1).toLowerCase()}`;
-    } else if (value === 1) {
+    } else if (value.param === 1) {
       if (scale === TimeScale.DAYS) return "Tomorrow";
       else return `Next ${scale.toLowerCase()}`;
-    } else if (value === -1) {
+    } else if (value.param === -1) {
       if (scale === TimeScale.DAYS) return "Yesterday";
       else return `Last ${scale.toLowerCase()}`;
-    } else if (value < 0) {
-      return `Last ${Math.abs(value)} ${scale.toLowerCase()}`;
-    } else if (value > 0) {
+    } else if (value.param < 0) {
+      return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;
+    } else if (value.param > 0) {
       return `Next ${value} ${scale.toLowerCase()}`;
     }
   }
@@ -119,28 +120,29 @@ export function timePeriodLabel(period: TimePeriod) {
 }
 
 export function determineTimePeriod(period: TimePeriod) {
+  console.log("determineTimePeriod", { period });
   let begin = new Date();
   let end = new Date();
   let title;
   if (
-    period.type === TimePeriodType.START_END &&
+    period.value.type === TimePeriodType.START_END &&
     period.value instanceof Object &&
     "start" in period.value &&
     "end" in period.value
   ) {
-    begin = period.value.start;
-    end = period.value.end;
+    begin = period.value.param.start;
+    end = period.value.param.end;
     return { begin, end, title: "" };
   }
   if (period.scale === TimeScale.DAYS) {
     if (
-      period.type === TimePeriodType.RELATIVE &&
+      period.value.type === TimePeriodType.RELATIVE &&
       typeof period.value === "number"
     ) {
       begin.setDate(begin.getDate() + period.value);
       title = timePeriodLabel(period);
     } else if (
-      period.type === TimePeriodType.CALENDAR_BOUND &&
+      period.value.type === TimePeriodType.CALENDAR_BOUND &&
       period.value instanceof Array
     ) {
       const year = period.value[0];
@@ -155,7 +157,7 @@ export function determineTimePeriod(period: TimePeriod) {
     }
   } else if (period.scale === TimeScale.MONTHS) {
     if (
-      period.type === TimePeriodType.RELATIVE &&
+      period.value.type === TimePeriodType.RELATIVE &&
       typeof period.value === "number"
     ) {
       begin.setMonth(begin.getMonth() + period.value);
@@ -163,7 +165,7 @@ export function determineTimePeriod(period: TimePeriod) {
       begin.setDate(1);
       end.setDate(31);
     } else if (
-      period.type === TimePeriodType.CALENDAR_BOUND &&
+      period.value.type === TimePeriodType.CALENDAR_BOUND &&
       period.value instanceof Array
     ) {
       const year = period.value[0];
@@ -177,7 +179,7 @@ export function determineTimePeriod(period: TimePeriod) {
     }
   } else if (period.scale === TimeScale.YEARS) {
     if (
-      period.type === TimePeriodType.RELATIVE &&
+      period.value.type === TimePeriodType.RELATIVE &&
       typeof period.value === "number"
     ) {
       begin.setFullYear(begin.getFullYear() + period.value);
@@ -187,7 +189,7 @@ export function determineTimePeriod(period: TimePeriod) {
       begin.setMonth(0);
       end.setMonth(11);
     } else if (
-      period.type === TimePeriodType.CALENDAR_BOUND &&
+      period.value.type === TimePeriodType.CALENDAR_BOUND &&
       period.value instanceof Array
     ) {
       const year = period.value[0];

@@ -48,7 +48,9 @@
 >
   <div class="flex gap-2 items-center">
     {#if selectionStyle === SelectionItemActiveStyle.CIRCLE}
-      <div class="relative rounded-lg outline outline-2 outline-fgs2 w-4 h-4">
+      <div
+        class="relative rounded-lg outline outline-2 outline-fgs2 w-4 h-4 min-w-[1rem]"
+      >
         {#if isActive}
           <div class="absolute w-2 h-2 left-1/4 top-1/4 bg-fgs2 rounded-full" />
         {/if}

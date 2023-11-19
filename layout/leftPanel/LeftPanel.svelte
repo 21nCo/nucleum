@@ -87,8 +87,8 @@
   {:else}
     <div
       class="flex justify-center items-center h-full {isInThinMode
-        ? 'w-16'
-        : 'w-56'} flex-none {isRounded ? 'ml-2' : ''}"
+        ? 'w-16 min-w-[4rem]'
+        : 'w-56 min-w-[14rem]'} {isRounded ? 'ml-2' : ''}"
       on:mouseenter={() => (isHovered = true)}
       on:mouseleave={() => (isHovered = false)}
     >
@@ -143,11 +143,11 @@
           {/if}
           {#if isInThinMode}
             <!-- todo - on click - show command bar -->
-            <Icon
+            <!-- <Icon
               icon="command"
               color="fgs2"
               hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
-            />
+            /> -->
           {:else}
             <!-- <div class="text-b3 text-fgs3 mb-4">
               Press <span

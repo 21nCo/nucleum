@@ -23,7 +23,7 @@
 </script>
 
 {#if colorSchemes && colorSchemes.length > 0}
-  <div class="flex flex-wrap gap-4">
+  <div class="flex flex-wrap gap-4 p-2">
     {#each colorSchemes as colorScheme, index}
       <button
         on:click={() => {

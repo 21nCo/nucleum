@@ -6,6 +6,7 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
+  import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
   import { bg } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
@@ -30,11 +31,12 @@
           <ProfilePicture />
           <div class="flex flex-col justify-center items-start">
             <div class="text-h5">
-              {$account.userInfo?.firstName || ""}
-              {$account.userInfo?.lastName || ""}
+              {$account.userInfo?.nickName || "App user"}
             </div>
             <div class="text-b2 text-fgs3">
-              {$account.userInfo?.email || "NA"}
+              {$account.userInfo?.emailParts
+                ? frameEmailFromParts($account.userInfo.emailParts)
+                : "NA"}
             </div>
           </div>
         </div>

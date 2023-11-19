@@ -84,7 +84,7 @@
 >
   {#if label}
     <div class="self-start">
-      <FormControlLabel {label} {info} />
+      <FormControlLabel {label} info={{ body: info ?? "" }} />
     </div>
   {/if}
   {#if selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND}

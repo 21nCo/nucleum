@@ -1,12 +1,14 @@
 <script lang="ts">
-  import EmptyStatus from "../illustrations/EmptyStatus.svelte";
-  import EmptyStatusInbox from "../illustrations/EmptyStatusInbox.svelte";
   import RocketLaunch from "../illustrations/RocketLaunch.svelte";
   import { windowObject } from "../stores/app.store";
   import { Size } from "../types/size.enum";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
+  if (!mainText && !subText) {
+    mainText = "Coming Soon";
+    subText = "We are working on this feature. Stay tuned!";
+  }
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center gap-2">

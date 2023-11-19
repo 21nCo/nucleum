@@ -39,7 +39,7 @@
 
 <div id={containerId} class="relative flex flex-col items-start gap-1 w-full">
   {#if label}
-    <FormControlLabel {label} {info} />
+    <FormControlLabel {label} info={{ body: info ?? "" }} />
   {/if}
   <button
     class="flex w-full justify-between gap-4 items-center p-2 {isShowOptions

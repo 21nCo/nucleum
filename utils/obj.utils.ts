@@ -101,3 +101,7 @@ export function objIsEmpty(obj: any) {
 export function isValidArray(arr: any[] | undefined) {
   return arr && Array.isArray(arr) && arr.length > 0;
 }
+
+export function deepCopy(obj: any) {
+  return JSON.parse(JSON.stringify(obj));
+}

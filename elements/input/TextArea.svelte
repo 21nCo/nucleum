@@ -107,7 +107,7 @@
 
 <div class="flex flex-col gap-1 w-full">
   {#if label}
-    <FormControlLabel {label} {info} {isRequired} />
+    <FormControlLabel {label} info={{ body: info ?? "" }} {isRequired} />
   {/if}
   <div class="relative flex items-center w-full">
     <textarea

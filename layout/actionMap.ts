@@ -18,6 +18,7 @@ import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
 import SessionExpired from "../components/error/SessionExpired.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
+import ComingSoonView from "../elements/ComingSoonView.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -96,7 +97,7 @@ export const actions: Action[] = [
     label: "Shortcuts",
     path: "cp/shortcuts",
     icon: "command",
-    component: AppMenuSettings,
+    component: ComingSoonView,
   },
   {
     action: "datetime-settings",

@@ -1,10 +1,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { localStore } from "$lib/local/stores/local.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
-  import { account } from "$lib/tidy/stores/app.store";
+  import { account, appStore } from "$lib/tidy/stores/app.store";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
   import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
@@ -12,8 +11,7 @@
   let email = "";
   let pass = "";
   let confirmPass = "";
-  let firstName = "";
-  let lastName = "";
+  let nickName = "";
   let error: string | null = null;
   let isTrusted = false;
   let actionInProgress = false;
@@ -45,7 +43,6 @@
       showError();
       return;
     }
-    //localStore.runSignupScripts();
     account.signIn(json);
     actionInProgress = false;
   }
@@ -55,7 +52,7 @@
     const response = await performApiCall(
       "account/signup",
       "POST",
-      JSON.stringify({ email: email.toLowerCase(), pass, firstName, lastName })
+      JSON.stringify({ email: email.toLowerCase(), pass, nickName })
     );
     if (!response || !response.ok) {
       showError();
@@ -71,11 +68,10 @@
       return;
     }
     account.signIn(json);
-    //await localStore.runSignupScripts();
     actionInProgress = false;
   }
   function isValidSignupData() {
-    if (!email || !pass || !confirmPass || !firstName || !lastName) {
+    if (!email || !pass || !confirmPass) {
       showError("Please fill all the fields.");
       return false;
     }
@@ -141,22 +137,31 @@
   {#if isSignup}
     <div class="flex flex-col gap-4 w-96 px-4">
       <TextInput
-        bind:value={firstName}
-        label="First name"
-        isRequired={true}
-        placeholder="John"
+        bind:value={nickName}
+        label="What should we call you?"
+        infoParams={{
+          body: "Leave this blank if you don't want to share your name.",
+          link: $appStore.appData.urls.privacy,
+          linkText: "Learn more about our privay policy",
+        }}
+        placeholder="nickname or leave it empty"
       />
-      <TextInput
+      <!-- <TextInput
         bind:value={lastName}
         label="Last name"
         isRequired={true}
         placeholder="Legend"
-      />
+      /> -->
       <TextInput
         bind:value={email}
         label="Email address"
         isRequired={true}
-        placeholder="john@legend.com"
+        infoParams={{
+          body:
+            $appStore.appData.name + " doesn't store your email or password.",
+          link: $appStore.appData.urls.privacy,
+        }}
+        placeholder="username@email.com"
       />
       <TextInput
         bind:value={pass}
