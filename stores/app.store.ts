@@ -121,6 +121,16 @@ function initWindow(settings: WindowObject) {
         return n;
       });
     },
+    toggleMenuVisibility: (isHidden?: boolean) => {
+      update((n: WindowObject) => {
+        if (isHidden !== undefined && isHidden !== null) {
+          n = { ...n, isMenuHidden: isHidden };
+        } else {
+          n = { ...n, isMenuHidden: !n.isMenuHidden };
+        }
+        return n;
+      });
+    },
     toggleTopBar: (isMinimal: boolean) => {
       update((n: WindowObject) => {
         n = { ...n, isMinimalTopBar: isMinimal };
