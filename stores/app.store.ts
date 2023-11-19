@@ -440,11 +440,11 @@ function initAccount(seed: UserAccount) {
     seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
   }
   postMessageToParent({
-    account: {
+    account: JSON.stringify({
       userId: seed.userInfo?.id.split("user:")[1],
       token: seed.token,
       isLoggedIn: true,
-    },
+    }),
   });
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const addSeedUserInfo = (n: UserAccount) => {

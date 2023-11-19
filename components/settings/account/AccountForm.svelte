@@ -141,7 +141,7 @@
         label="What should we call you?"
         infoParams={{
           body: "Leave this blank if you don't want to share your name.",
-          link: $appStore.appData.urls.privacy,
+          link: $appStore.appData?.urls?.privacy,
           linkText: "Learn more about our privay policy",
         }}
         placeholder="nickname or leave it empty"
@@ -159,7 +159,7 @@
         infoParams={{
           body:
             $appStore.appData.name + " doesn't store your email or password.",
-          link: $appStore.appData.urls.privacy,
+          link: $appStore.appData?.urls?.privacy,
         }}
         placeholder="username@email.com"
       />
