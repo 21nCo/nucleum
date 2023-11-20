@@ -34,10 +34,10 @@
     if (orientation === Orientation.Vertical) {
       switch (size) {
         case Size.xs:
-          sizingClass = "w-[10rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
+          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
           break;
         case Size.sm:
-          sizingClass = "w-[15rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
+          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
           break;
         case Size.md:
           sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";

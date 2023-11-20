@@ -216,10 +216,12 @@ export class Persistance {
         break;
       case Cloud.surreal:
         return surrealDb.merge(
-          itemType
-            ? `${ItemEnum[itemType]}:${item.id}`
-            : typeof item.id === "string"
+          itemType &&
+            typeof item.id === "string" &&
+            item.id.includes(ItemEnum[itemType])
             ? item.id
+            : itemType
+            ? `${ItemEnum[itemType]}:${item.id}`
             : "",
           item
         );

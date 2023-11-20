@@ -79,7 +79,11 @@
   />
 </Modal>
 {#each modals as modal}
-  <Modal show={modal.isShow} id={modal.path}>
+  <Modal
+    show={modal.isShow}
+    id={modal.path}
+    isDismissable={modal.isDismissable ?? true}
+  >
     <ComponentResolver
       path={modal.path}
       params={{ id: modal.id, path: modal.path }}
