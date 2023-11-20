@@ -41,11 +41,15 @@
   }
   function refreshSizing() {
     if ($userPreferences.accessibilitySizingFactor == 0) {
-      defaultRootFontSize = 14;
+      if ($windowObject.scale > 0.55) defaultRootFontSize = 14;
+      else defaultRootFontSize = 12;
     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-      defaultRootFontSize = 16;
+      if ($windowObject.scale > 0.55) defaultRootFontSize = 16;
+      else if ($windowObject.scale > 0.45) defaultRootFontSize = 14;
+      else defaultRootFontSize = 13;
     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-      defaultRootFontSize = 18;
+      if ($windowObject.scale > 0.55) defaultRootFontSize = 18;
+      else defaultRootFontSize = 16;
     }
   }
   function refreshTailwind() {

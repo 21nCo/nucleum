@@ -135,7 +135,7 @@
 
 <div class="flex flex-col gap-8 justify-center items-center">
   {#if isSignup}
-    <div class="flex flex-col gap-4 w-96 px-4">
+    <div class="flex flex-col gap-4 w-80 md:w-96 px-4">
       <TextInput
         bind:value={nickName}
         label="What should we call you?"
