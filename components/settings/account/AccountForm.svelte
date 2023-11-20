@@ -4,6 +4,8 @@
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account, appStore } from "$lib/tidy/stores/app.store";
+  import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
+  import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
   import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
@@ -16,6 +18,7 @@
   let isTrusted = false;
   let actionInProgress = false;
   onMount(() => {
+    postMessageToParent(EmbedMessage.MOUNT);
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
   });
@@ -180,7 +183,7 @@
       />
     </div>
   {:else}
-    <div class="flex flex-col gap-4 w-96 px-4">
+    <div class="flex flex-col gap-4 w-80 px-4">
       <TextInput
         bind:value={email}
         label="Email address"

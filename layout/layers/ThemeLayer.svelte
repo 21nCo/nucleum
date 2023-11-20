@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import {
     appEvents,
-    postMessageToParent,
     tailwindTheme,
     userPreferences,
     windowObject,
@@ -11,6 +10,7 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { persistLocally } from "$lib/tidy/stores/persistance";
   import { Item } from "$lib/tidy/types/item.enum";
+  import { postToParent } from "$lib/tidy/utils/embed.utils";
   handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -64,7 +64,7 @@
       "--fontFamily-sans-0",
       fontFamily
     );
-    postMessageToParent({
+    postToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
       rootFontSize,
     });
