@@ -114,6 +114,9 @@
     window?.addEventListener("visibilitychange", visibilityChangeListener);
     window?.addEventListener("resize", windowResizeListener);
     window?.addEventListener("click", windowClickEventListener);
+    window.onpopstate = () => {
+      windowObject.setCurrentPath(document.location.pathname);
+    };
   }
 </script>
 

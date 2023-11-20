@@ -266,6 +266,7 @@ export function convertFileSize(
 }
 
 export function resolveUiState(uiStates: any, property: string) {
+  if (!uiStates) return undefined;
   let value = undefined;
   if (get(windowObject).isInPortraitMode) {
     value = uiStates["portrait"][property];
