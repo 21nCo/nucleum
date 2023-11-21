@@ -59,6 +59,7 @@
   import Squares from "../icons/Squares.svelte";
   import Pomodoro from "../icons/Pomodoro.svelte";
   import Download from "../icons/Download.svelte";
+  import Pause from "../icons/Pause.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -214,6 +215,8 @@
         <Cross {variant} isCircled={false} />
       {:else if icon === "trash"}
         <Trash {variant} />
+      {:else if icon === "pause"}
+        <Pause {variant} />
       {:else if icon === "chatleftright"}
         <Chat {variant} chatIconVariant={ChatIconVariant.LeftRight} />
       {:else if icon === "academic-cap"}
