@@ -41,6 +41,8 @@ export const excludedPathsForRedirectionCheck = [
   "login",
   "404",
   "onboarding",
+  "error",
+  "welcome",
 ];
 
 let persistance = new Persistance();
@@ -120,6 +122,16 @@ function initWindow(settings: WindowObject) {
           isInPortraitMode: false,
         };
         n.isInPortraitMode = n.landscapiness < 1;
+        return n;
+      });
+    },
+    toggleMenuVisibility: (isHidden?: boolean) => {
+      update((n: WindowObject) => {
+        if (isHidden !== undefined && isHidden !== null) {
+          n = { ...n, isMenuHidden: isHidden };
+        } else {
+          n = { ...n, isMenuHidden: !n.isMenuHidden };
+        }
         return n;
       });
     },

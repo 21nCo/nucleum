@@ -58,6 +58,7 @@
   import Bars from "../icons/Bars.svelte";
   import Squares from "../icons/Squares.svelte";
   import Pomodoro from "../icons/Pomodoro.svelte";
+  import Download from "../icons/Download.svelte";
   import Bookmark from "../icons/Bookmark.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
@@ -226,6 +227,8 @@
         <Chevron direction={Direction.Down} />
       {:else if icon === "chevup"}
         <Chevron direction={Direction.Up} />
+      {:else if icon === "download"}
+        <Download {variant} />
       {:else if icon === "arrow-left"}
         <Arrow direction={Direction.Left} />
       {:else if icon === "arrow-right"}
