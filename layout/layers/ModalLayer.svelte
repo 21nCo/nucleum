@@ -47,7 +47,6 @@
         modals = [x];
       }
       appStore.log({ modals });
-      console.log({ modals });
     });
     () => {
       appEventSub();

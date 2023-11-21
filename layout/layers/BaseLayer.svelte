@@ -79,7 +79,6 @@
       )
     ) {
       const isProceed = await performRedirectionChecks();
-      console.log({ isProceed });
       if (isProceed) {
         let result = await checkForUpdates(currentVersion);
         if (!result) await runBackendUpdate();
