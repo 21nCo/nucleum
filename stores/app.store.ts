@@ -376,6 +376,7 @@ const seedUserPreferences: UserGlobalPreferences = {
     isDark: false,
     colors: defaultColorSchemeColors,
     tailwindSelector: "cs_dracula",
+    id: generateUID(),
   },
   uiStates: {
     all: {
