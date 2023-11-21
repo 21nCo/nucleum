@@ -14,7 +14,7 @@
     {#if $appStore.embedContext == EmbedContext.SHEET}
       <div class="text-fgs2">Loading...</div>
     {:else}
-      <!-- <div class="line bg-fgs1 w-[2px] h-[2.5rem]" /> -->
+      <div class="line bg-fgs1 w-[2px] h-[2.5rem]" />
       <div class="circle bg-fgs1 w-[2.25rem] h-[2.25rem] rounded-full" />
     {/if}
   </div>
