@@ -6,6 +6,7 @@
   import { bg, retrieveCurrentColors } from "../../utils/theme.utils";
   import { userPreferences, windowObject } from "../../stores/app.store";
   import { ButtonStyle } from "../../types/button.type";
+  import { renderPopover } from "$lib/tidy/utils/ui.utils";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   export let type: string = "secondary";
@@ -14,6 +15,9 @@
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
+  export let tooltip: string | undefined = undefined;
+  let toolTipRef: any;
+  let buttonRef: any;
   let isHovered: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
   $: if (!label && icon && style == ButtonStyle.DEFAULT)
@@ -25,6 +29,7 @@
       : " rounded-md") +
     ` ${width} `;
   onMount(() => {
+    hideToolTip();
     if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
@@ -99,17 +104,25 @@
       }
     }
   });
+
+  function hideToolTip() {
+    if (toolTipRef && toolTipRef?.style?.display != "none")
+      toolTipRef.style.display = "none";
+  }
 </script>
 
 <button
   class={classList +
     (isDisabled ? " opacity-50 cursor-not-allowed hover:opacity-50 " : "")}
   on:click
+  bind:this={buttonRef}
   on:pointerenter={() => {
     isHovered = true;
+    if (tooltip) renderPopover(buttonRef, toolTipRef);
   }}
   on:pointerleave={() => {
     isHovered = false;
+    hideToolTip();
   }}
   disabled={isDisabled}
 >
@@ -133,5 +146,13 @@
     </div>
   {:else}
     <slot />
+  {/if}
+  {#if tooltip}
+    <div
+      bind:this={toolTipRef}
+      class="min-w-fit bg-fgs3 text-bgs1 text-b3 rounded-md z-30 px-4"
+    >
+      {tooltip}
+    </div>
   {/if}
 </button>

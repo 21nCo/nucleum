@@ -27,6 +27,7 @@ import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
+import { postToParent } from "../utils/embed.utils";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -278,7 +279,7 @@ function initAppStore(seed: AppStore) {
           timestamp: new Date().toLocaleTimeString(),
         });
         if (n.isDebugEmbedMode) {
-          postMessageToParent({
+          postToParent({
             error: message,
           });
         }
@@ -449,12 +450,12 @@ function initAccount(seed: UserAccount) {
   if (localStorage.getItem("userInfo")) {
     seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
   }
-  postMessageToParent({
-    account: {
+  postToParent({
+    account: JSON.stringify({
       userId: seed.userInfo?.id.split("user:")[1],
       token: seed.token,
       isLoggedIn: true,
-    },
+    }),
   });
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const addSeedUserInfo = (n: UserAccount) => {
@@ -483,7 +484,7 @@ function initAccount(seed: UserAccount) {
     localStorage.setItem("refresh-token", data.refreshToken);
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     // isOnboardingComplete.check();
-    postMessageToParent({
+    postToParent({
       account: {
         userId: data.userInfo.id.split("user:")[1],
         token: data.token,
@@ -511,7 +512,7 @@ function initAccount(seed: UserAccount) {
       return n;
     });
     appEvents.publish(AppEvent.USER_LOGIN, false);
-    postMessageToParent({
+    postToParent({
       account: {
         isLoggedIn: false,
       },
@@ -529,21 +530,6 @@ function initAccount(seed: UserAccount) {
     signIn: signin,
     expire,
   };
-}
-
-export function postMessageToParent(message: any) {
-  appStore.log("posting message to parent:" + JSON.stringify(message));
-  try {
-    window?.parent?.postMessage(message, "*");
-  } catch (error) {
-    appStore.logError(error);
-  }
-  try {
-    //@ts-ignore
-    window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
-  } catch (error) {
-    appStore.logError(error);
-  }
 }
 
 const defaultModal = {
@@ -571,10 +557,4 @@ function initModalStore(seed: ModalEvent) {
       });
     },
   };
-}
-
-export function hapticFeedback(haptic: HapticFeedback) {
-  postMessageToParent({
-    haptic,
-  });
 }

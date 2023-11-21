@@ -14,7 +14,7 @@
 <div class="flex flex-col w-full h-full justify-center items-center gap-2">
   <div class="flex flex-col gap-1 items-center">
     {#if size === Size.sm || $windowObject.isInPortraitMode}
-      <RocketLaunch width={150} />
+      <RocketLaunch width={120} />
     {:else}
       <RocketLaunch width={200} />
     {/if}

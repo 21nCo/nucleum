@@ -1,0 +1,6 @@
+export enum EmbedMessage {
+  PING = "PING",
+  MOUNT = "MOUNT",
+  SHEET_MOUNTED = "SHEET_MOUNTED",
+  CLEAR_NOTIFICATIONS = "CLEAR_NOTIFICATIONS",
+}

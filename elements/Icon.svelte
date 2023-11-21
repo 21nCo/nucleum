@@ -59,6 +59,7 @@
   import Squares from "../icons/Squares.svelte";
   import Pomodoro from "../icons/Pomodoro.svelte";
   import Download from "../icons/Download.svelte";
+  import Bookmark from "../icons/Bookmark.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -276,6 +277,8 @@
         <Squares {variant} />
       {:else if icon === "pomodoro"}
         <Pomodoro {variant} />
+      {:else if icon === "bookmark"}
+        <Bookmark {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

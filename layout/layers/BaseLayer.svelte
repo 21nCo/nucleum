@@ -7,8 +7,6 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    postMessageToParent,
-    userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { dev } from "$app/environment";
@@ -25,6 +23,7 @@
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { pingParent, postToParent } from "$lib/tidy/utils/embed.utils";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -35,9 +34,7 @@
     appEvents.publish(AppEvent.WINDOW_CLICKED, event);
   };
   let timer: any;
-  postMessageToParent({
-    ping: true,
-  });
+  pingParent();
   bootup();
   onMount(async () => {
     await initializeData();
@@ -61,11 +58,7 @@
           let isValid = await performLoginStatusCheck();
           if (isValid) await checkForUpdates();
         }
-        setTimeout(() => {
-          postMessageToParent({
-            ping: true,
-          });
-        }, 2500);
+        pingParent(true);
       }
     }
   }
@@ -114,6 +107,9 @@
     window?.addEventListener("visibilitychange", visibilityChangeListener);
     window?.addEventListener("resize", windowResizeListener);
     window?.addEventListener("click", windowClickEventListener);
+    window.onpopstate = () => {
+      windowObject.setCurrentPath(document.location.pathname);
+    };
   }
 </script>
 

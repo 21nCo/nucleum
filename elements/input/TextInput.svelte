@@ -176,7 +176,6 @@
       return;
     }
     searchResults = await persistance.searchByLabel(value, searchItemType);
-    console.log({ searchResults });
   }
 </script>
 

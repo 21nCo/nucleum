@@ -2,14 +2,11 @@ import { onDestroy } from "svelte";
 import { localActions } from "$lib/local/stores/localActionMap";
 import { actions } from "$lib/tidy/layout/actionMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import {
-  appStore,
-  postMessageToParent,
-  windowObject,
-} from "../stores/app.store";
+import { appStore, windowObject } from "../stores/app.store";
 import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
 import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
+import { postToParent } from "./embed.utils";
 
 export function onInterval(
   callback: () => void,
@@ -166,7 +163,7 @@ export function resolveComponentFromPath(path: string) {
 
 export function openLink(url: string) {
   if (get(appStore).launchContext == LaunchContext.EMBED) {
-    postMessageToParent({
+    postToParent({
       link: url,
     });
   } else {
@@ -266,6 +263,7 @@ export function convertFileSize(
 }
 
 export function resolveUiState(uiStates: any, property: string) {
+  if (!uiStates) return undefined;
   let value = undefined;
   if (get(windowObject).isInPortraitMode) {
     value = uiStates["portrait"][property];
