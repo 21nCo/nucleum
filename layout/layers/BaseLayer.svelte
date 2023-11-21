@@ -73,10 +73,17 @@
     //todo - check if the saved timezone is different from current user timezone
     await initializeAppData();
     const currentVersion = $appStore.appData.version;
-    const isProceed = await performRedirectionChecks();
-    if (isProceed) {
-      let result = await checkForUpdates(currentVersion);
-      if (!result) await runBackendUpdate();
+    if (
+      !excludedPathsForRedirectionCheck.includes(
+        $windowObject.currentPath.split("/")[1]
+      )
+    ) {
+      const isProceed = await performRedirectionChecks();
+      console.log({ isProceed });
+      if (isProceed) {
+        let result = await checkForUpdates(currentVersion);
+        if (!result) await runBackendUpdate();
+      }
     }
   }
   async function initializeAppData() {
