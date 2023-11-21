@@ -222,6 +222,8 @@ export class Persistance {
             ? item.id
             : itemType
             ? `${ItemEnum[itemType]}:${item.id}`
+            : typeof item.id === "string"
+            ? item.id
             : "",
           item
         );
