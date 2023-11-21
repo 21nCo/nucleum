@@ -83,7 +83,6 @@ export function formatSecondsToTimeInDecimals(
 }
 
 export function timePeriodLabel(period: TimePeriod) {
-  console.log("timePeriodLabel", { period });
   const { scale, value } = period;
   if (typeof value.param != "number") return;
   if (value.type === TimePeriodType.RELATIVE) {
@@ -120,7 +119,6 @@ export function timePeriodLabel(period: TimePeriod) {
 }
 
 export function determineTimePeriod(period: TimePeriod) {
-  console.log("determineTimePeriod", { period });
   let begin = new Date();
   let end = new Date();
   let title;
@@ -252,7 +250,6 @@ export function detectTimeZone() {
   try {
     const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const timeZone = timeZones.find((x: any) => x.name === detectedTimeZone);
-    console.log({ detectedTimeZone, timeZone });
     return timeZone ? timeZone : timeZones[0];
   } catch (error) {
     console.error("Could not detect time zone:", error);
