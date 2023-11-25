@@ -71,6 +71,10 @@
   >
     <slot />
   </button>
+{:else if selectionStyle === SelectionItemActiveStyle.CIRCLE}
+  <button class={classList} on:click on:pointerenter disabled={isDisabled}>
+    <slot />
+  </button>
 {:else}
   <button
     class={classList + (isActive ? " bg-bgs3" : " bg-bgs2 hover:bg-bgs3")}

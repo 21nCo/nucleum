@@ -68,7 +68,6 @@
       colorscheme: JSON.stringify($userPreferences.colorScheme),
       rootFontSize,
     });
-    //postMessageToParent({ theme: $appStore.tailwindTheme, rootFontSize });
   }
 </script>
 

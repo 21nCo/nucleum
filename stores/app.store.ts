@@ -563,4 +563,30 @@ function initModalStore(seed: ModalEvent) {
   };
 }
 
-export const scheduledNotifications = writable<ScheduledNotification[]>([]);
+export const scheduledNotifications = initScheduledNotificationStore();
+
+function initScheduledNotificationStore() {
+  const { subscribe, set, update } = writable<ScheduledNotification[]>([]);
+  return {
+    subscribe,
+    set: (m: ScheduledNotification[]) => {
+      set(m);
+    },
+    reset: () => {
+      update((n: ScheduledNotification[]) => {
+        return [];
+      });
+    },
+    notify: (event: ScheduledNotification[]) => {
+      update((n: ScheduledNotification[]) => {
+        return event;
+      });
+    },
+    push: (event: ScheduledNotification) => {
+      update((n: ScheduledNotification[]) => {
+        n.push(event);
+        return n;
+      });
+    },
+  };
+}

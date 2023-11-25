@@ -6,14 +6,15 @@
   } from "$lib/tidy/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import SwitchItem from "./SwitchItem.svelte";
-  import FormControlLabel from "../text/FormControlLabel.svelte";
   import {
     customColorStyle,
     generateBackgroudColor,
-    retrieveCurrentColors,
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { ColorType } from "$lib/tidy/types/theme.type";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
+  import FormControlLabelWrapper from "../input/FormControlLabelWrapper.svelte";
+  import type { InfoTextParams } from "$lib/tidy/types/text.type";
 
   const dispatch = createEventDispatcher();
   export let items: string[];
@@ -25,10 +26,10 @@
   export let style: SwitcherStyle = SwitcherStyle.HorizontalAndWraps;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
+  export let infoParams: InfoTextParams | undefined = undefined;
   export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
-  export let wrapperClassList: string = "";
-  export let wrapperStyle: string = "";
+  export let labelOrientation: Orientation = Orientation.Vertical;
   let backgroundColor: string = "";
   let classList: string;
   onMount(() => {
@@ -47,7 +48,7 @@
         classList = "flex justify-start items-stretch flex-col gap-2";
         selectionStyle =
           selectionStyle === SelectionItemActiveStyle.UNKNOWN
-            ? SelectionItemActiveStyle.CIRCLE
+            ? SelectionItemActiveStyle.CIRCLE_WITH_BACKGROUND
             : selectionStyle;
         break;
       case SwitcherStyle.Horizontal:
@@ -65,7 +66,7 @@
         ) {
           classList = "flex flex-wrap w-full rounded-full" + backgroundColor;
         } else {
-          classList = "flex gap-2 flex-wrap w-full pb-2";
+          classList = "flex gap-2 flex-wrap pb-2";
           selectionStyle =
             selectionStyle === SelectionItemActiveStyle.UNKNOWN
               ? SelectionItemActiveStyle.SIDEBAR
@@ -78,15 +79,11 @@
   });
 </script>
 
-<div
-  style={wrapperStyle}
-  class={`flex flex-col h-full gap-2 justify-center items-center ${wrapperClassList}`}
+<FormControlLabelWrapper
+  {label}
+  info={info ? { body: info } : infoParams}
+  orientation={labelOrientation}
 >
-  {#if label}
-    <div class="self-start">
-      <FormControlLabel {label} info={{ body: info ?? "" }} />
-    </div>
-  {/if}
   {#if selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND}
     <div class={classList}>
       {#each items as item, index}
@@ -124,4 +121,4 @@
       {/each}
     </div>
   {/if}
-</div>
+</FormControlLabelWrapper>

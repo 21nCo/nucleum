@@ -336,6 +336,14 @@ export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+//generate doc string
+/**
+ * Increments a date time by a number of hours
+ * @param dateTime - date time to increment
+ * @param numberOfHours - number of hours to increment by
+ * @param isRoundToNearestHour - round to nearest hour
+ * @returns
+ */
 export function incrementTime(
   dateTime: Date,
   numberOfHours: number,

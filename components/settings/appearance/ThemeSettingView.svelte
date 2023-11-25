@@ -77,7 +77,7 @@
     label="Theme"
     {parentBackgroundIndex}
     items={$appStore.appConstants.themes.map((x) => properCase(x))}
-    selectionStyle={SelectionItemActiveStyle.CIRCLE}
+    selectionStyle={SelectionItemActiveStyle.CIRCLE_WITH_BACKGROUND}
     on:switch={onThemeChange}
     bind:selectedIndex={selectedThemeIndex}
   />
