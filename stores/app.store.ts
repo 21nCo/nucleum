@@ -28,6 +28,7 @@ import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
 import { postToParent } from "../utils/embed.utils";
+import type { ScheduledNotification } from "../types/notification.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -561,3 +562,5 @@ function initModalStore(seed: ModalEvent) {
     },
   };
 }
+
+export const scheduledNotifications = writable<ScheduledNotification[]>([]);
