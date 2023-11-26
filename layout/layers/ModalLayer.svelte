@@ -83,9 +83,6 @@
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
   >
-    <ComponentResolver
-      path={modal.path}
-      params={{ id: modal.id, path: modal.path }}
-    />
+    <ComponentResolver path={modal.path} params={{ params: modal }} />
   </Modal>
 {/each}

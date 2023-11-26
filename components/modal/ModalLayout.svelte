@@ -7,8 +7,8 @@
   import { onMount } from "svelte";
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
-  export let path: string | undefined = undefined;
-  export let id: string | undefined = undefined;
+  import type { ModalParams } from "$lib/tidy/types/popup.type";
+  export let params: ModalParams;
   export let primaryText: string | undefined = undefined;
   export let secondaryText: string | undefined = undefined;
   export let size: Size = Size.md;
@@ -21,14 +21,14 @@
   }
   onMount(() => {
     let queryParamId = $page.url.searchParams.get("id");
-    if (queryParamId && !id) {
-      id = queryParamId;
+    if (queryParamId && !params.id) {
+      params.id = queryParamId;
     }
-    console.log("id", { queryParamId, id });
     let queryParamPath = $page.url.searchParams.get("path");
-    if (queryParamPath && !path) {
-      path = queryParamPath;
+    if (queryParamPath && !params.path) {
+      params.path = queryParamPath;
     }
+    console.log("id", { queryParamId, queryParamPath, params });
   });
   function resolveSize() {
     if (orientation === Orientation.Vertical) {
@@ -64,14 +64,14 @@
     ? 'w-full h-full'
     : sizingClass}"
 >
-  <ModalHeader {path} />
+  <ModalHeader {params} />
   <div class="flex flex-col gap-4 w-full flex-grow">
     <slot />
   </div>
   <ModalFooter
     bind:this={footerRef}
     {primaryText}
-    {path}
+    path={params.path}
     on:primary
     on:secondary
     {secondaryText}
