@@ -45,7 +45,7 @@
   function resolveCurrentPath() {
     if (path) return path;
     let currentPath = $page.params.route;
-    console.log({ currentPath, page: $page, appData: $appStore.appData });
+    // console.log({ currentPath, page: $page, appData: $appStore.appData });
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
     }

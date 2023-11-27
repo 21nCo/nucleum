@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import {
     appEvents,
-    postMessageToParent,
     tailwindTheme,
     userPreferences,
     windowObject,
@@ -11,6 +10,7 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { persistLocally } from "$lib/tidy/stores/persistance";
   import { Item } from "$lib/tidy/types/item.enum";
+  import { postToParent } from "$lib/tidy/utils/embed.utils";
   handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -41,11 +41,15 @@
   }
   function refreshSizing() {
     if ($userPreferences.accessibilitySizingFactor == 0) {
-      defaultRootFontSize = 14;
+      if ($windowObject.scale > 0.55) defaultRootFontSize = 14;
+      else defaultRootFontSize = 12;
     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-      defaultRootFontSize = 16;
+      if ($windowObject.scale > 0.55) defaultRootFontSize = 16;
+      else if ($windowObject.scale > 0.45) defaultRootFontSize = 14;
+      else defaultRootFontSize = 13;
     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-      defaultRootFontSize = 18;
+      if ($windowObject.scale > 0.55) defaultRootFontSize = 18;
+      else defaultRootFontSize = 16;
     }
   }
   function refreshTailwind() {
@@ -60,11 +64,10 @@
       "--fontFamily-sans-0",
       fontFamily
     );
-    postMessageToParent({
+    postToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
       rootFontSize,
     });
-    //postMessageToParent({ theme: $appStore.tailwindTheme, rootFontSize });
   }
 </script>
 

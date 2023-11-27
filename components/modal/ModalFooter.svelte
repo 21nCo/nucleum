@@ -8,7 +8,7 @@
   export let secondaryText: string | undefined = undefined;
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
-  function close() {
+  export function close() {
     if (isPreventAutoClose) return;
     modalEvent.notify({
       path,

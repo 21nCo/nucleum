@@ -17,6 +17,7 @@ export enum PanelSwitcherStyle {
 export enum SelectionItemActiveStyle {
   UNKNOWN,
   NONE,
+  CIRCLE_WITH_BACKGROUND,
   CIRCLE,
   SIDEBAR,
   SIDEDOT,

@@ -1,15 +1,11 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import {
-    appStore,
-    modalEvent,
-    windowObject,
-  } from "$lib/tidy/stores/app.store";
+  import { appStore, modalEvent } from "$lib/tidy/stores/app.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
+  import type { ModalParams } from "$lib/tidy/types/popup.type";
   import { TextStyle } from "$lib/tidy/types/text.enum";
-  import { properCase } from "$lib/tidy/utils/text.utils";
-  export let path: string = "";
+  export let params: ModalParams;
   export let isShowClose: boolean = true;
 </script>
 
@@ -18,14 +14,14 @@
     <Text
       style={TextStyle.PANEL_HEADING}
       width="min-w-fit"
-      content={path.split("_").join(" ")}
+      content={params.path.split("_").join(" ")}
     />
-    {#if isShowClose}
+    {#if isShowClose && params.isDismissable}
       <div class="w-full flex justify-end text-b2">
         <Icon
           icon="cross"
           on:click={() => {
-            modalEvent.notify({ path, isShow: false });
+            modalEvent.notify({ path: params.path, isShow: false });
           }}
         />
       </div>

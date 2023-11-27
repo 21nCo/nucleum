@@ -60,6 +60,7 @@
   import Pomodoro from "../icons/Pomodoro.svelte";
   import Download from "../icons/Download.svelte";
   import Pause from "../icons/Pause.svelte";
+  import Bookmark from "../icons/Bookmark.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -96,29 +97,29 @@
       class="flex items-center justify-center {size == Size.xl
         ? 'w-10 h-10'
         : size == Size.lg
-        ? 'w-8 h-8'
-        : size == Size.md
-        ? 'w-6 h-6'
-        : 'w-4 h-4'} {variant === IconVariant.Outline
+          ? 'w-8 h-8'
+          : size == Size.md
+            ? 'w-6 h-6'
+            : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
               : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
-              ? `stroke-bgs1`
-              : 'stroke-fgs1'
+                ? `stroke-bgs1`
+                : 'stroke-fgs1'
             : `stroke-fgs3`) + ' stroke-[1.2] fill-none'
         : (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'fill-a1'
               : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
-              ? `fill-bgs1`
-              : 'fill-fgs1'
+                ? `fill-bgs1`
+                : 'fill-fgs1'
             : `fill-fgs3`) + ' stroke-none'} {hoverStyle ===
         SelectionItemActiveStyle.NONE || $windowObject.isInPortraitMode
         ? ''
         : variant === IconVariant.Outline
-        ? ' hover:stroke-a1'
-        : ' hover:fill-a1'}"
+          ? ' hover:stroke-a1'
+          : ' hover:fill-a1'}"
       style={!isActive
         ? variant === IconVariant.Outline
           ? `stroke: ${color ?? defaultColor}`
@@ -279,6 +280,8 @@
         <Squares {variant} />
       {:else if icon === "pomodoro"}
         <Pomodoro {variant} />
+      {:else if icon === "bookmark"}
+        <Bookmark {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

@@ -27,6 +27,8 @@ import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
+import { postToParent } from "../utils/embed.utils";
+import type { ScheduledNotification } from "../types/notification.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -40,6 +42,8 @@ export const excludedPathsForRedirectionCheck = [
   "login",
   "404",
   "onboarding",
+  "error",
+  "welcome",
 ];
 
 let persistance = new Persistance();
@@ -278,7 +282,7 @@ function initAppStore(seed: AppStore) {
           timestamp: new Date().toLocaleTimeString(),
         });
         if (n.isDebugEmbedMode) {
-          postMessageToParent({
+          postToParent({
             error: message,
           });
         }
@@ -327,32 +331,32 @@ function initAppStore(seed: AppStore) {
 
 const userPreferencesId = "Preferences:global";
 export const defaultColorSchemeColors = {
-  bgs1: "hsl(0 0% 100%)",
-  bgs2: "hsl(0 0% 98%)",
-  bgs3: "hsl(0 0% 92%)",
-  bgs4: "hsl(0 0% 88%)",
-  bgs5: "hsl(0 0% 85%)",
-  fgs1: "hsl(0 0% 20%)",
-  fgs2: "hsl(0 0% 33%)",
-  fgs3: "hsl(0 0% 50%)",
-  fgs4: "hsl(0 0% 65%)",
-  a1: "hsl(354 72% 64%)",
-  a2: "hsl(0 28% 55%)",
-  ar: "hsl(0 89% 71%)",
-  ag: "hsl(151 45% 53%)",
-  a1s1: "hsl(354 80% 90%)",
-  a1s2: "",
-  a2s1: "",
-  a2s2: "",
-  brs1: "hsl(0 0% 97%)",
-  brs2: "hsl(0 0% 95%)",
-  brs3: "hsl(0 0% 90%)",
+  a1: "hsl(244 68.07% 76.67%)",
+  a2: "hsl(0 28.38% 55.10%)",
+  ag: "hsl(68 100% 30%)",
+  ar: "hsl(1 71% 52%)",
+  bga1s1: "",
+  bga1s2: "",
+  bga2s1: "",
+  bga2s2: "",
+  bgs1: "hsl(231.43 14.89% 18.43%)",
+  bgs2: "hsl(230 14.75% 23.92%)",
+  bgs3: "hsl(231.72 14.43% 39.41%)",
+  bgs4: "hsl(231.67 14.40% 50.98%)",
+  bgs5: "hsl(192 71% 25%)",
+  brs1: "hsl(192 95% 13%)",
+  brs2: "hsl(192 95% 17%)",
+  brs3: "hsl(192 65% 22%)",
+  fgs1: "hsl(0 0% 97.65%)",
+  fgs2: "hsl(0 0% 78.04%)",
+  fgs3: "hsl(0 0% 67.84%)",
+  fgs4: "hsl(0 0% 58.04%)",
 };
 
 const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
 
 export const tailwindTheme = writable<string>(
-  locallySyncedTailwindTheme || "clean cs_pointron_light"
+  locallySyncedTailwindTheme || "clean cs_dracula"
 );
 
 const seedUserPreferences: UserGlobalPreferences = {
@@ -368,11 +372,12 @@ const seedUserPreferences: UserGlobalPreferences = {
   timeFormat: "meridian",
   timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
   colorScheme: {
-    label: "bw",
+    label: "dracula",
     theme: "clean",
     isDark: false,
     colors: defaultColorSchemeColors,
-    tailwindSelector: "cs_pointron_light",
+    tailwindSelector: "cs_dracula",
+    id: generateUID(),
   },
   uiStates: {
     all: {
@@ -449,12 +454,12 @@ function initAccount(seed: UserAccount) {
   if (localStorage.getItem("userInfo")) {
     seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
   }
-  postMessageToParent({
-    account: {
+  postToParent({
+    account: JSON.stringify({
       userId: seed.userInfo?.id.split("user:")[1],
       token: seed.token,
       isLoggedIn: true,
-    },
+    }),
   });
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const addSeedUserInfo = (n: UserAccount) => {
@@ -483,7 +488,7 @@ function initAccount(seed: UserAccount) {
     localStorage.setItem("refresh-token", data.refreshToken);
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     // isOnboardingComplete.check();
-    postMessageToParent({
+    postToParent({
       account: {
         userId: data.userInfo.id.split("user:")[1],
         token: data.token,
@@ -511,7 +516,7 @@ function initAccount(seed: UserAccount) {
       return n;
     });
     appEvents.publish(AppEvent.USER_LOGIN, false);
-    postMessageToParent({
+    postToParent({
       account: {
         isLoggedIn: false,
       },
@@ -529,21 +534,6 @@ function initAccount(seed: UserAccount) {
     signIn: signin,
     expire,
   };
-}
-
-export function postMessageToParent(message: any) {
-  appStore.log("posting message to parent:" + JSON.stringify(message));
-  try {
-    window?.parent?.postMessage(message, "*");
-  } catch (error) {
-    appStore.logError(error);
-  }
-  try {
-    //@ts-ignore
-    window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
-  } catch (error) {
-    appStore.logError(error);
-  }
 }
 
 const defaultModal = {
@@ -573,8 +563,30 @@ function initModalStore(seed: ModalEvent) {
   };
 }
 
-export function hapticFeedback(haptic: HapticFeedback) {
-  postMessageToParent({
-    haptic,
-  });
+export const scheduledNotifications = initScheduledNotificationStore();
+
+function initScheduledNotificationStore() {
+  const { subscribe, set, update } = writable<ScheduledNotification[]>([]);
+  return {
+    subscribe,
+    set: (m: ScheduledNotification[]) => {
+      set(m);
+    },
+    reset: () => {
+      update((n: ScheduledNotification[]) => {
+        return [];
+      });
+    },
+    notify: (event: ScheduledNotification[]) => {
+      update((n: ScheduledNotification[]) => {
+        return event;
+      });
+    },
+    push: (event: ScheduledNotification) => {
+      update((n: ScheduledNotification[]) => {
+        n.push(event);
+        return n;
+      });
+    },
+  };
 }

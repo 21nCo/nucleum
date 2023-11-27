@@ -1,6 +1,9 @@
 <!-- FILEPATH: /Users/ar/dev/devving/Tidigit/pointron/src/lib/tidy/layout/paint/LoadingView.svelte -->
 
 <script lang="ts">
+  import { appStore } from "$lib/tidy/stores/app.store";
+  import { EmbedContext } from "$lib/tidy/types/appStore.type";
+
   export let message: string = "booting up...";
 </script>
 
@@ -8,8 +11,12 @@
   class="w-full h-full intialRenderAnimation flex items-center justify-center"
 >
   <div class="flex items-center justify-center">
-    <div class="line bg-fgs1 w-[2px] h-[2.5rem]" />
-    <div class="circle bg-fgs1 w-[2.25rem] h-[2.25rem] rounded-full" />
+    {#if $appStore.embedContext == EmbedContext.SHEET}
+      <div class="text-fgs2">Loading...</div>
+    {:else}
+      <div class="line bg-fgs1 w-[2px] h-[2.5rem]" />
+      <div class="circle bg-fgs1 w-[2.25rem] h-[2.25rem] rounded-full" />
+    {/if}
   </div>
 </div>
 
