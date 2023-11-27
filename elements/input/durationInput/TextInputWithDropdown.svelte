@@ -45,6 +45,9 @@
     else if (newTimeUnit === TimeUnit.SECONDS && oldTimeUnit === TimeUnit.HOURS)
       value = value / 3600;
   }
+  $: {
+    console.log("Text Input With Dropdown", { currentTimeUnit });
+  }
 </script>
 
 <div class="text-center text-base self-center w-full">

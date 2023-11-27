@@ -12,6 +12,7 @@
     borderColor,
     generateBackgroudColor,
   } from "$lib/tidy/utils/theme.utils";
+  import { roundOffToNdigitsAfterDecimal } from "$lib/local/utils/local.utils";
   //todo - move clickoutside and pointron local code to tidy lib
   export let value: any;
   export let currentTimeUnit: TimeUnit;
@@ -208,20 +209,38 @@
     selectedIndex = -1;
   }
 
+  // function handleClickOnTimeSuggestion(index: number) {
+  //   return () => {
+  //     selectedIndex = index;
+  //     value = timeSuggestions[index].value * 60;
+  //     // value = timeSuggestions[index].value * 60; earlier
+  //     if (currentTimeUnit !== timeSuggestions[index].unit) {
+  //       currentTimeUnit = timeSuggestions[index].unit;
+  //     }
+
+  //     if (currentTimeUnit === TimeUnit.MINUTES)
+  //       inputValue = (value / 60).toString();
+  //     //there is no need of setting this, since we are actually getting the value from this, but this is like a safety mechanism to make sure the code doesn't break, since if the inputValue changes we'll know that something is wrong
+  //     else if (currentTimeUnit === TimeUnit.HOURS)
+  //       inputValue = (value / (60 * 60)).toString();
+  //     else inputValue = Math.round(value).toString();
+  //     resetTimeSuggestions();
+  //   };
+  // }
+
   function handleClickOnTimeSuggestion(index: number) {
     return () => {
       selectedIndex = index;
-      value = timeSuggestions[index].value * 60;
+      value = timeSuggestions[index].value;
       if (currentTimeUnit !== timeSuggestions[index].unit) {
         currentTimeUnit = timeSuggestions[index].unit;
       }
 
-      if (currentTimeUnit === TimeUnit.MINUTES)
-        inputValue = (value / 60).toString();
+      if (currentTimeUnit === TimeUnit.MINUTES) inputValue = value.toString();
       //there is no need of setting this, since we are actually getting the value from this, but this is like a safety mechanism to make sure the code doesn't break, since if the inputValue changes we'll know that something is wrong
       else if (currentTimeUnit === TimeUnit.HOURS)
-        inputValue = (value / (60 * 60)).toString();
-      else inputValue = Math.round(value).toString();
+        inputValue = (value / 60).toString();
+      else inputValue = Math.round(value * 60).toString();
 
       resetTimeSuggestions();
     };
@@ -234,10 +253,10 @@
       if (selectedIndex === -1) {
         if (numberedInputValue === 0 || isNaN(numberedInputValue)) value = 0;
         else if (currentTimeUnit === TimeUnit.MINUTES)
-          value = numberedInputValue * 60;
+          value = numberedInputValue;
         else if (currentTimeUnit === TimeUnit.HOURS)
-          value = numberedInputValue * 60 * 60;
-        else value = numberedInputValue;
+          value = numberedInputValue * 60;
+        else value = numberedInputValue / 60;
       } else {
         handleClickOnTimeSuggestion(selectedIndex)();
       }
@@ -252,6 +271,32 @@
     }
     resetChangeTimer();
   }
+
+  // function handleKeyDown(event: KeyboardEvent) {
+  //   const numberedInputValue = parseFloat(inputValue);
+
+  //   if (event.key === "Enter") {
+  //     if (selectedIndex === -1) {
+  //       if (numberedInputValue === 0 || isNaN(numberedInputValue)) value = 0;
+  //       else if (currentTimeUnit === TimeUnit.MINUTES)
+  //         value = numberedInputValue * 60;
+  //       else if (currentTimeUnit === TimeUnit.HOURS)
+  //         value = numberedInputValue * 60 * 60;
+  //       else value = numberedInputValue;
+  //     } else {
+  //       handleClickOnTimeSuggestion(selectedIndex)();
+  //     }
+  //     resetTimeSuggestions();
+  //     dispatch("enter", { value });
+  //   } else if (event.key === "ArrowDown") {
+  //     selectedIndex = Math.min(selectedIndex + 1, timeSuggestions.length - 1);
+  //   } else if (event.key === "ArrowUp") {
+  //     selectedIndex = Math.max(selectedIndex - 1, -1);
+  //   } else if (event.key === "Escape") {
+  //     resetTimeSuggestions();
+  //   }
+  //   resetChangeTimer();
+  // }
 
   $: {
     if (changeElapsedTime > 1) {
@@ -295,7 +340,7 @@
     bind:this={inputRef}
   />
   <div
-    class="units-dropdown absolute bg-bgs2 top-full w-full rounded-sm flex flex-col gap-1 z-20"
+    class="units-dropdown absolute bg-bgs2 top-full w-full rounded-sm flex flex-col gap-1 z-[20]"
   >
     {#if timeSuggestions && timeSuggestions.length > 0}
       {#each timeSuggestions as timeSuggestion, index}
