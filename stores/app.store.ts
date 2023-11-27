@@ -27,8 +27,9 @@ import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
-import { postToParent } from "../utils/embed.utils";
+import { postMessageToParent, postToParent } from "../utils/embed.utils";
 import type { ScheduledNotification } from "../types/notification.type";
+import { EmbedMessage } from "../types/embedMessage.enum";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -573,9 +574,10 @@ function initScheduledNotificationStore() {
       set(m);
     },
     reset: () => {
-      update((n: ScheduledNotification[]) => {
+      update(() => {
         return [];
       });
+      postMessageToParent(EmbedMessage.CLEAR_NOTIFICATIONS);
     },
     notify: (event: ScheduledNotification[]) => {
       update((n: ScheduledNotification[]) => {

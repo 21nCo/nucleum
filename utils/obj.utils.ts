@@ -74,7 +74,7 @@ export function sortPropertiesByOrder(obj: any) {
 export function sortArrayByOrder(arr: any[]) {
   //console.log("sortArrayByOrder", arr);
   arr = arr.map((item) => {
-    item.order = item.order || 1000;
+    item.order = item.order || 0;
     return item;
   });
   return arr.sort((a, b) => a.order - b.order);

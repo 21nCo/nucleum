@@ -10,7 +10,7 @@
   import { Placement } from "$lib/tidy/types/placement.type";
   import Icon from "../Icon.svelte";
 
-  export let icon: string = "ellipsis-vertical";
+  export let icon: string = "adjustments-vertical";
 
   export let items: GoalContextMenuItem[] = [];
   export let hideIcon: boolean = false;
@@ -100,7 +100,7 @@
       style={menuContainerStyle}
       class={`absolute top-0 ${
         placement === Placement.RIGHT ? `left-10` : `right-10`
-      } bg-bgs4 ${menuContainerClassList}`}
+      } bg-bgs3 ${menuContainerClassList}`}
     >
       {#each items as item, index}
         <ContextMenuItem
