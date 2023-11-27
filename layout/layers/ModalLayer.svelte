@@ -4,6 +4,7 @@
     appEvents,
     appStore,
     modalEvent as modalEvent,
+    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly } from "svelte/transition";
@@ -65,6 +66,12 @@
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}
+{#if $appStore.player && !$windowObject.isInPortraitMode}
+  <div class="fixed bottom-0 right-0">
+    <ComponentResolver path={$appStore.player} />
+  </div>
+{/if}
+
 <Modal
   size={Size.xl}
   show={isShowAppearancePreview}
