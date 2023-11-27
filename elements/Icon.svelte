@@ -215,6 +215,8 @@
         <Cross {variant} isCircled={false} />
       {:else if icon === "trash"}
         <Trash {variant} />
+      {:else if icon === "pause"}
+        <Pause {variant} />
       {:else if icon === "chatleftright"}
         <Chat {variant} chatIconVariant={ChatIconVariant.LeftRight} />
       {:else if icon === "academic-cap"}
