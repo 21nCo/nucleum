@@ -83,7 +83,6 @@ export function formatSecondsToTimeInDecimals(
 }
 
 export function timePeriodLabel(period: TimePeriod) {
-  console.log("timePeriodLabel", { period });
   const { scale, value } = period;
   if (typeof value.param != "number") return;
   if (value.type === TimePeriodType.RELATIVE) {
@@ -120,7 +119,6 @@ export function timePeriodLabel(period: TimePeriod) {
 }
 
 export function determineTimePeriod(period: TimePeriod) {
-  console.log("determineTimePeriod", { period });
   let begin = new Date();
   let end = new Date();
   let title;
@@ -137,10 +135,13 @@ export function determineTimePeriod(period: TimePeriod) {
   if (period.scale === TimeScale.DAYS) {
     if (
       period.value.type === TimePeriodType.RELATIVE &&
-      typeof period.value === "number"
+      typeof period.value.param === "number"
     ) {
-      begin.setDate(begin.getDate() + period.value);
+      begin.setDate(begin.getDate() + period.value.param);
       title = timePeriodLabel(period);
+      if (period.value.param === -1) {
+        end.setDate(end.getDate() - 1);
+      }
     } else if (
       period.value.type === TimePeriodType.CALENDAR_BOUND &&
       period.value instanceof Array
@@ -158,10 +159,13 @@ export function determineTimePeriod(period: TimePeriod) {
   } else if (period.scale === TimeScale.MONTHS) {
     if (
       period.value.type === TimePeriodType.RELATIVE &&
-      typeof period.value === "number"
+      typeof period.value.param === "number"
     ) {
-      begin.setMonth(begin.getMonth() + period.value);
+      begin.setMonth(begin.getMonth() + period.value.param);
       title = timePeriodLabel(period);
+      if (period.value.param === -1) {
+        end.setMonth(end.getMonth() - 1);
+      }
       begin.setDate(1);
       end.setDate(31);
     } else if (
@@ -180,10 +184,13 @@ export function determineTimePeriod(period: TimePeriod) {
   } else if (period.scale === TimeScale.YEARS) {
     if (
       period.value.type === TimePeriodType.RELATIVE &&
-      typeof period.value === "number"
+      typeof period.value.param === "number"
     ) {
-      begin.setFullYear(begin.getFullYear() + period.value);
+      begin.setFullYear(begin.getFullYear() + period.value.param);
       title = timePeriodLabel(period);
+      if (period.value.param === -1) {
+        end.setFullYear(end.getFullYear() - 1);
+      }
       begin.setDate(1);
       end.setDate(31);
       begin.setMonth(0);
@@ -243,7 +250,6 @@ export function detectTimeZone() {
   try {
     const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const timeZone = timeZones.find((x: any) => x.name === detectedTimeZone);
-    console.log({ detectedTimeZone, timeZone });
     return timeZone ? timeZone : timeZones[0];
   } catch (error) {
     console.error("Could not detect time zone:", error);
@@ -330,6 +336,14 @@ export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+//generate doc string
+/**
+ * Increments a date time by a number of hours
+ * @param dateTime - date time to increment
+ * @param numberOfHours - number of hours to increment by
+ * @param isRoundToNearestHour - round to nearest hour
+ * @returns
+ */
 export function incrementTime(
   dateTime: Date,
   numberOfHours: number,

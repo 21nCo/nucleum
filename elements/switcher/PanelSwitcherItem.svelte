@@ -34,7 +34,7 @@
           $windowObject.isInPortraitMode
         ? 'text-b3'
         : style === PanelSwitcherStyle.BOTTOMBAR_MINI
-        ? 'text-b2'
+        ? 'text-base'
         : 'text-h4'}"
     >
       {item}

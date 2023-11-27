@@ -4,6 +4,8 @@
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account, appStore } from "$lib/tidy/stores/app.store";
+  import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
+  import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
   import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
@@ -16,6 +18,7 @@
   let isTrusted = false;
   let actionInProgress = false;
   onMount(() => {
+    postMessageToParent(EmbedMessage.MOUNT);
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
   });
@@ -135,13 +138,13 @@
 
 <div class="flex flex-col gap-8 justify-center items-center">
   {#if isSignup}
-    <div class="flex flex-col gap-4 w-96 px-4">
+    <div class="flex flex-col gap-4 w-80 md:w-96 px-4">
       <TextInput
         bind:value={nickName}
         label="What should we call you?"
         infoParams={{
           body: "Leave this blank if you don't want to share your name.",
-          link: $appStore.appData.urls.privacy,
+          link: $appStore.appData?.urls?.privacy,
           linkText: "Learn more about our privay policy",
         }}
         placeholder="nickname or leave it empty"
@@ -159,7 +162,7 @@
         infoParams={{
           body:
             $appStore.appData.name + " doesn't store your email or password.",
-          link: $appStore.appData.urls.privacy,
+          link: $appStore.appData?.urls?.privacy,
         }}
         placeholder="username@email.com"
       />
@@ -180,7 +183,7 @@
       />
     </div>
   {:else}
-    <div class="flex flex-col gap-4 w-96 px-4">
+    <div class="flex flex-col gap-4 w-80 px-4">
       <TextInput
         bind:value={email}
         label="Email address"

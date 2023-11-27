@@ -7,33 +7,37 @@
   import { onMount } from "svelte";
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
-  export let path: string | undefined = undefined;
-  export let id: string | undefined = undefined;
+  import type { ModalParams } from "$lib/tidy/types/popup.type";
+  export let params: ModalParams;
   export let primaryText: string | undefined = undefined;
   export let secondaryText: string | undefined = undefined;
   export let size: Size = Size.md;
   export let orientation: Orientation = Orientation.Vertical;
+  let footerRef: any;
   let sizingClass = "";
   resolveSize();
+  export function close() {
+    footerRef.close();
+  }
   onMount(() => {
     let queryParamId = $page.url.searchParams.get("id");
-    if (queryParamId && !id) {
-      id = queryParamId;
+    if (queryParamId && !params.id) {
+      params.id = queryParamId;
     }
-    console.log("id", { queryParamId, id });
     let queryParamPath = $page.url.searchParams.get("path");
-    if (queryParamPath && !path) {
-      path = queryParamPath;
+    if (queryParamPath && !params.path) {
+      params.path = queryParamPath;
     }
+    console.log("id", { queryParamId, queryParamPath, params });
   });
   function resolveSize() {
     if (orientation === Orientation.Vertical) {
       switch (size) {
         case Size.xs:
-          sizingClass = "w-[10rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
+          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
           break;
         case Size.sm:
-          sizingClass = "w-[15rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
+          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
           break;
         case Size.md:
           sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
@@ -60,9 +64,16 @@
     ? 'w-full h-full'
     : sizingClass}"
 >
-  <ModalHeader {path} />
+  <ModalHeader {params} />
   <div class="flex flex-col gap-4 w-full flex-grow">
     <slot />
   </div>
-  <ModalFooter {primaryText} {path} on:primary on:secondary {secondaryText} />
+  <ModalFooter
+    bind:this={footerRef}
+    {primaryText}
+    path={params.path}
+    on:primary
+    on:secondary
+    {secondaryText}
+  />
 </div>

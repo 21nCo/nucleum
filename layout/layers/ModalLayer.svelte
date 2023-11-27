@@ -4,7 +4,6 @@
     appEvents,
     appStore,
     modalEvent as modalEvent,
-    postMessageToParent,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly } from "svelte/transition";
@@ -16,6 +15,7 @@
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { postToParent } from "$lib/tidy/utils/embed.utils";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
@@ -32,7 +32,7 @@
     const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
-        postMessageToParent({
+        postToParent({
           pop: JSON.stringify(x),
         });
       } else if (
@@ -40,11 +40,11 @@
         !x.isNonSheetModal
       ) {
         appStore.log("is embed");
-        postMessageToParent({
+        postToParent({
           pop: JSON.stringify(x),
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
-        modals = [...modals, x];
+        modals = [x];
       }
       appStore.log({ modals });
     });
@@ -78,10 +78,11 @@
   />
 </Modal>
 {#each modals as modal}
-  <Modal show={modal.isShow} id={modal.path}>
-    <ComponentResolver
-      path={modal.path}
-      params={{ id: modal.id, path: modal.path }}
-    />
+  <Modal
+    show={modal.isShow}
+    id={modal.path}
+    isDismissable={modal.isDismissable ?? true}
+  >
+    <ComponentResolver path={modal.path} params={{ params: modal }} />
   </Modal>
 {/each}

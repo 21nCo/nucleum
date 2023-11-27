@@ -61,7 +61,7 @@
         style="height: 90%; top: 5%;"
       >
         {#if title}
-          <ModalHeader path={title} />
+          <ModalHeader params={{ path: title }} />
           on:click={() => {
             show = false;
           }}

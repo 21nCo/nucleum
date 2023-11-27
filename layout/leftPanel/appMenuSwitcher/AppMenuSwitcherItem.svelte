@@ -2,13 +2,13 @@
   import { page } from "$app/stores";
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { createEventDispatcher } from "svelte";
-  import Element from "../../../elements/Element.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { hapticFeedback, windowObject } from "$lib/tidy/stores/app.store";
+  import { windowObject } from "$lib/tidy/stores/app.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { HapticFeedback } from "$lib/tidy/types/haptic.enum";
+  import { hapticFeedback } from "$lib/tidy/utils/embed.utils";
   const dispatch = createEventDispatcher();
   export let item: Action;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
