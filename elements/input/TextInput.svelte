@@ -28,6 +28,9 @@
   export let id: string = "";
   export let isRequired: boolean = false;
   export let labelOrientation: Orientation = Orientation.Vertical;
+  export let numberInputParams:
+    | { min: number; max: number; step: number }
+    | undefined = undefined;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
   let searchResults: DbRecordWithLabel[] = [];
@@ -215,6 +218,9 @@
       on:focus
       on:input={onChange}
       type="number"
+      min={numberInputParams?.min}
+      max={numberInputParams?.max}
+      step={numberInputParams?.step}
       {placeholder}
       disabled={isDisabled}
       bind:this={inputRef}

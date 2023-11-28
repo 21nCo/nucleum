@@ -28,7 +28,7 @@ import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
 import { postMessageToParent, postToParent } from "../utils/embed.utils";
-import type { ScheduledNotification } from "../types/notification.type";
+import type { ScheduledNotification, Toast } from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
@@ -589,6 +589,48 @@ function initScheduledNotificationStore() {
         n.push(event);
         return n;
       });
+    },
+  };
+}
+
+export const toasts = initToastStore();
+
+function initToastStore() {
+  let timer: any;
+  const { subscribe, set, update } = writable<Toast[]>([]);
+  return {
+    subscribe,
+    set: (m: Toast[]) => {
+      set(m);
+    },
+    reset: () => {
+      clearTimeout(timer);
+      update(() => {
+        return [];
+      });
+    },
+    trigger: (event: Toast) => {
+      console.log("triggering toast", event);
+      update((n: Toast[]) => {
+        if (n.length > 3) n.shift();
+        n.push(event);
+        return n;
+      });
+      if (get(windowObject).isInPortraitMode) {
+        modalEvent.notify({
+          path: "STATUS_UPDATE",
+          id: event.id,
+          isShow: true,
+          isDismissable: false,
+        });
+      } else {
+        timer = setTimeout(() => {
+          update((n: Toast[]) => {
+            n.shift();
+            return n;
+          });
+        }, 3000);
+      }
     },
   };
 }

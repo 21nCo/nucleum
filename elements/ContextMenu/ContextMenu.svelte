@@ -79,11 +79,7 @@
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-<div
-  {id}
-  class="z-20 relative"
-  on:keydown|stopPropagation={handleKeyDownInList}
->
+<div {id} class="relative" on:keydown|stopPropagation={handleKeyDownInList}>
   {#if icon && !hideIcon}
     <div
       style={iconStyle}
@@ -98,7 +94,7 @@
   {#if isContextMenuOpen}
     <div
       style={menuContainerStyle}
-      class={`absolute top-0 ${
+      class={`absolute z-10 top-0 ${
         placement === Placement.RIGHT ? `left-10` : `right-10`
       } bg-bgs3 ${menuContainerClassList}`}
     >

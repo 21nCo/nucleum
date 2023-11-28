@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "$lib/tidy/elements/text/InlineErrorMessage.svelte";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account, appStore } from "$lib/tidy/stores/app.store";
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
@@ -130,9 +131,6 @@
   function showError(message: string | null = null) {
     actionInProgress = false;
     error = message ?? "Something went wrong. Please try again later.";
-    setTimeout(() => {
-      error = null;
-    }, 3000);
   }
 </script>
 
@@ -211,11 +209,7 @@
       </button>
     </div>
   {/if}
-  <div class="h-6">
-    {#if error}
-      <div class="text-ar">{error}</div>
-    {/if}
-  </div>
+  <InlineErrorMessage bind:error />
   <div class="flex gap-2">
     <Button
       label={isSignup
@@ -223,8 +217,8 @@
           ? "Signing up..."
           : "Signup"
         : actionInProgress
-        ? "Signing in..."
-        : "Signin"}
+          ? "Signing in..."
+          : "Signin"}
       type="primary"
       isDisabled={actionInProgress}
       on:click={isSignup ? onSignupClicked : onSinginClicked}

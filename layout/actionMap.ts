@@ -19,6 +19,7 @@ import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.s
 import SessionExpired from "../components/error/SessionExpired.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
 import ComingSoonView from "../elements/ComingSoonView.svelte";
+import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -142,5 +143,9 @@ export const actions: Action[] = [
     path: "cp/about",
     icon: "info",
     component: AboutSettings,
+  },
+  {
+    action: "STATUS_UPDATE",
+    component: ToastModalPortrait,
   },
 ];

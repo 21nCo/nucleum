@@ -66,7 +66,11 @@
         ) {
           classList = "flex flex-wrap w-full rounded-full" + backgroundColor;
         } else {
-          classList = "flex gap-2 flex-wrap pb-2";
+          classList =
+            "flex pb-2 " +
+            (selectionStyle === SelectionItemActiveStyle.CIRCLE
+              ? "gap-4 "
+              : "gap-2 flex-wrap ");
           selectionStyle =
             selectionStyle === SelectionItemActiveStyle.UNKNOWN
               ? SelectionItemActiveStyle.SIDEBAR
