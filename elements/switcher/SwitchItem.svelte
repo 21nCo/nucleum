@@ -21,10 +21,10 @@
   onMount(() => {
     switch (size) {
       case Size.sm:
-        classList += " py-1 px-4 text-b2 rounded-full ";
+        classList += " py-1 text-b2 rounded-full ";
         break;
       case Size.md:
-        classList += " px-4 py-2 text-base ";
+        classList += " py-2 text-base ";
         break;
       case Size.lg:
         //todo - add roman and medium font variants and use those instead of bold
@@ -33,6 +33,12 @@
       default:
         classList += " p-2 ";
         break;
+    }
+    if (
+      selectionStyle == SelectionItemActiveStyle.CIRCLE_WITH_BACKGROUND ||
+      selectionStyle == SelectionItemActiveStyle.ACCENT_BACKGROUND
+    ) {
+      classList += " px-4 ";
     }
   });
 </script>

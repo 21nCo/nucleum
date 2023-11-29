@@ -180,7 +180,7 @@ const defaultFontSize = {
   title: "3rem",
   "2xl": "2.6rem",
   xl: "2.4rem",
-  h1: "2.1rem",
+  h1: "2rem",
   h2: "1.8rem",
   h3: "1.5rem",
   h4: "1.3rem",

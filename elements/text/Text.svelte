@@ -10,7 +10,7 @@
   onMount(() => {
     switch (style) {
       case TextStyle.PAGE_HEADING:
-        classList += " text-a1 bg-none text-h1";
+        classList += " text-a1 bg-none text-h1 font-medium";
         break;
       case TextStyle.PANEL_HEADING:
         classList += " text-h4 font-medium text-fgs2 bg-none ";
@@ -19,7 +19,7 @@
         classList += " text-fgs3";
         break;
       case TextStyle.SECTION_HEADING:
-        classList += " text-fgs3 font-medium text-b2 max-w-3xl bg-none";
+        classList += " text-fgs3 font-semibold text-b2 max-w-3xl bg-none";
         break;
       case TextStyle.FORM_LABEL:
         classList += " text-fgs2 font-medium text-b3 max-w-3xl bg-none";

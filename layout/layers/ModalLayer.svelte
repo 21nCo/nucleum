@@ -4,9 +4,11 @@
     appEvents,
     appStore,
     modalEvent as modalEvent,
+    toasts,
+    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { fly } from "svelte/transition";
+  import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
   import WithYStack from "../paint/painters/YStack/WithYStack.svelte";
   import { swipe } from "svelte-gestures";
@@ -16,6 +18,9 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { postToParent } from "$lib/tidy/utils/embed.utils";
+  import ToastNotification from "$lib/tidy/elements/ToastNotification.svelte";
+  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
@@ -65,6 +70,23 @@
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}
+{#if $appStore.player && !$windowObject.isInPortraitMode}
+  <div class="fixed bottom-0 right-0">
+    <ComponentResolver path={$appStore.player} />
+  </div>
+{/if}
+
+{#if isValidArray($toasts) && !$windowObject.isInPortraitMode}
+  <div
+    class="fixed top-0 right-0 mr-6 mt-6 drop-shadow z-100 flex flex-col flex-wrap gap-4 h-full"
+    transition:slide={{ duration: 200 }}
+  >
+    {#each $toasts as toast}
+      <ToastNotification notification={toast} />
+    {/each}
+  </div>
+{/if}
+
 <Modal
   size={Size.xl}
   show={isShowAppearancePreview}
@@ -77,7 +99,7 @@
     params={{ parentBackgroundIndex: 2, hidePageHeading: true }}
   />
 </Modal>
-{#each modals as modal}
+{#each modals as modal (modal.path)}
   <Modal
     show={modal.isShow}
     id={modal.path}

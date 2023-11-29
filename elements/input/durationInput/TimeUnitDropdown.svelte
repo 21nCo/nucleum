@@ -28,7 +28,7 @@
   function handleTimeUnitItemClick(item: TimeUnit) {
     return () => {
       if (currentTimeUnit !== item) {
-        dispatch("unit-changed", {
+        dispatch("change", {
           unit: {
             new: item,
             old: currentTimeUnit,

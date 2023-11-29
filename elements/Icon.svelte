@@ -59,8 +59,9 @@
   import Squares from "../icons/Squares.svelte";
   import Pomodoro from "../icons/Pomodoro.svelte";
   import Download from "../icons/Download.svelte";
-  import Pause from "../icons/Pause.svelte";
   import Bookmark from "../icons/Bookmark.svelte";
+  import Pause from "../icons/Pause.svelte";
+  import Adjustments from "../icons/Adjustments.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -282,6 +283,10 @@
         <Pomodoro {variant} />
       {:else if icon === "bookmark"}
         <Bookmark {variant} />
+      {:else if icon === "adjustments-vertical"}
+        <Adjustments {variant} orientation={Orientation.Vertical} />
+      {:else if icon === "adjustments-horizontal"}
+        <Adjustments {variant} orientation={Orientation.Horizontal} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

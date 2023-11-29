@@ -64,7 +64,7 @@
         on:enter
       />
       <TimeUnitDropdown
-        on:unit-changed={handleUnitChanged}
+        on:change={handleUnitChanged}
         {units}
         bind:currentTimeUnit
       />
