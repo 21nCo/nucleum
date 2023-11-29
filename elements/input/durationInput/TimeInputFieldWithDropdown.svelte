@@ -44,8 +44,8 @@
       value < 60
         ? value.toString()
         : value < 3600
-        ? (value / 60).toString()
-        : (value / 3600).toString();
+          ? (value / 60).toString()
+          : (value / 3600).toString();
     let colors = generateBackgroudColor(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
     inputClasses += ` bg-${backgroundColor}`;
@@ -209,42 +209,58 @@
     selectedIndex = -1;
   }
 
-  // function handleClickOnTimeSuggestion(index: number) {
-  //   return () => {
-  //     selectedIndex = index;
-  //     value = timeSuggestions[index].value * 60;
-  //     // value = timeSuggestions[index].value * 60; earlier
-  //     if (currentTimeUnit !== timeSuggestions[index].unit) {
-  //       currentTimeUnit = timeSuggestions[index].unit;
-  //     }
-
-  //     if (currentTimeUnit === TimeUnit.MINUTES)
-  //       inputValue = (value / 60).toString();
-  //     //there is no need of setting this, since we are actually getting the value from this, but this is like a safety mechanism to make sure the code doesn't break, since if the inputValue changes we'll know that something is wrong
-  //     else if (currentTimeUnit === TimeUnit.HOURS)
-  //       inputValue = (value / (60 * 60)).toString();
-  //     else inputValue = Math.round(value).toString();
-  //     resetTimeSuggestions();
-  //   };
-  // }
-
   function handleClickOnTimeSuggestion(index: number) {
     return () => {
       selectedIndex = index;
-      value = timeSuggestions[index].value;
+      value = timeSuggestions[index].value * 60;
+      // console.log({
+      //   hello: timeSuggestions[index],
+      //   selectedIndex,
+      //   currentTimeUnit,
+      //   value,
+      // });
       if (currentTimeUnit !== timeSuggestions[index].unit) {
         currentTimeUnit = timeSuggestions[index].unit;
       }
 
-      if (currentTimeUnit === TimeUnit.MINUTES) inputValue = value.toString();
+      if (currentTimeUnit === TimeUnit.MINUTES)
+        inputValue = (value / 60).toString();
       //there is no need of setting this, since we are actually getting the value from this, but this is like a safety mechanism to make sure the code doesn't break, since if the inputValue changes we'll know that something is wrong
       else if (currentTimeUnit === TimeUnit.HOURS)
-        inputValue = (value / 60).toString();
-      else inputValue = Math.round(value * 60).toString();
-
+        inputValue = (value / (60 * 60)).toString();
+      else inputValue = Math.round(value).toString();
       resetTimeSuggestions();
     };
   }
+
+  $: {
+    // console.log({ value });
+  }
+
+  // function handleClickOnTimeSuggestion(index: number) {
+  //   return () => {
+  //     selectedIndex = index;
+  //     value = timeSuggestions[index].value;
+
+  //     console.log({
+  //       hello: timeSuggestions[index],
+  //       selectedIndex,
+  //       currentTimeUnit,
+  //       value,
+  //     });
+  //     if (currentTimeUnit !== timeSuggestions[index].unit) {
+  //       currentTimeUnit = timeSuggestions[index].unit;
+  //     }
+
+  //     if (currentTimeUnit === TimeUnit.MINUTES) inputValue = value.toString();
+  //     //there is no need of setting this, since we are actually getting the value from this, but this is like a safety mechanism to make sure the code doesn't break, since if the inputValue changes we'll know that something is wrong
+  //     else if (currentTimeUnit === TimeUnit.HOURS)
+  //       inputValue = value.toString();
+  //     else inputValue = Math.round(value * 60).toString();
+
+  //     resetTimeSuggestions();
+  //   };
+  // }
 
   function handleKeyDown(event: KeyboardEvent) {
     const numberedInputValue = parseFloat(inputValue);

@@ -46,7 +46,7 @@
       value = value / 3600;
   }
   $: {
-    console.log("Text Input With Dropdown", { currentTimeUnit });
+    console.log("Text Input With Dropdown", { value });
   }
 </script>
 
