@@ -490,12 +490,12 @@ function initAccount(seed: UserAccount) {
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     // isOnboardingComplete.check();
     postToParent({
-      account: {
+      account: JSON.stringify({
         userId: data.userInfo.id.split("user:")[1],
         token: data.token,
         refreshToken: data.refreshToken,
         isLoggedIn: true,
-      },
+      }),
     });
     if (isRefreshApp) {
       appEvents.publish(AppEvent.USER_LOGIN, true);
@@ -518,9 +518,9 @@ function initAccount(seed: UserAccount) {
     });
     appEvents.publish(AppEvent.USER_LOGIN, false);
     postToParent({
-      account: {
+      account: JSON.stringify({
         isLoggedIn: false,
-      },
+      }),
     });
   };
   return {
