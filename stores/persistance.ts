@@ -313,7 +313,7 @@ export class Persistance {
       case Cloud.surreal:
         if (itemType != ItemEnum.ALL) {
           let searchResult = await surrealDb.query(
-            `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString`,
+            `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
               searchString: searchString.toLowerCase(),
             }

@@ -69,7 +69,7 @@
           <DropdownArrowAccordion isActive={isIconActive} width={20} {state} />
         </button>
       {/if}
-      <div>
+      <div class="truncate w-56">
         {#if headerContent}
           {@html headerContent}
         {/if}

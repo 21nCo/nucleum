@@ -6,7 +6,9 @@
 
 <button
   on:click
-  class="w-full p-2 rounded-md hover:bg-bgs4 flex {isActive ? ' bg-bgs4' : ''}"
+  class="p-2 rounded-md truncate w-full hover:bg-bgs4 flex {isActive
+    ? ' bg-bgs4'
+    : ''}"
 >
   {item.label ?? ("name" in item ? item.name : "")}
 </button>
