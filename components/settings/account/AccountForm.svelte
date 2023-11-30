@@ -47,7 +47,7 @@
       showError();
       return;
     }
-    account.signIn(json);
+    await account.signIn(json);
     actionInProgress = false;
   }
   async function onSignupClicked() {
@@ -71,7 +71,7 @@
       showError();
       return;
     }
-    account.signIn(json);
+    await account.signIn(json);
     actionInProgress = false;
   }
   function isValidSignupData() {
