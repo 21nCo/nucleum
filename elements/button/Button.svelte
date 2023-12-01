@@ -9,7 +9,8 @@
   import { renderPopover } from "$lib/tidy/utils/ui.utils";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
-  export let type: string = "secondary";
+  /** button type description to be rendered in stories and code editor tooltips*/
+  export let type: "primary" | "secondary" = "secondary";
   export let size: Size = Size.md;
   export let width: string = "max-w-fit";
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
@@ -133,8 +134,8 @@
       color={type === "primary"
         ? currentColors.bgs1
         : isHovered
-        ? currentColors.a1
-        : currentColors.fgs2}
+          ? currentColors.a1
+          : currentColors.fgs2}
       selectionStyle={type === "primary"
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND
         : SelectionItemActiveStyle.NONE}
