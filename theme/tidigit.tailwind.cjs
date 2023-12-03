@@ -82,7 +82,7 @@ const cs_tidigit_light = {
   fgs2: "hsl(0 0% 33%)",
   fgs3: "hsl(0 0% 50%)",
   fgs4: "hsl(0 0% 65%)",
-  a1: "hsl(354 72% 64%)",
+  a1: "hsl(354 72% 52%)",
   a2: "hsl(0 28% 55%)",
   ar: "hsl(0 89% 71%)",
   ag: "hsl(151 45% 53%)",
