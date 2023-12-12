@@ -206,10 +206,12 @@ export function performApiCall(
   method: string,
   body: string = ""
 ) {
+  const token = localStorage.getItem("surreal-token");
   return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
     method: method,
     headers: {
       "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
     },
     body: body,
   });

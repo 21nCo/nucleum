@@ -3,6 +3,7 @@ import { Surreal } from "surrealdb.js";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
 import { performLoginStatusCheck } from "$lib/tidy/utils/account.utils";
+import { performApiCall } from "../utils/utils";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -13,7 +14,7 @@ export class SurrealDatabaseUsingRest {
     this.token = localStorage.getItem("surreal-token");
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
-      this.userId = decodedToken?.ID ?? "";
+      this.userId = decodedToken?.id ?? "";
     }
   }
   async connect(instance: string, options: any) {
@@ -63,18 +64,27 @@ export class SurrealDatabaseUsingRest {
       record: recordId,
     });
   }
-  async query(
+  async executeReadFn(
     query: string,
     params: {
       [key: string]: QueryParams;
     } = {}
+  ) {
+    return this.query(query, params, true);
+  }
+  async query(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {},
+    isReadOperation: boolean = false
   ) {
     try {
       const isValid = await performLoginStatusCheck();
       if (!isValid) return null;
       this.token = localStorage.getItem("surreal-token");
       let decodedToken: any = jwt_decode(this.token!);
-      this.userId = decodedToken?.ID ?? "";
+      this.userId = decodedToken?.id ?? "";
       for (const key in params) {
         let replaceWith;
         if (typeof params[key] === "object")
@@ -84,15 +94,27 @@ export class SurrealDatabaseUsingRest {
         else replaceWith = params[key];
         query = query.replaceAll("$" + key, `${replaceWith}`);
       }
-      let response = await fetch(this.instance + "/sql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-          Accept: "application/json",
-          Authorization: "Bearer " + this.token,
-        },
-        body: `USE database ${this.userId}; ${query}`,
-      });
+      let response;
+      if (isReadOperation) {
+        response = await fetch(this.instance + "/sql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+            Accept: "application/json",
+            Authorization: "Bearer " + this.token,
+          },
+          body: `USE database ${this.userId}; ${query}`,
+        });
+      } else {
+        response = await performApiCall(
+          "sql",
+          "POST",
+          JSON.stringify({
+            query: `USE database ${this.userId}; ${query}`,
+            db: this.userId,
+          })
+        );
+      }
       if (response.ok) {
         let result = await response.json();
         //console.log({ result });
@@ -118,7 +140,7 @@ export class SurrealDatabaseUsingSdk {
     this.db = new Surreal();
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
-      this.userId = decodedToken?.ID ?? "";
+      this.userId = decodedToken?.id ?? "";
       this.connect();
     }
   }
@@ -132,7 +154,7 @@ export class SurrealDatabaseUsingSdk {
       this.token = localStorage.getItem("surreal-token");
       if (!this.token) throw new Error("User not logged in");
       let decodedToken: any = jwt_decode(this.token);
-      this.userId = decodedToken?.ID ?? "";
+      this.userId = decodedToken?.id ?? "";
       //console.log({ userId: this.userId, url: `${this.instance}/rpc` });
       this.db.strategy = "http";
       await this.db.connect(`${this.instance}/rpc`, {
@@ -237,6 +259,7 @@ export class SurrealDatabaseUsingSdk {
       this.close();
     }
   }
+  executeReadFn = this.query;
   async query(
     query: string,
     params: {
@@ -269,7 +292,7 @@ export class SurrealDatabase {
     else this.surreal = new SurrealDatabaseUsingRest(instance);
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
-      this.userId = decodedToken?.ID ?? "";
+      this.userId = decodedToken?.id ?? "";
     }
   }
   //todo - add strong types
@@ -290,6 +313,14 @@ export class SurrealDatabase {
   }
   delete(recordId: string) {
     return this.surreal.delete(recordId);
+  }
+  executeReadFn(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {}
+  ) {
+    return this.surreal.executeReadFn(query, params);
   }
   query(
     query: string,

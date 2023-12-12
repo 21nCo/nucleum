@@ -100,7 +100,7 @@
   let options: ChartOptions = defaultOptions;
   let currentColors = retrieveCurrentColors($userPreferences);
   initializeOptions();
-  type === ChartType.STACKEDBAR && console.log({ options });
+  type === ChartType.STACKEDBAR && console.log({ options, data });
   onMount(() => {
     manipulateCarbonToTidy();
     setTimeout(() => {
