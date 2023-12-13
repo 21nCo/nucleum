@@ -9,6 +9,7 @@ export type ColorScheme = {
   label: string;
   theme: string;
   isDark: boolean;
+  isDarkVariantTwo: boolean;
   tailwindSelector: string;
   colors: ColorSchemeColors;
   isExperimental?: boolean;

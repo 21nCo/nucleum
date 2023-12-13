@@ -19,10 +19,11 @@
     class="{orientation === Orientation.Vertical
       ? 'px-2 py-3 w-24 rounded-md'
       : 'flex px-4 py-2 w-full items-center justify-between'} {isActive
-      ? 'bg-a1 text-bgs1'
+      ? 'bg-a1' +
+        (!$userPreferences.colorScheme.isDarkVariantTwo ? ' text-bgs1' : '')
       : !$windowObject.isInPortraitMode
-      ? 'hover:' + bg($userPreferences.theme, 1)
-      : ''} {orientation === Orientation.Vertical && !isActive
+        ? 'hover:' + bg($userPreferences.theme, 1)
+        : ''} {orientation === Orientation.Vertical && !isActive
       ? bg($userPreferences.theme, 1)
       : ''}"
     on:click={() => {

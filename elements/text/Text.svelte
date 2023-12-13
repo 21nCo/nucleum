@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { onMount } from "svelte";
@@ -10,7 +11,9 @@
   onMount(() => {
     switch (style) {
       case TextStyle.PAGE_HEADING:
-        classList += " text-a1 bg-none text-h1 font-medium";
+        classList +=
+          "  bg-none text-h1 font-medium" +
+          (!$userPreferences.colorScheme.isDarkVariantTwo ? " text-a1" : "");
         break;
       case TextStyle.PANEL_HEADING:
         classList += " text-h4 font-medium text-fgs2 bg-none ";

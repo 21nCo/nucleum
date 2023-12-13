@@ -105,14 +105,16 @@
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
-              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
+              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
+                  !$userPreferences.colorScheme.isDarkVariantTwo
                 ? `stroke-bgs1`
                 : 'stroke-fgs1'
             : `stroke-fgs3`) + ' stroke-[1.2] fill-none'
         : (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'fill-a1'
-              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND
+              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
+                  !$userPreferences.colorScheme.isDarkVariantTwo
                 ? `fill-bgs1`
                 : 'fill-fgs1'
             : `fill-fgs3`) + ' stroke-none'} {hoverStyle ===

@@ -31,11 +31,11 @@
         PanelSwitcherStyle.BOTTOMBAR && $windowObject.isInPortraitMode
         ? 'text-h5'
         : style === PanelSwitcherStyle.BOTTOMBAR_MINI &&
-          $windowObject.isInPortraitMode
-        ? 'text-b3'
-        : style === PanelSwitcherStyle.BOTTOMBAR_MINI
-        ? 'text-base'
-        : 'text-h4'}"
+            $windowObject.isInPortraitMode
+          ? 'text-b3'
+          : style === PanelSwitcherStyle.BOTTOMBAR_MINI
+            ? 'text-base'
+            : 'text-h4'}"
     >
       {item}
     </div>
@@ -85,7 +85,10 @@
     <div
       class="{$windowObject.isInPortraitMode
         ? 'text-base font-medium'
-        : 'text-base'} {isActive ? 'text-bgs1' : 'text-fgs3'}"
+        : 'text-base'} {isActive &&
+      !$userPreferences.colorScheme.isDarkVariantTwo
+        ? 'text-bgs1'
+        : 'text-fgs3'}"
     >
       {item}
     </div>

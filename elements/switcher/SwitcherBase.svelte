@@ -42,7 +42,7 @@
 {#if selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND}
   <button
     class={classList +
-      (isActive
+      (isActive && !$userPreferences.colorScheme.isDarkVariantTwo
         ? " text-bgs1 "
         : bg($userPreferences.theme, parentBackgroundIndex) +
           " hover:" +

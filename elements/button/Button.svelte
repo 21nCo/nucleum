@@ -90,7 +90,9 @@
     if (type == "primary") {
       classList += " hover:opacity-90";
       if (style != ButtonStyle.PLAIN) {
-        classList += " bg-a1 text-bgs1";
+        classList +=
+          " bg-a1" +
+          (!$userPreferences.colorScheme.isDarkVariantTwo ? " text-bgs1" : "");
       }
     } else if (type == "secondary") {
       classList += " text-fgs2 hover:text-a1";
@@ -131,7 +133,8 @@
     <Icon
       {icon}
       {size}
-      color={type === "primary"
+      color={type === "primary" &&
+      !$userPreferences.colorScheme.isDarkVariantTwo
         ? currentColors.bgs1
         : isHovered
           ? currentColors.a1

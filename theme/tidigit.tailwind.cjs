@@ -18,6 +18,85 @@ const cs_tidigit_dark = {
   a2s2: "",
 };
 
+const cs_tidigit_dark_blue = {
+  bgs1: "hsl(228 26% 11%)",
+  bgs2: "hsl(229 19% 18%)",
+  bgs3: "hsl(229 19% 23%)",
+  bgs4: "hsl(229 14% 29%)",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "hsl(217 72% 52%)",
+  a2: "#ad6c6c",
+  brs1: "#414141",
+  brs2: "#565656",
+  brs3: "#565656",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+};
+const cs_tidigit_dark_red = {
+  bgs1: "hsl(228 26% 11%)",
+  bgs2: "hsl(229 19% 18%)",
+  bgs3: "hsl(229 19% 23%)",
+  bgs4: "hsl(229 14% 29%)",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "hsl(0 72% 64%)",
+  a2: "#ad6c6c",
+  brs1: "#414141",
+  brs2: "#565656",
+  brs3: "#565656",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+};
+
+const cs_tidigit_dark_bw = {
+  bgs1: "hsl(228 26% 11%)",
+  bgs2: "hsl(229 19% 18%)",
+  bgs3: "hsl(229 19% 23%)",
+  bgs4: "hsl(229 14% 29%)",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "hsl(229 10% 70%)",
+  a2: "#ad6c6c",
+  brs1: "#414141",
+  brs2: "#565656",
+  brs3: "#565656",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+};
+
+const cs_tidigit_dark_iris = {
+  bgs1: "hsl(228 26% 11%)",
+  bgs2: "hsl(229 19% 18%)",
+  bgs3: "hsl(229 19% 23%)",
+  bgs4: "hsl(229 14% 29%)",
+  fgs1: "#F3F3F3",
+  fgs2: "#CACACA",
+  fgs3: "#D0D0D0",
+  fgs4: "#D0D0D0",
+  a1: "hsl(239 55% 58%)",
+  a2: "#ad6c6c",
+  brs1: "#414141",
+  brs2: "#565656",
+  brs3: "#565656",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+};
+
 const cs_dracula = {
   bgs1: "#282A36",
   bgs2: "#343746",
@@ -332,6 +411,30 @@ const darkThemes = [
     name: "cs_tidigit_dark",
     extend: {
       colors: cs_tidigit_dark,
+    },
+  },
+  {
+    name: "cs_tidigit_dark_blue",
+    extend: {
+      colors: cs_tidigit_dark_blue,
+    },
+  },
+  {
+    name: "cs_tidigit_dark_red",
+    extend: {
+      colors: cs_tidigit_dark_red,
+    },
+  },
+  {
+    name: "cs_tidigit_dark_iris",
+    extend: {
+      colors: cs_tidigit_dark_iris,
+    },
+  },
+  {
+    name: "cs_tidigit_dark_bw",
+    extend: {
+      colors: cs_tidigit_dark_bw,
     },
   },
   {
