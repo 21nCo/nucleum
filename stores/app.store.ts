@@ -219,6 +219,8 @@ const selectableColorParams: selectableColorParams = {
 
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
+const isExperimentalMode =
+  import.meta.env.DEV && import.meta.env.VITE_ISEXPERIMENTAL === "true";
 
 const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
 
@@ -228,6 +230,7 @@ if (isDebugMode)
 
 export const appStore = initAppStore({
   isDebugMode,
+  isExperimentalMode,
   isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
   embedContext: EmbedContext.NONE,

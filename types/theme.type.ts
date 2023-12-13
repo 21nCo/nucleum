@@ -12,6 +12,7 @@ export type ColorScheme = {
   tailwindSelector: string;
   colors: ColorSchemeColors;
   isExperimental?: boolean;
+  isArchived?: boolean;
   id: string;
 };
 

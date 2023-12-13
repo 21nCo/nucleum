@@ -13,8 +13,8 @@ import { resolveUiState } from "./utils";
 import { UiState } from "../types/uiState.enum";
 
 export async function performRedirectionChecks() {
-  // const isOnboardingComplete = await onBoardingStatusCheck();
-  // if (!isOnboardingComplete) return false;
+  const isOnboardingComplete = await onBoardingStatusCheck();
+  if (!isOnboardingComplete) return false;
   return await performLoginStatusCheck();
 }
 

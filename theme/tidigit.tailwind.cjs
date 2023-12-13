@@ -12,19 +12,10 @@ const cs_tidigit_dark = {
   brs1: "#414141",
   brs2: "#565656",
   brs3: "#565656",
-};
-
-const cs_forest = {
-  bgs1: "#2C3639",
-  bgs2: "#3F4E4F",
-  bgs3: "#596D73",
-  bgs4: "#667D85",
-  fgs1: "#DCD7C9",
-  fgs2: "#CACACA",
-  fgs3: "#D0D0D0",
-  fgs4: "#D0D0D0",
-  a1: "#BF9E7C",
-  a2: "#ad6c6c",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
 };
 
 const cs_dracula = {
@@ -41,19 +32,10 @@ const cs_dracula = {
   brs1: "#343746",
   brs2: "#565A73",
   brs3: "#565A73",
-};
-
-const cs_sea = {
-  bgs1: "#0A2647",
-  bgs2: "#144272",
-  bgs3: "#205295",
-  bgs4: "#2C74B3",
-  fgs1: "#F3F3F3",
-  fgs2: "#CACACA",
-  fgs3: "#D0D0D0",
-  fgs4: "#D0D0D0",
-  a1: "#59B2FF",
-  a2: "#dbcfc1",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
 };
 
 const cs_dim = {
@@ -70,19 +52,51 @@ const cs_dim = {
   brs1: "#474E68",
   brs2: "#50577A",
   brs3: "#50577A",
+  a1s1: "",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
 };
 
-const cs_tidigit_light = {
+const cs_tidigit_light_red = {
   bgs1: "hsl(0 0% 100%)",
-  bgs2: "hsl(0 0% 98%)",
+  bgs2: "hsl(0 0% 97%)",
   bgs3: "hsl(0 0% 92%)",
-  bgs4: "hsl(0 0% 88%)",
-  bgs5: "hsl(0 0% 85%)",
+  bgs4: "hsl(0 0% 87%)",
+  bgs5: "hsl(0 0% 84%)",
   fgs1: "hsl(0 0% 20%)",
   fgs2: "hsl(0 0% 33%)",
   fgs3: "hsl(0 0% 50%)",
   fgs4: "hsl(0 0% 65%)",
-  a1: "hsl(354 72% 52%)",
+  a2: "hsl(0 28% 55%)",
+  ar: "hsl(0 89% 71%)",
+  ag: "hsl(151 45% 53%)",
+  a1: "hsl(0 72% 64%)",
+  as1: "hsl(0 72% 64%)",
+  as2: "hsl(358 57% 89%)",
+  as3: "hsl(357 61% 93%)",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+  brs1: "hsl(0 0% 97%)",
+  brs2: "hsl(0 0% 95%)",
+  brs3: "hsl(0 0% 90%)",
+};
+
+const cs_tidigit_light_blue = {
+  bgs1: "hsl(0 0% 100%)",
+  bgs2: "hsl(0 0% 97%)",
+  bgs3: "hsl(0 0% 92%)",
+  bgs4: "hsl(0 0% 87%)",
+  bgs5: "hsl(0 0% 84%)",
+  fgs1: "hsl(0 0% 20%)",
+  fgs2: "hsl(0 0% 33%)",
+  fgs3: "hsl(0 0% 50%)",
+  fgs4: "hsl(0 0% 65%)",
+  a1: "hsl(217 72% 52%)",
+  as1: "hsl(217 72% 52%)",
+  as2: "hsl(217 59% 89%)",
+  as3: "hsl(217 30% 88%)",
   a2: "hsl(0 28% 55%)",
   ar: "hsl(0 89% 71%)",
   ag: "hsl(151 45% 53%)",
@@ -95,31 +109,58 @@ const cs_tidigit_light = {
   brs3: "hsl(0 0% 90%)",
 };
 
-const cs_smoothy = {
-  bgs1: "#F9F5E7",
-  bgs2: "#F8EAD8",
-  bgs3: "#EDDBC7",
-  bgs4: "#E1C3A2",
-  fgs1: "#003947",
-  fgs2: "#003D4D",
-  fgs3: "#003D4D",
-  fgs4: "#D0D0D0",
-  a1: "#787168",
-  a2: "#d33682",
+const cs_tidigit_light_iris = {
+  bgs1: "hsl(0 0% 100%)",
+  bgs2: "hsl(0 0% 98%)",
+  bgs3: "hsl(0 0% 92%)",
+  bgs4: "hsl(0 0% 88%)",
+  bgs5: "hsl(0 0% 85%)",
+  fgs1: "hsl(0 0% 20%)",
+  fgs2: "hsl(0 0% 33%)",
+  fgs3: "hsl(0 0% 50%)",
+  fgs4: "hsl(0 0% 65%)",
+  a1: "hsl(239 55% 58%)",
+  as1: "hsl(239 55% 58%)",
+  as2: "hsl(245 59% 89%)",
+  as3: "hsl(231 30% 88%)",
+  a2: "hsl(0 28% 55%)",
+  ar: "hsl(0 89% 71%)",
+  ag: "hsl(151 45% 53%)",
+  a1s1: "hsl(354 80% 90%)",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+  brs1: "hsl(0 0% 97%)",
+  brs2: "hsl(0 0% 95%)",
+  brs3: "hsl(0 0% 90%)",
 };
 
-const cs_grainy = {
-  bgs1: "#FFFBEB",
-  bgs2: "#ECE8DD",
-  bgs3: "#E1D7C6",
-  bgs4: "#E1D7C6",
-  fgs1: "#003947",
-  fgs2: "#003D4D",
-  fgs3: "#003D4D",
-  fgs4: "#003D4D",
-  a1: "#2aa198",
-  a2: "#cb4b16",
+const cs_tidigit_light = {
+  bgs1: "hsl(0 0% 100%)",
+  bgs2: "hsl(0 0% 97%)",
+  bgs3: "hsl(0 0% 92%)",
+  bgs4: "hsl(0 0% 87%)",
+  bgs5: "hsl(0 0% 84%)",
+  fgs1: "hsl(0 0% 20%)",
+  fgs2: "hsl(0 0% 33%)",
+  fgs3: "hsl(0 0% 50%)",
+  fgs4: "hsl(0 0% 65%)",
+  a1: "hsl(217 0% 23%)",
+  as1: "hsl(217 0% 23%)",
+  as2: "hsl(0 0% 88%)",
+  as3: "hsl(0 0% 82%)",
+  a2: "hsl(0 28% 55%)",
+  ar: "hsl(0 89% 71%)",
+  ag: "hsl(151 45% 53%)",
+  a1s1: "hsl(354 80% 90%)",
+  a1s2: "",
+  a2s1: "",
+  a2s2: "",
+  brs1: "hsl(0 0% 97%)",
+  brs2: "hsl(0 0% 95%)",
+  brs3: "hsl(0 0% 90%)",
 };
+
 const cs_solarized_light = {
   bgs1: "hsl(44 87% 94%)",
   bgs2: "hsl(46 42% 88%)",
@@ -164,33 +205,6 @@ const cs_solarized_dark = {
   brs2: "hsl(192 95% 17%)",
   brs3: "hsl(192 65% 22%)",
 };
-const cs_bw = {
-  bgs1: "#FFFFFF",
-  bgs2: "#F6F6F6",
-  bgs3: "#e6e6e6",
-  bgs4: "#d9d9d9",
-  fgs1: "#383838",
-  fgs2: "#7E7C7C",
-  fgs3: "#9e9d9d",
-  a1: "#2d2f32",
-  a2: "#ad6c6c",
-};
-
-const defaultFontSize = {
-  title: "3rem",
-  "2xl": "2.6rem",
-  xl: "2.4rem",
-  h1: "2rem",
-  h2: "1.8rem",
-  h3: "1.5rem",
-  h4: "1.3rem",
-  h5: "1.2rem",
-  base: "1rem",
-  b2: "0.9rem",
-  b3: "0.8rem",
-  b4: "0.7rem",
-  b5: "0.6rem",
-};
 
 const themes = [
   {
@@ -213,100 +227,7 @@ const themes = [
   },
 ];
 
-const scales = [
-  {
-    name: "tiny",
-    extend: {
-      fontSize: {
-        title: "2rem",
-        "2xl": "2.2rem",
-        xl: "2rem",
-        h1: "1.8rem",
-        h2: "1.4rem",
-        h3: "1rem",
-        base: "0.8rem",
-        b2: "0.6rem",
-        b3: "0.5rem",
-        b4: "0.45rem",
-        b5: "0.4rem",
-      },
-    },
-  },
-  {
-    name: "small",
-    extend: {
-      fontSize: {
-        title: "2rem",
-        "2xl": "2.5rem",
-        xl: "2.2rem",
-        h1: "2rem",
-        h2: "1.6rem",
-        h3: "1.3rem",
-        base: "1rem",
-        b2: "0.8rem",
-        b3: "0.7rem",
-        b4: "0.6rem",
-        b5: "0.5rem",
-      },
-    },
-  },
-  {
-    name: "medium",
-    extend: {
-      fontSize: defaultFontSize,
-    },
-  },
-  {
-    name: "large",
-    extend: {
-      fontSize: {
-        title: "3.5rem",
-        "2xl": "2.8rem",
-        xl: "2.6rem",
-        h1: "2.4rem",
-        h2: "2rem",
-        h3: "1.7rem",
-        base: "1.5rem",
-        b2: "1.2rem",
-        b3: "1rem",
-        b4: "0.9rem",
-        b5: "0.8rem",
-      },
-    },
-  },
-  {
-    name: "huge",
-    extend: {
-      fontSize: {
-        title: "4rem",
-        "2xl": "3rem",
-        xl: "2.8rem",
-        h1: "2.5rem",
-        h2: "2.2rem",
-        h3: "2rem",
-        base: "1.7rem",
-        b2: "1.5rem",
-        b3: "1.2rem",
-        b4: "1rem",
-        b5: "0.9rem",
-      },
-    },
-  },
-];
-
 const lightThemes = [
-  {
-    name: "cs_grainy",
-    extend: {
-      colors: cs_grainy,
-    },
-  },
-  {
-    name: "cs_smoothy",
-    extend: {
-      colors: cs_smoothy,
-    },
-  },
   {
     name: "cs_tidigit_light",
     extend: {
@@ -320,9 +241,21 @@ const lightThemes = [
     },
   },
   {
-    name: "cs_bw",
+    name: "cs_tidigit_light_red",
     extend: {
-      colors: cs_bw,
+      colors: cs_tidigit_light_red,
+    },
+  },
+  {
+    name: "cs_tidigit_light_blue",
+    extend: {
+      colors: cs_tidigit_light_blue,
+    },
+  },
+  {
+    name: "cs_tidigit_light_iris",
+    extend: {
+      colors: cs_tidigit_light_iris,
     },
   },
   {
@@ -380,70 +313,6 @@ const lightThemes = [
       },
     },
   },
-  {
-    name: "cs_DEF5E5",
-    extend: {
-      colors: {
-        bgs1: "#DEF5E5",
-        bgs2: "#BCEAD5",
-        bgs3: "#9ED5C5",
-        bgs4: "#97BAC4",
-        fgs1: "#003947",
-        fgs2: "#003D4D",
-        fgs3: "#003D4D",
-        accent1: "#8EC3B0",
-        accent2: "#FFF4D2",
-      },
-    },
-  },
-  {
-    name: "cs_EEF1FF",
-    extend: {
-      colors: {
-        bgs1: "#EEF1FF",
-        bgs2: "#D2DAFF",
-        bgs3: "#AAC4FF",
-        bgs4: "#97BAC4",
-        fgs1: "#003947",
-        fgs2: "#003D4D",
-        fgs3: "#003D4D",
-        accent1: "#B1B2FF",
-        accent2: "#FFF4D2",
-      },
-    },
-  },
-  {
-    name: "cs_FBF8F1",
-    extend: {
-      colors: {
-        bgs1: "#FBF8F1",
-        bgs2: "#F7ECDE",
-        bgs3: "#E9DAC1",
-        bgs4: "#97BAC4",
-        fgs1: "#003947",
-        fgs2: "#003D4D",
-        fgs3: "#003D4D",
-        accent1: "#54BAB9",
-        accent2: "#FFF4D2",
-      },
-    },
-  },
-  {
-    name: "cs_F0ECE3",
-    extend: {
-      colors: {
-        bgs1: "#F0ECE3",
-        bgs2: "#DFD3C3",
-        bgs3: "#C7B198",
-        bgs4: "#97BAC4",
-        fgs1: "#003947",
-        fgs2: "#003D4D",
-        fgs3: "#003D4D",
-        accent1: "#A68DAD",
-        accent2: "#FFF4D2",
-      },
-    },
-  },
 ];
 
 const darkThemes = [
@@ -460,53 +329,9 @@ const darkThemes = [
     },
   },
   {
-    name: "cs_three",
-    extend: {
-      colors: {
-        bgs1: "#371B58",
-        bgs2: "#4C3575",
-        bgs3: "#5B4B8A",
-        bgs4: "#7858A6",
-        fgs1: "#F3F3F3",
-        fgs2: "#CACACA",
-        fgs3: "#D0D0D0",
-        accent1: "#9147E6",
-        accent2: "#dbcfc1",
-      },
-    },
-  },
-  {
     name: "cs_tidigit_dark",
     extend: {
       colors: cs_tidigit_dark,
-    },
-  },
-  {
-    name: "cs_wood",
-    extend: {
-      colors: {
-        bgs1: "#472D2D",
-        bgs2: "#553939",
-        bgs3: "#704F4F",
-        bgs4: "#A77979",
-        fgs1: "#F3F3F3",
-        fgs2: "#CACACA",
-        fgs3: "#D0D0D0",
-        accent1: "#D48585",
-        accent2: "#dbcfc1",
-      },
-    },
-  },
-  {
-    name: "cs_forest",
-    extend: {
-      colors: cs_forest,
-    },
-  },
-  {
-    name: "cs_sea",
-    extend: {
-      colors: cs_sea,
     },
   },
   {
@@ -521,6 +346,21 @@ module.exports = {
   content: ["./src/**/*.{html,js,svelte,ts}"],
   theme: {
     extend: {
+      fontSize: {
+        title: "3rem",
+        "2xl": "2.6rem",
+        xl: "2.4rem",
+        h1: "2rem",
+        h2: "1.8rem",
+        h3: "1.5rem",
+        h4: "1.3rem",
+        h5: "1.2rem",
+        base: "1rem",
+        b2: "0.9rem",
+        b3: "0.8rem",
+        b4: "0.7rem",
+        b5: "0.6rem",
+      },
       spacing: {
         // 12-grid system
         "1/12": "8.333333%",
@@ -562,7 +402,7 @@ module.exports = {
           },
         },
       },
-      themes: [...themes, ...scales, ...lightThemes, ...darkThemes],
+      themes: [...themes, ...lightThemes, ...darkThemes],
     }),
   ],
 };

@@ -44,8 +44,8 @@
                 class="w-5 h-5 {colorIndex === 0
                   ? 'rounded-l'
                   : colorIndex === getColors(colorScheme).length - 1
-                  ? 'rounded-r'
-                  : ''}"
+                    ? 'rounded-r'
+                    : ''}"
                 style="background-color: {color}"
               />
             {/each}
@@ -54,7 +54,7 @@
         {properCase(colorScheme.label)}
         {#if selected === index}
           <div
-            class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-fgs4"
+            class="active-marker absolute border-2 inset-0 left-0 top-0 rounded-lg border-a1"
           />
         {/if}
       </button>

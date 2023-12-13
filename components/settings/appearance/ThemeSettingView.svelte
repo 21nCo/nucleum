@@ -26,7 +26,8 @@
     filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
       (x) =>
         x.theme == $userPreferences.theme &&
-        (($appStore.isDebugMode && x.isExperimental == true) ||
+        !x.isArchived &&
+        (($appStore.isExperimentalMode && x.isExperimental == true) ||
           !x.isExperimental)
     );
     filteredColorSchemes = filteredColorSchemes?.filter((x: ColorScheme) => {
