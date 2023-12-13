@@ -94,7 +94,7 @@ export function timePeriodLabel(period: TimePeriod) {
       else return `Next ${scale.toLowerCase()}`;
     } else if (value.param === -1) {
       if (scale === TimeScale.DAYS) return "Yesterday";
-      else return `Last ${scale.toLowerCase()}`;
+      else return `Last ${scale.toLowerCase().slice(0, scale.length - 1)}`;
     } else if (value.param < 0) {
       return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;
     } else if (value.param > 0) {

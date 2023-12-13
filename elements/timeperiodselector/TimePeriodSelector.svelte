@@ -37,5 +37,11 @@
     {/each}
   </div>
   <div class="h-full w-1 border border-bgs3" />
-  <TimePeriodValueSelector {selectedScale} bind:value={timePeriod.value} />
+  <TimePeriodValueSelector
+    {selectedScale}
+    bind:value={timePeriod.value}
+    on:update={(event) => {
+      dispatch("update", timePeriod);
+    }}
+  />
 </div>
