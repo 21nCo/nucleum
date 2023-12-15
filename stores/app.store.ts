@@ -625,6 +625,7 @@ function initToastStore() {
           id: event.id,
           isShow: true,
           isDismissable: false,
+          isNonSheetModal: true,
         });
       } else {
         timer = setTimeout(() => {

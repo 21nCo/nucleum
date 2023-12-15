@@ -8,6 +8,8 @@
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
   import type { ModalParams } from "$lib/tidy/types/popup.type";
+  import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
+  import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   export let params: ModalParams;
   export let primaryText: string | undefined = undefined;
   export let secondaryText: string | undefined = undefined;
@@ -20,12 +22,13 @@
     footerRef.close();
   }
   onMount(() => {
+    postMessageToParent(EmbedMessage.SHEET_MOUNTED);
     let queryParamId = $page.url.searchParams.get("id");
-    if (queryParamId && !params.id) {
+    if (queryParamId && !params?.id) {
       params.id = queryParamId;
     }
     let queryParamPath = $page.url.searchParams.get("path");
-    if (queryParamPath && !params.path) {
+    if (queryParamPath && !params?.path) {
       params.path = queryParamPath;
     }
     console.log("id", { queryParamId, queryParamPath, params });
@@ -71,7 +74,7 @@
   <ModalFooter
     bind:this={footerRef}
     {primaryText}
-    path={params.path}
+    path={params?.path}
     on:primary
     on:secondary
     {secondaryText}

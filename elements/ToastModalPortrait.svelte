@@ -11,7 +11,7 @@
 </script>
 
 <ModalLayout
-  size={Size.sm}
+  size={Size.xs}
   bind:params
   primaryText="Done"
   on:primary={() => {
@@ -19,6 +19,6 @@
   }}
 >
   {#if notification}
-    <ToastNotification {notification} />
+    <ToastNotification {notification} isShownAsModal={true} />
   {/if}
 </ModalLayout>
