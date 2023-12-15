@@ -9,4 +9,5 @@ export enum AppEvent {
   WINDOW_CLICKED,
   WINDOW_RESIZED,
   USER_LOGIN,
+  USER_SIGNUP,
 }

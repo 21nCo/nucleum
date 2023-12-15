@@ -81,7 +81,7 @@ export class Persistance {
       if (!data?.token) return;
       if (!data.userInfo)
         data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
-      account.signIn(data, false);
+      account.signIn(data, { isFromSignup: false });
       return true;
     } catch (err) {
       appStore.logError(err);

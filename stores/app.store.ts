@@ -379,6 +379,7 @@ const seedUserPreferences: UserGlobalPreferences = {
     label: "dracula",
     theme: "clean",
     isDark: false,
+    isDarkVariantTwo: false,
     colors: defaultColorSchemeColors,
     tailwindSelector: "cs_dracula",
     id: generateUID(),
@@ -485,7 +486,10 @@ function initAccount(seed: UserAccount) {
       token: string;
       refreshToken: string;
     },
-    isRefreshApp: boolean = true
+    params: {
+      isRefreshApp?: boolean;
+      isFromSignup?: boolean;
+    } = { isRefreshApp: true, isFromSignup: false }
   ) => {
     console.log("signing in", { data });
     localStorage.setItem("surreal-token", data.token);
@@ -500,8 +504,10 @@ function initAccount(seed: UserAccount) {
         isLoggedIn: true,
       }),
     });
-    if (isRefreshApp) {
+    if (params.isRefreshApp && !params.isFromSignup) {
       appEvents.publish(AppEvent.USER_LOGIN, true);
+    } else if (params.isFromSignup) {
+      appEvents.publish(AppEvent.USER_SIGNUP, true);
     }
     update(() => {
       return {

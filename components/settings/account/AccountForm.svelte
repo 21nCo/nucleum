@@ -71,7 +71,7 @@
       showError();
       return;
     }
-    await account.signIn(json);
+    await account.signIn(json, { isFromSignup: true });
     actionInProgress = false;
   }
   function isValidSignupData() {
