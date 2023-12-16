@@ -3,6 +3,8 @@ export enum Direction {
   Down = "down",
   Left = "left",
   Right = "right",
+  DownLeft = "down-left",
+  DownRight = "down-right",
 }
 
 export enum Orientation {
