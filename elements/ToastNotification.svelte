@@ -14,8 +14,8 @@
   <div class="flex flex-col w-full gap-4 items-center">
     <div
       class="h-2 w-full rounded-full {notification.type === AlertType.SUCCESS
-        ? 'bg-ag'
-        : 'bg-ar'}"
+        ? 'bg-ags1'
+        : 'bg-ars1'}"
     ></div>
     <div class="flex flex-col gap-2">
       {#if notification.title}
@@ -32,8 +32,8 @@
     <div class="flex h-full items-center gap-4">
       <div
         class="h-full w-2 {notification.type === AlertType.SUCCESS
-          ? 'bg-ag'
-          : 'bg-ar'}"
+          ? 'bg-ags1'
+          : 'bg-ars1'}"
       ></div>
       <div class="flex flex-col gap-2 items-start">
         {#if notification.title}

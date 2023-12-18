@@ -12,6 +12,6 @@
     <InfoText {info} />
   {/if}
   {#if isRequired}
-    <div class="text-ar">*</div>
+    <div class="text-ars1">*</div>
   {/if}
 </div>

@@ -44,7 +44,7 @@
       </div>
       <div class="flex w-full justify-end">
         <div
-          class="text-b3 bg-ag text-bgs1 px-3 py-1 rounded-br-md rounded-tl-md"
+          class="text-b3 bg-ags1 text-bgs1 px-3 py-1 rounded-br-md rounded-tl-md"
         >
           Early adopter - lifetime license
         </div>

@@ -11,6 +11,6 @@
 
 <div class="h-4">
   {#if error}
-    <div class="text-ar">{error}</div>
+    <div class="text-ars1">{error}</div>
   {/if}
 </div>
