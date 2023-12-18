@@ -17,9 +17,10 @@ const cs_tidigit_dark_blue = {
   ars2: "hsl(0 89% 90%)",
   ags1: "hsl(151 45% 53%)",
   ags2: "hsl(151 45% 85%)",
-  brs1: "hsl(229 19% 16%)",
-  brs2: "hsl(229 19% 19%)",
-  brs3: "hsl(229 19% 22%)",
+  brs1: "hsl(228 26% 15%)",
+  brs2: "hsl(229 19% 21%)",
+  brs3: "hsl(229 19% 25%)",
+  brs3: "hsl(229 19% 28%)",
 };
 const cs_tidigit_dark_red = {
   bgs1: "hsl(0 4% 8%)",
@@ -40,9 +41,10 @@ const cs_tidigit_dark_red = {
   ars2: "hsl(0 89% 90%)",
   ags1: "hsl(151 45% 53%)",
   ags2: "hsl(151 45% 85%)",
-  brs1: "hsl(229 19% 16%)",
-  brs2: "hsl(229 19% 19%)",
-  brs3: "hsl(229 19% 22%)",
+  brs1: "hsl(0 4% 11%)",
+  brs2: "hsl(0 4% 15%)",
+  brs3: "hsl(0 4% 19%)",
+  brs3: "hsl(0 4% 24%)",
 };
 
 const cs_tidigit_dark = {
@@ -67,6 +69,7 @@ const cs_tidigit_dark = {
   brs1: "hsl(229 8% 16%)",
   brs2: "hsl(229 8% 19%)",
   brs3: "hsl(229 8% 22%)",
+  brs4: "hsl(229 8% 28%)",
 };
 
 const cs_tidigit_dark_iris = {
@@ -88,9 +91,10 @@ const cs_tidigit_dark_iris = {
   ars2: "hsl(0 89% 90%)",
   ags1: "hsl(151 45% 53%)",
   ags2: "hsl(151 45% 85%)",
-  brs1: "hsl(229 19% 16%)",
-  brs2: "hsl(229 19% 19%)",
-  brs3: "hsl(229 19% 22%)",
+  brs1: "hsl(228 26% 15%)",
+  brs2: "hsl(229 19% 21%)",
+  brs3: "hsl(229 19% 25%)",
+  brs3: "hsl(229 19% 28%)",
 };
 
 const cs_dracula = {
