@@ -45,6 +45,7 @@ export const excludedPathsForRedirectionCheck = [
   "onboarding",
   "error",
   "welcome",
+  "play",
 ];
 
 let persistance = new Persistance();
