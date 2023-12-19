@@ -62,6 +62,7 @@
   import Bookmark from "../icons/Bookmark.svelte";
   import Pause from "../icons/Pause.svelte";
   import Adjustments from "../icons/Adjustments.svelte";
+  import Pip from "../icons/Pip.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -82,6 +83,7 @@
       icon == "chevdoubleleft" ||
       icon == "chevdoubleright" ||
       icon == "history" ||
+      icon == "pip" ||
       icon == "logout" ||
       icon == "link" ||
       icon?.includes("-mini")
@@ -239,6 +241,10 @@
         <Arrow direction={Direction.Left} />
       {:else if icon === "arrow-right"}
         <Arrow direction={Direction.Right} />
+      {:else if icon === "arrow-down-right"}
+        <Arrow direction={Direction.DownRight} />
+      {:else if icon === "arrow-down-right-mini"}
+        <Arrow direction={Direction.DownRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
         <Arrow direction={Direction.Right} isCircled={true} />
       {:else if icon === "arrow-right-circled-mini"}
@@ -285,6 +291,8 @@
         <Pomodoro {variant} />
       {:else if icon === "bookmark"}
         <Bookmark {variant} />
+      {:else if icon === "pip"}
+        <Pip {variant} />
       {:else if icon === "adjustments-vertical"}
         <Adjustments {variant} orientation={Orientation.Vertical} />
       {:else if icon === "adjustments-horizontal"}
