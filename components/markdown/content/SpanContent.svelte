@@ -23,12 +23,20 @@
       style = "";
       break;
   }
+  function handleSelect(event: any) {
+    console.log("select", event);
+  }
+  function handleMouseup(event: any) {
+    const sel = window.getSelection();
+    const range = sel?.getRangeAt(0);
+    console.log("mouseup", event, range);
+  }
 </script>
 
 <span class={style}>
   {#if typeof span.content === "string"}
     <span
-      contenteditable
+      on:mouseup={handleMouseup}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word; caret-color: rgb(55, 53, 47);"
       class="outline-none">{span.content}</span
     >

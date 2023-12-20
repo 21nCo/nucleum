@@ -49,6 +49,7 @@ export enum SpanType {
   LINK = "LINK",
   REFERENCE = "REFERENCE",
   CODE = "CODE",
+  COLOR = "COLOR",
 }
 
 export enum ListType {

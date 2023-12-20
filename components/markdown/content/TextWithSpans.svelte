@@ -4,8 +4,6 @@
   export let content: SpanContent[];
 </script>
 
-<div>
-  {#each content as span (span.id)}
-    <SpanContentView {span} />
-  {/each}
-</div>
+{#each content as span (span.id)}
+  <SpanContentView {span} />
+{/each}
