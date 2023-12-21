@@ -11,11 +11,15 @@
 </script>
 
 <ModalLayout
-  size={Size.xs}
   bind:params
-  primaryText="Done"
-  on:primary={() => {
-    notification?.callback?.();
+  layoutParams={{
+    size: Size.xs,
+    primaryAction: {
+      label: "Done",
+      callback: () => {
+        notification?.callback?.();
+      },
+    },
   }}
 >
   {#if notification}

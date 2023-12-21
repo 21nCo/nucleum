@@ -1,38 +1,41 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { modalEvent } from "$lib/tidy/stores/app.store";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  import {
+    confirmationNotification,
+    modalEvent,
+  } from "$lib/tidy/stores/app.store";
+  import type { ButtonParams } from "$lib/tidy/types/button.type";
   export let path: string = "";
-  export let primaryText: string | undefined = undefined;
-  export let secondaryText: string | undefined = undefined;
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
+  export let primaryAction: ButtonParams | undefined = undefined;
+  export let secondaryAction: ButtonParams | undefined = undefined;
   export function close() {
     if (isPreventAutoClose) return;
     modalEvent.notify({
       path,
       isShow: false,
     });
+    confirmationNotification.reset();
   }
 </script>
 
 <div class="popover-footer flex gap-2 justify-center p-4">
-  {#if primaryText}
+  {#if primaryAction}
     <Button
-      label={primaryText}
+      label={primaryAction.label}
+      type={primaryAction.variant ?? "primary"}
       on:click={() => {
-        dispatch("primary");
+        if (primaryAction?.callback) primaryAction?.callback();
         close();
       }}
-      type="primary"
     />
   {/if}
-  {#if secondaryText}
+  {#if secondaryAction}
     <Button
-      label={secondaryText}
+      label={secondaryAction.label}
       on:click={() => {
-        dispatch("secondary");
+        if (secondaryAction?.callback) secondaryAction?.callback();
         close();
       }}
     />

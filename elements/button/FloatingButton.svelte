@@ -1,20 +1,16 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/tidy/types/button.type";
+  import { ButtonStyle, type ButtonParams } from "$lib/tidy/types/button.type";
   import BottomFloat from "../BottomFloat.svelte";
-  export let label: string;
-  export let action: () => void;
-  export let icon: string | undefined = undefined;
-  export let type: string = "primary";
+  export let params: ButtonParams;
 </script>
 
 <BottomFloat>
   <Button
-    {label}
-    {type}
+    {...params}
+    type={params.variant}
     width="w-[13rem]"
-    {icon}
-    on:click={action}
+    on:click={params.callback}
     style={ButtonStyle.ROUNDED}
   />
 </BottomFloat>

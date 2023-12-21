@@ -3,6 +3,7 @@
   import {
     appEvents,
     appStore,
+    confirmationNotification,
     modalEvent as modalEvent,
     toasts,
     windowObject,
@@ -20,6 +21,7 @@
   import { postToParent } from "$lib/tidy/utils/embed.utils";
   import ToastNotification from "$lib/tidy/elements/ToastNotification.svelte";
   import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -42,7 +44,7 @@
         });
       } else if (
         $appStore.launchContext == LaunchContext.EMBED &&
-        !x.isNonSheetModal
+        x.isShowAsSheet
       ) {
         appStore.log("is embed");
         postToParent({
@@ -105,6 +107,37 @@
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
   >
-    <ComponentResolver path={modal.path} params={{ params: modal }} />
+    {#if modal.layoutParams}
+      <ModalLayout layoutParams={modal.layoutParams} bind:params={modal}>
+        <ComponentResolver path={modal.path} params={{ params: modal }} />
+      </ModalLayout>
+    {:else}
+      <ComponentResolver path={modal.path} params={{ params: modal }} />
+    {/if}
   </Modal>
 {/each}
+
+{#if $confirmationNotification.isShow}
+  <Modal show={true} id="confirmation" isDismissable={true}>
+    <ModalLayout
+      params={{
+        path: "confirmation",
+        title: $confirmationNotification.title,
+        isHideTitleIfEmpty: true,
+      }}
+      layoutParams={{
+        size: Size.xs,
+        primaryAction: $confirmationNotification.confirmAction,
+        secondaryAction: $confirmationNotification.cancelAction ?? {
+          label: "Cancel",
+        },
+      }}
+    >
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <div class="text-b1">{$confirmationNotification.message}</div>
+        </div>
+      </div>
+    </ModalLayout>
+  </Modal>
+{/if}

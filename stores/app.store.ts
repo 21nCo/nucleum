@@ -28,8 +28,13 @@ import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
 import { postMessageToParent, postToParent } from "../utils/embed.utils";
-import type { ScheduledNotification, Toast } from "../types/notification.type";
+import type {
+  ConfirmationNotification,
+  ScheduledNotification,
+  Toast,
+} from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
+import type { ButtonParams } from "../types/button.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -631,7 +636,6 @@ function initToastStore() {
           id: event.id,
           isShow: true,
           isDismissable: false,
-          isNonSheetModal: true,
         });
       } else {
         timer = setTimeout(() => {
@@ -641,6 +645,38 @@ function initToastStore() {
           });
         }, 3000);
       }
+    },
+  };
+}
+
+const seedConfirmation = {
+  isShow: false,
+  title: "",
+  message: "",
+  confirmAction: {
+    label: "Confirm",
+    callback: () => {},
+  },
+};
+export const confirmationNotification = initConfirmationStore();
+
+function initConfirmationStore() {
+  const { subscribe, set, update } =
+    writable<ConfirmationNotification>(seedConfirmation);
+  return {
+    subscribe,
+    set: (m: any) => {
+      set(m);
+    },
+    reset: () => {
+      update(() => {
+        return seedConfirmation;
+      });
+    },
+    notify: (event: ConfirmationNotification) => {
+      update(() => {
+        return { ...event };
+      });
     },
   };
 }

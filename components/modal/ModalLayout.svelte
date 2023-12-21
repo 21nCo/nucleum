@@ -7,14 +7,15 @@
   import { onMount } from "svelte";
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
-  import type { ModalParams } from "$lib/tidy/types/popup.type";
+  import type {
+    ModalLayoutParams,
+    ModalParams,
+  } from "$lib/tidy/types/popup.type";
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
   import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
+  import { fly } from "svelte/transition";
   export let params: ModalParams;
-  export let primaryText: string | undefined = undefined;
-  export let secondaryText: string | undefined = undefined;
-  export let size: Size = Size.md;
-  export let orientation: Orientation = Orientation.Vertical;
+  export let layoutParams: ModalLayoutParams;
   let footerRef: any;
   let sizingClass = "";
   resolveSize();
@@ -34,8 +35,11 @@
     console.log("id", { queryParamId, queryParamPath, params });
   });
   function resolveSize() {
-    if (orientation === Orientation.Vertical) {
-      switch (size) {
+    if (
+      layoutParams.orientation === Orientation.Vertical ||
+      !layoutParams.orientation
+    ) {
+      switch (layoutParams.size) {
         case Size.xs:
           sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
           break;
@@ -53,30 +57,38 @@
           sizingClass =
             "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
           break;
+        case Size.full:
+          sizingClass = "w-full h-full min-h-screen min-w-screen";
+          break;
         default:
-          sizingClass = "";
+          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
+          break;
       }
       return;
     }
   }
 </script>
 
-<div
-  class="flex flex-col items-center justify-between gap-8 py-4 lg:py-8 px-3 md:px-4 lg:px-8 {$appStore.launchContext ===
-    LaunchContext.EMBED && $appStore.embedContext === EmbedContext.SHEET
-    ? 'w-full h-full'
-    : sizingClass}"
->
-  <ModalHeader {params} />
-  <div class="flex flex-col gap-4 w-full flex-grow">
+{#if layoutParams.size === Size.full}
+  <div transition:fly class="fixed inset-0 flex justify-center items-center">
     <slot />
   </div>
-  <ModalFooter
-    bind:this={footerRef}
-    {primaryText}
-    path={params?.path}
-    on:primary
-    on:secondary
-    {secondaryText}
-  />
-</div>
+{:else}
+  <div
+    class="flex flex-col items-center justify-between gap-8 py-4 lg:py-8 px-3 md:px-4 lg:px-8 {$appStore.launchContext ===
+      LaunchContext.EMBED && $appStore.embedContext === EmbedContext.SHEET
+      ? 'w-full h-full'
+      : sizingClass}"
+  >
+    <ModalHeader {params} />
+    <div class="flex flex-col gap-4 w-full flex-grow">
+      <slot />
+    </div>
+    <ModalFooter
+      primaryAction={layoutParams?.primaryAction}
+      secondaryAction={layoutParams?.secondaryAction}
+      bind:this={footerRef}
+      path={params?.path}
+    />
+  </div>
+{/if}

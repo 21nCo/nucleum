@@ -4,9 +4,22 @@ export enum ButtonStyle {
   ROUNDED = "rounded",
 }
 
-export type ButtonType = {
-  label: string;
+export type ButtonParams = {
+  label?: string;
   icon?: string;
-  action: () => void;
-  type?: string;
+  callback?: () => void;
+  variant?: ButtonVariant;
 };
+
+export enum ButtonVariant {
+  DEFAULT = "default",
+  PRIMARY = "primary",
+  SECONDARY = "secondary",
+  SUCCESS = "success",
+  WARNING = "warning",
+  DANGER = "danger",
+  INFO = "info",
+  LIGHT = "light",
+  DARK = "dark",
+  LINK = "link",
+}

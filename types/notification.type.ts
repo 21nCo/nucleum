@@ -1,3 +1,5 @@
+import type { ButtonParams } from "./button.type";
+
 export type ScheduledNotification = {
   inSeconds: number;
   message: string;
@@ -15,6 +17,14 @@ export type Toast = {
   id: string;
   actionText?: string;
   callback?: () => void;
+};
+
+export type ConfirmationNotification = {
+  isShow: boolean;
+  title: string;
+  message: string;
+  confirmAction: ButtonParams;
+  cancelAction?: ButtonParams;
 };
 
 export enum AlertType {

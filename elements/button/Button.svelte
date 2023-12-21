@@ -5,12 +5,13 @@
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
   import { bg, retrieveCurrentColors } from "../../utils/theme.utils";
   import { userPreferences, windowObject } from "../../stores/app.store";
-  import { ButtonStyle } from "../../types/button.type";
+  import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import { renderPopover } from "$lib/tidy/utils/ui.utils";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
-  export let type: "primary" | "secondary" = "secondary";
+  export let type: "primary" | "secondary" | "tertiary" | ButtonVariant =
+    "secondary";
   export let size: Size = Size.md;
   export let width: string = "max-w-fit";
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
@@ -98,6 +99,14 @@
       classList += " text-fgs2 hover:text-a1";
       if (style != ButtonStyle.PLAIN) {
         classList += " " + bg($userPreferences.theme, parentBackgroundIndex);
+      }
+    } else if (type == "danger") {
+      console.log("danger");
+      classList += " hover:opacity-90";
+      if (style != ButtonStyle.PLAIN) {
+        classList +=
+          " bg-ars1" +
+          (!$userPreferences.colorScheme.isDarkVariantTwo ? " text-bgs1" : "");
       }
     } else if (type == "tertiary") {
       classList += " text-bgs1 hover:opacity-90";

@@ -1,6 +1,11 @@
+import type { ButtonParams } from "./button.type";
+import type { Orientation } from "./direction.enum";
+import type { Size } from "./size.enum";
+
 export type ModalEvent = ModalParams & {
   isShow: boolean;
-  isNonSheetModal?: boolean;
+  isShowAsSheet?: boolean;
+  layoutParams?: ModalLayoutParams;
 };
 /**
  * @description
@@ -13,4 +18,13 @@ export type ModalParams = {
   path: string;
   id?: string;
   isDismissable?: boolean;
+  title?: string;
+  isHideTitleIfEmpty?: boolean;
+};
+
+export type ModalLayoutParams = {
+  size?: Size;
+  orientation?: Orientation;
+  primaryAction?: ButtonParams;
+  secondaryAction?: ButtonParams;
 };

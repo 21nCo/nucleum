@@ -1,7 +1,11 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
-  import { modalEvent, windowObject } from "$lib/tidy/stores/app.store";
-  import { fade } from "svelte/transition";
+  import {
+    confirmationNotification,
+    modalEvent,
+    windowObject,
+  } from "$lib/tidy/stores/app.store";
+  import { fade, fly } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   export let show = true;
@@ -44,6 +48,7 @@
       path: id,
       isShow: false,
     });
+    confirmationNotification.reset();
   }
 </script>
 
