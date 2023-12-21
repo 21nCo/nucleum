@@ -4,19 +4,23 @@ export type MdStore = {
   md: Markdown | undefined;
   blocks: Block[];
   focusedBlockId?: string;
+  context: MdContext;
+  params?: MdParams;
 };
 
 export type Block = {
   id: string;
   type: BlockType;
   content: BlockContent;
+  childrenHierarchy?: string[];
 };
 
 export type Markdown = {
   id: string;
   type: BlockType;
   content: BlockContent;
-  children: Markdown[];
+  children?: Markdown[];
+  childrenHierarchy?: string[];
 };
 
 export type DbBlock = DbRecordBase & {
@@ -70,3 +74,12 @@ export enum BlockType {
   MARKDOWN = "MARKDOWN",
   DIVIDER = "DIVIDER",
 }
+
+export enum MdContext {
+  NODE = "NODE",
+  BASIC = "BASIC",
+}
+
+export type MdParams = {
+  placeholder?: string;
+};

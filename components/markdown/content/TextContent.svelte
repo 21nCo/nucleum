@@ -7,15 +7,20 @@
     type SpanContent,
     SpanType,
     type TextContent,
+    MdContext,
   } from "$lib/tidy/types/md.type";
-  import { mdStore } from "../markdown.store";
+  import { mdContentChangeEvent, mdStore } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   import { deepCopy } from "$lib/tidy/utils/obj.utils";
   export let block: Block;
   let blockRef: any;
   let sizing = "";
-  const defaultPlaceholder = "Type / for all blocks";
+  const defaultPlaceholder =
+    $mdStore.params?.placeholder ??
+    ($mdStore.context === MdContext.NODE
+      ? "Type / for all blocks"
+      : "Start typing... ");
   let blockSpecificPlaceholder: string | undefined = undefined;
   let markerId = "caret-marker";
   let isNewSpanInserted = false;
@@ -41,15 +46,15 @@
   $: {
     switch (block.type) {
       case BlockType.HEADING1:
-        sizing = "text-h1";
+        sizing = "text-h1 font-bold";
         blockSpecificPlaceholder = "Heading 1";
         break;
       case BlockType.HEADING2:
-        sizing = "text-h2";
+        sizing = "text-h2 font-bold";
         blockSpecificPlaceholder = "Heading 2";
         break;
       case BlockType.HEADING3:
-        sizing = "text-h3";
+        sizing = "text-h3 font-bold";
         blockSpecificPlaceholder = "Heading 3";
         break;
       default:
@@ -114,7 +119,7 @@
       block.content.slice(0, caretPosition) +
       "<!--caret-->" +
       block.content.slice(caretPosition);
-    console.log("insertCaretMarker", block.content, caretPosition);
+    // console.log("insertCaretMarker", block.content, caretPosition);
   }
 
   function setCaretPosition() {
@@ -149,13 +154,13 @@
       ).indexOf(element),
       index: range?.endOffset ?? 0,
     };
-    console.log("setCaretPosition", range, caretPosition);
+    // console.log("setCaretPosition", range, caretPosition);
   }
 
   // Function to restore the caret position
   function restoreCursorPosition() {
     if (typeof block.content !== "string" || !blockRef) return;
-    console.log("restoreCursorPosition");
+    // console.log("restoreCursorPosition");
     //const index = block.content.indexOf("<!--caret-->");
     const index = caretPosition?.index ?? -1;
     if (index !== -1) {
@@ -175,19 +180,19 @@
 
   function restoreCaretPosition() {
     if (!caretPosition) return;
-    console.log("restoreCaretPosition", deepCopy(caretPosition));
+    // console.log("restoreCaretPosition", deepCopy(caretPosition));
     const range = document.createRange();
     const selection = window.getSelection();
     let node = caretPosition.element;
     try {
       const parent = document.getElementById(caretPosition.parent.id);
       if (isNewSpanInserted) {
-        console.log(
-          "eleIndex",
-          caretPosition.elementIndex,
-          caretPosition.parent.childNodes,
-          parent?.childNodes
-        );
+        // console.log(
+        //   "eleIndex",
+        //   caretPosition.elementIndex,
+        //   caretPosition.parent.childNodes,
+        //   parent?.childNodes
+        // );
         node = parent
           ? parent?.childNodes[caretPosition.elementIndex + 2]
           : caretPosition.parent.childNodes[caretPosition.elementIndex + 2];
@@ -196,17 +201,17 @@
           ? parent?.childNodes[caretPosition.elementIndex]
           : caretPosition.parent.childNodes[caretPosition.elementIndex];
       }
-      console.log("restoring to element", node);
+      // console.log("restoring to element", node);
       if (isNewSpanInserted) {
         // setCursorToEnd(node);
         range.setStart(node, 0);
-        console.log("restoring to range", range);
+        // console.log("restoring to range", range);
         range.collapse(true);
         selection?.removeAllRanges();
         selection?.addRange(range);
       } else {
         range.setStart(node, caretPosition.index - 1);
-        console.log("restoring to range", range);
+        // console.log("restoring to range", range);
         range.collapse(true);
         selection?.removeAllRanges();
         selection?.addRange(range);
@@ -223,7 +228,7 @@
     let found = false;
     // Recursive function to walk through child nodes
     function setRange(node: any) {
-      console.log(node);
+      // console.log(node);
       if (node.nodeType === 3) {
         // Text node
         const nextLength = currentLength + node.length;
@@ -289,7 +294,7 @@
   }
 
   function handleKeyUp(event: any) {
-    console.log("keyup", event, block);
+    // console.log("keyup", event, block);
     if (block.content === "# ") {
       block.content = "";
       block.type = BlockType.HEADING1;
@@ -313,9 +318,10 @@
         event.key === "~")
     )
       refreshInlineStyling();
+    mdContentChangeEvent.trigger();
   }
   function replaceWithUnicodeCharacters() {
-    console.log("replaceWithUnicodeCharacters");
+    // console.log("replaceWithUnicodeCharacters");
     const patterns = [
       { regex: /←&gt;/g, replacement: "↔" },
       { regex: /-&gt;/g, replacement: "→" },
@@ -328,11 +334,11 @@
       if (typeof block.content !== "string") return;
       const matches = block.content.match(regex);
       if (matches) {
-        console.log(
-          `Found ${matches.length} matches for ${regex}. Each match will be replaced with ${replacement.length} characters.`
-        );
+        // console.log(
+        //   `Found ${matches.length} matches for ${regex}. Each match will be replaced with ${replacement.length} characters.`
+        // );
         setCaretPosition();
-        console.log("caretPosition", caretPosition);
+        // console.log("caretPosition", caretPosition);
         block.content = block.content.replace(regex, replacement);
         // if (caretPosition) caretPosition.index = caretPosition?.index - 1 ?? 0;
         // restoreCaretPosition();
@@ -346,7 +352,7 @@
   function refreshInlineStyling() {
     if (typeof block.content !== "string") return;
     //insertCaretMarker();
-    console.log("refreshInlineStyling");
+    // console.log("refreshInlineStyling");
     block.content = block.content
       .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
       .replace(/(?<!\*)\*([^\*]+?)\*(?!\*)/g, "<i>$1</i>&nbsp;")
@@ -406,8 +412,9 @@
     on:click={() => {
       blockRef.focus();
     }}
-    class="absolute top-0 left-0 text-fgs3 cursor-text p-2 {sizing} {!blockSpecificPlaceholder &&
-      'ml-1'}"
+    class="absolute top-0 left-0 cursor-text p-2 {sizing} {blockSpecificPlaceholder
+      ? 'text-bgs4'
+      : 'text-fgs3 ml-1'}"
   >
     {blockSpecificPlaceholder ?? defaultPlaceholder}
   </button>

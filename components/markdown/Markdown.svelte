@@ -1,9 +1,22 @@
 <script lang="ts">
-  import type { Markdown } from "$lib/tidy/types/md.type";
+  import type { Markdown, MdContext, MdParams } from "$lib/tidy/types/md.type";
+  import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
-  import { mdStore } from "./markdown.store";
+  import { mdContentChangeEvent, mdStore } from "./markdown.store";
   export let md: Markdown;
-  mdStore.load(md);
+  export let context: MdContext;
+  export let params: MdParams | undefined = undefined;
+  const dispatch = createEventDispatcher();
+  mdStore.load(md, context, params);
+  onMount(() => {
+    const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
+      console.log("md content changed", val);
+      dispatch("change", $mdStore.blocks);
+    });
+    return () => {
+      mdChangeSub();
+    };
+  });
 </script>
 
 <div class="p-8">

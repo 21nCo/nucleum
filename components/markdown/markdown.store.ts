@@ -4,10 +4,12 @@ import {
   SpanType,
   type Markdown,
   type Block,
+  MdContext,
+  type MdParams,
 } from "$lib/tidy/types/md.type";
 import { deepCopy } from "$lib/tidy/utils/obj.utils";
 import { generateUID } from "$lib/tidy/utils/utils";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 
 export const sampleMd = {
   children: [
@@ -112,7 +114,6 @@ export const sampleMdTwo: Markdown = {
     {
       children: [
         {
-          children: [],
           type: BlockType.TEXT,
           content: "h1 1 text block",
           id: "mdtrail:djhmtyd3rc0jwg7pr3r0",
@@ -120,59 +121,86 @@ export const sampleMdTwo: Markdown = {
         {
           children: [
             {
-              children: [],
               type: BlockType.TEXT,
               content:
                 "lorem ipsum dolor **sit amet, *consectetur adipiscing elit*, sed do `eiusmod ~~tempor~~` incididunt** ut labore et dolore magna aliqua. Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. ",
               id: "mdtrail:2nf1gtuulr0yotuuipfs",
             },
             {
-              children: [],
               type: BlockType.TEXT,
               content:
                 "lo*r*em ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut **enim ad _minim_ veniam** something is not -> right or this way <- but it can be any way you want it to be <->",
               id: "mdtrail:0i18cc5p90wdisg5rp4y",
             },
           ],
+          childrenHierarchy: [
+            "mdtrail:2nf1gtuulr0yotuuipfs",
+            "mdtrail:0i18cc5p90wdisg5rp4y",
+          ],
           type: BlockType.HEADING2,
-          content: "h1 1 h2 1 block",
+          content: "Heading 2 first",
           id: "mdtrail:g8nzhoct35w996rvqers",
         },
         {
-          children: [],
-          type: BlockType.DIVIDER,
-          content: "",
-          id: "mdtrail:p216htbpu6e5vnf4w",
-        },
-        {
-          children: [],
+          children: [
+            {
+              type: BlockType.TEXT,
+              content:
+                "lorem ipsum dolor **sit amet, *consectetur adipiscing elit*, sed do `eiusmod ~~tempor~~` incididunt** ut labore et dolore magna aliqua. Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. ",
+              id: "mdtrail:2nf1gtuulr0yotufs",
+            },
+            {
+              type: BlockType.TEXT,
+              content:
+                "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam",
+              id: "mdtrail:0i18cc5p9isg5rp4y",
+            },
+          ],
+          childrenHierarchy: [
+            "mdtrail:2nf1gtuulr0yotufs",
+            "mdtrail:0i18cc5p9isg5rp4y",
+          ],
           type: BlockType.HEADING2,
-          content: "h1 1 h2 2 block",
+          content: "Heading 2 second",
           id: "mdtrail:p216htbpu6e5vnf4wvt9",
         },
       ],
+      childrenHierarchy: [
+        "mdtrail:g8nzhoct35w996rvqers",
+        "mdtrail:p216htbpu6e5vnf4wvt9",
+      ],
       type: BlockType.HEADING1,
-      content: "h1 1",
+      content: "Heading 1 first",
       id: "mdtrail:why60qlg3u5egi771fm3",
+    },
+    {
+      type: BlockType.DIVIDER,
+      content: "",
+      id: "mdtrail:p216htbpu6e5",
     },
     {
       type: BlockType.HEADING1,
       children: [],
-      content: "h1 2",
+      content: "Heading 1 second",
       id: "mdtrail:e2xg726y72leszcnp1zd",
     },
+  ],
+  childrenHierarchy: [
+    "mdtrail:why60qlg3u5egi771fm3",
+    "mdtrail:p216htbpu6e5",
+    "mdtrail:e2xg726y72leszcnp1zd",
   ],
   type: BlockType.MARKDOWN,
   content: "some content",
   id: "mdtrail:uy4urnx3z643jnt217ez",
 };
-let emptyBlock = {
+let emptyBlock: Block = {
   type: BlockType.TEXT,
   content: "",
-  children: [],
+  id: generateUID(),
 };
 let emptyMd: Markdown = {
-  children: [{ ...emptyBlock, id: generateUID() }],
+  children: [{ ...emptyBlock, id: generateUID(), children: [] }],
   type: BlockType.MARKDOWN,
   content: "",
   id: generateUID(),
@@ -180,32 +208,72 @@ let emptyMd: Markdown = {
 const seedMdStore: MdStore = {
   md: emptyMd,
   blocks: [],
+  context: MdContext.BASIC,
 };
+
+export const mdContentChangeEvent = initMdContentChangeEvent();
+
+function initMdContentChangeEvent() {
+  const { subscribe, set, update } = writable<boolean>(false);
+  return {
+    subscribe,
+    trigger: () => set(!get(mdContentChangeEvent)),
+  };
+}
 
 export const mdStore = initMarkdownStore();
 function initMarkdownStore() {
   const { subscribe, set, update } = writable<MdStore>(seedMdStore);
   return {
     subscribe,
-    load(md: Markdown) {
+    load(
+      md: Markdown,
+      context: MdContext,
+      params: MdParams | undefined = undefined
+    ) {
       set({
         md,
+        context,
+        params,
         blocks: recursivelyExtractAllChildrenIntoArray(md),
-        focusedBlockId: md.children[0].id,
+        focusedBlockId: md.children?.[0]?.id,
       });
     },
     reset: () => set(seedMdStore),
-    insert: (id: string) => {
+    insert: (previousSiblingId: string) => {
       update((n) => {
-        const insertIndex = n.blocks.findIndex((b) => b.id === id);
+        const previousSiblingIndex = n.blocks.findIndex(
+          (b) => b.id === previousSiblingId
+        );
         const newBlock = { ...emptyBlock, id: generateUID() };
         n.blocks = [
-          ...n.blocks.slice(0, insertIndex + 1),
+          ...n.blocks.slice(0, previousSiblingIndex + 1),
           newBlock,
-          ...n.blocks.slice(insertIndex + 1),
+          ...n.blocks.slice(previousSiblingIndex + 1),
         ];
         n.focusedBlockId = newBlock.id;
-        console.log(n);
+        if (n.context === MdContext.NODE) {
+          const parent = n.blocks.find((b) =>
+            b.childrenHierarchy?.includes(previousSiblingId)
+          );
+          if (parent && parent.childrenHierarchy) {
+            const previousSiblingIndexInParentContext =
+              parent.childrenHierarchy.findIndex(
+                (c) => c === previousSiblingId
+              );
+            parent.childrenHierarchy = [
+              ...parent.childrenHierarchy.slice(
+                0,
+                previousSiblingIndexInParentContext + 1
+              ),
+              newBlock.id,
+              ...parent.childrenHierarchy.slice(
+                previousSiblingIndexInParentContext + 1
+              ),
+            ];
+          }
+        }
+        // console.log(n);
         return n;
       });
     },
@@ -223,6 +291,11 @@ function initMarkdownStore() {
         return n;
       });
     },
+    //Not required for simple markdown editor - can save blocks instead of nested md
+    // fetchAsNestedMd: () => {
+    //   const n = get(mdStore);
+    //   return parseBlocksIntoNestedMd(n);
+    // },
   };
 }
 
@@ -230,8 +303,45 @@ function recursivelyExtractAllChildrenIntoArray(md: Markdown) {
   let children: Block[] = [];
   if (md.children && md.children.length > 0) {
     md.children.forEach((child) => {
-      children.push(child);
+      children.push({
+        type: child.type,
+        content: child.content,
+        id: child.id,
+        childrenHierarchy: child.childrenHierarchy,
+      });
       children.push(...recursivelyExtractAllChildrenIntoArray(child));
+    });
+  }
+  return children;
+}
+
+function parseBlocksIntoNestedMd(mdStore: MdStore) {
+  const md = deepCopy(mdStore.md);
+  md.children = recursivelyFormParentFromChildren(
+    mdStore.blocks,
+    md.childrenHierarchy
+  );
+  return md;
+}
+
+function recursivelyFormParentFromChildren(
+  blocks: Block[],
+  childrenHierarchy: string[] | undefined
+) {
+  let children: Markdown[] = [];
+  if (childrenHierarchy && childrenHierarchy.length > 0) {
+    childrenHierarchy.forEach((childId) => {
+      const child = blocks.find((b) => b.id === childId);
+      if (child) {
+        const newChild: Markdown = {
+          ...child,
+          children: recursivelyFormParentFromChildren(
+            blocks,
+            child.childrenHierarchy
+          ),
+        };
+        children.push(newChild);
+      }
     });
   }
   return children;
