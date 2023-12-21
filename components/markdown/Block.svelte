@@ -1,0 +1,14 @@
+<script lang="ts">
+  import { MdContext, type Block } from "$lib/tidy/types/md.type";
+  import BlockContent from "./content/BlockContent.svelte";
+  import LeftControls from "./LeftControls.svelte";
+  import { mdStore } from "./markdown.store";
+  export let block: Block;
+</script>
+
+<div class="flex items-center">
+  {#if $mdStore.context === MdContext.NODE}
+    <LeftControls />
+  {/if}
+  <BlockContent {block} />
+</div>
