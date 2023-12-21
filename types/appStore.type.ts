@@ -15,6 +15,7 @@ export type AppStore = {
   dynamicBlocks?: Action[];
   fullScreenComponentPath?: string;
   debugLogs?: DebugLog[];
+  isPipOn?: boolean;
 };
 
 export type DebugLog = {

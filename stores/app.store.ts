@@ -312,6 +312,13 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
+    togglePip(path: string) {
+      update((n: AppStore) => {
+        if (!n.player) n.player = path;
+        n.isPipOn = !n.isPipOn;
+        return n;
+      });
+    },
     hideMiniPlayer() {
       update((n: AppStore) => {
         n.player = undefined;
