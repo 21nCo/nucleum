@@ -37,7 +37,7 @@
   <!-- Right split -->
   <Divider
     orientation={Orientation.Vertical}
-    colorStrength={ColorStrength.Strong}
+    colorStrength={ColorStrength.Normal}
   />
   <div class="relative flex grow h-full">
     <slot name="right" />

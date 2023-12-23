@@ -105,6 +105,8 @@ export function borderColor(
       return "border-brs2";
     case ColorStrength.Strong:
       return "border-brs3";
+    case ColorStrength.ExtraStrong:
+      return "border-brs4";
     default:
       return "border-brs2";
   }
