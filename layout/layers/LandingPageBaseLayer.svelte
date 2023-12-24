@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import { Persistance } from "$lib/tidy/stores/persistance";
+  import { appStore } from "$lib/tidy/stores/app.store";
   onMount(async () => {
     await initializeAppData();
   });
@@ -12,6 +13,9 @@
   }
 </script>
 
-<ThemeLayer>
-  <slot />
-</ThemeLayer>
+<title>{$appStore.appData.name ?? ""}</title>
+<div class="flex h-screen w-screen">
+  <ThemeLayer>
+    <slot />
+  </ThemeLayer>
+</div>
