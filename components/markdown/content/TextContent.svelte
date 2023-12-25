@@ -1,19 +1,24 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import {
     BlockType,
-    type Block,
     type MdStore,
     type SpanContent,
     SpanType,
-    type TextContent,
     MdContext,
+    type TextContent,
+    BlockContext,
+    type TextType,
+    ListType,
   } from "$lib/tidy/types/md.type";
   import { mdContentChangeEvent, mdStore } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
-  import { deepCopy } from "$lib/tidy/utils/obj.utils";
-  export let block: Block;
+  import Block from "../Block.svelte";
+  const dispatch = createEventDispatcher();
+  export let content: TextContent;
+  export let id: string | undefined = undefined;
+  export let context: BlockContext = BlockContext.DEFAULT;
   let blockRef: any;
   let sizing = "";
   const defaultPlaceholder =
@@ -26,25 +31,30 @@
   let isNewSpanInserted = false;
   let caretPosition:
     | {
-        element: any;
-        parent: any;
-        elementIndex: number;
+        element?: any;
+        parent?: any;
+        elementIndex?: number;
         index: number;
+        elementId?: string;
+        endContainer?: any;
       }
     | undefined = undefined;
   let caretPosition2: number | undefined = undefined;
   $: isDirectInsertBlock =
-    block.type === BlockType.HEADING1 ||
-    block.type === BlockType.HEADING2 ||
-    block.type === BlockType.HEADING3 ||
-    block.content === "";
+    content.type === BlockType.HEADING1 ||
+    content.type === BlockType.HEADING2 ||
+    content.type === BlockType.HEADING3 ||
+    content.type === BlockType.HEADING4 ||
+    content.type === BlockType.HEADING5 ||
+    context === BlockContext.LIST_CHILD ||
+    content.body === "";
   let spans: SpanContent[] =
-    block.type === BlockType.TEXT && typeof block.content === "string"
-      ? parseSpansFromText(block.content)
+    content.type === BlockType.SIMPLE_TEXT && typeof content.body === "string"
+      ? parseSpansFromText(content.body)
       : [];
   refreshInlineStyling();
   $: {
-    switch (block.type) {
+    switch (content.type) {
       case BlockType.HEADING1:
         sizing = "text-h1 font-bold";
         blockSpecificPlaceholder = "Heading 1";
@@ -56,6 +66,14 @@
       case BlockType.HEADING3:
         sizing = "text-h3 font-bold";
         blockSpecificPlaceholder = "Heading 3";
+        break;
+      case BlockType.HEADING4:
+        sizing = "text-h4 font-bold";
+        blockSpecificPlaceholder = "Heading 4";
+        break;
+      case BlockType.HEADING5:
+        sizing = "text-h5 font-bold";
+        blockSpecificPlaceholder = "Heading 5";
         break;
       default:
         sizing = "text-base";
@@ -114,11 +132,11 @@
   // Function to insert a caret marker
   function insertCaretMarker() {
     const caretPosition = getCursorPosition(blockRef);
-    if (typeof block.content !== "string") return;
-    block.content =
-      block.content.slice(0, caretPosition) +
+    if (typeof content.body !== "string") return;
+    content.body =
+      content.body.slice(0, caretPosition) +
       "<!--caret-->" +
-      block.content.slice(caretPosition);
+      content.body.slice(caretPosition);
     // console.log("insertCaretMarker", block.content, caretPosition);
   }
 
@@ -153,13 +171,14 @@
         range?.endContainer.parentElement?.childNodes ?? []
       ).indexOf(element),
       index: range?.endOffset ?? 0,
+      endContainer: range?.endContainer,
     };
-    // console.log("setCaretPosition", range, caretPosition);
+    console.log("setCaretPosition", range, caretPosition);
   }
 
   // Function to restore the caret position
   function restoreCursorPosition() {
-    if (typeof block.content !== "string" || !blockRef) return;
+    if (typeof content.body !== "string" || !blockRef) return;
     // console.log("restoreCursorPosition");
     //const index = block.content.indexOf("<!--caret-->");
     const index = caretPosition?.index ?? -1;
@@ -175,47 +194,57 @@
       if (!caretPosition?.element) return;
       setCursorPosition(caretPosition?.element, index);
     }
-    block.content = block.content.replace("<!--caret-->", "");
+    content.body = content.body.replace("<!--caret-->", "");
   }
+  function setCursorToSpan(spanElement: any) {
+    console.log("setCursorToSpan", spanElement);
+    const range = document.createRange();
+    range.selectNodeContents(spanElement);
 
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
   function restoreCaretPosition() {
     if (!caretPosition) return;
     // console.log("restoreCaretPosition", deepCopy(caretPosition));
     const range = document.createRange();
     const selection = window.getSelection();
-    let node = caretPosition.element;
     try {
-      const parent = document.getElementById(caretPosition.parent.id);
-      if (isNewSpanInserted) {
-        // console.log(
-        //   "eleIndex",
-        //   caretPosition.elementIndex,
-        //   caretPosition.parent.childNodes,
-        //   parent?.childNodes
-        // );
-        node = parent
-          ? parent?.childNodes[caretPosition.elementIndex + 2]
-          : caretPosition.parent.childNodes[caretPosition.elementIndex + 2];
-      } else {
+      console.log({ isNewSpanInserted, caretPosition });
+      if (isNewSpanInserted && caretPosition.elementIndex != undefined) {
+        const parent = document.getElementById(caretPosition.parent.id);
+        console.log(
+          "eleIndex",
+          caretPosition?.elementId,
+          caretPosition.elementIndex,
+          caretPosition.parent.childNodes,
+          parent?.childNodes
+        );
+        if (!parent?.childNodes) return;
+        // const node = parent
+        //   ? parent?.childNodes[caretPosition.elementIndex + 1]
+        //   : caretPosition.parent.childNodes[caretPosition.elementIndex + 1];
+        // const node = document.getElementById(caretPosition.elementId);
+        // setCursorToEnd(node);
+        const node = Array.from(parent?.childNodes).find(
+          (node: ChildNode) => (node as Element).id === caretPosition?.elementId
+        );
+        console.log("new span node", node, caretPosition);
+        if (node) range.setStart(node, 1);
+      } else if (caretPosition.elementIndex != undefined) {
+        console.log("ss");
+        let node = caretPosition.element;
+        const parent = document.getElementById(caretPosition.parent.id);
         node = parent
           ? parent?.childNodes[caretPosition.elementIndex]
           : caretPosition.parent.childNodes[caretPosition.elementIndex];
-      }
-      // console.log("restoring to element", node);
-      if (isNewSpanInserted) {
-        // setCursorToEnd(node);
-        range.setStart(node, 0);
-        // console.log("restoring to range", range);
-        range.collapse(true);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-      } else {
         range.setStart(node, caretPosition.index - 1);
-        // console.log("restoring to range", range);
-        range.collapse(true);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
       }
+      // console.log("restoring to range", range);
+      range.collapse(true);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
     } catch (error) {
       console.log("restoring caret errored", error);
     }
@@ -271,7 +300,7 @@
     // console.log({ blockRef, style: blockRef.style.caretColor });
     blockRef?.focus();
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
-      if (md.focusedBlockId === block.id) {
+      if (md.focusedBlockId === id) {
         setCursorToEnd(blockRef);
       }
     });
@@ -280,34 +309,112 @@
     };
   });
   function handleKeyDown(event: any) {
-    // console.log("keydown", event, block);
+    console.log("keydown", event);
     if (
       (event.key === "Enter" && event.metaKey == true) ||
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
     ) {
-      mdStore.insert(block.id);
+      if (id && context === BlockContext.DEFAULT) mdStore.insert(id);
+      else dispatch("insert", { id });
       event.preventDefault();
-    } else if (event.key === "Backspace" && !block.content) {
-      mdStore.deleteBlock(block.id);
+    } else if (event.key === "Backspace" && !content.body) {
+      if (id && context === BlockContext.DEFAULT) mdStore.deleteBlock(id);
+      else dispatch("delete", { id });
       event.preventDefault();
     }
   }
 
   function handleKeyUp(event: any) {
-    // console.log("keyup", event, block);
-    if (block.content === "# ") {
-      block.content = "";
-      block.type = BlockType.HEADING1;
-    } else if (block.content === "## ") {
-      block.content = "";
-      block.type = BlockType.HEADING2;
-    } else if (block.content === "### ") {
-      block.content = "";
-      block.type = BlockType.HEADING3;
-    } else if (block.content === "---") {
-      block.content = "";
-      block.type = BlockType.DIVIDER;
-      mdStore.insert(block.id);
+    console.log("keyup", event);
+    setCaretPosition();
+    const textEscapeShortcuts: { shortcut: string; type: TextType }[] = [
+      { shortcut: "# ", type: BlockType.HEADING1 },
+      { shortcut: "## ", type: BlockType.HEADING2 },
+      { shortcut: "### ", type: BlockType.HEADING3 },
+      { shortcut: "#### ", type: BlockType.HEADING4 },
+      { shortcut: "##### ", type: BlockType.HEADING5 },
+      { shortcut: '" ', type: BlockType.QUOTE },
+    ];
+    const structuralEscapeShortcuts = [
+      { shortcut: "---", type: BlockType.DIVIDER },
+      { shortcut: "===", type: BlockType.DOUBLE_DIVIDER },
+    ];
+    const listEscapeShortcuts = [
+      { shortcut: "* ", type: BlockType.LIST, listType: ListType.UNORDERED },
+      { shortcut: "- ", type: BlockType.LIST, listType: ListType.UNORDERED },
+      { shortcut: "+ ", type: BlockType.LIST, listType: ListType.UNORDERED },
+      { shortcut: "1. ", type: BlockType.LIST, listType: ListType.ORDERED },
+    ];
+    textEscapeShortcuts.forEach(({ shortcut, type }) => {
+      if (typeof content.body !== "string") return;
+      if (content.body.startsWith(shortcut)) {
+        content.body = content.body.replace(shortcut, "");
+        content.type = type;
+      }
+      if (
+        content.type === BlockType.SIMPLE_TEXT &&
+        caretPosition &&
+        caretPosition.endContainer.nodeType === 3 &&
+        caretPosition.endContainer.nodeValue &&
+        caretPosition.endContainer.nodeValue.startsWith(shortcut)
+      ) {
+        //delete the parent <div> of the text node and insert new block with the type
+        content.body = content.body.replace(shortcut, "");
+        if (id) mdStore.insert(id, { blockType: type });
+        setTimeout(() => {
+          let parent = undefined;
+          if (id) parent = document.getElementById(id);
+          console.log("parent", parent, parent?.lastChild);
+          if (parent && parent.lastChild) {
+            parent.removeChild(parent.lastChild);
+          }
+        }, 10);
+      }
+    });
+
+    // if (typeof content.body !== "string") return;
+    // if (content.body.startsWith("# ")) {
+    //   content.body = content.body.replace("# ", "");
+    //   content.type = BlockType.HEADING1;
+    // } else if (content.body.startsWith("## ")) {
+    //   content.body = content.body.replace("## ", "");
+    //   content.type = BlockType.HEADING2;
+    // } else if (content.body.startsWith("### ")) {
+    //   content.body = content.body.replace("### ", "");
+    //   content.type = BlockType.HEADING3;
+    // } else if (content.body.startsWith("#### ")) {
+    //   content.body = content.body.replace("#### ", "");
+    //   content.type = BlockType.HEADING4;
+    // } else if (content.body.startsWith("##### ")) {
+    //   content.body = content.body.replace("##### ", "");
+    //   content.type = BlockType.HEADING5;
+    // } else
+    if (content.body === "---") {
+      content.body = "";
+      if (context != BlockContext.DEFAULT || !id) return;
+      mdStore.insert(id, { blockType: BlockType.DIVIDER });
+    } else if (content.body === "===") {
+      content.body = "";
+      if (context != BlockContext.DEFAULT || !id) return;
+      mdStore.insert(id, { blockType: BlockType.DOUBLE_DIVIDER });
+    } else if (
+      event.key === "Backspace" &&
+      content.type != BlockType.SIMPLE_TEXT &&
+      content.body != "" &&
+      caretPosition?.index === 0
+    ) {
+      content.type = BlockType.SIMPLE_TEXT;
+    } else if (
+      event.key === "Backspace" &&
+      content.type === BlockType.SIMPLE_TEXT &&
+      content.body != "" &&
+      caretPosition?.index === 0
+    ) {
+      if (id && context === BlockContext.DEFAULT)
+        mdStore.focusPreviousSibling(id);
+      else dispatch("delete", { id });
+      event.preventDefault();
+    } else if (event.key) {
     }
     replaceWithUnicodeCharacters();
     if (
@@ -330,53 +437,97 @@
       { regex: /&gt;=/g, replacement: "≥" },
       { regex: /=&gt;/g, replacement: "⇒" },
     ];
+    executeReplace(patterns);
+  }
+
+  function executeReplace(patterns: any[], isNewSpanInsert = false) {
     patterns.forEach(({ regex, replacement }) => {
-      if (typeof block.content !== "string") return;
-      const matches = block.content.match(regex);
+      if (typeof content.body !== "string") return;
+      const matches = content.body.match(regex);
       if (matches) {
         // console.log(
         //   `Found ${matches.length} matches for ${regex}. Each match will be replaced with ${replacement.length} characters.`
         // );
-        setCaretPosition();
+        let focusedSpan = generateUID();
+        if (isNewSpanInsert) {
+          setCaretPosition();
+          caretPosition = {
+            ...caretPosition,
+            index: caretPosition?.index ?? 0,
+            elementId: focusedSpan,
+          };
+          isNewSpanInserted = true;
+          content.body = content.body.replace(
+            regex,
+            replacement + `<span id="${focusedSpan}">&#8203;</span>`
+          );
+          // console.log("new span inserted", focusedSpan);
+          // setCursorToSpan(document.getElementById(focusedSpan));
+          // return;
+        } else {
+          setCaretPosition();
+          content.body = content.body.replace(regex, replacement);
+        }
+
         // console.log("caretPosition", caretPosition);
-        block.content = block.content.replace(regex, replacement);
+        //content.body = content.body.replace(regex, replacement);
         // if (caretPosition) caretPosition.index = caretPosition?.index - 1 ?? 0;
         // restoreCaretPosition();
         setTimeout(() => {
           restoreCaretPosition();
+          isNewSpanInserted = false;
         }, 10);
       }
     });
   }
 
   function refreshInlineStyling() {
-    if (typeof block.content !== "string") return;
+    if (typeof content.body !== "string") return;
+    const patterns = [
+      { regex: /(?<!\*)\*([^\*]+?)\*(?!\*)/g, replacement: "<i>$1</i>" },
+      { regex: /\*\*([^\*]+?)\*\*/g, replacement: "<b>$1</b>" },
+      { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
+      {
+        regex: /~~((?:\S|\s\S)+?)~~/g,
+        replacement: '<span class="line-through">$1</span>',
+      },
+      {
+        regex: /`((?:\S|\s\S)+?)`/g,
+        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>',
+      },
+      {
+        regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
+        replacement: '<span style="color:$2">$1</span>',
+      },
+    ];
+    executeReplace(patterns, true);
     //insertCaretMarker();
     // console.log("refreshInlineStyling");
-    block.content = block.content
-      .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
-      .replace(/(?<!\*)\*([^\*]+?)\*(?!\*)/g, "<i>$1</i>&nbsp;")
-      .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
-      .replace(/_((?:\s*\S)+?)_/g, "<u>$1</u>&nbsp;") //
-      .replace(
-        /~~((?:\S|\s\S)+?)~~/g,
-        `<span id="${generateUID()}" class="line-through">$1</span>&nbsp;`
-      )
-      .replace(
-        /`((?:\S|\s\S)+?)`/g,
-        `<span id="${generateUID()}" class="bg-gray-200 px-1 font-mono">$1</span>&nbsp;`
-      )
-      .replace(
-        /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-        '<span style="color:$2">$1</span>'
-      );
-    isNewSpanInserted = true;
-    setTimeout(() => {
-      restoreCaretPosition();
-      isNewSpanInserted = false;
-    }, 10);
-    //restoreCaretPosition();
-    //restoreCursorPosition();
+    // setCaretPosition();
+    // content.body = content.body
+    //   .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
+    //   .replace(/(?<!\*)\*([^\*]+?)\*(?!\*)/g, "<i>$1</i>&nbsp;")
+    //   .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
+    //   .replace(/_((?:\s*\S)+?)_/g, "<u>$1</u>&nbsp;") //
+    //   .replace(
+    //     /~~((?:\S|\s\S)+?)~~/g,
+    //     `<span id="${generateUID()}" class="line-through">$1</span>&nbsp;`
+    //   )
+    //   .replace(
+    //     /`((?:\S|\s\S)+?)`/g,
+    //     `<span id="${generateUID()}" class="bg-gray-200 px-1 font-mono">$1</span>&nbsp;`
+    //   )
+    //   .replace(
+    //     /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
+    //     '<span style="color:$2">$1</span>'
+    //   );
+    // isNewSpanInserted = true;
+    // setTimeout(() => {
+    //   restoreCaretPosition();
+    //   isNewSpanInserted = false;
+    // }, 10);
+    // //restoreCaretPosition();
+    // //restoreCursorPosition();
   }
 
   function handleKeyPress(event: any) {
@@ -388,17 +539,17 @@
   }
 </script>
 
-{#if typeof block.content === "string"}
+{#if typeof content.body === "string"}
   <div
     bind:this={blockRef}
-    id={block.id}
+    {id}
     style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word; caret-color: rgb(55, 53, 47);"
     class="w-full h-full outline-none p-2 {sizing}"
     on:keyup={handleKeyUp}
     on:keydown={handleKeyDown}
     on:keypress={handleKeyPress}
     on:mouseup={handleMouseup}
-    bind:innerHTML={block.content}
+    bind:innerHTML={content.body}
     contenteditable
   ></div>
   <!-- {:else if Array.isArray(block.content)} -->
@@ -407,7 +558,7 @@
     <TextWithSpans content={spans} />
   </div>
 {/if}
-{#if !block.content}
+{#if !content.body}
   <button
     on:click={() => {
       blockRef.focus();

@@ -1,13 +1,27 @@
 <script lang="ts">
-  import { BlockType, type Block } from "$lib/tidy/types/md.type";
+  import {
+    BlockType,
+    type BlockContent,
+    BlockContext,
+  } from "$lib/tidy/types/md.type";
+  import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
-  export let block: Block;
+  export let content: BlockContent;
+  export let id: string | undefined = undefined;
+  export let context: BlockContext = BlockContext.DEFAULT;
 </script>
 
-<div class="relative flex-grow">
-  {#if block.type === BlockType.DIVIDER}
-    <div class="w-5/6 h-px bg-brs3 m-4"></div>
-  {:else}
-    <TextContent {block} />
+<div class="relative flex-grow w-full">
+  {#if content.type === BlockType.DIVIDER}
+    <div class="h-px bg-brs3 m-4"></div>
+  {:else if content.type === BlockType.DOUBLE_DIVIDER}
+    <div class="flex flex-col my-1 gap-0.5 mx-2">
+      <div class="h-px bg-bgs4"></div>
+      <div class="h-px bg-bgs4"></div>
+    </div>
+  {:else if content.type === BlockType.LIST}
+    <ListContent {content} {id} />
+  {:else if "body" in content}
+    <TextContent {content} {id} {context} on:insert />
   {/if}
 </div>

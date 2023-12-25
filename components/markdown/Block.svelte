@@ -10,5 +10,5 @@
   {#if $mdStore.context === MdContext.NODE}
     <LeftControls />
   {/if}
-  <BlockContent {block} />
+  <BlockContent content={block.content} id={block.id} />
 </div>

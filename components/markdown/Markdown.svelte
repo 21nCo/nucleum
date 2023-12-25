@@ -10,7 +10,7 @@
   mdStore.load(md, context, params);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
-      console.log("md content changed", val);
+      // console.log("md content changed", val);
       dispatch("change", $mdStore.blocks);
     });
     return () => {
