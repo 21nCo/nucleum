@@ -12,7 +12,6 @@
   import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
   import WithYStack from "../paint/painters/YStack/WithYStack.svelte";
-  import { swipe } from "svelte-gestures";
   import { onMount } from "svelte";
   import type { ModalEvent } from "$lib/tidy/types/popup.type";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
@@ -26,9 +25,6 @@
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
-  function onSwipe(event: any) {
-    appStore.log({ event });
-  }
   $: if (dialogRef) dialogRef.showModal();
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: AppEventType) => {
@@ -66,8 +62,6 @@
   <div
     class="fixed left-0 top-0 w-full h-full flex flex-col z-40"
     transition:fly={{ y: 200, duration: 100 }}
-    use:swipe={{ timeframe: 300, minSwipeDistance: 60 }}
-    on:swipe={onSwipe}
   >
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
