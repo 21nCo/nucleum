@@ -206,7 +206,7 @@ export function performApiCall(
   method: string,
   body: string = ""
 ) {
-  const token = localStorage.getItem("surreal-token");
+  const token = localStorage?.getItem("surreal-token");
   return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
     method: method,
     headers: {
@@ -292,3 +292,7 @@ export function setUiState(
   }
   return uiStates;
 }
+
+// export function isClient() {
+//   return typeof window !== "undefined";
+// }
