@@ -75,6 +75,10 @@
         sizing = "text-h5 font-bold";
         blockSpecificPlaceholder = "Heading 5";
         break;
+      case BlockType.QUOTE:
+        sizing = "font-medium";
+        blockSpecificPlaceholder = "Quote";
+        break;
       default:
         sizing = "text-base";
         break;
@@ -540,18 +544,24 @@
 </script>
 
 {#if typeof content.body === "string"}
-  <div
-    bind:this={blockRef}
-    {id}
-    style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word; caret-color: rgb(55, 53, 47);"
-    class="w-full h-full outline-none p-2 {sizing}"
-    on:keyup={handleKeyUp}
-    on:keydown={handleKeyDown}
-    on:keypress={handleKeyPress}
-    on:mouseup={handleMouseup}
-    bind:innerHTML={content.body}
-    contenteditable
-  ></div>
+  <div class="relative">
+    <div
+      bind:this={blockRef}
+      {id}
+      style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word; caret-color: rgb(55, 53, 47);"
+      class="w-full h-full outline-none p-2 {sizing}"
+      on:keyup={handleKeyUp}
+      on:keydown={handleKeyDown}
+      on:keypress={handleKeyPress}
+      on:mouseup={handleMouseup}
+      bind:innerHTML={content.body}
+      contenteditable
+    ></div>
+    {#if content.type === BlockType.QUOTE}
+      <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>
+    {/if}
+  </div>
+
   <!-- {:else if Array.isArray(block.content)} -->
 {:else if spans.length > 0}
   <div contenteditable class="outline-none">
