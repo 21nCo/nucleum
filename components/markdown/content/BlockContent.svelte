@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    BlockType,
+    MdBlockType,
     type BlockContent,
     BlockContext,
   } from "$lib/tidy/types/md.type";
@@ -12,14 +12,14 @@
 </script>
 
 <div class="relative flex-grow w-full">
-  {#if content.type === BlockType.DIVIDER}
+  {#if content.type === MdBlockType.DIVIDER}
     <div class="h-px bg-brs3 m-4"></div>
-  {:else if content.type === BlockType.DOUBLE_DIVIDER}
+  {:else if content.type === MdBlockType.DOUBLE_DIVIDER}
     <div class="flex flex-col my-1 gap-0.5 mx-2">
       <div class="h-px bg-bgs4"></div>
       <div class="h-px bg-bgs4"></div>
     </div>
-  {:else if content.type === BlockType.LIST}
+  {:else if content.type === MdBlockType.LIST}
     <ListContent {content} {id} />
   {:else if "body" in content}
     <TextContent {content} {id} {context} on:insert />

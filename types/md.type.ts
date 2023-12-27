@@ -1,7 +1,7 @@
 import type { DbRecordBase } from "./dbrecord.type";
 
 export type MdStore = {
-  md: Markdown | undefined;
+  md: NodeMarkdown | undefined;
   blocks: Block[];
   focusedBlockId?: string;
   context: MdContext;
@@ -14,11 +14,16 @@ export type Block = {
   childrenHierarchy?: string[];
 };
 
-export type Markdown = {
+export type NodeMarkdown = {
   id: string;
   content: BlockContent;
-  children?: Markdown[];
+  children?: NodeMarkdown[];
   childrenHierarchy?: string[];
+};
+
+export type Markdown = {
+  id: string;
+  blocks: Block[];
 };
 
 export type DbBlock = DbRecordBase & Block;
@@ -26,7 +31,7 @@ export type DbBlock = DbRecordBase & Block;
 export type BlockContent = TextContent | ListContent | StructuralContent;
 
 export type ListContent = {
-  type: BlockType.LIST;
+  type: MdBlockType.LIST;
   body: {
     type: ListType;
     content: string | TextContent;
@@ -46,7 +51,7 @@ export type TextContent = {
 };
 
 export type StructuralContent = {
-  type: BlockType.DIVIDER | BlockType.DOUBLE_DIVIDER;
+  type: MdBlockType.DIVIDER | MdBlockType.DOUBLE_DIVIDER;
 };
 
 export type SpanContent = {
@@ -73,16 +78,16 @@ export enum ListType {
 }
 
 export type TextType =
-  | BlockType.SIMPLE_TEXT
-  | BlockType.QUOTE
-  | BlockType.CODE
-  | BlockType.HEADING1
-  | BlockType.HEADING2
-  | BlockType.HEADING3
-  | BlockType.HEADING4
-  | BlockType.HEADING5;
+  | MdBlockType.SIMPLE_TEXT
+  | MdBlockType.QUOTE
+  | MdBlockType.CODE
+  | MdBlockType.HEADING1
+  | MdBlockType.HEADING2
+  | MdBlockType.HEADING3
+  | MdBlockType.HEADING4
+  | MdBlockType.HEADING5;
 
-export enum BlockType {
+export enum MdBlockType {
   HEADING1 = "HEADING1",
   HEADING2 = "HEADING2",
   HEADING3 = "HEADING3",
@@ -104,6 +109,9 @@ export enum MdContext {
 
 export type MdParams = {
   placeholder?: string;
+  actions?: string[];
+  isReadOnly?: boolean;
+  title?: string;
 };
 
 export enum BlockContext {

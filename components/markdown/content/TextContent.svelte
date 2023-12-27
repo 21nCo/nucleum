@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import {
-    BlockType,
+    MdBlockType,
     type MdStore,
     type SpanContent,
     SpanType,
@@ -41,41 +41,41 @@
     | undefined = undefined;
   let caretPosition2: number | undefined = undefined;
   $: isDirectInsertBlock =
-    content.type === BlockType.HEADING1 ||
-    content.type === BlockType.HEADING2 ||
-    content.type === BlockType.HEADING3 ||
-    content.type === BlockType.HEADING4 ||
-    content.type === BlockType.HEADING5 ||
+    content.type === MdBlockType.HEADING1 ||
+    content.type === MdBlockType.HEADING2 ||
+    content.type === MdBlockType.HEADING3 ||
+    content.type === MdBlockType.HEADING4 ||
+    content.type === MdBlockType.HEADING5 ||
     context === BlockContext.LIST_CHILD ||
     content.body === "";
   let spans: SpanContent[] =
-    content.type === BlockType.SIMPLE_TEXT && typeof content.body === "string"
+    content.type === MdBlockType.SIMPLE_TEXT && typeof content.body === "string"
       ? parseSpansFromText(content.body)
       : [];
   refreshInlineStyling();
   $: {
     switch (content.type) {
-      case BlockType.HEADING1:
+      case MdBlockType.HEADING1:
         sizing = "text-h1 font-bold";
         blockSpecificPlaceholder = "Heading 1";
         break;
-      case BlockType.HEADING2:
+      case MdBlockType.HEADING2:
         sizing = "text-h2 font-bold";
         blockSpecificPlaceholder = "Heading 2";
         break;
-      case BlockType.HEADING3:
+      case MdBlockType.HEADING3:
         sizing = "text-h3 font-bold";
         blockSpecificPlaceholder = "Heading 3";
         break;
-      case BlockType.HEADING4:
+      case MdBlockType.HEADING4:
         sizing = "text-h4 font-bold";
         blockSpecificPlaceholder = "Heading 4";
         break;
-      case BlockType.HEADING5:
+      case MdBlockType.HEADING5:
         sizing = "text-h5 font-bold";
         blockSpecificPlaceholder = "Heading 5";
         break;
-      case BlockType.QUOTE:
+      case MdBlockType.QUOTE:
         sizing = "font-medium";
         blockSpecificPlaceholder = "Quote";
         break;
@@ -332,22 +332,22 @@
     console.log("keyup", event);
     setCaretPosition();
     const textEscapeShortcuts: { shortcut: string; type: TextType }[] = [
-      { shortcut: "# ", type: BlockType.HEADING1 },
-      { shortcut: "## ", type: BlockType.HEADING2 },
-      { shortcut: "### ", type: BlockType.HEADING3 },
-      { shortcut: "#### ", type: BlockType.HEADING4 },
-      { shortcut: "##### ", type: BlockType.HEADING5 },
-      { shortcut: '" ', type: BlockType.QUOTE },
+      { shortcut: "# ", type: MdBlockType.HEADING1 },
+      { shortcut: "## ", type: MdBlockType.HEADING2 },
+      { shortcut: "### ", type: MdBlockType.HEADING3 },
+      { shortcut: "#### ", type: MdBlockType.HEADING4 },
+      { shortcut: "##### ", type: MdBlockType.HEADING5 },
+      { shortcut: '" ', type: MdBlockType.QUOTE },
     ];
     const structuralEscapeShortcuts = [
-      { shortcut: "---", type: BlockType.DIVIDER },
-      { shortcut: "===", type: BlockType.DOUBLE_DIVIDER },
+      { shortcut: "---", type: MdBlockType.DIVIDER },
+      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER },
     ];
     const listEscapeShortcuts = [
-      { shortcut: "* ", type: BlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "- ", type: BlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "+ ", type: BlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "1. ", type: BlockType.LIST, listType: ListType.ORDERED },
+      { shortcut: "* ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
+      { shortcut: "- ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
+      { shortcut: "+ ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
+      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED },
     ];
     textEscapeShortcuts.forEach(({ shortcut, type }) => {
       if (typeof content.body !== "string") return;
@@ -356,7 +356,7 @@
         content.type = type;
       }
       if (
-        content.type === BlockType.SIMPLE_TEXT &&
+        content.type === MdBlockType.SIMPLE_TEXT &&
         caretPosition &&
         caretPosition.endContainer.nodeType === 3 &&
         caretPosition.endContainer.nodeValue &&
@@ -396,21 +396,21 @@
     if (content.body === "---") {
       content.body = "";
       if (context != BlockContext.DEFAULT || !id) return;
-      mdStore.insert(id, { blockType: BlockType.DIVIDER });
+      mdStore.insert(id, { blockType: MdBlockType.DIVIDER });
     } else if (content.body === "===") {
       content.body = "";
       if (context != BlockContext.DEFAULT || !id) return;
-      mdStore.insert(id, { blockType: BlockType.DOUBLE_DIVIDER });
+      mdStore.insert(id, { blockType: MdBlockType.DOUBLE_DIVIDER });
     } else if (
       event.key === "Backspace" &&
-      content.type != BlockType.SIMPLE_TEXT &&
+      content.type != MdBlockType.SIMPLE_TEXT &&
       content.body != "" &&
       caretPosition?.index === 0
     ) {
-      content.type = BlockType.SIMPLE_TEXT;
+      content.type = MdBlockType.SIMPLE_TEXT;
     } else if (
       event.key === "Backspace" &&
-      content.type === BlockType.SIMPLE_TEXT &&
+      content.type === MdBlockType.SIMPLE_TEXT &&
       content.body != "" &&
       caretPosition?.index === 0
     ) {
@@ -545,19 +545,29 @@
 
 {#if typeof content.body === "string"}
   <div class="relative">
-    <div
-      bind:this={blockRef}
-      {id}
-      style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word; caret-color: rgb(55, 53, 47);"
-      class="w-full h-full outline-none p-2 {sizing}"
-      on:keyup={handleKeyUp}
-      on:keydown={handleKeyDown}
-      on:keypress={handleKeyPress}
-      on:mouseup={handleMouseup}
-      bind:innerHTML={content.body}
-      contenteditable
-    ></div>
-    {#if content.type === BlockType.QUOTE}
+    {#if $mdStore.params?.isReadOnly}
+      <div
+        {id}
+        style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
+        class="w-full h-full outline-none p-2 {sizing}"
+      >
+        {@html content.body}
+      </div>
+    {:else}
+      <div
+        bind:this={blockRef}
+        {id}
+        style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
+        class="w-full h-full outline-none p-2 {sizing}"
+        on:keyup={handleKeyUp}
+        on:keydown={handleKeyDown}
+        on:keypress={handleKeyPress}
+        on:mouseup={handleMouseup}
+        bind:innerHTML={content.body}
+        contenteditable
+      ></div>
+    {/if}
+    {#if content.type === MdBlockType.QUOTE}
       <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>
     {/if}
   </div>
@@ -580,3 +590,9 @@
     {blockSpecificPlaceholder ?? defaultPlaceholder}
   </button>
 {/if}
+
+<style>
+  div[contenteditable] {
+    caret-color: rgba(var(--colors-fgs2), 1) !important;
+  }
+</style>

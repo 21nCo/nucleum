@@ -1,5 +1,6 @@
 import { Item, type ItemType } from "$lib/tidy/types/item.enum";
 import type { EmailParts } from "../types/account.type";
+import { MdBlockType, type Block, ListType } from "../types/md.type";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -31,4 +32,58 @@ export function isValidParentDomain(text: string) {
 
 export function frameEmailFromParts(parts: EmailParts) {
   return `${parts.firstFew}...${parts.lastFew ?? ""}@${parts.emailDomain}`;
+}
+
+export function generateMarkdownText(blocks: Block[]) {
+  return blocks
+    .map((b) => {
+      switch (b.content.type) {
+        case MdBlockType.SIMPLE_TEXT:
+          b.content.body = b.content.body.replaceAll(/\n/g, "  \n");
+          b.content.body = b.content.body.replaceAll("<div><br></div>", "  \n");
+          b.content.body = b.content.body.replaceAll(/<br>/g, "  \n");
+          b.content.body = b.content.body.replaceAll(
+            /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
+            "`$1`"
+          );
+          b.content.body = b.content.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
+          b.content.body = b.content.body.replaceAll(
+            /<b>(.*?)<\/b>/g,
+            "**$1**"
+          );
+          b.content.body = b.content.body.replaceAll(
+            /<span id="[^"]*">(.*?)<\/span>/g,
+            "$1"
+          );
+          b.content.body = b.content.body.replaceAll(
+            /<span>(.*?)<\/span>/g,
+            "$1"
+          );
+          b.content.body = b.content.body.replaceAll(
+            /<div>(.*?)<\/div>/g,
+            "\n $1"
+          );
+          //todo - add remaining inline style patterns
+          return b.content.body;
+        case MdBlockType.HEADING1:
+          return `# ${b.content.body}`;
+        case MdBlockType.HEADING2:
+          return `## ${b.content.body}`;
+        case MdBlockType.HEADING3:
+          return `### ${b.content.body}`;
+        case MdBlockType.HEADING4:
+          return `#### ${b.content.body}`;
+        case MdBlockType.HEADING5:
+          return `##### ${b.content.body}`;
+        case MdBlockType.DOUBLE_DIVIDER:
+          return `---`;
+        case MdBlockType.DIVIDER:
+          return `---`;
+        case MdBlockType.LIST:
+          return `${b.content.body.type === ListType.ORDERED ? "1." : "-"} ${
+            b.content.body.content
+          }`;
+      }
+    })
+    .join("\n");
 }

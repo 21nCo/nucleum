@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     BlockContext,
-    BlockType,
+    MdBlockType,
     type ListContent,
   } from "$lib/tidy/types/md.type";
   import { mdStore } from "../markdown.store";
@@ -17,7 +17,7 @@
       console.log("found in markdown");
       //TODO - handle if there are children to a list item - the children should move to the new list item when enter is pressed
       mdStore.insert(insertContextId, {
-        blockType: BlockType.LIST,
+        blockType: MdBlockType.LIST,
       });
       return;
     } else {
@@ -31,7 +31,7 @@
   <div class="flex flex-col">
     <TextContent
       content={typeof content.body.content === "string"
-        ? { body: content.body.content, type: BlockType.SIMPLE_TEXT }
+        ? { body: content.body.content, type: MdBlockType.SIMPLE_TEXT }
         : content.body.content}
       context={BlockContext.LIST_CHILD}
       on:insert={handleInsert}

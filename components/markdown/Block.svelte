@@ -6,7 +6,7 @@
   export let block: Block;
 </script>
 
-<div class="flex items-center">
+<div class="flex items-center w-full">
   {#if $mdStore.context === MdContext.NODE}
     <LeftControls />
   {/if}
