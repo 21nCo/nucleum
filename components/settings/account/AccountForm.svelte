@@ -8,6 +8,7 @@
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
   import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
+  import { detectTimeZone } from "$lib/tidy/utils/time.utils";
   import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isSignup = false;
@@ -53,10 +54,16 @@
   async function onSignupClicked() {
     if (!isValidSignupData()) return;
     actionInProgress = true;
+    const context = {
+      userAgent: navigator.userAgent,
+      host: window.location.host,
+      timezone: detectTimeZone(),
+      geo: null,
+    };
     const response = await performApiCall(
       "account/signup",
       "POST",
-      JSON.stringify({ email: email.toLowerCase(), pass, nickName })
+      JSON.stringify({ email: email.toLowerCase(), pass, nickName, context })
     );
     if (!response || !response.ok) {
       showError();
