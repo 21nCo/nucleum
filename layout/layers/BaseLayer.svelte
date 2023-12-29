@@ -7,10 +7,9 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
+    userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
-  import { dev } from "$app/environment";
-  import { inject } from "@vercel/analytics";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
   import { AppEvent } from "$lib/tidy/types/event.enum";
@@ -24,7 +23,8 @@
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { pingParent, postToParent } from "$lib/tidy/utils/embed.utils";
+  import { pingParent } from "$lib/tidy/utils/embed.utils";
+  import AnalyticsLayer from "./AnalyticsLayer.svelte";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -35,10 +35,32 @@
     appEvents.publish(AppEvent.WINDOW_CLICKED, event);
   };
   let timer: any;
+  let isAnalyticsIdentifiersMapped = false;
   pingParent();
   bootup();
   onMount(async () => {
     await initializeData();
+    if (
+      $appStore?.appData?.isAnalyticsEnabled &&
+      $userPreferences?.isAnonymousAnalyticsEnabled
+    ) {
+      const host = "dev.pointron.io"; //window.location.host;
+      const gaTag =
+        $appStore.appData?.gaTag ??
+        $appStore.appData?.gaTags?.find((ga: any) => ga.host === host)?.tag;
+      if (gaTag) {
+        localStorage.setItem("gaTag", gaTag);
+      }
+      const clarityTag =
+        $appStore.appData?.clarityTag ??
+        $appStore.appData?.clarityTags?.find(
+          (clarity: any) => clarity.host === host
+        )?.tag;
+      if (clarityTag) {
+        localStorage.setItem("clarityTag", clarityTag);
+      }
+      isAnalyticsIdentifiersMapped = true;
+    }
     const appEventSub = appEvents.subscribe(windowVisibilityHandler);
     return () => {
       appEventSub();
@@ -71,7 +93,6 @@
     addWindowEventListeners();
     runCurrentTime();
     windowObject.setCurrentPath(window.location.pathname);
-    inject({ mode: dev ? "development" : "production" });
   }
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
@@ -124,6 +145,9 @@
   }
 </script>
 
+{#if $appStore?.appData?.isAnalyticsEnabled && isAnalyticsIdentifiersMapped}
+  <AnalyticsLayer />
+{/if}
 <title>{$appStore.appData.name}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>

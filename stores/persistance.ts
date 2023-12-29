@@ -69,11 +69,9 @@ export class Persistance {
   refreshToken = async () => {
     try {
       const token = localStorage.getItem("refresh-token");
-      const response = await performApiCall(
-        "account/refreshToken",
-        "POST",
-        JSON.stringify({ token })
-      );
+      const response = await performApiCall("account/refreshToken", "POST", {
+        token,
+      });
       if (!response?.ok) {
         return;
       }
@@ -93,7 +91,7 @@ export class Persistance {
       const response = await performApiCall(
         "account/updateDefinitions",
         "POST",
-        JSON.stringify({ token })
+        { token }
       );
       if (!response?.ok) {
         return;
@@ -106,7 +104,7 @@ export class Persistance {
   };
   ping = async () => {
     try {
-      const response = await performApiCall("account/ping", "POST");
+      const response = await performApiCall("account/ping", "POST", {});
       console.log({ response });
       if (!response?.ok) {
         return;

@@ -7,6 +7,7 @@ import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
 import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
 import { postToParent } from "./embed.utils";
+import { detectTimeZone } from "./time.utils";
 
 export function onInterval(
   callback: () => void,
@@ -200,11 +201,23 @@ export function getAssociatedPlayerFromPath(path: string) {
   }
   return player;
 }
+export function getAppLoadContext() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return {
+    userAgent: navigator.userAgent,
+    host: window.location.host,
+    href: window.location.href,
+    timezone: detectTimeZone(),
+    geo: null,
+    referrer: document.referrer,
+    urlParams: Object.fromEntries(urlParams.entries()),
+  };
+}
 
 export function performApiCall(
   endpoint: string,
   method: string,
-  body: string = ""
+  body: any = {}
 ) {
   const token = localStorage?.getItem("surreal-token");
   return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
@@ -213,7 +226,7 @@ export function performApiCall(
       "Content-Type": "application/json",
       Authorization: "Bearer " + token,
     },
-    body: body,
+    body: JSON.stringify({ ...body, context: getAppLoadContext() }),
   });
 }
 export function performBlankApiCall(

@@ -388,6 +388,7 @@ const seedUserPreferences: UserGlobalPreferences = {
   timeScales: [TimeScale.DAYS, TimeScale.MONTHS, TimeScale.YEARS],
   timeFormat: "meridian",
   timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
+  isAnonymousAnalyticsEnabled: true,
   colorScheme: {
     label: "dracula",
     theme: "clean",
@@ -433,6 +434,8 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
     subscribe,
     loadFromCloud: (data: UserGlobalPreferences) => {
       if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
+      if (data.isAnonymousAnalyticsEnabled === undefined)
+        data.isAnonymousAnalyticsEnabled = true;
       set(data);
       persistLocally(Item.UserPreferences, data);
     },

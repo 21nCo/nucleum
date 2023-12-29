@@ -10,6 +10,7 @@ export type UserGlobalPreferences = {
   dayStartMinute: number;
   tempColorScheme: string;
   accessibilitySizingFactor: number;
+  isAnonymousAnalyticsEnabled: boolean;
   timeFormat: string;
   timeZoneOffset: number;
   timeScales?: TimeScale[];

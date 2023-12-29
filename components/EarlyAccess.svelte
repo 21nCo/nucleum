@@ -17,11 +17,10 @@
     } else {
       error = null;
     }
-    let response = await performApiCall(
-      "subscribe",
-      "POST",
-      JSON.stringify({ email, context: "earlyaccess" })
-    );
+    let response = await performApiCall("subscribe", "POST", {
+      email,
+      context: "earlyaccess",
+    });
     if (response && response.ok) {
       let jsonValue = await response.json();
       if (jsonValue && !jsonValue.error) {
