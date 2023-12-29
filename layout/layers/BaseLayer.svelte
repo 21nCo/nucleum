@@ -20,6 +20,7 @@
     performRedirectionChecks,
     runBackendUpdate,
     performLoginStatusCheck,
+    ping,
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
@@ -56,7 +57,10 @@
           )
         ) {
           let isValid = await performLoginStatusCheck();
-          if (isValid) await checkForUpdates();
+          if (isValid) {
+            await checkForUpdates();
+            await ping();
+          }
         }
         pingParent(true);
       }
@@ -82,6 +86,7 @@
       if (isProceed) {
         let result = await checkForUpdates(currentVersion);
         if (!result) await runBackendUpdate();
+        else await ping();
       }
     }
   }

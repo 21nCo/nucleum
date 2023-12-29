@@ -93,6 +93,10 @@ export async function runBackendUpdate() {
   console.log("running backend update");
   return new Persistance().updateDefinitions();
 }
+export async function ping() {
+  console.log("pinging");
+  return new Persistance().ping();
+}
 
 function runClientUpdate() {
   console.log("running client update");

@@ -104,6 +104,19 @@ export class Persistance {
       appStore.logError(err);
     }
   };
+  ping = async () => {
+    try {
+      const response = await performApiCall("account/ping", "POST");
+      console.log({ response });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return isValidArray(data);
+    } catch (err) {
+      appStore.logError(err);
+    }
+  };
   getLatestAppVersion = async (app: string) => {
     try {
       let response = await performBlankApiCall(
