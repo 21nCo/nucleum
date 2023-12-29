@@ -28,7 +28,7 @@
     "flex flex-row gap-2 justify-center items-center min-w-fit " +
     (style === ButtonStyle.ROUNDED || size === Size.xs
       ? " rounded-full"
-      : " rounded-full") +
+      : " rounded-md") +
     ` ${width} `;
   onMount(() => {
     hideToolTip();

@@ -64,6 +64,9 @@
   import Adjustments from "../icons/Adjustments.svelte";
   import Pip from "../icons/Pip.svelte";
   import Zen from "../icons/Zen.svelte";
+  import Envelope from "../icons/Envelope.svelte";
+  import Youtube from "../branding/external/logos/Youtube.svelte";
+  import Google from "../branding/external/logos/Google.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -87,6 +90,7 @@
       icon == "pip" ||
       icon == "logout" ||
       icon == "link" ||
+      icon == "google" ||
       icon?.includes("-mini")
         ? IconVariant.Solid
         : IconVariant.Outline;
@@ -300,6 +304,12 @@
         <Adjustments {variant} orientation={Orientation.Vertical} />
       {:else if icon === "adjustments-horizontal"}
         <Adjustments {variant} orientation={Orientation.Horizontal} />
+      {:else if icon === "envelope" || icon === "mail"}
+        <Envelope {variant} />
+      {:else if icon === "google"}
+        <Google />
+      {:else if icon === "youtube"}
+        <Youtube />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

@@ -7,7 +7,7 @@
 </script>
 
 <div class="flex gap-2 items-center">
-  <div class="text-fgs2 min-w-fit text-left">{label}</div>
+  <div class="text-fgs1 min-w-fit text-left">{label}</div>
   {#if info && info.body}
     <InfoText {info} />
   {/if}

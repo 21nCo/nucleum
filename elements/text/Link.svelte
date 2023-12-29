@@ -7,7 +7,7 @@
 </script>
 
 <a
-  class="relative hover:text-a1 {feedback === 'underline'
+  class="relative hover:text-a1 underline {feedback === 'underline'
     ? 'hover:underline'
     : ''}"
   {href}

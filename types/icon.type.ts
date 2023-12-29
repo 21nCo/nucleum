@@ -3,6 +3,7 @@ export enum IconVariant {
   Solid = "solid",
   Duotone = "duotone",
   Mini = "mini",
+  Micro = "micro",
 }
 
 export enum BellIconVariant {

@@ -348,32 +348,34 @@ function initAppStore(seed: AppStore) {
 
 const userPreferencesId = "Preferences:global";
 export const defaultColorSchemeColors = {
-  a1: "hsl(244 68.07% 76.67%)",
-  a2: "hsl(0 28.38% 55.10%)",
-  ag: "hsl(68 100% 30%)",
-  ar: "hsl(1 71% 52%)",
-  bga1s1: "",
-  bga1s2: "",
-  bga2s1: "",
-  bga2s2: "",
-  bgs1: "hsl(231.43 14.89% 18.43%)",
-  bgs2: "hsl(230 14.75% 23.92%)",
-  bgs3: "hsl(231.72 14.43% 39.41%)",
-  bgs4: "hsl(231.67 14.40% 50.98%)",
-  bgs5: "hsl(192 71% 25%)",
-  brs1: "hsl(192 95% 13%)",
-  brs2: "hsl(192 95% 17%)",
-  brs3: "hsl(192 65% 22%)",
-  fgs1: "hsl(0 0% 97.65%)",
-  fgs2: "hsl(0 0% 78.04%)",
-  fgs3: "hsl(0 0% 67.84%)",
-  fgs4: "hsl(0 0% 58.04%)",
+  bgs1: "hsl(228 26% 11%)",
+  bgs2: "hsl(229 19% 18%)",
+  bgs3: "hsl(229 19% 23%)",
+  bgs4: "hsl(229 14% 29%)",
+  fgs1: "hsl(0 0% 95%)",
+  fgs2: "hsl(0 0% 79%)",
+  fgs3: "hsl(0 0% 81%)",
+  fgs4: "hsl(0 0% 79%)",
+  a1: "hsl(217 72% 52%)",
+  aps1: "hsl(217 72% 52%)",
+  aps2: "hsl(217 59% 89%)",
+  a2: "hsl(0 28% 55%)",
+  ass1: "hsl(0 28% 55%)",
+  ass2: "hsl(0 28% 80%)",
+  ars1: "hsl(0 89% 71%)",
+  ars2: "hsl(0 89% 90%)",
+  ags1: "hsl(151 45% 53%)",
+  ags2: "hsl(151 45% 85%)",
+  brs1: "hsl(228 26% 15%)",
+  brs2: "hsl(229 19% 21%)",
+  brs3: "hsl(229 19% 25%)",
+  brs4: "hsl(229 19% 28%)",
 };
 
 const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
 
 export const tailwindTheme = writable<string>(
-  locallySyncedTailwindTheme || "clean cs_dracula"
+  locallySyncedTailwindTheme || "clean cs_tidigit_dark_blue"
 );
 
 const seedUserPreferences: UserGlobalPreferences = {
@@ -390,12 +392,12 @@ const seedUserPreferences: UserGlobalPreferences = {
   timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
   isAnonymousAnalyticsEnabled: true,
   colorScheme: {
-    label: "dracula",
+    label: "tidy blue",
     theme: "clean",
-    isDark: false,
-    isDarkVariantTwo: false,
+    isDark: true,
+    isDarkVariantTwo: true,
     colors: defaultColorSchemeColors,
-    tailwindSelector: "cs_dracula",
+    tailwindSelector: "cs_tidigit_dark_blue",
     id: generateUID(),
   },
   uiStates: {

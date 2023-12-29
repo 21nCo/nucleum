@@ -10,6 +10,7 @@
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
   import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -75,7 +76,7 @@
     actionInProgress = false;
   }
   function isValidSignupData() {
-    if (!email || !pass || !confirmPass) {
+    if (!email || !pass) {
       showError("Please fill all the fields.");
       return false;
     }
@@ -83,10 +84,10 @@
       showError("Please enter a valid email address.");
       return false;
     }
-    if (pass !== confirmPass) {
-      showError("Passwords do not match.");
-      return false;
-    }
+    // if (pass !== confirmPass) {
+    //   showError("Passwords do not match.");
+    //   return false;
+    // }
     if (!isValidPasswordChoice()) return;
     return true;
   }
@@ -134,7 +135,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-8 justify-center items-center">
+<div class="flex flex-col gap-8 justify-center items-center" transition:fade>
   {#if isSignup}
     <div class="flex flex-col gap-4 w-80 md:w-96 px-4">
       <TextInput
@@ -155,7 +156,7 @@
       /> -->
       <TextInput
         bind:value={email}
-        label="Email address"
+        label="Email"
         isRequired={true}
         infoParams={{
           body:
@@ -172,16 +173,16 @@
         placeholder="********"
         info="Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
       />
-      <TextInput
+      <!-- <TextInput
         bind:value={confirmPass}
         label="Confirm Password"
         type="password"
         isRequired={true}
         placeholder="********"
-      />
+      /> -->
     </div>
   {:else}
-    <div class="flex flex-col gap-4 w-80 px-4">
+    <div class="flex flex-col gap-4 w-80 md:w-96 px-4">
       <TextInput
         bind:value={email}
         label="Email address"
@@ -195,7 +196,7 @@
         isRequired={true}
         placeholder="********"
       />
-      <div class="w-full flex justify-end">
+      <div class="w-full flex justify-end text-b3">
         <Link href="forgot-password" label="Forgot password?" />
       </div>
       <button
@@ -210,24 +211,32 @@
     </div>
   {/if}
   <InlineErrorMessage bind:error />
-  <div class="flex gap-2">
+  <div class="flex flex-col gap-4">
     <Button
+      width="w-full"
+      icon="mail"
       label={isSignup
         ? actionInProgress
           ? "Signing up..."
-          : "Signup"
+          : "Sign up using email"
         : actionInProgress
           ? "Signing in..."
-          : "Signin"}
+          : "Sign in using email"}
       type="primary"
       isDisabled={actionInProgress}
       on:click={isSignup ? onSignupClicked : onSinginClicked}
     />
+    <div class="w-full flex justify-center text-fgs2 text-b3">or</div>
     <Button
+      width="w-full"
+      icon="google"
+      label={isSignup ? "Sign up using Google" : "Sign in usign Google"}
+    />
+    <!-- <Button
       label="{isSignup ? 'Signin' : 'Signup'} instead"
       on:click={() => {
         isSignup = !isSignup;
       }}
-    />
+    /> -->
   </div>
 </div>
