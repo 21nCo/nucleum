@@ -9,7 +9,8 @@ const cs_tidigit_dark_blue = {
   fgs4: "hsl(0 0% 79%)",
   a1: "hsl(217 72% 52%)",
   aps1: "hsl(217 72% 52%)",
-  aps2: "hsl(217 59% 89%)",
+  aps2: "hsl(217 59% 60%)",
+  aps3: "hsl(217 59% 75%)",
   a2: "hsl(0 28% 55%)",
   ass1: "hsl(0 28% 55%)",
   ass2: "hsl(0 28% 80%)",
@@ -33,7 +34,8 @@ const cs_tidigit_dark_red = {
   fgs4: "hsl(0 0% 79%)",
   a1: "hsl(0 72% 64%)",
   aps1: "hsl(0 72% 64%)",
-  aps2: "hsl(358 57% 89%)",
+  aps2: "hsl(0 72% 70%)",
+  aps3: "hsl(358 57% 80%)",
   a2: "hsl(0 28% 55%)",
   ass1: "hsl(0 28% 55%)",
   ass2: "hsl(0 28% 80%)",
@@ -83,7 +85,8 @@ const cs_tidigit_dark_iris = {
   fgs4: "hsl(0 0% 79%)",
   a1: "hsl(239 55% 58%)",
   aps1: "hsl(239 55% 58%)",
-  aps2: "hsl(245 59% 89%)",
+  aps2: "hsl(245 57% 88%)",
+  aps3: "hsl(229 35% 88%)",
   a2: "hsl(0 28% 55%)",
   ass1: "hsl(0 28% 55%)",
   ass2: "hsl(0 28% 80%)",
@@ -182,7 +185,7 @@ const cs_tidigit_light_blue = {
 };
 
 const cs_tidigit_light_iris = {
-  bgs1: "hsl(0 0% 100%)",
+  bgs1: "hsl(45 17% 95%)",
   bgs2: "hsl(0 0% 98%)",
   bgs3: "hsl(0 0% 92%)",
   bgs4: "hsl(0 0% 88%)",

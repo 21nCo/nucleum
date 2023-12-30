@@ -17,6 +17,7 @@ import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
+import colorSchemes from "$lib/tidy/theme/colorschemes.json";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
@@ -34,7 +35,6 @@ import type {
   Toast,
 } from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
-import type { ButtonParams } from "../types/button.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -243,7 +243,7 @@ export const appStore = initAppStore({
   appData: defaultAppData,
   appConstants: {
     themes,
-    colorSchemes: [],
+    colorSchemes,
     tempColorSchemes,
     selectableColorParams,
   },
@@ -260,7 +260,6 @@ function initAppStore(seed: AppStore) {
     initiatizeAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
-        n.appConstants.colorSchemes = appData.colorschemes;
         return n;
       });
     },
@@ -347,41 +346,15 @@ function initAppStore(seed: AppStore) {
 }
 
 const userPreferencesId = "Preferences:global";
-export const defaultColorSchemeColors = {
-  bgs1: "hsl(228 26% 11%)",
-  bgs2: "hsl(229 19% 18%)",
-  bgs3: "hsl(229 19% 23%)",
-  bgs4: "hsl(229 14% 29%)",
-  fgs1: "hsl(0 0% 95%)",
-  fgs2: "hsl(0 0% 79%)",
-  fgs3: "hsl(0 0% 81%)",
-  fgs4: "hsl(0 0% 79%)",
-  a1: "hsl(217 72% 52%)",
-  aps1: "hsl(217 72% 52%)",
-  aps2: "hsl(217 59% 89%)",
-  a2: "hsl(0 28% 55%)",
-  ass1: "hsl(0 28% 55%)",
-  ass2: "hsl(0 28% 80%)",
-  ars1: "hsl(0 89% 71%)",
-  ars2: "hsl(0 89% 90%)",
-  ags1: "hsl(151 45% 53%)",
-  ags2: "hsl(151 45% 85%)",
-  brs1: "hsl(228 26% 15%)",
-  brs2: "hsl(229 19% 21%)",
-  brs3: "hsl(229 19% 25%)",
-  brs4: "hsl(229 19% 28%)",
-};
-
 const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
-
 export const tailwindTheme = writable<string>(
   locallySyncedTailwindTheme || "clean cs_tidigit_dark_blue"
 );
+const defaultColorSchemeId = "colorscheme:cleantidydarkblue";
 
 const seedUserPreferences: UserGlobalPreferences = {
   id: userPreferencesId,
   nickName: "",
-  theme: AppTheme.Clean,
   dayStartHour: 0,
   dayStartMinute: 0,
   birthday: new Date(),
@@ -391,15 +364,9 @@ const seedUserPreferences: UserGlobalPreferences = {
   timeFormat: "meridian",
   timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
   isAnonymousAnalyticsEnabled: true,
-  colorScheme: {
-    label: "tidy blue",
-    theme: "clean",
-    isDark: true,
-    isDarkVariantTwo: true,
-    colors: defaultColorSchemeColors,
-    tailwindSelector: "cs_tidigit_dark_blue",
-    id: generateUID(),
-  },
+  colorScheme:
+    colorSchemes.find((cs) => cs.id == defaultColorSchemeId) ?? colorSchemes[0],
+  theme: AppTheme.Clean,
   uiStates: {
     all: {
       isOnboardingComplete: false,
@@ -460,6 +427,17 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
       // });
       set(newValue);
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
+    },
+    setTheme: (theme: AppTheme, colorScheme: string) => {
+      const colorSchemes = get(appStore).appConstants.colorSchemes;
+      let cs = colorSchemes.find((cs) => cs.id == colorScheme);
+      if (!cs) cs = colorSchemes[0];
+      console.log("setting theme", { theme, cs });
+      set({
+        ...get(userPreferences),
+        theme,
+        colorScheme: cs,
+      });
     },
   };
 }

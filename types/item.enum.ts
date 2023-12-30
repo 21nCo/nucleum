@@ -4,6 +4,7 @@ export enum GlobalItem {
   ALL = "ALL",
   UserPreferences = "UserPreferences",
   UserLocalPreferences = "UserLocalPreferences",
+  TailwindTheme = "TailwindTheme",
 }
 
 export const Item = {

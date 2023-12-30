@@ -23,3 +23,9 @@ export enum ButtonVariant {
   DARK = "dark",
   LINK = "link",
 }
+
+export enum LinkVariant {
+  DEFAULT = "default",
+  INLINE = "inline",
+  ARROW = "arrow",
+}
