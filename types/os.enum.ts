@@ -4,4 +4,5 @@ export enum OS {
   IOS = "IOS",
   ANDROID = "ANDROID",
   OTHER = "OTHER",
+  MOBILE_RESOLVER = "RESOLVER",
 }

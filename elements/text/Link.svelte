@@ -7,6 +7,7 @@
   export let feedback: string = "arrow";
   export let isSameTab: boolean = false;
   let isHovering: boolean = false;
+  if (!href?.includes("http")) isSameTab = true;
 </script>
 
 <a

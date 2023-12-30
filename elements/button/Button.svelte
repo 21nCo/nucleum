@@ -22,10 +22,10 @@
   let buttonRef: any;
   let isHovered: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
-  $: if (!label && icon && style == ButtonStyle.DEFAULT)
-    style = ButtonStyle.PLAIN;
+  // $: if (!label && icon && style == ButtonStyle.DEFAULT)
+  //   style = ButtonStyle.PLAIN;
   let classList =
-    "flex flex-row gap-2 justify-center items-center min-w-fit " +
+    "flex flex-row justify-center items-center min-w-fit " +
     (style === ButtonStyle.ROUNDED || size === Size.xs
       ? " rounded-full"
       : " rounded-md") +
@@ -35,37 +35,37 @@
     if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
-          classList += " text-h2";
+          classList += " gap-8 text-h2";
           break;
         case Size.lg:
-          classList += " text-h5";
+          classList += " gap-6 text-h5";
           break;
         case Size.md:
-          classList += " text-b1";
+          classList += " gap-4 text-b1";
           break;
         case Size.sm:
-          classList += " text-b2";
+          classList += " gap-2 text-b2";
           break;
         case Size.xs:
-          classList += " text-xs";
+          classList += " gap-1 text-xs";
           break;
       }
     } else {
       switch (size) {
         case Size.xl:
-          classList += " text-h2";
+          classList += " gap-8 text-h2";
           break;
         case Size.lg:
-          classList += " text-h5";
+          classList += " gap-6 text-h5";
           break;
         case Size.md:
-          classList += " text-base";
+          classList += " gap-4 text-base";
           break;
         case Size.sm:
-          classList += " text-b2";
+          classList += " gap-2 text-b2";
           break;
         case Size.xs:
-          classList += " text-xs";
+          classList += " gap-1 text-xs";
           break;
       }
     }

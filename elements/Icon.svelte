@@ -67,6 +67,7 @@
   import Envelope from "../icons/Envelope.svelte";
   import Youtube from "../branding/external/logos/Youtube.svelte";
   import Google from "../branding/external/logos/Google.svelte";
+  import Apple from "../branding/external/logos/Apple.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -91,6 +92,7 @@
       icon == "logout" ||
       icon == "link" ||
       icon == "google" ||
+      icon == "apple" ||
       icon?.includes("-mini")
         ? IconVariant.Solid
         : IconVariant.Outline;
@@ -310,6 +312,8 @@
         <Google />
       {:else if icon === "youtube"}
         <Youtube />
+      {:else if icon === "apple"}
+        <Apple />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

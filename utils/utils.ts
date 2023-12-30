@@ -163,6 +163,11 @@ export function resolveComponentFromPath(path: string) {
 }
 
 export function openLink(url: string) {
+  if (!url) return;
+  if (!url.includes("http")) {
+    windowObject.gotoPath(url);
+    return;
+  }
   if (get(appStore).launchContext == LaunchContext.EMBED) {
     postToParent({
       link: url,
