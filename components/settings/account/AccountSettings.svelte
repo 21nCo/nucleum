@@ -5,6 +5,7 @@
   import AccountForm from "./AccountForm.svelte";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
   import type { EmailParts } from "$lib/tidy/types/account.type";
+  import { ButtonVariant } from "$lib/tidy/types/button.type";
   let nickName = "";
   let emailParts: EmailParts | undefined = undefined;
   onMount(() => {
@@ -42,9 +43,18 @@
     <div class="flex justify-center w-full gap-4">
       <!-- <Button label="Update" on:click={onUpdateClicked} /> -->
       <Button
+        icon="logout"
         label="Sign out"
         on:click={() => {
           account.signOut();
+        }}
+      />
+      <Button
+        icon="trash"
+        label="Delete account"
+        type={ButtonVariant.DANGER}
+        on:click={() => {
+          account.delete();
         }}
       />
     </div>

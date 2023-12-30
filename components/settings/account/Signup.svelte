@@ -7,7 +7,19 @@
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { fade, slide } from "svelte/transition";
   import Link from "$lib/tidy/elements/text/Link.svelte";
+  import { page } from "$app/stores";
   let isSignup = true;
+  let message: string | undefined = undefined;
+  let messageParam = $page.url.searchParams.get("msg");
+  if (messageParam) {
+    if (messageParam === "deleted") {
+      message = "Your account has been deleted.";
+    } else if (messageParam === "signedout") {
+      message = "You have been signed out.";
+    } else if (messageParam === "expired") {
+      message = "Your session has expired. Please login again.";
+    }
+  }
   onMount(() => {
     const sub = account.subscribe((value) => {
       if (value.isLoggedIn) {
@@ -43,6 +55,11 @@
         }}
       />
     </div>
+    {#if message}
+      <div class="font-medium px-4 text-center text-fgs2 text-b2">
+        {message}
+      </div>
+    {/if}
     <div class="h-4/5">
       <AccountForm {isSignup} />
     </div>

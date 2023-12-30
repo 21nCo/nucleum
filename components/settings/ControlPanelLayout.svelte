@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    account,
     appStore,
     userPreferences,
     windowObject,
@@ -20,6 +21,7 @@
   import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   import Panel from "$lib/tidy/layout/paint/Panel.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   $: isCpHome = $page?.url.pathname === "/cp";
   let cpConfiguration: any;
   let color = retrieveCurrentColors($userPreferences)?.a1;
@@ -76,6 +78,16 @@
             />
           {/each}
         {/if}
+        <div class="flex w-full justify-center">
+          <Button
+            width="w-2/5"
+            icon="logout"
+            label="Sign out"
+            on:click={() => {
+              account.signOut();
+            }}
+          />
+        </div>
         <ProductInfoFooter />
       </div>
       <slot name="right" slot="right">

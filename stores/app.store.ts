@@ -1,6 +1,10 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
 import { get, writable } from "svelte/store";
-import { generateUID, resolveComponentFromPath } from "$lib/tidy/utils/utils";
+import {
+  generateUID,
+  performApiCall,
+  resolveComponentFromPath,
+} from "$lib/tidy/utils/utils";
 import {
   AppTheme,
   type selectableColorParams,
@@ -35,6 +39,7 @@ import type {
   Toast,
 } from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
+import { ButtonVariant } from "../types/button.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -536,9 +541,32 @@ function initAccount(seed: UserAccount) {
       localStorage.removeItem("surreal-token");
       localStorage.removeItem("userInfo");
       localStorage.removeItem("isOnboardingComplete");
+      windowObject.gotoPath("/signup?msg=signedout");
     },
     signIn: signin,
     expire,
+    delete: () => {
+      //todo - delete account
+      confirmationNotification.notify({
+        isShow: true,
+        title: "Account deletion confirmation",
+        message: "Are you sure you want to delete your account?",
+        confirmAction: {
+          label: "Delete",
+          variant: ButtonVariant.DANGER,
+          callback: () => {
+            account.confirmDelete();
+          },
+        },
+      });
+    },
+    confirmDelete: async () => {
+      let acc = get(account);
+      await performApiCall("account/delete", "POST", { id: acc.userId });
+      console.log("deleting account", { acc });
+      account.signOut();
+      windowObject.gotoPath("/signup?msg=deleted");
+    },
   };
 }
 

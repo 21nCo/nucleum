@@ -22,8 +22,8 @@
   let buttonRef: any;
   let isHovered: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
-  // $: if (!label && icon && style == ButtonStyle.DEFAULT)
-  //   style = ButtonStyle.PLAIN;
+  $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
+    style = ButtonStyle.PLAIN;
   let classList =
     "flex flex-row justify-center items-center min-w-fit " +
     (style === ButtonStyle.ROUNDED || size === Size.xs
@@ -35,13 +35,13 @@
     if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
-          classList += " gap-8 text-h2";
+          classList += " gap-6 text-h2";
           break;
         case Size.lg:
-          classList += " gap-6 text-h5";
+          classList += " gap-4 text-h5";
           break;
         case Size.md:
-          classList += " gap-4 text-b1";
+          classList += " gap-2 text-b1";
           break;
         case Size.sm:
           classList += " gap-2 text-b2";
@@ -53,13 +53,13 @@
     } else {
       switch (size) {
         case Size.xl:
-          classList += " gap-8 text-h2";
+          classList += " gap-6 text-h2";
           break;
         case Size.lg:
-          classList += " gap-6 text-h5";
+          classList += " gap-4 text-h5";
           break;
         case Size.md:
-          classList += " gap-4 text-base";
+          classList += " gap-2 text-base";
           break;
         case Size.sm:
           classList += " gap-2 text-b2";
@@ -145,9 +145,11 @@
       color={type === "primary" &&
       !$userPreferences.colorScheme.isDarkVariantTwo
         ? currentColors.bgs1
-        : isHovered
+        : isHovered && type == "secondary"
           ? currentColors.a1
-          : currentColors.fgs2}
+          : type === "secondary"
+            ? currentColors.fgs2
+            : currentColors.fgs1}
       selectionStyle={type === "primary"
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND
         : SelectionItemActiveStyle.NONE}
