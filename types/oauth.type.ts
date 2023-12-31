@@ -31,3 +31,15 @@ export enum IdentityProvider {
   Substack = "substack.com",
   Unknown = "unknown",
 }
+
+export type OAuthProviderConfig = {
+  provider: IdentityProvider;
+  client_id: string;
+  scope: string;
+  authorise_url: string;
+  oauth_slug: string;
+  token_url?: string;
+  userdata_url?: string;
+  accept_format?: string;
+  authority?: string;
+};

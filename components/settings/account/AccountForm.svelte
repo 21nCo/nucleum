@@ -6,7 +6,9 @@
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { account, appStore } from "$lib/tidy/stores/app.store";
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
+  import { IdentityProvider } from "$lib/tidy/types/oauth.type";
   import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
+  import { initiateOAuth2Flow } from "$lib/tidy/utils/oauth.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
   import { performApiCall } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
@@ -14,7 +16,6 @@
   export let isSignup = false;
   let email = "";
   let pass = "";
-  let confirmPass = "";
   let nickName = "";
   let error: string | null = null;
   let isTrusted = false;
@@ -230,7 +231,10 @@
     <Button
       width="w-full"
       icon="google"
-      label={isSignup ? "Sign up using Google" : "Sign in usign Google"}
+      label="Continue using Google"
+      on:click={() => {
+        initiateOAuth2Flow(IdentityProvider.Google);
+      }}
     />
     <!-- <Button
       label="{isSignup ? 'Signin' : 'Signup'} instead"

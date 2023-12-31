@@ -3,7 +3,7 @@
   import Link from "$lib/tidy/icons/Link.svelte";
   import Web from "$lib/tidy/icons/Web.svelte";
   import Phone from "$lib/tidy/icons/Phone.svelte";
-  import { IdentityProvider } from "$lib/tidy/types/identityprovider.type";
+  import { IdentityProvider } from "$lib/tidy/types/oauth.type";
   import Behance from "./logos/Behance.svelte";
   import Dribbble from "./logos/Dribbble.svelte";
   import FiveHundredPx from "./logos/FiveHundredPx.svelte";

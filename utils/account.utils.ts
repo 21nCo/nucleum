@@ -32,7 +32,7 @@ export async function performLoginStatusCheck() {
   }
   isSessionExpiredOrRefreshing = await checkIfSessionExpired();
   if (isSessionExpiredOrRefreshing) {
-    windowObject.gotoPath("/expired");
+    windowObject.gotoPath("/signup?msg=expired");
     return false;
   } else return true;
 }

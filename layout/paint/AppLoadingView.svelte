@@ -15,9 +15,14 @@
     {#if $appStore.embedContext == EmbedContext.SHEET}
       <div class="text-fgs2">Loading...</div>
     {:else}
-      <!-- <div class="line bg-fgs1 w-[2px] h-[2.5rem]" />
-      <div class="circle bg-fgs1 w-[2.25rem] h-[2.25rem] rounded-full" /> -->
-      <SubAtomLogo subatom="pointron" isDark={true} />
+      <div class="flex flex-col items-center">
+        <SubAtomLogo subatom="pointron" isDark={true} />
+        {#if message}
+          <div class="font-medium px-4 text-center text-fgs2 text-b4">
+            {message}
+          </div>
+        {/if}
+      </div>
     {/if}
   </div>
 </div>

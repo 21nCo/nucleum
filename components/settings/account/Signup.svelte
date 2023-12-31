@@ -5,9 +5,9 @@
   import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
   import PanelSwitcher from "$lib/tidy/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { fade, slide } from "svelte/transition";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { page } from "$app/stores";
+  import { LinkVariant } from "$lib/tidy/types/button.type";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -68,11 +68,13 @@
         <div class="text-b3 text-fgs2 text-center">
           By signing up, you agree to our <Link
             href={$appStore.appData?.urls?.terms}
+            variant={LinkVariant.INLINE}
             label="Terms of Service"
           />
           and
           <Link
             href={$appStore.appData?.urls?.privacypolicy}
+            variant={LinkVariant.INLINE}
             label="Privacy Policy"
           />.
         </div>

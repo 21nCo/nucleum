@@ -73,6 +73,7 @@
   async function windowVisibilityHandler(e: AppEventType) {
     if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
       if (e.value && !document?.hidden) {
+        console.log("performing redirection checks", $windowObject.currentPath);
         if (
           !excludedPathsForRedirectionCheck.includes(
             $windowObject.currentPath.split("/")[1]

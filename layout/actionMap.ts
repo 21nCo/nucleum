@@ -16,7 +16,6 @@ import Offline from "../components/error/Offline.svelte";
 import AboutSettings from "../components/settings/about/AboutSettings.svelte";
 import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
-import SessionExpired from "../components/error/SessionExpired.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
 import ComingSoonView from "../elements/ComingSoonView.svelte";
 import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
@@ -28,11 +27,6 @@ export const actions: Action[] = [
   {
     action: "offline",
     component: Offline,
-  },
-  {
-    action: "expired",
-    component: SessionExpired,
-    isMenuHidden: true,
   },
   {
     action: "signup",

@@ -10,27 +10,9 @@
     }
   },
   {
-    "bgs1": "hsl(0 0% 100%)",
-    "bgs2": "hsl(0 4% 97%)",
-    "bgs3": "hsl(0 4% 93%)",
-    "bgs4": "hsl(0 4% 90%)",
-    "bgs5": "hsl(0 4% 87%)",
-    "fgs1": "hsl(0 0% 20%)",
-    "fgs2": "hsl(0 0% 33%)",
-    "fgs3": "hsl(0 0% 50%)",
-    "fgs4": "hsl(0 0% 65%)",
-    "ars1": "hsl(0 89% 71%)",
-    "ars2": "hsl(0 89% 90%)",
-    "ags1": "hsl(151 45% 53%)",
-    "ags2": "hsl(151 45% 85%)",
-    "a1": "hsl(0 72% 64%)",
-    "aps1": "hsl(0 72% 64%)",
-    "aps2": "hsl(358 57% 89%)",
-    "a2": "hsl(0 28% 55%)",
-    "ass1": "hsl(0 28% 55%)",
-    "ass2": "hsl(0 28% 80%)",
-    "brs1": "hsl(0 4% 97%)",
-    "brs2": "hsl(0 4% 95%)",
-    "brs3": "hsl(0 4% 90%)"
+    "clientId": "1092091388619-kmn6g50sc29k8gn0tck4pe9jko4jejs0.apps.googleusercontent.com",
+    "scope": "openid profile email",
+    "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+    "slug": "google"
   }
 ]
