@@ -11,14 +11,15 @@
     type TextType,
     ListType,
   } from "$lib/tidy/types/md.type";
-  import { mdContentChangeEvent, mdStore } from "../markdown.store";
+  import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
-  import Block from "../Block.svelte";
   const dispatch = createEventDispatcher();
+  export let mdId: string;
   export let content: TextContent;
   export let id: string | undefined = undefined;
   export let context: BlockContext = BlockContext.DEFAULT;
+  const mdStore = getMdStore(mdId);
   let blockRef: any;
   let sizing = "";
   const defaultPlaceholder =
@@ -578,7 +579,7 @@
     <TextWithSpans content={spans} />
   </div>
 {/if}
-{#if !content.body}
+{#if !content.body && !$mdStore.params.isReadOnly}
   <button
     on:click={() => {
       blockRef.focus();

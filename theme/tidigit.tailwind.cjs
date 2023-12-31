@@ -205,9 +205,9 @@ const cs_tidigit_light_iris = {
   ars2: "hsl(0 89% 90%)",
   ags1: "hsl(151 45% 53%)",
   ags2: "hsl(151 45% 85%)",
-  brs1: "hsl(0 0% 97%)",
-  brs2: "hsl(0 0% 95%)",
-  brs3: "hsl(0 0% 90%)",
+  brs1: "hsl(45 17% 90%)",
+  brs2: "hsl(45 17% 85%)",
+  brs3: "hsl(45 17% 80%)",
 };
 
 const cs_tidigit_light = {

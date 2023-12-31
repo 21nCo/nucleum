@@ -7,7 +7,7 @@ import {
   MdContext,
   type MdParams,
   ListType,
-  type Markdown,
+  type BasicMarkdown,
 } from "$lib/tidy/types/md.type";
 import { deepCopy } from "$lib/tidy/utils/obj.utils";
 import { generateMarkdownText } from "$lib/tidy/utils/text.utils";
@@ -390,13 +390,22 @@ function initMdContentChangeEvent() {
   };
 }
 
+export const mdStores = new Map();
+
+export function getMdStore(id: string) {
+  if (!mdStores.has(id)) {
+    mdStores.set(id, initMarkdownStore());
+  }
+  return mdStores.get(id);
+}
+
 export const mdStore = initMarkdownStore();
 function initMarkdownStore() {
   const { subscribe, set, update } = writable<MdStore>(seedMdStore);
   return {
     subscribe,
     load(
-      md: NodeMarkdown | Markdown,
+      md: NodeMarkdown | BasicMarkdown,
       context: MdContext,
       params: MdParams | undefined = undefined
     ) {

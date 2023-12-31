@@ -3,20 +3,23 @@
     NodeMarkdown,
     MdContext,
     MdParams,
-    Markdown,
+    BasicMarkdown,
   } from "$lib/tidy/types/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
-  import { mdContentChangeEvent, mdStore } from "./markdown.store";
+  import { getMdStore, mdContentChangeEvent } from "./markdown.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  export let md: NodeMarkdown | Markdown;
+  import { generateUID } from "$lib/tidy/utils/utils";
+  export let md: NodeMarkdown | BasicMarkdown;
   export let context: MdContext;
   export let params: MdParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
+  const mdId = generateUID();
+  const mdStore = getMdStore(mdId);
   mdStore.load(md, context, params);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
@@ -55,11 +58,26 @@
           />
         </div>
       {/if}
+      {#if params?.actions?.includes("copyRaw")}
+        <div class="absolute top-0 right-0 z-40">
+          <Button
+            icon="copy"
+            tooltip="Copy raw md"
+            label="Copy raw md"
+            size={Size.xs}
+            {parentBackgroundIndex}
+            on:click={() => {
+              const rawMdJson = JSON.stringify($mdStore.blocks);
+              navigator.clipboard.writeText(rawMdJson);
+            }}
+          />
+        </div>
+      {/if}
     </div>
   </div>
   <div class="flex-grow w-full">
     {#each $mdStore.blocks as block (block.id)}
-      <Block {block} />
+      <Block {block} {mdId} />
     {/each}
   </div>
 </div>

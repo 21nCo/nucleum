@@ -68,6 +68,7 @@
   import Youtube from "../branding/external/logos/Youtube.svelte";
   import Google from "../branding/external/logos/Google.svelte";
   import Apple from "../branding/external/logos/Apple.svelte";
+  import VideoCamera from "../icons/VideoCamera.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -314,6 +315,8 @@
         <Youtube />
       {:else if icon === "apple"}
         <Apple />
+      {:else if icon === "video-camera"}
+        <VideoCamera {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

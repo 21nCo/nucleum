@@ -21,7 +21,7 @@ export type NodeMarkdown = {
   childrenHierarchy?: string[];
 };
 
-export type Markdown = {
+export type BasicMarkdown = {
   id: string;
   blocks: Block[];
 };

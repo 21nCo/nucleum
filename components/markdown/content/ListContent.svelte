@@ -3,17 +3,20 @@
     BlockContext,
     MdBlockType,
     type ListContent,
+    type Block,
   } from "$lib/tidy/types/md.type";
-  import { mdStore } from "../markdown.store";
+  import { getMdStore } from "../markdown.store";
   import BlockContent from "./BlockContent.svelte";
 
   import TextContent from "./TextContent.svelte";
+  export let mdId: string;
   export let content: ListContent;
   export let id: string | undefined = undefined;
+  const mdStore = getMdStore(mdId);
   function handleInsert(event: any) {
     console.log("insert", event.detail);
     const insertContextId = event.detail.id;
-    if ($mdStore.blocks.find((block) => block.id === insertContextId)) {
+    if ($mdStore.blocks.find((block: Block) => block.id === insertContextId)) {
       console.log("found in markdown");
       //TODO - handle if there are children to a list item - the children should move to the new list item when enter is pressed
       mdStore.insert(insertContextId, {
@@ -27,9 +30,12 @@
 </script>
 
 <div class="flex gap-2">
-  <div class="w-1.5 h-1.5 rounded-full bg-fgs1 my-4 mx-2"></div>
+  <div
+    class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full bg-fgs1 my-4 mx-2"
+  ></div>
   <div class="flex flex-col">
     <TextContent
+      {mdId}
       content={typeof content.body.content === "string"
         ? { body: content.body.content, type: MdBlockType.SIMPLE_TEXT }
         : content.body.content}
@@ -40,6 +46,7 @@
     {#if content.children && content.children.length > 0}
       {#each content.children as item (item)}
         <BlockContent
+          {mdId}
           content={item.content}
           id={item.id}
           context={BlockContext.LIST_CHILD}

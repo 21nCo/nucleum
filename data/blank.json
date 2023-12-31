@@ -8,11 +8,5 @@
       "twitter": "https://twitter.com/tidigit",
       "discord": "https://discord.com/invite/9HJqKYTZKg"
     }
-  },
-  {
-    "clientId": "1092091388619-kmn6g50sc29k8gn0tck4pe9jko4jejs0.apps.googleusercontent.com",
-    "scope": "openid profile email",
-    "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
-    "slug": "google"
   }
 ]

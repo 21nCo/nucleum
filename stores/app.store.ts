@@ -25,7 +25,6 @@ import colorSchemes from "$lib/tidy/theme/colorschemes.json";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
-import type { HapticFeedback } from "../types/haptic.enum";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";

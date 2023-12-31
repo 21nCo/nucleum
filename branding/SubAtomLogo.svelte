@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { appStore } from "../stores/app.store";
+  import { appStore, userPreferences } from "../stores/app.store";
   import { Size } from "../types/size.enum";
   export let subatom: string;
   export let size: Size = Size.md;
-  export let isDark = false;
+  export let isDark: boolean | undefined = undefined;
+  $: if (isDark === undefined) {
+    isDark = $userPreferences.colorScheme.isDark;
+  }
   let color = isDark ? "#FFFFFF" : "#393939";
   const defaults = [
     {
@@ -48,12 +51,14 @@
   let height = size === Size.md ? 61 : size === Size.sm ? 20 : Size.xs ? 4 : 61;
 </script>
 
-<svg
-  {height}
-  width={height}
-  viewBox="0 0 462 462"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
->
-  {@html logo}
-</svg>
+<button on:click>
+  <svg
+    {height}
+    width={height}
+    viewBox="0 0 462 462"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {@html logo}
+  </svg>
+</button>

@@ -6,6 +6,7 @@
   } from "$lib/tidy/types/md.type";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
+  export let mdId: string;
   export let content: BlockContent;
   export let id: string | undefined = undefined;
   export let context: BlockContext = BlockContext.DEFAULT;
@@ -20,8 +21,8 @@
       <div class="h-px bg-bgs4"></div>
     </div>
   {:else if content.type === MdBlockType.LIST}
-    <ListContent {content} {id} />
+    <ListContent {content} {id} {mdId} />
   {:else if "body" in content}
-    <TextContent {content} {id} {context} on:insert />
+    <TextContent {content} {id} {mdId} {context} on:insert />
   {/if}
 </div>

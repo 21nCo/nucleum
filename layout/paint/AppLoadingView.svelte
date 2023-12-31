@@ -2,10 +2,9 @@
 
 <script lang="ts">
   import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
-  import { appStore } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import { EmbedContext } from "$lib/tidy/types/appStore.type";
-
-  export let message: string = "booting up...";
+  export let message: string | undefined = undefined;
 </script>
 
 <div
@@ -16,7 +15,7 @@
       <div class="text-fgs2">Loading...</div>
     {:else}
       <div class="flex flex-col items-center">
-        <SubAtomLogo subatom="pointron" isDark={true} />
+        <SubAtomLogo subatom="pointron" />
         {#if message}
           <div class="font-medium px-4 text-center text-fgs2 text-b4">
             {message}
