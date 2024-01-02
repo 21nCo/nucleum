@@ -11,7 +11,7 @@
   import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
   export let value: string | number;
@@ -47,8 +47,8 @@
       : 'rounded-md'} {style === DropDownStyle.OUTLINED
       ? 'border border-bgs3'
       : style === DropDownStyle.PANEL_SWITCH
-      ? 'text-h4 font-medium'
-      : ''}"
+        ? 'text-h4 font-medium'
+        : ''}"
     on:click={() => {
       isShowOptions = !isShowOptions;
     }}
@@ -64,7 +64,7 @@
 
   {#if isShowOptions}
     <div
-      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results {bg(
+      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results {bgClass(
         $userPreferences.theme,
         parentBackgroundIndex
       )}"

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { account, userPreferences } from "$lib/tidy/stores/app.store";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   let initials: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
@@ -23,7 +23,7 @@
 </script>
 
 <div
-  class="w-20 h-20 rounded-full flex justify-center items-center {bg(
+  class="w-20 h-20 rounded-full flex justify-center items-center {bgClass(
     $userPreferences.theme,
     2
   )}"

@@ -2,12 +2,12 @@
   import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import AccountForm from "./AccountForm.svelte";
-  import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
   import PanelSwitcher from "$lib/tidy/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { page } from "$app/stores";
   import { LinkVariant } from "$lib/tidy/types/button.type";
+  windowObject.toggleMenuVisibility(false);
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");

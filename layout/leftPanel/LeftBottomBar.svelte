@@ -8,7 +8,7 @@
     windowObject,
   } from "$lib/tidy/stores/app.store";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
@@ -24,7 +24,7 @@
 </script>
 
 <div
-  class="w-full {bg($userPreferences.theme, 2)} {isInThinMode
+  class="w-full {bgClass($userPreferences.theme, 2)} {isInThinMode
     ? 'h-24'
     : 'h-12'}"
 >

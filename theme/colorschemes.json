@@ -18,7 +18,8 @@
     "isExperimental": true,
     "label": "grainy",
     "tailwindSelector": "grainy",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "clean"
   },
   {
@@ -40,7 +41,8 @@
     "isExperimental": true,
     "label": "sea",
     "tailwindSelector": "sea",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "clean"
   },
   {
@@ -62,7 +64,8 @@
     "isExperimental": true,
     "label": "smoothy",
     "tailwindSelector": "smoothy",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "clean"
   },
   {
@@ -80,7 +83,8 @@
     },
     "id": "colorscheme:35gtjhvkkzyf5hr8bkly",
     "isDark": true,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "isExperimental": true,
     "label": "rainbow",
     "tailwindSelector": "cs_dim",
@@ -112,7 +116,8 @@
     },
     "id": "colorscheme:801fplbiups3kprax60r",
     "isDark": true,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "label": "tidy",
     "tailwindSelector": "cs_tidigit_dark",
     "theme": "clean"
@@ -143,7 +148,8 @@
     },
     "id": "colorscheme:cleantidydarkblue",
     "isDark": true,
-    "isDarkVariantTwo": true,
+    "isActiveFgFg": true,
+    "isNeverFgFg": false,
     "label": "tidy blue",
     "tailwindSelector": "cs_tidigit_dark_blue",
     "theme": "clean"
@@ -166,7 +172,8 @@
     "isDark": true,
     "label": "tidy classic",
     "tailwindSelector": "cs_tidigit_dark",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "clean"
   },
   {
@@ -198,7 +205,8 @@
     "id": "colorscheme:cleantidylightiris",
     "isArchived": false,
     "isDark": false,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "isExperimental": true,
     "label": "tidy iris",
     "tailwindSelector": "cs_tidigit_light_iris",
@@ -223,7 +231,8 @@
     "isExperimental": true,
     "label": "forest",
     "tailwindSelector": "forest",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "clean"
   },
   {
@@ -249,9 +258,10 @@
       "fgs3": "hsl(196 13% 45%)",
       "fgs4": "hsl(194 14% 40%)"
     },
-    "id": "colorscheme:fp6lwsy28o11lzj9c7rt",
+    "id": "colorscheme:solarizeddark",
     "isDark": true,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": true,
     "label": "solarized",
     "tailwindSelector": "cs_solarized_dark",
     "theme": "clean"
@@ -283,7 +293,8 @@
     },
     "id": "colorscheme:h48e6ijxq8600tlyvdty",
     "isDark": false,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "isExperimental": false,
     "label": "tidy blue",
     "tailwindSelector": "cs_tidigit_light_blue",
@@ -307,7 +318,8 @@
     "isExperimental": true,
     "label": "test",
     "tailwindSelector": "cs_dim",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "glassy"
   },
   {
@@ -336,7 +348,8 @@
     },
     "id": "colorscheme:j4a9lmknhi8ogpg5socx",
     "isDark": true,
-    "isDarkVariantTwo": true,
+    "isActiveFgFg": true,
+    "isNeverFgFg": false,
     "label": "tidy red",
     "tailwindSelector": "cs_tidigit_dark_red",
     "theme": "clean"
@@ -368,7 +381,8 @@
     },
     "id": "colorscheme:j67njh578erk3ocvman7",
     "isDark": false,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "label": "tidy red",
     "tailwindSelector": "cs_tidigit_light_red",
     "theme": "clean"
@@ -391,7 +405,8 @@
     "isExperimental": true,
     "label": "greenlight",
     "tailwindSelector": "cs_grainy",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "glassy"
   },
   {
@@ -420,7 +435,8 @@
     },
     "id": "colorscheme:n8wfkmi6r9t0o7d3znbs",
     "isDark": true,
-    "isDarkVariantTwo": true,
+    "isActiveFgFg": true,
+    "isNeverFgFg": false,
     "isExperimental": true,
     "label": "tidy iris",
     "tailwindSelector": "cs_tidigit_dark_iris",
@@ -451,7 +467,8 @@
     },
     "id": "colorscheme:op243lrtzikytemul940",
     "isDark": false,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "label": "solarized",
     "tailwindSelector": "cs_solarized_light",
     "theme": "clean"
@@ -473,7 +490,8 @@
     },
     "id": "colorscheme:p3f2e3sxedtzu0ui16aq",
     "isDark": true,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "label": "dim",
     "tailwindSelector": "cs_dim",
     "theme": "clean"
@@ -506,7 +524,8 @@
     },
     "id": "colorscheme:pkznitlpgb0cjyksva0o",
     "isDark": false,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "isExperimental": false,
     "label": "tidy",
     "tailwindSelector": "cs_tidigit_light",
@@ -529,7 +548,8 @@
     "isDark": true,
     "label": "blue",
     "tailwindSelector": "cs_dim",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "glassy"
   },
   {
@@ -557,7 +577,8 @@
     },
     "id": "colorscheme:vrk2aeyu1b45eecdyqig",
     "isDark": true,
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "label": "dracula",
     "tailwindSelector": "cs_dracula",
     "theme": "clean"
@@ -580,7 +601,8 @@
     "isExperimental": true,
     "label": "greeny",
     "tailwindSelector": "cs_tidigit_dark",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "glassy"
   },
   {
@@ -601,7 +623,8 @@
     "label": "gotham",
     "order": 1,
     "tailwindSelector": "cs_dim",
-    "isDarkVariantTwo": false,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
     "theme": "glassy"
   }
 ]

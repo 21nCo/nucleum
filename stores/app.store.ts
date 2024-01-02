@@ -5,10 +5,7 @@ import {
   performApiCall,
   resolveComponentFromPath,
 } from "$lib/tidy/utils/utils";
-import {
-  AppTheme,
-  type selectableColorParams,
-} from "$lib/tidy/types/theme.type";
+import { AppTheme, type ColorSchemeSLValues } from "$lib/tidy/types/theme.type";
 import {
   LaunchContext,
   type AppStore,
@@ -221,12 +218,13 @@ const selectableColors = [
   { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
 ];
 
-const selectableColorParams: selectableColorParams = {
-  darkSaturation: 60,
-  darkLightness: 70,
-  lightSaturation: 30,
-  lightLightness: 50,
-};
+const selectableColorParams: ColorSchemeSLValues[] = [
+  {
+    saturation: 55,
+    lightness: 65,
+    colorScheme: "colorscheme:solarizeddark",
+  },
+];
 
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
@@ -250,7 +248,7 @@ export const appStore = initAppStore({
     themes,
     colorSchemes,
     tempColorSchemes,
-    selectableColorParams,
+    colorSchemeSLConfig: selectableColorParams,
   },
 });
 

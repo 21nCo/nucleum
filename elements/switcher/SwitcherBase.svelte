@@ -2,9 +2,9 @@
   import { onMount } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import {
-    bg,
+    bgClass,
     customColorStyle,
-    generateBackgroudColor,
+    resolveBackgroundClass,
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { ColorType } from "$lib/tidy/types/theme.type";
@@ -26,7 +26,7 @@
     activeColor
   );
   onMount(() => {
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
     //if (isForDebug) console.log({ classList, backgroundColor });
     if (!classList.includes("bg-")) backgroundColor = colors.backgroundColor;
@@ -42,11 +42,11 @@
 {#if selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND}
   <button
     class={classList +
-      (isActive && !$userPreferences.colorScheme.isDarkVariantTwo
+      (isActive && !$userPreferences.colorScheme.isActiveFgFg
         ? " text-bgs1 "
-        : bg($userPreferences.theme, parentBackgroundIndex) +
+        : bgClass($userPreferences.theme, parentBackgroundIndex) +
           " hover:" +
-          bg($userPreferences.theme, parentBackgroundIndex, true))}
+          bgClass($userPreferences.theme, parentBackgroundIndex, true))}
     style={isActive ? `;${activeBgStyle}` : ""}
     disabled={isDisabled}
     on:click

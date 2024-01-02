@@ -14,7 +14,7 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
 
-  import { bg, borderColor } from "$lib/tidy/utils/theme.utils";
+  import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
   import { AppTheme, ColorStrength } from "$lib/tidy/types/theme.type";
   import { onMount } from "svelte";
   import { resolveUiState, setUiState } from "$lib/tidy/utils/utils";
@@ -51,7 +51,7 @@
         class=" border-t border-bgs2 w-full min-w-min pb-6 pt-1 {$userPreferences.theme ===
         AppTheme.Glassy
           ? 'glassmenubar'
-          : bg($userPreferences.theme, 0)} {borderColor(
+          : bgClass($userPreferences.theme, 0)} {borderColor(
           $userPreferences.theme,
           ColorStrength.Subtle
         )}"
@@ -94,7 +94,7 @@
     >
       <div
         class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
-          ? 'rounded-lg ' + bg($userPreferences.theme, 1)
+          ? 'rounded-lg ' + bgClass($userPreferences.theme, 1)
           : 'border-r border-bgs2 bg-bgs2'}"
         style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
       >

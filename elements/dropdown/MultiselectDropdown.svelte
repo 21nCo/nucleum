@@ -12,7 +12,7 @@
   import Check from "$lib/tidy/icons/Check.svelte";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   const dispatch = createEventDispatcher();
   export let options: DropdownItem[];
   export let selected: (string | number)[] = [];
@@ -60,8 +60,8 @@
       : 'rounded-md'} {style === DropDownStyle.OUTLINED
       ? 'border border-bgs3'
       : style === DropDownStyle.PANEL_SWITCH
-      ? 'text-h4 font-medium'
-      : ''}"
+        ? 'text-h4 font-medium'
+        : ''}"
     on:click={() => {
       isShowOptions = !isShowOptions;
     }}
@@ -86,7 +86,7 @@
 
   {#if isShowOptions}
     <div
-      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results {bg(
+      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results {bgClass(
         $userPreferences.theme,
         parentBackgroundIndex
       )}"

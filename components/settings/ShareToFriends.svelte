@@ -6,12 +6,12 @@
     userPreferences,
   } from "$lib/tidy/stores/app.store";
 
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
 </script>
 
 <div class="w-full h-full flex justify-center">
   <div
-    class="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40 {bg(
+    class="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40 {bgClass(
       $userPreferences.theme
     )}"
   >

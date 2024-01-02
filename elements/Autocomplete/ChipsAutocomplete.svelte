@@ -11,7 +11,7 @@
   import { appEvents } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
+  import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -200,7 +200,7 @@
   onMount(() => {
     // this is taken from the TextInput.svelte component, because we want it look exactly like the text input, so we are using the same logic, but some of the parts has been changes, like how the focus state will be achieved, and how the outline will be applied
 
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
     if (
       inputStyle == TextInputStyle.PLAIN ||

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { generateBackgroudColor, bg } from "$lib/tidy/utils/theme.utils";
+  import { resolveBackgroundClass, bgClass } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
   const dispatch = createEventDispatcher();
@@ -15,7 +15,7 @@
   let classList: string;
   onMount(() => {
     if (selectedIndex === undefined) selectedIndex = 0;
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.BOTTOMBAR:
@@ -30,7 +30,7 @@
       case PanelSwitcherStyle.ROUNDED:
         classList =
           "flex rounded-full min-w-fit " +
-          bg($userPreferences.theme, parentBackgroundIndex);
+          bgClass($userPreferences.theme, parentBackgroundIndex);
         break;
       case PanelSwitcherStyle.DEFAULT:
         classList = "flex gap-4 rounded-full";
@@ -64,7 +64,10 @@
   </div>
   {#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
     <div
-      class="absolute w-full left-0 -bottom-1 {bg($userPreferences.theme, 2)}"
+      class="absolute w-full left-0 -bottom-1 {bgClass(
+        $userPreferences.theme,
+        2
+      )}"
       style="height: 5%;"
     />
   {/if}

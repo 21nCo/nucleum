@@ -4,7 +4,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
-  import { bg, borderColor } from "$lib/tidy/utils/theme.utils";
+  import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   export let value: any;
   export let label: string | undefined = undefined;
@@ -44,9 +44,10 @@
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
     } else if (style === TextInputStyle.BOXED) {
-      inputClasses += ` ${bg($userPreferences.theme, 1)} border ${borderColor(
-        $userPreferences.theme
-      )} p-2`;
+      inputClasses += ` ${bgClass(
+        $userPreferences.theme,
+        1
+      )} border ${borderColor($userPreferences.theme)} p-2`;
       unitClasses = unitClasses + " p-2";
     }
     if (style == TextInputStyle.BOXED && units && units.length > 0) {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AppTheme, type ColorScheme } from "$lib/tidy/types/theme.type";
   import { createEventDispatcher } from "svelte";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { properCase } from "$lib/tidy/utils/text.utils";
   export let colorSchemes: ColorScheme[];
@@ -29,13 +29,13 @@
         on:click={() => {
           onClicked(index);
         }}
-        class="relative flex flex-col items-center gap-1 p-2 rounded-md hover:{bg(
+        class="relative flex flex-col items-center gap-1 p-2 rounded-md hover:{bgClass(
           $userPreferences.theme,
           1,
           true
         )} {selected === index
-          ? bg($userPreferences.theme, 1, true)
-          : bg($userPreferences.theme, 1)}"
+          ? bgClass($userPreferences.theme, 1, true)
+          : bgClass($userPreferences.theme, 1)}"
       >
         {#if getColors(colorScheme) && $userPreferences.theme != AppTheme.Glassy}
           <div class="flex">

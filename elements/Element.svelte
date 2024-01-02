@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
+  import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "../types/theme.type";
   export let classList: string;
@@ -15,7 +15,7 @@
   let backgroundColor: string = "";
   $: if (classList.includes("bg-")) backgroundColor = "";
   onMount(() => {
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     activeBackgroundColor = colors.activeBackgroundColor;
     //if (isForDebug) console.log({ classList, backgroundColor });
     if (!classList.includes("bg-")) backgroundColor = colors.backgroundColor;

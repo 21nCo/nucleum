@@ -10,7 +10,7 @@
   import { getTimeLabel } from "$lib/tidy/utils/time.utils";
   import {
     borderColor,
-    generateBackgroudColor,
+    resolveBackgroundClass,
   } from "$lib/tidy/utils/theme.utils";
   import { roundOffToNdigitsAfterDecimal } from "$lib/local/utils/local.utils";
   //todo - move clickoutside and pointron local code to tidy lib
@@ -46,7 +46,7 @@
         : value < 3600
           ? (value / 60).toString()
           : (value / 3600).toString();
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
     inputClasses += ` bg-${backgroundColor}`;
   });

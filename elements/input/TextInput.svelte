@@ -8,7 +8,7 @@
   import { Persistance } from "$lib/tidy/stores/persistance";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import Element from "../Element.svelte";
-  import { bg, borderColor } from "$lib/tidy/utils/theme.utils";
+  import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import FormControlLabelWrapper from "./FormControlLabelWrapper.svelte";
@@ -60,9 +60,10 @@
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
     } else if (style === TextInputStyle.BOXED) {
-      inputClasses += ` ${bg($userPreferences.theme, 1)} border ${borderColor(
-        $userPreferences.theme
-      )} p-2`;
+      inputClasses += ` ${bgClass(
+        $userPreferences.theme,
+        1
+      )} border ${borderColor($userPreferences.theme)} p-2`;
       unitClasses = unitClasses + " p-2";
     }
     if (style == TextInputStyle.BOXED && units && units.length > 0) {

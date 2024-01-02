@@ -9,11 +9,12 @@ export type ColorScheme = {
   label: string;
   theme: string;
   isDark: boolean;
-  isDarkVariantTwo: boolean;
   tailwindSelector: string;
   colors: ColorSchemeColors;
   isExperimental?: boolean;
   isArchived?: boolean;
+  isActiveFgFg: boolean;
+  isNeverFgFg: boolean;
   id: string;
 };
 
@@ -39,14 +40,15 @@ export type ColorSchemeColors = {
   brs2?: string;
 };
 
-export type selectableColorParams = {
-  darkSaturation: number;
-  darkLightness: number;
-  lightSaturation: number;
-  lightLightness: number;
+export type ColorSchemeSLValues = {
+  saturation: number;
+  lightness: number;
+  alpha?: number;
+  colorScheme: string;
 };
 
 export enum ColorStrength {
+  ExtraSubtle = "extraSubtle",
   Subtle = "subtle",
   Normal = "normal",
   Strong = "strong",
@@ -54,6 +56,7 @@ export enum ColorStrength {
 }
 
 export enum ColorType {
+  None = "none",
   Bg = "background",
   Fg = "foreground",
   Outline = "outline",

@@ -1,9 +1,10 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
+  import ActiveBackgroundElement from "$lib/tidy/elements/Style/ActiveBackgroundElement.svelte";
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { retrieveCurrentColors, bg } from "$lib/tidy/utils/theme.utils";
+  import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   import { resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
@@ -11,33 +12,22 @@
   let selectionStyle = SelectionItemActiveStyle.ACCENT_BACKGROUND;
   let component = resolveComponent(action);
   $: isActive = $windowObject.currentPath === "/" + component?.path;
-  $: iconColor = retrieveCurrentColors($userPreferences)?.fgs1 ?? "";
 </script>
 
 {#if component}
-  <button
-    class="{orientation === Orientation.Vertical
-      ? 'px-2 py-3 w-24 rounded-md'
-      : 'flex px-4 py-2 w-full items-center justify-between'} {isActive
-      ? 'bg-a1' +
-        (!$userPreferences.colorScheme.isDarkVariantTwo ? ' text-bgs1' : '')
-      : !$windowObject.isInPortraitMode
-        ? 'hover:' + bg($userPreferences.theme, 1)
-        : ''} {orientation === Orientation.Vertical && !isActive
-      ? bg($userPreferences.theme, 1)
-      : ''}"
+  <ActiveBackgroundElement
+    classList={orientation === Orientation.Vertical
+      ? "px-2 py-3 w-24 rounded-md"
+      : "flex px-4 py-2 w-full items-center justify-between"}
+    isBackgroundActive={isActive}
+    bgWhenInactive={orientation === Orientation.Vertical ? 2 : 1}
     on:click={() => {
       resolveAction(action);
     }}
   >
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
-        <Icon
-          icon={component.icon ?? "info"}
-          {isActive}
-          {selectionStyle}
-          color={iconColor}
-        />
+        <Icon icon={component.icon ?? "info"} {isActive} {selectionStyle} />
         <div>{component.label}</div>
       </div>
       <Icon
@@ -47,14 +37,9 @@
       />
     {:else}
       <div class="flex flex-col items-center gap-2">
-        <Icon
-          icon={component.icon}
-          {isActive}
-          {selectionStyle}
-          color={iconColor}
-        />
+        <Icon icon={component.icon} {isActive} {selectionStyle} />
         <div>{component.label}</div>
       </div>
     {/if}
-  </button>
+  </ActiveBackgroundElement>
 {/if}

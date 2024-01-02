@@ -1,6 +1,12 @@
 import { Item, type ItemType } from "$lib/tidy/types/item.enum";
 import type { EmailParts } from "../types/account.type";
-import { MdBlockType, type Block, ListType } from "../types/md.type";
+import {
+  MdBlockType,
+  type Block,
+  ListType,
+  type BasicMarkdown,
+} from "../types/md.type";
+import { isValidArray } from "./obj.utils";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -86,4 +92,16 @@ export function generateMarkdownText(blocks: Block[]) {
       }
     })
     .join("\n");
+}
+
+export function isValidMarkdown(md: BasicMarkdown) {
+  return (
+    md.blocks &&
+    isValidArray(md.blocks) &&
+    md.blocks.length > 0 &&
+    ((md.blocks.length === 1 &&
+      "body" in md.blocks[0].content &&
+      md.blocks[0].content.body != "") ||
+      md.blocks.length > 1)
+  );
 }

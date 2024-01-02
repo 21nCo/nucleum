@@ -13,10 +13,10 @@
       case TextStyle.PAGE_HEADING:
         classList +=
           "  bg-none text-h1 font-medium" +
-          (!$userPreferences.colorScheme.isDarkVariantTwo ? " text-a1" : "");
+          (!$userPreferences.colorScheme.isActiveFgFg ? " text-a1" : "");
         break;
       case TextStyle.PANEL_HEADING:
-        classList += " text-h4 font-medium text-fgs2 bg-none ";
+        classList += " text-h3 font-medium text-fgs2 bg-none ";
         break;
       case TextStyle.SECTION_DESCRIPTION:
         classList += " text-fgs3";

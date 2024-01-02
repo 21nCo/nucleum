@@ -6,7 +6,7 @@
   import type { Action } from "$lib/tidy/types/action.type";
   import { userLocalPreferences } from "$lib/local/stores/local.store";
   import type { UserLocalPreferences } from "$lib/local/types/userLocalPreferences.type";
-  import { generateBackgroudColor } from "$lib/tidy/utils/theme.utils";
+  import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -37,7 +37,7 @@
       selected = currentPage ? pages.indexOf(currentPage) : 0;
     });
 
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
   });
 </script>

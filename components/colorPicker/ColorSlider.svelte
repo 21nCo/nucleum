@@ -1,6 +1,6 @@
 <script lang="ts">
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
-  import { assignSatAndLight } from "$lib/tidy/utils/theme.utils";
+  import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
 
   export let hue: number | undefined | null = 0;
@@ -12,9 +12,9 @@
     hue = parseInt(target.value);
     dispatch("value-change", hue);
   };
-  let values = assignSatAndLight(
+  let values = resolveSaturationAndLightness(
     $userPreferences,
-    $appStore.appConstants.selectableColorParams
+    $appStore.appConstants.colorSchemeSLConfig
   );
   if (values) {
     saturation = values.saturation;

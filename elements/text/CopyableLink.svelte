@@ -1,6 +1,6 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { copyToClipboard } from "$lib/tidy/utils/utils";
   import Icon from "../Icon.svelte";
   export let parentBackgroundIndex: number = 1;
@@ -17,7 +17,7 @@
 
 <button class="relative text-b2 cursor-pointer w-full" on:click={copyLink}>
   <div
-    class="flex justify-between w-full px-3 py-2 text-fgs3 rounded-md border-none outline-none {bg(
+    class="flex justify-between w-full px-3 py-2 text-fgs3 rounded-md border-none outline-none {bgClass(
       $userPreferences.theme,
       parentBackgroundIndex
     )}"

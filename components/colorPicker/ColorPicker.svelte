@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
 
-  import { assignSatAndLight } from "$lib/tidy/utils/theme.utils";
+  import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   import ColorSlider from "./ColorSlider.svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
@@ -12,9 +12,9 @@
   let isDark: boolean = false;
   $: isDark = $userPreferences.colorScheme.isDark;
   onMount(() => {
-    let values = assignSatAndLight(
+    let values = resolveSaturationAndLightness(
       $userPreferences,
-      $appStore.appConstants.selectableColorParams
+      $appStore.appConstants.colorSchemeSLConfig
     );
     if (values) {
       saturation = values.saturation;

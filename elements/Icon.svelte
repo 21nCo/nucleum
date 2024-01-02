@@ -37,7 +37,10 @@
   import BarChart from "../icons/BarChart.svelte";
   import LineChart from "../icons/LineChart.svelte";
   import AreaChart from "../icons/AreaChart.svelte";
-  import { retrieveCurrentColors } from "../utils/theme.utils";
+  import {
+    resolveIfActiveFgFg,
+    retrieveCurrentColors,
+  } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
   import Info from "../icons/Info.svelte";
@@ -74,6 +77,9 @@
   export let size: Size = Size.md;
   export let isActive: boolean = false;
   export let color: string | undefined = undefined;
+  export let bgColorHue: number | undefined = undefined;
+  export let isOutlineForActive: boolean = false;
+  $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $userPreferences);
   $: defaultColor = retrieveCurrentColors($userPreferences)?.fgs2 ?? "";
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
@@ -83,8 +89,11 @@
   $: {
     variant =
       (isActive &&
+        !isOutlineForActive &&
         icon != "chevright" &&
         icon != "chevleft" &&
+        icon != "chevdown" &&
+        icon != "chevup" &&
         icon != "list") ||
       icon == "chevdoubleleft" ||
       icon == "chevdoubleright" ||
@@ -116,7 +125,7 @@
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
               : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
-                  !$userPreferences.colorScheme.isDarkVariantTwo
+                  !isActiveFgFg
                 ? `stroke-bgs1`
                 : 'stroke-fgs1'
             : `stroke-fgs3`) + ' stroke-[1.2] fill-none'
@@ -124,7 +133,7 @@
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'fill-a1'
               : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
-                  !$userPreferences.colorScheme.isDarkVariantTwo
+                  !isActiveFgFg
                 ? `fill-bgs1`
                 : 'fill-fgs1'
             : `fill-fgs3`) + ' stroke-none'} {hoverStyle ===
@@ -254,7 +263,7 @@
       {:else if icon === "arrow-down-right-mini"}
         <Arrow direction={Direction.DownRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
-        <Arrow direction={Direction.Right} isCircled={true} />
+        <Arrow direction={Direction.Right} isCircled={true} {variant} />
       {:else if icon === "arrow-right-circled-mini"}
         <Arrow
           direction={Direction.Right}

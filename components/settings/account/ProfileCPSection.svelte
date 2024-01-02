@@ -7,13 +7,18 @@
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
-  import { bg } from "$lib/tidy/utils/theme.utils";
+  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   $: console.log($account.userInfo);
 </script>
 
-<div class="rounded-lg mx-4 h-40 min-h-[10rem] {bg($userPreferences.theme, 1)}">
+<div
+  class="rounded-lg mx-4 h-40 min-h-[10rem] {bgClass(
+    $userPreferences.theme,
+    1
+  )}"
+>
   {#if $account.isLoggedIn}
     <button
       class="flex flex-col justify-between items-center w-full h-full"

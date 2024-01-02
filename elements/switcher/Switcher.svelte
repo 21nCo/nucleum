@@ -8,7 +8,7 @@
   import SwitchItem from "./SwitchItem.svelte";
   import {
     customColorStyle,
-    generateBackgroudColor,
+    resolveBackgroundClass,
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { ColorType } from "$lib/tidy/types/theme.type";
@@ -34,7 +34,7 @@
   let classList: string;
   onMount(() => {
     if (selectedIndex === undefined) selectedIndex = 0;
-    let colors = generateBackgroudColor(parentBackgroundIndex);
+    let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
   });
   function handleClick(event: any) {

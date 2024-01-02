@@ -1,25 +1,22 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/app.store";
-  import Icon from "$lib/tidy/elements/Icon.svelte";
-  import Button from "$lib/tidy/elements/button/Button.svelte";
-  import DropdownArrow from "$lib/tidy/icons/DropdownArrow.svelte";
   import DropdownArrowAccordion from "$lib/tidy/icons/DropdownArrowAccordion.svelte";
-  import Element from "$lib/tidy/elements/Element.svelte";
   import { AccordionState } from "$lib/tidy/types/accordionState.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import { AccordionIconRenderType } from "../types/accordionIconRenderType.enum";
+  import ActiveBackgroundElement from "./Style/ActiveBackgroundElement.svelte";
+  import Icon from "./Icon.svelte";
+  import { Size } from "../types/size.enum";
+  import { SelectionItemActiveStyle } from "../types/switcher.enum";
   export let title: string;
   export let endContent: string | undefined;
-  export let classList: string = "";
   export let containerClassList: string = "";
   export let iconClassList: string = "";
   export let iconRenderType: AccordionIconRenderType | undefined =
     AccordionIconRenderType.VISIBLE;
-  export let containerStyle = "";
-  export let style = "";
-  export let isIconActive: boolean = false;
+  export let isActive: boolean = false;
   export let headerContent: string = "";
-
+  export let color: number | undefined;
+  export let nestingLevel: number = 0;
   const dispatch = createEventDispatcher();
   const iconButtonHoverStateClassList = "hover:bg-bgs3 hover:bg-opacity-20";
 
@@ -38,24 +35,20 @@
 </script>
 
 <div
-  style={containerStyle}
   class={`w-full flex items-center cursor-pointer flex-col justify-center ${containerClassList}`}
 >
   <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-  <div
-    {style}
-    tabindex="0"
+  <ActiveBackgroundElement
     on:click={handleClickOnAccordionItem}
-    on:keydown={(e) => {
-      if (e.key === "Enter") {
-        handleClickOnAccordionItem();
-      }
-    }}
-    class={`flex flex-col w-full items-center ${
-      headerContent ? `py-1 px-4` : `py-3 px-4`
-    } ${classList}`}
+    tabindex={0}
+    {color}
+    isBackgroundActive={isActive}
+    classList="flex flex-col w-full items-center {headerContent
+      ? `py-1 px-4`
+      : `py-3 px-4`}"
+    styles="padding-left: {nestingLevel * 1.5 ? nestingLevel * 1.5 : 0.5}rem"
   >
-    <div class={`flex w-full items-center gap-1 ${classList}`}>
+    <div class="flex w-full items-center gap-1">
       {#if iconRenderType !== AccordionIconRenderType.NOT_MOUNTED}
         <button
           on:keydown|stopPropagation
@@ -66,10 +59,17 @@
               : `invisible`
           } ${iconClassList}`}
         >
-          <DropdownArrowAccordion isActive={isIconActive} width={20} {state} />
+          <Icon
+            icon={state === AccordionState.collapsed ? "chevright" : "chevdown"}
+            size={Size.xs}
+            {isActive}
+            selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+            bgColorHue={color}
+          />
+          <!-- <DropdownArrowAccordion {isActive} width={20} {state} /> -->
         </button>
       {/if}
-      <div class="truncate w-56">
+      <div class="text-start truncate w-56">
         {#if headerContent}
           {@html headerContent}
         {/if}
@@ -80,7 +80,7 @@
         {@html endContent}
       {/if}
     </div>
-  </div>
+  </ActiveBackgroundElement>
   {#if state === AccordionState.expanded}
     <slot />
   {/if}

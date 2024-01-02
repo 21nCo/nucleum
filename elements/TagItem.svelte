@@ -3,16 +3,15 @@
   import Icon from "./Icon.svelte";
   import { IconVariant } from "../types/icon.type";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
+  import ActiveBackgroundElement from "./Style/ActiveBackgroundElement.svelte";
 
   export let label: string;
   export let id: string;
-  export let classList: string = "";
-
   export let icon: string | undefined = "";
-
-  export let activeClassList: string = "";
-  export let inActiveClassList: string = ""; // this is done because, if we have some classes which are going to be changing depending on the active state, and if we put their initial value in classList, then we won't be able to override it later
-  export let disabledClassList: string = "";
+  let classList = `text-b3 border-[1px] rounded-[4px] py-1 px-3 transition-all active:scale-105 border-fgs2`;
+  let activeClassList = "bg-a1 border-a1 text-bgs1 focus:bg-a1";
+  let inActiveClassList = "bg-transparent border-fgs2 text-fgs1";
+  let disabledClassList = "bg-bgs2 border-fgs2 text-fgs1 active:scale-100";
 
   export let isActive: boolean = false;
   export let style: string = "";
@@ -26,17 +25,13 @@
   }
 </script>
 
-<button
-  {style}
-  tabindex="0"
+<ActiveBackgroundElement
+  isBackgroundActive={isActive}
+  styles={style}
   on:click={handleTagClick}
-  class={`w-fit flex items-center justify-center gap-1 whitespace-nowrap ${classList} ${
-    disabled
-      ? `${disabledClassList} cursor-not-allowed`
-      : isActive
-      ? activeClassList
-      : inActiveClassList
-  }`}
+  isIncludeActiveBorder={true}
+  classList="w-fit flex items-center justify-center gap-1 whitespace-nowrap {classList} {disabled &&
+    `${disabledClassList} cursor-not-allowed`}"
 >
   {#if icon}
     <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
@@ -49,4 +44,4 @@
     </div>
   {/if}
   {label}
-</button>
+</ActiveBackgroundElement>

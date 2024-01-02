@@ -2,7 +2,11 @@
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { ColorType } from "$lib/tidy/types/theme.type";
-  import { bg, customColorStyle } from "$lib/tidy/utils/theme.utils";
+  import {
+    bgClass,
+    customColorStyle,
+    resolveIfActiveFgFg,
+  } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
@@ -29,7 +33,7 @@
     <div
       class="font-medium {isActive ? '' : 'text-fgs4'} {style ===
         PanelSwitcherStyle.BOTTOMBAR && $windowObject.isInPortraitMode
-        ? 'text-h5'
+        ? 'text-h4'
         : style === PanelSwitcherStyle.BOTTOMBAR_MINI &&
             $windowObject.isInPortraitMode
           ? 'text-b3'
@@ -46,7 +50,7 @@
       />
     {:else}
       <button
-        class="absolute w-full {bg(
+        class="absolute w-full {bgClass(
           $userPreferences.theme,
           2
         )} left-0 -bottom-1 z-10"
@@ -85,10 +89,7 @@
     <div
       class="{$windowObject.isInPortraitMode
         ? 'text-base font-medium'
-        : 'text-base'} {isActive &&
-      !$userPreferences.colorScheme.isDarkVariantTwo
-        ? 'text-bgs1'
-        : 'text-fgs3'}"
+        : 'text-base'} {resolveIfActiveFgFg(-1, $userPreferences)}"
     >
       {item}
     </div>

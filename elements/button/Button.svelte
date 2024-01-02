@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
-  import { bg, retrieveCurrentColors } from "../../utils/theme.utils";
+  import { bgClass, retrieveCurrentColors } from "../../utils/theme.utils";
   import { userPreferences, windowObject } from "../../stores/app.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import { renderPopover } from "$lib/tidy/utils/ui.utils";
@@ -93,12 +93,13 @@
       if (style != ButtonStyle.PLAIN) {
         classList +=
           " bg-a1" +
-          (!$userPreferences.colorScheme.isDarkVariantTwo ? " text-bgs1" : "");
+          (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
       }
     } else if (type == "secondary") {
       classList += " text-fgs2 hover:text-a1";
       if (style != ButtonStyle.PLAIN) {
-        classList += " " + bg($userPreferences.theme, parentBackgroundIndex);
+        classList +=
+          " " + bgClass($userPreferences.theme, parentBackgroundIndex);
       }
     } else if (type == "danger") {
       console.log("danger");
@@ -106,7 +107,7 @@
       if (style != ButtonStyle.PLAIN) {
         classList +=
           " bg-ars1" +
-          (!$userPreferences.colorScheme.isDarkVariantTwo ? " text-bgs1" : "");
+          (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
       }
     } else if (type == "tertiary") {
       classList += " text-bgs1 hover:opacity-90";
@@ -142,8 +143,7 @@
     <Icon
       {icon}
       {size}
-      color={type === "primary" &&
-      !$userPreferences.colorScheme.isDarkVariantTwo
+      color={type === "primary" && !$userPreferences.colorScheme.isActiveFgFg
         ? currentColors.bgs1
         : isHovered && type == "secondary"
           ? currentColors.a1
