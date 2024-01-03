@@ -23,17 +23,17 @@ export function postMessageToParent(message: EmbedMessage) {
   });
 }
 export function postToParent(message: any) {
-  appStore.log("posting message to parent:" + JSON.stringify(message));
+  appStore?.log("posting message to parent:" + JSON.stringify(message));
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
-    appStore.logError(error);
+    appStore?.logError(error);
   }
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
   } catch (error) {
-    appStore.logError(error);
+    appStore?.logError(error);
   }
 }
 
