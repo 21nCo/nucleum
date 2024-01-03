@@ -1,13 +1,11 @@
 <script lang="ts">
-  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
-  import { onMount } from "svelte";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import AccountForm from "./AccountForm.svelte";
   import PanelSwitcher from "$lib/tidy/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { page } from "$app/stores";
   import { LinkVariant } from "$lib/tidy/types/button.type";
-  windowObject.toggleMenuVisibility(false);
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -20,16 +18,6 @@
       message = "Your session has expired. Please login again.";
     }
   }
-  onMount(() => {
-    const sub = account.subscribe((value) => {
-      if (value.isLoggedIn) {
-        windowObject.gotoPath("/");
-      }
-    });
-    return () => {
-      sub();
-    };
-  });
 </script>
 
 <div class="flex flex-col w-full h-full justify-center">

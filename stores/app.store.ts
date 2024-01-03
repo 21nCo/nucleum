@@ -503,11 +503,6 @@ function initAccount(seed: UserAccount) {
         isLoggedIn: true,
       }),
     });
-    if (params.isRefreshApp && !params.isFromSignup) {
-      appEvents.publish(AppEvent.USER_LOGIN, true);
-    } else if (params.isFromSignup) {
-      appEvents.publish(AppEvent.USER_SIGNUP, true);
-    }
     update(() => {
       return {
         token: data.token,
@@ -516,6 +511,15 @@ function initAccount(seed: UserAccount) {
         userInfo: data.userInfo,
       };
     });
+    if (params.isRefreshApp && !params.isFromSignup) {
+      appEvents.publish(AppEvent.USER_LOGIN, true);
+      windowObject.gotoPath("/");
+    } else if (params.isFromSignup) {
+      appEvents.publish(AppEvent.USER_SIGNUP, true);
+      windowObject.gotoPath("/onboarding");
+    } else if (!params.isFromSignup) {
+      windowObject.gotoPath("/");
+    }
   };
   const expire = () => {
     // localStorage.removeItem("surreal-token");

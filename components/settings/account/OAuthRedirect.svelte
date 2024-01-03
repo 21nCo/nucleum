@@ -12,14 +12,6 @@
     } else {
       await processOAuthRedirection(codeQueryParam);
     }
-    const sub = account.subscribe((value) => {
-      if (value.isLoggedIn) {
-        windowObject.gotoPath("/");
-      }
-    });
-    return () => {
-      sub();
-    };
   });
   async function processOAuthRedirection(code: string) {
     let response = await handleOAuthRedirection($page.params.slug, code);
