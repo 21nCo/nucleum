@@ -186,7 +186,7 @@ const cs_tidigit_light_blue = {
 
 const cs_tidigit_light_iris = {
   bgs1: "hsl(45 17% 95%)",
-  bgs2: "hsl(0 0% 98%)",
+  bgs2: "hsl(0 0% 100%)",
   bgs3: "hsl(0 0% 92%)",
   bgs4: "hsl(0 0% 88%)",
   bgs5: "hsl(0 0% 85%)",
@@ -444,7 +444,7 @@ module.exports = {
   theme: {
     extend: {
       fontSize: {
-        title: "3rem",
+        title: "5rem",
         "2xl": "2.6rem",
         xl: "2.4rem",
         h1: "1.875rem",

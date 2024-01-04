@@ -32,7 +32,7 @@
     disabled={isDisabled}
   >
     <div
-      class="font-medium {isActive ? '' : 'text-fgs4'} {style ===
+      class="font-medium min-w-fit {isActive ? '' : 'text-fgs4'} {style ===
         PanelSwitcherStyle.BOTTOMBAR && $windowObject.isInPortraitMode
         ? 'text-h4'
         : style === PanelSwitcherStyle.BOTTOMBAR_MINI &&

@@ -6,14 +6,26 @@
   export let selectedIndex: number;
   export let style: PanelSwitcherStyle;
   export let interval: number = 4000;
+  let intervalTimer: any;
   onMount(() => {
-    const intervalTimer = setInterval(() => {
-      selectedIndex = (selectedIndex + 1) % items.length;
-    }, interval);
+    intervalTimer = startIntervalTimer();
     return () => {
       clearInterval(intervalTimer);
     };
   });
+  function startIntervalTimer() {
+    return setInterval(() => {
+      selectedIndex = (selectedIndex + 1) % items.length;
+    }, interval);
+  }
 </script>
 
-<PanelSwitcher {items} {selectedIndex} {style} on:switch />
+<PanelSwitcher
+  {items}
+  bind:selectedIndex
+  {style}
+  on:switch={() => {
+    clearInterval(intervalTimer);
+    intervalTimer = startIntervalTimer();
+  }}
+/>
