@@ -143,14 +143,14 @@
     <Icon
       {icon}
       {size}
-      color={type === "primary" && !$userPreferences.colorScheme.isActiveFgFg
+      color={type != "secondary" && !$userPreferences.colorScheme.isActiveFgFg
         ? currentColors.bgs1
         : isHovered && type == "secondary"
           ? currentColors.a1
           : type === "secondary"
             ? currentColors.fgs2
             : currentColors.fgs1}
-      selectionStyle={type === "primary"
+      selectionStyle={type != "secondary"
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND
         : SelectionItemActiveStyle.NONE}
     />

@@ -1,11 +1,12 @@
 <script lang="ts">
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { ColorType } from "$lib/tidy/types/theme.type";
+  import { ColorStrength, ColorType } from "$lib/tidy/types/theme.type";
   import {
     bgClass,
     customColorStyle,
     resolveIfActiveFgFg,
+    textColorClass,
   } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let isActive: boolean = false;
@@ -89,7 +90,12 @@
     <div
       class="{$windowObject.isInPortraitMode
         ? 'text-base font-medium'
-        : 'text-base'} {resolveIfActiveFgFg(-1, $userPreferences)}"
+        : 'text-base'} {textColorClass(
+        $userPreferences,
+        ColorStrength.Normal,
+        isActive,
+        activeColor
+      )}"
     >
       {item}
     </div>

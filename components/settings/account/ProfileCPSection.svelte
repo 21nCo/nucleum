@@ -5,12 +5,33 @@
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
+  import { LicenseType } from "$lib/tidy/types/account.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   $: console.log($account.userInfo);
+  function determineLicense() {
+    if ($account.userInfo?.licenseType) {
+      switch ($account.userInfo?.licenseType) {
+        case LicenseType.EA_LIFETIME:
+          return "Early Adopter - lifetime license";
+        case LicenseType.EA_EXTENDED:
+          return "Early Adopter - 2 years extended trial";
+        case LicenseType.FREE:
+          return "Free plan";
+      }
+    } else if ($account.userInfo?.joinDate) {
+      const joinDate = new Date($account.userInfo?.joinDate);
+      const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 0, 1);
+      if (joinDateIsBeforeJan012024) {
+        return "Early Adopter - lifetime license";
+      } else {
+        return "Early Adopter - 2 years extended trial";
+      }
+    }
+  }
 </script>
 
 <div
@@ -51,7 +72,7 @@
         <div
           class="text-b3 bg-ags1 text-bgs1 px-3 py-1 rounded-br-md rounded-tl-md"
         >
-          Early adopter - lifetime license
+          {determineLicense()}
         </div>
       </div>
     </button>

@@ -27,6 +27,7 @@ export function renderPopover(parentRef: HTMLElement, popRef: HTMLElement) {
     popRef.style.left = `${triggerRect.right + 2}px`;
     popRef.style.right = "auto";
   }
+  popRef.style.maxWidth = "300px";
   popRef.style.display = popRef.style.display === "none" ? "block" : "none";
   // popRect = popRef.getBoundingClientRect();
   // console.log({ popRef, popRect });

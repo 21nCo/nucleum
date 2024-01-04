@@ -351,9 +351,9 @@ function initAppStore(seed: AppStore) {
 const userPreferencesId = "Preferences:global";
 const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
 export const tailwindTheme = writable<string>(
-  locallySyncedTailwindTheme || "clean cs_tidigit_dark_blue"
+  locallySyncedTailwindTheme || "clean cs_tidigit_light_blue"
 );
-const defaultColorSchemeId = "colorscheme:cleantidydarkblue";
+const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 
 const seedUserPreferences: UserGlobalPreferences = {
   id: userPreferencesId,

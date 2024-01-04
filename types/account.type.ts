@@ -14,6 +14,7 @@ export type UserInformation = {
   lastLogin: Date;
   profilePicture?: string;
   emailParts?: EmailParts;
+  licenseType?: LicenseType;
 };
 
 export type EmailParts = {
@@ -22,3 +23,12 @@ export type EmailParts = {
   firstFew: string;
   lastFew?: string;
 };
+
+export enum LicenseType {
+  EA_LIFETIME = "EA_LIFETIME",
+  EA_EXTENDED = "EA_EXTENDED",
+  LIFETIME = "LIFETIME",
+  YEARLY = "YEARLY",
+  MONTHLY = "MONTHLY",
+  FREE = "FREE",
+}

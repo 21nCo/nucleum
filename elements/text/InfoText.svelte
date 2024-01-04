@@ -22,22 +22,22 @@
 <button
   class="relative rounded-full w-4 h-4 flex justify-center items-center text-b3 text-fgs3 cursor-pointer"
   on:mouseenter={() => {
+    if (isClicked) return;
     isHovered = true;
     renderPopover(buttonRef, toolTipRef);
   }}
   on:mouseleave={() => {
+    if (isClicked) return;
     isHovered = false;
-    isClicked = false;
     hideToolTip();
   }}
   on:click={() => {
-    if (isClicked || isHovered) {
-      isClicked = false;
-      isHovered = false;
+    isClicked = !isClicked;
+    if (isClicked) {
       hideToolTip();
-    } else {
-      isClicked = true;
       renderPopover(buttonRef, toolTipRef);
+    } else {
+      hideToolTip();
     }
   }}
   bind:this={buttonRef}

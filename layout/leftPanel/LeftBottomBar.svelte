@@ -58,7 +58,8 @@
       >
         <Icon icon={$account.isLoggedIn ? "logout" : "login"} />
         {#if !isInThinMode}
-          <span class="text-sm">{$account.isLoggedIn ? "logout" : "login"}</span
+          <span class="text-sm"
+            >{$account.isLoggedIn ? "Sign out" : "login"}</span
           >
         {/if}
       </button>

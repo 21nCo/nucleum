@@ -9,7 +9,7 @@ import { performApiCall } from "./utils";
 
 export function initiateOAuth2Flow(provider: IdentityProvider) {
   const oAuthConfig: OAuthProviderConfig[] = get(appStore).appData?.oAuthConfig;
-  console.log(oAuthConfig);
+  console.log(oAuthConfig, window.location);
   if (!oAuthConfig || oAuthConfig.length < 1) return;
   const config = oAuthConfig.find((c) => c.provider === provider);
   if (!config) return;
@@ -18,8 +18,8 @@ export function initiateOAuth2Flow(provider: IdentityProvider) {
       "?client_id=" +
       config.client_id +
       "&redirect_uri=" +
-      import.meta.env.VITE_OAUTH_REDIRECT_BASE_URL +
-      "/" +
+      window.location.origin +
+      "/r/" +
       config.oauth_slug +
       "&scope=" +
       config.scope +
