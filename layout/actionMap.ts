@@ -4,7 +4,7 @@ import {
   PaintType,
   type Action,
 } from "$lib/tidy/types/action.type";
-import NotFound from "../components/error/404NotFound.svelte";
+import NotFound from "../components/error/PageError.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
 import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
