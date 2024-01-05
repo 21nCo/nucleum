@@ -11,7 +11,6 @@
   import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
-  $: console.log($account.userInfo);
   function determineLicense() {
     if ($account.userInfo?.licenseType) {
       switch ($account.userInfo?.licenseType) {

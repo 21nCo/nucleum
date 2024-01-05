@@ -547,6 +547,22 @@ function initAccount(seed: UserAccount) {
     },
     signIn: signin,
     expire,
+    embedOAuthSignin: async (token: string, isSignup: boolean) => {
+      localStorage.setItem("surreal-token", token);
+      let response = await new Persistance().getUserInfo(token);
+      if (response?.userInfo) {
+        await signin(
+          {
+            userInfo: response?.userInfo,
+            token: token,
+            refreshToken: token,
+          },
+          { isFromSignup: isSignup }
+        );
+      } else {
+        console.log("error", response);
+      }
+    },
     delete: () => {
       //todo - delete account
       confirmationNotification.notify({

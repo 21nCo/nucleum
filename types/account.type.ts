@@ -12,7 +12,7 @@ export type UserInformation = {
   phone?: string;
   joinDate: Date;
   lastLogin: Date;
-  profilePicture?: string;
+  profilePictureUrl?: string;
   emailParts?: EmailParts;
   licenseType?: LicenseType;
 };

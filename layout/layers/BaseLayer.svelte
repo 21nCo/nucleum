@@ -3,6 +3,7 @@
   import DebugLayer from "./DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
+    account,
     appEvents,
     appStore,
     currentTime,
@@ -39,6 +40,7 @@
   pingParent();
   bootup();
   onMount(async () => {
+    await parseEmbedToken();
     await initializeData();
     if (
       $appStore?.appData?.isAnalyticsEnabled &&
@@ -94,6 +96,13 @@
     addWindowEventListeners();
     runCurrentTime();
     windowObject.setCurrentPath(window.location.pathname);
+  }
+  async function parseEmbedToken() {
+    const token = $page.url?.searchParams?.get("token");
+    const isSignup = $page.url?.searchParams?.get("signup");
+    if (token) {
+      await account.embedOAuthSignin(token, isSignup === "true" ?? false);
+    }
   }
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone

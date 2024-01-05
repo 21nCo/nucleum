@@ -85,6 +85,21 @@ export class Persistance {
       appStore.logError(err);
     }
   };
+  getUserInfo = async (token: string) => {
+    try {
+      const response = await performApiCall("account/refreshToken", "POST", {
+        token,
+      });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      if (!data?.userInfo) return;
+      return data;
+    } catch (err) {
+      appStore.logError(err);
+    }
+  };
   updateDefinitions = async () => {
     try {
       const token = localStorage.getItem("refresh-token");

@@ -105,3 +105,7 @@ export function isValidMarkdown(md: BasicMarkdown) {
       md.blocks.length > 1)
   );
 }
+
+export function isValidString(str: string | undefined | null) {
+  return str && str != "" && str != "null" && str != "undefined";
+}

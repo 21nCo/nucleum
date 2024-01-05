@@ -5,7 +5,8 @@ import type {
   IdentityProvider,
   OAuthProviderConfig,
 } from "../types/oauth.type";
-import { performApiCall } from "./utils";
+import { openLink, performApiCall } from "./utils";
+import { LaunchContext } from "../types/appStore.type";
 
 export function initiateOAuth2Flow(provider: IdentityProvider) {
   const oAuthConfig: OAuthProviderConfig[] = get(appStore).appData?.oAuthConfig;
@@ -13,19 +14,23 @@ export function initiateOAuth2Flow(provider: IdentityProvider) {
   if (!oAuthConfig || oAuthConfig.length < 1) return;
   const config = oAuthConfig.find((c) => c.provider === provider);
   if (!config) return;
-  goto(
+  const url =
     config.authorise_url +
-      "?client_id=" +
-      config.client_id +
-      "&redirect_uri=" +
-      window.location.origin +
-      "/r/" +
-      config.oauth_slug +
-      "&scope=" +
-      config.scope +
-      "&response_type=code" +
-      "&state=state&code_challenge=challenge&code_challenge_method=plain"
-  );
+    "?client_id=" +
+    config.client_id +
+    "&redirect_uri=" +
+    window.location.origin +
+    "/r/" +
+    config.oauth_slug +
+    "&scope=" +
+    config.scope +
+    "&response_type=code" +
+    "&state=state&code_challenge=challenge&code_challenge_method=plain";
+  if (get(appStore).launchContext == LaunchContext.EMBED) {
+    openLink(url);
+  } else {
+    goto(url);
+  }
 }
 
 export async function handleOAuthRedirection(
