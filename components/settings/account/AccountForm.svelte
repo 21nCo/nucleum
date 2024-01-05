@@ -197,9 +197,9 @@
         isRequired={true}
         placeholder="********"
       />
-      <div class="w-full flex justify-end text-b3">
+      <!-- <div class="w-full flex justify-end text-b3">
         <Link href="forgot-password" label="Forgot password?" />
-      </div>
+      </div> -->
       <button
         class="flex items-center gap-2 w-full"
         on:click={() => {

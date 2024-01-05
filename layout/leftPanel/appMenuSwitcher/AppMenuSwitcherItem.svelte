@@ -4,11 +4,16 @@
   import { createEventDispatcher } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { HapticFeedback } from "$lib/tidy/types/haptic.enum";
   import { hapticFeedback } from "$lib/tidy/utils/embed.utils";
+  import {
+    resolveIfActiveFgFg,
+    textColorClass,
+  } from "$lib/tidy/utils/theme.utils";
+  import { ColorStrength } from "$lib/tidy/types/theme.type";
   const dispatch = createEventDispatcher();
   export let item: Action;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -38,12 +43,12 @@
     ? layoutContext === LayoutContext.PORTRAIT
       ? 'flex-col gap-1 text-b4 rounded-lg'
       : 'text-b2 gap-3 rounded-lg p-3 h-10'
-    : 'p-4 rounded-full'} {isActive
-    ? layoutContext === LayoutContext.PORTRAIT ||
-      layoutContext === LayoutContext.THIN
-      ? 'text-a1'
-      : 'bg-a1 text-bgs1'
-    : 'text-fgs2'}"
+    : 'p-4 rounded-full'} {textColorClass(
+    $userPreferences,
+    ColorStrength.Normal,
+    isActive,
+    -1
+  )} {isActive && layoutContext === LayoutContext.DEFAULT && 'bg-a1'}"
   on:click={onClick}
   on:pointerenter={onHover}
 >

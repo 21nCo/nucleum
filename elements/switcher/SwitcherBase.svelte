@@ -8,6 +8,7 @@
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { ColorType } from "$lib/tidy/types/theme.type";
+  import ActiveBackgroundElement from "../Style/ActiveBackgroundElement.svelte";
   export let classList: string;
   export let id: string = "";
   export let isActive: boolean = false;
@@ -40,20 +41,15 @@
 </script>
 
 {#if selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND}
-  <button
-    class={classList +
-      (isActive && !$userPreferences.colorScheme.isActiveFgFg
-        ? " text-bgs1 "
-        : bgClass($userPreferences.theme, parentBackgroundIndex) +
-          " hover:" +
-          bgClass($userPreferences.theme, parentBackgroundIndex, true))}
-    style={isActive ? `;${activeBgStyle}` : ""}
-    disabled={isDisabled}
+  <ActiveBackgroundElement
+    {classList}
+    isBackgroundActive={isActive}
+    bgWhenInactive={parentBackgroundIndex + 1}
     on:click
     on:pointerenter
   >
     <slot />
-  </button>
+  </ActiveBackgroundElement>
 {:else if selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR}
   <button
     class={classList}
