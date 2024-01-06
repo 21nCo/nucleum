@@ -26,28 +26,30 @@
   </div>
 {:else}
   <button
-    class="flex justify-between bg-bgs2 text-fgs2 border-t border-bgs3 border-opacity-50 items-center w-96 h-20 pr-2 rounded-md"
+    class="flex justify-between bg-bgs3 text-fgs2 border-t border-bgs3 border-opacity-50 items-center w-96 h-20 pr-2 rounded-md"
     on:click|stopPropagation
   >
     <div class="flex h-full items-center gap-4">
       <div
-        class="h-full w-2 {notification.type === AlertType.SUCCESS
+        class="h-full w-1 {notification.type === AlertType.SUCCESS
           ? 'bg-ags1'
           : 'bg-ars1'}"
       ></div>
       <div class="flex flex-col gap-2 items-start">
+        <div class="text-b2">
+          {notification.message}
+        </div>
         {#if notification.title}
-          <div class="text-fgs2 text-b3 font-bold">{notification.title}</div>
+          <div class="text-fgs2 font-bold">{notification.title}</div>
         {/if}
-        {notification.message}
       </div>
     </div>
     <div class="flex gap-2">
-      {#if notification.actionText}
+      <!-- {#if notification.actionText}
         <Button on:click={notification.callback}>
           {notification.actionText}
         </Button>
-      {/if}
+      {/if} -->
       <Button icon="cross" on:click={clickHandler} />
     </div>
   </button>

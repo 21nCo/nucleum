@@ -7,6 +7,7 @@
   import { userPreferences, windowObject } from "../../stores/app.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import { renderPopover } from "$lib/tidy/utils/ui.utils";
+  import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -18,6 +19,8 @@
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
+  export let isLoading: boolean = false;
+  $: if (isLoading) isDisabled = true;
   let toolTipRef: any;
   let buttonRef: any;
   let isHovered: boolean = false;
@@ -126,7 +129,7 @@
 
 <button
   class={classList +
-    (isDisabled ? " opacity-50 cursor-not-allowed hover:opacity-50 " : "")}
+    (isDisabled ? " opacity-70 cursor-not-allowed hover:opacity-50 " : "")}
   on:click
   bind:this={buttonRef}
   on:pointerenter={() => {
@@ -139,7 +142,7 @@
   }}
   disabled={isDisabled}
 >
-  {#if icon}
+  {#if icon && !isLoading}
     <Icon
       {icon}
       {size}
@@ -154,6 +157,8 @@
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND
         : SelectionItemActiveStyle.NONE}
     />
+  {:else if isLoading}
+    <InlineLoadingAnimation />
   {/if}
   {#if label}
     <div class="min-w-fit">

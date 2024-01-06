@@ -3,13 +3,13 @@ import { get, writable } from "svelte/store";
 import {
   generateUID,
   performApiCall,
-  resolveComponentFromPath,
+  resolveComponentFromPath
 } from "$lib/tidy/utils/utils";
 import { AppTheme, type ColorSchemeSLValues } from "$lib/tidy/types/theme.type";
 import {
   LaunchContext,
   type AppStore,
-  EmbedContext,
+  EmbedContext
 } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
@@ -32,7 +32,7 @@ import { postMessageToParent, postToParent } from "../utils/embed.utils";
 import type {
   ConfirmationNotification,
   ScheduledNotification,
-  Toast,
+  Toast
 } from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import { ButtonVariant } from "../types/button.type";
@@ -52,7 +52,7 @@ export const excludedPathsForRedirectionCheck = [
   "error",
   "welcome",
   "play",
-  "r",
+  "r"
 ];
 
 let persistance = new Persistance();
@@ -73,7 +73,7 @@ function initEventStore(seed: AppEventType) {
       update((n: AppEventType) => {
         return { ...n, value, event: m };
       });
-    },
+    }
   };
 }
 
@@ -85,7 +85,7 @@ export const windowObject = initWindow({
   isInPortraitMode: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
-  isMenuHidden: false,
+  isMenuHidden: false
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
@@ -95,7 +95,7 @@ function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
   }
   const listOfPathsToHideMenu = {
     portrait: ["/goals/*", "/cp/*"],
-    landscape: [],
+    landscape: []
   };
   if (!newPath) return false;
   let pathParts = newPath.split("/").filter((p) => p);
@@ -129,7 +129,7 @@ function initWindow(settings: WindowObject) {
           documentWidth: width,
           landscapiness: width / height,
           scale: (width / 1000 + height / 1000) / 2,
-          isInPortraitMode: false,
+          isInPortraitMode: false
         };
         n.isInPortraitMode = n.landscapiness < 1;
         return n;
@@ -156,7 +156,7 @@ function initWindow(settings: WindowObject) {
         n = {
           ...n,
           currentPath: path,
-          isMenuHidden: checkIfNeedToHideMenu(path, n),
+          isMenuHidden: checkIfNeedToHideMenu(path, n)
         };
         return n;
       });
@@ -167,7 +167,7 @@ function initWindow(settings: WindowObject) {
         n = {
           ...n,
           currentPath: path,
-          isMenuHidden: checkIfNeedToHideMenu(path, n),
+          isMenuHidden: checkIfNeedToHideMenu(path, n)
         };
         return n;
       });
@@ -176,7 +176,7 @@ function initWindow(settings: WindowObject) {
       }
       if (params) goto(path, params);
       else goto(path);
-    },
+    }
   };
 }
 
@@ -185,7 +185,7 @@ export const dragAndDropStore = writable<DragAndDrop>({
   dropItem: {},
   dragEnterItem: {},
   dragStatus: DragStatus.NONE,
-  listId: "",
+  listId: ""
 });
 
 //todo - generate cool placeholders for focus using AI
@@ -205,7 +205,7 @@ const tempColorSchemes = [
   "scheme8",
   "scheme9",
   "scheme10",
-  "scheme11",
+  "scheme11"
 ];
 
 //HSL - dark: x, 30, 50   light: x, 60, 70
@@ -215,15 +215,15 @@ const selectableColors = [
   { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
   { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
   { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
-  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
+  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" }
 ];
 
 const selectableColorParams: ColorSchemeSLValues[] = [
   {
     saturation: 55,
     lightness: 65,
-    colorScheme: "colorscheme:solarizeddark",
-  },
+    colorScheme: "colorscheme:solarizeddark"
+  }
 ];
 
 const isDebugMode =
@@ -248,8 +248,8 @@ export const appStore = initAppStore({
     themes,
     colorSchemes,
     tempColorSchemes,
-    colorSchemeSLConfig: selectableColorParams,
-  },
+    colorSchemeSLConfig: selectableColorParams
+  }
 });
 
 function initAppStore(seed: AppStore) {
@@ -280,7 +280,7 @@ function initAppStore(seed: AppStore) {
           message:
             typeof message === "string" ? message : JSON.stringify(message),
           type,
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: new Date().toLocaleTimeString()
         });
         return n;
       });
@@ -291,11 +291,11 @@ function initAppStore(seed: AppStore) {
         n.debugLogs.push({
           message,
           type: "error",
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: new Date().toLocaleTimeString()
         });
         if (n.isDebugEmbedMode) {
           postToParent({
-            error: message,
+            error: message
           });
         }
         return n;
@@ -337,14 +337,13 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         n.fullScreenComponentPath = undefined;
         return n;
       });
-    },
+    }
   };
 }
 
@@ -373,15 +372,15 @@ const seedUserPreferences: UserGlobalPreferences = {
   uiStates: {
     all: {
       isOnboardingComplete: false,
-      isInThinMode: false,
+      isInThinMode: false
     },
     desktop: {
-      isInThinMode: false,
+      isInThinMode: false
     },
     portrait: {
-      isInThinMode: false,
-    },
-  },
+      isInThinMode: false
+    }
+  }
 };
 
 const locallySyncedUserPreferences = retrieveLocally(Item.UserPreferences);
@@ -439,15 +438,15 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
       set({
         ...get(userPreferences),
         theme,
-        colorScheme: cs,
+        colorScheme: cs
       });
-    },
+    }
   };
 }
 
 export const account = initAccount({
   isLoggedIn: false,
-  token: null,
+  token: null
 });
 
 function initAccount(seed: UserAccount) {
@@ -462,8 +461,8 @@ function initAccount(seed: UserAccount) {
     account: JSON.stringify({
       userId: seed.userInfo?.id.split("user:")[1],
       token: seed.token,
-      isLoggedIn: true,
-    }),
+      isLoggedIn: true
+    })
   });
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const addSeedUserInfo = (n: UserAccount) => {
@@ -474,7 +473,7 @@ function initAccount(seed: UserAccount) {
       joinDate: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 200),
       lastLogin: new Date(),
       profilePicture: "",
-      id: "",
+      id: ""
     };
     n.userInfo = seedUserInfo;
     return n;
@@ -500,15 +499,15 @@ function initAccount(seed: UserAccount) {
         userId: data.userInfo.id.split("user:")[1],
         token: data.token,
         refreshToken: data.refreshToken,
-        isLoggedIn: true,
-      }),
+        isLoggedIn: true
+      })
     });
     update(() => {
       return {
         token: data.token,
         isLoggedIn: true,
         userId: data.userInfo.id,
-        userInfo: data.userInfo,
+        userInfo: data.userInfo
       };
     });
     if (params.isRefreshApp && !params.isFromSignup) {
@@ -531,8 +530,8 @@ function initAccount(seed: UserAccount) {
     appEvents.publish(AppEvent.USER_LOGIN, false);
     postToParent({
       account: JSON.stringify({
-        isLoggedIn: false,
-      }),
+        isLoggedIn: false
+      })
     });
   };
   return {
@@ -555,7 +554,7 @@ function initAccount(seed: UserAccount) {
           {
             userInfo: response?.userInfo,
             token: token,
-            refreshToken: token,
+            refreshToken: token
           },
           { isFromSignup: isSignup }
         );
@@ -574,8 +573,8 @@ function initAccount(seed: UserAccount) {
           variant: ButtonVariant.DANGER,
           callback: () => {
             account.confirmDelete();
-          },
-        },
+          }
+        }
       });
     },
     confirmDelete: async () => {
@@ -584,14 +583,14 @@ function initAccount(seed: UserAccount) {
       console.log("deleting account", { acc });
       account.signOut();
       windowObject.gotoPath("/signup?msg=deleted");
-    },
+    }
   };
 }
 
 const defaultModal = {
   path: "",
   id: "",
-  isShow: false,
+  isShow: false
 };
 export const modalEvent = initModalStore(defaultModal);
 
@@ -611,7 +610,7 @@ function initModalStore(seed: ModalEvent) {
       update((n: ModalEvent) => {
         return { ...event };
       });
-    },
+    }
   };
 }
 
@@ -640,7 +639,7 @@ function initScheduledNotificationStore() {
         n.push(event);
         return n;
       });
-    },
+    }
   };
 }
 
@@ -672,7 +671,7 @@ function initToastStore() {
           path: "STATUS_UPDATE",
           id: event.id,
           isShow: true,
-          isDismissable: false,
+          isDismissable: false
         });
       } else {
         timer = setTimeout(() => {
@@ -680,9 +679,9 @@ function initToastStore() {
             n.shift();
             return n;
           });
-        }, 3000);
+        }, 5000);
       }
-    },
+    }
   };
 }
 
@@ -692,8 +691,8 @@ const seedConfirmation = {
   message: "",
   confirmAction: {
     label: "Confirm",
-    callback: () => {},
-  },
+    callback: () => {}
+  }
 };
 export const confirmationNotification = initConfirmationStore();
 
@@ -714,6 +713,35 @@ function initConfirmationStore() {
       update(() => {
         return { ...event };
       });
+    }
+  };
+}
+export const fullPageLoadingScreen = initFullPageLoadingScreen();
+
+function initFullPageLoadingScreen() {
+  const { subscribe, set, update } = writable<{
+    isShow: boolean;
+    text: string;
+  }>({ isShow: false, text: "loading..." });
+  return {
+    subscribe,
+    set: (m: any) => {
+      set(m);
     },
+    reset: () => {
+      update(() => {
+        return { isShow: false, text: "loading..." };
+      });
+    },
+    show: (text: string) => {
+      update(() => {
+        return { isShow: true, text };
+      });
+    },
+    hide: () => {
+      update(() => {
+        return { isShow: false, text: "loading..." };
+      });
+    }
   };
 }

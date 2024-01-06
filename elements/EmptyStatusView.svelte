@@ -2,17 +2,24 @@
   import EmptyStatus from "../illustrations/EmptyStatus.svelte";
   import EmptyStatusInbox from "../illustrations/EmptyStatusInbox.svelte";
   import { Size } from "../types/size.enum";
+  import InlineLoadingAnimation from "./animations/InlineLoadingAnimation.svelte";
+  import PageLoadingAnimation from "./animations/PageLoadingAnimation.svelte";
   import Button from "./button/Button.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
   export let isLoadingState: boolean = false;
   export let actionText: string | undefined = undefined;
+  export let loadingText: string = "Refreshing...";
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center gap-2 px-2">
   {#if isLoadingState}
-    <div class="text-fgs2">Loading...</div>
+    <div class="text-fgs3 text-b3 flex flex-col gap-2 items-center">
+      <!-- <InlineLoadingAnimation /> -->
+      <PageLoadingAnimation variant="panel-refresh" />
+      <div>{loadingText}</div>
+    </div>
   {:else}
     <div class="flex flex-col gap-1 items-center">
       {#if size === Size.sm}
@@ -23,7 +30,11 @@
       <div>{mainText ?? ""}</div>
     </div>
     <div class="text-fgs3 text-center text-b3">
-      {subText ?? ""}
+      {#if $$slots.subtext}
+        <slot name="subtext" />
+      {:else}
+        {subText ?? ""}
+      {/if}
     </div>
     {#if actionText}
       <Button label={actionText} size={Size.xs} on:click />

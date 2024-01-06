@@ -13,6 +13,7 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import FormControlLabelWrapper from "./FormControlLabelWrapper.svelte";
   import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import Button from "../button/Button.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -37,6 +38,7 @@
   let selectedIndex: number = 0;
   let previousValue: string = "";
   let currentValue: string;
+  let isSearchInProgress: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
   }
@@ -174,12 +176,14 @@
   }
   async function search() {
     if (!searchItemType) return;
+    isSearchInProgress = true;
     selectedIndex = 0;
     if (!value) {
       searchResults = [];
       return;
     }
     searchResults = await persistance.searchByLabel(value, searchItemType);
+    isSearchInProgress = false;
   }
 </script>
 
@@ -242,26 +246,43 @@
       disabled={isDisabled}
       bind:this={inputRef}
     />
-    {#if searchResults && searchResults.length > 0}
+    {#if value && searchItemType}
       <div
-        class="search-results bg-bgs3 h-max max-h-60 overflow-auto rounded-md flex flex-col gap-1 items-start"
+        class="search-results bg-bgs3 overflow-y-auto rounded-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
+        5
+          ? 'max-h-60 h-60'
+          : 'h-48'}"
       >
-        {#each searchResults as item, index}
-          <SearchResultItem
-            {item}
-            isActive={selectedIndex === index}
+        {#if searchResults && searchResults.length > 0}
+          {#each searchResults as item, index}
+            <SearchResultItem
+              {item}
+              isActive={selectedIndex === index}
+              on:click={() => {
+                onSearchResultSelection(item);
+              }}
+            />
+          {/each}
+        {:else}
+          <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
+            {#if isSearchInProgress}
+              Searching...
+            {:else if searchResults.length === 0}
+              No results found
+            {/if}
+          </div>
+        {/if}
+        <div class="w-full bg-bgs4 flex justify-center">
+          <Button
+            size={Size.sm}
+            label="close"
+            parentBackgroundIndex={3}
             on:click={() => {
-              onSearchResultSelection(item);
+              value = "";
+              resetSearch();
             }}
           />
-        {/each}
-        <Element
-          classList="w-full rounded-b-md py-2 text-center mt-10"
-          parentBackgroundIndex={2}
-          on:click={() => {
-            resetSearch();
-          }}>close</Element
-        >
+        </div>
       </div>
     {/if}
   {/if}

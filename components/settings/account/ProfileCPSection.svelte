@@ -3,7 +3,7 @@
   import {
     account,
     userPreferences,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { LicenseType } from "$lib/tidy/types/account.type";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -23,11 +23,11 @@
       }
     } else if ($account.userInfo?.joinDate) {
       const joinDate = new Date($account.userInfo?.joinDate);
-      const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 0, 1);
+      const joinDateIsBeforeJan012024 = joinDate < new Date(2024, 1, 1);
       if (joinDateIsBeforeJan012024) {
         return "Early Adopter - lifetime license";
       } else {
-        return "Early Adopter - 2 years extended trial";
+        return "Early Adopter - 1 year extended trial";
       }
     }
   }

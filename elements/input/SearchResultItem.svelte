@@ -6,7 +6,7 @@
 
 <button
   on:click
-  class="p-2 rounded-md truncate w-full hover:bg-bgs4 flex {isActive
+  class="p-2 rounded-md truncate w-full h-10 min-h-[2.5rem] hover:bg-bgs4 flex {isActive
     ? ' bg-bgs4'
     : ''}"
 >

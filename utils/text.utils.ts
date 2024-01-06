@@ -4,7 +4,7 @@ import {
   MdBlockType,
   type Block,
   ListType,
-  type BasicMarkdown,
+  type BasicMarkdown
 } from "../types/md.type";
 import { isValidArray } from "./obj.utils";
 
@@ -96,6 +96,7 @@ export function generateMarkdownText(blocks: Block[]) {
 
 export function isValidMarkdown(md: BasicMarkdown) {
   return (
+    md &&
     md.blocks &&
     isValidArray(md.blocks) &&
     md.blocks.length > 0 &&

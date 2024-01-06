@@ -31,7 +31,7 @@
     const response = await performApiCall("account/signin", "POST", {
       email: email.toLowerCase(),
       pass,
-      isTrusted,
+      isTrusted
     });
     if (!response || !response.ok) {
       showError();
@@ -58,7 +58,7 @@
     const response = await performApiCall("account/signup", "POST", {
       email: email.toLowerCase(),
       pass,
-      nickName,
+      nickName
     });
     if (!response || !response.ok) {
       showError();
@@ -145,7 +145,7 @@
         infoParams={{
           body: "Leave this blank if you don't want to share your name.",
           link: $appStore.appData?.urls?.privacy,
-          linkText: "Learn more about our privay policy",
+          linkText: "Learn more about our privay policy"
         }}
         placeholder="nickname or leave it empty"
       />
@@ -162,7 +162,7 @@
         infoParams={{
           body:
             $appStore.appData.name + " doesn't store your email or password.",
-          link: $appStore.appData?.urls?.privacy,
+          link: $appStore.appData?.urls?.privacy
         }}
         placeholder="username@email.com"
       />
@@ -224,7 +224,7 @@
           ? "Signing in..."
           : "Sign in using email"}
       type="primary"
-      isDisabled={actionInProgress}
+      isLoading={actionInProgress}
       on:click={isSignup ? onSignupClicked : onSinginClicked}
     />
     <div class="w-full flex justify-center text-fgs2 text-b3">or</div>

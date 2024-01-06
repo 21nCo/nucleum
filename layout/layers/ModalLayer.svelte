@@ -4,9 +4,10 @@
     appEvents,
     appStore,
     confirmationNotification,
+    fullPageLoadingScreen,
     modalEvent as modalEvent,
     toasts,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
@@ -21,6 +22,7 @@
   import ToastNotification from "$lib/tidy/elements/ToastNotification.svelte";
   import { isValidArray } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
+  import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -36,7 +38,7 @@
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
-          pop: JSON.stringify(x),
+          pop: JSON.stringify(x)
         });
       } else if (
         $appStore.launchContext == LaunchContext.EMBED &&
@@ -44,7 +46,7 @@
       ) {
         appStore.log("is embed");
         postToParent({
-          pop: JSON.stringify(x),
+          pop: JSON.stringify(x)
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         modals = [x];
@@ -66,6 +68,21 @@
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
 {/if}
+{#if $fullPageLoadingScreen.isShow}
+  <div
+    class="fixed left-0 top-0 w-full h-full flex flex-col z-40"
+    transition:fly={{ y: 200, duration: 100 }}
+  >
+    <div
+      class="h-full w-full flex flex-col gap-4 justify-center items-center bg-bgs1"
+    >
+      <PageLoadingAnimation variant="page" />
+      <div class="text-b2">
+        {$fullPageLoadingScreen.text}
+      </div>
+    </div>
+  </div>
+{/if}
 {#if $appStore.player && !$windowObject.isInPortraitMode}
   <div class="fixed bottom-0 right-0">
     <ComponentResolver path={$appStore.player} />
@@ -74,7 +91,7 @@
 
 {#if isValidArray($toasts) && !$windowObject.isInPortraitMode}
   <div
-    class="fixed top-0 right-0 mr-6 mt-6 drop-shadow z-100 flex flex-col flex-wrap gap-4 h-full"
+    class="fixed bottom-0 left-0 mb-6 ml-12 flex flex-col gap-4 z-40"
     transition:slide={{ duration: 200 }}
   >
     {#each $toasts as toast}
@@ -117,14 +134,14 @@
       params={{
         path: "confirmation",
         title: $confirmationNotification.title,
-        isHideTitleIfEmpty: true,
+        isHideTitleIfEmpty: true
       }}
       layoutParams={{
         size: Size.xs,
         primaryAction: $confirmationNotification.confirmAction,
         secondaryAction: $confirmationNotification.cancelAction ?? {
-          label: "Cancel",
-        },
+          label: "Cancel"
+        }
       }}
     >
       <div class="flex flex-col gap-4">
