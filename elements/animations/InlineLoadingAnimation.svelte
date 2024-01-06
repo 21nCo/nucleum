@@ -7,12 +7,10 @@ let width:any;
 let squareML:any;
 let circleMT:any;
 let ranOnce:boolean=false;
-let r:any;
 onMount(()=>{
-  cssRoot=document.querySelector(':root');
-  div=document.getElementById('InlineDiv');
-  divParent=document.getElementById('InlineDiv')?.parentElement;
-  r=document.querySelector(':root');
+  cssRoot=document.querySelector('#inlineLoadingAnim');
+  div=document.getElementById('inlineLoadingAnim');
+  divParent=document.getElementById('inlineLoadingAnim')?.parentElement;
 })  
 $:if(divParent && !ranOnce){
         ranOnce=true;
@@ -25,18 +23,18 @@ $:if(divParent && !ranOnce){
         cssRoot.style.setProperty('--width',(width));
         cssRoot.style.setProperty('--squareML',squareML);
         cssRoot.style.setProperty('--circleMT',circleMT);
-        // let rs = getComputedStyle(r);
+        // let rs = getComputedStyle(cssRoot);
         // console.log("--squareML is ",rs.getPropertyValue('--squareML'));
     }
-  </script>
-<div id="InlineDiv">
+</script>
+<div id="inlineLoadingAnim">
      <svg class="square" xmlns="http://www.w3.org/2000/svg" fill="none"></svg>
     <svg class="circle" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <circle fill="#333333" />
+        <circle/>
     </svg>
 </div>
 <style>
-     :root{
+     #inlineLoadingAnim{
         --width:var(--width);
         --height:var(--width);
         --squareML:var(--squareML);
@@ -59,6 +57,7 @@ $:if(divParent && !ranOnce){
         cx:calc(var(--width)/10);
         cy:calc(var(--width)/10);
         r:calc(var(--width)/10);
+        fill:rgba(var(--colors-fgs1), 1);
         z-index: 9999;
     }
     .square {
@@ -68,7 +67,7 @@ $:if(divParent && !ranOnce){
         left: 50%;
         z-index: 999;
         margin-left: var(--squareML);
-        border: calc(var(--width)/1.5*(1/24)) solid #333333;
+        border: calc((var(--width)/1.5)*(1/24)) solid rgba(var(--colors-fgs1), 1);
     }
 
     @keyframes translate {
@@ -114,7 +113,6 @@ $:if(divParent && !ranOnce){
 
     .circle {
         animation: translate 1s ease infinite;
-        animation-fill-mode: backwards;
     }
 
 

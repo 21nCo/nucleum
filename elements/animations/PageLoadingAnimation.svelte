@@ -5,14 +5,7 @@
   let width:any
   let margin:any
   onMount(()=>{
-    cssRoot=document.querySelector(':root');
-    // width=$windowObject.documentWidth/10;
-    // margin=width/2;
-    // width+='px';
-    // margin=-margin;
-    // margin+='px';
-    // cssRoot.style.setProperty('--width',(width));
-    // cssRoot.style.setProperty('--margin',(margin));
+    cssRoot=document.querySelector('#pageLoadingAnim');
   })  
 
   $:if(cssRoot){
@@ -27,15 +20,15 @@
   }
 </script>
 
-<svg xmlns="http://www.w3.org/2000/svg"  fill="none">
-    <circle fill="#333333" />
+<svg id="pageLoadingAnim" xmlns="http://www.w3.org/2000/svg"  fill="none">
+    <circle/>
 </svg>
 
 <style>
-    :root{
-        --width:120px;
+    #pageLoadingAnim{
+        --width:var(--width);
         --height:var(--width);
-        --margin:-60px;
+        --margin:var(--margin);
     }
     svg {
         position: fixed;
@@ -45,7 +38,7 @@
         top: 50%;
         z-index: 9999;
         margin: var(--margin) 0 0 var(--margin);
-        border: calc(var(--width)*(1/24)) solid #333333;
+        border: calc(var(--width)*(1/24)) solid rgba(var(--colors-fgs1), 1);
         border-radius: calc(var(--width)*(1/24));
         box-sizing: content-box;
     }
@@ -53,6 +46,7 @@
         cx:calc(var(--width)/2);
         cy:calc(var(--width)/2);
         r:calc(var(--width)/4);
+        fill:rgba(var(--colors-fgs1), 1);
     }
     @keyframes scale {
         0% {
