@@ -5,14 +5,14 @@
   import {
     PaintType,
     type Action,
-    ThinModeBehavior,
+    ThinModeBehavior
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
   import {
     appStore,
     excludedPathsForRedirectionCheck,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -44,7 +44,7 @@
 
   function resolveCurrentPath() {
     if (path) return path;
-    let currentPath = $page.params.route;
+    let currentPath = $page?.params?.route;
     // console.log({ currentPath, page: $page, appData: $appStore.appData });
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
@@ -110,7 +110,7 @@
       windowObject.gotoPath(
         currentComponent.path + "/" + currentComponent.sections[0],
         {
-          replaceState: true,
+          replaceState: true
         }
       );
     } else {
