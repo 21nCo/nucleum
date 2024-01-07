@@ -5,7 +5,10 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
-  import { resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
+  import {
+    resolveNavigationAction,
+    resolveComponent,
+  } from "$lib/tidy/utils/utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let parentBackgroundIndex: number = 0;
@@ -22,7 +25,7 @@
     isBackgroundActive={isActive}
     bgWhenInactive={orientation === Orientation.Vertical ? 2 : 1}
     on:click={() => {
-      resolveAction(action);
+      resolveNavigationAction(action);
     }}
   >
     {#if orientation === Orientation.Horizontal}

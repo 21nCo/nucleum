@@ -1,0 +1,8 @@
+<script lang="ts">
+  import { IconVariant } from "../types/icon.type";
+  export let variant: IconVariant = IconVariant.Outline;
+</script>
+
+<path d="M12 8L12 16" stroke-linecap="round" />
+<path d="M8 12H16" stroke-linecap="round" />
+<circle cx="12" cy="12" r="10" stroke-width="2.8" />

@@ -63,6 +63,7 @@
     currentComponent = resolveComponentFromPath(currentPath);
 
     if (!currentComponent) {
+      console.log({ currentPath, currentComponent });
       if (currentPath == "") {
         windowObject.gotoPath($appStore.appData.homePath ?? "/home");
       } else {

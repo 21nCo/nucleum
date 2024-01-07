@@ -2,7 +2,10 @@
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { onMount } from "svelte";
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
-  import { resolveAction, resolveComponent } from "$lib/tidy/utils/utils";
+  import {
+    resolveNavigationAction,
+    resolveComponent,
+  } from "$lib/tidy/utils/utils";
   import type { Action } from "$lib/tidy/types/action.type";
   import { userLocalPreferences } from "$lib/local/stores/local.store";
   import type { UserLocalPreferences } from "$lib/local/types/userLocalPreferences.type";
@@ -13,6 +16,7 @@
   let pages: Action[] = [];
   let backgroundColor: string;
   let selected: number;
+  $: console.log({ pages });
   onMount(() => {
     userLocalPreferences.subscribe((x: UserLocalPreferences) => {
       pages = [];
@@ -55,7 +59,7 @@
         isShowLabel={layoutContext == LayoutContext.DEFAULT}
         on:click={() => {
           selected = index;
-          resolveAction(item.action);
+          resolveNavigationAction(item.action);
         }}
         {item}
       />

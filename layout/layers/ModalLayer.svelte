@@ -7,7 +7,7 @@
     fullPageLoadingScreen,
     modalEvent as modalEvent,
     toasts,
-    windowObject
+    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
@@ -23,6 +23,8 @@
   import { isValidArray } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
+  import Icon from "$lib/tidy/elements/Icon.svelte";
+  import { runAction } from "$lib/tidy/utils/utils";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -38,7 +40,7 @@
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
-          pop: JSON.stringify(x)
+          pop: JSON.stringify(x),
         });
       } else if (
         $appStore.launchContext == LaunchContext.EMBED &&
@@ -46,7 +48,7 @@
       ) {
         appStore.log("is embed");
         postToParent({
-          pop: JSON.stringify(x)
+          pop: JSON.stringify(x),
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         modals = [x];
@@ -86,6 +88,18 @@
 {#if $appStore.player && !$windowObject.isInPortraitMode}
   <div class="fixed bottom-0 right-0">
     <ComponentResolver path={$appStore.player} />
+  </div>
+{/if}
+{#if $appStore.appData?.bottomRightAction && !$windowObject.isInPortraitMode}
+  <div class="fixed bottom-0 right-0 mr-6 mb-6">
+    <button
+      class="bg-bgs2 rounded-full p-3"
+      on:click={() => {
+        runAction($appStore.appData?.bottomRightAction);
+      }}
+    >
+      <Icon icon={$appStore.appData?.bottomRightAction} size={Size.lg} />
+    </button>
   </div>
 {/if}
 
@@ -134,14 +148,14 @@
       params={{
         path: "confirmation",
         title: $confirmationNotification.title,
-        isHideTitleIfEmpty: true
+        isHideTitleIfEmpty: true,
       }}
       layoutParams={{
         size: Size.xs,
         primaryAction: $confirmationNotification.confirmAction,
         secondaryAction: $confirmationNotification.cancelAction ?? {
-          label: "Cancel"
-        }
+          label: "Cancel",
+        },
       }}
     >
       <div class="flex flex-col gap-4">

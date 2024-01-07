@@ -72,6 +72,13 @@
   import Google from "../branding/external/logos/Google.svelte";
   import Apple from "../branding/external/logos/Apple.svelte";
   import VideoCamera from "../icons/VideoCamera.svelte";
+  import QuestionMarkCircle from "../icons/QuestionMarkCircle.svelte";
+  import Calendar from "../icons/Calendar.svelte";
+  import CalendarDays from "../icons/CalendarDays.svelte";
+  import LightBulb from "../icons/LightBulb.svelte";
+  import Node from "../icons/Node.svelte";
+  import Curation from "../icons/Curation.svelte";
+  import Capture from "../icons/Capture.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -326,6 +333,22 @@
         <Apple />
       {:else if icon === "video-camera"}
         <VideoCamera {variant} />
+      {:else if icon === "help"}
+        <QuestionMarkCircle {variant} />
+      {:else if icon === "help-mini"}
+        <QuestionMarkCircle variant={IconVariant.Mini} />
+      {:else if icon === "calendar"}
+        <Calendar {variant} />
+      {:else if icon === "calendar-days"}
+        <CalendarDays {variant} />
+      {:else if icon === "light-bulb"}
+        <LightBulb {variant} />
+      {:else if icon === "node"}
+        <Node {variant} />
+      {:else if icon === "curation"}
+        <Curation {variant} />
+      {:else if icon === "capture"}
+        <Capture {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

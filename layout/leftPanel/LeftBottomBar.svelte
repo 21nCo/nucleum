@@ -7,12 +7,15 @@
     userPreferences,
     windowObject,
   } from "$lib/tidy/stores/app.store";
+  import { IconVariant } from "$lib/tidy/types/icon.type";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
+  import { openLink } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   //let isCpActive: boolean = false;
+  $: console.log({ $page });
   $: isCpActive =
     $page.params.route?.includes("/cp") || $page.route.id?.includes("/cp");
   // onMount(() => {
@@ -52,15 +55,12 @@
           ? 'rounded-b-lg'
           : 'rounded-br-lg'}"
         on:click={() => {
-          if ($account.isLoggedIn) account.signOut();
-          windowObject.gotoPath("/cp/account");
+          openLink($appStore?.appData?.urls?.help);
         }}
       >
-        <Icon icon={$account.isLoggedIn ? "logout" : "login"} />
+        <Icon icon="help" />
         {#if !isInThinMode}
-          <span class="text-sm"
-            >{$account.isLoggedIn ? "Sign out" : "login"}</span
-          >
+          <span class="text-b3 text-fgs2">Help</span>
         {/if}
       </button>
     </div>

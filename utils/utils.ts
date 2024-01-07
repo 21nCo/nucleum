@@ -180,7 +180,17 @@ export function openLink(url: string) {
   }
 }
 
-export function resolveAction(action: string) {
+export function runAction(action: string) {
+  let component = resolveComponent(action);
+  if (!component) {
+    windowObject.gotoPath("404");
+    return;
+  }
+  if (component.fn) component.fn();
+  else resolveNavigationAction(action);
+}
+
+export function resolveNavigationAction(action: string) {
   let component = resolveComponent(action);
   if (!component) {
     windowObject.gotoPath("404");
@@ -189,7 +199,6 @@ export function resolveAction(action: string) {
   if (component.link) {
     const url = get(appStore).appData.urls[component.link];
     if (url) openLink(url);
-    return;
   } else if (component.component) {
     windowObject.gotoPath("/" + (component.path ?? component.action));
     return;

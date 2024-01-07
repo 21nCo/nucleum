@@ -4,7 +4,7 @@ import {
   MdBlockType,
   type Block,
   ListType,
-  type BasicMarkdown
+  type BasicMarkdown,
 } from "../types/md.type";
 import { isValidArray } from "./obj.utils";
 
@@ -108,5 +108,7 @@ export function isValidMarkdown(md: BasicMarkdown) {
 }
 
 export function isValidString(str: string | undefined | null) {
-  return str && str != "" && str != "null" && str != "undefined";
+  const isValid = str && str != "" && str != "null" && str != "undefined";
+  if (isValid) return str;
+  return undefined;
 }

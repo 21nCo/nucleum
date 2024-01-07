@@ -98,12 +98,17 @@
           : 'border-r border-bgs2 bg-bgs2'}"
         style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
       >
-        <div class="w-full flex flex-col gap-8 lg:gap-12">
+        <div class="w-full flex flex-col gap-8">
           <div
-            class="w-full flex h-6 {isInThinMode
+            class="w-full flex items-center h-6 {isInThinMode
               ? 'justify-center'
-              : 'justify-end'}  px-2"
+              : $$slots.top
+                ? 'justify-between'
+                : 'justify-end'}  px-2"
           >
+            {#if !isInThinMode}
+              <slot name="top" />
+            {/if}
             {#if isHovered}
               <Button
                 icon="sidebar-toggle"
@@ -120,7 +125,7 @@
           {#if !isInThinMode}
             <slot name="header" />
           {/if}
-          <div class="flex flex-col gap-12 items-center w-full p-2">
+          <div class="flex flex-col gap-8 items-center w-full p-2">
             <AppMenuSwitcher
               parentBackgroundIndex={1}
               layoutContext={isInThinMode
@@ -130,7 +135,9 @@
             {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
               <PageMenuView />
             {/if}
-            <!-- todo - dynamicsection rendering from dyanmic items -->
+            {#if !isInThinMode}
+              <slot name="mid" />
+            {/if}
           </div>
         </div>
         <div class="w-full flex flex-col gap-2 items-center">
@@ -141,23 +148,26 @@
               label="switch to min mode"
             />
           {/if}
-          {#if isInThinMode}
-            <!-- todo - on click - show command bar -->
-            <!-- <Icon
-              icon="command"
-              color="fgs2"
-              hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
-            /> -->
-          {:else}
-            <!-- <div class="text-b3 text-fgs3 mb-4">
-              Press <span
-                class="text-fgs2 px-2 py-0.5 rounded-md {bg(
-                  $userPreferences.theme,
-                  2
-                )}">Cmd + K</span
-              > for command bar
-            </div> -->
+          {#if $appStore?.appData?.isCmdBarEnabled === true}
+            {#if isInThinMode}
+              <!-- todo - on click - show command bar -->
+              <Icon
+                icon="command"
+                color="fgs2"
+                hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
+              />
+            {:else}
+              <div class="text-b3 text-fgs3 mb-4">
+                Press <span
+                  class="text-fgs2 px-2 py-0.5 rounded-md {bgClass(
+                    $userPreferences.theme,
+                    2
+                  )}">Cmd + K</span
+                > for command bar
+              </div>
+            {/if}
           {/if}
+
           <LeftBottomBar {isInThinMode} {isRounded} />
         </div>
       </div>
