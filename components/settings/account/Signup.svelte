@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { appStore } from "$lib/tidy/stores/app.store";
-  import AccountForm from "./AccountForm.svelte";
+  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import AccountForm from "./signup/AccountForm.svelte";
   import PanelSwitcher from "$lib/tidy/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import Link from "$lib/tidy/elements/text/Link.svelte";
   import { page } from "$app/stores";
   import { LinkVariant } from "$lib/tidy/types/button.type";
+  import { onMount } from "svelte";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -18,17 +19,25 @@
       message = "Your session has expired. Please login again.";
     }
   }
+  onMount(() => {
+    if ($account.isLoggedIn) windowObject.gotoPath("/");
+  });
 </script>
 
-<div class="flex flex-col w-full h-full justify-center">
-  <div class="w-full h-3/4 flex flex-col gap-8 justify-start items-center">
+<div class="flex flex-col w-full h-full justify-start pt-8 xl:pt-12">
+  <div
+    class="w-full flex flex-col justify-start items-center {$windowObject.scale >
+    0.6
+      ? 'gap-16'
+      : 'gap-12'}"
+  >
     <!-- <div class="flex flex-col items-center">
       <SubAtomLogo subatom="pointron" isDark={true} />
       <div class="font-medium text-h3 text-fgs2">
         {$appStore.appData.name}
       </div>
     </div> -->
-    <div>
+    <div class="flex flex-col gap-6">
       <PanelSwitcher
         items={["Sign up", "Sign in"]}
         selectedIndex={0}
@@ -42,15 +51,13 @@
           }
         }}
       />
+      {#if message}
+        <div class="font-medium px-4 text-center text-ass1 text-b2 -mb-4">
+          {message}
+        </div>
+      {/if}
     </div>
-    {#if message}
-      <div class="font-medium px-4 text-center text-fgs2 text-b2">
-        {message}
-      </div>
-    {/if}
-    <div class="h-4/5">
-      <AccountForm {isSignup} />
-    </div>
+    <AccountForm {isSignup} />
     {#if isSignup}
       <footer class="px-8">
         <div class="text-b3 text-fgs2 text-center">

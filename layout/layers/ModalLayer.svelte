@@ -7,7 +7,7 @@
     fullPageLoadingScreen,
     modalEvent as modalEvent,
     toasts,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
@@ -40,7 +40,7 @@
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
-          pop: JSON.stringify(x),
+          pop: JSON.stringify(x)
         });
       } else if (
         $appStore.launchContext == LaunchContext.EMBED &&
@@ -48,7 +48,11 @@
       ) {
         appStore.log("is embed");
         postToParent({
-          pop: JSON.stringify(x),
+          pop: JSON.stringify({
+            isShow: x.isShow,
+            path: x.path,
+            id: x.id
+          })
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         modals = [x];
@@ -148,14 +152,14 @@
       params={{
         path: "confirmation",
         title: $confirmationNotification.title,
-        isHideTitleIfEmpty: true,
+        isHideTitleIfEmpty: true
       }}
       layoutParams={{
         size: Size.xs,
         primaryAction: $confirmationNotification.confirmAction,
         secondaryAction: $confirmationNotification.cancelAction ?? {
-          label: "Cancel",
-        },
+          label: "Cancel"
+        }
       }}
     >
       <div class="flex flex-col gap-4">

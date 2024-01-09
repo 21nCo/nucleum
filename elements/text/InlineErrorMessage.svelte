@@ -5,12 +5,14 @@
     clearTimeout(timer);
     timer = setTimeout(() => {
       error = null;
-    }, 3000);
+    }, 4000);
   }
 </script>
 
-<div class="h-4">
+<div class="h-6 w-full flex justify-center">
   {#if error}
-    <div class="text-ars1">{error}</div>
+    <div class="text-ars1 text-b3">
+      {error}
+    </div>
   {/if}
 </div>

@@ -9,10 +9,8 @@
   import ModalHeader from "./ModalHeader.svelte";
   import type {
     ModalLayoutParams,
-    ModalParams,
+    ModalParams
   } from "$lib/tidy/types/popup.type";
-  import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
-  import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import { fly } from "svelte/transition";
   export let params: ModalParams;
   export let layoutParams: ModalLayoutParams;
@@ -23,7 +21,6 @@
     footerRef.close();
   }
   onMount(() => {
-    postMessageToParent(EmbedMessage.SHEET_MOUNTED);
     let queryParamId = $page.url.searchParams.get("id");
     if (queryParamId && !params?.id) {
       params.id = queryParamId;

@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
+  import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import { EmbedContext } from "$lib/tidy/types/appStore.type";
   export let message: string | undefined = undefined;
@@ -11,8 +12,13 @@
   class="w-full h-full intialRenderAnimation flex items-center justify-center"
 >
   <div class="flex items-center justify-center">
-    {#if $appStore.embedContext == EmbedContext.SHEET}
-      <div class="text-fgs2">Loading...</div>
+    {#if $appStore.embedContext != EmbedContext.SHEET}
+      <div
+        class="text-fgs3 text-b3 flex flex-col gap-2 justify-center items-center"
+      >
+        <PageLoadingAnimation variant="panel-refresh" />
+        Loading...
+      </div>
     {:else}
       <div class="flex flex-col items-center">
         <SubAtomLogo

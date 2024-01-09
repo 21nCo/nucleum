@@ -4,6 +4,7 @@ export enum IdentityProvider {
   Phone = "phone",
   RealHuman = "realhuman",
   Google = "google.com",
+  Apple = "apple.com",
   Github = "github.com",
   Dribbble = "dribbble.com",
   Stackoverflow = "stackoverflow.com",
@@ -29,7 +30,7 @@ export enum IdentityProvider {
   Spotify = "open.spotify.com",
   SoundCloud = "soundcloud.com",
   Substack = "substack.com",
-  Unknown = "unknown",
+  Unknown = "unknown"
 }
 
 export type OAuthProviderConfig = {

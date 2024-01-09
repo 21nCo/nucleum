@@ -64,8 +64,8 @@
     } else if (style === TextInputStyle.BOXED) {
       inputClasses += ` ${bgClass(
         $userPreferences.theme,
-        1
-      )} border ${borderColor($userPreferences.theme)} p-2`;
+        0
+      )} border-2 ${borderColor($userPreferences.theme)} p-2`;
       unitClasses = unitClasses + " p-2";
     }
     if (style == TextInputStyle.BOXED && units && units.length > 0) {

@@ -485,9 +485,9 @@ function initAccount(seed: UserAccount) {
       refreshToken: string;
     },
     params: {
-      isRefreshApp?: boolean;
+      isIgnoreRefresh?: boolean;
       isFromSignup?: boolean;
-    } = { isRefreshApp: true, isFromSignup: false }
+    } = { isIgnoreRefresh: false, isFromSignup: false }
   ) => {
     console.log("signing in", { data });
     localStorage.setItem("surreal-token", data.token);
@@ -510,7 +510,7 @@ function initAccount(seed: UserAccount) {
         userInfo: data.userInfo
       };
     });
-    if (params.isRefreshApp && !params.isFromSignup) {
+    if (!params.isIgnoreRefresh && !params.isFromSignup) {
       appEvents.publish(AppEvent.USER_LOGIN, true);
       windowObject.gotoPath("/");
     } else if (params.isFromSignup) {

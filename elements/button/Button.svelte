@@ -20,7 +20,6 @@
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
   export let isLoading: boolean = false;
-  $: if (isLoading) isDisabled = true;
   let toolTipRef: any;
   let buttonRef: any;
   let isHovered: boolean = false;

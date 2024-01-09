@@ -28,7 +28,7 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
       localStorage.setItem(key, toString(value));
       return set(value);
     },
-    update,
+    update
   };
 };
 
@@ -70,7 +70,7 @@ export class Persistance {
     try {
       const token = localStorage.getItem("refresh-token");
       const response = await performApiCall("account/refreshToken", "POST", {
-        token,
+        token
       });
       if (!response?.ok) {
         return;
@@ -79,7 +79,7 @@ export class Persistance {
       if (!data?.token) return;
       if (!data.userInfo)
         data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
-      account.signIn(data, { isFromSignup: false });
+      account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;
     } catch (err) {
       appStore.logError(err);
@@ -88,7 +88,7 @@ export class Persistance {
   getUserInfo = async (token: string) => {
     try {
       const response = await performApiCall("account/refreshToken", "POST", {
-        token,
+        token
       });
       if (!response?.ok) {
         return;
@@ -245,8 +245,8 @@ export class Persistance {
           itemType
             ? `${ItemEnum[itemType]}:${item.id}`
             : typeof item.id === "string"
-            ? item.id
-            : "",
+              ? item.id
+              : "",
           item
         );
     }
@@ -341,7 +341,7 @@ export class Persistance {
           let searchResult = await surrealDb.query(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
-              searchString: searchString.toLowerCase(),
+              searchString: searchString.toLowerCase()
             }
           );
           if (searchResult && searchResult.length > 0) {

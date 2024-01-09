@@ -3,7 +3,7 @@ import { get } from "svelte/store";
 import { appStore } from "../stores/app.store";
 import type {
   IdentityProvider,
-  OAuthProviderConfig,
+  OAuthProviderConfig
 } from "../types/oauth.type";
 import { openLink, performApiCall } from "./utils";
 import { LaunchContext } from "../types/appStore.type";
@@ -44,7 +44,7 @@ export async function handleOAuthRedirection(
     slug,
     code,
     verifier,
-    app,
+    app
   };
   let response = await performApiCall("account/oauth", "POST", body);
   console.log(response);
