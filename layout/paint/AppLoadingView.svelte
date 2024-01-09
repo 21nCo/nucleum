@@ -12,7 +12,7 @@
   class="w-full h-full intialRenderAnimation flex items-center justify-center"
 >
   <div class="flex items-center justify-center">
-    {#if $appStore.embedContext != EmbedContext.SHEET}
+    {#if $appStore.embedContext === EmbedContext.SHEET}
       <div
         class="text-fgs3 text-b3 flex flex-col gap-2 justify-center items-center"
       >

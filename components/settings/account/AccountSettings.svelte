@@ -28,7 +28,7 @@
         placeholder="john@legend.com"
       /> -->
     <div>
-      <div>Nick name</div>
+      <div>Name</div>
       <div class="text-b2 text-fgs3">{nickName}</div>
     </div>
     {#if emailParts}

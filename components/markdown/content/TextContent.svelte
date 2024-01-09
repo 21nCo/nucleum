@@ -9,11 +9,12 @@
     type TextContent,
     BlockContext,
     type TextType,
-    ListType,
+    ListType
   } from "$lib/tidy/types/md.type";
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
+  import { windowObject } from "$lib/tidy/stores/app.store";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let content: TextContent;
@@ -176,7 +177,7 @@
         range?.endContainer.parentElement?.childNodes ?? []
       ).indexOf(element),
       index: range?.endOffset ?? 0,
-      endContainer: range?.endContainer,
+      endContainer: range?.endContainer
     };
     console.log("setCaretPosition", range, caretPosition);
   }
@@ -303,7 +304,7 @@
   onMount(() => {
     // console.log("mounted");
     // console.log({ blockRef, style: blockRef.style.caretColor });
-    blockRef?.focus();
+    if (!$windowObject.isInPortraitMode) blockRef?.focus();
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
       if (md.focusedBlockId === id) {
         setCursorToEnd(blockRef);
@@ -338,17 +339,17 @@
       { shortcut: "### ", type: MdBlockType.HEADING3 },
       { shortcut: "#### ", type: MdBlockType.HEADING4 },
       { shortcut: "##### ", type: MdBlockType.HEADING5 },
-      { shortcut: '" ', type: MdBlockType.QUOTE },
+      { shortcut: '" ', type: MdBlockType.QUOTE }
     ];
     const structuralEscapeShortcuts = [
       { shortcut: "---", type: MdBlockType.DIVIDER },
-      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER },
+      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER }
     ];
     const listEscapeShortcuts = [
       { shortcut: "* ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
       { shortcut: "- ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
       { shortcut: "+ ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED },
+      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED }
     ];
     textEscapeShortcuts.forEach(({ shortcut, type }) => {
       if (typeof content.body !== "string") return;
@@ -440,7 +441,7 @@
       { regex: /&lt;-/g, replacement: "←" },
       { regex: /&lt;=/g, replacement: "≤" },
       { regex: /&gt;=/g, replacement: "≥" },
-      { regex: /=&gt;/g, replacement: "⇒" },
+      { regex: /=&gt;/g, replacement: "⇒" }
     ];
     executeReplace(patterns);
   }
@@ -459,7 +460,7 @@
           caretPosition = {
             ...caretPosition,
             index: caretPosition?.index ?? 0,
-            elementId: focusedSpan,
+            elementId: focusedSpan
           };
           isNewSpanInserted = true;
           content.body = content.body.replace(
@@ -494,16 +495,16 @@
       { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
       {
         regex: /~~((?:\S|\s\S)+?)~~/g,
-        replacement: '<span class="line-through">$1</span>',
+        replacement: '<span class="line-through">$1</span>'
       },
       {
         regex: /`((?:\S|\s\S)+?)`/g,
-        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>',
+        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>'
       },
       {
         regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-        replacement: '<span style="color:$2">$1</span>',
-      },
+        replacement: '<span style="color:$2">$1</span>'
+      }
     ];
     executeReplace(patterns, true);
     //insertCaretMarker();
