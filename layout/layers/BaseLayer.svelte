@@ -8,8 +8,7 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    userPreferences,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
@@ -20,12 +19,12 @@
     performRedirectionChecks,
     runBackendUpdate,
     performLoginStatusCheck,
-    ping,
+    ping
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { pingParent } from "$lib/tidy/utils/embed.utils";
-  import AnalyticsLayer from "./AnalyticsLayer.svelte";
+  import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -36,33 +35,11 @@
     appEvents.publish(AppEvent.WINDOW_CLICKED, event);
   };
   let timer: any;
-  let isAnalyticsIdentifiersMapped = false;
   pingParent();
   bootup();
   onMount(async () => {
     await parseEmbedToken();
     await initializeData();
-    if (
-      $appStore?.appData?.isAnalyticsEnabled &&
-      $userPreferences?.isAnonymousAnalyticsEnabled
-    ) {
-      const host = "dev.pointron.io"; //window.location.host;
-      const gaTag =
-        $appStore.appData?.gaTag ??
-        $appStore.appData?.gaTags?.find((ga: any) => ga.host === host)?.tag;
-      if (gaTag) {
-        localStorage.setItem("gaTag", gaTag);
-      }
-      const clarityTag =
-        $appStore.appData?.clarityTag ??
-        $appStore.appData?.clarityTags?.find(
-          (clarity: any) => clarity.host === host
-        )?.tag;
-      if (clarityTag) {
-        localStorage.setItem("clarityTag", clarityTag);
-      }
-      isAnalyticsIdentifiersMapped = true;
-    }
     const appEventSub = appEvents.subscribe(windowVisibilityHandler);
     return () => {
       appEventSub();
@@ -106,7 +83,7 @@
   }
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
-    await initializeAppData();
+    await new Persistance().initializeAppData();
     const currentVersion = $appStore.appData.version;
     if (
       !excludedPathsForRedirectionCheck.includes(
@@ -120,11 +97,6 @@
         else await ping();
       }
     }
-  }
-  async function initializeAppData() {
-    const app = import.meta.env.VITE_APP ?? window.location.hostname;
-    if (!app) return;
-    await new Persistance().initializeAppData(app);
   }
   function runCurrentTime() {
     clearInterval(timer);
@@ -155,7 +127,7 @@
   }
 </script>
 
-{#if $appStore?.appData?.isAnalyticsEnabled && isAnalyticsIdentifiersMapped}
+{#if $appStore?.appData?.isAnalyticsEnabled}
   <AnalyticsLayer />
 {/if}
 <title>{$appStore.appData.name}</title>

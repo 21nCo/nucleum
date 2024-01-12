@@ -146,8 +146,10 @@ export class Persistance {
       appStore.logError(err);
     }
   };
-  initializeAppData = async (app: string) => {
+  initializeAppData = async () => {
     try {
+      const app = import.meta.env.VITE_APP ?? window.location.hostname;
+      if (!app) return;
       let response = await performBlankApiCall(
         "appdata",
         "POST",
