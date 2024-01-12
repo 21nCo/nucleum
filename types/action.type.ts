@@ -14,6 +14,7 @@ export type Action = {
   context?: string;
   params?: any;
   isMenuHidden?: boolean;
+  isHideInCmdBar?: boolean;
 };
 
 export enum PaintType {
@@ -22,7 +23,7 @@ export enum PaintType {
   YMENU,
   XMENU,
   PANEL_ON_LEFT,
-  JUMP_TO_PARENT,
+  JUMP_TO_PARENT
 }
 
 export enum ThinModeBehavior {
@@ -30,7 +31,7 @@ export enum ThinModeBehavior {
   GRAND_CHILDREN_ON_MENU,
   RIGHT_PANEL_AS_PLAYER,
   YSTACK,
-  HIDE,
+  HIDE
 }
 
 export enum BlockType {
@@ -38,5 +39,5 @@ export enum BlockType {
   SECTION,
   INLINE,
   BUTTON,
-  TOGGLE,
+  TOGGLE
 }

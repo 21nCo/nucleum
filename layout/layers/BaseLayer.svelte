@@ -25,6 +25,7 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { pingParent } from "$lib/tidy/utils/embed.utils";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
+  import Shortcuts from "./Shortcuts.svelte";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -140,3 +141,4 @@
   <DebugLayer />
 {/if}
 <ModalLayer />
+<Shortcuts />

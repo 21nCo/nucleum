@@ -62,6 +62,34 @@
           break;
       }
       return;
+    } else if (layoutParams.orientation === Orientation.Horizontal) {
+      switch (layoutParams.size) {
+        case Size.xs:
+          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
+          break;
+        case Size.sm:
+          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
+          break;
+        case Size.md:
+          sizingClass =
+            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[25rem] min-h-[25rem]";
+          break;
+        case Size.lg:
+          sizingClass =
+            "w-[21rem] sm:w-[35rem] md:w-[45rem] h-[30rem] min-h-[30rem]";
+          break;
+        case Size.xl:
+          sizingClass =
+            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
+          break;
+        case Size.full:
+          sizingClass = "w-full h-full min-h-screen min-w-screen";
+          break;
+        default:
+          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
+          break;
+      }
+      return;
     }
   }
 </script>
@@ -72,20 +100,26 @@
   </div>
 {:else}
   <div
-    class="flex flex-col items-center justify-between gap-8 py-4 lg:py-8 px-3 md:px-4 lg:px-8 {$appStore.launchContext ===
+    class="flex flex-col items-center justify-between {$appStore.launchContext ===
       LaunchContext.EMBED && $appStore.embedContext === EmbedContext.SHEET
       ? 'w-full h-full'
-      : sizingClass}"
+      : sizingClass} {!layoutParams.ignoreSafeArea
+      ? 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
+      : ''}"
   >
-    <ModalHeader {params} />
+    {#if !layoutParams.ignoreSafeArea}
+      <ModalHeader {params} />
+    {/if}
     <div class="flex flex-col gap-4 w-full flex-grow">
       <slot />
     </div>
-    <ModalFooter
-      primaryAction={layoutParams?.primaryAction}
-      secondaryAction={layoutParams?.secondaryAction}
-      bind:this={footerRef}
-      path={params?.path}
-    />
+    {#if !layoutParams.ignoreSafeArea}
+      <ModalFooter
+        primaryAction={layoutParams?.primaryAction}
+        secondaryAction={layoutParams?.secondaryAction}
+        bind:this={footerRef}
+        path={params?.path}
+      />
+    {/if}
   </div>
 {/if}

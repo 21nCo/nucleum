@@ -15,6 +15,7 @@ export type UserGlobalPreferences = {
   timeZoneOffset: number;
   timeScales?: TimeScale[];
   id: string;
+  recentCommands?: string[];
   uiStates: {
     all: UiState;
     desktop: UiState;

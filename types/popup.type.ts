@@ -27,4 +27,5 @@ export type ModalLayoutParams = {
   orientation?: Orientation;
   primaryAction?: ButtonParams;
   secondaryAction?: ButtonParams;
+  ignoreSafeArea?: boolean;
 };

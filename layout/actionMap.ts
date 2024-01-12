@@ -2,7 +2,7 @@ import AppearanceSettings from "$lib/tidy/components/settings/appearance/Appeara
 import {
   ThinModeBehavior,
   PaintType,
-  type Action,
+  type Action
 } from "$lib/tidy/types/action.type";
 import NotFound from "../components/error/PageError.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
@@ -19,36 +19,42 @@ import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.s
 import Signup from "../components/settings/account/Signup.svelte";
 import ComingSoonView from "../elements/ComingSoonView.svelte";
 import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
+import CommandBar from "../components/commandBar/CommandBar.svelte";
 export const actions: Action[] = [
   {
     action: "404",
     component: NotFound,
+    isHideInCmdBar: true
   },
   {
     action: "offline",
     component: Offline,
+    isHideInCmdBar: true
   },
   {
     action: "signup",
     component: Signup,
     isMenuHidden: true,
+    isHideInCmdBar: true
   },
   {
     action: "debuglogs",
     icon: "code",
     component: DebugLogs,
+    isHideInCmdBar: true
   },
   {
     action: "cp",
     label: "Control",
     icon: "settings",
     component: ControlPanel,
+    isHideInCmdBar: true
   },
   {
     action: "account",
     label: "Account",
     path: "cp/account",
-    component: AccountSettings,
+    component: AccountSettings
   },
   {
     label: "Appearance",
@@ -56,7 +62,7 @@ export const actions: Action[] = [
     component: AppearanceSettings,
     sections: ["openPreviewMode", "basics", "theme", "accessibility"],
     pagePaint: PaintType.YSTACK,
-    thinModeBehavior: ThinModeBehavior.JUMP_TO_PARENT,
+    thinModeBehavior: ThinModeBehavior.JUMP_TO_PARENT
   },
   {
     action: "openPreviewMode",
@@ -64,82 +70,86 @@ export const actions: Action[] = [
     path: "settings/appearance/openPreviewMode",
     pagePaint: PaintType.JUMP_TO_PARENT,
     component: OpenPreviewMode,
-    thinModeBehavior: ThinModeBehavior.HIDE,
+    thinModeBehavior: ThinModeBehavior.HIDE
   },
   {
     action: "accessibility",
     label: "Accessibility",
     path: "cp/accessibility",
     icon: "cube",
-    component: AccessibilitySettings,
+    component: AccessibilitySettings
   },
   {
     action: "theme",
     label: "Theme",
     path: "cp/theme",
     icon: "palette",
-    component: ThemeSettingView,
+    component: ThemeSettingView
   },
   {
     action: "appMenu",
     label: "App Menu",
     path: "cp/appMenu",
     icon: "list",
-    component: AppMenuSettings,
+    component: AppMenuSettings
   },
   {
     action: "shortcuts",
     label: "Shortcuts",
     path: "cp/shortcuts",
     icon: "command",
-    component: ComingSoonView,
+    component: ComingSoonView
   },
   {
     action: "datetime-settings",
     label: "Date & Time",
     path: "cp/datetime-settings",
     icon: "sun",
-    component: DateTimeSettings,
+    component: DateTimeSettings
   },
   {
     action: "productguide",
     label: "Product guide",
     icon: "academic-cap",
-    link: "productguide",
+    link: "productguide"
   },
   {
     action: "discord",
     label: "Join us on discord",
     icon: "users",
-    link: "discord",
+    link: "discord"
   },
   {
     action: "privacy",
     label: "Privacy policy",
-    link: "privacy",
+    link: "privacy"
   },
   {
     action: "feedback",
     label: "Give feedback",
     icon: "chatleftright",
-    link: "feedback",
+    link: "feedback"
   },
   {
     action: "share",
     path: "cp/share",
     label: "Refer a friend",
     icon: "share",
-    component: ShareToFriends,
+    component: ShareToFriends
   },
   {
     action: "about",
     label: "About",
     path: "cp/about",
     icon: "info",
-    component: AboutSettings,
+    component: AboutSettings
   },
   {
     action: "STATUS_UPDATE",
-    component: ToastModalPortrait,
+    component: ToastModalPortrait
   },
+  {
+    action: "cmd",
+    component: CommandBar
+  }
 ];

@@ -39,7 +39,7 @@
   import AreaChart from "../icons/AreaChart.svelte";
   import {
     resolveIfActiveFgFg,
-    retrieveCurrentColors,
+    retrieveCurrentColors
   } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
@@ -339,7 +339,7 @@
         <QuestionMarkCircle variant={IconVariant.Mini} />
       {:else if icon === "calendar"}
         <Calendar {variant} />
-      {:else if icon === "calendar-days"}
+      {:else if icon === "calendar-days" || icon === "journal"}
         <CalendarDays {variant} />
       {:else if icon === "light-bulb"}
         <LightBulb {variant} />
