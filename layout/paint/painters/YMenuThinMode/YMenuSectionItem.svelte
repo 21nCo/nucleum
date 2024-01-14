@@ -3,7 +3,7 @@
   import {
     BlockType,
     type Action,
-    ThinModeBehavior,
+    ThinModeBehavior
   } from "$lib/tidy/types/action.type";
   import ComponentResolver from "../../ComponentResolver.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
@@ -13,7 +13,7 @@
 </script>
 
 {#if currentComponent && currentComponent.thinModeBehavior != ThinModeBehavior.HIDE}
-  {#if currentComponent.type === BlockType.INLINE}
+  {#if currentComponent.blockType === BlockType.INLINE}
     <div class="flex justify-center">
       <ComponentResolver {currentComponent} />
     </div>

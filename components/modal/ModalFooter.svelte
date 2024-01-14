@@ -3,6 +3,7 @@
   import {
     confirmationNotification,
     modalEvent,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import type { ButtonParams } from "$lib/tidy/types/button.type";
   export let path: string = "";
@@ -14,7 +15,7 @@
     if (isPreventAutoClose) return;
     modalEvent.notify({
       path,
-      isShow: false,
+      isShow: false
     });
     confirmationNotification.reset();
   }
@@ -23,23 +24,37 @@
 <div class="popover-footer flex gap-2 justify-center p-4">
   {#if primaryAction}
     <Button
-      label={primaryAction.label}
       type={primaryAction.variant ?? "primary"}
       on:click={() => {
         if (primaryAction?.callback) primaryAction?.callback();
         close();
       }}
-    />
+    >
+      {primaryAction.label}
+      <!-- TODO: enter icon -->
+      <!-- {#if !$windowObject.isInPortraitMode}
+        <span class="text-bgs3 text-b4">Enter</span>
+      {/if} -->
+    </Button>
   {/if}
   {#if secondaryAction}
     <Button
-      label={secondaryAction.label}
       on:click={() => {
         if (secondaryAction?.callback) secondaryAction?.callback();
         close();
       }}
-    />
+    >
+      {secondaryAction.label}
+      {#if !$windowObject.isInPortraitMode}
+        <span class="text-fgs3 text-b3">Esc</span>
+      {/if}
+    </Button>
   {:else if isShowClose}
-    <Button label="close" on:click={close} />
+    <Button on:click={close}>
+      close
+      {#if !$windowObject.isInPortraitMode}
+        <span class="text-fgs3 text-b3">Esc</span>
+      {/if}
+    </Button>
   {/if}
 </div>

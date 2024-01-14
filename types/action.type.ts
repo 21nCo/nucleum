@@ -1,21 +1,44 @@
+import type { ConfirmationNotification } from "./notification.type";
+import type { ModalLayoutParams } from "./popup.type";
+
 export type Action = {
   action: string;
+  type?: ActionType;
   path?: string;
   link?: string;
   fn?: () => void;
+  cmdBarPreCondition?: () => void;
   component?: any;
   label?: string;
   icon?: string;
   sections?: string[];
   pagePaint?: PaintType;
   thinModeBehavior?: ThinModeBehavior;
-  type?: BlockType;
+  blockType?: BlockType;
   associatedPlayer?: string;
   context?: string;
   params?: any;
   isMenuHidden?: boolean;
-  isHideInCmdBar?: boolean;
+  isInactive?: boolean;
+  modalParams?: {
+    isHideTitleIfEmpty?: boolean;
+    layoutParams: ModalLayoutParams;
+  };
+  confirmation?: ConfirmationNotification;
+  cmdLabel?: string;
 };
+
+export enum ActionType {
+  PAGE = "PAGE",
+  LINK = "LINK",
+  MODAL = "MODAL",
+  INLINE = "INLINE",
+  FUNCTION = "FUNCTION",
+  META = "META",
+  META_MODAL = "META_MODAL",
+  CONFIRMATION = "CONFIRMATION_MODAL",
+  META_PAGE = "META_PAGE"
+}
 
 export enum PaintType {
   YSTACK,

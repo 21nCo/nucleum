@@ -37,6 +37,7 @@
       }
     });
     const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
+      console.log("modal event", x);
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
@@ -146,7 +147,7 @@
   </Modal>
 {/each}
 
-{#if $confirmationNotification.isShow}
+{#if $confirmationNotification}
   <Modal show={true} id="confirmation" isDismissable={true}>
     <ModalLayout
       params={{
@@ -164,7 +165,7 @@
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <div class="text-b1">{$confirmationNotification.message}</div>
+          <div class="text-b1">{$confirmationNotification?.message}</div>
         </div>
       </div>
     </ModalLayout>

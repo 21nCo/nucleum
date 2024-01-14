@@ -6,14 +6,17 @@
     userPreferences,
     windowObject
   } from "$lib/tidy/stores/app.store";
+  import { ActionType } from "$lib/tidy/types/action.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { runAction } from "$lib/tidy/utils/utils";
   import ResultItem from "./ResultItem.svelte";
   export let search: string = "";
   let allActions: any[] = [];
   let filteredActions: any[] = [];
   let selectedAction: string = "";
   loadAllActions();
-  loadDefaultActions();
+  loadDefaultFilteredActions();
   $: if (search) {
     filteredActions = search
       ? allActions.filter((x) =>
@@ -22,7 +25,7 @@
       : allActions;
     selectedAction = filteredActions?.[0]?.action;
   } else {
-    loadDefaultActions();
+    loadDefaultFilteredActions();
     selectedAction = filteredActions?.[0]?.action;
   }
   export function moveSelection(direction: "up" | "down") {
@@ -45,13 +48,8 @@
   }
   export function select() {
     if (selectedAction) {
-      const action = allActions.find((x) => x.action === selectedAction);
-      if (action.type === "navigation") {
-        windowObject.gotoPath(action.path ?? "/" + action.action);
-        closeCmdBar();
-      } else {
-        action.fn();
-      }
+      closeCmdBar();
+      runAction(selectedAction);
       let recentCommands = isValidArray($userPreferences.recentCommands);
       if (recentCommands) {
         if (recentCommands.includes(selectedAction)) {
@@ -68,31 +66,42 @@
   function closeCmdBar() {
     modalEvent.notify({
       isShow: false,
-      path: "cmd"
+      path: AppEvent.CMD
     });
   }
-  function mapAction(action: any) {
-    if (!action.label || action.link) {
-      return;
-    } else if (action.fn) {
-      return { ...action, type: "action" };
-    } else {
-      return { ...action, type: "navigation" };
-    }
-  }
+
   function loadAllActions() {
     const rawActions = [...localActions, ...actions];
-    allActions = rawActions.map((x) => mapAction(x)).filter((x) => x);
+    allActions = rawActions.filter(
+      (action) =>
+        action.label &&
+        !action.isInactive &&
+        !(
+          action.type === ActionType.META ||
+          action.type === ActionType.META_MODAL ||
+          action.type === ActionType.META_PAGE
+        ) &&
+        (action.cmdBarPreCondition ? action.cmdBarPreCondition() : true)
+    );
+    allActions = allActions.map((x) => {
+      if (x.cmdLabel) {
+        return x;
+      }
+      return {
+        ...x,
+        cmdLabel: x.label
+      };
+    });
   }
-  function loadDefaultActions() {
+  function loadDefaultFilteredActions() {
     const recentCommands = isValidArray($userPreferences.recentCommands);
     if (recentCommands) {
       filteredActions = allActions.filter(
         (x) => !recentCommands.includes(x.action)
       );
-      const recentActions = recentCommands.map((x) =>
-        allActions.find((y) => y.action === x)
-      );
+      const recentActions = recentCommands
+        .map((x) => allActions.find((y) => y.action === x))
+        .filter((x) => x);
       filteredActions = [...recentActions, ...filteredActions];
     } else {
       filteredActions = allActions;

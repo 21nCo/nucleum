@@ -2,7 +2,8 @@ import AppearanceSettings from "$lib/tidy/components/settings/appearance/Appeara
 import {
   ThinModeBehavior,
   PaintType,
-  type Action
+  type Action,
+  ActionType
 } from "$lib/tidy/types/action.type";
 import NotFound from "../components/error/PageError.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
@@ -20,40 +21,45 @@ import Signup from "../components/settings/account/Signup.svelte";
 import ComingSoonView from "../elements/ComingSoonView.svelte";
 import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
 import CommandBar from "../components/commandBar/CommandBar.svelte";
+import { Size } from "../types/size.enum";
+import { Orientation } from "../types/direction.enum";
+import { AppEvent } from "../types/event.enum";
+import { isInEditMode } from "../stores/app.store";
 export const actions: Action[] = [
   {
     action: "404",
-    component: NotFound,
-    isHideInCmdBar: true
+    type: ActionType.META_PAGE,
+    component: NotFound
   },
   {
     action: "offline",
-    component: Offline,
-    isHideInCmdBar: true
+    type: ActionType.META_PAGE,
+    component: Offline
   },
   {
     action: "signup",
     component: Signup,
-    isMenuHidden: true,
-    isHideInCmdBar: true
+    type: ActionType.META_PAGE,
+    isMenuHidden: true
   },
   {
     action: "debuglogs",
     icon: "code",
-    component: DebugLogs,
-    isHideInCmdBar: true
+    type: ActionType.META_PAGE,
+    component: DebugLogs
   },
   {
     action: "cp",
-    label: "Control",
+    label: "Settings",
     icon: "settings",
-    component: ControlPanel,
-    isHideInCmdBar: true
+    type: ActionType.PAGE,
+    component: ControlPanel
   },
   {
     action: "account",
-    label: "Account",
+    label: "Account Settings",
     path: "cp/account",
+    type: ActionType.PAGE,
     component: AccountSettings
   },
   {
@@ -62,6 +68,7 @@ export const actions: Action[] = [
     component: AppearanceSettings,
     sections: ["openPreviewMode", "basics", "theme", "accessibility"],
     pagePaint: PaintType.YSTACK,
+    isInactive: true,
     thinModeBehavior: ThinModeBehavior.JUMP_TO_PARENT
   },
   {
@@ -70,20 +77,23 @@ export const actions: Action[] = [
     path: "settings/appearance/openPreviewMode",
     pagePaint: PaintType.JUMP_TO_PARENT,
     component: OpenPreviewMode,
+    type: ActionType.META,
     thinModeBehavior: ThinModeBehavior.HIDE
   },
   {
     action: "accessibility",
-    label: "Accessibility",
+    label: "Accessibility Settings",
     path: "cp/accessibility",
     icon: "cube",
+    type: ActionType.PAGE,
     component: AccessibilitySettings
   },
   {
     action: "theme",
-    label: "Theme",
+    label: "Theme Settings",
     path: "cp/theme",
     icon: "palette",
+    type: ActionType.PAGE,
     component: ThemeSettingView
   },
   {
@@ -91,6 +101,7 @@ export const actions: Action[] = [
     label: "App Menu",
     path: "cp/appMenu",
     icon: "list",
+    isInactive: true,
     component: AppMenuSettings
   },
   {
@@ -98,13 +109,15 @@ export const actions: Action[] = [
     label: "Shortcuts",
     path: "cp/shortcuts",
     icon: "command",
+    type: ActionType.META_PAGE,
     component: ComingSoonView
   },
   {
     action: "datetime-settings",
-    label: "Date & Time",
+    label: "Date & Time Settings",
     path: "cp/datetime-settings",
     icon: "sun",
+    type: ActionType.PAGE,
     component: DateTimeSettings
   },
   {
@@ -117,24 +130,27 @@ export const actions: Action[] = [
     action: "discord",
     label: "Join us on discord",
     icon: "users",
+    type: ActionType.META,
     link: "discord"
   },
   {
     action: "privacy",
     label: "Privacy policy",
+    type: ActionType.META,
     link: "privacy"
   },
   {
     action: "feedback",
     label: "Give feedback",
     icon: "chatleftright",
-    link: "feedback"
+    link: "tallyFeedback"
   },
   {
     action: "share",
     path: "cp/share",
     label: "Refer a friend",
     icon: "share",
+    type: ActionType.META_PAGE,
     component: ShareToFriends
   },
   {
@@ -142,14 +158,29 @@ export const actions: Action[] = [
     label: "About",
     path: "cp/about",
     icon: "info",
+    type: ActionType.META_PAGE,
     component: AboutSettings
   },
   {
     action: "STATUS_UPDATE",
-    component: ToastModalPortrait
+    component: ToastModalPortrait,
+    type: ActionType.META_MODAL
   },
   {
-    action: "cmd",
-    component: CommandBar
+    action: AppEvent.EDIT_MODE,
+    fn: () => isInEditMode.toggle()
+  },
+  {
+    action: AppEvent.CMD,
+    component: CommandBar,
+    type: ActionType.MODAL,
+    modalParams: {
+      isHideTitleIfEmpty: true,
+      layoutParams: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
   }
 ];

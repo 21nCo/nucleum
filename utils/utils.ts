@@ -2,12 +2,18 @@ import { onDestroy } from "svelte";
 import { localActions } from "$lib/local/stores/localActionMap";
 import { actions } from "$lib/tidy/layout/actionMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { appStore, windowObject } from "../stores/app.store";
+import {
+  appStore,
+  confirmationNotification,
+  modalEvent,
+  windowObject
+} from "../stores/app.store";
 import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
 import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
 import { postToParent } from "./embed.utils";
 import { detectTimeZone } from "./time.utils";
+import { ActionType } from "../types/action.type";
 
 export function onInterval(
   callback: () => void,
@@ -39,12 +45,12 @@ export function getUserDate(timestamp: number, dayStart: string = "00:00") {
     hours > startHours
       ? true
       : hours === startHours
-      ? minutes >= startMinutes
-      : false;
+        ? minutes >= startMinutes
+        : false;
   let userDate = {
     day: date.getDate(),
     month: date.getMonth(),
-    year: date.getFullYear(),
+    year: date.getFullYear()
   };
   userDate = isSameDay ? userDate : getOneDayEarlier(userDate);
   return userDate;
@@ -101,7 +107,7 @@ export function getOneDayLater(date: UserDate) {
   return {
     day: oneDayLater.getDate(),
     month: oneDayLater.getMonth(),
-    year: oneDayLater.getFullYear(),
+    year: oneDayLater.getFullYear()
   };
 }
 
@@ -111,7 +117,7 @@ export function getOneDayEarlier(date: UserDate) {
   return {
     day: oneDayEarlier.getDate(),
     month: oneDayEarlier.getMonth(),
-    year: oneDayEarlier.getFullYear(),
+    year: oneDayEarlier.getFullYear()
   };
 }
 
@@ -119,7 +125,7 @@ export function formatDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
-    year: "numeric",
+    year: "numeric"
   });
 }
 
@@ -170,7 +176,7 @@ export function openLink(url: string) {
   }
   if (get(appStore).launchContext == LaunchContext.EMBED) {
     postToParent({
-      link: url,
+      link: url
     });
   } else {
     let win = window?.open(url, "_blank");
@@ -186,7 +192,21 @@ export function runAction(action: string) {
     windowObject.gotoPath("404");
     return;
   }
-  if (component.fn) component.fn();
+  if (
+    component.type === ActionType.MODAL ||
+    component.type === ActionType.META_MODAL
+  ) {
+    modalEvent.notify({
+      path: component.action,
+      isShow: true,
+      layoutParams: component.modalParams?.layoutParams
+    });
+  } else if (
+    component.type === ActionType.CONFIRMATION &&
+    component.confirmation
+  ) {
+    confirmationNotification.notify(component.confirmation);
+  } else if (component.fn) component.fn();
   else resolveNavigationAction(action);
 }
 
@@ -224,7 +244,7 @@ export function getAppLoadContext() {
     timezone: detectTimeZone(),
     geo: null,
     referrer: document.referrer,
-    urlParams: Object.fromEntries(urlParams.entries()),
+    urlParams: Object.fromEntries(urlParams.entries())
   };
 }
 
@@ -238,9 +258,9 @@ export function performApiCall(
     method: method,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token,
+      Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ ...body, context: getAppLoadContext() }),
+    body: JSON.stringify({ ...body, context: getAppLoadContext() })
   });
 }
 export function performBlankApiCall(
@@ -251,9 +271,9 @@ export function performBlankApiCall(
   return fetch(import.meta.env.VITE_BLANK_API_URL + "/" + endpoint, {
     method: method,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: body,
+    body: body
   });
 }
 
@@ -323,3 +343,16 @@ export function setUiState(
 // export function isClient() {
 //   return typeof window !== "undefined";
 // }
+
+export function generateCmdType(actionType: ActionType) {
+  switch (actionType) {
+    case ActionType.PAGE:
+      return "page";
+    case (ActionType.MODAL, ActionType.FUNCTION):
+      return "action";
+    case ActionType.LINK:
+      return "link";
+    default:
+      return "action";
+  }
+}

@@ -565,7 +565,6 @@ function initAccount(seed: UserAccount) {
     delete: () => {
       //todo - delete account
       confirmationNotification.notify({
-        isShow: true,
         title: "Account deletion confirmation",
         message: "Are you sure you want to delete your account?",
         confirmAction: {
@@ -604,6 +603,13 @@ function initModalStore(seed: ModalEvent) {
     reset: () => {
       update((n: ModalEvent) => {
         return defaultModal;
+      });
+    },
+    hide: () => {
+      const modal = get(modalEvent);
+      if (modal.isDismissable === false) return;
+      update((n: ModalEvent) => {
+        return { ...n, isShow: false };
       });
     },
     notify: (event: ModalEvent) => {
@@ -685,29 +691,23 @@ function initToastStore() {
   };
 }
 
-const seedConfirmation = {
-  isShow: false,
-  title: "",
-  message: "",
-  confirmAction: {
-    label: "Confirm",
-    callback: () => {}
-  }
-};
 export const confirmationNotification = initConfirmationStore();
 
 function initConfirmationStore() {
-  const { subscribe, set, update } =
-    writable<ConfirmationNotification>(seedConfirmation);
+  const { subscribe, set, update } = writable<
+    ConfirmationNotification | undefined
+  >(undefined);
   return {
     subscribe,
     set: (m: any) => {
       set(m);
     },
     reset: () => {
-      update(() => {
-        return seedConfirmation;
-      });
+      setTimeout(() => {
+        update(() => {
+          return undefined;
+        });
+      }, 100);
     },
     notify: (event: ConfirmationNotification) => {
       update(() => {
@@ -741,6 +741,20 @@ function initFullPageLoadingScreen() {
     hide: () => {
       update(() => {
         return { isShow: false, text: "loading..." };
+      });
+    }
+  };
+}
+
+export const isInEditMode = initEditModeStore();
+
+function initEditModeStore() {
+  const { subscribe, update } = writable<boolean>(false);
+  return {
+    subscribe,
+    toggle: () => {
+      update((n: boolean) => {
+        return !n;
       });
     }
   };

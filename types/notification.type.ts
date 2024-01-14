@@ -20,7 +20,6 @@ export type Toast = {
 };
 
 export type ConfirmationNotification = {
-  isShow: boolean;
   title: string;
   message: string;
   confirmAction: ButtonParams;
@@ -30,5 +29,5 @@ export type ConfirmationNotification = {
 export enum AlertType {
   SUCCESS = "SUCCESS",
   ERROR = "ERROR",
-  WARNING = "WARNING",
+  WARNING = "WARNING"
 }

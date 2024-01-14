@@ -1,22 +1,18 @@
 <script lang="ts">
   import { modalEvent } from "$lib/tidy/stores/app.store";
-  import { Orientation } from "$lib/tidy/types/direction.enum";
-  import { Size } from "$lib/tidy/types/size.enum";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { runAction } from "$lib/tidy/utils/utils";
   import { onDestroy } from "svelte";
 
   const shortcutListener = (event: any) => {
     if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
-      modalEvent.notify({
-        isShow: true,
-        path: "cmd",
-        isHideTitleIfEmpty: true,
-        layoutParams: {
-          size: Size.lg,
-          orientation: Orientation.Horizontal,
-          ignoreSafeArea: true
-        }
-      });
+      runAction(AppEvent.CMD);
+    } else if (event.key === "e" && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      runAction(AppEvent.EDIT_MODE);
+    } else if (event.key === "Escape") {
+      modalEvent.hide();
     }
   };
   window?.addEventListener("keydown", shortcutListener);

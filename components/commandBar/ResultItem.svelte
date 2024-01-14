@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { ActionType } from "$lib/tidy/types/action.type";
+  import { generateCmdType } from "$lib/tidy/utils/utils";
+
   export let search: string = "";
   export let action: any;
   export let isActive: boolean = false;
@@ -7,12 +10,12 @@
     ref.scrollIntoView({ behavior: "smooth", block: "end" });
   }
   $: label =
-    search && action?.label?.toLowerCase()?.includes(search.toLowerCase())
-      ? action?.label.replace(
+    search && action?.cmdLabel?.toLowerCase()?.includes(search.toLowerCase())
+      ? action?.cmdLabel.replace(
           new RegExp(search, "gi"),
           (matched: string) => `<span class="font-bold">${matched}</span>`
         )
-      : action?.label;
+      : action?.cmdLabel;
 </script>
 
 <button
@@ -22,12 +25,12 @@
     'bg-bgs3'}"
 >
   <div>
-    {#if action.type === "navigation"}
+    {#if action.type === ActionType.PAGE}
       Go to
     {/if}
     {@html label}
   </div>
   <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
-    {action?.type}
+    {generateCmdType(action?.type)}
   </div>
 </button>

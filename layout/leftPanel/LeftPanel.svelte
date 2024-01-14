@@ -3,7 +3,7 @@
   import {
     appStore,
     userPreferences,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -17,8 +17,9 @@
   import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
   import { AppTheme, ColorStrength } from "$lib/tidy/types/theme.type";
   import { onMount } from "svelte";
-  import { resolveUiState, setUiState } from "$lib/tidy/utils/utils";
+  import { resolveUiState, runAction, setUiState } from "$lib/tidy/utils/utils";
   import { UiState } from "$lib/tidy/types/uiState.enum";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
@@ -154,15 +155,17 @@
               <Icon
                 icon="command"
                 color="fgs2"
+                on:click={() => runAction(AppEvent.CMD)}
                 hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
               />
             {:else}
               <div class="text-b3 text-fgs3 mb-4">
-                Press <span
+                Press <button
                   class="text-fgs2 px-2 py-0.5 rounded-md {bgClass(
                     $userPreferences.theme,
                     2
-                  )}">Cmd + K</span
+                  )}"
+                  on:click={() => runAction(AppEvent.CMD)}>Cmd + K</button
                 > for command bar
               </div>
             {/if}

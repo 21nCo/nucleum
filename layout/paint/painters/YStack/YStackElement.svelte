@@ -11,7 +11,7 @@
   let component: Action | null = resolveComponentFromPath(path);
 </script>
 
-{#if component && component.label && component.type === BlockType.SECTION}
+{#if component && component.label && component.blockType === BlockType.SECTION}
   <Text style={TextStyle.SECTION_HEADING} content={component.label} />
 {/if}
 <ComponentResolver {path} {params} />

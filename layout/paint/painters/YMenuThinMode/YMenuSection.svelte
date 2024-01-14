@@ -17,7 +17,7 @@
       <YMenuSectionItem path={path + "/" + section} />
     {/each}
   </div>
-{:else if currentComponent && currentComponent.type === BlockType.INLINE}
+{:else if currentComponent && currentComponent.blockType === BlockType.INLINE}
   <div class="flex justify-center">
     <ComponentResolver {currentComponent} />
   </div>
