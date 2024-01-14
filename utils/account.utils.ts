@@ -4,7 +4,7 @@ import {
   appStore,
   isRefreshingToken,
   userPreferences,
-  windowObject,
+  windowObject
 } from "../stores/app.store";
 import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";

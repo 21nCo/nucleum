@@ -89,18 +89,19 @@ export const windowObject = initWindow({
 });
 
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
-  if (newPath.split("/")[1]) {
-    let component = resolveComponentFromPath(newPath.split("/")[1]);
+  const path = newPath.split("?")[0];
+  if (path.split("/")[1]) {
+    let component = resolveComponentFromPath(path.split("/")[1]);
     if (component?.isMenuHidden) return true;
   }
   const listOfPathsToHideMenu = {
     portrait: ["/goals/*", "/cp/*"],
     landscape: []
   };
-  if (!newPath) return false;
-  let pathParts = newPath.split("/").filter((p) => p);
+  if (!path) return false;
+  let pathParts = path.split("/").filter((p) => p);
   if (n.isInPortraitMode) {
-    if (listOfPathsToHideMenu.portrait.includes(newPath)) return true;
+    if (listOfPathsToHideMenu.portrait.includes(path)) return true;
     //currently only supports one level deep, but can be extended to support more
     else if (
       pathParts.length > 1 &&

@@ -37,7 +37,6 @@
       }
     });
     const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
-      console.log("modal event", x);
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
