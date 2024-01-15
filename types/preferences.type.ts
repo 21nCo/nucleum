@@ -16,11 +16,18 @@ export type UserGlobalPreferences = {
   timeScales?: TimeScale[];
   id: string;
   recentCommands?: string[];
+  shortcuts?: KeyboardShortcut[];
   uiStates: {
     all: UiState;
     desktop: UiState;
     portrait: UiState;
   };
+};
+
+export type KeyboardShortcut = {
+  action: string;
+  key: string;
+  modifiers: string[];
 };
 
 type UiState = {

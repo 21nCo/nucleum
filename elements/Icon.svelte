@@ -79,6 +79,7 @@
   import Node from "../icons/Node.svelte";
   import Curation from "../icons/Curation.svelte";
   import Capture from "../icons/Capture.svelte";
+  import CheckTwo from "../icons/CheckTwo.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -349,6 +350,8 @@
         <Curation {variant} />
       {:else if icon === "capture"}
         <Capture {variant} />
+      {:else if icon === "check-circle"}
+        <CheckTwo {variant} isCircled={true} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

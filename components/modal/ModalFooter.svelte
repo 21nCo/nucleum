@@ -5,7 +5,10 @@
     modalEvent,
     windowObject
   } from "$lib/tidy/stores/app.store";
-  import type { ButtonParams } from "$lib/tidy/types/button.type";
+  import {
+    ButtonVariant,
+    type ButtonParams
+  } from "$lib/tidy/types/button.type";
   export let path: string = "";
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
@@ -39,21 +42,23 @@
   {/if}
   {#if secondaryAction}
     <Button
+      type={secondaryAction.variant ?? "secondary"}
+      icon={secondaryAction.icon}
       on:click={() => {
         if (secondaryAction?.callback) secondaryAction?.callback();
         close();
       }}
     >
       {secondaryAction.label}
-      {#if !$windowObject.isInPortraitMode}
-        <span class="text-fgs3 text-b3">Esc</span>
+      {#if !$windowObject.isInPortraitMode && (secondaryAction.variant === ButtonVariant.SECONDARY || !secondaryAction.variant)}
+        <span class=" text-b4">Esc</span>
       {/if}
     </Button>
   {:else if isShowClose}
     <Button on:click={close}>
       close
       {#if !$windowObject.isInPortraitMode}
-        <span class="text-fgs3 text-b3">Esc</span>
+        <span class="text-b3">Esc</span>
       {/if}
     </Button>
   {/if}

@@ -25,6 +25,7 @@ import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { AppEvent } from "../types/event.enum";
 import { isInEditMode } from "../stores/app.store";
+import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -112,7 +113,7 @@ export const actions: Action[] = [
     path: "cp/shortcuts",
     icon: "command",
     type: ActionType.META_PAGE,
-    component: ComingSoonView
+    component: ShortcutSettings
   },
   {
     action: "datetime-settings",
@@ -171,10 +172,12 @@ export const actions: Action[] = [
   },
   {
     action: AppEvent.EDIT_MODE,
-    fn: () => isInEditMode.toggle()
+    fn: () => isInEditMode.toggle(),
+    label: "Edit mode"
   },
   {
     action: AppEvent.CMD,
+    label: "Command bar",
     component: CommandBar,
     type: ActionType.MODAL,
     modalParams: {

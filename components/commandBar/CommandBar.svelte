@@ -13,7 +13,7 @@
   let isPerformingSearchAction: boolean = false;
   let searchAction: Action;
   let defaultPlaceholder =
-    "Run a command or type / to see list of all commands";
+    "Run a command or scroll to see list of all commands";
   let placeholder = defaultPlaceholder;
   onMount(() => {
     inputRef?.focus();
