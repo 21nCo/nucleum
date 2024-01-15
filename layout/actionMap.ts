@@ -83,6 +83,7 @@ export const actions: Action[] = [
   {
     action: "accessibility",
     label: "Accessibility Settings",
+    alternateLabel: "Accessibility",
     path: "cp/accessibility",
     icon: "cube",
     type: ActionType.PAGE,
@@ -91,6 +92,7 @@ export const actions: Action[] = [
   {
     action: "theme",
     label: "Theme Settings",
+    alternateLabel: "Theme",
     path: "cp/theme",
     icon: "palette",
     type: ActionType.PAGE,
@@ -115,6 +117,7 @@ export const actions: Action[] = [
   {
     action: "datetime-settings",
     label: "Date & Time Settings",
+    alternateLabel: "Date & Time",
     path: "cp/datetime-settings",
     icon: "sun",
     type: ActionType.PAGE,

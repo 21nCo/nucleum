@@ -1,3 +1,4 @@
+import type { ItemType } from "./item.enum";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalLayoutParams } from "./popup.type";
 
@@ -10,6 +11,7 @@ export type Action = {
   cmdBarPreCondition?: () => void;
   component?: any;
   label?: string;
+  alternateLabel?: string;
   icon?: string;
   sections?: string[];
   pagePaint?: PaintType;
@@ -26,6 +28,11 @@ export type Action = {
   };
   confirmation?: ConfirmationNotification;
   cmdLabel?: string;
+  searchActionParams?: {
+    searchItemType: ItemType;
+    itemLabel: string;
+    callback: (id: string, label?: string) => void;
+  };
 };
 
 export enum ActionType {
@@ -37,7 +44,8 @@ export enum ActionType {
   META = "META",
   META_MODAL = "META_MODAL",
   CONFIRMATION = "CONFIRMATION_MODAL",
-  META_PAGE = "META_PAGE"
+  META_PAGE = "META_PAGE",
+  SEARCH_CMD = "SEARCH_CMD"
 }
 
 export enum PaintType {

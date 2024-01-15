@@ -2,7 +2,6 @@
   import EmptyStatus from "../illustrations/EmptyStatus.svelte";
   import EmptyStatusInbox from "../illustrations/EmptyStatusInbox.svelte";
   import { Size } from "../types/size.enum";
-  import InlineLoadingAnimation from "./animations/InlineLoadingAnimation.svelte";
   import PageLoadingAnimation from "./animations/PageLoadingAnimation.svelte";
   import Button from "./button/Button.svelte";
   export let mainText: string | undefined = undefined;

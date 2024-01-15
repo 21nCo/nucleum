@@ -1,16 +1,14 @@
 <script lang="ts">
   import { localActions } from "$lib/local/stores/localActionMap";
   import { actions } from "$lib/tidy/layout/actionMap";
-  import {
-    modalEvent,
-    userPreferences,
-    windowObject
-  } from "$lib/tidy/stores/app.store";
+  import { modalEvent, userPreferences } from "$lib/tidy/stores/app.store";
   import { ActionType } from "$lib/tidy/types/action.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { isValidArray } from "$lib/tidy/utils/obj.utils";
   import { runAction } from "$lib/tidy/utils/utils";
-  import ResultItem from "./ResultItem.svelte";
+  import { createEventDispatcher } from "svelte";
+  import CmdResultItem from "./CmdResultItem.svelte";
+  const dispatch = createEventDispatcher();
   export let search: string = "";
   let allActions: any[] = [];
   let filteredActions: any[] = [];
@@ -48,8 +46,13 @@
   }
   export function select() {
     if (selectedAction) {
-      closeCmdBar();
-      runAction(selectedAction);
+      const action = filteredActions.find((x) => x.action === selectedAction);
+      if (action && action.type === ActionType.SEARCH_CMD) {
+        dispatch("searchAction", action);
+      } else {
+        dispatch("close");
+        runAction(selectedAction);
+      }
       let recentCommands = isValidArray($userPreferences.recentCommands);
       if (recentCommands) {
         if (recentCommands.includes(selectedAction)) {
@@ -62,12 +65,6 @@
       }
       $userPreferences.recentCommands = recentCommands;
     }
-  }
-  function closeCmdBar() {
-    modalEvent.notify({
-      isShow: false,
-      path: AppEvent.CMD
-    });
   }
 
   function loadAllActions() {
@@ -110,7 +107,7 @@
 </script>
 
 {#each filteredActions as action}
-  <ResultItem
+  <CmdResultItem
     {search}
     {action}
     isActive={selectedAction === action.action}

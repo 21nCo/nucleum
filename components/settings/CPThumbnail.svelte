@@ -7,7 +7,7 @@
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   import {
     resolveNavigationAction,
-    resolveComponent,
+    resolveComponent
   } from "$lib/tidy/utils/utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
@@ -31,7 +31,7 @@
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
         <Icon icon={component.icon ?? "info"} {isActive} {selectionStyle} />
-        <div>{component.label}</div>
+        <div>{component.alternateLabel ?? component.label}</div>
       </div>
       <Icon
         icon={component.link ? "link" : "chevright"}
@@ -41,7 +41,7 @@
     {:else}
       <div class="flex flex-col items-center gap-2">
         <Icon icon={component.icon} {isActive} {selectionStyle} />
-        <div>{component.label}</div>
+        <div>{component.alternateLabel ?? component.label}</div>
       </div>
     {/if}
   </ActiveBackgroundElement>
