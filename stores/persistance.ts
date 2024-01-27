@@ -2,7 +2,7 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import { account, appStore, cloudProvider } from "./app.store";
+import { account, appStore, cloudProvider, userPreferences } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
@@ -102,12 +102,10 @@ export class Persistance {
   };
   updateDefinitions = async () => {
     try {
-      const token = localStorage.getItem("refresh-token");
-      const response = await performApiCall(
-        "account/updateDefinitions",
-        "POST",
-        { token }
-      );
+      const userPrefs = get(userPreferences);
+      const response = await performApiCall("account/updateDb", "POST", {
+        lastRunChangeId: userPrefs?.lastRunChangeId ?? 1
+      });
       if (!response?.ok) {
         return;
       }

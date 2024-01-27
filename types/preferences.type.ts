@@ -17,6 +17,7 @@ export type UserGlobalPreferences = {
   id: string;
   recentCommands?: string[];
   shortcuts?: KeyboardShortcut[];
+  lastRunChangeId?: number;
   uiStates: {
     all: UiState;
     desktop: UiState;
