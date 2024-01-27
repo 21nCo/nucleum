@@ -6,6 +6,7 @@ let scrollTop: any;
 console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
 export function startTouch(e: any) {
   console.log("Current Target ID", e.currentTarget.id);
+  if (e.currentTarget.id == "focusItems") return;
   scrollTop = e.currentTarget.scrollTop === 0;
   initialX = e.touches[0].clientX;
   initialY = e.touches[0].clientY;
