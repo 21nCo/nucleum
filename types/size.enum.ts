@@ -6,5 +6,5 @@ export enum Size {
   lg,
   xl,
   xxl,
-  full,
+  full
 }

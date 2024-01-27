@@ -4,7 +4,7 @@
   import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
   import {
     DropDownStyle,
-    type DropdownItem,
+    type DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -20,7 +20,19 @@
   export let info: string | undefined = undefined;
   export let style: DropDownStyle = DropDownStyle.DEFAULT;
   export let containerId = generateUID();
+  export let isActive: boolean = false;
   let isShowOptions: boolean = false;
+  let classList = "relative flex flex-col items-start gap-1 w-full";
+  $: {
+    console.log("isActive ", isActive);
+    if (isActive) {
+      classList = "relative flex flex-col items-start gap-1 w-full";
+      classList +=
+        " bg-a1" +
+        (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
+    } else classList = "relative flex flex-col items-start gap-1 w-full";
+    classList = classList;
+  }
   $: selected = items.find((x) => x.value === value) ?? items[0];
   onMount(() => {
     appEvents.subscribe((x: AppEventType) => {
@@ -37,7 +49,7 @@
   });
 </script>
 
-<div id={containerId} class="relative flex flex-col items-start gap-1 w-full">
+<div id={containerId} class={classList}>
   {#if label}
     <FormControlLabel {label} info={{ body: info ?? "" }} />
   {/if}
