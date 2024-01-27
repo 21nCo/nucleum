@@ -20,20 +20,23 @@
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
   export let isLoading: boolean = false;
+  // export let buttonBaseColor: string = "";
+  // export let buttonActiveColor: string = "";
+  // export let isActive: boolean = false;
   let toolTipRef: any;
   let buttonRef: any;
   let isHovered: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
-  let classList =
-    "flex flex-row justify-center items-center min-w-fit " +
-    (style === ButtonStyle.ROUNDED || size === Size.xs
-      ? " rounded-full"
-      : " rounded-md") +
-    ` ${width} `;
-  onMount(() => {
-    hideToolTip();
+  let classList: string;
+  function setStyles() {
+    classList =
+      "flex flex-row justify-center items-center min-w-fit " +
+      (style === ButtonStyle.ROUNDED || size === Size.xs
+        ? " rounded-full"
+        : " rounded-md") +
+      ` ${width} `;
     if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
@@ -118,8 +121,16 @@
         classList += " bg-fgs1";
       }
     }
+    classList = classList;
+  }
+  $: {
+    console.log("type ", type);
+    setStyles();
+  }
+  onMount(() => {
+    hideToolTip();
+    setStyles();
   });
-
   function hideToolTip() {
     if (toolTipRef && toolTipRef?.style?.display != "none")
       toolTipRef.style.display = "none";

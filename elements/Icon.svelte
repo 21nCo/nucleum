@@ -84,7 +84,7 @@
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
-  export let color: string | undefined = undefined;
+  export let color: string | undefined = undefined; //" text-bgs1";
   export let bgColorHue: number | undefined = undefined;
   export let isOutlineForActive: boolean = false;
   $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $userPreferences);
@@ -128,7 +128,9 @@
           ? 'w-8 h-8'
           : size == Size.md
             ? 'w-6 h-6'
-            : 'w-4 h-4'} {variant === IconVariant.Outline
+            : size == Size.xs
+              ? 'w-4 h-4'
+              : 'w-3 h-3'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
@@ -160,6 +162,8 @@
         <Home {variant} />
       {:else if icon === "bolt" || icon === "focus"}
         <Bolt {variant} />
+      {:else if icon === "bolt-micro"}
+        <Bolt variant={IconVariant.Micro} />
       {:else if icon === "chart"}
         <PieChart {variant} />
       {:else if icon === "barchart"}

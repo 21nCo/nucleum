@@ -1,5 +1,5 @@
 import type { WindowObject } from "$lib/tidy/types/windowObject.type";
-import { get, writable } from "svelte/store";
+import { get, readable, writable } from "svelte/store";
 import {
   generateUID,
   performApiCall,
@@ -36,13 +36,34 @@ import type {
 } from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import { ButtonVariant } from "../types/button.type";
+import type {
+  DailyData,
+  MonthlyData,
+  YearlyData
+} from "../types/CalendarHeatMapData.type";
+import { CalendarLayout } from "../types/CalendarHeatMap.enum";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 export const isRefreshingToken = writable(false);
 export const isAppInLoadingState = writable(true);
-
+export const isTouchDevice = writable(false);
+export const CalendarHeatMapData = writable<{
+  data: any;
+  target: number;
+}>({ data: [], target: 0 });
+export const CalendarHeatMapLayout = writable<
+  CalendarLayout.VERTICAL | CalendarLayout.HORIZONTAL
+>(CalendarLayout.HORIZONTAL);
+export const CalendarHeatMapstoreColors = readable<string[]>([
+  "#D8E4D8",
+  "#B2CAB1",
+  "#9FBD9D",
+  "#79A376",
+  "#5B8958",
+  "#407C3C"
+]);
 export const excludedPathsForRedirectionCheck = [
   "expired",
   "signup",
