@@ -10,7 +10,7 @@
 
 <span>
   <button id="MaITile">
-    <!-- dispatch required event on:click here-->
+    <!--on:click dispatch required event along with data/data.year available here-->
     {tileValue}
   </button>
 </span>
