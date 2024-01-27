@@ -202,13 +202,36 @@ function initWindow(settings: WindowObject) {
   };
 }
 
-export const dragAndDropStore = writable<DragAndDrop>({
-  dragItem: {},
-  dropItem: {},
-  dragEnterItem: {},
-  dragStatus: DragStatus.NONE,
-  listId: ""
-});
+export const dragAndDropStore = createDragAndDropStore();
+
+function createDragAndDropStore() {
+  const { subscribe, set, update } = writable<DragAndDrop>({
+    dragItem: {},
+    dropItem: {},
+    dragEnterItem: {},
+    dragStatus: DragStatus.NONE,
+    dragId: "",
+    dragEnterId: "",
+    dropId: "",
+  });
+
+  return {
+    subscribe,
+    set,
+    update,
+    reset: () => {
+      set({
+        dragItem: {},
+        dropItem: {},
+        dragEnterItem: {},
+        dragStatus: DragStatus.NONE,
+        dragId: "",
+        dragEnterId: "",
+        dropId: "",
+      });
+    },
+  };
+}
 
 //todo - generate cool placeholders for focus using AI
 //"three", "four", "wood","DEF5E5", "EEF1FF", "FBF8F1", "F0ECE3"

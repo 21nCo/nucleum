@@ -5,5 +5,7 @@ export type DragAndDrop = {
   dragEnterItem: any;
   dropItem: any;
   dragStatus: DragStatus;
-  listId: any;
+  dragId: any;
+  dragEnterId: any;
+  dropId: any;
 };
