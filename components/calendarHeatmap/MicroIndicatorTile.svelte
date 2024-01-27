@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/tidy/elements/Icon.svelte";
+  import { CalendarHeatMapLayout } from "$lib/tidy/stores/app.store";
+  import { CalendarLayout } from "$lib/tidy/types/CalendarHeatMap.enum";
   import type {
     DailyData,
     MonthlyData
@@ -27,7 +28,10 @@
   $: if (tileValue == "") {
     if ("date" in data) {
       tileValue = data.date.split("-")[2];
-    } else if ("month" in data) {
+    } else if (
+      $CalendarHeatMapLayout == CalendarLayout.HORIZONTAL &&
+      "month" in data
+    ) {
       let month: number = Number(data.month.split("-")[1]) - 1;
       tileValue = monthTitles[month];
     }
@@ -110,13 +114,11 @@
     width: var(--width, 0.5px);
     height: var(--height, 4.5px);
     background-color: var(--topThreadColor, inherit);
-    /* transform: translate(6px, 0px); */
   }
   span::after {
     content: "";
     width: var(--width, 0.5px);
     height: var(--height, 4.5px);
     background-color: var(--bottomThreadColor, inherit);
-    /* transform: translate(6px, 0px); */
   }
 </style>
