@@ -27,7 +27,7 @@
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
   let classList =
-    "flex flex-row justify-center items-center min-w-fit " +
+    "inline-flex flex-row justify-center items-center min-w-fit " +
     (style === ButtonStyle.ROUNDED || size === Size.xs
       ? " rounded-full"
       : " rounded-md") +
