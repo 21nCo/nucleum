@@ -5,11 +5,12 @@
   import { ColorStrength } from "../types/theme.type";
   export let colorStrength: ColorStrength = ColorStrength.Normal;
   export let orientation: Orientation = Orientation.Horizontal;
+  export let thickness: number = 1;
 </script>
 
 <div
   class="{borderColor($userPreferences.theme, colorStrength)} {orientation ===
   Orientation.Horizontal
     ? 'border-b w-full'
-    : 'border-r h-full'}"
+    : 'border-r h-full'} border-{thickness} rounded-full"
 />

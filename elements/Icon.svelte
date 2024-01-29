@@ -39,7 +39,7 @@
   import AreaChart from "../icons/AreaChart.svelte";
   import {
     resolveIfActiveFgFg,
-    retrieveCurrentColors
+    retrieveCurrentColors,
   } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
@@ -80,6 +80,8 @@
   import Curation from "../icons/Curation.svelte";
   import Capture from "../icons/Capture.svelte";
   import CheckTwo from "../icons/CheckTwo.svelte";
+  import Microphone from "../icons/Microphone.svelte";
+  import Camera from "../icons/Camera.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -356,6 +358,12 @@
         <Capture {variant} />
       {:else if icon === "check-circle"}
         <CheckTwo {variant} isCircled={true} />
+      {:else if icon === "microphone" || icon === "audio"}
+        <Microphone {variant} />
+      {:else if icon === "camera"}
+        <Camera {variant} />
+      {:else if icon === "camera"}
+        <Camera {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"
