@@ -1,21 +1,34 @@
 <script lang="ts">
+  import { CalendarView } from "$lib/tidy/types/CalendarHeatMap.enum";
   import { startTouch } from "$lib/tidy/utils/touchGesture";
   import MonthsHeader from "./MonthsHeader.svelte";
   import WeekDays from "./WeekDays.svelte";
   export let data: any;
-  export let isDaysLayout: boolean = false;
-  export let isMonthsLayout: boolean = false;
+  export let scale: CalendarView;
+  export let numberOfColumns: number = 3;
 </script>
 
-<div class="VerticalCL" on:touchstart={startTouch} on:touchmove>
-  {#if isMonthsLayout}
+<div
+  class="VerticalCL"
+  style:--times={scale === CalendarView.DAYS ? numberOfColumns : 0}
+  style:--itemSize={scale === CalendarView.DAYS ? "28%" : "300px"}
+  style:--columnGap={scale === CalendarView.DAYS ? "20px" : "0px"}
+  style:--rowHeight={scale === CalendarView.YEARS
+    ? "58px"
+    : scale === CalendarView.MONTHS
+      ? "30px"
+      : undefined}
+  on:touchstart={startTouch}
+  on:touchmove
+>
+  {#if scale === CalendarView.MONTHS}
     <MonthsHeader />
   {/if}
   {#each Object.entries(data) as [slot, slotData], index}
-    {#if isDaysLayout && (index == 0 || index % 3 == 0)}
+    {#if scale === CalendarView.DAYS && (index == 0 || index % numberOfColumns == 0)}
       <WeekDays />
     {/if}
-    <slot datum={[slot, slotData]} />
+    <slot datum={[slot, slotData, index]} />
   {/each}
 </div>
 

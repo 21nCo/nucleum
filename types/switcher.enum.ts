@@ -2,7 +2,7 @@ export enum SwitcherStyle {
   Default,
   Vertical,
   Horizontal,
-  HorizontalAndWraps,
+  HorizontalAndWraps
 }
 
 export enum PanelSwitcherStyle {
@@ -11,7 +11,8 @@ export enum PanelSwitcherStyle {
   BOTTOMBAR_MINI,
   BOTTOMDOT,
   BOTTOMBAR_WITHBACKGROUND,
-  ROUNDED,
+  ACCENT_SWITCH,
+  ACCENT_SWITCH_MINI
 }
 
 export enum SelectionItemActiveStyle {
@@ -26,5 +27,5 @@ export enum SelectionItemActiveStyle {
   ACCENT_BACKGROUND,
   ACCENTROUNDEDBACKGROUND,
   ACCENT_COLOR,
-  BG_COLOR,
+  BG_COLOR
 }

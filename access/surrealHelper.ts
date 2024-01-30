@@ -30,12 +30,12 @@ export class SurrealDatabaseUsingRest {
    */
   async create(recordId: string, data: DbRecordType) {
     return this.query(`create ${recordId} content $data return id;`, {
-      data,
+      data
     });
   }
   async insert(tableName: string, data: DbRecordType[]) {
     return this.query(`insert into ${tableName} $data return id;`, {
-      data,
+      data
     });
   }
   /**
@@ -46,12 +46,12 @@ export class SurrealDatabaseUsingRest {
    */
   async merge(recordId: string, data: MergeRecord) {
     return this.query(`UPDATE ${recordId} MERGE $data;`, {
-      data,
+      data
     });
   }
   async update(recordId: string, data: DbRecordType) {
     return this.query(`UPDATE ${recordId} CONTENT $data;`, {
-      data,
+      data
     });
   }
   async select(recordId: string) {
@@ -61,7 +61,7 @@ export class SurrealDatabaseUsingRest {
   }
   async delete(recordId: string) {
     return await this.query("DELETE $record;", {
-      record: recordId,
+      record: recordId
     });
   }
   async executeReadFn(
@@ -101,14 +101,14 @@ export class SurrealDatabaseUsingRest {
           headers: {
             "Content-Type": "text/plain",
             Accept: "application/json",
-            Authorization: "Bearer " + this.token,
+            Authorization: "Bearer " + this.token
           },
-          body: `USE database ${this.userId}; ${query}`,
+          body: `USE database ${this.userId}; ${query}`
         });
       } else {
-        response = await performApiCall("sql", "POST", {
+        response = await performApiCall("account/run", "POST", {
           query: `USE database ${this.userId}; ${query}`,
-          db: this.userId,
+          db: this.userId
         });
       }
       if (response.ok) {
@@ -155,7 +155,7 @@ export class SurrealDatabaseUsingSdk {
       this.db.strategy = "http";
       await this.db.connect(`${this.instance}/rpc`, {
         namespace: import.meta.env.VITE_SURREAL_USER_NS ?? "TIDIGIT",
-        database: this.userId ?? "",
+        database: this.userId ?? ""
       });
       return await this.db.authenticate(this.token ?? "");
     } catch (error) {

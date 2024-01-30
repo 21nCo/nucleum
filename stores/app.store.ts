@@ -41,7 +41,7 @@ import type {
   MonthlyData,
   YearlyData
 } from "../types/CalendarHeatMapData.type";
-import { CalendarLayout } from "../types/CalendarHeatMap.enum";
+import { Orientation } from "../types/direction.enum";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
@@ -54,8 +54,8 @@ export const CalendarHeatMapData = writable<{
   target: number;
 }>({ data: [], target: 0 });
 export const CalendarHeatMapLayout = writable<
-  CalendarLayout.VERTICAL | CalendarLayout.HORIZONTAL
->(CalendarLayout.HORIZONTAL);
+  Orientation.Horizontal | Orientation.Vertical
+>(Orientation.Horizontal);
 export const CalendarHeatMapstoreColors = readable<string[]>([
   "#D8E4D8",
   "#B2CAB1",
@@ -212,7 +212,7 @@ function createDragAndDropStore() {
     dragStatus: DragStatus.NONE,
     dragId: "",
     dragEnterId: "",
-    dropId: "",
+    dropId: ""
   });
 
   return {
@@ -227,9 +227,9 @@ function createDragAndDropStore() {
         dragStatus: DragStatus.NONE,
         dragId: "",
         dragEnterId: "",
-        dropId: "",
+        dropId: ""
       });
-    },
+    }
   };
 }
 

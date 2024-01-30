@@ -1,7 +1,10 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import DropDown from "$lib/tidy/elements/dropdown/DropDown.svelte";
-  import type { DropdownItem } from "$lib/tidy/types/dropdownItem.type";
+  import {
+    DropDownStyle,
+    type DropdownItem
+  } from "$lib/tidy/types/dropdownItem.type";
   import {
     fetchDailyDataForTheYear,
     fetchLast365daysData
@@ -38,6 +41,7 @@
       isActive={!isLast365 ? true : false}
       {items}
       {value}
+      style={DropDownStyle.OUTLINED}
     /></span
   >
   <Button

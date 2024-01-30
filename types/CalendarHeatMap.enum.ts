@@ -6,12 +6,13 @@ export enum TileAppearance {
 }
 
 export enum CalendarView {
-  DAYS,
-  MONTHS,
-  YEARS
+  DAYS = "Days",
+  MONTHS = "Months",
+  YEARS = "Years"
 }
 
-export enum CalendarLayout {
-  VERTICAL,
-  HORIZONTAL
+export enum CalendarHmVariant {
+  YEARS_SWITCH,
+  SCALE_SWITCH,
+  PLAIN
 }

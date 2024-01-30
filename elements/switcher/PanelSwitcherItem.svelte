@@ -6,7 +6,7 @@
     bgClass,
     customColorStyle,
     resolveIfActiveFgFg,
-    textColorClass,
+    textColorClass
   } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let isActive: boolean = false;
@@ -26,7 +26,9 @@
 
 {#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
   <button
-    class="flex relative px-2 bg-transparent"
+    class="flex relative bg-transparent {style === PanelSwitcherStyle.BOTTOMBAR
+      ? 'px-6'
+      : 'px-4'}"
     on:click
     style={fgColorStyle}
     disabled={isDisabled}
@@ -80,17 +82,22 @@
       />
     {/if}
   </button>
-{:else if style === PanelSwitcherStyle.ROUNDED}
+{:else if style === PanelSwitcherStyle.ACCENT_SWITCH || style === PanelSwitcherStyle.ACCENT_SWITCH_MINI}
   <button
-    class="relative min-w-fit rounded-full px-6 py-3"
+    class="relative min-w-fit {style === PanelSwitcherStyle.ACCENT_SWITCH
+      ? 'rounded-full px-6 py-3'
+      : 'rounded-md px-3 py-1'}"
     style={isActive ? activeBgColorStyle : ""}
     on:click
     disabled={isDisabled}
   >
     <div
-      class="{$windowObject.isInPortraitMode
+      class="{style === PanelSwitcherStyle.ACCENT_SWITCH &&
+      $windowObject.isInPortraitMode
         ? 'text-base font-medium'
-        : 'text-base'} {textColorClass(
+        : style === PanelSwitcherStyle.ACCENT_SWITCH_MINI
+          ? 'text-b2'
+          : 'text-base'} {textColorClass(
         $userPreferences,
         ColorStrength.Normal,
         isActive,

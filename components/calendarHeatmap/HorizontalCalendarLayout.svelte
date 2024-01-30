@@ -1,12 +1,27 @@
 <script lang="ts">
+  import { CalendarView } from "$lib/tidy/types/CalendarHeatMap.enum";
   import { startTouch } from "$lib/tidy/utils/touchGesture";
   import WeekDays from "./WeekDays.svelte";
+  export let scale: CalendarView;
   export let data: any;
-  export let isDaysLayout: boolean = false;
 </script>
 
-<div on:touchstart={startTouch} on:touchmove>
-  {#if isDaysLayout}
+<div
+  style:--times={scale != CalendarView.MONTHS ? 12 : 22}
+  style:--itemSize={scale === CalendarView.YEARS
+    ? "85px"
+    : scale === CalendarView.MONTHS
+      ? "44px"
+      : "7%"}
+  style:--columnGap={scale === CalendarView.YEARS
+    ? "7px"
+    : scale === CalendarView.MONTHS
+      ? "4px"
+      : "20px"}
+  on:touchstart={startTouch}
+  on:touchmove
+>
+  {#if scale === CalendarView.DAYS}
     <WeekDays />
   {:else}
     <div><!-- place holder for the WeekDays gap--></div>

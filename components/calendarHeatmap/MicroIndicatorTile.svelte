@@ -1,16 +1,17 @@
 <script lang="ts">
   import { CalendarHeatMapLayout } from "$lib/tidy/stores/app.store";
-  import { CalendarLayout } from "$lib/tidy/types/CalendarHeatMap.enum";
   import type {
     DailyData,
     MonthlyData
   } from "$lib/tidy/types/CalendarHeatMapData.type";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
 
   export let data: DailyData | MonthlyData | {};
   export let classList: string = "";
   export let tileValue: string = "";
+  let isActive: boolean = false;
   let monthTitles = [
     "J",
     "F",
@@ -29,7 +30,7 @@
     if ("date" in data) {
       tileValue = data.date.split("-")[2];
     } else if (
-      $CalendarHeatMapLayout == CalendarLayout.HORIZONTAL &&
+      $CalendarHeatMapLayout == Orientation.Horizontal &&
       "month" in data
     ) {
       let month: number = Number(data.month.split("-")[1]) - 1;
@@ -39,7 +40,13 @@
 </script>
 
 <span class={classList}>
-  <button id="MITile">
+  <button
+    id="MITile"
+    class={isActive ? "border-2 border-fgs2" : ""}
+    on:click={() => {
+      isActive = !isActive;
+    }}
+  >
     <!-- dispatch required event on:click here-->
     <!-- {typeof +tileValue == "number" ? "" : tileValue} -->
     <!-- {tileValue === "🔥" ? tileValue : ""} -->

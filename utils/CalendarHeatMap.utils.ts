@@ -81,7 +81,7 @@ function getYearRange(year: number): {
 } {
   const lastYearEndDate = new Date(Date.UTC(year, 0, 0));
   const nextYearStartDate = new Date(Date.UTC(year + 1, 0, 1));
-
+  console.log({ year, lastYearEndDate, nextYearStartDate });
   return {
     lastYearEndDate,
     nextYearStartDate
@@ -288,6 +288,7 @@ function convertToMonthWiseData(dailyData: any) {
   for (const data of dailyData) {
     const [year, month] = data.date.split("-");
     const monthKey = getMonthName(Number(month));
+    //+ "-" + year;
 
     if (currentMonth === null) {
       currentMonth = monthKey;
@@ -349,6 +350,7 @@ function convertToOriginalForm(data: any) {
 function fillDateValuesColorandAppearance(startDate: Date, endDate: Date) {
   let data = generateDailyDataInRange(startDate, endDate);
   //fetch data from API for the same range and merge with above data in this line
+  console.log("generated daily values", { data });
   let prevEnd: any = data.splice(0, 1)[0];
   let nextStart: any = data.splice(data.length - 1, 1)[0];
   let dailyData = {
@@ -360,6 +362,7 @@ function fillDateValuesColorandAppearance(startDate: Date, endDate: Date) {
     data: convertToMonthWiseData(dailyData.data),
     target: dailyData.target
   };
+  console.log({ monthWiseData });
   CalendarHeatMapData.set(monthWiseData);
 }
 function splitDailyDataArrayAndMerge(

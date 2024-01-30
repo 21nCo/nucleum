@@ -1,10 +1,10 @@
 <script lang="ts">
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
   import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
-  export let view: "V1" | "V2";
+  // export let view: "V1" | "V2";
   // export const days = 30;
   export let data: any;
-  let [monthName, monthData] = data;
+  let [monthName, monthData, index] = data;
   let firstDay: any;
   let year = "";
 
@@ -13,19 +13,22 @@
     // console.log("months layout", data[1][0].date, monthData[0].date);
     firstDay = new Date(monthData[0].date).getDay();
     firstDay = firstDay == 0 ? 7 : firstDay;
-    if (view == "V2") {
-      year = monthData[0].date.split("-")[0];
-      year = "-" + year[2] + year[3];
-    }
+    year = monthData[0].date.split("-")[0];
+    year = " " + year[2] + year[3];
   }
 </script>
 
-<div class="monthHolder">
-  {monthName}{year}
+<div class="py-2">
+  <span class="p-1 text-fgs2 text-b2">
+    {monthName}
+    {index === 0 || monthName === "Jan" ? year : ""}
+    <!-- {year} -->
+  </span>
   <div class="month">
     <MicroIndicatorTile
       data={monthData[0]}
       classList="firstDay"
+      --height="3px"
       --tileBgColor={monthData[0].color}
       --startDay={firstDay}
       tileValue={monthData[0].display == TileAppearance.FTile ||
@@ -44,6 +47,7 @@
     {#each monthData.slice(1) as daydata, index (index)}
       <MicroIndicatorTile
         data={daydata}
+        --height="3px"
         --tileBgColor={daydata.color}
         tileValue={daydata.display == TileAppearance.FTile ||
         daydata.display == TileAppearance.LTile
@@ -63,10 +67,6 @@
 </div>
 
 <style>
-  .monthHolder {
-    text-align: center;
-    font-size: 14px;
-  }
   .month {
     display: grid;
     grid-auto-flow: column;
