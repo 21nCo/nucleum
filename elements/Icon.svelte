@@ -82,6 +82,8 @@
   import CheckTwo from "../icons/CheckTwo.svelte";
   import Microphone from "../icons/Microphone.svelte";
   import Camera from "../icons/Camera.svelte";
+  import BarsCenterLeft from "../icons/BarsCenterLeft.svelte";
+  import CubeTransparent from "../icons/CubeTransparent.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -218,6 +220,8 @@
         <Swatch {variant} />
       {:else if icon === "cube"}
         <Cube {variant} />
+      {:else if icon === "cube-transparent"}
+        <CubeTransparent {variant} />
       {:else if icon === "data"}
         <Data {variant} />
       {:else if icon === "list"}
@@ -316,6 +320,8 @@
         <Ellipsis orientation={Orientation.Horizontal} isCircled={true} />
       {:else if icon === "bars"}
         <Bars {variant} />
+      {:else if icon === "bars-center-left"}
+        <BarsCenterLeft {variant} />
       {:else if icon === "squares-2x2"}
         <Squares {variant} />
       {:else if icon === "pomodoro"}
@@ -358,7 +364,7 @@
         <Capture {variant} />
       {:else if icon === "check-circle"}
         <CheckTwo {variant} isCircled={true} />
-      {:else if icon === "microphone" || icon === "audio"}
+      {:else if icon === "microphone"}
         <Microphone {variant} />
       {:else if icon === "camera"}
         <Camera {variant} />
