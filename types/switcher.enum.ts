@@ -28,3 +28,16 @@ export enum SelectionItemActiveStyle {
   ACCENT_COLOR,
   BG_COLOR,
 }
+
+export enum VerticalSwitcherStyle {
+  BAR,
+  GRADIENT,
+  DOT,
+  BG,
+  BAR_V2,
+}
+
+export type SwitchItem = {
+  label: string;
+  icon?: string;
+};
