@@ -25,7 +25,11 @@ export async function moveTouch(
   if (initialY === null) {
     return;
   }
-
+  console.log("swipeLeftAction is", swipeLeftAction);
+  if (swipeLeftAction == "pullLeft" || swipeRightAction == "pullRight") {
+    minDistance = 0;
+    console.log("minDistance is", minDistance);
+  }
   var currentX = e.touches[0].clientX;
   var currentY = e.touches[0].clientY;
 
@@ -35,13 +39,19 @@ export async function moveTouch(
     if (Math.abs(diffX) < minDistance) return;
     if (diffX > 0) {
       console.log("Touch Gesture swiped left");
-      if (swipeLeftAction) {
+      if (swipeLeftAction == "pullLeft") {
+        console.log("apullLeft");
+        return diffX;
+      } else if (swipeLeftAction) {
         await swipeLeftAction();
         console.log("swipeLeftAction Happened");
       }
     } else {
       console.log("Touch Gesture swiped right");
-      if (swipeRightAction) {
+      if (swipeRightAction == "pullRight") {
+        console.log("apullRight");
+        return diffX;
+      } else if (swipeRightAction) {
         await swipeRightAction();
         console.log("swipeRightAction Happened");
       }
