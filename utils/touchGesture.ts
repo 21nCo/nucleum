@@ -6,7 +6,10 @@ let scrollTop: any;
 console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
 export function startTouch(e: any) {
   console.log("Current Target ID", e.currentTarget.id);
-  scrollTop = e.currentTarget.scrollTop === 0;
+  console.log("Scroll Top", e.currentTarget.scrollTop);
+  scrollTop =
+    e.currentTarget.scrollTop === 0 &&
+    e.currentTarget.parentElement.scrollTop === 0;
   initialX = e.touches[0].clientX;
   initialY = e.touches[0].clientY;
 }
@@ -51,10 +54,19 @@ export async function moveTouch(
       if (swipeRightAction == "pullRight") {
         console.log("apullRight");
         return diffX;
-      } else if (swipeRightAction) {
+      } else if (
+        (swipeRightAction ? true : false) &&
+        (minDistance > 0 || Math.abs(diffX) >= 60)
+      ) {
         await swipeRightAction();
         console.log("swipeRightAction Happened");
       }
+      console.log(
+        "swipeRightAction is",
+        swipeRightAction ? true : false,
+        Math.abs(diffX)
+      );
+      return;
     }
   } else {
     if (Math.abs(diffY) < minDistance) return;
@@ -68,7 +80,12 @@ export async function moveTouch(
       console.log("Touch Gesture swiped down");
       console.log("scrollTop is", scrollTop);
       console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
-      if (swipeDownAction && scrollTop && !get(swipeIsRefreshing)) {
+      if (
+        swipeDownAction &&
+        scrollTop &&
+        !get(swipeIsRefreshing) &&
+        (minDistance > 0 || Math.abs(diffY) >= 60)
+      ) {
         initialX = null; //not redundant, used to stop touchmove immediately being further executed due to awaits
         initialY = null; //not redundant, used to stop touchmove immediately being further executed due to awaits
         swipeIsRefreshing.set(true);
@@ -76,6 +93,7 @@ export async function moveTouch(
         console.log("swipeDownAction Happened");
         swipeIsRefreshing.set(false);
       }
+      return;
     }
   }
 
