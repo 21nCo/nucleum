@@ -1,14 +1,16 @@
 <script lang="ts">
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { Size } from "$lib/tidy/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { ColorStrength, ColorType } from "$lib/tidy/types/theme.type";
   import {
     bgClass,
     customColorStyle,
     resolveIfActiveFgFg,
-    textColorClass
+    textColorClass,
   } from "$lib/tidy/utils/theme.utils";
   export let item: string;
+  export let size: Size;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
   export let activeColor: number | undefined = undefined;
@@ -24,23 +26,20 @@
   );
 </script>
 
-{#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
+{#if style === PanelSwitcherStyle.BAR}
   <button
-    class="flex relative bg-transparent {style === PanelSwitcherStyle.BOTTOMBAR
-      ? 'px-6'
-      : 'px-4'}"
+    class="flex relative bg-transparent {size === Size.md ? 'px-6' : 'px-4'}"
     on:click
     style={fgColorStyle}
     disabled={isDisabled}
   >
     <div
-      class="font-medium min-w-fit {isActive ? '' : 'text-fgs4'} {style ===
-        PanelSwitcherStyle.BOTTOMBAR && $windowObject.isInPortraitMode
+      class="font-medium min-w-fit {isActive ? '' : 'text-fgs4'} {size ===
+        Size.md && $windowObject.isInPortraitMode
         ? 'text-h4'
-        : style === PanelSwitcherStyle.BOTTOMBAR_MINI &&
-            $windowObject.isInPortraitMode
+        : size === Size.sm && $windowObject.isInPortraitMode
           ? 'text-b3'
-          : style === PanelSwitcherStyle.BOTTOMBAR_MINI
+          : size === Size.sm
             ? 'text-base'
             : 'text-h4'}"
     >
@@ -61,7 +60,7 @@
       />
     {/if}
   </button>
-{:else if style === PanelSwitcherStyle.BOTTOMDOT}
+{:else if style === PanelSwitcherStyle.DOT}
   <button
     class="relative min-w-fit"
     on:click
@@ -69,9 +68,11 @@
     disabled={isDisabled}
   >
     <div
-      class="{$windowObject.isInPortraitMode
-        ? 'text-base'
-        : 'text-h3'} {isActive ? '' : 'text-fgs3'}"
+      class="{size === Size.sm
+        ? 'text-b2'
+        : $windowObject.isInPortraitMode
+          ? 'text-base'
+          : 'text-h3'} {isActive ? '' : 'text-fgs3'}"
     >
       {item}
     </div>
@@ -82,9 +83,9 @@
       />
     {/if}
   </button>
-{:else if style === PanelSwitcherStyle.ACCENT_SWITCH || style === PanelSwitcherStyle.ACCENT_SWITCH_MINI}
+{:else if style === PanelSwitcherStyle.TRAIN}
   <button
-    class="relative min-w-fit {style === PanelSwitcherStyle.ACCENT_SWITCH
+    class="relative min-w-fit {size === Size.md
       ? 'rounded-full px-6 py-3'
       : 'rounded-md px-3 py-1'}"
     style={isActive ? activeBgColorStyle : ""}
@@ -92,10 +93,9 @@
     disabled={isDisabled}
   >
     <div
-      class="{style === PanelSwitcherStyle.ACCENT_SWITCH &&
-      $windowObject.isInPortraitMode
+      class="{size === Size.md && $windowObject.isInPortraitMode
         ? 'text-base font-medium'
-        : style === PanelSwitcherStyle.ACCENT_SWITCH_MINI
+        : size === Size.sm
           ? 'text-b2'
           : 'text-base'} {textColorClass(
         $userPreferences,

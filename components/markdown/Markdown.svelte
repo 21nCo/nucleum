@@ -75,7 +75,7 @@
       {/if}
     </div>
   </div>
-  <div class="flex-grow w-full pb-20">
+  <div class="flex-grow w-full">
     {#each $mdStore.blocks as block (block.id)}
       <Block {block} {mdId} />
     {/each}

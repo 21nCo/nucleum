@@ -41,7 +41,7 @@
       <PanelSwitcher
         items={["Sign up", "Sign in"]}
         selected="Sign up"
-        style={PanelSwitcherStyle.BOTTOMBAR}
+        style={PanelSwitcherStyle.BAR}
         on:switch={(e) => {
           if (e.detail === "Sign up") {
             isSignup = true;

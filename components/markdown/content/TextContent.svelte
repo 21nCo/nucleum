@@ -603,7 +603,7 @@
       <div
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none p-2 {sizing}"
+        class="w-full h-full outline-none {sizing}"
       >
         {@html content.body}
       </div>
@@ -612,7 +612,7 @@
         bind:this={blockRef}
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none p-2 {sizing}"
+        class="w-full h-full outline-none {sizing}"
         on:keyup={handleKeyUp}
         on:keydown={handleKeyDown}
         on:keypress={handleKeyPress}
@@ -638,7 +638,7 @@
     on:click={() => {
       blockRef.focus();
     }}
-    class="absolute top-0 left-0 cursor-text p-2 {sizing} {blockSpecificPlaceholder
+    class="absolute top-0 left-0 cursor-text {sizing} {blockSpecificPlaceholder
       ? 'text-bgs4'
       : 'text-fgs3 ml-1'}"
   >
