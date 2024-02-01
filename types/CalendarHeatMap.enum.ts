@@ -5,7 +5,7 @@ export enum TileAppearance {
   LTile
 }
 
-export enum CalendarView {
+export enum TileScale {
   DAYS = "Days",
   MONTHS = "Months",
   YEARS = "Years"

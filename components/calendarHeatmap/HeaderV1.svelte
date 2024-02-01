@@ -7,7 +7,7 @@
   } from "$lib/tidy/types/dropdownItem.type";
   import {
     fetchDailyDataForTheYear,
-    fetchLast365daysData
+    fetchLast12MonthsDailyData
   } from "$lib/tidy/utils/CalendarHeatMap.utils";
   let logstartdate = "2000-01-01"; //fetch log start date and put here
   let logstartYear = new Date(logstartdate).getFullYear();
@@ -30,7 +30,7 @@
   function handleLast365() {
     isLast365 = true;
     console.log("in handle last 365");
-    fetchLast365daysData();
+    fetchLast12MonthsDailyData();
   }
 </script>
 

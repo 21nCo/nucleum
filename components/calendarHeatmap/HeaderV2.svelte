@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { CalendarView } from "$lib/tidy/types/CalendarHeatMap.enum";
+  import { TileScale } from "$lib/tidy/types/CalendarHeatMap.enum";
   import { createEventDispatcher } from "svelte";
   import { isTouchDevice } from "$lib/tidy/stores/app.store";
   import { moveTouch } from "$lib/tidy/utils/touchGesture";
@@ -10,7 +10,7 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   export let orientation: Orientation;
   let dispatch = createEventDispatcher();
-  let activeButton: CalendarView = CalendarView.DAYS;
+  let activeButton: TileScale = TileScale.DAYS;
   function chevleft() {
     dispatch("prev");
   }
@@ -29,9 +29,10 @@
   <div class="flex w-full justify-center items-center gap-x-px p-1">
     <div class="flex ml-auto">
       <PanelSwitcher
-        items={Object.values(CalendarView)}
+        items={Object.values(TileScale)}
         bind:selected={activeButton}
-        style={PanelSwitcherStyle.ACCENT_SWITCH_MINI}
+        size={Size.sm}
+        style={PanelSwitcherStyle.TRAIN}
         on:switch
       />
     </div>

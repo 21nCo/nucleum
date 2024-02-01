@@ -6,16 +6,16 @@
   } from "$lib/tidy/stores/app.store";
   import {
     CalendarHmVariant,
-    CalendarView
+    TileScale
   } from "$lib/tidy/types/CalendarHeatMap.enum";
   import {
-    fetch11years,
-    fetch22years,
-    fetch24years,
-    fetch48Years,
+    paginateMonthlyAggData,
+    fetchMonthlyAggData,
+    paginateYearlyAggData,
+    fetchYearlyAggData,
     fetch6months,
     fetchDailyDataForTheYear,
-    fetchLast365daysData
+    fetchLast12MonthsDailyData
   } from "$lib/tidy/utils/CalendarHeatMap.utils";
   import { onMount } from "svelte";
   import Footer from "./Footer.svelte";
@@ -36,44 +36,44 @@
   let data: any;
   const currentYear = new Date().getFullYear();
   const endYear = currentYear;
-  export let scale: CalendarView = CalendarView.DAYS;
+  export let tileScale: TileScale = TileScale.DAYS;
   $: {
     $CalendarHeatMapLayout = orientation;
   }
   $: $isTouchDevice = touchDevice;
   function viewChangeHandler(e: any) {
     console.log("viewChangeHandler", e.detail);
-    scale = e.detail;
+    tileScale = e.detail;
     refreshData();
   }
   function refreshData() {
     if (
-      scale === CalendarView.DAYS &&
+      tileScale === TileScale.DAYS &&
       variant != CalendarHmVariant.SCALE_SWITCH
     )
-      fetchLast365daysData();
+      fetchLast12MonthsDailyData();
     else if (
-      scale === CalendarView.DAYS &&
+      tileScale === TileScale.DAYS &&
       variant === CalendarHmVariant.SCALE_SWITCH
     )
       fetchDailyDataForTheYear(new Date().getFullYear());
-    else if (scale == CalendarView.MONTHS) {
+    else if (tileScale == TileScale.MONTHS) {
       const startYear = currentYear - 21;
-      fetch22years(startYear, endYear);
-    } else if (scale == CalendarView.YEARS) {
+      fetchMonthlyAggData(startYear, endYear);
+    } else if (tileScale == TileScale.YEARS) {
       const startYear = currentYear - 47;
-      fetch48Years(startYear, endYear);
+      fetchYearlyAggData(startYear, endYear);
     }
   }
   function prev() {
-    if (scale == CalendarView.DAYS) fetch6months("prev");
-    else if (scale == CalendarView.MONTHS) fetch11years("prev");
-    else fetch24years("prev");
+    if (tileScale == TileScale.DAYS) fetch6months("prev");
+    else if (tileScale == TileScale.MONTHS) paginateMonthlyAggData("prev");
+    else paginateYearlyAggData("prev");
   }
   function next() {
-    if (scale == CalendarView.DAYS) fetch6months("next");
-    else if (scale == CalendarView.MONTHS) fetch11years("next");
-    else fetch24years("next");
+    if (tileScale == TileScale.DAYS) fetch6months("next");
+    else if (tileScale == TileScale.MONTHS) paginateMonthlyAggData("next");
+    else paginateYearlyAggData("next");
   }
   onMount(() => {
     refreshData();
@@ -99,20 +99,20 @@
 
 {#if data}
   {#if orientation === Orientation.Horizontal}
-    <HorizontalCalendarLayout let:datum {data} {scale}>
-      {#if scale === CalendarView.DAYS}
+    <HorizontalCalendarLayout let:datum {data} scale={tileScale}>
+      {#if tileScale === TileScale.DAYS}
         <MonthsLayout data={datum} />
-      {:else if scale === CalendarView.MONTHS}
+      {:else if tileScale === TileScale.MONTHS}
         <YearsLayout data={datum} />
       {:else}
         <QuadrennialLayout data={datum} />
       {/if}
     </HorizontalCalendarLayout>
   {:else}
-    <VerticalCalendarLayout let:datum {data} {scale}>
-      {#if scale === CalendarView.DAYS}
+    <VerticalCalendarLayout let:datum {data} scale={tileScale}>
+      {#if tileScale === TileScale.DAYS}
         <MonthsLayout data={datum} />
-      {:else if scale === CalendarView.MONTHS}
+      {:else if tileScale === TileScale.MONTHS}
         <VerticalYearsLayout data={datum} />
       {:else}
         <VerticalQuadrennialLayout data={datum} />
