@@ -7,7 +7,7 @@
     fullPageLoadingScreen,
     modalEvent as modalEvent,
     toasts,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
@@ -20,7 +20,7 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { postToParent } from "$lib/tidy/utils/embed.utils";
   import ToastNotification from "$lib/tidy/elements/ToastNotification.svelte";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";
@@ -43,7 +43,7 @@
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
-          pop: JSON.stringify(x),
+          pop: JSON.stringify(x)
         });
       } else if (
         $appStore.launchContext == LaunchContext.EMBED &&
@@ -54,8 +54,8 @@
           pop: JSON.stringify({
             isShow: x.isShow,
             path: x.path,
-            id: x.id,
-          }),
+            id: x.id
+          })
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         modals = [x];
@@ -110,7 +110,7 @@
   </div>
 {/if}
 
-{#if isValidArray($toasts) && !$windowObject.isInPortraitMode}
+{#if isValidArrayWithData($toasts) && !$windowObject.isInPortraitMode}
   <div
     class="fixed bottom-0 left-0 mb-6 ml-12 flex flex-col gap-4 z-40"
     transition:slide={{ duration: 200 }}
@@ -155,14 +155,14 @@
       params={{
         path: "confirmation",
         title: $confirmationNotification.title,
-        isHideTitleIfEmpty: true,
+        isHideTitleIfEmpty: true
       }}
       layoutParams={{
         size: Size.xs,
         primaryAction: $confirmationNotification.confirmAction,
         secondaryAction: $confirmationNotification.cancelAction ?? {
-          label: "Cancel",
-        },
+          label: "Cancel"
+        }
       }}
     >
       <div class="flex flex-col gap-4">

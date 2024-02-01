@@ -2,12 +2,12 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { appStore } from "$lib/tidy/stores/app.store";
   import { initiateOAuth2Flow } from "$lib/tidy/utils/oauth.utils";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import { properCase } from "$lib/tidy/utils/text.utils";
 </script>
 
 <div class="flex flex-col w-full gap-4">
-  {#if isValidArray($appStore?.appData?.oAuthConfig)}
+  {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
     {#each $appStore.appData.oAuthConfig as provider}
       <Button
         width="w-full"

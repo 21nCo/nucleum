@@ -11,7 +11,7 @@
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import OAuthButtons from "./OAuthButtons.svelte";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -169,7 +169,7 @@
       on:click={handleClick}
     />
   </div>
-  {#if isValidArray($appStore?.appData?.oAuthConfig)}
+  {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
     <div class="w-full flex justify-center items-center text-fgs3 text-b3 px-4">
       <hr class="grow border-t border-bgs4" />
       <div class="px-2">or</div>

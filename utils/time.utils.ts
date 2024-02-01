@@ -2,7 +2,7 @@ import {
   TimePeriodType,
   type TimePeriod,
   TimeScale,
-  TimeFormat,
+  TimeFormat
 } from "../types/time.type";
 import moment from "moment-timezone";
 import type { UserDate } from "../types/userDate.type";
@@ -21,7 +21,7 @@ const months = [
   "Sep",
   "Oct",
   "Nov",
-  "Dec",
+  "Dec"
 ];
 
 export function formatTime(date: Date, format: string | undefined = undefined) {
@@ -240,7 +240,7 @@ export const getTimeZonesWithOffsets = () => {
       String(Math.abs(offset) % 60).padStart(2, "0");
     return {
       name: zone,
-      offset: formattedOffset,
+      offset: formattedOffset
     };
   });
 };
@@ -318,7 +318,7 @@ export function formatDateRelativeToToday(date: UserDate) {
     "Wednesday",
     "Thursday",
     "Friday",
-    "Saturday",
+    "Saturday"
   ];
 
   if (dayDifference === 0) {
@@ -355,4 +355,15 @@ export function incrementTime(
     dateTime.setMinutes(minutesRounded);
   }
   return new Date(dateTime.getTime() + numberOfHours * 60 * 60 * 1000);
+}
+
+export function formatDate(date: Date, format: "iso" | "verbose" = "iso") {
+  if (format === "iso") {
+    return date.toISOString().split("T")[0];
+  }
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric"
+  });
 }

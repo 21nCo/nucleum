@@ -2,7 +2,7 @@
   import InlineErrorMessage from "$lib/tidy/elements/text/InlineErrorMessage.svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ShortcutItem from "./ShortcutItem.svelte";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
   let userKeyMap = $userPreferences?.shortcuts;
@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex flex-col gap-4 max-w-lg">
-  {#if isValidArray(keyMap)}
+  {#if isValidArrayWithData(keyMap)}
     {#each keyMap as shortcut}
       <ShortcutItem
         {shortcut}

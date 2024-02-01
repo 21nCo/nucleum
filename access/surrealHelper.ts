@@ -116,7 +116,7 @@ export class SurrealDatabaseUsingRest {
         //console.log({ result });
         if (result.length > 0) {
           return result.slice(1).map((item: any) => {
-            return item.result;
+            return { result: item.result, status: item.status };
           });
         }
       } else return null;
@@ -282,10 +282,12 @@ export class SurrealDatabase {
   userId: string | undefined;
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
   constructor(private instance: string = "") {
+    const instanceDefault = import.meta.env.VITE_SURREAL_URL;
+    this.instance = instanceDefault ?? instance;
     this.token = localStorage.getItem("surreal-token");
     if (isUseSurrealSDK == "true")
-      this.surreal = new SurrealDatabaseUsingSdk(instance);
-    else this.surreal = new SurrealDatabaseUsingRest(instance);
+      this.surreal = new SurrealDatabaseUsingSdk(this.instance);
+    else this.surreal = new SurrealDatabaseUsingRest(this.instance);
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
       this.userId = decodedToken?.id ?? "";

@@ -5,7 +5,7 @@
   import type { Action } from "$lib/tidy/types/action.type";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import ResultItem from "./ResultItem.svelte";
   const dispatch = createEventDispatcher();
@@ -55,7 +55,7 @@
   }
 </script>
 
-{#if isValidArray(results)}
+{#if isValidArrayWithData(results)}
   {#each results as result, index}
     <ResultItem
       isActive={selectedIndex === index}

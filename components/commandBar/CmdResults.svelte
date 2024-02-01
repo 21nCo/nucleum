@@ -4,7 +4,7 @@
   import { modalEvent, userPreferences } from "$lib/tidy/stores/app.store";
   import { ActionType } from "$lib/tidy/types/action.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import { runAction } from "$lib/tidy/utils/utils";
   import { createEventDispatcher } from "svelte";
   import CmdResultItem from "./CmdResultItem.svelte";
@@ -53,7 +53,9 @@
         dispatch("close");
         runAction(selectedAction);
       }
-      let recentCommands = isValidArray($userPreferences.recentCommands);
+      let recentCommands = isValidArrayWithData(
+        $userPreferences.recentCommands
+      );
       if (recentCommands) {
         if (recentCommands.includes(selectedAction)) {
           recentCommands = recentCommands.filter((x) => x !== selectedAction);
@@ -91,7 +93,9 @@
     });
   }
   function loadDefaultFilteredActions() {
-    const recentCommands = isValidArray($userPreferences.recentCommands);
+    const recentCommands = isValidArrayWithData(
+      $userPreferences.recentCommands
+    );
     if (recentCommands) {
       filteredActions = allActions.filter(
         (x) => !recentCommands.includes(x.action)

@@ -6,7 +6,8 @@ import {
   appStore,
   confirmationNotification,
   modalEvent,
-  windowObject,
+  toasts,
+  windowObject
 } from "../stores/app.store";
 import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
@@ -14,6 +15,8 @@ import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
 import { postToParent } from "./embed.utils";
 import { detectTimeZone } from "./time.utils";
 import { ActionType } from "../types/action.type";
+import { isValidArrayWithData } from "./obj.utils";
+import { AlertType } from "../types/notification.type";
 
 export function onInterval(
   callback: () => void,
@@ -45,12 +48,12 @@ export function getUserDate(timestamp: number, dayStart: string = "00:00") {
     hours > startHours
       ? true
       : hours === startHours
-      ? minutes >= startMinutes
-      : false;
+        ? minutes >= startMinutes
+        : false;
   let userDate = {
     day: date.getDate(),
     month: date.getMonth(),
-    year: date.getFullYear(),
+    year: date.getFullYear()
   };
   userDate = isSameDay ? userDate : getOneDayEarlier(userDate);
   return userDate;
@@ -107,7 +110,7 @@ export function getOneDayLater(date: UserDate) {
   return {
     day: oneDayLater.getDate(),
     month: oneDayLater.getMonth(),
-    year: oneDayLater.getFullYear(),
+    year: oneDayLater.getFullYear()
   };
 }
 
@@ -117,7 +120,7 @@ export function getOneDayEarlier(date: UserDate) {
   return {
     day: oneDayEarlier.getDate(),
     month: oneDayEarlier.getMonth(),
-    year: oneDayEarlier.getFullYear(),
+    year: oneDayEarlier.getFullYear()
   };
 }
 
@@ -125,7 +128,7 @@ export function formatDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
-    year: "numeric",
+    year: "numeric"
   });
 }
 
@@ -180,7 +183,7 @@ export function openLink(url: string) {
   }
   if (get(appStore).launchContext == LaunchContext.EMBED) {
     postToParent({
-      link: url,
+      link: url
     });
   } else {
     let win = window?.open(url, "_blank");
@@ -203,7 +206,7 @@ export function runAction(action: string) {
     modalEvent.notify({
       path: component.action,
       isShow: true,
-      layoutParams: component.modalParams?.layoutParams,
+      layoutParams: component.modalParams?.layoutParams
     });
   } else if (
     component.type === ActionType.CONFIRMATION &&
@@ -248,7 +251,7 @@ export function getAppLoadContext() {
     timezone: detectTimeZone(),
     geo: null,
     referrer: document.referrer,
-    urlParams: Object.fromEntries(urlParams.entries()),
+    urlParams: Object.fromEntries(urlParams.entries())
   };
 }
 
@@ -262,9 +265,9 @@ export function performApiCall(
     method: method,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token,
+      Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ ...body, context: getAppLoadContext() }),
+    body: JSON.stringify({ ...body, context: getAppLoadContext() })
   });
 }
 export function performBlankApiCall(
@@ -275,9 +278,9 @@ export function performBlankApiCall(
   return fetch(import.meta.env.VITE_BLANK_API_URL + "/" + endpoint, {
     method: method,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: body,
+    body: body
   });
 }
 
@@ -358,5 +361,32 @@ export function generateCmdType(actionType: ActionType) {
       return "link";
     default:
       return "action";
+  }
+}
+
+export function download(data: string, label: string | null = null) {
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = (label ?? "data") + ".json";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function interceptResponse(response: any, context: string = "") {
+  console.log({ context, response });
+  if (!isValidArrayWithData(response) || response[0].status === "ERR") {
+    toasts.trigger({
+      title: "ERR: SUR-001",
+      message: "Something went wrong. Please try again",
+      actionText: "View",
+      type: AlertType.ERROR,
+      id: generateUID(),
+      callback: () => {}
+    });
+    return null;
+  } else if (response[0].status === "OK" && response[0].result) {
+    return response[0].result;
   }
 }
