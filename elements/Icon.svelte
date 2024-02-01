@@ -80,6 +80,7 @@
   import Curation from "../icons/Curation.svelte";
   import Capture from "../icons/Capture.svelte";
   import CheckTwo from "../icons/CheckTwo.svelte";
+  import Unpin from "../icons/Unpin.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -240,6 +241,8 @@
         <Minus {variant} isCircled={false} />
       {:else if icon === "minus-circled"}
         <Minus {variant} isCircled={true} />
+      {:else if icon === "unpin"}
+        <Unpin />
       {:else if icon === "cross-circled"}
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
