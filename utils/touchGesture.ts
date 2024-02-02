@@ -3,10 +3,10 @@ export const swipeIsRefreshing: any = writable(false);
 let initialX: any = null;
 let initialY: any = null;
 let scrollTop: any;
-console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
+// console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
 export function startTouch(e: any) {
-  console.log("Current Target ID", e.currentTarget.id);
-  console.log("Scroll Top", e.currentTarget.scrollTop);
+  // console.log("Current Target ID", e.currentTarget.id);
+  // console.log("Scroll Top", e.currentTarget.scrollTop);
   scrollTop =
     e.currentTarget.scrollTop === 0 &&
     e.currentTarget.parentElement.scrollTop === 0;
@@ -28,10 +28,9 @@ export async function moveTouch(
   if (initialY === null) {
     return;
   }
-  console.log("swipeLeftAction is", swipeLeftAction);
   if (swipeLeftAction == "pullLeft" || swipeRightAction == "pullRight") {
     minDistance = 0;
-    console.log("minDistance is", minDistance);
+    // console.log("minDistance is", minDistance);
   }
   var currentX = e.touches[0].clientX;
   var currentY = e.touches[0].clientY;
@@ -41,45 +40,38 @@ export async function moveTouch(
   if (Math.abs(diffX) > Math.abs(diffY)) {
     if (Math.abs(diffX) < minDistance) return;
     if (diffX > 0) {
-      console.log("Touch Gesture swiped left");
+      // console.log("Touch Gesture swiped left");
       if (swipeLeftAction == "pullLeft") {
-        console.log("apullLeft");
         return diffX;
       } else if (swipeLeftAction) {
         await swipeLeftAction();
-        console.log("swipeLeftAction Happened");
+        // console.log("swipeLeftAction Happened");
       }
     } else {
-      console.log("Touch Gesture swiped right");
+      // console.log("Touch Gesture swiped right");
       if (swipeRightAction == "pullRight") {
-        console.log("apullRight");
         return diffX;
       } else if (
         (swipeRightAction ? true : false) &&
         (minDistance > 0 || Math.abs(diffX) >= 60)
       ) {
         await swipeRightAction();
-        console.log("swipeRightAction Happened");
+        // console.log("swipeRightAction Happened");
       }
-      console.log(
-        "swipeRightAction is",
-        swipeRightAction ? true : false,
-        Math.abs(diffX)
-      );
       return;
     }
   } else {
     if (Math.abs(diffY) < minDistance) return;
     if (diffY > 0) {
-      console.log("Touch Gesture swiped up");
+      // console.log("Touch Gesture swiped up");
       if (swipeUpAction) {
         await swipeUpAction();
-        console.log("swipeUpAction Happened");
+        // console.log("swipeUpAction Happened");
       }
     } else {
-      console.log("Touch Gesture swiped down");
-      console.log("scrollTop is", scrollTop);
-      console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
+      // console.log("Touch Gesture swiped down");
+      // console.log("scrollTop is", scrollTop);
+      // console.log("SwipeisRefreshing is", get(swipeIsRefreshing));
       if (
         swipeDownAction &&
         scrollTop &&
@@ -90,7 +82,7 @@ export async function moveTouch(
         initialY = null; //not redundant, used to stop touchmove immediately being further executed due to awaits
         swipeIsRefreshing.set(true);
         await swipeDownAction();
-        console.log("swipeDownAction Happened");
+        // console.log("swipeDownAction Happened");
         swipeIsRefreshing.set(false);
       }
       return;
