@@ -362,4 +362,28 @@ export class Persistance {
     }
     return results;
   }
+  async fetchDailyJournal(context: string, start: Date, end: Date) {
+    const query = "return fn::global::journal::daily($context, $start, $end)";
+    const response = await surrealDb.executeReadFn(query, {
+      context,
+      start: start.toISOString(),
+      end: end.toISOString()
+    });
+    return interceptResponse(response, query);
+  }
+  async fetchJournal(
+    context: string,
+    scale: "MONTHS" | "YEARS",
+    start: number,
+    end: number
+  ) {
+    const query = "return fn::global::journal($context, $scale, $start, $end)";
+    const response = await surrealDb.executeReadFn(query, {
+      context,
+      scale,
+      start,
+      end
+    });
+    return interceptResponse(response, query);
+  }
 }

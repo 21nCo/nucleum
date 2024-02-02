@@ -56,6 +56,7 @@ export const CalendarHeatMapData = writable<{
 export const CalendarHeatMapLayout = writable<
   Orientation.Horizontal | Orientation.Vertical
 >(Orientation.Horizontal);
+export const calendarHmContext = writable<string>("");
 export const CalendarHeatMapstoreColors = readable<string[]>([
   "#D8E4D8",
   "#B2CAB1",
