@@ -603,7 +603,10 @@
       <div
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none {sizing}"
+        class="w-full h-full outline-none {sizing} {content.type ===
+        MdBlockType.QUOTE
+          ? 'p-2'
+          : 'p-1'}"
       >
         {@html content.body}
       </div>
