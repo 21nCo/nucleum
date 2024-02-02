@@ -2,12 +2,10 @@
   import { CellVariant } from "$lib/tidy/types/cellVariant.enum";
   import type {
     TableColumnItem,
-    TableRowItem,
+    TableRowItem
   } from "$lib/tidy/types/tableCell.type";
   import TableCell from "./TableCell.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
   import RowWrapper from "./RowWrapper.svelte";
-
   export let columns: TableColumnItem[] = [];
   export let data: TableRowItem[] = [];
   export let width: string = "";
@@ -53,7 +51,11 @@
         </RowWrapper>
       {/each}
     {:else}
-      <div class="w-full flex items-center justify-center p-6">No data</div>
+      <div
+        class="w-full flex items-center justify-center p-6 text-fgs3 text-b3"
+      >
+        No data
+      </div>
     {/if}
   </div>
 </div>

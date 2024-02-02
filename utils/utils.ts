@@ -6,6 +6,7 @@ import {
   appStore,
   confirmationNotification,
   modalEvent,
+  toasts,
   windowObject
 } from "../stores/app.store";
 import { get } from "svelte/store";
@@ -14,6 +15,8 @@ import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
 import { postToParent } from "./embed.utils";
 import { detectTimeZone } from "./time.utils";
 import { ActionType } from "../types/action.type";
+import { isValidArrayWithData } from "./obj.utils";
+import { AlertType } from "../types/notification.type";
 
 export function onInterval(
   callback: () => void,
@@ -149,9 +152,13 @@ export function generateSessionId(timestamp: number) {
 }
 
 export function resolveComponent(action: string) {
-  let component = localActions.find((x) => x.action == action);
+  let component = localActions.find(
+    (x) => x.action.toLowerCase() == action.toLowerCase()
+  );
   if (component) return component;
-  component = actions.find((x) => x.action == action);
+  component = actions.find(
+    (x) => x.action.toLowerCase() == action.toLowerCase()
+  );
   if (component) return component;
   return null;
 }
@@ -354,5 +361,32 @@ export function generateCmdType(actionType: ActionType) {
       return "link";
     default:
       return "action";
+  }
+}
+
+export function download(data: string, label: string | null = null) {
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = (label ?? "data") + ".json";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function interceptResponse(response: any, context: string = "") {
+  console.log({ context, response });
+  if (!isValidArrayWithData(response) || response[0].status === "ERR") {
+    toasts.trigger({
+      title: "ERR: SUR-001",
+      message: "Something went wrong. Please try again",
+      actionText: "View",
+      type: AlertType.ERROR,
+      id: generateUID(),
+      callback: () => {}
+    });
+    return null;
+  } else if (response[0].status === "OK" && response[0].result) {
+    return response[0].result;
   }
 }

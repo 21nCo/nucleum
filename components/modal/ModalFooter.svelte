@@ -1,14 +1,12 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
+  import CloseButton from "$lib/tidy/elements/button/CloseButton.svelte";
   import {
     confirmationNotification,
     modalEvent,
-    windowObject
+    windowObject,
   } from "$lib/tidy/stores/app.store";
-  import {
-    ButtonVariant,
-    type ButtonParams
-  } from "$lib/tidy/types/button.type";
+  import type { ButtonParams } from "$lib/tidy/types/button.type";
   export let path: string = "";
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
@@ -18,7 +16,7 @@
     if (isPreventAutoClose) return;
     modalEvent.notify({
       path,
-      isShow: false
+      isShow: false,
     });
     confirmationNotification.reset();
   }
@@ -41,7 +39,7 @@
     </Button>
   {/if}
   {#if secondaryAction}
-    <Button
+    <!-- <Button
       type={secondaryAction.variant ?? "secondary"}
       icon={secondaryAction.icon}
       on:click={() => {
@@ -53,7 +51,8 @@
       {#if !$windowObject.isInPortraitMode && (secondaryAction.variant === ButtonVariant.SECONDARY || !secondaryAction.variant)}
         <span class=" text-b4">Esc</span>
       {/if}
-    </Button>
+    </Button> -->
+    <CloseButton params={secondaryAction} />
   {:else if isShowClose}
     <Button on:click={close}>
       close

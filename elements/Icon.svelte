@@ -81,11 +81,15 @@
   import Capture from "../icons/Capture.svelte";
   import CheckTwo from "../icons/CheckTwo.svelte";
   import Unpin from "../icons/Unpin.svelte";
+  import Microphone from "../icons/Microphone.svelte";
+  import Camera from "../icons/Camera.svelte";
+  import BarsCenterLeft from "../icons/BarsCenterLeft.svelte";
+  import CubeTransparent from "../icons/CubeTransparent.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
-  export let color: string | undefined = undefined;
+  export let color: string | undefined = undefined; //" text-bgs1";
   export let bgColorHue: number | undefined = undefined;
   export let isOutlineForActive: boolean = false;
   $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $userPreferences);
@@ -129,7 +133,9 @@
           ? 'w-8 h-8'
           : size == Size.md
             ? 'w-6 h-6'
-            : 'w-4 h-4'} {variant === IconVariant.Outline
+            : size == Size.xs
+              ? 'w-4 h-4'
+              : 'w-3 h-3'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
@@ -161,6 +167,8 @@
         <Home {variant} />
       {:else if icon === "bolt" || icon === "focus"}
         <Bolt {variant} />
+      {:else if icon === "bolt-micro"}
+        <Bolt variant={IconVariant.Micro} />
       {:else if icon === "chart"}
         <PieChart {variant} />
       {:else if icon === "barchart"}
@@ -213,6 +221,8 @@
         <Swatch {variant} />
       {:else if icon === "cube"}
         <Cube {variant} />
+      {:else if icon === "cube-transparent"}
+        <CubeTransparent {variant} />
       {:else if icon === "data"}
         <Data {variant} />
       {:else if icon === "list"}
@@ -313,6 +323,8 @@
         <Ellipsis orientation={Orientation.Horizontal} isCircled={true} />
       {:else if icon === "bars"}
         <Bars {variant} />
+      {:else if icon === "bars-center-left"}
+        <BarsCenterLeft {variant} />
       {:else if icon === "squares-2x2"}
         <Squares {variant} />
       {:else if icon === "pomodoro"}
@@ -355,6 +367,12 @@
         <Capture {variant} />
       {:else if icon === "check-circle"}
         <CheckTwo {variant} isCircled={true} />
+      {:else if icon === "microphone"}
+        <Microphone {variant} />
+      {:else if icon === "camera"}
+        <Camera {variant} />
+      {:else if icon === "camera"}
+        <Camera {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

@@ -20,20 +20,20 @@
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
   export let isLoading: boolean = false;
+  // export let buttonBaseColor: string = "";
+  // export let buttonActiveColor: string = "";
+  // export let isActive: boolean = false;
   let toolTipRef: any;
   let buttonRef: any;
   let isHovered: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
-  let classList =
-    "flex flex-row justify-center items-center min-w-fit " +
-    (style === ButtonStyle.ROUNDED || size === Size.xs
-      ? " rounded-full"
-      : " rounded-md") +
-    ` ${width} `;
-  onMount(() => {
-    hideToolTip();
+  let classList: string;
+  function setStyles() {
+    classList =
+      "flex flex-row justify-center items-center min-w-fit rounded-full" +
+      ` ${width} `;
     if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
@@ -71,7 +71,7 @@
           break;
       }
     }
-    if (style != ButtonStyle.PLAIN) {
+    if (style != ButtonStyle.PLAIN && (label || $$slots.default)) {
       switch (size) {
         case Size.xl:
           classList += " py-5 px-6";
@@ -87,6 +87,25 @@
           break;
         case Size.xs:
           classList += " py-1.5 px-3";
+          break;
+      }
+    }
+    if (style === ButtonStyle.ROUNDED && !label && icon && !$$slots.default) {
+      switch (size) {
+        case Size.xl:
+          classList += " p-6";
+          break;
+        case Size.lg:
+          classList += " p-5";
+          break;
+        case Size.md:
+          classList += " p-4";
+          break;
+        case Size.sm:
+          classList += " p-3";
+          break;
+        case Size.xs:
+          classList += " p-2";
           break;
       }
     }
@@ -118,8 +137,16 @@
         classList += " bg-fgs1";
       }
     }
+    classList = classList;
+  }
+  $: {
+    console.log("type ", type);
+    setStyles();
+  }
+  onMount(() => {
+    hideToolTip();
+    setStyles();
   });
-
   function hideToolTip() {
     if (toolTipRef && toolTipRef?.style?.display != "none")
       toolTipRef.style.display = "none";

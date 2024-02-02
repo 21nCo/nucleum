@@ -20,11 +20,14 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { postToParent } from "$lib/tidy/utils/embed.utils";
   import ToastNotification from "$lib/tidy/elements/ToastNotification.svelte";
-  import { isValidArray } from "$lib/tidy/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { runAction } from "$lib/tidy/utils/utils";
+  import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/tidy/types/button.type";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -96,18 +99,18 @@
 {/if}
 {#if $appStore.appData?.bottomRightAction && !$windowObject.isInPortraitMode}
   <div class="fixed bottom-0 right-0 mr-6 mb-6">
-    <button
-      class="bg-bgs2 rounded-full p-3"
+    <Button
+      icon={$appStore.appData?.bottomRightAction}
+      type={ButtonVariant.PRIMARY}
+      style={ButtonStyle.ROUNDED}
       on:click={() => {
         runAction($appStore.appData?.bottomRightAction);
       }}
-    >
-      <Icon icon={$appStore.appData?.bottomRightAction} size={Size.lg} />
-    </button>
+    />
   </div>
 {/if}
 
-{#if isValidArray($toasts) && !$windowObject.isInPortraitMode}
+{#if isValidArrayWithData($toasts) && !$windowObject.isInPortraitMode}
   <div
     class="fixed bottom-0 left-0 mb-6 ml-12 flex flex-col gap-4 z-40"
     transition:slide={{ duration: 200 }}

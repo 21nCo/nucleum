@@ -98,7 +98,7 @@ export function objIsEmpty(obj: any) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
-export function isValidArray(arr: any[] | undefined) {
+export function isValidArrayWithData(arr: any[] | undefined) {
   if (arr && Array.isArray(arr) && arr.length > 0) {
     return arr;
   }
@@ -106,6 +106,9 @@ export function isValidArray(arr: any[] | undefined) {
 }
 export function isEmptyArray(arr: any[] | undefined) {
   return arr && Array.isArray(arr) && arr.length === 0;
+}
+export function isValidArray(arr: any) {
+  return arr && Array.isArray(arr);
 }
 
 export function deepCopy(obj: any) {

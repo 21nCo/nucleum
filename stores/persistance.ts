@@ -2,13 +2,13 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import { account, appStore, cloudProvider } from "./app.store";
+import { account, appStore, cloudProvider, userPreferences } from "./app.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import { performApiCall, performBlankApiCall } from "../utils/utils";
-import { isValidArray } from "../utils/obj.utils";
+import { isValidArrayWithData } from "../utils/obj.utils";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
@@ -102,17 +102,15 @@ export class Persistance {
   };
   updateDefinitions = async () => {
     try {
-      const token = localStorage.getItem("refresh-token");
-      const response = await performApiCall(
-        "account/updateDefinitions",
-        "POST",
-        { token }
-      );
+      const userPrefs = get(userPreferences);
+      const response = await performApiCall("account/updateDb", "POST", {
+        lastRunChangeId: userPrefs?.lastRunChangeId ?? 1
+      });
       if (!response?.ok) {
         return;
       }
       const data = await response.json();
-      return isValidArray(data);
+      return isValidArrayWithData(data);
     } catch (err) {
       appStore.logError(err);
     }
@@ -125,7 +123,7 @@ export class Persistance {
         return;
       }
       const data = await response.json();
-      return isValidArray(data);
+      return isValidArrayWithData(data);
     } catch (err) {
       appStore.logError(err);
     }

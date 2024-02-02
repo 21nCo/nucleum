@@ -4,65 +4,66 @@
   import { resolveBackgroundClass, bgClass } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
   const dispatch = createEventDispatcher();
   export let items: string[];
-  export let selectedIndex: number | undefined = undefined;
+  export let selected: string | undefined = undefined;
   export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
   export let parentBackgroundIndex: number = 1;
+  export let size: Size = Size.md;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
   let backgroundColor: string = "";
-  let classList: string;
+  let classList: string = "flex ";
   onMount(() => {
-    if (selectedIndex === undefined) selectedIndex = 0;
+    if (selected === undefined) selected = items[0];
     let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
     switch (style) {
-      case PanelSwitcherStyle.BOTTOMBAR:
-        classList = "flex gap-6";
+      case PanelSwitcherStyle.DOT:
+        classList += "gap-6 items-center";
         break;
-      case PanelSwitcherStyle.BOTTOMBAR_MINI:
-        classList = "flex gap-2";
-        break;
-      case PanelSwitcherStyle.BOTTOMDOT:
-        classList = "flex gap-6 items-center";
-        break;
-      case PanelSwitcherStyle.ROUNDED:
-        classList =
-          "flex rounded-full min-w-fit " +
-          bgClass($userPreferences.theme, parentBackgroundIndex);
+      case PanelSwitcherStyle.TRAIN:
+        if (size === Size.md) {
+          classList +=
+            "min-w-fit rounded-full " +
+            bgClass($userPreferences.theme, parentBackgroundIndex);
+        } else if (size === Size.sm) {
+          classList +=
+            "min-w-fit rounded-md " +
+            bgClass($userPreferences.theme, parentBackgroundIndex);
+        }
         break;
       case PanelSwitcherStyle.DEFAULT:
-        classList = "flex gap-4 rounded-full";
+        classList += "gap-4 rounded-full";
         break;
       default:
-        classList = "flex items-center";
+        classList += " items-center";
         break;
     }
   });
 </script>
 
 <div
-  class="relative {style === PanelSwitcherStyle.BOTTOMBAR
-    ? 'w-full'
-    : 'max-w-fit'}"
+  class="relative {style === PanelSwitcherStyle.BAR ? 'w-full' : 'max-w-fit'}"
 >
   <div class={classList}>
     {#each items as item, index}
       <PanelSwitcherItem
         {item}
+        {size}
         {activeColor}
         {style}
-        isActive={selectedIndex === index}
-        isDisabled={isDisableEnabled && selectedIndex !== index}
+        isActive={selected === item}
+        isDisabled={isDisableEnabled && selected !== item}
         on:click={() => {
-          selectedIndex = index;
-          dispatch("switch", { selected: index });
+          selected = item;
+          dispatch("switch", item);
         }}
       />
     {/each}
   </div>
-  {#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
+  <!-- {#if style === PanelSwitcherStyle.BOTTOMBAR || style === PanelSwitcherStyle.BOTTOMBAR_MINI}
     <div
       class="absolute w-full left-0 -bottom-1 {bgClass(
         $userPreferences.theme,
@@ -70,5 +71,5 @@
       )}"
       style="height: 5%;"
     />
-  {/if}
+  {/if} -->
 </div>

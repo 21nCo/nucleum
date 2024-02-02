@@ -3,7 +3,7 @@
   import {
     confirmationNotification,
     modalEvent,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { fade, fly } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
@@ -46,7 +46,7 @@
     show = false;
     modalEvent.notify({
       path: id,
-      isShow: false,
+      isShow: false
     });
     confirmationNotification.reset();
   }
@@ -54,8 +54,8 @@
 
 {#if show}
   <button
-    class="pop-overlay fixed top-0 left-0 w-screen h-screen bg-black {isShowOverlay
-      ? 'bg-opacity-50'
+    class="pop-overlay fixed top-0 left-0 w-screen h-screen bg-bgs1 {isShowOverlay
+      ? 'bg-opacity-80'
       : 'bg-opacity-0'} z-50"
     on:click={overlayClicked}
     transition:fade={{ duration: 200 }}

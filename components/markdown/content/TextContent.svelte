@@ -9,7 +9,7 @@
     type TextContent,
     BlockContext,
     type TextType,
-    ListType
+    ListType,
   } from "$lib/tidy/types/md.type";
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
@@ -177,9 +177,9 @@
         range?.endContainer.parentElement?.childNodes ?? []
       ).indexOf(element),
       index: range?.endOffset ?? 0,
-      endContainer: range?.endContainer
+      endContainer: range?.endContainer,
     };
-    console.log("setCaretPosition", range, caretPosition);
+    // console.log("setCaretPosition", range, caretPosition);
   }
 
   // Function to restore the caret position
@@ -203,7 +203,7 @@
     content.body = content.body.replace("<!--caret-->", "");
   }
   function setCursorToSpan(spanElement: any) {
-    console.log("setCursorToSpan", spanElement);
+    //console.log("setCursorToSpan", spanElement);
     const range = document.createRange();
     range.selectNodeContents(spanElement);
 
@@ -217,16 +217,16 @@
     const range = document.createRange();
     const selection = window.getSelection();
     try {
-      console.log({ isNewSpanInserted, caretPosition });
+      //console.log({ isNewSpanInserted, caretPosition });
       if (isNewSpanInserted && caretPosition.elementIndex != undefined) {
         const parent = document.getElementById(caretPosition.parent.id);
-        console.log(
-          "eleIndex",
-          caretPosition?.elementId,
-          caretPosition.elementIndex,
-          caretPosition.parent.childNodes,
-          parent?.childNodes
-        );
+        // console.log(
+        //   "eleIndex",
+        //   caretPosition?.elementId,
+        //   caretPosition.elementIndex,
+        //   caretPosition.parent.childNodes,
+        //   parent?.childNodes
+        // );
         if (!parent?.childNodes) return;
         // const node = parent
         //   ? parent?.childNodes[caretPosition.elementIndex + 1]
@@ -236,10 +236,10 @@
         const node = Array.from(parent?.childNodes).find(
           (node: ChildNode) => (node as Element).id === caretPosition?.elementId
         );
-        console.log("new span node", node, caretPosition);
+        // console.log("new span node", node, caretPosition);
         if (node) range.setStart(node, 1);
       } else if (caretPosition.elementIndex != undefined) {
-        console.log("ss");
+        // console.log("ss");
         let node = caretPosition.element;
         const parent = document.getElementById(caretPosition.parent.id);
         node = parent
@@ -315,7 +315,7 @@
     };
   });
   function handleKeyDown(event: any) {
-    console.log("keydown", event);
+    // console.log("keydown", event);
     if (
       (event.key === "Enter" && event.metaKey == true) ||
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
@@ -331,7 +331,7 @@
   }
 
   function handleKeyUp(event: any) {
-    console.log("keyup", event);
+    // console.log("keyup", event);
     setCaretPosition();
     const textEscapeShortcuts: { shortcut: string; type: TextType }[] = [
       { shortcut: "# ", type: MdBlockType.HEADING1 },
@@ -339,17 +339,17 @@
       { shortcut: "### ", type: MdBlockType.HEADING3 },
       { shortcut: "#### ", type: MdBlockType.HEADING4 },
       { shortcut: "##### ", type: MdBlockType.HEADING5 },
-      { shortcut: '" ', type: MdBlockType.QUOTE }
+      { shortcut: '" ', type: MdBlockType.QUOTE },
     ];
     const structuralEscapeShortcuts = [
       { shortcut: "---", type: MdBlockType.DIVIDER },
-      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER }
+      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER },
     ];
     const listEscapeShortcuts = [
       { shortcut: "* ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
       { shortcut: "- ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
       { shortcut: "+ ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED }
+      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED },
     ];
     textEscapeShortcuts.forEach(({ shortcut, type }) => {
       if (typeof content.body !== "string") return;
@@ -370,7 +370,7 @@
         setTimeout(() => {
           let parent = undefined;
           if (id) parent = document.getElementById(id);
-          console.log("parent", parent, parent?.lastChild);
+          // console.log("parent", parent, parent?.lastChild);
           if (parent && parent.lastChild) {
             parent.removeChild(parent.lastChild);
           }
@@ -441,7 +441,7 @@
       { regex: /&lt;-/g, replacement: "←" },
       { regex: /&lt;=/g, replacement: "≤" },
       { regex: /&gt;=/g, replacement: "≥" },
-      { regex: /=&gt;/g, replacement: "⇒" }
+      { regex: /=&gt;/g, replacement: "⇒" },
     ];
     executeReplace(patterns);
   }
@@ -460,7 +460,7 @@
           caretPosition = {
             ...caretPosition,
             index: caretPosition?.index ?? 0,
-            elementId: focusedSpan
+            elementId: focusedSpan,
           };
           isNewSpanInserted = true;
           content.body = content.body.replace(
@@ -495,16 +495,16 @@
       { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
       {
         regex: /~~((?:\S|\s\S)+?)~~/g,
-        replacement: '<span class="line-through">$1</span>'
+        replacement: '<span class="line-through">$1</span>',
       },
       {
         regex: /`((?:\S|\s\S)+?)`/g,
-        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>'
+        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>',
       },
       {
         regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-        replacement: '<span style="color:$2">$1</span>'
-      }
+        replacement: '<span style="color:$2">$1</span>',
+      },
     ];
     executeReplace(patterns, true);
     //insertCaretMarker();
@@ -543,6 +543,58 @@
     setCaretPosition();
     // console.log("mouseup", event, block);
   }
+  async function handlePaste(event: ClipboardEvent) {
+    const items = event?.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("text") === 0) {
+        console.log("Text is being pasted");
+      } else if (items[i].type.indexOf("image") === 0) {
+        console.log("Image is being pasted");
+        const blob = items[i].getAsFile();
+        if (!blob) return;
+        let image;
+        let reader = new FileReader();
+        reader.onload = async (e) => {
+          // console.log(
+          //   "length: ",
+          //   e.target?.result?.includes("data:image/jpeg")
+          // );
+          // if (!e.target.result.includes("data:image/jpeg")) {
+          //   return alert("Wrong file type - JPG only.");
+          // }
+          // if (e.target.result.length > MAX_IMAGE_SIZE) {
+          //   return alert("Image is loo large.");
+          // }
+          image = e.target?.result;
+          await uploadImage(image);
+        };
+        reader.readAsDataURL(blob);
+      }
+    }
+    event.preventDefault();
+  }
+  async function uploadImage(image: any) {
+    const signedUrl =
+      "https://testtidyuserbucketthree.s3.ap-south-2.amazonaws.com/xyz/image/3ce5fefd-81a9-4238-9560-83755202c0e7_sample.jpeg?Content-Type=image%2Fjpeg&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAXLCVEUWSBWDSDV6G%2F20240116%2Fap-south-2%2Fs3%2Faws4_request&X-Amz-Date=20240116T160522Z&X-Amz-Expires=3000&X-Amz-Signature=ba01b9a17f36c821cf15a18034d554528245c1158ca4b1a9064c5129ef97f8f4&X-Amz-SignedHeaders=host%3Bx-amz-acl&x-amz-acl=public-read";
+    if (!image) return;
+    let binary = atob(image.split(",")[1]);
+    let array = [];
+    for (var j = 0; j < binary.length; j++) {
+      array.push(binary.charCodeAt(j));
+    }
+    let blobData = new Blob([new Uint8Array(array)], {
+      type: "image/jpeg",
+    });
+    const result = await fetch(signedUrl, {
+      method: "PUT",
+      body: blobData,
+    });
+    console.log("result", result);
+    if (result.status === 200) {
+      content.body = content.body + `<img src="${signedUrl}"/>`;
+    }
+  }
 </script>
 
 {#if typeof content.body === "string"}
@@ -551,7 +603,7 @@
       <div
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none p-2 {sizing}"
+        class="w-full h-full outline-none {sizing}"
       >
         {@html content.body}
       </div>
@@ -560,11 +612,12 @@
         bind:this={blockRef}
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none p-2 {sizing}"
+        class="w-full h-full outline-none {sizing}"
         on:keyup={handleKeyUp}
         on:keydown={handleKeyDown}
         on:keypress={handleKeyPress}
         on:mouseup={handleMouseup}
+        on:paste={handlePaste}
         bind:innerHTML={content.body}
         contenteditable
       ></div>
@@ -585,7 +638,7 @@
     on:click={() => {
       blockRef.focus();
     }}
-    class="absolute top-0 left-0 cursor-text p-2 {sizing} {blockSpecificPlaceholder
+    class="absolute top-0 left-0 cursor-text {sizing} {blockSpecificPlaceholder
       ? 'text-bgs4'
       : 'text-fgs3 ml-1'}"
   >

@@ -1,46 +1,42 @@
 import type { DragAndDrop } from "../types/draganddrop.type";
 import { DragStatus } from "../types/dragstatus.enum";
 
-export function handleDragNDropForMultiList(
-  x: DragAndDrop,
-  items: any[],
-  listId: any
-) {
+export function handleDragNDrop(x: DragAndDrop, items: any[]) {
+  const goalIdCheck = x.dropItem.goalId === x.dragItem.goalId;
+  const dropItemCheck = x.dropItem ? true : false;
+  const dragItemCheck = x.dragItem ? true : false;
+
   if (
     x.dragStatus == DragStatus.DROPPED &&
-    x.dragItem &&
-    x.dropItem &&
-    (x.dropItem.listId == listId || x.dragItem.listId == listId)
+    dropItemCheck &&
+    dragItemCheck &&
+    goalIdCheck
   ) {
     let draggedItem = x.dragItem;
     let targetItem = x.dropItem;
     if (
       !draggedItem ||
       !targetItem ||
-      draggedItem.task.id === targetItem.task.id
+      draggedItem.taskId === targetItem.taskId
     ) {
-      return;
+      return null;
     }
-    let draggedIndex = -1;
-    let targetIndex = -1;
-    if (draggedItem.listId == listId) {
-      draggedIndex = items.indexOf(draggedItem.task);
-    }
-    if (targetItem.listId == listId) {
-      targetIndex = items.indexOf(targetItem.task);
-    }
+    let draggedIndex = items.indexOf(draggedItem);
+    let targetIndex = items.indexOf(targetItem);
+
     if (draggedIndex >= 0 && targetIndex >= 0 && targetIndex < items.length) {
       items = [
         ...items.slice(0, draggedIndex),
         ...items.slice(draggedIndex + 1),
       ];
-      items.splice(targetIndex, 0, draggedItem.task);
+      items.splice(targetIndex, 0, draggedItem);
+      items.forEach((item: any, index) => {
+        item.order = index + 1;
+      });
+      return items;
     }
-    items.forEach((item: any, index) => {
-      item.order = index;
-    });
-    return items;
   }
+
   if (x.dragStatus == DragStatus.STARTED && x.dragItem) {
     //todo - remove dragged item from list
   }
@@ -49,21 +45,36 @@ export function handleDragNDropForMultiList(
   return null;
 }
 
-export function handleDragNDrop(x: DragAndDrop, items: any[]) {
-  if (x.dragStatus == DragStatus.DROPPED && x.dragItem && x.dropItem) {
-    items = items.filter(
-      (item) => item.order != x.dragItem.order && item.order != x.dropItem.order
-    );
+export function handleFocusItemsDND(x: DragAndDrop, items: any[]) {
+  const dropItemCheck = x.dropItem ? true : false;
+  const dragItemCheck = x.dragItem ? true : false;
+  const dropContainsTasks =
+    x.dropId == "goalItem" || x.dropId == "soloTaskItem" ? true : false;
+  const dragContainsTasks =
+    x.dragId == "goalItem" || x.dragId == "soloTaskItem" ? true : false;
+  if (
+    dropItemCheck &&
+    dragItemCheck &&
+    dropContainsTasks &&
+    dragContainsTasks
+  ) {
     let draggedItem = x.dragItem;
-    draggedItem.order = x.dropItem.order;
-    x.dropItem.order = x.dragItem.order;
-    items = items.concat([draggedItem, x.dropItem]);
-    return items;
-  }
-  if (x.dragStatus == DragStatus.STARTED && x.dragItem) {
-    //todo - remove dragged item from list
-  }
-  if (x.dragItem && x.dragEnterItem) {
+    let targetItem = x.dropItem;
+    let draggedIndex = items.indexOf(draggedItem);
+    let targetIndex = items.indexOf(targetItem);
+    if (draggedIndex >= 0 && targetIndex >= 0 && targetIndex < items.length) {
+      items = [
+        ...items.slice(0, draggedIndex),
+        ...items.slice(draggedIndex + 1),
+      ];
+      items.splice(targetIndex, 0, draggedItem);
+      let orderValues = items.map((item) => item.order);
+      orderValues.sort((a, b) => a - b);
+      items.forEach((item: any, index) => {
+        item.order = orderValues[index];
+      });
+      return items;
+    }
   }
   return null;
 }

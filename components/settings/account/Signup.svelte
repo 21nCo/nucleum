@@ -40,11 +40,10 @@
     <div class="flex flex-col gap-6">
       <PanelSwitcher
         items={["Sign up", "Sign in"]}
-        selectedIndex={0}
-        style={PanelSwitcherStyle.BOTTOMBAR}
+        selected="Sign up"
+        style={PanelSwitcherStyle.BAR}
         on:switch={(e) => {
-          console.log(e.detail);
-          if (e.detail.selected === 0) {
+          if (e.detail === "Sign up") {
             isSignup = true;
           } else {
             isSignup = false;

@@ -20,20 +20,20 @@
     if ($windowObject.isInPortraitMode) {
       switch (variant) {
         case CellVariant.COLUMN:
-          return `text-fgs1 text-b3`;
+          return `text-fgs1 text-b2`;
         case CellVariant.ROW:
-          return `text-fgs2 text-b5`;
+          return `text-fgs2 text-b3`;
         default:
-          return "text-fgs2 text-b5";
+          return "text-fgs2 text-b3";
       }
     } else {
       switch (variant) {
         case CellVariant.COLUMN:
-          return `text-fgs1 text-b2`;
+          return `text-fgs1 text-base`;
         case CellVariant.ROW:
-          return `text-fgs2 text-b4`;
+          return `text-fgs2 text-b2`;
         default:
-          return "text-fgs2 text-b4";
+          return "text-fgs2 text-b2";
       }
     }
   })();
@@ -56,7 +56,7 @@
 
 <div class={`${classList} ${width}`}>
   {#if icon}
-    <Icon {icon} size={Size.sm} on:click={handleClick} />
+    <Icon {icon} size={Size.md} on:click={handleClick} />
   {/if}
   <slot />
 </div>

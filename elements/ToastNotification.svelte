@@ -36,12 +36,12 @@
           : 'bg-ars1'}"
       ></div>
       <div class="flex flex-col gap-2 items-start">
-        <div class="text-b2">
-          {notification.message}
-        </div>
         {#if notification.title}
           <div class="text-fgs2 font-bold">{notification.title}</div>
         {/if}
+        <div class="text-b2">
+          {notification.message}
+        </div>
       </div>
     </div>
     <div class="flex gap-2">

@@ -4,9 +4,9 @@ import {
   MdBlockType,
   type Block,
   ListType,
-  type BasicMarkdown,
+  type BasicMarkdown
 } from "../types/md.type";
-import { isValidArray } from "./obj.utils";
+import { isValidArrayWithData } from "./obj.utils";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -98,7 +98,7 @@ export function isValidMarkdown(md: BasicMarkdown) {
   return (
     md &&
     md.blocks &&
-    isValidArray(md.blocks) &&
+    isValidArrayWithData(md.blocks) &&
     md.blocks.length > 0 &&
     ((md.blocks.length === 1 &&
       "body" in md.blocks[0].content &&
