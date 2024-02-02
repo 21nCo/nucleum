@@ -84,6 +84,7 @@
   import Camera from "../icons/Camera.svelte";
   import BarsCenterLeft from "../icons/BarsCenterLeft.svelte";
   import CubeTransparent from "../icons/CubeTransparent.svelte";
+  import Stop from "../icons/Stop.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -200,7 +201,7 @@
         <Users {variant} />
       {:else if icon === "copy"}
         <Copy {variant} />
-      {:else if icon === "sync"}
+      {:else if icon === "arrow-path" || icon === "sync"}
         <ArrowPath {variant} />
       {:else if icon === "sun"}
         <Sun {variant} />
@@ -368,8 +369,8 @@
         <Microphone {variant} />
       {:else if icon === "camera"}
         <Camera {variant} />
-      {:else if icon === "camera"}
-        <Camera {variant} />
+      {:else if icon === "stop"}
+        <Stop {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"
