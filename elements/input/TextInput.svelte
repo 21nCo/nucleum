@@ -253,25 +253,27 @@
           ? 'max-h-60 h-60'
           : 'h-48'}"
       >
-        {#if searchResults && searchResults.length > 0}
-          {#each searchResults as item, index}
-            <SearchResultItem
-              {item}
-              isActive={selectedIndex === index}
-              on:click={() => {
-                onSearchResultSelection(item);
-              }}
-            />
-          {/each}
-        {:else}
-          <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
-            {#if isSearchInProgress}
-              Searching...
-            {:else if searchResults.length === 0}
-              No results found
-            {/if}
-          </div>
-        {/if}
+        <div class="flex flex-col flex-grow items-center w-full">
+          {#if searchResults && searchResults.length > 0}
+            {#each searchResults as item, index}
+              <SearchResultItem
+                {item}
+                isActive={selectedIndex === index}
+                on:click={() => {
+                  onSearchResultSelection(item);
+                }}
+              />
+            {/each}
+          {:else}
+            <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
+              {#if isSearchInProgress}
+                Searching...
+              {:else if searchResults.length === 0}
+                No results found
+              {/if}
+            </div>
+          {/if}
+        </div>
         <div class="w-full bg-bgs4 flex justify-center">
           <Button
             size={Size.sm}

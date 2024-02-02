@@ -7,7 +7,11 @@ import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
 import type { DbRecordType } from "$lib/local/types/item.type";
-import { performApiCall, performBlankApiCall } from "../utils/utils";
+import {
+  interceptResponse,
+  performApiCall,
+  performBlankApiCall
+} from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
@@ -230,7 +234,7 @@ export class Persistance {
     itemType?: ItemType
   ) {
     switch (get(cloudProvider)) {
-      case Cloud.local:
+      case Cloud.local: {
         if (!itemType) break;
         let items: DbRecordBase[] = retrieveLocally(itemType);
         if (!items) {
@@ -240,6 +244,7 @@ export class Persistance {
         items.push(item);
         persistLocally(itemType, items);
         break;
+      }
       case Cloud.surreal:
         return surrealDb.merge(
           itemType
@@ -259,18 +264,19 @@ export class Persistance {
    */
   delete(itemId: string, itemType: ItemType) {
     switch (get(cloudProvider)) {
-      case Cloud.local:
+      case Cloud.local: {
         let items = retrieveLocally(itemType);
         items = items.filter((x: DbRecordBase) => x.id != itemId);
         persistLocally(itemType, items);
         break;
+      }
       case Cloud.surreal:
         return surrealDb.delete(itemId);
     }
   }
   retrieve(itemId: string, itemType: ItemType | undefined = undefined) {
     switch (get(cloudProvider)) {
-      case Cloud.local:
+      case Cloud.local: {
         if (!itemType) break;
         let items = retrieveLocally(itemType);
         if (!items) {
@@ -278,6 +284,7 @@ export class Persistance {
         }
         let item = items.find((x: DbRecordBase) => x.id == itemId);
         return item;
+      }
       case Cloud.surreal:
         return surrealDb.select(itemId);
     }
@@ -285,9 +292,10 @@ export class Persistance {
   retrieveAll(itemType: ItemType) {
     try {
       switch (get(cloudProvider)) {
-        case Cloud.local:
+        case Cloud.local: {
           let items = retrieveLocally(itemType);
           return items;
+        }
         case Cloud.surreal:
           return surrealDb.select(ItemEnum[itemType]);
       }
@@ -304,7 +312,7 @@ export class Persistance {
     switch (get(cloudProvider)) {
       case Cloud.local:
         switch (itemType) {
-          case ItemEnum.ALL:
+          case ItemEnum.ALL: {
             const tagList = retrieveLocally(ItemEnum.PointTag);
             const taskList = retrieveLocally(ItemEnum.PointTask);
             if (tagList) {
@@ -324,7 +332,8 @@ export class Persistance {
               results = [...results, ...taskItems];
             }
             break;
-          default:
+          }
+          default: {
             let items = retrieveLocally(itemType);
             if (!items) break;
             items = items.filter((item: DbRecordWithLabel) =>
@@ -334,20 +343,22 @@ export class Persistance {
               return { label: x.label, id: x.id };
             });
             break;
+          }
         }
         break;
       case Cloud.surreal:
         if (itemType != ItemEnum.ALL) {
-          let searchResult = await surrealDb.query(
+          const response = await surrealDb.executeReadFn(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
               searchString: searchString.toLowerCase()
             }
           );
-          if (searchResult && searchResult.length > 0) {
-            results = searchResult[0];
-          }
+          results = interceptResponse(response);
         }
+        break;
+      default:
+        break;
     }
     return results;
   }

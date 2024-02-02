@@ -2,7 +2,7 @@
   import { windowObject } from "$lib/tidy/stores/app.store";
   import {
     ButtonVariant,
-    type ButtonParams,
+    type ButtonParams
   } from "$lib/tidy/types/button.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "./Button.svelte";
@@ -14,8 +14,7 @@
   icon={params.icon}
   size={Size.sm}
   on:click={() => {
-    if (params.callback) params?.callback();
-    close();
+    if (params?.callback) params.callback();
   }}
 >
   {params?.label}

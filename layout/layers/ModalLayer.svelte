@@ -112,7 +112,7 @@
 
 {#if isValidArrayWithData($toasts) && !$windowObject.isInPortraitMode}
   <div
-    class="fixed bottom-0 left-0 mb-6 ml-12 flex flex-col gap-4 z-40"
+    class="fixed bottom-0 right-0 mb-6 mr-12 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}
   >
     {#each $toasts as toast}

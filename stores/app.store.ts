@@ -656,6 +656,7 @@ function initModalStore(seed: ModalEvent) {
       update((n: ModalEvent) => {
         return { ...n, isShow: false };
       });
+      confirmationNotification.reset();
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {
