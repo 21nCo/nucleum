@@ -115,6 +115,7 @@
       icon == "link" ||
       icon == "google" ||
       icon == "apple" ||
+      icon == "apple-dark" ||
       icon?.includes("-mini")
         ? IconVariant.Solid
         : IconVariant.Outline;
@@ -344,6 +345,8 @@
         <Youtube />
       {:else if icon === "apple"}
         <Apple />
+      {:else if icon === "apple-dark"}
+        <Apple isDark={true} />
       {:else if icon === "video-camera"}
         <VideoCamera {variant} />
       {:else if icon === "help"}
