@@ -39,7 +39,7 @@
   import AreaChart from "../icons/AreaChart.svelte";
   import {
     resolveIfActiveFgFg,
-    retrieveCurrentColors,
+    retrieveCurrentColors
   } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
@@ -80,6 +80,7 @@
   import Curation from "../icons/Curation.svelte";
   import Capture from "../icons/Capture.svelte";
   import CheckTwo from "../icons/CheckTwo.svelte";
+  import Unpin from "../icons/Unpin.svelte";
   import Microphone from "../icons/Microphone.svelte";
   import Camera from "../icons/Camera.svelte";
   import BarsCenterLeft from "../icons/BarsCenterLeft.svelte";
@@ -252,6 +253,8 @@
         <Minus {variant} isCircled={false} />
       {:else if icon === "minus-circled"}
         <Minus {variant} isCircled={true} />
+      {:else if icon === "unpin"}
+        <Unpin />
       {:else if icon === "cross-circled"}
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
