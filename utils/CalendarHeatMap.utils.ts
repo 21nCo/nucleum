@@ -6,9 +6,13 @@ import type {
 import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
 import {
   CalendarHeatMapData,
-  CalendarHeatMapstoreColors
+  CalendarHeatMapstoreColors,
+  calendarHmContext
 } from "../stores/app.store";
 import { get } from "svelte/store";
+import { Persistance } from "../stores/persistance";
+import { isValidArrayWithData } from "./obj.utils";
+let persistance = new Persistance();
 let profileStartdate = "2023-02-19"; //replace the value with with logs start date variable
 let profileStartmonth = profileStartdate.slice(0, 7); //*important don't delete even if it shows value never used
 let profileStartyear = profileStartdate.slice(0, 4); //*important don't delete even if it shows value never used
@@ -99,7 +103,7 @@ function generateDailyDataInRange(startDate: Date, endDate: Date) {
   for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
     data.push({
       date: date.toISOString().split("T")[0],
-      value: getRandomValue() //change to zero by default
+      value: 0 //getRandomValue()
     });
   }
 
@@ -344,27 +348,137 @@ function convertToOriginalForm(data: any) {
   }
   return originalData;
 }
-function fillDateValuesColorandAppearance(startDate: Date, endDate: Date) {
-  let data = generateDailyDataInRange(startDate, endDate);
-  //fetch data from API for the same range and merge with above data in this line
-  console.log("daily", { data });
+async function fetchDailyDataAndMerge(
+  data: DailyData[],
+  startDate: Date,
+  endDate: Date
+) {
   let prevEnd: any = data.splice(0, 1)[0];
   let nextStart: any = data.splice(data.length - 1, 1)[0];
-  let dailyData = {
-    data: data,
-    target: Math.floor(Math.random() * (10 - 5 + 1)) + 5 //put target fetched from API here
+  const df = { dailyData: { data, target: 1000 }, prevEnd, nextStart };
+  const context = get(calendarHmContext);
+  if (!context) return df;
+  let apiResponse = await persistance.fetchDailyJournal(
+    context,
+    startDate,
+    endDate
+  );
+  if (!apiResponse || !isValidArrayWithData(apiResponse.data)) return df;
+  const modified = data.map((x) => {
+    let apiItem = apiResponse.data.find(
+      (item: any) => item.date.split("T")[0] === x.date
+    );
+    if (apiItem) {
+      x.value = apiItem.value / (60 * 60);
+    } else {
+      x.value = 0;
+    }
+    return x;
+  });
+  prevEnd = modified.splice(0, 1)[0];
+  nextStart = modified.splice(modified.length - 1, 1)[0];
+  return {
+    dailyData: { data: modified, target: apiResponse.target },
+    prevEnd,
+    nextStart
   };
-  findHeatandStreak(dailyData, prevEnd, nextStart, "date");
+}
+async function fetchMonthlyDataAndMerge(
+  data: MonthlyData[],
+  startYear: number,
+  endYear: number
+) {
+  let prevEnd: any = data.splice(0, 1)[0];
+  let nextStart: any = data.splice(data.length - 1, 1)[0];
+  const df = { monthlyData: { data, target: 1000 }, prevEnd, nextStart };
+  const context = get(calendarHmContext);
+  if (!context) return df;
+  let apiResponse = await persistance.fetchJournal(
+    context,
+    "MONTHS",
+    startYear,
+    endYear
+  );
+  if (!apiResponse || !isValidArrayWithData(apiResponse.data)) return df;
+  console.log({ apiData: apiResponse.data, data });
+  const modified = data.map((x) => {
+    let apiItem = apiResponse.data.find(
+      (item: any) =>
+        item.month.split("-")[0] === x.month.split("-")[0] &&
+        Number(item.month.split("-")[1]) === Number(x.month.split("-")[1])
+    );
+    if (apiItem) {
+      x.value = apiItem.value / (60 * 60);
+    } else {
+      x.value = 0;
+    }
+    return x;
+  });
+  prevEnd = modified.splice(0, 1)[0];
+  nextStart = modified.splice(modified.length - 1, 1)[0];
+  return {
+    monthlyData: { data: modified, target: apiResponse.target },
+    prevEnd,
+    nextStart
+  };
+}
+async function fetchYearlyDataAndMerge(
+  data: YearlyData[],
+  startYear: number,
+  endYear: number
+) {
+  let prevEnd: any = data.splice(0, 1)[0];
+  let nextStart: any = data.splice(data.length - 1, 1)[0];
+  const df = { yearlyData: { data, target: 1000 }, prevEnd, nextStart };
+  const context = get(calendarHmContext);
+  if (!context) return df;
+  let apiResponse = await persistance.fetchJournal(
+    context,
+    "YEARS",
+    startYear,
+    endYear
+  );
+  if (!apiResponse || !isValidArrayWithData(apiResponse.data)) return df;
+  const modified = data.map((x) => {
+    let apiItem = apiResponse.data.find((item: any) => item.year === x.year);
+    if (apiItem) {
+      x.value = apiItem.value / (60 * 60);
+    } else {
+      x.value = 0;
+    }
+    return x;
+  });
+  prevEnd = modified.splice(0, 1)[0];
+  nextStart = modified.splice(modified.length - 1, 1)[0];
+  return {
+    yearlyData: { data: modified, target: apiResponse.target },
+    prevEnd,
+    nextStart
+  };
+}
+async function fillDateValuesColorandAppearance(
+  startDate: Date,
+  endDate: Date
+) {
+  let data = generateDailyDataInRange(startDate, endDate);
+  let mergedData = await fetchDailyDataAndMerge(data, startDate, endDate);
+  console.log("daily", { result: mergedData });
+  findHeatandStreak(
+    mergedData.dailyData,
+    mergedData.prevEnd,
+    mergedData.nextStart,
+    "date"
+  );
   let monthWiseData = {
-    data: convertToMonthWiseData(dailyData.data),
-    target: dailyData.target
+    data: convertToMonthWiseData(mergedData.dailyData.data),
+    target: mergedData.dailyData.target
   };
   CalendarHeatMapData.set(monthWiseData);
+  return true;
 }
-function splitDailyDataArrayAndMerge(
+async function splitDailyDataArrayAndMerge(
   request: "prev" | "next",
-  data: DailyData[],
-  target: number
+  data: DailyData[]
 ) {
   let dateData: any;
   let date: Date = new Date();
@@ -382,15 +496,18 @@ function splitDailyDataArrayAndMerge(
       dates.firstMonthEndDate,
       dates.lastMonthStartDate
     );
-    //fetch data from API for the same range and merge with above data in this line
-    let prevEnd: any = newDateData.splice(0, 1)[0];
-    let nextStart: any = newDateData.splice(newDateData.length - 1, 1)[0];
-    let dailyData = {
-      data: newDateData,
-      target: target
-    };
-    findHeatandStreak(dailyData, prevEnd, nextStart, "date");
-    let monthWiseData = convertToMonthWiseData(dailyData.data);
+    const mergedData = await fetchDailyDataAndMerge(
+      newDateData,
+      dates.firstMonthEndDate,
+      dates.lastMonthStartDate
+    );
+    findHeatandStreak(
+      mergedData.dailyData,
+      mergedData.prevEnd,
+      mergedData.nextStart,
+      "date"
+    );
+    let monthWiseData = convertToMonthWiseData(mergedData.dailyData.data);
     dateData = convertToMonthWiseData(dateData);
     result = Object.assign(monthWiseData, dateData);
   } else if (request === "next") {
@@ -406,22 +523,25 @@ function splitDailyDataArrayAndMerge(
       dates.firstMonthEndDate,
       dates.lastMonthStartDate
     );
-    //fetch data from API for the same range and merge with above data in this line
-    let prevEnd: any = newDateData.splice(0, 1)[0];
-    let nextStart: any = newDateData.splice(newDateData.length - 1, 1)[0];
-    let dailyData = {
-      data: newDateData,
-      target: target
-    };
-    findHeatandStreak(dailyData, prevEnd, nextStart, "date");
-    let monthWiseData = convertToMonthWiseData(dailyData.data);
+    const mergedData = await fetchDailyDataAndMerge(
+      newDateData,
+      dates.firstMonthEndDate,
+      dates.lastMonthStartDate
+    );
+    findHeatandStreak(
+      mergedData.dailyData,
+      mergedData.prevEnd,
+      mergedData.nextStart,
+      "date"
+    );
+    let monthWiseData = convertToMonthWiseData(mergedData.dailyData.data);
     dateData = convertToMonthWiseData(dateData);
     result = Object.assign(dateData, monthWiseData);
   }
 
   return result;
 }
-function splitMonthlyDataArrayAndMerge(
+async function splitMonthlyDataArrayAndMerge(
   request: "prev" | "next",
   data: MonthlyData[],
   target: number
@@ -444,16 +564,19 @@ function splitMonthlyDataArrayAndMerge(
       startYear - 11,
       startYear - 1
     );
-    // fetch data from API for the range one month before and after as done inside generateMonthlyDataInRange and merge with above data newMonthData in this line
-    let prevEnd: any = newMonthData.splice(0, 1)[0];
-    let nextStart: any = newMonthData.splice(newMonthData.length - 1, 1)[0];
-    let monthlyData = {
-      data: newMonthData,
-      target: target
-    };
-    findHeatandStreak(monthlyData, prevEnd, nextStart, "month");
+    let mergedData = await fetchMonthlyDataAndMerge(
+      newMonthData,
+      startYear,
+      endYear
+    );
+    findHeatandStreak(
+      mergedData.monthlyData,
+      mergedData.prevEnd,
+      mergedData.nextStart,
+      "month"
+    );
     monthData = convertToYearWiseData(monthData);
-    newMonthData = convertToYearWiseData(monthlyData.data);
+    newMonthData = convertToYearWiseData(mergedData.monthlyData.data);
     result = Object.assign(newMonthData, monthData);
   } else if (request === "next") {
     const uniqueYears = new Set(data.map((item) => item.month.slice(0, 4)));
@@ -468,22 +591,25 @@ function splitMonthlyDataArrayAndMerge(
       endYear + 1,
       endYear + 11
     );
-    // fetch data from API for the range one month before and after as done inside generateMonthlyDataInRange and merge with above data newMonthData in this line
-    let prevEnd: any = newMonthData.splice(0, 1)[0];
-    let nextStart: any = newMonthData.splice(newMonthData.length - 1, 1)[0];
-    let monthlyData = {
-      data: newMonthData,
-      target: target
-    };
-    findHeatandStreak(monthlyData, prevEnd, nextStart, "month");
+    let mergedData = await fetchMonthlyDataAndMerge(
+      newMonthData,
+      startYear,
+      endYear
+    );
+    findHeatandStreak(
+      mergedData.monthlyData,
+      mergedData.prevEnd,
+      mergedData.nextStart,
+      "month"
+    );
     monthData = convertToYearWiseData(monthData);
-    newMonthData = convertToYearWiseData(monthlyData.data);
+    newMonthData = convertToYearWiseData(mergedData.monthlyData.data);
     result = Object.assign(monthData, newMonthData);
   }
 
   return result;
 }
-function splitYearlyDataArrayAndMerge(
+async function splitYearlyDataArrayAndMerge(
   request: "prev" | "next",
   data: YearlyData[],
   target: number
@@ -501,114 +627,128 @@ function splitYearlyDataArrayAndMerge(
       startYear - 24,
       startYear - 1
     );
-    // fetch data from API for the range one year before and after as done inside generateYearlyDataInRange and merge with above data newMonthData in this line
-    let prevEnd: any = newYearData.splice(0, 1)[0];
-    let nextStart: any = newYearData.splice(newYearData.length - 1, 1)[0];
-    let yearlyData = {
-      data: newYearData,
-      target: target
-    };
-    findHeatandStreak(yearlyData, prevEnd, nextStart, "year");
+    let mergedData = await fetchYearlyDataAndMerge(
+      newYearData,
+      startYear,
+      endYear
+    );
+    findHeatandStreak(
+      mergedData.yearlyData,
+      mergedData.prevEnd,
+      mergedData.nextStart,
+      "year"
+    );
     yearData = convertToQuadrennialWiseData(yearData);
-    newYearData = convertToQuadrennialWiseData(yearlyData.data);
+    newYearData = convertToQuadrennialWiseData(mergedData.yearlyData.data);
     result = Object.assign(newYearData, yearData);
   } else if (request === "next") {
     yearData = data.slice(24); //.map((item) => item.year);
     startYear = yearData[0].year;
     endYear = yearData[yearData.length - 1].year;
     let newYearData: any = generateYearlyDataInRange(endYear + 1, endYear + 24);
-    // fetch data from API for the range one year before and after as done inside generateYearlyDataInRange and merge with above data newMonthData in this line
-    let prevEnd: any = newYearData.splice(0, 1)[0];
-    let nextStart: any = newYearData.splice(newYearData.length - 1, 1)[0];
-    let yearlyData = {
-      data: newYearData,
-      target: target
-    };
-    findHeatandStreak(yearlyData, prevEnd, nextStart, "year");
+    let mergedData = await fetchYearlyDataAndMerge(
+      newYearData,
+      startYear,
+      endYear
+    );
+    findHeatandStreak(
+      mergedData.yearlyData,
+      mergedData.prevEnd,
+      mergedData.nextStart,
+      "year"
+    );
     yearData = convertToQuadrennialWiseData(yearData);
-    newYearData = convertToQuadrennialWiseData(yearlyData.data);
+    newYearData = convertToQuadrennialWiseData(mergedData.yearlyData.data);
     result = Object.assign(yearData, newYearData);
   }
-
   return result;
 }
-export function fetchDailyDataForTheYear(year: number) {
+export async function fetchDailyDataForTheYear(year: number) {
   let Dates = getYearRange(year);
-  fillDateValuesColorandAppearance(
+  return fillDateValuesColorandAppearance(
     Dates.lastYearEndDate,
     Dates.nextYearStartDate
   );
 }
 export function fetchLast12MonthsDailyData() {
   let Dates = getprevDateRange();
-  fillDateValuesColorandAppearance(
+  return fillDateValuesColorandAppearance(
     Dates.firstMonthEndDate,
     Dates.lastMonthStartDate
   );
 }
-export function fetch6months(time: "prev" | "next") {
+export async function paginateDailyData(time: "prev" | "next") {
+  const data = await splitDailyDataArrayAndMerge(
+    time,
+    convertToOriginalForm(get(CalendarHeatMapData).data)
+  );
   const current = {
-    data: splitDailyDataArrayAndMerge(
-      time,
-      convertToOriginalForm(get(CalendarHeatMapData).data),
-      get(CalendarHeatMapData).target
-    ),
+    data,
     target: get(CalendarHeatMapData).target
   };
   CalendarHeatMapData.set(current);
 }
 
-export function fetchMonthlyAggData(startYear: number, endYear: number) {
+export async function fetchMonthlyAggData(startYear: number, endYear: number) {
   let monthlyData = generateMonthlyDataInRange(startYear, endYear);
   console.log({ monthlyData });
-  //fill data from API for the range one Monthly before and after as done inside generateMonthlylyDataInRange and merge with above data in this line
-  let prevEnd: any = monthlyData.splice(0, 1)[0];
-  let nextStart: any = monthlyData.splice(monthlyData.length - 1, 1)[0];
-  let monthlyDataObj = {
-    data: monthlyData,
-    target: 100
-  };
-  findHeatandStreak(monthlyDataObj, prevEnd, nextStart, "month");
-  let yearWiseData = convertToYearWiseData(monthlyDataObj.data);
-  monthlyDataObj.data = yearWiseData;
-  CalendarHeatMapData.set(monthlyDataObj);
+  let mergedData = await fetchMonthlyDataAndMerge(
+    monthlyData,
+    startYear,
+    endYear
+  );
+  findHeatandStreak(
+    mergedData.monthlyData,
+    mergedData.prevEnd,
+    mergedData.nextStart,
+    "month"
+  );
+  let yearWiseData = convertToYearWiseData(mergedData.monthlyData.data);
+  mergedData.monthlyData.data = yearWiseData;
+  CalendarHeatMapData.set(mergedData.monthlyData);
 }
 
-export function paginateMonthlyAggData(time: "prev" | "next") {
+export async function paginateMonthlyAggData(time: "prev" | "next") {
+  const data = await splitMonthlyDataArrayAndMerge(
+    time,
+    convertToOriginalForm(get(CalendarHeatMapData).data),
+    get(CalendarHeatMapData).target
+  );
   const current = {
-    data: splitMonthlyDataArrayAndMerge(
-      time,
-      convertToOriginalForm(get(CalendarHeatMapData).data),
-      get(CalendarHeatMapData).target
-    ),
+    data,
     target: get(CalendarHeatMapData).target
   };
   CalendarHeatMapData.set(current);
 }
 
-export function fetchYearlyAggData(startYear: number, endYear: number) {
+export async function fetchYearlyAggData(startYear: number, endYear: number) {
   let yearlyData = generateYearlyDataInRange(startYear, endYear);
-  //fill data from API for the range one year before and after as done inside generateYearlyDataInRange and merge with above data in this line
-  console.log({ yearlyData });
-  let prevEnd: any = yearlyData.splice(0, 1)[0];
-  let nextStart: any = yearlyData.splice(yearlyData.length - 1, 1)[0];
-  let YearlyDataObj = {
-    data: yearlyData,
-    target: 3000 //put target fetched from API here
-  };
-  findHeatandStreak(YearlyDataObj, prevEnd, nextStart, "year");
-  let QuadrennialWiseData = convertToQuadrennialWiseData(YearlyDataObj.data);
-  YearlyDataObj.data = QuadrennialWiseData;
-  CalendarHeatMapData.set(YearlyDataObj);
+  let mergedData = await fetchYearlyDataAndMerge(
+    yearlyData,
+    startYear,
+    endYear
+  );
+  findHeatandStreak(
+    mergedData.yearlyData,
+    mergedData.prevEnd,
+    mergedData.nextStart,
+    "year"
+  );
+  let QuadrennialWiseData = convertToQuadrennialWiseData(
+    mergedData.yearlyData.data
+  );
+  mergedData.yearlyData.data = QuadrennialWiseData;
+  CalendarHeatMapData.set(mergedData.yearlyData);
 }
 
-export function paginateYearlyAggData(time: "prev" | "next") {
+export async function paginateYearlyAggData(time: "prev" | "next") {
+  const data = await splitYearlyDataArrayAndMerge(
+    time,
+    convertToOriginalForm(get(CalendarHeatMapData).data),
+    get(CalendarHeatMapData).target
+  );
   const current = {
-    data: splitYearlyDataArrayAndMerge(
-      time,
-      convertToOriginalForm(get(CalendarHeatMapData).data),
-      get(CalendarHeatMapData).target
-    ),
+    data,
     target: get(CalendarHeatMapData).target
   };
   CalendarHeatMapData.set(current);

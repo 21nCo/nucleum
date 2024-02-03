@@ -118,7 +118,6 @@
         primaryAction={layoutParams?.primaryAction}
         secondaryAction={layoutParams?.secondaryAction}
         bind:this={footerRef}
-        path={params?.path}
       />
     {/if}
   </div>

@@ -85,6 +85,7 @@
   import Camera from "../icons/Camera.svelte";
   import BarsCenterLeft from "../icons/BarsCenterLeft.svelte";
   import CubeTransparent from "../icons/CubeTransparent.svelte";
+  import Stop from "../icons/Stop.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -116,6 +117,7 @@
       icon == "link" ||
       icon == "google" ||
       icon == "apple" ||
+      icon == "apple-dark" ||
       icon?.includes("-mini")
         ? IconVariant.Solid
         : IconVariant.Outline;
@@ -201,7 +203,7 @@
         <Users {variant} />
       {:else if icon === "copy"}
         <Copy {variant} />
-      {:else if icon === "sync"}
+      {:else if icon === "arrow-path" || icon === "sync"}
         <ArrowPath {variant} />
       {:else if icon === "sun"}
         <Sun {variant} />
@@ -347,6 +349,8 @@
         <Youtube />
       {:else if icon === "apple"}
         <Apple />
+      {:else if icon === "apple-dark"}
+        <Apple isDark={true} />
       {:else if icon === "video-camera"}
         <VideoCamera {variant} />
       {:else if icon === "help"}
@@ -371,8 +375,8 @@
         <Microphone {variant} />
       {:else if icon === "camera"}
         <Camera {variant} />
-      {:else if icon === "camera"}
-        <Camera {variant} />
+      {:else if icon === "stop"}
+        <Stop {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

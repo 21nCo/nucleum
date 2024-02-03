@@ -57,6 +57,7 @@ export const CalendarHeatMapData = writable<{
 export const CalendarHeatMapLayout = writable<
   Orientation.Horizontal | Orientation.Vertical
 >(Orientation.Horizontal);
+export const calendarHmContext = writable<string>("");
 export const CalendarHeatMapstoreColors = readable<string[]>([
   "#D8E4D8",
   "#B2CAB1",
@@ -657,6 +658,7 @@ function initModalStore(seed: ModalEvent) {
       update((n: ModalEvent) => {
         return { ...n, isShow: false };
       });
+      confirmationNotification.reset();
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {

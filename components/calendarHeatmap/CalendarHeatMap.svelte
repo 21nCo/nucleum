@@ -2,6 +2,7 @@
   import {
     CalendarHeatMapData,
     CalendarHeatMapLayout,
+    calendarHmContext,
     isTouchDevice
   } from "$lib/tidy/stores/app.store";
   import {
@@ -13,7 +14,7 @@
     fetchMonthlyAggData,
     paginateYearlyAggData,
     fetchYearlyAggData,
-    fetch6months,
+    paginateDailyData,
     fetchDailyDataForTheYear,
     fetchLast12MonthsDailyData
   } from "$lib/tidy/utils/CalendarHeatMap.utils";
@@ -30,13 +31,18 @@
   import YearsLayout from "./YearsLayout.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
+  import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
   export let variant: CalendarHmVariant = CalendarHmVariant.PLAIN;
   export let orientation: Orientation;
   export let touchDevice: boolean;
+  export let context: string;
   let data: any;
+  let isLoading = false;
   const currentYear = new Date().getFullYear();
   const endYear = currentYear;
   export let tileScale: TileScale = TileScale.DAYS;
+  calendarHmContext.set(context);
   $: {
     $CalendarHeatMapLayout = orientation;
   }
@@ -46,17 +52,18 @@
     tileScale = e.detail;
     refreshData();
   }
-  function refreshData() {
+  async function refreshData() {
+    isLoading = true;
     if (
       tileScale === TileScale.DAYS &&
       variant != CalendarHmVariant.SCALE_SWITCH
     )
-      fetchLast12MonthsDailyData();
+      await fetchLast12MonthsDailyData();
     else if (
       tileScale === TileScale.DAYS &&
       variant === CalendarHmVariant.SCALE_SWITCH
     )
-      fetchDailyDataForTheYear(new Date().getFullYear());
+      await fetchDailyDataForTheYear(new Date().getFullYear());
     else if (tileScale == TileScale.MONTHS) {
       const startYear = currentYear - 21;
       fetchMonthlyAggData(startYear, endYear);
@@ -64,19 +71,20 @@
       const startYear = currentYear - 47;
       fetchYearlyAggData(startYear, endYear);
     }
+    isLoading = false;
   }
-  function prev() {
-    if (tileScale == TileScale.DAYS) fetch6months("prev");
+  async function prev() {
+    if (tileScale == TileScale.DAYS) await paginateDailyData("prev");
     else if (tileScale == TileScale.MONTHS) paginateMonthlyAggData("prev");
     else paginateYearlyAggData("prev");
   }
-  function next() {
-    if (tileScale == TileScale.DAYS) fetch6months("next");
+  async function next() {
+    if (tileScale == TileScale.DAYS) await paginateDailyData("next");
     else if (tileScale == TileScale.MONTHS) paginateMonthlyAggData("next");
     else paginateYearlyAggData("next");
   }
-  onMount(() => {
-    refreshData();
+  onMount(async () => {
+    await refreshData();
     CalendarHeatMapData.subscribe((x) => {
       data = undefined;
       data = x.data;
@@ -97,30 +105,34 @@
   />
 {/if}
 
-{#if data}
-  {#if orientation === Orientation.Horizontal}
-    <HorizontalCalendarLayout let:datum {data} scale={tileScale}>
-      {#if tileScale === TileScale.DAYS}
-        <MonthsLayout data={datum} />
-      {:else if tileScale === TileScale.MONTHS}
-        <YearsLayout data={datum} />
-      {:else}
-        <QuadrennialLayout data={datum} />
-      {/if}
-    </HorizontalCalendarLayout>
-  {:else}
-    <VerticalCalendarLayout let:datum {data} scale={tileScale}>
-      {#if tileScale === TileScale.DAYS}
-        <MonthsLayout data={datum} />
-      {:else if tileScale === TileScale.MONTHS}
-        <VerticalYearsLayout data={datum} />
-      {:else}
-        <VerticalQuadrennialLayout data={datum} />
-      {/if}
-    </VerticalCalendarLayout>
+<div class="h-full w-full">
+  {#if isLoading}
+    <EmptyStatusView size={Size.sm} isLoadingState={isLoading} mainText="" />
+  {:else if data}
+    {#if orientation === Orientation.Horizontal}
+      <HorizontalCalendarLayout let:datum {data} scale={tileScale}>
+        {#if tileScale === TileScale.DAYS}
+          <MonthsLayout data={datum} />
+        {:else if tileScale === TileScale.MONTHS}
+          <YearsLayout data={datum} />
+        {:else}
+          <QuadrennialLayout data={datum} />
+        {/if}
+      </HorizontalCalendarLayout>
+    {:else}
+      <VerticalCalendarLayout let:datum {data} scale={tileScale}>
+        {#if tileScale === TileScale.DAYS}
+          <MonthsLayout data={datum} />
+        {:else if tileScale === TileScale.MONTHS}
+          <VerticalYearsLayout data={datum} />
+        {:else}
+          <VerticalQuadrennialLayout data={datum} />
+        {/if}
+      </VerticalCalendarLayout>
+    {/if}
   {/if}
-{/if}
-<Footer />
-{#if variant === CalendarHmVariant.PLAIN}
-  <Icon icon="chevdown" on:click={next} />
-{/if}
+  <Footer />
+  {#if variant === CalendarHmVariant.PLAIN}
+    <Icon icon="chevdown" on:click={next} />
+  {/if}
+</div>

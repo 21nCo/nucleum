@@ -4,8 +4,9 @@
   import Button from "./button/Button.svelte";
   export let notification: Toast;
   export let isShownAsModal = false;
-  function clickHandler() {
+  function clickHandler(event: MouseEvent) {
     toasts.reset();
+    event.stopPropagation();
   }
 </script>
 
