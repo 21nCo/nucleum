@@ -7,7 +7,7 @@
     bgClass,
     customColorStyle,
     resolveIfActiveFgFg,
-    textColorClass,
+    textColorClass
   } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let size: Size;
@@ -36,9 +36,9 @@
     <div
       class="font-medium min-w-fit {isActive ? '' : 'text-fgs4'} {size ===
         Size.md && $windowObject.isInPortraitMode
-        ? 'text-h4'
+        ? 'text-base'
         : size === Size.sm && $windowObject.isInPortraitMode
-          ? 'text-b3'
+          ? 'text-b2'
           : size === Size.sm
             ? 'text-base'
             : 'text-h4'}"
@@ -71,7 +71,7 @@
       class="{size === Size.sm
         ? 'text-b2'
         : $windowObject.isInPortraitMode
-          ? 'text-base'
+          ? 'text-h4'
           : 'text-h3'} {isActive ? '' : 'text-fgs3'}"
     >
       {item}

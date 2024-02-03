@@ -48,6 +48,7 @@ export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 export const isRefreshingToken = writable(false);
 export const isAppInLoadingState = writable(true);
+export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
 export const CalendarHeatMapData = writable<{
   data: any;
@@ -724,7 +725,7 @@ function initToastStore() {
           path: "STATUS_UPDATE",
           id: event.id,
           isShow: true,
-          isDismissable: false
+          isDismissable: true
         });
       } else {
         timer = setTimeout(() => {
