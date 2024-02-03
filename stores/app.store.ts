@@ -725,7 +725,7 @@ function initToastStore() {
           path: "STATUS_UPDATE",
           id: event.id,
           isShow: true,
-          isDismissable: false
+          isDismissable: true
         });
       } else {
         timer = setTimeout(() => {
