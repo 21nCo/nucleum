@@ -359,7 +359,7 @@ export const sampleMdTwo: NodeMarkdown = {
   },
   id: "mdtrail:uy4urnx3z643jnt217ez",
 };
-let emptyBlock: Block = {
+export const emptyBlock: Block = {
   content: {
     type: MdBlockType.SIMPLE_TEXT,
     body: "",

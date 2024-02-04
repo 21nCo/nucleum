@@ -19,4 +19,5 @@ export enum PlayActionState {
   RUNNING = "RUNNING",
   PAUSED = "PAUSED",
   STOPPED = "STOPPED",
+  PREVIEWING = "PREVIEWING",
 }
