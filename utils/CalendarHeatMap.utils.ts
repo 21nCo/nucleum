@@ -7,11 +7,14 @@ import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
 import {
   CalendarHeatMapData,
   CalendarHeatMapstoreColors,
-  calendarHmContext
+  calendarHmContext,
+  userPreferences
 } from "../stores/app.store";
 import { get } from "svelte/store";
 import { Persistance } from "../stores/persistance";
 import { isValidArrayWithData } from "./obj.utils";
+import { heatMapColorRange } from "./theme.utils";
+const defaultTarget = 1;
 let persistance = new Persistance();
 let profileStartdate = "2023-02-19"; //replace the value with with logs start date variable
 let profileStartmonth = profileStartdate.slice(0, 7); //*important don't delete even if it shows value never used
@@ -179,11 +182,12 @@ function findTileColorAndAppearance(
   prev: any,
   tileItem: any,
   next: any,
-  target: number
+  target: number,
+  colors: string[]
 ) {
   let baseColor = "#ebebeb";
-  let colors = get(CalendarHeatMapstoreColors);
   let noOfColors = colors.length; //exluding the base color
+  if (!target) target = defaultTarget;
   let variantRange = target / (noOfColors - 2);
   if (tileItem.value > target) {
     return [checkStreakDisplay(prev, tileItem, next, target), colors[5]];
@@ -209,6 +213,8 @@ function findHeatandStreak(
 ) {
   let length = inputData.data.length;
   let target = inputData.target;
+  const colors = heatMapColorRange(get(userPreferences), "aps1", 6);
+  console.log({ colors });
   if (
     new Date(`prevEnd.${dataType}`) <=
     new Date(`profileStart${dataType}`.toString())
@@ -217,7 +223,8 @@ function findHeatandStreak(
       null,
       inputData.data[0],
       inputData.data[1],
-      target
+      target,
+      colors
     );
     inputData.data[0].display = returnValue[0];
     inputData.data[0].color = returnValue[1];
@@ -226,7 +233,8 @@ function findHeatandStreak(
       prevEnd,
       inputData.data[0],
       inputData.data[1],
-      target
+      target,
+      colors
     );
     inputData.data[0].display = returnValue[0];
     inputData.data[0].color = returnValue[1];
@@ -236,7 +244,8 @@ function findHeatandStreak(
       inputData.data[i - 1],
       inputData.data[i],
       inputData.data[i + 1],
-      target
+      target,
+      colors
     );
     inputData.data[i].display = returnValue[0];
     inputData.data[i].color = returnValue[1];
@@ -249,7 +258,8 @@ function findHeatandStreak(
       inputData.data[length - 2],
       inputData.data[length - 1],
       null,
-      target
+      target,
+      colors
     );
     inputData.data[length - 1].display = returnValue[0];
     inputData.data[length - 1].color = returnValue[1];
@@ -258,7 +268,8 @@ function findHeatandStreak(
       inputData.data[length - 2],
       inputData.data[length - 1],
       nextStart,
-      target
+      target,
+      colors
     );
     inputData.data[length - 1].display = returnValue[0];
     inputData.data[length - 1].color = returnValue[1];
@@ -355,7 +366,7 @@ async function fetchDailyDataAndMerge(
 ) {
   let prevEnd: any = data.splice(0, 1)[0];
   let nextStart: any = data.splice(data.length - 1, 1)[0];
-  const df = { dailyData: { data, target: 1000 }, prevEnd, nextStart };
+  const df = { dailyData: { data, target: defaultTarget }, prevEnd, nextStart };
   const context = get(calendarHmContext);
   if (!context) return df;
   let apiResponse = await persistance.fetchDailyJournal(
@@ -390,7 +401,11 @@ async function fetchMonthlyDataAndMerge(
 ) {
   let prevEnd: any = data.splice(0, 1)[0];
   let nextStart: any = data.splice(data.length - 1, 1)[0];
-  const df = { monthlyData: { data, target: 1000 }, prevEnd, nextStart };
+  const df = {
+    monthlyData: { data, target: defaultTarget },
+    prevEnd,
+    nextStart
+  };
   const context = get(calendarHmContext);
   if (!context) return df;
   let apiResponse = await persistance.fetchJournal(
@@ -429,7 +444,11 @@ async function fetchYearlyDataAndMerge(
 ) {
   let prevEnd: any = data.splice(0, 1)[0];
   let nextStart: any = data.splice(data.length - 1, 1)[0];
-  const df = { yearlyData: { data, target: 1000 }, prevEnd, nextStart };
+  const df = {
+    yearlyData: { data, target: defaultTarget },
+    prevEnd,
+    nextStart
+  };
   const context = get(calendarHmContext);
   if (!context) return df;
   let apiResponse = await persistance.fetchJournal(

@@ -11,7 +11,7 @@
 <span>
   <button id="MaITile">
     <!--on:click dispatch required event along with data/data.year available here-->
-    {tileValue}
+    {tileValue ?? ""}
   </button>
 </span>
 

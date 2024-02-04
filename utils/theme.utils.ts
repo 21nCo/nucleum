@@ -4,7 +4,7 @@ import {
   AppTheme,
   ColorStrength,
   ColorType,
-  type ColorSchemeSLValues,
+  type ColorSchemeSLValues
 } from "../types/theme.type";
 import { appStore, userPreferences } from "../stores/app.store";
 
@@ -246,7 +246,7 @@ export function resolveBackgroundClass(parentBackgroundIndex: number = 1) {
     activeBackgroundColor,
     backgroundColor,
     activeBackgroundColorHex,
-    backgroundColorHex,
+    backgroundColorHex
   };
 }
 /**
@@ -271,4 +271,38 @@ export function resolveIfActiveFgFg(
   } else {
     return userPreferences.colorScheme.isDark;
   }
+}
+
+export function heatMapColorRange(
+  userPreferences: UserGlobalPreferences,
+  fallback: string,
+  numberOfColors: number,
+  hue: number | undefined = undefined
+) {
+  let colors: string[];
+  let saturation: number = 50;
+  let lightness: number = 50;
+  const currentColors = retrieveCurrentColors(userPreferences);
+  if (hue === undefined || hue === null || typeof hue !== "number") {
+    const color = currentColors[fallback];
+    hue = color.split(" ")[0].split("(")[1];
+    saturation = color.split(" ")[1].split("%")[0];
+    lightness = color.split(" ")[2].split("%")[0];
+  } else {
+    let values = resolveSaturationAndLightness(
+      userPreferences,
+      get(appStore).appConstants.colorSchemeSLConfig
+    );
+    if (values) {
+      saturation = values.saturation;
+      lightness = values.lightness;
+    }
+  }
+  console.log({ hue });
+  colors = Array.from({ length: numberOfColors }, (_, i) => {
+    const s = +saturation - i * 10;
+    const l = +lightness + i * 6;
+    return `hsl(${hue} ${s}% ${l}%)`;
+  });
+  return colors.reverse();
 }
