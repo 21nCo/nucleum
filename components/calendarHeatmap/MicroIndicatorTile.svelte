@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { CalendarHeatMapLayout } from "$lib/tidy/stores/app.store";
+  import {
+    CalendarHeatMapLayout,
+    calendarHmSelectedTile
+  } from "$lib/tidy/stores/app.store";
   import type {
     DailyData,
     MonthlyData
@@ -11,7 +14,9 @@
   export let data: DailyData | MonthlyData | {};
   export let classList: string = "";
   export let tileValue: string = "";
-  let isActive: boolean = false;
+  $: isActive =
+    ("date" in data && $calendarHmSelectedTile == data.date) ||
+    ("month" in data && $calendarHmSelectedTile == data.month);
   let monthTitles = [
     "J",
     "F",
@@ -42,9 +47,15 @@
 <span class={classList}>
   <button
     id="MITile"
-    class={isActive ? "border-2 border-fgs2" : ""}
+    class={isActive ? "border-2 border-bgs1 shadow-outline" : ""}
     on:click={() => {
-      isActive = !isActive;
+      let val;
+      if ("date" in data) {
+        val = data.date;
+      } else if ("month" in data) {
+        val = data.month;
+      }
+      calendarHmSelectedTile.set(val ?? "");
     }}
   >
     <!-- dispatch required event on:click here-->
@@ -101,8 +112,8 @@
   button {
     /* color: var(--colors-fg-s2, #545454); */
     font-size: 8px;
-    height: 12px;
-    width: 12px;
+    height: 13px;
+    width: 13px;
     background-color: var(--tileBgColor);
     border-radius: 3px;
   }
@@ -127,5 +138,8 @@
     width: var(--width, 0.5px);
     height: var(--height, 4.5px);
     background-color: var(--bottomThreadColor, inherit);
+  }
+  .shadow-outline {
+    box-shadow: 0 0 0 2px rgba(var(--colors-fgs3));
   }
 </style>

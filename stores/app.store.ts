@@ -66,6 +66,7 @@ export const CalendarHeatMapstoreColors = readable<string[]>([
   "#5B8958",
   "#407C3C"
 ]);
+export const calendarHmSelectedTile = writable<string>("");
 export const excludedPathsForRedirectionCheck = [
   "expired",
   "signup",
