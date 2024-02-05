@@ -300,9 +300,10 @@ export function heatMapColorRange(
   }
   console.log({ hue });
   colors = Array.from({ length: numberOfColors }, (_, i) => {
-    const s = +saturation - i * 10;
-    const l = +lightness + i * 6;
+    const s = +saturation - i * (userPreferences.colorScheme.isDark ? 4 : 8);
+    const l = +lightness + i * (userPreferences.colorScheme.isDark ? 4 : 6);
     return `hsl(${hue} ${s}% ${l}%)`;
   });
+  colors.push(currentColors["bgs2"]);
   return colors.reverse();
 }

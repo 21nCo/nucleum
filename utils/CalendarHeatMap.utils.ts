@@ -185,24 +185,23 @@ function findTileColorAndAppearance(
   target: number,
   colors: string[]
 ) {
-  let baseColor = "#ebebeb";
   let noOfColors = colors.length; //exluding the base color
   if (!target) target = defaultTarget;
   let variantRange = target / (noOfColors - 2);
   if (tileItem.value > target) {
-    return [checkStreakDisplay(prev, tileItem, next, target), colors[5]];
+    return [checkStreakDisplay(prev, tileItem, next, target), colors[6]];
   } else if (tileItem.value == target) {
-    return [checkStreakDisplay(prev, tileItem, next, target), colors[4]];
+    return [checkStreakDisplay(prev, tileItem, next, target), colors[5]];
   } else if (tileItem.value >= target - variantRange) {
-    return [Number(TileAppearance.DEFAULT), colors[3]];
+    return [Number(TileAppearance.DEFAULT), colors[4]];
   } else if (tileItem.value >= target - 2 * variantRange) {
-    return [Number(TileAppearance.DEFAULT), colors[2]];
+    return [Number(TileAppearance.DEFAULT), colors[3]];
   } else if (tileItem.value >= target - 3 * variantRange) {
-    return [Number(TileAppearance.DEFAULT), colors[1]];
+    return [Number(TileAppearance.DEFAULT), colors[2]];
   } else if (tileItem.value > 0) {
-    return [Number(TileAppearance.DEFAULT), colors[0]];
+    return [Number(TileAppearance.DEFAULT), colors[1]];
   } else {
-    return [Number(TileAppearance.DEFAULT), baseColor];
+    return [Number(TileAppearance.DEFAULT), colors[0]];
   }
 }
 function findHeatandStreak(
