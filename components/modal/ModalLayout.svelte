@@ -30,7 +30,7 @@
     if (queryParamPath && !params?.path) {
       params.path = queryParamPath;
     }
-    console.log("id", { queryParamId, queryParamPath, params });
+    // console.log("id", { queryParamId, queryParamPath, params });
   });
   function resolveSize() {
     if (
@@ -81,7 +81,7 @@
           break;
         case Size.xl:
           sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
+            "w-[21rem] sm:w-[30rem] md:w-[50rem] h-[50rem] min-h-[45rem]";
           break;
         case Size.full:
           sizingClass = "w-full h-full min-h-screen min-w-screen";
@@ -117,6 +117,14 @@
       : sizingClass} {!layoutParams.ignoreSafeArea
       ? 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
       : ''}"
+    in:fly={{
+      duration: 500,
+      delay: 0,
+      easing: quintOut,
+      x: 0,
+      y: 100,
+      opacity: 0,
+    }}
   >
     {#if !layoutParams.ignoreSafeArea}
       <ModalHeader {params} />

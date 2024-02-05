@@ -42,9 +42,9 @@
         <Text content={params.title} style={TextStyle.PANEL_HEADING} />
       {/if}
     </div>
-    <div>
+    <div class="absolute flex gap-2 top-0 right-0 z-40">
       {#if params?.actions?.includes("copy")}
-        <div class="absolute top-0 right-0 z-40">
+        <div>
           <Button
             icon="copy"
             tooltip="Copy markdown"
@@ -59,7 +59,7 @@
         </div>
       {/if}
       {#if params?.actions?.includes("copyRaw")}
-        <div class="absolute top-0 right-0 z-40">
+        <div>
           <Button
             icon="copy"
             tooltip="Copy raw md"

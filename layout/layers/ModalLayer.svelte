@@ -142,10 +142,16 @@
   >
     {#if modal.layoutParams}
       <ModalLayout layoutParams={modal.layoutParams} bind:params={modal}>
-        <ComponentResolver path={modal.path} params={{ params: modal }} />
+        <ComponentResolver
+          path={modal.path}
+          params={{ id: modal.id, ...modal.componentParams }}
+        />
       </ModalLayout>
     {:else}
-      <ComponentResolver path={modal.path} params={{ params: modal }} />
+      <ComponentResolver
+        path={modal.path}
+        params={{ id: modal.id, ...modal.componentParams }}
+      />
     {/if}
   </Modal>
 {/each}

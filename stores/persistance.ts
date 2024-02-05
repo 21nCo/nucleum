@@ -8,7 +8,7 @@ import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
 import type { DbRecordType } from "$lib/local/types/item.type";
 import {
-  interceptResponse,
+  interceptSurrealResponse,
   performApiCall,
   performBlankApiCall,
 } from "../utils/utils";
@@ -355,7 +355,7 @@ export class Persistance {
               searchString: searchString.toLowerCase(),
             }
           );
-          results = interceptResponse(response);
+          results = interceptSurrealResponse(response);
         }
         break;
       default:
@@ -370,7 +370,7 @@ export class Persistance {
       start: start.toISOString(),
       end: end.toISOString(),
     });
-    return interceptResponse(response, query);
+    return interceptSurrealResponse(response, query);
   }
   async fetchJournal(
     context: string,
@@ -385,7 +385,7 @@ export class Persistance {
       start,
       end,
     });
-    return interceptResponse(response, query);
+    return interceptSurrealResponse(response, query);
   }
   async getSignedUrl(contentType: string, fileName: string) {
     const acc = get(account);

@@ -620,10 +620,10 @@
         on:keydown={handleKeyDown}
         on:keypress={handleKeyPress}
         on:mouseup={handleMouseup}
-        on:paste={handlePaste}
         bind:innerHTML={content.body}
         contenteditable
       ></div>
+      <!--         on:paste={handlePaste} -->
     {/if}
     {#if content.type === MdBlockType.QUOTE}
       <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>

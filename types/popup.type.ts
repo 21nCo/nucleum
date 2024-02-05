@@ -20,6 +20,7 @@ export type ModalParams = {
   isDismissable?: boolean;
   title?: string;
   isHideTitleIfEmpty?: boolean;
+  componentParams?: any;
 };
 
 export type ModalLayoutParams = {
