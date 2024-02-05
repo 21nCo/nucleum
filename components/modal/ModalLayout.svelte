@@ -9,9 +9,10 @@
   import ModalHeader from "./ModalHeader.svelte";
   import type {
     ModalLayoutParams,
-    ModalParams
+    ModalParams,
   } from "$lib/tidy/types/popup.type";
-  import { fly } from "svelte/transition";
+  import { fade, blur, fly, slide, scale, draw } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
   export let params: ModalParams;
   export let layoutParams: ModalLayoutParams;
   let footerRef: any;
@@ -95,7 +96,17 @@
 </script>
 
 {#if layoutParams.size === Size.full}
-  <div transition:fly class="fixed inset-0 flex justify-center items-center">
+  <div
+    in:fly={{
+      duration: 500,
+      delay: 0,
+      easing: quintOut,
+      x: 0,
+      y: 100,
+      opacity: 0,
+    }}
+    class="fixed inset-0 flex justify-center items-center"
+  >
     <slot />
   </div>
 {:else}

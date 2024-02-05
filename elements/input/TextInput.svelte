@@ -26,6 +26,7 @@
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
   export let searchItemType: ItemType | undefined = undefined;
+  export let searchCallback: Function | undefined = undefined;
   export let id: string = "";
   export let isRequired: boolean = false;
   export let labelOrientation: Orientation = Orientation.Vertical;
@@ -56,6 +57,7 @@
   let currentUnit: string | undefined = undefined;
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
+  let debounceTimeoutId: any;
   const dispatch = createEventDispatcher();
   onMount(() => {
     if (!currentUnit) currentUnit = units ? units[0] : "";
@@ -162,7 +164,7 @@
           //
         }
       }
-      search();
+      debounceSearch();
     } else if (event.key === "Enter" && value) {
       if (searchResults && searchResults.length > 0) {
         onSearchResultSelection(searchResults[selectedIndex]);
@@ -171,8 +173,14 @@
       }
     } else {
       currentValue = (event.target as HTMLInputElement).value;
-      search();
+      debounceSearch();
     }
+  }
+  function debounceSearch() {
+    clearTimeout(debounceTimeoutId);
+    debounceTimeoutId = setTimeout(() => {
+      search();
+    }, 500);
   }
   async function search() {
     if (!searchItemType) return;
@@ -180,6 +188,12 @@
     selectedIndex = 0;
     if (!value) {
       searchResults = [];
+      return;
+    }
+    if (searchCallback) {
+      let result = await searchCallback(value);
+      if (result) searchResults = result;
+      isSearchInProgress = false;
       return;
     }
     searchResults = await persistance.searchByLabel(value, searchItemType);

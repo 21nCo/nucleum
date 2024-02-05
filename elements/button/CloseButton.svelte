@@ -2,7 +2,7 @@
   import { windowObject } from "$lib/tidy/stores/app.store";
   import {
     ButtonVariant,
-    type ButtonParams
+    type ButtonParams,
   } from "$lib/tidy/types/button.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "./Button.svelte";
@@ -19,6 +19,6 @@
 >
   {params?.label}
   {#if !$windowObject.isInPortraitMode && (params.variant === ButtonVariant.SECONDARY || !params.variant)}
-    <span class=" text-b4">Esc</span>
+    <span class="rounded-md px-1 bg-bgs3 text-b5">Esc</span>
   {/if}
 </Button>

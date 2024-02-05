@@ -14,7 +14,6 @@ import {
 } from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 
-const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   const toString = (value: T) => JSON.stringify(value, null, 2);
 
@@ -70,6 +69,7 @@ export function retrieveLocally(itemType: ItemType) {
 }
 
 export class Persistance {
+  surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
   refreshToken = async () => {
     try {
       const token = localStorage.getItem("refresh-token");
@@ -186,9 +186,9 @@ export class Persistance {
         if (item.id) {
           const id = ItemEnum[itemType] + `:${item.id}`;
           item.id = id;
-          surrealDb.create(id, item);
+          this.surrealDb.create(id, item);
         } else {
-          return surrealDb.create(ItemEnum[itemType], item);
+          return this.surrealDb.create(ItemEnum[itemType], item);
         }
         break;
     }
@@ -214,9 +214,9 @@ export class Persistance {
         //todo - replace with surreal query for bulk create
         items.forEach((item: T) => {
           if (item.id) {
-            surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
+            this.surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
           } else {
-            surrealDb.create(ItemEnum[itemType], item);
+            this.surrealDb.create(ItemEnum[itemType], item);
           }
         });
         break;
@@ -246,7 +246,7 @@ export class Persistance {
         break;
       }
       case Cloud.surreal:
-        return surrealDb.merge(
+        return this.surrealDb.merge(
           itemType
             ? `${ItemEnum[itemType]}:${item.id}`
             : typeof item.id === "string"
@@ -271,7 +271,7 @@ export class Persistance {
         break;
       }
       case Cloud.surreal:
-        return surrealDb.delete(itemId);
+        return this.surrealDb.delete(itemId);
     }
   }
   retrieve(itemId: string, itemType: ItemType | undefined = undefined) {
@@ -286,7 +286,7 @@ export class Persistance {
         return item;
       }
       case Cloud.surreal:
-        return surrealDb.select(itemId);
+        return this.surrealDb.select(itemId);
     }
   }
   retrieveAll(itemType: ItemType) {
@@ -297,7 +297,7 @@ export class Persistance {
           return items;
         }
         case Cloud.surreal:
-          return surrealDb.select(ItemEnum[itemType]);
+          return this.surrealDb.select(ItemEnum[itemType]);
       }
       return [];
     } catch (error) {
@@ -348,7 +348,8 @@ export class Persistance {
         break;
       case Cloud.surreal:
         if (itemType != ItemEnum.ALL) {
-          const response = await surrealDb.executeReadFn(
+          console.log({ itemType, ItemEnum });
+          const response = await this.surrealDb.executeReadFn(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
               searchString: searchString.toLowerCase(),
@@ -364,7 +365,7 @@ export class Persistance {
   }
   async fetchDailyJournal(context: string, start: Date, end: Date) {
     const query = "return fn::global::journal::daily($context, $start, $end)";
-    const response = await surrealDb.executeReadFn(query, {
+    const response = await this.surrealDb.executeReadFn(query, {
       context,
       start: start.toISOString(),
       end: end.toISOString(),
@@ -378,7 +379,7 @@ export class Persistance {
     end: number
   ) {
     const query = "return fn::global::journal($context, $scale, $start, $end)";
-    const response = await surrealDb.executeReadFn(query, {
+    const response = await this.surrealDb.executeReadFn(query, {
       context,
       scale,
       start,
@@ -410,6 +411,9 @@ export class Persistance {
     });
     console.log("upload result:", result);
     if (result.status === 200) {
+      return signedUrlResponse;
+    } else {
+      return null;
     }
   }
 }
