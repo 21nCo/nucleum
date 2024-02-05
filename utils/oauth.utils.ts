@@ -46,7 +46,7 @@ export async function handleOAuthRedirection(
     verifier,
     app
   };
-  let response = await performApiCall("account/oauth", "POST", body);
+  let response = await performApiCall("account/n/oauth", "POST", body);
   console.log(response);
   if (response) {
     if (response.status === 200) {

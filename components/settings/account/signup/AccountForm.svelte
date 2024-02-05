@@ -28,7 +28,7 @@
     if (!isValidFormData()) return;
     actionInProgress = true;
     const response = await performApiCall(
-      "account/" + (isSignup ? "signup" : "signin"),
+      "account/n/" + (isSignup ? "signup" : "signin"),
       "POST",
       {
         email: email.toLowerCase(),
