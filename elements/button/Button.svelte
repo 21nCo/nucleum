@@ -123,7 +123,6 @@
           " " + bgClass($userPreferences.theme, parentBackgroundIndex);
       }
     } else if (type == "danger") {
-      console.log("danger");
       classList += " hover:opacity-90";
       if (style != ButtonStyle.PLAIN) {
         classList +=
@@ -140,7 +139,6 @@
     classList = classList;
   }
   $: {
-    console.log("type ", type);
     setStyles();
   }
   onMount(() => {

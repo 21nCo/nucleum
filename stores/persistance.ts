@@ -10,7 +10,7 @@ import type { DbRecordType } from "$lib/local/types/item.type";
 import {
   interceptResponse,
   performApiCall,
-  performBlankApiCall
+  performBlankApiCall,
 } from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 
@@ -32,7 +32,7 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
       localStorage.setItem(key, toString(value));
       return set(value);
     },
-    update
+    update,
   };
 };
 
@@ -74,7 +74,7 @@ export class Persistance {
     try {
       const token = localStorage.getItem("refresh-token");
       const response = await performApiCall("account/refreshToken", "POST", {
-        token
+        token,
       });
       if (!response?.ok) {
         return;
@@ -92,7 +92,7 @@ export class Persistance {
   getUserInfo = async (token: string) => {
     try {
       const response = await performApiCall("account/refreshToken", "POST", {
-        token
+        token,
       });
       if (!response?.ok) {
         return;
@@ -108,7 +108,7 @@ export class Persistance {
     try {
       const userPrefs = get(userPreferences);
       const response = await performApiCall("account/updateDb", "POST", {
-        lastRunChangeId: userPrefs?.lastRunChangeId ?? 1
+        lastRunChangeId: userPrefs?.lastRunChangeId ?? 1,
       });
       if (!response?.ok) {
         return;
@@ -250,8 +250,8 @@ export class Persistance {
           itemType
             ? `${ItemEnum[itemType]}:${item.id}`
             : typeof item.id === "string"
-              ? item.id
-              : "",
+            ? item.id
+            : "",
           item
         );
     }
@@ -351,7 +351,7 @@ export class Persistance {
           const response = await surrealDb.executeReadFn(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
-              searchString: searchString.toLowerCase()
+              searchString: searchString.toLowerCase(),
             }
           );
           results = interceptResponse(response);
@@ -367,7 +367,7 @@ export class Persistance {
     const response = await surrealDb.executeReadFn(query, {
       context,
       start: start.toISOString(),
-      end: end.toISOString()
+      end: end.toISOString(),
     });
     return interceptResponse(response, query);
   }
@@ -382,8 +382,34 @@ export class Persistance {
       context,
       scale,
       start,
-      end
+      end,
     });
     return interceptResponse(response, query);
+  }
+  async getSignedUrl(contentType: string, fileName: string) {
+    const acc = get(account);
+    const userId = acc.userInfo?.id.split(":")[1];
+    console.log({ acc });
+    const response = await performApiCall("utils/n/getsignedurl", "POST", {
+      contentType,
+      fileName,
+      userId,
+    });
+    return await response.json();
+  }
+  async uploadFile(contentType: string, fileName: string, blob: any) {
+    const signedUrlResponse = await this.getSignedUrl(contentType, fileName);
+    console.log("signedUrl", signedUrlResponse);
+    const result = await fetch(signedUrlResponse.uploadURL, {
+      method: "PUT",
+      body: blob,
+      headers: {
+        "Content-Type": contentType,
+        "x-amz-acl": "public-read",
+      },
+    });
+    console.log("upload result:", result);
+    if (result.status === 200) {
+    }
   }
 }

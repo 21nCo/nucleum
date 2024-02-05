@@ -12,7 +12,7 @@
   export let activeStatusPlacement: Direction = Direction.Left;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
-  $: console.log({ isActive, item });
+  // $: console.log({ isActive, item });
   let activeClasses: string;
   let inactiveClasses: string;
   let sizeClasses: string;
