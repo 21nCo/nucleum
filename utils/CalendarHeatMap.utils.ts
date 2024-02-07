@@ -1,14 +1,14 @@
 import type {
   DailyData,
   MonthlyData,
-  YearlyData,
+  YearlyData
 } from "../types/CalendarHeatMapData.type";
 import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
 import {
   CalendarHeatMapData,
   CalendarHeatMapstoreColors,
   calendarHmContext,
-  userPreferences,
+  userPreferences
 } from "../stores/app.store";
 import { get } from "svelte/store";
 import { Persistance } from "../stores/persistance";
@@ -31,7 +31,7 @@ function getprevDateRange(
 } {
   let result: { firstMonthEndDate: Date; lastMonthStartDate: Date } = {
     firstMonthEndDate: new Date(),
-    lastMonthStartDate: new Date(),
+    lastMonthStartDate: new Date()
   };
 
   const lastDayOfLastMonth = new Date(
@@ -61,7 +61,7 @@ function getNextDateRange(
 } {
   let result: { firstMonthEndDate: Date; lastMonthStartDate: Date } = {
     firstMonthEndDate: new Date(),
-    lastMonthStartDate: new Date(),
+    lastMonthStartDate: new Date()
   };
 
   const lastDayOfCurrentMonth = new Date(
@@ -90,7 +90,7 @@ function getYearRange(year: number): {
   const nextYearStartDate = new Date(Date.UTC(year + 1, 0, 1));
   return {
     lastYearEndDate,
-    nextYearStartDate,
+    nextYearStartDate
   };
 }
 function getRandomValue(min = 0, max = 10) {
@@ -106,7 +106,7 @@ function generateDailyDataInRange(startDate: Date, endDate: Date) {
   for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
     data.push({
       date: date.toISOString().split("T")[0],
-      value: 0, //getRandomValue()
+      value: 0 //getRandomValue()
     });
   }
 
@@ -122,7 +122,7 @@ function generateMonthlyDataInRange(
     .padStart(2, "0")}`;
   let data: MonthlyData = {
     month: monthString,
-    value: getRandomValue(90, 300),
+    value: getRandomValue(90, 300)
   };
   monthlyData.push(data);
   for (let year = startYear; year <= endYear; year++) {
@@ -130,7 +130,7 @@ function generateMonthlyDataInRange(
       monthString = `${year.toString()}-${month.toString().padStart(2, "0")}`;
       data = {
         month: monthString,
-        value: getRandomValue(90, 300), //change to zero by default
+        value: getRandomValue(90, 300) //change to zero by default
       };
       monthlyData.push(data);
     }
@@ -140,7 +140,7 @@ function generateMonthlyDataInRange(
     .padStart(2, "0")}`;
   data = {
     month: monthString,
-    value: getRandomValue(90, 300), //change to zero by default
+    value: getRandomValue(90, 300) //change to zero by default
   };
   monthlyData.push(data);
   return monthlyData;
@@ -154,7 +154,7 @@ function generateYearlyDataInRange(
     const yearlyValue = getRandomValue(2900, 3600);
     const data: YearlyData = {
       year: year,
-      value: yearlyValue,
+      value: yearlyValue
     };
     yearlyData.push(data);
   }
@@ -212,6 +212,7 @@ function findHeatandStreak(
   let length = inputData.data.length;
   let target = inputData.target;
   if (!target) target = Math.max(...inputData.data.map((x: any) => x.value));
+  if (target === 0) target = 1;
   console.log({ target, data: inputData.data });
   const colors = heatMapColorRange(get(userPreferences), "aps1", 6);
   console.log({ colors });
@@ -288,7 +289,7 @@ function getMonthName(month: number) {
     "Sep",
     "Oct",
     "Nov",
-    "Dec",
+    "Dec"
   ];
   return monthNames[month - 1];
 }
@@ -391,7 +392,7 @@ async function fetchDailyDataAndMerge(
   return {
     dailyData: { data: modified, target: apiResponse.target },
     prevEnd,
-    nextStart,
+    nextStart
   };
 }
 async function fetchMonthlyDataAndMerge(
@@ -404,7 +405,7 @@ async function fetchMonthlyDataAndMerge(
   const df = {
     monthlyData: { data, target: defaultTarget },
     prevEnd,
-    nextStart,
+    nextStart
   };
   const context = get(calendarHmContext);
   if (!context) return df;
@@ -434,7 +435,7 @@ async function fetchMonthlyDataAndMerge(
   return {
     monthlyData: { data: modified, target: apiResponse.target },
     prevEnd,
-    nextStart,
+    nextStart
   };
 }
 async function fetchYearlyDataAndMerge(
@@ -447,7 +448,7 @@ async function fetchYearlyDataAndMerge(
   const df = {
     yearlyData: { data, target: defaultTarget },
     prevEnd,
-    nextStart,
+    nextStart
   };
   const context = get(calendarHmContext);
   if (!context) return df;
@@ -472,7 +473,7 @@ async function fetchYearlyDataAndMerge(
   return {
     yearlyData: { data: modified, target: apiResponse.target },
     prevEnd,
-    nextStart,
+    nextStart
   };
 }
 async function fillDateValuesColorandAppearance(
@@ -490,7 +491,7 @@ async function fillDateValuesColorandAppearance(
   );
   let monthWiseData = {
     data: convertToMonthWiseData(mergedData.dailyData.data),
-    target: mergedData.dailyData.target,
+    target: mergedData.dailyData.target
   };
   CalendarHeatMapData.set(monthWiseData);
   return true;
@@ -703,7 +704,7 @@ export async function paginateDailyData(time: "prev" | "next") {
   );
   const current = {
     data,
-    target: get(CalendarHeatMapData).target,
+    target: get(CalendarHeatMapData).target
   };
   CalendarHeatMapData.set(current);
 }
@@ -735,7 +736,7 @@ export async function paginateMonthlyAggData(time: "prev" | "next") {
   );
   const current = {
     data,
-    target: get(CalendarHeatMapData).target,
+    target: get(CalendarHeatMapData).target
   };
   CalendarHeatMapData.set(current);
 }
@@ -768,7 +769,7 @@ export async function paginateYearlyAggData(time: "prev" | "next") {
   );
   const current = {
     data,
-    target: get(CalendarHeatMapData).target,
+    target: get(CalendarHeatMapData).target
   };
   CalendarHeatMapData.set(current);
 }

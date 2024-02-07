@@ -1,3 +1,5 @@
+import type { Size } from "./size.enum";
+
 export enum ButtonStyle {
   DEFAULT = "default",
   PLAIN = "plain",
@@ -8,6 +10,7 @@ export type ButtonParams = {
   label?: string;
   icon?: string;
   callback?: () => void;
+  size?: Size;
   variant?: ButtonVariant;
 };
 

@@ -2,9 +2,8 @@
   import { windowObject } from "$lib/tidy/stores/app.store";
   import {
     ButtonVariant,
-    type ButtonParams,
+    type ButtonParams
   } from "$lib/tidy/types/button.type";
-  import { Size } from "$lib/tidy/types/size.enum";
   import Button from "./Button.svelte";
   export let params: ButtonParams;
 </script>
@@ -12,7 +11,7 @@
 <Button
   type={params.variant ?? "secondary"}
   icon={params.icon}
-  size={Size.sm}
+  size={params.size}
   on:click={() => {
     if (params?.callback) params.callback();
   }}

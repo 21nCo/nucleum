@@ -6,6 +6,7 @@
   } from "$lib/tidy/types/tableCell.type";
   import TableCell from "./TableCell.svelte";
   import RowWrapper from "./RowWrapper.svelte";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   export let columns: TableColumnItem[] = [];
   export let data: TableRowItem[] = [];
   export let width: string = "";
@@ -24,7 +25,7 @@
     {/if}
   </div>
   <div class="data">
-    {#if data.length > 0}
+    {#if isValidArrayWithData(data)}
       {#each data as row}
         <RowWrapper variant={CellVariant.ROW} {width}>
           {#each columns as column}

@@ -37,37 +37,37 @@
     if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
-          classList += " gap-6 text-h2";
+          classList += " h-12 gap-6 text-h2";
           break;
         case Size.lg:
-          classList += " gap-4 text-h5";
+          classList += " h-12 gap-4 text-h5";
           break;
         case Size.md:
-          classList += " gap-2 text-b1";
+          classList += " h-12 gap-2 text-b1";
           break;
         case Size.sm:
-          classList += " gap-2 text-b2";
+          classList += " h-8 gap-2 text-b2";
           break;
         case Size.xs:
-          classList += " gap-1 text-xs";
+          classList += " h-8 gap-1 text-xs";
           break;
       }
     } else {
       switch (size) {
         case Size.xl:
-          classList += " gap-6 text-h2";
+          classList += " h-14 gap-6 text-h2";
           break;
         case Size.lg:
-          classList += " gap-4 text-h5";
+          classList += " h-14 gap-4 text-h5";
           break;
         case Size.md:
-          classList += " gap-2 text-base";
+          classList += " h-12 gap-2 text-base";
           break;
         case Size.sm:
-          classList += " gap-2 text-b2";
+          classList += " h-10 gap-2 text-b2";
           break;
         case Size.xs:
-          classList += " gap-1 text-xs";
+          classList += " h-8 gap-1 text-xs";
           break;
       }
     }
@@ -184,7 +184,7 @@
   {:else if isLoading}
     <InlineLoadingAnimation />
   {/if}
-  {#if label}
+  {#if label && !isLoading}
     <div class="min-w-fit">
       {label}
     </div>

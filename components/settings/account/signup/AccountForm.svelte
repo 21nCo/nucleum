@@ -44,11 +44,11 @@
     }
     const json = await response.json();
     if (!json || !json.token) {
-      if (json.result > 0) {
+      if (json > 0) {
         showError("User already exists. Please signin instead");
-      } else if (json.result === 0) {
+      } else if (json === 0) {
         showError("User not found. Please signup instead.");
-      } else if (json.result === -1) {
+      } else if (json === -1) {
         showError("Invalid password.");
       } else {
         showError();
