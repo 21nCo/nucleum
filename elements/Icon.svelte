@@ -86,6 +86,13 @@
   import BarsCenterLeft from "../icons/BarsCenterLeft.svelte";
   import CubeTransparent from "../icons/CubeTransparent.svelte";
   import Stop from "../icons/Stop.svelte";
+  import Sparkles from "../icons/Sparkles.svelte";
+  import Map from "../icons/Map.svelte";
+  import Flag from "../icons/Flag.svelte";
+  import LockClosed from "../icons/LockClosed.svelte";
+  import Megaphone from "../icons/Megaphone.svelte";
+  import Star from "../icons/Star.svelte";
+  import FaceSmile from "../icons/FaceSmile.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -265,6 +272,8 @@
         <Pause {variant} />
       {:else if icon === "chatleftright"}
         <Chat {variant} chatIconVariant={ChatIconVariant.LeftRight} />
+      {:else if icon === "chat-bubble-bottom-center"}
+        <Chat {variant} chatIconVariant={ChatIconVariant.BottomCenter} />
       {:else if icon === "academic-cap"}
         <AcademicCap {variant} />
       {:else if icon === "chevleft"}
@@ -377,6 +386,20 @@
         <Camera {variant} />
       {:else if icon === "stop"}
         <Stop {variant} />
+      {:else if icon === "sparkles"}
+        <Sparkles {variant} />
+      {:else if icon === "map"}
+        <Map {variant} />
+      {:else if icon === "flag"}
+        <Flag {variant} />
+      {:else if icon === "lock-closed"}
+        <LockClosed {variant} />
+      {:else if icon === "megaphone"}
+        <Megaphone {variant} />
+      {:else if icon === "star"}
+        <Star {variant} />
+      {:else if icon === "face-smile"}
+        <FaceSmile {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

@@ -3,14 +3,14 @@ export enum IconVariant {
   Solid = "solid",
   Duotone = "duotone",
   Mini = "mini",
-  Micro = "micro",
+  Micro = "micro"
 }
 
 export enum BellIconVariant {
   Default = "default",
   Alert = "alert",
   Slash = "slash",
-  Snooze = "snooze",
+  Snooze = "snooze"
 }
 
 export enum ChatIconVariant {
@@ -20,4 +20,5 @@ export enum ChatIconVariant {
   LeftRight = "leftRight",
   Oval = "oval",
   OvalEllipsis = "ovalEllipsis",
+  BottomCenter = "bottomCenter"
 }

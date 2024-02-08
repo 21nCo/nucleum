@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { appStore } from "$lib/tidy/stores/app.store";
-  import { isValidString } from "$lib/tidy/utils/text.utils";
+  import AppNameWithVersion from "./AppNameWithVersion.svelte";
   import BlankLabsFooter from "./BlankLabsFooter.svelte";
   export let isHideAppVersion = false;
   export let isComingSoon: boolean = false;
@@ -11,8 +10,7 @@
 >
   <div class="flex justify-center text-b4">
     {#if !isHideAppVersion}
-      {$appStore?.appData?.name ?? ""}
-      {" v" + (isValidString($appStore?.appData?.version) ?? "")}
+      <AppNameWithVersion />
     {/if}
   </div>
   <BlankLabsFooter {isComingSoon} />

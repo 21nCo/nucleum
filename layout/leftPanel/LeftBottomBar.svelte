@@ -5,12 +5,13 @@
     account,
     appStore,
     userPreferences,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   import { IconVariant } from "$lib/tidy/types/icon.type";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
-  import { openLink } from "$lib/tidy/utils/utils";
+  import { openLink, runAction } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
@@ -55,7 +56,8 @@
           ? 'rounded-b-lg'
           : 'rounded-br-lg'}"
         on:click={() => {
-          openLink($appStore?.appData?.urls?.help);
+          // openLink($appStore?.appData?.urls?.help);
+          runAction(AppEvent.HELP);
         }}
       >
         <Icon icon="help" />

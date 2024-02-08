@@ -26,6 +26,7 @@ import { Orientation } from "../types/direction.enum";
 import { AppEvent } from "../types/event.enum";
 import { isInEditMode } from "../stores/app.store";
 import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
+import Help from "../components/help/Help.svelte";
 export const actions: Action[] = [
   {
     action: "404",
@@ -131,6 +132,39 @@ export const actions: Action[] = [
     link: "productguide"
   },
   {
+    action: "tutorial",
+    label: "Start tutorial",
+    icon: "play",
+    link: "productguide"
+  },
+  {
+    action: "downloads",
+    label: "Downloads",
+    icon: "download",
+    link: "productguide"
+  },
+  {
+    action: "chat",
+    label: "Chat with us",
+    icon: "chatleftright",
+    type: ActionType.META,
+    link: "discord"
+  },
+  {
+    action: "call",
+    label: "Book a call",
+    icon: "video-camera",
+    type: ActionType.META,
+    link: "discord"
+  },
+  {
+    action: "faqs",
+    label: "FAQs",
+    icon: "help",
+    type: ActionType.META,
+    link: "discord"
+  },
+  {
     action: "discord",
     label: "Join us on discord",
     icon: "users",
@@ -138,15 +172,63 @@ export const actions: Action[] = [
     link: "discord"
   },
   {
+    action: "twitter",
+    label: "Share on socials",
+    icon: "megaphone",
+    type: ActionType.META,
+    link: "discord"
+  },
+  {
+    action: "credits",
+    label: "Credits",
+    icon: "face-smile",
+    type: ActionType.META,
+    link: "credits"
+  },
+  {
+    action: "git",
+    label: "Star us on git",
+    icon: "star",
+    type: ActionType.META,
+    link: "git"
+  },
+  {
     action: "privacy",
     label: "Privacy policy",
+    icon: "lock-closed",
     type: ActionType.META,
     link: "privacy"
   },
   {
+    action: "changelog",
+    label: "What's new",
+    icon: "sparkles",
+    type: ActionType.META,
+    link: "changelog"
+  },
+  {
+    action: "roadmap",
+    label: "Roadmap",
+    icon: "map",
+    type: ActionType.META,
+    link: "roadmap"
+  },
+  {
     action: "feedback",
     label: "Give feedback",
-    icon: "chatleftright",
+    icon: "chat-bubble-bottom-center",
+    link: "tallyFeedback"
+  },
+  {
+    action: "requestfeature",
+    label: "Request a feature",
+    icon: "light-bulb",
+    link: "tallyFeedback"
+  },
+  {
+    action: "report",
+    label: "Report an issue",
+    icon: "flag",
     link: "tallyFeedback"
   },
   {
@@ -159,7 +241,7 @@ export const actions: Action[] = [
   },
   {
     action: "about",
-    label: "About",
+    label: "About us",
     path: "cp/about",
     icon: "info",
     type: ActionType.META_PAGE,
@@ -173,13 +255,27 @@ export const actions: Action[] = [
   {
     action: AppEvent.EDIT_MODE,
     fn: () => isInEditMode.toggle(),
+    type: ActionType.META,
     label: "Edit mode"
+  },
+  {
+    action: AppEvent.HELP,
+    label: "Help",
+    type: ActionType.MODAL,
+    component: Help,
+    modalParams: {
+      layoutParams: {
+        size: Size.xl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
   },
   {
     action: AppEvent.CMD,
     label: "Command bar",
     component: CommandBar,
-    type: ActionType.MODAL,
+    type: ActionType.META_MODAL,
     modalParams: {
       isHideTitleIfEmpty: true,
       layoutParams: {

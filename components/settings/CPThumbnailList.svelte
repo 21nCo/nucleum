@@ -4,6 +4,7 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { resolveNavigationAction } from "$lib/tidy/utils/utils";
   import CpThumbnail from "./CPThumbnail.svelte";
   export let items: string[] = [];
   export let sectionName: string;
@@ -23,7 +24,13 @@
   >
     {#if items}
       {#each items as item}
-        <CpThumbnail {orientation} action={item} />
+        <CpThumbnail
+          {orientation}
+          action={item}
+          on:click={() => {
+            resolveNavigationAction(item);
+          }}
+        />
         {#if orientation === Orientation.Horizontal}
           <Divider colorStrength={ColorStrength.Subtle} />
         {/if}
