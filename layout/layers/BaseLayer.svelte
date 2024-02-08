@@ -4,6 +4,7 @@
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
     account,
+    app,
     appEvents,
     appStore,
     currentTime,
@@ -26,6 +27,7 @@
   import { pingParent } from "$lib/tidy/utils/embed.utils";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import Shortcuts from "./Shortcuts.svelte";
+  import { extractProduct } from "$lib/tidy/utils/utils";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -107,6 +109,9 @@
     }, 1000);
   }
   function setLaunchContext() {
+    const host = import.meta.env.VITE_APP ?? window.location.host;
+    const appDetails = extractProduct(host);
+    app.set(appDetails);
     let subdomain = window?.location.host.split(".")[0];
     let isSheet = $page.url?.searchParams?.get("isSheet");
     let isDebugMode = $page.url?.searchParams?.get("debug");

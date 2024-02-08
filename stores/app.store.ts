@@ -42,7 +42,10 @@ import type {
   YearlyData
 } from "../types/CalendarHeatMapData.type";
 import { Orientation } from "../types/direction.enum";
-
+export const app = writable<{ product: string; env: string }>({
+  product: "tidy",
+  env: "dev"
+});
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
@@ -385,8 +388,9 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         n.fullScreenComponentPath = undefined;
         return n;

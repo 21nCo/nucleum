@@ -1,14 +1,12 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "../stores/app.store";
+  import { app, appStore, userPreferences } from "../stores/app.store";
   import { Size } from "../types/size.enum";
   import { extractProduct } from "../utils/utils";
   export let subatom: string | undefined = undefined;
   export let size: Size = Size.md;
   export let isDark: boolean | undefined = undefined;
   if (!subatom) {
-    const host = import.meta.env.VITE_APP ?? window.location.host;
-    const appDetails = extractProduct(host);
-    subatom = appDetails?.product;
+    subatom = $app.product;
   }
   $: if (isDark === undefined) {
     isDark = $userPreferences.colorScheme.isDark;
