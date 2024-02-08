@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import DebugLayer from "./DebugLayer.svelte";
+  import DebugLayer from "./debug/DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
     account,
@@ -17,7 +17,7 @@
   import {
     checkForUpdates,
     performRedirectionChecks,
-    runBackendUpdate,
+    runDboUpdate,
     performLoginStatusCheck,
     ping
   } from "$lib/tidy/utils/account.utils";
@@ -94,7 +94,7 @@
       const isProceed = await performRedirectionChecks();
       if (isProceed) {
         let result = await checkForUpdates(currentVersion);
-        if (!result) await runBackendUpdate();
+        if (!result) await runDboUpdate();
         else await ping();
       }
     }
@@ -109,6 +109,10 @@
   function setLaunchContext() {
     let subdomain = window?.location.host.split(".")[0];
     let isSheet = $page.url?.searchParams?.get("isSheet");
+    let isDebugMode = $page.url?.searchParams?.get("debug");
+    if (isDebugMode) {
+      $appStore.isDebugMode = true;
+    }
     // console.log({ subdomain, location: window?.location });
     //$appStore.launchContext = LaunchContext.EMBED;
     if (subdomain?.includes("embed") || $appStore.isDebugEmbedMode) {

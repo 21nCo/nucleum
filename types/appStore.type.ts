@@ -25,14 +25,14 @@ export type DebugLog = {
 };
 
 export enum LaunchContext {
-  DEFAULT,
-  EMBED,
-  PREVIEW,
-  DEV,
+  DEFAULT = "DEFAULT",
+  EMBED = "EMBED",
+  PREVIEW = "PREVIEW",
+  DEV = "DEV"
 }
 
 export enum EmbedContext {
   NONE,
   APP,
-  SHEET,
+  SHEET
 }

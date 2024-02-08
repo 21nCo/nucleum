@@ -4,7 +4,7 @@
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import {
     resolveNavigationAction,
-    resolveComponent,
+    resolveComponent
   } from "$lib/tidy/utils/utils";
   import type { Action } from "$lib/tidy/types/action.type";
   import { userLocalPreferences } from "$lib/local/stores/local.store";
@@ -56,7 +56,8 @@
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
         {layoutContext}
-        isShowLabel={layoutContext == LayoutContext.DEFAULT}
+        isShowLabel={layoutContext == LayoutContext.DEFAULT ||
+          (layoutContext === LayoutContext.MINIMIZED && isHovered)}
         on:click={() => {
           selected = index;
           resolveNavigationAction(item.action);

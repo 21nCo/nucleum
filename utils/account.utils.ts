@@ -87,8 +87,10 @@ async function checkIfSessionExpired() {
   }
 }
 
-export async function runBackendUpdate() {
-  return new Persistance().updateDefinitions();
+export async function runDboUpdate(
+  lastRunchangeId: number | undefined = undefined
+) {
+  return new Persistance().updateDbo(lastRunchangeId);
 }
 export async function ping() {
   return new Persistance().ping();
@@ -114,7 +116,7 @@ export async function checkForUpdates(
     const appVersionOnClient = localStorage.getItem("appVersion");
     if (!appVersionOnClient) {
       localStorage.setItem("appVersion", latestVersion);
-      await runBackendUpdate();
+      await runDboUpdate();
       return true;
     } else if (appVersionOnClient != latestVersion) {
       localStorage.setItem("appVersion", latestVersion);

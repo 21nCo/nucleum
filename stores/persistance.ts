@@ -10,7 +10,7 @@ import type { DbRecordType } from "$lib/local/types/item.type";
 import {
   interceptSurrealResponse,
   performApiCall,
-  performBlankApiCall,
+  performBlankApiCall
 } from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 
@@ -31,7 +31,7 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
       localStorage.setItem(key, toString(value));
       return set(value);
     },
-    update,
+    update
   };
 };
 
@@ -74,7 +74,7 @@ export class Persistance {
     try {
       const token = localStorage.getItem("refresh-token");
       const response = await performApiCall("account/refreshToken", "POST", {
-        token,
+        token
       });
       if (!response?.ok) {
         return;
@@ -92,7 +92,7 @@ export class Persistance {
   getUserInfo = async (token: string) => {
     try {
       const response = await performApiCall("account/refreshToken", "POST", {
-        token,
+        token
       });
       if (!response?.ok) {
         return;
@@ -104,11 +104,11 @@ export class Persistance {
       appStore.logError(err);
     }
   };
-  updateDefinitions = async () => {
+  updateDbo = async (lastRunchangeId: number | undefined = undefined) => {
     try {
       const userPrefs = get(userPreferences);
       const response = await performApiCall("account/updateDb", "POST", {
-        lastRunChangeId: userPrefs?.lastRunChangeId ?? 1,
+        lastRunChangeId: lastRunchangeId ?? userPrefs?.lastRunChangeId ?? 1
       });
       if (!response?.ok) {
         return;
@@ -250,8 +250,8 @@ export class Persistance {
           itemType
             ? `${ItemEnum[itemType]}:${item.id}`
             : typeof item.id === "string"
-            ? item.id
-            : "",
+              ? item.id
+              : "",
           item
         );
     }
@@ -352,7 +352,7 @@ export class Persistance {
           const response = await this.surrealDb.executeReadFn(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
-              searchString: searchString.toLowerCase(),
+              searchString: searchString.toLowerCase()
             }
           );
           results = interceptSurrealResponse(response);
@@ -368,7 +368,7 @@ export class Persistance {
     const response = await this.surrealDb.executeReadFn(query, {
       context,
       start: start.toISOString(),
-      end: end.toISOString(),
+      end: end.toISOString()
     });
     return interceptSurrealResponse(response, query);
   }
@@ -383,7 +383,7 @@ export class Persistance {
       context,
       scale,
       start,
-      end,
+      end
     });
     return interceptSurrealResponse(response, query);
   }
@@ -394,7 +394,7 @@ export class Persistance {
     const response = await performApiCall("utils/n/getsignedurl", "POST", {
       contentType,
       fileName,
-      userId,
+      userId
     });
     return await response.json();
   }
@@ -406,8 +406,8 @@ export class Persistance {
       body: blob,
       headers: {
         "Content-Type": contentType,
-        "x-amz-acl": "public-read",
-      },
+        "x-amz-acl": "public-read"
+      }
     });
     console.log("upload result:", result);
     if (result.status === 200) {

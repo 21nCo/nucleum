@@ -11,7 +11,7 @@
   import { hapticFeedback } from "$lib/tidy/utils/embed.utils";
   import {
     resolveIfActiveFgFg,
-    textColorClass,
+    textColorClass
   } from "$lib/tidy/utils/theme.utils";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
   const dispatch = createEventDispatcher();
@@ -48,7 +48,10 @@
     ColorStrength.Normal,
     isActive,
     -1
-  )} {isActive && layoutContext === LayoutContext.DEFAULT && 'bg-a1'}"
+  )} {isActive &&
+    (layoutContext === LayoutContext.DEFAULT ||
+      layoutContext === LayoutContext.MINIMIZED) &&
+    'bg-a1'}"
   on:click={onClick}
   on:pointerenter={onHover}
 >

@@ -65,9 +65,9 @@
     </div>
   {:else if isMinimized}
     <div
-      class="flex flex-col gap-4 absolute left-1 z-30 {isHovered
-        ? 'bg-bgs4 rounded-lg p-2'
-        : 'opacity-40'}"
+      class="flex flex-col items-center gap-4 absolute rounded-md left-1 z-30 {isHovered
+        ? 'bg-bgs3 p-4 w-48'
+        : 'bg-aps1 opacity-50'}"
       style="top: {headerHeight}px"
       on:mouseenter={() => (isHovered = true)}
       on:mouseleave={() => (isHovered = false)}
@@ -146,7 +146,8 @@
             <Button
               on:click={onMinimizeToggled}
               size={Size.xs}
-              label="switch to min mode"
+              label={isInThinMode ? "min" : "switch to min mode"}
+              parentBackgroundIndex={2}
             />
           {/if}
           {#if $appStore?.appData?.isCmdBarEnabled === true}
