@@ -1,9 +1,15 @@
 <script lang="ts">
   import { appStore, userPreferences } from "../stores/app.store";
   import { Size } from "../types/size.enum";
-  export let subatom: string;
+  import { extractProduct } from "../utils/utils";
+  export let subatom: string | undefined = undefined;
   export let size: Size = Size.md;
   export let isDark: boolean | undefined = undefined;
+  if (!subatom) {
+    const host = import.meta.env.VITE_APP ?? window.location.host;
+    const appDetails = extractProduct(host);
+    subatom = appDetails?.product;
+  }
   $: if (isDark === undefined) {
     isDark = $userPreferences.colorScheme.isDark;
   }
@@ -28,7 +34,11 @@
     },
     {
       subatom: "memotron",
-      svg: ``,
+      svg: `<rect x="89.1001" y="235.199" width="9.00001" height="148" rx="3.67484" transform="rotate(-90 89.1001 235.199)" fill="{color}"/>
+<path d="M128.124 231.488C128.124 174.456 174.357 128.223 231.389 128.223" stroke="{color}" stroke-width="27.5374"/>
+<path d="M231.389 334.754C174.357 334.754 128.124 288.52 128.124 231.489" stroke="{color}" stroke-width="27.5374"/>
+<path d="M334.655 231.485C334.655 288.517 288.421 334.75 231.389 334.75" stroke="{color}" stroke-width="27.5374"/>
+<path d="M231.39 128.223C288.421 128.223 334.655 174.456 334.655 231.488" stroke="{color}" stroke-width="27.5374"/>`,
     },
     {
       subatom: "selftron",
@@ -45,7 +55,7 @@
   ];
   $: rawlogo =
     $appStore.appData.logo ??
-    defaults.find((l) => subatom.includes(l.subatom))?.svg ??
+    defaults.find((l) => subatom?.includes(l.subatom))?.svg ??
     defaults[0].svg;
   $: logo = rawlogo?.replaceAll("{color}", color);
   let height = size === Size.md ? 61 : size === Size.sm ? 20 : Size.xs ? 4 : 61;
