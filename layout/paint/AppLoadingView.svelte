@@ -21,10 +21,7 @@
       </div>
     {:else}
       <div class="flex flex-col items-center">
-        <SubAtomLogo
-          subatom="pointron"
-          isDark={$userPreferences.colorScheme.isDark}
-        />
+        <SubAtomLogo isDark={$userPreferences.colorScheme.isDark} />
         {#if message}
           <div class="font-medium px-4 text-center text-fgs2 text-b4">
             {message}

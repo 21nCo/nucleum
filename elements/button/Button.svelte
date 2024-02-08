@@ -99,7 +99,7 @@
           classList += " p-5";
           break;
         case Size.md:
-          classList += " p-4";
+          classList += " h-[3.5rem] p-4";
           break;
         case Size.sm:
           classList += " p-3";

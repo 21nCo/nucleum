@@ -8,7 +8,7 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    windowObject
+    windowObject,
   } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
@@ -19,7 +19,7 @@
     performRedirectionChecks,
     runDboUpdate,
     performLoginStatusCheck,
-    ping
+    ping,
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
@@ -110,6 +110,7 @@
     let subdomain = window?.location.host.split(".")[0];
     let isSheet = $page.url?.searchParams?.get("isSheet");
     let isDebugMode = $page.url?.searchParams?.get("debug");
+    console.log({ isSheet, isDebugMode });
     if (isDebugMode) {
       $appStore.isDebugMode = true;
     }
