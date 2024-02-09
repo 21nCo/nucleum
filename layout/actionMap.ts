@@ -18,7 +18,6 @@ import AboutSettings from "../components/settings/about/AboutSettings.svelte";
 import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
-import ComingSoonView from "../elements/ComingSoonView.svelte";
 import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
 import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
@@ -27,6 +26,8 @@ import { AppEvent } from "../types/event.enum";
 import { isInEditMode } from "../stores/app.store";
 import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
 import Help from "../components/help/Help.svelte";
+import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
+
 export const actions: Action[] = [
   {
     action: "404",
@@ -282,6 +283,17 @@ export const actions: Action[] = [
         size: Size.lg,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
+      }
+    }
+  },
+  {
+    action: AppEvent.MANUAL_RUN_DBO,
+    component: ManualRunDbo,
+    type: ActionType.META_MODAL,
+    isMenuHidden: true,
+    modalParams: {
+      layoutParams: {
+        size: Size.sm
       }
     }
   }

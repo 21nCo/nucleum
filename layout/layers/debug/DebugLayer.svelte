@@ -12,6 +12,8 @@
   import { onMount } from "svelte";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonVariant } from "$lib/tidy/types/button.type";
+  import { runAction } from "$lib/tidy/utils/utils";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   let environment: string;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
@@ -83,6 +85,14 @@
       }}
       icon="sync"
       label="Rerun dbo update"
+    />
+    <Button
+      width="w-full"
+      icon="play"
+      on:click={() => {
+        runAction(AppEvent.MANUAL_RUN_DBO);
+      }}
+      label="Run manual dbo update"
     />
     <Button
       width="w-full"

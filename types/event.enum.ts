@@ -12,7 +12,8 @@ export enum AppEvent {
   WINDOW_RESIZED = "WINDOW_RESIZED",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
-  HELP = "HELP"
+  HELP = "HELP",
+  MANUAL_RUN_DBO = "MANUAL_RUN_DBO"
 }
 
 export enum PlayActionState {
