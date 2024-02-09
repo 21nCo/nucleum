@@ -3,7 +3,10 @@ import { get, readable, writable } from "svelte/store";
 import {
   generateUID,
   performApiCall,
-  resolveComponentFromPath
+  resolveComponentFromPath,
+  resolveUiState,
+  runAction,
+  setUiState
 } from "$lib/tidy/utils/utils";
 import { AppTheme, type ColorSchemeSLValues } from "$lib/tidy/types/theme.type";
 import {
@@ -23,7 +26,7 @@ import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
-import { objIsEmpty, shallowDiff } from "../utils/obj.utils";
+import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
@@ -42,6 +45,7 @@ import type {
   YearlyData
 } from "../types/CalendarHeatMapData.type";
 import { Orientation } from "../types/direction.enum";
+import { UiState } from "../types/uiState.enum";
 export const app = writable<{ product: string; env: string }>({
   product: "tidy",
   env: "dev"
@@ -287,117 +291,12 @@ const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
 let themes = [AppTheme.Clean, AppTheme.Glassy];
 if (isDebugMode)
   themes = themes.concat([AppTheme.Vibrant, AppTheme.Futuristic]);
-
-export const appStore = initAppStore({
-  isDebugMode,
-  isExperimentalMode,
-  isDebugEmbedMode,
-  launchContext: LaunchContext.DEFAULT,
-  embedContext: EmbedContext.NONE,
-  appData: defaultAppData,
-  appConstants: {
-    themes,
-    colorSchemes,
-    tempColorSchemes,
-    colorSchemeSLConfig: selectableColorParams
-  }
-});
-
-function initAppStore(seed: AppStore) {
-  const { subscribe, set, update } = writable<AppStore>(seed);
-  return {
-    subscribe,
-    set: (m: AppStore) => {
-      set(m);
-    },
-    update,
-    initiatizeAppData(appData: any) {
-      update((n: AppStore) => {
-        n.appData = appData;
-        return n;
-      });
-    },
-    turnDebugMode(isDebugMode: boolean) {
-      update((n: AppStore) => {
-        n.isDebugMode = isDebugMode;
-        return n;
-      });
-    },
-    log(message: string | object, type: "error" | "info" | "warn" = "info") {
-      update((n: AppStore) => {
-        (n.isDebugMode || n.isDebugEmbedMode) && console.log(message);
-        if (!n.debugLogs) n.debugLogs = [];
-        n.debugLogs.push({
-          message:
-            typeof message === "string" ? message : JSON.stringify(message),
-          type,
-          timestamp: new Date().toLocaleTimeString()
-        });
-        return n;
-      });
-    },
-    logError(message: any) {
-      update((n: AppStore) => {
-        if (!n.debugLogs) n.debugLogs = [];
-        n.debugLogs.push({
-          message,
-          type: "error",
-          timestamp: new Date().toLocaleTimeString()
-        });
-        if (n.isDebugEmbedMode) {
-          postToParent({
-            error: message
-          });
-        }
-        return n;
-      });
-    },
-    clearDebugLogs() {
-      update((n: AppStore) => {
-        n.debugLogs = [];
-        return n;
-      });
-    },
-    showMiniPlayer(path: string, params: any = null) {
-      update((n: AppStore) => {
-        n.player = path;
-        //n.playerParams = params;
-        return n;
-      });
-    },
-    togglePip(path: string) {
-      update((n: AppStore) => {
-        if (!n.player) n.player = path;
-        n.isPipOn = !n.isPipOn;
-        return n;
-      });
-    },
-    hideMiniPlayer() {
-      update((n: AppStore) => {
-        n.player = undefined;
-        return n;
-      });
-    },
-    showFullScreenPlayer(path: string) {
-      update((n: AppStore) => {
-        n.fullScreenComponentPath = path;
-        n.player = undefined;
-        return n;
-      });
-    },
-    hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
-      update((n: AppStore) => {
-        if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
-        else if (isHideMiniPlayer) n.player = undefined;
-        n.fullScreenComponentPath = undefined;
-        return n;
-      });
-    }
-  };
-}
+export const appConstants = {
+  themes,
+  colorSchemes,
+  tempColorSchemes,
+  colorSchemeSLConfig: selectableColorParams
+};
 
 const userPreferencesId = "Preferences:global";
 const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
@@ -483,7 +382,7 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
     },
     setTheme: (theme: AppTheme, colorScheme: string) => {
-      const colorSchemes = get(appStore).appConstants.colorSchemes;
+      const colorSchemes = appConstants.colorSchemes;
       let cs = colorSchemes.find((cs) => cs.id == colorScheme);
       if (!cs) cs = colorSchemes[0];
       console.log("setting theme", { theme, cs });
@@ -492,6 +391,139 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
         theme,
         colorScheme: cs
       });
+    },
+    setUiStates: (uiStates: any) => {
+      set({
+        ...get(userPreferences),
+        uiStates
+      });
+      persist({ uiStates });
+    }
+  };
+}
+
+export const appStore = initAppStore({
+  isDebugMode,
+  isExperimentalMode,
+  isDebugEmbedMode,
+  launchContext: LaunchContext.DEFAULT,
+  embedContext: EmbedContext.NONE,
+  appData: defaultAppData
+});
+
+function initAppStore(seed: AppStore) {
+  const { subscribe, set, update } = writable<AppStore>(seed);
+  return {
+    subscribe,
+    set: (m: AppStore) => {
+      set(m);
+    },
+    update,
+    initiatizeAppData(appData: any) {
+      update((n: AppStore) => {
+        n.appData = appData;
+        return n;
+      });
+    },
+    turnDebugMode(isDebugMode: boolean) {
+      update((n: AppStore) => {
+        n.isDebugMode = isDebugMode;
+        return n;
+      });
+    },
+    log(message: string | object, type: "error" | "info" | "warn" = "info") {
+      update((n: AppStore) => {
+        (n.isDebugMode || n.isDebugEmbedMode) && console.log(message);
+        if (!n.debugLogs) n.debugLogs = [];
+        n.debugLogs.push({
+          message:
+            typeof message === "string" ? message : JSON.stringify(message),
+          type,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        return n;
+      });
+    },
+    logError(message: any) {
+      update((n: AppStore) => {
+        if (!n.debugLogs) n.debugLogs = [];
+        n.debugLogs.push({
+          message,
+          type: "error",
+          timestamp: new Date().toLocaleTimeString()
+        });
+        if (n.isDebugEmbedMode) {
+          postToParent({
+            error: message
+          });
+        }
+        return n;
+      });
+    },
+    clearDebugLogs() {
+      update((n: AppStore) => {
+        n.debugLogs = [];
+        return n;
+      });
+    },
+    showMiniPlayer(path: string, params: any = null) {
+      update((n: AppStore) => {
+        n.player = path;
+        //n.playerParams = params;
+        return n;
+      });
+    },
+    togglePip(path: string) {
+      update((n: AppStore) => {
+        if (!n.player) n.player = path;
+        n.isPipOn = !n.isPipOn;
+        return n;
+      });
+    },
+    hideMiniPlayer() {
+      update((n: AppStore) => {
+        n.player = undefined;
+        return n;
+      });
+    },
+    showFullScreenPlayer(path: string) {
+      update((n: AppStore) => {
+        n.fullScreenComponentPath = path;
+        runAction(path);
+        n.player = undefined;
+        return n;
+      });
+    },
+    hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
+      update((n: AppStore) => {
+        if (n.fullScreenComponentPath && !isHideMiniPlayer)
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
+        else if (isHideMiniPlayer) n.player = undefined;
+        n.fullScreenComponentPath = undefined;
+        modalEvent.hide();
+        return n;
+      });
+    },
+    showAssociatedPlayerIfRequired() {
+      update((n: AppStore) => {
+        if (n.fullScreenComponentPath) {
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
+        }
+        return n;
+      });
+    },
+    toggleSidebar() {
+      const userPref = get(userPreferences);
+      const val = resolveUiState(userPref.uiStates, UiState.isInThinMode);
+      console.log({ val, userPref });
+      let newUiStates = setUiState(
+        deepCopy(userPref.uiStates),
+        UiState.isInThinMode,
+        !val
+      );
+      userPreferences.setUiStates(newUiStates);
     }
   };
 }
@@ -664,6 +696,7 @@ function initModalStore(seed: ModalEvent) {
         return { ...n, isShow: false };
       });
       confirmationNotification.reset();
+      appStore.showAssociatedPlayerIfRequired();
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {

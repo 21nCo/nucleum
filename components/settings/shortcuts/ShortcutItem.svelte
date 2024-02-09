@@ -148,7 +148,7 @@
       class="bg-transparent cursor-pointer focus:outline-none w-32 text-fgs2"
       placeholder="record shortcut"
       type="text"
-      on:keydown={onKeydown}
+      on:keydown|stopPropagation={onKeydown}
       on:paste|preventDefault
     />
     {#if isConfigurationInProgress}

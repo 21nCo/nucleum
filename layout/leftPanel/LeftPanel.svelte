@@ -114,11 +114,12 @@
               <Button
                 icon="sidebar-toggle"
                 on:click={() => {
-                  $userPreferences.uiStates = setUiState(
-                    $userPreferences.uiStates,
-                    UiState.isInThinMode,
-                    !isInThinMode
-                  );
+                  // $userPreferences.uiStates = setUiState(
+                  //   $userPreferences.uiStates,
+                  //   UiState.isInThinMode,
+                  //   !isInThinMode
+                  // );
+                  appStore.toggleSidebar();
                 }}
               />
             {/if}

@@ -4,6 +4,7 @@
     modalEvent,
     userPreferences
   } from "$lib/tidy/stores/app.store";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
   import { runAction } from "$lib/tidy/utils/utils";
   import { onDestroy, onMount } from "svelte";
@@ -27,6 +28,9 @@
       event.preventDefault();
       modalEvent.hide();
       return;
+    } else if (event.key === "q") {
+      event.preventDefault();
+      runAction(AppEvent.TOGGLE_SIDEBAR);
     }
     let modifiers = [];
     if (event.metaKey || event.ctrlKey) {

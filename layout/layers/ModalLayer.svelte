@@ -69,14 +69,14 @@
   });
 </script>
 
-{#if $appStore.fullScreenComponentPath}
+<!-- {#if $appStore.fullScreenComponentPath}
   <div
     class="fixed left-0 top-0 w-full h-full flex flex-col z-40"
     transition:fly={{ y: 200, duration: 100 }}
   >
     <ComponentResolver path={$appStore.fullScreenComponentPath} />
   </div>
-{/if}
+{/if} -->
 {#if $fullPageLoadingScreen.isShow}
   <div
     class="fixed left-0 top-0 w-full h-full flex flex-col z-40"

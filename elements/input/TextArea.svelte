@@ -118,12 +118,12 @@
       }`} ${resizable ? `` : `resize-none`} ${inputClasses}`}
       {rows}
       bind:value
-      on:change
-      on:keydown
-      on:keyup
+      on:change|stopPropagation
+      on:keydown|stopPropagation
+      on:keyup|stopPropagation
       on:blur
       on:focus
-      on:input={onChange}
+      on:input|stopPropagation={onChange}
       {placeholder}
       disabled={isDisabled}
       bind:this={inputRef}

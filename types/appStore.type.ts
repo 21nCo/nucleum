@@ -1,8 +1,6 @@
-import type { AppConstants } from "$lib/tidy/types/appConstants.type";
 import type { Action } from "$lib/tidy/types/action.type";
 
 export type AppStore = {
-  appConstants: AppConstants;
   appData: any;
   isDebugMode: boolean;
   isExperimentalMode: boolean;

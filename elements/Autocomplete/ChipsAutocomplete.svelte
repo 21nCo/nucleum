@@ -29,23 +29,23 @@
   export let mobileInputClassList: ClassListProp = {
     active: "",
     inactive: "",
-    common: "",
+    common: ""
   };
   export let classList: ClassListProp = {
     active: "",
     inactive: "",
-    common: "",
+    common: ""
   };
   export let listItemClassList: ClassListProp = {
     active: "bg-bgs2",
     inactive: "",
     common: "",
-    selected: "bg-bgs2",
+    selected: "bg-bgs2"
   };
   export let containerClassList: ClassListProp = {
     active: "",
     inactive: "",
-    common: "",
+    common: ""
   }; // this is for the container, which contains label, and the input field not the list
 
   export let escapeDefaultClickBehaviour: boolean = false; // this is used to escape the default behaviour of the list item click, if this is true then the default behaviour of the list item click will not be performed, for example if you don't want to hide the list on list item click then set this to true
@@ -279,9 +279,9 @@
         type="text"
         {placeholder}
         bind:value={inputValue}
-        on:input
+        on:input|stopPropagation
         on:focus
-        on:keydown={handleKeyDownInDropdown}
+        on:keydown|stopPropagation={handleKeyDownInDropdown}
         class={`bg-transparent pl-1 py-1 text-b3 min-w-[100px] flex-1 outline-none ${
           mobileInputClassList.common
         } ${

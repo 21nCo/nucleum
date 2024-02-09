@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appConstants, userPreferences } from "$lib/tidy/stores/app.store";
   import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   export let classList: string;
   export let hue: number | undefined;
@@ -10,7 +10,7 @@
   onMount(() => {
     let values = resolveSaturationAndLightness(
       $userPreferences,
-      $appStore.appConstants.colorSchemeSLConfig
+      appConstants.colorSchemeSLConfig
     );
     if (values) {
       saturation = values.saturation;

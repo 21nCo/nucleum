@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import {
+    appConstants,
+    appStore,
+    userPreferences
+  } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
   import { AppTheme, type ColorScheme } from "$lib/tidy/types/theme.type";
@@ -15,7 +19,7 @@
   let selectedTempSchemeIndex: number = 0;
   let filteredColorSchemes: ColorScheme[] = [];
   onMount(() => {
-    selectedThemeIndex = $appStore.appConstants.themes.findIndex(
+    selectedThemeIndex = appConstants.themes.findIndex(
       (x) => x == $userPreferences.theme
     );
     selectedLightnessIndex = $userPreferences.colorScheme?.isDark ? 1 : 0;
@@ -23,7 +27,7 @@
   });
   $: console.log({ selectedColorSchemeIndex });
   function refreshColorSchemes(e: any = undefined) {
-    filteredColorSchemes = $appStore.appConstants.colorSchemes?.filter(
+    filteredColorSchemes = appConstants.colorSchemes?.filter(
       (x) =>
         x.theme == $userPreferences.theme &&
         !x.isArchived &&
@@ -57,7 +61,7 @@
   function saveTheme() {
     $userPreferences.theme =
       selectedThemeIndex != undefined
-        ? $appStore.appConstants.themes[selectedThemeIndex]
+        ? appConstants.themes[selectedThemeIndex]
         : $userPreferences.theme;
     //showChangesFeedback();
   }
@@ -68,7 +72,7 @@
   function onTempSchemeChange(event: any) {
     $userPreferences.tempColorScheme =
       selectedTempSchemeIndex != undefined
-        ? $appStore.appConstants.tempColorSchemes[selectedTempSchemeIndex]
+        ? appConstants.tempColorSchemes[selectedTempSchemeIndex]
         : $userPreferences.tempColorScheme;
   }
 </script>
@@ -77,7 +81,7 @@
   <Switcher
     label="Theme"
     {parentBackgroundIndex}
-    items={$appStore.appConstants.themes.map((x) => properCase(x))}
+    items={appConstants.themes.map((x) => properCase(x))}
     selectionStyle={SelectionItemActiveStyle.CIRCLE_WITH_BACKGROUND}
     on:switch={onThemeChange}
     bind:selectedIndex={selectedThemeIndex}
@@ -106,7 +110,7 @@
       <Switcher
         label="Glassy theme trails"
         {parentBackgroundIndex}
-        items={$appStore.appConstants.tempColorSchemes}
+        items={appConstants.tempColorSchemes}
         selectionStyle={SelectionItemActiveStyle.SIDEBAR}
         on:switch={onTempSchemeChange}
         bind:selectedIndex={selectedTempSchemeIndex}

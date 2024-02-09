@@ -213,10 +213,10 @@
       type="text"
       bind:this={inputRef}
       bind:value={inputValue}
-      on:input={onInputChange}
+      on:input|stopPropagation={onInputChange}
       on:focus={onFocus}
-      on:keydown={handleKeyDownInDropdown}
-      on:keyup={() => dispatch("search")}
+      on:keydown|stopPropagation={handleKeyDownInDropdown}
+      on:keyup|stopPropagation={() => dispatch("search")}
       class={`outline-none w-full py-2 px-2.5 text-b2 ${
         hideSearchIcon && !icon ? `` : `pl-8`
       } ${inputClassList} ` + bgClass($userPreferences.theme, 1)}
@@ -235,7 +235,7 @@
           {...listItem}
           classList={{
             common: listItemClassList,
-            active: activeListItemClassList,
+            active: activeListItemClassList
           }}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}

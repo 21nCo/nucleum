@@ -6,7 +6,7 @@ import {
   ColorType,
   type ColorSchemeSLValues
 } from "../types/theme.type";
-import { appStore, userPreferences } from "../stores/app.store";
+import { appConstants, userPreferences } from "../stores/app.store";
 
 export function resolveSaturationAndLightness(
   userPreferences: UserGlobalPreferences,
@@ -66,7 +66,7 @@ export function customColorShade(
     let lightness: number = 50;
     let values = resolveSaturationAndLightness(
       userPreferences,
-      get(appStore).appConstants.colorSchemeSLConfig
+      appConstants.colorSchemeSLConfig
     );
     if (values) {
       saturation = values.saturation;
@@ -91,7 +91,7 @@ export function customColor(
     let lightness: number = 50;
     let values = resolveSaturationAndLightness(
       userPreferences,
-      get(appStore).appConstants.colorSchemeSLConfig
+      appConstants.colorSchemeSLConfig
     );
     if (values) {
       saturation = values.saturation;
@@ -291,7 +291,7 @@ export function heatMapColorRange(
   } else {
     let values = resolveSaturationAndLightness(
       userPreferences,
-      get(appStore).appConstants.colorSchemeSLConfig
+      appConstants.colorSchemeSLConfig
     );
     if (values) {
       saturation = values.saturation;

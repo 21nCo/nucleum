@@ -23,7 +23,7 @@ import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { AppEvent } from "../types/event.enum";
-import { isInEditMode } from "../stores/app.store";
+import { appStore, isInEditMode } from "../stores/app.store";
 import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
@@ -295,6 +295,14 @@ export const actions: Action[] = [
       layoutParams: {
         size: Size.sm
       }
+    }
+  },
+  {
+    action: AppEvent.TOGGLE_SIDEBAR,
+    type: ActionType.FUNCTION,
+    label: "Toggle sidebar",
+    fn: () => {
+      appStore.toggleSidebar();
     }
   }
 ];

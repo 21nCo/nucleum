@@ -13,7 +13,8 @@ export enum AppEvent {
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
   HELP = "HELP",
-  MANUAL_RUN_DBO = "MANUAL_RUN_DBO"
+  MANUAL_RUN_DBO = "MANUAL_RUN_DBO",
+  TOGGLE_SIDEBAR = "TOGGLE_SIDEBAR"
 }
 
 export enum PlayActionState {

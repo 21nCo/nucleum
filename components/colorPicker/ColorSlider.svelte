@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appConstants, userPreferences } from "$lib/tidy/stores/app.store";
   import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
 
@@ -14,7 +14,7 @@
   };
   let values = resolveSaturationAndLightness(
     $userPreferences,
-    $appStore.appConstants.colorSchemeSLConfig
+    appConstants.colorSchemeSLConfig
   );
   if (values) {
     saturation = values.saturation;

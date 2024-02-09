@@ -10,7 +10,7 @@
   import { getTimeLabel } from "$lib/tidy/utils/time.utils";
   import {
     borderColor,
-    resolveBackgroundClass,
+    resolveBackgroundClass
   } from "$lib/tidy/utils/theme.utils";
   import { roundOffToNdigitsAfterDecimal } from "$lib/local/utils/local.utils";
   //todo - move clickoutside and pointron local code to tidy lib
@@ -141,8 +141,8 @@
               TimeUnit.HOURS
             ),
             value: inputValueInNumber * 60,
-            unit: TimeUnit.HOURS,
-          },
+            unit: TimeUnit.HOURS
+          }
         ];
       } else if (inputValue.includes("m")) {
         selectedIndex = 0; //Since we are only showing one time suggestion and the input is very specific, so we are selecting the first time suggestion by default
@@ -153,8 +153,8 @@
               TimeUnit.MINUTES
             ),
             value: inputValueInNumber,
-            unit: TimeUnit.MINUTES,
-          },
+            unit: TimeUnit.MINUTES
+          }
         ];
       } else if (inputValue.includes("s")) {
         selectedIndex = 0; //Since we are only showing one time suggestion and the input is very specific, so we are selecting the first time suggestion by default
@@ -165,8 +165,8 @@
               TimeUnit.SECONDS
             ),
             value: inputValueInNumber / 60,
-            unit: TimeUnit.SECONDS,
-          },
+            unit: TimeUnit.SECONDS
+          }
         ];
       } else if (inputValueInNumber < 10) {
         selectedIndex = -1;
@@ -177,7 +177,7 @@
               TimeUnit.HOURS
             ), // Since the value is in minutes, we need to showcase hours so we are assuming that user is entering hours but the value parameter is in minutes always, so we need to multiply it by 60
             value: inputValueInNumber * 60,
-            unit: TimeUnit.HOURS,
+            unit: TimeUnit.HOURS
           },
           {
             label: getTimeLabelAlongWithTimeMentionedInTheInputField(
@@ -185,8 +185,8 @@
               TimeUnit.MINUTES
             ),
             value: inputValueInNumber,
-            unit: TimeUnit.MINUTES,
-          },
+            unit: TimeUnit.MINUTES
+          }
         ];
       } else {
         selectedIndex = -1;
@@ -197,8 +197,8 @@
               TimeUnit.MINUTES
             ),
             value: inputValueInNumber,
-            unit: TimeUnit.MINUTES,
-          },
+            unit: TimeUnit.MINUTES
+          }
         ];
       }
     }
@@ -344,13 +344,13 @@
   <input
     class={inputClasses}
     bind:value={inputValue}
-    on:change
-    on:keydown={handleKeyDown}
-    on:keyup
+    on:change|stopPropagation
+    on:keydown|stopPropagation={handleKeyDown}
+    on:keyup|stopPropagation
     on:blur
     on:focus={generateTimeSuggestions}
     on:focusout
-    on:input={onChange}
+    on:input|stopPropagation={onChange}
     {placeholder}
     disabled={isDisabled}
     bind:this={inputRef}

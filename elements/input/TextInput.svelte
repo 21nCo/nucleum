@@ -178,9 +178,11 @@
   }
   function debounceSearch() {
     clearTimeout(debounceTimeoutId);
-    debounceTimeoutId = setTimeout(() => {
-      search();
-    }, 500);
+    if (value.length == 1) search();
+    else
+      debounceTimeoutId = setTimeout(() => {
+        search();
+      }, 300);
   }
   async function search() {
     if (!searchItemType) return;
@@ -213,12 +215,12 @@
         {id}
         class={inputClasses}
         bind:value
-        on:change
-        on:keydown
-        on:keyup
+        on:change|stopPropagation
+        on:keydown|stopPropagation
+        on:keyup|stopPropagation
         on:blur
         on:focus
-        on:input={onChange}
+        on:input|stopPropagation={onChange}
         type="password"
         {placeholder}
         disabled={isDisabled}
@@ -230,12 +232,12 @@
       {id}
       class={inputClasses}
       bind:value
-      on:change
-      on:keydown
-      on:keyup
+      on:change|stopPropagation
+      on:keydown|stopPropagation
+      on:keyup|stopPropagation
       on:blur
       on:focus
-      on:input={onChange}
+      on:input|stopPropagation={onChange}
       type="number"
       min={numberInputParams?.min}
       max={numberInputParams?.max}
@@ -249,12 +251,14 @@
       {id}
       class={inputClasses}
       bind:value
-      on:change
-      on:keydown
-      on:keyup={searchItemType ? handleKeyUpForSearch : handleKeyUp}
+      on:change|stopPropagation
+      on:keydown|stopPropagation
+      on:keyup|stopPropagation={searchItemType
+        ? handleKeyUpForSearch
+        : handleKeyUp}
       on:blur
       on:focus
-      on:input={onChange}
+      on:input|stopPropagation={onChange}
       type="text"
       {placeholder}
       disabled={isDisabled}

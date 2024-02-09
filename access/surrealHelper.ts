@@ -106,7 +106,7 @@ export class SurrealDatabaseUsingRest {
           body: `USE database ${this.userId}; ${query}`
         });
       } else {
-        response = await performApiCall("account/run", "POST", {
+        response = await performApiCall("account/n/run", "POST", {
           query: `USE database ${this.userId}; ${query}`,
           db: this.userId
         });

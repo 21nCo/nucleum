@@ -61,8 +61,8 @@
       bind:this={inputRef}
       type="text"
       bind:value
-      on:keyup={handleKeyUp}
-      on:keydown={handleKeyDown}
+      on:keyup|stopPropagation={handleKeyUp}
+      on:keydown|stopPropagation={handleKeyDown}
       class="h-[3.6rem] bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
       {placeholder}
     />

@@ -4,7 +4,11 @@
   import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   import ColorSlider from "./ColorSlider.svelte";
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import {
+    appConstants,
+    appStore,
+    userPreferences
+  } from "$lib/tidy/stores/app.store";
   export let hue = 0;
   export let isShowPreview: boolean = false;
   let saturation = 50;
@@ -14,7 +18,7 @@
   onMount(() => {
     let values = resolveSaturationAndLightness(
       $userPreferences,
-      $appStore.appConstants.colorSchemeSLConfig
+      appConstants.colorSchemeSLConfig
     );
     if (values) {
       saturation = values.saturation;
