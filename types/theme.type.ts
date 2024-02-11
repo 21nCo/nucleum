@@ -61,4 +61,5 @@ export enum ColorType {
   Fg = "foreground",
   Outline = "outline",
   Border = "border",
+  Fill = "fill",
 }
