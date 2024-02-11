@@ -19,7 +19,7 @@
   </div>
 {:else if currentComponent && currentComponent.contentType === ContentType.INLINE}
   <div class="flex justify-center">
-    <ComponentResolver {currentComponent} />
+    <ComponentResolver action={currentComponent} />
   </div>
 {:else}
   <button class={classList} on:click={() => windowObject.gotoPath(path)}>

@@ -15,7 +15,7 @@
 {#if currentComponent && currentComponent.thinModeBehavior != ThinModeBehavior.HIDE}
   {#if currentComponent.contentType === ContentType.INLINE}
     <div class="flex justify-center">
-      <ComponentResolver {currentComponent} />
+      <ComponentResolver action={currentComponent} />
     </div>
   {:else}
     <button

@@ -181,6 +181,6 @@
     <!-- {#if currentComponent?.label}
       <Text type={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
     {/if} -->
-    <ComponentResolver {currentComponent} />
+    <ComponentResolver action={currentComponent} />
   </div>
 {/if}

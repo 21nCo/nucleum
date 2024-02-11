@@ -4,26 +4,27 @@
   import { ContentType, type Action } from "$lib/tidy/types/action.type";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  export let currentComponent: Action | null = null;
+  export let action: Action | null = null;
   export let path: string = "";
   export let params: any = {};
   onMount(() => {
-    if (currentComponent === null && path !== "") {
-      currentComponent = resolveComponentFromPath(path);
+    if (action === null && path !== "") {
+      action = resolveComponentFromPath(path);
     }
   });
 </script>
 
-{#if currentComponent?.contentType === ContentType.BUTTON}
+{#if action?.contentType === ContentType.BUTTON}
   <Button
     size={Size.sm}
-    label={currentComponent?.label}
+    label={action?.label}
     on:click={() => {
-      if (currentComponent?.fn) currentComponent?.fn();
+      if (action?.fn) action?.fn();
     }}
   />
-{:else if currentComponent?.contentType === ContentType.GATHERYDOC}
+{:else if action?.contentType === ContentType.GATHERYDOC}
   <!--  -->
+  <div>Gathery doc with id: {action.link}</div>
 {:else}
-  <svelte:component this={currentComponent?.component} {...params} />
+  <svelte:component this={action?.component} {...params} />
 {/if}

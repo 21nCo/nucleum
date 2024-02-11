@@ -143,37 +143,38 @@ export const actions: Action[] = [
     action: "downloads",
     label: "Downloads",
     icon: "download",
-    type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
-    link: "productguide"
+    type: ActionType.LINK,
+    link: "downloads"
   },
   {
     action: "chat",
     label: "Chat with us",
     icon: "chatleftright",
-    type: ActionType.META,
+    type: ActionType.FUNCTION,
+    fn: () => {
+      //TODO open Intercom
+    },
     link: "chat"
   },
   {
     action: "call",
     label: "Book a call",
     icon: "video-camera",
-    type: ActionType.META,
+    type: ActionType.LINK,
     link: "call"
   },
   {
     action: "faqs",
     label: "FAQs",
     icon: "help",
-    type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
-    link: "discord"
+    type: ActionType.LINK,
+    link: "faqs"
   },
   {
     action: "discord",
     label: "Join us on discord",
     icon: "users",
-    type: ActionType.META,
+    type: ActionType.LINK,
     link: "discord"
   },
   {
@@ -195,7 +196,7 @@ export const actions: Action[] = [
     action: "git",
     label: "Star us on git",
     icon: "star",
-    type: ActionType.META,
+    type: ActionType.LINK,
     link: "git"
   },
   {

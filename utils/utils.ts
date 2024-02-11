@@ -7,14 +7,14 @@ import {
   confirmationNotification,
   modalEvent,
   toasts,
-  windowObject,
+  windowObject
 } from "../stores/app.store";
 import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
 import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
 import { postToParent } from "./embed.utils";
 import { detectTimeZone } from "./time.utils";
-import { ActionType } from "../types/action.type";
+import { ActionType, type Action } from "../types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
 import { AlertType } from "../types/notification.type";
 
@@ -48,12 +48,12 @@ export function getUserDate(timestamp: number, dayStart: string = "00:00") {
     hours > startHours
       ? true
       : hours === startHours
-      ? minutes >= startMinutes
-      : false;
+        ? minutes >= startMinutes
+        : false;
   let userDate = {
     day: date.getDate(),
     month: date.getMonth(),
-    year: date.getFullYear(),
+    year: date.getFullYear()
   };
   userDate = isSameDay ? userDate : getOneDayEarlier(userDate);
   return userDate;
@@ -110,7 +110,7 @@ export function getOneDayLater(date: UserDate) {
   return {
     day: oneDayLater.getDate(),
     month: oneDayLater.getMonth(),
-    year: oneDayLater.getFullYear(),
+    year: oneDayLater.getFullYear()
   };
 }
 
@@ -120,7 +120,7 @@ export function getOneDayEarlier(date: UserDate) {
   return {
     day: oneDayEarlier.getDate(),
     month: oneDayEarlier.getMonth(),
-    year: oneDayEarlier.getFullYear(),
+    year: oneDayEarlier.getFullYear()
   };
 }
 
@@ -128,7 +128,7 @@ export function formatDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
-    year: "numeric",
+    year: "numeric"
   });
 }
 
@@ -183,7 +183,7 @@ export function openLink(url: string) {
   }
   if (get(appStore).launchContext == LaunchContext.EMBED) {
     postToParent({
-      link: url,
+      link: url
     });
   } else {
     let win = window?.open(url, "_blank");
@@ -207,7 +207,7 @@ export function runAction(action: string, params: any = undefined) {
       path: component.action,
       isShow: true,
       layoutParams: component.modalParams?.layoutParams,
-      componentParams: params,
+      componentParams: params
     });
   } else if (
     component.type === ActionType.CONFIRMATION &&
@@ -224,11 +224,14 @@ export function resolveNavigationAction(action: string) {
     windowObject.gotoPath("404");
     return;
   }
-  if (component.link) {
-    const url = get(appStore).appData.urls[component.link];
+  runNavigationAction(component);
+}
+export function runNavigationAction(action: Action) {
+  if (action.type === ActionType.LINK && action.link) {
+    const url = get(appStore).appData.urls[action.link];
     if (url) openLink(url);
-  } else if (component.component) {
-    windowObject.gotoPath("/" + (component.path ?? component.action));
+  } else if (action.component) {
+    windowObject.gotoPath("/" + (action.path ?? action.action));
     return;
   }
 }
@@ -253,7 +256,7 @@ export function getAppLoadContext() {
     timezone: detectTimeZone(),
     geo: null,
     referrer: document.referrer,
-    urlParams: Object.fromEntries(urlParams.entries()),
+    urlParams: Object.fromEntries(urlParams.entries())
   };
 }
 
@@ -267,9 +270,9 @@ export function performApiCall(
     method: method,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token,
+      Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ ...body, context: getAppLoadContext() }),
+    body: JSON.stringify({ ...body, context: getAppLoadContext() })
   });
 }
 export function performBlankApiCall(
@@ -280,9 +283,9 @@ export function performBlankApiCall(
   return fetch(import.meta.env.VITE_BLANK_API_URL + "/" + endpoint, {
     method: method,
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: body,
+    body: body
   });
 }
 
@@ -385,7 +388,7 @@ export function interceptSurrealResponse(response: any, context: string = "") {
       actionText: "View",
       type: AlertType.ERROR,
       id: generateUID(),
-      callback: () => {},
+      callback: () => {}
     });
     return null;
   } else if (response[0].status === "OK" && response[0].result) {

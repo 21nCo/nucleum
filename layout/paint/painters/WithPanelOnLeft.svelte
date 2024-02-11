@@ -37,5 +37,5 @@
     </div>
   </div>
 {:else}
-  <ComponentResolver {currentComponent} />
+  <ComponentResolver action={currentComponent} />
 {/if}
