@@ -39,11 +39,11 @@
   };
   const messageReceivedListener = (event: any) => {
     try {
-      console.log("message received", event);
-      appStore.log("message received from iOS");
-      appStore.log(event.data);
-      appStore.log(event.origin);
-      appStore.log(event.source);
+      // console.log("message received", event);
+      // appStore.log("message received from iOS");
+      // appStore.log(event.data);
+      // appStore.log(event.origin);
+      // appStore.log(event.source);
     } catch (e) {
       console.error(e);
       appStore.logError(e);
@@ -64,6 +64,7 @@
       window?.removeEventListener("visibilitychange", visibilityChangeListener);
       window?.removeEventListener("resize", windowResizeListener);
       window?.removeEventListener("click", windowClickEventListener);
+      window?.removeEventListener("message", messageReceivedListener);
     };
   });
   async function windowVisibilityHandler(e: AppEventType) {

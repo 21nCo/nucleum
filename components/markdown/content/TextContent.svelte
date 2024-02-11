@@ -14,9 +14,6 @@
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
-  import { windowObject } from "$lib/tidy/stores/app.store";
-  import { BlockType } from "$lib/tidy/types/action.type";
-  import { escape } from "svelte/internal";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let content: TextContent;
