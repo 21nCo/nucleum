@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
-  import { BlockType, type Action } from "$lib/tidy/types/action.type";
+  import { ContentType, type Action } from "$lib/tidy/types/action.type";
   import YMenuSectionItem from "./YMenuSectionItem.svelte";
   import ComponentResolver from "../../ComponentResolver.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
@@ -17,7 +17,7 @@
       <YMenuSectionItem path={path + "/" + section} />
     {/each}
   </div>
-{:else if currentComponent && currentComponent.blockType === BlockType.INLINE}
+{:else if currentComponent && currentComponent.contentType === ContentType.INLINE}
   <div class="flex justify-center">
     <ComponentResolver {currentComponent} />
   </div>

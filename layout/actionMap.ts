@@ -3,7 +3,8 @@ import {
   ThinModeBehavior,
   PaintType,
   type Action,
-  ActionType
+  ActionType,
+  ContentType
 } from "$lib/tidy/types/action.type";
 import NotFound from "../components/error/PageError.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
@@ -142,6 +143,8 @@ export const actions: Action[] = [
     action: "downloads",
     label: "Downloads",
     icon: "download",
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "productguide"
   },
   {
@@ -149,20 +152,21 @@ export const actions: Action[] = [
     label: "Chat with us",
     icon: "chatleftright",
     type: ActionType.META,
-    link: "discord"
+    link: "chat"
   },
   {
     action: "call",
     label: "Book a call",
     icon: "video-camera",
     type: ActionType.META,
-    link: "discord"
+    link: "call"
   },
   {
     action: "faqs",
     label: "FAQs",
     icon: "help",
-    type: ActionType.META,
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "discord"
   },
   {
@@ -183,7 +187,8 @@ export const actions: Action[] = [
     action: "credits",
     label: "Credits",
     icon: "face-smile",
-    type: ActionType.META,
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "credits"
   },
   {
@@ -197,40 +202,51 @@ export const actions: Action[] = [
     action: "privacy",
     label: "Privacy policy",
     icon: "lock-closed",
-    type: ActionType.META,
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "privacy"
   },
   {
     action: "changelog",
     label: "What's new",
     icon: "sparkles",
-    type: ActionType.META,
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "changelog"
   },
   {
     action: "roadmap",
     label: "Roadmap",
     icon: "map",
-    type: ActionType.META,
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "roadmap"
+    // on db - gathery id will be saved for this key ex: roadmap: "gathery:page:id"
   },
   {
     action: "feedback",
     label: "Give feedback",
     icon: "chat-bubble-bottom-center",
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "tallyFeedback"
   },
   {
     action: "requestfeature",
     label: "Request a feature",
     icon: "light-bulb",
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "tallyFeedback"
   },
   {
     action: "report",
     label: "Report an issue",
     icon: "flag",
+    type: ActionType.MODAL,
+    contentType: ContentType.GATHERYDOC,
     link: "tallyFeedback"
+    //"gathery:form:id"
   },
   {
     action: "share",

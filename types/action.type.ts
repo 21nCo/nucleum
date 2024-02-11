@@ -16,7 +16,7 @@ export type Action = {
   sections?: string[];
   pagePaint?: PaintType;
   thinModeBehavior?: ThinModeBehavior;
-  blockType?: BlockType;
+  contentType?: ContentType;
   associatedPlayer?: string;
   context?: string;
   params?: any;
@@ -65,10 +65,11 @@ export enum ThinModeBehavior {
   HIDE
 }
 
-export enum BlockType {
+export enum ContentType {
   BLOCK,
   SECTION,
   INLINE,
   BUTTON,
-  TOGGLE
+  TOGGLE,
+  GATHERYDOC
 }
