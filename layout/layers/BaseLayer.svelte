@@ -9,7 +9,7 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
@@ -20,11 +20,11 @@
     performRedirectionChecks,
     runDboUpdate,
     performLoginStatusCheck,
-    ping,
+    ping
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { pingParent } from "$lib/tidy/utils/embed.utils";
+  import { pingParent, postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import { extractProduct } from "$lib/tidy/utils/utils";
@@ -36,6 +36,20 @@
   };
   const windowClickEventListener = (event: MouseEvent) => {
     appEvents.publish(AppEvent.WINDOW_CLICKED, event);
+  };
+  const messageReceivedListener = (event: any) => {
+    try {
+      console.log("message received", event);
+      appStore.log("message received from iOS");
+      appStore.log(event.data);
+      appStore.log(event.origin);
+      appStore.log(event.source);
+    } catch (e) {
+      console.error(e);
+      appStore.logError(e);
+    }
+
+    // postMessageToParent(event.data);
   };
   let timer: any;
   pingParent();
@@ -132,6 +146,7 @@
     window?.addEventListener("visibilitychange", visibilityChangeListener);
     window?.addEventListener("resize", windowResizeListener);
     window?.addEventListener("click", windowClickEventListener);
+    window?.addEventListener("message", messageReceivedListener);
     window.onpopstate = () => {
       windowObject.setCurrentPath(document.location.pathname);
     };

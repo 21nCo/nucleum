@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import {
-    BlockType,
+    ContentType,
     type Action,
     ThinModeBehavior
   } from "$lib/tidy/types/action.type";
@@ -13,7 +13,7 @@
 </script>
 
 {#if currentComponent && currentComponent.thinModeBehavior != ThinModeBehavior.HIDE}
-  {#if currentComponent.blockType === BlockType.INLINE}
+  {#if currentComponent.contentType === ContentType.INLINE}
     <div class="flex justify-center">
       <ComponentResolver {currentComponent} />
     </div>
