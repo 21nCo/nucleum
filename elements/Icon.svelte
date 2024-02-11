@@ -93,6 +93,7 @@
   import Megaphone from "../icons/Megaphone.svelte";
   import Star from "../icons/Star.svelte";
   import FaceSmile from "../icons/FaceSmile.svelte";
+  import Grab from "../icons/Grab.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -124,6 +125,7 @@
       icon == "link" ||
       icon == "google" ||
       icon == "apple" ||
+      icon == "grab" ||
       icon == "apple-dark" ||
       icon?.includes("-mini")
         ? IconVariant.Solid
@@ -400,6 +402,8 @@
         <Star {variant} />
       {:else if icon === "face-smile"}
         <FaceSmile {variant} />
+      {:else if icon === "grab"}
+        <Grab {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

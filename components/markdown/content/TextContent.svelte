@@ -9,17 +9,25 @@
     type TextContent,
     BlockContext,
     type TextType,
-    ListType,
+    ListType
   } from "$lib/tidy/types/md.type";
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   import { windowObject } from "$lib/tidy/stores/app.store";
+  import { BlockType } from "$lib/tidy/types/action.type";
+  import { escape } from "svelte/internal";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let content: TextContent;
   export let id: string | undefined = undefined;
   export let context: BlockContext = BlockContext.DEFAULT;
+  export let isHovering: boolean = false;
+  export let isFocusing: boolean = false;
+  $: {
+    if (isHovering) assignPlaceholder();
+    else if (!isFocusing) placeholder = "";
+  }
   const mdStore = getMdStore(mdId);
   let blockRef: any;
   let sizing = "";
@@ -29,6 +37,7 @@
       ? "Type / for all blocks"
       : "Start typing... ");
   let blockSpecificPlaceholder: string | undefined = undefined;
+  let placeholder: string;
   let markerId = "caret-marker";
   let isNewSpanInserted = false;
   let caretPosition:
@@ -177,7 +186,7 @@
         range?.endContainer.parentElement?.childNodes ?? []
       ).indexOf(element),
       index: range?.endOffset ?? 0,
-      endContainer: range?.endContainer,
+      endContainer: range?.endContainer
     };
     // console.log("setCaretPosition", range, caretPosition);
   }
@@ -291,6 +300,7 @@
     }
   }
   function setCursorToEnd(element: any) {
+    // console.log("setCursorToEnd", element);
     if (!element) return;
     element.focus();
     const range = document.createRange();
@@ -304,9 +314,18 @@
   onMount(() => {
     // console.log("mounted");
     // console.log({ blockRef, style: blockRef.style.caretColor });
-    if (!$windowObject.isInPortraitMode) blockRef?.focus();
+    // if (!$windowObject.isInPortraitMode) {
+    //   console.log("focusing block from mount", blockRef);
+    //   blockRef?.focus();
+    // }
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
-      if (md.focusedBlockId === id) {
+      if (md.blockToFocus === id) {
+        // console.log("focusing block check", {
+        //   id,
+        //   blockRef,
+        //   blockToFocs: md.blockToFocus,
+        //   context
+        // });
         setCursorToEnd(blockRef);
       }
     });
@@ -315,13 +334,14 @@
     };
   });
   function handleKeyDown(event: any) {
-    // console.log("keydown", event);
+    console.log("keydown", event);
+    //return;
     if (
       (event.key === "Enter" && event.metaKey == true) ||
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
     ) {
       if (id && context === BlockContext.DEFAULT) mdStore.insert(id);
-      else dispatch("insert", { id });
+      else if (content.body != "") dispatch("insert", { id });
       event.preventDefault();
     } else if (event.key === "Backspace" && !content.body) {
       if (id && context === BlockContext.DEFAULT) mdStore.deleteBlock(id);
@@ -330,26 +350,49 @@
     }
   }
 
-  function handleKeyUp(event: any) {
-    // console.log("keyup", event);
-    setCaretPosition();
+  function handleEscShortcutForSecondaryLines(
+    shortcut: string,
+    type: MdBlockType,
+    listType?: ListType
+  ) {
+    if (
+      content.type === MdBlockType.SIMPLE_TEXT &&
+      caretPosition &&
+      caretPosition.endContainer.nodeType === 3 &&
+      caretPosition.endContainer.nodeValue &&
+      caretPosition.endContainer.nodeValue.startsWith(shortcut)
+    ) {
+      //delete the parent <div> of the text node and insert new block with the type
+      content.body = content.body.replace(shortcut, "");
+      if (id) mdStore.insert(id, { blockType: type, listType });
+      setTimeout(() => {
+        let parent = undefined;
+        if (id) parent = document.getElementById(id);
+        // console.log("parent", parent, parent?.lastChild);
+        if (parent && parent.lastChild) {
+          parent.removeChild(parent.lastChild);
+        }
+      }, 10);
+    }
+  }
+  function performEscapeShortcutsT2() {
     const textEscapeShortcuts: { shortcut: string; type: TextType }[] = [
       { shortcut: "# ", type: MdBlockType.HEADING1 },
       { shortcut: "## ", type: MdBlockType.HEADING2 },
       { shortcut: "### ", type: MdBlockType.HEADING3 },
       { shortcut: "#### ", type: MdBlockType.HEADING4 },
       { shortcut: "##### ", type: MdBlockType.HEADING5 },
-      { shortcut: '" ', type: MdBlockType.QUOTE },
+      { shortcut: '" ', type: MdBlockType.QUOTE }
     ];
     const structuralEscapeShortcuts = [
       { shortcut: "---", type: MdBlockType.DIVIDER },
-      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER },
+      { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER }
     ];
     const listEscapeShortcuts = [
       { shortcut: "* ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
       { shortcut: "- ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
       { shortcut: "+ ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED },
+      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED }
     ];
     textEscapeShortcuts.forEach(({ shortcut, type }) => {
       if (typeof content.body !== "string") return;
@@ -357,45 +400,46 @@
         content.body = content.body.replace(shortcut, "");
         content.type = type;
       }
-      if (
-        content.type === MdBlockType.SIMPLE_TEXT &&
-        caretPosition &&
-        caretPosition.endContainer.nodeType === 3 &&
-        caretPosition.endContainer.nodeValue &&
-        caretPosition.endContainer.nodeValue.startsWith(shortcut)
-      ) {
-        //delete the parent <div> of the text node and insert new block with the type
-        content.body = content.body.replace(shortcut, "");
-        if (id) mdStore.insert(id, { blockType: type });
-        setTimeout(() => {
-          let parent = undefined;
-          if (id) parent = document.getElementById(id);
-          // console.log("parent", parent, parent?.lastChild);
-          if (parent && parent.lastChild) {
-            parent.removeChild(parent.lastChild);
-          }
-        }, 10);
+      handleEscShortcutForSecondaryLines(shortcut, type);
+    });
+    structuralEscapeShortcuts.forEach(({ shortcut, type }) => {
+      if (typeof content.body !== "string") return;
+      if (content.body === shortcut) {
+        content.body = "";
+        if (context != BlockContext.DEFAULT || !id) return;
+        mdStore.insert(id, { blockType: type });
       }
     });
+    listEscapeShortcuts.forEach(({ shortcut, type, listType }) => {
+      if (typeof content.body !== "string") return;
+      if (content.body.startsWith(shortcut)) {
+        content.body = content.body.replace(shortcut, "");
+        mdStore.insert(id, { blockType: type, listType });
+        // content.type = type;
+        // content.listType = listType;
+      }
+      handleEscShortcutForSecondaryLines(shortcut, type, listType);
+    });
+  }
 
-    // if (typeof content.body !== "string") return;
-    // if (content.body.startsWith("# ")) {
-    //   content.body = content.body.replace("# ", "");
-    //   content.type = BlockType.HEADING1;
-    // } else if (content.body.startsWith("## ")) {
-    //   content.body = content.body.replace("## ", "");
-    //   content.type = BlockType.HEADING2;
-    // } else if (content.body.startsWith("### ")) {
-    //   content.body = content.body.replace("### ", "");
-    //   content.type = BlockType.HEADING3;
-    // } else if (content.body.startsWith("#### ")) {
-    //   content.body = content.body.replace("#### ", "");
-    //   content.type = BlockType.HEADING4;
-    // } else if (content.body.startsWith("##### ")) {
-    //   content.body = content.body.replace("##### ", "");
-    //   content.type = BlockType.HEADING5;
-    // } else
-    if (content.body === "---") {
+  function performEscapeShortcutsT1() {
+    if (typeof content.body !== "string") return;
+    if (content.body.startsWith("# ")) {
+      content.body = content.body.replace("# ", "");
+      content.type = MdBlockType.HEADING1;
+    } else if (content.body.startsWith("## ")) {
+      content.body = content.body.replace("## ", "");
+      content.type = MdBlockType.HEADING2;
+    } else if (content.body.startsWith("### ")) {
+      content.body = content.body.replace("### ", "");
+      content.type = MdBlockType.HEADING3;
+    } else if (content.body.startsWith("#### ")) {
+      content.body = content.body.replace("#### ", "");
+      content.type = MdBlockType.HEADING4;
+    } else if (content.body.startsWith("##### ")) {
+      content.body = content.body.replace("##### ", "");
+      content.type = MdBlockType.HEADING5;
+    } else if (content.body === "---") {
       content.body = "";
       if (context != BlockContext.DEFAULT || !id) return;
       mdStore.insert(id, { blockType: MdBlockType.DIVIDER });
@@ -403,14 +447,17 @@
       content.body = "";
       if (context != BlockContext.DEFAULT || !id) return;
       mdStore.insert(id, { blockType: MdBlockType.DOUBLE_DIVIDER });
-    } else if (
-      event.key === "Backspace" &&
-      content.type != MdBlockType.SIMPLE_TEXT &&
-      content.body != "" &&
-      caretPosition?.index === 0
-    ) {
-      content.type = MdBlockType.SIMPLE_TEXT;
-    } else if (
+    }
+  }
+
+  function handleKeyUp(event: any) {
+    console.log("keyup", event);
+    setCaretPosition();
+    //performEscapeShortcutsT1();
+    performEscapeShortcutsT2();
+    handleListContext();
+    handleBackspaceAtStart();
+    if (
       event.key === "Backspace" &&
       content.type === MdBlockType.SIMPLE_TEXT &&
       content.body != "" &&
@@ -432,6 +479,32 @@
     )
       refreshInlineStyling();
     mdContentChangeEvent.trigger();
+
+    /**
+     * Function to handle backspace at the start of the block. Removes formatting of heading, quote, etc.
+     */
+    function handleBackspaceAtStart() {
+      if (
+        event.key === "Backspace" &&
+        content.type != MdBlockType.SIMPLE_TEXT &&
+        content.body != "" &&
+        caretPosition?.index === 0
+      ) {
+        content.type = MdBlockType.SIMPLE_TEXT;
+      }
+    }
+
+    function handleListContext() {
+      if (
+        context === BlockContext.LIST_CHILD &&
+        event.key === "Backspace" &&
+        content.body === "" &&
+        caretPosition?.index === 0
+      ) {
+        console.log("converting to simple text");
+        mdStore.convert(id, MdBlockType.SIMPLE_TEXT);
+      }
+    }
   }
   function replaceWithUnicodeCharacters() {
     // console.log("replaceWithUnicodeCharacters");
@@ -441,7 +514,7 @@
       { regex: /&lt;-/g, replacement: "←" },
       { regex: /&lt;=/g, replacement: "≤" },
       { regex: /&gt;=/g, replacement: "≥" },
-      { regex: /=&gt;/g, replacement: "⇒" },
+      { regex: /=&gt;/g, replacement: "⇒" }
     ];
     executeReplace(patterns);
   }
@@ -460,7 +533,7 @@
           caretPosition = {
             ...caretPosition,
             index: caretPosition?.index ?? 0,
-            elementId: focusedSpan,
+            elementId: focusedSpan
           };
           isNewSpanInserted = true;
           content.body = content.body.replace(
@@ -495,16 +568,16 @@
       { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
       {
         regex: /~~((?:\S|\s\S)+?)~~/g,
-        replacement: '<span class="line-through">$1</span>',
+        replacement: '<span class="line-through">$1</span>'
       },
       {
         regex: /`((?:\S|\s\S)+?)`/g,
-        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>',
+        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>'
       },
       {
         regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-        replacement: '<span style="color:$2">$1</span>',
-      },
+        replacement: '<span style="color:$2">$1</span>'
+      }
     ];
     executeReplace(patterns, true);
     //insertCaretMarker();
@@ -584,16 +657,19 @@
       array.push(binary.charCodeAt(j));
     }
     let blobData = new Blob([new Uint8Array(array)], {
-      type: "image/jpeg",
+      type: "image/jpeg"
     });
     const result = await fetch(signedUrl, {
       method: "PUT",
-      body: blobData,
+      body: blobData
     });
     console.log("result", result);
     if (result.status === 200) {
       content.body = content.body + `<img src="${signedUrl}"/>`;
     }
+  }
+  function assignPlaceholder() {
+    placeholder = blockSpecificPlaceholder ?? defaultPlaceholder;
   }
 </script>
 
@@ -615,13 +691,29 @@
         bind:this={blockRef}
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none {sizing}"
+        class="w-full h-full outline-none py-2 {sizing} {content.type ===
+        MdBlockType.QUOTE
+          ? 'px-2'
+          : 'px-1'}"
         on:keyup={handleKeyUp}
-        on:keydown={handleKeyDown}
+        on:keydown|stopPropagation={handleKeyDown}
         on:keypress={handleKeyPress}
         on:mouseup={handleMouseup}
         bind:innerHTML={content.body}
+        on:pointerenter
+        on:pointerleave
+        on:blur={() => {
+          isFocusing = false;
+          placeholder = "";
+          dispatch("blur");
+        }}
+        on:focus={() => {
+          console.log("focusing", id);
+          isFocusing = true;
+          assignPlaceholder();
+        }}
         contenteditable
+        {placeholder}
       ></div>
       <!--         on:paste={handlePaste} -->
     {/if}
@@ -637,20 +729,29 @@
   </div>
 {/if}
 {#if !content.body && !$mdStore.params.isReadOnly}
-  <button
+  <!-- <button
     on:click={() => {
       blockRef.focus();
     }}
-    class="absolute top-0 left-0 cursor-text {sizing} {blockSpecificPlaceholder
+    class="absolute top-0 left-0 cursor-text py-2 {sizing} {blockSpecificPlaceholder
       ? 'text-bgs4'
-      : 'text-fgs3 ml-1'}"
+      : 'text-fgs3 ml-1'} {content.type === MdBlockType.QUOTE
+      ? 'px-2'
+      : 'px-1'}"
   >
     {blockSpecificPlaceholder ?? defaultPlaceholder}
-  </button>
+  </button> -->
 {/if}
 
 <style>
   div[contenteditable] {
     caret-color: rgba(var(--colors-fgs2), 1) !important;
+  }
+  div[contenteditable]:empty::after {
+    content: attr(placeholder);
+    color: rgba(var(--colors-fgs3), 1);
+  }
+  [contenteditable]::selection {
+    background-color: rgba(var(--colors-aps1), 0.3);
   }
 </style>

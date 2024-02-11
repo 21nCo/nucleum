@@ -2,13 +2,16 @@
   import {
     MdBlockType,
     type BlockContent,
-    BlockContext,
+    BlockContext
   } from "$lib/tidy/types/md.type";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
   export let mdId: string;
   export let content: BlockContent;
   export let id: string | undefined = undefined;
+  export let parentHierarchy: string[] = [];
+  export let isHovering: boolean = false;
+  export let isFocusing: boolean = false;
   export let context: BlockContext = BlockContext.DEFAULT;
 </script>
 
@@ -21,8 +24,25 @@
       <div class="h-px bg-bgs4"></div>
     </div>
   {:else if content.type === MdBlockType.LIST}
-    <ListContent {content} {id} {mdId} />
+    <ListContent
+      {isHovering}
+      {parentHierarchy}
+      {content}
+      {id}
+      {mdId}
+      bind:isFocusing
+      on:blur
+    />
   {:else if "body" in content}
-    <TextContent {content} {id} {mdId} {context} on:insert />
+    <TextContent
+      {content}
+      {id}
+      {mdId}
+      {context}
+      {isHovering}
+      bind:isFocusing
+      on:insert
+      on:blur
+    />
   {/if}
 </div>

@@ -3,7 +3,7 @@ import type { DbRecordBase } from "./dbrecord.type";
 export type MdStore = {
   md: NodeMarkdown | undefined;
   blocks: Block[];
-  focusedBlockId?: string;
+  blockToFocus?: string;
   context: MdContext;
   params?: MdParams;
 };
@@ -40,7 +40,6 @@ export type ListContent = {
 };
 
 export type ListChild = {
-  order: number;
   id: string;
   content: BlockContent;
 };
@@ -69,12 +68,12 @@ export enum SpanType {
   LINK = "LINK",
   REFERENCE = "REFERENCE",
   CODE = "CODE",
-  COLOR = "COLOR",
+  COLOR = "COLOR"
 }
 
 export enum ListType {
   ORDERED = "ORDERED",
-  UNORDERED = "UNORDERED",
+  UNORDERED = "UNORDERED"
 }
 
 export type TextType =
@@ -99,12 +98,12 @@ export enum MdBlockType {
   LIST = "LIST",
   MARKDOWN = "MARKDOWN",
   DIVIDER = "DIVIDER",
-  DOUBLE_DIVIDER = "DOUBLE_DIVIDER",
+  DOUBLE_DIVIDER = "DOUBLE_DIVIDER"
 }
 
 export enum MdContext {
   NODE = "NODE",
-  BASIC = "BASIC",
+  BASIC = "BASIC"
 }
 
 export type MdParams = {
@@ -116,5 +115,5 @@ export type MdParams = {
 
 export enum BlockContext {
   DEFAULT = "DEFAULT",
-  LIST_CHILD = "LIST_CHILD",
+  LIST_CHILD = "LIST_CHILD"
 }

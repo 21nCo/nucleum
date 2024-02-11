@@ -3,7 +3,7 @@
     NodeMarkdown,
     MdContext,
     MdParams,
-    BasicMarkdown,
+    BasicMarkdown
   } from "$lib/tidy/types/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
@@ -19,8 +19,9 @@
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
   const mdId = generateUID();
-  const mdStore = getMdStore(mdId);
+  const mdStore: any = getMdStore(mdId);
   mdStore.load(md, context, params);
+  $: console.log("blocks", $mdStore.blocks);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       // console.log("md content changed", val);
@@ -75,7 +76,7 @@
       {/if}
     </div>
   </div>
-  <div class="flex-grow w-full">
+  <div class="grow w-full">
     {#each $mdStore.blocks as block (block.id)}
       <Block {block} {mdId} />
     {/each}
