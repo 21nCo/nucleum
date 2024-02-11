@@ -40,6 +40,8 @@ function cssStyle(color: string, colorType: ColorType) {
       return `outline-color: ${color};`;
     case ColorType.Border:
       return `border-color: ${color};`;
+    case ColorType.Fill:
+      return `fill: ${color};`;
     default:
       return ``;
   }
