@@ -2,17 +2,15 @@
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import {
-    account,
     appStore,
     userPreferences,
     windowObject
   } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { IconVariant } from "$lib/tidy/types/icon.type";
+  import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { openLink, runAction } from "$lib/tidy/utils/utils";
-  import { onMount } from "svelte";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   //let isCpActive: boolean = false;
@@ -32,7 +30,7 @@
     ? 'h-24'
     : 'h-12'}"
 >
-  {#if $appStore.appData.leftPanelFooter === "simple"}
+  {#if $appStore.appData.leftPanelFooter === "simple" || !$appStore.appData.leftPanelFooter}
     <div
       class="w-full h-full flex {isInThinMode
         ? 'flex-col items-center'
@@ -47,6 +45,7 @@
       >
         <Icon
           icon="settings"
+          size={isInThinMode ? Size.md : Size.sm}
           isActive={isCpActive}
           selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
         />
@@ -60,7 +59,7 @@
           runAction(AppEvent.HELP);
         }}
       >
-        <Icon icon="help" />
+        <Icon icon="help" size={isInThinMode ? Size.md : Size.sm} />
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}

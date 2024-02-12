@@ -3,6 +3,7 @@
   import ActiveBackgroundElement from "$lib/tidy/elements/Style/ActiveBackgroundElement.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
+  import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { resolveComponent } from "$lib/tidy/utils/utils";
   export let action: string;
@@ -26,7 +27,12 @@
   >
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
-        <Icon icon={component.icon ?? "info"} {isActive} {selectionStyle} />
+        <Icon
+          size={Size.sm}
+          icon={component.icon ?? "info"}
+          {isActive}
+          {selectionStyle}
+        />
         <div>{component.alternateLabel ?? component.label}</div>
       </div>
       <Icon

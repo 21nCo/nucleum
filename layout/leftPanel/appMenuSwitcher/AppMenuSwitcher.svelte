@@ -57,6 +57,7 @@
         {parentBackgroundIndex}
         {layoutContext}
         isShowLabel={layoutContext == LayoutContext.DEFAULT ||
+          layoutContext == LayoutContext.PORTRAIT ||
           (layoutContext === LayoutContext.MINIMIZED && isHovered)}
         on:click={() => {
           selected = index;

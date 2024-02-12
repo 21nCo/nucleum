@@ -144,9 +144,9 @@
           ? 'w-8 h-8'
           : size == Size.md
             ? 'w-6 h-6'
-            : size == Size.xs
-              ? 'w-4 h-4'
-              : 'w-3 h-3'} {variant === IconVariant.Outline
+            : size == Size.sm
+              ? 'w-[1.25rem] h-[1.25rem]'
+              : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'

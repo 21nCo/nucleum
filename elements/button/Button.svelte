@@ -34,7 +34,25 @@
     classList =
       "flex flex-row justify-center items-center min-w-fit rounded-full" +
       ` ${width} `;
-    if ($windowObject.isInPortraitMode) {
+    if (style === ButtonStyle.ROUNDED && !label && icon && !$$slots.default) {
+      switch (size) {
+        case Size.xl:
+          classList += " p-6";
+          break;
+        case Size.lg:
+          classList += " p-5";
+          break;
+        case Size.md:
+          classList += " h-[3.5rem] p-4";
+          break;
+        case Size.sm:
+          classList += " p-3";
+          break;
+        case Size.xs:
+          classList += " p-2";
+          break;
+      }
+    } else if ($windowObject.isInPortraitMode) {
       switch (size) {
         case Size.xl:
           classList += " h-12 gap-6 text-h2";
@@ -43,7 +61,7 @@
           classList += " h-12 gap-4 text-h5";
           break;
         case Size.md:
-          classList += " h-12 gap-2 text-b1";
+          classList += " h-[2.75rem] gap-2 text-b1";
           break;
         case Size.sm:
           classList += " h-8 gap-2 text-b2";
@@ -55,13 +73,13 @@
     } else {
       switch (size) {
         case Size.xl:
-          classList += " h-14 gap-6 text-h2";
+          classList += " h-12 gap-6 text-h2";
           break;
         case Size.lg:
-          classList += " h-14 gap-4 text-h5";
+          classList += " h-12 gap-4 text-h5";
           break;
         case Size.md:
-          classList += " h-12 gap-2 text-base";
+          classList += " h-[2.75rem] gap-2 text-base";
           break;
         case Size.sm:
           classList += " h-10 gap-2 text-b2";
@@ -87,25 +105,6 @@
           break;
         case Size.xs:
           classList += " py-1.5 px-3";
-          break;
-      }
-    }
-    if (style === ButtonStyle.ROUNDED && !label && icon && !$$slots.default) {
-      switch (size) {
-        case Size.xl:
-          classList += " p-6";
-          break;
-        case Size.lg:
-          classList += " p-5";
-          break;
-        case Size.md:
-          classList += " h-[3.5rem] p-4";
-          break;
-        case Size.sm:
-          classList += " p-3";
-          break;
-        case Size.xs:
-          classList += " p-2";
           break;
       }
     }
