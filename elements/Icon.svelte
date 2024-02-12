@@ -39,7 +39,7 @@
   import AreaChart from "../icons/AreaChart.svelte";
   import {
     resolveIfActiveFgFg,
-    retrieveCurrentColors
+    retrieveCurrentColors,
   } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
@@ -138,15 +138,14 @@
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
-      class="flex items-center justify-center {size == Size.xl
-        ? 'w-10 h-10'
-        : size == Size.lg
-          ? 'w-8 h-8'
-          : size == Size.md
-            ? 'w-6 h-6'
-            : size == Size.sm
-              ? 'w-[1.25rem] h-[1.25rem]'
-              : 'w-4 h-4'} {variant === IconVariant.Outline
+      class="flex items-center justify-center {size == Size.xl ||
+      size == Size.lg
+        ? 'w-8 h-8'
+        : size == Size.md
+          ? 'w-6 h-6'
+          : size == Size.sm
+            ? 'w-[1.25rem] h-[1.25rem]'
+            : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
