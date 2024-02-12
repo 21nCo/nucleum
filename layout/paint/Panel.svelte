@@ -18,7 +18,7 @@
     : 'w-[26rem] min-w-[26rem]'} "
 >
   {#if title}
-    <div class="p-4">
+    <div class={$windowObject.isInPortraitMode ? "px-4 py-2" : "p-4"}>
       <Text style={titleStyle} content={title} />
     </div>
   {/if}

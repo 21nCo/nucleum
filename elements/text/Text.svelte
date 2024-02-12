@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { onMount } from "svelte";
@@ -12,11 +12,15 @@
     switch (style) {
       case TextStyle.PAGE_HEADING:
         classList +=
-          "  bg-none text-h1 font-medium" +
+          ($windowObject.isInPortraitMode ? "text-h2" : "text-h1") +
+          "  bg-none font-medium" +
           (!$userPreferences.colorScheme.isActiveFgFg ? " text-a1" : "");
         break;
       case TextStyle.PANEL_HEADING:
         classList += " text-h3 font-medium text-fgs2 bg-none ";
+        break;
+      case TextStyle.PANEL_HEADING_SMALL:
+        classList += " text-h4 font-medium text-fgs2 bg-none ";
         break;
       case TextStyle.SECTION_DESCRIPTION:
         classList += " text-fgs3";

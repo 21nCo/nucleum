@@ -36,13 +36,19 @@
         <div>{component.alternateLabel ?? component.label}</div>
       </div>
       <Icon
+        size={Size.sm}
         icon={component.link ? "link" : "chevright"}
         {isActive}
         {selectionStyle}
       />
     {:else}
       <div class="flex flex-col items-center gap-2">
-        <Icon icon={component.icon} {isActive} {selectionStyle} />
+        <Icon
+          size={Size.sm}
+          icon={component.icon}
+          {isActive}
+          {selectionStyle}
+        />
         <div>{component.alternateLabel ?? component.label}</div>
       </div>
     {/if}

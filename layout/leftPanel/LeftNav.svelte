@@ -49,7 +49,7 @@
         <ComponentResolver path={$appStore.player} />
       {/if}
       <div
-        class=" border-t border-bgs2 w-full min-w-min pb-6 pt-4 {$userPreferences.theme ===
+        class=" border-t border-bgs2 w-full min-w-min pb-8 pt-3 {$userPreferences.theme ===
         AppTheme.Glassy
           ? 'glassmenubar'
           : bgClass($userPreferences.theme, 0)} {borderColor(

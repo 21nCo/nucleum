@@ -43,17 +43,17 @@
     ? layoutContext === LayoutContext.PORTRAIT
       ? 'flex-col gap-1 text-b5 rounded-lg'
       : 'text-b2 gap-2 rounded-lg p-3 h-10'
-    : 'p-4 rounded-full'} {textColorClass(
-    $userPreferences,
-    ColorStrength.Normal,
-    isActive && !(layoutContext === LayoutContext.PORTRAIT),
-    -1
-  )} {isActive &&
+    : 'p-4 rounded-full'} {isActive &&
     (layoutContext === LayoutContext.DEFAULT ||
       layoutContext === LayoutContext.MINIMIZED) &&
-    'bg-a1'} {isActive &&
-    layoutContext === LayoutContext.PORTRAIT &&
-    'text-aps1'}"
+    'bg-a1'} {isActive && layoutContext === LayoutContext.PORTRAIT
+    ? ' text-aps1'
+    : textColorClass(
+        $userPreferences,
+        ColorStrength.Normal,
+        isActive && !(layoutContext === LayoutContext.PORTRAIT),
+        -1
+      )}"
   on:click={onClick}
   on:pointerenter={onHover}
 >
@@ -63,7 +63,10 @@
       <Icon
         icon={item.icon}
         {isActive}
-        size={layoutContext === LayoutContext.THIN ? Size.md : Size.sm}
+        size={layoutContext === LayoutContext.THIN ||
+        layoutContext === LayoutContext.PORTRAIT
+          ? Size.md
+          : Size.sm}
         selectionStyle={layoutContext === LayoutContext.PORTRAIT ||
         layoutContext === LayoutContext.THIN
           ? SelectionItemActiveStyle.ACCENT_COLOR
