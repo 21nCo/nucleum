@@ -12,7 +12,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col items-start gap-2">
   <div class="text-fgs2">Block sizing</div>
   <SizeFactorSelector
     on:change={onChange}

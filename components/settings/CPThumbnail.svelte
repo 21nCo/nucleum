@@ -9,10 +9,13 @@
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let width: string = "w-24";
-  export let parentBackgroundIndex: number = 0;
+  export let parentBackgroundIndex: number = 1;
+  export let isActive: boolean = false;
+  export let setActiveByPath: boolean = false;
   let selectionStyle = SelectionItemActiveStyle.ACCENT_BACKGROUND;
   let component = resolveComponent(action);
-  $: isActive = $windowObject.currentPath === "/" + component?.path;
+  $: if (setActiveByPath)
+    isActive = $windowObject.currentPath === "/" + component?.path;
 </script>
 
 {#if component}
@@ -22,7 +25,9 @@
       : 'flex px-4 py-2 w-full items-center justify-between'} {orientation ===
       Orientation.Vertical && width}"
     isBackgroundActive={isActive}
-    bgWhenInactive={orientation === Orientation.Vertical ? 2 : 1}
+    bgWhenInactive={orientation === Orientation.Vertical
+      ? parentBackgroundIndex + 1
+      : parentBackgroundIndex}
     on:click
   >
     {#if orientation === Orientation.Horizontal}

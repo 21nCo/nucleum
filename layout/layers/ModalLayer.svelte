@@ -140,19 +140,17 @@
     isDismissable={modal.isDismissable ?? true}
     isFullScreen={modal.layoutParams?.size === Size.full}
   >
-    {#if modal.layoutParams}
-      <ModalLayout layoutParams={modal.layoutParams} bind:params={modal}>
-        <ComponentResolver
-          path={modal.path}
-          params={{ id: modal.id, ...modal.componentParams, params: modal }}
-        />
-      </ModalLayout>
-    {:else}
+    <ModalLayout
+      layoutParams={modal.layoutParams ?? {
+        size: Size.md
+      }}
+      bind:params={modal}
+    >
       <ComponentResolver
         path={modal.path}
         params={{ id: modal.id, ...modal.componentParams, params: modal }}
       />
-    {/if}
+    </ModalLayout>
   </Modal>
 {/each}
 

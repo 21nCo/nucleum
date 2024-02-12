@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import {
     account,
@@ -11,6 +11,8 @@
   import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/utils";
   import ProfilePicture from "./ProfilePicture.svelte";
+  export let context: "page" | "modal" = "page";
+  export let parentBackgroundIndex: number = 1;
   function determineLicense() {
     if ($account.userInfo?.licenseType) {
       switch ($account.userInfo?.licenseType) {
@@ -34,17 +36,15 @@
 </script>
 
 <div
-  class="rounded-lg mx-4 h-40 min-h-[10rem] {bgClass(
+  class="h-40 min-h-[10rem] {bgClass(
     $userPreferences.theme,
-    1
-  )}"
+    parentBackgroundIndex
+  )} {context === 'page' ? 'mx-4 rounded-lg' : 'w-full'}"
 >
   {#if $account.isLoggedIn}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
-      on:click={() => {
-        windowObject.gotoPath("/cp/account");
-      }}
+      on:click
     >
       <div class="flex w-full justify-end text-b5 text-fgs3 px-3 pt-2">
         {$account.userInfo?.joinDate
@@ -69,7 +69,10 @@
       </div>
       <div class="flex w-full justify-end">
         <div
-          class="text-b3 bg-ags1 text-bgs1 px-3 py-1 rounded-br-md rounded-tl-md"
+          class="text-b3 bg-ags1 text-bgs1 px-3 py-1 rounded-tl-md {context ===
+          'page'
+            ? 'rounded-br-md'
+            : ''}"
         >
           {determineLicense()}
         </div>
@@ -88,7 +91,7 @@
           label="Go to signup/signin"
           parentBackgroundIndex={2}
           size={Size.sm}
-          on:click={() => windowObject.gotoPath("/cp/account")}
+          on:click
         />
       </div>
     </div>

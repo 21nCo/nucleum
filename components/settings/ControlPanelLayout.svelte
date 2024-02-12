@@ -66,7 +66,9 @@
           ? 'pb-40'
           : 'pb-20'}"
       >
-        <ProfileCpSection />
+        <ProfileCpSection
+          on:click={() => windowObject.gotoPath("/cp/account")}
+        />
         {#if cpConfiguration}
           {#each Object.keys(cpConfiguration) as item}
             <CpThumbnailList

@@ -9,12 +9,14 @@
   import ModalHeader from "./ModalHeader.svelte";
   import type {
     ModalLayoutParams,
-    ModalParams,
+    ModalParams
   } from "$lib/tidy/types/popup.type";
   import { fade, blur, fly, slide, scale, draw } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   export let params: ModalParams;
   export let layoutParams: ModalLayoutParams;
+  console.log({ layoutParams });
+  if (!layoutParams.size) layoutParams.size = Size.md;
   let footerRef: any;
   let sizingClass = "";
   resolveSize();
@@ -77,17 +79,18 @@
           break;
         case Size.lg:
           sizingClass =
-            "w-[21rem] sm:w-[35rem] md:w-[45rem] h-[30rem] min-h-[30rem]";
+            "w-[21rem] sm:w-[35rem] md:w-[50rem] h-[45rem] min-h-[45rem]";
           break;
         case Size.xl:
           sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[50rem] h-[50rem] min-h-[45rem]";
+            "w-[21rem] sm:w-[30rem] md:w-[70rem] h-[50rem] min-h-[45rem]";
           break;
         case Size.full:
           sizingClass = "w-full h-full min-h-screen min-w-screen";
           break;
         default:
-          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
+          sizingClass =
+            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[25rem] min-h-[25rem]";
           break;
       }
       return;
@@ -103,7 +106,7 @@
       easing: quintOut,
       x: 0,
       y: 100,
-      opacity: 0,
+      opacity: 0
     }}
     class="fixed inset-0 flex justify-center items-center"
   >
@@ -123,7 +126,7 @@
       easing: quintOut,
       x: 0,
       y: 100,
-      opacity: 0,
+      opacity: 0
     }}
   >
     {#if !layoutParams.ignoreSafeArea}

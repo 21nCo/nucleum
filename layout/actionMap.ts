@@ -7,17 +7,9 @@ import {
   ContentType
 } from "$lib/tidy/types/action.type";
 import NotFound from "../components/error/PageError.svelte";
-import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
-import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
 import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
-import AccountSettings from "../components/settings/account/AccountSettings.svelte";
-import ControlPanel from "../components/settings/ControlPanel.svelte";
-import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
-import AboutSettings from "../components/settings/about/AboutSettings.svelte";
-import ShareToFriends from "../components/settings/ShareToFriends.svelte";
-import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
 import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
 import CommandBar from "../components/commandBar/CommandBar.svelte";
@@ -25,7 +17,6 @@ import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { AppEvent } from "../types/event.enum";
 import { appStore, isInEditMode } from "../stores/app.store";
-import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 
@@ -53,20 +44,6 @@ export const actions: Action[] = [
     component: DebugLogs
   },
   {
-    action: "cp",
-    label: "Settings",
-    icon: "settings",
-    type: ActionType.PAGE,
-    component: ControlPanel
-  },
-  {
-    action: "account",
-    label: "Account Settings",
-    path: "cp/account",
-    type: ActionType.PAGE,
-    component: AccountSettings
-  },
-  {
     label: "Appearance",
     action: "settings/appearance",
     component: AppearanceSettings,
@@ -84,49 +61,7 @@ export const actions: Action[] = [
     type: ActionType.META,
     thinModeBehavior: ThinModeBehavior.HIDE
   },
-  {
-    action: "accessibility",
-    label: "Accessibility Settings",
-    alternateLabel: "Accessibility",
-    path: "cp/accessibility",
-    icon: "cube",
-    type: ActionType.PAGE,
-    component: AccessibilitySettings
-  },
-  {
-    action: "theme",
-    label: "Theme Settings",
-    alternateLabel: "Theme",
-    path: "cp/theme",
-    icon: "palette",
-    type: ActionType.PAGE,
-    component: ThemeSettingView
-  },
-  {
-    action: "appMenu",
-    label: "App Menu",
-    path: "cp/appMenu",
-    icon: "list",
-    isInactive: true,
-    component: AppMenuSettings
-  },
-  {
-    action: "shortcuts",
-    label: "Shortcuts",
-    path: "cp/shortcuts",
-    icon: "command",
-    type: ActionType.META_PAGE,
-    component: ShortcutSettings
-  },
-  {
-    action: "datetime-settings",
-    label: "Date & Time Settings",
-    alternateLabel: "Date & Time",
-    path: "cp/datetime-settings",
-    icon: "sun",
-    type: ActionType.PAGE,
-    component: DateTimeSettings
-  },
+
   {
     action: "productguide",
     label: "Product guide",
@@ -250,22 +185,6 @@ export const actions: Action[] = [
     //"gathery:form:id"
   },
   {
-    action: "share",
-    path: "cp/share",
-    label: "Refer a friend",
-    icon: "share",
-    type: ActionType.META_PAGE,
-    component: ShareToFriends
-  },
-  {
-    action: "about",
-    label: "About us",
-    path: "cp/about",
-    icon: "info",
-    type: ActionType.META_PAGE,
-    component: AboutSettings
-  },
-  {
     action: "STATUS_UPDATE",
     component: ToastModalPortrait,
     type: ActionType.META_MODAL
@@ -283,7 +202,7 @@ export const actions: Action[] = [
     component: Help,
     modalParams: {
       layoutParams: {
-        size: Size.xl,
+        size: Size.lg,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }

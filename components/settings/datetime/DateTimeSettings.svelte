@@ -6,7 +6,7 @@
   import MultiselectDropdown from "$lib/tidy/elements/dropdown/MultiselectDropdown.svelte";
   import {
     DropDownStyle,
-    type DropdownItem,
+    type DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/tidy/types/button.type";
@@ -16,13 +16,13 @@
   import {
     detectTimeZone,
     getTimeZonesWithOffsets,
-    offsetInSeconds,
+    offsetInSeconds
   } from "$lib/tidy/utils/time.utils";
   let timeZones: (Omit<DropdownItem, "value"> & { value: number })[];
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
       label: properCase(key),
-      value: TimeScale[key],
+      value: TimeScale[key]
     };
   });
   onMount(() => {
@@ -30,7 +30,7 @@
     timeZones = rawZones.map((zone) => {
       return {
         label: zone.name + " (UTC" + zone.offset + ")",
-        value: offsetInSeconds(zone.offset),
+        value: offsetInSeconds(zone.offset)
       };
     });
     let selectedTimezone;
@@ -47,7 +47,7 @@
   });
 </script>
 
-<div class="flex flex-col max-w-lg gap-4">
+<div class="flex flex-col max-w-lg w-full gap-4">
   <MultiselectDropdown
     label="Time scales"
     info="Only selected time scales will be used throughout the application eg: Analytics, targets etc"
