@@ -1,8 +1,7 @@
 import { onDestroy } from "svelte";
-import { localActions } from "$lib/local/stores/localActionMap";
-import { actions } from "$lib/tidy/layout/actionMap";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
 import {
+  actions,
   appStore,
   confirmationNotification,
   modalEvent,
@@ -152,11 +151,7 @@ export function generateSessionId(timestamp: number) {
 }
 
 export function resolveComponent(action: string) {
-  let component = localActions.find(
-    (x) => x.action.toLowerCase() == action.toLowerCase()
-  );
-  if (component) return component;
-  component = actions.find(
+  let component = get(actions).find(
     (x) => x.action.toLowerCase() == action.toLowerCase()
   );
   if (component) return component;
@@ -164,13 +159,10 @@ export function resolveComponent(action: string) {
 }
 
 export function resolveComponentFromPath(path: string) {
-  let component = localActions.find((x) => x.path == path);
+  let component = get(actions).find((x) => x.path == path);
   if (component) return component;
-  component = localActions.find((x) => x.action == path);
+  component = get(actions).find((x) => x.action == path);
   if (component) return component;
-  component = actions.find((x) => x.path == path);
-  if (component) return component;
-  component = actions.find((x) => x.action == path);
   if (component) return component;
   return null;
 }
@@ -238,12 +230,8 @@ export function runNavigationAction(action: Action) {
 
 export function getAssociatedPlayerFromPath(path: string) {
   let player = undefined;
-  let component = localActions.find((x) => x.associatedPlayer == path);
+  let component = get(actions).find((x) => x.associatedPlayer == path);
   if (component) player = component;
-  else {
-    component = actions.find((x) => x.associatedPlayer == path);
-    if (component) player = component;
-  }
   return player;
 }
 export function getAppLoadContext() {

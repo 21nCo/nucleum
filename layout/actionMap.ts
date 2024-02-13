@@ -20,7 +20,7 @@ import { appStore, isInEditMode } from "../stores/app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 
-export const actions: Action[] = [
+export const globalActions: Action[] = [
   {
     action: "404",
     type: ActionType.META_PAGE,

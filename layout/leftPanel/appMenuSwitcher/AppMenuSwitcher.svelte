@@ -28,12 +28,15 @@
       } else {
         items = x.appMenu.filter((item) => item !== "cp");
       }
+      console.log("app menu items", { items });
       items.forEach((action: string) => {
         const currentPage = resolveComponent(action);
         if (currentPage) {
           pages.push(currentPage);
         }
       });
+      console.log("app menu pages", { pages });
+
       let currentPath = window?.location?.pathname?.replace("/", "");
       let currentPage = pages.find((item) =>
         currentPath.includes(item.path ?? item.action)
@@ -48,7 +51,7 @@
 
 <div
   class="flex {layoutContext === LayoutContext.PORTRAIT
-    ? 'justify-around items-center px-4'
+    ? 'justify-around items-center px-2'
     : 'flex-col justify-center rounded-lg'} min-w-min w-full"
 >
   {#each pages as item, index}

@@ -4,8 +4,10 @@
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
     account,
+    actions,
     app,
     appEvents,
+    appLoadingState,
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
@@ -58,6 +60,7 @@
     await parseEmbedToken();
     await initializeData();
     const appEventSub = appEvents.subscribe(windowVisibilityHandler);
+    $appLoadingState.isBaseLoaded = true;
     return () => {
       appEventSub();
       clearInterval(timer);
@@ -102,6 +105,7 @@
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
     await new Persistance().initializeAppData();
+    actions.updateSettingsActionMap();
     const currentVersion = $appStore.appData.version;
     if (
       !excludedPathsForRedirectionCheck.includes(

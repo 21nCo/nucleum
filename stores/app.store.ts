@@ -46,6 +46,10 @@ import type {
 } from "../types/CalendarHeatMapData.type";
 import { Orientation } from "../types/direction.enum";
 import { UiState } from "../types/uiState.enum";
+import { globalActions } from "../layout/actionMap";
+import { localActions } from "$lib/local/stores/localActionMap";
+import { settingsAsModal, settingsAsPages } from "../layout/settingsActionMap";
+import type { Action } from "../types/action.type";
 export const app = writable<{ product: string; env: string }>({
   product: "tidy",
   env: "dev"
@@ -54,9 +58,16 @@ export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 export const isRefreshingToken = writable(false);
-export const isAppInLoadingState = writable(true);
+export const appLoadingState = writable<{
+  isBaseLoaded: boolean;
+  isLocalLoaded: boolean;
+}>({ isBaseLoaded: false, isLocalLoaded: false });
 export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
+
+/**
+ * Calendar Heatmap stores
+ */
 export const CalendarHeatMapData = writable<{
   data: any;
   target: number;
@@ -74,6 +85,10 @@ export const CalendarHeatMapstoreColors = readable<string[]>([
   "#407C3C"
 ]);
 export const calendarHmSelectedTile = writable<string>("");
+
+/**
+ * Paths that are excluded to redirection checks like login
+ */
 export const excludedPathsForRedirectionCheck = [
   "expired",
   "signup",
@@ -119,6 +134,12 @@ export const windowObject = initWindow({
   isMenuHidden: false
 });
 
+/**
+ * Determines whether the app menu should be hidden for a path
+ * @param newPath path which needs to checked
+ * @param n windowObject
+ * @returns a boolean whether app menu should be hidden or not
+ */
 function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
   const path = newPath.split("?")[0];
   if (path.split("/")[1]) {
@@ -208,6 +229,29 @@ function initWindow(settings: WindowObject) {
       }
       if (params) goto(path, params);
       else goto(path);
+    }
+  };
+}
+
+export const actions = initActions();
+
+function initActions() {
+  const modifiedGlobalActions = globalActions.filter(
+    (x) => !localActions.some((y) => y.action === x.action)
+  );
+  let actions = [...modifiedGlobalActions, ...localActions];
+  const { subscribe, update, set } = writable<Action[]>(actions);
+  return {
+    subscribe,
+    updateSettingsActionMap: () => {
+      const isSettingsAsModal = get(appStore).appData?.isSettingsAsModal;
+      const isInPortraitMode = get(windowObject).isInPortraitMode;
+      update((n) => {
+        console.log({ isInPortraitMode, isSettingsAsModal });
+        if (isInPortraitMode || !isSettingsAsModal)
+          return [...n, ...settingsAsPages];
+        else return [...n, ...settingsAsModal];
+      });
     }
   };
 }
@@ -497,8 +541,9 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         n.fullScreenComponentPath = undefined;
         modalEvent.hide();
@@ -508,8 +553,9 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         }
         return n;
       });

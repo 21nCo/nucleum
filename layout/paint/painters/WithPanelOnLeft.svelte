@@ -1,9 +1,13 @@
 <script lang="ts">
-  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import {
+    actions,
+    userPreferences,
+    windowObject
+  } from "$lib/tidy/stores/app.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import { actions } from "$lib/tidy/layout/actionMap";
-  export let currentComponent: Action = actions[0];
+  import { AppTheme } from "$lib/tidy/types/theme.type";
+  export let currentComponent: Action = $actions[0];
   let pad: number;
   $: if ($windowObject.documentHeight) {
     let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
@@ -15,7 +19,7 @@
   <div class="flex justify-center h-full w-full items-center">
     <div
       class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
-      'Colorful'
+      AppTheme.Glassy
         ? 'glasspanel'
         : 'bg-bgs2'}"
       style="padding-top: {pad / 4}px; padding-bottom: {pad /

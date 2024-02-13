@@ -41,7 +41,7 @@
         isRounded
           ? 'rounded-bl-lg'
           : ''} {isCpActive ? 'bg-a1' : ''}"
-        on:click={() => windowObject.gotoPath("/cp")}
+        on:click={() => runAction(AppEvent.SETTINGS)}
       >
         <Icon
           icon="settings"

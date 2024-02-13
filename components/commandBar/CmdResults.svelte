@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { localActions } from "$lib/local/stores/localActionMap";
-  import { actions } from "$lib/tidy/layout/actionMap";
-  import { modalEvent, userPreferences } from "$lib/tidy/stores/app.store";
+  import {
+    actions,
+    modalEvent,
+    userPreferences
+  } from "$lib/tidy/stores/app.store";
   import { ActionType } from "$lib/tidy/types/action.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
@@ -70,7 +72,7 @@
   }
 
   function loadAllActions() {
-    const rawActions = [...localActions, ...actions];
+    const rawActions = $actions;
     allActions = rawActions.filter(
       (action) =>
         action.label &&

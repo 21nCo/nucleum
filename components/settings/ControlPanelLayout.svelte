@@ -17,7 +17,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
-  import { sortPropertiesByOrder } from "$lib/tidy/utils/obj.utils";
+  import { isValidArray, sortArrayByOrder } from "$lib/tidy/utils/obj.utils";
   import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   import Panel from "$lib/tidy/layout/paint/Panel.svelte";
@@ -29,7 +29,8 @@
     appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
         let cp = x.appData.cp;
-        if (cp) cpConfiguration = sortPropertiesByOrder(cp);
+        console.log({ cp });
+        if (isValidArray(cp)) cpConfiguration = sortArrayByOrder(cp);
       }
     });
   });
@@ -70,12 +71,12 @@
           on:click={() => windowObject.gotoPath("/cp/account")}
         />
         {#if cpConfiguration}
-          {#each Object.keys(cpConfiguration) as item}
+          {#each cpConfiguration as item}
             <CpThumbnailList
-              sectionName={cpConfiguration[item].isHideTitle ? "" : item}
-              items={cpConfiguration[item].children}
-              orientation={cpConfiguration[item].orientation
-                ? cpConfiguration[item].orientation
+              sectionName={item.isHideTitle ? "" : item.section}
+              items={item.children}
+              orientation={item.orientation
+                ? item.orientation
                 : Orientation.Horizontal}
             />
           {/each}
