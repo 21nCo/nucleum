@@ -333,7 +333,16 @@
   function handleKeyDown(event: any) {
     console.log("keydown", event);
     //return;
-    if (
+    if (event.key === "Tab") {
+      if (context === BlockContext.LIST_CHILD) {
+        if (event.shiftKey === true) {
+          dispatch("shifttab", { id });
+        } else {
+          dispatch("tab", { id });
+          //mdStore.tabListItem(id);
+        }
+      }
+    } else if (
       (event.key === "Enter" && event.metaKey == true) ||
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
     ) {
@@ -386,10 +395,10 @@
       { shortcut: "===", type: MdBlockType.DOUBLE_DIVIDER }
     ];
     const listEscapeShortcuts = [
-      { shortcut: "* ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "- ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "+ ", type: MdBlockType.LIST, listType: ListType.UNORDERED },
-      { shortcut: "1. ", type: MdBlockType.LIST, listType: ListType.ORDERED }
+      { shortcut: "* ", listType: ListType.UNORDERED },
+      { shortcut: "- ", listType: ListType.UNORDERED },
+      { shortcut: "+ ", listType: ListType.UNORDERED },
+      { shortcut: "1. ", listType: ListType.ORDERED }
     ];
     textEscapeShortcuts.forEach(({ shortcut, type }) => {
       if (typeof content.body !== "string") return;
@@ -407,18 +416,17 @@
         mdStore.insert(id, { blockType: type });
       }
     });
-    listEscapeShortcuts.forEach(({ shortcut, type, listType }) => {
+    listEscapeShortcuts.forEach(({ shortcut, listType }) => {
       if (typeof content.body !== "string") return;
       if (content.body.startsWith(shortcut)) {
         content.body = content.body.replace(shortcut, "");
-        mdStore.insert(id, { blockType: type, listType });
-        // content.type = type;
-        // content.listType = listType;
+        mdStore.convert(id!, { blockType: MdBlockType.LIST, listType });
       }
-      handleEscShortcutForSecondaryLines(shortcut, type, listType);
+      handleEscShortcutForSecondaryLines(shortcut, MdBlockType.LIST, listType);
     });
   }
 
+  //OBSELETE
   function performEscapeShortcutsT1() {
     if (typeof content.body !== "string") return;
     if (content.body.startsWith("# ")) {
@@ -453,7 +461,7 @@
     //performEscapeShortcutsT1();
     performEscapeShortcutsT2();
     handleListContext();
-    handleBackspaceAtStart();
+    handleBackspaceAtBeginOfLine();
     if (
       event.key === "Backspace" &&
       content.type === MdBlockType.SIMPLE_TEXT &&
@@ -480,7 +488,7 @@
     /**
      * Function to handle backspace at the start of the block. Removes formatting of heading, quote, etc.
      */
-    function handleBackspaceAtStart() {
+    function handleBackspaceAtBeginOfLine() {
       if (
         event.key === "Backspace" &&
         content.type != MdBlockType.SIMPLE_TEXT &&
@@ -499,7 +507,7 @@
         caretPosition?.index === 0
       ) {
         console.log("converting to simple text");
-        mdStore.convert(id, MdBlockType.SIMPLE_TEXT);
+        mdStore.convert(id!, { blockType: MdBlockType.SIMPLE_TEXT });
       }
     }
   }

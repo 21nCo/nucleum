@@ -399,7 +399,13 @@ export type mdStoreType = {
   insert: any;
   insertStructualBlock: any;
   handleInsertForExistingList: any;
-  convert: any;
+  convert: (
+    id: string,
+    params: {
+      blockType: MdBlockType.LIST | TextType;
+      listType?: ListType;
+    }
+  ) => {};
   deleteBlock: any;
   focusPreviousSibling: any;
   focusBlock: any;
@@ -654,12 +660,21 @@ function initMarkdownStore() {
         }
       });
     },
-    convert: (id: string, to: MdBlockType.LIST | TextType) => {
+    convert: (
+      id: string,
+      params: {
+        blockType: MdBlockType.LIST | TextType;
+        listType?: ListType;
+      } = {
+        blockType: MdBlockType.SIMPLE_TEXT,
+        listType: ListType.UNORDERED
+      }
+    ) => {
       update((n) => {
         const block = n.blocks.find((b) => b.id === id);
         if (block && "body" in block.content) {
-          block.content.type = to;
-          if (to === MdBlockType.LIST) {
+          block.content.type = params.blockType;
+          if (params.blockType === MdBlockType.LIST) {
             block.content.body = {
               type: ListType.UNORDERED,
               content: {
