@@ -18,7 +18,7 @@
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
   export let units: string[] | undefined = undefined;
-  export let style: TextInputStyle = TextInputStyle.BOXED;
+  export let style: TextInputStyle = TextInputStyle.OUTLINED;
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
   export let info: string | undefined = undefined;
@@ -28,6 +28,7 @@
   export let searchItemType: ItemType | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let id: string = "";
+  export let width: string | undefined = undefined;
   export let isRequired: boolean = false;
   export let labelOrientation: Orientation = Orientation.Vertical;
   export let numberInputParams:
@@ -63,23 +64,23 @@
     if (!currentUnit) currentUnit = units ? units[0] : "";
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
-    } else if (style === TextInputStyle.BOXED) {
+    } else if (style === TextInputStyle.WITH_BACKGROUND) {
       inputClasses += ` ${bgClass(
         $userPreferences.theme,
         0
       )} border-2 ${borderColor($userPreferences.theme)} p-2`;
       unitClasses = unitClasses + " p-2";
     }
-    if (style == TextInputStyle.BOXED && units && units.length > 0) {
+    if (style == TextInputStyle.WITH_BACKGROUND && units && units.length > 0) {
       inputClasses += " rounded-r-none";
       unitClasses = unitClasses + " rounded-l-none";
     } else if (
-      style === TextInputStyle.BOXED ||
+      style === TextInputStyle.WITH_BACKGROUND ||
       style === TextInputStyle.OUTLINED
     ) {
-      inputClasses += " focus:outline-a1";
+      inputClasses += " focus:outline-aps1";
       if (style === TextInputStyle.OUTLINED)
-        inputClasses += ` outline outline-2 outline-fgs3 p-2`;
+        inputClasses += ` outline outline-2 outline-brs3 p-2`;
     } else {
       inputClasses += " focus:border-none focus:outline-none";
     }
@@ -88,9 +89,11 @@
     else if (size == Size.md)
       inputClasses +=
         " text-base " +
-        (labelOrientation === Orientation.Vertical
-          ? "max-w-md"
-          : "max-w-[16rem]");
+        (width
+          ? width
+          : labelOrientation === Orientation.Vertical
+            ? "max-w-md"
+            : "max-w-[16rem]");
     else if (size == Size.sm) inputClasses += " text-b2";
     else if (size == Size.xs) inputClasses += " text-b3";
   });

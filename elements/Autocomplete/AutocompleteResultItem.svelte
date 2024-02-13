@@ -7,11 +7,11 @@
   export let id: string;
   export let isActive: boolean = false;
   export let isSelected: boolean = false;
-  export let classList: ClassListProp = {
-    active: "",
-    inactive: "",
+  let classList: ClassListProp = {
+    active: "bg-aps1 text-bgs1",
+    inactive: "bg-bgs2",
     common: "bg-bgs2 hover:bg-bgs3",
-    selected: "",
+    selected: "bg-bgs4"
   };
 
   const dispatch = createEventDispatcher();
@@ -37,8 +37,8 @@
       isSelected
         ? classList.selected
         : isActive
-        ? `${classList.active}`
-        : classList.inactive
+          ? `${classList.active}`
+          : classList.inactive
     }`}
   >
     {label}

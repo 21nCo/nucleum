@@ -7,6 +7,7 @@
   import Icon from "./Icon.svelte";
   import { Size } from "../types/size.enum";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
+  import { windowObject } from "../stores/app.store";
   export let title: string;
   export let endContent: string | undefined;
   export let containerClassList: string = "";
@@ -43,9 +44,7 @@
     tabindex={0}
     {color}
     isBackgroundActive={isActive}
-    classList="flex flex-col w-full items-center {headerContent
-      ? `py-1 px-4`
-      : `py-3 px-4`}"
+    classList="flex flex-col w-full items-center py-2 px-4"
     styles="padding-left: {nestingLevel * 1.5 ? nestingLevel * 1.5 : 0.5}rem"
   >
     <div class="flex w-full items-center gap-1">

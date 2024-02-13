@@ -3,13 +3,13 @@ import type { Size } from "./size.enum";
 export enum ButtonStyle {
   DEFAULT = "default",
   PLAIN = "plain",
-  ROUNDED = "rounded",
+  ROUNDED = "rounded"
 }
 
 export type ButtonParams = {
   label?: string;
   icon?: string;
-  callback?: () => void;
+  callback?: () => Promise<any>;
   size?: Size;
   variant?: ButtonVariant;
 };
@@ -24,11 +24,11 @@ export enum ButtonVariant {
   INFO = "info",
   LIGHT = "light",
   DARK = "dark",
-  LINK = "link",
+  LINK = "link"
 }
 
 export enum LinkVariant {
   DEFAULT = "default",
   INLINE = "inline",
-  ARROW = "arrow",
+  ARROW = "arrow"
 }

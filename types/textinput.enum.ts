@@ -1,5 +1,5 @@
 export enum TextInputStyle {
   PLAIN,
-  BOXED,
-  OUTLINED,
+  WITH_BACKGROUND,
+  OUTLINED
 }

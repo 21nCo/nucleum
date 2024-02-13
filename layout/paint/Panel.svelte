@@ -15,7 +15,7 @@
 <div
   class="relative flex flex-col h-full {$windowObject.isInPortraitMode
     ? 'w-full'
-    : 'w-[26rem] min-w-[26rem]'} "
+    : 'w-[24rem] min-w-[24rem]'} "
 >
   {#if title}
     <div class={$windowObject.isInPortraitMode ? "px-4 py-2" : "p-4"}>

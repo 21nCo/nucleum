@@ -16,11 +16,11 @@
 </script>
 
 <div class="flex items-center justify-center w-fit mr-2 whitespace-nowrap">
-  <div class="triangle bg-fgs2 w-[8px] h-[7px] mr-2" />
+  <div class="triangle bg-fgs2 w-[8px] h-[7px] mr-1" />
   <p
     on:click={handleClick}
     on:keydown={handleKeyDown}
-    class={`text-fgs2 font-thin ${isDisabled ? `opacity-50` : ``} ${
+    class={`text-fgs2 text-b2 font-thin ${isDisabled ? `opacity-50` : ``} ${
       path === "" ? `cursor-default` : `cursor-pointer`
     }`}
   >

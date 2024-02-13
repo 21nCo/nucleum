@@ -10,13 +10,12 @@
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
   export let units: string[] | undefined = undefined;
-  export let style: TextInputStyle = TextInputStyle.BOXED;
+  export let style: TextInputStyle = TextInputStyle.OUTLINED;
   export let size: Size = Size.md;
   export let info: string | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let rows: number = 5;
-  export let resizable: boolean = false;
-  export let classList: string = "";
+  export let resizable: boolean = true;
   export let isRequired: boolean = false;
   let isShowSaveFeedback: boolean = false;
   let searchResults: DbRecordWithLabel[] = [];
@@ -33,7 +32,7 @@
   }
   let inputRef: any;
   export let isDisabled = false;
-  let inputClasses: string = "text-input w-full rounded-sm";
+  let inputClasses: string = "text-input w-full rounded-md";
   let unitClasses: string = "outline outline-bgs2 outline-2 rounded-sm";
   let currentUnit: string | undefined = undefined;
   let changeTimer: any;
@@ -43,23 +42,23 @@
     if (!currentUnit) currentUnit = units ? units[0] : "";
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
-    } else if (style === TextInputStyle.BOXED) {
+    } else if (style === TextInputStyle.WITH_BACKGROUND) {
       inputClasses += ` ${bgClass(
         $userPreferences.theme,
         1
       )} border ${borderColor($userPreferences.theme)} p-2`;
       unitClasses = unitClasses + " p-2";
     }
-    if (style == TextInputStyle.BOXED && units && units.length > 0) {
+    if (style == TextInputStyle.WITH_BACKGROUND && units && units.length > 0) {
       inputClasses += " rounded-r-none";
       unitClasses = unitClasses + " rounded-l-none";
     } else if (
-      style === TextInputStyle.BOXED ||
+      style === TextInputStyle.WITH_BACKGROUND ||
       style === TextInputStyle.OUTLINED
     ) {
-      inputClasses += " focus:outline-a1";
+      inputClasses += " focus:outline-aps1";
       if (style === TextInputStyle.OUTLINED)
-        inputClasses += ` outline outline-2 outline-fgs3 p-2`;
+        inputClasses += ` border-none outline outline-2 outline-brs3 p-2`;
     } else {
       inputClasses += " focus:border-none focus:outline-none";
     }
@@ -113,9 +112,9 @@
   <div class="relative flex items-center w-full">
     <textarea
       style="max-width:unset;"
-      class={`${`text-b3 outline-[1px] ${
-        $windowObject.isInPortraitMode ? `max-w-[unset]` : ``
-      }`} ${resizable ? `` : `resize-none`} ${inputClasses}`}
+      class="text-b3 {$windowObject.isInPortraitMode
+        ? `max-w-[unset]`
+        : ``} {resizable ? `` : `resize-none`} {inputClasses}"
       {rows}
       bind:value
       on:change|stopPropagation

@@ -10,9 +10,11 @@ import { isValidArrayWithData } from "./obj.utils";
 
 export function properCase(str: string) {
   if (!str) return str;
-  return str.replace(/\w\S*/g, function (text) {
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-  });
+  return str.charAt(0).toUpperCase() + str.slice(1);
+  // if (!str) return str;
+  // return str.replace(/\w\S*/g, function (text) {
+  //   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  // });
 }
 
 export function prefixDb(id: string | number, itemType: ItemType) {
@@ -111,4 +113,9 @@ export function isValidString(str: string | undefined | null) {
   const isValid = str && str != "" && str != "null" && str != "undefined";
   if (isValid) return str;
   return undefined;
+}
+
+export function truncateString(str: string, length: number) {
+  if (str.length > length) return str.slice(0, length) + "...";
+  return str;
 }

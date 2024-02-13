@@ -216,7 +216,7 @@ export const globalActions: Action[] = [
     modalParams: {
       isHideTitleIfEmpty: true,
       layoutParams: {
-        size: Size.lg,
+        size: Size.md,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }

@@ -12,51 +12,20 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
-
-  export let wrapperClassList: string = "w-full";
-  export let wrapperStyle: string = "";
-  export let style: string = "";
-  export let listContainerClassList: string = "bg-bgs2 shadow-sm shadow-fgs3";
+  import FormControlLabel from "../text/FormControlLabel.svelte";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
   export let inputStyle: TextInputStyle = TextInputStyle.OUTLINED;
-  export let chipsClassList: string = "";
-
   export let isListVisible: boolean = false;
-
-  export let mobileInputClassList: ClassListProp = {
-    active: "",
-    inactive: "",
-    common: ""
-  };
-  export let classList: ClassListProp = {
-    active: "",
-    inactive: "",
-    common: ""
-  };
-  export let listItemClassList: ClassListProp = {
-    active: "bg-bgs2",
-    inactive: "",
-    common: "",
-    selected: "bg-bgs2"
-  };
-  export let containerClassList: ClassListProp = {
-    active: "",
-    inactive: "",
-    common: ""
-  }; // this is for the container, which contains label, and the input field not the list
-
-  export let escapeDefaultClickBehaviour: boolean = false; // this is used to escape the default behaviour of the list item click, if this is true then the default behaviour of the list item click will not be performed, for example if you don't want to hide the list on list item click then set this to true
-
   export let options: AutocompleteListItemType[] = [];
-
   export let placeholder: string = "";
   export let values: AutocompleteListItemType[] = [];
   export let label: string = "";
   export let chipsVariant: ChipVariant = ChipVariant.FILLED;
-
+  let listContainerClassList: string = "bg-bgs2 shadow-sm shadow-fgs3";
+  let isFocusing: boolean = false;
   let inputValue: string;
   const wrapperId = generateUID(); // main wrapper, outside which if clicked then the list will be hidden
   let id = generateUID(); // this is the id of the input field
@@ -107,24 +76,25 @@
     updateListVisibility(false);
   }
 
-  function updateValues({ title, id }: { title: string; id: string }) {
+  function updateValues({ label, id }: { label: string; id: string }) {
     if (values.some((x) => x.id === id)) {
       values = values.filter((x) => x.id !== id);
     } else {
-      values = [...values, { label: title, id }];
+      values = [...values, { label, id }];
     }
   }
 
-  function handleResultItemClick(detail: { title: string; id: string }) {
+  function handleResultItemClick(detail: { label: string; id: string }) {
     dispatch("list-item-click", detail);
     updateValues(detail);
-    if (!escapeDefaultClickBehaviour) {
-      performDefaultClickActions();
-      // because since there are chips, we don't want to hide the list on click, because the user might want to select multiple items
-    }
+    performDefaultClickActions();
+    // if (!escapeDefaultClickBehaviour) {
+    //   performDefaultClickActions();
+    // }
   }
 
   function handleResultItemClickViaCustomEvent({ detail }: CustomEvent) {
+    console.log(detail);
     handleResultItemClick(detail);
   }
 
@@ -145,10 +115,11 @@
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
         const { label: title, id } = tempOptions[selectedListItemIndex];
-        handleResultItemClick({ title, id });
-        if (!escapeDefaultClickBehaviour) {
-          performDefaultClickActions();
-        }
+        handleResultItemClick({ label, id });
+        performDefaultClickActions();
+        // if (!escapeDefaultClickBehaviour) {
+        //   performDefaultClickActions();
+        // }
       }
     }
   }
@@ -157,26 +128,26 @@
     isListVisible = value;
   }
 
-  function getStateWiseStyles() {
-    if (isActive) {
-      if (classList.active) return classList.active;
-      if (
-        inputStyle === TextInputStyle.BOXED ||
-        inputStyle === TextInputStyle.OUTLINED
-      ) {
-        return `outline-a1`;
-      } else {
-        return `border-none outline-none`;
-      }
-    } else if (classList.inactive) return classList.inactive;
-    else if (inputStyle === TextInputStyle.BOXED) {
-      return `outline-fgs3 focus:outline-a1`;
-    } else if (inputStyle === TextInputStyle.OUTLINED) {
-      return `outline-fgs3 focus:outline-a1`;
-    } else {
-      return `border-none outline-none`;
-    }
-  }
+  // function getStateWiseStyles() {
+  //   if (isActive) {
+  //     if (classList.active) return classList.active;
+  //     if (
+  //       inputStyle === TextInputStyle.WITH_BACKGROUND ||
+  //       inputStyle === TextInputStyle.OUTLINED
+  //     ) {
+  //       return `outline-2 outline-aps1`;
+  //     } else {
+  //       return `border-none outline-none`;
+  //     }
+  //   } else if (classList.inactive) return classList.inactive;
+  //   else if (inputStyle === TextInputStyle.WITH_BACKGROUND) {
+  //     return `focus:outline-aps1`;
+  //   } else if (inputStyle === TextInputStyle.OUTLINED) {
+  //     return `outline outline-2 outline-brs3 focus:outline-aps1`;
+  //   } else {
+  //     return `border-none outline-none`;
+  //   }
+  // }
 
   // this is used to filter the options based on the input value
   $: {
@@ -207,7 +178,7 @@
       inputStyle == TextInputStyle.OUTLINED
     ) {
       defaultInputClasses += " bg-transparent";
-    } else if (inputStyle === TextInputStyle.BOXED) {
+    } else if (inputStyle === TextInputStyle.WITH_BACKGROUND) {
       defaultInputClasses += ` bg-${backgroundColor} outline outline-1 p-2`;
     }
     if (inputStyle === TextInputStyle.OUTLINED)
@@ -233,21 +204,11 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 
-<div id={wrapperId} style={wrapperStyle} class={`relative ${wrapperClassList}`}>
-  <div
-    class={`relative flex flex-col gap-1 w-full items-start ${
-      containerClassList.common
-    } ${isActive ? containerClassList.active : containerClassList.inactive}`}
-  >
-    <label class="" for={id}>
-      {label}
-    </label>
-    <!-- 
-       isActive ? getStateWiseStyles() : getStateWiseStyles(), is written this way, because we want to call the function as soon as active state changes, but if we put the function call in the classList, then it will be called only once, and the classList will not be updated when the active state changes, so we are calling the function in the ternary operator, so that it is called everytime the active state changes, and the classList is updated accordingly
-     -->
+<div id={wrapperId} class="relative w-full">
+  <div class="relative flex flex-col gap-1 w-full items-start">
+    <FormControlLabel {label} forId={id} />
     <div
       tabindex="0"
-      {style}
       on:click={() => {
         toggleActiveState(true);
         updateListVisibility(true);
@@ -257,19 +218,13 @@
           toggleActiveState(true);
         }
       }}
-      class={`mock-input-field w-full flex flex-wrap p-2 gap-1 ${defaultInputClasses} ${classList} ${
-        isActive ? getStateWiseStyles() : getStateWiseStyles()
-      }`}
+      class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline-2 {isFocusing
+        ? 'outline-aps1'
+        : 'outline-brs3'}"
     >
       {#each values as value}
-        <Chip
-          on:click
-          hideCloseIcon
-          classList={chipsClassList}
-          variant={chipsVariant}>{value.label}</Chip
-        >
+        <Chip on:click hideCloseIcon variant={chipsVariant}>{value.label}</Chip>
       {/each}
-
       <input
         {id}
         on:focusin={() => {
@@ -280,13 +235,14 @@
         {placeholder}
         bind:value={inputValue}
         on:input|stopPropagation
-        on:focus
+        on:focus={() => {
+          isFocusing = true;
+        }}
+        on:focusout={() => {
+          isFocusing = false;
+        }}
         on:keydown|stopPropagation={handleKeyDownInDropdown}
-        class={`bg-transparent pl-1 py-1 text-b3 min-w-[100px] flex-1 outline-none ${
-          mobileInputClassList.common
-        } ${
-          isActive ? mobileInputClassList.active : mobileInputClassList.inactive
-        }`}
+        class="bg-transparent pl-1 py-1 text-base min-w-[100px] flex-1 outline-none"
         aria-label="Search"
         aria-describedby="search-addon"
       />
@@ -302,7 +258,6 @@
         <AutocompleteResultItem
           {...listItem}
           isSelected={values.some((x) => x.id === listItem.id)}
-          classList={listItemClassList}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}
           on:click={handleResultItemClickViaCustomEvent}
@@ -311,20 +266,3 @@
     </div>
   {/if}
 </div>
-
-<!-- 
-    Note: Just need to implement one thing, which is if we navigate in the list using arrow keys then the list should scroll automatically to the selected item
-
-    Basic terminologies used in this component:
-    1. Wrapper: The main wrapper, which contains the label, and the input field, and the list
-    2. Container: The container is the wrapper of the input field, and the label, and the list is not the part of the container
-    3. List: The list is the list of the options, which is shown when the user clicks on the input field
-    4. Input field: The input field is the input field, which is used to type the text
-    5. List item: The list item is the item in the list, which is shown when the user clicks on the input field
-    6. mobileInputClassList: This is the classList for the input field, which is used to style the input field which is mobile in nature, meaning which is moving in order to accommodate the chips
-    7. classList: This is the classList for the input field, which is used to style the input field which is actually not an input field but is behaving like one, and is used to contains the chips along with the mobile input field
-    8. listItemClassList: This is the classList for the list item, which is used to style the list item
-    9. containerClassList: This is the classList for the container, which is used to style the container, which contains the label, and the input field not the list
-
- 
--->

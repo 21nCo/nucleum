@@ -7,6 +7,7 @@
   export let isPreventAutoClose: boolean = false;
   export let primaryAction: ButtonParams | undefined = undefined;
   export let secondaryAction: ButtonParams | undefined = undefined;
+  let isActionInProgress = false;
   export function close() {
     if (isPreventAutoClose) return;
     modalEvent.hide();
@@ -17,17 +18,15 @@
   {#if primaryAction}
     <Button
       type={primaryAction.variant ?? "primary"}
-      on:click={() => {
-        if (primaryAction?.callback) primaryAction?.callback();
+      isLoading={isActionInProgress}
+      on:click={async () => {
+        isActionInProgress = true;
+        if (primaryAction?.callback) await primaryAction?.callback();
+        isActionInProgress = false;
         close();
       }}
-    >
-      {primaryAction.label}
-      <!-- TODO: enter icon -->
-      <!-- {#if !$windowObject.isInPortraitMode}
-        <span class="text-bgs3 text-b4">Enter</span>
-      {/if} -->
-    </Button>
+      label={primaryAction.label}
+    />
   {/if}
   {#if secondaryAction}
     <!-- <Button
@@ -49,6 +48,7 @@
         callback: () => {
           if (secondaryAction?.callback) secondaryAction.callback();
           close();
+          return Promise.resolve(true);
         }
       }}
     />
