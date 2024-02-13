@@ -10,6 +10,8 @@
   import { userLocalPreferences } from "$lib/local/stores/local.store";
   import type { UserLocalPreferences } from "$lib/local/types/userLocalPreferences.type";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
+  import CaptureComponent from "$lib/tidy/components/CaptureComponent.svelte";
+  import { appStore } from "$lib/tidy/stores/app.store";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -23,7 +25,10 @@
       let items = [];
       if (!x.appMenu) return;
       if (layoutContext === LayoutContext.PORTRAIT) {
-        items = x.appMenu.slice(0, 4);
+        items = x.appMenu.slice(
+          0,
+          $appStore.appData.isShowCaptureOnMobile ? 3 : 4
+        );
         items.push("cp");
       } else {
         items = x.appMenu.filter((item) => item !== "cp");
@@ -55,6 +60,9 @@
     : 'flex-col justify-center rounded-lg'} min-w-min w-full"
 >
   {#each pages as item, index}
+    {#if index == Math.floor(pages.length / 2) && layoutContext === LayoutContext.PORTRAIT && $appStore.appData.isShowCaptureOnMobile}
+      <CaptureComponent />
+    {/if}
     {#if layoutContext != LayoutContext.MINIMIZED || (layoutContext === LayoutContext.MINIMIZED && (isHovered || selected == index))}
       <AppMenuSwitcherItem
         {parentBackgroundIndex}

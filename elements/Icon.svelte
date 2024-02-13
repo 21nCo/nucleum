@@ -39,7 +39,7 @@
   import AreaChart from "../icons/AreaChart.svelte";
   import {
     resolveIfActiveFgFg,
-    retrieveCurrentColors,
+    retrieveCurrentColors
   } from "../utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
@@ -94,6 +94,7 @@
   import Star from "../icons/Star.svelte";
   import FaceSmile from "../icons/FaceSmile.svelte";
   import Grab from "../icons/Grab.svelte";
+  import Capture2 from "../icons/Capture2.0.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -137,15 +138,20 @@
   <button class="flex items-center justify-center" on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox={icon.includes("-mini") ? "0 0 20 20" : "0 0 24 24"}
-      class="flex items-center justify-center {size == Size.xl ||
-      size == Size.lg
-        ? 'w-8 h-8'
-        : size == Size.md
-          ? 'w-6 h-6'
-          : size == Size.sm
-            ? 'w-[1.25rem] h-[1.25rem]'
-            : 'w-4 h-4'} {variant === IconVariant.Outline
+      viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
+        ? "0 0 20 20"
+        : icon == "capture2.0" || icon === "capture2.0-mini"
+          ? "0 0 52 52"
+          : "0 0 24 24"}
+      class="flex items-center justify-center {size == Size.xxl
+        ? 'w-14 h-14'
+        : size == Size.xl || size == Size.lg
+          ? 'w-8 h-8'
+          : size == Size.md
+            ? 'w-6 h-6'
+            : size == Size.sm
+              ? 'w-[1.25rem] h-[1.25rem]'
+              : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-a1'
@@ -379,6 +385,8 @@
         <Curation {variant} />
       {:else if icon === "capture"}
         <Capture {variant} />
+      {:else if icon === "capture2.0"}
+        <Capture2 {variant} />
       {:else if icon === "check-circle"}
         <CheckTwo {variant} isCircled={true} />
       {:else if icon === "microphone"}
