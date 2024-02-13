@@ -24,6 +24,7 @@
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
+  let testingInMobileBrowser: boolean = false;
   $: isInThinMode = resolveUiState(
     $userPreferences.uiStates,
     UiState.isInThinMode
@@ -43,7 +44,9 @@
 {#if !$windowObject.isMenuHidden}
   {#if $windowObject.isInPortraitMode}
     <div
-      class="absolute bottom-0 flex flex-col justify-center items-center z-30 w-full"
+      class="absolute {testingInMobileBrowser
+        ? 'bottom-14'
+        : 'bottom-0'} flex flex-col justify-center items-center z-30 w-full"
     >
       {#if $appStore.player}
         <ComponentResolver path={$appStore.player} />
