@@ -9,16 +9,23 @@ import {
   ListType,
   type BasicMarkdown,
   type ListChild,
-  type TextType
+  type TextType,
+  type ListContent,
+  type BlockContent
 } from "$lib/tidy/types/md.type";
-import { deepCopy, isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
+import {
+  deepCopy,
+  isEmptyArray,
+  isValidArrayWithData
+} from "$lib/tidy/utils/obj.utils";
 import { generateMarkdownText } from "$lib/tidy/utils/text.utils";
 import { generateUID } from "$lib/tidy/utils/utils";
 import type { List } from "postcss/lib/list";
 import { get, writable } from "svelte/store";
 import {
   handleNodeMarkdownChildHierarchyChanges,
-  recursivelyExtractAllChildrenIntoArray
+  recursivelyExtractAllChildrenIntoArray,
+  resolveImmediateParent
 } from "./markdown.utils";
 
 export const sampleMd = {
@@ -405,7 +412,12 @@ export type mdStoreType = {
       blockType: MdBlockType.LIST | TextType;
       listType?: ListType;
     }
-  ) => {};
+  ) => boolean;
+  listOperation: (
+    operation: string,
+    id: string,
+    parentHierarchy: string[]
+  ) => boolean;
   deleteBlock: any;
   focusPreviousSibling: any;
   focusBlock: any;
@@ -421,276 +433,352 @@ export function getMdStore(id: string): mdStoreType {
 export const mdStore: mdStoreType = initMarkdownStore();
 function initMarkdownStore() {
   const { subscribe, set, update } = writable<MdStore>(seedMdStore);
-  return {
-    subscribe,
-    load(
-      md: NodeMarkdown | BasicMarkdown,
-      context: MdContext,
-      params: MdParams | undefined = undefined
-    ) {
-      if (md && "blocks" in md) {
-        set(
-          deepCopy({
-            context,
-            params,
-            blocks: md.blocks,
-            blockToFocus: md.blocks[0].id
-          })
-        );
-      } else {
-        set({
-          md,
+
+  function load(
+    md: NodeMarkdown | BasicMarkdown,
+    context: MdContext,
+    params: MdParams | undefined = undefined
+  ) {
+    if (md && "blocks" in md) {
+      set(
+        deepCopy({
           context,
           params,
-          blocks: recursivelyExtractAllChildrenIntoArray(md),
-          blockToFocus: md.children?.[0]?.id
-        });
-      }
-    },
-    reset: () => set(seedMdStore),
-    /**
-     * Inserts a new block after the context block
-     * @param contextBlockId block to insert the new block after
-     * @param params block type to insert, defaults to simple text
-     */
-    insert: (
-      contextBlockId: string,
-      params: { blockType?: MdBlockType; listType?: ListType } = {
-        blockType: MdBlockType.SIMPLE_TEXT,
-        listType: ListType.UNORDERED
-      }
-    ) => {
-      update((n) => {
-        const contextBlockIndex = n.blocks.findIndex(
-          (b) => b.id === contextBlockId
-        );
-        let newBlock: Block;
-        if (
-          params.blockType &&
-          params.blockType != MdBlockType.LIST &&
-          params.blockType != MdBlockType.MARKDOWN
-        ) {
-          newBlock = {
-            id: generateUID(),
-            content: {
-              type: params.blockType ?? MdBlockType.SIMPLE_TEXT,
-              body: ""
-            }
-          };
-        } else if (params.blockType === MdBlockType.LIST) {
-          newBlock = {
-            id: generateUID(),
-            content: {
-              type: MdBlockType.LIST,
-              body: {
-                type: params.listType ?? ListType.UNORDERED,
-                content: {
-                  type: MdBlockType.SIMPLE_TEXT,
-                  body: ""
-                }
-              }
-            }
-          };
-        } else {
-          newBlock = {
-            id: generateUID(),
-            content: {
-              type: MdBlockType.SIMPLE_TEXT,
-              body: ""
-            }
-          };
-        }
-        if (!newBlock) return n;
-        n.blocks = [
-          ...n.blocks.slice(0, contextBlockIndex + 1),
-          newBlock,
-          ...n.blocks.slice(contextBlockIndex + 1)
-        ];
-        n.blockToFocus = newBlock.id;
-        n = handleNodeMarkdownChildHierarchyChanges(
-          n,
-          contextBlockId,
-          newBlock,
-          true
-        );
-        return n;
+          blocks: md.blocks,
+          blockToFocus: md.blocks[0].id
+        })
+      );
+    } else {
+      set({
+        md,
+        context,
+        params,
+        blocks: recursivelyExtractAllChildrenIntoArray(md),
+        blockToFocus: md.children?.[0]?.id
       });
-    },
-    /**
-     * Inserts a structural block after the context block
-     * @param contextBlockId block to insert the new block after
-     * @param blockType type of structural block to insert
-     */
-    insertStructualBlock: (
-      contextBlockId: string,
-      blockType: MdBlockType.DIVIDER | MdBlockType.DOUBLE_DIVIDER
-    ) => {
-      update((n) => {
-        const contextBlockIndex = n.blocks.findIndex(
-          (b) => b.id === contextBlockId
-        );
-        const newBlock: Block = {
+    }
+  }
+
+  /**
+   * Inserts a new block after the context block
+   * @param contextBlockId block to insert the new block after
+   * @param params block type to insert, defaults to simple text
+   */
+  function insert(
+    contextBlockId: string,
+    params: { blockType?: MdBlockType; listType?: ListType } = {
+      blockType: MdBlockType.SIMPLE_TEXT,
+      listType: ListType.UNORDERED
+    }
+  ) {
+    update((n) => {
+      const contextBlockIndex = n.blocks.findIndex(
+        (b) => b.id === contextBlockId
+      );
+      let newBlock: Block;
+      if (
+        params.blockType &&
+        params.blockType != MdBlockType.LIST &&
+        params.blockType != MdBlockType.MARKDOWN
+      ) {
+        newBlock = {
           id: generateUID(),
           content: {
-            type:
-              blockType === MdBlockType.DIVIDER
-                ? MdBlockType.DIVIDER
-                : MdBlockType.DOUBLE_DIVIDER
+            type: params.blockType ?? MdBlockType.SIMPLE_TEXT,
+            body: ""
           }
         };
-        n.blocks = [
-          ...n.blocks.slice(0, contextBlockIndex),
-          newBlock,
-          ...n.blocks.slice(contextBlockIndex)
-        ];
-        n.blockToFocus = newBlock.id;
-        n = handleNodeMarkdownChildHierarchyChanges(
-          n,
-          contextBlockId,
-          newBlock,
-          true
-        );
-        return n;
-      });
-    },
-    /**
-     * Handles insert operations for lists which are already present
-     * @param contextId the id of the block to insert the new block after
-     */
-    handleInsertForExistingList: (
-      contextId: string,
-      parentHierarchy: string[]
-    ) => {
-      update((n) => {
-        if (parentHierarchy.length === 0) {
-          const { blocks, id } = handleInsertion(n.blocks);
-          n.blocks = blocks;
-          n.blockToFocus = id;
-          console.log({ blockToFocus: n.blockToFocus });
-          return n;
-        }
-        const topMostParentId = parentHierarchy.shift();
-        const topMostParent = n.blocks.find((b) => b.id === topMostParentId);
-        console.log({ topMostParent });
-        if (
-          topMostParent &&
-          "children" in topMostParent.content &&
-          topMostParent.content.children
-        ) {
-          let iterParent: Block | ListChild | undefined = topMostParent;
-          parentHierarchy.forEach((item) => {
-            console.log({ iterParent, item });
-            iterParent = getChild(iterParent, item);
-          });
-          console.log("final iterParent", { iterParent });
-          if (
-            !iterParent ||
-            !("children" in iterParent.content) ||
-            !iterParent.content.children
-          )
-            return n;
-          const blocksInScopeForChange = iterParent.content.children;
-          const { blocks, id } = handleInsertion(blocksInScopeForChange);
-          iterParent.content.children = blocks;
-          n.blockToFocus = id;
-          console.log({ blockToFocus: n.blockToFocus });
-          return n;
-        }
-        return n;
-        /**
-         * Iterator function to find the child that matches the childId to ultimately arrive at the deep nesting and insert the new block
-         * @param block parent block
-         * @param childId the id of the child to find
-         * @returns blocks of the child that matches the childId
-         */
-        function getChild(
-          block: ListChild | Block | undefined,
-          childId: string
-        ) {
-          if (
-            block &&
-            "children" in block.content &&
-            block.content.children &&
-            block.content.children.length > 0
-          )
-            return block.content.children.find((b) => b.id === childId);
-        }
-        /**
-         * Handles the insertion of a new block in the context of a list
-         * @param blocks the blocks to insert into
-         * @returns the new blocks and the id of the new block
-         */
-        function handleInsertion(blocks: Block[] | ListChild[]) {
-          const contextBlockIndex = blocks.findIndex((b) => b.id === contextId);
-          const currentBlock = blocks[contextBlockIndex];
-          let newBlock: Block = {
-            id: generateUID(),
-            content: {
-              type: MdBlockType.LIST,
-              body: {
-                type: ListType.UNORDERED,
-                content: {
-                  type: MdBlockType.SIMPLE_TEXT,
-                  body: ""
-                }
-              },
-              children: []
+      } else if (params.blockType === MdBlockType.LIST) {
+        newBlock = {
+          id: generateUID(),
+          content: {
+            type: MdBlockType.LIST,
+            body: {
+              type: params.listType ?? ListType.UNORDERED,
+              content: {
+                type: MdBlockType.SIMPLE_TEXT,
+                body: ""
+              }
             }
-          };
-          if (
-            "children" in currentBlock.content &&
-            "children" in newBlock.content &&
-            isValidArrayWithData(currentBlock.content.children)
-          ) {
-            const currentListItemChildren = currentBlock.content.children;
-            newBlock.content.children = currentListItemChildren;
-            currentBlock.content.children = [];
           }
-          let blocksWithoutCurrent = [
-            ...blocks.slice(0, contextBlockIndex),
-            ...blocks.slice(contextBlockIndex + 1)
-          ];
-          blocks = [
-            ...blocksWithoutCurrent.slice(0, contextBlockIndex),
-            currentBlock,
-            newBlock,
-            ...blocksWithoutCurrent.slice(contextBlockIndex)
-          ];
-          return { blocks, id: newBlock.id };
-        }
-      });
-    },
-    convert: (
-      id: string,
-      params: {
-        blockType: MdBlockType.LIST | TextType;
-        listType?: ListType;
-      } = {
-        blockType: MdBlockType.SIMPLE_TEXT,
-        listType: ListType.UNORDERED
+        };
+      } else {
+        newBlock = {
+          id: generateUID(),
+          content: {
+            type: MdBlockType.SIMPLE_TEXT,
+            body: ""
+          }
+        };
       }
-    ) => {
-      update((n) => {
-        const block = n.blocks.find((b) => b.id === id);
-        if (block && "body" in block.content) {
-          block.content.type = params.blockType;
-          if (params.blockType === MdBlockType.LIST) {
-            block.content.body = {
+      if (!newBlock) return n;
+      n.blocks = [
+        ...n.blocks.slice(0, contextBlockIndex + 1),
+        newBlock,
+        ...n.blocks.slice(contextBlockIndex + 1)
+      ];
+      n.blockToFocus = newBlock.id;
+      n = handleNodeMarkdownChildHierarchyChanges(
+        n,
+        contextBlockId,
+        newBlock,
+        true
+      );
+      return n;
+    });
+  }
+  /**
+   * Inserts a structural block after the context block
+   * @param contextBlockId block to insert the new block after
+   * @param blockType type of structural block to insert
+   */
+  function insertStructualBlock(
+    contextBlockId: string,
+    blockType: MdBlockType.DIVIDER | MdBlockType.DOUBLE_DIVIDER
+  ) {
+    update((n) => {
+      const contextBlockIndex = n.blocks.findIndex(
+        (b) => b.id === contextBlockId
+      );
+      const newBlock: Block = {
+        id: generateUID(),
+        content: {
+          type:
+            blockType === MdBlockType.DIVIDER
+              ? MdBlockType.DIVIDER
+              : MdBlockType.DOUBLE_DIVIDER
+        }
+      };
+      n.blocks = [
+        ...n.blocks.slice(0, contextBlockIndex),
+        newBlock,
+        ...n.blocks.slice(contextBlockIndex)
+      ];
+      n.blockToFocus = newBlock.id;
+      n = handleNodeMarkdownChildHierarchyChanges(
+        n,
+        contextBlockId,
+        newBlock,
+        true
+      );
+      return n;
+    });
+  }
+  /**
+   * Handles insert operations for lists which are already present
+   * @param contextId the id of the block to insert the new block after
+   * @param parentHierarchy the hierarchy of the parents of the list item
+   */
+  function handleInsertForExistingList(
+    contextId: string,
+    parentHierarchy: string[]
+  ) {
+    update((n) => {
+      if (parentHierarchy.length === 0) {
+        const { blocks, id } = handleInsertion(n.blocks);
+        n.blocks = blocks;
+        n.blockToFocus = id;
+        return n;
+      }
+      const parent = resolveImmediateParent(n.blocks, parentHierarchy);
+      if (
+        !parent?.content ||
+        !("children" in parent.content) ||
+        !parent.content.children
+      )
+        return n;
+      const { blocks, id } = handleInsertion(parent.content.children);
+      parent.content.children = blocks;
+      n.blockToFocus = id;
+      return n;
+
+      /**
+       * Handles the insertion of a new block in the context of a list
+       * @param blocks the blocks to insert into
+       * @returns the new blocks and the id of the new block
+       */
+      function handleInsertion(
+        blocks: Block<BlockContent>[] | ListChild<BlockContent>[]
+      ) {
+        const contextBlockIndex = blocks.findIndex((b) => b.id === contextId);
+        const currentBlock = blocks[contextBlockIndex];
+        let newBlock: Block<ListContent> = {
+          id: generateUID(),
+          content: {
+            type: MdBlockType.LIST,
+            body: {
               type: ListType.UNORDERED,
               content: {
                 type: MdBlockType.SIMPLE_TEXT,
                 body: ""
               }
-            };
-          } else {
-            block.content.body = "";
+            },
+            children: []
           }
+        };
+        if (
+          "children" in currentBlock.content &&
+          "children" in newBlock.content &&
+          isValidArrayWithData(currentBlock.content.children)
+        ) {
+          const currentListItemChildren = currentBlock.content.children;
+          newBlock.content.children = currentListItemChildren;
+          currentBlock.content.children = [];
         }
-        console.log({ block });
+        let blocksWithoutCurrent = [
+          ...blocks.slice(0, contextBlockIndex),
+          ...blocks.slice(contextBlockIndex + 1)
+        ];
+        blocks = [
+          ...blocksWithoutCurrent.slice(0, contextBlockIndex),
+          currentBlock,
+          newBlock,
+          ...blocksWithoutCurrent.slice(contextBlockIndex)
+        ];
+        return { blocks, id: newBlock.id };
+      }
+    });
+  }
+
+  /**
+   * Converts a block of one type to another
+   * @param id id of the block which needs to be converted
+   * @param params blockType to which the block needs to be converted and listType if the convertion is list
+   * @returns a boolean that states conversion is successful or not
+   */
+  function convert(
+    id: string,
+    params: {
+      blockType: MdBlockType.LIST | TextType;
+      listType?: ListType;
+    } = {
+      blockType: MdBlockType.SIMPLE_TEXT,
+      listType: ListType.UNORDERED
+    }
+  ) {
+    update((n) => {
+      const block = n.blocks.find((b) => b.id === id);
+      if (block && "body" in block.content) {
+        block.content.type = params.blockType;
+        if (params.blockType === MdBlockType.LIST) {
+          block.content.body = {
+            type: ListType.UNORDERED,
+            content: {
+              type: MdBlockType.SIMPLE_TEXT,
+              body: ""
+            }
+          };
+        } else {
+          block.content.body = "";
+        }
+      }
+      console.log({ block });
+      n.blockToFocus = id;
+      return n;
+    });
+    return true;
+  }
+
+  function listOperation(
+    operation: string,
+    id: string,
+    parentHierarchy: string[]
+  ) {
+    if (isEmptyArray(parentHierarchy) && operation === "shifttab") return false;
+    if (isEmptyArray(parentHierarchy) && operation === "tab") {
+      update((n) => {
+        const currentBlockIndex = n.blocks.findIndex((b) => b.id === id);
+        let previousSibling = n.blocks[currentBlockIndex - 1];
+        if (previousSibling.content.type != MdBlockType.LIST) return n;
+        previousSibling = moveAsChild(
+          n.blocks[currentBlockIndex],
+          previousSibling as Block<ListContent>
+        );
+        n.blocks = n.blocks.filter((b) => b.id !== id);
         n.blockToFocus = id;
         return n;
       });
-    },
+    } else if (operation === "tab") {
+      update((n) => {
+        const { parent } = resolveImmediateParent(n.blocks, parentHierarchy);
+        const currentBlockIndex = parent.content.children.findIndex(
+          (b) => b.id === id
+        );
+        if (!currentBlockIndex || currentBlockIndex === 0) return n;
+        let previousSibling = parent.content.children[currentBlockIndex - 1];
+        previousSibling = moveAsChild(
+          parent.content.children[currentBlockIndex],
+          previousSibling as ListChild<ListContent>
+        );
+        parent.content.children = parent.content.children.filter(
+          (b) => b.id !== id
+        );
+        n.blockToFocus = id;
+        return n;
+      });
+    } else if (operation === "shifttab") {
+      console.log("shifttab executing...", { parentHierarchy });
+      update((n) => {
+        const { parent, parentOneAbove } = resolveImmediateParent(
+          n.blocks,
+          parentHierarchy
+        );
+        const currentBlock = parent.content.children.find(
+          (b) => b.id === id
+        ) as ListChild;
+        parent.content.children = parent.content.children.filter(
+          (b) => b.id !== id
+        );
+        if (!parentOneAbove) {
+          console.log("parentOneAbove not present", parentOneAbove);
+          const parentIndex = n.blocks.findIndex((b) => b.id === parent.id);
+          n.blocks = [
+            ...n.blocks.slice(0, parentIndex + 1),
+            currentBlock,
+            ...n.blocks.slice(parentIndex + 1)
+          ];
+          n.blockToFocus = id;
+        } else {
+          console.log("parentOneAbove", parentOneAbove);
+          let blocksInScope: ListChild[] = (
+            parentOneAbove as ListChild<ListContent>
+          ).content.children!;
+          const parentIndex = blocksInScope.findIndex(
+            (b) => b.id === parent.id
+          );
+          console.log({ blocksInScope, parentIndex });
+          blocksInScope = [
+            ...blocksInScope.slice(0, parentIndex + 1),
+            currentBlock,
+            ...blocksInScope.slice(parentIndex + 1)
+          ];
+          parentOneAbove.content.children = blocksInScope;
+          n.blockToFocus = id;
+        }
+        return n;
+      });
+    }
+    return true;
+
+    function moveAsChild(
+      blockToBeMoved: Block | ListChild,
+      parent: Block<ListContent> | ListChild<ListContent>
+    ) {
+      if (!parent.content.children) parent.content.children = [];
+      parent.content.children = [...parent.content.children, blockToBeMoved];
+      return parent;
+    }
+  }
+
+  return {
+    subscribe,
+    load,
+    insert,
+    convert,
+    reset: () => set(seedMdStore),
+    insertStructualBlock,
+    handleInsertForExistingList,
+    listOperation,
     deleteBlock: (id: string) => {
       update((n) => {
         const deleteIndex = n.blocks.findIndex((b) => b.id === id);

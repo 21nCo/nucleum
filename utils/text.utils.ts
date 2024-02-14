@@ -10,7 +10,7 @@ import { isValidArrayWithData } from "./obj.utils";
 
 export function properCase(str: string) {
   if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   // if (!str) return str;
   // return str.replace(/\w\S*/g, function (text) {
   //   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();

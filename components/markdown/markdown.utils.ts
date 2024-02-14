@@ -2,7 +2,10 @@ import {
   MdContext,
   type Block,
   type MdStore,
-  type NodeMarkdown
+  type NodeMarkdown,
+  type ListChild,
+  type ListContent,
+  type ListBlockWithChildren
 } from "$lib/tidy/types/md.type";
 import { deepCopy } from "$lib/tidy/utils/obj.utils";
 
@@ -87,4 +90,33 @@ export function handleNodeMarkdownChildHierarchyChanges(
     ];
   }
   return n;
+}
+
+/**
+ * Iterator function to find the child that matches the childId to ultimately arrive at the deep nesting and insert the new block
+ * @param block parent block
+ * @param childId the id of the child to find
+ * @returns blocks of the child that matches the childId
+ */
+function getChild(block: ListBlockWithChildren, childId: string) {
+  return block.content.children.find((b) => b.id === childId) as ListChild<
+    Required<Pick<ListContent, "children">>
+  >;
+}
+
+export function resolveImmediateParent(
+  mdBlocks: Block[],
+  parentHierarchy: string[]
+) {
+  const topMostParentId = parentHierarchy.shift();
+  const topMostParent = mdBlocks.find((b) => b.id === topMostParentId);
+  let iterParent: ListBlockWithChildren = topMostParent as Block<
+    Required<Pick<ListContent, "children">>
+  >;
+  let parentOneAbove: ListBlockWithChildren | undefined = undefined;
+  parentHierarchy.forEach((item, index) => {
+    parentOneAbove = iterParent;
+    iterParent = getChild(iterParent, item);
+  });
+  return { parent: iterParent, parentOneAbove };
 }

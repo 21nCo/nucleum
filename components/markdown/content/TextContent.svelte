@@ -330,15 +330,15 @@
       focusBlockSub();
     };
   });
-  function handleKeyDown(event: any) {
+  function handleKeyDown(event: KeyboardEvent) {
     console.log("keydown", event);
     //return;
     if (event.key === "Tab") {
       if (context === BlockContext.LIST_CHILD) {
         if (event.shiftKey === true) {
-          dispatch("shifttab", { id });
+          dispatch("shifttab", id);
         } else {
-          dispatch("tab", { id });
+          dispatch("tab", id);
           //mdStore.tabListItem(id);
         }
       }
@@ -347,11 +347,11 @@
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
     ) {
       if (id && context === BlockContext.DEFAULT) mdStore.insert(id);
-      else if (content.body != "") dispatch("insert", { id });
+      else if (content.body != "") dispatch("insert", id);
       event.preventDefault();
     } else if (event.key === "Backspace" && !content.body) {
       if (id && context === BlockContext.DEFAULT) mdStore.deleteBlock(id);
-      else dispatch("delete", { id });
+      else dispatch("delete", id);
       event.preventDefault();
     }
   }
@@ -455,7 +455,7 @@
     }
   }
 
-  function handleKeyUp(event: any) {
+  function handleKeyUp(event: KeyboardEvent) {
     console.log("keyup", event);
     setCaretPosition();
     //performEscapeShortcutsT1();

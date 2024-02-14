@@ -8,9 +8,9 @@ export type MdStore = {
   params?: MdParams;
 };
 
-export type Block = {
+export type Block<T = BlockContent> = {
   id: string;
-  content: BlockContent;
+  content: T;
   childrenHierarchy?: string[];
 };
 
@@ -36,12 +36,12 @@ export type ListContent = {
     type: ListType;
     content: string | TextContent;
   };
-  children?: ListChild[];
+  children?: ListChild<BlockContent>[];
 };
 
-export type ListChild = {
+export type ListChild<T = BlockContent> = {
   id: string;
-  content: BlockContent;
+  content: T;
 };
 
 export type TextContent = {
@@ -117,3 +117,7 @@ export enum BlockContext {
   DEFAULT = "DEFAULT",
   LIST_CHILD = "LIST_CHILD"
 }
+
+export type ListBlockWithChildren =
+  | ListChild<Required<Pick<ListContent, "children">>>
+  | Block<Required<Pick<ListContent, "children">>>;

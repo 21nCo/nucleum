@@ -18,8 +18,12 @@
   const mdStore = getMdStore(mdId);
   function handleInsert(event: any) {
     console.log("insert in list", event.detail, parentHierarchy);
-    const insertContextId = event.detail.id;
+    const insertContextId = event.detail;
     mdStore.handleInsertForExistingList(insertContextId, parentHierarchy);
+  }
+  function handleTab(event: CustomEvent) {
+    console.log("tab", { event, id });
+    mdStore.listOperation(event.type, id!, parentHierarchy);
   }
 </script>
 
@@ -34,16 +38,18 @@
 
   <div class="flex flex-col w-full">
     <TextContent
-      {mdId}
-      {isHovering}
       bind:isFocusing
       on:blur
+      on:insert={handleInsert}
+      on:tab={handleTab}
+      on:shifttab={handleTab}
+      {mdId}
+      {isHovering}
+      {id}
+      context={BlockContext.LIST_CHILD}
       content={typeof content.body.content === "string"
         ? { body: content.body.content, type: MdBlockType.SIMPLE_TEXT }
         : content.body.content}
-      context={BlockContext.LIST_CHILD}
-      on:insert={handleInsert}
-      {id}
     />
     {#if content.children && content.children.length > 0}
       {#each content.children as item (item)}
