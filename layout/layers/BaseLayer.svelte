@@ -134,7 +134,7 @@
     let subdomain = window?.location.host.split(".")[0];
     let isSheet = $page.url?.searchParams?.get("isSheet");
     let isDebugMode = $page.url?.searchParams?.get("debug");
-    console.log({ isSheet, isDebugMode });
+    // console.log({ isSheet, isDebugMode });
     if (isDebugMode) {
       $appStore.isDebugMode = true;
     }

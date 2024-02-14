@@ -4,6 +4,7 @@ export type MdStore = {
   md: NodeMarkdown | undefined;
   blocks: Block[];
   blockToFocus?: string;
+  reRenderBlock?: string;
   context: MdContext;
   params?: MdParams;
 };

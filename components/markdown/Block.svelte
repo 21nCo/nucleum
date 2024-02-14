@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { MdContext, type Block } from "$lib/tidy/types/md.type";
+  import { MdContext, type Block, type MdStore } from "$lib/tidy/types/md.type";
+  import { onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
   import { getMdStore } from "./markdown.store";
@@ -7,7 +8,23 @@
   export let mdId: string;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
+  let isReRendering: boolean = false;
   const mdStore = getMdStore(mdId);
+  onMount(() => {
+    const mdStoreSub = mdStore.subscribe((md: MdStore) => {
+      // console.log("re-render block", md.reRenderBlock);
+      if (md.reRenderBlock === block.id) {
+        // console.log("re-rendering block", block.id);
+        isReRendering = true;
+        setTimeout(() => {
+          isReRendering = false;
+        }, 0.1);
+      }
+    });
+    return () => {
+      mdStoreSub();
+    };
+  });
 </script>
 
 <div
@@ -30,16 +47,29 @@
       ? 'bg-bgs2-disabled'
       : ''}"
   >
-    <BlockContent
-      content={block.content}
-      id={block.id}
-      {mdId}
-      {isHovering}
-      bind:isFocusing
-      on:blur={() => {
-        isHovering = false;
-      }}
-    />
+    {#if isReRendering}
+      <BlockContent
+        content={block.content}
+        id={block.id}
+        {mdId}
+        {isHovering}
+        bind:isFocusing
+        on:blur={() => {
+          isHovering = false;
+        }}
+      />
+    {:else}
+      <BlockContent
+        content={block.content}
+        id={block.id}
+        {mdId}
+        {isHovering}
+        bind:isFocusing
+        on:blur={() => {
+          isHovering = false;
+        }}
+      />
+    {/if}
   </div>
 </div>
 

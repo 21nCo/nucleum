@@ -22,7 +22,7 @@
     mdStore.handleInsertForExistingList(insertContextId, parentHierarchy);
   }
   function handleTab(event: CustomEvent) {
-    console.log("tab", { event, id });
+    // console.log("tab in list", event.detail, parentHierarchy);
     mdStore.listOperation(event.type, id!, parentHierarchy);
   }
 </script>

@@ -18,7 +18,6 @@
   let pages: Action[] = [];
   let backgroundColor: string;
   let selected: number;
-  $: console.log({ pages });
   onMount(() => {
     userLocalPreferences.subscribe((x: UserLocalPreferences) => {
       pages = [];
@@ -33,15 +32,12 @@
       } else {
         items = x.appMenu.filter((item) => item !== "cp");
       }
-      console.log("app menu items", { items });
       items.forEach((action: string) => {
         const currentPage = resolveComponent(action);
         if (currentPage) {
           pages.push(currentPage);
         }
       });
-      console.log("app menu pages", { pages });
-
       let currentPath = window?.location?.pathname?.replace("/", "");
       let currentPage = pages.find((item) =>
         currentPath.includes(item.path ?? item.action)

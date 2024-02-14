@@ -247,7 +247,6 @@ function initActions() {
       const isSettingsAsModal = get(appStore).appData?.isSettingsAsModal;
       const isInPortraitMode = get(windowObject).isInPortraitMode;
       update((n) => {
-        console.log({ isInPortraitMode, isSettingsAsModal });
         if (isInPortraitMode || !isSettingsAsModal)
           return [...n, ...settingsAsPages];
         else return [...n, ...settingsAsModal];

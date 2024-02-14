@@ -14,7 +14,6 @@
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   //let isCpActive: boolean = false;
-  $: console.log({ $page });
   $: isCpActive =
     $page.params.route?.includes("/cp") || $page.route.id?.includes("/cp");
   // onMount(() => {

@@ -14,6 +14,9 @@
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
+  import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
+  import { renderPopover, renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
+  import { Direction } from "$lib/tidy/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let content: TextContent;
@@ -37,6 +40,7 @@
   let placeholder: string;
   let markerId = "caret-marker";
   let isNewSpanInserted = false;
+  let blockBrowserRef: any;
   let caretPosition:
     | {
         element?: any;
@@ -315,12 +319,12 @@
     //   console.log("focusing block from mount", blockRef);
     //   blockRef?.focus();
     // }
+    hideBlockBrowser();
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
-      if (md.blockToFocus === id) {
+      if (md.blockToFocus === id && !isFocusing) {
         // console.log("focusing block check", {
         //   id,
         //   blockRef,
-        //   blockToFocs: md.blockToFocus,
         //   context
         // });
         setCursorToEnd(blockRef);
@@ -331,7 +335,7 @@
     };
   });
   function handleKeyDown(event: KeyboardEvent) {
-    console.log("keydown", event);
+    // console.log("keydown", event);
     //return;
     if (event.key === "Tab") {
       if (context === BlockContext.LIST_CHILD) {
@@ -342,6 +346,7 @@
           //mdStore.tabListItem(id);
         }
       }
+      event.preventDefault();
     } else if (
       (event.key === "Enter" && event.metaKey == true) ||
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
@@ -455,9 +460,14 @@
     }
   }
 
+  function hideBlockBrowser() {
+    blockBrowserRef.style.display = "none";
+  }
+
   function handleKeyUp(event: KeyboardEvent) {
-    console.log("keyup", event);
+    // console.log("keyup", event);
     setCaretPosition();
+    handleBlockBrowser();
     //performEscapeShortcutsT1();
     performEscapeShortcutsT2();
     handleListContext();
@@ -484,6 +494,17 @@
     )
       refreshInlineStyling();
     mdContentChangeEvent.trigger();
+
+    /**
+     * Function to show or hide block browser
+     */
+    function handleBlockBrowser() {
+      if (event.key === "/") {
+        renderPopoverv2(blockRef, blockBrowserRef, Direction.BottomLeft);
+      } else {
+        hideBlockBrowser();
+      }
+    }
 
     /**
      * Function to handle backspace at the start of the block. Removes formatting of heading, quote, etc.
@@ -713,7 +734,7 @@
           dispatch("blur");
         }}
         on:focus={() => {
-          console.log("focusing", id);
+          // console.log("focusing", id);
           isFocusing = true;
           assignPlaceholder();
         }}
@@ -747,6 +768,10 @@
     {blockSpecificPlaceholder ?? defaultPlaceholder}
   </button> -->
 {/if}
+
+<div bind:this={blockBrowserRef}>
+  <BlockBrowser />
+</div>
 
 <style>
   div[contenteditable] {

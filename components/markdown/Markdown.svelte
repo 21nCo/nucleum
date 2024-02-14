@@ -21,7 +21,7 @@
   const mdId = generateUID();
   const mdStore: any = getMdStore(mdId);
   mdStore.load(md, context, params);
-  $: console.log("blocks", $mdStore.blocks);
+  // $: console.log("blocks", $mdStore.blocks);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       // console.log("md content changed", val);

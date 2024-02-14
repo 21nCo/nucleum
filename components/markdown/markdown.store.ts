@@ -580,7 +580,7 @@ function initMarkdownStore() {
         n.blockToFocus = id;
         return n;
       }
-      const parent = resolveImmediateParent(n.blocks, parentHierarchy);
+      const { parent } = resolveImmediateParent(n.blocks, parentHierarchy);
       if (
         !parent?.content ||
         !("children" in parent.content) ||
@@ -589,6 +589,7 @@ function initMarkdownStore() {
         return n;
       const { blocks, id } = handleInsertion(parent.content.children);
       parent.content.children = blocks;
+      n.reRenderBlock = parentHierarchy[0];
       n.blockToFocus = id;
       return n;
 
@@ -684,6 +685,7 @@ function initMarkdownStore() {
     id: string,
     parentHierarchy: string[]
   ) {
+    const parentHierarchyCopy = deepCopy(parentHierarchy);
     if (isEmptyArray(parentHierarchy) && operation === "shifttab") return false;
     if (isEmptyArray(parentHierarchy) && operation === "tab") {
       update((n) => {
@@ -695,6 +697,7 @@ function initMarkdownStore() {
           previousSibling as Block<ListContent>
         );
         n.blocks = n.blocks.filter((b) => b.id !== id);
+        n.reRenderBlock = previousSibling.id;
         n.blockToFocus = id;
         return n;
       });
@@ -713,11 +716,11 @@ function initMarkdownStore() {
         parent.content.children = parent.content.children.filter(
           (b) => b.id !== id
         );
+        n.reRenderBlock = parentHierarchyCopy[0];
         n.blockToFocus = id;
         return n;
       });
     } else if (operation === "shifttab") {
-      console.log("shifttab executing...", { parentHierarchy });
       update((n) => {
         const { parent, parentOneAbove } = resolveImmediateParent(
           n.blocks,
@@ -739,7 +742,6 @@ function initMarkdownStore() {
           ];
           n.blockToFocus = id;
         } else {
-          console.log("parentOneAbove", parentOneAbove);
           let blocksInScope: ListChild[] = (
             parentOneAbove as ListChild<ListContent>
           ).content.children!;
@@ -760,6 +762,12 @@ function initMarkdownStore() {
     }
     return true;
 
+    /**
+     * Moves the current block as a child of the parent block
+     * @param blockToBeMoved the block that needs to be moved as a child
+     * @param parent the parent block under which the current block needs to be moved
+     * @returns the parent block with the current block moved as a child
+     */
     function moveAsChild(
       blockToBeMoved: Block | ListChild,
       parent: Block<ListContent> | ListChild<ListContent>

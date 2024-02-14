@@ -298,9 +298,9 @@
       {:else if icon === "arrow-right"}
         <Arrow direction={Direction.Right} />
       {:else if icon === "arrow-down-right"}
-        <Arrow direction={Direction.DownRight} />
+        <Arrow direction={Direction.BottomRight} />
       {:else if icon === "arrow-down-right-mini"}
-        <Arrow direction={Direction.DownRight} variant={IconVariant.Mini} />
+        <Arrow direction={Direction.BottomRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
         <Arrow direction={Direction.Right} isCircled={true} {variant} />
       {:else if icon === "arrow-right-circled-mini"}
