@@ -18,7 +18,8 @@
   export let params: MdParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
-  const mdId = generateUID();
+  export let mdId: string;
+  if (!mdId) mdId = generateUID();
   const mdStore: any = getMdStore(mdId);
   mdStore.load(md, context, params);
   // $: console.log("blocks", $mdStore.blocks);
