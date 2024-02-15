@@ -16,7 +16,8 @@ export enum AppEvent {
   SETTINGS = "cp",
   ACCOUNT = "account",
   MANUAL_RUN_DBO = "MANUAL_RUN_DBO",
-  TOGGLE_SIDEBAR = "TOGGLE_SIDEBAR"
+  TOGGLE_SIDEBAR = "TOGGLE_SIDEBAR",
+  MOBILE_TOAST = "MOBILE_TOAST"
 }
 
 export enum PlayActionState {

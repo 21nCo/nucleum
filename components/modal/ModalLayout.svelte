@@ -24,14 +24,14 @@
     footerRef.close();
   }
   onMount(() => {
-    let queryParamId = $page.url.searchParams.get("id");
-    if (queryParamId && !params?.id) {
-      params.id = queryParamId;
-    }
-    let queryParamPath = $page.url.searchParams.get("path");
-    if (queryParamPath && !params?.path) {
-      params.path = queryParamPath;
-    }
+    // let queryParamId = $page.url.searchParams.get("id");
+    // if (queryParamId && !params?.id) {
+    //   params.id = queryParamId;
+    // }
+    // let queryParamPath = $page.url.searchParams.get("path");
+    // if (queryParamPath && !params?.path) {
+    //   params.path = queryParamPath;
+    // }
     // console.log("id", { queryParamId, queryParamPath, params });
   });
   function resolveSize() {
@@ -135,7 +135,7 @@
     <div class="flex flex-col gap-4 w-full flex-grow">
       <slot />
     </div>
-    {#if !layoutParams.ignoreSafeArea}
+    {#if !layoutParams.ignoreSafeArea && (layoutParams?.primaryAction || layoutParams?.secondaryAction)}
       <ModalFooter
         primaryAction={layoutParams?.primaryAction}
         secondaryAction={layoutParams?.secondaryAction}

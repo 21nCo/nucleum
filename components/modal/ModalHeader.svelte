@@ -23,7 +23,7 @@
         <Icon
           icon="cross"
           on:click={() => {
-            modalEvent.notify({ path: params.path, isShow: false });
+            modalEvent.hideSpecific(params.path);
           }}
         />
       </div>

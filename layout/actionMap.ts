@@ -185,9 +185,14 @@ export const globalActions: Action[] = [
     //"gathery:form:id"
   },
   {
-    action: "STATUS_UPDATE",
+    action: AppEvent.MOBILE_TOAST,
     component: ToastModalPortrait,
-    type: ActionType.META_MODAL
+    type: ActionType.META_MODAL,
+    modalParams: {
+      layoutParams: {
+        size: Size.xs
+      }
+    }
   },
   {
     action: AppEvent.EDIT_MODE,

@@ -28,7 +28,11 @@
 
 {#if style === PanelSwitcherStyle.BAR}
   <button
-    class="flex relative bg-transparent {size === Size.md ? 'px-6' : 'px-4'}"
+    class="flex relative bg-transparent {size === Size.md
+      ? 'px-6'
+      : size === Size.sm
+        ? 'px-4'
+        : 'px-3'}"
     on:click
     style={fgColorStyle}
     disabled={isDisabled}
@@ -41,7 +45,9 @@
           ? 'text-b2'
           : size === Size.sm
             ? 'text-base'
-            : 'text-h4'}"
+            : size === Size.xs
+              ? 'text-b2'
+              : 'text-h4'}"
     >
       {item}
     </div>

@@ -43,6 +43,7 @@
       return;
     }
     const json = await response.json();
+    console.log({ json });
     if (!json || !json.token) {
       if (json > 0) {
         showError("User already exists. Please signin instead");

@@ -24,6 +24,8 @@ export type Action = {
   isInactive?: boolean;
   modalParams?: {
     isHideTitleIfEmpty?: boolean;
+    isDismissable?: boolean;
+    isShowAsSheet?: boolean;
     layoutParams: ModalLayoutParams;
   };
   confirmation?: ConfirmationNotification;

@@ -14,7 +14,7 @@
   export let type: "primary" | "secondary" | "tertiary" | ButtonVariant =
     "secondary";
   export let size: Size = Size.md;
-  export let width: string = "max-w-fit";
+  export let width: string = "min-w-fit max-w-fit";
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
@@ -32,8 +32,7 @@
   let classList: string;
   function setStyles() {
     classList =
-      "flex flex-row justify-center items-center min-w-fit rounded-full" +
-      ` ${width} `;
+      "flex flex-row justify-center items-center min-w-fit rounded-full ";
     if (style === ButtonStyle.ROUNDED && !label && icon && !$$slots.default) {
       switch (size) {
         case Size.xl:
@@ -152,6 +151,7 @@
 
 <button
   class={classList +
+    ` ${width} ` +
     (isDisabled ? " opacity-70 cursor-not-allowed hover:opacity-50 " : "")}
   on:click
   bind:this={buttonRef}

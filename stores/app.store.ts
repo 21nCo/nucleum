@@ -540,9 +540,8 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         n.fullScreenComponentPath = undefined;
         modalEvent.hide();
@@ -552,9 +551,8 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         }
         return n;
       });
@@ -734,14 +732,20 @@ function initModalStore(seed: ModalEvent) {
         return defaultModal;
       });
     },
-    hide: () => {
+    hide: async () => {
       const modal = get(modalEvent);
-      if (modal.isDismissable === false) return;
+      if (modal.isDismissable === false) return false;
       update((n: ModalEvent) => {
         return { ...n, isShow: false };
       });
       confirmationNotification.reset();
       appStore.showAssociatedPlayerIfRequired();
+      return true;
+    },
+    hideSpecific: (action: string) => {
+      update((n: ModalEvent) => {
+        return { ...n, isShow: false };
+      });
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {
@@ -805,8 +809,8 @@ function initToastStore() {
       });
       if (get(windowObject).isInPortraitMode) {
         modalEvent.notify({
-          path: "STATUS_UPDATE",
-          id: event.id,
+          path: AppEvent.MOBILE_TOAST,
+          componentParams: { id: event.id },
           isShow: true,
           isDismissable: true
         });

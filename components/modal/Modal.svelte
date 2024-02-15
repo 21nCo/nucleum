@@ -3,7 +3,7 @@
   import {
     confirmationNotification,
     modalEvent,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { fade, fly } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
@@ -45,10 +45,7 @@
   }
   function close() {
     show = false;
-    modalEvent.notify({
-      path: id,
-      isShow: false,
-    });
+    modalEvent.hideSpecific(id);
     confirmationNotification.reset();
   }
 </script>

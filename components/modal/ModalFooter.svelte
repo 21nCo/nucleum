@@ -8,9 +8,9 @@
   export let primaryAction: ButtonParams | undefined = undefined;
   export let secondaryAction: ButtonParams | undefined = undefined;
   let isActionInProgress = false;
-  export function close() {
-    if (isPreventAutoClose) return;
-    modalEvent.hide();
+  export async function close() {
+    if (isPreventAutoClose) return false;
+    return modalEvent.hide();
   }
 </script>
 
@@ -47,8 +47,7 @@
         ...secondaryAction,
         callback: () => {
           if (secondaryAction?.callback) secondaryAction.callback();
-          close();
-          return Promise.resolve(true);
+          return close();
         }
       }}
     />
