@@ -255,7 +255,7 @@
       class={inputClasses}
       bind:value
       on:change|stopPropagation
-      on:keydown|stopPropagation
+      on:keydown
       on:keyup|stopPropagation={searchItemType
         ? handleKeyUpForSearch
         : handleKeyUp}

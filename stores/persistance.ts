@@ -186,7 +186,7 @@ export class Persistance {
         if (item.id) {
           const id = ItemEnum[itemType] + `:${item.id}`;
           item.id = id;
-          this.surrealDb.create(id, item);
+          return this.surrealDb.create(id, item);
         } else {
           return this.surrealDb.create(ItemEnum[itemType], item);
         }

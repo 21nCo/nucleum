@@ -85,3 +85,18 @@ export function renderPopoverv2(
   });
   popRef.style.opacity = "1";
 }
+
+export function isTextElement(target: EventTarget | null) {
+  let tagName;
+  if (target instanceof Element) {
+    tagName = target.tagName.toLowerCase();
+  }
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    tagName === "input" ||
+    tagName === "textarea" ||
+    (target instanceof HTMLElement &&
+      (target as HTMLElement).contentEditable === "true")
+  );
+}

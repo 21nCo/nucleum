@@ -6,6 +6,7 @@
   } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
+  import { isTextElement } from "$lib/tidy/utils/ui.utils";
   import { runAction } from "$lib/tidy/utils/utils";
   import { onDestroy, onMount } from "svelte";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
@@ -22,16 +23,24 @@
       appStoreSub();
     };
   });
-  const shortcutListener = (event: any) => {
-    defaultKeyMap = $appStore?.appData?.shortcuts;
+  function handleShortcutsForTextBoxScenario(event: KeyboardEvent) {
+    const target = event.target || event.srcElement;
     if (event.key === "Escape") {
       event.preventDefault();
       modalEvent.hide();
-      return;
-    } else if (event.key === "q") {
+      return true;
+    }
+    if (isTextElement(target)) return;
+    if (event.key === "q") {
       event.preventDefault();
       runAction(AppEvent.TOGGLE_SIDEBAR);
+      return true;
     }
+  }
+  const shortcutListener = (event: KeyboardEvent) => {
+    defaultKeyMap = $appStore?.appData?.shortcuts;
+    const isShortcutRunCompleted = handleShortcutsForTextBoxScenario(event);
+    if (isShortcutRunCompleted) return;
     let modifiers = [];
     if (event.metaKey || event.ctrlKey) {
       modifiers.push("ctrl");

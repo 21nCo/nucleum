@@ -32,10 +32,11 @@ import { Item } from "$lib/tidy/types/item.enum";
 import { defaultAppData } from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
 import { postMessageToParent, postToParent } from "../utils/embed.utils";
-import type {
-  ConfirmationNotification,
-  ScheduledNotification,
-  Toast
+import {
+  AlertType,
+  type ConfirmationNotification,
+  type ScheduledNotification,
+  type Toast
 } from "../types/notification.type";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import { ButtonVariant } from "../types/button.type";
@@ -543,8 +544,8 @@ function initAppStore(seed: AppStore) {
           n.player = resolveComponentFromPath(n.fullScreenComponentPath)
             ?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
+        modalEvent.hideSpecific(n.fullScreenComponentPath ?? "");
         n.fullScreenComponentPath = undefined;
-        modalEvent.hide();
         return n;
       });
     },
@@ -736,6 +737,7 @@ function initModalStore(seed: ModalEvent) {
       const modal = get(modalEvent);
       if (modal.isDismissable === false) return false;
       update((n: ModalEvent) => {
+        // console.log("hiding modal", { n });
         return { ...n, isShow: false };
       });
       confirmationNotification.reset();
@@ -744,7 +746,7 @@ function initModalStore(seed: ModalEvent) {
     },
     hideSpecific: (action: string) => {
       update((n: ModalEvent) => {
-        return { ...n, isShow: false };
+        return { path: action, isShow: false };
       });
     },
     notify: (event: ModalEvent) => {
@@ -789,6 +791,34 @@ export const toasts = initToastStore();
 function initToastStore() {
   let timer: any;
   const { subscribe, set, update } = writable<Toast[]>([]);
+
+  /**
+   * Triggers a toast notification
+   * @param event Toast event with message and type
+   */
+  const trigger = (event: Toast) => {
+    console.log("triggering toast", event);
+    update((n: Toast[]) => {
+      if (n.length > 3) n.shift();
+      n.push(event);
+      return n;
+    });
+    if (get(windowObject).isInPortraitMode) {
+      modalEvent.notify({
+        path: AppEvent.MOBILE_TOAST,
+        componentParams: { id: event.id },
+        isShow: true,
+        isDismissable: true
+      });
+    } else {
+      timer = setTimeout(() => {
+        update((n: Toast[]) => {
+          n.shift();
+          return n;
+        });
+      }, 5000);
+    }
+  };
   return {
     subscribe,
     set: (m: Toast[]) => {
@@ -800,29 +830,17 @@ function initToastStore() {
         return [];
       });
     },
-    trigger: (event: Toast) => {
-      console.log("triggering toast", event);
-      update((n: Toast[]) => {
-        if (n.length > 3) n.shift();
-        n.push(event);
-        return n;
-      });
-      if (get(windowObject).isInPortraitMode) {
-        modalEvent.notify({
-          path: AppEvent.MOBILE_TOAST,
-          componentParams: { id: event.id },
-          isShow: true,
-          isDismissable: true
-        });
-      } else {
-        timer = setTimeout(() => {
-          update((n: Toast[]) => {
-            n.shift();
-            return n;
-          });
-        }, 5000);
-      }
-    }
+    success: (message: string, title: string = "SUCCESS") => {
+      const id = generateUID();
+      trigger({ title, message, type: AlertType.SUCCESS, id });
+      return id;
+    },
+    error: (message: string, title: string = "ERROR") => {
+      const id = generateUID();
+      trigger({ title, message, type: AlertType.ERROR, id });
+      return id;
+    },
+    trigger: trigger
   };
 }
 

@@ -58,7 +58,8 @@
           })
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
-        modals = [x];
+        // modals = [x];
+        modals = [...modals, x];
       }
       appStore.log({ modals });
     });
@@ -159,7 +160,7 @@
   <Modal show={true} id="confirmation" isDismissable={true}>
     <ModalLayout
       params={{
-        path: "confirmation",
+        path: AppEvent.CONFIRMATION,
         title: $confirmationNotification.title,
         isHideTitleIfEmpty: true
       }}

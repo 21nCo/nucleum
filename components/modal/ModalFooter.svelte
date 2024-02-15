@@ -1,8 +1,10 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import CloseButton from "$lib/tidy/elements/button/CloseButton.svelte";
-  import { modalEvent, windowObject } from "$lib/tidy/stores/app.store";
+  import { windowObject } from "$lib/tidy/stores/app.store";
   import type { ButtonParams } from "$lib/tidy/types/button.type";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
   export let primaryAction: ButtonParams | undefined = undefined;
@@ -10,7 +12,7 @@
   let isActionInProgress = false;
   export async function close() {
     if (isPreventAutoClose) return false;
-    return modalEvent.hide();
+    dispatch("close");
   }
 </script>
 

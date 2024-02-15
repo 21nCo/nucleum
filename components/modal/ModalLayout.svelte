@@ -1,6 +1,10 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { appStore } from "$lib/tidy/stores/app.store";
+  import {
+    appStore,
+    confirmationNotification,
+    modalEvent
+  } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -13,6 +17,7 @@
   } from "$lib/tidy/types/popup.type";
   import { fade, blur, fly, slide, scale, draw } from "svelte/transition";
   import { quintOut } from "svelte/easing";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   export let params: ModalParams;
   export let layoutParams: ModalLayoutParams;
   console.log({ layoutParams });
@@ -140,6 +145,11 @@
         primaryAction={layoutParams?.primaryAction}
         secondaryAction={layoutParams?.secondaryAction}
         bind:this={footerRef}
+        on:close={() => {
+          if (params.path === AppEvent.CONFIRMATION)
+            confirmationNotification.reset();
+          else modalEvent.hideSpecific(params.path);
+        }}
       />
     {/if}
   </div>

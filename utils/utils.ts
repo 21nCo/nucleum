@@ -373,14 +373,7 @@ export function download(data: string, label: string | null = null) {
 export function interceptSurrealResponse(response: any, context: string = "") {
   console.log({ context, response });
   if (!isValidArrayWithData(response) || response[0].status === "ERR") {
-    toasts.trigger({
-      title: "ERR: SUR-001",
-      message: "Something went wrong. Please try again",
-      actionText: "View",
-      type: AlertType.ERROR,
-      id: generateUID(),
-      callback: () => {}
-    });
+    toasts.error("Something went wrong. Please try again", "ERR: SUR-001");
     return null;
   } else if (response[0].status === "OK" && response[0].result) {
     return response[0].result;
