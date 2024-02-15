@@ -9,14 +9,15 @@ export type ModalEvent = ModalParams & {
 };
 /**
  * @description
- * id: unique id for the resource to be shown in the modal
- * that can be used for any mutations on the resource
  *
  * path: path to the resource to be shown in the modal which is used by componentResolver
+ * isDismissable: if true, the modal can be dismissed by clicking outside of the modal
+ * title: title of the modal
+ * isHideTitleIfEmpty: if true, the title will be hidden if it is empty
+ * componentParams: parameters to be passed to the component
  */
 export type ModalParams = {
   path: string;
-  id?: string;
   isDismissable?: boolean;
   title?: string;
   isHideTitleIfEmpty?: boolean;

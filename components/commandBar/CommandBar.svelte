@@ -41,10 +41,7 @@
     placeholder = "select a " + searchAction.searchActionParams?.itemLabel;
   }
   function close() {
-    modalEvent.notify({
-      isShow: false,
-      path: AppEvent.CMD
-    });
+    modalEvent.hideSpecific(AppEvent.CMD);
   }
 </script>
 

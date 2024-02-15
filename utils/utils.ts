@@ -185,7 +185,7 @@ export function openLink(url: string) {
   }
 }
 
-export function runAction(action: string, params: any = undefined) {
+export function runAction(action: string, componentParams: any = undefined) {
   let component = resolveComponent(action);
   if (!component) {
     windowObject.gotoPath("404");
@@ -198,8 +198,11 @@ export function runAction(action: string, params: any = undefined) {
     modalEvent.notify({
       path: component.action,
       isShow: true,
+      isDismissable: component.modalParams?.isDismissable,
+      isHideTitleIfEmpty: component.modalParams?.isHideTitleIfEmpty,
+      isShowAsSheet: component.modalParams?.isShowAsSheet,
       layoutParams: component.modalParams?.layoutParams,
-      componentParams: params
+      componentParams
     });
   } else if (
     component.type === ActionType.CONFIRMATION &&

@@ -53,8 +53,8 @@
         postToParent({
           pop: JSON.stringify({
             isShow: x.isShow,
-            path: x.path,
-            id: x.id
+            path: x.path
+            // id: x.id TODO - send component params
           })
         });
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
@@ -121,7 +121,7 @@
   </div>
 {/if}
 
-<Modal
+<!-- <Modal
   size={Size.xl}
   show={isShowAppearancePreview}
   isOnRight={true}
@@ -132,7 +132,8 @@
     path={"settings/appearance"}
     params={{ parentBackgroundIndex: 2, hidePageHeading: true }}
   />
-</Modal>
+</Modal> -->
+
 {#each modals as modal (modal.path)}
   <Modal
     show={modal.isShow}
@@ -148,7 +149,7 @@
     >
       <ComponentResolver
         path={modal.path}
-        params={{ id: modal.id, ...modal.componentParams, params: modal }}
+        params={{ ...modal.componentParams }}
       />
     </ModalLayout>
   </Modal>
