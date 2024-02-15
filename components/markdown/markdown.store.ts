@@ -430,7 +430,6 @@ export function getMdStore(id: string): mdStoreType {
   return mdStores.get(id);
 }
 
-export const mdStore: mdStoreType = initMarkdownStore();
 function initMarkdownStore() {
   const { subscribe, set, update } = writable<MdStore>(seedMdStore);
 
