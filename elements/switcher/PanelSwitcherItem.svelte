@@ -2,28 +2,14 @@
   import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { ColorStrength, ColorType } from "$lib/tidy/types/theme.type";
-  import {
-    bgClass,
-    customColorStyle,
-    resolveIfActiveFgFg,
-    textColorClass
-  } from "$lib/tidy/utils/theme.utils";
+  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { bgClass, textColorClass } from "$lib/tidy/utils/theme.utils";
   export let item: string;
   export let size: Size;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
   export let activeColor: number | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
-  $: fgColorStyle = isActive
-    ? customColorStyle($userPreferences, ColorType.Fg, "a1", activeColor)
-    : "";
-  $: activeBgColorStyle = customColorStyle(
-    $userPreferences,
-    ColorType.Bg,
-    "a1",
-    activeColor
-  );
 </script>
 
 {#if style === PanelSwitcherStyle.BAR}
@@ -34,12 +20,12 @@
         ? 'px-4'
         : 'px-3'}"
     on:click
-    style={fgColorStyle}
     disabled={isDisabled}
   >
     <div
-      class="font-medium min-w-fit {isActive ? '' : 'text-fgs4'} {size ===
-        Size.md && $windowObject.isInPortraitMode
+      class="font-medium min-w-fit {isActive
+        ? 'activeFgColor'
+        : 'text-fgs4'} {size === Size.md && $windowObject.isInPortraitMode
         ? 'text-base'
         : size === Size.sm && $windowObject.isInPortraitMode
           ? 'text-b2'
@@ -53,8 +39,8 @@
     </div>
     {#if isActive}
       <div
-        class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1 z-10"
-        style="height: 5%; {activeBgColorStyle}"
+        class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1 z-10 activeBgColor"
+        style="height: 5%;"
       />
     {:else}
       <button
@@ -67,25 +53,20 @@
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.DOT}
-  <button
-    class="relative min-w-fit"
-    on:click
-    style={fgColorStyle}
-    disabled={isDisabled}
-  >
+  <button class="relative min-w-fit" on:click disabled={isDisabled}>
     <div
       class="{size === Size.sm
         ? 'text-b2'
         : $windowObject.isInPortraitMode
           ? 'text-h4'
-          : 'text-h3'} {isActive ? '' : 'text-fgs3'}"
+          : 'text-h3'} {isActive ? 'activeFgColor' : 'text-fgs3'}"
     >
       {item}
     </div>
     {#if isActive}
       <div
-        class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full"
-        style="left: 40%; {activeBgColorStyle}"
+        class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full activeBgColor"
+        style="left: 40%;"
       />
     {/if}
   </button>
@@ -93,8 +74,7 @@
   <button
     class="relative min-w-fit {size === Size.md
       ? 'rounded-full px-6 py-3'
-      : 'rounded-md px-3 py-1'}"
-    style={isActive ? activeBgColorStyle : ""}
+      : 'rounded-md px-3 py-1 '} {isActive ? 'activeBgColor' : ''}"
     on:click
     disabled={isDisabled}
   >
@@ -114,3 +94,12 @@
     </div>
   </button>
 {/if}
+
+<style>
+  .activeBgColor {
+    background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
+  }
+  .activeFgColor {
+    color: var(--customcolor, rgba(var(--colors-aps1), 1));
+  }
+</style>

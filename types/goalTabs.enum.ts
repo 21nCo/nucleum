@@ -1,5 +1,5 @@
 export enum GoalTab {
   Analytics = "Analytics",
   LOGS = "Logs",
-  INFO = "Info"
+  Overview = "Overview"
 }

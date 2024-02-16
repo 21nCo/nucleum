@@ -1,10 +1,14 @@
 <script lang="ts">
   import { Direction } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
-  import type { SwitchItem } from "$lib/tidy/types/switcher.enum";
+  import {
+    VerticalSwitcherStyle,
+    type SwitchItem
+  } from "$lib/tidy/types/switcher.enum";
   import VerticalSwitcherItem from "./VerticalSwitcherItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
+  export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let items: SwitchItem[];
   export let selected: string;
   export let itemProps: {
@@ -12,7 +16,7 @@
     activeStatusPlacement?: Direction;
   } = {
     size: Size.md,
-    activeStatusPlacement: Direction.Right,
+    activeStatusPlacement: Direction.Right
   };
 </script>
 
@@ -21,6 +25,7 @@
     <VerticalSwitcherItem
       {item}
       {...itemProps}
+      {style}
       isActive={selected === item.label}
       on:click={() => {
         selected = item.label;

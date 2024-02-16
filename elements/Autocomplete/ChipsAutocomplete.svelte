@@ -13,6 +13,7 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
   import FormControlLabel from "../text/FormControlLabel.svelte";
+  import Autocomplete from "./Autocomplete.svelte";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;
@@ -21,9 +22,12 @@
   export let isListVisible: boolean = false;
   export let options: AutocompleteListItemType[] = [];
   export let placeholder: string = "";
-  export let values: AutocompleteListItemType[] = [];
+  export let values: string[] = [];
   export let label: string = "";
   export let chipsVariant: ChipVariant = ChipVariant.FILLED;
+  let selected: AutocompleteListItemType[] = [];
+  initSelected();
+
   let listContainerClassList: string = "bg-bgs2 shadow-sm shadow-fgs3";
   let isFocusing: boolean = false;
   let inputValue: string;
@@ -32,8 +36,7 @@
   let isActive: boolean = false;
   let backgroundColor: string;
   let defaultInputClasses: string = "text-input w-full rounded-sm";
-
-  let tempOptions: AutocompleteListItemType[] = [];
+  let filteredOptions: AutocompleteListItemType[] = [];
 
   const dispatch = createEventDispatcher();
 
@@ -76,17 +79,22 @@
     updateListVisibility(false);
   }
 
-  function updateValues({ label, id }: { label: string; id: string }) {
-    if (values.some((x) => x.id === id)) {
-      values = values.filter((x) => x.id !== id);
+  function initSelected() {
+    selected = options.filter((x) => values.includes(x.id));
+  }
+
+  function updateSelected({ label, id }: { label: string; id: string }) {
+    if (selected.some((x) => x.id === id)) {
+      selected = selected.filter((x) => x.id !== id);
     } else {
-      values = [...values, { label, id }];
+      selected = [...selected, { label, id }];
     }
+    values = selected.map((x) => x.id);
   }
 
   function handleResultItemClick(detail: { label: string; id: string }) {
     dispatch("list-item-click", detail);
-    updateValues(detail);
+    updateSelected(detail);
     performDefaultClickActions();
     // if (!escapeDefaultClickBehaviour) {
     //   performDefaultClickActions();
@@ -94,7 +102,6 @@
   }
 
   function handleResultItemClickViaCustomEvent({ detail }: CustomEvent) {
-    console.log(detail);
     handleResultItemClick(detail);
   }
 
@@ -103,7 +110,7 @@
       hideOptions();
     }
     if (event.key === "ArrowDown") {
-      if (selectedListItemIndex < tempOptions.length - 1) {
+      if (selectedListItemIndex < filteredOptions.length - 1) {
         selectedListItemIndex++;
       }
     }
@@ -114,7 +121,7 @@
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { label: title, id } = tempOptions[selectedListItemIndex];
+        const { label: title, id } = filteredOptions[selectedListItemIndex];
         handleResultItemClick({ label, id });
         performDefaultClickActions();
         // if (!escapeDefaultClickBehaviour) {
@@ -153,7 +160,7 @@
   $: {
     selectedListItemIndex = -1;
     if (!inputValue) {
-      tempOptions = options;
+      filteredOptions = options;
     }
     if (
       inputValue !== undefined &&
@@ -162,7 +169,7 @@
       options.length !== 0
     ) {
       updateListVisibility(true);
-      tempOptions = options.filter((x) =>
+      filteredOptions = options.filter((x) =>
         x.label.toLowerCase().includes(inputValue.toLowerCase())
       );
     }
@@ -222,7 +229,7 @@
         ? 'outline-aps1'
         : 'outline-brs3'}"
     >
-      {#each values as value}
+      {#each selected as value}
         <Chip on:click hideCloseIcon variant={chipsVariant}>{value.label}</Chip>
       {/each}
       <input
@@ -248,16 +255,16 @@
       />
     </div>
   </div>
-  {#if tempOptions && tempOptions.length > 0 && isListVisible}
+  {#if filteredOptions && filteredOptions.length > 0 && isListVisible}
     <!-- mt-1 is given because of the outline, since the outline is not the part of box model, it takes up extra space causing the overlap between outline, and the below list-->
     <div
       style={listContainerStyle}
       class={`absolute w-full z-[10] mt-1 max-h-[10rem] overflow-auto ${listContainerClassList}`}
     >
-      {#each tempOptions as listItem, index}
+      {#each filteredOptions as listItem, index}
         <AutocompleteResultItem
           {...listItem}
-          isSelected={values.some((x) => x.id === listItem.id)}
+          isSelected={selected.some((x) => x.id === listItem.id)}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}
           on:click={handleResultItemClickViaCustomEvent}

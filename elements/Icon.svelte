@@ -95,6 +95,7 @@
   import FaceSmile from "../icons/FaceSmile.svelte";
   import Grab from "../icons/Grab.svelte";
   import Capture2 from "../icons/Capture2.0.svelte";
+  import QueueList from "../icons/QueueList.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -197,7 +198,7 @@
         <LineChart {variant} />
       {:else if icon === "settings"}
         <Settings {variant} />
-      {:else if icon === "goals"}
+      {:else if icon === "rectangle-stack" || icon === "goals"}
         <Stack {variant} />
       {:else if icon === "command"}
         <Command {variant} />
@@ -243,7 +244,7 @@
         <Data {variant} />
       {:else if icon === "list"}
         <List {variant} />
-      {:else if icon === "widget"}
+      {:else if icon === "rectangle-group" || icon === "widget"}
         <Widget {variant} />
       {:else if icon === "fire"}
         <Fire {variant} />
@@ -411,6 +412,8 @@
         <FaceSmile {variant} />
       {:else if icon === "grab"}
         <Grab {variant} />
+      {:else if icon === "queue-list"}
+        <QueueList {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

@@ -4,7 +4,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import {
     VerticalSwitcherStyle,
-    type SwitchItem,
+    type SwitchItem
   } from "$lib/tidy/types/switcher.enum";
   import { properCase } from "$lib/tidy/utils/text.utils";
   export let item: SwitchItem;
@@ -24,12 +24,6 @@
       "border-l-2 border-l-bgs2 bg-gradient-to-l from-transparent to-bgs2";
     inactiveClasses = "border-l-2 border-l-bgs2 text-fgs3";
   } else if (
-    style === VerticalSwitcherStyle.BAR &&
-    activeStatusPlacement === Direction.Left
-  ) {
-    activeClasses = "border-l-4 border-l-aps1 border-lounded-md";
-    inactiveClasses = "border-l-4 border-l-bgs2 text-fgs3";
-  } else if (
     style === VerticalSwitcherStyle.GRADIENT &&
     activeStatusPlacement === Direction.Right
   ) {
@@ -38,21 +32,27 @@
     inactiveClasses = "border-r-2 border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR &&
+    activeStatusPlacement === Direction.Left
+  ) {
+    activeClasses = "border-l-4 border-rounded-md";
+    inactiveClasses = "border-l-4 border-l-bgs2 text-fgs3";
+  } else if (
+    style === VerticalSwitcherStyle.BAR &&
     activeStatusPlacement === Direction.Right
   ) {
-    activeClasses = "border-r-4 border-r-aps1 border-rounded-md";
+    activeClasses = "border-r-4 border-rounded-md";
     inactiveClasses = "border-r-4 border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
     activeStatusPlacement === Direction.Right
   ) {
-    activeClasses = "border-r-4 border-r-aps1 border-rounded-md";
+    activeClasses = "border-r-4 border-rounded-md";
     inactiveClasses = "border-r-4 border-r-bgs1 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
     activeStatusPlacement === Direction.Left
   ) {
-    activeClasses = "border-l-4 border-l-aps1 border-lounded-md";
+    activeClasses = "border-l-4 border-rounded-md";
     inactiveClasses = "border-l-4 border-l-bgs1 text-fgs3";
   }
   $: if (size === Size.xs) {
@@ -75,8 +75,8 @@
 >
   <button
     class="flex flex-col items-center {sizeClasses} {isActive
-      ? activeClasses
-      : inactiveClasses}"
+      ? activeClasses + ' active '
+      : inactiveClasses + ' inactive '}"
     on:click
   >
     {#if item.icon}
@@ -89,3 +89,9 @@
     <span>{properCase(item.label)}</span>
   </button>
 </div>
+
+<style>
+  button.active {
+    border-color: var(--customcolor);
+  }
+</style>

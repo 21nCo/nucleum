@@ -902,9 +902,10 @@ function initFullPageLoadingScreen() {
 export const isInEditMode = initEditModeStore();
 
 function initEditModeStore() {
-  const { subscribe, update } = writable<boolean>(false);
+  const { subscribe,set, update } = writable<boolean>(false);
   return {
     subscribe,
+    set,
     toggle: () => {
       update((n: boolean) => {
         return !n;

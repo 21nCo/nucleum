@@ -26,7 +26,7 @@
       case PanelSwitcherStyle.TRAIN:
         if (size === Size.md) {
           classList +=
-            "min-w-fit rounded-full " +
+            "min-w-fit border-2 border-brs3 rounded-full " +
             bgClass($userPreferences.theme, parentBackgroundIndex);
         } else if (size === Size.sm) {
           classList +=

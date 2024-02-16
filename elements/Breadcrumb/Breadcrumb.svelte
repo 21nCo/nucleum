@@ -1,17 +1,11 @@
 <script lang="ts">
   import BreadcrumbItem from "./BreadcrumbItem.svelte";
   import type { BreadcrumbItem as BreadcrumbItemType } from "$lib/tidy/types/breadcrumbItem.type";
-
-  export let containerClassList: string = "";
-  export let containerStyle: string = "";
   export let items: BreadcrumbItemType[] = [];
 </script>
 
-<div
-  style={containerStyle}
-  class={`flex overflow-auto remove-scrollbar ${containerClassList}`}
->
-  {#each items as item}
-    <BreadcrumbItem {...item} />
+<div class="flex remove-scrollbar rounded-md">
+  {#each items as item, index}
+    <BreadcrumbItem {...item} isLast={index === items.length - 1} />
   {/each}
 </div>

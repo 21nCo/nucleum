@@ -1,7 +1,9 @@
 <script>
+  import { generateUID } from "$lib/tidy/utils/utils";
+
   export let checked = false;
   export let label = "";
-  export let id = "toggle-switch";
+  export let id = "toggle-switch" + generateUID();
 
   function toggle() {
     checked = !checked;
