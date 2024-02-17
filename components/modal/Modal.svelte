@@ -1,21 +1,17 @@
 <script lang="ts">
-  import { Size } from "$lib/tidy/types/size.enum";
   import {
     confirmationNotification,
-    modalEvent,
-    windowObject
+    modalEvent
   } from "$lib/tidy/stores/app.store";
-  import { fade, fly } from "svelte/transition";
+  import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   export let show = true;
-  export let size: Size = Size.lg;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
   export let isOnRight: boolean = false;
   export let isDismissable: boolean = true;
   export let isUseDialog: boolean = true;
-  export let isFullScreen: boolean = false;
   let dialog: HTMLDialogElement;
   let width: number;
   let left: any;
@@ -32,17 +28,17 @@
       close();
     }
   };
-  $: {
-    if (size == Size.xs) {
-      width = 400;
-    } else if ($windowObject.documentWidth >= 650) {
-      width = 600;
-    } else {
-      width = $windowObject.documentWidth - 50;
-    }
-    left = $windowObject.documentWidth / 2 - width / 2;
-    // top = $windowObject.documentHeight / 2 - height / 2;
-  }
+  // $: {
+  //   if (size == Size.xs) {
+  //     width = 400;
+  //   } else if ($windowObject.documentWidth >= 650) {
+  //     width = 600;
+  //   } else {
+  //     width = $windowObject.documentWidth - 50;
+  //   }
+  //   left = $windowObject.documentWidth / 2 - width / 2;
+  //   // top = $windowObject.documentHeight / 2 - height / 2;
+  // }
   function close() {
     show = false;
     modalEvent.hideSpecific(id);
@@ -52,8 +48,7 @@
 
 {#if show}
   <button
-    class="pop-overlay fixed top-0 left-0 w-screen h-screen {isShowOverlay &&
-    !isFullScreen
+    class="pop-overlay fixed w-screen h-screen inset-0 {isShowOverlay
       ? 'bg-bgs1 bg-opacity-80'
       : 'bg-opacity-0'} z-50"
     on:click={overlayClicked}
@@ -79,13 +74,14 @@
       <dialog
         bind:this={dialog}
         {id}
-        class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1"
+        class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1 {!isShowOverlay &&
+          'bg-none'}"
       >
         <slot />
         <!-- <div class="popover-content" style="max-height: 80vh;" /> -->
       </dialog>
     {:else}
-      <div
+      <!-- <div
         class="popover-container max-h-max flex flex-col p-4 fixed rounded-md shadow-lg bg-bgs1 z-50 overflow-y-auto"
         style="width: {width}px;  top: 5%; left: {left}px; max-height: 80vh;"
         transition:fade={{ duration: 200 }}
@@ -93,7 +89,8 @@
         <div class="popover-body h-full w-full mb-10">
           <slot />
         </div>
-      </div>
+      </div> -->
+      <slot />
     {/if}
   </button>
 {/if}
@@ -101,5 +98,9 @@
 <style>
   .popover-container {
     transform: translate3d(0, 0, 0);
+  }
+
+  dialog.bg-none::backdrop {
+    background-color: transparent;
   }
 </style>

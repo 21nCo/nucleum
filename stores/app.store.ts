@@ -217,6 +217,7 @@ function initWindow(settings: WindowObject) {
     },
     gotoPath: async (path: string, params: any = null) => {
       appStore.log({ method: "gotoPath", path });
+      appStore.hideFullScreenPlayer();
       update((n: WindowObject) => {
         n = {
           ...n,
@@ -902,7 +903,7 @@ function initFullPageLoadingScreen() {
 export const isInEditMode = initEditModeStore();
 
 function initEditModeStore() {
-  const { subscribe,set, update } = writable<boolean>(false);
+  const { subscribe, set, update } = writable<boolean>(false);
   return {
     subscribe,
     set,

@@ -140,7 +140,7 @@
     show={modal.isShow}
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
-    isFullScreen={modal.layoutParams?.size === Size.full}
+    isUseDialog={modal.layoutParams?.size != Size.full}
   >
     <ModalLayout
       layoutParams={modal.layoutParams ?? {

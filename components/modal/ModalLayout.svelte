@@ -113,7 +113,7 @@
       y: 100,
       opacity: 0
     }}
-    class="fixed inset-0 flex justify-center items-center"
+    class="w-full h-full flex justify-center items-center"
   >
     <slot />
   </div>

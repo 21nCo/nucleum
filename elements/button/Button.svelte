@@ -6,8 +6,9 @@
   import { bgClass, retrieveCurrentColors } from "../../utils/theme.utils";
   import { userPreferences, windowObject } from "../../stores/app.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import { renderPopover } from "$lib/tidy/utils/ui.utils";
+  import { renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
+  import { Direction } from "$lib/tidy/types/direction.enum";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -19,6 +20,7 @@
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
+  export let toolTipPlacement: Direction = Direction.Down;
   export let isLoading: boolean = false;
   // export let buttonBaseColor: string = "";
   // export let buttonActiveColor: string = "";
@@ -157,7 +159,7 @@
   bind:this={buttonRef}
   on:pointerenter={() => {
     isHovered = true;
-    if (tooltip) renderPopover(buttonRef, toolTipRef);
+    if (tooltip) renderPopoverv2(buttonRef, toolTipRef, toolTipPlacement);
   }}
   on:pointerleave={() => {
     isHovered = false;
