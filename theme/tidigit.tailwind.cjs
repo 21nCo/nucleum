@@ -21,7 +21,7 @@ const cs_tidigit_dark_blue = {
   brs1: "hsl(228 26% 15%)",
   brs2: "hsl(229 19% 21%)",
   brs3: "hsl(229 19% 25%)",
-  brs4: "hsl(229 19% 28%)",
+  brs4: "hsl(229 19% 28%)"
 };
 const cs_tidigit_dark_red = {
   bgs1: "hsl(0 4% 8%)",
@@ -46,7 +46,7 @@ const cs_tidigit_dark_red = {
   brs1: "hsl(0 4% 11%)",
   brs2: "hsl(0 4% 15%)",
   brs3: "hsl(0 4% 19%)",
-  brs4: "hsl(0 4% 24%)",
+  brs4: "hsl(0 4% 24%)"
 };
 
 const cs_tidigit_dark = {
@@ -71,7 +71,7 @@ const cs_tidigit_dark = {
   brs1: "hsl(229 8% 16%)",
   brs2: "hsl(229 8% 19%)",
   brs3: "hsl(229 8% 22%)",
-  brs4: "hsl(229 8% 28%)",
+  brs4: "hsl(229 8% 28%)"
 };
 
 const cs_tidigit_dark_iris = {
@@ -97,7 +97,7 @@ const cs_tidigit_dark_iris = {
   brs1: "hsl(228 26% 15%)",
   brs2: "hsl(229 19% 21%)",
   brs3: "hsl(229 19% 25%)",
-  brs4: "hsl(229 19% 28%)",
+  brs4: "hsl(229 19% 28%)"
 };
 
 const cs_dracula = {
@@ -116,7 +116,7 @@ const cs_dracula = {
   brs1: "hsl(230 14.75% 23.92%)",
   brs2: "hsl(230 14.75% 23.92%)",
   brs3: "hsl(230 14.75% 23.92%)",
-  brs4: "hsl(230 14.75% 23.92%)",
+  brs4: "hsl(230 14.75% 23.92%)"
 };
 
 const cs_dim = {
@@ -131,7 +131,7 @@ const cs_dim = {
   fgs1: "hsl(0.00 0.00% 95.29%)",
   fgs2: "hsl(0.00 0.00% 79.22%)",
   fgs3: "hsl(0.00 0.00% 81.57%)",
-  fgs4: "hsl(0.00 0.00% 81.57%)",
+  fgs4: "hsl(0.00 0.00% 81.57%)"
 };
 
 const cs_tidigit_light_red = {
@@ -156,7 +156,7 @@ const cs_tidigit_light_red = {
   ass2: "hsl(0 28% 80%)",
   brs1: "hsl(0 4% 97%)",
   brs2: "hsl(0 4% 95%)",
-  brs3: "hsl(0 4% 90%)",
+  brs3: "hsl(0 4% 90%)"
 };
 
 const cs_tidigit_light_blue = {
@@ -172,6 +172,7 @@ const cs_tidigit_light_blue = {
   a1: "hsl(217 72% 52%)",
   aps1: "hsl(217 72% 52%)",
   aps2: "hsl(217 59% 89%)",
+  aps3: "hsl(217 59% 95%)",
   a2: "hsl(0 28% 55%)",
   ass1: "hsl(0 28% 55%)",
   ass2: "hsl(0 28% 80%)",
@@ -181,7 +182,7 @@ const cs_tidigit_light_blue = {
   ags2: "hsl(151 45% 85%)",
   brs1: "hsl(228 26% 97%)",
   brs2: "hsl(228 26% 95%)",
-  brs3: "hsl(228 26% 90%)",
+  brs3: "hsl(228 26% 90%)"
 };
 
 const cs_tidigit_light_iris = {
@@ -207,7 +208,7 @@ const cs_tidigit_light_iris = {
   ags2: "hsl(151 45% 85%)",
   brs1: "hsl(45 17% 90%)",
   brs2: "hsl(45 17% 85%)",
-  brs3: "hsl(45 17% 80%)",
+  brs3: "hsl(45 17% 80%)"
 };
 
 const cs_tidigit_light = {
@@ -233,7 +234,7 @@ const cs_tidigit_light = {
   ags2: "hsl(151 45% 85%)",
   brs1: "hsl(0 0% 97%)",
   brs2: "hsl(0 0% 95%)",
-  brs3: "hsl(0 0% 90%)",
+  brs3: "hsl(0 0% 90%)"
 };
 
 const cs_solarized_light = {
@@ -258,7 +259,7 @@ const cs_solarized_light = {
   ags2: "hsl(175 59% 80%)",
   brs1: "hsl(44 75% 90%)",
   brs2: "hsl(44 75% 88%)",
-  brs3: "hsl(44 75% 87%)",
+  brs3: "hsl(44 75% 87%)"
 };
 const cs_solarized_dark = {
   bgs1: "hsl(192 100% 11%)",
@@ -282,7 +283,7 @@ const cs_solarized_dark = {
   ags2: "hsl(68 100% 70%)",
   brs1: "hsl(192 95% 13%)",
   brs2: "hsl(192 95% 17%)",
-  brs3: "hsl(192 65% 22%)",
+  brs3: "hsl(192 65% 22%)"
 };
 
 const themes = [
@@ -291,51 +292,51 @@ const themes = [
     extend: {
       fontFamily: {
         sans: ["Avenir", "sans-serif"],
-        serif: ["Merriweather", "serif"],
-      },
-    },
+        serif: ["Merriweather", "serif"]
+      }
+    }
   },
   {
     name: "Colorful",
     extend: {
       fontFamily: {
         sans: ["Roboto", "sans-serif"],
-        serif: ["Merriweather", "serif"],
-      },
-    },
-  },
+        serif: ["Merriweather", "serif"]
+      }
+    }
+  }
 ];
 
 const lightThemes = [
   {
     name: "cs_tidigit_light",
     extend: {
-      colors: cs_tidigit_light,
-    },
+      colors: cs_tidigit_light
+    }
   },
   {
     name: "cs_solarized_light",
     extend: {
-      colors: cs_solarized_light,
-    },
+      colors: cs_solarized_light
+    }
   },
   {
     name: "cs_tidigit_light_red",
     extend: {
-      colors: cs_tidigit_light_red,
-    },
+      colors: cs_tidigit_light_red
+    }
   },
   {
     name: "cs_tidigit_light_blue",
     extend: {
-      colors: cs_tidigit_light_blue,
-    },
+      colors: cs_tidigit_light_blue
+    }
   },
   {
     name: "cs_tidigit_light_iris",
     extend: {
-      colors: cs_tidigit_light_iris,
-    },
+      colors: cs_tidigit_light_iris
+    }
   },
   {
     name: "cs_blank",
@@ -350,9 +351,9 @@ const lightThemes = [
         fgs3: "#D0D0D0",
         accent1: "#fa7089",
         accent3: "#AE4EDE",
-        accent2: "#6566f1",
-      },
-    },
+        accent2: "#6566f1"
+      }
+    }
   },
   {
     name: "cs_dapien",
@@ -369,9 +370,9 @@ const lightThemes = [
         accent1: "#47ccd9",
         accent2: "#ad6c6c",
         red: "#f77272",
-        green: "#4fbd88",
-      },
-    },
+        green: "#4fbd88"
+      }
+    }
   },
   {
     name: "cs_dapienlanding",
@@ -388,55 +389,55 @@ const lightThemes = [
         accent1: "#47ccd9",
         accent2: "#ad6c6c",
         red: "#f77272",
-        green: "#4fbd88",
-      },
-    },
-  },
+        green: "#4fbd88"
+      }
+    }
+  }
 ];
 
 const darkThemes = [
   {
     name: "cs_dracula",
     extend: {
-      colors: cs_dracula,
-    },
+      colors: cs_dracula
+    }
   },
   {
     name: "cs_solarized_dark",
     extend: {
-      colors: cs_solarized_dark,
-    },
+      colors: cs_solarized_dark
+    }
   },
   {
     name: "cs_tidigit_dark",
     extend: {
-      colors: cs_tidigit_dark,
-    },
+      colors: cs_tidigit_dark
+    }
   },
   {
     name: "cs_tidigit_dark_blue",
     extend: {
-      colors: cs_tidigit_dark_blue,
-    },
+      colors: cs_tidigit_dark_blue
+    }
   },
   {
     name: "cs_tidigit_dark_red",
     extend: {
-      colors: cs_tidigit_dark_red,
-    },
+      colors: cs_tidigit_dark_red
+    }
   },
   {
     name: "cs_tidigit_dark_iris",
     extend: {
-      colors: cs_tidigit_dark_iris,
-    },
+      colors: cs_tidigit_dark_iris
+    }
   },
   {
     name: "cs_dim",
     extend: {
-      colors: cs_dim,
-    },
-  },
+      colors: cs_dim
+    }
+  }
 ];
 
 module.exports = {
@@ -449,7 +450,7 @@ module.exports = {
       lg: "1024px",
       xl: "1280px",
       "2xl": "1536px",
-      "3xl": "1800px",
+      "3xl": "1800px"
     },
     extend: {
       fontSize: {
@@ -465,7 +466,7 @@ module.exports = {
         b2: "0.9rem",
         b3: "0.8rem",
         b4: "0.7rem",
-        b5: "0.6rem",
+        b5: "0.6rem"
       },
       spacing: {
         // 12-grid system
@@ -490,9 +491,9 @@ module.exports = {
         "6/10": "60%",
         "7/10": "70%",
         "8/10": "80%",
-        "9/10": "90%",
-      },
-    },
+        "9/10": "90%"
+      }
+    }
   },
   plugins: [
     require("tailwindcss-themer")({
@@ -500,15 +501,15 @@ module.exports = {
         extend: {
           fontFamily: {
             sans: ["Roboto", "sans-serif"],
-            serif: ["Merriweather", "serif"],
+            serif: ["Merriweather", "serif"]
           },
           colors: cs_tidigit_light,
           rotate: {
-            270: "270deg",
-          },
-        },
+            270: "270deg"
+          }
+        }
       },
-      themes: [...themes, ...lightThemes, ...darkThemes],
-    }),
-  ],
+      themes: [...themes, ...lightThemes, ...darkThemes]
+    })
+  ]
 };

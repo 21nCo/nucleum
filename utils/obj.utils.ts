@@ -114,3 +114,7 @@ export function isValidArray(arr: any) {
 export function deepCopy(obj: any) {
   return JSON.parse(JSON.stringify(obj));
 }
+
+export function compareObjects(obj1: any, obj2: any) {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
+}

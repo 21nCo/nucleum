@@ -53,7 +53,7 @@ export function renderPopoverv2(
   location: Direction = Direction.Down
 ) {
   const triggerRect = parentRef.getBoundingClientRect();
-  popRef.style.display = popRef.style.display === "none" ? "block" : "none";
+  popRef.style.display = "block";
   popRef.style.opacity = "0";
   let popRect = popRef.getBoundingClientRect();
   const { documentWidth, documentHeight } = documentDimensions();

@@ -92,6 +92,6 @@
 
 <style>
   button.active {
-    border-color: var(--customcolor);
+    border-color: var(--customcolor, rgba(var(--colors-aps1), 1));
   }
 </style>

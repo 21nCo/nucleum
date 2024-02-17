@@ -15,7 +15,7 @@
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
-  import { renderPopover, renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
+  import { renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
   import { Direction } from "$lib/tidy/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let mdId: string;
@@ -40,7 +40,11 @@
   let placeholder: string;
   let markerId = "caret-marker";
   let isNewSpanInserted = false;
+  let blockBrowserContainerRef: HTMLElement;
   let blockBrowserRef: any;
+  let isRenderBlockBrowser: boolean = false;
+  let isCustomCaret = false;
+  let customCaret: HTMLElement | null = null;
   let caretPosition:
     | {
         element?: any;
@@ -93,8 +97,10 @@
         break;
       default:
         sizing = "text-base";
+        blockSpecificPlaceholder = undefined;
         break;
     }
+    if (isFocusing) assignPlaceholder();
   }
 
   function parseSpansFromText(text: string) {
@@ -319,6 +325,8 @@
     //   console.log("focusing block from mount", blockRef);
     //   blockRef?.focus();
     // }
+    customCaret = document.getElementById("customcaret");
+    console.log("caret", customCaret);
     hideBlockBrowser();
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
       if (md.blockToFocus === id && !isFocusing) {
@@ -334,9 +342,55 @@
       focusBlockSub();
     };
   });
+  function hideBlockBrowser() {
+    isRenderBlockBrowser = false;
+    // blockBrowserRef.style.display = "none";
+  }
+  /**
+   * Function to handle block browser related events
+   */
+  function handleBlockBrowser(
+    event: KeyboardEvent,
+    type: "keyup" | "keydown" = "keydown"
+  ) {
+    if (type === "keyup" && event.key === "/") {
+      isRenderBlockBrowser = true;
+      setTimeout(() => {
+        console.log({ blockBrowserContainerRef, blockRef });
+        renderPopoverv2(
+          blockRef,
+          blockBrowserContainerRef,
+          Direction.BottomLeft
+        );
+      }, 100);
+      return true;
+    } else if (!isRenderBlockBrowser) {
+      return false;
+    } else if (
+      type === "keyup" &&
+      (event.key === "Escape" || !content.body.includes("/"))
+    ) {
+      hideBlockBrowser();
+    } else if (
+      type === "keydown" &&
+      (event.key === "ArrowDown" ||
+        event.key === "ArrowUp" ||
+        event.key === "Enter")
+    ) {
+      blockBrowserRef.key(event.key);
+      event.preventDefault();
+    } else if (type === "keyup") {
+      blockBrowserRef.filter(content.body);
+    }
+    return true;
+  }
+
   function handleKeyDown(event: KeyboardEvent) {
     // console.log("keydown", event);
-    //return;
+    const blockBrowserStatus = handleBlockBrowser(event);
+    if (blockBrowserStatus) {
+      return;
+    }
     if (event.key === "Tab") {
       if (context === BlockContext.LIST_CHILD) {
         if (event.shiftKey === true) {
@@ -460,14 +514,20 @@
     }
   }
 
-  function hideBlockBrowser() {
-    blockBrowserRef.style.display = "none";
-  }
-
   function handleKeyUp(event: KeyboardEvent) {
     // console.log("keyup", event);
+
+    if (customCaret) {
+      let rect = window?.getSelection()?.getRangeAt(0).getClientRects()[0];
+      console.log({ caret: customCaret, rect });
+      customCaret.style.left = rect?.x + "px";
+      customCaret.style.top = rect?.y + "px";
+    }
     setCaretPosition();
-    handleBlockBrowser();
+    const blockBrowserStatus = handleBlockBrowser(event, "keyup");
+    if (blockBrowserStatus) {
+      return;
+    }
     //performEscapeShortcutsT1();
     performEscapeShortcutsT2();
     handleListContext();
@@ -494,18 +554,6 @@
     )
       refreshInlineStyling();
     mdContentChangeEvent.trigger();
-
-    /**
-     * Function to show or hide block browser
-     */
-    function handleBlockBrowser() {
-      if (event.key === "/") {
-        renderPopoverv2(blockRef, blockBrowserRef, Direction.BottomLeft);
-      } else {
-        hideBlockBrowser();
-      }
-    }
-
     /**
      * Function to handle backspace at the start of the block. Removes formatting of heading, quote, etc.
      */
@@ -697,6 +745,12 @@
   function assignPlaceholder() {
     placeholder = blockSpecificPlaceholder ?? defaultPlaceholder;
   }
+
+  function onBlockSelect(event: CustomEvent) {
+    console.log("onBlockSelect", event.detail);
+    if (id) mdStore.convert(id, { blockType: event.detail.type });
+    hideBlockBrowser();
+  }
 </script>
 
 {#if typeof content.body === "string"}
@@ -717,12 +771,12 @@
         bind:this={blockRef}
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none py-2 {sizing} {content.type ===
+        class="relative w-full h-full outline-none py-2 {sizing} {content.type ===
         MdBlockType.QUOTE
           ? 'px-2'
           : 'px-1'}"
         on:keyup={handleKeyUp}
-        on:keydown|stopPropagation={handleKeyDown}
+        on:keydown={handleKeyDown}
         on:keypress={handleKeyPress}
         on:mouseup={handleMouseup}
         bind:innerHTML={content.body}
@@ -741,6 +795,9 @@
         contenteditable
         {placeholder}
       ></div>
+      {#if isCustomCaret}
+        <div id="customcaret" class="w-2 h-2 bg-aps1"></div>
+      {/if}
       <!--         on:paste={handlePaste} -->
     {/if}
     {#if content.type === MdBlockType.QUOTE}
@@ -769,13 +826,19 @@
   </button> -->
 {/if}
 
-<div bind:this={blockBrowserRef}>
-  <BlockBrowser />
-</div>
+{#if isRenderBlockBrowser}
+  <div bind:this={blockBrowserContainerRef}>
+    <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
+  </div>
+{/if}
 
 <style>
   div[contenteditable] {
-    caret-color: rgba(var(--colors-fgs2), 1) !important;
+    caret-color: rgba(var(--colors-aps1), 1) !important;
+  }
+  div[contenteditable].customcaret {
+    /* caret-color: rgba(var(--colors-aps1), 1) !important; */
+    caret-color: transparent;
   }
   div[contenteditable]:empty::after {
     content: attr(placeholder);
@@ -783,5 +846,18 @@
   }
   [contenteditable]::selection {
     background-color: rgba(var(--colors-aps1), 0.3);
+  }
+  #customcaret {
+    position: fixed;
+    height: 22px;
+    width: 3px;
+    background-color: rgba(var(--colors-aps1), 1);
+    animation: blink 1s steps(5, start) infinite;
+  }
+
+  @keyframes blink {
+    to {
+      visibility: hidden;
+    }
   }
 </style>

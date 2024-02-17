@@ -54,6 +54,14 @@ export type StructuralContent = {
   type: MdBlockType.DIVIDER | MdBlockType.DOUBLE_DIVIDER;
 };
 
+export type LayoutContent = {
+  type:
+    | MdBlockType.GRID
+    | MdBlockType.COLUMNS
+    | MdBlockType.TABS
+    | MdBlockType.ACCORDION;
+};
+
 export type SpanContent = {
   type: SpanType;
   content: TextContent;
@@ -74,7 +82,9 @@ export enum SpanType {
 
 export enum ListType {
   ORDERED = "ORDERED",
-  UNORDERED = "UNORDERED"
+  UNORDERED = "UNORDERED",
+  CHECKLIST = "CHECKLIST",
+  TOGGLELIST = "TOGGLELIST"
 }
 
 export type TextType =
@@ -96,10 +106,39 @@ export enum MdBlockType {
   SIMPLE_TEXT = "SIMEPLE_TEXT",
   QUOTE = "QUOTE",
   CODE = "CODE",
+  MATH = "MATH",
+  CALLOUT = "CALLOUT",
+  LINK = "LINK",
   LIST = "LIST",
+  IMAGE = "IMAGE",
+  MEDIA_STACK = "IMAGE_STACK",
+  MEDIA_GRID = "IMAGE_GRID",
+  AUDIO = "AUDIO",
+  VIDEO = "VIDEO",
+  PDF = "PDF",
+  FILE = "FILE",
+  EMBED = "EMBED",
+  TABLE = "TABLE",
   MARKDOWN = "MARKDOWN",
   DIVIDER = "DIVIDER",
-  DOUBLE_DIVIDER = "DOUBLE_DIVIDER"
+  DOUBLE_DIVIDER = "DOUBLE_DIVIDER",
+  COLUMNS = "COLUMNS",
+  TABS = "TABS",
+  GRID = "GRID",
+  ACCORDION = "ACCORDION",
+  TOC = "TOC",
+  COLLECTION_AS_EMBED = "COLLECTION_AS_EMBED"
+}
+export enum InlineType {
+  MENTION = "MENTION",
+  DATE = "DATE",
+  CODE = "CODE",
+  BOLD = "BOLD",
+  ITALIC = "ITALIC",
+  UNDERLINE = "UNDERLINE",
+  STRIKE = "STRIKE",
+  SUBSCRIPT = "SUBSCRIPT",
+  SUPERSCRIPT = "SUPERSCRIPT"
 }
 
 export enum MdContext {
