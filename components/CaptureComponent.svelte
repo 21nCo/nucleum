@@ -106,10 +106,9 @@
 <div class="flex flex-col relative">
   <div
     id="captureIconsHolder"
-    class="w-14 border-0 border-b-0 rounded-t-full absolute bottom-full {touchAndHold
+    class="w-14 border-0 border-b-0 rounded-t-full absolute bottom-full bg-aps1 {touchAndHold
       ? 'slideUp'
       : 'slideDown'}"
-    style="background-color: #2c70dd;"
   >
     {#each IconsList as icon}
       <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -192,7 +191,7 @@
     height: 3.8rem;
     border-bottom-left-radius: 9999px;
     border-bottom-right-radius: 9999px;
-    background-color: #2c70dd;
+    background-color: rgba(var(--colors-aps1), 1);
   }
   .slideDown::after {
     content: "";
@@ -201,7 +200,7 @@
     height: 3.8rem;
     border-bottom-left-radius: 9999px;
     border-bottom-right-radius: 9999px;
-    background-color: #2c70dd;
+    background-color: rgba(var(--colors-aps1), 1);
   }
   .slideDown {
     /* visibility: hidden;

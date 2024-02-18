@@ -3,12 +3,11 @@
   export let variant: IconVariant = IconVariant.Outline;
 </script>
 
-<circle cx="26" cy="26" r="24.6" stroke="#2C70DD" stroke-width="2.8" />
+<circle cx="26" cy="26" r="24.6" class="stroke-aps1" stroke-width="2.8" />
 <circle
   cx="26"
   cy="26"
   r="23"
-  fill="#2C70DD"
-  stroke={variant === IconVariant.Mini ? "" : "white"}
+  class="fill-aps1 {variant === IconVariant.Mini ? '' : 'stroke-bgs1'}"
   stroke-width="1.5"
 />
