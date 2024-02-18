@@ -86,7 +86,7 @@ export const CalendarHeatMapstoreColors = readable<string[]>([
   "#407C3C"
 ]);
 export const calendarHmSelectedTile = writable<string>("");
-
+export const PlainCSSFgs2 = writable<string | undefined>("");
 /**
  * Paths that are excluded to redirection checks like login
  */

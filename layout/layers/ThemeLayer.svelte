@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
+    PlainCSSFgs2,
     appEvents,
     tailwindTheme,
     userPreferences,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
@@ -26,7 +27,8 @@
         handleResize();
       }
     });
-    const userPrefSub = userPreferences.subscribe(() => {
+    const userPrefSub = userPreferences.subscribe((preferences) => {
+      $PlainCSSFgs2 = preferences.colorScheme.colors.fgs2;
       refreshTheme();
     });
     return () => {
@@ -66,7 +68,7 @@
     );
     postToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
-      rootFontSize,
+      rootFontSize
     });
   }
 </script>

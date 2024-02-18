@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PlainCSSFgs2 } from "$lib/tidy/stores/app.store";
   import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
   import MacroIndicatorTIle from "./MacroIndicatorTIle.svelte";
   export let data: any;
@@ -16,11 +17,11 @@
         : ""}
       --topThreadColor={yearData.display == TileAppearance.LTile ||
       yearData.display == TileAppearance.MTile
-        ? "black"
+        ? $PlainCSSFgs2
         : ""}
       --bottomThreadColor={yearData.display == TileAppearance.FTile ||
       yearData.display == TileAppearance.MTile
-        ? "black"
+        ? $PlainCSSFgs2
         : ""}
     />
   {/each}
