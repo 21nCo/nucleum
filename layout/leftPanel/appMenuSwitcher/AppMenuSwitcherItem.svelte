@@ -39,7 +39,7 @@
 </script>
 
 <button
-  class="flex items-center {isShowLabel
+  class="flex items-center w-12 {isShowLabel
     ? layoutContext === LayoutContext.PORTRAIT
       ? 'flex-col gap-1 text-b5 rounded-lg'
       : 'text-b2 gap-2 rounded-lg p-3 h-10'

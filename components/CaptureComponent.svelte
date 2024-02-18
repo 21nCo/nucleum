@@ -4,6 +4,8 @@
   import { HapticFeedback } from "../types/haptic.enum";
   import { IconVariant } from "../types/icon.type";
   import { Size } from "../types/size.enum";
+  import { hapticFeedback, postMessageToParent } from "../utils/embed.utils";
+  import { EmbedMessage } from "../types/embedMessage.enum";
   type restrictedlengthArray = [string, string, string, string];
   export let IconsList: restrictedlengthArray = [
     "play",
@@ -49,8 +51,8 @@
       setTimeout(() => {
         touchY = event.touches[0].clientY;
       }, 300);
-      //HapticFeedback.PRESSANDHOLD;//todo-notify after haptic feedback pressandhold is implemented
-    }, 500);
+      hapticFeedback(HapticFeedback.PRESSANDHOLD);
+    }, 200);
   }
   function handleTouchMove(event: TouchEvent) {
     if (startedOnClick) return;
@@ -62,7 +64,7 @@
     containerTouchY = captureButtonTop + 1.37 * rem ?? 0;
     if (IconsList.includes(fingerId)) {
       // emit event for fingerId(i.e.,icon) here
-      // console.log("Touch ended in ", fingerId);
+      triggerAction(fingerId);
     }
     touchY = null;
     fingerId = "";
@@ -82,11 +84,17 @@
   }
   function handleIconClick(icon: string) {
     iconClicked = icon;
+    triggerAction(icon);
     setTimeout(() => {
       iconClicked = "";
       touchAndHold = false;
       startedOnClick = false;
     }, 100);
+  }
+  function triggerAction(icon: string) {
+    if (!icon.includes("camera")) return;
+    console.log("Camera triggered");
+    postMessageToParent(EmbedMessage.CAMERA);
   }
   onMount(() => {
     rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
