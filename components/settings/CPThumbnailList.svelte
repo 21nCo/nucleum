@@ -27,6 +27,7 @@
         <CpThumbnail
           {orientation}
           action={item}
+          setActiveByPath={true}
           on:click={() => {
             resolveNavigationAction(item);
           }}
