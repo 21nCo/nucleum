@@ -36,6 +36,7 @@
 </script>
 
 <div
+  id="markDown-{mdId}"
   class="relative flex flex-col justify-start items-start text-start w-full h-full"
 >
   <div class="flex justify-between">
@@ -77,7 +78,7 @@
       {/if}
     </div>
   </div>
-  <div class="grow w-full">
+  <div class="grow w-3/4">
     {#each $mdStore.blocks as block (block.id)}
       <Block {block} {mdId} />
     {/each}
