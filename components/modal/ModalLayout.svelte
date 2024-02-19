@@ -123,7 +123,9 @@
       LaunchContext.EMBED && $appStore.embedContext === EmbedContext.SHEET
       ? 'w-full h-full'
       : sizingClass} {!layoutParams.ignoreSafeArea
-      ? 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
+      ? layoutParams.size === Size.xs
+        ? 'p-2 lg:p-4 gap-4'
+        : 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
       : ''}"
     in:fly={{
       duration: 500,
@@ -140,7 +142,7 @@
     <div class="flex flex-col gap-4 w-full flex-grow">
       <slot />
     </div>
-    {#if !layoutParams.ignoreSafeArea && (layoutParams?.primaryAction || layoutParams?.secondaryAction)}
+    {#if layoutParams?.primaryAction || layoutParams?.secondaryAction}
       <ModalFooter
         primaryAction={layoutParams?.primaryAction}
         secondaryAction={layoutParams?.secondaryAction}

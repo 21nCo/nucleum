@@ -39,9 +39,9 @@
 </script>
 
 <button
-  class="flex items-center w-12 {isShowLabel
+  class="flex items-center {isShowLabel
     ? layoutContext === LayoutContext.PORTRAIT
-      ? 'flex-col gap-1 text-b5 rounded-lg'
+      ? 'w-12 flex-col gap-1 text-b5 rounded-lg'
       : 'text-b2 gap-2 rounded-lg p-3 h-10'
     : 'p-4 rounded-full'} {isActive &&
     (layoutContext === LayoutContext.DEFAULT ||
