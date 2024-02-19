@@ -1,13 +1,13 @@
 import type { ItemType } from "./item.enum";
 import type { ConfirmationNotification } from "./notification.type";
-import type { ModalLayoutParams } from "./popup.type";
+import type { ModalParams } from "./popup.type";
 
 export type Action = {
   action: string;
   type?: ActionType;
   path?: string;
   link?: string;
-  fn?: () => void;
+  fn?: (params: any) => Promise<any>;
   cmdBarPreCondition?: () => void;
   component?: any;
   label?: string;
@@ -22,12 +22,7 @@ export type Action = {
   params?: any;
   isMenuHidden?: boolean;
   isInactive?: boolean;
-  modalParams?: {
-    isHideTitleIfEmpty?: boolean;
-    isDismissable?: boolean;
-    isShowAsSheet?: boolean;
-    layoutParams: ModalLayoutParams;
-  };
+  modalParams?: ModalParams;
   confirmation?: ConfirmationNotification;
   cmdLabel?: string;
   searchActionParams?: {

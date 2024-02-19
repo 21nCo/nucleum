@@ -18,7 +18,7 @@
   export let params: MdParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
-  export let mdId: string;
+  export let mdId: string | undefined = undefined;
   if (!mdId) mdId = generateUID();
   const mdStore: any = getMdStore(mdId);
   mdStore.load(md, context, params);

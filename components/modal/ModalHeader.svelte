@@ -1,32 +1,18 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { appStore, modalEvent } from "$lib/tidy/stores/app.store";
-  import { LaunchContext } from "$lib/tidy/types/appStore.type";
-  import type { ModalParams } from "$lib/tidy/types/popup.type";
   import { TextStyle } from "$lib/tidy/types/text.enum";
-  export let params: ModalParams;
-  export let isShowClose: boolean = true;
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  export let title: string;
+  export let isShowClose: boolean = false;
 </script>
 
-{#if $appStore.launchContext != LaunchContext.EMBED}
-  <div class="popover-header flex w-full justify-between rounded-t-md">
-    {#if !(!params.title && params.isHideTitleIfEmpty) || (!params.isHideTitleIfEmpty && (params.title || params.path))}
-      <Text
-        style={TextStyle.PANEL_HEADING}
-        width="min-w-fit"
-        content={params.title ?? params.path.split("_").join(" ")}
-      />
-    {/if}
-    {#if isShowClose && params.isDismissable}
-      <div class="w-full flex justify-end text-b2">
-        <Icon
-          icon="cross"
-          on:click={() => {
-            modalEvent.hideSpecific(params.path);
-          }}
-        />
-      </div>
-    {/if}
-  </div>
-{/if}
+<div class="popover-header flex w-full justify-between rounded-t-md">
+  <Text style={TextStyle.PANEL_HEADING} width="min-w-fit" content={title} />
+  {#if isShowClose}
+    <div class="w-full flex justify-end text-b2">
+      <Icon icon="cross" on:click={() => dispatch("close")} />
+    </div>
+  {/if}
+</div>

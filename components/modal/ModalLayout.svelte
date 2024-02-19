@@ -11,17 +11,16 @@
   import { onMount } from "svelte";
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
-  import type {
-    ModalLayoutParams,
-    ModalParams
-  } from "$lib/tidy/types/popup.type";
+  import type { ModalParams } from "$lib/tidy/types/popup.type";
   import { fade, blur, fly, slide, scale, draw } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  export let path: string;
   export let params: ModalParams;
-  export let layoutParams: ModalLayoutParams;
-  console.log({ layoutParams });
-  if (!layoutParams.size) layoutParams.size = Size.md;
+  let size: Size = Size.md;
+  let orientation: Orientation = Orientation.Vertical;
+  if (params.layout?.size) size = params.layout.size;
+  if (params.layout?.orientation) orientation = params.layout.orientation;
   let footerRef: any;
   let sizingClass = "";
   resolveSize();
@@ -40,11 +39,8 @@
     // console.log("id", { queryParamId, queryParamPath, params });
   });
   function resolveSize() {
-    if (
-      layoutParams.orientation === Orientation.Vertical ||
-      !layoutParams.orientation
-    ) {
-      switch (layoutParams.size) {
+    if (orientation === Orientation.Vertical) {
+      switch (size) {
         case Size.xs:
           sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
           break;
@@ -70,8 +66,8 @@
           break;
       }
       return;
-    } else if (layoutParams.orientation === Orientation.Horizontal) {
-      switch (layoutParams.size) {
+    } else if (orientation === Orientation.Horizontal) {
+      switch (size) {
         case Size.xs:
           sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
           break;
@@ -101,9 +97,14 @@
       return;
     }
   }
+
+  function handleClose() {
+    if (path === AppEvent.CONFIRMATION) confirmationNotification.reset();
+    else modalEvent.hideSpecific(path);
+  }
 </script>
 
-{#if layoutParams.size === Size.full}
+{#if size === Size.full}
   <div
     in:fly={{
       duration: 500,
@@ -122,8 +123,8 @@
     class="flex flex-col items-center justify-between {$appStore.launchContext ===
       LaunchContext.EMBED && $appStore.embedContext === EmbedContext.SHEET
       ? 'w-full h-full'
-      : sizingClass} {!layoutParams.ignoreSafeArea
-      ? layoutParams.size === Size.xs
+      : sizingClass} {!params.layout?.ignoreSafeArea
+      ? size === Size.xs
         ? 'p-2 lg:p-4 gap-4'
         : 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
       : ''}"
@@ -136,22 +137,23 @@
       opacity: 0
     }}
   >
-    {#if !layoutParams.ignoreSafeArea}
-      <ModalHeader {params} />
+    {#if params.title && $appStore.launchContext != LaunchContext.EMBED}
+      <ModalHeader
+        title={params.title}
+        on:close={() => handleClose()}
+        isShowClose={params.layout?.isShowClose}
+      />
     {/if}
     <div class="flex flex-col gap-4 w-full flex-grow">
       <slot />
     </div>
-    {#if layoutParams?.primaryAction || layoutParams?.secondaryAction}
+    {#if params.layout?.primaryAction || params.layout?.secondaryAction}
       <ModalFooter
-        primaryAction={layoutParams?.primaryAction}
-        secondaryAction={layoutParams?.secondaryAction}
+        primaryAction={params.layout?.primaryAction}
+        secondaryAction={params.layout?.secondaryAction}
         bind:this={footerRef}
-        on:close={() => {
-          if (params.path === AppEvent.CONFIRMATION)
-            confirmationNotification.reset();
-          else modalEvent.hideSpecific(params.path);
-        }}
+        on:close={() => handleClose()}
+        isShowClose={params.layout?.isShowClose}
       />
     {/if}
   </div>

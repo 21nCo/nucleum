@@ -185,7 +185,10 @@ export function openLink(url: string) {
   }
 }
 
-export function runAction(action: string, componentParams: any = undefined) {
+export async function runAction(
+  action: string,
+  componentParams: any = undefined
+) {
   let component = resolveComponent(action);
   if (!component) {
     windowObject.gotoPath("404");
@@ -198,18 +201,15 @@ export function runAction(action: string, componentParams: any = undefined) {
     modalEvent.notify({
       path: component.action,
       isShow: true,
-      isDismissable: component.modalParams?.isDismissable,
-      isHideTitleIfEmpty: component.modalParams?.isHideTitleIfEmpty,
-      isShowAsSheet: component.modalParams?.isShowAsSheet,
-      layoutParams: component.modalParams?.layoutParams,
-      componentParams
+      componentParams,
+      ...component.modalParams
     });
   } else if (
     component.type === ActionType.CONFIRMATION &&
     component.confirmation
   ) {
     confirmationNotification.notify(component.confirmation);
-  } else if (component.fn) component.fn();
+  } else if (component.fn) return await component.fn(componentParams);
   else resolveNavigationAction(action);
 }
 

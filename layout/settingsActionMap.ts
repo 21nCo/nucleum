@@ -96,7 +96,7 @@ export const settingsAsModal: Action[] = [
     type: ActionType.MODAL,
     component: SettingsModal,
     modalParams: {
-      layoutParams: {
+      layout: {
         size: Size.xl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
@@ -111,7 +111,7 @@ export const settingsAsModal: Action[] = [
     type: ActionType.MODAL,
     component: ThemeSettingView,
     modalParams: {
-      layoutParams: {
+      layout: {
         size: Size.lg
       }
     }

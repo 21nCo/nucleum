@@ -189,7 +189,7 @@ export const globalActions: Action[] = [
     component: ToastModalPortrait,
     type: ActionType.META_MODAL,
     modalParams: {
-      layoutParams: {
+      layout: {
         size: Size.xs
       }
     }
@@ -206,7 +206,7 @@ export const globalActions: Action[] = [
     type: ActionType.MODAL,
     component: Help,
     modalParams: {
-      layoutParams: {
+      layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
@@ -219,8 +219,7 @@ export const globalActions: Action[] = [
     component: CommandBar,
     type: ActionType.META_MODAL,
     modalParams: {
-      isHideTitleIfEmpty: true,
-      layoutParams: {
+      layout: {
         size: Size.md,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
@@ -233,7 +232,7 @@ export const globalActions: Action[] = [
     type: ActionType.META_MODAL,
     isMenuHidden: true,
     modalParams: {
-      layoutParams: {
+      layout: {
         size: Size.sm
       }
     }

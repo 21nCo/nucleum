@@ -80,7 +80,7 @@
 {/if} -->
 {#if $fullPageLoadingScreen.isShow}
   <div
-    class="fixed left-0 top-0 w-full h-full flex flex-col z-40"
+    class="fixed left-0 top-0 w-full h-full flex flex-col z-[100]"
     transition:fly={{ y: 200, duration: 100 }}
   >
     <div
@@ -140,14 +140,9 @@
     show={modal.isShow}
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
-    isUseDialog={modal.layoutParams?.size != Size.full}
+    isUseDialog={modal.layout?.size != Size.full}
   >
-    <ModalLayout
-      layoutParams={modal.layoutParams ?? {
-        size: Size.md
-      }}
-      bind:params={modal}
-    >
+    <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver
         path={modal.path}
         params={{ ...modal.componentParams }}
@@ -159,16 +154,15 @@
 {#if $confirmationNotification}
   <Modal show={true} id="confirmation" isDismissable={true}>
     <ModalLayout
+      path={AppEvent.CONFIRMATION}
       params={{
-        path: AppEvent.CONFIRMATION,
         title: $confirmationNotification.title,
-        isHideTitleIfEmpty: true
-      }}
-      layoutParams={{
-        size: Size.xs,
-        primaryAction: $confirmationNotification.confirmAction,
-        secondaryAction: $confirmationNotification.cancelAction ?? {
-          label: "Cancel"
+        layout: {
+          size: Size.xs,
+          primaryAction: $confirmationNotification.confirmAction,
+          secondaryAction: $confirmationNotification.cancelAction ?? {
+            label: "Cancel"
+          }
         }
       }}
     >

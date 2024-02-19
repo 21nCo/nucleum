@@ -10,9 +10,11 @@
   export let primaryAction: ButtonParams | undefined = undefined;
   export let secondaryAction: ButtonParams | undefined = undefined;
   let isActionInProgress = false;
-  export async function close() {
+  export async function close(
+    from: "primary" | "secondary" | "close" = "close"
+  ) {
     if (isPreventAutoClose) return false;
-    dispatch("close");
+    dispatch("close", from);
   }
 </script>
 
@@ -20,12 +22,13 @@
   {#if primaryAction}
     <Button
       type={primaryAction.variant ?? "primary"}
+      icon={primaryAction.icon}
       isLoading={isActionInProgress}
       on:click={async () => {
         isActionInProgress = true;
         if (primaryAction?.callback) await primaryAction?.callback();
         isActionInProgress = false;
-        close();
+        close("primary");
       }}
       label={primaryAction.label}
     />
@@ -49,12 +52,12 @@
         ...secondaryAction,
         callback: () => {
           if (secondaryAction?.callback) secondaryAction.callback();
-          return close();
+          return close("secondary");
         }
       }}
     />
   {:else if isShowClose}
-    <Button on:click={close}>
+    <Button on:click={() => close("close")}>
       close
       {#if !$windowObject.isInPortraitMode}
         <span class="text-b3">Esc</span>
