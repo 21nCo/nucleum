@@ -7,13 +7,19 @@
     DailyData,
     MonthlyData
   } from "$lib/tidy/types/CalendarHeatMapData.type";
-  import { Orientation } from "$lib/tidy/types/direction.enum";
+  import { Direction, Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
+  import { formatDate } from "$lib/tidy/utils/time.utils";
+  import { renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
 
   export let data: DailyData | MonthlyData | {};
   export let classList: string = "";
   export let tileValue: string = "";
+  let tileRef: HTMLSpanElement;
+  let toolTipRef: HTMLDivElement;
+  let isHovering: boolean = false;
+  let tooltip: string | undefined = undefined;
   $: isActive =
     ("date" in data && $calendarHmSelectedTile == data.date) ||
     ("month" in data && $calendarHmSelectedTile == data.month);
@@ -33,6 +39,7 @@
   ];
   $: if (tileValue == "") {
     if ("date" in data) {
+      // tooltip = data.date;
       tileValue = data.date.split("-")[2];
     } else if (
       $CalendarHeatMapLayout == Orientation.Horizontal &&
@@ -42,9 +49,35 @@
       tileValue = monthTitles[month];
     }
   }
+  function resolveToolTip() {
+    if ("date" in data) {
+      tooltip = formatDate(new Date(data.date), "verbose");
+    }
+  }
+  function hideToolTip() {
+    if (toolTipRef && toolTipRef?.style?.display != "none")
+      toolTipRef.style.display = "none";
+  }
 </script>
 
-<span class={classList}>
+<span
+  bind:this={tileRef}
+  class="relative {classList}"
+  on:pointerenter={() => {
+    isHovering = true;
+    resolveToolTip();
+    setTimeout(() => {
+      if (tooltip && toolTipRef) {
+        renderPopoverv2(tileRef, toolTipRef, Direction.Right);
+      }
+    }, 100);
+  }}
+  on:pointerleave={() => {
+    isHovering = false;
+    tooltip = undefined;
+    hideToolTip();
+  }}
+>
   <button
     id="MITile"
     class={isActive ? "border-2 border-bgs1 shadow-outline" : ""}
@@ -60,6 +93,7 @@
   >
     <!-- dispatch required event on:click here-->
     <!-- {typeof +tileValue == "number" ? "" : tileValue} -->
+    <!-- {tileValue} -->
     <!-- {tileValue === "🔥" ? tileValue : ""} -->
     {#if tileValue === "🔥"}
       <!-- 🔥 -->
@@ -73,6 +107,15 @@
       </div> -->
     {/if}
   </button>
+  {#if tooltip}
+    <div
+      bind:this={toolTipRef}
+      class="min-w-fit bg-fgs3 text-bgs1 text-b4 rounded-sm z-30 ml-1 px-2"
+      style="display: none;"
+    >
+      {tooltip}
+    </div>
+  {/if}
 </span>
 
 <!-- <style>

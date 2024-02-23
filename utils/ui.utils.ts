@@ -92,13 +92,13 @@ export function renderPopoverv2(
   } else if (location === Direction.Down) {
     popRef.style.top = `${triggerRect.bottom + 2}px`;
   }
-  console.log({
-    triggerRect,
-    popRect,
-    location,
-    documentWidth,
-    documentHeight
-  });
+  // console.log({
+  //   triggerRect,
+  //   popRect,
+  //   location,
+  //   documentWidth,
+  //   documentHeight
+  // });
   popRef.style.opacity = "1";
 }
 
