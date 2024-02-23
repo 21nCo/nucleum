@@ -7,6 +7,7 @@ import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
 import {
   CalendarHeatMapData,
   CalendarHeatMapstoreColors,
+  PlainCSSHMColorIndex5,
   calendarHmContext,
   userPreferences
 } from "../stores/app.store";
@@ -215,6 +216,7 @@ function findHeatandStreak(
   if (target === 0) target = 1;
   console.log({ target, data: inputData.data });
   const colors = heatMapColorRange(get(userPreferences), "aps1", 6);
+  PlainCSSHMColorIndex5.set(colors[5]);
   console.log({ colors });
   if (
     new Date(`prevEnd.${dataType}`) <=

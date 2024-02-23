@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
-    PlainCSSFgs2,
+    PlainCSSHMColorIndex5,
     appEvents,
     tailwindTheme,
     userPreferences,
@@ -27,8 +27,7 @@
         handleResize();
       }
     });
-    const userPrefSub = userPreferences.subscribe((preferences) => {
-      $PlainCSSFgs2 = preferences.colorScheme.colors.fgs2;
+    const userPrefSub = userPreferences.subscribe(() => {
       refreshTheme();
     });
     return () => {
