@@ -30,6 +30,7 @@
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import { extractProduct } from "$lib/tidy/utils/utils";
+  import ChatSupport from "./ChatSupport.svelte";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -172,3 +173,4 @@
 {/if}
 <ModalLayer />
 <Shortcuts />
+<ChatSupport />
