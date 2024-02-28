@@ -125,6 +125,26 @@
         stroke-linejoin="round"
         d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25"
       />
+    {:else if direction === Direction.TopRight}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25"
+      />
+    {/if}
+  {:else if variant === IconVariant.Solid}
+    {#if direction === Direction.Left}
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M19.5 12h-15m0 0l6.75 6.75M4.5 12l6.75-6.75"
+      />
+    {:else if direction === Direction.TopRight}
+      <path
+        fill-rule="evenodd"
+        d="M8.25 3.75H19.5a.75.75 0 0 1 .75.75v11.25a.75.75 0 0 1-1.5 0V6.31L5.03 20.03a.75.75 0 0 1-1.06-1.06L17.69 5.25H8.25a.75.75 0 0 1 0-1.5Z"
+        clip-rule="evenodd"
+      />
     {/if}
   {:else if variant === IconVariant.Mini}
     {#if direction === Direction.Left}
@@ -154,6 +174,12 @@
     {:else if direction === Direction.BottomRight}
       <path
         d="M6.28 5.22a.75.75 0 00-1.06 1.06l7.22 7.22H6.75a.75.75 0 000 1.5h7.5a.747.747 0 00.75-.75v-7.5a.75.75 0 00-1.5 0v5.69L6.28 5.22z"
+      />
+    {:else if direction === Direction.TopRight}
+      <path
+        fill-rule="evenodd"
+        d="M5.22 14.78a.75.75 0 0 0 1.06 0l7.22-7.22v5.69a.75.75 0 0 0 1.5 0v-7.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0 0 1.5h5.69l-7.22 7.22a.75.75 0 0 0 0 1.06Z"
+        clip-rule="evenodd"
       />
     {/if}
   {/if}

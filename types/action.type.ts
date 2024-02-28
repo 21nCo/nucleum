@@ -25,6 +25,7 @@ export type Action = {
   modalParams?: ModalParams;
   confirmation?: ConfirmationNotification;
   cmdLabel?: string;
+  loadingComponent?: any;
   searchActionParams?: {
     searchItemType: ItemType;
     itemLabel: string;

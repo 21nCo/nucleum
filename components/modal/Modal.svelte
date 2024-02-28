@@ -1,18 +1,26 @@
 <script lang="ts">
   import {
+    appStore,
     confirmationNotification,
     modalEvent
   } from "$lib/tidy/stores/app.store";
   import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
+  import { Size } from "$lib/tidy/types/size.enum";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
+  import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
   export let isOnRight: boolean = false;
   export let isDismissable: boolean = true;
   export let isUseDialog: boolean = true;
+  export let size: Size = Size.md;
+  export let orientation: Orientation = Orientation.Vertical;
   let dialog: HTMLDialogElement;
+  let sizingClass = "";
+  resolveSize();
   let width: number;
   let left: any;
   export let id = generateUID();
@@ -44,6 +52,64 @@
     modalEvent.hideSpecific(id);
     confirmationNotification.reset();
   }
+  function resolveSize() {
+    if (orientation === Orientation.Vertical) {
+      switch (size) {
+        case Size.xs:
+          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
+          break;
+        case Size.sm:
+          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
+          break;
+        case Size.md:
+          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
+          break;
+        case Size.lg:
+          sizingClass =
+            "w-[21rem] sm:w-[28rem] md:w-[35rem] h-[45rem] min-h-[40rem]";
+          break;
+        case Size.xl:
+          sizingClass =
+            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
+          break;
+        case Size.full:
+          sizingClass = "w-full h-full min-h-screen min-w-screen";
+          break;
+        default:
+          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
+          break;
+      }
+      return;
+    } else if (orientation === Orientation.Horizontal) {
+      switch (size) {
+        case Size.xs:
+          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
+          break;
+        case Size.sm:
+          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
+          break;
+        case Size.md:
+          sizingClass =
+            "w-[21rem] sm:w-[30rem] md:w-[45rem] h-[30rem] min-h-[30rem]";
+          break;
+        case Size.lg:
+          sizingClass =
+            "w-[21rem] sm:w-[35rem] md:w-[50rem] h-[45rem] min-h-[45rem]";
+          break;
+        case Size.xl:
+          sizingClass = "w-[21rem] sm:w-[80%] 2xl:w-[100rem] h-[90%]";
+          break;
+        case Size.full:
+          sizingClass = "w-full h-full min-h-screen min-w-screen";
+          break;
+        default:
+          sizingClass =
+            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[25rem] min-h-[25rem]";
+          break;
+      }
+      return;
+    }
+  }
 </script>
 
 {#if show}
@@ -60,7 +126,7 @@
         style="height: 90%; top: 5%;"
       >
         {#if title}
-          <ModalHeader params={{ path: title }} />
+          <ModalHeader {title} />
           on:click={() => {
             show = false;
           }}
@@ -75,7 +141,10 @@
         bind:this={dialog}
         {id}
         class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1 {!isShowOverlay &&
-          'bg-none'}"
+          'bg-none'} {$appStore.launchContext === LaunchContext.EMBED &&
+        $appStore.embedContext === EmbedContext.SHEET
+          ? 'w-full h-full'
+          : sizingClass}"
       >
         <slot />
         <!-- <div class="popover-content" style="max-height: 80vh;" /> -->

@@ -9,6 +9,7 @@
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let isReRendering: boolean = false;
+  let isShowBgOnFocus: boolean = false;
   const mdStore = getMdStore(mdId);
   onMount(() => {
     const mdStoreSub = mdStore.subscribe((md: MdStore) => {
@@ -43,8 +44,10 @@
   </div>
   <div
     id="sss"
-    class="-ml-10 pl-10 flex grow rounded-md {isHovering || isFocusing
-      ? 'bg-bgs2-disabled'
+    class="-ml-10 pl-10 flex grow rounded-md {(isHovering || isFocusing) &&
+    isShowBgOnFocus &&
+    !$mdStore.params?.isReadOnly
+      ? 'bg-bgs2'
       : ''}"
   >
     {#if isReRendering}

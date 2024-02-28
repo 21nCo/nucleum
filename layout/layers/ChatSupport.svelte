@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { account } from "$lib/tidy/stores/app.store";
+  import { account, windowObject } from "$lib/tidy/stores/app.store";
 
-  window.intercomSettings = {
-    api_base: "https://api-iam.intercom.io",
-    app_id: "esh1m4xq",
-    name: $account.userInfo?.nickName,
-    user_id: $account.userId ?? "notloggedin",
-    email: $account.userInfo?.email ?? ""
-  };
+  $: if (!$windowObject.isInPortraitMode && $account.userInfo) {
+    window.intercomSettings = {
+      api_base: "https://api-iam.intercom.io",
+      app_id: "esh1m4xq",
+      name: $account.userInfo?.nickName,
+      user_id: $account.userId ?? $account.userInfo?.id,
+      email: $account.userInfo?.email ?? ""
+    };
+  }
 </script>
 
 <svelte:head>

@@ -2,8 +2,9 @@
   import type { Block, MdStore } from "$lib/tidy/types/md.type";
   import { onMount } from "svelte";
   import { getMdStore } from "./markdown.store";
+  import Text from "$lib/tidy/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/tidy/types/text.enum";
   export let mdId: string;
-  export let title: string;
   const mdStore = getMdStore(mdId);
   let mdcontainerID = "markDown-" + mdId;
   let mdContainerHeight: number | undefined;
@@ -33,12 +34,11 @@
 </script>
 
 {#if isHeadingAvailable}
-  <div
-    class="absolute w-1/4 right-0 bottom-0 text-left bg-bgs2"
-    style="height:{mdContainerHeight * 0.95}px"
-  >
+  <div class="w-full text-left">
+    <div>
+      <Text content="Table of Contents" style={TextStyle.SECTION_HEADING} />
+    </div>
     <div class="sticky top-10 pt-4">
-      <p class="text-lg text-fgs2 p-1 truncate">{title.toUpperCase()}</p>
       {#each headingBlocks as block}
         <a
           href="#{block.id.slice(4)}"
@@ -47,4 +47,5 @@
         >
       {/each}
     </div>
-  </div>{/if}
+  </div>
+{/if}

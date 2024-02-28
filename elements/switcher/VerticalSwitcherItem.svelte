@@ -56,9 +56,9 @@
     inactiveClasses = "border-l-4 border-l-bgs1 text-fgs3";
   }
   $: if (size === Size.xs) {
-    sizeClasses = "text-b4 w-16 gap-1 py-3";
+    sizeClasses = "text-b5 w-16 gap-1 py-3";
   } else if (size === Size.sm) {
-    sizeClasses = "text-b3 w-20 gap-1 py-4";
+    sizeClasses = "text-b4 w-[4.5rem] gap-1 py-4";
   } else if (size === Size.md) {
     sizeClasses = "text-b2 w-24 gap-2 py-4";
   } else if (size === Size.lg) {
@@ -82,11 +82,12 @@
     {#if item.icon}
       <Icon
         icon={item.icon.toLowerCase()}
+        size={size == Size.lg ? Size.md : size}
         color={!isActive ? "fgs3" : undefined}
       />
     {/if}
     <slot />
-    <span>{properCase(item.label)}</span>
+    <span class={isActive ? "font-medium" : ""}>{properCase(item.label)}</span>
   </button>
 </div>
 

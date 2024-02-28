@@ -78,7 +78,7 @@
       {/if}
     </div>
   </div>
-  <div class="grow w-3/4">
+  <div class="grow w-full">
     {#each $mdStore.blocks as block (block.id)}
       <Block {block} {mdId} />
     {/each}

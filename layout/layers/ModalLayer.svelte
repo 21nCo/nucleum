@@ -113,7 +113,7 @@
 
 {#if isValidArrayWithData($toasts) && !$windowObject.isInPortraitMode}
   <div
-    class="fixed bottom-0 right-0 mb-6 mr-12 flex flex-col gap-4 z-[100]"
+    class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}
   >
     {#each $toasts as toast}
@@ -141,6 +141,8 @@
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
     isUseDialog={modal.layout?.size != Size.full}
+    size={modal.layout?.size ?? Size.md}
+    orientation={modal.layout?.orientation}
   >
     <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver
@@ -152,7 +154,7 @@
 {/each}
 
 {#if $confirmationNotification}
-  <Modal show={true} id="confirmation" isDismissable={true}>
+  <Modal show={true} id="confirmation" isDismissable={true} size={Size.xs}>
     <ModalLayout
       path={AppEvent.CONFIRMATION}
       params={{

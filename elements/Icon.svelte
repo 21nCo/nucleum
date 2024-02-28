@@ -96,6 +96,7 @@
   import Grab from "../icons/Grab.svelte";
   import Capture2 from "../icons/Capture2.0.svelte";
   import QueueList from "../icons/QueueList.svelte";
+  import AtSymbol from "../icons/AtSymbol.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -105,6 +106,7 @@
   export let isOutlineForActive: boolean = false;
   $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $userPreferences);
   $: defaultColor = retrieveCurrentColors($userPreferences)?.fgs2 ?? "";
+  $: if (icon === "capture") isOutlineForActive = true;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
   export let hoverStyle: SelectionItemActiveStyle =
@@ -300,6 +302,8 @@
         <Arrow direction={Direction.Right} />
       {:else if icon === "arrow-down-right"}
         <Arrow direction={Direction.BottomRight} />
+      {:else if icon === "arrow-up-right"}
+        <Arrow direction={Direction.TopRight} {variant} />
       {:else if icon === "arrow-down-right-mini"}
         <Arrow direction={Direction.BottomRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
@@ -385,7 +389,7 @@
       {:else if icon === "curation"}
         <Curation {variant} />
       {:else if icon === "capture"}
-        <Capture {variant} />
+        <Capture />
       {:else if icon === "capture2.0"}
         <Capture2 {variant} />
       {:else if icon === "check-circle"}
@@ -414,6 +418,8 @@
         <Grab {variant} />
       {:else if icon === "queue-list"}
         <QueueList {variant} />
+      {:else if icon === "at-symbol"}
+        <AtSymbol {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

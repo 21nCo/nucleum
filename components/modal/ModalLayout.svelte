@@ -18,12 +18,10 @@
   export let path: string;
   export let params: ModalParams;
   let size: Size = Size.md;
-  let orientation: Orientation = Orientation.Vertical;
-  if (params.layout?.size) size = params.layout.size;
-  if (params.layout?.orientation) orientation = params.layout.orientation;
+  // let orientation: Orientation = Orientation.Vertical;
+  // if (params.layout?.size) size = params.layout.size;
+  // if (params.layout?.orientation) orientation = params.layout.orientation;
   let footerRef: any;
-  let sizingClass = "";
-  resolveSize();
   export function close() {
     footerRef.close();
   }
@@ -38,65 +36,6 @@
     // }
     // console.log("id", { queryParamId, queryParamPath, params });
   });
-  function resolveSize() {
-    if (orientation === Orientation.Vertical) {
-      switch (size) {
-        case Size.xs:
-          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
-          break;
-        case Size.sm:
-          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
-          break;
-        case Size.md:
-          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
-          break;
-        case Size.lg:
-          sizingClass =
-            "w-[21rem] sm:w-[28rem] md:w-[35rem] h-[45rem] min-h-[40rem]";
-          break;
-        case Size.xl:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
-          break;
-        case Size.full:
-          sizingClass = "w-full h-full min-h-screen min-w-screen";
-          break;
-        default:
-          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
-          break;
-      }
-      return;
-    } else if (orientation === Orientation.Horizontal) {
-      switch (size) {
-        case Size.xs:
-          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
-          break;
-        case Size.sm:
-          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
-          break;
-        case Size.md:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[45rem] h-[30rem] min-h-[30rem]";
-          break;
-        case Size.lg:
-          sizingClass =
-            "w-[21rem] sm:w-[35rem] md:w-[50rem] h-[45rem] min-h-[45rem]";
-          break;
-        case Size.xl:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[70rem] h-[50rem] min-h-[45rem]";
-          break;
-        case Size.full:
-          sizingClass = "w-full h-full min-h-screen min-w-screen";
-          break;
-        default:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[25rem] min-h-[25rem]";
-          break;
-      }
-      return;
-    }
-  }
 
   function handleClose() {
     if (path === AppEvent.CONFIRMATION) confirmationNotification.reset();
@@ -120,10 +59,8 @@
   </div>
 {:else}
   <div
-    class="flex flex-col items-center justify-between {$appStore.launchContext ===
-      LaunchContext.EMBED && $appStore.embedContext === EmbedContext.SHEET
-      ? 'w-full h-full'
-      : sizingClass} {!params.layout?.ignoreSafeArea
+    class="flex flex-col items-center justify-between w-full h-full {!params
+      .layout?.ignoreSafeArea
       ? size === Size.xs
         ? 'p-2 lg:p-4 gap-4'
         : 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'

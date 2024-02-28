@@ -65,6 +65,7 @@ export const appLoadingState = writable<{
 }>({ isBaseLoaded: false, isLocalLoaded: false });
 export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
+export const splitView = writable<string[]>([]);
 
 /**
  * Calendar Heatmap stores
@@ -542,8 +543,9 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "");
         n.fullScreenComponentPath = undefined;
@@ -553,8 +555,9 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         }
         return n;
       });
