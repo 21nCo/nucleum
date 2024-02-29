@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MdContext, type Block, type MdStore } from "$lib/tidy/types/md.type";
+  import type { Block, MdStore } from "$lib/tidy/types/md.type";
   import { onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
@@ -38,8 +38,8 @@
   }}
 >
   <div class="absolute -left-10 flex h-full justify-center">
-    {#if $mdStore.context === MdContext.NODE && (isHovering || isFocusing)}
-      <LeftControls />
+    {#if isHovering || isFocusing}
+      <LeftControls {mdId} />
     {/if}
   </div>
   <div

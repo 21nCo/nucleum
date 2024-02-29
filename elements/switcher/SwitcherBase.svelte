@@ -4,11 +4,11 @@
   import {
     bgClass,
     customColorStyle,
-    resolveBackgroundClass,
+    resolveBackgroundClass
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { ColorType } from "$lib/tidy/types/theme.type";
-  import ActiveBackgroundElement from "../Style/ActiveBackgroundElement.svelte";
+  import ActiveBackgroundElement from "../style/ActiveBackgroundElement.svelte";
   export let classList: string;
   export let id: string = "";
   export let isActive: boolean = false;

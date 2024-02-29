@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import ActiveBackgroundElement from "$lib/tidy/elements/Style/ActiveBackgroundElement.svelte";
+  import ActiveBackgroundElement from "$lib/tidy/elements/style/ActiveBackgroundElement.svelte";
   import { windowObject } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";

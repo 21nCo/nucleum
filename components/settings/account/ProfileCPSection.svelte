@@ -9,7 +9,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
-  import { formatDate } from "$lib/tidy/utils/utils";
+  import { formatDate } from "$lib/tidy/utils/time.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;

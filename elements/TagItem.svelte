@@ -3,7 +3,7 @@
   import Icon from "./Icon.svelte";
   import { IconVariant } from "../types/icon.type";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import ActiveBackgroundElement from "./Style/ActiveBackgroundElement.svelte";
+  import ActiveBackgroundElement from "./style/ActiveBackgroundElement.svelte";
 
   export let label: string;
   export let id: string;

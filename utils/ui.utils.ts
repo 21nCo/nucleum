@@ -116,3 +116,9 @@ export function isTextElement(target: EventTarget | null) {
       (target as HTMLElement).contentEditable === "true")
   );
 }
+
+export function searchParam(param: string, value: string | boolean | number) {
+  let url = new URL(window.location.href);
+  url.searchParams.set(param, value.toString());
+  windowObject.gotoPath(url.href);
+}

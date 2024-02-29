@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     CalendarHeatMapLayout,
-    calendarHmSelectedTile
+    selectedTimePeriod
   } from "$lib/tidy/stores/app.store";
   import type {
     DailyData,
@@ -21,8 +21,14 @@
   let isHovering: boolean = false;
   let tooltip: string | undefined = undefined;
   $: isActive =
-    ("date" in data && $calendarHmSelectedTile == data.date) ||
-    ("month" in data && $calendarHmSelectedTile == data.month);
+    ("date" in data &&
+      data.date == formatDate($selectedTimePeriod, "iso-short")) ||
+    ("month" in data &&
+      data.month ==
+        formatDate($selectedTimePeriod, "iso-short")
+          .split("-")
+          .slice(0, 2)
+          .join("-"));
   let monthTitles = [
     "J",
     "F",
@@ -82,13 +88,14 @@
     id="MITile"
     class={isActive ? "border-2 border-bgs1 shadow-outline" : ""}
     on:click={() => {
+      //TODO - date.date and date.month to be in Date type approach
       let val;
       if ("date" in data) {
-        val = data.date;
+        val = new Date(data.date);
       } else if ("month" in data) {
-        val = data.month;
+        val = new Date(data.month + "-01");
       }
-      calendarHmSelectedTile.set(val ?? "");
+      selectedTimePeriod.set(val ?? new Date());
     }}
   >
     <!-- dispatch required event on:click here-->

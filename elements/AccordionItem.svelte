@@ -3,7 +3,7 @@
   import { AccordionState } from "$lib/tidy/types/accordionState.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import { AccordionIconRenderType } from "../types/accordionIconRenderType.enum";
-  import ActiveBackgroundElement from "./Style/ActiveBackgroundElement.svelte";
+  import ActiveBackgroundElement from "./style/ActiveBackgroundElement.svelte";
   import Icon from "./Icon.svelte";
   import { Size } from "../types/size.enum";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";

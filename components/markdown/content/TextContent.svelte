@@ -17,6 +17,7 @@
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
   import { Direction } from "$lib/tidy/types/direction.enum";
+  import { isInEditMode } from "$lib/tidy/stores/app.store";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let content: TextContent;
@@ -755,14 +756,14 @@
 
 {#if typeof content.body === "string"}
   <div class="relative">
-    {#if $mdStore.params?.isReadOnly}
+    {#if $mdStore.params?.isReadOnly || !$isInEditMode}
       <div
         {id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none {sizing} {content.type ===
+        class="w-full h-full outline-none py-2 {sizing} {content.type ===
         MdBlockType.QUOTE
-          ? 'p-2'
-          : 'p-1'}"
+          ? 'px-2'
+          : 'px-1'}"
       >
         {@html content.body}
       </div>

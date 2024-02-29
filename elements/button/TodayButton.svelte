@@ -1,17 +1,18 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { calendarHmSelectedTile } from "$lib/tidy/stores/app.store";
+  import { selectedTimePeriod } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
+  import { isSameDay, formatDate } from "$lib/tidy/utils/time.utils";
   export let parentBackgroundIndex: number = 0;
 </script>
 
-{#if $calendarHmSelectedTile !== new Date().toISOString().split("T")[0]}
+{#if !isSameDay($selectedTimePeriod, new Date())}
   <Button
     label="Go to today"
     {parentBackgroundIndex}
     size={Size.xs}
     on:click={() => {
-      calendarHmSelectedTile.set(new Date().toISOString().split("T")[0]);
+      selectedTimePeriod.set(new Date());
     }}
   />
 {/if}

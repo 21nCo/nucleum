@@ -357,13 +357,28 @@ export function incrementTime(
   return new Date(dateTime.getTime() + numberOfHours * 60 * 60 * 1000);
 }
 
-export function formatDate(date: Date, format: "iso" | "verbose" = "iso") {
-  if (format === "iso") {
-    return date.toISOString().split("T")[0];
+export function formatDate(
+  date: Date,
+  format: "iso" | "iso-short" | "verbose" = "verbose"
+) {
+  if (format === "iso" || format === "iso-short") {
+    let year = date.getFullYear();
+    let month = (1 + date.getMonth()).toString().padStart(2, "0");
+    let day = date.getDate().toString().padStart(2, "0");
+    if (format === "iso") return `${year}-${month}-${day}T00:00:00.000Z`;
+    else return `${year}-${month}-${day}`;
   }
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric"
   });
+}
+
+export function isSameDay(date1: Date, date2: Date) {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
 }

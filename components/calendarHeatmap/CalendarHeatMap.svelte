@@ -3,7 +3,7 @@
     CalendarHeatMapData,
     CalendarHeatMapLayout,
     calendarHmContext,
-    calendarHmSelectedTile,
+    selectedTimePeriod,
     isTouchDevice
   } from "$lib/tidy/stores/app.store";
   import {
@@ -55,7 +55,7 @@
   }
   function refreshSelectedTile() {
     if (tileScale === TileScale.DAYS) {
-      calendarHmSelectedTile.set(new Date().toISOString().split("T")[0]);
+      selectedTimePeriod.set(new Date());
     }
   }
   async function refreshData() {
@@ -97,8 +97,8 @@
       data = undefined;
       data = x.data;
     });
-    const hmselection = calendarHmSelectedTile.subscribe((x) => {
-      console.log("calendarHmSelectedTile", x);
+    const hmselection = selectedTimePeriod.subscribe((x) => {
+      console.log("selectedTimePeriod", x);
     });
     return () => {
       hmsub();
