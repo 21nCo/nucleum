@@ -543,9 +543,8 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "");
         n.fullScreenComponentPath = undefined;
@@ -555,9 +554,8 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         }
         return n;
       });
@@ -653,7 +651,7 @@ function initAccount(seed: UserAccount) {
     }
   };
   const expire = () => {
-    // localStorage.removeItem("surreal-token");
+    localStorage.removeItem("surreal-token");
     // localStorage.removeItem("userInfo");
     update(() => {
       const n = { token: null, isLoggedIn: false };
