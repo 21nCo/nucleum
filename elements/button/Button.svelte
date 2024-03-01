@@ -6,7 +6,7 @@
   import { bgClass, retrieveCurrentColors } from "../../utils/theme.utils";
   import { userPreferences, windowObject } from "../../stores/app.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import { renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
+  import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
   export let parentBackgroundIndex: number = 1;

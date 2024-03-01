@@ -15,7 +15,7 @@
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
-  import { renderPopoverv2 } from "$lib/tidy/utils/ui.utils";
+  import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import { Direction } from "$lib/tidy/types/direction.enum";
   import { isInEditMode } from "$lib/tidy/stores/app.store";
   const dispatch = createEventDispatcher();

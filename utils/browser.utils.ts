@@ -1,6 +1,7 @@
 import { get } from "svelte/store";
 import { windowObject } from "../stores/app.store";
 import { Direction } from "../types/direction.enum";
+import { OS } from "../types/os.enum";
 
 function documentDimensions() {
   let documentWidth = get(windowObject).documentWidth;
@@ -121,4 +122,26 @@ export function searchParam(param: string, value: string | boolean | number) {
   let url = new URL(window.location.href);
   url.searchParams.set(param, value.toString());
   windowObject.gotoPath(url.href);
+}
+
+export function detectSystemOS() {
+  let os: OS;
+  const userAgent = navigator.userAgent.toLowerCase();
+  const platform = userAgent ?? navigator.platform.toLowerCase();
+  if (platform.includes("win")) {
+    os = OS.WINDOWS;
+  } else if (platform.includes("mac")) {
+    os = OS.MAC;
+  } else if (
+    platform.includes("iphone") ||
+    platform.includes("ipad") ||
+    platform.includes("iOS")
+  ) {
+    os = OS.IOS;
+  } else if (platform.includes("android")) {
+    os = OS.ANDROID;
+  } else {
+    os = OS.OTHER;
+  }
+  return os;
 }

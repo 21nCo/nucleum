@@ -6,9 +6,11 @@
     account,
     app,
     appStore,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
+  import { OS } from "$lib/tidy/types/os.enum";
+  import { detectSystemOS } from "$lib/tidy/utils/browser.utils";
   import { handleOAuthRedirection } from "$lib/tidy/utils/oauth.utils";
   import { onMount } from "svelte";
   onMount(async () => {
@@ -24,7 +26,8 @@
     let response = await handleOAuthRedirection($page.params.slug, code);
     if (!response) return;
     const json = await response.json();
-    if ($appStore.launchContext === LaunchContext.EMBED) {
+    const os = detectSystemOS();
+    if (os == OS.IOS || os === OS.MAC) {
       if (json.isSignup) {
         goto($app.product + "://oauthsignup" + "?token=" + json.token);
       } else {

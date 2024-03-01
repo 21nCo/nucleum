@@ -2,7 +2,7 @@
   import { windowObject } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import type { InfoTextParams } from "$lib/tidy/types/text.type";
-  import { renderPopover } from "$lib/tidy/utils/ui.utils";
+  import { renderPopover } from "$lib/tidy/utils/browser.utils";
   import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
   export let info: InfoTextParams;

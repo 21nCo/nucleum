@@ -26,7 +26,7 @@
   } from "$lib/tidy/utils/account.utils";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { pingParent, postMessageToParent } from "$lib/tidy/utils/embed.utils";
+  import { pingParent, postToParent } from "$lib/tidy/utils/embed.utils";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import { extractProduct } from "$lib/tidy/utils/utils";
@@ -129,23 +129,32 @@
     }, 1000);
   }
   function setLaunchContext() {
-    const host = import.meta.env.VITE_APP ?? window.location.host;
-    const appDetails = extractProduct(host);
-    app.set(appDetails);
-    let subdomain = window?.location.host.split(".")[0];
-    let isSheet = $page.url?.searchParams?.get("isSheet");
-    let isDebugMode = $page.url?.searchParams?.get("debug");
-    // console.log({ isSheet, isDebugMode });
-    if (isDebugMode) {
-      $appStore.isDebugMode = true;
-    }
-    // console.log({ subdomain, location: window?.location });
-    //$appStore.launchContext = LaunchContext.EMBED;
-    if (subdomain?.includes("embed") || $appStore.isDebugEmbedMode) {
-      $appStore.launchContext = LaunchContext.EMBED;
-    }
-    if (isSheet) {
-      $appStore.embedContext = EmbedContext.SHEET;
+    try {
+      const host = import.meta.env.VITE_APP ?? window.location.host;
+      const appDetails = extractProduct(host);
+      app.set(appDetails);
+      let subdomain = window?.location.host.split(".")[0];
+      let isSheet = $page.url?.searchParams?.get("isSheet");
+      let isDebugMode = $page.url?.searchParams?.get("debug");
+      // console.log({ isSheet, isDebugMode });
+      if (isDebugMode) {
+        $appStore.isDebugMode = true;
+      }
+      // console.log({ subdomain, location: window?.location });
+      //$appStore.launchContext = LaunchContext.EMBED;
+      let browserAgent = navigator?.userAgent;
+      if (
+        subdomain?.includes("embed") ||
+        $appStore.isDebugEmbedMode ||
+        browserAgent.includes("embed")
+      ) {
+        $appStore.launchContext = LaunchContext.EMBED;
+      }
+      if (isSheet) {
+        $appStore.embedContext = EmbedContext.SHEET;
+      }
+    } catch (e) {
+      postToParent({ type: "ERROR", message: e });
     }
   }
   function addWindowEventListeners() {

@@ -6,7 +6,7 @@
   } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
-  import { isTextElement } from "$lib/tidy/utils/ui.utils";
+  import { isTextElement } from "$lib/tidy/utils/browser.utils";
   import { runAction } from "$lib/tidy/utils/utils";
   import { onDestroy, onMount } from "svelte";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
