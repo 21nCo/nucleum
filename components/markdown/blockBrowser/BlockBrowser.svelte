@@ -1,7 +1,8 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { InlineType, ListType, MdBlockType } from "$lib/tidy/types/md.type";
+  import { InlineType } from "$lib/tidy/types/md.type";
+  import { NodeType, ListType } from "$lib/tidy/types/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import {
@@ -22,67 +23,67 @@
         {
           label: "Paragraph",
           description: "Paragraph block",
-          type: MdBlockType.SIMPLE_TEXT,
+          type: NodeType.SIMPLE_TEXT,
           icon: "text"
         },
         {
           label: "Heading 1",
           description: "Heading 1 block",
-          type: MdBlockType.HEADING1,
+          type: NodeType.HEADING1,
           icon: "heading1"
         },
         {
           label: "Heading 2",
           description: "Heading 2 block",
-          type: MdBlockType.HEADING2,
+          type: NodeType.HEADING2,
           icon: "heading2"
         },
         {
           label: "Heading 3",
           description: "Heading 3 block",
-          type: MdBlockType.HEADING3,
+          type: NodeType.HEADING3,
           icon: "heading3"
         },
         {
           label: "Heading 4",
           description: "Heading 4 block",
-          type: MdBlockType.HEADING4,
+          type: NodeType.HEADING4,
           icon: "heading4"
         },
         {
           label: "Heading 5",
           description: "Heading 5 block",
-          type: MdBlockType.HEADING5,
+          type: NodeType.HEADING5,
           icon: "heading5"
         },
         {
           label: "Quote",
           description: "Quote block",
-          type: MdBlockType.QUOTE,
+          type: NodeType.QUOTE,
           icon: "quote"
         },
         {
           label: "Code",
           description: "Code block",
-          type: MdBlockType.CODE,
+          type: NodeType.CODE,
           icon: "code"
         },
         {
           label: "Math",
           description: "Math block",
-          type: MdBlockType.MATH,
+          type: NodeType.MATH,
           icon: "math"
         },
         {
           label: "Callout",
           description: "Callout block",
-          type: MdBlockType.CALLOUT,
+          type: NodeType.CALLOUT,
           icon: "bookmark"
         },
         {
           label: "Link",
           description: "Link block",
-          type: MdBlockType.LINK,
+          type: NodeType.LINK,
           icon: "link"
         }
       ]
@@ -116,13 +117,13 @@
         {
           label: "Divider",
           description: "Divider block",
-          type: MdBlockType.DIVIDER,
+          type: NodeType.DIVIDER,
           icon: "divider"
         },
         {
           label: "Double Divider",
           description: "Divider block",
-          type: MdBlockType.DOUBLE_DIVIDER,
+          type: NodeType.DOUBLE_DIVIDER,
           icon: "divider"
         }
       ]
@@ -133,28 +134,28 @@
         {
           label: "Unordered List",
           description: "Unordered List block",
-          type: MdBlockType.LIST,
+          type: NodeType.LIST,
           sub: ListType.UNORDERED,
           icon: "unordered-list"
         },
         {
           label: "Ordered List",
           description: "Ordered List block",
-          type: MdBlockType.LIST,
+          type: NodeType.LIST,
           sub: ListType.ORDERED,
           icon: "ordered-list"
         },
         {
           label: "Checklist",
           description: "Checklist block",
-          type: MdBlockType.LIST,
+          type: NodeType.LIST,
           sub: ListType.CHECKLIST,
           icon: "checklist"
         },
         {
           label: "Toggle list",
           description: "Toggle list block",
-          type: MdBlockType.LIST,
+          type: NodeType.LIST,
           sub: ListType.TOGGLELIST,
           icon: "task"
         }
@@ -166,43 +167,43 @@
         {
           label: "Image",
           description: "Image block",
-          type: MdBlockType.IMAGE,
+          type: NodeType.IMAGE,
           icon: "image"
         },
         {
           label: "Video",
           description: "Video block",
-          type: MdBlockType.VIDEO,
+          type: NodeType.VIDEO,
           icon: "video-camera"
         },
         {
           label: "Audio",
           description: "Audio block",
-          type: MdBlockType.AUDIO,
+          type: NodeType.AUDIO,
           icon: "music"
         },
         {
           label: "PDF",
           description: "Pdf block",
-          type: MdBlockType.PDF,
+          type: NodeType.PDF,
           icon: "document"
         },
         {
           label: "File",
           description: "File block",
-          type: MdBlockType.FILE,
+          type: NodeType.FILE,
           icon: "attachment"
         },
         {
           label: "Media stack",
           description: "Media stack block",
-          type: MdBlockType.MEDIA_STACK,
+          type: NodeType.MEDIA_STACK,
           icon: "rectangle-stack"
         },
         {
           label: "Media grid",
           description: "Media grid block",
-          type: MdBlockType.MEDIA_GRID,
+          type: NodeType.MEDIA_GRID,
           icon: "rectangle-group"
         }
       ]
@@ -213,25 +214,25 @@
         {
           label: "Columns",
           description: "Columns block",
-          type: MdBlockType.COLUMNS,
+          type: NodeType.COLUMNS,
           icon: "columns"
         },
         {
           label: "Grid",
           description: "Grid block",
-          type: MdBlockType.GRID,
+          type: NodeType.GRID,
           icon: "squares-2x2"
         },
         {
           label: "Accordion",
           description: "Accordion block",
-          type: MdBlockType.ACCORDION,
+          type: NodeType.ACCORDION,
           icon: "queue-list"
         },
         {
           label: "Tabs",
           description: "Tabs block",
-          type: MdBlockType.TABS,
+          type: NodeType.TABS,
           icon: "tabs"
         }
       ]
@@ -242,25 +243,25 @@
         {
           label: "Table",
           description: "Table block",
-          type: MdBlockType.TABLE,
+          type: NodeType.TABLE,
           icon: "table"
         },
         {
           label: "Embed",
           description: "Embed block",
-          type: MdBlockType.EMBED,
+          type: NodeType.EMBED,
           icon: "code"
         },
         {
           label: "Table of contents",
           description: "Embed table of contents block",
-          type: MdBlockType.TOC,
+          type: NodeType.TOC,
           icon: "list"
         },
         {
           label: "Embed collection",
           description: "Embed Collection block",
-          type: MdBlockType.COLLECTION_AS_EMBED,
+          type: NodeType.COLLECTION_AS_EMBED,
           icon: "collection"
         }
       ]

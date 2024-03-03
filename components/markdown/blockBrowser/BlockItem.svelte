@@ -1,11 +1,12 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import type { InlineType, MdBlockType } from "$lib/tidy/types/md.type";
+  import type { InlineType } from "$lib/tidy/types/md.type";
+  import type { NodeType } from "$lib/tidy/types/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { createEventDispatcher } from "svelte";
   export let block: {
     label: string;
-    type: MdBlockType | InlineType;
+    type: NodeType | InlineType;
     icon: string;
   };
   export let width: string = "w-full";

@@ -1,18 +1,16 @@
 import {
-  MdBlockType,
-  type MdStore,
-  SpanType,
-  type NodeMarkdown,
-  type Block,
-  MdContext,
-  type MdParams,
+  NodeType,
+  type Node,
   ListType,
-  type BasicMarkdown,
   type ListChild,
-  type TextType,
+  type TextNodeType,
   type ListContent,
-  type BlockContent
-} from "$lib/tidy/types/md.type";
+  type TextContent,
+  type LayoutContent,
+  type StructuralContent,
+  type NodeContent
+} from "$lib/tidy/types/node.type";
+
 import {
   deepCopy,
   isEmptyArray,
@@ -20,372 +18,36 @@ import {
 } from "$lib/tidy/utils/obj.utils";
 import { generateMarkdownText } from "$lib/tidy/utils/text.utils";
 import { generateUID } from "$lib/tidy/utils/utils";
-import type { List } from "postcss/lib/list";
 import { get, writable } from "svelte/store";
 import {
   handleNodeMarkdownChildHierarchyChanges,
   recursivelyExtractAllChildrenIntoArray,
   resolveImmediateParent
 } from "./markdown.utils";
+import type {
+  Block,
+  MdParams,
+  MdStore,
+  Markdown
+} from "$lib/tidy/types/md.type";
 
-export const sampleMd = {
-  children: [
-    {
-      children: [
-        {
-          children: [],
-          type: MdBlockType.SIMPLE_TEXT,
-          content: "h1 1 text block",
-          id: "mdtrail:djhmtyd3rc0jwg7pr3r0"
-        },
-        {
-          children: [
-            {
-              children: [],
-              type: MdBlockType.SIMPLE_TEXT,
-              content:
-                "lorem ipsum dolor **sit amet, *consectetur adipiscing elit*, sed do `eiusmod ~~tempor~~` incididunt** ut labore et dolore magna aliqua. Ut enim ad minim veniam",
-              id: "mdtrail:2nf1gtuulr0yotuuipfs"
-            },
-            {
-              children: [],
-              type: MdBlockType.SIMPLE_TEXT,
-              content: [
-                {
-                  type: SpanType.BOLD,
-                  content:
-                    "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-                  id: "mdtrail:2nf1gtuulr0yotuu "
-                },
-                {
-                  type: SpanType.ITALIC,
-                  content:
-                    "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu",
-                  id: "mdtrail:2nf1gtuulr0yotuuipf "
-                },
-                {
-                  type: SpanType.UNDERLINE,
-                  content: [
-                    {
-                      type: SpanType.DEFAULT,
-                      content:
-                        "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est",
-                      id: "mdtrail:2nf1gtuulr0yo"
-                    },
-                    {
-                      type: SpanType.BOLD,
-                      content: "reference",
-                      id: "mdtrail:2nf1gtuulr0yot"
-                    },
-                    {
-                      type: SpanType.CODE,
-                      content: "code",
-                      id: "mdtrail:2nf1gtuulr0yotu"
-                    },
-                    {
-                      type: SpanType.DEFAULT,
-                      content: "laborum.",
-                      id: "mdtrail:2nf1gtuulr0yotuui"
-                    }
-                  ],
-                  id: "mdtrail:2nf1gtuulr0yotuui"
-                }
-              ],
-              id: "mdtrail:0i18cc5p90wdisg5rp4y"
-            }
-          ],
-          type: MdBlockType.HEADING2,
-          content: "h1 1 h2 1 block",
-          id: "mdtrail:g8nzhoct35w996rvqers"
-        },
-        {
-          children: [],
-          type: MdBlockType.DIVIDER,
-          content: "",
-          id: "mdtrail:p216htbpu6e5vnf4w"
-        },
-        {
-          children: [],
-          type: MdBlockType.HEADING2,
-          content: "h1 1 h2 2 block",
-          id: "mdtrail:p216htbpu6e5vnf4wvt9"
-        }
-      ],
-      type: MdBlockType.HEADING1,
-      content: "h1 1",
-      id: "mdtrail:why60qlg3u5egi771fm3"
-    },
-    {
-      type: MdBlockType.HEADING1,
-      children: [],
-      content: "h1 2",
-      id: "mdtrail:e2xg726y72leszcnp1zd"
-    }
-  ],
-  type: MdBlockType.MARKDOWN,
-  content: "some content",
-  id: "mdtrail:uy4urnx3z643jnt217ez"
-};
-export const sampleMdTwo: NodeMarkdown = {
-  children: [
-    {
-      children: [
-        {
-          content: {
-            type: MdBlockType.SIMPLE_TEXT,
-            body: "h1 1 text block"
-          },
-          id: "mdtrail:djhmtyd3rc0jwg7pr3r0"
-        },
-        {
-          children: [
-            {
-              content: {
-                type: MdBlockType.SIMPLE_TEXT,
-                body: "lorem ipsum dolor **sit amet, *consectetur adipiscing elit*, sed do `eiusmod ~~tempor~~` incididunt** ut labore et dolore magna aliqua. Ut enim ad minim veniam"
-              },
-              id: "mdtrail:2nf1gtuulr0yotuuipfs"
-            },
-            {
-              content: {
-                type: MdBlockType.SIMPLE_TEXT,
-                body: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam"
-              },
-
-              id: "mdtrail:0i18cc5p90wdisg5rp4y"
-            }
-          ],
-          childrenHierarchy: [
-            "mdtrail:2nf1gtuulr0yotuuipfs",
-            "mdtrail:0i18cc5p90wdisg5rp4y"
-          ],
-          content: {
-            type: MdBlockType.HEADING2,
-            body: "h1 1 h2 1 block"
-          },
-          id: "mdtrail:g8nzhoct35w996rvqers"
-        },
-        {
-          content: {
-            type: MdBlockType.DIVIDER
-          },
-          id: "mdtrail:p216tbpu6e5"
-        },
-        {
-          children: [
-            {
-              content: {
-                type: MdBlockType.SIMPLE_TEXT,
-                body: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam"
-              },
-              id: "mdtrail:2nf1gtuulr0yotufs"
-            },
-            {
-              content: {
-                type: MdBlockType.SIMPLE_TEXT,
-                body: "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam"
-              },
-              id: "mdtrail:0i18cc5p9isg5rp4y"
-            }
-          ],
-          childrenHierarchy: [
-            "mdtrail:2nf1gtuulr0yotufs",
-            "mdtrail:0i18cc5p9isg5rp4y"
-          ],
-          content: {
-            type: MdBlockType.HEADING2,
-            body: "h1 1 h2 2 block"
-          },
-          id: "mdtrail:p216htbpu6e5vnf4wvt9"
-        }
-      ],
-      childrenHierarchy: [
-        "mdtrail:g8nzhoct35w996rvqers",
-        "mdtrail:p216htbpu6e5vnf4wvt9"
-      ],
-      content: {
-        type: MdBlockType.HEADING1,
-        body: "h1 1"
-      },
-      id: "mdtrail:why60qlg3u5egi771fm3"
-    },
-    {
-      content: {
-        type: MdBlockType.DOUBLE_DIVIDER
-      },
-      id: "mdtrail:p216htbpu6e5"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.HEADING1,
-        body: "h1 2"
-      },
-      id: "mdtrail:e2xg726y72leszcnp1zd"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.HEADING2,
-        body: "h2 1"
-      },
-      id: "mdtrail:e2xg726y72leszcnp1zd2"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.HEADING3,
-        body: "h3 1"
-      },
-      id: "mdtrail:e2xg726y72leszcnp1zd3"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.HEADING4,
-        body: "h4 1"
-      },
-      id: "mdtrail:e2xg726y72leszcnp1zd4"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.HEADING5,
-        body: "h5 1"
-      },
-      id: "mdtrail:e2xg726y72leszcnp1zd5"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.SIMPLE_TEXT,
-        body: "simple text"
-      },
-      id: "mdtrail:e2xg726y72leszcnp1zd2t3"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.LIST,
-        body: {
-          type: ListType.UNORDERED,
-          content: {
-            type: MdBlockType.SIMPLE_TEXT,
-            body: "list item 1"
-          }
-        },
-        children: [
-          {
-            id: "mdtrail:e2xg726addd",
-            content: {
-              type: MdBlockType.LIST,
-              body: {
-                type: ListType.UNORDERED,
-                content: {
-                  type: MdBlockType.SIMPLE_TEXT,
-                  body: "sub item 1"
-                }
-              },
-              children: [
-                {
-                  id: "mdtrail:e2xg72b",
-                  content: {
-                    type: MdBlockType.LIST,
-                    body: {
-                      type: ListType.UNORDERED,
-                      content: "sub sub item 1"
-                    }
-                  }
-                },
-                {
-                  id: "mdtrail:e2xg72c",
-                  content: {
-                    type: MdBlockType.LIST,
-                    body: {
-                      type: ListType.UNORDERED,
-                      content: "sub sub item 2"
-                    }
-                  }
-                },
-                {
-                  id: "mdtrail:e2xg72d",
-                  content: {
-                    type: MdBlockType.LIST,
-                    body: {
-                      type: ListType.UNORDERED,
-                      content: "sub sub item 3"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          {
-            id: "mdtrail:e2xg726basdas",
-            content: {
-              type: MdBlockType.LIST,
-              body: {
-                type: ListType.UNORDERED,
-                content: "sub item 2"
-              }
-            }
-          },
-          {
-            id: "mdtrail:e2xg726cadas",
-            content: {
-              type: MdBlockType.LIST,
-              body: {
-                type: ListType.UNORDERED,
-                content: "sub item 3"
-              }
-            }
-          }
-        ]
-      },
-      id: "mdtrail:e2xg726y72leszcn"
-    },
-    {
-      children: [],
-      content: {
-        type: MdBlockType.LIST,
-        body: {
-          type: ListType.UNORDERED,
-          content: "list item 2"
-        }
-      },
-      id: "mdtrail:e2xg726yeszcn"
-    }
-  ],
-  childrenHierarchy: [
-    "mdtrail:why60qlg3u5egi771fm3",
-    "mdtrail:p216htbpu6e5",
-    "mdtrail:e2xg726y72leszcnp1zd"
-  ],
-  content: {
-    type: MdBlockType.SIMPLE_TEXT,
-    body: "some content"
-  },
-  id: "mdtrail:uy4urnx3z643jnt217ez"
-};
 export const emptyBlock: Block = {
-  content: {
-    type: MdBlockType.SIMPLE_TEXT,
-    body: ""
-  },
+  type: NodeType.SIMPLE_TEXT,
+  body: "",
   id: generateUID()
 };
-export const emptyMd: NodeMarkdown = {
-  children: [{ ...emptyBlock, id: generateUID(), children: [] }],
-  content: {
-    type: MdBlockType.SIMPLE_TEXT,
-    body: ""
+export const emptyNode: Node = {
+  children: [],
+  type: NodeType.NON_NODULAR_MARKDOWN,
+  body: {
+    blocks: [emptyBlock]
   },
+  icon: "",
   id: generateUID()
 };
 const seedMdStore: MdStore = {
-  md: emptyMd,
-  blocks: [],
-  context: MdContext.BASIC
+  node: emptyNode,
+  blocks: []
 };
 
 export const mdContentChangeEvent = initMdContentChangeEvent();
@@ -397,65 +59,33 @@ function initMdContentChangeEvent() {
     trigger: () => set(!get(mdContentChangeEvent))
   };
 }
-
-export const mdStores = new Map();
-export type mdStoreType = {
-  subscribe: any;
-  load: any;
-  reset: any;
-  insert: any;
-  insertStructualBlock: any;
-  handleInsertForExistingList: any;
-  convert: (
-    id: string,
-    params: {
-      blockType: MdBlockType.LIST | TextType;
-      listType?: ListType;
-    }
-  ) => boolean;
-  listOperation: (
-    operation: string,
-    id: string,
-    parentHierarchy: string[]
-  ) => boolean;
-  deleteBlock: any;
-  focusPreviousSibling: any;
-  focusBlock: any;
-  generateMarkdownText: any;
-};
-export function getMdStore(id: string): mdStoreType {
+type MdStoreType = ReturnType<typeof initMarkdownStore>;
+export const mdStores = new Map<string, MdStoreType>();
+export function getMdStore(id: string) {
   if (!mdStores.has(id)) {
     mdStores.set(id, initMarkdownStore());
   }
-  return mdStores.get(id);
+  return mdStores.get(id)!;
 }
 
 function initMarkdownStore() {
   const { subscribe, set, update } = writable<MdStore>(seedMdStore);
 
-  function load(
-    md: NodeMarkdown | BasicMarkdown,
-    context: MdContext,
-    params: MdParams | undefined = undefined
-  ) {
-    if (md && "blocks" in md) {
-      set(
-        deepCopy({
-          context,
-          params,
-          blocks: md.blocks,
-          blockToFocus: md.blocks[0].id
-        })
-      );
-    } else {
+  function load(md: Node | Markdown, params: MdParams | undefined = undefined) {
+    if ("blocks" in md) {
       set({
-        md,
-        context,
+        node: undefined,
+        params,
+        blocks: md.blocks,
+        blockToFocus: md.blocks?.[0]?.id
+      });
+    } else
+      set({
+        node: md,
         params,
         blocks: recursivelyExtractAllChildrenIntoArray(md),
         blockToFocus: md.children?.[0]?.id
       });
-    }
   }
 
   /**
@@ -465,8 +95,8 @@ function initMarkdownStore() {
    */
   function insert(
     contextBlockId: string,
-    params: { blockType?: MdBlockType; listType?: ListType } = {
-      blockType: MdBlockType.SIMPLE_TEXT,
+    params: { blockType?: NodeType; listType?: ListType } = {
+      blockType: NodeType.SIMPLE_TEXT,
       listType: ListType.UNORDERED
     }
   ) {
@@ -474,40 +104,29 @@ function initMarkdownStore() {
       const contextBlockIndex = n.blocks.findIndex(
         (b) => b.id === contextBlockId
       );
-      let newBlock: Block;
+      let newBlock: Block<NodeContent>;
       if (
         params.blockType &&
-        params.blockType != MdBlockType.LIST &&
-        params.blockType != MdBlockType.MARKDOWN
+        params.blockType != NodeType.LIST &&
+        params.blockType != NodeType.NODULAR_MARKDOWN
       ) {
         newBlock = {
           id: generateUID(),
-          content: {
-            type: params.blockType ?? MdBlockType.SIMPLE_TEXT,
-            body: ""
-          }
-        };
-      } else if (params.blockType === MdBlockType.LIST) {
+          type: params.blockType ?? NodeType.SIMPLE_TEXT,
+          body: ""
+        } as Block<TextContent | LayoutContent | StructuralContent>;
+      } else if (params.blockType === NodeType.LIST) {
         newBlock = {
           id: generateUID(),
-          content: {
-            type: MdBlockType.LIST,
-            body: {
-              type: params.listType ?? ListType.UNORDERED,
-              content: {
-                type: MdBlockType.SIMPLE_TEXT,
-                body: ""
-              }
-            }
-          }
+          type: NodeType.LIST,
+          listType: params.listType ?? ListType.UNORDERED,
+          body: ""
         };
       } else {
         newBlock = {
           id: generateUID(),
-          content: {
-            type: MdBlockType.SIMPLE_TEXT,
-            body: ""
-          }
+          type: NodeType.SIMPLE_TEXT,
+          body: ""
         };
       }
       if (!newBlock) return n;
@@ -533,7 +152,7 @@ function initMarkdownStore() {
    */
   function insertStructualBlock(
     contextBlockId: string,
-    blockType: MdBlockType.DIVIDER | MdBlockType.DOUBLE_DIVIDER
+    blockType: NodeType.DIVIDER | NodeType.DOUBLE_DIVIDER
   ) {
     update((n) => {
       const contextBlockIndex = n.blocks.findIndex(
@@ -541,12 +160,10 @@ function initMarkdownStore() {
       );
       const newBlock: Block = {
         id: generateUID(),
-        content: {
-          type:
-            blockType === MdBlockType.DIVIDER
-              ? MdBlockType.DIVIDER
-              : MdBlockType.DOUBLE_DIVIDER
-        }
+        type:
+          blockType === NodeType.DIVIDER
+            ? NodeType.DIVIDER
+            : NodeType.DOUBLE_DIVIDER
       };
       n.blocks = [
         ...n.blocks.slice(0, contextBlockIndex),
@@ -580,14 +197,9 @@ function initMarkdownStore() {
         return n;
       }
       const { parent } = resolveImmediateParent(n.blocks, parentHierarchy);
-      if (
-        !parent?.content ||
-        !("children" in parent.content) ||
-        !parent.content.children
-      )
-        return n;
-      const { blocks, id } = handleInsertion(parent.content.children);
-      parent.content.children = blocks;
+      if (!parent || !("children" in parent) || !parent.children) return n;
+      const { blocks, id } = handleInsertion(parent.children);
+      parent.children = blocks;
       n.reRenderBlock = parentHierarchy[0];
       n.blockToFocus = id;
       return n;
@@ -598,32 +210,28 @@ function initMarkdownStore() {
        * @returns the new blocks and the id of the new block
        */
       function handleInsertion(
-        blocks: Block<BlockContent>[] | ListChild<BlockContent>[]
+        blocks: Block<NodeContent>[] | ListChild<NodeContent>[]
       ) {
         const contextBlockIndex = blocks.findIndex((b) => b.id === contextId);
         const currentBlock = blocks[contextBlockIndex];
         let newBlock: Block<ListContent> = {
           id: generateUID(),
-          content: {
-            type: MdBlockType.LIST,
-            body: {
-              type: ListType.UNORDERED,
-              content: {
-                type: MdBlockType.SIMPLE_TEXT,
-                body: ""
-              }
-            },
-            children: []
-          }
+          type: NodeType.LIST,
+          listType: ListType.UNORDERED,
+          body: {
+            type: NodeType.SIMPLE_TEXT,
+            body: ""
+          },
+          children: []
         };
         if (
-          "children" in currentBlock.content &&
-          "children" in newBlock.content &&
-          isValidArrayWithData(currentBlock.content.children)
+          "children" in currentBlock &&
+          "children" in newBlock &&
+          isValidArrayWithData(currentBlock.children)
         ) {
-          const currentListItemChildren = currentBlock.content.children;
-          newBlock.content.children = currentListItemChildren;
-          currentBlock.content.children = [];
+          const currentListItemChildren = currentBlock.children;
+          newBlock.children = currentListItemChildren;
+          currentBlock.children = [];
         }
         let blocksWithoutCurrent = [
           ...blocks.slice(0, contextBlockIndex),
@@ -649,27 +257,26 @@ function initMarkdownStore() {
   function convert(
     id: string,
     params: {
-      blockType: MdBlockType.LIST | TextType;
+      blockType: NodeType.LIST | TextNodeType;
       listType?: ListType;
     } = {
-      blockType: MdBlockType.SIMPLE_TEXT,
+      blockType: NodeType.SIMPLE_TEXT,
       listType: ListType.UNORDERED
     }
   ) {
     update((n) => {
       const block = n.blocks.find((b) => b.id === id);
-      if (block && "body" in block.content) {
-        block.content.type = params.blockType;
-        if (params.blockType === MdBlockType.LIST) {
-          block.content.body = {
-            type: ListType.UNORDERED,
-            content: {
-              type: MdBlockType.SIMPLE_TEXT,
-              body: ""
-            }
+      if (block && "body" in block) {
+        block.type = params.blockType;
+        if (params.blockType === NodeType.LIST) {
+          (block as ListContent).listType =
+            params.listType ?? ListType.UNORDERED;
+          block.body = {
+            type: NodeType.SIMPLE_TEXT,
+            body: ""
           };
         } else {
-          block.content.body = "";
+          block.body = "";
         }
       }
       console.log({ block });
@@ -690,7 +297,7 @@ function initMarkdownStore() {
       update((n) => {
         const currentBlockIndex = n.blocks.findIndex((b) => b.id === id);
         let previousSibling = n.blocks[currentBlockIndex - 1];
-        if (previousSibling.content.type != MdBlockType.LIST) return n;
+        if (previousSibling.type != NodeType.LIST) return n;
         previousSibling = moveAsChild(
           n.blocks[currentBlockIndex],
           previousSibling as Block<ListContent>
@@ -703,18 +310,14 @@ function initMarkdownStore() {
     } else if (operation === "tab") {
       update((n) => {
         const { parent } = resolveImmediateParent(n.blocks, parentHierarchy);
-        const currentBlockIndex = parent.content.children.findIndex(
-          (b) => b.id === id
-        );
+        const currentBlockIndex = parent.children.findIndex((b) => b.id === id);
         if (!currentBlockIndex || currentBlockIndex === 0) return n;
-        let previousSibling = parent.content.children[currentBlockIndex - 1];
+        let previousSibling = parent.children[currentBlockIndex - 1];
         previousSibling = moveAsChild(
-          parent.content.children[currentBlockIndex],
+          parent.children[currentBlockIndex],
           previousSibling as ListChild<ListContent>
         );
-        parent.content.children = parent.content.children.filter(
-          (b) => b.id !== id
-        );
+        parent.children = parent.children.filter((b) => b.id !== id);
         n.reRenderBlock = parentHierarchyCopy[0];
         n.blockToFocus = id;
         return n;
@@ -725,12 +328,10 @@ function initMarkdownStore() {
           n.blocks,
           parentHierarchy
         );
-        const currentBlock = parent.content.children.find(
+        const currentBlock = parent.children.find(
           (b) => b.id === id
         ) as ListChild;
-        parent.content.children = parent.content.children.filter(
-          (b) => b.id !== id
-        );
+        parent.children = parent.children.filter((b) => b.id !== id);
         if (!parentOneAbove) {
           console.log("parentOneAbove not present", parentOneAbove);
           const parentIndex = n.blocks.findIndex((b) => b.id === parent.id);
@@ -743,7 +344,7 @@ function initMarkdownStore() {
         } else {
           let blocksInScope: ListChild[] = (
             parentOneAbove as ListChild<ListContent>
-          ).content.children!;
+          ).children!;
           const parentIndex = blocksInScope.findIndex(
             (b) => b.id === parent.id
           );
@@ -753,7 +354,7 @@ function initMarkdownStore() {
             currentBlock,
             ...blocksInScope.slice(parentIndex + 1)
           ];
-          parentOneAbove.content.children = blocksInScope;
+          parentOneAbove.children = blocksInScope;
           n.blockToFocus = id;
         }
         return n;
@@ -771,8 +372,8 @@ function initMarkdownStore() {
       blockToBeMoved: Block | ListChild,
       parent: Block<ListContent> | ListChild<ListContent>
     ) {
-      if (!parent.content.children) parent.content.children = [];
-      parent.content.children = [...parent.content.children, blockToBeMoved];
+      if (!parent.children) parent.children = [];
+      parent.children = [...parent.children, blockToBeMoved];
       return parent;
     }
   }

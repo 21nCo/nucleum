@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Direction } from "$lib/tidy/types/direction.enum";
+  import { Direction, Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import {
     VerticalSwitcherStyle,
@@ -14,13 +14,19 @@
   export let itemProps: {
     size?: Size;
     activeStatusPlacement?: Direction;
+    isHideLabel?: boolean;
   } = {
     size: Size.md,
     activeStatusPlacement: Direction.Right
   };
 </script>
 
-<aside class="flex flex-col h-full items-center justify-center">
+<aside
+  class="flex flex-col h-full justify-center {itemProps.activeStatusPlacement ===
+  Direction.Left
+    ? 'items-start'
+    : 'items-end'}"
+>
   {#each items as item}
     <VerticalSwitcherItem
       {item}

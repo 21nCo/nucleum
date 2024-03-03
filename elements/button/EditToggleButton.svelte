@@ -7,9 +7,10 @@
 
 {#if isReadModeVariant}
   <Button
-    tooltip="Toggle read-only mode"
-    icon="pencil"
-    size={Size.xs}
+    tooltip="Toggle read mode"
+    icon="book-open"
+    size={Size.sm}
+    isStayActive={!$isInEditMode}
     on:click={() => isInEditMode.toggle()}
   />
 {:else}

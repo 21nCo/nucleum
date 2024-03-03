@@ -27,7 +27,7 @@
     if (!response) return;
     const json = await response.json();
     const os = detectSystemOS();
-    if (os == OS.IOS || os === OS.MAC) {
+    if (os == OS.IOS) {
       if (json.isSignup) {
         goto($app.product + "://oauthsignup" + "?token=" + json.token);
       } else {

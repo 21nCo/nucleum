@@ -9,6 +9,7 @@
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
+  import Tooltip from "../text/Tooltip.svelte";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -22,6 +23,7 @@
   export let tooltip: string | undefined = undefined;
   export let toolTipPlacement: Direction = Direction.Down;
   export let isLoading: boolean = false;
+  export let isStayActive: boolean = false;
   // export let buttonBaseColor: string = "";
   // export let buttonActiveColor: string = "";
   // export let isActive: boolean = false;
@@ -173,7 +175,7 @@
       {size}
       color={type != "secondary" && !$userPreferences.colorScheme.isActiveFgFg
         ? currentColors.bgs1
-        : isHovered && type == "secondary"
+        : (isHovered && type == "secondary") || isStayActive
           ? currentColors.a1
           : type === "secondary"
             ? currentColors.fgs2
@@ -193,11 +195,8 @@
     <slot />
   {/if}
   {#if tooltip}
-    <div
-      bind:this={toolTipRef}
-      class="min-w-fit bg-fgs3 text-bgs1 text-b3 rounded-md z-30 px-4"
-    >
-      {tooltip}
+    <div bind:this={toolTipRef}>
+      <Tooltip {tooltip} />
     </div>
   {/if}
 </button>
