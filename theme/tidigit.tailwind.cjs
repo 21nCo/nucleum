@@ -50,25 +50,25 @@ const cs_tidigit_dark_red = {
 };
 
 const cs_tidigit_dark = {
-  bgs1: "hsl(229 8% 12%)",
+  bgs1: "hsl(229 8% 12%)", //background shade1
   bgs2: "hsl(229 8% 16%)",
   bgs3: "hsl(229 10% 20%)",
   bgs4: "hsl(229 10% 24%)",
-  fgs1: "hsl(0 0% 95%)",
+  fgs1: "hsl(0 0% 95%)", //foreground shade1
   fgs2: "hsl(0 0% 79%)",
   fgs3: "hsl(0 0% 81%)",
   fgs4: "hsl(0 0% 79%)",
   a1: "hsl(229 10% 75%)",
   aps1: "hsl(229 10% 75%)",
   aps2: "hsl(229 10% 89%)",
-  a2: "hsl(0 28% 55%)",
-  ass1: "hsl(0 28% 55%)",
-  ass2: "hsl(0 28% 80%)",
+  a2: "hsl(0 28% 55%)", //ascent2
+  ass1: "hsl(0 28% 55%)", //ascent secondary shade1
+  ass2: "hsl(0 28% 80%)", //ascent secondary shade2
   ars1: "hsl(0 89% 71%)",
-  ars2: "hsl(0 89% 90%)",
-  ags1: "hsl(151 45% 53%)",
+  ars2: "hsl(0 89% 90%)", //ascent red shade2
+  ags1: "hsl(151 45% 53%)", //ascent green shade1
   ags2: "hsl(151 45% 85%)",
-  brs1: "hsl(229 8% 16%)",
+  brs1: "hsl(229 8% 16%)", //border shade1
   brs2: "hsl(229 8% 19%)",
   brs3: "hsl(229 8% 22%)",
   brs4: "hsl(229 8% 28%)"
