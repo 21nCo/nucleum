@@ -98,7 +98,7 @@
       selectedTimePeriod.set(val ?? new Date());
     }}
   >
-    <!-- dispatch required event on:click here-->
+    <!--on:click dispatch required event along with data/data.day/data.month available here-->
     <!-- {typeof +tileValue == "number" ? "" : tileValue} -->
     <!-- {tileValue} -->
     <!-- {tileValue === "🔥" ? tileValue : ""} -->
@@ -124,39 +124,6 @@
     </div>
   {/if}
 </span>
-
-<!-- <style>
-  button {
-    /* color: var(--colors-fg-s2, #545454); */
-    font-size: 8px;
-    height: 12px;
-    width: 12px;
-    background-color: var(--tileBgColor);
-    border-radius: 3px;
-  }
-  .firstDay {
-    grid-row: var(--startDay);
-  }
-  span {
-    display: flex;
-    flex-direction: row;
-    /* justify-self: center; */
-    align-items: center;
-    border: 1px solid red;
-  }
-  span::before {
-    content: "";
-    height: 0.5px;
-    width: 4.25px;
-    background-color: var(--topThreadColor, inherit);
-  }
-  span::after {
-    content: "";
-    height: 0.5px;
-    width: 4.25px;
-    background-color: var(--bottomThreadColor, inherit);
-  }
-</style> -->
 
 <style>
   button {

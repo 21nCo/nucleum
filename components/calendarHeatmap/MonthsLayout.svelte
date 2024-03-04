@@ -1,13 +1,13 @@
 <script lang="ts">
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
   import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
+  import { plainCSSHMColorIndex5 } from "$lib/tidy/stores/app.store";
   // export let view: "V1" | "V2";
   // export const days = 30;
   export let data: any;
   let [monthName, monthData, index] = data;
   let firstDay: any;
   let year = "";
-
   $: {
     [monthName, monthData] = data;
     // console.log("months layout", data[1][0].date, monthData[0].date);
@@ -37,11 +37,11 @@
         : ""}
       --topThreadColor={monthData[0].display == TileAppearance.LTile ||
       monthData[0].display == TileAppearance.MTile
-        ? "black"
+        ? $plainCSSHMColorIndex5
         : ""}
       --bottomThreadColor={monthData[0].display == TileAppearance.FTile ||
       monthData[0].display == TileAppearance.MTile
-        ? "black"
+        ? $plainCSSHMColorIndex5
         : ""}
     />
     {#each monthData.slice(1) as daydata, index (index)}
@@ -55,11 +55,11 @@
           : ""}
         --topThreadColor={daydata.display == TileAppearance.LTile ||
         daydata.display == TileAppearance.MTile
-          ? "black"
+          ? $plainCSSHMColorIndex5
           : ""}
         --bottomThreadColor={daydata.display == TileAppearance.FTile ||
         daydata.display == TileAppearance.MTile
-          ? "black"
+          ? $plainCSSHMColorIndex5
           : ""}
       />
     {/each}

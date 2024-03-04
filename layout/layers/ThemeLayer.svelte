@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
+    plainCSSHMColorIndex5,
     appEvents,
     tailwindTheme,
     userPreferences,
-    windowObject,
+    windowObject
   } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
@@ -66,7 +67,7 @@
     );
     postToParent({
       colorscheme: JSON.stringify($userPreferences.colorScheme),
-      rootFontSize,
+      rootFontSize
     });
   }
 </script>
