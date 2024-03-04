@@ -27,12 +27,15 @@
     if (!response) return;
     const json = await response.json();
     const os = detectSystemOS();
-    if (os == OS.IOS || os === OS.MAC) {
+    if (os == OS.IOS) {
       if (json.isSignup) {
         goto($app.product + "://oauthsignup" + "?token=" + json.token);
       } else {
         goto($app.product + "://oauthsignin" + "?token=" + json.token);
       }
+      setTimeout(() => {
+        account.signIn(json, { isFromSignup: json.isSignup });
+      }, 10000);
     } else {
       await account.signIn(json, { isFromSignup: json.isSignup });
     }
