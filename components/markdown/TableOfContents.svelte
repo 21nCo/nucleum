@@ -22,11 +22,13 @@
   });
   function refresh(blocks: Block[]) {
     headingBlocks = blocks
-      .filter((block: any) => block.content.type.startsWith("HEADING"))
-      .map((block: any) => ({
-        content: block.content.body,
+      .filter(
+        (block: Block) => block.type.startsWith("HEADING") && "body" in block
+      )
+      .map((block: Block) => ({
+        content: block.body,
         id: "toc-" + block.id,
-        HEADING: Number(block.content.type.slice(-1))
+        HEADING: Number(block.type.slice(-1))
       }));
     if (!(headingBlocks.length > 0)) return;
     isHeadingAvailable = true;

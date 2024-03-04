@@ -1,12 +1,9 @@
-import {
-  MdContext,
-  type Block,
-  type MdStore,
-  type NodeMarkdown,
-  type ListChild,
-  type ListContent,
-  type ListBlockWithChildren
+import type {
+  Block,
+  MdStore,
+  ListBlockWithChildren
 } from "$lib/tidy/types/md.type";
+import type { ListChild, ListContent, Node } from "$lib/tidy/types/node.type";
 import { deepCopy } from "$lib/tidy/utils/obj.utils";
 
 /**
@@ -14,15 +11,11 @@ import { deepCopy } from "$lib/tidy/utils/obj.utils";
  * @param md Node markdown with children in each node
  * @returns children of the node and all its children
  */
-export function recursivelyExtractAllChildrenIntoArray(md: NodeMarkdown) {
+export function recursivelyExtractAllChildrenIntoArray(md: Node) {
   let children: Block[] = [];
   if (md.children && md.children.length > 0) {
     md.children.forEach((child) => {
-      children.push({
-        content: child.content,
-        id: child.id,
-        childrenHierarchy: child.childrenHierarchy
-      });
+      children.push(child);
       children.push(...recursivelyExtractAllChildrenIntoArray(child));
     });
   }
@@ -30,7 +23,7 @@ export function recursivelyExtractAllChildrenIntoArray(md: NodeMarkdown) {
 }
 
 export function parseBlocksIntoNestedMd(mdStore: MdStore) {
-  const md = deepCopy(mdStore.md);
+  const md = deepCopy(mdStore.node);
   md.children = recursivelyFormParentFromChildren(
     mdStore.blocks,
     md.childrenHierarchy
@@ -42,12 +35,12 @@ export function recursivelyFormParentFromChildren(
   blocks: Block[],
   childrenHierarchy: string[] | undefined
 ) {
-  let children: NodeMarkdown[] = [];
+  let children: Node[] = [];
   if (childrenHierarchy && childrenHierarchy.length > 0) {
     childrenHierarchy.forEach((childId) => {
       const child = blocks.find((b) => b.id === childId);
       if (child) {
-        const newChild: NodeMarkdown = {
+        const newChild: Node = {
           ...child,
           children: recursivelyFormParentFromChildren(
             blocks,
@@ -67,7 +60,7 @@ export function handleNodeMarkdownChildHierarchyChanges(
   newBlock: Block,
   isStructuralBlock: boolean
 ) {
-  if (n.context != MdContext.NODE) return n;
+  if (!n.params?.isNodular) return n;
   const parent = n.blocks.find((b) =>
     b.childrenHierarchy?.includes(contextBlockId)
   );
@@ -99,7 +92,7 @@ export function handleNodeMarkdownChildHierarchyChanges(
  * @returns blocks of the child that matches the childId
  */
 function getChild(block: ListBlockWithChildren, childId: string) {
-  return block.content.children.find((b) => b.id === childId) as ListChild<
+  return block.children.find((b) => b.id === childId) as ListChild<
     Required<Pick<ListContent, "children">>
   >;
 }
@@ -113,7 +106,7 @@ export function resolveImmediateParent(
   let iterParent: ListBlockWithChildren = topMostParent as Block<
     Required<Pick<ListContent, "children">>
   >;
-  let parentOneAbove: ListBlockWithChildren | undefined = undefined;
+  let parentOneAbove: ListBlockWithChildren | undefined;
   parentHierarchy.forEach((item, index) => {
     parentOneAbove = iterParent;
     iterParent = getChild(iterParent, item);

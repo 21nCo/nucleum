@@ -87,7 +87,7 @@ export function renderPopoverv2(
     popRef.style.top = `${triggerRect.top}px`;
   } else if (location === Direction.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + 2}px`;
-    popRef.style.top = `${triggerRect.top}px`;
+    popRef.style.top = `$-{triggerRect.top - triggerRect.height / 2}px`;
   } else if (location === Direction.Up) {
     popRef.style.bottom = `${documentHeight - triggerRect.top + 2}px`;
   } else if (location === Direction.Down) {
@@ -144,4 +144,21 @@ export function detectSystemOS() {
     os = OS.OTHER;
   }
   return os;
+}
+
+export function getGeoLocation() {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve(position);
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    } else {
+      reject("Geolocation is not supported by this browser.");
+    }
+  });
 }

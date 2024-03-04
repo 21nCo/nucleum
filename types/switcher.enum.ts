@@ -2,7 +2,7 @@ export enum SwitcherStyle {
   Default,
   Vertical,
   Horizontal,
-  HorizontalAndWraps,
+  HorizontalAndWraps
 }
 
 export enum PanelSwitcherStyle {
@@ -10,7 +10,7 @@ export enum PanelSwitcherStyle {
   BAR,
   DOT,
   BAR_WITH_BG,
-  TRAIN,
+  TRAIN
 }
 
 export enum SelectionItemActiveStyle {
@@ -25,7 +25,7 @@ export enum SelectionItemActiveStyle {
   ACCENT_BACKGROUND,
   ACCENTROUNDEDBACKGROUND,
   ACCENT_COLOR,
-  BG_COLOR,
+  BG_COLOR
 }
 
 export enum VerticalSwitcherStyle {
@@ -33,10 +33,16 @@ export enum VerticalSwitcherStyle {
   GRADIENT,
   DOT,
   BG,
-  BAR_V2,
+  BAR_V2
 }
 
 export type SwitchItem = {
   label: string;
   icon?: string;
 };
+
+export enum OptionSelectorStyle {
+  TRAIN,
+  OUTLINE,
+  CHECK_CIRCLE
+}

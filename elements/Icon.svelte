@@ -97,6 +97,7 @@
   import Capture2 from "../icons/Capture2.0.svelte";
   import QueueList from "../icons/QueueList.svelte";
   import AtSymbol from "../icons/AtSymbol.svelte";
+  import BookOpen from "../icons/BookOpen.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -422,6 +423,8 @@
         <QueueList {variant} />
       {:else if icon === "at-symbol"}
         <AtSymbol {variant} />
+      {:else if icon === "book-open"}
+        <BookOpen {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

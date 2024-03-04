@@ -52,8 +52,7 @@
   >
     {#if isReRendering}
       <BlockContent
-        content={block.content}
-        id={block.id}
+        {block}
         {mdId}
         {isHovering}
         bind:isFocusing
@@ -63,8 +62,7 @@
       />
     {:else}
       <BlockContent
-        content={block.content}
-        id={block.id}
+        {block}
         {mdId}
         {isHovering}
         bind:isFocusing

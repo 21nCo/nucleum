@@ -1,11 +1,7 @@
 import { Item, type ItemType } from "$lib/tidy/types/item.enum";
 import type { EmailParts } from "../types/account.type";
-import {
-  MdBlockType,
-  type Block,
-  ListType,
-  type BasicMarkdown
-} from "../types/md.type";
+import type { Block, Markdown } from "../types/md.type";
+import { ListType, NodeType, type TextContent } from "../types/node.type";
 import { isValidArrayWithData } from "./obj.utils";
 
 export function properCase(str: string) {
@@ -45,66 +41,52 @@ export function frameEmailFromParts(parts: EmailParts) {
 export function generateMarkdownText(blocks: Block[]) {
   return blocks
     .map((b) => {
-      switch (b.content.type) {
-        case MdBlockType.SIMPLE_TEXT:
-          b.content.body = b.content.body.replaceAll(/\n/g, "  \n");
-          b.content.body = b.content.body.replaceAll("<div><br></div>", "  \n");
-          b.content.body = b.content.body.replaceAll(/<br>/g, "  \n");
-          b.content.body = b.content.body.replaceAll(
+      switch (b.type) {
+        case NodeType.SIMPLE_TEXT:
+          b.body = b.body.replaceAll(/\n/g, "  \n");
+          b.body = b.body.replaceAll("<div><br></div>", "  \n");
+          b.body = b.body.replaceAll(/<br>/g, "  \n");
+          b.body = b.body.replaceAll(
             /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
             "`$1`"
           );
-          b.content.body = b.content.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
-          b.content.body = b.content.body.replaceAll(
-            /<b>(.*?)<\/b>/g,
-            "**$1**"
-          );
-          b.content.body = b.content.body.replaceAll(
-            /<span id="[^"]*">(.*?)<\/span>/g,
-            "$1"
-          );
-          b.content.body = b.content.body.replaceAll(
-            /<span>(.*?)<\/span>/g,
-            "$1"
-          );
-          b.content.body = b.content.body.replaceAll(
-            /<div>(.*?)<\/div>/g,
-            "\n $1"
-          );
+          b.body = b.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
+          b.body = b.body.replaceAll(/<b>(.*?)<\/b>/g, "**$1**");
+          b.body = b.body.replaceAll(/<span id="[^"]*">(.*?)<\/span>/g, "$1");
+          b.body = b.body.replaceAll(/<span>(.*?)<\/span>/g, "$1");
+          b.body = b.body.replaceAll(/<div>(.*?)<\/div>/g, "\n $1");
           //todo - add remaining inline style patterns
-          return b.content.body;
-        case MdBlockType.HEADING1:
-          return `# ${b.content.body}`;
-        case MdBlockType.HEADING2:
-          return `## ${b.content.body}`;
-        case MdBlockType.HEADING3:
-          return `### ${b.content.body}`;
-        case MdBlockType.HEADING4:
-          return `#### ${b.content.body}`;
-        case MdBlockType.HEADING5:
-          return `##### ${b.content.body}`;
-        case MdBlockType.DOUBLE_DIVIDER:
+          return b.body;
+        case NodeType.HEADING1:
+          return `# ${b.body}`;
+        case NodeType.HEADING2:
+          return `## ${b.body}`;
+        case NodeType.HEADING3:
+          return `### ${b.body}`;
+        case NodeType.HEADING4:
+          return `#### ${b.body}`;
+        case NodeType.HEADING5:
+          return `##### ${b.body}`;
+        case NodeType.DOUBLE_DIVIDER:
           return `---`;
-        case MdBlockType.DIVIDER:
+        case NodeType.DIVIDER:
           return `---`;
-        case MdBlockType.LIST:
-          return `${b.content.body.type === ListType.ORDERED ? "1." : "-"} ${
-            b.content.body.content
-          }`;
+        case NodeType.LIST:
+          return `${b.listType === ListType.ORDERED ? "1." : "-"} ${b.body}`;
       }
     })
     .join("\n");
 }
 
-export function isValidMarkdown(md: BasicMarkdown) {
+export function isValidMarkdown(md: Markdown) {
   return (
     md &&
     md.blocks &&
     isValidArrayWithData(md.blocks) &&
     md.blocks.length > 0 &&
     ((md.blocks.length === 1 &&
-      "body" in md.blocks[0].content &&
-      md.blocks[0].content.body != "") ||
+      "body" in md.blocks[0] &&
+      md.blocks[0].body != "") ||
       md.blocks.length > 1)
   );
 }

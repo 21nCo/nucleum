@@ -6,16 +6,25 @@
     VerticalSwitcherStyle,
     type SwitchItem
   } from "$lib/tidy/types/switcher.enum";
+  import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import { properCase } from "$lib/tidy/utils/text.utils";
+  import { onMount } from "svelte";
+  import Tooltip from "../text/Tooltip.svelte";
   export let item: SwitchItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let activeStatusPlacement: Direction = Direction.Left;
+  export let isHideLabel: boolean = false;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
   // $: console.log({ isActive, item });
   let activeClasses: string;
   let inactiveClasses: string;
   let sizeClasses: string;
+  let toolTipRef: any;
+  let parentRef: any;
+  onMount(() => {
+    hideToolTip();
+  });
   $: if (
     style === VerticalSwitcherStyle.GRADIENT &&
     activeStatusPlacement === Direction.Left
@@ -58,11 +67,15 @@
   $: if (size === Size.xs) {
     sizeClasses = "text-b5 w-16 gap-1 py-3";
   } else if (size === Size.sm) {
-    sizeClasses = "text-b4 w-[4.5rem] gap-1 py-4";
+    sizeClasses = "text-b4 w-disabled-[4.5rem] px-2 gap-1 py-4";
   } else if (size === Size.md) {
     sizeClasses = "text-b2 w-24 gap-2 py-4";
   } else if (size === Size.lg) {
     sizeClasses = "text-base w-24 gap-2 px-4 py-6";
+  }
+  function hideToolTip() {
+    if (toolTipRef && toolTipRef?.style?.display != "none")
+      toolTipRef.style.display = "none";
   }
 </script>
 
@@ -78,6 +91,14 @@
       ? activeClasses + ' active '
       : inactiveClasses + ' inactive '}"
     on:click
+    bind:this={parentRef}
+    on:pointerenter={() => {
+      if (isHideLabel && item.label)
+        renderPopoverv2(parentRef, toolTipRef, Direction.Left);
+    }}
+    on:pointerleave={() => {
+      hideToolTip();
+    }}
   >
     {#if item.icon}
       <Icon
@@ -87,7 +108,16 @@
       />
     {/if}
     <slot />
-    <span class={isActive ? "font-medium" : ""}>{properCase(item.label)}</span>
+    {#if !isHideLabel}
+      <span class="w-min {isActive ? 'font-medium' : ''}"
+        >{properCase(item.label)}</span
+      >
+    {/if}
+    {#if isHideLabel && item.label}
+      <div bind:this={toolTipRef}>
+        <Tooltip tooltip={properCase(item.label)} />
+      </div>
+    {/if}
   </button>
 </div>
 

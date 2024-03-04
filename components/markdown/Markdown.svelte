@@ -1,10 +1,5 @@
 <script lang="ts">
-  import type {
-    NodeMarkdown,
-    MdContext,
-    MdParams,
-    BasicMarkdown
-  } from "$lib/tidy/types/md.type";
+  import type { Markdown, MdParams } from "$lib/tidy/types/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
   import { getMdStore, mdContentChangeEvent } from "./markdown.store";
@@ -13,15 +8,16 @@
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import { generateUID } from "$lib/tidy/utils/utils";
-  export let md: NodeMarkdown | BasicMarkdown;
-  export let context: MdContext;
+  import type { Node } from "$lib/tidy/types/node.type";
+  export let md: Node | Markdown;
   export let params: MdParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
-  export let mdId: string | undefined = undefined;
-  if (!mdId) mdId = generateUID();
-  const mdStore: any = getMdStore(mdId);
-  mdStore.load(md, context, params);
+  export let id: string | undefined = undefined;
+  let mdId: string = id ?? generateUID();
+  const mdStore = getMdStore(mdId);
+  console.log("md", md);
+  mdStore.load(md, params);
   // $: console.log("blocks", $mdStore.blocks);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
