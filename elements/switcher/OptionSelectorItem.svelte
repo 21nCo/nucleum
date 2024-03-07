@@ -29,7 +29,9 @@
         ? ' px-8 py-6'
         : size === Size.md
           ? ' px-6 py-4'
-          : ' px-3 py-1 '} {isActive ? 'activeBgColor' : 'outline-transparent'}"
+          : ' px-3 py-1 '} {isActive
+      ? 'activeBgColor'
+      : 'outline-transparent border-brs3'}"
     on:click
   >
     <div
@@ -42,7 +44,7 @@
           : 'text-base'}"
     >
       {#if item.icon}
-        <Icon icon={item.icon} />
+        <Icon icon={item.icon} {isActive} />
       {/if}
       {properCase(item.label)}
     </div>

@@ -98,6 +98,9 @@
   import QueueList from "../icons/QueueList.svelte";
   import AtSymbol from "../icons/AtSymbol.svelte";
   import BookOpen from "../icons/BookOpen.svelte";
+  import Square3Stack3d from "../icons/Square3Stack3d.svelte";
+  import TableCells from "../icons/TableCells.svelte";
+  import GlobeAlt from "../icons/GlobeAlt.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -425,6 +428,12 @@
         <AtSymbol {variant} />
       {:else if icon === "book-open"}
         <BookOpen {variant} />
+      {:else if icon === "square-3-stack-3d"}
+        <Square3Stack3d {variant} />
+      {:else if icon === "table-cells"}
+        <TableCells {variant} />
+      {:else if icon === "globe-alt"}
+        <GlobeAlt {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

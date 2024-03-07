@@ -66,6 +66,7 @@ export const appLoadingState = writable<{
 export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
 export const splitView = writable<string[]>([]);
+export const intercomId = import.meta.env.VITE_INTERCOM_ID ?? "esh1m4xq";
 
 /**
  * Calendar Heatmap stores
@@ -702,7 +703,7 @@ function initAccount(seed: UserAccount) {
         confirmAction: {
           label: "Delete",
           variant: ButtonVariant.DANGER,
-          callback: () => {
+          callback: async () => {
             account.confirmDelete();
           }
         }

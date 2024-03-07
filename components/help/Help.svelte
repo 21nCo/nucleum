@@ -9,6 +9,8 @@
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import { resolveComponent, runNavigationAction } from "$lib/tidy/utils/utils";
   import { ActionType, type Action } from "$lib/tidy/types/action.type";
+  import { modalEvent } from "$lib/tidy/stores/app.store";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   let pageAction: Action | null = null;
   let config = [
     {
@@ -42,6 +44,7 @@
     if (!result) return;
     if (result.type === ActionType.FUNCTION) {
       result.fn?.();
+      if (slug === "chat") modalEvent.hideSpecific(AppEvent.HELP);
     } else if (result?.type === ActionType.LINK) {
       runNavigationAction(result);
     } else {

@@ -7,7 +7,7 @@ export type Action = {
   type?: ActionType;
   path?: string;
   link?: string;
-  fn?: (params: any) => Promise<any>;
+  fn?: (params?: any) => Promise<any>;
   cmdBarPreCondition?: () => void;
   component?: any;
   label?: string;

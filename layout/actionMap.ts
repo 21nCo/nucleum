@@ -16,7 +16,7 @@ import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { AppEvent } from "../types/event.enum";
-import { appStore, isInEditMode } from "../stores/app.store";
+import { appStore, intercomId, isInEditMode } from "../stores/app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 
@@ -86,8 +86,17 @@ export const globalActions: Action[] = [
     label: "Chat with us",
     icon: "chatleftright",
     type: ActionType.FUNCTION,
-    fn: () => {
-      //TODO open Intercom
+    fn: async () => {
+      setTimeout(() => {
+        if ((window as any).Intercom) {
+          (window as any).Intercom("boot", {
+            app_id: intercomId
+          });
+          (window as any).Intercom("show");
+        } else {
+          console.error("Intercom is not defined");
+        }
+      }, 300);
     },
     link: "chat"
   },

@@ -30,7 +30,7 @@
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import { extractProduct } from "$lib/tidy/utils/utils";
-  import ChatSupport from "./ChatSupport.svelte";
+  import Intercom from "./Intercom.svelte";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -58,6 +58,10 @@
   pingParent();
   bootup();
   onMount(async () => {
+    if ((<any>window).Intercom)
+      (<any>window).Intercom("update", {
+        hide_default_launcher: true
+      });
     await parseEmbedToken();
     await initializeData();
     const appEventSub = appEvents.subscribe(windowVisibilityHandler);
@@ -182,4 +186,4 @@
 {/if}
 <ModalLayer />
 <Shortcuts />
-<ChatSupport />
+<Intercom />

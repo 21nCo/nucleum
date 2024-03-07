@@ -1,20 +1,27 @@
 <script lang="ts">
-  import { account, windowObject } from "$lib/tidy/stores/app.store";
-
+  import {
+    account,
+    intercomId,
+    windowObject
+  } from "$lib/tidy/stores/app.store";
+  localStorage.setItem("intercomId", intercomId);
   $: if (!$windowObject.isInPortraitMode && $account.userInfo) {
-    window.intercomSettings = {
+    (<any>window).intercomSettings = {
       api_base: "https://api-iam.intercom.io",
-      app_id: "esh1m4xq",
+      app_id: intercomId,
       name: $account.userInfo?.nickName,
       user_id: $account.userId ?? $account.userInfo?.id,
       email: $account.userInfo?.email ?? ""
     };
+    if ((<any>window).Intercom)
+      (<any>window).Intercom("update", {
+        hide_default_launcher: true
+      });
   }
 </script>
 
 <svelte:head>
   <script>
-    // We pre-filled your app ID in the widget URL: 'https://widget.intercom.io/widget/esh1m4xq'
     (function () {
       var w = window;
       var ic = w.Intercom;
@@ -35,7 +42,8 @@
           var s = d.createElement("script");
           s.type = "text/javascript";
           s.async = true;
-          s.src = "https://widget.intercom.io/widget/esh1m4xq";
+          const intercomId = localStorage.getItem("intercomId");
+          s.src = "https://widget.intercom.io/widget/" + intercomId;
           var x = d.getElementsByTagName("script")[0];
           x.parentNode.insertBefore(s, x);
         };

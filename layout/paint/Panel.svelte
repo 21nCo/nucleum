@@ -12,34 +12,36 @@
   export let floatingButton: ButtonParams | undefined = undefined;
 </script>
 
-<div
-  class="relative flex flex-col h-full {$windowObject.isInPortraitMode
-    ? 'w-full'
-    : 'w-[24rem] min-w-[24rem]'} "
->
-  {#if title}
-    <div class={$windowObject.isInPortraitMode ? "px-4 py-2" : "p-4"}>
-      <Text style={titleStyle} content={title} />
+<div class="flex w-full h-full">
+  <div
+    class="relative flex flex-col h-full {$windowObject.isInPortraitMode
+      ? 'w-full'
+      : 'w-[24rem] min-w-[24rem]'} "
+  >
+    {#if title}
+      <div class={$windowObject.isInPortraitMode ? "px-4 py-2" : "p-4"}>
+        <Text style={titleStyle} content={title} />
+      </div>
+    {/if}
+    {#if $$slots.nonpadded}
+      <slot name="nonpadded" />
+    {:else}
+      <div class="p-4 flex-grow">
+        <slot />
+      </div>
+    {/if}
+    {#if floatingButton}
+      <FloatingButton params={floatingButton} />
+    {/if}
+  </div>
+  {#if !$windowObject.isInPortraitMode}
+    <!-- Right split -->
+    <Divider
+      orientation={Orientation.Vertical}
+      colorStrength={ColorStrength.Normal}
+    />
+    <div class="relative flex grow h-full">
+      <slot name="right" />
     </div>
-  {/if}
-  {#if $$slots.nonpadded}
-    <slot name="nonpadded" />
-  {:else}
-    <div class="p-4 flex-grow">
-      <slot />
-    </div>
-  {/if}
-  {#if floatingButton}
-    <FloatingButton params={floatingButton} />
   {/if}
 </div>
-{#if !$windowObject.isInPortraitMode}
-  <!-- Right split -->
-  <Divider
-    orientation={Orientation.Vertical}
-    colorStrength={ColorStrength.Normal}
-  />
-  <div class="relative flex grow h-full">
-    <slot name="right" />
-  </div>
-{/if}
