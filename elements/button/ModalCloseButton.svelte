@@ -19,7 +19,7 @@
     icon="cross"
     tooltip="close"
     on:click={() => {
-      modalEvent.hideSpecific(path);
+      modalEvent.hideSpecific(path, "ModalCloseButton.svelte");
     }}
   />
 </div>

@@ -39,7 +39,7 @@
 
   function handleClose() {
     if (path === AppEvent.CONFIRMATION) confirmationNotification.reset();
-    else modalEvent.hideSpecific(path);
+    else modalEvent.hideSpecific(path, "ModalLayout.svelte");
   }
 </script>
 

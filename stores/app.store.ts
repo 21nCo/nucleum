@@ -29393,11 +29393,10 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
-        modalEvent.hideSpecific(n.fullScreenComponentPath ?? "");
+        modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
         n.fullScreenComponentPath = undefined;
         return n;
       });
@@ -29405,9 +29404,8 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         }
         return n;
       });
@@ -29598,7 +29596,8 @@ function initModalStore(seed: ModalEvent) {
       appStore.showAssociatedPlayerIfRequired();
       return true;
     },
-    hideSpecific: (action: string) => {
+    hideSpecific: (action: string, context: string = "") => {
+      appStore.log({ method: "modalEvent.hideSpecific", action, context });
       update((n: ModalEvent) => {
         return { path: action, isShow: false };
       });
