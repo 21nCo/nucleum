@@ -139,7 +139,9 @@
       app.set(appDetails);
       let subdomain = window?.location.host.split(".")[0];
       let isSheet = $page.url?.searchParams?.get("isSheet");
-      let isDebugMode = $page.url?.searchParams?.get("debug");
+      let isDebugMode =
+        $page.url?.searchParams?.get("debug") ||
+        import.meta.env.VITE_DEBUG_MODE === "true";
       // console.log({ isSheet, isDebugMode });
       if (isDebugMode) {
         $appStore.isDebugMode = true;

@@ -26,10 +26,16 @@
   export let id = generateUID();
   $: if (show) dialog?.showModal();
   const overlayClicked = (event: any) => {
+    // appStore.log({
+    //   context: "modalOverlayClickEvent",
+    //   event,
+    //   target: event.target
+    // });
     if (
       (event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
         event.target?.id === id) &&
+      event.pointerId &&
       event.pointerId != -1 &&
       isDismissable
     ) {
@@ -49,7 +55,7 @@
   // }
   function close() {
     show = false;
-    modalEvent.hideSpecific(id);
+    modalEvent.hideSpecific(id, "Modal.svelte");
     confirmationNotification.reset();
   }
   function resolveSize() {
