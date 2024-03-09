@@ -16,6 +16,11 @@
           "  bg-none font-medium" +
           (!$userPreferences.colorScheme.isActiveFgFg ? " text-a1" : "");
         break;
+      case TextStyle.PAGE_HEADING_SUBTLE:
+        classList +=
+          ($windowObject.isInPortraitMode ? "text-h2" : "text-h1") +
+          "  bg-none font-medium text-fgs2 opacity-40";
+        break;
       case TextStyle.PANEL_HEADING:
         classList += " text-h3 font-medium text-fgs2 bg-none ";
         break;

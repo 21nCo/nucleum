@@ -21,24 +21,24 @@
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.DOT:
-        classList += "gap-6 items-center";
+        classList += " gap-6 items-center ";
         break;
       case PanelSwitcherStyle.TRAIN:
         if (size === Size.md) {
           classList +=
-            "min-w-fit border-2 border-brs3 rounded-full " +
+            " min-w-fit border-2 border-brs3 rounded-full " +
             bgClass($userPreferences.theme, parentBackgroundIndex);
         } else if (size === Size.sm) {
           classList +=
-            "min-w-fit rounded-md " +
+            " min-w-fit rounded-md border border-brs3 " +
             bgClass($userPreferences.theme, parentBackgroundIndex);
         }
         break;
       case PanelSwitcherStyle.DEFAULT:
-        classList += "gap-4 rounded-full";
+        classList += " gap-4 rounded-full ";
         break;
       default:
-        classList += " items-center";
+        classList += " items-center ";
         break;
     }
   });

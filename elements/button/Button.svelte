@@ -55,41 +55,43 @@
           classList += " p-2";
           break;
       }
-    } else if ($windowObject.isInPortraitMode) {
-      switch (size) {
-        case Size.xl:
-          classList += " h-12 gap-6 text-h2";
-          break;
-        case Size.lg:
-          classList += " h-12 gap-4 text-h5";
-          break;
-        case Size.md:
-          classList += " h-[2.75rem] gap-2 text-b1";
-          break;
-        case Size.sm:
-          classList += " h-8 gap-2 text-b2";
-          break;
-        case Size.xs:
-          classList += " h-8 gap-1 text-xs";
-          break;
-      }
-    } else {
-      switch (size) {
-        case Size.xl:
-          classList += " h-16 gap-6 text-base";
-          break;
-        case Size.lg:
-          classList += " h-12 gap-4 text-base";
-          break;
-        case Size.md:
-          classList += " h-[2.75rem] gap-2 text-base";
-          break;
-        case Size.sm:
-          classList += " h-10 gap-2 text-b2";
-          break;
-        case Size.xs:
-          classList += " h-8 gap-1 text-xs";
-          break;
+    } else if (label || $$slots.default) {
+      if ($windowObject.isInPortraitMode) {
+        switch (size) {
+          case Size.xl:
+            classList += " h-12 gap-6 text-h2";
+            break;
+          case Size.lg:
+            classList += " h-12 gap-4 text-h5";
+            break;
+          case Size.md:
+            classList += " h-[2.75rem] gap-2 text-b1";
+            break;
+          case Size.sm:
+            classList += " h-8 gap-2 text-b2";
+            break;
+          case Size.xs:
+            classList += " h-8 gap-1 text-xs";
+            break;
+        }
+      } else {
+        switch (size) {
+          case Size.xl:
+            classList += " h-16 gap-6 text-base";
+            break;
+          case Size.lg:
+            classList += " h-12 gap-4 text-base";
+            break;
+          case Size.md:
+            classList += " h-[2.75rem] gap-2 text-base";
+            break;
+          case Size.sm:
+            classList += " h-10 gap-2 text-b2";
+            break;
+          case Size.xs:
+            classList += " h-8 gap-1 text-xs";
+            break;
+        }
       }
     }
     if (style != ButtonStyle.PLAIN && (label || $$slots.default)) {

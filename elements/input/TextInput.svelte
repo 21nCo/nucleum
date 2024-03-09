@@ -84,8 +84,8 @@
     } else {
       inputClasses += " focus:border-none focus:outline-none";
     }
-    if (size == Size.xl) inputClasses += " text-h3 font-medium";
-    else if (size == Size.lg) inputClasses += " text-h4 font-medium";
+    if (size == Size.xl) inputClasses += " text-h3";
+    else if (size == Size.lg) inputClasses += " text-h4";
     else if (size == Size.md)
       inputClasses +=
         " text-base " +

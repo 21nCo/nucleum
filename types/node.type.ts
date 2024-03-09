@@ -17,7 +17,7 @@ export type NodeCapture = Omit<NodeBase, "id"> &
 
 export type NodeDbType = Node & DbRecordBase;
 
-export type NodeThumbnailType = NodeBase &
+export type NodeThumbnail = NodeBase &
   NodeContent & {
     created: string;
     links: LinkThumbnail[];

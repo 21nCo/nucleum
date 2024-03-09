@@ -57,9 +57,11 @@
     <div
       class="{size === Size.sm
         ? 'text-b2'
-        : $windowObject.isInPortraitMode
-          ? 'text-h4'
-          : 'text-h3'} {isActive ? 'activeFgColor' : 'text-fgs3'}"
+        : size === Size.md
+          ? 'text-base'
+          : $windowObject.isInPortraitMode
+            ? 'text-h4'
+            : 'text-h3'} {isActive ? 'activeFgColor' : 'text-fgs3'}"
     >
       {item}
     </div>
@@ -74,7 +76,7 @@
   <button
     class="relative min-w-fit {size === Size.md
       ? 'rounded-full px-6 py-3'
-      : 'rounded-md px-3 py-1 '} {isActive ? 'activeBgColor' : ''}"
+      : 'rounded-md px-3 py-1 w-24 '} {isActive ? 'activeBgColor' : ''}"
     on:click
     disabled={isDisabled}
   >
