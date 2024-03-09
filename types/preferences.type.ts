@@ -1,6 +1,6 @@
 import type { AppTheme, ColorScheme } from "$lib/tidy/types/theme.type";
 import type { TimeScale } from "./time.type";
-
+import type { avatarWithCode, avatarWithURL } from "./iconPicker.type";
 export type UserGlobalPreferences = {
   nickName: string;
   theme: AppTheme;
@@ -22,6 +22,13 @@ export type UserGlobalPreferences = {
     all: UiState;
     desktop: UiState;
     portrait: UiState;
+  };
+  avatarPicker: {
+    skinIndex: number;
+    usedEmojis: (avatarWithCode | avatarWithURL)[];
+    iconColor: string;
+    filled: boolean;
+    usedIcons: (avatarWithCode | avatarWithURL)[];
   };
 };
 
