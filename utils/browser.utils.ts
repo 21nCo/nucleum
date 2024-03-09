@@ -118,9 +118,18 @@ export function isTextElement(target: EventTarget | null) {
   );
 }
 
-export function searchParam(param: string, value: string | boolean | number) {
-  let url = new URL(window.location.href);
-  url.searchParams.set(param, value.toString());
+export function toggleSearchParam(
+  param: string,
+  value?: string | boolean | number
+) {
+  if (value !== undefined) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(param, value.toString());
+    windowObject.gotoPath(url.href);
+    return;
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.delete(param);
   windowObject.gotoPath(url.href);
 }
 
