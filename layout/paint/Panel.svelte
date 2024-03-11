@@ -2,7 +2,7 @@
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import FloatingButton from "$lib/tidy/elements/button/FloatingButton.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import type { ButtonParams } from "$lib/tidy/types/button.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
@@ -14,19 +14,19 @@
 
 <div class="flex w-full h-full">
   <div
-    class="relative flex flex-col h-full {$windowObject.isInPortraitMode
+    class="relative flex flex-col h-full {$view.isPortrait
       ? 'w-full'
       : 'w-[24rem] min-w-[24rem]'} "
   >
     {#if title}
-      <div class={$windowObject.isInPortraitMode ? "px-4 py-2" : "p-4"}>
+      <div class={$view.isPortrait ? "px-4 py-2" : "p-4"}>
         <Text style={titleStyle} content={title} />
       </div>
     {/if}
     {#if $$slots.nonpadded}
       <slot name="nonpadded" />
     {:else}
-      <div class="p-4 flex-grow">
+      <div class="px-4 flex-grow">
         <slot />
       </div>
     {/if}
@@ -34,7 +34,7 @@
       <FloatingButton params={floatingButton} />
     {/if}
   </div>
-  {#if !$windowObject.isInPortraitMode}
+  {#if !$view.isPortrait}
     <!-- Right split -->
     <Divider
       orientation={Orientation.Vertical}

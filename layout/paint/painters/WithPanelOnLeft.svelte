@@ -1,16 +1,12 @@
 <script lang="ts">
-  import {
-    actions,
-    userPreferences,
-    windowObject
-  } from "$lib/tidy/stores/app.store";
+  import { actions, userPreferences, view } from "$lib/tidy/stores/app.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   export let currentComponent: Action = $actions[0];
   let pad: number;
-  $: if ($windowObject.documentHeight) {
-    let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
+  $: if ($view.height) {
+    let rawPad = ($view.height / 10) * $view.scale;
     pad = rawPad > 200 ? 200 : rawPad;
   }
 </script>

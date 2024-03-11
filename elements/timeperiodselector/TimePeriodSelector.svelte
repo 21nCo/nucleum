@@ -2,11 +2,11 @@
   import {
     type TimePeriod,
     TimeScale,
-    TimePeriodType,
+    TimePeriodType
   } from "$lib/tidy/types/time.type";
   import { createEventDispatcher } from "svelte";
   import { properCase } from "$lib/tidy/utils/text.utils";
-  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, view } from "$lib/tidy/stores/app.store";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import TimePeriodValueSelector from "./TimePeriodValueSelector.svelte";
   const dispatch = createEventDispatcher();
@@ -18,7 +18,7 @@
 </script>
 
 <div
-  class="flex gap-4 h-96 p-8 {$windowObject.isInPortraitMode
+  class="flex gap-4 h-96 p-8 {$view.isPortrait
     ? 'flex-col w-full'
     : 'flex-row w-1/2 items-center'}"
 >
@@ -40,7 +40,7 @@
       </button>
     {/each}
   </div>
-  {#if !$windowObject.isInPortraitMode}
+  {#if !$view.isPortrait}
     <div class="h-full w-1 border border-bgs3" />
   {/if}
   <TimePeriodValueSelector

@@ -21,10 +21,10 @@
     backgroundColor = colors.backgroundColor;
     switch (style) {
       case PanelSwitcherStyle.DOT:
-        if (size === Size.md) {
+        if (size === Size.md || size === Size.lg) {
           classList += " gap-6 items-center ";
         } else if (size === Size.sm) {
-          classList += "p-1 gap-6 items-center justify-around";
+          classList += " p-1 gap-6 items-center justify-around ";
         }
 
         break;

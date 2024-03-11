@@ -6,7 +6,7 @@
     ThinModeBehavior
   } from "$lib/tidy/types/action.type";
   import ComponentResolver from "../../ComponentResolver.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   export let path: string;
   const classList = "w-full text-start px-8 py-2 self-start";
   let currentComponent: Action | null = resolveComponentFromPath(path);
@@ -18,10 +18,7 @@
       <ComponentResolver action={currentComponent} />
     </div>
   {:else}
-    <button
-      class={classList + " text-b2"}
-      on:click={() => windowObject.gotoPath(path)}
-    >
+    <button class={classList + " text-b2"} on:click={() => view.gotoPath(path)}>
       {currentComponent.label?.toLowerCase()}</button
     >
   {/if}

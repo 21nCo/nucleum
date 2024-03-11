@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import { account, appStore, view } from "$lib/tidy/stores/app.store";
   import AccountForm from "./signup/AccountForm.svelte";
   import PanelSwitcher from "$lib/tidy/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
@@ -20,14 +20,13 @@
     }
   }
   onMount(() => {
-    if ($account.isLoggedIn) windowObject.gotoPath("/");
+    if ($account.isLoggedIn) view.gotoPath("/");
   });
 </script>
 
 <div class="flex flex-col w-full h-full justify-start pt-8 xl:pt-12">
   <div
-    class="w-full flex flex-col justify-start items-center {$windowObject.scale >
-    0.6
+    class="w-full flex flex-col justify-start items-center {$view.scale > 0.6
       ? 'gap-16'
       : 'gap-12'}"
   >

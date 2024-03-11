@@ -3,7 +3,7 @@
     appEvents,
     appStore,
     userPreferences,
-    windowObject,
+    view
   } from "$lib/tidy/stores/app.store";
   import { LayoutType } from "$lib/tidy/types/layout.enum";
   import { onMount } from "svelte";
@@ -19,18 +19,18 @@
   export let isShowPageMenu: boolean = true;
   let pad: number;
   let selectedPanel: number = 0;
-  $: if ($windowObject.documentHeight) {
-    let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
+  $: if ($view.height) {
+    let rawPad = ($view.height / 10) * $view.scale;
     pad = rawPad > 200 ? 200 : rawPad;
   }
   onMount(() => {
-    isShowPageMenu = $windowObject.isInPortraitMode;
+    isShowPageMenu = $view.isPortrait;
     appEvents.subscribe((x: AppEvent) => {
       if (x.type == AppEvent.PAGE_MENU_CHANGED) {
         isShowPageMenu = false;
       }
       if (
-        $windowObject.isInPortraitMode &&
+        $view.isPortrait &&
         x.type === AppEvent.THINMODE_PANELSWITCH &&
         x.value != undefined
       ) {
@@ -45,7 +45,7 @@
     <PageMenuView />
   </div>
 {:else}
-  {#if $appStore.pageMenu && $appStore.pageMenu.length > 0 && $windowObject.isInPortraitMode}
+  {#if $appStore.pageMenu && $appStore.pageMenu.length > 0 && $view.isPortrait}
     <div style="padding: {pad / 4}px;">
       <Button
         label="go back"
@@ -61,7 +61,7 @@
       <slot />
     </div>
   {:else if layoutType == LayoutType.TWOPANEL}
-    {#if $windowObject.isInPortraitMode}
+    {#if $view.isPortrait}
       <div
         class="flex w-full text-h2"
         style="margin-top: {pad / 4}px; margin-bottom: {pad / 4}px;"
@@ -77,7 +77,7 @@
     {/if}
     <div class="flex justify-center w-full items-center overflow-auto">
       <div class="flex h-full w-full">
-        {#if !$windowObject.isInPortraitMode}
+        {#if !$view.isPortrait}
           <div
             class="relative w-2/5 max-w-xl flex flex-col items-center gap-4 rounded-xl m-2 {$userPreferences.theme ==
             'Colorful'

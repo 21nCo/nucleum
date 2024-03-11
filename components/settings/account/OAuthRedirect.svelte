@@ -2,12 +2,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import AppLoadingView from "$lib/tidy/layout/paint/AppLoadingView.svelte";
-  import {
-    account,
-    app,
-    appStore,
-    windowObject
-  } from "$lib/tidy/stores/app.store";
+  import { account, appStore, view } from "$lib/tidy/stores/app.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { OS } from "$lib/tidy/types/os.enum";
   import { detectSystemOS } from "$lib/tidy/utils/browser.utils";
@@ -16,7 +11,7 @@
   onMount(async () => {
     let codeQueryParam = $page.url.searchParams.get("code");
     if (!codeQueryParam) {
-      windowObject.gotoPath("/signup?msg=invalidoauth");
+      view.gotoPath("/signup?msg=invalidoauth");
       return;
     } else {
       await processOAuthRedirection(codeQueryParam);
@@ -29,9 +24,9 @@
     const os = detectSystemOS();
     if (os == OS.IOS) {
       if (json.isSignup) {
-        goto($app.product + "://oauthsignup" + "?token=" + json.token);
+        goto($appStore.product + "://oauthsignup" + "?token=" + json.token);
       } else {
-        goto($app.product + "://oauthsignin" + "?token=" + json.token);
+        goto($appStore.product + "://oauthsignin" + "?token=" + json.token);
       }
       setTimeout(() => {
         account.signIn(json, { isFromSignup: json.isSignup });

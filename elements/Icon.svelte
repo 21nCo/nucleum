@@ -24,7 +24,7 @@
   import Arrow from "../icons/Arrow.svelte";
   import Plus from "../icons/Plus.svelte";
   import Cross from "../icons/Cross.svelte";
-  import { userPreferences, windowObject } from "../stores/app.store";
+  import { userPreferences, view } from "../stores/app.store";
   import Trash from "../icons/Trash.svelte";
   import Music from "../icons/Music.svelte";
   import Pencil from "../icons/Pencil.svelte";
@@ -175,7 +175,7 @@
                 ? `fill-bgs1`
                 : 'fill-fgs1'
             : `fill-fgs3`) + ' stroke-none'} {hoverStyle ===
-        SelectionItemActiveStyle.NONE || $windowObject.isInPortraitMode
+        SelectionItemActiveStyle.NONE || $view.isPortrait
         ? ''
         : variant === IconVariant.Outline
           ? ' hover:stroke-a1'

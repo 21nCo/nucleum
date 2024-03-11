@@ -1,16 +1,12 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
-  import {
-    appEvents,
-    appStore,
-    windowObject,
-  } from "$lib/tidy/stores/app.store";
+  import { appEvents, appStore, view } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import {
     SelectionItemActiveStyle,
-    SwitcherStyle,
+    SwitcherStyle
   } from "$lib/tidy/types/switcher.enum";
   import { onMount } from "svelte";
   let selected: number = 0;
@@ -24,7 +20,7 @@
   function onSwitch(event: any) {
     if (!event.detail || !$appStore.pageMenu) return;
     const path = $appStore.pageMenu[event.detail.selected];
-    windowObject.gotoPath("/" + path);
+    view.gotoPath("/" + path);
   }
 </script>
 

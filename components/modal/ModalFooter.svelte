@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import CloseButton from "$lib/tidy/elements/button/CloseButton.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import type { ButtonParams } from "$lib/tidy/types/button.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -59,7 +59,7 @@
   {:else if isShowClose}
     <Button on:click={() => close("close")}>
       close
-      {#if !$windowObject.isInPortraitMode}
+      {#if !$view.isPortrait}
         <span class="text-b3">Esc</span>
       {/if}
     </Button>

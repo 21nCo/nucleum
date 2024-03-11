@@ -3,7 +3,7 @@
     account,
     appStore,
     userPreferences,
-    windowObject
+    view
   } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { onMount } from "svelte";
@@ -36,14 +36,14 @@
   });
 </script>
 
-{#if $windowObject.isInPortraitMode && !isCpHome}
+{#if $view.isPortrait && !isCpHome}
   <div class="flex flex-col h-full gap-2 px-4 py-2">
     <div class="relative flex justify-center w-full h-16 min-h-[4rem]">
       <button
         class="absolute left-0 flex gap-1 items-center min-w-fit py-1.5 h-2 text-a1"
         style="top: 1.75rem;"
         on:click={() => {
-          windowObject.gotoPath("/cp");
+          view.gotoPath("/cp");
         }}
       >
         <Icon icon="chevleft" size={Size.sm} {color} />
@@ -51,25 +51,23 @@
       </button>
       <Text
         style={TextStyle.PANEL_HEADING}
-        content={$windowObject.currentComponent?.label ?? ""}
+        content={$view.currentComponent?.label ?? ""}
       />
     </div>
     <div class="flex flex-col flex-grow">
       <slot />
     </div>
   </div>
-{:else if isCpHome || !$windowObject.isInPortraitMode}
+{:else if isCpHome || !$view.isPortrait}
   <div class="flex w-full h-full">
     <Panel title="Settings">
       <div
         slot="nonpadded"
-        class="flex flex-col gap-8 grow overflow-auto {$windowObject.isInPortraitMode
+        class="flex flex-col gap-8 grow overflow-auto {$view.isPortrait
           ? 'pb-40'
           : 'pb-20'}"
       >
-        <ProfileCpSection
-          on:click={() => windowObject.gotoPath("/cp/account")}
-        />
+        <ProfileCpSection on:click={() => view.gotoPath("/cp/account")} />
         {#if cpConfiguration}
           {#each cpConfiguration as item}
             <CpThumbnailList
@@ -98,7 +96,7 @@
           {#if !isCpHome}
             <Text
               style={TextStyle.PANEL_HEADING}
-              content={$windowObject.currentComponent?.label ?? ""}
+              content={$view.currentComponent?.label ?? ""}
             />
           {/if}
           <div class="w-full flex-grow">

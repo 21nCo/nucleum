@@ -12,7 +12,7 @@
   import {
     appStore,
     excludedPathsForRedirectionCheck,
-    windowObject
+    view
   } from "$lib/tidy/stores/app.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -25,15 +25,15 @@
   let parentComponent: Action | null;
   let grandPa: Action | null;
   let pad: number;
-  $: if ($windowObject.documentHeight) {
-    let rawPad = ($windowObject.documentHeight / 10) * $windowObject.scale;
+  $: if ($view.height) {
+    let rawPad = ($view.height / 10) * $view.scale;
     pad = rawPad > 200 ? 200 : rawPad;
   }
   onMount(async () => {
     await resolve(resolveCurrentPath());
     const sub = page.subscribe(async () => {
       let currentPath = resolveCurrentPath();
-      if ($windowObject.currentPath.includes(currentPath)) {
+      if ($view.currentPath.includes(currentPath)) {
         await resolve(currentPath);
       }
     });
@@ -65,14 +65,14 @@
     if (!currentComponent) {
       console.log({ currentPath, currentComponent });
       if (currentPath == "") {
-        windowObject.gotoPath($appStore.appData.homePath ?? "/home");
+        view.gotoPath($appStore.appData.homePath ?? "/home");
       } else {
-        windowObject.gotoPath($appStore.appData.notFoundPath ?? "/404");
+        view.gotoPath($appStore.appData.notFoundPath ?? "/404");
       }
     }
-    $windowObject.currentComponent = currentComponent ?? undefined;
+    $view.currentComponent = currentComponent ?? undefined;
     if (currentComponent && currentComponent.isMenuHidden) {
-      $windowObject.isMenuHidden = true;
+      $view.isMenuHidden = true;
     }
     if (currentComponent && currentComponent.fn) {
       currentComponent.fn();
@@ -89,7 +89,7 @@
         }
       }
     }
-    if ($windowObject.isInPortraitMode) {
+    if ($view.isPortrait) {
       thinModePaint();
     } else {
       paint();
@@ -107,7 +107,7 @@
   function paint() {
     const isSet = setPageMenuIfRequired(currentComponent!);
     if (isSet && currentComponent?.sections) {
-      windowObject.gotoPath(
+      view.gotoPath(
         currentComponent.path + "/" + currentComponent.sections[0],
         {
           replaceState: true
@@ -145,30 +145,30 @@
 </script>
 
 {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
-  {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$windowObject.isInPortraitMode}
+  {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$view.isPortrait}
     <WithPanelOnLeft {currentComponent} />
   {:else}
     <div
-      class="w-full {$windowObject.isInPortraitMode ? 'mb-40' : ''}"
+      class="w-full {$view.isPortrait ? 'mb-40' : ''}"
       style="padding: {pad / 4}px;"
     >
-      {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $windowObject.isInPortraitMode && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
+      {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $view.isPortrait && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
         <ComponentResolver path={currentComponent.sections[0]} />
-      {:else if currentComponent.pagePaint === PaintType.YSTACK || ($windowObject.isInPortraitMode && currentComponent.thinModeBehavior === ThinModeBehavior.YSTACK)}
+      {:else if currentComponent.pagePaint === PaintType.YSTACK || ($view.isPortrait && currentComponent.thinModeBehavior === ThinModeBehavior.YSTACK)}
         <WithYStack {currentComponent} />
-      {:else if currentComponent.pagePaint === PaintType.YMENU && $windowObject.isInPortraitMode}
+      {:else if currentComponent.pagePaint === PaintType.YMENU && $view.isPortrait}
         <WithYMenuThinMode {currentComponent} />
       {/if}
     </div>
   {/if}
 {:else}
   <div class="flex flex-col gap-4 w-full h-full">
-    {#if $windowObject.isInPortraitMode && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
+    {#if $view.isPortrait && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
       <Button
         label="go back"
         size={Size.sm}
         on:click={() => {
-          windowObject.gotoPath(
+          view.gotoPath(
             "/" +
               (parentComponent?.pagePaint === PaintType.YMENU
                 ? parentComponent?.path

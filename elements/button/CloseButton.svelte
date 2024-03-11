@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import {
     ButtonVariant,
     type ButtonParams
@@ -17,7 +17,7 @@
   }}
 >
   {params?.label}
-  {#if !$windowObject.isInPortraitMode && (params.variant === ButtonVariant.SECONDARY || !params.variant)}
+  {#if !$view.isPortrait && (params.variant === ButtonVariant.SECONDARY || !params.variant)}
     <span class="rounded-md px-1 bg-bgs3 text-b5">Esc</span>
   {/if}
 </Button>

@@ -4,7 +4,7 @@
   import { createEventDispatcher } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, view } from "$lib/tidy/stores/app.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { HapticFeedback } from "$lib/tidy/types/haptic.enum";
@@ -24,8 +24,8 @@
   export let parentBackgroundIndex: number;
   let pad: number;
   let rive: any;
-  $: if ($windowObject.documentHeight) {
-    let rawPad = ($windowObject.documentWidth / 10) * $windowObject.scale;
+  $: if ($view.height) {
+    let rawPad = ($view.width / 10) * $view.scale;
     pad = rawPad > 30 ? 30 : rawPad;
   }
   function onClick() {

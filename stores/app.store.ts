@@ -1,4 +1,4 @@
-import type { WindowObject } from "$lib/tidy/types/windowObject.type";
+import type { View } from "$lib/tidy/types/view.type";
 import { get, readable, writable } from "svelte/store";
 import {
   generateUID,
@@ -56,10 +56,10 @@ import {
 } from "../types/store.type";
 import { dataManager } from "./data.store";
 import { currentUnixTimestamp } from "../utils/surreal.utils";
-export const app = writable<{ product: string; env: string }>({
-  product: "tidy",
-  env: "dev"
-});
+// export const app = writable<{ product: string; env: string }>({
+//   product: "tidy",
+//   env: "dev"
+// });
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
@@ -142,12 +142,12 @@ function initEventStore(seed: AppEventType) {
   };
 }
 
-export const windowObject = initWindow({
-  documentHeight: 0,
-  documentWidth: 0,
+export const view = initViewStore({
+  height: 0,
+  width: 0,
   landscapiness: 0,
   scale: 0,
-  isInPortraitMode: false,
+  isPortrait: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
   isMenuHidden: false
@@ -159,7 +159,7 @@ export const windowObject = initWindow({
  * @param n windowObject
  * @returns a boolean whether app menu should be hidden or not
  */
-function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
+function checkIfNeedToHideMenu(newPath: string, n: View) {
   const path = newPath.split("?")[0];
   if (path.split("/")[1]) {
     let component = resolveComponentFromPath(path.split("/")[1]);
@@ -171,7 +171,7 @@ function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
   };
   if (!path) return false;
   let pathParts = path.split("/").filter((p) => p);
-  if (n.isInPortraitMode) {
+  if (n.isPortrait) {
     if (listOfPathsToHideMenu.portrait.includes(path)) return true;
     //currently only supports one level deep, but can be extended to support more
     else if (
@@ -185,30 +185,30 @@ function checkIfNeedToHideMenu(newPath: string, n: WindowObject) {
   return false;
 }
 
-function initWindow(settings: WindowObject) {
-  const { subscribe, set, update } = writable<WindowObject>(settings);
+function initViewStore(settings: View) {
+  const { subscribe, set, update } = writable<View>(settings);
   return {
     subscribe,
     set,
-    reset: (windowObject: WindowObject) => {
+    reset: (windowObject: View) => {
       set(windowObject);
     },
-    updateDoumentDimensions: (width: number, height: number) => {
-      update((n: WindowObject) => {
+    update: (width: number, height: number) => {
+      update((n: View) => {
         n = {
           ...n,
-          documentHeight: height,
-          documentWidth: width,
+          height: height,
+          width: width,
           landscapiness: width / height,
           scale: (width / 1000 + height / 1000) / 2,
-          isInPortraitMode: false
+          isPortrait: false
         };
-        n.isInPortraitMode = n.landscapiness < 1;
+        n.isPortrait = n.landscapiness < 1;
         return n;
       });
     },
     toggleMenuVisibility: (isHidden?: boolean) => {
-      update((n: WindowObject) => {
+      update((n: View) => {
         if (isHidden !== undefined && isHidden !== null) {
           n = { ...n, isMenuHidden: isHidden };
         } else {
@@ -218,13 +218,13 @@ function initWindow(settings: WindowObject) {
       });
     },
     toggleTopBar: (isMinimal: boolean) => {
-      update((n: WindowObject) => {
+      update((n: View) => {
         n = { ...n, isMinimalTopBar: isMinimal };
         return n;
       });
     },
     setCurrentPath: (path: string) => {
-      update((n: WindowObject) => {
+      update((n: View) => {
         n = {
           ...n,
           currentPath: path,
@@ -236,7 +236,7 @@ function initWindow(settings: WindowObject) {
     gotoPath: async (path: string, params: any = null) => {
       appStore.log({ method: "gotoPath", path });
       appStore.hideFullScreenPlayer();
-      update((n: WindowObject) => {
+      update((n: View) => {
         n = {
           ...n,
           currentPath: path,
@@ -265,7 +265,7 @@ function initActions() {
     subscribe,
     updateSettingsActionMap: () => {
       const isSettingsAsModal = get(appStore).appData?.isSettingsAsModal;
-      const isInPortraitMode = get(windowObject).isInPortraitMode;
+      const isInPortraitMode = get(view).isPortrait;
       update((n) => {
         if (isInPortraitMode || !isSettingsAsModal)
           return [...n, ...settingsAsPages];
@@ -492,6 +492,8 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
 }
 
 export const appStore = initAppStore({
+  product: "tidy",
+  env: "dev",
   isDebugMode,
   isExperimentalMode,
   isDebugEmbedMode,
@@ -508,6 +510,16 @@ function initAppStore(seed: AppStore) {
       set(m);
     },
     update,
+    initializeProductInformation: (details: {
+      product: string;
+      env: string;
+    }) => {
+      update((n: AppStore) => {
+        n.product = details.product;
+        n.env = details.env;
+        return n;
+      });
+    },
     initiatizeAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
@@ -685,12 +697,12 @@ function initAccount(seed: UserAccount) {
     });
     if (!params.isIgnoreRefresh && !params.isFromSignup) {
       appEvents.publish(AppEvent.USER_LOGIN, true);
-      windowObject.gotoPath("/");
+      view.gotoPath("/");
     } else if (params.isFromSignup) {
       appEvents.publish(AppEvent.USER_SIGNUP, true);
-      windowObject.gotoPath("/onboarding");
+      view.gotoPath("/onboarding");
     } else if (!params.isFromSignup) {
-      windowObject.gotoPath("/");
+      view.gotoPath("/");
     }
   };
   const expire = () => {
@@ -715,7 +727,7 @@ function initAccount(seed: UserAccount) {
       localStorage.removeItem("surreal-token");
       localStorage.removeItem("userInfo");
       localStorage.removeItem("isOnboardingComplete");
-      windowObject.gotoPath("/signup?msg=signedout");
+      view.gotoPath("/signup?msg=signedout");
     },
     signIn: signin,
     expire,
@@ -754,7 +766,7 @@ function initAccount(seed: UserAccount) {
       await performApiCall("account/delete", "POST", { id: acc.userId });
       console.log("deleting account", { acc });
       account.signOut();
-      windowObject.gotoPath("/signup?msg=deleted");
+      view.gotoPath("/signup?msg=deleted");
     }
   };
 }
@@ -849,7 +861,7 @@ function initToastStore() {
       n.push(event);
       return n;
     });
-    if (get(windowObject).isInPortraitMode) {
+    if (get(view).isPortrait) {
       modalEvent.notify({
         path: AppEvent.MOBILE_TOAST,
         componentParams: { id: event.id },

@@ -1,12 +1,12 @@
 import type { Action } from "./action.type";
 
-export type WindowObject = {
-  documentHeight: number;
-  documentWidth: number;
+export type View = {
+  height: number;
+  width: number;
   landscapiness: number;
+  isPortrait: boolean;
   scale: number;
   isMinimalTopBar?: boolean;
-  isInPortraitMode: boolean;
   firstLoad: number;
   currentPath: string;
   isMenuHidden: boolean;

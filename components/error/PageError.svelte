@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   $: is404 = $page?.url.pathname === "/404" || $page?.url.pathname === "/404/";
 </script>
@@ -17,7 +17,7 @@
     size={Size.sm}
     label="Try again"
     on:click={() => {
-      windowObject.gotoPath("/");
+      view.gotoPath("/");
     }}
   />
 </main>

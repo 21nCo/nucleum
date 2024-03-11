@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import { onMount } from "svelte";
   export let variant: "panel-refresh" | "page" = "page";
   let cssRoot: any;
@@ -14,9 +14,9 @@
   $: width =
     variant === "panel-refresh"
       ? 20
-      : $windowObject.isInPortraitMode
-        ? $windowObject.documentWidth / 15
-        : $windowObject.documentWidth / 40;
+      : $view.isPortrait
+        ? $view.width / 15
+        : $view.width / 40;
   $: if (cssRoot) {
     margin = width / 2;
     margin = width / 2;

@@ -4,7 +4,7 @@ import {
   appStore,
   isRefreshingToken,
   userPreferences,
-  windowObject
+  view
 } from "../stores/app.store";
 import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";
@@ -19,7 +19,7 @@ export async function performRedirectionChecks() {
 export async function performLoginStatusCheck() {
   const token = localStorage.getItem("surreal-token");
   if (!token) {
-    windowObject.gotoPath("/signup");
+    view.gotoPath("/signup");
     return false;
   }
   let isSessionExpiredOrRefreshing = await checkIfSessionExpired();
@@ -30,7 +30,7 @@ export async function performLoginStatusCheck() {
   }
   isSessionExpiredOrRefreshing = await checkIfSessionExpired();
   if (isSessionExpiredOrRefreshing) {
-    windowObject.gotoPath("/signup?msg=expired");
+    view.gotoPath("/signup?msg=expired");
     return false;
   } else return true;
 }
@@ -41,7 +41,7 @@ export async function onBoardingStatusCheck() {
   )
     return true;
   else {
-    windowObject.gotoPath("/onboarding");
+    view.gotoPath("/onboarding");
     return false;
   }
 }

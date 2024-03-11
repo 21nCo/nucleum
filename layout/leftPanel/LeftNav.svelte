@@ -1,10 +1,6 @@
 <script lang="ts">
   import AppMenuSwitcher from "$lib/tidy/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
-  import {
-    appStore,
-    userPreferences,
-    windowObject
-  } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences, view } from "$lib/tidy/stores/app.store";
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "$lib/tidy/elements/button/Button.svelte";
@@ -31,7 +27,7 @@
   );
   $: isRounded = $userPreferences.theme === AppTheme.Glassy ? true : false;
   onMount(() => {
-    if ($windowObject.landscapiness < 1.25) {
+    if ($view.landscapiness < 1.25) {
       isInThinMode = true;
     }
   });
@@ -41,8 +37,8 @@
   }
 </script>
 
-{#if !$windowObject.isMenuHidden}
-  {#if $windowObject.isInPortraitMode}
+{#if !$view.isMenuHidden}
+  {#if $view.isPortrait}
     <div
       class="absolute {testingInMobileBrowser
         ? 'bottom-14'

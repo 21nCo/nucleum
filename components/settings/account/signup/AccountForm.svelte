@@ -3,7 +3,7 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import InlineErrorMessage from "$lib/tidy/elements/text/InlineErrorMessage.svelte";
-  import { account, appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import { account, appStore, view } from "$lib/tidy/stores/app.store";
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
   import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
@@ -106,7 +106,7 @@
 </script>
 
 <div
-  class="flex flex-col {$windowObject.scale > 0.6 ? 'gap-10' : 'gap-6'}"
+  class="flex flex-col {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}"
   transition:fade
 >
   <div class="flex flex-col gap-2 justify-center items-center w-80">

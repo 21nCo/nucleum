@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { appStore, windowObject } from "../stores/app.store";
+  import { appStore, view } from "../stores/app.store";
   export let isAppMenuHidden: boolean = false;
 </script>
 
 <div
-  class="absolute bottom-0 flex w-full justify-center z-20 {$windowObject.isInPortraitMode &&
+  class="absolute bottom-0 flex w-full justify-center z-20 {$view.isPortrait &&
   isAppMenuHidden
     ? 'mb-8'
-    : $windowObject.isInPortraitMode && $appStore.player
+    : $view.isPortrait && $appStore.player
       ? 'mb-[10.5rem]'
-      : $windowObject.isInPortraitMode
+      : $view.isPortrait
         ? 'mb-24'
         : 'mb-4'}"
 >

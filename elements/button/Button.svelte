@@ -4,7 +4,7 @@
   import Icon from "../Icon.svelte";
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
   import { bgClass, retrieveCurrentColors } from "../../utils/theme.utils";
-  import { userPreferences, windowObject } from "../../stores/app.store";
+  import { userPreferences, view } from "../../stores/app.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
@@ -56,7 +56,7 @@
           break;
       }
     } else if (label || $$slots.default) {
-      if ($windowObject.isInPortraitMode) {
+      if ($view.isPortrait) {
         switch (size) {
           case Size.xl:
             classList += " h-12 gap-6 text-h2";

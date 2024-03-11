@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import { CellVariant } from "$lib/tidy/types/cellVariant.enum";
   import { onMount } from "svelte";
 
@@ -35,7 +35,7 @@
 
 <div
   class={`flex ${
-    $windowObject.isInPortraitMode ? `py-2.5 px-4` : `py-3 px-4`
+    $view.isPortrait ? `py-2.5 px-4` : `py-3 px-4`
   } ${classList} ${width}`}
 >
   <slot />

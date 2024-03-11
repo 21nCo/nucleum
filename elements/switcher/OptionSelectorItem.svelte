@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import {
@@ -37,7 +37,7 @@
     <div
       class="flex {orientation === Orientation.Vertical
         ? 'flex-col gap-1'
-        : 'gap-2'} {size === Size.md && $windowObject.isInPortraitMode
+        : 'gap-2'} {size === Size.md && $view.isPortrait
         ? 'text-base font-medium'
         : size === Size.sm
           ? 'text-b2'

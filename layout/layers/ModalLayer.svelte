@@ -7,7 +7,7 @@
     fullPageLoadingScreen,
     modalEvent as modalEvent,
     toasts,
-    windowObject
+    view
   } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
@@ -93,12 +93,12 @@
     </div>
   </div>
 {/if}
-{#if $appStore.player && !$windowObject.isInPortraitMode}
+{#if $appStore.player && !$view.isPortrait}
   <div class="fixed bottom-0 right-0">
     <ComponentResolver path={$appStore.player} />
   </div>
 {/if}
-{#if $appStore.appData?.bottomRightAction && !$windowObject.isInPortraitMode}
+{#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
   <div class="fixed bottom-0 right-0 mr-6 mb-6">
     <Button
       icon={$appStore.appData?.bottomRightAction}
@@ -111,7 +111,7 @@
   </div>
 {/if}
 
-{#if isValidArrayWithData($toasts) && !$windowObject.isInPortraitMode}
+{#if isValidArrayWithData($toasts) && !$view.isPortrait}
   <div
     class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}

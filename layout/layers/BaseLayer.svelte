@@ -5,13 +5,12 @@
   import {
     account,
     actions,
-    app,
     appEvents,
     appLoadingState,
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    windowObject
+    view
   } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
@@ -80,10 +79,10 @@
   async function windowVisibilityHandler(e: AppEventType) {
     if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
       if (e.value && !document?.hidden) {
-        console.log("performing redirection checks", $windowObject.currentPath);
+        console.log("performing redirection checks", $view.currentPath);
         if (
           !excludedPathsForRedirectionCheck.includes(
-            $windowObject.currentPath.split("/")[1]
+            $view.currentPath.split("/")[1]
           )
         ) {
           let isValid = await performLoginStatusCheck();
@@ -100,7 +99,7 @@
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
-    windowObject.setCurrentPath(window.location.pathname);
+    view.setCurrentPath(window.location.pathname);
   }
   async function parseEmbedToken() {
     const token = $page.url?.searchParams?.get("token");
@@ -117,7 +116,7 @@
     const currentVersion = $appStore.appData.version;
     if (
       !excludedPathsForRedirectionCheck.includes(
-        $windowObject.currentPath.split("/")[1]
+        $view.currentPath.split("/")[1]
       )
     ) {
       const isProceed = await performRedirectionChecks();
@@ -139,7 +138,7 @@
     try {
       const host = import.meta.env.VITE_APP ?? window.location.host;
       const appDetails = extractProduct(host);
-      app.set(appDetails);
+      appStore.initializeProductInformation(appDetails);
       let subdomain = window?.location.host.split(".")[0];
       let isSheet = $page.url?.searchParams?.get("isSheet");
       let isDebugMode =
@@ -172,7 +171,7 @@
     window?.addEventListener("click", windowClickEventListener);
     window?.addEventListener("message", messageReceivedListener);
     window.onpopstate = () => {
-      windowObject.setCurrentPath(document.location.pathname);
+      view.setCurrentPath(document.location.pathname);
     };
   }
 </script>

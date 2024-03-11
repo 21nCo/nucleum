@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, view } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { ColorStrength } from "$lib/tidy/types/theme.type";
@@ -25,9 +25,9 @@
     <div
       class="font-medium min-w-fit {isActive
         ? 'activeFgColor'
-        : 'text-fgs4'} {size === Size.md && $windowObject.isInPortraitMode
+        : 'text-fgs4'} {size === Size.md && $view.isPortrait
         ? 'text-base'
-        : size === Size.sm && $windowObject.isInPortraitMode
+        : size === Size.sm && $view.isPortrait
           ? 'text-b2'
           : size === Size.sm
             ? 'text-base'
@@ -59,7 +59,7 @@
         ? 'text-b2'
         : size === Size.md
           ? 'text-base'
-          : $windowObject.isInPortraitMode
+          : $view.isPortrait
             ? 'text-h4'
             : 'text-h3'} {isActive ? 'activeFgColor' : 'text-fgs3'}"
     >
@@ -81,7 +81,7 @@
     disabled={isDisabled}
   >
     <div
-      class="{size === Size.md && $windowObject.isInPortraitMode
+      class="{size === Size.md && $view.isPortrait
         ? 'text-base font-medium'
         : size === Size.sm
           ? 'text-b2'

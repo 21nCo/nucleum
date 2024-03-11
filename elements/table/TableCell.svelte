@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
   import { CellVariant } from "$lib/tidy/types/cellVariant.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import Icon from "../Icon.svelte";
@@ -17,7 +17,7 @@
   const dispatch = createEventDispatcher();
 
   $: classList = (() => {
-    if ($windowObject.isInPortraitMode) {
+    if ($view.isPortrait) {
       switch (variant) {
         case CellVariant.COLUMN:
           return `text-fgs1 text-b2`;
@@ -47,9 +47,7 @@
   onMount(() => {
     if (!width) {
       console.log("This should not run atleast for one of these", variant);
-      width = `w-full ${
-        $windowObject.isInPortraitMode ? "min-w-[4rem]" : "min-w-[9rem]"
-      }`;
+      width = `w-full ${$view.isPortrait ? "min-w-[4rem]" : "min-w-[9rem]"}`;
     }
   });
 </script>

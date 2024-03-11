@@ -5,7 +5,7 @@
     appStore,
     tailwindTheme,
     userPreferences,
-    windowObject
+    view
   } from "$lib/tidy/stores/app.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { runDboUpdate } from "$lib/tidy/utils/account.utils";
@@ -45,18 +45,15 @@
     <DebugInfoItem label="Path" value={window.location.pathname} />
     <DebugInfoItem
       label="Dimensions (W x H)"
-      value={$windowObject.documentWidth + " x " + $windowObject.documentHeight}
+      value={$view.width + " x " + $view.height}
     />
     <DebugInfoItem
       label="Landscapiness"
-      value={$windowObject.landscapiness.toFixed(2)}
+      value={$view.landscapiness.toFixed(2)}
     />
-    <DebugInfoItem label="Scale" value={$windowObject.scale.toFixed(2)} />
+    <DebugInfoItem label="Scale" value={$view.scale.toFixed(2)} />
     <DebugInfoItem label="Theme" value={$tailwindTheme} />
-    <DebugInfoItem
-      label="Portrait mode"
-      value={$windowObject.isInPortraitMode}
-    />
+    <DebugInfoItem label="Portrait mode" value={$view.isPortrait} />
     <DebugInfoItem
       label="Last run change id"
       value={$userPreferences.lastRunChangeId}

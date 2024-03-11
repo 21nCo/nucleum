@@ -1,6 +1,8 @@
 import type { Action } from "$lib/tidy/types/action.type";
 
 export type AppStore = {
+  product: string;
+  env: string;
   appData: any;
   isDebugMode: boolean;
   isExperimentalMode: boolean;

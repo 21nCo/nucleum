@@ -3,7 +3,7 @@
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import FormControlLabel from "../text/FormControlLabel.svelte";
-  import { userPreferences, windowObject } from "$lib/tidy/stores/app.store";
+  import { userPreferences, view } from "$lib/tidy/stores/app.store";
   import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   export let value: any;
@@ -112,9 +112,9 @@
   <div class="relative flex items-center w-full">
     <textarea
       style="max-width:unset;"
-      class="text-b3 {$windowObject.isInPortraitMode
-        ? `max-w-[unset]`
-        : ``} {resizable ? `` : `resize-none`} {inputClasses}"
+      class="text-b3 {$view.isPortrait ? `max-w-[unset]` : ``} {resizable
+        ? ``
+        : `resize-none`} {inputClasses}"
       {rows}
       bind:value
       on:change|stopPropagation

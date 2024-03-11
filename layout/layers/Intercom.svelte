@@ -1,11 +1,7 @@
 <script lang="ts">
-  import {
-    account,
-    intercomId,
-    windowObject
-  } from "$lib/tidy/stores/app.store";
+  import { account, intercomId, view } from "$lib/tidy/stores/app.store";
   localStorage.setItem("intercomId", intercomId);
-  $: if (!$windowObject.isInPortraitMode && $account.userInfo) {
+  $: if (!$view.isPortrait && $account.userInfo) {
     (<any>window).intercomSettings = {
       api_base: "https://api-iam.intercom.io",
       app_id: intercomId,

@@ -1,16 +1,16 @@
 import { get } from "svelte/store";
-import { windowObject } from "../stores/app.store";
+import { view } from "../stores/app.store";
 import { Direction } from "../types/direction.enum";
 import { OS } from "../types/os.enum";
 
 function documentDimensions() {
-  let documentWidth = get(windowObject).documentWidth;
+  let documentWidth = get(view).width;
   const rawDocumentWidth = window.innerWidth;
   // console.log({ triggerRect, documentWidth, rawDocumentWidth, popRect });
   if (documentWidth === 0) {
     documentWidth = rawDocumentWidth;
   }
-  let documentHeight = get(windowObject).documentHeight;
+  let documentHeight = get(view).height;
   const rawDocumentHeight = window.innerHeight;
   if (documentHeight === 0) {
     documentHeight = rawDocumentHeight;
@@ -125,12 +125,12 @@ export function toggleSearchParam(
   if (value !== undefined) {
     const url = new URL(window.location.href);
     url.searchParams.set(param, value.toString());
-    windowObject.gotoPath(url.href);
+    view.gotoPath(url.href);
     return;
   }
   const url = new URL(window.location.href);
   url.searchParams.delete(param);
-  windowObject.gotoPath(url.href);
+  view.gotoPath(url.href);
 }
 
 export function detectSystemOS() {

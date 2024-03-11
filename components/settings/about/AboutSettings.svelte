@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { appStore, windowObject } from "$lib/tidy/stores/app.store";
+  import { appStore, view } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { openLink } from "$lib/tidy/utils/utils";
   import ProductInfoFooter from "./ProductInfoFooter.svelte";
@@ -14,7 +14,7 @@
     </div>
   {/if}
   <div
-    class="flex gap-4 w-full self-center {$windowObject.isInPortraitMode
+    class="flex gap-4 w-full self-center {$view.isPortrait
       ? 'flex-col justify-center'
       : 'flex-row flex-wrap'}"
   >
@@ -22,7 +22,7 @@
       label={$appStore.appData.name + " roadmap"}
       {size}
       icon="link"
-      width={$windowObject.isInPortraitMode ? "w-full" : "w-max"}
+      width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
         openLink($appStore.appData.urls.roadmap);
       }}
@@ -31,7 +31,7 @@
       label="Join us on discord"
       {size}
       icon="link"
-      width={$windowObject.isInPortraitMode ? "w-full" : "w-max"}
+      width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
         openLink($appStore.appData.urls.discord);
       }}
@@ -40,7 +40,7 @@
       label="Read about Blank labs"
       {size}
       icon="link"
-      width={$windowObject.isInPortraitMode ? "w-full" : "w-max"}
+      width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
         openLink($appStore.appData.urls.blank);
       }}

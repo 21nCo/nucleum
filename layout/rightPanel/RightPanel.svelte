@@ -1,11 +1,11 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
 
   let isInThinMode = true;
 </script>
 
-{#if !$windowObject.isInPortraitMode}
+{#if !$view.isPortrait}
   <div
     class="flex justify-center items-center h-full {isInThinMode
       ? 'w-16'

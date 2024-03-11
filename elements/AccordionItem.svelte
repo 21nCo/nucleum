@@ -7,7 +7,7 @@
   import Icon from "./Icon.svelte";
   import { Size } from "../types/size.enum";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import { windowObject } from "../stores/app.store";
+  import { view } from "../stores/app.store";
   export let title: string;
   export let endContent: string | undefined;
   export let containerClassList: string = "";
@@ -44,7 +44,9 @@
     tabindex={0}
     {color}
     isBackgroundActive={isActive}
-    classList="flex flex-col w-full items-center py-2 px-4"
+    classList="flex flex-col w-full items-center px-4 {$view.isPortrait
+      ? 'py-3'
+      : 'py-2'}"
     styles="padding-left: {nestingLevel * 1.5 ? nestingLevel * 1.5 : 0.5}rem"
   >
     <div class="flex w-full items-center gap-1">
@@ -60,7 +62,7 @@
         >
           <Icon
             icon={state === AccordionState.collapsed ? "chevright" : "chevdown"}
-            size={Size.xs}
+            size={Size.sm}
             {isActive}
             selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
             bgColorHue={color}

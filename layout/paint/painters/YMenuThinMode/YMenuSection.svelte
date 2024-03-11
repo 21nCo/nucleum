@@ -3,7 +3,7 @@
   import { ContentType, type Action } from "$lib/tidy/types/action.type";
   import YMenuSectionItem from "./YMenuSectionItem.svelte";
   import ComponentResolver from "../../ComponentResolver.svelte";
-  import { windowObject } from "$lib/tidy/stores/app.store";
+  import { view } from "$lib/tidy/stores/app.store";
 
   export let path: string;
   const classList = "w-full text-start px-8 py-4 rounded-md";
@@ -22,7 +22,7 @@
     <ComponentResolver action={currentComponent} />
   </div>
 {:else}
-  <button class={classList} on:click={() => windowObject.gotoPath(path)}>
+  <button class={classList} on:click={() => view.gotoPath(path)}>
     {currentComponent?.label}</button
   >
 {/if}

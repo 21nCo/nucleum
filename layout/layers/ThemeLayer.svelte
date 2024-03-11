@@ -5,7 +5,7 @@
     appEvents,
     tailwindTheme,
     userPreferences,
-    windowObject
+    view
   } from "$lib/tidy/stores/app.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
@@ -15,10 +15,10 @@
   handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
-  $: rootFontSize = defaultRootFontSize + 0.6 * $windowObject.scale;
+  $: rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
   $: document.documentElement.style.fontSize = `${rootFontSize}px`;
   function handleResize() {
-    windowObject.updateDoumentDimensions(window.innerWidth, window.innerHeight);
+    view.update(window.innerWidth, window.innerHeight);
   }
   onMount(() => {
     refreshTheme();
@@ -42,14 +42,14 @@
   }
   function refreshSizing() {
     if ($userPreferences.accessibilitySizingFactor == 0) {
-      if ($windowObject.scale > 0.55) defaultRootFontSize = 14;
+      if ($view.scale > 0.55) defaultRootFontSize = 14;
       else defaultRootFontSize = 12;
     } else if ($userPreferences.accessibilitySizingFactor == 1) {
-      if ($windowObject.scale > 0.55) defaultRootFontSize = 16;
-      else if ($windowObject.scale > 0.45) defaultRootFontSize = 14;
+      if ($view.scale > 0.55) defaultRootFontSize = 16;
+      else if ($view.scale > 0.45) defaultRootFontSize = 14;
       else defaultRootFontSize = 13;
     } else if ($userPreferences.accessibilitySizingFactor == 2) {
-      if ($windowObject.scale > 0.55) defaultRootFontSize = 18;
+      if ($view.scale > 0.55) defaultRootFontSize = 18;
       else defaultRootFontSize = 16;
     }
   }

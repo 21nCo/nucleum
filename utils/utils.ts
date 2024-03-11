@@ -6,7 +6,7 @@ import {
   confirmationNotification,
   modalEvent,
   toasts,
-  windowObject
+  view
 } from "../stores/app.store";
 import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
@@ -162,7 +162,7 @@ export function resolveComponentFromPath(path: string) {
 export function openLink(url: string) {
   if (!url) return;
   if (!url.includes("http")) {
-    windowObject.gotoPath(url);
+    view.gotoPath(url);
     return;
   }
   if (get(appStore).launchContext == LaunchContext.EMBED) {
@@ -183,7 +183,7 @@ export async function runAction(
 ) {
   let component = resolveComponent(action);
   if (!component) {
-    windowObject.gotoPath("404");
+    view.gotoPath("404");
     return;
   }
   if (
@@ -208,7 +208,7 @@ export async function runAction(
 export function resolveNavigationAction(action: string) {
   let component = resolveComponent(action);
   if (!component) {
-    windowObject.gotoPath("404");
+    view.gotoPath("404");
     return;
   }
   runNavigationAction(component);
@@ -218,7 +218,7 @@ export function runNavigationAction(action: Action) {
     const url = get(appStore).appData.urls[action.link];
     if (url) openLink(url);
   } else if (action.component) {
-    windowObject.gotoPath("/" + (action.path ?? action.action));
+    view.gotoPath("/" + (action.path ?? action.action));
     return;
   }
 }
@@ -309,7 +309,7 @@ export function convertFileSize(
 export function resolveUiState(uiStates: any, property: string) {
   if (!uiStates) return undefined;
   let value = undefined;
-  if (get(windowObject).isInPortraitMode) {
+  if (get(view).isPortrait) {
     value = uiStates["portrait"][property];
   } else {
     value = uiStates["desktop"][property];
@@ -327,7 +327,7 @@ export function setUiState(
 ) {
   if (isForAll) {
     uiStates["all"][property] = value;
-  } else if (get(windowObject).isInPortraitMode) {
+  } else if (get(view).isPortrait) {
     uiStates["portrait"][property] = value;
   } else {
     uiStates["desktop"][property] = value;
