@@ -364,13 +364,20 @@ export function download(data: string, label: string | null = null) {
 
 export function interceptSurrealResponse(response: any, context: string = "") {
   console.log({ context, response });
-  if (!isValidArrayWithData(response) || response[0].status === "ERR") {
-    toasts.error("Something went wrong. Please try again", "ERR: S001");
+  return checkSurrealResponse(response[0], true);
+}
+export function checkSurrealResponse(
+  response: any,
+  isShowErrMessage: boolean = false
+) {
+  if (response.status === "ERR") {
+    if (isShowErrMessage)
+      toasts.error("Something went wrong. Please try again", "ERR: S001");
     return null;
-  } else if (response[0].status === "OK" && response[0].result) {
-    return response[0].result;
+  } else if (response.status === "OK" && response.result) {
+    return response.result;
   } else {
-    return response[0].status === "OK";
+    return response.status === "OK";
   }
 }
 

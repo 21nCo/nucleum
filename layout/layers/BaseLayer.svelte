@@ -31,6 +31,8 @@
   import Shortcuts from "./Shortcuts.svelte";
   import { extractProduct } from "$lib/tidy/utils/utils";
   import Intercom from "./Intercom.svelte";
+  import CacheLayer from "./CacheLayer.svelte";
+  import { dataManager } from "$lib/tidy/stores/data.store";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -110,6 +112,7 @@
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
     await new Persistance().initializeAppData();
+    await dataManager.initialize();
     actions.updateSettingsActionMap();
     const currentVersion = $appStore.appData.version;
     if (
@@ -189,3 +192,4 @@
 <ModalLayer />
 <Shortcuts />
 <Intercom />
+<CacheLayer />

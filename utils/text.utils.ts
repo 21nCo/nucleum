@@ -67,10 +67,10 @@ export function generateMarkdownText(blocks: Block[]) {
           return `#### ${b.body}`;
         case NodeType.HEADING5:
           return `##### ${b.body}`;
-        case NodeType.DOUBLE_DIVIDER:
-          return `---`;
-        case NodeType.DIVIDER:
-          return `---`;
+        // case NodeType.DOUBLE_DIVIDER:
+        //   return `---`;
+        // case NodeType.DIVIDER:
+        //   return `---`;
         case NodeType.LIST:
           return `${b.listType === ListType.ORDERED ? "1." : "-"} ${b.body}`;
       }

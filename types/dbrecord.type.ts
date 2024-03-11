@@ -1,7 +1,7 @@
 export interface DbRecordBase {
   id?: string | number;
-  created?: string;
-  modified?: string;
+  createdAt?: number;
+  modifiedAt?: number;
 }
 
 export interface DbRecordWithLabel extends DbRecordBase {

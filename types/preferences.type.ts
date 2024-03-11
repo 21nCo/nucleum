@@ -1,7 +1,8 @@
 import type { AppTheme, ColorScheme } from "$lib/tidy/types/theme.type";
 import type { TimeScale } from "./time.type";
 import type { avatarWithCode, avatarWithURL } from "./iconPicker.type";
-export type UserGlobalPreferences = {
+import type { CacheableStore } from "./store.type";
+export type UserGlobalPreferences = CacheableStore & {
   nickName: string;
   theme: AppTheme;
   colorScheme: ColorScheme;
