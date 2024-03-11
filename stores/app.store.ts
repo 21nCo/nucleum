@@ -29,7 +29,10 @@ import { Persistance, retrieveLocally } from "./persistance";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
-import { defaultAppData } from "$lib/local/stores/local.store";
+import {
+  defaultAppData,
+  localCacheableStores
+} from "$lib/local/stores/local.store";
 import { TimeScale } from "../types/time.type";
 import { postMessageToParent, postToParent } from "../utils/embed.utils";
 import {
@@ -46,7 +49,6 @@ import { globalActions } from "../layout/actionMap";
 import { localActions } from "$lib/local/stores/localActionMap";
 import { settingsAsModal, settingsAsPages } from "../layout/settingsActionMap";
 import type { Action } from "../types/action.type";
-import { localCacheableStores } from "$lib/local/stores/localCacheableStores";
 import { emojis, materialSymbols, shuffleEmojis } from "../data/avatars";
 import {
   StoreDataType,
