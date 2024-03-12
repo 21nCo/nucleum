@@ -2,6 +2,7 @@ import type { Writable } from "svelte/store";
 
 export interface CacheableStoreContract extends Writable<any> {
   loader: (data: any) => void;
+  search?: (query: string) => Promise<any>;
 }
 
 export interface CacheableStore {

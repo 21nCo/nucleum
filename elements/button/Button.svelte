@@ -128,7 +128,9 @@
       }
     } else if (type == "danger") {
       classList += " hover:opacity-90";
-      if (style != ButtonStyle.PLAIN) {
+      if (style === ButtonStyle.OUTLINED) {
+        classList += " border border-ars1 text-ars1";
+      } else if (style != ButtonStyle.PLAIN) {
         classList +=
           " bg-ars1" +
           (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
@@ -175,13 +177,15 @@
     <Icon
       {icon}
       {size}
-      color={type != "secondary" && !$userPreferences.colorScheme.isActiveFgFg
-        ? currentColors.bgs1
-        : (isHovered && type == "secondary") || isStayActive
-          ? currentColors.a1
-          : type === "secondary"
-            ? currentColors.fgs2
-            : currentColors.fgs1}
+      color={type === ButtonVariant.DANGER && style === ButtonStyle.OUTLINED
+        ? currentColors.ar
+        : type != "secondary" && !$userPreferences.colorScheme.isActiveFgFg
+          ? currentColors.bgs1
+          : (isHovered && type == "secondary") || isStayActive
+            ? currentColors.a1
+            : type === "secondary"
+              ? currentColors.fgs2
+              : currentColors.fgs1}
       selectionStyle={type != "secondary"
         ? SelectionItemActiveStyle.ACCENT_BACKGROUND
         : SelectionItemActiveStyle.NONE}

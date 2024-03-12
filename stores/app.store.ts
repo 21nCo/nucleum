@@ -440,7 +440,6 @@ function initUserPreferences(initialValue: UserGlobalPreferences) {
     subscribe,
     update,
     loader: (data: UserGlobalPreferences) => {
-      console.log("loading user preferences", { data });
       if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
       if (!data.avatarPicker)
         data.avatarPicker = seedUserPreferences.avatarPicker;

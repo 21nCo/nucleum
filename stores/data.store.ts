@@ -1,9 +1,5 @@
 import { SurrealDatabase } from "$lib/tidy/access/surrealHelper";
-import {
-  app,
-  appStore,
-  cacheableStoresTable
-} from "$lib/tidy/stores/app.store";
+import { appStore, cacheableStoresTable } from "$lib/tidy/stores/app.store";
 import { get, writable } from "svelte/store";
 import { Item } from "../types/item.enum";
 import { checkSurrealResponse, interceptSurrealResponse } from "../utils/utils";
@@ -36,7 +32,26 @@ function init() {
     set,
     update,
     fetchAll: () => {},
-    refresh: refresh,
+    refreshAllThatAreStale: refreshStale,
+    search: async (storeId: string, query: string) => {
+      const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+      if (store) {
+        return store.search?.(query);
+      }
+    },
+    refresh: async (storeId: string) => {
+      const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+      if (store) {
+        const storeData = get(store);
+        if (storeData.refreshQuery) {
+          const x = await surrealDb.executeReadFn(storeData.refreshQuery);
+          const data = interceptSurrealResponse(x);
+          if (data) {
+            store.loader(data);
+          }
+        }
+      }
+    },
     cache: (store: CacheableStore) => {
       let strategy = store.cacheStrategy;
       if (!strategy) {
@@ -69,13 +84,13 @@ function init() {
           map: serverSeed
         });
       }
-      refresh();
+      refreshStale();
     }
   };
 }
 
 async function fetchServerMutationMap() {
-  const appName = get(app).product;
+  const appName = get(appStore).product;
   let serverMutationMap: any = {};
   const response = await surrealDb.executeReadFn(
     "return fn::global::fetchMutationMap();",
@@ -133,7 +148,7 @@ async function resolveStoresThatNeedRefresh(
  * Performs a refresh of the data stores that are out of sync with the server.
  * @returns true if the refresh was successful, false otherwise.
  */
-async function refresh() {
+async function refreshStale() {
   const serverMutationMap = await fetchServerMutationMap();
   const clientMutationMap: any = await fetchClientMutationMap();
   console.log({ clientMutationMap, serverMutationMap });

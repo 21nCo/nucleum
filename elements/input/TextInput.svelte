@@ -14,6 +14,8 @@
   import FormControlLabelWrapper from "./FormControlLabelWrapper.svelte";
   import type { InfoTextParams } from "$lib/tidy/types/text.type";
   import Button from "../button/Button.svelte";
+  import { dataManager } from "$lib/tidy/stores/data.store";
+  import { debouncer } from "$lib/tidy/utils/utils";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -25,7 +27,7 @@
   export let infoParams: InfoTextParams | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
-  export let searchItemType: ItemType | undefined = undefined;
+  export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let id: string = "";
   export let width: string | undefined = undefined;
@@ -167,7 +169,7 @@
           //
         }
       }
-      debounceSearch();
+      debouncedSearch();
     } else if (event.key === "Enter" && value) {
       if (searchResults && searchResults.length > 0) {
         onSearchResultSelection(searchResults[selectedIndex]);
@@ -176,19 +178,12 @@
       }
     } else {
       currentValue = (event.target as HTMLInputElement).value;
-      debounceSearch();
+      debouncedSearch();
     }
   }
-  function debounceSearch() {
-    clearTimeout(debounceTimeoutId);
-    if (value.length == 1) search();
-    else
-      debounceTimeoutId = setTimeout(() => {
-        search();
-      }, 300);
-  }
+  let debouncedSearch = debouncer(search, 100);
   async function search() {
-    if (!searchItemType) return;
+    if (!searchStoreId) return;
     isSearchInProgress = true;
     selectedIndex = 0;
     if (!value) {
@@ -201,7 +196,7 @@
       isSearchInProgress = false;
       return;
     }
-    searchResults = await persistance.searchByLabel(value, searchItemType);
+    searchResults = await dataManager.search(searchStoreId, value);
     isSearchInProgress = false;
   }
 </script>
@@ -256,7 +251,7 @@
       bind:value
       on:change|stopPropagation
       on:keydown
-      on:keyup|stopPropagation={searchItemType
+      on:keyup|stopPropagation={searchStoreId
         ? handleKeyUpForSearch
         : handleKeyUp}
       on:blur
@@ -267,9 +262,9 @@
       disabled={isDisabled}
       bind:this={inputRef}
     />
-    {#if value && searchItemType}
+    {#if value && searchStoreId}
       <div
-        class="search-results bg-bgs3 overflow-y-auto rounded-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
+        class="search-results bg-bgs2 mt-[0.75rem] shadow-md overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
         5
           ? 'max-h-60 h-60'
           : 'h-48'}"
@@ -295,11 +290,11 @@
             </div>
           {/if}
         </div>
-        <div class="w-full bg-bgs4 flex justify-center">
+        <div class="w-full bg-bgs2 flex justify-center">
           <Button
             size={Size.sm}
             label="close"
-            parentBackgroundIndex={3}
+            parentBackgroundIndex={1}
             on:click={() => {
               value = "";
               resetSearch();

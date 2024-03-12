@@ -3,6 +3,7 @@ import type { Size } from "./size.enum";
 export enum ButtonStyle {
   DEFAULT = "default",
   PLAIN = "plain",
+  OUTLINED = "outlined",
   ROUNDED = "rounded"
 }
 

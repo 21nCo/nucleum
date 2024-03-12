@@ -2,12 +2,16 @@
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   export let item: DbRecordWithLabel;
   export let isActive: boolean = false;
+  let itemRef: HTMLButtonElement;
+  $: if (isActive && itemRef)
+    itemRef.scrollIntoView({ behavior: "smooth", block: "end" });
 </script>
 
 <button
+  bind:this={itemRef}
   on:click
-  class="p-2 rounded-md truncate w-full h-10 min-h-[2.5rem] hover:bg-bgs4 flex {isActive
-    ? ' bg-bgs4'
+  class="p-2 truncate w-full h-10 min-h-[2.5rem] hover:bg-bgs3 flex {isActive
+    ? ' bg-bgs3 bg-opacity-70 font-medium'
     : ''}"
 >
   {item.label ?? ("name" in item ? item.name : "")}
