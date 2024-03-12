@@ -9,7 +9,7 @@
     subatom = $appStore.product;
   }
   $: if (isDark === undefined) {
-    isDark = $userPreferences.colorScheme.isDark;
+    isDark = $userPreferences?.colorScheme?.isDark;
   }
   let color = isDark ? "#FFFFFF" : "#393939";
   const defaults = [

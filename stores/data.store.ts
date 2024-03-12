@@ -184,15 +184,21 @@ function fetchClientMutationMap() {
   return indxDb.getItem("mutationMap");
 }
 
-function mergeMutationMap(clientMutationMap: any, serverMutationMap: any) {
-  let updatedMap = Object.keys(clientMutationMap).reduce((acc, key) => {
-    if (serverMutationMap[key] > clientMutationMap[key]) {
-      acc[key] = serverMutationMap[key];
-    } else {
-      acc[key] = clientMutationMap[key];
-    }
-    return acc;
-  }, {});
+function mergeMutationMap(
+  clientMutationMap: Record<string, any>,
+  serverMutationMap: Record<string, any>
+) {
+  let updatedMap: Record<string, any> = Object.keys(clientMutationMap).reduce(
+    (acc: Record<string, any>, key) => {
+      if (serverMutationMap[key] > clientMutationMap[key]) {
+        acc[key] = serverMutationMap[key];
+      } else {
+        acc[key] = clientMutationMap[key];
+      }
+      return acc;
+    },
+    {}
+  );
   updateClientMutationMap(updatedMap);
 }
 

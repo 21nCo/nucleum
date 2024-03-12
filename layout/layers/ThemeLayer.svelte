@@ -41,6 +41,7 @@
     refreshTailwind();
   }
   function refreshSizing() {
+    if (!$userPreferences?.accessibilitySizingFactor) return;
     if ($userPreferences.accessibilitySizingFactor == 0) {
       if ($view.scale > 0.55) defaultRootFontSize = 14;
       else defaultRootFontSize = 12;
@@ -55,26 +56,27 @@
   }
   function refreshTailwind() {
     fontFamily =
-      $userPreferences.theme === AppTheme.Clean ? "Avenir" : "Avenir";
+      $userPreferences?.theme === AppTheme.Clean ? "Avenir" : "Avenir";
     //BlinkMacSystemFont Cantarell Nunito sans-serif
-    $tailwindTheme = `${$userPreferences.theme} ${"medium"} ${
-      $userPreferences.colorScheme?.tailwindSelector ?? "cs_pointron_light"
+    $tailwindTheme = `${$userPreferences?.theme ?? "clean"} ${"medium"} ${
+      $userPreferences?.colorScheme?.tailwindSelector ?? "cs_pointron_light"
     }`;
     persistLocally(Item.TailwindTheme, $tailwindTheme);
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
     );
-    postToParent({
-      colorscheme: JSON.stringify($userPreferences.colorScheme),
-      rootFontSize
-    });
+    if ($userPreferences?.colorScheme)
+      postToParent({
+        colorscheme: JSON.stringify($userPreferences?.colorScheme),
+        rootFontSize
+      });
   }
 </script>
 
 <div
-  class="flex h-full w-full {$userPreferences.theme == AppTheme.Glassy
-    ? 'glassy' + $userPreferences.colorScheme?.label
+  class="flex h-full w-full {$userPreferences?.theme == AppTheme.Glassy
+    ? 'glassy' + $userPreferences?.colorScheme?.label
     : ''}"
 >
   <slot />

@@ -406,19 +406,17 @@ export const seedUserPreferences: UserGlobalPreferences = {
   // UsedEmojis: [[{ code: "&#X1F609", name: "winking face", frequency: 1 }]]
 };
 
-const cachedPreferences = await dataManager.retrieveCache(userPreferencesId);
+export const userPreferences = initUserPreferences();
 
-export const userPreferences = initUserPreferences(
-  (cachedPreferences as UserGlobalPreferences) || seedUserPreferences
-);
-
-function initUserPreferences(initialValue: UserGlobalPreferences) {
+function initUserPreferences() {
   let previousValue: string;
-  const {
-    subscribe,
-    set: setRaw,
-    update
-  } = writable<UserGlobalPreferences>(initialValue);
+  const { subscribe, set: setRaw, update } = writable<UserGlobalPreferences>();
+  dataManager.retrieveCache(userPreferencesId).then((x) => {
+    if (x) {
+      setRaw(x as UserGlobalPreferences);
+      previousValue = JSON.stringify(x);
+    }
+  });
   const persist = (n: Partial<UserGlobalPreferences>) => {
     //console.log("persisting global preferences", { n });
     persistance.update({
