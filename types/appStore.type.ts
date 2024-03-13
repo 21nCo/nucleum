@@ -14,14 +14,7 @@ export type AppStore = {
   //TACO - dynamic actions
   dynamicBlocks?: Action[];
   fullScreenComponentPath?: string;
-  debugLogs?: DebugLog[];
   isPipOn?: boolean;
-};
-
-export type DebugLog = {
-  message: string;
-  type: "error" | "info" | "warn";
-  timestamp: string;
 };
 
 export enum LaunchContext {

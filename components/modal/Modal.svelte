@@ -26,11 +26,6 @@
   export let id = generateUID();
   $: if (show) dialog?.showModal();
   const overlayClicked = (event: any) => {
-    // appStore.log({
-    //   context: "modalOverlayClickEvent",
-    //   event,
-    //   target: event.target
-    // });
     if (
       (event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||

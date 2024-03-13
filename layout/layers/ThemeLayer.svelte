@@ -58,10 +58,12 @@
     fontFamily =
       $userPreferences?.theme === AppTheme.Clean ? "Avenir" : "Avenir";
     //BlinkMacSystemFont Cantarell Nunito sans-serif
-    $tailwindTheme = `${$userPreferences?.theme ?? "clean"} ${"medium"} ${
-      $userPreferences?.colorScheme?.tailwindSelector ?? "cs_pointron_light"
-    }`;
-    persistLocally(Item.TailwindTheme, $tailwindTheme);
+    $tailwindTheme = $userPreferences
+      ? `${$userPreferences.theme ?? "clean"} ${"medium"} ${
+          $userPreferences.colorScheme?.tailwindSelector ?? "cs_pointron_light"
+        }`
+      : $tailwindTheme;
+    if ($tailwindTheme) persistLocally(Item.TailwindTheme, $tailwindTheme);
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily

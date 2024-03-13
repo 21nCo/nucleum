@@ -48,3 +48,18 @@ export enum CacheStrategy {
    */
   MERGE_RECORDS = "MERGE_RECORDS"
 }
+
+export interface DataManager {
+  cacheSource: CacheSource;
+}
+export interface CacheSource {
+  initialize: () => void;
+  cacheStore: (store: CacheableStore, strategy: CacheStrategy) => void;
+  retrieveCache: (storeId: string) => Promise<any>;
+  fetchClientMutationMap: () => Promise<any>;
+  updateClientMutationMap: (clientMutationMap: Record<string, number>) => void;
+  mergeClientMutationMap: (
+    newMap: Record<string, number>,
+    existingMap?: Record<string, number>
+  ) => Promise<Record<string, number>>;
+}

@@ -8,31 +8,29 @@ import {
   CacheStrategy,
   StoreDataType,
   type CacheableStore,
-  type CacheableStoreContract
+  type CacheableStoreContract,
+  type DataManager
 } from "../types/store.type";
-import localforage from "localforage";
+
 import { resolveRefreshQuery } from "../utils/surreal.utils";
+import { CacheManager } from "./cache";
+import { logger } from "./log.store";
 
 export const dataManager = init();
 const surrealDb = new SurrealDatabase();
-let userId = "guest";
-if (localStorage.getItem("userInfo")) {
-  const userInfo = JSON.parse(localStorage.getItem("userInfo")!);
-  userId = userInfo.id;
-}
-const indxDb = localforage.createInstance({
-  name: userId
-});
+
 const allItems = Object.values(Item);
 
 function init() {
-  const { subscribe, set, update } = writable();
+  const cacheSource = new CacheManager();
+  cacheSource.initialize();
+  const { subscribe, set, update } = writable<DataManager>({ cacheSource });
   return {
     subscribe,
     set,
     update,
     fetchAll: () => {},
-    refreshAllThatAreStale: refreshStale,
+    refreshStaleData: refreshStaleData,
     search: async (storeId: string, query: string) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
@@ -54,6 +52,7 @@ function init() {
     },
     cache: (store: CacheableStore) => {
       let strategy = store.cacheStrategy;
+      const cacheSource = get(dataManager).cacheSource;
       if (!strategy) {
         if (
           store.dataType === StoreDataType.KVO ||
@@ -65,26 +64,32 @@ function init() {
           strategy = CacheStrategy.MERGE_RECORDS;
         }
       }
-      cacheStore(store, strategy);
+      cacheSource.cacheStore(store, strategy);
     },
-    retrieveCache: retrieveCache,
+    retrieveCache: async (storeId: string) => {
+      const cacheSource = get(dataManager).cacheSource;
+      return await cacheSource.retrieveCache(storeId);
+    },
     initialize: async () => {
-      const clientMutationMap = await fetchClientMutationMap();
-      if (!clientMutationMap) {
-        let seedMutationMap: any = {};
-        allItems.forEach((item) => {
-          seedMutationMap[item] = 1;
-        });
-        await updateClientMutationMap(seedMutationMap);
-        let serverSeed: any = {};
-        allItems.forEach((item) => {
-          serverSeed[item] = +(new Date().getTime() / 1000).toFixed();
-        });
-        await surrealDb.query(`update kv:mutationMap merge $map`, {
-          map: serverSeed
-        });
-      }
-      refreshStale();
+      update((x) => {
+        x.cacheSource = new CacheManager();
+        return x;
+      });
+      const cacheSource = get(dataManager).cacheSource;
+      let seedMutationMap: any = {};
+      allItems.forEach((item) => {
+        seedMutationMap[item] = 1;
+      });
+      const result = await cacheSource.mergeClientMutationMap(seedMutationMap);
+      logger.log({ context: "dataManager.initialize", result });
+      let serverSeed: any = {};
+      allItems.forEach((item) => {
+        serverSeed[item] = +(new Date().getTime() / 1000).toFixed();
+      });
+      await surrealDb.query(`return fn::global::mergeMutationMap($map);`, {
+        map: serverSeed
+      });
+      refreshStaleData();
     }
   };
 }
@@ -105,7 +110,7 @@ async function fetchServerMutationMap() {
     });
   }
   if (result.forRecords) {
-    serverMutationMap = { ...serverMutationMap, ...result.forRecords };
+    serverMutationMap = { ...result.forRecords, ...serverMutationMap };
   }
   return serverMutationMap;
 }
@@ -148,9 +153,10 @@ async function resolveStoresThatNeedRefresh(
  * Performs a refresh of the data stores that are out of sync with the server.
  * @returns true if the refresh was successful, false otherwise.
  */
-async function refreshStale() {
+async function refreshStaleData() {
   const serverMutationMap = await fetchServerMutationMap();
-  const clientMutationMap: any = await fetchClientMutationMap();
+  const cacheSource = get(dataManager).cacheSource;
+  const clientMutationMap: any = await cacheSource.fetchClientMutationMap();
   console.log({ clientMutationMap, serverMutationMap });
   if (!clientMutationMap || !serverMutationMap) return;
   const storesThatNeedRefresh = await resolveStoresThatNeedRefresh(
@@ -158,7 +164,7 @@ async function refreshStale() {
     serverMutationMap
   );
   if (!isValidArrayWithData(storesThatNeedRefresh)) return;
-  appStore.log("Stale data found. Refreshing stores");
+  logger.log("Stale data found. Refreshing stores");
   const queries = storesThatNeedRefresh.map((x: CacheableStoreContract) => {
     const store = get(x) as CacheableStore;
     if (store?.refreshQuery) return store.refreshQuery;
@@ -174,49 +180,5 @@ async function refreshStale() {
       store.loader(data);
     }
   }
-  mergeMutationMap(clientMutationMap, serverMutationMap);
-}
-/**
- * Retrieves the client mutation map.
- * @returns the client mutation map.
- */
-function fetchClientMutationMap() {
-  return indxDb.getItem("mutationMap");
-}
-
-function mergeMutationMap(
-  clientMutationMap: Record<string, any>,
-  serverMutationMap: Record<string, any>
-) {
-  let updatedMap: Record<string, any> = Object.keys(clientMutationMap).reduce(
-    (acc: Record<string, any>, key) => {
-      if (serverMutationMap[key] > clientMutationMap[key]) {
-        acc[key] = serverMutationMap[key];
-      } else {
-        acc[key] = clientMutationMap[key];
-      }
-      return acc;
-    },
-    {}
-  );
-  updateClientMutationMap(updatedMap);
-}
-
-function updateClientMutationMap(map: any) {
-  return indxDb.setItem("mutationMap", map);
-}
-
-function cacheStore(
-  store: CacheableStore,
-  strategy: CacheStrategy | undefined = undefined
-) {
-  if (!strategy || strategy === CacheStrategy.WHOLE) {
-    indxDb.setItem(store.id, store);
-  } else {
-    //TODO - merge using id
-  }
-}
-
-async function retrieveCache(storeId: string) {
-  return (await indxDb.getItem(storeId)) as CacheableStore;
+  cacheSource.mergeClientMutationMap(clientMutationMap, serverMutationMap);
 }

@@ -28,6 +28,7 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/tidy/types/button.type";
+  import { logger } from "$lib/tidy/stores/log.store";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -49,7 +50,6 @@
         $appStore.launchContext == LaunchContext.EMBED &&
         x.isShowAsSheet
       ) {
-        appStore.log("is embed");
         postToParent({
           pop: JSON.stringify({
             isShow: x.isShow,
@@ -61,7 +61,7 @@
         // modals = [x];
         modals = [...modals, x];
       }
-      appStore.log({ modals });
+      logger.log({ modals });
     });
     () => {
       appEventSub();

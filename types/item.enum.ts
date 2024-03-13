@@ -2,8 +2,9 @@ import { LocalItem } from "$lib/local/types/item.enum";
 
 export enum GlobalItem {
   ALL = "ALL",
-  UserPreferences = "globalPreferences",
-  TailwindTheme = "TailwindTheme"
+  globalPreferences = "globalPreferences",
+  TailwindTheme = "TailwindTheme",
+  appData = "appData"
 }
 
 export const Item = {

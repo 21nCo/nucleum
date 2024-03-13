@@ -1,0 +1,61 @@
+import { get, writable } from "svelte/store";
+import type { LogStore } from "../types/log.type";
+import { postToParent } from "../utils/embed.utils";
+import { StoreDataType } from "../types/store.type";
+import { appStore } from "./app.store";
+
+const seedLogStore: LogStore = {
+  id: "debugLogs",
+  dataType: StoreDataType.IFR,
+  items: []
+};
+
+export const logger = initLogStore();
+const propagate = (message: any) => {
+  const app = get(appStore);
+  (app.isDebugMode || app.isDebugEmbedMode) && console.log(message);
+  if (app.isDebugEmbedMode) {
+    postToParent({
+      error: message
+    });
+  }
+};
+function initLogStore() {
+  const { subscribe, set, update } = writable<LogStore>(seedLogStore);
+  return {
+    subscribe,
+    set,
+    update,
+    log(message: string | object, type: "error" | "info" | "warn" = "info") {
+      propagate({ message, type });
+      update((n: LogStore) => {
+        if (!n.items) n.items = [];
+        n.items.push({
+          message:
+            typeof message === "string" ? message : JSON.stringify(message),
+          type,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        return n;
+      });
+    },
+    logError(message: any) {
+      propagate({ message, type: "error" });
+      update((n: LogStore) => {
+        if (!n.items) n.items = [];
+        n.items.push({
+          message,
+          type: "error",
+          timestamp: new Date().toLocaleTimeString()
+        });
+        return n;
+      });
+    },
+    clearDebugLogs() {
+      update((n: LogStore) => {
+        n.items = [];
+        return n;
+      });
+    }
+  };
+}

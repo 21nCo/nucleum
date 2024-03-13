@@ -1,7 +1,6 @@
 import { get } from "svelte/store";
 import {
   account,
-  appStore,
   isRefreshingToken,
   userPreferences,
   view
@@ -11,6 +10,7 @@ import jwt_decode from "jwt-decode";
 import { Persistance } from "../stores/persistance";
 import { resolveUiState } from "./utils";
 import { UiState } from "../types/uiState.enum";
+import { logger } from "../stores/log.store";
 
 export async function performRedirectionChecks() {
   return await performLoginStatusCheck();
@@ -124,7 +124,7 @@ export async function checkForUpdates(
       return true;
     }
   } catch (e) {
-    appStore.logError(e);
+    logger.logError(e);
   }
   return false;
 }

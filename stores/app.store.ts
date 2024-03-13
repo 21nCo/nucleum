@@ -25,7 +25,7 @@ import colorSchemes from "$lib/tidy/theme/colorschemes.json";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { goto } from "$app/navigation";
 import type { ModalEvent } from "../types/popup.type";
-import { Persistance, retrieveLocally } from "./persistance";
+import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
@@ -56,6 +56,7 @@ import {
 } from "../types/store.type";
 import { dataManager } from "./data.store";
 import { currentUnixTimestamp } from "../utils/surreal.utils";
+import { logger } from "./log.store";
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
 //   env: "dev"
@@ -234,7 +235,7 @@ function initViewStore(settings: View) {
       });
     },
     gotoPath: async (path: string, params: any = null) => {
-      appStore.log({ method: "gotoPath", path });
+      logger.log({ method: "gotoPath", path });
       appStore.hideFullScreenPlayer();
       update((n: View) => {
         n = {
@@ -244,9 +245,9 @@ function initViewStore(settings: View) {
         };
         return n;
       });
-      if (!navigator.onLine) {
-        path = "/offline";
-      }
+      // if (!navigator.onLine) {
+      //   path = "/offline";
+      // }
       if (params) goto(path, params);
       else goto(path);
     }
@@ -361,7 +362,7 @@ export const appConstants = {
   colorSchemeSLConfig: selectableColorParams
 };
 
-const userPreferencesId = "kv:" + Item.UserPreferences;
+const userPreferencesId = "kv:" + Item.globalPreferences;
 const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
 export const tailwindTheme = writable<string>(
   locallySyncedTailwindTheme || "clean cs_tidigit_light_blue"
@@ -405,12 +406,16 @@ export const seedUserPreferences: UserGlobalPreferences = {
   }
   // UsedEmojis: [[{ code: "&#X1F609", name: "winking face", frequency: 1 }]]
 };
-
+const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
 export const userPreferences = initUserPreferences();
 
 function initUserPreferences() {
   let previousValue: string;
-  const { subscribe, set: setRaw, update } = writable<UserGlobalPreferences>();
+  const {
+    subscribe,
+    set: setRaw,
+    update
+  } = writable<UserGlobalPreferences>(locallyPersistedPreferences);
   dataManager.retrieveCache(userPreferencesId).then((x) => {
     if (x) {
       setRaw(x as UserGlobalPreferences);
@@ -425,7 +430,7 @@ function initUserPreferences() {
       modifiedAt: currentUnixTimestamp()
     });
     cache(get(userPreferences));
-    // persistLocally(Item.UserPreferences, get(userPreferences));
+    persistLocally(Item.globalPreferences, get(userPreferences));
   };
   const cache = async (n: UserGlobalPreferences) => {
     dataManager.cache(n);
@@ -488,6 +493,8 @@ function initUserPreferences() {
   };
 }
 
+const cachedAppData = retrieveLocally(Item.appData);
+
 export const appStore = initAppStore({
   product: "tidy",
   env: "dev",
@@ -496,7 +503,7 @@ export const appStore = initAppStore({
   isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
   embedContext: EmbedContext.NONE,
-  appData: defaultAppData
+  appData: cachedAppData ?? defaultAppData
 });
 
 function initAppStore(seed: AppStore) {
@@ -517,9 +524,10 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    initiatizeAppData(appData: any) {
+    loadAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
+        persistLocally(Item.appData, appData);
         return n;
       });
     },
@@ -529,41 +537,7 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    log(message: string | object, type: "error" | "info" | "warn" = "info") {
-      update((n: AppStore) => {
-        (n.isDebugMode || n.isDebugEmbedMode) && console.log(message);
-        if (!n.debugLogs) n.debugLogs = [];
-        n.debugLogs.push({
-          message:
-            typeof message === "string" ? message : JSON.stringify(message),
-          type,
-          timestamp: new Date().toLocaleTimeString()
-        });
-        return n;
-      });
-    },
-    logError(message: any) {
-      update((n: AppStore) => {
-        if (!n.debugLogs) n.debugLogs = [];
-        n.debugLogs.push({
-          message,
-          type: "error",
-          timestamp: new Date().toLocaleTimeString()
-        });
-        if (n.isDebugEmbedMode) {
-          postToParent({
-            error: message
-          });
-        }
-        return n;
-      });
-    },
-    clearDebugLogs() {
-      update((n: AppStore) => {
-        n.debugLogs = [];
-        return n;
-      });
-    },
+
     showMiniPlayer(path: string, params: any = null) {
       update((n: AppStore) => {
         n.player = path;
@@ -799,7 +773,7 @@ function initModalStore(seed: ModalEvent) {
       return true;
     },
     hideSpecific: (action: string, context: string = "") => {
-      appStore.log({ method: "modalEvent.hideSpecific", action, context });
+      logger.log({ method: "modalEvent.hideSpecific", action, context });
       update((n: ModalEvent) => {
         return { path: action, isShow: false };
       });

@@ -13,6 +13,8 @@ import {
   performBlankApiCall
 } from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
+import { logger } from "./log.store";
+import { currentUnixTimestamp } from "../utils/surreal.utils";
 
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   const toString = (value: T) => JSON.stringify(value, null, 2);
@@ -86,7 +88,7 @@ export class Persistance {
       account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;
     } catch (err) {
-      appStore.logError(err);
+      logger.logError(err);
     }
   };
   getUserInfo = async (token: string) => {
@@ -101,7 +103,7 @@ export class Persistance {
       if (!data?.userInfo) return;
       return data;
     } catch (err) {
-      appStore.logError(err);
+      logger.logError(err);
     }
   };
   updateDbo = async (lastRunchangeId: number | undefined = undefined) => {
@@ -116,7 +118,7 @@ export class Persistance {
       const data = await response.json();
       return isValidArrayWithData(data);
     } catch (err) {
-      appStore.logError(err);
+      logger.logError(err);
     }
   };
   ping = async () => {
@@ -129,7 +131,7 @@ export class Persistance {
       const data = await response.json();
       return isValidArrayWithData(data);
     } catch (err) {
-      appStore.logError(err);
+      logger.logError(err);
     }
   };
   getLatestAppVersion = async (app: string) => {
@@ -145,7 +147,7 @@ export class Persistance {
         return jsonValue.version;
       }
     } catch (err) {
-      appStore.logError(err);
+      logger.logError(err);
     }
   };
   initializeAppData = async () => {
@@ -160,10 +162,10 @@ export class Persistance {
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;
-        appStore.initiatizeAppData(jsonValue);
+        appStore.loadAppData(jsonValue);
       }
     } catch (err) {
-      appStore.logError(err);
+      logger.logError(err);
     }
   };
   /**
@@ -246,6 +248,7 @@ export class Persistance {
         break;
       }
       case Cloud.surreal:
+        item.modifiedAt = currentUnixTimestamp();
         return this.surrealDb.merge(
           itemType
             ? `${ItemEnum[itemType]}:${item.id}`
@@ -301,7 +304,7 @@ export class Persistance {
       }
       return [];
     } catch (error) {
-      appStore.logError(error);
+      logger.logError(error);
     }
   }
   async searchByLabel(

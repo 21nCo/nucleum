@@ -10,6 +10,7 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
+    userPreferences,
     view
   } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
@@ -32,6 +33,7 @@
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
+  import { logger } from "$lib/tidy/stores/log.store";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -43,16 +45,9 @@
   };
   const messageReceivedListener = (event: any) => {
     try {
-      // console.log("message received", event);
-      // appStore.log("message received from iOS");
-      // appStore.log(event.data);
-      // appStore.log(event.origin);
-      // appStore.log(event.source);
     } catch (e) {
-      console.error(e);
-      appStore.logError(e);
+      logger.logError(e);
     }
-
     // postMessageToParent(event.data);
   };
   let timer: any;
@@ -87,12 +82,17 @@
         ) {
           let isValid = await performLoginStatusCheck();
           if (isValid) {
-            await checkForUpdates();
-            await ping();
+            checkForUpdates();
+            ping();
           }
         }
         pingParent(true);
       }
+    } else if (e.event === AppEvent.USER_LOGIN) {
+      if (e.value) dataManager.initialize();
+    } else if (e.event === AppEvent.USER_SIGNUP) {
+      userPreferences.loadSeedData();
+      dataManager.initialize();
     }
   }
   function bootup() {
@@ -110,8 +110,8 @@
   }
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
-    await new Persistance().initializeAppData();
-    await dataManager.initialize();
+    new Persistance().initializeAppData();
+    if ($account.isLoggedIn) await dataManager.initialize();
     actions.updateSettingsActionMap();
     const currentVersion = $appStore.appData.version;
     if (

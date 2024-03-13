@@ -1,4 +1,5 @@
 import { appStore } from "../stores/app.store";
+import { logger } from "../stores/log.store";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import type { HapticFeedback } from "../types/haptic.enum";
 
@@ -19,26 +20,26 @@ export function pingParent(isExtended: boolean = false) {
 
 export function postMessageToParent(message: EmbedMessage) {
   postToParent({
-    message,
+    message
   });
 }
 export function postToParent(message: any) {
-  appStore?.log("posting message to parent:" + JSON.stringify(message));
+  logger.log("posting message to parent:" + JSON.stringify(message));
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
-    appStore?.logError(error);
+    logger.logError(error);
   }
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
   } catch (error) {
-    appStore?.logError(error);
+    logger.logError(error);
   }
 }
 
 export function hapticFeedback(haptic: HapticFeedback) {
   postToParent({
-    haptic,
+    haptic
   });
 }
