@@ -50,10 +50,7 @@ import { localActions } from "$lib/local/stores/localActionMap";
 import { settingsAsModal, settingsAsPages } from "../layout/settingsActionMap";
 import type { Action } from "../types/action.type";
 import { emojis, materialSymbols, shuffleEmojis } from "../data/avatars";
-import {
-  StoreDataType,
-  type CacheableStoreContract
-} from "../types/store.type";
+import { StoreDataType, type CacheableStoreContract } from "../types/data.type";
 import { dataManager } from "./data.store";
 import { currentUnixTimestamp } from "../utils/surreal.utils";
 import { logger } from "./log.store";

@@ -60,7 +60,7 @@
       });
     await parseEmbedToken();
     await initializeData();
-    const appEventSub = appEvents.subscribe(windowVisibilityHandler);
+    const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
     return () => {
       appEventSub();
@@ -71,7 +71,7 @@
       window?.removeEventListener("message", messageReceivedListener);
     };
   });
-  async function windowVisibilityHandler(e: AppEventType) {
+  async function appEventHandler(e: AppEventType) {
     if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
       if (e.value && !document?.hidden) {
         console.log("performing redirection checks", $view.currentPath);
@@ -82,6 +82,7 @@
         ) {
           let isValid = await performLoginStatusCheck();
           if (isValid) {
+            dataManager.refreshOnAppear();
             checkForUpdates();
             ping();
           }

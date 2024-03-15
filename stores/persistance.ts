@@ -399,7 +399,7 @@ export class Persistance {
       fileName,
       userId
     });
-    return await response.json();
+    return await response?.json();
   }
   async uploadFile(contentType: string, fileName: string, blob: any) {
     const signedUrlResponse = await this.getSignedUrl(contentType, fileName);

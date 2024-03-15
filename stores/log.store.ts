@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import type { LogStore } from "../types/log.type";
 import { postToParent } from "../utils/embed.utils";
-import { StoreDataType } from "../types/store.type";
+import { StoreDataType } from "../types/data.type";
 import { appStore } from "./app.store";
 
 const seedLogStore: LogStore = {
@@ -11,13 +11,11 @@ const seedLogStore: LogStore = {
 };
 
 export const logger = initLogStore();
-const propagate = (message: any) => {
+const propagate = (log: any) => {
   const app = get(appStore);
-  (app.isDebugMode || app.isDebugEmbedMode) && console.log(message);
+  (app.isDebugMode || app.isDebugEmbedMode) && console.log(log);
   if (app.isDebugEmbedMode) {
-    postToParent({
-      error: message
-    });
+    postToParent(log);
   }
 };
 function initLogStore() {
@@ -27,7 +25,8 @@ function initLogStore() {
     set,
     update,
     log(message: string | object, type: "error" | "info" | "warn" = "info") {
-      propagate({ message, type });
+      if (typeof message === "string") propagate({ message, type });
+      else propagate({ ...message, type });
       update((n: LogStore) => {
         if (!n.items) n.items = [];
         n.items.push({
@@ -40,7 +39,9 @@ function initLogStore() {
       });
     },
     logError(message: any) {
-      propagate({ message, type: "error" });
+      const type = "error";
+      if (typeof message === "string") propagate({ message, type });
+      else propagate({ ...message, type });
       update((n: LogStore) => {
         if (!n.items) n.items = [];
         n.items.push({

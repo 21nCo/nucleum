@@ -19,7 +19,7 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { postToParent } from "$lib/tidy/utils/embed.utils";
-  import ToastNotification from "$lib/tidy/elements/ToastNotification.svelte";
+  import ToastNotification from "$lib/tidy/elements/feedback/ToastNotification.svelte";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
@@ -29,11 +29,18 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/tidy/types/button.type";
   import { logger } from "$lib/tidy/stores/log.store";
+  import { dataManager } from "$lib/tidy/stores/data.store";
+  import { liveQuery } from "dexie";
+  import { AlertType } from "$lib/tidy/types/notification.type";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
   $: if (dialogRef) dialogRef.showModal();
+  //TODO offline mode detection and showing changes pending sync
+  let mutationQueue = liveQuery(() =>
+    $dataManager.cacheSource.dixie.mutationQueue.toArray()
+  );
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: AppEventType) => {
       if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -111,7 +118,7 @@
   </div>
 {/if}
 
-{#if isValidArrayWithData($toasts) && !$view.isPortrait}
+{#if (isValidArrayWithData($toasts) || isValidArrayWithData($mutationQueue)) && !$view.isPortrait}
   <div
     class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}
@@ -119,6 +126,24 @@
     {#each $toasts as toast}
       <ToastNotification notification={toast} />
     {/each}
+    {#if isValidArrayWithData($mutationQueue)}
+      <ToastNotification
+        notification={{
+          id: "syncNotification",
+          type: AlertType.WARNING,
+          message:
+            $mutationQueue.length +
+            ($mutationQueue.length === 1 ? " change" : " changes") +
+            " pending sync",
+          title: "Sync error - we're sorry!",
+          actionText: "Sync manually",
+          callback: () => {
+            dataManager.syncPendingMutations();
+          },
+          isHideClose: true
+        }}
+      />
+    {/if}
   </div>
 {/if}
 

@@ -3,13 +3,15 @@ import {
   CacheStrategy,
   type CacheSource,
   type CacheableStore
-} from "../types/store.type";
+} from "../types/data.type";
+import { LocalDixie } from "$lib/local/stores/local.dixie";
 
 /**
  * The cache manager for the application.
  */
 export class CacheManager implements CacheSource {
   indxDb: LocalForage = localforage.createInstance({ name: "guest" });
+  dixie: LocalDixie = new LocalDixie("d:guest");
   initialize() {
     let userId = "guest";
     if (localStorage.getItem("userInfo")) {
@@ -19,6 +21,7 @@ export class CacheManager implements CacheSource {
     this.indxDb = localforage.createInstance({
       name: userId
     });
+    this.dixie = new LocalDixie("d:" + userId);
   }
   constructor() {
     this.initialize();

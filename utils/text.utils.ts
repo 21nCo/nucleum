@@ -13,7 +13,7 @@ export function properCase(str: string) {
   // });
 }
 
-export function prefixDb(id: string | number, itemType: ItemType) {
+export function prefixTable(id: string | number, itemType: ItemType) {
   return `${Item[itemType]}:${id}`;
 }
 
