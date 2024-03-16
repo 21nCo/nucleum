@@ -25,7 +25,8 @@
   });
   $: if (divParent && !ranOnce) {
     ranOnce = true;
-    width = divParent.offsetHeight - div.offsetHeight - 20;
+    const calculatedWidth = divParent.offsetHeight - div.offsetHeight - 14;
+    width = calculatedWidth < 18 ? 18 : calculatedWidth;
     squareML = 0 - width / 3;
     circleMT = 0 - width / 9;
     width += "px";
@@ -105,7 +106,7 @@
 
     100% {
       opacity: 0;
-      transform: translateX(calc(var(--width) * 1.8));
+      transform: translateX(calc(var(--width) * 1.3));
     }
   }
 

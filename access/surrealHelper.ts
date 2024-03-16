@@ -4,7 +4,8 @@ import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
 import { performLoginStatusCheck } from "$lib/tidy/utils/account.utils";
 import { performApiCall } from "../utils/utils";
-import { mutationEntryQuery } from "../utils/surreal.utils";
+import { replaceParams, mutationQuery } from "../utils/surreal.utils";
+import { PersistanceActionType } from "../types/data.type";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -30,22 +31,14 @@ export class SurrealDatabaseUsingRest {
    * @returns Id of the created record or null if failed
    */
   async create(recordId: string, data: DbRecordType) {
-    return this.query(
-      `create ${recordId} content $data return id;` +
-        mutationEntryQuery(recordId),
-      {
-        data
-      }
-    );
+    return this.query(mutationQuery(PersistanceActionType.CREATE, recordId), {
+      data
+    });
   }
   async insert(tableName: string, data: DbRecordType[]) {
-    return this.query(
-      `insert into ${tableName} $data return id;` +
-        mutationEntryQuery(tableName),
-      {
-        data
-      }
-    );
+    return this.query(mutationQuery(PersistanceActionType.INSERT, tableName), {
+      data
+    });
   }
   /**
    *
@@ -54,20 +47,14 @@ export class SurrealDatabaseUsingRest {
    * @returns Updated record or null if failed
    */
   async merge(recordId: string, data: MergeRecord) {
-    return this.query(
-      `UPDATE ${recordId} MERGE $data;` + mutationEntryQuery(recordId),
-      {
-        data
-      }
-    );
+    return this.query(mutationQuery(PersistanceActionType.MERGE, recordId), {
+      data
+    });
   }
   async update(recordId: string, data: DbRecordType) {
-    return this.query(
-      `UPDATE ${recordId} CONTENT $data;` + mutationEntryQuery(recordId),
-      {
-        data
-      }
-    );
+    return this.query(mutationQuery(PersistanceActionType.UPDATE, recordId), {
+      data
+    });
   }
   async select(recordId: string) {
     let response = await this.query(`select * from ${recordId};`);
@@ -75,9 +62,9 @@ export class SurrealDatabaseUsingRest {
     else return null;
   }
   async delete(recordId: string) {
-    return await this.query("DELETE $record;" + mutationEntryQuery(recordId), {
-      record: recordId
-    });
+    return await this.query(
+      mutationQuery(PersistanceActionType.DELETE, recordId)
+    );
   }
   async executeReadFn(
     query: string,
@@ -100,15 +87,7 @@ export class SurrealDatabaseUsingRest {
       this.token = localStorage.getItem("surreal-token");
       let decodedToken: any = jwt_decode(this.token!);
       this.userId = decodedToken?.id ?? "";
-      for (const key in params) {
-        let replaceWith;
-        if (typeof params[key] === "object")
-          replaceWith = JSON.stringify(params[key]);
-        else if (typeof params[key] === "string")
-          replaceWith = `"${params[key]}"`;
-        else replaceWith = params[key];
-        query = query.replaceAll("$" + key, `${replaceWith}`);
-      }
+      query = replaceParams(query, params);
       let response;
       if (isReadOperation) {
         response = await fetch(this.instance + "/sql", {
@@ -126,7 +105,7 @@ export class SurrealDatabaseUsingRest {
           db: this.userId
         });
       }
-      if (response.ok) {
+      if (response?.ok) {
         let result = await response.json();
         //console.log({ result });
         if (result.length > 0) {

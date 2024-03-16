@@ -249,14 +249,18 @@ export function performApiCall(
   body: any = {}
 ) {
   const token = localStorage?.getItem("surreal-token");
-  return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
-    method: method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({ ...body, context: getAppLoadContext() })
-  });
+  try {
+    return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({ ...body, context: getAppLoadContext() })
+    });
+  } catch (err) {
+    console.error(err);
+  }
 }
 export function performBlankApiCall(
   endpoint: string,
@@ -364,7 +368,8 @@ export function download(data: string, label: string | null = null) {
 
 export function interceptSurrealResponse(response: any, context: string = "") {
   console.log({ context, response });
-  return checkSurrealResponse(response[0], true);
+  if (!response || !isValidArrayWithData(response)) return null;
+  return checkSurrealResponse(response[0], false);
 }
 export function checkSurrealResponse(
   response: any,

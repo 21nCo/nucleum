@@ -11,7 +11,7 @@ import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.s
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
-import ToastModalPortrait from "../elements/ToastModalPortrait.svelte";
+import ToastModalPortrait from "../elements/feedback/ToastModalPortrait.svelte";
 import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";

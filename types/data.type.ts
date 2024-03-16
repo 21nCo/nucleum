@@ -1,0 +1,110 @@
+import type { LocalDixie } from "$lib/local/stores/local.dixie";
+import type { Writable } from "svelte/store";
+
+export interface CacheableStoreContract extends Writable<any> {
+  loader?: (data: any) => void;
+  search?: (query: string) => Promise<any>;
+  propagateDependencyChanges?: (params: any) => void;
+}
+
+export interface CacheableStore {
+  id: string;
+  refreshQuery?: string;
+  dataType: StoreDataType;
+  dependencies?: ResourceDependency[];
+  mutatingResources?: string[];
+  cacheStrategy?: CacheStrategy;
+  refreshOnAppAppear?: boolean;
+  isRefreshing?: boolean;
+}
+
+/**
+ * The type of data the store holds
+ */
+export enum StoreDataType {
+  /**
+   * Finite and infrequently mutated Records
+   */
+  FIR = "FIR",
+  /**
+   * Infinite and frequently mutated Records
+   */
+  IFR = "IFR",
+  /**
+   * Finite and Constant system Records
+   */
+  FCR = "FCR",
+  /**
+   * Key Value Object
+   */
+  KVO = "KVO",
+  /**
+   * Non persisting data
+   */
+  NON_PERSISTING = "NON_PERSISTING"
+}
+
+/**
+ * The cache strategy to use for the store.
+ */
+export enum CacheStrategy {
+  /**
+   * The whole store is replaced
+   */
+  WHOLE = "WHOLE",
+  /**
+   * Only the records are replaced
+   */
+  MERGE_RECORDS = "MERGE_RECORDS"
+}
+
+/**
+ * Data manager which is responsible for managing the cache and the stores in the application
+ */
+export interface DataManager {
+  cacheSource: CacheSource;
+}
+
+/**
+ * The source of the cache which handles the caching and retrieval of the cache
+ */
+export interface CacheSource {
+  dixie: LocalDixie;
+  initialize: () => void;
+  cacheStore: (store: CacheableStore, strategy: CacheStrategy) => void;
+  retrieveCache: (storeId: string) => Promise<any>;
+  fetchClientMutationMap: () => Promise<any>;
+  updateClientMutationMap: (clientMutationMap: Record<string, number>) => void;
+  mergeClientMutationMap: (
+    newMap: Record<string, number>,
+    existingMap?: Record<string, number>
+  ) => Promise<Record<string, number>>;
+}
+
+/**
+ * The type of the dependency sync
+ */
+export enum DependencySyncType {
+  /**
+   *The stores which depend on a resource will be updated immediately after the dependant resource is updated before the mutations are posted to the server using propagateDependencyChanges method on Cacheable Store
+   */
+  EAGER = "EAGER",
+  /**
+   * The stores which depend on a resource will be updated after the mutations are posted to the server using DataManager mutationMap and refreshStale
+   */
+  DEFERRED = "DEFERRED"
+}
+
+export type ResourceDependency = {
+  resource: string;
+  syncType?: DependencySyncType;
+};
+
+export enum PersistanceActionType {
+  CREATE = "CREATE",
+  INSERT = "INSERT",
+  UPDATE = "UPDATE",
+  MERGE = "MERGE",
+  DELETE = "DELETE",
+  CUSTOM_QUERY = "CUSTOM_QUERY"
+}
