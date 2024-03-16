@@ -101,6 +101,7 @@
   import Square3Stack3d from "../icons/Square3Stack3d.svelte";
   import TableCells from "../icons/TableCells.svelte";
   import GlobeAlt from "../icons/GlobeAlt.svelte";
+  import DocumentText from "../icons/DocumentText.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -434,6 +435,8 @@
         <TableCells {variant} />
       {:else if icon === "globe-alt"}
         <GlobeAlt {variant} />
+      {:else if icon === "document-text"}
+        <DocumentText {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

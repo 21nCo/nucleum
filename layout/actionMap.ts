@@ -205,13 +205,14 @@ export const globalActions: Action[] = [
   },
   {
     action: AppEvent.EDIT_MODE,
-    fn: () => isInEditMode.toggle(),
+    fn: async () => isInEditMode.toggle(),
     type: ActionType.META,
     label: "Edit mode"
   },
   {
     action: AppEvent.HELP,
     label: "Help",
+    icon: "help",
     type: ActionType.MODAL,
     component: Help,
     modalParams: {
@@ -250,7 +251,7 @@ export const globalActions: Action[] = [
     action: AppEvent.TOGGLE_SIDEBAR,
     type: ActionType.FUNCTION,
     label: "Toggle sidebar",
-    fn: () => {
+    fn: async () => {
       appStore.toggleSidebar();
     }
   }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PageLoadingAnimation from "../elements/animations/PageLoadingAnimation.svelte";
   import { appStore, userPreferences } from "../stores/app.store";
   import { Size } from "../types/size.enum";
   import { extractProduct } from "../utils/utils";
@@ -60,13 +61,17 @@
 </script>
 
 <button on:click>
-  <svg
-    {height}
-    width={height}
-    viewBox="0 0 462 462"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    {@html logo}
-  </svg>
+  {#if logo}
+    <svg
+      {height}
+      width={height}
+      viewBox="0 0 462 462"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {@html logo}
+    </svg>
+  {:else}
+    <PageLoadingAnimation variant="panel-refresh" />
+  {/if}
 </button>

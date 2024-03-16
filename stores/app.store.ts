@@ -415,7 +415,9 @@ function initUserPreferences() {
     subscribe,
     set: setRaw,
     update
-  } = writable<UserGlobalPreferences>(locallyPersistedPreferences);
+  } = writable<UserGlobalPreferences>(
+    locallyPersistedPreferences ?? seedUserPreferences
+  );
   dataManager.retrieveCache(userPreferencesId).then((x) => {
     if (x) {
       setRaw(x as UserGlobalPreferences);
@@ -569,8 +571,9 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
         n.fullScreenComponentPath = undefined;
@@ -580,8 +583,9 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         }
         return n;
       });

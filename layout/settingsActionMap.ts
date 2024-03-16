@@ -93,6 +93,7 @@ export const settingsAsModal: Action[] = [
   {
     action: AppEvent.SETTINGS,
     label: "Settings",
+    icon: "settings",
     type: ActionType.MODAL,
     component: SettingsModal,
     modalParams: {
