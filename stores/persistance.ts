@@ -109,7 +109,7 @@ export class Persistance {
   updateDbo = async (lastRunchangeId: number | undefined = undefined) => {
     try {
       const userPrefs = get(userPreferences);
-      const response = await performApiCall("account/updateDb", "POST", {
+      const response = await performApiCall("account/n/updateDb", "POST", {
         lastRunChangeId: lastRunchangeId ?? userPrefs?.lastRunChangeId ?? 1
       });
       if (!response?.ok) {

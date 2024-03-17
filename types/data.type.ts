@@ -1,20 +1,51 @@
 import type { LocalDixie } from "$lib/local/stores/local.dixie";
 import type { Writable } from "svelte/store";
+import type { SurrealDatabase } from "../access/surrealHelper";
 
+/**
+ * The operations which can be performed on a cacheable store
+ */
 export interface CacheableStoreContract extends Writable<any> {
   loader?: (data: any) => void;
   search?: (query: string) => Promise<any>;
   propagateDependencyChanges?: (params: any) => void;
 }
 
+/**
+ * The store which can be cached and retrieved
+ */
 export interface CacheableStore {
+  /**
+   * The unique identifier of the store which is used to cache and retrieve the store. see dataManager
+   */
   id: string;
+  /**
+   * The query to be used to refresh the store
+   */
   refreshQuery?: string;
+  /**
+   * The type of data the store holds
+   */
   dataType: StoreDataType;
+  /**
+   * The resources on which the store depends on
+   */
   dependencies?: ResourceDependency[];
+  /**
+   * The resources which will be mutated by the store
+   */
   mutatingResources?: string[];
+  /**
+   * The cache strategy to use for the store
+   */
   cacheStrategy?: CacheStrategy;
-  refreshOnAppAppear?: boolean;
+  /**
+   * Setting this true will refresh the store when the app appears before even performing stale check
+   */
+  priorityRefreshOnAppAppear?: boolean;
+  /**
+   * The state of the store when it is refreshing
+   */
   isRefreshing?: boolean;
 }
 
@@ -63,6 +94,7 @@ export enum CacheStrategy {
  */
 export interface DataManager {
   cacheSource: CacheSource;
+  db: SurrealDatabase;
 }
 
 /**

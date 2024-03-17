@@ -17,7 +17,7 @@ export function prefixTable(id: string | number, itemType: ItemType) {
   return `${Item[itemType]}:${id}`;
 }
 
-export function stripDbPrefix(id: string) {
+export function stripTablePrefix(id: string) {
   return id.split(":")[1];
 }
 export function prefix(str: string, prefix: string) {

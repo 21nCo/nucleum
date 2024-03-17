@@ -1,9 +1,9 @@
 <script>
-  import CopyableLink from "$lib/tidy/elements/text/CopyableLink.svelte";
+  import CopyableText from "$lib/tidy/elements/text/CopyableText.svelte";
   import {
     account,
     appStore,
-    userPreferences,
+    userPreferences
   } from "$lib/tidy/stores/app.store";
 
   import { bgClass } from "$lib/tidy/utils/theme.utils";
@@ -20,9 +20,9 @@
       studies.
     </div>
     <div>
-      <CopyableLink
+      <CopyableText
         parentBackgroundIndex={2}
-        link={($appStore.appData?.urls?.landing ?? "") +
+        text={($appStore.appData?.urls?.landing ?? "") +
           "?referral=" +
           ($account.userId ? $account.userId : "appuser")}
       />

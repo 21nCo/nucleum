@@ -5,9 +5,13 @@
   import { onMount } from "svelte";
   import TopNavItem from "./TopNavItem.svelte";
   import { account } from "$lib/tidy/stores/app.store";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
+  import { GatheryEvent } from "$lib/local/types/localEvent.enum";
+  import { spaceInContext } from "$lib/tidy/stores/space.store";
   export let items: string[];
   let selected: string = items[0];
   let isCollapsed: boolean = false;
+
   onMount(() => {
     const pageSub = page.subscribe((x) => {
       const item = items.find((y) => y === x.params?.route);
@@ -19,14 +23,20 @@
   });
 </script>
 
-<div class="fixed z-50 right-0 flex justify-end bg-bgs1 pt-4 px-4 h-16">
+<div
+  class="fixed z-50 right-0 bottom-0 flex justify-end bg-bgs1 pb-4 px-4 h-16"
+>
   <div class="flex items-center gap-6 rounded-full bg-bgs2 px-4">
     {#if !isCollapsed}
-      <div class="flex items-center px-8">
-        Blank labs &nbsp;&nbsp;⏐&nbsp;&nbsp;
-        <span class="text-fgs2 text-b2">
+      <div class="flex items-center px-4">
+        <Button
+          label={$spaceInContext?.label ?? "none selected"}
+          on:click={() => runAction(GatheryEvent.SPACE_BROWSER)}
+        />
+        &nbsp;&nbsp;⏐&nbsp;&nbsp;
+        <!-- <span class="text-fgs2 text-b2">
           {$account.userInfo?.nickName || "Guest"}</span
-        >
+        > -->
       </div>
       {#each items as item}
         <TopNavItem
@@ -49,7 +59,8 @@
     {:else}
       <TopNavItem
         item={selected}
-        isActive={true}
+        isActive={false}
+        isShowLabel={true}
         on:click={() => runAction(selected)}
       />
     {/if}

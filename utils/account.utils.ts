@@ -7,10 +7,11 @@ import {
 } from "../stores/app.store";
 import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";
-import { Persistance } from "../stores/persistance";
+import { Persistance, retrieveLocally } from "../stores/persistance";
 import { resolveUiState } from "./utils";
 import { UiState } from "../types/uiState.enum";
 import { logger } from "../stores/log.store";
+import { Item } from "../types/item.enum";
 
 export async function performRedirectionChecks() {
   return await performLoginStatusCheck();
@@ -127,4 +128,13 @@ export async function checkForUpdates(
     logger.logError(e);
   }
   return false;
+}
+
+export function resolveToken() {
+  let token: string | null = null;
+  const space = retrieveLocally(Item.spaceInContext);
+  if (space?.id) {
+    token = localStorage?.getItem(`token-${space.id}`);
+  } else token = localStorage?.getItem("surreal-token");
+  return token;
 }

@@ -4,7 +4,9 @@ export enum GlobalItem {
   ALL = "ALL",
   globalPreferences = "globalPreferences",
   TailwindTheme = "TailwindTheme",
-  appData = "appData"
+  appData = "appData",
+  space = "space",
+  spaceInContext = "spaceInContext"
 }
 
 export const Item = {

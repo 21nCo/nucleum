@@ -15,7 +15,7 @@ import { postToParent } from "./embed.utils";
 import { detectTimeZone } from "./time.utils";
 import { ActionType, type Action } from "../types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
-import { AlertType } from "../types/notification.type";
+import { resolveToken } from "./account.utils";
 
 export function onInterval(
   callback: () => void,
@@ -248,7 +248,7 @@ export function performApiCall(
   method: string,
   body: any = {}
 ) {
-  const token = localStorage?.getItem("surreal-token");
+  let token = resolveToken();
   try {
     return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
       method: method,

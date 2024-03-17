@@ -111,7 +111,7 @@
   }
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
-    new Persistance().initializeAppData();
+    //new Persistance().initializeAppData();
     if ($account.isLoggedIn) await dataManager.initialize();
     actions.updateSettingsActionMap();
     const currentVersion = $appStore.appData.version;

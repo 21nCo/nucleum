@@ -24,26 +24,27 @@ import { CacheManager } from "./cache";
 import { logger } from "./log.store";
 
 export const dataManager = init();
-const surrealDb = new SurrealDatabase();
+// const surrealDb = new SurrealDatabase();
 
 const allResources = Object.values(Item);
 
 function init() {
   const cacheSource = new CacheManager();
   cacheSource.initialize();
-  const { subscribe, set, update } = writable<DataManager>({ cacheSource });
+  const db = new SurrealDatabase();
+  const { subscribe, set, update } = writable<DataManager>({ cacheSource, db });
   return {
     subscribe,
     set,
     update,
     refreshStaleData,
     performMutation,
-    search: async (storeId: string, query: string) => {
-      const store = cacheableStoresTable.find((x) => get(x).id === storeId);
-      if (store) {
-        return store.search?.(query);
-      }
-    },
+    // search: async (storeId: string, query: string) => {
+    //   const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+    //   if (store) {
+    //     return store?.search?.(query);
+    //   }
+    // },
     refresh: async (storeId: string) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
@@ -52,14 +53,16 @@ function init() {
     },
     refreshOnAppear: async () => {
       const storesThatNeedRefresh = cacheableStoresTable.filter(
-        (x) => (get(x) as CacheableStore).refreshOnAppAppear
+        (x) => (get(x) as CacheableStore).priorityRefreshOnAppAppear
       );
       if (!isValidArrayWithData(storesThatNeedRefresh)) return;
       refreshStores(storesThatNeedRefresh);
+      //TODO - fetch serverMutationMap along with response for priority store data and run refreshStaleData
     },
     cache: (store: CacheableStore) => {
       let strategy = store.cacheStrategy;
-      const cacheSource = get(dataManager).cacheSource;
+      const dm = get(dataManager);
+      const cacheSource = dm.cacheSource;
       if (!strategy) {
         if (
           store.dataType === StoreDataType.KVO ||
@@ -82,7 +85,8 @@ function init() {
         x.cacheSource = new CacheManager();
         return x;
       });
-      const cacheSource = get(dataManager).cacheSource;
+      const dm = get(dataManager);
+      const cacheSource = dm.cacheSource;
       let seedMutationMap: any = {};
       allResources.forEach((item) => {
         seedMutationMap[item] = 1;
@@ -93,13 +97,14 @@ function init() {
       allResources.forEach((item) => {
         serverSeed[item] = +(new Date().getTime() / 1000).toFixed();
       });
-      await surrealDb.query(`return fn::global::mergeMutationMap($map);`, {
+      await dm.db.query(`return fn::global::mergeMutationMap($map);`, {
         map: serverSeed
       });
       refreshStaleData();
     },
     syncPendingMutations: async () => {
-      const cacheSource = get(dataManager).cacheSource;
+      const dm = get(dataManager);
+      const cacheSource = dm.cacheSource;
       const mutationQueue = cacheSource.dixie.mutationQueue;
       const mutations = await mutationQueue.toArray();
       let masterQuery = "";
@@ -107,7 +112,7 @@ function init() {
         mutations.forEach((x) => {
           masterQuery += replaceParams(x.query, x.params) + ";";
         });
-        const response = await surrealDb.query(masterQuery);
+        const response = await dm.db.query(masterQuery);
         const result = interceptSurrealResponse(response);
         if (result) {
           await mutationQueue.clear();
@@ -139,6 +144,7 @@ async function performMutation(
     data
   });
   const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+  const surrealDb = get(dataManager).db;
   if (!store) return;
   const storeData = get(store);
   console.log({ storeData });
@@ -197,6 +203,7 @@ async function performMutation(
   setTimeout(() => {
     setRefreshingState(defferedStores, false);
   }, 1000);
+  //TODO - if required - fetch serverMutationMap along with response of mutation and run refreshStaleData
   if (mutationResponse) return mutationResponse;
   const cacheSource = get(dataManager).cacheSource;
   cacheSource.dixie.mutationQueue.add({
@@ -211,6 +218,7 @@ async function performMutation(
  * @returns the mutation map.
  */
 async function fetchServerMutationMap() {
+  const surrealDb = get(dataManager).db;
   const appName = get(appStore).product;
   let serverMutationMap: any = {};
   const response = await surrealDb.executeReadFn(
@@ -220,12 +228,12 @@ async function fetchServerMutationMap() {
     }
   );
   const result = interceptSurrealResponse(response);
-  if (result.forObjects) {
+  if (result?.forObjects) {
     result.forObjects.forEach((element: any) => {
       serverMutationMap[element.id] = element.modifiedAt;
     });
   }
-  if (result.forRecords) {
+  if (result?.forRecords) {
     serverMutationMap = { ...result.forRecords, ...serverMutationMap };
   }
   return serverMutationMap;
@@ -306,6 +314,7 @@ async function refreshStores(
   isShowRefreshingState: boolean = true
 ) {
   try {
+    const surrealDb = get(dataManager).db;
     if (!isValidArrayWithData(storesThatNeedRefresh)) return;
     if (isShowRefreshingState)
       await setRefreshingState(storesThatNeedRefresh, true);
@@ -316,6 +325,7 @@ async function refreshStores(
     for (let i = 0; i < storesThatNeedRefresh.length; i++) {
       const store = storesThatNeedRefresh[i];
       const data = response[i];
+      console.log({ store, data });
       if (store.loader && data) {
         store.loader(data);
       }
