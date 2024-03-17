@@ -1,6 +1,6 @@
 <script lang="ts">
   import { generateUID, performApiCall } from "$lib/tidy/utils/utils";
-  import NodeLoadingPulse from "$lib/memotronlib/components/node/NodeLoadingPulse.svelte";
+  import NodeLoadingPulse from "$lib/tidy/elements/animations/NodeLoadingPulse.svelte";
   import Markdown from "$lib/tidy/components/markdown/Markdown.svelte";
   import type { Node } from "$lib/tidy/types/node.type";
   export let spaceId: string;
