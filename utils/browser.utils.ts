@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { view } from "../stores/app.store";
+import view from "$lib/tidy/stores/view.store";
 import { Direction } from "../types/direction.enum";
 import { OS } from "../types/os.enum";
 

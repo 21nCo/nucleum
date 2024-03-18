@@ -4,9 +4,9 @@
   import {
     appStore,
     tailwindTheme,
-    userPreferences,
-    view
+    userPreferences
   } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { runDboUpdate } from "$lib/tidy/utils/account.utils";
   import { onMount } from "svelte";
@@ -14,6 +14,7 @@
   import { ButtonVariant } from "$lib/tidy/types/button.type";
   import { runAction } from "$lib/tidy/utils/utils";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { logger } from "$lib/tidy/stores/log.store";
   let environment: string;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
@@ -118,8 +119,8 @@
       <Icon icon="minus-circled" />
     </button>
     <div class="flex flex-col gap-2 overflow-y-auto">
-      {#if $appStore.debugLogs && $appStore.debugLogs.length > 0}
-        {#each $appStore.debugLogs as log}
+      {#if $logger.items && $logger.items.length > 0}
+        {#each $logger.items as log}
           <div>{log.type.toUpperCase()} -- {log.message}</div>
         {/each}
       {:else}

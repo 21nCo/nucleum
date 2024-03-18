@@ -4,7 +4,7 @@
   import { runAction } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   import TopNavItem from "./TopNavItem.svelte";
-  import { account } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { GatheryEvent } from "$lib/local/types/localEvent.enum";
   import { spaceInContext } from "$lib/tidy/stores/space.store";

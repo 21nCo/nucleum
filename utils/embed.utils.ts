@@ -1,4 +1,3 @@
-import { appStore } from "../stores/app.store";
 import { logger } from "../stores/log.store";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import type { HapticFeedback } from "../types/haptic.enum";

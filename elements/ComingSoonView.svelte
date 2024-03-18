@@ -1,7 +1,7 @@
 <script lang="ts">
   import RocketLaunch from "../illustrations/RocketLaunch.svelte";
-  import { view } from "../stores/app.store";
   import { Size } from "../types/size.enum";
+  import view from "$lib/tidy/stores/view.store";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;

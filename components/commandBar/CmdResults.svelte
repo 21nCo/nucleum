@@ -1,15 +1,12 @@
 <script lang="ts">
-  import {
-    actions,
-    modalEvent,
-    userPreferences
-  } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { ActionType } from "$lib/tidy/types/action.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import { runAction } from "$lib/tidy/utils/utils";
   import { createEventDispatcher } from "svelte";
   import CmdResultItem from "./CmdResultItem.svelte";
+  import actions from "$lib/tidy/stores/actions.store";
   const dispatch = createEventDispatcher();
   export let search: string = "";
   let allActions: any[] = [];

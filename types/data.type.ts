@@ -1,4 +1,4 @@
-import type { LocalDixie } from "$lib/local/stores/local.dixie";
+import type { LocalDexie } from "$lib/local/stores/local.dexie";
 import type { Writable } from "svelte/store";
 import type { SurrealDatabase } from "../access/surrealHelper";
 
@@ -101,7 +101,7 @@ export interface DataManager {
  * The source of the cache which handles the caching and retrieval of the cache
  */
 export interface CacheSource {
-  dixie: LocalDixie;
+  dixie: LocalDexie;
   initialize: () => void;
   cacheStore: (store: CacheableStore, strategy: CacheStrategy) => void;
   retrieveCache: (storeId: string) => Promise<any>;

@@ -321,7 +321,7 @@
   onMount(() => {
     // console.log("mounted");
     // console.log({ blockRef, style: blockRef.style.caretColor });
-    // if (!$windowObject.isInPortraitMode) {
+    // if (!$view.isPortrait) {
     //   console.log("focusing block from mount", blockRef);
     //   blockRef?.focus();
     // }

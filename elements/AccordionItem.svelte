@@ -7,7 +7,7 @@
   import Icon from "./Icon.svelte";
   import { Size } from "../types/size.enum";
   import { SelectionItemActiveStyle } from "../types/switcher.enum";
-  import { view } from "../stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   export let title: string;
   export let endContent: string | undefined;
   export let containerClassList: string = "";

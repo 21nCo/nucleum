@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { toasts } from "../../stores/app.store";
+  import { toasts } from "../../stores/notification.store";
   import { AlertType, type Toast } from "../../types/notification.type";
   import { Size } from "../../types/size.enum";
   import Button from "../button/Button.svelte";

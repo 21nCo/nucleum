@@ -6,8 +6,6 @@ import type { Space, SpaceStore } from "../types/space.type";
 import { logger } from "./log.store";
 import { performApiCall } from "../utils/utils";
 import { retrieveLocally } from "./persistance";
-import { modalEvent } from "./app.store";
-import { GatheryEvent } from "$lib/local/types/localEvent.enum";
 
 const cachedSpaceInContext = retrieveLocally(Item.spaceInContext);
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);
@@ -73,7 +71,7 @@ function initSpaceStore() {
         }
         spaceInContext.set(space);
         localStorage.setItem(Item.spaceInContext, JSON.stringify(space));
-        modalEvent.hideSpecific(GatheryEvent.SPACE_BROWSER);
+        //modalEvent.hideSpecific(GatheryEvent.SPACE_BROWSER);
       }
     }
   };

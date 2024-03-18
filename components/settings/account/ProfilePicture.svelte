@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { account, userPreferences } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
   import { isValidString } from "$lib/tidy/utils/text.utils";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
@@ -19,7 +20,7 @@
     if (isValidString(x.userInfo?.profilePictureUrl)) {
       try {
         let response = await fetch(x.userInfo?.profilePictureUrl!, {
-          method: "GET",
+          method: "GET"
         });
         console.log("profilepic", { response });
         if (response.status === 200) {

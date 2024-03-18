@@ -1,9 +1,6 @@
 <script lang="ts">
-  import {
-    appStore,
-    modalEvent,
-    userPreferences
-  } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
   import { isTextElement } from "$lib/tidy/utils/browser.utils";

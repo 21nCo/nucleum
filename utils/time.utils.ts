@@ -6,8 +6,7 @@ import {
 } from "../types/time.type";
 import moment from "moment-timezone";
 import type { UserDate } from "../types/userDate.type";
-import { get } from "svelte/store";
-import { userPreferences } from "../stores/app.store";
+import type { UserGlobalPreferences } from "../types/preferences.type";
 
 const months = [
   "Jan",
@@ -24,8 +23,12 @@ const months = [
   "Dec"
 ];
 
-export function formatTime(date: Date, format: string | undefined = undefined) {
-  let userPreferredFormat = get(userPreferences).timeFormat;
+export function formatTime(
+  userPreferences: UserGlobalPreferences,
+  date: Date,
+  format: string | undefined = undefined
+) {
+  let userPreferredFormat = userPreferences.timeFormat;
   format = format ? format : userPreferredFormat ?? "meridian";
   if (format === "24") {
     let hours = date?.getHours().toString().padStart(2, "0");

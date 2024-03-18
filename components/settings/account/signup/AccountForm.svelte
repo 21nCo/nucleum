@@ -3,7 +3,7 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
   import InlineErrorMessage from "$lib/tidy/elements/text/InlineErrorMessage.svelte";
-  import { account, appStore, view } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
   import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
@@ -12,6 +12,8 @@
   import { fade } from "svelte/transition";
   import OAuthButtons from "./OAuthButtons.svelte";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
+  import account from "$lib/tidy/stores/account.store";
+  import view from "$lib/tidy/stores/view.store";
   export let isSignup = false;
   let email = "";
   let pass = "";

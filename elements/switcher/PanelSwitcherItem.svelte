@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { ColorStrength } from "$lib/tidy/types/theme.type";

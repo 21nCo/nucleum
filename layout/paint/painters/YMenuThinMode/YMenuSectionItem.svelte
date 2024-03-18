@@ -6,7 +6,7 @@
     ThinModeBehavior
   } from "$lib/tidy/types/action.type";
   import ComponentResolver from "../../ComponentResolver.svelte";
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   export let path: string;
   const classList = "w-full text-start px-8 py-2 self-start";
   let currentComponent: Action | null = resolveComponentFromPath(path);

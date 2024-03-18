@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import ActiveBackgroundElement from "$lib/tidy/elements/style/ActiveBackgroundElement.svelte";
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";

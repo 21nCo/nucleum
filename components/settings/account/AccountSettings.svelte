@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { account } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
   import { onMount } from "svelte";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
   import type { EmailParts } from "$lib/tidy/types/account.type";

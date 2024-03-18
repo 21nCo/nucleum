@@ -1,10 +1,7 @@
 import { get } from "svelte/store";
-import {
-  account,
-  isRefreshingToken,
-  userPreferences,
-  view
-} from "../stores/app.store";
+import { isRefreshingToken, userPreferences } from "../stores/app.store";
+import view from "$lib/tidy/stores/view.store";
+import account from "$lib/tidy/stores/account.store";
 import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";
 import { Persistance, retrieveLocally } from "../stores/persistance";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import {

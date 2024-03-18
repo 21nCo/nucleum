@@ -1,6 +1,7 @@
 <!-- DraggableItem.svelte -->
 <script lang="ts">
-  import { dragAndDropStore, view } from "$lib/tidy/stores/app.store";
+  import { dragAndDropStore } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
   export let item: any;
   export let classList: string;

@@ -6,7 +6,7 @@ export interface MutationQueue {
   params: any;
 }
 
-export class AppDixie extends Dexie {
+export class AppDexie extends Dexie {
   mutationQueue!: Table<MutationQueue>;
   constructor(scope: string) {
     super(scope);

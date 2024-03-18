@@ -5,7 +5,7 @@
   import CmdResults from "./CmdResults.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
-  import { modalEvent } from "$lib/tidy/stores/app.store";
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   let value: string = "";
   let inputRef: HTMLInputElement;

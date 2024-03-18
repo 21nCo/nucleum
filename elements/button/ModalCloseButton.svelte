@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { modalEvent } from "$lib/tidy/stores/app.store";
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { Direction } from "$lib/tidy/types/direction.enum";
   import Button from "./Button.svelte";
   export let path: string;

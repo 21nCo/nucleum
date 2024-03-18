@@ -1,6 +1,8 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { account, userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
+  import view from "$lib/tidy/stores/view.store";
   import { LicenseType } from "$lib/tidy/types/account.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";

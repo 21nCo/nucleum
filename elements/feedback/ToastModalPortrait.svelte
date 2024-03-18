@@ -1,6 +1,6 @@
 <script lang="ts">
   import ModalFooter from "../../components/modal/ModalFooter.svelte";
-  import { toasts } from "../../stores/app.store";
+  import { toasts } from "../../stores/notification.store";
   import type { Toast } from "../../types/notification.type";
   import ToastNotification from "./ToastNotification.svelte";
   export let id: string;
