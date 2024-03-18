@@ -3,7 +3,8 @@
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import YMenuSection from "./YMenuSection.svelte";
-  import { actions } from "$lib/tidy/stores/app.store";
+  import actions from "$lib/tidy/stores/actions.store";
+
   export let currentComponent: Action = $actions[0];
 </script>
 

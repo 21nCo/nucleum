@@ -3,15 +3,12 @@
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
-    account,
-    actions,
     appEvents,
     appLoadingState,
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    userPreferences,
-    view
+    userPreferences
   } from "$lib/tidy/stores/app.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import ModalLayer from "./ModalLayer.svelte";
@@ -34,6 +31,9 @@
   import CacheLayer from "./CacheLayer.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { logger } from "$lib/tidy/stores/log.store";
+  import view from "$lib/tidy/stores/view.store";
+  import actions from "$lib/tidy/stores/actions.store";
+  import account from "$lib/tidy/stores/account.store";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };

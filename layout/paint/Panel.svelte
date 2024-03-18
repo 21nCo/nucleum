@@ -2,7 +2,7 @@
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import FloatingButton from "$lib/tidy/elements/button/FloatingButton.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import type { ButtonParams } from "$lib/tidy/types/button.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";

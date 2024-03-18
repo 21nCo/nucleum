@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { account, appStore, view } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import AccountForm from "./signup/AccountForm.svelte";
   import PanelSwitcher from "$lib/tidy/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
@@ -7,6 +7,8 @@
   import { page } from "$app/stores";
   import { LinkVariant } from "$lib/tidy/types/button.type";
   import { onMount } from "svelte";
+  import account from "$lib/tidy/stores/account.store";
+  import view from "$lib/tidy/stores/view.store";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");

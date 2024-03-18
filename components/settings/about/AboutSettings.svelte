@@ -1,9 +1,10 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { appStore, view } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { openLink } from "$lib/tidy/utils/utils";
   import ProductInfoFooter from "./ProductInfoFooter.svelte";
+  import view from "$lib/tidy/stores/view.store";
   let size = Size.sm;
 </script>
 

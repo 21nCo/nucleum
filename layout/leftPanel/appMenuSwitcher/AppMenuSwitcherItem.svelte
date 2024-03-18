@@ -4,7 +4,8 @@
   import { createEventDispatcher } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { HapticFeedback } from "$lib/tidy/types/haptic.enum";

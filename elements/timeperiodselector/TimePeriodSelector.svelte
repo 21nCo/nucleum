@@ -6,7 +6,8 @@
   } from "$lib/tidy/types/time.type";
   import { createEventDispatcher } from "svelte";
   import { properCase } from "$lib/tidy/utils/text.utils";
-  import { userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import FormControlLabel from "../text/FormControlLabel.svelte";
   import TimePeriodValueSelector from "./TimePeriodValueSelector.svelte";
   const dispatch = createEventDispatcher();

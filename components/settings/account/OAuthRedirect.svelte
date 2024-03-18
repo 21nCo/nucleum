@@ -2,7 +2,9 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import AppLoadingView from "$lib/tidy/layout/paint/AppLoadingView.svelte";
-  import { account, appStore, view } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
+  import view from "$lib/tidy/stores/view.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { OS } from "$lib/tidy/types/os.enum";
   import { detectSystemOS } from "$lib/tidy/utils/browser.utils";

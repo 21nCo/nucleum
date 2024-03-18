@@ -1,14 +1,13 @@
 <script lang="ts">
   import Modal from "$lib/tidy/components/modal/Modal.svelte";
+  import { appEvents, appStore } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
   import {
-    appEvents,
-    appStore,
-    confirmationNotification,
-    fullPageLoadingScreen,
-    modalEvent as modalEvent,
     toasts,
-    view
-  } from "$lib/tidy/stores/app.store";
+    confirmationNotification,
+    fullPageLoadingScreen
+  } from "$lib/tidy/stores/notification.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";

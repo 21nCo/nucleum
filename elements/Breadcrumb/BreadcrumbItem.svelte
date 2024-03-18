@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   export let label: string = "";
   export let path: string = "";
   export let isDisabled: boolean = false;

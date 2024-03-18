@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import CloseButton from "$lib/tidy/elements/button/CloseButton.svelte";
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import type { ButtonParams } from "$lib/tidy/types/button.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -43,7 +43,7 @@
       }}
     >
       {secondaryAction.label}
-      {#if !$windowObject.isInPortraitMode && (secondaryAction.variant === ButtonVariant.SECONDARY || !secondaryAction.variant)}
+      {#if !$view.isPortrait && (secondaryAction.variant === ButtonVariant.SECONDARY || !secondaryAction.variant)}
         <span class=" text-b4">Esc</span>
       {/if}
     </Button> -->

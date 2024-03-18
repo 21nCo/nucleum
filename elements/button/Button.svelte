@@ -4,7 +4,8 @@
   import Icon from "../Icon.svelte";
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
   import { bgClass, retrieveCurrentColors } from "../../utils/theme.utils";
-  import { userPreferences, view } from "../../stores/app.store";
+  import { userPreferences } from "../../stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";

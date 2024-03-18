@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { CellVariant } from "$lib/tidy/types/cellVariant.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import Icon from "../Icon.svelte";

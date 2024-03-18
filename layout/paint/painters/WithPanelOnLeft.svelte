@@ -1,8 +1,12 @@
 <script lang="ts">
-  import { actions, userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+
+  import view from "$lib/tidy/stores/view.store";
   import type { Action } from "$lib/tidy/types/action.type";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
   import { AppTheme } from "$lib/tidy/types/theme.type";
+  import actions from "$lib/tidy/stores/actions.store";
+
   export let currentComponent: Action = $actions[0];
   let pad: number;
   $: if ($view.height) {

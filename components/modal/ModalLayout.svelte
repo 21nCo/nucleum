@@ -1,10 +1,8 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import {
-    appStore,
-    confirmationNotification,
-    modalEvent
-  } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
+  import { confirmationNotification } from "$lib/tidy/stores/notification.store";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";

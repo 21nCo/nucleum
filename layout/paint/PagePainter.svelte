@@ -11,9 +11,9 @@
   import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
   import {
     appStore,
-    excludedPathsForRedirectionCheck,
-    view
+    excludedPathsForRedirectionCheck
   } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import WithYStack from "./painters/YStack/WithYStack.svelte";

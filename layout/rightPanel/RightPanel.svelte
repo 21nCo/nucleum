@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
 
   let isInThinMode = true;
 </script>

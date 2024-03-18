@@ -1,5 +1,5 @@
 <script>
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
 </script>
 
 <div class="w-full h-full flex flex-col gap-12 justify-center items-center p-4">

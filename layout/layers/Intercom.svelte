@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { account, intercomId, view } from "$lib/tidy/stores/app.store";
+  import { intercomId } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
+  import view from "$lib/tidy/stores/view.store";
   localStorage.setItem("intercomId", intercomId);
   $: if (!$view.isPortrait && $account.userInfo) {
     (<any>window).intercomSettings = {

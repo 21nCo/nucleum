@@ -4,9 +4,9 @@
     plainCSSHMColorIndex5,
     appEvents,
     tailwindTheme,
-    userPreferences,
-    view
+    userPreferences
   } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { AppTheme } from "$lib/tidy/types/theme.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { persistLocally } from "$lib/tidy/stores/persistance";

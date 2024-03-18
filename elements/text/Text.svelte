@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { onMount } from "svelte";

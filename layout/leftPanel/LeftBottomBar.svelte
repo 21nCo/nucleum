@@ -1,7 +1,8 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { appStore, userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import type { InfoTextParams } from "$lib/tidy/types/text.type";
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";

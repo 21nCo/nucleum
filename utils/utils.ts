@@ -1,13 +1,13 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
+import { appStore } from "../stores/app.store";
+import actions from "$lib/tidy/stores/actions.store";
+import view from "$lib/tidy/stores/view.store";
+import modalEvent from "../components/modal/modal.store";
 import {
-  actions,
-  appStore,
-  confirmationNotification,
-  modalEvent,
   toasts,
-  view
-} from "../stores/app.store";
+  confirmationNotification
+} from "$lib/tidy/stores/notification.store";
 import { get } from "svelte/store";
 import { LaunchContext } from "../types/appStore.type";
 import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";

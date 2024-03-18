@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import {
     ButtonVariant,
     type ButtonParams

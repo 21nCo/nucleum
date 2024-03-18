@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    account,
-    appStore,
-    userPreferences,
-    view
-  } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { onMount } from "svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
@@ -22,6 +17,8 @@
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   import Panel from "$lib/tidy/layout/paint/Panel.svelte";
   import Button from "$lib/tidy/elements/button/Button.svelte";
+  import view from "$lib/tidy/stores/view.store";
+  import account from "$lib/tidy/stores/account.store";
   $: isCpHome = $page?.url.pathname === "/cp" || $page?.url.pathname === "/cp/";
   let cpConfiguration: any;
   let color = retrieveCurrentColors($userPreferences)?.a1;

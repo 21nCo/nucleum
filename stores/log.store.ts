@@ -1,8 +1,8 @@
 import { get, writable } from "svelte/store";
+// import { appStore } from "./app.store";
+// import { postToParent } from "../utils/embed.utils";
 import type { LogStore } from "../types/log.type";
-import { postToParent } from "../utils/embed.utils";
 import { StoreDataType } from "../types/data.type";
-import { appStore } from "./app.store";
 
 const seedLogStore: LogStore = {
   id: "debugLogs",
@@ -12,11 +12,13 @@ const seedLogStore: LogStore = {
 
 export const logger = initLogStore();
 const propagate = (log: any) => {
-  const app = get(appStore);
-  (app.isDebugMode || app.isDebugEmbedMode) && console.log(log);
-  if (app.isDebugEmbedMode) {
-    postToParent(log);
-  }
+  console.log(log);
+  //BELOW -  causing circular dependency issue
+  // const app = get(appStore);
+  // (app.isDebugMode || app.isDebugEmbedMode) && console.log(log);
+  // if (app.isDebugEmbedMode) {
+  //   postToParent(log);
+  // }
 };
 function initLogStore() {
   const { subscribe, set, update } = writable<LogStore>(seedLogStore);

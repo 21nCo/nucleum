@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { account } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
   import ProfilePicture from "./ProfilePicture.svelte";
 </script>
 

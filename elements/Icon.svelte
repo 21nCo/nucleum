@@ -24,7 +24,8 @@
   import Arrow from "../icons/Arrow.svelte";
   import Plus from "../icons/Plus.svelte";
   import Cross from "../icons/Cross.svelte";
-  import { userPreferences, view } from "../stores/app.store";
+  import { userPreferences } from "../stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import Trash from "../icons/Trash.svelte";
   import Music from "../icons/Music.svelte";
   import Pencil from "../icons/Pencil.svelte";

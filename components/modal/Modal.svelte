@@ -1,9 +1,7 @@
 <script lang="ts">
-  import {
-    appStore,
-    confirmationNotification,
-    modalEvent
-  } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
+  import { confirmationNotification } from "$lib/tidy/stores/notification.store";
   import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";

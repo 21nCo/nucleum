@@ -1,6 +1,7 @@
 <script lang="ts">
   import AppMenuSwitcher from "$lib/tidy/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
-  import { appStore, userPreferences, view } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "$lib/tidy/elements/button/Button.svelte";

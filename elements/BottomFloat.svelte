@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { appStore, view } from "../stores/app.store";
+  import { appStore } from "../stores/app.store";
+  import view from "../stores/view.store";
   export let isAppMenuHidden: boolean = false;
 </script>
 

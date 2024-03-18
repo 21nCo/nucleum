@@ -2,7 +2,8 @@ import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
 
 import { get, writable } from "svelte/store";
-import { account, appStore, cloudProvider, userPreferences } from "./app.store";
+import { appStore, cloudProvider, userPreferences } from "./app.store";
+import account from "./account.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
 import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";

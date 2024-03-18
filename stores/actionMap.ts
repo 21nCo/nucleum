@@ -16,7 +16,7 @@ import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { AppEvent } from "../types/event.enum";
-import { appStore, intercomId, isInEditMode } from "../stores/app.store";
+import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 

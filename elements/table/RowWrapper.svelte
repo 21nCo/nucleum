@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { view } from "$lib/tidy/stores/app.store";
+  import view from "$lib/tidy/stores/view.store";
   import { CellVariant } from "$lib/tidy/types/cellVariant.enum";
   import { onMount } from "svelte";
 
@@ -10,7 +10,7 @@
 
   $: {
     classList = (() => {
-      //   if ($windowObject.isInPortraitMode) {
+      //   if ($view.isPortrait) {
       //     switch (variant) {
       //       case CellVariant.COLUMN:
       //         return `text-fgs1 text-b3`;

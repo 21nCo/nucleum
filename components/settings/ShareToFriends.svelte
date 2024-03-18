@@ -1,11 +1,7 @@
 <script>
   import CopyableText from "$lib/tidy/elements/text/CopyableText.svelte";
-  import {
-    account,
-    appStore,
-    userPreferences
-  } from "$lib/tidy/stores/app.store";
-
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import account from "$lib/tidy/stores/account.store";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
 </script>
 
