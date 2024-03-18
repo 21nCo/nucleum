@@ -69,5 +69,5 @@ export enum ContentType {
   INLINE,
   BUTTON,
   TOGGLE,
-  GATHERYDOC
+  SPACE_DOC
 }

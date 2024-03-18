@@ -24,6 +24,7 @@
   export let toolTipPlacement: Direction = Direction.Down;
   export let isLoading: boolean = false;
   export let isStayActive: boolean = false;
+  export let id: string = "";
   // export let buttonBaseColor: string = "";
   // export let buttonActiveColor: string = "";
   // export let isActive: boolean = false;
@@ -158,6 +159,7 @@
 </script>
 
 <button
+  {id}
   class={classList +
     ` ${width} ` +
     (isDisabled ? " opacity-70 cursor-not-allowed hover:opacity-50 " : "")}

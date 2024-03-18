@@ -3,13 +3,18 @@
   import NodeLoadingPulse from "$lib/tidy/elements/animations/NodeLoadingPulse.svelte";
   import Markdown from "$lib/tidy/components/markdown/Markdown.svelte";
   import type { Node } from "$lib/tidy/types/node.type";
+  import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
   export let spaceId: string;
   export let documentId: string;
   export let mdId = generateUID();
   let document: Node;
   let isLoading: boolean = true;
+  let isValidDocIdNotPresent: boolean = false;
+  // console.log("SpaceDocument", spaceId, documentId);
   $: if (spaceId && documentId) {
     fetchDoc();
+  } else {
+    isValidDocIdNotPresent = true;
   }
   async function fetchDoc() {
     const response = await performApiCall("space/n/doc", "POST", {
@@ -24,8 +29,12 @@
   }
 </script>
 
-{#if !isLoading && document}
-  <!-- TODO -->
+{#if isValidDocIdNotPresent}
+  <EmptyStatusView
+    mainText="Geez! We couldn't find that page."
+    subText="Please try again after some time."
+  />
+{:else if !isLoading && document}
   <Markdown
     id={mdId}
     md={document.body}

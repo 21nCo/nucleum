@@ -22,7 +22,7 @@
     userLocalPreferences.subscribe((x: UserLocalPreferences) => {
       pages = [];
       let items = [];
-      if (!x.appMenu) return;
+      if (!x?.appMenu) return;
       if (layoutContext === LayoutContext.PORTRAIT) {
         items = x.appMenu.slice(
           0,

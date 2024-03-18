@@ -4,6 +4,7 @@
   import { ContentType, type Action } from "$lib/tidy/types/action.type";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
+  import SpaceDocument from "$lib/tidy/components/space/SpaceDocument.svelte";
   export let action: Action | null = null;
   export let path: string = "";
   export let params: any = {};
@@ -22,9 +23,13 @@
       if (action?.fn) action?.fn();
     }}
   />
-{:else if action?.contentType === ContentType.GATHERYDOC}
-  <!--  -->
-  <div>Gathery doc with id: {action.link}</div>
+{:else if action?.contentType === ContentType.SPACE_DOC}
+  {#if action.link}
+    <SpaceDocument
+      documentId={action.link.split(":")[1]}
+      spaceId={action.link.split(":")[0]}
+    />
+  {/if}
 {:else}
   <svelte:component this={action?.component} {...params} />
 {/if}

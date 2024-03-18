@@ -39,12 +39,12 @@ function init() {
     update,
     refreshStaleData,
     performMutation,
-    // search: async (storeId: string, query: string) => {
-    //   const store = cacheableStoresTable.find((x) => get(x).id === storeId);
-    //   if (store) {
-    //     return store?.search?.(query);
-    //   }
-    // },
+    search: async (storeId: string, query: string) => {
+      const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+      if (store) {
+        return store?.search?.(query);
+      }
+    },
     refresh: async (storeId: string) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {

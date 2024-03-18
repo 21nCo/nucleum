@@ -133,7 +133,7 @@ export const globalActions: Action[] = [
     label: "Credits",
     icon: "face-smile",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
+    contentType: ContentType.SPACE_DOC,
     link: "credits"
   },
   {
@@ -148,15 +148,15 @@ export const globalActions: Action[] = [
     label: "Privacy policy",
     icon: "lock-closed",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
-    link: "privacy"
+    contentType: ContentType.SPACE_DOC,
+    link: "e0t7ukrazp277ukhj0sj:7l5gyy2n5fdyqhnklk34"
   },
   {
     action: "changelog",
     label: "What's new",
     icon: "sparkles",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
+    contentType: ContentType.SPACE_DOC,
     link: "changelog"
   },
   {
@@ -164,7 +164,7 @@ export const globalActions: Action[] = [
     label: "Roadmap",
     icon: "map",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
+    contentType: ContentType.SPACE_DOC,
     link: "roadmap"
     // on db - gathery id will be saved for this key ex: roadmap: "gathery:page:id"
   },
@@ -173,7 +173,7 @@ export const globalActions: Action[] = [
     label: "Give feedback",
     icon: "chat-bubble-bottom-center",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
+    contentType: ContentType.SPACE_DOC,
     link: "tallyFeedback"
   },
   {
@@ -181,7 +181,7 @@ export const globalActions: Action[] = [
     label: "Request a feature",
     icon: "light-bulb",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
+    contentType: ContentType.SPACE_DOC,
     link: "tallyFeedback"
   },
   {
@@ -189,7 +189,7 @@ export const globalActions: Action[] = [
     label: "Report an issue",
     icon: "flag",
     type: ActionType.MODAL,
-    contentType: ContentType.GATHERYDOC,
+    contentType: ContentType.SPACE_DOC,
     link: "tallyFeedback"
     //"gathery:form:id"
   },
