@@ -40,6 +40,7 @@ export type MdParams = {
   actions?: string[];
   isReadOnly?: boolean;
   title?: string;
+  canUseSlashShortcut?: boolean;
 };
 
 export enum BlockContext {

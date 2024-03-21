@@ -20,6 +20,7 @@
     type TextContent,
     type TextNodeType
   } from "$lib/tidy/types/node.type";
+  import { inlineStylingPatterns } from "../markdown.utils";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let block: Block<TextContent>;
@@ -638,24 +639,7 @@
 
   function refreshInlineStyling() {
     if (typeof block.body !== "string") return;
-    const patterns = [
-      { regex: /(?<!\*)\*([^\*]+?)\*(?!\*)/g, replacement: "<i>$1</i>" },
-      { regex: /\*\*([^\*]+?)\*\*/g, replacement: "<b>$1</b>" },
-      { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
-      {
-        regex: /~~((?:\S|\s\S)+?)~~/g,
-        replacement: '<span class="line-through">$1</span>'
-      },
-      {
-        regex: /`((?:\S|\s\S)+?)`/g,
-        replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>'
-      },
-      {
-        regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-        replacement: '<span style="color:$2">$1</span>'
-      }
-    ];
-    executeReplace(patterns, true);
+    executeReplace(inlineStylingPatterns, true);
     //insertCaretMarker();
     // console.log("refreshInlineStyling");
     // setCaretPosition();
@@ -757,7 +741,8 @@
 
 {#if typeof block.body === "string"}
   <div class="relative">
-    {#if $mdStore.params?.isReadOnly || !$isInEditMode}
+    <!--  || !$isInEditMode -->
+    {#if $mdStore.params?.isReadOnly}
       <div
         id={block.id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
@@ -828,7 +813,7 @@
   </button> -->
 {/if}
 
-{#if isRenderBlockBrowser}
+{#if isRenderBlockBrowser && $mdStore.params?.canUseSlashShortcut}
   <div bind:this={blockBrowserContainerRef}>
     <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
   </div>

@@ -19,8 +19,8 @@
 
   function handleUnitChanged({
     detail: {
-      unit: { new: newTimeUnit, old: oldTimeUnit },
-    },
+      unit: { new: newTimeUnit, old: oldTimeUnit }
+    }
   }: {
     detail: {
       unit: {
@@ -44,9 +44,6 @@
       value = value * 3600;
     else if (newTimeUnit === TimeUnit.SECONDS && oldTimeUnit === TimeUnit.HOURS)
       value = value / 3600;
-  }
-  $: {
-    console.log("Text Input With Dropdown", { value });
   }
 </script>
 

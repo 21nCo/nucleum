@@ -15,7 +15,7 @@
   let isUnitDropdownOpen: boolean;
   let selectedIndex: number = -1; // -1 means no item is selected
   let unitClasses: string =
-    "border rounded-sm text-[1.125rem] text-[0.875rem] p-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none " +
+    "border-2 rounded-sm py-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none " +
     borderColor($userPreferences.theme);
   const containerId = "units-dropdown-container";
 
@@ -31,8 +31,8 @@
         dispatch("change", {
           unit: {
             new: item,
-            old: currentTimeUnit,
-          },
+            old: currentTimeUnit
+          }
         });
         currentTimeUnit = item;
       }
@@ -81,7 +81,7 @@
   <div class="current-unit flex items-center gap-1">
     <span>{currentTimeUnit}</span>
     <div
-      class={`drop-down-indicator transition-all duration-300 ease-out w-[0.5rem] h-[0.375rem] bg-fgs1 ${
+      class={`drop-down-indicator transition-all duration-300 ease-out w-[0.5rem] h-[0.375rem] bg-fgs2 ${
         isUnitDropdownOpen ? `rotate-180` : `rotate-0`
       }`}
     />

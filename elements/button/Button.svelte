@@ -7,7 +7,10 @@
   import { userPreferences } from "../../stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
+  import {
+    renderPopoverv2,
+    resolveHoverState
+  } from "$lib/tidy/utils/browser.utils";
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
@@ -31,11 +34,20 @@
   // export let isActive: boolean = false;
   let toolTipRef: any;
   let buttonRef: any;
-  let isHovered: boolean = false;
+  export let isHovering: boolean = false;
   let currentColors = retrieveCurrentColors($userPreferences);
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
   let classList: string;
+  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
+    if (resolveHoverState(event)) {
+      isHovering = true;
+      if (tooltip) renderPopoverv2(buttonRef, toolTipRef, toolTipPlacement);
+    } else {
+      isHovering = false;
+      hideToolTip();
+    }
+  };
   function setStyles() {
     classList =
       "flex flex-row justify-center items-center min-w-fit rounded-full ";
@@ -166,14 +178,10 @@
     (isDisabled ? " opacity-70 cursor-not-allowed hover:opacity-50 " : "")}
   on:click
   bind:this={buttonRef}
-  on:pointerenter={() => {
-    isHovered = true;
-    if (tooltip) renderPopoverv2(buttonRef, toolTipRef, toolTipPlacement);
-  }}
-  on:pointerleave={() => {
-    isHovered = false;
-    hideToolTip();
-  }}
+  on:mouseover={toggleHoveringState}
+  on:mouseout={toggleHoveringState}
+  on:focus={toggleHoveringState}
+  on:blur={toggleHoveringState}
   disabled={isDisabled}
 >
   {#if icon && !isLoading}
@@ -184,7 +192,7 @@
         ? currentColors.ar
         : type != "secondary" && !$userPreferences.colorScheme.isActiveFgFg
           ? currentColors.bgs1
-          : (isHovered && type == "secondary") || isStayActive
+          : (isHovering && type == "secondary") || isStayActive
             ? currentColors.a1
             : type === "secondary"
               ? currentColors.fgs2

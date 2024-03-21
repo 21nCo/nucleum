@@ -1,8 +1,7 @@
 <script>
-  import FwTrail from "./FWTrail.svelte";
+  import FwTrial3 from "./FWTrial3.svelte";
 </script>
 
 <div class="flex w-full h-full bg-bgs1">
-  Feature wheel
-  <FwTrail />
+  <FwTrial3 />
 </div>

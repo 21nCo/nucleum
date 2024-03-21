@@ -61,8 +61,8 @@ export function handleNodeMarkdownChildHierarchyChanges(
   isStructuralBlock: boolean
 ) {
   if (!n.params?.isNodular) return n;
-  const parent = n.blocks.find((b) =>
-    b.childrenHierarchy?.includes(contextBlockId)
+  const parent = n.blocks.find(
+    (b) => b.childrenHierarchy?.includes(contextBlockId)
   );
   if (parent && parent.childrenHierarchy) {
     const previousSiblingIndexInParentContext =
@@ -112,4 +112,30 @@ export function resolveImmediateParent(
     iterParent = getChild(iterParent, item);
   });
   return { parent: iterParent, parentOneAbove };
+}
+
+export const inlineStylingPatterns = [
+  { regex: /(?<!\*)\*([^\*]+?)\*(?!\*)/g, replacement: "<i>$1</i>" },
+  { regex: /\*\*([^\*]+?)\*\*/g, replacement: "<b>$1</b>" },
+  { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
+  {
+    regex: /~~((?:\S|\s\S)+?)~~/g,
+    replacement: '<span class="line-through">$1</span>'
+  },
+  {
+    regex: /`((?:\S|\s\S)+?)`/g,
+    replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>'
+  },
+  {
+    regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
+    replacement: '<span style="color:$2">$1</span>'
+  }
+];
+
+export function renderMdAsHtml(text: string) {
+  let parsedText = text;
+  inlineStylingPatterns.forEach((pattern) => {
+    parsedText = parsedText.replace(pattern.regex, pattern.replacement);
+  });
+  return parsedText;
 }

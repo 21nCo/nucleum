@@ -80,9 +80,9 @@
       style === TextInputStyle.WITH_BACKGROUND ||
       style === TextInputStyle.OUTLINED
     ) {
-      inputClasses += " focus:outline-aps1";
+      inputClasses += " focus:border-aps1 focus:outline-none";
       if (style === TextInputStyle.OUTLINED)
-        inputClasses += ` outline outline-2 outline-brs3 p-2`;
+        inputClasses += ` border border-2  border-brs2 p-2`;
     } else {
       inputClasses += " focus:border-none focus:outline-none";
     }

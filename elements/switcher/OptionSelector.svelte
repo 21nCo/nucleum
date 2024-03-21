@@ -19,6 +19,7 @@
   export let size: Size = Size.md;
   export let style: OptionSelectorStyle = OptionSelectorStyle.TRAIN;
   export let iconOrientation: Orientation = Orientation.Horizontal;
+  export let labelOrientation: Orientation = Orientation.Vertical;
   export let info: InfoTextParams | undefined = undefined;
   let classList: string = " flex w-full ";
   onMount(() => {
@@ -38,6 +39,9 @@
           classList += "gap-2 overflow-auto";
         }
         break;
+      case OptionSelectorStyle.CHECK_CIRCLE:
+        classList += " justify-around grow gap-2 ";
+        break;
       default:
         classList += " items-center";
         break;
@@ -45,17 +49,22 @@
   });
 </script>
 
-<FormControlLabelWrapper {label} {info}
-  ><div class="relative w-full">
+<FormControlLabelWrapper {label} {info} orientation={labelOrientation}
+  ><div
+    class={labelOrientation === Orientation.Horizontal
+      ? "max-w-[16rem] grow"
+      : "relative w-full"}
+  >
     <div class={classList}>
       {#each items as item, index}
         <OptionSelectorItem
           {item}
           {size}
           {style}
-          orientation={iconOrientation}
+          {iconOrientation}
           isActive={selected === item.label}
           on:click={() => {
+            if (item.isDisabled) return;
             selected = item.label;
             dispatch("switch", item);
           }}

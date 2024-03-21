@@ -59,6 +59,8 @@ export function renderPopoverv2(
   let popRect = popRef.getBoundingClientRect();
   const { documentWidth, documentHeight } = documentDimensions();
   popRef.style.position = "fixed";
+  //set z index
+  popRef.style.zIndex = "100";
   if (
     location === Direction.BottomLeft &&
     documentHeight - triggerRect.bottom < popRect.height
@@ -84,7 +86,7 @@ export function renderPopoverv2(
     popRef.style.bottom = `${documentHeight - triggerRect.top + 2}px`;
   } else if (location === Direction.Right) {
     popRef.style.left = `${triggerRect.right + 2}px`;
-    popRef.style.top = `${triggerRect.top}px`;
+    // popRef.style.top = `${triggerRect.top}px`;
   } else if (location === Direction.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + 2}px`;
     popRef.style.top = `$-{triggerRect.top - triggerRect.height / 2}px`;
@@ -170,4 +172,8 @@ export function getGeoLocation() {
       reject("Geolocation is not supported by this browser.");
     }
   });
+}
+
+export function resolveHoverState(event: MouseEvent | FocusEvent) {
+  return event.type === "mouseover" || event.type === "focus";
 }

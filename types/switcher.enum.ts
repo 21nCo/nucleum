@@ -39,6 +39,7 @@ export enum VerticalSwitcherStyle {
 export type SwitchItem = {
   label: string;
   icon?: string;
+  isDisabled?: boolean;
 };
 
 export enum OptionSelectorStyle {
