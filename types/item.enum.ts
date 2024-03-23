@@ -6,7 +6,8 @@ export enum GlobalItem {
   TailwindTheme = "TailwindTheme",
   appData = "appData",
   space = "space",
-  spaceInContext = "spaceInContext"
+  spaceInContext = "spaceInContext",
+  appearance = "appearance"
 }
 
 export const Item = {

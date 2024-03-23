@@ -1,6 +1,6 @@
 <script lang="ts">
   import PanelSwitcher from "../elements/switcher/PanelSwitcher.svelte";
-  import { ColorStrength } from "../types/theme.type";
+  import { ColorStrength } from "../types/appearance.type";
   import { deepCopy } from "../utils/obj.utils";
   import Divider from "../elements/Divider.svelte";
   import ToggleSwitch from "../elements/toggle/ToggleSwitch.svelte";

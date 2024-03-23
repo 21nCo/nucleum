@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
   import { ChartType } from "$lib/tidy/types/analytics.type";
@@ -13,6 +12,7 @@
   import { determineCarbonChartTimeInterval } from "$lib/tidy/utils/carbon.utils";
   import { pieLabelFormatter } from "$lib/tidy/utils/carbon.utils";
   import { BarChartSimple, BarChartStacked } from "./charts";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;
@@ -67,9 +67,7 @@
     donut: {
       alignment: Alignments.CENTER
     },
-    theme: $userPreferences.colorScheme.isDark
-      ? ChartTheme.G100
-      : ChartTheme.WHITE,
+    theme: $appearance.colorScheme.isDark ? ChartTheme.G100 : ChartTheme.WHITE,
     zoomBar: {
       top: {
         enabled: false
@@ -92,7 +90,7 @@
     }
   };
   let options: ChartOptions = defaultOptions;
-  let currentColors = retrieveCurrentColors($userPreferences);
+  let currentColors = retrieveCurrentColors($appearance);
   initializeOptions();
   // type === ChartType.STACKEDBAR && console.log({ options, data });
   onMount(() => {
@@ -168,7 +166,7 @@
         },
         color: {
           scale: {
-            value: currentColors?.a1!
+            value: currentColors?.aps1!
           }
         }
       };

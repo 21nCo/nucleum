@@ -1,8 +1,10 @@
-export enum AppTheme {
+import type { CacheableStore } from "./data.type";
+
+export enum AppSkin {
   Clean = "clean",
   Glassy = "glassy",
   Vibrant = "vibrant",
-  Futuristic = "futuristic",
+  Futuristic = "futuristic"
 }
 
 export type ColorScheme = {
@@ -27,17 +29,19 @@ export type ColorSchemeColors = {
   fgs2?: string;
   fgs3?: string;
   fgs4?: string;
-  a1?: string;
-  a2?: string;
-  a3?: string;
-  ar?: string;
-  ag?: string;
-  a1s1?: string;
-  a1s2?: string;
-  a2s1?: string;
-  a2s2?: string;
+  aps1?: string;
+  aps2?: string;
+  aps3?: string;
+  ass1?: string;
+  ass2?: string;
+  ass3?: string;
+  ags1?: string;
+  ags2?: string;
+  ars1?: string;
+  ars2?: string;
   brs1?: string;
   brs2?: string;
+  brs3?: string;
 };
 
 export type ColorSchemeSLValues = {
@@ -52,7 +56,7 @@ export enum ColorStrength {
   Subtle = "subtle",
   Normal = "normal",
   Strong = "strong",
-  ExtraStrong = "extraStrong",
+  ExtraStrong = "extraStrong"
 }
 
 export enum ColorType {
@@ -61,5 +65,21 @@ export enum ColorType {
   Fg = "foreground",
   Outline = "outline",
   Border = "border",
-  Fill = "fill",
+  Fill = "fill"
 }
+
+export enum Theme {
+  LIGHT = "light",
+  DARK = "dark",
+  SYSTEM = "system"
+}
+
+export type AppearanceStore = CacheableStore & {
+  skin: AppSkin;
+  theme: Theme;
+  colorScheme: ColorScheme;
+  lightColorSchemeId: string;
+  darkColorSchemeId: string;
+  userThemeSetting: Theme;
+  systemTheme: Theme;
+};

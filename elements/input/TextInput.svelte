@@ -2,20 +2,17 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import FormControlLabel from "../text/FormControlLabel.svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
-  import type { ItemType } from "$lib/tidy/types/item.enum";
   import { Persistance } from "$lib/tidy/stores/persistance";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
-  import Element from "../Element.svelte";
-  import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
+  import { bgClass, borderClass } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import FormControlLabelWrapper from "./FormControlLabelWrapper.svelte";
-  import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
+  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import Button from "../button/Button.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { debouncer } from "$lib/tidy/utils/utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -24,7 +21,7 @@
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
   export let info: string | undefined = undefined;
-  export let infoParams: InfoTextParams | undefined = undefined;
+  export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
   export let searchStoreId: string | undefined = undefined;
@@ -67,10 +64,9 @@
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
     } else if (style === TextInputStyle.WITH_BACKGROUND) {
-      inputClasses += ` ${bgClass(
-        $userPreferences.theme,
-        0
-      )} border-2 ${borderColor($userPreferences.theme)} p-2`;
+      inputClasses += ` ${bgClass($appearance, 0)} border-2 ${borderClass(
+        $appearance
+      )} p-2`;
       unitClasses = unitClasses + " p-2";
     }
     if (style == TextInputStyle.WITH_BACKGROUND && units && units.length > 0) {

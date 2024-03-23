@@ -1,17 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    plainCSSHMColorIndex5,
-    appEvents,
-    tailwindTheme,
-    userPreferences
-  } from "$lib/tidy/stores/app.store";
+  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
-  import { AppTheme } from "$lib/tidy/types/theme.type";
+  import { AppSkin } from "$lib/tidy/types/appearance.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { persistLocally } from "$lib/tidy/stores/persistance";
-  import { Item } from "$lib/tidy/types/item.enum";
   import { postToParent } from "$lib/tidy/utils/embed.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
   handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
@@ -55,30 +49,23 @@
     }
   }
   function refreshTailwind() {
-    fontFamily =
-      $userPreferences?.theme === AppTheme.Clean ? "Avenir" : "Avenir";
+    fontFamily = $appearance.skin === AppSkin.Clean ? "Avenir" : "Avenir";
     //BlinkMacSystemFont Cantarell Nunito sans-serif
-    $tailwindTheme = $userPreferences
-      ? `${$userPreferences.theme ?? "clean"} ${"medium"} ${
-          $userPreferences.colorScheme?.tailwindSelector ?? "cs_pointron_light"
-        }`
-      : $tailwindTheme;
-    if ($tailwindTheme) persistLocally(Item.TailwindTheme, $tailwindTheme);
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
     );
-    if ($userPreferences?.colorScheme)
+    if ($appearance?.colorScheme)
       postToParent({
-        colorscheme: JSON.stringify($userPreferences?.colorScheme),
+        colorscheme: JSON.stringify($appearance?.colorScheme),
         rootFontSize
       });
   }
 </script>
 
 <div
-  class="flex h-full w-full {$userPreferences?.theme == AppTheme.Glassy
-    ? 'glassy' + $userPreferences?.colorScheme?.label
+  class="flex h-full w-full {$appearance?.skin == AppSkin.Glassy
+    ? 'glassy' + $appearance?.colorScheme?.label
     : ''}"
 >
   <slot />

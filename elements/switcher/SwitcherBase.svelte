@@ -7,8 +7,9 @@
     resolveBackgroundClass
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
-  import { ColorType } from "$lib/tidy/types/theme.type";
+  import { ColorType } from "$lib/tidy/types/appearance.type";
   import ActiveBackgroundElement from "../style/ActiveBackgroundElement.svelte";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let classList: string;
   export let id: string = "";
   export let isActive: boolean = false;
@@ -21,9 +22,9 @@
   let backgroundColor: string = "";
   $: if (classList.includes("bg-")) backgroundColor = "";
   $: activeBgStyle = customColorStyle(
-    $userPreferences,
+    $appearance,
     ColorType.Bg,
-    "a1",
+    "aps1",
     activeColor
   );
   onMount(() => {
@@ -56,12 +57,7 @@
     on:click
     on:pointerenter
     style={isActive && selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-      ? `;${customColorStyle(
-          $userPreferences,
-          ColorType.Fg,
-          "a1",
-          activeColor
-        )}`
+      ? `;${customColorStyle($appearance, ColorType.Fg, "aps1", activeColor)}`
       : ""}
     disabled={isDisabled}
   >

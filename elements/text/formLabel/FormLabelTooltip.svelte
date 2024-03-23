@@ -1,12 +1,12 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
-  import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import { onMount } from "svelte";
-  import Icon from "../Icon.svelte";
+  import Icon from "../../Icon.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
-  import Tooltip from "./Tooltip.svelte";
-  export let info: InfoTextParams;
+  import Tooltip from "../Tooltip.svelte";
+  export let info: FormLabelInfoTooltip;
   let isHovered: boolean = false;
   let isClicked: boolean = false;
   let toolTipRef: any;

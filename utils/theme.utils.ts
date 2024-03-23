@@ -1,23 +1,24 @@
 import { get } from "svelte/store";
-import type { UserGlobalPreferences } from "../types/preferences.type";
 import {
-  AppTheme,
+  AppSkin,
   ColorStrength,
   ColorType,
-  type ColorSchemeSLValues
-} from "../types/theme.type";
+  type ColorSchemeSLValues,
+  type AppearanceStore
+} from "../types/appearance.type";
 import { appConstants, userPreferences } from "../stores/app.store";
+import appearance from "../stores/appearance.store";
 
 export function resolveSaturationAndLightness(
-  userPreferences: UserGlobalPreferences,
+  appearance: AppearanceStore,
   sLConfig: ColorSchemeSLValues[]
 ) {
   let saturation = 75;
   let lightness = 55;
-  if (!userPreferences || !sLConfig || !userPreferences.colorScheme)
+  if (!appearance || !sLConfig || !appearance.colorScheme)
     return { saturation, lightness };
   let config = sLConfig.find(
-    (x: ColorSchemeSLValues) => x.colorScheme === userPreferences.colorScheme.id
+    (x: ColorSchemeSLValues) => x.colorScheme === appearance.colorScheme.id
   );
   if (config) {
     saturation = config.saturation;
@@ -25,8 +26,8 @@ export function resolveSaturationAndLightness(
   }
   return { saturation, lightness };
 }
-export function retrieveCurrentColors(userPreferences: UserGlobalPreferences) {
-  let colorScheme = userPreferences.colorScheme.colors;
+export function retrieveCurrentColors(appearance: AppearanceStore) {
+  let colorScheme = appearance.colorScheme.colors;
   return colorScheme;
 }
 
@@ -48,26 +49,26 @@ function cssStyle(color: string, colorType: ColorType) {
 }
 
 export function customColorShade(
-  userPreferences: UserGlobalPreferences,
+  appearance: AppearanceStore,
   fallback: string,
   hue: number | null | undefined = undefined,
   shade: number = 1
 ) {
   let alpha = 0.3;
   if (shade === 1) {
-    alpha = userPreferences.colorScheme.isDark ? 0.35 : 0.15;
+    alpha = appearance.colorScheme.isDark ? 0.35 : 0.15;
   } else if (shade === 2) {
-    alpha = userPreferences.colorScheme.isDark ? 0.5 : 0.3;
+    alpha = appearance.colorScheme.isDark ? 0.5 : 0.3;
   }
   let color: string;
-  const currentColors = retrieveCurrentColors(userPreferences);
+  const currentColors = retrieveCurrentColors(appearance);
   if (hue === undefined || hue === null || typeof hue !== "number") {
     color = currentColors[fallback];
   } else {
     let saturation: number = 50;
     let lightness: number = 50;
     let values = resolveSaturationAndLightness(
-      userPreferences,
+      appearance,
       appConstants.colorSchemeSLConfig
     );
     if (values) {
@@ -80,19 +81,19 @@ export function customColorShade(
 }
 
 export function customColor(
-  userPreferences: UserGlobalPreferences,
+  appearance: AppearanceStore,
   fallback: string,
   hue: number | null | undefined = undefined
 ) {
   let color: string;
-  const currentColors = retrieveCurrentColors(userPreferences);
+  const currentColors = retrieveCurrentColors(appearance);
   if (hue === undefined || hue === null || typeof hue !== "number") {
     color = currentColors[fallback];
   } else {
     let saturation: number = 50;
     let lightness: number = 50;
     let values = resolveSaturationAndLightness(
-      userPreferences,
+      appearance,
       appConstants.colorSchemeSLConfig
     );
     if (values) {
@@ -105,13 +106,13 @@ export function customColor(
 }
 
 export function customColorStyle(
-  userPreferences: UserGlobalPreferences,
+  appearance: AppearanceStore,
   colorType: ColorType[] | ColorType,
   fallback: string,
   hue: number | null | undefined = undefined
 ) {
   let style: string = "";
-  const color = customColor(userPreferences, fallback, hue);
+  const color = customColor(appearance, fallback, hue);
   if (colorType instanceof Array) {
     colorType.forEach((colorType) => {
       style += cssStyle(color, colorType);
@@ -122,8 +123,8 @@ export function customColorStyle(
   return style;
 }
 
-export function borderColor(
-  theme: string,
+export function borderClass(
+  appearance: AppearanceStore,
   colorStrength: ColorStrength = ColorStrength.Normal
 ) {
   // if (theme === AppTheme.Glassy) return "border-none";
@@ -142,13 +143,13 @@ export function borderColor(
 }
 
 export function bgClass(
-  theme: string,
+  appearance: AppearanceStore,
   parentBackgroundIndex: number = 1,
   isActive: boolean = false
 ) {
   const colors = resolveBackgroundClass(parentBackgroundIndex);
   let result = "";
-  if (theme === AppTheme.Glassy) {
+  if (appearance.skin === AppSkin.Glassy) {
     result = isActive ? "glassactive" : "glass";
   } else {
     result = isActive ? colors.activeBackgroundColor : colors.backgroundColor;
@@ -157,12 +158,12 @@ export function bgClass(
 }
 
 export function textColorClass(
-  userPreferences: UserGlobalPreferences,
+  appearance: AppearanceStore,
   textColorStrength: ColorStrength = ColorStrength.Normal,
   isAccentBgActive: boolean = false,
-  bgColorHue: number | undefined
+  bgColorHue: number | undefined = undefined
 ) {
-  const isActiveFgFg = resolveIfActiveFgFg(bgColorHue, userPreferences);
+  const isActiveFgFg = resolveIfActiveFgFg(bgColorHue, appearance);
   if ((isAccentBgActive && isActiveFgFg) || !isAccentBgActive) {
     switch (textColorStrength) {
       case ColorStrength.ExtraSubtle:
@@ -196,33 +197,12 @@ export function textColorClass(
   }
 }
 
-export function bgfgClasses(
-  userPreferences: UserGlobalPreferences,
-  parentBackgroundIndex: number = 1,
-  isActive: boolean = false,
-  textColorStrength: ColorStrength = ColorStrength.Normal,
-  bgColorHue: number | undefined
-) {
-  const background = bgClass(
-    userPreferences.theme,
-    parentBackgroundIndex,
-    isActive
-  );
-  const foreground = textColorClass(
-    userPreferences,
-    textColorStrength,
-    isActive,
-    bgColorHue
-  );
-  return `${background} ${foreground}`;
-}
-
 export function resolveBackgroundClass(parentBackgroundIndex: number = 1) {
   let activeBackgroundColor;
   let backgroundColor;
   let activeBackgroundColorHex;
   let backgroundColorHex;
-  let currentColors = retrieveCurrentColors(get(userPreferences));
+  let currentColors = retrieveCurrentColors(get(appearance));
   if (parentBackgroundIndex === 1) {
     activeBackgroundColor = "bg-bgs3";
     activeBackgroundColorHex = currentColors?.bgs3;
@@ -254,29 +234,29 @@ export function resolveBackgroundClass(parentBackgroundIndex: number = 1) {
 /**
  * Determines if the foreground color of text or icons should be Fg shades or not
  * @param bgColorHue 0-360 for custom hue or -1 for default bg of the app or undefined if the custom color is not present
- * @param userPreferences user preferences
+ * @param appearance user preferences
  * @returns true if the foreground color of text or icons should be Fg shades or not
  */
 export function resolveIfActiveFgFg(
   bgColorHue: number | undefined,
-  userPreferences: UserGlobalPreferences
+  appearance: AppearanceStore
 ) {
   if (
-    "isNeverFgFg" in userPreferences.colorScheme &&
-    userPreferences.colorScheme.isNeverFgFg
+    "isNeverFgFg" in appearance.colorScheme &&
+    appearance.colorScheme.isNeverFgFg
   ) {
     return false;
   } else if (bgColorHue === -1 || !bgColorHue) {
-    return userPreferences.colorScheme.isActiveFgFg;
+    return appearance.colorScheme.isActiveFgFg;
   } else if (bgColorHue >= 45 && bgColorHue <= 180) {
-    return !userPreferences.colorScheme.isDark;
+    return !appearance.colorScheme.isDark;
   } else {
-    return userPreferences.colorScheme.isDark;
+    return appearance.colorScheme.isDark;
   }
 }
 
 export function heatMapColorRange(
-  userPreferences: UserGlobalPreferences,
+  appearance: AppearanceStore,
   fallback: string,
   numberOfColors: number,
   hue: number | undefined = undefined
@@ -284,15 +264,16 @@ export function heatMapColorRange(
   let colors: string[];
   let saturation: number = 50;
   let lightness: number = 50;
-  const currentColors = retrieveCurrentColors(userPreferences);
+  const currentColors = retrieveCurrentColors(appearance);
   if (hue === undefined || hue === null || typeof hue !== "number") {
     const color = currentColors[fallback];
+    if (!color) return [];
     hue = color.split(" ")[0].split("(")[1];
     saturation = color.split(" ")[1].split("%")[0];
     lightness = color.split(" ")[2].split("%")[0];
   } else {
     let values = resolveSaturationAndLightness(
-      userPreferences,
+      appearance,
       appConstants.colorSchemeSLConfig
     );
     if (values) {
@@ -302,8 +283,8 @@ export function heatMapColorRange(
   }
   console.log({ hue });
   colors = Array.from({ length: numberOfColors }, (_, i) => {
-    const s = +saturation - i * (userPreferences.colorScheme.isDark ? 4 : 8);
-    const l = +lightness + i * (userPreferences.colorScheme.isDark ? 4 : 6);
+    const s = +saturation - i * (appearance.colorScheme.isDark ? 4 : 8);
+    const l = +lightness + i * (appearance.colorScheme.isDark ? 4 : 6);
     return `hsl(${hue} ${s}% ${l}%)`;
   });
   colors.push(currentColors["bgs2"]);

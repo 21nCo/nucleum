@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Divider from "./Divider.svelte";
-  import Icon from "./Icon.svelte";
+  import Divider from "../Divider.svelte";
+  import Icon from "../Icon.svelte";
   import dayjs from "dayjs";
   import "dayjs/locale/en";
-  import { Size } from "../types/size.enum";
-  import { TimeScale } from "../types/time.type";
+  import { Size } from "../../types/size.enum";
+  import { TimeScale } from "../../types/time.type";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS;

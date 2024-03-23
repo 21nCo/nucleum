@@ -1,0 +1,134 @@
+[
+  {
+    "colors": {
+      "accent1": "#BAC1DB",
+      "accent2": "#dbcfc1",
+      "bgs1": "#404258",
+      "bgs2": "#474E68",
+      "bgs3": "#50577A",
+      "bgs4": "#6B728E",
+      "fgs1": "#F3F3F3",
+      "fgs2": "#CACACA",
+      "fgs3": "#D0D0D0",
+      "fgs4": "#D0D0D0"
+    },
+    "id": "colorscheme:ihugcptyax3wftcvkuag",
+    "isArchived": true,
+    "isDark": true,
+    "isExperimental": true,
+    "label": "test",
+    "tailwindSelector": "cs_dim",
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
+    "theme": "glassy"
+  },
+  {
+    "colors": {
+      "accent1": "HSL(227.27°, 31.43%, 79.41%)",
+      "accent2": "HSL(32.31°, 26.53%, 80.78%)",
+      "bgs1": "HSL(235°, 15.79%, 29.80%)",
+      "bgs2": "HSL(227.27°, 18.86%, 34.31%)",
+      "bgs3": "HSL(230°, 20.79%, 39.61%)",
+      "bgs4": "HSL(228°, 14.06%, 48.82%)",
+      "fgs1": "HSL(0°, 0%, 95.29%)",
+      "fgs2": "HSL(0°, 0%, 79.22%)",
+      "fgs3": "HSL(0°, 0%, 81.57%)",
+      "fgs4": "HSL(0°, 0%, 81.57%)"
+    },
+    "id": "colorscheme:whi0doezko1dlz47m7nv",
+    "isDark": true,
+    "isExperimental": true,
+    "label": "greeny",
+    "tailwindSelector": "cs_tidigit_dark",
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
+    "theme": "glassy"
+  },
+  {
+    "colors": {
+      "accent1": "#BAC1DB",
+      "accent2": "#dbcfc1",
+      "bgs1": "#404258",
+      "bgs2": "#474E68",
+      "bgs3": "#50577A",
+      "bgs4": "#6B728E",
+      "fgs1": "#F3F3F3",
+      "fgs2": "#CACACA",
+      "fgs3": "#D0D0D0",
+      "fgs4": "#D0D0D0"
+    },
+    "id": "colorscheme:y2dtw6cmnkqe1wj96uns",
+    "isDark": true,
+    "label": "gotham",
+    "order": 1,
+    "tailwindSelector": "cs_dim",
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
+    "theme": "glassy"
+  },
+  {
+    "colors": {
+      "accent1": "#BAC1DB",
+      "accent2": "#dbcfc1",
+      "bgs1": "#404258",
+      "bgs2": "#474E68",
+      "bgs3": "#50577A",
+      "bgs4": "#6B728E",
+      "fgs1": "#F3F3F3",
+      "fgs2": "#CACACA",
+      "fgs3": "#D0D0D0",
+      "fgs4": "#D0D0D0"
+    },
+    "id": "colorscheme:uwhl4bjdx9nrxoa46u5n",
+    "isDark": true,
+    "label": "blue",
+    "tailwindSelector": "cs_dim",
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
+    "theme": "glassy"
+  },
+  {
+    "colors": {
+      "accent1": "#BAC1DB",
+      "accent2": "#dbcfc1",
+      "bgs1": "#404258",
+      "bgs2": "#474E68",
+      "bgs3": "#50577A",
+      "bgs4": "#6B728E",
+      "fgs1": "#F3F3F3",
+      "fgs2": "#CACACA",
+      "fgs3": "#D0D0D0",
+      "fgs4": "#D0D0D0"
+    },
+    "id": "colorscheme:jotegeewhlpda3lfx9or",
+    "isDark": false,
+    "isExperimental": true,
+    "label": "greenlight",
+    "tailwindSelector": "cs_grainy",
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
+    "theme": "glassy"
+  },
+  {
+    "colors": {
+      "accent1": "#BAC1DB",
+      "accent2": "#dbcfc1",
+      "bgs1": "#404258",
+      "bgs2": "#474E68",
+      "bgs3": "#50577A",
+      "bgs4": "#6B728E",
+      "fgs1": "#F3F3F3",
+      "fgs2": "#CACACA",
+      "fgs3": "#D0D0D0",
+      "fgs4": "#D0D0D0"
+    },
+    "id": "colorscheme:35gtjhvkkzyf5hr8bkly",
+    "isDark": true,
+    "isActiveFgFg": false,
+    "isNeverFgFg": false,
+    "isExperimental": true,
+    "label": "rainbow",
+    "tailwindSelector": "cs_dim",
+    "theme": "glassy"
+  }
+]

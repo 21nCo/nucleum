@@ -34,6 +34,8 @@
   import view from "$lib/tidy/stores/view.store";
   import actions from "$lib/tidy/stores/actions.store";
   import account from "$lib/tidy/stores/account.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
+  import { Theme } from "$lib/tidy/types/appearance.type";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
@@ -62,6 +64,14 @@
     await initializeData();
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
+    const darkModeMediaQuery = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    );
+    appearance.modifySystemTheme(darkModeMediaQuery.matches);
+    darkModeMediaQuery.addEventListener("change", (e) => {
+      appearance.modifySystemTheme(e.matches);
+    });
+
     return () => {
       appEventSub();
       clearInterval(timer);

@@ -127,68 +127,70 @@
   }
 </script>
 
-<div class="flex items-center justify-between gap-8">
-  <span>
-    {action?.label}
-  </span>
-  <button
-    class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60"
-    on:click={() => {
-      if (!isConfigurationInProgress) {
-        isConfigurationInProgress = true;
-        reset();
-        inputRef.focus();
-      }
-    }}
-  >
-    <input
-      bind:this={inputRef}
-      bind:value
-      id="shortcutInput"
-      class="bg-transparent cursor-pointer focus:outline-none w-32 text-fgs2"
-      placeholder="record shortcut"
-      type="text"
-      on:keydown|stopPropagation={onKeydown}
-      on:paste|preventDefault
-    />
-    {#if isConfigurationInProgress}
-      <div class="flex gap-1">
-        <Button
-          tooltip="clear"
-          size={Size.xs}
-          icon="cross"
-          on:click={(event) => {
-            reset();
-            inputRef.focus();
-            event.stopPropagation();
-          }}
-        />
-        <Button
-          tooltip="reset to old value"
-          icon="sync"
-          size={Size.xs}
-          on:click={(event) => {
-            isConfigurationInProgress = false;
-            value = existingValue;
-            event.stopPropagation();
-          }}
-        />
-        <Button
-          tooltip="accept"
-          icon="check-circle"
-          size={Size.xs}
-          on:click={(event) => {
-            if (isValidConfiguration()) {
+{#if action}
+  <div class="flex items-center justify-between gap-8">
+    <span>
+      {action?.label}
+    </span>
+    <button
+      class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60"
+      on:click={() => {
+        if (!isConfigurationInProgress) {
+          isConfigurationInProgress = true;
+          reset();
+          inputRef.focus();
+        }
+      }}
+    >
+      <input
+        bind:this={inputRef}
+        bind:value
+        id="shortcutInput"
+        class="bg-transparent cursor-pointer focus:outline-none w-32 text-fgs2"
+        placeholder="record shortcut"
+        type="text"
+        on:keydown|stopPropagation={onKeydown}
+        on:paste|preventDefault
+      />
+      {#if isConfigurationInProgress}
+        <div class="flex gap-1">
+          <Button
+            tooltip="clear"
+            size={Size.xs}
+            icon="cross"
+            on:click={(event) => {
+              reset();
+              inputRef.focus();
+              event.stopPropagation();
+            }}
+          />
+          <Button
+            tooltip="reset to old value"
+            icon="sync"
+            size={Size.xs}
+            on:click={(event) => {
               isConfigurationInProgress = false;
-              saveShortcut();
-            }
-            event.stopPropagation();
-          }}
-        />
-      </div>
-    {/if}
-  </button>
-</div>
+              value = existingValue;
+              event.stopPropagation();
+            }}
+          />
+          <Button
+            tooltip="accept"
+            icon="check-circle"
+            size={Size.xs}
+            on:click={(event) => {
+              if (isValidConfiguration()) {
+                isConfigurationInProgress = false;
+                saveShortcut();
+              }
+              event.stopPropagation();
+            }}
+          />
+        </div>
+      {/if}
+    </button>
+  </div>
+{/if}
 
 <style>
   #shortcutInput {

@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   import view from "$lib/tidy/stores/view.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { Size } from "$lib/tidy/types/size.enum";
@@ -21,11 +22,7 @@
   // });
 </script>
 
-<div
-  class="w-full {bgClass($userPreferences.theme, 2)} {isInThinMode
-    ? 'h-24'
-    : 'h-12'}"
->
+<div class="w-full {bgClass($appearance, 2)} {isInThinMode ? 'h-24' : 'h-12'}">
   {#if $appStore.appData.leftPanelFooter === "simple" || !$appStore.appData.leftPanelFooter}
     <div
       class="w-full h-full flex {isInThinMode
@@ -36,7 +33,7 @@
         class="flex gap-2 h-full w-full items-center justify-center px-2 {!isInThinMode &&
         isRounded
           ? 'rounded-bl-lg'
-          : ''} {isCpActive ? 'bg-a1' : ''}"
+          : ''} {isCpActive ? 'bg-aps1' : ''}"
         on:click={() => runAction(AppEvent.SETTINGS)}
       >
         <Icon

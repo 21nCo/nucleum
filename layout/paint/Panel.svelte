@@ -6,7 +6,7 @@
   import type { ButtonParams } from "$lib/tidy/types/button.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   export let title: string | undefined = undefined;
   export let titleStyle: TextStyle = TextStyle.PAGE_HEADING;
   export let floatingButton: ButtonParams | undefined = undefined;

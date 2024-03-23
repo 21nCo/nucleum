@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
-  import Element from "$lib/tidy/elements/Element.svelte";
   import { onMount } from "svelte";
   export let progress: number = 0;
   export let size: Size = Size.md;
@@ -25,10 +24,10 @@
 </script>
 
 <div class="relative w-full rounded-full overflow-hidden mb-1 {sizeClasses}">
-  <Element isAction={false} classList="absolute w-full h-full bg-bgs4" />
+  <!-- <Element isAction={false} classList="absolute w-full h-full bg-bgs4" /> -->
   <!-- <div class="absolute bg-bgs3 w-full h-full" /> -->
   <div
-    class="relative z-10 h-full bg-a1 rounded-full"
+    class="relative z-10 h-full bg-aps1 rounded-full"
     style="width: {progress * 100}%"
   />
 </div>

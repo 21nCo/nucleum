@@ -22,8 +22,8 @@
 <div class="flex flex-col gap-1 items-center">
   <button
     on:click
-    class={classList + (isActive ? " bg-a1 text-bgs1" : " bg-bgs2 text-fgs3")}
+    class={classList + (isActive ? " bg-aps1 text-bgs1" : " bg-bgs2 text-fgs3")}
     >Abc</button
   >
-  <div class={isActive ? "text-a1" : "text-fgs3"}>{label}</div>
+  <div class={isActive ? "text-aps1" : "text-fgs3"}>{label}</div>
 </div>

@@ -8,9 +8,9 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import OptionSelectorItem from "./OptionSelectorItem.svelte";
-  import FormControlLabelWrapper from "../input/FormControlLabelWrapper.svelte";
+  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   const dispatch = createEventDispatcher();
   export let items: SwitchItem[];
   export let label: string = "";
@@ -20,7 +20,7 @@
   export let style: OptionSelectorStyle = OptionSelectorStyle.TRAIN;
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let labelOrientation: Orientation = Orientation.Vertical;
-  export let info: InfoTextParams | undefined = undefined;
+  export let info: FormLabelInfoTooltip | undefined = undefined;
   let classList: string = " flex w-full ";
   onMount(() => {
     if (selected === undefined) selected = items[0].label;

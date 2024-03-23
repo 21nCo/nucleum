@@ -11,6 +11,7 @@
   import { IconVariant } from "$lib/tidy/types/icon.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -219,7 +220,7 @@
       on:keyup|stopPropagation={() => dispatch("search")}
       class={`outline-none w-full py-2 px-2.5 text-b2 ${
         hideSearchIcon && !icon ? `` : `pl-8`
-      } ${inputClassList} ` + bgClass($userPreferences.theme, 1)}
+      } ${inputClassList} ` + bgClass($appearance, 1)}
       {placeholder}
       aria-label="Search"
       aria-describedby="search-addon"

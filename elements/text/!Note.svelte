@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
@@ -14,6 +14,6 @@
   )} rounded-md w-full"
 >
   <Icon icon="info" size={Size.sm} />
-  <!-- <strong>Note</strong> -->
+  <strong>Note</strong>
   {note}
-</div>
+</div> -->

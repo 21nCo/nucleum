@@ -3,8 +3,9 @@
   import view from "$lib/tidy/stores/view.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { bgClass, textColorClass } from "$lib/tidy/utils/theme.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let item: string;
   export let size: Size;
   export let isActive: boolean = false;
@@ -45,10 +46,7 @@
       />
     {:else}
       <button
-        class="absolute w-full {bgClass(
-          $userPreferences.theme,
-          2
-        )} left-0 -bottom-1 z-10"
+        class="absolute w-full {bgClass($appearance, 2)} left-0 -bottom-1 z-10"
         style="height: 5%;"
       />
     {/if}
@@ -87,7 +85,7 @@
         : size === Size.sm
           ? 'text-b2'
           : 'text-base'} {textColorClass(
-        $userPreferences,
+        $appearance,
         ColorStrength.Normal,
         isActive,
         activeColor

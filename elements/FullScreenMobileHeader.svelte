@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "../stores/app.store";
-  import { bgClass } from "../utils/theme.utils";
+  import { appStore } from "../stores/app.store";
+  import BackgroundElement from "./style/BackgroundElement.svelte";
 </script>
 
 <button
@@ -9,6 +9,6 @@
     appStore.hideFullScreenPlayer();
   }}
 >
-  <div class="h-1 w-1/3 rounded-full {bgClass($userPreferences.theme, 1)}" />
+  <BackgroundElement classList="h-1 w-1/3 rounded-full" />
   <!-- <Icon icon="collapse" color="fgs2" /> -->
 </button>

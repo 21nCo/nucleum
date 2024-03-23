@@ -1,11 +1,7 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import {
-    appStore,
-    tailwindTheme,
-    userPreferences
-  } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { runDboUpdate } from "$lib/tidy/utils/account.utils";
@@ -15,6 +11,7 @@
   import { runAction } from "$lib/tidy/utils/utils";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { logger } from "$lib/tidy/stores/log.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   let environment: string;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
@@ -53,7 +50,13 @@
       value={$view.landscapiness.toFixed(2)}
     />
     <DebugInfoItem label="Scale" value={$view.scale.toFixed(2)} />
-    <DebugInfoItem label="Theme" value={$tailwindTheme} />
+    <DebugInfoItem label="Skin" value={$appearance.skin} />
+    <DebugInfoItem
+      label="Theme & Color scheme"
+      value={$appearance.theme +
+        "  " +
+        $appearance.colorScheme.tailwindSelector}
+    />
     <DebugInfoItem label="Portrait mode" value={$view.isPortrait} />
     <DebugInfoItem
       label="Last run change id"
@@ -130,7 +133,7 @@
   </div>
 {/if}
 {#if environment}
-  <div class="fixed right-0 top-20 text-bgs1 z-50 w-20 px-2 bg-a1 opacity-30">
+  <div class="fixed right-0 top-20 text-bgs1 z-50 w-20 px-2 bg-aps1 opacity-30">
     {environment}
   </div>
 {/if}

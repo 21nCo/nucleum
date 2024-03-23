@@ -2,10 +2,10 @@
   import {
     TimePeriodType,
     TimeScale,
-    type TimePeriodValue,
+    type TimePeriodValue
   } from "$lib/tidy/types/time.type";
   import { timePeriodLabel } from "$lib/tidy/utils/time.utils";
-  import FormControlLabel from "../text/FormControlLabel.svelte";
+  import FormControlLabel from "$lib/tidy/elements/text/formLabel/FormControlLabel.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let selectedScale: TimeScale;
@@ -14,10 +14,10 @@
     selectedScale === TimeScale.DAYS
       ? [0, -1, -7, -14, -30]
       : selectedScale === TimeScale.WEEKS
-      ? [0, -1, -4, -8, -12]
-      : selectedScale === TimeScale.MONTHS
-      ? [0, -1, -3, -6, -12]
-      : [0, -1, -2, -3];
+        ? [0, -1, -4, -8, -12]
+        : selectedScale === TimeScale.MONTHS
+          ? [0, -1, -3, -6, -12]
+          : [0, -1, -2, -3];
 </script>
 
 {#if value.type === TimePeriodType.RELATIVE}
@@ -26,7 +26,7 @@
     {#each segemets as item}
       <button
         class="rounded-md px-4 py-2 w-48 {item == value.param
-          ? 'bg-a1 text-bgs1'
+          ? 'bg-aps1 text-bgs1'
           : 'bg-bgs2'}"
         on:click={() => {
           value.type = TimePeriodType.RELATIVE;
@@ -38,8 +38,8 @@
           scale: selectedScale,
           value: {
             type: TimePeriodType.RELATIVE,
-            param: item,
-          },
+            param: item
+          }
         })}
       </button>
     {/each}

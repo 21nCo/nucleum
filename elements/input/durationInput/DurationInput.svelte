@@ -1,13 +1,13 @@
 <script lang="ts">
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import { TimeUnit } from "$lib/tidy/types/time.type";
-  import FormControlLabelWrapper from "../FormControlLabelWrapper.svelte";
+  import FormControlLabelWrapper from "../../text/formLabel/FormControlLabelWrapper.svelte";
   import TextInputWithDropdown from "./TextInputWithDropdown.svelte";
   export let parentBackgroundIndex: number = 1;
   export let value: number;
   export let label: string | undefined = undefined;
-  export let info: InfoTextParams | undefined = undefined;
+  export let info: FormLabelInfoTooltip | undefined = undefined;
   export let labelOrientation: Orientation = Orientation.Vertical;
   let inputTextBox: any;
   let units: TimeUnit[] = [TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS];

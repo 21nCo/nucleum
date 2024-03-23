@@ -1,11 +1,12 @@
-import type { AppTheme, ColorScheme } from "$lib/tidy/types/theme.type";
+import type { AppSkin, Theme } from "$lib/tidy/types/appearance.type";
 import type { TimeScale } from "./time.type";
 import type { avatarWithCode, avatarWithURL } from "./iconPicker.type";
 import type { CacheableStore } from "./data.type";
 export type UserGlobalPreferences = CacheableStore & {
   nickName: string;
-  theme: AppTheme;
-  colorScheme: ColorScheme;
+  // theme: AppSkin;
+  // colorScheme: ColorScheme;
+  appearance: UserAppearanceSettings;
   birthday?: Date;
   dayStartHour: number;
   dayStartMinute: number;
@@ -42,4 +43,11 @@ export type KeyboardShortcut = {
 type UiState = {
   isOnboardingComplete?: boolean;
   isInThinMode: boolean;
+};
+
+export type UserAppearanceSettings = {
+  skin: AppSkin;
+  theme: Theme;
+  lightColorSchemeId: string;
+  darkColorSchemeId: string;
 };

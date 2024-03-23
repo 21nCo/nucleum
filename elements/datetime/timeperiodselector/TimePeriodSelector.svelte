@@ -8,8 +8,8 @@
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
-  import FormControlLabel from "../text/FormControlLabel.svelte";
   import TimePeriodValueSelector from "./TimePeriodValueSelector.svelte";
+  import FormControlLabel from "../../text/formLabel/FormControlLabel.svelte";
   const dispatch = createEventDispatcher();
   export let timePeriod: TimePeriod;
   let scales = $userPreferences.timeScales ?? Object.keys(TimeScale);
@@ -28,7 +28,7 @@
     {#each scales as scale}
       <button
         class="rounded-md px-4 py-2 w-40 {TimeScale[selectedScale] === scale
-          ? 'bg-a1 text-bgs1'
+          ? 'bg-aps1 text-bgs1'
           : 'bg-bgs2'}"
         on:click={() => {
           selectedScale = TimeScale[scale];

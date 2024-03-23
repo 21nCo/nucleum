@@ -9,7 +9,7 @@
   export let id: string;
   export let icon: string | undefined = "";
   let classList = `text-b3 border-[1px] rounded-[4px] py-1 px-3 transition-all active:scale-105 border-fgs2`;
-  let activeClassList = "bg-a1 border-a1 text-bgs1 focus:bg-a1";
+  let activeClassList = "bg-aps1 border-a1 text-bgs1 focus:bg-aps1";
   let inActiveClassList = "bg-transparent border-fgs2 text-fgs1";
   let disabledClassList = "bg-bgs2 border-fgs2 text-fgs1 active:scale-100";
 

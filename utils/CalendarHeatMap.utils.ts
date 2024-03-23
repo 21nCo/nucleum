@@ -8,13 +8,13 @@ import {
   CalendarHeatMapData,
   CalendarHeatMapstoreColors,
   plainCSSHMColorIndex5,
-  calendarHmContext,
-  userPreferences
+  calendarHmContext
 } from "../stores/app.store";
 import { get } from "svelte/store";
 import { Persistance } from "../stores/persistance";
 import { isValidArrayWithData } from "./obj.utils";
 import { heatMapColorRange } from "./theme.utils";
+import appearance from "../stores/appearance.store";
 const defaultTarget = null;
 let persistance = new Persistance();
 let profileStartdate = "2023-02-19"; //replace the value with with logs start date variable
@@ -215,7 +215,7 @@ function findHeatandStreak(
   if (!target) target = Math.max(...inputData.data.map((x: any) => x.value));
   if (target === 0) target = 1;
   console.log({ target, data: inputData.data });
-  const colors = heatMapColorRange(get(userPreferences), "aps1", 6);
+  const colors = heatMapColorRange(get(appearance), "aps1", 6);
   plainCSSHMColorIndex5.set(colors[5]);
   console.log({ colors });
   if (

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import FormControlLabel from "../text/FormControlLabel.svelte";
+  import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import ToggleSwitch from "./ToggleSwitch.svelte";
   export let label: string;
   export let checked: boolean = false;

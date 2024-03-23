@@ -1,6 +1,10 @@
-import type { AppTheme, ColorScheme, ColorSchemeSLValues } from "./theme.type";
+import type {
+  AppSkin,
+  ColorScheme,
+  ColorSchemeSLValues
+} from "./appearance.type";
 export type AppConstants = {
-  themes: AppTheme[];
+  themes: AppSkin[];
   colorSchemes: ColorScheme[];
   tempColorSchemes: string[];
   colorSchemeSLConfig: ColorSchemeSLValues[];

@@ -3,7 +3,7 @@
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { resolveNavigationAction } from "$lib/tidy/utils/utils";
   import CpThumbnail from "./CPThumbnail.svelte";
   export let items: string[] = [];

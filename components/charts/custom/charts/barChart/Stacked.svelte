@@ -16,6 +16,7 @@
   import { generateUID } from "$lib/tidy/utils/utils";
   import type { ChartDataPoint } from "$lib/tidy/types/chartDataPoint.type";
   import { scale } from "svelte/transition";
+  import appearance from "$lib/tidy/stores/appearance.store";
 
   export let data: ChartDataPoint[] = [];
   export let options: any;
@@ -660,7 +661,7 @@
               CHART_PADDING.bottom
           : SVGScrollableDimensionLength
       )
-      .attr("stroke", customColor($userPreferences, "fgs1"))
+      .attr("stroke", customColor($appearance, "fgs1"))
       .attr("stroke-width", 1)
       // .attr("stroke-dasharray", "5,5")
       .attr("stroke-opacity", 1);
@@ -901,7 +902,7 @@
           colors[group[0].group] = options.color.scale[group[0].group];
         } else {
           colors[group[0].group] = customColor(
-            $userPreferences,
+            $appearance,
             "a",
             getRandomHue()
           );
@@ -909,11 +910,7 @@
       });
     } else {
       groups.forEach((group: ChartDataPoint[], groupIndex) => {
-        colors[group[0].group] = customColor(
-          $userPreferences,
-          "a",
-          getRandomHue()
-        );
+        colors[group[0].group] = customColor($appearance, "a", getRandomHue());
       });
     }
     paintGraph();

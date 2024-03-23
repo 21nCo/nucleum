@@ -11,12 +11,13 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
 
-  import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
-  import { AppTheme, ColorStrength } from "$lib/tidy/types/theme.type";
+  import { bgClass, borderClass } from "$lib/tidy/utils/theme.utils";
+  import { AppSkin, ColorStrength } from "$lib/tidy/types/appearance.type";
   import { onMount } from "svelte";
   import { resolveUiState, runAction, setUiState } from "$lib/tidy/utils/utils";
   import { UiState } from "$lib/tidy/types/uiState.enum";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import appearance from "$lib/tidy/stores/appearance.store";
   let isMinimized: boolean = false;
   let isInThinMode: boolean = false;
   let headerHeight: number = 150;
@@ -26,7 +27,7 @@
     $userPreferences.uiStates,
     UiState.isInThinMode
   );
-  $: isRounded = $userPreferences.theme === AppTheme.Glassy ? true : false;
+  $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
   onMount(() => {
     if ($view.landscapiness < 1.25) {
       isInThinMode = true;
@@ -49,11 +50,11 @@
         <ComponentResolver path={$appStore.player} />
       {/if}
       <div
-        class=" border-t border-bgs2 w-full min-w-min pb-8 pt-3 {$userPreferences.theme ===
-        AppTheme.Glassy
+        class=" border-t border-bgs2 w-full min-w-min pb-8 pt-3 {$appearance.skin ===
+        AppSkin.Glassy
           ? 'glassmenubar'
-          : bgClass($userPreferences.theme, 0)} {borderColor(
-          $userPreferences.theme,
+          : bgClass($appearance, 0)} {borderClass(
+          $appearance,
           ColorStrength.Subtle
         )}"
       >
@@ -95,7 +96,7 @@
     >
       <div
         class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
-          ? 'rounded-lg ' + bgClass($userPreferences.theme, 1)
+          ? 'rounded-lg ' + bgClass($appearance, 1)
           : 'border-r border-bgs2 bg-bgs2'}"
         style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
       >
@@ -164,7 +165,7 @@
               <div class="text-b3 text-fgs3 mb-4">
                 Press <button
                   class="text-fgs2 px-2 py-0.5 rounded-md {bgClass(
-                    $userPreferences.theme,
+                    $appearance,
                     2
                   )}"
                   on:click={() => runAction(AppEvent.CMD)}>Cmd + K</button

@@ -7,7 +7,7 @@ import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import AccessibilitySettings from "$lib/tidy/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
-import ThemeSettingView from "$lib/tidy/components/settings/appearance/ThemeSettingView.svelte";
+import ThemeSettingView from "$lib/tidy/components/settings/appearance/AppearanceSettings.svelte";
 import SettingsModal from "../components/settings/SettingsModal.svelte";
 import { AppEvent } from "../types/event.enum";
 import { Size } from "../types/size.enum";
@@ -30,8 +30,8 @@ export const settingsAsPages: Action[] = [
   },
   {
     action: "theme",
-    label: "Theme Settings",
-    alternateLabel: "Theme",
+    label: "Appearance Settings",
+    alternateLabel: "Appearance",
     path: "cp/theme",
     icon: "palette",
     type: ActionType.PAGE,
@@ -106,8 +106,8 @@ export const settingsAsModal: Action[] = [
   },
   {
     action: "theme",
-    label: "Theme Settings",
-    alternateLabel: "Theme",
+    label: "Appearance Settings",
+    alternateLabel: "Appearance",
     icon: "palette",
     type: ActionType.MODAL,
     component: ThemeSettingView,

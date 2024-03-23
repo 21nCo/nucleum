@@ -1,18 +1,18 @@
 <script lang="ts">
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
-  import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
+  import FormControlLabel from "$lib/tidy/elements/text/formLabel/FormControlLabel.svelte";
   import {
     DropDownStyle,
-    type DropdownItem,
+    type DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appEvents } from "$lib/tidy/stores/app.store";
   import Check from "$lib/tidy/icons/Check.svelte";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { bgClass } from "$lib/tidy/utils/theme.utils";
+  import BackgroundElement from "../style/BackgroundElement.svelte";
   const dispatch = createEventDispatcher();
   export let options: DropdownItem[];
   export let selected: (string | number)[] = [];
@@ -85,11 +85,9 @@
   </button>
 
   {#if isShowOptions}
-    <div
-      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results {bgClass(
-        $userPreferences.theme,
-        parentBackgroundIndex
-      )}"
+    <BackgroundElement
+      classList="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results"
+      parentBgIndex={parentBackgroundIndex}
     >
       {#each options as item, index}
         <button
@@ -112,7 +110,7 @@
           </div>
         </button>
       {/each}
-    </div>
+    </BackgroundElement>
   {/if}
 </div>
 

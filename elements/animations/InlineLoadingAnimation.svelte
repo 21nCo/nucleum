@@ -1,5 +1,6 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   import { resolveIfActiveFgFg } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   export let variant: "accent-background" | "bg-background" =
@@ -11,7 +12,7 @@
   let squareML: any;
   let circleMT: any;
   let ranOnce: boolean = false;
-  $: isActiveFgFg = resolveIfActiveFgFg(-1, $userPreferences);
+  $: isActiveFgFg = resolveIfActiveFgFg(-1, $appearance);
   $: circleFill =
     variant === "accent-background" && isActiveFgFg ? "fill-fgs1" : "fill-bgs1";
   $: squareBorder =

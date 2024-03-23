@@ -1,14 +1,12 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import account from "$lib/tidy/stores/account.store";
-  import view from "$lib/tidy/stores/view.store";
   import { LicenseType } from "$lib/tidy/types/account.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
-  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { formatDate } from "$lib/tidy/utils/time.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
+  import BackgroundElement from "$lib/tidy/elements/style/BackgroundElement.svelte";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
   function determineLicense() {
@@ -33,11 +31,11 @@
   }
 </script>
 
-<div
-  class="h-40 min-h-[10rem] {bgClass(
-    $userPreferences.theme,
-    parentBackgroundIndex
-  )} {context === 'page' ? 'mx-4 rounded-lg' : 'w-full'}"
+<BackgroundElement
+  classList="h-40 min-h-[10rem] {context === 'page'
+    ? 'mx-4 rounded-lg'
+    : 'w-full'}"
+  parentBgIndex={parentBackgroundIndex}
 >
   {#if $account.isLoggedIn}
     <button
@@ -94,4 +92,4 @@
       </div>
     </div>
   {/if}
-</div>
+</BackgroundElement>

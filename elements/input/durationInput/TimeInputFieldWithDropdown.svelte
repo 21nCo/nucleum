@@ -4,15 +4,16 @@
   import TimeSuggestionsItem from "./TimeSuggestionsItem.svelte";
   import { TimeUnit, type TimeSuggestion } from "$lib/tidy/types/time.type";
   import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { getTimeLabel } from "$lib/tidy/utils/time.utils";
   import {
-    borderColor,
+    borderClass,
     resolveBackgroundClass
   } from "$lib/tidy/utils/theme.utils";
   import { roundOffToNdigitsAfterDecimal } from "$lib/local/utils/local.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
   //todo - move clickoutside and pointron local code to tidy lib
   export let value: any;
   export let currentTimeUnit: TimeUnit;
@@ -28,7 +29,7 @@
   let inputRef: any;
   let inputClasses: string =
     "w-full rounded-l-sm bg-transparent border-2 text-base p-2 focus:border-aps1 focus:outline-none " +
-    borderColor($userPreferences.theme);
+    borderClass($appearance);
 
   let changeTimer: any;
   let changeElapsedTime: number = 0;

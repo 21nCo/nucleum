@@ -12,7 +12,7 @@
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
-  import FormControlLabel from "../text/FormControlLabel.svelte";
+  import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import Autocomplete from "./Autocomplete.svelte";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";

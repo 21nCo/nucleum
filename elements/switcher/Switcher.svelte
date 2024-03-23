@@ -2,19 +2,20 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import {
     SelectionItemActiveStyle,
-    SwitcherStyle,
+    SwitcherStyle
   } from "$lib/tidy/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import SwitchItem from "./SwitchItem.svelte";
   import {
     customColorStyle,
-    resolveBackgroundClass,
+    resolveBackgroundClass
   } from "$lib/tidy/utils/theme.utils";
   import { userPreferences } from "$lib/tidy/stores/app.store";
-  import { ColorType } from "$lib/tidy/types/theme.type";
+  import { ColorType } from "$lib/tidy/types/appearance.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import FormControlLabelWrapper from "../input/FormControlLabelWrapper.svelte";
-  import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
+  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
+  import appearance from "$lib/tidy/stores/appearance.store";
 
   const dispatch = createEventDispatcher();
   export let items: string[];
@@ -26,7 +27,7 @@
   export let style: SwitcherStyle = SwitcherStyle.HorizontalAndWraps;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
-  export let infoParams: InfoTextParams | undefined = undefined;
+  export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
   export let labelOrientation: Orientation = Orientation.Vertical;
@@ -97,12 +98,7 @@
           }}
           class="flex rounded-full gap-2 py-3 px-4 {backgroundColor}"
           style={selectedIndex === index
-            ? customColorStyle(
-                $userPreferences,
-                ColorType.Bg,
-                "a1",
-                activeColor
-              )
+            ? customColorStyle($appearance, ColorType.Bg, "a1", activeColor)
             : ""}
         >
           {item}

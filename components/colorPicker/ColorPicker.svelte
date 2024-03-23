@@ -4,20 +4,17 @@
   import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
   import ColorSlider from "./ColorSlider.svelte";
-  import {
-    appConstants,
-    appStore,
-    userPreferences
-  } from "$lib/tidy/stores/app.store";
+  import { appConstants, appStore } from "$lib/tidy/stores/app.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let hue = 0;
   export let isShowPreview: boolean = false;
   let saturation = 50;
   let lightness = 50;
   let isDark: boolean = false;
-  $: isDark = $userPreferences.colorScheme.isDark;
+  $: isDark = $appearance.colorScheme.isDark;
   onMount(() => {
     let values = resolveSaturationAndLightness(
-      $userPreferences,
+      $appearance,
       appConstants.colorSchemeSLConfig
     );
     if (values) {

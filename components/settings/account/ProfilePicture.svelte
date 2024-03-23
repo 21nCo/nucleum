@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import account from "$lib/tidy/stores/account.store";
   import { isValidString } from "$lib/tidy/utils/text.utils";
-  import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { onMount } from "svelte";
+  import BackgroundElement from "$lib/tidy/elements/style/BackgroundElement.svelte";
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
@@ -43,11 +42,9 @@
   }
 </script>
 
-<div
-  class="w-20 h-20 rounded-full flex justify-center items-center {bgClass(
-    $userPreferences.theme,
-    2
-  )}"
+<BackgroundElement
+  classList="w-20 h-20 rounded-full flex justify-center items-center"
+  parentBgIndex={2}
 >
   {#if initials}
     <div class="text-h3 text-fgs3">{initials}</div>
@@ -58,4 +55,4 @@
       alt="Profile picture"
     />
   {/if}
-</div>
+</BackgroundElement>

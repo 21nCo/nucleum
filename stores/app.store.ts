@@ -6,7 +6,11 @@ import {
   runAction,
   setUiState
 } from "$lib/tidy/utils/utils";
-import { AppTheme, type ColorSchemeSLValues } from "$lib/tidy/types/theme.type";
+import {
+  AppSkin,
+  Theme,
+  type ColorSchemeSLValues
+} from "$lib/tidy/types/appearance.type";
 import {
   LaunchContext,
   type AppStore,
@@ -14,7 +18,10 @@ import {
 } from "$lib/tidy/types/appStore.type";
 import type { DragAndDrop } from "$lib/tidy/types/draganddrop.type";
 import { DragStatus } from "$lib/tidy/types/dragstatus.enum";
-import type { UserGlobalPreferences } from "$lib/tidy/types/preferences.type";
+import type {
+  UserAppearanceSettings,
+  UserGlobalPreferences
+} from "$lib/tidy/types/preferences.type";
 import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
@@ -198,9 +205,8 @@ const isExperimentalMode =
 
 const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
 
-let themes = [AppTheme.Clean, AppTheme.Glassy];
-if (isDebugMode)
-  themes = themes.concat([AppTheme.Vibrant, AppTheme.Futuristic]);
+let themes = [AppSkin.Clean, AppSkin.Glassy];
+if (isDebugMode) themes = themes.concat([AppSkin.Vibrant, AppSkin.Futuristic]);
 export const appConstants = {
   themes,
   colorSchemes,
@@ -209,11 +215,12 @@ export const appConstants = {
 };
 
 const userPreferencesId = "kv:" + Item.globalPreferences;
-const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
-export const tailwindTheme = writable<string>(
-  locallySyncedTailwindTheme || "clean cs_tidigit_light_blue"
-);
+// const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
+// export const tailwindTheme = writable<string>(
+//   locallySyncedTailwindTheme || "clean cs_tidigit_light_blue"
+// );
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
+const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 
 export const seedUserPreferences: UserGlobalPreferences = {
   id: userPreferencesId,
@@ -228,9 +235,12 @@ export const seedUserPreferences: UserGlobalPreferences = {
   timeFormat: "meridian",
   timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
   isAnonymousAnalyticsEnabled: true,
-  colorScheme:
-    colorSchemes.find((cs) => cs.id == defaultColorSchemeId) ?? colorSchemes[0],
-  theme: AppTheme.Clean,
+  appearance: {
+    skin: AppSkin.Clean,
+    theme: Theme.SYSTEM,
+    lightColorSchemeId: defaultColorSchemeId,
+    darkColorSchemeId: defaultDarkColorSchemeId
+  },
   uiStates: {
     all: {
       isOnboardingComplete: false,
@@ -320,23 +330,20 @@ function initUserPreferences() {
       set(newValue);
       if (!objIsEmpty(changedProperties)) persist(changedProperties);
     },
-    setTheme: (theme: AppTheme, colorScheme: string) => {
-      const colorSchemes = appConstants.colorSchemes;
-      let cs = colorSchemes.find((cs) => cs.id == colorScheme);
-      if (!cs) cs = colorSchemes[0];
-      console.log("setting theme", { theme, cs });
-      set({
-        ...get(userPreferences),
-        theme,
-        colorScheme: cs
-      });
-    },
     setUiStates: (uiStates: any) => {
       set({
         ...get(userPreferences),
         uiStates
       });
       persist({ uiStates });
+    },
+    setAppearance: (x: UserAppearanceSettings) => {
+      update((n: UserGlobalPreferences) => {
+        const appearance = { ...n.appearance, ...x };
+        n.appearance = appearance;
+        persist({ appearance });
+        return n;
+      });
     }
   };
 }
@@ -417,9 +424,8 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
         n.fullScreenComponentPath = undefined;
@@ -429,9 +435,8 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(
-            n.fullScreenComponentPath
-          )?.associatedPlayer;
+          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
+            ?.associatedPlayer;
         }
         return n;
       });

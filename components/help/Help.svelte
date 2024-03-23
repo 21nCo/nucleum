@@ -11,6 +11,7 @@
   import { ActionType, type Action } from "$lib/tidy/types/action.type";
   import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
+  import NavigationHeader from "$lib/tidy/elements/NavigationHeader.svelte";
   let pageAction: Action | null = null;
   let config = [
     {
@@ -56,19 +57,12 @@
 <div class="flex flex-col gap-6 w-full h-full p-8 pb-12">
   {#if pageAction}
     <div class="flex flex-col gap-1 h-full">
-      <div class="flex justify-between h-10">
-        <BackButton
-          text="Back"
-          on:click={() => {
-            pageAction = null;
-          }}
-        />
-        <Text
-          content={pageAction.label ?? ""}
-          style={TextStyle.PANEL_HEADING}
-        />
-        <div class="w-10 opacity-0"></div>
-      </div>
+      <NavigationHeader
+        label={pageAction.label ?? ""}
+        backCallback={() => {
+          pageAction = null;
+        }}
+      />
       <ComponentResolver action={pageAction} />
     </div>
   {:else}

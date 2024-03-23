@@ -21,7 +21,7 @@
   bind:this={parentElement}
   class="flex relative overflow-hidden px-2 {isCentered
     ? 'justify-center'
-    : ''} text-a1"
+    : ''} text-aps1"
   style="width: {width}px; height: {childElement?.offsetHeight}px;"
 >
   {#each roll as text, i}

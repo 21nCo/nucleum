@@ -1,8 +1,8 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/tidy/components/markdown/markdown.utils";
-  import type { InfoTextParams } from "$lib/tidy/types/text.type";
+  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   export let tooltip: string | undefined = undefined;
-  export let info: InfoTextParams | undefined = undefined;
+  export let info: FormLabelInfoTooltip | undefined = undefined;
   export let variant: "v1" | "v2" = "v1";
 </script>
 
@@ -16,7 +16,7 @@
       </div>
       {#if info.link}
         <a
-          class="text-b4 font-medium text-a1 hover:opacity-80"
+          class="text-b4 font-medium text-aps1 hover:opacity-80"
           href={info.link}
           target="_blank"
           rel="noopener noreferrer"

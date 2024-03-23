@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { resolveBackgroundClass, bgClass } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
+  import appearance from "$lib/tidy/stores/appearance.store";
   const dispatch = createEventDispatcher();
   export let items: string[];
   export let selected: string | undefined = undefined;
@@ -32,11 +32,11 @@
         if (size === Size.md) {
           classList +=
             " min-w-fit border-2 border-brs3 rounded-full " +
-            bgClass($userPreferences.theme, parentBackgroundIndex);
+            bgClass($appearance, parentBackgroundIndex);
         } else if (size === Size.sm) {
           classList +=
             " min-w-fit rounded-md border border-brs3 " +
-            bgClass($userPreferences.theme, parentBackgroundIndex);
+            bgClass($appearance, parentBackgroundIndex);
         }
         break;
       case PanelSwitcherStyle.DEFAULT:

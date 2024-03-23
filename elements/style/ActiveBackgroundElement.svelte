@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
-  import { ColorStrength, ColorType } from "$lib/tidy/types/theme.type";
+  import appearance from "$lib/tidy/stores/appearance.store";
+  import { ColorStrength, ColorType } from "$lib/tidy/types/appearance.type";
   import {
-    bgfgClasses,
+    bgClass,
     customColorShade,
     customColorStyle,
+    textColorClass
   } from "$lib/tidy/utils/theme.utils";
   export let bgWhenInactive: number = 0;
   export let isBackgroundActive: boolean = false;
@@ -15,19 +16,33 @@
   export let classList: string = "";
   export let styles: string = "";
   export let tabindex: number = 0;
-  $: preferences = $userPreferences;
+
+  function bgfgClasses(
+    parentBackgroundIndex: number = 1,
+    isActive: boolean = false,
+    textColorStrength: ColorStrength = ColorStrength.Normal,
+    bgColorHue: number | undefined
+  ) {
+    const background = bgClass($appearance, parentBackgroundIndex, isActive);
+    const foreground = textColorClass(
+      $appearance,
+      textColorStrength,
+      isActive,
+      bgColorHue
+    );
+    return `${background} ${foreground}`;
+  }
 </script>
 
 <button
   class="{classList} {bgfgClasses(
-    preferences,
     bgWhenInactive - 1,
     isBackgroundActive,
     fgColorStrength,
     color
   )}"
   style={customColorStyle(
-    $userPreferences,
+    $appearance,
     isBackgroundActive && isIncludeActiveBorder
       ? [ColorType.Bg, ColorType.Border]
       : isBackgroundActive
@@ -35,16 +50,11 @@
         : isActivateFgWhenBgInactive
           ? ColorType.Fg
           : ColorType.None,
-    isBackgroundActive ? "a1" : "fgs1",
+    isBackgroundActive ? "aps1" : "fgs1",
     color
   ) +
     (bgWhenInactive === -1 && !isBackgroundActive
-      ? `background-color: ${customColorShade(
-          $userPreferences,
-          "bgs2",
-          color,
-          1
-        )}`
+      ? `background-color: ${customColorShade($appearance, "bgs2", color, 1)}`
       : "") +
     ";" +
     styles}

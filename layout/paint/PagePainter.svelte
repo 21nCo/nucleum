@@ -8,7 +8,7 @@
     ThinModeBehavior
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
-  import WithPanelOnLeft from "./painters/WithPanelOnLeft.svelte";
+  import WithPanelOnLeft from "./painters/!WithPanelOnLeft.svelte";
   import {
     appStore,
     excludedPathsForRedirectionCheck
@@ -144,7 +144,7 @@
   }
 </script>
 
-{#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
+<!-- {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
   {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$view.isPortrait}
     <WithPanelOnLeft {currentComponent} />
   {:else}
@@ -161,26 +161,26 @@
       {/if}
     </div>
   {/if}
-{:else}
-  <div class="flex flex-col gap-4 w-full h-full">
-    {#if $view.isPortrait && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
-      <Button
-        label="go back"
-        size={Size.sm}
-        on:click={() => {
-          view.gotoPath(
-            "/" +
-              (parentComponent?.pagePaint === PaintType.YMENU
-                ? parentComponent?.path
-                : grandPa?.path),
-            { replaceState: true }
-          );
-        }}
-      />
-    {/if}
-    <!-- {#if currentComponent?.label}
+{:else} -->
+<div class="flex flex-col gap-4 w-full h-full">
+  {#if $view.isPortrait && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
+    <Button
+      label="go back"
+      size={Size.sm}
+      on:click={() => {
+        view.gotoPath(
+          "/" +
+            (parentComponent?.pagePaint === PaintType.YMENU
+              ? parentComponent?.path
+              : grandPa?.path),
+          { replaceState: true }
+        );
+      }}
+    />
+  {/if}
+  <!-- {#if currentComponent?.label}
       <Text type={TextType.PAGE_HEADING}>{currentComponent.label}</Text>
     {/if} -->
-    <ComponentResolver action={currentComponent} />
-  </div>
-{/if}
+  <ComponentResolver action={currentComponent} />
+</div>
+<!-- {/if} -->

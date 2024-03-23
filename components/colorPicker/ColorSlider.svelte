@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { appConstants, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appConstants } from "$lib/tidy/stores/app.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
 
@@ -13,7 +14,7 @@
     dispatch("value-change", hue);
   };
   let values = resolveSaturationAndLightness(
-    $userPreferences,
+    $appearance,
     appConstants.colorSchemeSLConfig
   );
   if (values) {

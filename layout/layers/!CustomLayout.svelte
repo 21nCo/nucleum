@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import {
     appEvents,
     appStore,
@@ -118,4 +118,4 @@
     /* border: 1px solid white; */
     backdrop-filter: blur(25px);
   }
-</style>
+</style> -->

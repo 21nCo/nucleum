@@ -14,7 +14,8 @@
     resolveIfActiveFgFg,
     textColorClass
   } from "$lib/tidy/utils/theme.utils";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
+  import appearance from "$lib/tidy/stores/appearance.store";
   const dispatch = createEventDispatcher();
   export let item: Action;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -47,10 +48,10 @@
     : 'p-4 rounded-full'} {isActive &&
     (layoutContext === LayoutContext.DEFAULT ||
       layoutContext === LayoutContext.MINIMIZED) &&
-    'bg-a1'} {isActive && layoutContext === LayoutContext.PORTRAIT
+    'bg-aps1'} {isActive && layoutContext === LayoutContext.PORTRAIT
     ? ' text-aps1'
     : textColorClass(
-        $userPreferences,
+        $appearance,
         ColorStrength.Normal,
         isActive && !(layoutContext === LayoutContext.PORTRAIT),
         -1

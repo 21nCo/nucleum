@@ -22,7 +22,7 @@
   <ActiveBackgroundElement
     classList="{orientation === Orientation.Vertical
       ? 'px-2 py-3 rounded-md'
-      : 'flex px-4 py-2 w-full items-center justify-between'} {orientation ===
+      : 'flex px-4 py-3 w-full items-center justify-between'} {orientation ===
       Orientation.Vertical && width}"
     isBackgroundActive={isActive}
     bgWhenInactive={orientation === Orientation.Vertical

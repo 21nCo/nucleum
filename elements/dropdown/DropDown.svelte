@@ -1,17 +1,18 @@
 <script lang="ts">
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
-  import FormControlLabel from "$lib/tidy/elements/text/FormControlLabel.svelte";
+  import FormControlLabel from "$lib/tidy/elements/text/formLabel/FormControlLabel.svelte";
   import {
     DropDownStyle,
     type DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appEvents } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { bgClass } from "$lib/tidy/utils/theme.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
+  import BackgroundElement from "../style/BackgroundElement.svelte";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
   export let value: string | number;
@@ -28,8 +29,8 @@
     if (isActive) {
       classList = "relative flex flex-col items-start gap-1 w-full";
       classList +=
-        " bg-a1" +
-        (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
+        " bg-aps1" +
+        (!$appearance.colorScheme.isActiveFgFg ? " text-bgs1" : "");
     } else classList = "relative flex flex-col items-start gap-1 w-full";
     classList = classList;
   }
@@ -75,11 +76,9 @@
   </button>
 
   {#if isShowOptions}
-    <div
-      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results {bgClass(
-        $userPreferences.theme,
-        parentBackgroundIndex
-      )}"
+    <BackgroundElement
+      classList="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results"
+      parentBgIndex={parentBackgroundIndex}
     >
       {#each items as item, index}
         <button
@@ -103,7 +102,7 @@
           </div>
         </button>
       {/each}
-    </div>
+    </BackgroundElement>
   {/if}
 </div>
 

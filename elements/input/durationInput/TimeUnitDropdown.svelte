@@ -2,12 +2,13 @@
   import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import type { TimeUnit } from "$lib/tidy/types/time.type";
-  import { borderColor } from "$lib/tidy/utils/theme.utils";
+  import { borderClass } from "$lib/tidy/utils/theme.utils";
   import { actIfClickedOutside } from "$lib/tidy/utils/utils";
   import TimeUnitItem from "./TimeUnitItem.svelte";
   import { createEventDispatcher } from "svelte";
+  import appearance from "$lib/tidy/stores/appearance.store";
 
   export let units: TimeUnit[];
   export let currentTimeUnit: TimeUnit;
@@ -16,7 +17,7 @@
   let selectedIndex: number = -1; // -1 means no item is selected
   let unitClasses: string =
     "border-2 rounded-sm py-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none " +
-    borderColor($userPreferences.theme);
+    borderClass($appearance);
   const containerId = "units-dropdown-container";
 
   const dispatch = createEventDispatcher();

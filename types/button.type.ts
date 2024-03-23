@@ -30,6 +30,6 @@ export enum ButtonVariant {
 
 export enum LinkVariant {
   DEFAULT = "default",
-  INLINE = "inline",
+  DOTTED = "dotted",
   ARROW = "arrow"
 }

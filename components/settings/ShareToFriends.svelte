@@ -1,15 +1,13 @@
 <script>
   import CopyableText from "$lib/tidy/elements/text/CopyableText.svelte";
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import account from "$lib/tidy/stores/account.store";
-  import { bgClass } from "$lib/tidy/utils/theme.utils";
+  import BackgroundElement from "$lib/tidy/elements/style/BackgroundElement.svelte";
 </script>
 
 <div class="w-full h-full flex justify-center">
-  <div
-    class="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40 {bgClass(
-      $userPreferences.theme
-    )}"
+  <BackgroundElement
+    classList="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40"
   >
     <div>
       Refer your friends to Pointron to help them focus on their work and
@@ -23,5 +21,5 @@
           ($account.userId ? $account.userId : "appuser")}
       />
     </div>
-  </div>
+  </BackgroundElement>
 </div>

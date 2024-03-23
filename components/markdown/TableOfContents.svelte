@@ -44,7 +44,7 @@
       {#each headingBlocks as block}
         <a
           href="#{block.id.slice(4)}"
-          class="block text-base hover:text-bgs4 hover:bg-a1 truncate"
+          class="block text-base hover:text-bgs4 hover:bg-aps1 truncate"
           style="padding-left: {block.HEADING * 15}px;">{block.content}</a
         >
       {/each}

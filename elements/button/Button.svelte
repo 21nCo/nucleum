@@ -4,7 +4,6 @@
   import Icon from "../Icon.svelte";
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
   import { bgClass, retrieveCurrentColors } from "../../utils/theme.utils";
-  import { userPreferences } from "../../stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import {
@@ -14,6 +13,7 @@
   import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -35,7 +35,7 @@
   let toolTipRef: any;
   let buttonRef: any;
   export let isHovering: boolean = false;
-  let currentColors = retrieveCurrentColors($userPreferences);
+  let currentColors = retrieveCurrentColors($appearance);
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
   let classList: string;
@@ -131,14 +131,13 @@
       classList += " hover:opacity-90";
       if (style != ButtonStyle.PLAIN) {
         classList +=
-          " bg-a1" +
-          (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
+          " bg-aps1" +
+          (!$appearance.colorScheme.isActiveFgFg ? " text-bgs1" : "");
       }
     } else if (type == "secondary") {
-      classList += " text-fgs2 hover:text-a1";
+      classList += " text-fgs2 hover:text-aps1";
       if (style != ButtonStyle.PLAIN) {
-        classList +=
-          " " + bgClass($userPreferences.theme, parentBackgroundIndex);
+        classList += " " + bgClass($appearance, parentBackgroundIndex);
       }
     } else if (type == "danger") {
       classList += " hover:opacity-90";
@@ -147,7 +146,7 @@
       } else if (style != ButtonStyle.PLAIN) {
         classList +=
           " bg-ars1" +
-          (!$userPreferences.colorScheme.isActiveFgFg ? " text-bgs1" : "");
+          (!$appearance.colorScheme.isActiveFgFg ? " text-bgs1" : "");
       }
     } else if (type == "tertiary") {
       classList += " text-bgs1 hover:opacity-90";
@@ -189,11 +188,11 @@
       {icon}
       {size}
       color={type === ButtonVariant.DANGER && style === ButtonStyle.OUTLINED
-        ? currentColors.ar
-        : type != "secondary" && !$userPreferences.colorScheme.isActiveFgFg
+        ? currentColors.ars1
+        : type != "secondary" && !$appearance.colorScheme.isActiveFgFg
           ? currentColors.bgs1
           : (isHovering && type == "secondary") || isStayActive
-            ? currentColors.a1
+            ? currentColors.aps1
             : type === "secondary"
               ? currentColors.fgs2
               : currentColors.fgs1}

@@ -2,11 +2,12 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import FormControlLabel from "../text/FormControlLabel.svelte";
+  import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
-  import { bgClass, borderColor } from "$lib/tidy/utils/theme.utils";
+  import { bgClass, borderClass } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -44,10 +45,9 @@
     if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
       inputClasses += " bg-transparent";
     } else if (style === TextInputStyle.WITH_BACKGROUND) {
-      inputClasses += ` ${bgClass(
-        $userPreferences.theme,
-        1
-      )} border ${borderColor($userPreferences.theme)} p-2`;
+      inputClasses += ` ${bgClass($appearance, 1)} border ${borderClass(
+        $appearance
+      )} p-2`;
       unitClasses = unitClasses + " p-2";
     }
     if (style == TextInputStyle.WITH_BACKGROUND && units && units.length > 0) {

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
   import { ChartType } from "$lib/tidy/types/analytics.type";
@@ -15,11 +14,12 @@
     GaugeChart,
     type ChartOptions,
     Alignments,
-    PieChart,
+    PieChart
   } from "@carbon/charts-svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
   import { determineCarbonChartTimeInterval } from "$lib/tidy/utils/carbon.utils";
   import { pieLabelFormatter } from "$lib/tidy/utils/carbon.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;
@@ -32,57 +32,55 @@
         scaleType: ScaleTypes.LINEAR,
         stacked: true,
         percentage: additionalOptions?.percentage,
-        thresholds: additionalOptions?.yThresholds,
+        thresholds: additionalOptions?.yThresholds
       },
       bottom: {
         mapsTo: "key",
         scaleType:
           additionalOptions?.xScale && additionalOptions.xScale === "labels"
             ? ScaleTypes.LABELS
-            : ScaleTypes.TIME,
+            : ScaleTypes.TIME
         // ticks: {
         //   formatter: function (date: any) {
         //     return new Date(date).getDate();
         //   },
         //   values: additionalOptions?.xTicks,
         // },
-      },
+      }
     },
     height: "100%",
     width: "100%",
     grid: {
       x: {
-        enabled: false,
+        enabled: false
       },
       y: {
-        enabled: false,
-      },
+        enabled: false
+      }
     },
     resizable: false,
     animations: false,
     bars: {
       width: additionalOptions?.barsWidth ?? 30,
-      maxWidth: 30,
+      maxWidth: 30
     },
     pie: {
       alignment: Alignments.CENTER,
       labels: {
-        formatter: pieLabelFormatter,
-      },
+        formatter: pieLabelFormatter
+      }
     },
     donut: {
-      alignment: Alignments.CENTER,
+      alignment: Alignments.CENTER
     },
-    theme: $userPreferences.colorScheme.isDark
-      ? ChartTheme.G100
-      : ChartTheme.WHITE,
+    theme: $appearance.colorScheme.isDark ? ChartTheme.G100 : ChartTheme.WHITE,
     zoomBar: {
       top: {
-        enabled: false,
-      },
+        enabled: false
+      }
     },
     tooltip: {
-      valueFormatter: (d: any) => d,
+      valueFormatter: (d: any) => d
     },
     legend: {
       enabled: true,
@@ -90,15 +88,15 @@
       clickable: true,
       truncation: {
         // threshold: 50,
-        numCharacter: 20,
-      },
+        numCharacter: 20
+      }
     },
     toolbar: {
-      enabled: false,
-    },
+      enabled: false
+    }
   };
   let options: ChartOptions = defaultOptions;
-  let currentColors = retrieveCurrentColors($userPreferences);
+  let currentColors = retrieveCurrentColors($appearance);
   initializeOptions();
   type === ChartType.STACKEDBAR && console.log({ options, data });
   onMount(() => {
@@ -123,15 +121,15 @@
           timeInterval:
             additionalOptions?.timeInterval &&
             determineCarbonChartTimeInterval(additionalOptions?.timeInterval),
-          timeIntervalFormats: additionalOptions?.timeIntervalFormats,
+          timeIntervalFormats: additionalOptions?.timeIntervalFormats
         },
-        ...additionalOptions,
+        ...additionalOptions
       };
     } else if (type === ChartType.STACKEDAREA) {
       options = {
         ...defaultOptions,
         ...additionalOptions,
-        curve: "curveMonotoneX",
+        curve: "curveMonotoneX"
       };
     } else if (type === ChartType.PIE) {
       options = {
@@ -142,11 +140,11 @@
           center: {
             label: additionalOptions?.donutLabel ?? "",
             number: undefined,
-            numberFormatter: additionalOptions?.donutFormatter,
+            numberFormatter: additionalOptions?.donutFormatter
           },
-          alignment: Alignments.CENTER,
+          alignment: Alignments.CENTER
         },
-        width: "100%",
+        width: "100%"
       };
     } else if (type === ChartType.GUAGE) {
       options = {
@@ -167,16 +165,16 @@
             } else {
               return 2;
             }
-          },
+          }
         },
         legend: {
-          enabled: false,
+          enabled: false
         },
         color: {
           scale: {
-            value: currentColors?.a1!,
-          },
-        },
+            value: currentColors?.aps1!
+          }
+        }
       };
     }
   }

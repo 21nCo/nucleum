@@ -1,5 +1,6 @@
 <script lang="ts">
   import Link from "../elements/text/Link.svelte";
+  import { LinkVariant } from "../types/button.type";
   export let body: string;
   export let actionLabel: string | undefined = undefined;
   export let action: string | undefined = undefined;
@@ -18,7 +19,7 @@
         isSameTab={true}
         label={actionLabel}
         href={action}
-        feedback="underline"
+        variant={LinkVariant.DOTTED}
       />
     </div>
   {/if}

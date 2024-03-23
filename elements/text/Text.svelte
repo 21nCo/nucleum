@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   import view from "$lib/tidy/stores/view.store";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { properCase } from "$lib/tidy/utils/text.utils";
@@ -15,7 +15,7 @@
         classList +=
           ($view.isPortrait ? "text-h2" : "text-h1") +
           "  bg-none font-medium" +
-          (!$userPreferences.colorScheme.isActiveFgFg ? " text-a1" : "");
+          (!$appearance.colorScheme.isActiveFgFg ? " text-aps1" : "");
         break;
       case TextStyle.PAGE_HEADING_SUBTLE:
         classList +=
@@ -45,7 +45,7 @@
   });
 </script>
 
-<button style={customStyle} class={`${classList}`}>
+<div style={customStyle} class={`${classList}`}>
   {properCase(content)}
   <!-- <slot /> -->
-</button>
+</div>

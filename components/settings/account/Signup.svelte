@@ -63,13 +63,13 @@
         <div class="text-b3 text-fgs2 text-center">
           By signing up, you agree to our <Link
             href={$appStore.appData?.urls?.tos}
-            variant={LinkVariant.INLINE}
+            variant={LinkVariant.DOTTED}
             label="Terms of Service"
           />
           and
           <Link
             href={$appStore.appData?.urls?.privacy}
-            variant={LinkVariant.INLINE}
+            variant={LinkVariant.DOTTED}
             label="Privacy Policy"
           />.
         </div>

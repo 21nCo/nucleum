@@ -15,6 +15,7 @@
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import type { ChartDataPoint } from "$lib/tidy/types/chartDataPoint.type";
   import { generateUID } from "$lib/tidy/utils/utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
 
   export let data: ChartDataPoint[] = [];
   export let options: BarChartOptions;
@@ -515,7 +516,7 @@
               CHART_PADDING.bottom
           : SVGScrollableDimensionLength
       )
-      .attr("stroke", customColor($userPreferences, "fgs1"))
+      .attr("stroke", customColor($appearance, "fgs1"))
       .attr("stroke-width", 1)
       // .attr("stroke-dasharray", "5,5")
       .attr("stroke-opacity", 1);
@@ -758,12 +759,12 @@
           //@ts-ignore, we are aware about the type problem here, but we cannot do much about it since the type of scale is provided in the library itself
           colors[group] = options.color.scale[group];
         } else {
-          colors[group] = customColor($userPreferences, "a", getRandomHue());
+          colors[group] = customColor($appearance, "a", getRandomHue());
         }
       });
     } else {
       groups.forEach((group, groupIndex) => {
-        colors[group] = customColor($userPreferences, "a", getRandomHue());
+        colors[group] = customColor($appearance, "a", getRandomHue());
       });
     }
 

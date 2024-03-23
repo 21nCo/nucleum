@@ -788,7 +788,7 @@
       <!--         on:paste={handlePaste} -->
     {/if}
     {#if block.type === NodeType.QUOTE}
-      <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>
+      <div class="absolute top-0 left-0 h-full w-0.5 bg-aps1"></div>
     {/if}
   </div>
 

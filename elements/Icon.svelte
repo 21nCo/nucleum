@@ -103,6 +103,7 @@
   import TableCells from "../icons/TableCells.svelte";
   import GlobeAlt from "../icons/GlobeAlt.svelte";
   import DocumentText from "../icons/DocumentText.svelte";
+  import appearance from "../stores/appearance.store";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -110,8 +111,8 @@
   export let color: string | undefined = undefined; //" text-bgs1";
   export let bgColorHue: number | undefined = undefined;
   export let isOutlineForActive: boolean = false;
-  $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $userPreferences);
-  $: defaultColor = retrieveCurrentColors($userPreferences)?.fgs2 ?? "";
+  $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $appearance);
+  $: defaultColor = retrieveCurrentColors($appearance)?.fgs2 ?? "";
   $: if (icon === "capture") isOutlineForActive = true;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
@@ -163,7 +164,7 @@
               : 'w-4 h-4'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-              ? 'stroke-a1'
+              ? 'stroke-aps1'
               : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
                   !isActiveFgFg
                 ? `stroke-bgs1`
@@ -171,7 +172,7 @@
             : `stroke-fgs3`) + ' stroke-[1.2] fill-none'
         : (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-              ? 'fill-a1'
+              ? 'fill-aps1'
               : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
                   !isActiveFgFg
                 ? `fill-bgs1`
@@ -180,8 +181,8 @@
         SelectionItemActiveStyle.NONE || $view.isPortrait
         ? ''
         : variant === IconVariant.Outline
-          ? ' hover:stroke-a1'
-          : ' hover:fill-a1'}"
+          ? ' hover:stroke-aps1'
+          : ' hover:fill-aps1'}"
       style={!isActive
         ? variant === IconVariant.Outline
           ? `stroke: ${color ?? defaultColor}`

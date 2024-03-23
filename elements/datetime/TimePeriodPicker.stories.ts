@@ -1,5 +1,6 @@
+import { TimeScale } from "$lib/tidy/types/time.type";
 import CustomDatePicker from "./TimePeriodPicker.svelte";
-import { TimeScale } from "../types/time.type";
+
 export default {
   component: CustomDatePicker,
   parameters: { layout: "centered" }

@@ -160,7 +160,7 @@ export const globalActions: Action[] = [
     link: "changelog"
   },
   {
-    action: "roadmap",
+    action: AppEvent.ROADMAP,
     label: "Roadmap",
     icon: "map",
     type: ActionType.MODAL,

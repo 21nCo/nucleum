@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { onMount } from "svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
@@ -11,7 +11,7 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import Divider from "$lib/tidy/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/tidy/types/theme.type";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { isValidArray, sortArrayByOrder } from "$lib/tidy/utils/obj.utils";
   import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   import { retrieveCurrentColors } from "$lib/tidy/utils/theme.utils";
@@ -19,9 +19,12 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import view from "$lib/tidy/stores/view.store";
   import account from "$lib/tidy/stores/account.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
+  import BackButton from "$lib/tidy/elements/button/BackButton.svelte";
+  import NavigationHeader from "$lib/tidy/elements/NavigationHeader.svelte";
   $: isCpHome = $page?.url.pathname === "/cp" || $page?.url.pathname === "/cp/";
   let cpConfiguration: any;
-  let color = retrieveCurrentColors($userPreferences)?.a1;
+  let color = retrieveCurrentColors($appearance)?.aps1;
   onMount(() => {
     appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
@@ -35,22 +38,12 @@
 
 {#if $view.isPortrait && !isCpHome}
   <div class="flex flex-col h-full gap-2 px-4 py-2">
-    <div class="relative flex justify-center w-full h-16 min-h-[4rem]">
-      <button
-        class="absolute left-0 flex gap-1 items-center min-w-fit py-1.5 h-2 text-a1"
-        style="top: 1.75rem;"
-        on:click={() => {
-          view.gotoPath("/cp");
-        }}
-      >
-        <Icon icon="chevleft" size={Size.sm} {color} />
-        <div class="pr-1">Back</div>
-      </button>
-      <Text
-        style={TextStyle.PANEL_HEADING}
-        content={$view.currentComponent?.label ?? ""}
-      />
-    </div>
+    <NavigationHeader
+      label={$view.currentComponent?.label ?? ""}
+      backCallback={() => {
+        view.gotoPath("/cp");
+      }}
+    />
     <div class="flex flex-col flex-grow">
       <slot />
     </div>

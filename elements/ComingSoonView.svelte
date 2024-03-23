@@ -2,6 +2,11 @@
   import RocketLaunch from "../illustrations/RocketLaunch.svelte";
   import { Size } from "../types/size.enum";
   import view from "$lib/tidy/stores/view.store";
+  import Link from "./text/Link.svelte";
+  import { LinkVariant } from "../types/button.type";
+  import Button from "./button/Button.svelte";
+  import { runAction } from "../utils/utils";
+  import { AppEvent } from "../types/event.enum";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
@@ -22,5 +27,14 @@
   </div>
   <div class="text-fgs3 text-center text-b3">
     {subText ?? ""}
+  </div>
+  <div class="text-b3 text-fgs2">
+    <Link
+      on:click={() => {
+        runAction(AppEvent.ROADMAP);
+      }}
+      label="See roadmap"
+      variant={LinkVariant.DOTTED}
+    />
   </div>
 </div>
