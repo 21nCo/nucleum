@@ -3,33 +3,38 @@
   import {
     FeatureWheelMode,
     type FeatureWheelGroup,
-    type FeatureWheelSpoke
+    type FeatureWheelSpoke,
+    type FeatureWheel
   } from "$lib/tidy/types/featureWheel.type";
-  import { memotronWheel } from "./memotronWheel";
-  export let wheel: FeatureWheelGroup[] = [];
-  export let mode: FeatureWheelMode = FeatureWheelMode.PROGRESS;
+  import { Size } from "$lib/tidy/types/size.enum";
+  import SpokeLabel from "./SpokeLabel.svelte";
+  import SpokeProgressMarker from "./SpokeProgressMarker.svelte";
+  import SpokeContemporaries from "./contemporaries/SpokeContemporaries.svelte";
+  export let wheel: FeatureWheel;
+  export let mode: FeatureWheelMode = FeatureWheelMode.CONTEMPORARY;
+  let features: FeatureWheelGroup[] = wheel.features;
   let categoryColoringStyle: "bg" | "spoke" =
-    mode === FeatureWheelMode.PROGRESS ? "spoke" : "bg";
-  let radius = 260;
-
-  wheel = memotronWheel;
+    mode === FeatureWheelMode.PROGRESS || mode === FeatureWheelMode.CONTEMPORARY
+      ? "spoke"
+      : "bg";
+  let radius = 245;
   const emptyDividerSpoke: FeatureWheelSpoke = {
     label: "",
     contemporaries: [],
     isDivider: true
   };
   if (categoryColoringStyle === "bg") {
-    wheel = wheel.map((group) => {
+    features = features.map((group) => {
       group.spokes = [emptyDividerSpoke, ...group.spokes];
       return group;
     });
   }
-  let groupCount = wheel.length;
+  let groupCount = features.length;
   //   let angle = (2 * Math.PI) / groupCount;
   //   let spokeAngle = angle / 3;
 
   // Calculate the total number of spokes
-  let totalSpokes = wheel.reduce(
+  let totalSpokes = features.reduce(
     (total, group) => total + group.spokes.length,
     0
   );
@@ -38,20 +43,21 @@
   let startAngles = [0];
 
   // Fill in the start angles for the rest of the groups
-  for (let i = 1; i < wheel.length; i++) {
+  for (let i = 1; i < features.length; i++) {
     startAngles[i] =
       startAngles[i - 1] +
-      (2 * Math.PI * wheel[i - 1].spokes.length) / totalSpokes;
+      (2 * Math.PI * features[i - 1].spokes.length) / totalSpokes;
   }
 
   // Calculate the angle for each group
-  let groupAngles = wheel.map(
+  let groupAngles = features.map(
     (group) => (2 * Math.PI * group.spokes.length) / totalSpokes
   );
+  let size = totalSpokes > 10 ? Size.xs : Size.md;
 </script>
 
 <svg class="wheel" viewBox="-300 -300 600 600">
-  {#each wheel as group, i (group.label)}
+  {#each features as group, i (group.label)}
     {#if categoryColoringStyle === "bg"}
       <path
         d={`M 0 0 L ${radius * Math.cos(startAngles[i])} ${
@@ -92,15 +98,18 @@
           Math.cos(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
         y2={radius *
           Math.sin(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
-        class={!group.color || spoke.isDivider
-          ? "stroke-fgs2"
-          : categoryColoringStyle === "bg"
-            ? "stroke-bgs2"
-            : ""}
+        class={spoke.isDivider
+          ? "stroke-fgs3"
+          : !group.color
+            ? "stroke-fgs2"
+            : categoryColoringStyle === "bg"
+              ? "stroke-bgs2"
+              : ""}
         stroke={group.color && categoryColoringStyle === "spoke"
           ? `${group.color}`
           : ""}
-        stroke-width="1.5"
+        stroke-width={mode === FeatureWheelMode.CONTEMPORARY ? 1 : 1.5}
+        stroke-dasharray={spoke.isDivider ? "4 2" : ""}
       />
       {#if mode === FeatureWheelMode.PROGRESS}
         <line
@@ -119,86 +128,69 @@
           class="stroke-bgs2"
           stroke-width="1.5"
         />
-        <rect
-          x={radius *
-            (1 - (spoke.progress ?? 0)) *
-            Math.cos(
-              startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-            ) -
-            2}
-          y={radius *
-            (1 - (spoke.progress ?? 0)) *
-            Math.sin(
-              startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-            ) -
-            2}
-          width="20"
-          height="20"
-          class="fill-bgs1"
-        />
-        <text
-          x={radius *
-            (1 - (spoke.progress ?? 0)) *
-            Math.cos(
-              startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-            ) +
-            8}
-          y={radius *
-            (1 - (spoke.progress ?? 0)) *
-            Math.sin(
-              startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-            ) +
-            8}
-          text-anchor="middle"
-          dominant-baseline="middle"
-          class="text-b5 bg-bgs2"
-        >
-          {Math.round((spoke.progress ?? 0) * 100)}%
-        </text>
+        {#if spoke.progress && spoke.progress != 1}
+          <SpokeProgressMarker
+            {size}
+            xCoord={radius *
+              (1 - (spoke.progress ?? 0)) *
+              Math.cos(
+                startAngles[i] + (j / group.spokes.length) * groupAngles[i]
+              )}
+            yCoord={radius *
+              (1 - (spoke.progress ?? 0)) *
+              Math.sin(
+                startAngles[i] + (j / group.spokes.length) * groupAngles[i]
+              )}
+            progress={spoke.progress}
+          />
+        {/if}
+      {:else if mode === FeatureWheelMode.CONTEMPORARY && spoke.contemporaries.length > 0}
+        {#each spoke.contemporaries as contemporary}
+          <SpokeContemporaries
+            xCoord={radius *
+              (1 - (contemporary.value ?? 0)) *
+              Math.cos(
+                startAngles[i] + (j / group.spokes.length) * groupAngles[i]
+              ) +
+              8}
+            yCoord={radius *
+              (1 - (contemporary.value ?? 0)) *
+              Math.sin(
+                startAngles[i] + (j / group.spokes.length) * groupAngles[i]
+              ) +
+              8}
+            {contemporary}
+          />
+        {/each}
       {/if}
-      {#if spoke.isProminent || spoke.isNovel}
-        <rect
-          x={(radius + groupAngles[i] * 40) *
-            Math.cos(
-              startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-            ) -
-            spoke.label.length * 3.5}
-          y={(radius + 20) *
-            Math.sin(
-              startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-            ) -
-            13}
-          width={spoke.label.length * 7}
-          height="25"
-          class="{spoke.isNovel
-            ? 'fill-ags1'
-            : 'fill-bgs1'} stroke-aps1 rounded-md"
-        />
-      {/if}
-      <text
-        x={(radius + groupAngles[i] * 40) *
+      <SpokeLabel
+        {size}
+        {spoke}
+        xCoord={(radius + groupAngles[i] * 40) *
           Math.cos(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
-        y={(radius + 20) *
+        yCoord={(radius + 20) *
           Math.sin(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
-        text-anchor="middle"
-        dominant-baseline="middle"
-        class="text-b4"
-      >
-        {spoke.label}
-      </text>
+      />
     {/each}
   {/each}
-  <foreignObject x="-35" y="-35" class="w-16 h-[3.5rem] bg-bgs1 rounded-full">
-    <SubAtomLogo />
+  <foreignObject x="-20" y="-22" class="w-[2.5rem] h-[2.5rem]">
+    <div
+      class="bg-bgs1 w-full h-full flex justify-center items-center rounded-full"
+    >
+      <SubAtomLogo subatom={wheel.product} />
+      <!-- <div class="hover:text-b3 text-aps1">something</div> -->
+    </div>
   </foreignObject>
 </svg>
 
 <style>
   .wheel {
-    width: 100%;
+    /* width: 100%;
     height: 100%;
     max-width: 1450px;
-    max-height: 750px;
+    max-height: 750px; */
+    width: 95vw;
+    height: 80vh;
     margin: auto;
   }
 </style>

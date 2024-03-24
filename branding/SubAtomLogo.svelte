@@ -1,8 +1,8 @@
 <script lang="ts">
   import PageLoadingAnimation from "../elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { appStore, userPreferences } from "../stores/app.store";
+  import { appStore } from "../stores/app.store";
+  import appearance from "../stores/appearance.store";
   import { Size } from "../types/size.enum";
-  import { extractProduct } from "../utils/utils";
   export let subatom: string | undefined = undefined;
   export let size: Size = Size.md;
   export let isDark: boolean | undefined = undefined;
@@ -10,7 +10,7 @@
     subatom = $appStore.product;
   }
   $: if (isDark === undefined) {
-    isDark = $userPreferences?.colorScheme?.isDark;
+    isDark = $appearance?.colorScheme?.isDark;
   }
   let color = isDark ? "#FFFFFF" : "#393939";
   const defaults = [
@@ -53,8 +53,8 @@
     }
   ];
   $: rawlogo =
-    $appStore.appData.logo ??
     defaults.find((l) => subatom?.includes(l.subatom))?.svg ??
+    $appStore.appData.logo ??
     defaults[0].svg;
   $: logo = rawlogo?.replaceAll("{color}", color);
   let height = size === Size.md ? 61 : size === Size.sm ? 20 : Size.xs ? 4 : 61;

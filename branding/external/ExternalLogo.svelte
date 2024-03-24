@@ -16,7 +16,15 @@
   import Youtube from "./logos/Youtube.svelte";
   import Medium from "./logos/Medium.svelte";
   import Spotify from "./logos/Spotify.svelte";
-  export let provider: IdentityProvider;
+  import Obsidian from "./logos/Obsidian.svelte";
+  import Notion from "./logos/Notion.svelte";
+  import Heptabase from "./logos/Heptabase.svelte";
+  import Capacities from "./logos/Capacities.svelte";
+  import RoamResearch from "./logos/RoamResearch.svelte";
+  import Remnote from "./logos/Remnote.svelte";
+  import Dynalist from "./logos/Dynalist.svelte";
+  import Ideaflow from "./logos/Ideaflow.svelte";
+  export let provider: IdentityProvider | string;
   export let width = 20;
   let selected: any = Link;
   $: {
@@ -39,8 +47,10 @@
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Link;
   }
+  $: console.log({ provider });
 </script>
 
+<!-- <span class="text-b5">{provider}</span> -->
 <svg
   {width}
   height={width}
@@ -53,6 +63,28 @@
   style="enable-background:new 0 0 512 512"
   xml:space="preserve"
   class="flex justify-center items-center"
+  id={provider}
 >
-  <svelte:component this={selected} />
+  <!-- TODO - later load logos from link dynamically -->
+  {#if provider === "obsidian"}
+    <Obsidian />
+  {:else if provider === "notion"}
+    <Notion />
+  {:else if provider === "capacities"}
+    <Capacities />
+  {:else if provider === "roam"}
+    <RoamResearch />
+  {:else if provider === "remnote"}
+    <Remnote />
+  {:else if provider === "dynalist"}
+    <Dynalist />
+  {:else if provider === "ideaflow"}
+    <Ideaflow />
+  {:else if provider === "tana"}
+    <Notion />
+  {:else if provider === "heptabase"}
+    <Heptabase />
+  {:else}
+    <svelte:component this={selected} />
+  {/if}
 </svg>

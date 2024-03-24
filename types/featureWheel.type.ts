@@ -1,11 +1,12 @@
 export type FeatureWheel = {
-  groups: FeatureWheelGroup[];
+  features: FeatureWheelGroup[];
+  product: string;
 };
 
 export enum FeatureWheelMode {
-  DEFAULT,
-  PROGRESS,
-  CONTEMPORARY
+  DEFAULT = "default",
+  PROGRESS = "progress",
+  CONTEMPORARY = "contemporary"
 }
 
 export type FeatureWheelGroup = {
@@ -30,7 +31,6 @@ export type FeatureWheelSpoke = {
 };
 
 export type FeatureWheelContemporary = {
-  label: string;
-  icon: string;
+  label: string | string[];
   value: number;
 };
