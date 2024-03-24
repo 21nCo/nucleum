@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
-  import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
+  import PageLoadingAnimation from "$lib/tidy/elements/feedback/animations/PageLoadingAnimation.svelte";
   import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import { EmbedContext } from "$lib/tidy/types/appStore.type";
   export let message: string | undefined = undefined;

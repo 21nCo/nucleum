@@ -1,7 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { fly } from "svelte/transition";
-  import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
+  import InlineLoadingAnimation from "./animations/InlineLoadingAnimation.svelte";
   export let loadingText: string = "Refreshing";
 </script>
 

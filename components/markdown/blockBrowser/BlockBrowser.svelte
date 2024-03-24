@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
+  import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { InlineType } from "$lib/tidy/types/md.type";
   import { NodeType, ListType } from "$lib/tidy/types/node.type";

@@ -32,7 +32,7 @@
   import YearsLayout from "./YearsLayout.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
+  import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   export let variant: CalendarHmVariant = CalendarHmVariant.PLAIN;
   export let orientation: Orientation;

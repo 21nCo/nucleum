@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { renderMdAsHtml } from "$lib/tidy/components/markdown/markdown.utils";
   import { Size } from "$lib/tidy/types/size.enum";
   import { InfoTextType } from "$lib/tidy/types/text.type";
   import { runAction } from "$lib/tidy/utils/utils";
@@ -19,7 +20,9 @@
   <Icon icon={type} size={Size.sm} />
   <div class="flex flex-col items-start gap-2">
     {#if content}
-      {content}
+      <div>
+        {@html renderMdAsHtml(content)}
+      </div>
     {:else}
       <slot />
     {/if}

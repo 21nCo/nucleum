@@ -21,7 +21,7 @@
   import ToastNotification from "$lib/tidy/elements/feedback/ToastNotification.svelte";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
-  import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
+  import PageLoadingAnimation from "$lib/tidy/elements/feedback/animations/PageLoadingAnimation.svelte";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import { runAction } from "$lib/tidy/utils/utils";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
@@ -85,10 +85,8 @@
   </div>
 {/if} -->
 {#if $fullPageLoadingScreen.isShow}
-  <div
-    class="fixed left-0 top-0 w-full h-full flex flex-col z-[100]"
-    transition:fly={{ y: 200, duration: 100 }}
-  >
+  <!-- Causing unexpected behaviors - transition:fly={{ y: 200, duration: 100 }} -->
+  <div class="fixed left-0 top-0 w-full h-full flex flex-col z-[100]">
     <div
       class="h-full w-full flex flex-col gap-4 justify-center items-center bg-bgs1"
     >
@@ -118,10 +116,8 @@
 {/if}
 
 {#if (isValidArrayWithData($toasts) || isValidArrayWithData($mutationQueue)) && !$view.isPortrait}
-  <div
-    class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
-    transition:slide={{ duration: 200 }}
-  >
+  <!--     transition:slide={{ duration: 200 }} -->
+  <div class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]">
     {#each $toasts as toast}
       <ToastNotification notification={toast} />
     {/each}

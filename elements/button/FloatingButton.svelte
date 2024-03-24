@@ -10,7 +10,9 @@
     {...params}
     type={params.variant}
     width="w-[13rem]"
-    on:click={params.callback}
+    on:click={async () => {
+      if (params.callback) await params?.callback();
+    }}
     style={ButtonStyle.ROUNDED}
   />
 </BottomFloat>

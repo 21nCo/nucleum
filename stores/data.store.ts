@@ -45,10 +45,13 @@ function init() {
         return store?.search?.(query);
       }
     },
-    refresh: async (storeId: string) => {
+    refresh: async (
+      storeId: string,
+      isShowRefreshingState: boolean = false
+    ) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
-        refreshStores([store], false);
+        refreshStores([store], isShowRefreshingState);
       }
     },
     refreshOnAppear: async () => {

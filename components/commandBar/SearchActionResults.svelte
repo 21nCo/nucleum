@@ -1,6 +1,6 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
-  import PageLoadingAnimation from "$lib/tidy/elements/animations/PageLoadingAnimation.svelte";
+  import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
+  import PageLoadingAnimation from "$lib/tidy/elements/feedback/animations/PageLoadingAnimation.svelte";
   import { Persistance } from "$lib/tidy/stores/persistance";
   import type { Action } from "$lib/tidy/types/action.type";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";

@@ -42,20 +42,26 @@
 </script>
 
 {#if size === Size.full}
-  <div
-    in:fly={{
+  <!--     in:fly={{
       duration: 500,
       delay: 0,
       easing: quintOut,
       x: 0,
       y: 100,
       opacity: 0
-    }}
-    class="w-full h-full flex justify-center items-center"
-  >
+    }} Disabling transition animations - unexpected behaviors -->
+  <div class="w-full h-full flex justify-center items-center">
     <slot />
   </div>
 {:else}
+  <!--     in:fly={{
+      duration: 500,
+      delay: 0,
+      easing: quintOut,
+      x: 0,
+      y: 100,
+      opacity: 0
+    }} -->
   <div
     class="flex flex-col items-center justify-between w-full h-full {!params
       .layout?.ignoreSafeArea
@@ -63,14 +69,6 @@
         ? 'p-2 lg:p-4 gap-4'
         : 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
       : ''}"
-    in:fly={{
-      duration: 500,
-      delay: 0,
-      easing: quintOut,
-      x: 0,
-      y: 100,
-      opacity: 0
-    }}
   >
     {#if params.title && $appStore.launchContext != LaunchContext.EMBED}
       <ModalHeader

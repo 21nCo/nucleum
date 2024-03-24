@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/tidy/elements/EmptyStatusView.svelte";
+  import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
   import ControlPanelLayout from "./ControlPanelLayout.svelte";
 </script>
 

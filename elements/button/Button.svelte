@@ -10,7 +10,7 @@
     renderPopoverv2,
     resolveHoverState
   } from "$lib/tidy/utils/browser.utils";
-  import InlineLoadingAnimation from "../animations/InlineLoadingAnimation.svelte";
+  import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
   import appearance from "$lib/tidy/stores/appearance.store";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PageLoadingAnimation from "../elements/animations/PageLoadingAnimation.svelte";
+  import PageLoadingAnimation from "../elements/feedback/animations/PageLoadingAnimation.svelte";
   import { appStore, userPreferences } from "../stores/app.store";
   import { Size } from "../types/size.enum";
   import { extractProduct } from "../utils/utils";

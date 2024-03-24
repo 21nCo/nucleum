@@ -67,9 +67,13 @@
   $: if (size === Size.xs) {
     sizeClasses = "text-b5 w-16 gap-1 py-3";
   } else if (size === Size.sm) {
-    sizeClasses = "text-b4 w-disabled-[4.5rem] px-2 gap-1 py-4";
+    sizeClasses = "text-b4 gap-1 py-4";
+    if (!isHideLabel) sizeClasses += " w-[4.5rem]";
+    else sizeClasses += " px-2";
   } else if (size === Size.md) {
-    sizeClasses = "text-b2 w-24 gap-2 py-4";
+    sizeClasses = "text-b2 gap-2 py-4";
+    if (isHideLabel) sizeClasses += " px-3";
+    else sizeClasses += " w-24";
   } else if (size === Size.lg) {
     sizeClasses = "text-base w-24 gap-2 px-4 py-6";
   }

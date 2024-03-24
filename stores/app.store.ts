@@ -215,10 +215,6 @@ export const appConstants = {
 };
 
 const userPreferencesId = "kv:" + Item.globalPreferences;
-// const locallySyncedTailwindTheme = retrieveLocally(Item.TailwindTheme);
-// export const tailwindTheme = writable<string>(
-//   locallySyncedTailwindTheme || "clean cs_tidigit_light_blue"
-// );
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 

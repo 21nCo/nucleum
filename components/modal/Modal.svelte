@@ -112,12 +112,12 @@
 </script>
 
 {#if show}
+  <!-- transition:fade={{ duration: 200 }} - Causing unexpected behaviours -->
   <button
     class="pop-overlay fixed w-screen h-screen inset-0 {isShowOverlay
       ? 'bg-bgs1 bg-opacity-80'
       : 'bg-opacity-0'} z-50"
     on:click={overlayClicked}
-    transition:fade={{ duration: 200 }}
   >
     {#if isOnRight}
       <div

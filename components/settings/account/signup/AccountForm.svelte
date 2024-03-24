@@ -107,10 +107,8 @@
   }
 </script>
 
-<div
-  class="flex flex-col {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}"
-  transition:fade
->
+<!-- transition:fade -->
+<div class="flex flex-col {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
   <div class="flex flex-col gap-2 justify-center items-center w-80">
     <div class="flex flex-col w-full gap-4">
       <!-- <TextInput
