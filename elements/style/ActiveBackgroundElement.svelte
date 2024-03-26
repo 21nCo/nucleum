@@ -16,7 +16,7 @@
   export let classList: string = "";
   export let styles: string = "";
   export let tabindex: number = 0;
-
+  export let transition: string = "";
   function bgfgClasses(
     parentBackgroundIndex: number = 1,
     isActive: boolean = false,
@@ -40,7 +40,7 @@
     isBackgroundActive,
     fgColorStrength,
     color
-  )}"
+  )} {transition}"
   style={customColorStyle(
     $appearance,
     isBackgroundActive && isIncludeActiveBorder
@@ -67,3 +67,9 @@
 >
   <slot />
 </button>
+
+<style>
+  button.ease {
+    transition: background-color 0.3s ease-in-out;
+  }
+</style>

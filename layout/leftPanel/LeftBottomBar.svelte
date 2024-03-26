@@ -38,7 +38,7 @@
       >
         <Icon
           icon="settings"
-          size={isInThinMode ? Size.md : Size.sm}
+          size={isInThinMode ? Size.lg : Size.md}
           isActive={isCpActive}
           selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
         />
@@ -52,7 +52,7 @@
           runAction(AppEvent.HELP);
         }}
       >
-        <Icon icon="help" size={isInThinMode ? Size.md : Size.sm} />
+        <Icon icon="help" size={isInThinMode ? Size.lg : Size.md} />
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}

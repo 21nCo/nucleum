@@ -109,10 +109,11 @@
   }
 </script>
 
-{#each filteredActions as action}
+{#each filteredActions as action, index}
   <CmdResultItem
     {search}
     {action}
+    {index}
     isActive={selectedAction === action.action}
     on:click={() => {
       selectedAction = action.action;

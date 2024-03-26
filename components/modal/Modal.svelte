@@ -112,12 +112,12 @@
 </script>
 
 {#if show}
-  <!-- transition:fade={{ duration: 200 }} - Causing unexpected behaviours -->
   <button
     class="pop-overlay fixed w-screen h-screen inset-0 {isShowOverlay
       ? 'bg-bgs1 bg-opacity-80'
       : 'bg-opacity-0'} z-50"
     on:click={overlayClicked}
+    transition:fade={{ duration: 100 }}
   >
     {#if isOnRight}
       <div
@@ -139,7 +139,7 @@
       <dialog
         bind:this={dialog}
         {id}
-        class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1 {!isShowOverlay &&
+        class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1 shadow-xl {!isShowOverlay &&
           'bg-none'} {$appStore.launchContext === LaunchContext.EMBED &&
         $appStore.embedContext === EmbedContext.SHEET
           ? 'w-full h-full'
@@ -168,6 +168,10 @@
     transform: translate3d(0, 0, 0);
   }
 
+  dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(4px);
+  }
   dialog.bg-none::backdrop {
     background-color: transparent;
   }

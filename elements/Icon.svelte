@@ -154,14 +154,16 @@
           ? "0 0 52 52"
           : "0 0 24 24"}
       class="flex items-center justify-center {size == Size.xxl
-        ? 'w-14 h-14'
-        : size == Size.xl || size == Size.lg
-          ? 'w-8 h-8'
-          : size == Size.md
+        ? 'w-10 h-10'
+        : size == Size.xl
+          ? 'w-8 h-8 '
+          : size == Size.lg
             ? 'w-6 h-6'
-            : size == Size.sm
+            : size == Size.md
               ? 'w-[1.25rem] h-[1.25rem]'
-              : 'w-4 h-4'} {variant === IconVariant.Outline
+              : size == Size.sm
+                ? 'w-4 h-4'
+                : 'w-3 h-3'} {variant === IconVariant.Outline
         ? (isActive
             ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
               ? 'stroke-aps1'

@@ -85,10 +85,10 @@
   </div>
 {/if} -->
 {#if $fullPageLoadingScreen.isShow}
-  <!-- Causing unexpected behaviors - transition:fly={{ y: 200, duration: 100 }} -->
   <div class="fixed left-0 top-0 w-full h-full flex flex-col z-[100]">
     <div
       class="h-full w-full flex flex-col gap-4 justify-center items-center bg-bgs1"
+      transition:fly={{ y: 200, duration: 100 }}
     >
       <PageLoadingAnimation variant="page" />
       <div class="text-b2">
@@ -116,8 +116,10 @@
 {/if}
 
 {#if (isValidArrayWithData($toasts) || isValidArrayWithData($mutationQueue)) && !$view.isPortrait}
-  <!--     transition:slide={{ duration: 200 }} -->
-  <div class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]">
+  <div
+    class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
+    transition:slide={{ duration: 200 }}
+  >
     {#each $toasts as toast}
       <ToastNotification notification={toast} />
     {/each}

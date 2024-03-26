@@ -6,13 +6,31 @@
   import "dayjs/locale/en";
   import { Size } from "../../types/size.enum";
   import { TimeScale } from "../../types/time.type";
+  import BackgroundElement from "../style/BackgroundElement.svelte";
+  import { transition } from "d3-transition";
+  import { fade, slide } from "svelte/transition";
+  import Button from "../button/Button.svelte";
+  import { appEvents } from "$lib/tidy/stores/app.store";
+  import type { AppEventType } from "$lib/tidy/types/event.type";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
+  import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
-  export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS;
+  export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
+    TimeScale.DAYS;
+  export let parentBgIndex: number = 0;
+  export let isDatePickerMode: boolean = false;
+  /**
+   * @description selected date - used for date picker mode
+   * @type {Date}
+   */
+  export let selectedDate: Date = new Date();
+  export let srcId = generateUID();
+  export let containerId = generateUID();
   let yearMode: boolean = scale === TimeScale.YEARS;
   let monthMode: boolean = scale === TimeScale.MONTHS;
   let dayMode: boolean = scale === TimeScale.DAYS;
-  export let isPickerOpen: boolean = false; // true: show picker
+  export let isPickerOpen: boolean = true; // true: show picker
   const arrDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   let thisDay = +dayjs().format("D"); // 1..31
   let thisMonth = +dayjs().format("M"); // 1..12
@@ -32,11 +50,36 @@
   let endSelected: boolean = false;
   let selectedDecade = Math.floor(mapYear / 10) * 10; // 2021...
   let rows: any;
-  let monthPool: any[] = [mapMonth - 1, mapMonth, mapMonth + 1, mapMonth + 2];
-  $: if (isPickerOpen) {
-    document.addEventListener("click", handleOutsideClickModal);
-  } else {
-    document.removeEventListener("click", handleOutsideClickModal);
+  // let monthPool: any[] = [
+  //   mapMonth - 2,
+  //   mapMonth - 1,
+  //   mapMonth,
+  //   mapMonth + 1,
+  //   mapMonth + 2
+  // ];
+  let monthPool: any[] = [...Array.from({ length: 12 }, (_, i) => i + 1)];
+  let yearPool: any[] = [
+    mapYear - 2,
+    mapYear - 1,
+    mapYear,
+    mapYear + 1,
+    mapYear + 2
+  ];
+  // $: if (isPickerOpen) {
+  //   document.addEventListener("click", handleOutsideClickModal);
+  // } else {
+  //   document.removeEventListener("click", handleOutsideClickModal);
+  // }
+  $: if (isDatePickerMode && selectedDate) {
+    mapDay = +dayjs(selectedDate).format("D");
+    mapMonth = +dayjs(selectedDate).format("M");
+    mapYear = +dayjs(selectedDate).format("YYYY");
+    startDay = +dayjs(selectedDate).format("D");
+    startMonth = +dayjs(selectedDate).format("M");
+    startYear = +dayjs(selectedDate).format("YYYY");
+    startSelected = true;
+    handlePoolChangeForYears();
+    getDecade();
   }
   $: if (monthMode) {
     rows = initMonth();
@@ -48,7 +91,6 @@
   let getDecade = () => {
     selectedDecade = Math.floor(mapYear / 10) * 10;
   };
-
   onMount(() => {
     dayjs.locale("en"); // use locale
     if (dayMode) {
@@ -58,7 +100,22 @@
     } else if (yearMode) {
       rows = initYear();
     }
+    const appEventSub = appEvents.subscribe((x: AppEventType) => {
+      if (
+        x.event === AppEvent.WINDOW_CLICKED &&
+        x.value &&
+        (x.value instanceof PointerEvent || x.value instanceof MouseEvent)
+      ) {
+        actIfClickedOutside(x.value, [srcId, containerId], closePicker);
+      }
+    });
+    return () => {
+      appEventSub();
+    };
   });
+  function closePicker() {
+    dispatch("close");
+  }
   /**
    * @description closure to remember initialized or previously passed value to handle the monthPool change for the month range slider
    * @param index
@@ -72,6 +129,20 @@
       } else {
         monthPool.forEach((m, i) => {
           monthPool[i] = mapMonth - (previousIndex - i);
+        });
+      }
+    };
+  })();
+
+  let handlePoolChangeForYears = (function () {
+    let previousIndex = 1;
+    return function (index?: number) {
+      if (index !== undefined) {
+        previousIndex = index;
+        changeRows();
+      } else {
+        yearPool.forEach((m, i) => {
+          yearPool[i] = mapYear - (previousIndex - i);
         });
       }
     };
@@ -116,7 +187,7 @@
    *
    */
   function handleOutsideClickModal() {
-    // console.log("RangePicked", { start: startString, end: endString });
+    console.log("RangePicked", { start: startString, end: endString });
     if (startString && endString)
       dispatch("rangePicked", { start: startString, end: endString });
     isPickerOpen = false;
@@ -212,6 +283,7 @@
     mapYear -= decreaseConst;
     getDecade();
     changeRows();
+    handlePoolChangeForYears();
   }
 
   function nextMonth(increaseConst: number) {
@@ -228,6 +300,7 @@
     mapYear += increaseConst;
     getDecade();
     changeRows();
+    handlePoolChangeForYears();
   }
   function nextDecade() {
     selectedDecade++;
@@ -235,6 +308,11 @@
   }
   function selectDate(y: number, m: number, d: number) {
     let date = y + "-" + m + "-" + d;
+    if (isDatePickerMode) {
+      selectedDate = new Date(dayjs(date).format("YYYY-MM-DD"));
+      dispatch("change", date);
+      return;
+    }
     if (startSelected == false || dayjs(date).isBefore(dayjs(startString))) {
       startSelected = true;
       startDay = +d;
@@ -289,39 +367,73 @@
 
 {#if isPickerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div
-    class="w-72 px-4 py-4 bg-bgs2 text-fgs3 rounded-t shadow-lg"
-    on:click|stopPropagation
+  <BackgroundElement
+    id={containerId}
+    {parentBgIndex}
+    classList="flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2"
   >
-    <div class="flex items-center justify-between text-sm">
-      <button on:click={previousDecade} aria-label="calendar backward">
-        <Icon icon="chevleft" color="black" size={Size.sm} />
-      </button>
-      <div class="flex place-self-center">
-        <span
-          class="focus:outline-none bg-bgs4 rounded-md px-2 mr-4 text-center"
-          >{selectedDecade + "-" + (selectedDecade + 10)}</span
-        >
+    <div class="flex items-center w-full justify-between text-b2">
+      <div class="flex gap-1">
+        <button on:click={previousDecade} aria-label="calendar backward">
+          <Icon icon="chevleft" size={Size.sm} />
+        </button>
 
-        <button on:click={nextDecade} class="focus:outline-none"
-          >{selectedDecade + 10 + "-" + (selectedDecade + 20)}</button
-        >
+        <div class="flex justify-between">
+          <!-- <button on:click={previousDecade} class="focus:outline-none"
+            >{selectedDecade -
+              10 +
+              "-" +
+              selectedDecade.toString().slice(2)}</button
+          > -->
+          <BackgroundElement
+            {parentBgIndex}
+            classList="focus:outline-none rounded-md px-2 py-1 text-center"
+            >{selectedDecade +
+              "-" +
+              (selectedDecade + 10).toString().slice(2)}</BackgroundElement
+          >
+
+          <!-- <button on:click={nextDecade} class="focus:outline-none"
+            >{selectedDecade +
+              10 +
+              "-" +
+              (selectedDecade + 20).toString().slice(2)}</button
+          > -->
+        </div>
+        <button on:click={nextDecade} aria-label="calendar forward">
+          <Icon icon="chevright" size={Size.sm} />
+        </button>
       </div>
-      <button on:click={nextDecade} aria-label="calendar forward">
-        <Icon icon="chevright" color="black" size={Size.sm} />
-      </button>
+      <Button
+        icon="calendar"
+        label="Jump to Today"
+        size={Size.xxs}
+        on:click={() => {
+          // selectDate(thisYear, thisMonth, thisDay);
+          selectedDate = new Date();
+        }}
+      />
     </div>
     {#if monthMode || dayMode}
-      <div class="flex items-center justify-between pt-2 text-sm">
+      <div class="w-full flex items-center justify-between text-b3">
         <button
           on:click={() => {
-            previousYear(3);
+            previousYear(2);
           }}
           aria-label="calendar backward"
         >
-          <Icon icon="chevleft" color="black" size={Size.sm} />
+          <Icon icon="chevleft" size={Size.sm} />
         </button>
-        <div class="px-4 w-full flex items-center justify-around">
+        <div class="px-2 grow flex items-center justify-around">
+          <!-- <button
+            on:click={() => {
+              previousYear(2);
+            }}
+            class="focus:outline-none"
+            >{ucFirst(
+              dayjs(mapYear - 2 + "-" + mapMonth).format("YYYY")
+            )}</button
+          >
           <button
             on:click={() => {
               previousYear(1);
@@ -332,8 +444,12 @@
             )}</button
           >
 
-          <span class="focus:outline-none bg-bgs4 rounded-md px-2 text-center"
-            >{ucFirst(dayjs(mapYear + "-" + mapMonth).format("YYYY"))}</span
+          <BackgroundElement
+            parentBgIndex={parentBgIndex + 1}
+            classList="focus:outline-none rounded-md px-2 py-1 text-center"
+            >{ucFirst(
+              dayjs(mapYear + "-" + mapMonth).format("YYYY")
+            )}</BackgroundElement
           >
 
           <button
@@ -345,55 +461,96 @@
               dayjs(mapYear + 1 + "-" + mapMonth).format("YYYY")
             )}</button
           >
-        </div>
-        <button
-          on:click={() => {
-            nextYear(3);
-          }}
-          aria-label="calendar forward"
-        >
-          <Icon icon="chevright" color="black" size={Size.sm} />
-        </button>
-      </div>
-    {/if}
-
-    {#if dayMode}
-      <div class="flex items-center text-sm justify-between pt-2">
-        <button
-          on:click={() => {
-            previousMonth(4);
-          }}
-          aria-label="calendar backward"
-        >
-          <Icon icon="chevleft" color="black" size={Size.sm} />
-        </button>
-        <div class="px-4 w-full flex items-center justify-around">
-          {#each monthPool as month, index (month)}
-            <button
+          <button
+            on:click={() => {
+              nextYear(2);
+            }}
+            class="focus:outline-none"
+            >{ucFirst(
+              dayjs(mapYear + 2 + "-" + mapMonth).format("YYYY")
+            )}</button
+          > -->
+          {#each yearPool as year, index (year)}
+            <BackgroundElement
               on:click={() => {
-                mapMonth = monthPool[index];
-                handlePoolChange(index);
+                mapYear = yearPool[index];
+                //TODO handle pool change for year
+                handlePoolChangeForYears(index);
               }}
-              class="focus:outline-none {mapMonth == monthPool[index]
-                ? 'font-medium bg-bgs4 rounded-md px-2 text-center'
+              parentBgIndex={mapYear == yearPool[index]
+                ? parentBgIndex + 1
+                : parentBgIndex}
+              classList="focus:outline-none px-2 py-1 {mapYear ==
+              yearPool[index]
+                ? 'font-medium rounded-md text-center'
                 : ''}"
               >{ucFirst(
-                dayjs(mapYear + "-" + monthPool[index]).format("MMM")
-              )}</button
+                dayjs(yearPool[index] + "-" + mapMonth).format("YYYY")
+              )}</BackgroundElement
             >
           {/each}
         </div>
         <button
           on:click={() => {
+            nextYear(2);
+          }}
+          aria-label="calendar forward"
+        >
+          <Icon icon="chevright" size={Size.sm} />
+        </button>
+      </div>
+    {/if}
+
+    {#if dayMode}
+      <div class="flex w-full items-center text-b3 justify-between">
+        <!-- <button
+          on:click={() => {
+            previousMonth(4);
+          }}
+          aria-label="calendar backward"
+        >
+          <Icon icon="chevleft" />
+        </button> -->
+        <div
+          class="px-2 w-full flex items-center justify-evenly gap-3 flex-wrap"
+        >
+          {#each monthPool as month, index (month)}
+            <BackgroundElement
+              on:click={() => {
+                console.log("monthPool", monthPool);
+                mapMonth = monthPool[index];
+                handlePoolChange(index);
+              }}
+              parentBgIndex={mapMonth == monthPool[index]
+                ? parentBgIndex + 1
+                : parentBgIndex}
+              classList="focus:outline-none px-1.5 py-1 {mapMonth ==
+              monthPool[index]
+                ? 'font-medium rounded-md  text-center'
+                : ''}"
+              >{ucFirst(
+                dayjs(mapYear + "-" + monthPool[index]).format("MMM")
+                // .charAt(0)
+              )}</BackgroundElement
+            >
+          {/each}
+        </div>
+        <!-- <button
+          on:click={() => {
             nextMonth(4);
           }}
           aria-label="calendar forward"
         >
-          <Icon icon="chevright" color="black" size={Size.sm} />
-        </button>
+          <Icon icon="chevright" />
+        </button> -->
       </div>
-      <div class="flex pt-2">
-        <table class="w-full text-xs" cellpadding="0">
+      <div class="flex w-full justify-center">
+        <div class="w-1/2">
+          <Divider />
+        </div>
+      </div>
+      <div class="flex w-full">
+        <table class="w-full text-b3" cellpadding="0">
           <thead>
             <tr>
               {#each arrDays as day}
@@ -416,12 +573,12 @@
                       {#if i > 0}
                         {#if (i === startDay && mapMonth === startMonth && mapYear === startYear && startSelected) || (i === endDay && mapMonth === endMonth && mapYear === endYear && endSelected)}
                           <button
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-sm flex items-center justify-center text-bgs1 bg-aps1"
+                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
                             >{i}</button
                           >
                         {:else if startDay && startMonth && startYear && laterDate(startDay, startMonth, startYear, i, mapMonth, mapYear) && endDay && endMonth && endYear && laterDate(i, mapMonth, mapYear, endDay, endMonth, endYear) && endSelected == true}
                           <button
-                            class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-bgs1 text-sm text-bgs1 bg-aps2"
+                            class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-bgs1 text-b2 text-bgs1 bg-aps2"
                             on:click={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
@@ -471,12 +628,12 @@
                       {#if i > 0}
                         {#if (i === startMonth && mapYear === startYear && startSelected) || (i === endMonth && mapYear === endYear && endSelected)}
                           <button
-                            class="rounded w-full h-full focus:ring-1focus:opacity-80 hover:opacity-80 text-sm flex items-center justify-center text-bgs1 bg-aps1"
+                            class="rounded w-full h-full focus:ring-1focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
                             >{dayjs(mapYear + "-" + i).format("MMM")}</button
                           >
                         {:else if startMonth && startYear && laterDate(1, startMonth, startYear, 1, i, mapYear) && endMonth && endYear && laterDate(1, i, mapYear, 1, endMonth, endYear) && endSelected == true}
                           <button
-                            class=" bg-aps2 text-bgs1 w-full text-sm text-center hover:bg-aps1 hover:text-bgs1"
+                            class=" bg-aps2 text-bgs1 w-full text-b2 text-center hover:bg-aps1 hover:text-bgs1"
                             on:click={() => {
                               selectDate(mapYear, i, 1);
                             }}
@@ -485,7 +642,7 @@
                           </button>
                         {:else if i === thisMonth && mapYear === thisYear}
                           <button
-                            class="rounded-full w-full h-full focus:ring-1 focus:bg-aps1 hover:bg-aps1 hover:text-white flex items-center justify-center text-sm text-bgs1 bg-ass1"
+                            class="rounded-full w-full h-full focus:ring-1 focus:bg-aps1 hover:bg-aps1 hover:text-white flex items-center justify-center text-b2 text-bgs1 bg-ass1"
                             on:click={() => {
                               selectDate(mapYear, i, 1);
                             }}
@@ -494,7 +651,7 @@
                           </button>
                         {:else}
                           <button
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:bg-aps1 hover:text-bgs1 text-sm flex items-center justify-center"
+                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:bg-aps1 hover:text-bgs1 text-b2 flex items-center justify-center"
                             on:click={() => {
                               selectDate(mapYear, i, 1);
                             }}
@@ -524,13 +681,13 @@
                       {#if i > -2}
                         {#if (i + selectedDecade === startYear && startSelected) || (selectedDecade + i == endYear && endSelected)}
                           <button
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-sm flex items-center justify-center text-bgs1 bg-aps1"
+                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
                           >
                             {selectedDecade + i}
                           </button>
                         {:else if startYear && laterDate(1, 1, startYear, 1, 1, selectedDecade + i) && endYear && laterDate(1, 1, selectedDecade + i, 1, 1, endYear) && endSelected == true}
                           <button
-                            class="rounded w-full h-full focus:ring-1 focus:bg-aps1 text-bgs1 bg-aps2 text-sm flex items-center justify-center hover:text-bgs1 hover:bg-aps1"
+                            class="rounded w-full h-full focus:ring-1 focus:bg-aps1 text-bgs1 bg-aps2 text-b2 flex items-center justify-center hover:text-bgs1 hover:bg-aps1"
                             on:click={() => {
                               selectDate(selectedDecade + i, 1, 1);
                             }}
@@ -539,7 +696,7 @@
                           </button>
                         {:else if i + selectedDecade === thisYear}
                           <button
-                            class="rounded-full w-full h-full focus:ring-1 focus:bg-aps1 hover:bg-aps1 text-sm flex items-center justify-center text-bgs1 bg-ass1"
+                            class="rounded-full w-full h-full focus:ring-1 focus:bg-aps1 hover:bg-aps1 text-b2 flex items-center justify-center text-bgs1 bg-ass1"
                             on:click={() => {
                               selectDate(mapYear, i, 1);
                             }}
@@ -548,7 +705,7 @@
                           </button>
                         {:else}
                           <button
-                            class="rounded w-full h-full focus:ring-1 focus:bg-aps1 focus:text-bgs1 text-sm flex items-center justify-center hover:text-bgs1 hover:bg-aps1"
+                            class="rounded w-full h-full focus:ring-1 focus:bg-aps1 focus:text-bgs1 text-b2 flex items-center justify-center hover:text-bgs1 hover:bg-aps1"
                             on:click={() => {
                               selectDate(selectedDecade + i, 1, 1);
                             }}
@@ -566,45 +723,53 @@
         </table>
       </div>
     {/if}
-    <Divider />
-    <div class="flex justify-between pt-1">
-      <div class="flex flex-col w-4/10">
-        <div class="text-sm">Start</div>
-        <div class="text-sm bg-bgs4 text-fgs3 p-1 rounded-sm">
-          {#if startSelected}
-            {startString}<button
-              ><Icon
-                icon="cross-circled"
-                size={Size.xs}
-                color="red"
-                on:click={() => reset(true, false)}
-              /></button
-            >
-          {:else}
-            {"-/-"}
-          {/if}
+    {#if !isDatePickerMode}
+      <Divider />
+      <div class="flex justify-between pt-1">
+        <div class="flex flex-col w-4/10">
+          <div class="text-b2">Start</div>
+          <BackgroundElement
+            parentBgIndex={parentBgIndex + 1}
+            classList="text-b2 text-fgs3 p-1 rounded-sm"
+          >
+            {#if startSelected}
+              {startString}<button
+                ><Icon
+                  icon="cross-circled"
+                  size={Size.xs}
+                  color="red"
+                  on:click={() => reset(true, false)}
+                /></button
+              >
+            {:else}
+              {"-/-"}
+            {/if}
+          </BackgroundElement>
+        </div>
+        <Icon icon="arrow-right" />
+        <div class="flex flex-col w-4/10">
+          <div class="text-b2">End</div>
+          <BackgroundElement
+            parentBgIndex={parentBgIndex + 1}
+            classList="text-b2 text-fgs3 p-1 rounded-sm"
+          >
+            {#if endSelected}
+              {endString}<button
+                ><Icon
+                  icon="cross-circled"
+                  size={Size.xs}
+                  color="red"
+                  on:click={() => reset(false, true)}
+                /></button
+              >
+            {:else}
+              -/-
+            {/if}
+          </BackgroundElement>
         </div>
       </div>
-      <Icon icon="arrow-right" color="black" />
-      <div class="flex flex-col w-4/10">
-        <div class="text-sm">End</div>
-        <div class="text-sm bg-bgs4 text-fgs3 p-1 rounded-sm">
-          {#if endSelected}
-            {endString}<button
-              ><Icon
-                icon="cross-circled"
-                size={Size.xs}
-                color="red"
-                on:click={() => reset(false, true)}
-              /></button
-            >
-          {:else}
-            -/-
-          {/if}
-        </div>
-      </div>
-    </div>
-  </div>
+    {/if}
+  </BackgroundElement>
 {:else}
   <button on:click|stopPropagation={enablePicker} class="text-fgs1">
     -- Pick Range --

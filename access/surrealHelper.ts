@@ -7,7 +7,7 @@ import {
   resolveToken
 } from "$lib/tidy/utils/account.utils";
 import { performApiCall } from "../utils/utils";
-import { replaceParams, mutationQuery } from "../utils/surreal.utils";
+import { replaceParams, resolveMutationQuery } from "../utils/surreal.utils";
 import { PersistanceActionType } from "../types/data.type";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
@@ -34,14 +34,20 @@ export class SurrealDatabaseUsingRest {
    * @returns Id of the created record or null if failed
    */
   async create(recordId: string, data: DbRecordType) {
-    return this.query(mutationQuery(PersistanceActionType.CREATE, recordId), {
-      data
-    });
+    return this.query(
+      resolveMutationQuery(PersistanceActionType.CREATE, recordId),
+      {
+        data
+      }
+    );
   }
   async insert(tableName: string, data: DbRecordType[]) {
-    return this.query(mutationQuery(PersistanceActionType.INSERT, tableName), {
-      data
-    });
+    return this.query(
+      resolveMutationQuery(PersistanceActionType.INSERT, tableName),
+      {
+        data
+      }
+    );
   }
   /**
    *
@@ -50,14 +56,20 @@ export class SurrealDatabaseUsingRest {
    * @returns Updated record or null if failed
    */
   async merge(recordId: string, data: MergeRecord) {
-    return this.query(mutationQuery(PersistanceActionType.MERGE, recordId), {
-      data
-    });
+    return this.query(
+      resolveMutationQuery(PersistanceActionType.MERGE, recordId),
+      {
+        data
+      }
+    );
   }
   async update(recordId: string, data: DbRecordType) {
-    return this.query(mutationQuery(PersistanceActionType.UPDATE, recordId), {
-      data
-    });
+    return this.query(
+      resolveMutationQuery(PersistanceActionType.UPDATE, recordId),
+      {
+        data
+      }
+    );
   }
   async select(recordId: string) {
     let response = await this.query(`select * from ${recordId};`);
@@ -66,7 +78,7 @@ export class SurrealDatabaseUsingRest {
   }
   async delete(recordId: string) {
     return await this.query(
-      mutationQuery(PersistanceActionType.DELETE, recordId)
+      resolveMutationQuery(PersistanceActionType.DELETE, recordId)
     );
   }
   async executeReadFn(

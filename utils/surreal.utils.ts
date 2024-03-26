@@ -21,7 +21,10 @@ function mutationMapEntry(recordId: string) {
   ).toFixed()};`;
 }
 
-export function mutationQuery(type: PersistanceActionType, record: string) {
+export function resolveMutationQuery(
+  type: PersistanceActionType,
+  record: string
+) {
   let modifiedQuery: string = "";
   switch (type) {
     case PersistanceActionType.DELETE:

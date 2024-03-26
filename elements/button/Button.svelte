@@ -85,7 +85,10 @@
             classList += " h-8 gap-2 text-b2";
             break;
           case Size.xs:
-            classList += " h-8 gap-1 text-xs";
+            classList += " h-8 gap-1 text-b4";
+            break;
+          case Size.xxs:
+            classList += " h-6 gap-1 text-b5";
             break;
         }
       } else {
@@ -103,7 +106,10 @@
             classList += " h-10 gap-2 text-b2";
             break;
           case Size.xs:
-            classList += " h-8 gap-1 text-xs";
+            classList += " h-8 gap-1 text-b4";
+            break;
+          case Size.xxs:
+            classList += " h-6 gap-1 text-b5";
             break;
         }
       }
@@ -124,6 +130,9 @@
           break;
         case Size.xs:
           classList += " py-1.5 px-3";
+          break;
+        case Size.xxs:
+          classList += " py-1 px-2";
           break;
       }
     }

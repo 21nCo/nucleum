@@ -26,7 +26,7 @@
   on:click={() => dispatch("select", block)}
 >
   <div class="bg-bgs2 rounded-md p-1 border border-brs3">
-    <Icon icon={block.icon} size={Size.sm} />
+    <Icon icon={block.icon} />
   </div>
   <div>{block.label}</div>
 </button>

@@ -279,15 +279,25 @@ export function performBlankApiCall(
 export function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
 }
-
+/**
+ * Checks if the event target is outside the target element and performs the action if true.
+ * @param event the event object
+ * @param target the target element
+ * @param action the action to be performed
+ */
 export function actIfClickedOutside(
-  event: PointerEvent, //The event that is triggered when clicked (passed down from the event listener)
-  target: string, //This should be same as the class,id or tag(i.e target) of the div outside of which when clicked, an action is performed
+  event: PointerEvent | MouseEvent,
+  target: string | string[],
   action: any
 ) {
-  const nodeTarget = document.querySelector(target);
-  !nodeTarget?.contains(event.target as Node) && action();
-  //Basically we are checking whether or not the clicked element is inside the task-text or is the task-text itself
+  const targets = Array.isArray(target) ? target : [target];
+  const clickedOutsideAllTargets = targets.every((t) => {
+    const nodeTarget = document.querySelector("#" + t);
+    return !nodeTarget?.contains(event.target as Node);
+  });
+  if (clickedOutsideAllTargets) {
+    action();
+  }
 }
 
 export function convertFileSize(
@@ -378,7 +388,10 @@ export function checkSurrealResponse(
   if (response.status === "ERR") {
     if (isShowErrMessage)
       toasts.error("Something went wrong. Please try again", "ERR: S001");
-    return null;
+    const pattern = /Database record `.*` already exists/;
+    const match = pattern.test(response.result);
+    if (match) return "Record already exists";
+    else return null;
   } else if (response.status === "OK" && response.result) {
     return response.result;
   } else {

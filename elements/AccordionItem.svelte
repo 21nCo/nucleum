@@ -62,7 +62,6 @@
         >
           <Icon
             icon={state === AccordionState.collapsed ? "chevright" : "chevdown"}
-            size={Size.sm}
             {isActive}
             selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
             bgColorHue={color}

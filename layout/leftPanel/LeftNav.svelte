@@ -81,14 +81,14 @@
       {#if isHovered}
         <Button
           on:click={onMinimizeToggled}
-          size={Size.xs}
+          size={Size.sm}
           label="switch to verbose"
         />
       {/if}
     </div>
   {:else}
     <div
-      class="flex justify-center items-center h-full {isInThinMode
+      class="flex justify-center items-center h-full border-r border-r-brs2 {isInThinMode
         ? 'w-16 min-w-[4rem]'
         : 'w-56 min-w-[14rem]'} {isRounded ? 'ml-2' : ''}"
       on:mouseenter={() => (isHovered = true)}
@@ -113,6 +113,7 @@
             {/if}
             {#if isHovered}
               <Button
+                size={Size.lg}
                 icon="sidebar-toggle"
                 on:click={() => {
                   // $userPreferences.uiStates = setUiState(
@@ -156,6 +157,7 @@
             {#if isInThinMode}
               <!-- todo - on click - show command bar -->
               <Icon
+                size={Size.lg}
                 icon="command"
                 color="fgs2"
                 on:click={() => runAction(AppEvent.CMD)}

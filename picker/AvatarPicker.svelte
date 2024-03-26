@@ -323,7 +323,7 @@
     </div>
     <div class="flex justify-around w-7/10">
       <div class="flex rounded h-6/10 w-8/10 bg-bgs2">
-        <Icon icon="search-mini" variant={IconVariant.Outline} size={Size.xs} />
+        <Icon icon="search-mini" variant={IconVariant.Outline} size={Size.sm} />
         <input
           type="search"
           placeholder="Search"

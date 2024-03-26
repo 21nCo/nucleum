@@ -32,28 +32,17 @@
   >
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
-        <Icon
-          size={Size.sm}
-          icon={component.icon ?? "info"}
-          {isActive}
-          {selectionStyle}
-        />
+        <Icon icon={component.icon ?? "info"} {isActive} {selectionStyle} />
         <div>{component.alternateLabel ?? component.label}</div>
       </div>
       <Icon
-        size={Size.sm}
         icon={component.link ? "link" : "chevright"}
         {isActive}
         {selectionStyle}
       />
     {:else}
       <div class="flex flex-col items-center gap-2">
-        <Icon
-          size={Size.sm}
-          icon={component.icon}
-          {isActive}
-          {selectionStyle}
-        />
+        <Icon icon={component.icon} {isActive} {selectionStyle} />
         <div>{component.alternateLabel ?? component.label}</div>
       </div>
     {/if}

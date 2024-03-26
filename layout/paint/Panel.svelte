@@ -8,7 +8,7 @@
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
   export let title: string | undefined = undefined;
-  export let titleStyle: TextStyle = TextStyle.PAGE_HEADING;
+  export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
   export let floatingButton: ButtonParams | undefined = undefined;
 </script>
 

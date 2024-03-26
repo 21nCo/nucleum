@@ -16,8 +16,8 @@
   export let path: string;
   export let params: ModalParams;
   let size: Size = Size.md;
-  // let orientation: Orientation = Orientation.Vertical;
-  // if (params.layout?.size) size = params.layout.size;
+  let orientation: Orientation = Orientation.Vertical;
+  if (params.layout?.size) size = params.layout.size;
   // if (params.layout?.orientation) orientation = params.layout.orientation;
   let footerRef: any;
   export function close() {
@@ -42,33 +42,35 @@
 </script>
 
 {#if size === Size.full}
-  <!--     in:fly={{
-      duration: 500,
+  <div
+    class="w-full h-full flex justify-center items-center"
+    in:fly={{
+      duration: 400,
       delay: 0,
       easing: quintOut,
       x: 0,
       y: 100,
       opacity: 0
-    }} Disabling transition animations - unexpected behaviors -->
-  <div class="w-full h-full flex justify-center items-center">
+    }}
+  >
     <slot />
   </div>
 {:else}
-  <!--     in:fly={{
-      duration: 500,
-      delay: 0,
-      easing: quintOut,
-      x: 0,
-      y: 100,
-      opacity: 0
-    }} -->
   <div
-    class="flex flex-col items-center justify-between w-full h-full {!params
+    class="modal flex flex-col items-center justify-between w-full h-full {!params
       .layout?.ignoreSafeArea
       ? size === Size.xs
         ? 'p-2 lg:p-4 gap-4'
         : 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
       : ''}"
+    in:fly={{
+      duration: 400,
+      delay: 0,
+      easing: quintOut,
+      x: 0,
+      y: orientation === Orientation.Horizontal ? 100 : 10,
+      opacity: 0
+    }}
   >
     {#if params.title && $appStore.launchContext != LaunchContext.EMBED}
       <ModalHeader
@@ -91,3 +93,34 @@
     {/if}
   </div>
 {/if}
+
+<style>
+  @keyframes slideIn {
+    0% {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .modal-slide {
+    animation: slideIn 0.2s ease-in-out forwards;
+  }
+  @keyframes flyIn {
+    0% {
+      transform: translate(0px, 100px);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(0px, 0px);
+      opacity: 1;
+    }
+  }
+
+  .modal-disabled {
+    animation: flyIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+</style>

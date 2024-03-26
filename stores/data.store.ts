@@ -17,7 +17,7 @@ import {
 
 import {
   replaceParams,
-  mutationQuery,
+  resolveMutationQuery,
   resolveRefreshQuery
 } from "../utils/surreal.utils";
 import { CacheManager } from "./cache";
@@ -52,6 +52,14 @@ function init() {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
         refreshStores([store], isShowRefreshingState);
+      }
+    },
+    refreshMultiple: async (storeIdentifiers: string[]) => {
+      const stores = cacheableStoresTable.filter((x) =>
+        storeIdentifiers.includes(get(x).id)
+      );
+      if (isValidArrayWithData(stores)) {
+        refreshStores(stores, false);
       }
     },
     refreshOnAppear: async () => {
@@ -125,6 +133,19 @@ function init() {
     }
   };
 }
+/**
+ * Adds a mutation to the mutation queue.
+ * @param query db query to be added to the mutation queue
+ * @param params db query params to be added to the mutation queue
+ */
+async function addToMutationQueue(query: string, params: any) {
+  const cacheSource = get(dataManager).cacheSource;
+  cacheSource.dixie.mutationQueue.add({
+    timestamp: new Date().getTime(),
+    query,
+    params
+  });
+}
 
 /**
  * Performs a mutation on the server and propagates changes to the dependant stores according to the sync type.
@@ -150,11 +171,9 @@ async function performMutation(
   const surrealDb = get(dataManager).db;
   if (!store) return;
   const storeData = get(store);
-  console.log({ storeData });
   let defferedStores: CacheableStoreContract[] = [];
   storeData.mutatingResources.forEach((resource: string) => {
     const dependantStores = resolveDependantStores(resource);
-    console.log({ dependantStores });
     dependantStores.forEach((x) => {
       const y = get(x);
       if (!y.dependencies) return;
@@ -173,22 +192,25 @@ async function performMutation(
       }
     });
   });
-  console.log({ defferedStores });
-  const refreshQueryForDeferrredStores =
+  const refreshQueryForDeferredStores =
     resolveStoresRefreshQuery(defferedStores);
-  let dbQuery: string = "";
-  if (action === PersistanceActionType.CUSTOM_QUERY && query) dbQuery = query;
-  else dbQuery = mutationQuery(action, data?.id);
-  if (refreshQueryForDeferrredStores) {
-    dbQuery = `${dbQuery};${refreshQueryForDeferrredStores}`;
+  let mutationQuery: string = "";
+  if (action === PersistanceActionType.CUSTOM_QUERY && query)
+    mutationQuery = query;
+  else mutationQuery = resolveMutationQuery(action, data?.id);
+  let dbFullQuery: string = `${mutationQuery};`;
+  if (refreshQueryForDeferredStores) {
+    dbFullQuery += `${refreshQueryForDeferredStores}`;
   }
-  logger.log({ context: "mutation query:", dbQuery });
-  let response = await surrealDb.query(
-    dbQuery,
-    action === PersistanceActionType.CUSTOM_QUERY ? { ...data } : { data }
-  );
+  const mutationParams =
+    action === PersistanceActionType.CUSTOM_QUERY ? { ...data } : { data };
+  logger.log({ context: "mutation full query:", dbFullQuery });
+  let response = await surrealDb.query(dbFullQuery, mutationParams);
   console.log("performMutation response", { response });
-  if (!isValidArrayWithData(response)) return;
+  if (!isValidArrayWithData(response)) {
+    addToMutationQueue(mutationQuery, mutationParams);
+    return;
+  }
   setRefreshingState(defferedStores, true);
   response = response.map((x: any) => checkSurrealResponse(x));
   const mutationResponse = response[0];
@@ -208,12 +230,7 @@ async function performMutation(
   }, 1000);
   //TODO - if required - fetch serverMutationMap along with response of mutation and run refreshStaleData
   if (mutationResponse) return mutationResponse;
-  const cacheSource = get(dataManager).cacheSource;
-  cacheSource.dixie.mutationQueue.add({
-    timestamp: new Date().getTime(),
-    query: action,
-    params: { data }
-  });
+  addToMutationQueue(mutationQuery, mutationParams);
 }
 
 /**

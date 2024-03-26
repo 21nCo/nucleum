@@ -6,6 +6,8 @@
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { bgClass, textColorClass } from "$lib/tidy/utils/theme.utils";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import { fade, fly } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
   export let item: string;
   export let size: Size;
   export let isActive: boolean = false;
@@ -99,6 +101,7 @@
 <style>
   .activeBgColor {
     background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
+    /* transition: background-color 0.2s ease-in-out; */
   }
   .activeFgColor {
     color: var(--customcolor, rgba(var(--colors-aps1), 1));

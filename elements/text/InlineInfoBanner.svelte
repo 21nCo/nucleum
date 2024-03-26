@@ -17,10 +17,10 @@
       ? 'bg-ars2'
       : 'bg-ass3'}"
 >
-  <Icon icon={type} size={Size.sm} />
+  <Icon icon={type} />
   <div class="flex flex-col items-start gap-2">
     {#if content}
-      <div>
+      <div class="text-left">
         {@html renderMdAsHtml(content)}
       </div>
     {:else}

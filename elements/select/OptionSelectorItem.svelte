@@ -66,7 +66,7 @@
       {#if isActive}
         <div
           class="w-[0.7rem] h-[0.7rem] bg-aps1 rounded-full"
-          transition:scale={{ duration: 200, easing: easeBackOut }}
+          in:scale={{ duration: 200, easing: easeBackOut }}
         />
       {/if}
     </div>

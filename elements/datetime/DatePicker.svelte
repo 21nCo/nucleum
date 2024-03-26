@@ -1,10 +1,16 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
+  import Icon from "../Icon.svelte";
+  import { Size } from "$lib/tidy/types/size.enum";
+  import { formatDate } from "$lib/tidy/utils/time.utils";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date;
+  export let variant: "wide-v1" | "wide" | "inline" | "icon" = "wide";
+  let isPopoverActive: boolean = false;
   let backgroundColor: string;
+  let dateInput: HTMLInputElement;
   onMount(() => {
     let colors = resolveBackgroundClass(parentBackgroundIndex);
     backgroundColor = colors.backgroundColor;
@@ -16,14 +22,46 @@
   }
 </script>
 
-<label class="block max-w-md">
-  <input
-    type="date"
-    on:input={updateDate}
-    value={date.toISOString().substr(0, 10)}
-    class="mt-1 block w-full {backgroundColor} p-2 rounded-sm"
-  />
-</label>
+{#if variant == "wide-v1"}
+  <label class="block max-w-md w-full rounded-md">
+    <input
+      type="date"
+      on:input={updateDate}
+      value={date.toISOString().substr(0, 10)}
+      class="mt-1 block w-full {backgroundColor} py-1 px-2 rounded-md"
+    />
+  </label>
+{:else}
+  <div class="relative">
+    <input
+      bind:this={dateInput}
+      bind:value={date}
+      on:input={updateDate}
+      type="date"
+      class="absolute w-full h-full opacity-0 cursor-pointer bg-bgs3"
+    />
+    <button
+      class="flex items-center rounded-md p-2"
+      on:click={(e) => {
+        console.log("clicked", e, isPopoverActive);
+        if (isPopoverActive) {
+          dateInput.blur();
+          isPopoverActive = false;
+        } else {
+          dateInput.focus();
+          dateInput.click();
+          isPopoverActive = true;
+        }
+      }}
+    >
+      <Icon icon="calendar" size={variant === "inline" ? Size.md : Size.lg} />
+      <!-- {#if variant === "inline"}
+        <span class="ml-2 text-fgs2">{formatDate(date)}</span>
+      {/if} -->
+      <!-- {formatDate(date)} -->
+    </button>
+  </div>
+{/if}
 
 <style>
   input::-webkit-calendar-picker-indicator {

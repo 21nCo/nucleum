@@ -122,7 +122,12 @@
   {/if}
   <div class="h-full w-full">
     {#if isLoading}
-      <EmptyStatusView size={Size.sm} isLoadingState={isLoading} mainText="" />
+      <EmptyStatusView
+        size={Size.sm}
+        isLoadingState={isLoading}
+        mainText=""
+        loadingText=""
+      />
     {:else if data}
       {#if orientation === Orientation.Horizontal}
         <HorizontalCalendarLayout let:datum {data} scale={tileScale}>

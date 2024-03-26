@@ -6,6 +6,7 @@
   import PageLoadingAnimation from "./animations/PageLoadingAnimation.svelte";
   import Button from "../button/Button.svelte";
   import PageLoadingPulse from "./animations/PageLoadingPulse.svelte";
+  import LogsLoadingPulse from "./animations/LogsPulse/LogsLoadingPulse.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
@@ -14,6 +15,7 @@
   export let loadingText: string = "Refreshing...";
   export let loadingAnimation: LoadingAnimationType =
     LoadingAnimationType.SPINNER;
+  export let pulseCount: number = 0;
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center gap-2 px-2">
@@ -25,6 +27,8 @@
     </div>
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.PAGE_PULSE}
     <PageLoadingPulse />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.LOGS_PULSE}
+    <LogsLoadingPulse count={pulseCount} />
   {:else}
     <div class="flex flex-col gap-1 items-center">
       {#if size === Size.sm}

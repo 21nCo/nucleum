@@ -5,6 +5,7 @@
   export let search: string = "";
   export let action: any;
   export let isActive: boolean = false;
+  export let index: number;
   $: label =
     search && action?.cmdLabel?.toLowerCase()?.includes(search.toLowerCase())
       ? action?.cmdLabel.replace(
@@ -14,7 +15,7 @@
       : action?.cmdLabel;
 </script>
 
-<ResultItem {isActive} on:click>
+<ResultItem {isActive} {index} on:click>
   <div>
     {#if action.type === ActionType.PAGE}
       Go to
