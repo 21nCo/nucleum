@@ -27,17 +27,20 @@
     selected.some((x) => x == item.value)
   );
   onMount(() => {
-    appEvents.subscribe((x: AppEventType) => {
+    const sub = appEvents.subscribe((x: AppEventType) => {
       if (
         x.event === AppEvent.WINDOW_CLICKED &&
         x.value &&
         x.value instanceof PointerEvent
       ) {
-        actIfClickedOutside(x.value, `#${containerId}`, () => {
+        actIfClickedOutside(x.value, containerId, () => {
           isShowOptions = false;
         });
       }
     });
+    return () => {
+      sub();
+    };
   });
   function onCheckClicked(item: DropdownItem) {
     if (item.disabled) return;

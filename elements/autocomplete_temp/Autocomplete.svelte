@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
+  import {
+    SvelteComponent,
+    createEventDispatcher,
+    onDestroy,
+    onMount
+  } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
   import Search from "$lib/tidy/icons/Search.svelte";
@@ -163,14 +168,17 @@
   //   }, 0);
   // });
 
-  appEvents.subscribe((x: AppEventType) => {
+  const sub = appEvents.subscribe((x: AppEventType) => {
     if (
       x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {
-      actIfClickedOutside(x.value, `#${containerId}`, hideOptions);
+      actIfClickedOutside(x.value, containerId, hideOptions);
     }
+  });
+  onDestroy(() => {
+    sub();
   });
 </script>
 

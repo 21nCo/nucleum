@@ -36,17 +36,20 @@
   }
   $: selected = items.find((x) => x.value === value) ?? items[0];
   onMount(() => {
-    appEvents.subscribe((x: AppEventType) => {
+    const sub = appEvents.subscribe((x: AppEventType) => {
       if (
         x.event === AppEvent.WINDOW_CLICKED &&
         x.value &&
         x.value instanceof PointerEvent
       ) {
-        actIfClickedOutside(x.value, `#${containerId}`, () => {
+        actIfClickedOutside(x.value, containerId, () => {
           isShowOptions = false;
         });
       }
     });
+    return () => {
+      sub();
+    };
   });
 </script>
 

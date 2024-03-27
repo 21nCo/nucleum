@@ -7,7 +7,7 @@
   import { borderClass } from "$lib/tidy/utils/theme.utils";
   import { actIfClickedOutside } from "$lib/tidy/utils/utils";
   import TimeUnitItem from "./TimeUnitItem.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onDestroy } from "svelte";
   import appearance from "$lib/tidy/stores/appearance.store";
 
   export let units: TimeUnit[];
@@ -59,14 +59,17 @@
     }
   }
 
-  appEvents.subscribe((x: AppEventType) => {
+  const appEventSub = appEvents.subscribe((x: AppEventType) => {
     if (
       x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {
-      actIfClickedOutside(x.value, `#${containerId}`, closeUnitDropdown);
+      actIfClickedOutside(x.value, containerId, closeUnitDropdown);
     }
+  });
+  onDestroy(() => {
+    appEventSub();
   });
 </script>
 

@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { SvelteComponent, createEventDispatcher, onMount } from "svelte";
+  import {
+    SvelteComponent,
+    createEventDispatcher,
+    onDestroy,
+    onMount
+  } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
@@ -198,14 +203,17 @@
     else if (size == Size.xs) defaultInputClasses += " text-b3";
   });
 
-  appEvents.subscribe((x: AppEventType) => {
+  const sub = appEvents.subscribe((x: AppEventType) => {
     if (
       x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {
-      actIfClickedOutside(x.value, `#${wrapperId}`, actionsWhenClickOutside);
+      actIfClickedOutside(x.value, wrapperId, actionsWhenClickOutside);
     }
+  });
+  onDestroy(() => {
+    sub();
   });
 </script>
 

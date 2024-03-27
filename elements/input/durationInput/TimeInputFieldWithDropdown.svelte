@@ -1,6 +1,6 @@
 <script lang="ts">
   import { actIfClickedOutside } from "$lib/tidy/utils/utils";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import TimeSuggestionsItem from "./TimeSuggestionsItem.svelte";
   import { TimeUnit, type TimeSuggestion } from "$lib/tidy/types/time.type";
   import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
@@ -326,18 +326,19 @@
     }
   }
 
-  //To close the dropdown when clicked outside
-  appEvents.subscribe((x: AppEventType) => {
+  const sub = appEvents.subscribe((x: AppEventType) => {
     if (
       x.event === AppEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {
-      actIfClickedOutside(x.value, `#${inputContainerId}`, () => {
+      actIfClickedOutside(x.value, inputContainerId, () => {
         resetTimeSuggestions();
-        // timeSuggestions.length > 0 && handleClickOnTimeSuggestion(0)(); // To select the first time suggestion, if present any (in the case of focusout)
       });
     }
+  });
+  onDestroy(() => {
+    sub();
   });
 </script>
 
