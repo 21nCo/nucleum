@@ -5,7 +5,7 @@
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
   import { isTextElement } from "$lib/tidy/utils/browser.utils";
   import { runAction } from "$lib/tidy/utils/utils";
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
   let userKeyMap = $userPreferences?.shortcuts;
   onMount(() => {
@@ -61,10 +61,6 @@
     event.stopPropagation();
     if (isShortcutFound) event.preventDefault();
   };
-  window?.addEventListener("keydown", shortcutListener);
-  onDestroy(() => {
-    window?.removeEventListener("keydown", shortcutListener);
-  });
 
   function runShortcut(key: string, modifiers: string[]) {
     if (!defaultKeyMap) return;
@@ -87,3 +83,5 @@
     return true;
   }
 </script>
+
+<svelte:window on:keydown={shortcutListener} />

@@ -35,11 +35,11 @@
   import actions from "$lib/tidy/stores/actions.store";
   import account from "$lib/tidy/stores/account.store";
   import appearance from "$lib/tidy/stores/appearance.store";
-  import { Theme } from "$lib/tidy/types/appearance.type";
   const visibilityChangeListener = (event: Event) => {
     appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
   const windowResizeListener = (event: Event) => {
+    view.update(window.innerWidth, window.innerHeight);
     appEvents.publish(AppEvent.WINDOW_RESIZED, event);
   };
   const windowClickEventListener = (event: MouseEvent) => {
@@ -62,6 +62,7 @@
       });
     await parseEmbedToken();
     await initializeData();
+    view.update(window.innerWidth, window.innerHeight);
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
     const darkModeMediaQuery = window.matchMedia(
@@ -177,10 +178,10 @@
     }
   }
   function addWindowEventListeners() {
-    window?.addEventListener("visibilitychange", visibilityChangeListener);
-    window?.addEventListener("resize", windowResizeListener);
-    window?.addEventListener("click", windowClickEventListener);
-    window?.addEventListener("message", messageReceivedListener);
+    // window?.addEventListener("visibilitychange", visibilityChangeListener);
+    // window?.addEventListener("resize", windowResizeListener);
+    // window?.addEventListener("click", windowClickEventListener);
+    // window?.addEventListener("message", messageReceivedListener);
     window.onpopstate = () => {
       view.setCurrentPath(document.location.pathname);
     };
@@ -203,3 +204,10 @@
 <Shortcuts />
 <Intercom />
 <CacheLayer />
+<svelte:window
+  on:resize={windowResizeListener}
+  on:click={windowClickEventListener}
+  on:message={messageReceivedListener}
+/>
+
+<svelte:document on:visibilitychange={visibilityChangeListener} />

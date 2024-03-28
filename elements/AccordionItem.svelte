@@ -44,7 +44,7 @@
     tabindex={0}
     {color}
     isBackgroundActive={isActive}
-    classList="flex flex-col w-full items-center px-4 {$view.isPortrait
+    class="flex flex-col w-full items-center px-4 {$view.isPortrait
       ? 'py-3'
       : 'py-2'}"
     styles="padding-left: {nestingLevel * 1.5 ? nestingLevel * 1.5 : 0.5}rem"

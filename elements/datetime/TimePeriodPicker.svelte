@@ -7,13 +7,7 @@
   import { Size } from "../../types/size.enum";
   import { TimeScale } from "../../types/time.type";
   import BackgroundElement from "../style/BackgroundElement.svelte";
-  import { transition } from "d3-transition";
-  import { fade, slide } from "svelte/transition";
   import Button from "../button/Button.svelte";
-  import { appEvents } from "$lib/tidy/stores/app.store";
-  import type { AppEventType } from "$lib/tidy/types/event.type";
-  import { AppEvent } from "$lib/tidy/types/event.enum";
-  import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
@@ -25,8 +19,6 @@
    * @type {Date}
    */
   export let selectedDate: Date = new Date();
-  export let srcId = generateUID();
-  export let containerId = generateUID();
   let yearMode: boolean = scale === TimeScale.YEARS;
   let monthMode: boolean = scale === TimeScale.MONTHS;
   let dayMode: boolean = scale === TimeScale.DAYS;
@@ -100,22 +92,7 @@
     } else if (yearMode) {
       rows = initYear();
     }
-    const appEventSub = appEvents.subscribe((x: AppEventType) => {
-      if (
-        x.event === AppEvent.WINDOW_CLICKED &&
-        x.value &&
-        (x.value instanceof PointerEvent || x.value instanceof MouseEvent)
-      ) {
-        actIfClickedOutside(x.value, [srcId, containerId], closePicker);
-      }
-    });
-    return () => {
-      appEventSub();
-    };
   });
-  function closePicker() {
-    dispatch("close");
-  }
   /**
    * @description closure to remember initialized or previously passed value to handle the monthPool change for the month range slider
    * @param index
@@ -368,9 +345,8 @@
 {#if isPickerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <BackgroundElement
-    id={containerId}
     {parentBgIndex}
-    classList="flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2"
+    class="flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2"
   >
     <div class="flex items-center w-full justify-between text-b2">
       <div class="flex gap-1">
@@ -387,7 +363,7 @@
           > -->
           <BackgroundElement
             {parentBgIndex}
-            classList="focus:outline-none rounded-md px-2 py-1 text-center"
+            class="focus:outline-none rounded-md px-2 py-1 text-center"
             >{selectedDecade +
               "-" +
               (selectedDecade + 10).toString().slice(2)}</BackgroundElement
@@ -480,8 +456,7 @@
               parentBgIndex={mapYear == yearPool[index]
                 ? parentBgIndex + 1
                 : parentBgIndex}
-              classList="focus:outline-none px-2 py-1 {mapYear ==
-              yearPool[index]
+              class="focus:outline-none px-2 py-1 {mapYear == yearPool[index]
                 ? 'font-medium rounded-md text-center'
                 : ''}"
               >{ucFirst(
@@ -524,7 +499,7 @@
               parentBgIndex={mapMonth == monthPool[index]
                 ? parentBgIndex + 1
                 : parentBgIndex}
-              classList="focus:outline-none px-1.5 py-1 {mapMonth ==
+              class="focus:outline-none px-1.5 py-1 {mapMonth ==
               monthPool[index]
                 ? 'font-medium rounded-md  text-center'
                 : ''}"
@@ -730,7 +705,7 @@
           <div class="text-b2">Start</div>
           <BackgroundElement
             parentBgIndex={parentBgIndex + 1}
-            classList="text-b2 text-fgs3 p-1 rounded-sm"
+            class="text-b2 text-fgs3 p-1 rounded-sm"
           >
             {#if startSelected}
               {startString}<button
@@ -751,7 +726,7 @@
           <div class="text-b2">End</div>
           <BackgroundElement
             parentBgIndex={parentBgIndex + 1}
-            classList="text-b2 text-fgs3 p-1 rounded-sm"
+            class="text-b2 text-fgs3 p-1 rounded-sm"
           >
             {#if endSelected}
               {endString}<button

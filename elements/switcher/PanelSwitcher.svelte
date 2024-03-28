@@ -33,7 +33,7 @@
           classList +=
             " min-w-fit border-2 border-brs3 rounded-full " +
             bgClass($appearance, parentBackgroundIndex);
-        } else if (size === Size.sm) {
+        } else if (size === Size.sm || size === Size.xs) {
           classList +=
             " min-w-fit rounded-md border border-brs3 " +
             bgClass($appearance, parentBackgroundIndex);

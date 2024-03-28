@@ -9,6 +9,6 @@
     appStore.hideFullScreenPlayer();
   }}
 >
-  <BackgroundElement classList="h-1 w-1/3 rounded-full" />
+  <BackgroundElement class="h-1 w-1/3 rounded-full" />
   <!-- <Icon icon="collapse" color="fgs2" /> -->
 </button>

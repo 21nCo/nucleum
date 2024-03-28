@@ -27,7 +27,7 @@ export type NodeBase = {
   id: string;
   title?: string;
   generatedTitle?: string;
-  icon?: string;
+  avatar?: string;
 };
 
 export type NodeStore = Node & {};

@@ -17,6 +17,8 @@
   export let styles: string = "";
   export let tabindex: number = 0;
   export let transition: string = "";
+  export let id: string = "";
+  export { classList as class };
   function bgfgClasses(
     parentBackgroundIndex: number = 1,
     isActive: boolean = false,
@@ -35,6 +37,7 @@
 </script>
 
 <button
+  {id}
   class="{classList} {bgfgClasses(
     bgWhenInactive - 1,
     isBackgroundActive,

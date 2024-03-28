@@ -42,7 +42,7 @@ export const emptyNode: Node = {
   body: {
     blocks: [emptyBlock]
   },
-  icon: "",
+  avatar: "",
   id: generateUID()
 };
 const seedMdStore: MdStore = {

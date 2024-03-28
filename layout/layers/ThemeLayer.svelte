@@ -1,31 +1,20 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
+  import { userPreferences } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { AppSkin } from "$lib/tidy/types/appearance.type";
-  import { AppEvent } from "$lib/tidy/types/event.enum";
   import { postToParent } from "$lib/tidy/utils/embed.utils";
   import appearance from "$lib/tidy/stores/appearance.store";
-  handleResize();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   $: rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
   $: document.documentElement.style.fontSize = `${rootFontSize}px`;
-  function handleResize() {
-    view.update(window.innerWidth, window.innerHeight);
-  }
   onMount(() => {
     refreshTheme();
-    const appEventSub = appEvents.subscribe((e) => {
-      if (e.event == AppEvent.WINDOW_RESIZED) {
-        handleResize();
-      }
-    });
     const userPrefSub = userPreferences.subscribe(() => {
       refreshTheme();
     });
     return () => {
-      appEventSub();
       userPrefSub();
     };
   });

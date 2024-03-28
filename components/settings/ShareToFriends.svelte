@@ -7,7 +7,7 @@
 
 <div class="w-full h-full flex justify-center">
   <BackgroundElement
-    classList="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40"
+    class="flex flex-col gap-4 bg-bgs2 rounded-md p-6 w-[27rem] h-40"
   >
     <div>
       Refer your friends to Pointron to help them focus on their work and

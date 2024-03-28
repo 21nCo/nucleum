@@ -43,7 +43,7 @@
 </script>
 
 <BackgroundElement
-  classList="w-20 h-20 rounded-full flex justify-center items-center"
+  class="w-20 h-20 rounded-full flex justify-center items-center"
   parentBgIndex={2}
 >
   {#if initials}

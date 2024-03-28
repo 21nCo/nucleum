@@ -3,7 +3,8 @@
 <script lang="ts">
   import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
+  import appearance from "$lib/tidy/stores/appearance.store";
   import { EmbedContext } from "$lib/tidy/types/appStore.type";
   export let message: string | undefined = undefined;
 </script>
@@ -21,7 +22,7 @@
       </div>
     {:else}
       <div class="flex flex-col items-center">
-        <SubAtomLogo isDark={$userPreferences?.colorScheme?.isDark} />
+        <SubAtomLogo isDark={$appearance?.colorScheme?.isDark} />
         {#if message}
           <div class="font-medium px-4 text-center text-fgs2 text-b4">
             {message}

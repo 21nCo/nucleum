@@ -14,6 +14,7 @@
   import { Direction } from "$lib/tidy/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import { cn } from "$lib/tidy/utils/ui.utils";
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -179,11 +180,14 @@
   }
 </script>
 
+<!--   class={classList +
+    ` ${width} ` +
+    (isDisabled ? " opacity-70 cursor-not-allowed hover:opacity-50 " : "")} -->
 <button
   {id}
-  class={classList +
-    ` ${width} ` +
-    (isDisabled ? " opacity-70 cursor-not-allowed hover:opacity-50 " : "")}
+  class={cn(classList, width, {
+    "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled
+  })}
   on:click
   bind:this={buttonRef}
   on:mouseover={toggleHoveringState}

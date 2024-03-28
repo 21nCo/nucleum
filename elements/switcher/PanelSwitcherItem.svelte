@@ -77,16 +77,18 @@
   <button
     class="relative min-w-fit {size === Size.md
       ? 'rounded-full px-6 py-3'
-      : 'rounded-md px-3 py-1 w-24 '} {isActive ? 'activeBgColor' : ''}"
+      : size === Size.sm
+        ? 'rounded-md px-3 py-1 w-24 '
+        : 'rounded-md px-2 py-0.5 w-16 '} {isActive ? 'activeBgColor' : ''}"
     on:click
     disabled={isDisabled}
   >
     <div
       class="{size === Size.md && $view.isPortrait
         ? 'text-base font-medium'
-        : size === Size.sm
+        : size === Size.sm || size === Size.xs
           ? 'text-b2'
-          : 'text-base'} {textColorClass(
+          : 'text-b3'} {textColorClass(
         $appearance,
         ColorStrength.Normal,
         isActive,

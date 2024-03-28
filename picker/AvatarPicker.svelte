@@ -13,7 +13,7 @@
     userPreferences
   } from "../stores/app.store";
   import { Size } from "../types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import { debouncer } from "../utils/utils";
   import { ButtonStyle } from "../types/button.type";
   import type { avatarWithCode, avatarWithURL } from "../types/iconPicker.type";
@@ -21,12 +21,15 @@
   import { Persistance } from "../stores/persistance";
   import { IconVariant } from "../types/icon.type";
   import { PanelSwitcherStyle } from "../types/switcher.enum";
+  import Autocomplete from "../elements/autocomplete_temp/Autocomplete.svelte";
+  import Text from "../elements/text/Text.svelte";
+  import { TextStyle } from "../types/text.enum";
+  import ActiveBackgroundElement from "../elements/style/ActiveBackgroundElement.svelte";
+  import BackgroundElement from "../elements/style/BackgroundElement.svelte";
   export let mode: iconPickerType.EMOJI | iconPickerType.ICON =
     iconPickerType.EMOJI;
-  /**
-   * To close the avatar picker when clicked outside the picker or when an avatar is clicked.
-   */
-  export let isRenderAvatarPicker: boolean;
+  let activeCategory: string = "";
+
   // onMount(() => {
   //   $userPreferences.avatarPicker = {
   //     skinIndex: 0,
@@ -111,7 +114,7 @@
           ][0]
         : shuffleEmojis[Math.floor(Math.random() * shuffleEmojis.length)][0]
     );
-    isRenderAvatarPicker = false;
+    eventDispatcher("close");
   }
 
   /**
@@ -132,9 +135,10 @@
       if (
         scrollTop > avtContainerTop &&
         scrollTop < avtContainerTop + avtContainerHeight
-      )
-        avtContainerIndicator?.classList.add("bg-aps1", "text-bgs1");
-      else avtContainerIndicator?.classList.remove("bg-aps1", "text-bgs1");
+      ) {
+        // avtContainerIndicator?.classList.add("bg-aps1", "text-bgs1");
+        activeCategory = avtContainer.id;
+      } else avtContainerIndicator?.classList.remove("bg-aps1", "text-bgs1");
     });
   }
   /**
@@ -242,8 +246,7 @@
     }
     if (emote.length == 1) addToUsedList(emote[0]);
     else addToUsedList(emote[skinIndex]);
-
-    isRenderAvatarPicker = false;
+    eventDispatcher("close");
   }
   /**
    * Invoked when the custom upload button is clicked. It triggers the file input element to open the file picker.
@@ -304,25 +307,21 @@
   }
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
-  class="bg-bgs2 text-fgs2 rounded shadow-lg"
-  style="height:344px;width:429px"
-  on:click|stopPropagation
+  class="bg-bgs1 rounded-md shadow-lg border border-brs3 h-[28rem] w-[35rem]"
 >
-  <div class="flex items-center h-1/10">
-    <div class="flex w-3/10">
+  <div class="flex h-12 border-b border-b-brs2 p-2">
+    <div class="flex w-3/10 h-full px-2">
       <PanelSwitcher
         items={["Icon", "Emoji"]}
-        parentBackgroundIndex={2}
-        size={Size.sm}
-        style={PanelSwitcherStyle.DOT}
+        size={Size.xs}
+        style={PanelSwitcherStyle.TRAIN}
         selected={mode == iconPickerType.ICON ? "Icon" : "Emoji"}
         on:switch={(event) => (mode = event.detail.toUpperCase())}
       />
     </div>
-    <div class="flex justify-around w-7/10">
-      <div class="flex rounded h-6/10 w-8/10 bg-bgs2">
+    <div class="flex h-full justify-around w-7/10">
+      <div class="flex rounded-md w-8/10 px-1 border border-brs2">
         <Icon icon="search-mini" variant={IconVariant.Outline} size={Size.sm} />
         <input
           type="search"
@@ -330,39 +329,45 @@
           bind:this={searchRef}
           on:input={debouncedSearch}
           id="iconPickerSearch"
-          class="w-full h-full p-0.5 pl-2 bg-bgs2 text-fgs1 text-sm truncate outline-none"
+          class="w-full h-full p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
         />
       </div>
-      <button on:click={ShufflePick}>🔀</button><Icon
+      <Button icon="clock" on:click={ShufflePick} />
+      <Button
         icon="trash"
-        size={Size.xs}
         on:click={() => {
           eventDispatcher("delete");
-          isRenderAvatarPicker = false;
+          eventDispatcher("close");
         }}
       />
     </div>
   </div>
   <div class="flex h-9/10">
-    <div class="relative w-3/10 h-full p-2">
-      <!-- svelte-ignore a11y-click-events-have-key-events -->
-      <h1 class="opacity-80">Category</h1>
-      {#each avatarKeys as key, index (index)}
-        {#if avatars[key] !== undefined && avatars[key].length > 0}
-          <button
-            id={"avt" + index}
-            class={"block w-full mb-0.5 text-xs text-left hover:bg-aps2"}
-            on:click={PanelItemClickHandler}
-          >
-            {key}
-          </button>
-        {/if}
-      {/each}
+    <div
+      class="relative w-3/10 h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
+    >
+      <div class="px-2">
+        <Text content="Category" style={TextStyle.SECTION_HEADING_SMALL} />
+      </div>
+      <div class="flex flex-col gap-1">
+        {#each avatarKeys as key, index (index)}
+          {#if avatars[key] !== undefined && avatars[key].length > 0}
+            <ActiveBackgroundElement
+              isBackgroundActive={activeCategory == "AVT" + index}
+              id={"avt" + index}
+              class={"block w-full px-2 py-0.5 text-b2 text-left hover:bg-bgs2 rounded-md"}
+              on:click={PanelItemClickHandler}
+            >
+              {key}
+            </ActiveBackgroundElement>
+          {/if}
+        {/each}
+      </div>
       {#if mode == iconPickerType.ICON}
-        <Divider colorStrength={ColorStrength.ExtraStrong} thickness={2} />
+        <Divider colorStrength={ColorStrength.Strong} thickness={2} />
         <ToggleSwitch label="Fill" bind:checked size={Size.sm} />
       {/if}
-      <div class="absolute bottom-0 pb-1 w-9/10">
+      <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
         <input
           style="visibility:hidden;height:0px;width:0px;"
           type="file"
@@ -372,23 +377,24 @@
           on:input={customUploadHandler}
         />
         <Button
-          label="Custom Upload"
-          size={Size.xs}
-          type="primary"
-          parentBackgroundIndex={2}
-          style={ButtonStyle.DEFAULT}
+          icon="upload"
+          label="Upload"
+          size={Size.sm}
           on:click={triggerFileInput}
         />
         <!-- </div> -->
       </div>
     </div>
     <div class="flex flex-col w-7/10 h-full">
-      <div class="w-full h-1/10 bg-bgs3">
+      <BackgroundElement
+        class="w-full h-1/10 flex items-center gap-3 px-4 border-b border-b-brs2"
+        parentBgIndex={1}
+      >
         {#if mode == iconPickerType.ICON}
-          {#each colorPalate as color, index}
+          {#each colorPalate as color}
             <span
               id={"colPalate" + color}
-              class="inline-flex justify-center items-center rounded-full w-5 h-5 m-1"
+              class="inline-flex justify-center items-center rounded-full w-7 h-7"
               style="padding: 0rem;{iconColor == color
                 ? `border:1px solid ${color}`
                 : ''}"
@@ -396,7 +402,7 @@
               <button
                 id={"colPalateButton" + color}
                 on:click={() => (iconColor = color)}
-                class="rounded-full w-4 h-4"
+                class="rounded-full w-5 h-5"
                 style="background-color:{color}"
               ></button></span
             >
@@ -404,29 +410,29 @@
         {:else}
           {#each skinTones as skin, index}
             <span
-              class="inline-flex justify-center items-center rounded-full w-5 h-5 m-1"
+              class="inline-flex justify-center items-center rounded-full w-7 h-7"
               style="padding: 0rem;{skinIndex == index
                 ? `border:1px solid ${skin}`
                 : ''}"
             >
               <button
                 on:click={() => (skinIndex = index)}
-                class="rounded-full w-4 h-4"
+                class="rounded-full w-5 h-5"
                 style="background-color:{skin}"
               ></button></span
             >
           {/each}
         {/if}
-      </div>
+      </BackgroundElement>
       <div
         bind:this={avatarsParentContainer}
         on:scroll={handleScroll}
-        class="relative w-full h-9/10 overflow-auto"
+        class="relative w-full h-8/10 overflow-auto mt-3"
       >
         {#each avatarKeys as key, index}
           {#if avatars[key] !== undefined && avatars[key].length > 0}
-            <div id={"AVT" + index} class="AVT flex flex-col p-1">
-              <p class="text-xs">{key}</p>
+            <div id={"AVT" + index} class="AVT flex flex-col p-2">
+              <p class="text-b4 text-fgs3 px-2">{key}</p>
               <div class="flex flex-wrap">
                 {#if key == "Custom"}
                   {#each avatars[key] as emote}
@@ -439,7 +445,7 @@
                       on:mouseleave={() => {
                         searchRef.placeholder = "Search";
                       }}
-                      class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs4"
+                      class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2 rounded-md"
                     >
                       <img
                         id={emote[0].name}

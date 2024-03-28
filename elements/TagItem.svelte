@@ -30,7 +30,7 @@
   styles={style}
   on:click={handleTagClick}
   isIncludeActiveBorder={true}
-  classList="w-fit flex items-center justify-center gap-1 whitespace-nowrap {classList} {disabled &&
+  class="w-fit flex items-center justify-center gap-1 whitespace-nowrap {classList} {disabled &&
     `${disabledClassList} cursor-not-allowed`}"
 >
   {#if icon}

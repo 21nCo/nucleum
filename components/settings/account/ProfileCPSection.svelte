@@ -32,9 +32,7 @@
 </script>
 
 <BackgroundElement
-  classList="h-40 min-h-[10rem] {context === 'page'
-    ? 'mx-4 rounded-lg'
-    : 'w-full'}"
+  class="h-40 min-h-[10rem] {context === 'page' ? 'mx-4 rounded-lg' : 'w-full'}"
   parentBgIndex={parentBackgroundIndex}
 >
   {#if $account.isLoggedIn}

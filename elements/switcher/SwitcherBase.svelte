@@ -43,7 +43,7 @@
 
 {#if selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND}
   <ActiveBackgroundElement
-    {classList}
+    class={classList}
     isBackgroundActive={isActive}
     bgWhenInactive={parentBackgroundIndex + 1}
     on:click
