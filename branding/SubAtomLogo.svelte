@@ -12,7 +12,7 @@
   $: if (isDark === undefined) {
     isDark = $appearance?.colorScheme?.isDark;
   }
-  let color = isDark ? "#FFFFFF" : "#393939";
+  $: color = isDark ? "#FFFFFF" : "#393939";
   const defaults = [
     {
       subatom: "tidigit",

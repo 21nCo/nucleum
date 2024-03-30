@@ -10,55 +10,112 @@
   import SpokeLabel from "./SpokeLabel.svelte";
   import SpokeProgressMarker from "./SpokeProgressMarker.svelte";
   import SpokeContemporaries from "./contemporaries/SpokeContemporaries.svelte";
+  import { deepCopy } from "$lib/tidy/utils/obj.utils";
+  import GroupLabel from "./GroupLabel.svelte";
   export let wheel: FeatureWheel;
   export let mode: FeatureWheelMode = FeatureWheelMode.CONTEMPORARY;
-  let features: FeatureWheelGroup[] = wheel.features;
-  let categoryColoringStyle: "bg" | "spoke" =
-    mode === FeatureWheelMode.PROGRESS || mode === FeatureWheelMode.CONTEMPORARY
-      ? "spoke"
-      : "bg";
-  let radius = 245;
+  let groups: FeatureWheelGroup[];
+  let categoryColoringStyle: "bg" | "spoke";
+  let groupInFocus: string = "";
+
+  $: refresh(mode, wheel);
+
+  let radius = 220;
   const emptyDividerSpoke: FeatureWheelSpoke = {
     label: "",
     contemporaries: [],
     isDivider: true
   };
-  if (categoryColoringStyle === "bg") {
-    features = features.map((group) => {
-      group.spokes = [emptyDividerSpoke, ...group.spokes];
-      return group;
+
+  let startAngles = [0];
+  let groupAngles: number[];
+  let size: Size;
+  let spokeLabelXDisplacementFactor = 10;
+
+  function refresh(mode: FeatureWheelMode, wheel: FeatureWheel) {
+    groups = deepCopy(wheel.groups);
+    if (groupInFocus) {
+      groups = groups.filter((group) => group.label === groupInFocus);
+    }
+    console.log("groups", groups);
+    categoryColoringStyle =
+      mode === FeatureWheelMode.PROGRESS ||
+      mode === FeatureWheelMode.CONTEMPORARY
+        ? "spoke"
+        : "bg";
+    if (categoryColoringStyle === "bg" && groups.length > 1) {
+      groups = groups.map((group) => {
+        if (group.spokes.length > 0 && !group.spokes[0].isDivider)
+          group.spokes = [emptyDividerSpoke, ...group.spokes];
+        return group;
+      });
+    } else {
+      groups = groups.map((group) => {
+        group.spokes = group.spokes.filter((spoke) => !spoke.isDivider);
+        return group;
+      });
+    }
+
+    let groupCount = groups.length;
+    //   let angle = (2 * Math.PI) / groupCount;
+    //   let spokeAngle = angle / 3;
+
+    let totalSpokes = groups.reduce(
+      (total, group) => total + group.spokes.length,
+      0
+    );
+    let limitingSpokeCount =
+      totalSpokes >= 30 ? 4 : totalSpokes >= 20 ? 5 : totalSpokes > 10 ? 6 : 8;
+    if (totalSpokes > limitingSpokeCount && groups.length > 1) {
+      groups = groups.map((group) => {
+        if (group.spokes.length > limitingSpokeCount) {
+          const remainingCount = group.spokes.length - limitingSpokeCount;
+          group.spokes = group.spokes.slice(0, limitingSpokeCount);
+          group.spokes.push({
+            label: "+" + remainingCount + " more",
+            contemporaries: []
+          });
+        }
+        return group;
+      });
+      totalSpokes = groups.reduce(
+        (total, group) => total + group.spokes.length,
+        0
+      );
+    }
+
+    for (let i = 1; i < groups.length; i++) {
+      startAngles[i] =
+        startAngles[i - 1] +
+        (2 * Math.PI * groups[i - 1].spokes.length) / totalSpokes;
+    }
+
+    groupAngles = groups.map(
+      (group) => (2 * Math.PI * group.spokes.length) / totalSpokes
+    );
+    size = totalSpokes > 10 ? Size.sm : Size.md;
+    radius = totalSpokes > 10 ? 220 : 180;
+    spokeLabelXDisplacementFactor = totalSpokes * 1.3;
+    console.log({
+      totalSpokes,
+      startAngles,
+      groupAngles,
+      size,
+      radius,
+      groups
     });
   }
-  let groupCount = features.length;
-  //   let angle = (2 * Math.PI) / groupCount;
-  //   let spokeAngle = angle / 3;
 
-  // Calculate the total number of spokes
-  let totalSpokes = features.reduce(
-    (total, group) => total + group.spokes.length,
-    0
-  );
-
-  // Initialize startAngles with the start angle for the first group
-  let startAngles = [0];
-
-  // Fill in the start angles for the rest of the groups
-  for (let i = 1; i < features.length; i++) {
-    startAngles[i] =
-      startAngles[i - 1] +
-      (2 * Math.PI * features[i - 1].spokes.length) / totalSpokes;
+  function toggleGroupFocus(group: string) {
+    groupInFocus = groupInFocus === group ? "" : group;
+    // console.log("groupInFocus", { groupInFocus });
+    refresh(mode, wheel);
   }
-
-  // Calculate the angle for each group
-  let groupAngles = features.map(
-    (group) => (2 * Math.PI * group.spokes.length) / totalSpokes
-  );
-  let size = totalSpokes > 10 ? Size.xs : Size.md;
 </script>
 
 <svg class="wheel" viewBox="-300 -300 600 600">
-  {#each features as group, i (group.label)}
-    {#if categoryColoringStyle === "bg"}
+  {#each groups as group, i (group.label)}
+    {#if categoryColoringStyle === "bg" && groups.length > 1}
       <path
         d={`M 0 0 L ${radius * Math.cos(startAngles[i])} ${
           radius * Math.sin(startAngles[i])
@@ -73,23 +130,29 @@
         cx="0"
         cy="0"
         r={radius}
-        class="fill-none stroke-fgs2"
+        class={categoryColoringStyle != "bg"
+          ? "stroke-fgs2 fill-none"
+          : "stroke-fgs3"}
         stroke-width="2"
+        fill={categoryColoringStyle === "bg" && groups.length === 1
+          ? group.color
+          : ""}
       />
     {/if}
-
-    <text
-      x={(radius + groupAngles[i] * 120) *
-        Math.cos(startAngles[i] + groupAngles[i] / 2)}
-      y={(radius + 60) * Math.sin(startAngles[i] + groupAngles[i] / 2)}
-      text-anchor="middle"
-      dominant-baseline="middle"
-      class="text-b1 font-bold"
-      fill={group.color}
-    >
-      {group.label}
-    </text>
-
+    <GroupLabel
+      label={group.label}
+      color={group.color}
+      xCoord={groups.length > 1
+        ? (radius + groupAngles[i] * 140) *
+          Math.cos(startAngles[i] + groupAngles[i] / 2)
+        : 0}
+      yCoord={groups.length > 1
+        ? (radius + 60) * Math.sin(startAngles[i] + groupAngles[i] / 2)
+        : radius + 60}
+      on:click={() => {
+        toggleGroupFocus(group.label);
+      }}
+    />
     {#each group.spokes as spoke, j (spoke.label)}
       <line
         x1="0"
@@ -99,7 +162,7 @@
         y2={radius *
           Math.sin(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
         class={spoke.isDivider
-          ? "stroke-fgs3"
+          ? "stroke-bgs1"
           : !group.color
             ? "stroke-fgs2"
             : categoryColoringStyle === "bg"
@@ -108,8 +171,9 @@
         stroke={group.color && categoryColoringStyle === "spoke"
           ? `${group.color}`
           : ""}
-        stroke-width={mode === FeatureWheelMode.CONTEMPORARY ? 1 : 1.5}
-        stroke-dasharray={spoke.isDivider ? "4 2" : ""}
+        stroke-width={mode === FeatureWheelMode.CONTEMPORARY ? 0.6 : 0.8}
+        stroke-dasharray={spoke.isDivider ? "6 6" : ""}
+        shape-rendering="geometricPrecision"
       />
       {#if mode === FeatureWheelMode.PROGRESS}
         <line
@@ -166,7 +230,7 @@
       <SpokeLabel
         {size}
         {spoke}
-        xCoord={(radius + groupAngles[i] * 40) *
+        xCoord={(radius + groupAngles[i] * spokeLabelXDisplacementFactor) *
           Math.cos(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
         yCoord={(radius + 20) *
           Math.sin(startAngles[i] + (j / group.spokes.length) * groupAngles[i])}
@@ -189,8 +253,8 @@
     height: 100%;
     max-width: 1450px;
     max-height: 750px; */
-    width: 95vw;
-    height: 80vh;
+    width: 100%;
+    height: 100%;
     margin: auto;
   }
 </style>

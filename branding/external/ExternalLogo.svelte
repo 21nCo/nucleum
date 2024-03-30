@@ -47,7 +47,7 @@
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Link;
   }
-  $: console.log({ provider });
+  // $: console.log({ provider });
 </script>
 
 <!-- <span class="text-b5">{provider}</span> -->

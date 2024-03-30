@@ -35,13 +35,13 @@
   y={yCoord + 8}
   text-anchor="middle"
   dominant-baseline="middle"
-  class={size === Size.lg
-    ? "text-b4"
+  class="fill-fgs1 {size === Size.lg
+    ? 'text-b4'
     : size === Size.md
-      ? "text-b5"
+      ? 'text-b5'
       : size === Size.sm
-        ? "text-[0.5rem]"
-        : "text-[0.45rem]"}
+        ? 'text-[0.5rem]'
+        : 'text-[0.45rem]'}"
 >
   {Math.round((progress ?? 0) * 100)}%
 </text>

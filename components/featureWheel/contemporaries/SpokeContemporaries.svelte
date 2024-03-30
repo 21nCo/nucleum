@@ -12,7 +12,7 @@
   };
 </script>
 
-<foreignObject x={xCoord} y={yCoord} class="w-8 min-w-fit h-[3.5rem]">
+<foreignObject x={xCoord} y={yCoord} class="w-6 min-w-fit h-[3rem]">
   {#if Array.isArray(contemporary.label)}
     <button
       on:click={() => {
@@ -24,7 +24,7 @@
       on:mouseout={toggleHoveringState}
       on:focus={toggleHoveringState}
       on:blur={toggleHoveringState}
-      class="flex bg-bgs2 rounded-md px-1.5 py-1 text-b5"
+      class="flex bg-bgs2 rounded-md px-1.5 py-1 text-[0.4rem]"
     >
       +{contemporary.label.length}
     </button>

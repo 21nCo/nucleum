@@ -5,15 +5,18 @@
   export let xCoord: number;
   export let yCoord: number;
   export let size: Size = Size.md;
+  $: widthFactor = size === Size.lg ? 8 : size === Size.md ? 7 : 5;
 </script>
 
 {#if spoke.isProminent || spoke.isNovel}
   <rect
-    x={xCoord - (spoke.label.length <= 8 ? 30 : spoke.label.length * 3.5)}
-    y={yCoord - (size === Size.lg ? 13 : size === Size.md ? 10 : 8)}
-    width={spoke.label.length <= 8 ? 60 : spoke.label.length * 7}
-    height={size === Size.lg ? 26 : size === Size.md ? 20 : 16}
+    x={xCoord -
+      (spoke.label.length <= 8 ? 25 : spoke.label.length * (widthFactor / 2))}
+    y={yCoord - (size === Size.lg ? 10 : size === Size.md ? 8 : 5.5)}
+    width={spoke.label.length <= 8 ? 50 : spoke.label.length * widthFactor}
+    height={size === Size.lg ? 20 : size === Size.md ? 16 : 10}
     class="{spoke.isNovel ? 'fill-ags1' : 'fill-bgs1'} stroke-aps1 rounded-md"
+    stroke-width="0.4"
   />
 {/if}
 <text
@@ -21,13 +24,13 @@
   y={yCoord}
   text-anchor="middle"
   dominant-baseline="middle"
-  class=" {size === Size.lg
+  class="font-thin fill-fgs1 {size === Size.lg
     ? 'text-b2'
     : size === Size.md
       ? 'text-b3'
       : size === Size.sm
-        ? 'text-b4'
-        : 'text-b5'}"
+        ? 'text-[0.5rem]'
+        : 'text-[0.4rem]'}"
 >
   {spoke.label}
 </text>

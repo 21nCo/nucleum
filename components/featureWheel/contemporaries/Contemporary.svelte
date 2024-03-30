@@ -3,4 +3,4 @@
   export let label: string;
 </script>
 
-<ExternalLogo provider={label.toLowerCase()} />
+<ExternalLogo provider={label.toLowerCase()} width={12} />

@@ -1,5 +1,5 @@
 export type FeatureWheel = {
-  features: FeatureWheelGroup[];
+  groups: FeatureWheelGroup[];
   product: string;
 };
 
@@ -33,4 +33,9 @@ export type FeatureWheelSpoke = {
 export type FeatureWheelContemporary = {
   label: string | string[];
   value: number;
+};
+
+export type ContemporaryDetail = {
+  label: string;
+  url: string;
 };
