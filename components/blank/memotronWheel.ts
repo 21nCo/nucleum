@@ -212,7 +212,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
               "Anytype",
               "Remnote"
             ],
-            value: 0.2
+            value: 0.8
           }
         ],
         progress: 0

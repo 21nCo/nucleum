@@ -61,8 +61,8 @@ export function handleNodeMarkdownChildHierarchyChanges(
   isStructuralBlock: boolean
 ) {
   if (!n.params?.isNodular) return n;
-  const parent = n.blocks.find(
-    (b) => b.childrenHierarchy?.includes(contextBlockId)
+  const parent = n.blocks.find((b) =>
+    b.childrenHierarchy?.includes(contextBlockId)
   );
   if (parent && parent.childrenHierarchy) {
     const previousSiblingIndexInParentContext =
@@ -114,22 +114,54 @@ export function resolveImmediateParent(
   return { parent: iterParent, parentOneAbove };
 }
 
+function encapsulateInlinePattern(
+  keyword: string,
+  content: string,
+  isEncapsulate = false
+) {
+  if (!isEncapsulate) return content;
+  return `<span class='hidden'>${keyword}</span> ${content} <span class='hidden'>${keyword}</span>`;
+}
+
 export const inlineStylingPatterns = [
-  { regex: /(?<!\*)\*([^\*]+?)\*(?!\*)/g, replacement: "<i>$1</i>" },
-  { regex: /\*\*([^\*]+?)\*\*/g, replacement: "<b>$1</b>" },
-  { regex: /_((?:\s*\S)+?)_/g, replacement: "<u>$1</u>" },
+  {
+    regex: /(?<!\*)\*([^\*]+?)\*(?!\*)/g,
+    replacement: encapsulateInlinePattern("*", "<i>$1</i>")
+  },
+  {
+    regex: /\*\*([^\*]+?)\*\*/g,
+    replacement: encapsulateInlinePattern("**", "<b>$1</b>")
+  },
+  {
+    regex: /_((?:\s*\S)+?)_/g,
+    replacement: encapsulateInlinePattern("_", "<u>$1</u>")
+  },
   {
     regex: /~~((?:\S|\s\S)+?)~~/g,
-    replacement: '<span class="line-through">$1</span>'
+    replacement: encapsulateInlinePattern("~~", "<s>$1</s>")
+    // '<span class="line-through">$1</span>'
   },
   {
     regex: /`((?:\S|\s\S)+?)`/g,
-    replacement: '<span class="bg-gray-200 px-1 font-mono">$1</span>'
-  },
-  {
-    regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-    replacement: '<span style="color:$2">$1</span>'
+    // replacement: encapsulateInlinePattern("`", "<code>$1</code>")
+    replacement: encapsulateInlinePattern(
+      "`",
+      "<span class='bg-aps2 px-1 font-mono'>$1</span>"
+    )
   }
+  // {
+  //   regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
+  //   replacement: '<span style="color:$2">$1</span>'
+  // }
+];
+
+export const symbolPatterns = [
+  { regex: /←&gt;/g, replacement: "↔" },
+  { regex: /-&gt;/g, replacement: "→" },
+  { regex: /&lt;-/g, replacement: "←" },
+  { regex: /&lt;=/g, replacement: "≤" },
+  { regex: /&gt;=/g, replacement: "≥" },
+  { regex: /=&gt;/g, replacement: "⇒" }
 ];
 
 export function renderMdAsHtml(text: string) {
@@ -138,4 +170,50 @@ export function renderMdAsHtml(text: string) {
     parsedText = parsedText.replace(pattern.regex, pattern.replacement);
   });
   return parsedText;
+}
+type MatchPattern = {
+  match: RegExpExecArray;
+  pattern: { regex: RegExp; replacement: string };
+};
+/**
+ * Finds all inline styling patterns in a given text and returns the matches. If no matches are found, an empty array is returned.
+ * @param text Text to find inline styling patterns
+ * @returns matches of inline styling patterns
+ */
+export function findInlineStylingPatterns(text: string) {
+  let matches: MatchPattern[] = [];
+  inlineStylingPatterns.forEach((pattern) => {
+    let match;
+    while ((match = pattern.regex.exec(text)) !== null) {
+      matches.push({ match, pattern });
+    }
+  });
+  return matches;
+}
+
+export function findSymbolPatterns(text: string) {
+  let matches: RegExpExecArray[] = [];
+  symbolPatterns.forEach((pattern) => {
+    let match;
+    while ((match = pattern.regex.exec(text)) !== null) {
+      matches.push(match);
+    }
+  });
+  return matches;
+}
+
+export function replaceInlineStylePatterns(text: string) {
+  let html = text;
+  inlineStylingPatterns.forEach((pattern) => {
+    html = html.replace(pattern.regex, pattern.replacement);
+  });
+  return html;
+}
+
+export function replaceSymbolPatterns(text: string) {
+  let html = text;
+  symbolPatterns.forEach((pattern) => {
+    html = html.replace(pattern.regex, pattern.replacement);
+  });
+  return html;
 }

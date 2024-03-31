@@ -1,6 +1,7 @@
 <script lang="ts">
   import ExternalLogo from "$lib/tidy/branding/external/ExternalLogo.svelte";
   export let label: string;
+  export let width: number;
 </script>
 
-<ExternalLogo provider={label.toLowerCase()} width={12} />
+<ExternalLogo provider={label.toLowerCase()} {width} />

@@ -12,7 +12,7 @@ const seedLogStore: LogStore = {
 
 export const logger = initLogStore();
 const propagate = (log: any) => {
-  console.log(log);
+  // console.log(log);
   //BELOW -  causing circular dependency issue
   // const app = get(appStore);
   // (app.isDebugMode || app.isDebugEmbedMode) && console.log(log);

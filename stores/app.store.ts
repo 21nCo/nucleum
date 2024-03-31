@@ -43,6 +43,7 @@ import { StoreDataType, type CacheableStoreContract } from "../types/data.type";
 import { dataManager } from "./data.store";
 import { currentUnixTimestamp } from "../utils/surreal.utils";
 import modalEvent from "../components/modal/modal.store";
+import account from "./account.store";
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
 //   env: "dev"
@@ -104,7 +105,8 @@ export const excludedPathsForRedirectionCheck = [
   "error",
   "welcome",
   "play",
-  "r"
+  "r",
+  "fw"
 ];
 
 let persistance = new Persistance();
@@ -277,14 +279,15 @@ function initUserPreferences() {
     }
   });
   const persist = (n: Partial<UserGlobalPreferences>) => {
-    //console.log("persisting global preferences", { n });
+    // console.log("persisting global preferences", { n });
+    cache(get(userPreferences));
+    persistLocally(Item.globalPreferences, get(userPreferences));
+    if (!get(account).isLoggedIn) return;
     persistance.update({
       ...n,
       id: userPreferencesId,
       modifiedAt: currentUnixTimestamp()
     });
-    cache(get(userPreferences));
-    persistLocally(Item.globalPreferences, get(userPreferences));
   };
   const cache = async (n: UserGlobalPreferences) => {
     dataManager.cache(n);
@@ -420,8 +423,9 @@ function initAppStore(seed: AppStore) {
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
         n.fullScreenComponentPath = undefined;
@@ -431,8 +435,9 @@ function initAppStore(seed: AppStore) {
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
-          n.player = resolveComponentFromPath(n.fullScreenComponentPath)
-            ?.associatedPlayer;
+          n.player = resolveComponentFromPath(
+            n.fullScreenComponentPath
+          )?.associatedPlayer;
         }
         return n;
       });

@@ -27,7 +27,7 @@
   import ActiveBackgroundElement from "../elements/style/ActiveBackgroundElement.svelte";
   import BackgroundElement from "../elements/style/BackgroundElement.svelte";
   export let mode: iconPickerType.EMOJI | iconPickerType.ICON =
-    iconPickerType.EMOJI;
+    iconPickerType.ICON;
   let activeCategory: string = "";
 
   // onMount(() => {

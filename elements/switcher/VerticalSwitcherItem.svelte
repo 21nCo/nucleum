@@ -107,7 +107,8 @@
     {#if item.icon}
       <Icon
         icon={item.icon.toLowerCase()}
-        size={size == Size.lg ? Size.md : size}
+        {size}
+        {isActive}
         color={!isActive ? "fgs3" : undefined}
       />
     {/if}

@@ -2,25 +2,21 @@
   import { createEventDispatcher, onMount } from "svelte";
   import {
     type MdStore,
-    type SpanContent,
-    SpanType,
     BlockContext,
     type Block
   } from "$lib/tidy/types/md.type";
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
-  import TextWithSpans from "./TextWithSpans.svelte";
-  import { generateUID } from "$lib/tidy/utils/utils";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
-  import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import { Direction } from "$lib/tidy/types/direction.enum";
-  import { isInEditMode } from "$lib/tidy/stores/app.store";
   import {
     ListType,
     NodeType,
     type TextContent,
     type TextNodeType
   } from "$lib/tidy/types/node.type";
-  import { inlineStylingPatterns } from "../markdown.utils";
+  import { cn } from "$lib/tidy/utils/ui.utils";
+  import Popover from "$lib/tidy/elements/popover/Popover.svelte";
+  import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
   const dispatch = createEventDispatcher();
   export let mdId: string;
   export let block: Block<TextContent>;
@@ -32,21 +28,17 @@
     else if (!isFocusing) placeholder = "";
   }
   const mdStore = getMdStore(mdId);
-  let blockRef: any;
+  let textRef: any;
   let sizing = "";
   const defaultPlaceholder =
     $mdStore.params?.placeholder ??
     ($mdStore.params?.isNodular ? "Type / for all blocks" : "Start typing... ");
   let blockSpecificPlaceholder: string | undefined = undefined;
   let placeholder: string;
-  let markerId = "caret-marker";
-  let isNewSpanInserted = false;
-  let blockBrowserContainerRef: HTMLElement;
+  let popoverRef: any;
   let blockBrowserRef: any;
-  let isRenderBlockBrowser: boolean = false;
-  let isCustomCaret = false;
-  let customCaret: HTMLElement | null = null;
-  let caretPosition:
+  let isBlockBrowserRendered: boolean = false;
+  let caretPositionT2:
     | {
         element?: any;
         parent?: any;
@@ -56,7 +48,7 @@
         endContainer?: any;
       }
     | undefined = undefined;
-  let caretPosition2: number | undefined = undefined;
+
   $: isDirectInsertBlock =
     block.type === NodeType.HEADING1 ||
     block.type === NodeType.HEADING2 ||
@@ -65,11 +57,6 @@
     block.type === NodeType.HEADING5 ||
     context === BlockContext.LIST_CHILD ||
     block.body === "";
-  let spans: SpanContent[] =
-    block.type === NodeType.SIMPLE_TEXT && typeof block.body === "string"
-      ? parseSpansFromText(block.body)
-      : [];
-  refreshInlineStyling();
   $: {
     switch (block.type) {
       case NodeType.HEADING1:
@@ -104,239 +91,14 @@
     if (isFocusing) assignPlaceholder();
   }
 
-  function parseSpansFromText(text: string) {
-    let spans: SpanContent[] = [];
-    return spans;
-  }
-
-  function getSpanType(match: string) {
-    let type: SpanType;
-    const startAndEndCharacter = match.slice(0, 2);
-    switch (startAndEndCharacter) {
-      case "**":
-        type = SpanType.BOLD;
-        break;
-      case "*":
-        type = SpanType.ITALIC;
-        break;
-      case "_":
-        type = SpanType.UNDERLINE;
-        break;
-      case "~~":
-        type = SpanType.STRIKE;
-        break;
-      case "`":
-        type = SpanType.CODE;
-        break;
-      default:
-        type = SpanType.COLOR;
-        break;
-    }
-    return type;
-  }
-
-  function getCursorPosition(element: any) {
-    if (!element) return;
-    let caretOffset = 0;
-    const doc = element.ownerDocument || element.document;
-    const win = doc.defaultView || doc.parentWindow;
-    const sel = win.getSelection();
-
-    if (sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(element);
-      preCaretRange.setEnd(range.endContainer, range.endOffset);
-      caretOffset = preCaretRange.toString().length;
-    }
-
-    return caretOffset;
-  }
-  // Function to insert a caret marker
-  function insertCaretMarker() {
-    const caretPosition = getCursorPosition(blockRef);
-    if (typeof block.body !== "string") return;
-    block.body =
-      block.body.slice(0, caretPosition) +
-      "<!--caret-->" +
-      block.body.slice(caretPosition);
-    // console.log("insertCaretMarker", block.content, caretPosition);
-  }
-
-  function setCaretPosition() {
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
-    const range = sel?.getRangeAt(0);
-    let element;
-    let parent = range?.startContainer.parentElement;
-    if (parent?.childNodes.length === 1) {
-      element = parent?.childNodes[0];
-    } else {
-      const nextSibling = range.endContainer.nextSibling;
-      if (nextSibling) {
-        const nextSiblingIndex = Array.from(
-          nextSibling.parentElement?.childNodes ?? []
-        ).indexOf(nextSibling);
-        element =
-          range?.endContainer.parentElement?.childNodes[nextSiblingIndex - 1];
-      } else {
-        element =
-          range?.endContainer.parentElement?.childNodes[
-            range?.endContainer.parentElement?.childNodes.length - 1
-          ];
-      }
-    }
-    if (!element) return;
-    caretPosition = {
-      element,
-      parent: range?.endContainer.parentElement,
-      elementIndex: Array.from(
-        range?.endContainer.parentElement?.childNodes ?? []
-      ).indexOf(element),
-      index: range?.endOffset ?? 0,
-      endContainer: range?.endContainer
-    };
-    // console.log("setCaretPosition", range, caretPosition);
-  }
-
-  // Function to restore the caret position
-  function restoreCursorPosition() {
-    if (typeof block.body !== "string" || !blockRef) return;
-    // console.log("restoreCursorPosition");
-    //const index = block.block.indexOf("<!--caret-->");
-    const index = caretPosition?.index ?? -1;
-    if (index !== -1) {
-      // const range = document.createRange();
-      // const sel = window.getSelection();
-      // range.setStart(blockRef, index);
-      // range.collapse(true);
-      // sel?.removeAllRanges();
-      // sel?.addRange(range);
-      //setCursorPosition(blockRef, index);
-      // const ele = document.getElementById(caretPosition?.element ?? "");
-      if (!caretPosition?.element) return;
-      setCursorPosition(caretPosition?.element, index);
-    }
-    block.body = block.body.replace("<!--caret-->", "");
-  }
-  function setCursorToSpan(spanElement: any) {
-    //console.log("setCursorToSpan", spanElement);
-    const range = document.createRange();
-    range.selectNodeContents(spanElement);
-
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }
-  function restoreCaretPosition() {
-    if (!caretPosition) return;
-    // console.log("restoreCaretPosition", deepCopy(caretPosition));
-    const range = document.createRange();
-    const selection = window.getSelection();
-    try {
-      //console.log({ isNewSpanInserted, caretPosition });
-      if (isNewSpanInserted && caretPosition.elementIndex != undefined) {
-        const parent = document.getElementById(caretPosition.parent.id);
-        // console.log(
-        //   "eleIndex",
-        //   caretPosition?.elementId,
-        //   caretPosition.elementIndex,
-        //   caretPosition.parent.childNodes,
-        //   parent?.childNodes
-        // );
-        if (!parent?.childNodes) return;
-        // const node = parent
-        //   ? parent?.childNodes[caretPosition.elementIndex + 1]
-        //   : caretPosition.parent.childNodes[caretPosition.elementIndex + 1];
-        // const node = document.getElementById(caretPosition.elementId);
-        // setCursorToEnd(node);
-        const node = Array.from(parent?.childNodes).find(
-          (node: ChildNode) => (node as Element).id === caretPosition?.elementId
-        );
-        // console.log("new span node", node, caretPosition);
-        if (node) range.setStart(node, 1);
-      } else if (caretPosition.elementIndex != undefined) {
-        // console.log("ss");
-        let node = caretPosition.element;
-        const parent = document.getElementById(caretPosition.parent.id);
-        node = parent
-          ? parent?.childNodes[caretPosition.elementIndex]
-          : caretPosition.parent.childNodes[caretPosition.elementIndex];
-        range.setStart(node, caretPosition.index - 1);
-      }
-      // console.log("restoring to range", range);
-      range.collapse(true);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-    } catch (error) {
-      console.log("restoring caret errored", error);
-    }
-  }
-  function setCursorPosition(element: any, index: any) {
-    const selection = window.getSelection();
-    const range = document.createRange();
-    selection?.removeAllRanges();
-    let currentLength = 0;
-    let found = false;
-    // Recursive function to walk through child nodes
-    function setRange(node: any) {
-      // console.log(node);
-      if (node.nodeType === 3) {
-        // Text node
-        const nextLength = currentLength + node.length;
-        if (!found && nextLength > index) {
-          range.setStart(node, index - currentLength);
-          range.collapse(true);
-          found = true;
-        }
-        currentLength = nextLength;
-      } else {
-        node.childNodes.forEach(setRange);
-      }
-    }
-    setRange(element);
-    if (found) {
-      selection?.addRange(range);
-    } else {
-      const eleIndex = Array.from(element.parentElement.childNodes).indexOf(
-        element
-      );
-      element = element.parentElement.childNodes[eleIndex + 1];
-      if (element) {
-        setCursorPosition(element, 0);
-      }
-    }
-  }
-  function setCursorToEnd(element: any) {
-    // console.log("setCursorToEnd", element);
-    if (!element) return;
-    element.focus();
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    // console.log("setCursorToEnd", element, range, selection);
-  }
   onMount(() => {
-    // console.log("mounted");
-    // console.log({ blockRef, style: blockRef.style.caretColor });
-    // if (!$view.isPortrait) {
-    //   console.log("focusing block from mount", blockRef);
-    //   blockRef?.focus();
-    // }
-    customCaret = document.getElementById("customcaret");
-    console.log("caret", customCaret);
     hideBlockBrowser();
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
       if (md.blockToFocus === block.id && !isFocusing) {
-        // console.log("focusing block check", {
-        //   id,
-        //   blockRef,
-        //   context
-        // });
-        setCursorToEnd(blockRef);
+        //TODO - relay to child
+        // setCursorToEnd(blockRef);
+        textRef.focus();
+        assignPlaceholder();
       }
     });
     return () => {
@@ -344,28 +106,23 @@
     };
   });
   function hideBlockBrowser() {
-    isRenderBlockBrowser = false;
-    // blockBrowserRef.style.display = "none";
+    isBlockBrowserRendered = false;
+    popoverRef.hide();
   }
   /**
-   * Function to handle block browser related events
+   * Handles block browser shortcuts.
+   * @returns boolean - true if the event is handled by the block browser, false otherwise
    */
   function handleBlockBrowser(
     event: KeyboardEvent,
     type: "keyup" | "keydown" = "keydown"
   ) {
+    if (!$mdStore.params?.canUseSlashShortcut) return false;
     if (type === "keyup" && event.key === "/") {
-      isRenderBlockBrowser = true;
-      setTimeout(() => {
-        console.log({ blockBrowserContainerRef, blockRef });
-        renderPopoverv2(
-          blockRef,
-          blockBrowserContainerRef,
-          Direction.BottomLeft
-        );
-      }, 100);
+      isBlockBrowserRendered = true;
+      popoverRef.show();
       return true;
-    } else if (!isRenderBlockBrowser) {
+    } else if (!isBlockBrowserRendered) {
       return false;
     } else if (
       type === "keyup" &&
@@ -381,17 +138,21 @@
       blockBrowserRef.key(event.key);
       event.preventDefault();
     } else if (type === "keyup") {
+      console.log("filtering", block.body);
       blockBrowserRef.filter(block.body);
     }
     return true;
   }
 
-  function handleKeyDown(event: KeyboardEvent) {
-    // console.log("keydown", event);
-    const blockBrowserStatus = handleBlockBrowser(event);
-    if (blockBrowserStatus) {
-      return;
+  function handleKeyDown(e: CustomEvent<KeyboardEvent>) {
+    const event = e.detail;
+    console.log("keydown textcontent", event);
+    const functions = [() => handleBlockBrowser(event)];
+
+    for (const func of functions) {
+      if (func()) return;
     }
+
     if (event.key === "Tab") {
       if (context === BlockContext.LIST_CHILD) {
         if (event.shiftKey === true) {
@@ -403,7 +164,7 @@
       }
       event.preventDefault();
     } else if (
-      (event.key === "Enter" && event.metaKey == true) ||
+      event.key === "Enter" ||
       (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
     ) {
       if (block.id && context === BlockContext.DEFAULT)
@@ -425,13 +186,14 @@
   ) {
     if (
       block.type === NodeType.SIMPLE_TEXT &&
-      caretPosition &&
-      caretPosition.endContainer.nodeType === 3 &&
-      caretPosition.endContainer.nodeValue &&
-      caretPosition.endContainer.nodeValue.startsWith(shortcut)
+      caretPositionT2 &&
+      caretPositionT2.endContainer.nodeType === 3 &&
+      caretPositionT2.endContainer.nodeValue &&
+      caretPositionT2.endContainer.nodeValue.startsWith(shortcut)
     ) {
       //delete the parent <div> of the text node and insert new block with the type
       block.body = block.body.replace(shortcut, "");
+      textRef.replace(shortcut, "");
       if (block.id) mdStore.insert(block.id, { blockType: type, listType });
       setTimeout(() => {
         let parent = undefined;
@@ -443,6 +205,9 @@
       }, 10);
     }
   }
+  /**
+   * Handles escape shortcuts for text, structural and list nodes when entered at the start of the block
+   */
   function performEscapeShortcutsT2() {
     const textEscapeShortcuts: { shortcut: string; type: TextNodeType }[] = [
       { shortcut: "# ", type: NodeType.HEADING1 },
@@ -462,33 +227,58 @@
       { shortcut: "+ ", listType: ListType.UNORDERED },
       { shortcut: "1. ", listType: ListType.ORDERED }
     ];
-    textEscapeShortcuts.forEach(({ shortcut, type }) => {
-      if (typeof block.body !== "string") return;
-      if (block.body.startsWith(shortcut)) {
-        block.body = block.body.replace(shortcut, "");
-        block.type = type;
+    const isTextShortcutPresent = textEscapeShortcuts.some(
+      ({ shortcut, type }) => {
+        if (block.body.startsWith(shortcut)) {
+          block.body = block.body.replace(shortcut, "");
+          textRef.replace(shortcut, "");
+          block.type = type;
+          return true;
+        } else {
+          return handleEscShortcutForSecondaryLines(shortcut, type);
+        }
       }
-      handleEscShortcutForSecondaryLines(shortcut, type);
-    });
-    structuralEscapeShortcuts.forEach(({ shortcut, type }) => {
-      if (typeof block.body !== "string") return;
-      if (block.body === shortcut) {
-        block.body = "";
-        if (context != BlockContext.DEFAULT || !block.id) return;
-        mdStore.insert(block.id, { blockType: type });
+    );
+
+    const isStructuralShortcutPresent = structuralEscapeShortcuts.some(
+      ({ shortcut, type }) => {
+        if (block.body === shortcut) {
+          block.body = "";
+          textRef.set("");
+          if (context != BlockContext.DEFAULT || !block.id) return false;
+          mdStore.insert(block.id, { blockType: type });
+          return true;
+        }
+        return false;
       }
-    });
-    listEscapeShortcuts.forEach(({ shortcut, listType }) => {
-      if (typeof block.body !== "string") return;
-      if (block.body.startsWith(shortcut)) {
-        block.body = block.body.replace(shortcut, "");
-        mdStore.convert(block.id!, { blockType: NodeType.LIST, listType });
+    );
+
+    const isListShortcutPresent = listEscapeShortcuts.some(
+      ({ shortcut, listType }) => {
+        if (block.body.startsWith(shortcut)) {
+          block.body = block.body.replace(shortcut, "");
+          textRef.replace(shortcut, "");
+          mdStore.convert(block.id!, { blockType: NodeType.LIST, listType });
+          return true;
+        }
+        return handleEscShortcutForSecondaryLines(
+          shortcut,
+          NodeType.LIST,
+          listType
+        );
       }
-      handleEscShortcutForSecondaryLines(shortcut, NodeType.LIST, listType);
-    });
+    );
+
+    return (
+      isTextShortcutPresent ||
+      isStructuralShortcutPresent ||
+      isListShortcutPresent
+    );
   }
 
-  //OBSELETE
+  /**
+   * Deprecated function to handle escape shortcuts
+   */
   function performEscapeShortcutsT1() {
     if (typeof block.body !== "string") return;
     if (block.body.startsWith("# ")) {
@@ -516,166 +306,63 @@
       mdStore.insert(block.id, { blockType: NodeType.DOUBLE_DIVIDER });
     }
   }
-
-  function handleKeyUp(event: KeyboardEvent) {
-    // console.log("keyup", event);
-
-    if (customCaret) {
-      let rect = window?.getSelection()?.getRangeAt(0).getClientRects()[0];
-      console.log({ caret: customCaret, rect });
-      customCaret.style.left = rect?.x + "px";
-      customCaret.style.top = rect?.y + "px";
+  /**
+   * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
+   *
+   * 1. Sets the caret position so that events like backspace at the start of the block can be handled
+   * 2. Delegates block browser shortcut handling, Escape shortcut handling, list contextual actions, backspace at the start of the block, symbol replacement, inline styling replacement
+   *
+   * Note: Chaging the sequence of the operation can lead to unexpected behaviour
+   *
+   * @param event
+   */
+  function handleKeyUp(e: CustomEvent<KeyboardEvent>) {
+    const event = e.detail;
+    console.log("keyup in textcontent", event);
+    const steps = [
+      () => handleBlockBrowser(event, "keyup"),
+      //performEscapeShortcutsT1(),
+      performEscapeShortcutsT2,
+      handleBackspaceAtBeginOfLine
+    ];
+    for (const func of steps) {
+      if (func()) return;
     }
-    setCaretPosition();
-    const blockBrowserStatus = handleBlockBrowser(event, "keyup");
-    if (blockBrowserStatus) {
-      return;
-    }
-    //performEscapeShortcutsT1();
-    performEscapeShortcutsT2();
-    handleListContext();
-    handleBackspaceAtBeginOfLine();
-    if (
-      event.key === "Backspace" &&
-      block.type === NodeType.SIMPLE_TEXT &&
-      block.body != "" &&
-      caretPosition?.index === 0
-    ) {
-      if (block.id && context === BlockContext.DEFAULT)
-        mdStore.focusPreviousSibling(block.id);
-      else dispatch("delete", { id: block.id });
-      event.preventDefault();
-    } else if (event.key) {
-    }
-    replaceWithUnicodeCharacters();
-    if (
-      event.key != "Backspace" &&
-      (event.key === "*" ||
-        event.key === "_" ||
-        event.key === "`" ||
-        event.key === "~")
-    )
-      refreshInlineStyling();
     mdContentChangeEvent.trigger();
     /**
-     * Function to handle backspace at the start of the block. Removes formatting of heading, quote, etc.
+     * Handles backspace key entry if occured at the start of the block
+     *
+     *
+     * If the block is empty or not
+     * 1. If the block is a list child: Converts the block to a simple text block
+     * 2. If the block is a text type but not simple text: Removes formatting of heading, quote, etc. and converts it to a simple text block if the block is not simple text
+     *
+     *
+     * If the block is not empty and is simple text: Deletes the current block and moves all the content to the previous block if it exists
+     *
+     *
+     * If the block is empty: Deletes the block and shifts focus to the previous block if it exists
+     *
+     *
      */
     function handleBackspaceAtBeginOfLine() {
-      if (
-        event.key === "Backspace" &&
-        block.type != NodeType.SIMPLE_TEXT &&
-        block.body != "" &&
-        caretPosition?.index === 0
-      ) {
-        block.type = NodeType.SIMPLE_TEXT;
-      }
-    }
-
-    function handleListContext() {
-      if (
-        context === BlockContext.LIST_CHILD &&
-        event.key === "Backspace" &&
-        block.body === "" &&
-        caretPosition?.index === 0
-      ) {
-        console.log("converting to simple text");
+      if (event.key != "Backspace" || !(caretPositionT2?.index === 0))
+        return false;
+      if (context === BlockContext.LIST_CHILD) {
         mdStore.convert(block.id!, { blockType: NodeType.SIMPLE_TEXT });
+      } else if (block.type != NodeType.SIMPLE_TEXT) {
+        block.type = NodeType.SIMPLE_TEXT;
+      } else if (block.body != "") {
+        //TODO - Move the content to the previous block, delete the current block and focus the previous block
+        mdStore.focusPreviousSibling(block.id);
+        event.preventDefault();
+      } else {
+        dispatch("delete", { id: block.id });
       }
+      return true;
     }
   }
-  function replaceWithUnicodeCharacters() {
-    // console.log("replaceWithUnicodeCharacters");
-    const patterns = [
-      { regex: /←&gt;/g, replacement: "↔" },
-      { regex: /-&gt;/g, replacement: "→" },
-      { regex: /&lt;-/g, replacement: "←" },
-      { regex: /&lt;=/g, replacement: "≤" },
-      { regex: /&gt;=/g, replacement: "≥" },
-      { regex: /=&gt;/g, replacement: "⇒" }
-    ];
-    executeReplace(patterns);
-  }
 
-  function executeReplace(patterns: any[], isNewSpanInsert = false) {
-    patterns.forEach(({ regex, replacement }) => {
-      if (typeof block.body !== "string") return;
-      const matches = block.body.match(regex);
-      if (matches) {
-        // console.log(
-        //   `Found ${matches.length} matches for ${regex}. Each match will be replaced with ${replacement.length} characters.`
-        // );
-        let focusedSpan = generateUID();
-        if (isNewSpanInsert) {
-          setCaretPosition();
-          caretPosition = {
-            ...caretPosition,
-            index: caretPosition?.index ?? 0,
-            elementId: focusedSpan
-          };
-          isNewSpanInserted = true;
-          block.body = block.body.replace(
-            regex,
-            replacement + `<span id="${focusedSpan}">&#8203;</span>`
-          );
-          // console.log("new span inserted", focusedSpan);
-          // setCursorToSpan(document.getElementById(focusedSpan));
-          // return;
-        } else {
-          setCaretPosition();
-          block.body = block.body.replace(regex, replacement);
-        }
-
-        // console.log("caretPosition", caretPosition);
-        //block.body = block.body.replace(regex, replacement);
-        // if (caretPosition) caretPosition.index = caretPosition?.index - 1 ?? 0;
-        // restoreCaretPosition();
-        setTimeout(() => {
-          restoreCaretPosition();
-          isNewSpanInserted = false;
-        }, 10);
-      }
-    });
-  }
-
-  function refreshInlineStyling() {
-    if (typeof block.body !== "string") return;
-    executeReplace(inlineStylingPatterns, true);
-    //insertCaretMarker();
-    // console.log("refreshInlineStyling");
-    // setCaretPosition();
-    // block.body = block.body
-    //   .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
-    //   .replace(/(?<!\*)\*([^\*]+?)\*(?!\*)/g, "<i>$1</i>&nbsp;")
-    //   .replace(/\*\*([^\*]+?)\*\*/g, `<b id="${generateUID()}">$1</b>&nbsp;`)
-    //   .replace(/_((?:\s*\S)+?)_/g, "<u>$1</u>&nbsp;") //
-    //   .replace(
-    //     /~~((?:\S|\s\S)+?)~~/g,
-    //     `<span id="${generateUID()}" class="line-through">$1</span>&nbsp;`
-    //   )
-    //   .replace(
-    //     /`((?:\S|\s\S)+?)`/g,
-    //     `<span id="${generateUID()}" class="bg-gray-200 px-1 font-mono">$1</span>&nbsp;`
-    //   )
-    //   .replace(
-    //     /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
-    //     '<span style="color:$2">$1</span>'
-    //   );
-    // isNewSpanInserted = true;
-    // setTimeout(() => {
-    //   restoreCaretPosition();
-    //   isNewSpanInserted = false;
-    // }, 10);
-    // //restoreCaretPosition();
-    // //restoreCursorPosition();
-  }
-
-  function handleKeyPress(event: any) {
-    // console.log("keypress", event, block);
-  }
-  function handleMouseup(event: any) {
-    setCaretPosition();
-    // console.log("mouseup", event, block);
-  }
   async function handlePaste(event: ClipboardEvent) {
     const items = event?.clipboardData?.items;
     if (!items) return;
@@ -733,71 +420,20 @@
   }
 
   function onBlockSelect(event: CustomEvent) {
-    console.log("onBlockSelect", event.detail);
-    if (block.id) mdStore.convert(block.id, { blockType: event.detail.type });
+    const parts = block.body.split("/");
+    if (parts[0]) {
+      block.body = parts[0];
+      textRef.removeSlashText();
+      mdStore.insert(block.id, { blockType: event.detail.type });
+    } else {
+      block.body = "";
+      textRef.set("");
+      if (block.id) mdStore.convert(block.id, { blockType: event.detail.type });
+    }
     hideBlockBrowser();
   }
 </script>
 
-{#if typeof block.body === "string"}
-  <div class="relative">
-    <!--  || !$isInEditMode -->
-    {#if $mdStore.params?.isReadOnly}
-      <div
-        id={block.id}
-        style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none py-2 {sizing} {block.type ===
-        NodeType.QUOTE
-          ? 'px-2'
-          : 'px-1'}"
-      >
-        {@html block.body}
-      </div>
-    {:else}
-      <div
-        bind:this={blockRef}
-        id={block.id}
-        style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="relative w-full h-full outline-none py-2 {sizing} {block.type ===
-        NodeType.QUOTE
-          ? 'px-2'
-          : 'px-1'}"
-        on:keyup={handleKeyUp}
-        on:keydown={handleKeyDown}
-        on:keypress={handleKeyPress}
-        on:mouseup={handleMouseup}
-        bind:innerHTML={block.body}
-        on:pointerenter
-        on:pointerleave
-        on:blur={() => {
-          isFocusing = false;
-          placeholder = "";
-          dispatch("blur");
-        }}
-        on:focus={() => {
-          // console.log("focusing", id);
-          isFocusing = true;
-          assignPlaceholder();
-        }}
-        contenteditable
-        {placeholder}
-      ></div>
-      {#if isCustomCaret}
-        <div id="customcaret" class="w-2 h-2 bg-aps1"></div>
-      {/if}
-      <!--         on:paste={handlePaste} -->
-    {/if}
-    {#if block.type === NodeType.QUOTE}
-      <div class="absolute top-0 left-0 h-full w-0.5 bg-aps1"></div>
-    {/if}
-  </div>
-
-  <!-- {:else if Array.isArray(block.content)} -->
-{:else if spans.length > 0}
-  <div contenteditable class="outline-none">
-    <TextWithSpans content={spans} />
-  </div>
-{/if}
 {#if !block.body && !$mdStore.params?.isReadOnly}
   <!-- <button
     on:click={() => {
@@ -813,38 +449,46 @@
   </button> -->
 {/if}
 
-{#if isRenderBlockBrowser && $mdStore.params?.canUseSlashShortcut}
-  <div bind:this={blockBrowserContainerRef}>
-    <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
+<Popover bind:this={popoverRef} triggerClass="w-full" isPreventDefault={true}>
+  <div class="relative w-full flex justify-start" slot="trigger">
+    <!--  || !$isInEditMode -->
+    {#if $mdStore.params?.isReadOnly}
+      <div
+        id={block.id}
+        style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
+        class="w-full h-full outline-none py-2 {sizing} {block.type ===
+        NodeType.QUOTE
+          ? 'px-2'
+          : 'px-1'}"
+      >
+        {@html block.body}
+      </div>
+    {:else}
+      <div class={cn(sizing, "w-full flex justify-start")}>
+        <InlineMarkdownTextInput
+          bind:this={textRef}
+          bind:content={block.body}
+          id={block.id}
+          isMarkdown={true}
+          on:keydown={handleKeyDown}
+          on:keyup={handleKeyUp}
+          on:focus={() => {
+            isFocusing = true;
+          }}
+          on:blur={() => {
+            isFocusing = false;
+            placeholder = "";
+            dispatch("blur");
+          }}
+          bind:placeholder
+        />
+      </div>
+    {/if}
+    {#if block.type === NodeType.QUOTE}
+      <div class="absolute top-0 left-0 h-full w-0.5 bg-aps1"></div>
+    {/if}
   </div>
-{/if}
-
-<style>
-  div[contenteditable] {
-    caret-color: rgba(var(--colors-aps1), 1) !important;
-  }
-  div[contenteditable].customcaret {
-    /* caret-color: rgba(var(--colors-aps1), 1) !important; */
-    caret-color: transparent;
-  }
-  div[contenteditable]:empty::after {
-    content: attr(placeholder);
-    color: rgba(var(--colors-fgs3), 1);
-  }
-  [contenteditable]::selection {
-    background-color: rgba(var(--colors-aps1), 0.3);
-  }
-  #customcaret {
-    position: fixed;
-    height: 22px;
-    width: 3px;
-    background-color: rgba(var(--colors-aps1), 1);
-    animation: blink 1s steps(5, start) infinite;
-  }
-
-  @keyframes blink {
-    to {
-      visibility: hidden;
-    }
-  }
-</style>
+  <slot:fragment slot="popover">
+    <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
+  </slot:fragment>
+</Popover>

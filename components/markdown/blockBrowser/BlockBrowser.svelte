@@ -321,8 +321,7 @@
     }
   }
   export function filter(query: string) {
-    // console.log({ query });
-    const newQueryString = query.replace("/", "");
+    const newQueryString = query.split("/")[1];
     if (searchQueryString === newQueryString) {
       return;
     }
@@ -350,7 +349,7 @@
 </script>
 
 <div
-  class="blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[30rem] rounded-md flex flex-col gap-12 overflow-auto styledscroll {searchQueryString
+  class="blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[45vh] rounded-md flex flex-col gap-12 overflow-auto styledscroll {searchQueryString
     ? 'w-72'
     : 'w-[30rem]'} {variant === 'v1' || searchQueryString ? 'p-4 pb-10' : ''}"
 >
@@ -383,7 +382,7 @@
         class="flex flex-col items-start gap-2 bg-bgs2 h-full px-2 py-4 grow"
       >
         <Text content="Block type" style={TextStyle.SECTION_HEADING_SMALL} />
-        <div class="flex flex-col gap-1 w-full">
+        <div class="flex flex-col gap-1 w-full overflow-auto">
           {#each filteredResults as section}
             <button
               class="flex items-center gap-3 hover:bg-bgs3 py-2 px-2 rounded-md text-h5 {selectedSection ===

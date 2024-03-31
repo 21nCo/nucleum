@@ -13,6 +13,7 @@
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { debouncer } from "$lib/tidy/utils/utils";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import InlineMarkdownTextInput from "$lib/tidy/components/markdown/content/InlineMarkdownTextInput.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -33,6 +34,7 @@
   export let numberInputParams:
     | { min: number; max: number; step: number }
     | undefined = undefined;
+  export let isExperimentalMdInput: boolean = false;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
   let searchResults: DbRecordWithLabel[] = [];
@@ -241,23 +243,37 @@
       bind:this={inputRef}
     />
   {:else}
-    <input
-      {id}
-      class={inputClasses}
-      bind:value
-      on:change|stopPropagation
-      on:keydown
-      on:keyup|stopPropagation={searchStoreId
-        ? handleKeyUpForSearch
-        : handleKeyUp}
-      on:blur
-      on:focus
-      on:input|stopPropagation={onChange}
-      type="text"
-      {placeholder}
-      disabled={isDisabled}
-      bind:this={inputRef}
-    />
+    {#if isExperimentalMdInput}
+      <div class={inputClasses}>
+        <InlineMarkdownTextInput
+          bind:content={value}
+          {placeholder}
+          on:keydown
+          on:keyup
+          on:focus
+          on:blur
+        />
+      </div>
+    {:else}
+      <input
+        {id}
+        class={inputClasses}
+        bind:value
+        on:change|stopPropagation
+        on:keydown
+        on:keyup|stopPropagation={searchStoreId
+          ? handleKeyUpForSearch
+          : handleKeyUp}
+        on:blur
+        on:focus
+        on:input|stopPropagation={onChange}
+        type="text"
+        {placeholder}
+        disabled={isDisabled}
+        bind:this={inputRef}
+      />
+    {/if}
+
     {#if value && searchStoreId}
       <div
         class="search-results bg-bgs2 mt-[0.75rem] shadow-md overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >

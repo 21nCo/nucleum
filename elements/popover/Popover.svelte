@@ -3,6 +3,8 @@
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
   export let placement: Direction = Direction.Down;
+  export let triggerClass: string = "";
+  export let isPreventDefault: boolean = false;
   let triggerRef: HTMLElement;
   let popOverRef: HTMLElement;
   let isPopoverVisible = false;
@@ -27,12 +29,20 @@
     };
   }
   function onWindowClick(x: MouseEvent) {
-    console.log("onWindowClick", x);
     actIfClickedOutside(x, [containerId, popoverId], hide);
   }
 </script>
 
-<button id={containerId} bind:this={triggerRef} on:click={toggle}>
+<button
+  id={containerId}
+  bind:this={triggerRef}
+  on:click={() => {
+    if (!isPreventDefault) {
+      toggle();
+    }
+  }}
+  class={triggerClass}
+>
   <slot name="trigger" />
 </button>
 <div id={popoverId} bind:this={popOverRef} use:onPopoverMount>

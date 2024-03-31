@@ -7,29 +7,23 @@
   export let size: Size = Size.md;
   let width =
     size === Size.lg
-      ? "26"
-      : size === Size.md
-        ? "24"
-        : size === Size.sm
-          ? "22"
-          : "20";
-  let height =
-    size === Size.lg
       ? "22"
       : size === Size.md
-        ? "20"
+        ? "18"
         : size === Size.sm
-          ? "18"
-          : "16";
+          ? "16"
+          : "14";
+  let height =
+    size === Size.lg
+      ? "18"
+      : size === Size.md
+        ? "16"
+        : size === Size.sm
+          ? "10"
+          : "10";
 </script>
 
-<rect
-  x={xCoord - 2}
-  y={yCoord - (size === Size.xs ? 1 : 2)}
-  {width}
-  {height}
-  class="fill-bgs2"
-/>
+<rect x={xCoord} y={yCoord + 2} {width} {height} class="fill-bgs2" />
 <text
   x={xCoord + 9}
   y={yCoord + 8}
@@ -38,10 +32,10 @@
   class="fill-fgs1 {size === Size.lg
     ? 'text-b4'
     : size === Size.md
-      ? 'text-b5'
+      ? 'text-[0.38rem]'
       : size === Size.sm
-        ? 'text-[0.5rem]'
-        : 'text-[0.45rem]'}"
+        ? 'text-[0.32rem]'
+        : 'text-[0.28rem]'}"
 >
   {Math.round((progress ?? 0) * 100)}%
 </text>

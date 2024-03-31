@@ -215,14 +215,12 @@
               (1 - (contemporary.value ?? 0)) *
               Math.cos(
                 startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-              ) +
-              8}
+              )}
             yCoord={radius *
               (1 - (contemporary.value ?? 0)) *
               Math.sin(
                 startAngles[i] + (j / group.spokes.length) * groupAngles[i]
-              ) +
-              8}
+              )}
             {contemporary}
           />
         {/each}
