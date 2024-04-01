@@ -70,6 +70,9 @@ async function checkIfSessionExpired() {
     return true;
   }
   if (!get(isRefreshingToken)) {
+    account.expire();
+    return true;
+    //TODO - not refreshing token as refresh token logic is not robust on the backend and also refreshToken - CORS config is not added on backend which is causing issues
     console.log("refreshing token");
     isRefreshingToken.set(true);
     const response = await new Persistance().refreshToken();
