@@ -39,6 +39,7 @@ export type NodeContent =
   | MediaContent
   | ClipContent
   | NonNodularMarkdownContent
+  | StructuralContent
   | OtherContent;
 
 export type TextContent = {
@@ -49,7 +50,7 @@ export type TextContent = {
 export type ListContent = {
   type: NodeType.LIST;
   listType: ListType;
-  body: TextContent | string;
+  body: string;
   children?: ListChild[];
 };
 

@@ -29,7 +29,7 @@
   export let id = generateUID();
   $: if (show) {
     dialog?.showModal();
-    setTimeout(() => focusTrap.focus(), 0);
+    setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
     console.log("overlayClicked", event, id);

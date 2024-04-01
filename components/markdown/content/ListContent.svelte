@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BlockContext, type Block } from "$lib/tidy/types/md.type";
+  import type { Block } from "$lib/tidy/types/md.type";
   import {
     ListType,
     NodeType,
@@ -35,6 +35,12 @@
   {/if}
 
   <div class="flex flex-col w-full">
+    <!-- 
+      context={BlockContext.LIST_CHILD}
+      block={typeof block.body != "string"
+        ? { ...block.body, id: block.id }
+        : { body: block.body, type: NodeType.SIMPLE_TEXT, id: block.id }} 
+      -->
     <TextContent
       bind:isFocusing
       on:blur
@@ -43,12 +49,10 @@
       on:shifttab={handleTab}
       {mdId}
       {isHovering}
-      context={BlockContext.LIST_CHILD}
-      block={typeof block.body != "string"
-        ? { ...block.body, id: block.id }
-        : { body: block.body, type: NodeType.SIMPLE_TEXT, id: block.id }}
+      {block}
     />
     {#if block.children && block.children.length > 0}
+      <!--           context={BlockContext.LIST_CHILD} -->
       {#each block.children as item (item)}
         <BlockContent
           {mdId}
@@ -57,7 +61,6 @@
             ? [...parentHierarchy, block.id]
             : parentHierarchy}
           block={item}
-          context={BlockContext.LIST_CHILD}
         />
       {/each}
     {/if}

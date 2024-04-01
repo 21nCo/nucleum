@@ -73,13 +73,13 @@
 
   onMount(() => {
     customCaret = document.getElementById("customcaret");
-    //TODO - parse innerHTML from content on initial load
+    innerHTML = content ?? "";
   });
 
-  export function focus() {
+  export function focus(offset: number = 0) {
     const element = blockRef;
     if (!element) return;
-    element?.focus();
+    // element?.focus();
     const range = document.createRange();
     range.selectNodeContents(element);
     range.collapse(false);
@@ -89,7 +89,6 @@
   }
 
   export function replace(target: string, replacement: string) {
-    console.log("replacing", target, replacement);
     innerHTML = innerHTML.replace(target, replacement);
   }
   export function set(content: string) {
@@ -176,7 +175,6 @@
   function setCustomCaretPosition() {
     if (!customCaret) return;
     let rect = window?.getSelection()?.getRangeAt(0).getClientRects()[0];
-    console.log({ caret: customCaret, rect });
     customCaret.style.left = rect?.x + "px";
     customCaret.style.top = rect?.y + "px";
   }
@@ -223,7 +221,6 @@
       const range = selection.getRangeAt(0);
       const nodeParent = range.startContainer.parentNode;
       const node = range.startContainer;
-      console.log({ nodeParent });
       if (nodeParent && nodeParent instanceof HTMLElement) {
         if (
           inlineCaretResolutionMethod ===
@@ -275,8 +272,6 @@
         caretPositionUsingCurrentNodeAndParentId.currentNodeIndex
       ];
     if (!node) return;
-    console.log("restoring caret position using current node", node);
-
     try {
       const range = document.createRange();
       const selection = window.getSelection();
@@ -285,7 +280,7 @@
       selection?.removeAllRanges();
       selection?.addRange(range);
     } catch (error) {
-      console.log("restoring caret errored", error);
+      console.error("restoring caret errored", error);
     }
   }
   /**
@@ -356,23 +351,12 @@
     }, 10);
   }
   function restoreCaretPositionT2() {
-    // debugger;
     if (!caretPositionT2) return;
-    console.log("restoreCaretPosition", deepCopy(caretPositionT2));
-
     const range = document.createRange();
     const selection = window.getSelection();
     try {
-      console.log({ isNewSpanInserted, caretPosition: caretPositionT2 });
       if (isNewSpanInserted && caretPositionT2.elementIndex != undefined) {
         const parent = document.getElementById(caretPositionT2.parent.id);
-        console.log(
-          "eleIndex",
-          caretPositionT2?.elementId,
-          caretPositionT2.elementIndex,
-          caretPositionT2.parent.childNodes,
-          parent?.childNodes
-        );
         if (!parent?.childNodes) return;
         // const node = parent
         //   ? parent?.childNodes[caretPosition.elementIndex + 1]
@@ -383,7 +367,6 @@
           (node: ChildNode) =>
             (node as Element).id === caretPositionT2?.elementId
         );
-        console.log("new span node", node, caretPositionT2);
         if (node) range.setStart(node, 1);
       } else if (caretPositionT2.elementIndex != undefined) {
         let node = caretPositionT2.element;
@@ -391,18 +374,16 @@
         node = parent
           ? parent?.childNodes[caretPositionT2.elementIndex]
           : caretPositionT2.parent.childNodes[caretPositionT2.elementIndex];
-        console.log("ss", { caretPosition: caretPositionT2, node, parent });
         range.setStart(
           node,
           caretPositionT2.index === 0 ? 0 : caretPositionT2.index - 1
         );
       }
-      console.log("restoring to range", range);
       range.collapse(true);
       selection?.removeAllRanges();
       selection?.addRange(range);
     } catch (error) {
-      console.log("restoring caret errored", error);
+      console.error("restoring caret errored", error);
     }
   }
   /**
@@ -421,7 +402,9 @@
       sel.removeAllRanges();
       sel.addRange(range);
     } else {
-      console.log("Element with this ID does not exist.");
+      console.error(
+        "Restoring caret position to new span failed. element with this ID does not exist."
+      );
     }
   }
 
@@ -438,7 +421,6 @@
     let found = false;
     // Recursive function to walk through child nodes
     function setRange(node: any) {
-      // console.log(node);
       if (node.nodeType === 3) {
         // Text node
         const nextLength = currentLength + node.length;
@@ -467,11 +449,9 @@
   }
 
   function handleKeyDown(event: KeyboardEvent) {
-    console.log("keydown", event);
     clearTimeout(typingTimeout);
     typing = true;
     if (isMarkdown) {
-      //TODO - relay keydown event
       dispatch("keydown", event);
     } else {
       //TODO - test functioning of enter, backspace etc
@@ -489,18 +469,15 @@
    * @param event
    */
   function handleKeyUp(event: KeyboardEvent) {
-    console.log("keyup", event);
+    // console.log("keyup", event);
+    saveCaretPosition();
     content = blockRef.textContent ?? "";
-    // console.log("content", content);
-    // console.log({ innerHTML });
     const steps = [replaceInlineSymbols, () => replaceInlineStyling(event)];
     for (const func of steps) {
       if (func()) return;
     }
-
     if (isMarkdown) {
-      dispatch("keyup", event);
-      //TODO - relay keyup event
+      dispatch("keyup", { event, caretPosition: caretPositionT2?.index });
     }
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
@@ -562,7 +539,6 @@
     }
     if (!matches || !(matches.length > 0)) return false;
     matches.forEach(({ match, pattern }) => {
-      // console.log(`Found ${match.length} matches for ${pattern.regex}.`);
       newInlineSpanId = generateUID();
       isNewSpanInserted = true;
       const replacementWithNewSpan =
@@ -598,7 +574,6 @@
         //replace innerHTML part of the pattern with a new span with id
         const newNode = document.createElement("span");
         newNode.id = generateUID();
-        console.log({ match, pattern });
         newNode.innerHTML = match[0].replace(
           pattern.regex,
           replacementWithNewSpan
@@ -615,7 +590,7 @@
     // console.log("keypress", event, block);
   }
   function handleMouseup(event: any) {
-    // setCaretPosition();
+    saveCaretPosition();
     setCustomCaretPosition();
     // console.log("mouseup", event, block);
   }
@@ -629,9 +604,17 @@
       //TODO - test paste functionality
     }
   }
+  /**
+   * oninput event handler
+   *
+   * 1. Sets the custom caret position
+   * 2. Handles the case when the content is empty but a <br> tag is being inserted by some browsers (which is making placeholder to not become visible - as :empty::after is used to show placeholder)
+   *
+   * saveCaretPosition() - is moved to keyup event - since input event is not triggered for the case when the user moves the placement of the caret using arrow keys
+   * @param event
+   */
   function oninput(event: any) {
     setCustomCaretPosition();
-    saveCaretPosition();
     if (event.target.innerHTML === "<br>" || event.target.innerHTML === "") {
       event.target.innerHTML = "";
     }
@@ -687,7 +670,7 @@
 
   div[contenteditable]:empty::after {
     content: attr(placeholder);
-    color: rgba(var(--colors-fgs3), 1);
+    color: rgba(var(--colors-fgs2), 0.5);
   }
   [contenteditable]::selection {
     background-color: rgba(var(--colors-aps1), 0.3);

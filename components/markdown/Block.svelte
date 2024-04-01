@@ -12,6 +12,7 @@
   let isShowBgOnFocus: boolean = false;
   const mdStore = getMdStore(mdId);
   onMount(() => {
+    //TODO - check the need for rerendering
     const mdStoreSub = mdStore.subscribe((md: MdStore) => {
       // console.log("re-render block", md.reRenderBlock);
       if (md.reRenderBlock === block.id) {
@@ -50,27 +51,15 @@
       ? 'bg-bgs2'
       : ''}"
   >
-    {#if isReRendering}
-      <BlockContent
-        {block}
-        {mdId}
-        {isHovering}
-        bind:isFocusing
-        on:blur={() => {
-          isHovering = false;
-        }}
-      />
-    {:else}
-      <BlockContent
-        {block}
-        {mdId}
-        {isHovering}
-        bind:isFocusing
-        on:blur={() => {
-          isHovering = false;
-        }}
-      />
-    {/if}
+    <BlockContent
+      {block}
+      {mdId}
+      {isHovering}
+      bind:isFocusing
+      on:blur={() => {
+        isHovering = false;
+      }}
+    />
   </div>
 </div>
 

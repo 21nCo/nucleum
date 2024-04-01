@@ -8,7 +8,8 @@ import {
   type TextContent,
   type LayoutContent,
   type StructuralContent,
-  type NodeContent
+  type NodeContent,
+  type StructuralNodeType
 } from "$lib/tidy/types/node.type";
 
 import {
@@ -152,18 +153,15 @@ function initMarkdownStore() {
    */
   function insertStructualBlock(
     contextBlockId: string,
-    blockType: NodeType.DIVIDER | NodeType.DOUBLE_DIVIDER
+    blockType: StructuralNodeType
   ) {
     update((n) => {
       const contextBlockIndex = n.blocks.findIndex(
         (b) => b.id === contextBlockId
       );
-      const newBlock: Block = {
+      const newBlock: Block<StructuralContent> = {
         id: generateUID(),
-        type:
-          blockType === NodeType.DIVIDER
-            ? NodeType.DIVIDER
-            : NodeType.DOUBLE_DIVIDER
+        type: blockType
       };
       n.blocks = [
         ...n.blocks.slice(0, contextBlockIndex),
@@ -218,10 +216,7 @@ function initMarkdownStore() {
           id: generateUID(),
           type: NodeType.LIST,
           listType: ListType.UNORDERED,
-          body: {
-            type: NodeType.SIMPLE_TEXT,
-            body: ""
-          },
+          body: "",
           children: []
         };
         if (
@@ -271,15 +266,11 @@ function initMarkdownStore() {
         if (params.blockType === NodeType.LIST) {
           (block as ListContent).listType =
             params.listType ?? ListType.UNORDERED;
-          block.body = {
-            type: NodeType.SIMPLE_TEXT,
-            body: ""
-          };
+          (block as ListContent).body = "";
         } else {
           block.body = "";
         }
       }
-      console.log({ block });
       n.blockToFocus = id;
       return n;
     });
@@ -298,12 +289,13 @@ function initMarkdownStore() {
         const currentBlockIndex = n.blocks.findIndex((b) => b.id === id);
         let previousSibling = n.blocks[currentBlockIndex - 1];
         if (previousSibling.type != NodeType.LIST) return n;
+        const currentBlock = { ...n.blocks[currentBlockIndex] };
         previousSibling = moveAsChild(
-          n.blocks[currentBlockIndex],
+          currentBlock,
           previousSibling as Block<ListContent>
         );
         n.blocks = n.blocks.filter((b) => b.id !== id);
-        n.reRenderBlock = previousSibling.id;
+        //n.reRenderBlock = previousSibling.id;
         n.blockToFocus = id;
         return n;
       });
@@ -318,7 +310,7 @@ function initMarkdownStore() {
           previousSibling as ListChild<ListContent>
         );
         parent.children = parent.children.filter((b) => b.id !== id);
-        n.reRenderBlock = parentHierarchyCopy[0];
+        //n.reRenderBlock = parentHierarchyCopy[0];
         n.blockToFocus = id;
         return n;
       });
@@ -391,7 +383,7 @@ function initMarkdownStore() {
       update((n) => {
         const deleteIndex = n.blocks.findIndex((b) => b.id === id);
         n.blocks = n.blocks.filter((b) => b.id !== id);
-        n.blockToFocus = n.blocks[deleteIndex - 1].id;
+        if (deleteIndex) n.blockToFocus = n.blocks[deleteIndex - 1].id;
         return n;
       });
     },

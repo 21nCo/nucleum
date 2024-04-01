@@ -346,6 +346,11 @@
 <!-- placeholder={placeholder ?? ""} -->
 
 <style>
+  input::placeholder {
+    font-weight: lighter;
+    /* font-style: italic; */
+    color: rgba(var(--colors-fgs2), 0.5);
+  }
   .search-results {
     position: absolute;
     top: 100%;

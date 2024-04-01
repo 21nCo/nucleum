@@ -1,26 +1,25 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import {
-    type MdStore,
-    BlockContext,
-    type Block
-  } from "$lib/tidy/types/md.type";
+  import type { MdStore, Block } from "$lib/tidy/types/md.type";
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";
   import {
     ListType,
     NodeType,
+    type ListContent,
+    type StructuralNodeType,
     type TextContent,
     type TextNodeType
   } from "$lib/tidy/types/node.type";
   import { cn } from "$lib/tidy/utils/ui.utils";
   import Popover from "$lib/tidy/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
+  import Node from "$lib/tidy/icons/Node.svelte";
   const dispatch = createEventDispatcher();
   export let mdId: string;
-  export let block: Block<TextContent>;
-  export let context: BlockContext = BlockContext.DEFAULT;
+  export let block: Block<TextContent | ListContent>;
+  // export let context: BlockContext = BlockContext.DEFAULT;
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;
   $: {
@@ -49,14 +48,11 @@
       }
     | undefined = undefined;
 
-  $: isDirectInsertBlock =
-    block.type === NodeType.HEADING1 ||
-    block.type === NodeType.HEADING2 ||
-    block.type === NodeType.HEADING3 ||
-    block.type === NodeType.HEADING4 ||
-    block.type === NodeType.HEADING5 ||
-    context === BlockContext.LIST_CHILD ||
-    block.body === "";
+  /**
+   * Checks if the block is of type code or quote and prevents the insertion of a new block on pressing enter - inserts a new line instead
+   */
+  $: isPreventInsertOnEnter =
+    block.type === NodeType.CODE || block.type === NodeType.QUOTE;
   $: {
     switch (block.type) {
       case NodeType.HEADING1:
@@ -91,13 +87,17 @@
     if (isFocusing) assignPlaceholder();
   }
 
+  /**
+   *
+   * TODO - mode blockToFocus as its own store and send offset in case of tab operations and caret at the end or in the middle before tab operations - currently caret is being set to the start if no timeout is used since the focus is being set before the block is rendered - subscribe to blockToFocus in inlineMarkdownTextInput and set the focus there if that's the last resort (but try avoiding any md related features in inlineMarkdownTextInput)
+   */
   onMount(() => {
     hideBlockBrowser();
     const focusBlockSub = mdStore.subscribe((md: MdStore) => {
-      if (md.blockToFocus === block.id && !isFocusing) {
-        //TODO - relay to child
-        // setCursorToEnd(blockRef);
-        textRef.focus();
+      if (md.blockToFocus === block.id) {
+        setTimeout(() => {
+          textRef.focus();
+        }, 10);
         assignPlaceholder();
       }
     });
@@ -138,7 +138,6 @@
       blockBrowserRef.key(event.key);
       event.preventDefault();
     } else if (type === "keyup") {
-      console.log("filtering", block.body);
       blockBrowserRef.filter(block.body);
     }
     return true;
@@ -146,34 +145,32 @@
 
   function handleKeyDown(e: CustomEvent<KeyboardEvent>) {
     const event = e.detail;
-    console.log("keydown textcontent", event);
     const functions = [() => handleBlockBrowser(event)];
 
     for (const func of functions) {
       if (func()) return;
     }
+    const isRelayOperations = block.type === NodeType.LIST;
+    // context === BlockContext.LIST_CHILD
 
     if (event.key === "Tab") {
-      if (context === BlockContext.LIST_CHILD) {
+      if (isRelayOperations) {
         if (event.shiftKey === true) {
           dispatch("shifttab", block.id);
         } else {
           dispatch("tab", block.id);
-          //mdStore.tabListItem(block.id);
         }
       }
       event.preventDefault();
     } else if (
-      event.key === "Enter" ||
-      (event.key === "Enter" && isDirectInsertBlock && !event.shiftKey)
+      (event.key === "Enter" && !isPreventInsertOnEnter && !event.shiftKey) ||
+      (event.key === "Enter" && event.metaKey)
     ) {
-      if (block.id && context === BlockContext.DEFAULT)
-        mdStore.insert(block.id);
+      if (block.id && !isRelayOperations) mdStore.insert(block.id);
       else if (block.body != "") dispatch("insert", block.id);
       event.preventDefault();
     } else if (event.key === "Backspace" && !block.body) {
-      if (block.id && context === BlockContext.DEFAULT)
-        mdStore.deleteBlock(block.id);
+      if (block.id && !isRelayOperations) mdStore.deleteBlock(block.id);
       else dispatch("delete", block.id);
       event.preventDefault();
     }
@@ -245,8 +242,9 @@
         if (block.body === shortcut) {
           block.body = "";
           textRef.set("");
-          if (context != BlockContext.DEFAULT || !block.id) return false;
-          mdStore.insert(block.id, { blockType: type });
+          //TODO - handling structural block insertion for list
+          if (block.type === NodeType.LIST || !block.id) return false;
+          mdStore.insertStructualBlock(block.id, type as StructuralNodeType);
           return true;
         }
         return false;
@@ -275,37 +273,6 @@
       isListShortcutPresent
     );
   }
-
-  /**
-   * Deprecated function to handle escape shortcuts
-   */
-  function performEscapeShortcutsT1() {
-    if (typeof block.body !== "string") return;
-    if (block.body.startsWith("# ")) {
-      block.body = block.body.replace("# ", "");
-      block.type = NodeType.HEADING1;
-    } else if (block.body.startsWith("## ")) {
-      block.body = block.body.replace("## ", "");
-      block.type = NodeType.HEADING2;
-    } else if (block.body.startsWith("### ")) {
-      block.body = block.body.replace("### ", "");
-      block.type = NodeType.HEADING3;
-    } else if (block.body.startsWith("#### ")) {
-      block.body = block.body.replace("#### ", "");
-      block.type = NodeType.HEADING4;
-    } else if (block.body.startsWith("##### ")) {
-      block.body = block.body.replace("##### ", "");
-      block.type = NodeType.HEADING5;
-    } else if (block.body === "---") {
-      block.body = "";
-      if (context != BlockContext.DEFAULT || !block.id) return;
-      mdStore.insert(block.id, { blockType: NodeType.DIVIDER });
-    } else if (block.body === "===") {
-      block.body = "";
-      if (context != BlockContext.DEFAULT || !block.id) return;
-      mdStore.insert(block.id, { blockType: NodeType.DOUBLE_DIVIDER });
-    }
-  }
   /**
    * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
    *
@@ -316,9 +283,11 @@
    *
    * @param event
    */
-  function handleKeyUp(e: CustomEvent<KeyboardEvent>) {
-    const event = e.detail;
-    console.log("keyup in textcontent", event);
+  function handleKeyUp(
+    e: CustomEvent<{ event: KeyboardEvent; caretPosition: any }>
+  ) {
+    const event = e.detail.event;
+    const caretPosition = e.detail.caretPosition;
     const steps = [
       () => handleBlockBrowser(event, "keyup"),
       //performEscapeShortcutsT1(),
@@ -346,9 +315,9 @@
      *
      */
     function handleBackspaceAtBeginOfLine() {
-      if (event.key != "Backspace" || !(caretPositionT2?.index === 0))
-        return false;
-      if (context === BlockContext.LIST_CHILD) {
+      if (event.key != "Backspace" || !(caretPosition === 0)) return false;
+      if (block.type === NodeType.LIST) {
+        // context === BlockContext.LIST_CHILD
         mdStore.convert(block.id!, { blockType: NodeType.SIMPLE_TEXT });
       } else if (block.type != NodeType.SIMPLE_TEXT) {
         block.type = NodeType.SIMPLE_TEXT;
@@ -368,9 +337,8 @@
     if (!items) return;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf("text") === 0) {
-        console.log("Text is being pasted");
+        //TODO - Handle text paste
       } else if (items[i].type.indexOf("image") === 0) {
-        console.log("Image is being pasted");
         const blob = items[i].getAsFile();
         if (!blob) return;
         let image;
@@ -390,9 +358,9 @@
           await uploadImage(image);
         };
         reader.readAsDataURL(blob);
+        event.preventDefault();
       }
     }
-    event.preventDefault();
   }
   async function uploadImage(image: any) {
     const signedUrl =
@@ -410,7 +378,6 @@
       method: "PUT",
       body: blobData
     });
-    console.log("result", result);
     if (result.status === 200) {
       block.body = block.body + `<img src="${signedUrl}"/>`;
     }
@@ -464,7 +431,13 @@
         {@html block.body}
       </div>
     {:else}
-      <div class={cn(sizing, "w-full flex justify-start")}>
+      <div
+        class={cn(
+          sizing,
+          "w-full flex justify-start",
+          block.type === NodeType.QUOTE ? "pl-2" : ""
+        )}
+      >
         <InlineMarkdownTextInput
           bind:this={textRef}
           bind:content={block.body}

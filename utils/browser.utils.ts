@@ -71,6 +71,11 @@ export function renderPopoverv2(
     triggerRect.top < popRect.height
   ) {
     location = Direction.BottomLeft;
+  } else if (
+    location === Direction.Down &&
+    documentHeight - triggerRect.bottom < popRect.height
+  ) {
+    location = Direction.Up;
   }
   if (location === Direction.BottomLeft) {
     popRef.style.left = `${triggerRect.left}px`;
