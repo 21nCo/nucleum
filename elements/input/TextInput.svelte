@@ -14,6 +14,7 @@
   import { debouncer } from "$lib/tidy/utils/utils";
   import appearance from "$lib/tidy/stores/appearance.store";
   import InlineMarkdownTextInput from "$lib/tidy/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import Search from "$lib/tidy/icons/Search.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -27,6 +28,7 @@
   export let type: string = "text";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
+  $: isSearchEnabled = searchStoreId || searchCallback;
   export let id: string = "";
   export let width: string | undefined = undefined;
   export let isRequired: boolean = false;
@@ -37,7 +39,8 @@
   export let isExperimentalMdInput: boolean = false;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
-  let searchResults: DbRecordWithLabel[] = [];
+  type SearchItem = Partial<DbRecordWithLabel & Record<string, unknown>>;
+  let searchResults: SearchItem[] = [];
   let selectedIndex: number = 0;
   let previousValue: string = "";
   let currentValue: string;
@@ -60,6 +63,7 @@
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
   let debounceTimeoutId: any;
+  let isShowSearchResults: boolean = false;
   const dispatch = createEventDispatcher();
   onMount(() => {
     if (!currentUnit) currentUnit = units ? units[0] : "";
@@ -136,8 +140,9 @@
     }
     dispatch("keyup", { value });
   }
-  function onSearchResultSelection(item: DbRecordWithLabel) {
+  function onSearchResultSelection(item: SearchItem) {
     dispatch("select", { item });
+    isShowSearchResults = false;
   }
   function resetSearch() {
     searchResults = [];
@@ -181,7 +186,7 @@
   }
   let debouncedSearch = debouncer(search, 100);
   async function search() {
-    if (!searchStoreId) return;
+    isShowSearchResults = true;
     isSearchInProgress = true;
     selectedIndex = 0;
     if (!value) {
@@ -189,12 +194,14 @@
       return;
     }
     if (searchCallback) {
+      console.log("searching with callback");
       let result = await searchCallback(value);
       if (result) searchResults = result;
       isSearchInProgress = false;
       return;
     }
-    searchResults = await dataManager.search(searchStoreId, value);
+    if (searchStoreId)
+      searchResults = await dataManager.search(searchStoreId, value);
     isSearchInProgress = false;
   }
 </script>
@@ -261,7 +268,7 @@
         bind:value
         on:change|stopPropagation
         on:keydown
-        on:keyup|stopPropagation={searchStoreId
+        on:keyup|stopPropagation={isSearchEnabled
           ? handleKeyUpForSearch
           : handleKeyUp}
         on:blur
@@ -274,7 +281,7 @@
       />
     {/if}
 
-    {#if value && searchStoreId}
+    {#if value && isSearchEnabled && isShowSearchResults}
       <div
         class="search-results bg-bgs2 mt-[0.75rem] shadow-md overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
         5
@@ -285,7 +292,10 @@
           {#if searchResults && searchResults.length > 0}
             {#each searchResults as item, index}
               <SearchResultItem
-                {item}
+                label={item.label ??
+                  ("name" in item && typeof item.name == "string"
+                    ? item.name
+                    : "")}
                 isActive={selectedIndex === index}
                 on:click={() => {
                   onSearchResultSelection(item);

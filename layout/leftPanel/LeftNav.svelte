@@ -113,7 +113,6 @@
             {/if}
             {#if isHovered}
               <Button
-                size={Size.lg}
                 icon="sidebar-toggle"
                 on:click={() => {
                   // $userPreferences.uiStates = setUiState(

@@ -8,6 +8,7 @@
   import { TimeScale } from "../../types/time.type";
   import BackgroundElement from "../style/BackgroundElement.svelte";
   import Button from "../button/Button.svelte";
+  import ActiveBackgroundElement from "../style/ActiveBackgroundElement.svelte";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
@@ -447,21 +448,18 @@
             )}</button
           > -->
           {#each yearPool as year, index (year)}
-            <BackgroundElement
+            <ActiveBackgroundElement
               on:click={() => {
                 mapYear = yearPool[index];
-                //TODO handle pool change for year
                 handlePoolChangeForYears(index);
               }}
-              parentBgIndex={mapYear == yearPool[index]
-                ? parentBgIndex + 1
-                : parentBgIndex}
+              isBackgroundActive={mapYear == yearPool[index]}
               class="focus:outline-none px-2 py-1 {mapYear == yearPool[index]
                 ? 'font-medium rounded-md text-center'
                 : ''}"
               >{ucFirst(
                 dayjs(yearPool[index] + "-" + mapMonth).format("YYYY")
-              )}</BackgroundElement
+              )}</ActiveBackgroundElement
             >
           {/each}
         </div>
@@ -490,15 +488,13 @@
           class="px-2 w-full flex items-center justify-evenly gap-3 flex-wrap"
         >
           {#each monthPool as month, index (month)}
-            <BackgroundElement
+            <ActiveBackgroundElement
               on:click={() => {
                 console.log("monthPool", monthPool);
                 mapMonth = monthPool[index];
                 handlePoolChange(index);
               }}
-              parentBgIndex={mapMonth == monthPool[index]
-                ? parentBgIndex + 1
-                : parentBgIndex}
+              isBackgroundActive={mapMonth == monthPool[index]}
               class="focus:outline-none px-1.5 py-1 {mapMonth ==
               monthPool[index]
                 ? 'font-medium rounded-md  text-center'
@@ -506,7 +502,7 @@
               >{ucFirst(
                 dayjs(mapYear + "-" + monthPool[index]).format("MMM")
                 // .charAt(0)
-              )}</BackgroundElement
+              )}</ActiveBackgroundElement
             >
           {/each}
         </div>
@@ -547,9 +543,10 @@
                     <div class="flex w-full h-8 justify-center items-center">
                       {#if i > 0}
                         {#if (i === startDay && mapMonth === startMonth && mapYear === startYear && startSelected) || (i === endDay && mapMonth === endMonth && mapYear === endYear && endSelected)}
-                          <button
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
-                            >{i}</button
+                          <ActiveBackgroundElement
+                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center"
+                            isBackgroundActive={true}
+                            >{i}</ActiveBackgroundElement
                           >
                         {:else if startDay && startMonth && startYear && laterDate(startDay, startMonth, startYear, i, mapMonth, mapYear) && endDay && endMonth && endYear && laterDate(i, mapMonth, mapYear, endDay, endMonth, endYear) && endSelected == true}
                           <button

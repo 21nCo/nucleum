@@ -3,11 +3,19 @@
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
+  import Popover from "../popover/Popover.svelte";
+  import TimePeriodPicker from "./TimePeriodPicker.svelte";
   import { formatDate } from "$lib/tidy/utils/time.utils";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date;
-  export let variant: "wide-v1" | "wide" | "inline" | "icon" = "wide";
+  export let variant:
+    | "wide-v1"
+    | "wide"
+    | "inline"
+    | "icon"
+    | "use-time-period-picker" = "wide";
+  let popoverRef: any;
   let isPopoverActive: boolean = false;
   let backgroundColor: string;
   let dateInput: HTMLInputElement;
@@ -31,6 +39,28 @@
       class="mt-1 block w-full {backgroundColor} py-1 px-2 rounded-md"
     />
   </label>
+{:else if variant == "wide"}
+  <Popover bind:this={popoverRef}>
+    <button
+      slot="trigger"
+      class="flex items-center gap-2 min-w-fit rounded-md bg-bgs2 p-2 w-40 focus:outline focus:outline-aps1"
+    >
+      <Icon icon="calendar" size={Size.md} />
+      <span class="text-fgs2 text-base">
+        {formatDate(date)}
+      </span>
+    </button>
+    <slot:fragment slot="popover">
+      <TimePeriodPicker
+        isDatePickerMode={true}
+        bind:selectedDate={date}
+        on:change={() => {
+          popoverRef.toggle();
+          dispatch("change", { date });
+        }}
+      />
+    </slot:fragment>
+  </Popover>
 {:else}
   <div class="relative">
     <input

@@ -19,13 +19,21 @@
       svg: ``
     },
     {
-      subatom: "pointron",
+      subatom: "pointron-old",
       svg: `
 <rect x="227.1" y="91" width="9" height="144" rx="3.67484" fill="{color}"/>
 <rect x="227.1" y="235" width="9" height="142" rx="3.67484" transform="rotate(-90 227.1 235)" fill="{color}"/>
 <path d="M128.196 230.5C128.196 173.468 174.429 127.234 231.461 127.234" stroke="{color}" stroke-width="27.5374"/>
 <path d="M231.461 333.766C174.429 333.766 128.196 287.532 128.196 230.5" stroke="{color}" stroke-width="27.5374"/>
 <path d="M334.725 230.5C334.725 287.532 288.492 333.766 231.46 333.766" stroke="{color}" stroke-width="27.5374"/>`
+    },
+    {
+      subatom: "pointron",
+      svg: `
+      <path d="M231.36 127.234C288.392 127.234 334.625 173.468 334.625 230.5" stroke="{color}" stroke-width="27.5374"/>
+<path d="M128.096 230.5C128.096 173.468 174.329 127.234 231.361 127.234" stroke="{color}" stroke-width="27.5374"/>
+<path d="M231.361 333.766C174.329 333.766 128.096 287.532 128.096 230.5" stroke="{color}" stroke-width="27.5374"/>
+<path d="M334.625 230.5C334.625 287.532 288.392 333.766 231.36 333.766" stroke="{color}" stroke-width="27.5374"/>`
     },
     {
       subatom: "goaltron",

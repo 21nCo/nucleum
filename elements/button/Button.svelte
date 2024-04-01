@@ -114,6 +114,10 @@
             break;
         }
       }
+    } else if (icon) {
+      if (size === Size.lg) size = Size.xl;
+      else if (size === Size.md) size = Size.lg;
+      else if (size === Size.sm) size = Size.md;
     }
     if (style != ButtonStyle.PLAIN && (label || $$slots.default)) {
       switch (size) {
@@ -166,9 +170,6 @@
       }
     }
     classList = classList;
-  }
-  $: {
-    setStyles();
   }
   onMount(() => {
     hideToolTip();

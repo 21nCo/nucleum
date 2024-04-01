@@ -1,3 +1,4 @@
+<!-- Deprecated -->
 <script lang="ts">
   import { actIfClickedOutside } from "$lib/tidy/utils/utils";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";

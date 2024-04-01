@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
-  export let item: DbRecordWithLabel;
+  export let label: string;
   export let isActive: boolean = false;
   let itemRef: HTMLButtonElement;
   $: if (isActive && itemRef)
@@ -14,5 +13,5 @@
     ? ' bg-bgs3 bg-opacity-70 font-medium'
     : ''}"
 >
-  {item.label ?? ("name" in item ? item.name : "")}
+  {label}
 </button>

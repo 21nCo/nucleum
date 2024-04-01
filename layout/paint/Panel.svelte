@@ -19,8 +19,13 @@
       : 'w-[24rem] min-w-[24rem]'} "
   >
     {#if title}
-      <div class={$view.isPortrait ? "px-4 py-2" : "p-4"}>
+      <div
+        class="flex justify-between w-full {$view.isPortrait
+          ? 'px-4 py-2'
+          : 'p-4'}"
+      >
         <Text style={titleStyle} content={title} />
+        <slot name="toprightactions" />
       </div>
     {/if}
     {#if $$slots.nonpadded}

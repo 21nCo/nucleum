@@ -39,4 +39,4 @@
   }
 </script>
 
-<AppLoadingView message="logging you in..." />
+<AppLoadingView message="Signing in" />

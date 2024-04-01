@@ -47,6 +47,8 @@
     hapticFeedback(HapticFeedback.MENUITEM);
     rive?.fire();
     dispatch("click", {});
+    if (toolTipTimeout) clearTimeout(toolTipTimeout);
+    hideToolTip();
   }
   function onHover() {
     rive?.fire();

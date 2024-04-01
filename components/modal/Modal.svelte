@@ -8,6 +8,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
+  import { onMount } from "svelte";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
@@ -21,20 +22,32 @@
   resolveSize();
   let width: number;
   let left: any;
+  /**
+   * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
+   */
+  let focusTrap: HTMLDivElement;
   export let id = generateUID();
-  $: if (show) dialog?.showModal();
+  $: if (show) {
+    dialog?.showModal();
+    setTimeout(() => focusTrap.focus(), 0);
+  }
   const overlayClicked = (event: any) => {
+    console.log("overlayClicked", event, id);
     if (
-      (event.target?.classList?.contains("pop-overlay") ||
+      (((event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
         event.target?.id === id) &&
-      event.pointerId &&
-      event.pointerId != -1 &&
+        event.pointerId &&
+        event.pointerId != -1) ||
+        event.target.nodeName === "DIALOG") &&
       isDismissable
     ) {
       close();
     }
   };
+  // onMount(() => {
+  //   setTimeout(() => document.body.focus(), 10);
+  // });
   // $: {
   //   if (size == Size.xs) {
   //     width = 400;
@@ -47,6 +60,7 @@
   //   // top = $windowObject.documentHeight / 2 - height / 2;
   // }
   function close() {
+    console.log("close from modal.svelte");
     show = false;
     modalEvent.hideSpecific(id, "Modal.svelte");
     confirmationNotification.reset();
@@ -145,6 +159,7 @@
           ? 'w-full h-full'
           : sizingClass}"
       >
+        <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
         <slot />
         <!-- <div class="popover-content" style="max-height: 80vh;" /> -->
       </dialog>

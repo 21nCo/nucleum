@@ -29,7 +29,7 @@ export function formatTime(
   format: string | undefined = undefined
 ) {
   let userPreferredFormat = userPreferences.timeFormat;
-  format = format ? format : userPreferredFormat ?? "meridian";
+  format = format ?? userPreferredFormat ?? "meridian";
   if (format === "24") {
     let hours = date?.getHours().toString().padStart(2, "0");
     let minutes = date?.getMinutes().toString().padStart(2, "0");
@@ -39,7 +39,7 @@ export function formatTime(
     let minutes = date?.getMinutes().toString().padStart(2, "0");
     let ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
-    hours = hours ? hours : 12;
+    hours = hours || 12;
     return `${hours}:${minutes} ${ampm}`;
   }
 }
@@ -388,4 +388,17 @@ export function isSameDay(date1: Date, date2: Date) {
 
 export function offsetDate(date: Date, offset: number) {
   return new Date(date.getTime() + offset * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Attaches time to a date - time is in format HH:MM
+ * @param date
+ * @param time
+ * @returns
+ */
+export function attachTimeToDate(date: Date, time: string) {
+  const [hours, minutes] = time.split(":");
+  date.setHours(parseInt(hours));
+  date.setMinutes(parseInt(minutes));
+  return date;
 }
