@@ -14,18 +14,29 @@ export function initiateOAuth2Flow(provider: IdentityProvider) {
   if (!oAuthConfig || oAuthConfig.length < 1) return;
   const config = oAuthConfig.find((c) => c.provider === provider);
   if (!config) return;
-  const url =
+  let url =
     config.authorise_url +
     "?client_id=" +
     config.client_id +
-    "&redirect_uri=" +
-    window.location.origin +
-    "/r/" +
-    config.oauth_slug +
     "&scope=" +
     config.scope +
-    "&response_type=code" +
-    "&state=state&code_challenge=challenge&code_challenge_method=plain";
+    "&response_type=code&state=signin";
+  let redirectUri = "";
+  if (config.response_mode === "form_post") {
+    redirectUri = import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
+    // redirectUri = "https://dev.pointron.io/r/apple";
+    url += "&response_mode=form_post";
+  } else {
+    redirectUri = window.location.origin + "/r/" + config.oauth_slug;
+  }
+  if (config.code_challenge_method) {
+    //TODO generate code challenge
+    url +=
+      "&code_challenge=challenge&code_challenge_method=" +
+      config.code_challenge_method;
+  }
+  if (!redirectUri) return;
+  url += "&redirect_uri=" + encodeURIComponent(redirectUri);
   if (get(appStore).launchContext == LaunchContext.EMBED) {
     openLink(url);
   } else {

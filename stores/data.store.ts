@@ -1,7 +1,7 @@
 import { SurrealDatabase } from "$lib/tidy/access/surrealHelper";
 import { appStore, cacheableStoresTable } from "$lib/tidy/stores/app.store";
 import { get, writable } from "svelte/store";
-import { Item } from "../types/item.enum";
+import { Item, type ItemType } from "../types/item.enum";
 import { checkSurrealResponse, interceptSurrealResponse } from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 import {
@@ -38,6 +38,29 @@ function init() {
     set,
     update,
     refreshStaleData,
+    refreshForIFR: async (storeId: string) => {
+      //TODO
+    },
+    performMutationForIFR: (
+      item: ItemType,
+      action: PersistanceActionType,
+      data: any,
+      query?: string
+    ) => {
+      const dexie = get(dataManager).cacheSource.dexie;
+      // @ts-ignore
+      const table = dexie[item];
+      if (action === PersistanceActionType.DELETE) {
+        table.delete(data.id);
+      } else if (action === PersistanceActionType.CREATE) {
+        console.log("creating", data);
+        table.add(data);
+      } else if (action === PersistanceActionType.UPDATE) {
+        table.update(data.id, data);
+      }
+      //TODO - change the local mutation map to have timestamp of now for the resource
+      performMutation(Item[item], data, action, query, true);
+    },
     performMutation,
     search: async (storeId: string, query: string) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
@@ -116,7 +139,7 @@ function init() {
     syncPendingMutations: async () => {
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
-      const mutationQueue = cacheSource.dixie.mutationQueue;
+      const mutationQueue = cacheSource.dexie.mutationQueue;
       const mutations = await mutationQueue.toArray();
       let masterQuery = "";
       if (mutations.length > 0) {
@@ -140,7 +163,7 @@ function init() {
  */
 async function addToMutationQueue(query: string, params: any) {
   const cacheSource = get(dataManager).cacheSource;
-  cacheSource.dixie.mutationQueue.add({
+  cacheSource.dexie.mutationQueue.add({
     timestamp: new Date().getTime(),
     query,
     params
@@ -159,39 +182,24 @@ async function performMutation(
   storeId: string,
   data: any,
   action: PersistanceActionType,
-  query?: string
+  query?: string,
+  isIFR: boolean = false
 ) {
   logger.log({
     context: "dataManager.performMutation",
     storeId,
-    query: action,
+    action,
     data
   });
-  const store = cacheableStoresTable.find((x) => get(x).id === storeId);
-  const surrealDb = get(dataManager).db;
-  if (!store) return;
-  const storeData = get(store);
-  let defferedStores: CacheableStoreContract[] = [];
-  storeData.mutatingResources.forEach((resource: string) => {
-    const dependantStores = resolveDependantStores(resource);
-    dependantStores.forEach((x) => {
-      const y = get(x);
-      if (!y.dependencies) return;
-      const syncType = y.dependencies.find(
-        (k: ResourceDependency) => k.resource === resource
-      )?.syncType;
-      if (syncType === DependencySyncType.EAGER) {
-        console.log("Eagerly refreshing", y.id);
-        setRefreshingState([x], true);
-        x.propagateDependencyChanges?.(data);
-        setTimeout(() => {
-          setRefreshingState([x], false);
-        }, 1000);
-      } else {
-        defferedStores.push(x);
-      }
-    });
-  });
+  let mutatingResources: string[] = [];
+  if (isIFR) mutatingResources = [storeId];
+  else {
+    const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+    if (!store) return;
+    const storeData = get(store);
+    mutatingResources = storeData.mutatingResources;
+  }
+  const defferedStores = propagateToEagerStores(mutatingResources, data);
   const refreshQueryForDeferredStores =
     resolveStoresRefreshQuery(defferedStores);
   let mutationQuery: string = "";
@@ -205,32 +213,76 @@ async function performMutation(
   const mutationParams =
     action === PersistanceActionType.CUSTOM_QUERY ? { ...data } : { data };
   logger.log({ context: "mutation full query:", dbFullQuery });
+  const surrealDb = get(dataManager).db;
   let response = await surrealDb.query(dbFullQuery, mutationParams);
   console.log("performMutation response", { response });
   if (!isValidArrayWithData(response)) {
     addToMutationQueue(mutationQuery, mutationParams);
     return;
   }
-  setRefreshingState(defferedStores, true);
   response = response.map((x: any) => checkSurrealResponse(x));
   const mutationResponse = response[0];
-  let deferredStoresResponse = response.slice(1);
-  if (deferredStoresResponse[0]?.[0]?.id?.includes("mutationMap")) {
-    deferredStoresResponse = deferredStoresResponse.slice(1);
-  }
-  for (let i = 0; i < defferedStores.length; i++) {
-    const store = defferedStores[i];
-    const data = deferredStoresResponse[i];
-    if (store.loader && data) {
-      store.loader(data);
-    }
-  }
-  setTimeout(() => {
-    setRefreshingState(defferedStores, false);
-  }, 1000);
+  propagateToDefferedStores(defferedStores, response);
   //TODO - if required - fetch serverMutationMap along with response of mutation and run refreshStaleData
   if (mutationResponse) return mutationResponse;
   addToMutationQueue(mutationQuery, mutationParams);
+
+  /**
+   * Propagates the changes to the dependant stores with eager sync type and returns the deffered stores.
+   * @param mutatingResources the resources that are being mutated.
+   * @param data the data to be propagated.
+   * @returns the deffered stores.
+   */
+  function propagateToEagerStores(mutatingResources: string[], data: any) {
+    let defferedStores: CacheableStoreContract[] = [];
+    mutatingResources.forEach((resource: string) => {
+      const dependantStores = resolveDependantStores(resource);
+      dependantStores.forEach((x) => {
+        const y = get(x);
+        if (!y.dependencies) return;
+        const syncType = y.dependencies.find(
+          (k: ResourceDependency) => k.resource === resource
+        )?.syncType;
+        if (syncType === DependencySyncType.EAGER) {
+          console.log("Eagerly refreshing", y.id);
+          setRefreshingState([x], true);
+          x.propagateDependencyChanges?.(data);
+          setTimeout(() => {
+            setRefreshingState([x], false);
+          }, 1000);
+        } else {
+          defferedStores.push(x);
+        }
+      });
+    });
+    return defferedStores;
+  }
+
+  /**
+   * Parses the response and propagates the store data for respective deffered stores.
+   * @param defferedStores
+   * @param response
+   */
+  function propagateToDefferedStores(
+    defferedStores: CacheableStoreContract[],
+    response: any
+  ) {
+    setRefreshingState(defferedStores, true);
+    let deferredStoresResponse = response.slice(1);
+    if (deferredStoresResponse[0]?.[0]?.id?.includes("mutationMap")) {
+      deferredStoresResponse = deferredStoresResponse.slice(1);
+    }
+    for (let i = 0; i < defferedStores.length; i++) {
+      const store = defferedStores[i];
+      const data = deferredStoresResponse[i];
+      if (store.loader && data) {
+        store.loader(data);
+      }
+    }
+    setTimeout(() => {
+      setRefreshingState(defferedStores, false);
+    }, 1000);
+  }
 }
 
 /**

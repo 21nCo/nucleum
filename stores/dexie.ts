@@ -6,12 +6,20 @@ export interface MutationQueue {
   params: any;
 }
 
+interface TestDexieRecord {
+  id: string;
+  label: string;
+  context: string;
+}
+
 export class AppDexie extends Dexie {
+  test!: Table<TestDexieRecord>;
   mutationQueue!: Table<MutationQueue>;
   constructor(scope: string) {
     super(scope);
-    this.version(1).stores({
-      mutationQueue: "timestamp"
+    this.version(2).stores({
+      mutationQueue: "timestamp",
+      test: "id"
     });
   }
 }

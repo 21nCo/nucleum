@@ -30,7 +30,7 @@ export type NodeBase = {
   avatar?: string;
 };
 
-export type NodeStore = Node & {};
+export type ActiveNodeStore = Node & {};
 
 export type NodeContent =
   | TextContent

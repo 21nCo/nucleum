@@ -11,7 +11,7 @@ import { LocalDexie } from "$lib/local/stores/local.dexie";
  */
 export class CacheManager implements CacheSource {
   indxDb: LocalForage = localforage.createInstance({ name: "guest" });
-  dixie: LocalDexie = new LocalDexie("d:guest");
+  dexie: LocalDexie = new LocalDexie("d:guest");
   initialize() {
     let userId = "guest";
     if (localStorage.getItem("userInfo")) {
@@ -21,7 +21,7 @@ export class CacheManager implements CacheSource {
     this.indxDb = localforage.createInstance({
       name: userId
     });
-    this.dixie = new LocalDexie("d:" + userId);
+    this.dexie = new LocalDexie("d:" + userId);
   }
   constructor() {
     this.initialize();

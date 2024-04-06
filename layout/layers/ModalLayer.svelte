@@ -38,7 +38,7 @@
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let mutationQueue = liveQuery(() =>
-    $dataManager.cacheSource.dixie.mutationQueue.toArray()
+    $dataManager.cacheSource.dexie.mutationQueue.toArray()
   );
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: AppEventType) => {

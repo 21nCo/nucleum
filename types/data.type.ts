@@ -101,7 +101,7 @@ export interface DataManager {
  * The source of the cache which handles the caching and retrieval of the cache
  */
 export interface CacheSource {
-  dixie: LocalDexie;
+  dexie: LocalDexie;
   initialize: () => void;
   cacheStore: (store: CacheableStore, strategy: CacheStrategy) => void;
   retrieveCache: (storeId: string) => Promise<any>;
