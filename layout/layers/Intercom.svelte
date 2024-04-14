@@ -2,12 +2,13 @@
   import { intercomId } from "$lib/tidy/stores/app.store";
   import account from "$lib/tidy/stores/account.store";
   import view from "$lib/tidy/stores/view.store";
+  import { isValidString } from "$lib/tidy/utils/text.utils";
   localStorage.setItem("intercomId", intercomId);
   $: if (!$view.isPortrait && $account.userInfo) {
     (<any>window).intercomSettings = {
       api_base: "https://api-iam.intercom.io",
       app_id: intercomId,
-      name: $account.userInfo?.nickName,
+      name: isValidString($account.userInfo?.nickName) ?? "App user",
       user_id: $account.userId ?? $account.userInfo?.id,
       email: $account.userInfo?.email ?? ""
     };

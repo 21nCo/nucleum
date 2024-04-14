@@ -4,14 +4,18 @@ import { PersistanceActionType, StoreDataType } from "../types/data.type";
  * This is uniform with Surreal time::unix() - for cache invalidation etc
  * @returns current timestamp in unix
  */
-export function currentUnixTimestamp() {
-  return +(new Date().getTime() / 1000).toFixed();
+export function surrealUnixTimestamp(date?: string | Date) {
+  if (!date) return +(new Date().getTime() / 1000).toFixed();
+  return +(new Date(date).getTime() / 1000).toFixed();
 }
 
 export function resolveRefreshQuery(id: string, dataType: StoreDataType) {
   if (dataType === StoreDataType.KVO)
     return `array::first(select * from ${id});`;
   else if (dataType === StoreDataType.FIR) return `select * from ${id};`;
+  else if (dataType === StoreDataType.IFR) {
+    return `select * from ${id} where modifiedAt > $since;`;
+  }
 }
 
 function mutationMapEntry(recordId: string) {

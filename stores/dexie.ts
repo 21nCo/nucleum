@@ -13,11 +13,12 @@ interface TestDexieRecord {
 }
 
 export class AppDexie extends Dexie {
+  protected dbVersion: number = 6;
   test!: Table<TestDexieRecord>;
   mutationQueue!: Table<MutationQueue>;
   constructor(scope: string) {
     super(scope);
-    this.version(2).stores({
+    this.version(this.dbVersion).stores({
       mutationQueue: "timestamp",
       test: "id"
     });

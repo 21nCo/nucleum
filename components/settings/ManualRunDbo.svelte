@@ -1,9 +1,9 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import TextInput from "$lib/tidy/elements/input/TextInput.svelte";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { dboVersion } from "$lib/tidy/stores/app.store";
   import { runDboUpdate } from "$lib/tidy/utils/account.utils";
-  let value: number = $userPreferences.lastRunChangeId ?? 0;
+  let value: number = $dboVersion.version ?? 0;
   let isDboUpdateInProgress: boolean = false;
 </script>
 

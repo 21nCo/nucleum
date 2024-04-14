@@ -11,6 +11,7 @@
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let items: SwitchItem[];
   export let selected: string;
+  export let isHideBar: boolean = false;
   export let itemProps: {
     size?: Size;
     activeStatusPlacement?: Direction;
@@ -32,6 +33,7 @@
       {item}
       {...itemProps}
       {style}
+      {isHideBar}
       isActive={selected === item.label}
       on:click={() => {
         selected = item.label;

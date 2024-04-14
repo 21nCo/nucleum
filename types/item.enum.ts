@@ -7,7 +7,9 @@ export enum GlobalItem {
   appData = "appData",
   space = "space",
   spaceInContext = "spaceInContext",
-  appearance = "appearance"
+  appearance = "appearance",
+  dboVersion = "dboVersion",
+  tz = "tz"
 }
 
 export const Item = {

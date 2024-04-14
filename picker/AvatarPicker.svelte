@@ -3,7 +3,7 @@
   import { ColorStrength } from "../types/appearance.type";
   import { deepCopy } from "../utils/obj.utils";
   import Divider from "../elements/Divider.svelte";
-  import ToggleSwitch from "../elements/toggle/ToggleSwitch.svelte";
+  import Switch from "../elements/toggle/Switch.svelte";
   import Button from "../elements/button/Button.svelte";
   import Icon from "../elements/Icon.svelte";
   import {
@@ -21,7 +21,6 @@
   import { Persistance } from "../stores/persistance";
   import { IconVariant } from "../types/icon.type";
   import { PanelSwitcherStyle } from "../types/switcher.enum";
-  import Autocomplete from "../elements/autocomplete_temp/Autocomplete.svelte";
   import Text from "../elements/text/Text.svelte";
   import { TextStyle } from "../types/text.enum";
   import ActiveBackgroundElement from "../elements/style/ActiveBackgroundElement.svelte";
@@ -365,7 +364,7 @@
       </div>
       {#if mode == iconPickerType.ICON}
         <Divider colorStrength={ColorStrength.Strong} thickness={2} />
-        <ToggleSwitch label="Fill" bind:checked size={Size.sm} />
+        <Switch label="Fill" bind:on={checked} size={Size.sm} />
       {/if}
       <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
         <input

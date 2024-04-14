@@ -99,7 +99,7 @@
   }
 
   /**
-   * Deprecated
+   * ! Deprecated
    * T1 method of inline fragment
    */
   function parseSpansFromText(text: string) {
@@ -108,7 +108,7 @@
   }
 
   /**
-   * Deprecated
+   * ! Deprecated
    * T1 of having fragments for inline formatting
    * @param match
    */
@@ -139,7 +139,7 @@
   }
 
   /**
-   * Deprecated
+   * !Deprecated
    * T1 of saving caret position
    */
   function insertCaretMarker() {
@@ -284,7 +284,7 @@
     }
   }
   /**
-   * Deprecated
+   * !Deprecated
    * Restore cursor position using comment marker
    */
   function restoreCursorPosition() {
@@ -409,7 +409,7 @@
   }
 
   /**
-   * Deprecated
+   * !Deprecated
    * @param element
    * @param index
    */

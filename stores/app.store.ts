@@ -29,7 +29,6 @@ import blankJson from "$lib/tidy/data/blank.json";
 import colorSchemes from "$lib/tidy/theme/colorschemes.json";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
-import { detectTimeZone, offsetInSeconds } from "../utils/time.utils";
 import { Item } from "$lib/tidy/types/item.enum";
 import {
   defaultAppData,
@@ -39,11 +38,17 @@ import { TimeScale } from "../types/time.type";
 import { Orientation } from "../types/direction.enum";
 import { UiState } from "../types/uiState.enum";
 import { emojis, materialSymbols, shuffleEmojis } from "../data/avatars";
-import { StoreDataType, type CacheableStoreContract } from "../types/data.type";
+import {
+  PersistanceActionType,
+  StoreDataType,
+  type CacheableStore,
+  type CacheableStoreContract
+} from "../types/data.type";
 import { dataManager } from "./data.store";
-import { currentUnixTimestamp } from "../utils/surreal.utils";
 import modalEvent from "../components/modal/modal.store";
 import account from "./account.store";
+import { detectTimeZone } from "../utils/time.utils";
+
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
 //   env: "dev"
@@ -215,6 +220,44 @@ export const appConstants = {
   tempColorSchemes,
   colorSchemeSLConfig: selectableColorParams
 };
+const seedDboVersion = {
+  version: 0,
+  id: "kv:" + Item.dboVersion,
+  dataType: StoreDataType.KVO
+};
+const locallyPersistedDboVersion = retrieveLocally(Item.dboVersion);
+
+export const dboVersion = initDboVersionStore();
+
+function initDboVersionStore() {
+  const { subscribe, set, update } = writable<dbVersionStore>(
+    locallyPersistedDboVersion ?? seedDboVersion
+  );
+  dataManager.retrieveCache(seedDboVersion.id).then((x) => {
+    if (x) set(x as dbVersionStore);
+  });
+  return {
+    subscribe,
+    set,
+    loader: (data: any) => {
+      console.log("loading db version", { data });
+      const n = { ...seedDboVersion, ...data };
+      set(n);
+      persistLocally(Item.dboVersion, n);
+      dataManager.cache(n);
+    },
+    setVersion: (version: number) => {
+      console.log("setting db version", { version });
+      update((n: dbVersionStore) => {
+        n.version = version;
+        persistLocally(Item.dboVersion, n);
+        dataManager.cache(n);
+        return n;
+      });
+    },
+    update
+  };
+}
 
 const userPreferencesId = "kv:" + Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
@@ -231,7 +274,8 @@ export const seedUserPreferences: UserGlobalPreferences = {
   accessibilitySizingFactor: 1,
   timeScales: [TimeScale.DAYS, TimeScale.MONTHS, TimeScale.YEARS],
   timeFormat: "meridian",
-  timeZoneOffset: offsetInSeconds(detectTimeZone().offset),
+  timeZoneOffset: new Date().getTimezoneOffset() * 60,
+  timeZoneLabel: detectTimeZone()?.label ?? "UTC",
   isAnonymousAnalyticsEnabled: true,
   appearance: {
     skin: AppSkin.Clean,
@@ -261,6 +305,10 @@ export const seedUserPreferences: UserGlobalPreferences = {
   // UsedEmojis: [[{ code: "&#X1F609", name: "winking face", frequency: 1 }]]
 };
 const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
+type dbVersionStore = CacheableStore & {
+  version: number;
+};
+
 export const userPreferences = initUserPreferences();
 
 function initUserPreferences() {
@@ -283,11 +331,18 @@ function initUserPreferences() {
     cache(get(userPreferences));
     persistLocally(Item.globalPreferences, get(userPreferences));
     if (!get(account).isLoggedIn) return;
-    persistance.update({
-      ...n,
-      id: userPreferencesId,
-      modifiedAt: currentUnixTimestamp()
-    });
+    // persistance.update({
+    //   ...n,
+    //   id: userPreferencesId
+    // });
+    dataManager.performMutation(
+      userPreferencesId,
+      {
+        ...n,
+        id: userPreferencesId
+      },
+      PersistanceActionType.MERGE
+    );
   };
   const cache = async (n: UserGlobalPreferences) => {
     dataManager.cache(n);
@@ -312,6 +367,7 @@ function initUserPreferences() {
     loadSeedData: () => {
       set(seedUserPreferences);
       cache(seedUserPreferences);
+      persist(seedUserPreferences);
     },
     set: (newValue: UserGlobalPreferences) => {
       let changedProperties: any = {};
@@ -341,6 +397,22 @@ function initUserPreferences() {
         const appearance = { ...n.appearance, ...x };
         n.appearance = appearance;
         persist({ appearance });
+        return n;
+      });
+    },
+    setTimeZone: (offset?: number, label?: string) => {
+      if (!offset) {
+        offset = -new Date().getTimezoneOffset() * 60;
+        label = detectTimeZone()?.label ?? "UTC";
+      }
+      console.log("setting time zone", { offset, label });
+      update((n: UserGlobalPreferences) => {
+        n.timeZoneOffset = offset;
+        persist({ timeZoneOffset: offset, timeZoneLabel: label });
+        persistance.create(
+          { offset, date: new Date().toISOString(), label: label ?? "" },
+          Item.tz
+        );
         return n;
       });
     }
@@ -470,7 +542,7 @@ function initEditModeStore() {
     }
   };
 }
-const cacheableStores: CacheableStoreContract[] = [userPreferences];
+const cacheableStores: CacheableStoreContract[] = [userPreferences, dboVersion];
 export const cacheableStoresTable = [
   ...localCacheableStores,
   ...cacheableStores

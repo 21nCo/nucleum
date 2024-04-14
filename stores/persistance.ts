@@ -1,21 +1,18 @@
 import { Cloud } from "$lib/tidy/types/cloud.enum";
 import type { JsonValue } from "$lib/tidy/types/json.type";
-
 import { get, writable } from "svelte/store";
-import { appStore, cloudProvider, userPreferences } from "./app.store";
+import { appStore, cloudProvider, dboVersion } from "./app.store";
 import account from "./account.store";
 import { SurrealDatabase } from "../access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/tidy/types/item.enum";
-import type { DbRecordBase, DbRecordWithLabel } from "../types/dbrecord.type";
-import type { DbRecordType } from "$lib/local/types/item.type";
-import {
-  interceptSurrealResponse,
-  performApiCall,
-  performBlankApiCall
-} from "../utils/utils";
+import type {
+  DbRecord,
+  DbRecordBase,
+  DbRecordWithLabel
+} from "../types/dbrecord.type";
+import { interceptSurrealResponse, performApiCall } from "../utils/utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 import { logger } from "./log.store";
-import { currentUnixTimestamp } from "../utils/surreal.utils";
 
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   const toString = (value: T) => JSON.stringify(value, null, 2);
@@ -94,7 +91,7 @@ export class Persistance {
   };
   getUserInfo = async (token: string) => {
     try {
-      const response = await performApiCall("account/refreshToken", "POST", {
+      const response = await performApiCall("account/n/refresh", "POST", {
         token
       });
       if (!response?.ok) {
@@ -107,16 +104,18 @@ export class Persistance {
       logger.logError(err);
     }
   };
-  updateDbo = async (lastRunchangeId: number | undefined = undefined) => {
+  updateDbo = async (fromVersion: number | undefined = undefined) => {
     try {
-      const userPrefs = get(userPreferences);
+      const dbo = get(dboVersion);
       const response = await performApiCall("account/n/updateDb", "POST", {
-        lastRunChangeId: lastRunchangeId ?? userPrefs?.lastRunChangeId ?? 1
+        fromVersion: fromVersion ?? dbo?.version ?? 1
       });
       if (!response?.ok) {
         return;
       }
       const data = await response.json();
+      console.log({ data });
+      if (data.version) dboVersion.setVersion(data.version);
       return isValidArrayWithData(data);
     } catch (err) {
       logger.logError(err);
@@ -137,11 +136,9 @@ export class Persistance {
   };
   getLatestAppVersion = async (app: string) => {
     try {
-      let response = await performBlankApiCall(
-        "appdata",
-        "POST",
-        JSON.stringify({ app })
-      );
+      let response = await performApiCall("utils/n/retrieveAppData", "POST", {
+        app
+      });
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;
@@ -154,12 +151,11 @@ export class Persistance {
   initializeAppData = async () => {
     try {
       const app = import.meta.env.VITE_APP ?? window.location.hostname;
+      console.log({ app });
       if (!app) return;
-      let response = await performBlankApiCall(
-        "appdata",
-        "POST",
-        JSON.stringify({ app })
-      );
+      let response = await performApiCall("utils/n/retrieveAppData", "POST", {
+        app
+      });
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;
@@ -175,15 +171,20 @@ export class Persistance {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  create(item: DbRecordType, itemType: ItemType) {
+  create(item: DbRecord, itemType: ItemType) {
+    item = {
+      ...item,
+      createdAt: new Date().toISOString(),
+      modifiedAt: new Date().toISOString()
+    };
     switch (get(cloudProvider)) {
       case Cloud.local:
-        let items = retrieveLocally(itemType);
-        if (!items) {
-          items = [];
-        }
-        items.push(item);
-        persistLocally(itemType, items);
+        // let items = retrieveLocally(itemType);
+        // if (!items) {
+        //   items = [];
+        // }
+        // items.push(item);
+        // persistLocally(itemType, items);
         break;
       case Cloud.surreal:
         if (item.id) {
@@ -193,7 +194,6 @@ export class Persistance {
         } else {
           return this.surrealDb.create(ItemEnum[itemType], item);
         }
-        break;
     }
     return item.id;
   }
@@ -233,7 +233,7 @@ export class Persistance {
    * @returns complete modified item record
    */
   update(
-    item: Partial<DbRecordType> & Required<Pick<DbRecordType, "id">>,
+    item: Partial<DbRecord> & Required<Pick<DbRecord, "id">>,
     itemType?: ItemType
   ) {
     switch (get(cloudProvider)) {
@@ -249,7 +249,7 @@ export class Persistance {
         break;
       }
       case Cloud.surreal:
-        item.modifiedAt = currentUnixTimestamp();
+        item.modifiedAt = new Date().toISOString();
         return this.surrealDb.merge(
           itemType
             ? `${ItemEnum[itemType]}:${item.id}`
@@ -315,44 +315,43 @@ export class Persistance {
     let results: DbRecordWithLabel[] = [];
     switch (get(cloudProvider)) {
       case Cloud.local:
-        switch (itemType) {
-          case ItemEnum.ALL: {
-            const tagList = retrieveLocally(ItemEnum.PointTag);
-            const taskList = retrieveLocally(ItemEnum.PointTask);
-            if (tagList) {
-              const tagItems = tagList
-                .filter((item: DbRecordWithLabel) =>
-                  item.label.toLowerCase().includes(searchString.toLowerCase())
-                )
-                .map((x: DbRecordWithLabel) => {
-                  return { label: x.label, id: x.id };
-                });
-              results = [...results, ...tagItems];
-            }
-            if (taskList) {
-              const taskItems = taskList.filter((item: DbRecordWithLabel) =>
-                item.label.toLowerCase().includes(searchString.toLowerCase())
-              );
-              results = [...results, ...taskItems];
-            }
-            break;
-          }
-          default: {
-            let items = retrieveLocally(itemType);
-            if (!items) break;
-            items = items.filter((item: DbRecordWithLabel) =>
-              item.label.toLowerCase().includes(searchString.toLowerCase())
-            );
-            results = items.map((x: DbRecordWithLabel) => {
-              return { label: x.label, id: x.id };
-            });
-            break;
-          }
-        }
-        break;
+      // switch (itemType) {
+      //   case ItemEnum.ALL: {
+      //     const tagList = retrieveLocally(ItemEnum.PointTag);
+      //     const taskList = retrieveLocally(ItemEnum.PointTask);
+      //     if (tagList) {
+      //       const tagItems = tagList
+      //         .filter((item: DbRecordWithLabel) =>
+      //           item.label.toLowerCase().includes(searchString.toLowerCase())
+      //         )
+      //         .map((x: DbRecordWithLabel) => {
+      //           return { label: x.label, id: x.id };
+      //         });
+      //       results = [...results, ...tagItems];
+      //     }
+      //     if (taskList) {
+      //       const taskItems = taskList.filter((item: DbRecordWithLabel) =>
+      //         item.label.toLowerCase().includes(searchString.toLowerCase())
+      //       );
+      //       results = [...results, ...taskItems];
+      //     }
+      //     break;
+      //   }
+      //   default: {
+      //     let items = retrieveLocally(itemType);
+      //     if (!items) break;
+      //     items = items.filter((item: DbRecordWithLabel) =>
+      //       item.label.toLowerCase().includes(searchString.toLowerCase())
+      //     );
+      //     results = items.map((x: DbRecordWithLabel) => {
+      //       return { label: x.label, id: x.id };
+      //     });
+      //     break;
+      //   }
+      // }
+      // break;
       case Cloud.surreal:
         if (itemType != ItemEnum.ALL) {
-          console.log({ itemType, ItemEnum });
           const response = await this.surrealDb.executeReadFn(
             `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
@@ -394,7 +393,6 @@ export class Persistance {
   async getSignedUrl(contentType: string, fileName: string) {
     const acc = get(account);
     const userId = acc.userInfo?.id.split(":")[1];
-    console.log({ acc });
     const response = await performApiCall("utils/n/getsignedurl", "POST", {
       contentType,
       fileName,
@@ -404,7 +402,6 @@ export class Persistance {
   }
   async uploadFile(contentType: string, fileName: string, blob: any) {
     const signedUrlResponse = await this.getSignedUrl(contentType, fileName);
-    console.log("signedUrl", signedUrlResponse);
     const result = await fetch(signedUrlResponse.uploadURL, {
       method: "PUT",
       body: blob,
@@ -413,7 +410,6 @@ export class Persistance {
         "x-amz-acl": "public-read"
       }
     });
-    console.log("upload result:", result);
     if (result.status === 200) {
       return signedUrlResponse;
     } else {

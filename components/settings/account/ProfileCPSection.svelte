@@ -3,7 +3,10 @@
   import account from "$lib/tidy/stores/account.store";
   import { LicenseType } from "$lib/tidy/types/account.type";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { frameEmailFromParts } from "$lib/tidy/utils/text.utils";
+  import {
+    frameEmailFromParts,
+    isValidString
+  } from "$lib/tidy/utils/text.utils";
   import { formatDate } from "$lib/tidy/utils/time.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
   import BackgroundElement from "$lib/tidy/elements/style/BackgroundElement.svelte";
@@ -50,7 +53,7 @@
           <ProfilePicture />
           <div class="flex flex-col justify-center items-start">
             <div class="text-h5">
-              {$account.userInfo?.nickName || "App user"}
+              {isValidString($account.userInfo?.nickName) || "App user"}
             </div>
             <div class="text-b2 text-fgs3">
               {$account.userInfo?.emailParts

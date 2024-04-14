@@ -1,3 +1,4 @@
+import type { MemotronItemBase } from "$lib/memotronlib/types/common.type";
 import type { DbRecordBase } from "$lib/tidy/types/dbrecord.type";
 import type { Markdown } from "./md.type";
 
@@ -9,7 +10,7 @@ export type Node = NodeBase &
     forelinks?: LinkThumbnail[];
   };
 
-export type NodeCapture = Omit<NodeBase, "id"> &
+export type NodeCapture = NodeBase &
   NodeContent & {
     metadata: NodeMetadataCapturedAtClient;
     links?: Link[];
@@ -19,15 +20,14 @@ export type NodeDbType = Node & DbRecordBase;
 
 export type NodeThumbnail = NodeBase &
   NodeContent & {
-    created: string;
     links: LinkThumbnail[];
   };
 
-export type NodeBase = {
-  id: string;
-  title?: string;
-  generatedTitle?: string;
+export type NodeBase = Omit<MemotronItemBase, "label"> & {
+  label?: string;
+  generatedLabel?: string;
   avatar?: string;
+  createdBy: string;
 };
 
 export type ActiveNodeStore = Node & {};
@@ -238,3 +238,5 @@ export type NodeMetadata = NodeMetadataCapturedAtClient & {
   createdBy: string;
   updatedBy: string;
 };
+
+export type NodeLocalRecord = NodeBase;

@@ -35,8 +35,41 @@
   import actions from "$lib/tidy/stores/actions.store";
   import account from "$lib/tidy/stores/account.store";
   import appearance from "$lib/tidy/stores/appearance.store";
-  const visibilityChangeListener = (event: Event) => {
-    appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
+  import { detectTimeZone } from "$lib/tidy/utils/time.utils";
+
+  /**
+   * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
+   * @param isSignup - If the user is signing up
+   */
+  function refreshTimeZone(isSignup?: boolean) {
+    const timeZone = detectTimeZone();
+    if (isSignup) {
+      if (timeZone)
+        userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
+      else userPreferences.setTimeZone();
+      return;
+    }
+    if (!timeZone) return;
+    if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
+      userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
+    }
+  }
+  const visibilityChangeListener = async (event: Event) => {
+    if (document?.hidden) return;
+    pingParent(true);
+    refreshTimeZone();
+    if (
+      excludedPathsForRedirectionCheck.includes($view.currentPath.split("/")[1])
+    )
+      return;
+    let isValid = await performLoginStatusCheck();
+    if (!isValid) return;
+    dataManager.refreshOnAppear();
+    checkForUpdates();
+    ping();
+
+    //Removed - Use <svelte:document on:visibilitychange={handleVisibilityChange} /> in the required component instead
+    //appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
@@ -83,31 +116,16 @@
     };
   });
   async function appEventHandler(e: AppEventType) {
-    if (e.event == AppEvent.WINDOW_VISIBILITY_CHANGED) {
-      if (e.value && !document?.hidden) {
-        console.log("performing redirection checks", $view.currentPath);
-        if (
-          !excludedPathsForRedirectionCheck.includes(
-            $view.currentPath.split("/")[1]
-          )
-        ) {
-          let isValid = await performLoginStatusCheck();
-          if (isValid) {
-            dataManager.refreshOnAppear();
-            checkForUpdates();
-            ping();
-          }
-        }
-        pingParent(true);
-      }
-    } else if (e.event === AppEvent.USER_LOGIN) {
+    if (e.event === AppEvent.USER_LOGIN) {
       if (e.value) dataManager.initialize();
     } else if (e.event === AppEvent.USER_SIGNUP) {
       userPreferences.loadSeedData();
+      refreshTimeZone(true);
       dataManager.initialize();
     }
   }
   function bootup() {
+    refreshTimeZone();
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
@@ -156,11 +174,9 @@
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||
         import.meta.env.VITE_DEBUG_MODE === "true";
-      // console.log({ isSheet, isDebugMode });
       if (isDebugMode) {
         $appStore.isDebugMode = true;
       }
-      // console.log({ subdomain, location: window?.location });
       //$appStore.launchContext = LaunchContext.EMBED;
       let browserAgent = navigator?.userAgent;
       if (

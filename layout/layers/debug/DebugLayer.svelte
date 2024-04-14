@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
+  import { appStore, dboVersion } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
   import { runDboUpdate } from "$lib/tidy/utils/account.utils";
@@ -12,10 +12,16 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { logger } from "$lib/tidy/stores/log.store";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import Divider from "$lib/tidy/elements/Divider.svelte";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
+  import { Size } from "$lib/tidy/types/size.enum";
   let environment: string;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
   let isDboUpdateInProgress: boolean = false;
+  let storageQuota: number | undefined;
+  let storageUsage: number | undefined;
+  checkStorage();
   onMount(() => {
     if ($appStore.launchContext) {
       if ($appStore.launchContext == LaunchContext.PREVIEW)
@@ -26,6 +32,17 @@
         environment = "Embed";
     }
   });
+  function checkStorage() {
+    try {
+      navigator.storage.estimate().then((estimate) => {
+        console.log(`Using ${estimate.usage} out of ${estimate.quota} bytes.`);
+        storageQuota = estimate.quota;
+        storageUsage = estimate.usage;
+      });
+    } catch (e) {
+      console.log("Storage estimate not supported");
+    }
+  }
 </script>
 
 {#if isShowDebugOverlay}
@@ -58,9 +75,16 @@
         $appearance.colorScheme.tailwindSelector}
     />
     <DebugInfoItem label="Portrait mode" value={$view.isPortrait} />
+    <DebugInfoItem label="Dbo version" value={$dboVersion.version} />
     <DebugInfoItem
-      label="Last run change id"
-      value={$userPreferences.lastRunChangeId}
+      label="Storage quota"
+      value={storageQuota
+        ? `${(storageQuota / 1000000000).toFixed(2)} GB`
+        : "NA"}
+    />
+    <DebugInfoItem
+      label="Storage used"
+      value={storageUsage ? `${(storageUsage / 1000000).toFixed(2)} MB` : "NA"}
     />
     <Button
       width="w-full"
@@ -77,11 +101,7 @@
       isLoading={isDboUpdateInProgress}
       on:click={async () => {
         isDboUpdateInProgress = true;
-        await runDboUpdate(
-          $userPreferences.lastRunChangeId
-            ? $userPreferences.lastRunChangeId - 1
-            : 1
-        );
+        await runDboUpdate($dboVersion.version);
         isDboUpdateInProgress = false;
       }}
       icon="sync"
@@ -113,18 +133,19 @@
 {/if}
 {#if isShowLogs}
   <div
-    class="absolute top-10 left-4 flex flex-col w-3/4 h-3/4 p-10 bg-bgs3 text-fgs1 rounded-lg z-50"
+    class="absolute top-10 left-4 flex flex-col w-3/4 h-3/4 p-10 bg-bgs2 text-fgs1 rounded-lg z-50 shadow-lg border border-brs1"
   >
     <button
-      class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
+      class="absolute top-0 right-0 flex flex-col p-1 text-fgs1 rounded-lg z-50"
       on:click={() => (isShowLogs = false)}
     >
-      <Icon icon="minus-circled" />
+      <Icon icon="minus-circled" size={Size.lg} />
     </button>
     <div class="flex flex-col gap-2 overflow-y-auto">
       {#if $logger.items && $logger.items.length > 0}
         {#each $logger.items as log}
           <div>{log.type.toUpperCase()} -- {log.message}</div>
+          <Divider colorStrength={ColorStrength.Strong} />
         {/each}
       {:else}
         <div>No logs</div>

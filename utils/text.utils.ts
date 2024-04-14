@@ -1,4 +1,4 @@
-import { Item, type ItemType } from "$lib/tidy/types/item.enum";
+import type { ItemType } from "$lib/tidy/types/item.enum";
 import type { EmailParts } from "../types/account.type";
 import type { Block, Markdown } from "../types/md.type";
 import { ListType, NodeType, type TextContent } from "../types/node.type";
@@ -14,7 +14,7 @@ export function properCase(str: string) {
 }
 
 export function prefixTable(id: string | number, itemType: ItemType) {
-  return `${Item[itemType]}:${id}`;
+  return `${itemType}:${id}`;
 }
 
 export function stripTablePrefix(id: string) {

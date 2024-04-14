@@ -194,8 +194,8 @@
       return;
     }
     if (searchCallback) {
-      console.log("searching with callback");
       let result = await searchCallback(value);
+      // console.log("result of search callback: ", result);
       if (result) searchResults = result;
       isSearchInProgress = false;
       return;

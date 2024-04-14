@@ -13,11 +13,7 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { TimeScale } from "$lib/tidy/types/time.type";
   import { properCase } from "$lib/tidy/utils/text.utils";
-  import {
-    detectTimeZone,
-    getTimeZonesWithOffsets,
-    offsetInSeconds
-  } from "$lib/tidy/utils/time.utils";
+  import { getTimeZonesWithOffsets } from "$lib/tidy/utils/time.utils";
   let timeZones: (Omit<DropdownItem, "value"> & { value: number })[];
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
@@ -29,8 +25,8 @@
     const rawZones = getTimeZonesWithOffsets();
     timeZones = rawZones.map((zone) => {
       return {
-        label: zone.name + " (UTC" + zone.offset + ")",
-        value: offsetInSeconds(zone.offset)
+        label: zone.label,
+        value: zone.offset
       };
     });
     let selectedTimezone;
@@ -40,9 +36,7 @@
       )?.value;
     }
     if (selectedTimezone === undefined) {
-      $userPreferences.timeZoneOffset = offsetInSeconds(
-        detectTimeZone().offset
-      );
+      userPreferences.setTimeZone();
     }
   });
 </script>
@@ -61,18 +55,17 @@
       style={DropDownStyle.OUTLINED}
       info="The timezone used to calculate your daily target and streak."
       items={timeZones}
-      bind:value={$userPreferences.timeZoneOffset}
+      on:select={(e) => {
+        userPreferences.setTimeZone(e.detail.value * 60);
+      }}
+      value={$userPreferences.timeZoneOffset}
     />
     <Button
       label="Auto detect time zone"
       icon="sync"
       style={ButtonStyle.PLAIN}
       size={Size.sm}
-      on:click={() => {
-        $userPreferences.timeZoneOffset = offsetInSeconds(
-          detectTimeZone().offset
-        );
-      }}
+      on:click={() => userPreferences.setTimeZone()}
     />
   {/if}
   <TimeSelector

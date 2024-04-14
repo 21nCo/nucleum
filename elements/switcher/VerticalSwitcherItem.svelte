@@ -16,6 +16,7 @@
   export let isHideLabel: boolean = false;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
+  export let isHideBar: boolean = false;
   // $: console.log({ isActive, item });
   let activeClasses: string;
   let inactiveClasses: string;
@@ -43,14 +44,14 @@
     style === VerticalSwitcherStyle.BAR &&
     activeStatusPlacement === Direction.Left
   ) {
-    activeClasses = "border-l-4 border-rounded-md";
-    inactiveClasses = "border-l-4 border-l-bgs2 text-fgs3";
+    activeClasses = "border-rounded-md";
+    inactiveClasses = "border-l-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR &&
     activeStatusPlacement === Direction.Right
   ) {
-    activeClasses = "border-r-4 border-rounded-md";
-    inactiveClasses = "border-r-4 border-r-bgs2 text-fgs3";
+    activeClasses = "border-rounded-md";
+    inactiveClasses = "border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
     activeStatusPlacement === Direction.Right
@@ -93,7 +94,12 @@
   <button
     class="flex flex-col items-center {sizeClasses} {isActive
       ? activeClasses + ' active '
-      : inactiveClasses + ' inactive '}"
+      : inactiveClasses + ' inactive '} {style === VerticalSwitcherStyle.BAR &&
+    !isHideBar
+      ? activeStatusPlacement === Direction.Left
+        ? 'border-l-4'
+        : 'border-r-4'
+      : ''}"
     on:click
     bind:this={parentRef}
     on:pointerenter={() => {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { isInEditMode } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import Button from "./Button.svelte";
+  import Button from "../button/Button.svelte";
   export let isReadModeVariant: boolean = false;
 </script>
 

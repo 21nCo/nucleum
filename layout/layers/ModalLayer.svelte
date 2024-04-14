@@ -44,6 +44,8 @@
     const appEventSub = appEvents.subscribe((x: AppEventType) => {
       if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
+      } else if (x.event === AppEvent.USER_LOGIN) {
+        modals = [];
       }
     });
     const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {

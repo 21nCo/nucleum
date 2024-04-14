@@ -15,11 +15,11 @@ export type UserGlobalPreferences = CacheableStore & {
   isAnonymousAnalyticsEnabled: boolean;
   timeFormat: string;
   timeZoneOffset: number;
+  timeZoneLabel: string;
   timeScales?: TimeScale[];
   id: string;
   recentCommands?: string[];
   shortcuts?: KeyboardShortcut[];
-  lastRunChangeId?: number;
   uiStates: {
     all: UiState;
     desktop: UiState;
@@ -50,4 +50,10 @@ export type UserAppearanceSettings = {
   theme: Theme;
   lightColorSchemeId: string;
   darkColorSchemeId: string;
+};
+
+export type TimeZoneRecord = {
+  offset: number;
+  date: string;
+  label: string;
 };

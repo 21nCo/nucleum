@@ -262,6 +262,14 @@ export function performApiCall(
     console.error(err);
   }
 }
+
+/**
+ * !Deprecated - Use performApiCall
+ * @param endpoint
+ * @param method
+ * @param body
+ * @returns
+ */
 export function performBlankApiCall(
   endpoint: string,
   method: string,

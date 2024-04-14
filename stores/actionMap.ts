@@ -19,6 +19,7 @@ import { AppEvent } from "../types/event.enum";
 import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
+import OAuthRedirect from "../components/settings/account/OAuthRedirect.svelte";
 
 export const globalActions: Action[] = [
   {
@@ -254,5 +255,10 @@ export const globalActions: Action[] = [
     fn: async () => {
       appStore.toggleSidebar();
     }
+  },
+  {
+    action: "oauthredirect",
+    type: ActionType.PAGE,
+    component: OAuthRedirect
   }
 ];

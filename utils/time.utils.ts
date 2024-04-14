@@ -232,6 +232,10 @@ export function getCorrespoingHorizonFrequencyLabel(scale: TimeScale) {
   }
 }
 
+/**
+ * Returns an array of time zones with offsets.
+ * @returns Array of time zones with offsets
+ */
 export const getTimeZonesWithOffsets = () => {
   const zones = moment.tz.names();
   return zones.map((zone) => {
@@ -242,27 +246,26 @@ export const getTimeZonesWithOffsets = () => {
       ":" +
       String(Math.abs(offset) % 60).padStart(2, "0");
     return {
-      name: zone,
-      offset: formattedOffset
+      label: zone + " (UTC" + formattedOffset + ")",
+      offset,
+      zone
     };
   });
 };
 
+/**
+ * Detects the time zone of the user.
+ * @returns The time zone of the user.
+ */
 export function detectTimeZone() {
   const timeZones = getTimeZonesWithOffsets();
   try {
     const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const timeZone = timeZones.find((x: any) => x.name === detectedTimeZone);
-    return timeZone ? timeZone : timeZones[0];
+    const timeZone = timeZones.find((x: any) => x.zone === detectedTimeZone);
+    return timeZone;
   } catch (error) {
     console.error("Could not detect time zone:", error);
-    return timeZones[0];
   }
-}
-
-export function offsetInSeconds(offset: string) {
-  const [hours, minutes] = offset.split(":");
-  return parseInt(hours) * 60 * 60 + parseInt(minutes) * 60;
 }
 
 //todo cleanup - this is duplicate of formatSeconds

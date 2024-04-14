@@ -89,9 +89,9 @@ async function checkIfSessionExpired() {
 }
 
 export async function runDboUpdate(
-  lastRunchangeId: number | undefined = undefined
+  fromVersion: number | undefined = undefined
 ) {
-  return new Persistance().updateDbo(lastRunchangeId);
+  return new Persistance().updateDbo(fromVersion);
 }
 export async function ping() {
   return new Persistance().ping();

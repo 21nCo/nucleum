@@ -14,13 +14,15 @@ export function initiateOAuth2Flow(provider: IdentityProvider) {
   if (!oAuthConfig || oAuthConfig.length < 1) return;
   const config = oAuthConfig.find((c) => c.provider === provider);
   if (!config) return;
+  const app = import.meta.env.VITE_APP ?? window.location.hostname;
   let url =
     config.authorise_url +
     "?client_id=" +
     config.client_id +
     "&scope=" +
     config.scope +
-    "&response_type=code&state=signin";
+    "&response_type=code&state=" +
+    app;
   let redirectUri = "";
   if (config.response_mode === "form_post") {
     redirectUri = import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
