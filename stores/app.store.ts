@@ -301,8 +301,8 @@ export const seedUserPreferences: UserGlobalPreferences = {
     iconColor: "#C14D8A",
     filled: false,
     usedIcons: []
-  }
-  // UsedEmojis: [[{ code: "&#X1F609", name: "winking face", frequency: 1 }]]
+  },
+  annotations: []
 };
 const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
 type dbVersionStore = CacheableStore & {
@@ -358,6 +358,7 @@ function initUserPreferences() {
       if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
       if (!data.avatarPicker)
         data.avatarPicker = seedUserPreferences.avatarPicker;
+      if (!data.annotations) data.annotations = seedUserPreferences.annotations;
       if (data.isAnonymousAnalyticsEnabled === undefined)
         data.isAnonymousAnalyticsEnabled = true;
       if (!data.dataType) data.dataType = StoreDataType.KVO;
