@@ -32,6 +32,7 @@ export type UserGlobalPreferences = CacheableStore & {
     filled: boolean;
     usedIcons: (avatarWithCode | avatarWithURL)[];
   };
+  annotations: any[];
 };
 
 export type KeyboardShortcut = {
