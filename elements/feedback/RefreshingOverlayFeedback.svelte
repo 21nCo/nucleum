@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import { fly } from "svelte/transition";
   import InlineLoadingAnimation from "./animations/InlineLoadingAnimation.svelte";
+  import appearance from "$lib/tidy/stores/appearance.store";
   export let loadingText: string = "Refreshing";
 </script>
 
@@ -11,7 +11,7 @@
   out:fly={{ y: -200, duration: 200 }}
 >
   <span
-    class="flex justify-center items-center shadow-md h-full min-h-full min-w-[9rem] w-36 gap-2 pl-6 pr-8 bg-aps1 text-b3 rounded-full {!$userPreferences
+    class="flex justify-center items-center shadow-md h-full min-h-full min-w-[9rem] w-36 gap-2 pl-6 pr-8 bg-aps1 text-b3 rounded-full {!$appearance
       .colorScheme.isActiveFgFg
       ? ' text-bgs1'
       : ''}"

@@ -22,7 +22,6 @@ import type {
   UserAppearanceSettings,
   UserGlobalPreferences
 } from "$lib/tidy/types/preferences.type";
-import { AppEvent } from "../types/event.enum";
 import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
@@ -53,7 +52,7 @@ import { detectTimeZone } from "../utils/time.utils";
 //   product: "tidy",
 //   env: "dev"
 // });
-export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
+// export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
 export const cloudProvider = writable(Cloud.surreal);
 export const isRefreshingToken = writable(false);
@@ -120,21 +119,6 @@ let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
 );
 export const blank = writable(blankDetails);
-
-function initEventStore(seed: AppEventType) {
-  const { subscribe, set, update } = writable<AppEventType>(seed);
-  return {
-    subscribe,
-    set: (m: AppEventType) => {
-      set(m);
-    },
-    publish: (m: AppEvent, value: any = undefined) => {
-      update((n: AppEventType) => {
-        return { ...n, value, event: m };
-      });
-    }
-  };
-}
 
 export const dragAndDropStore = createDragAndDropStore();
 
