@@ -1,13 +1,12 @@
 import { get, writable } from "svelte/store";
-import type { UserAccount, UserInformation } from "../types/account.type";
-import { appEvents } from "./app.store";
-import { postToParent } from "../utils/embed.utils";
 import view from "./view.store";
+import type { UserAccount, UserInformation } from "../types/account.type";
+import { postToParent } from "../utils/embed.utils";
 import { AppEvent } from "../types/event.enum";
 import { Persistance } from "./persistance";
 import { ButtonVariant } from "../types/button.type";
 import { performApiCall } from "../utils/utils";
-import { confirmationNotification } from "./notification.store";
+import { confirmationNotification, appEvents } from "./notification.store";
 
 const account = initAccount({
   isLoggedIn: false,

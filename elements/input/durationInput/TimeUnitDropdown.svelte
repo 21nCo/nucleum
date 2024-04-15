@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
@@ -9,6 +8,7 @@
   import TimeUnitItem from "./TimeUnitItem.svelte";
   import { createEventDispatcher, onDestroy } from "svelte";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import { appEvents } from "$lib/tidy/stores/notification.store";
 
   export let units: TimeUnit[];
   export let currentTimeUnit: TimeUnit;

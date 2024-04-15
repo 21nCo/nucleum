@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
-  import { appEvents, appStore } from "$lib/tidy/stores/app.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { Size } from "$lib/tidy/types/size.enum";

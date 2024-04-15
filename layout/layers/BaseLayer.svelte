@@ -3,7 +3,6 @@
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
   import {
-    appEvents,
     appLoadingState,
     appStore,
     currentTime,
@@ -36,6 +35,7 @@
   import account from "$lib/tidy/stores/account.store";
   import appearance from "$lib/tidy/stores/appearance.store";
   import { detectTimeZone } from "$lib/tidy/utils/time.utils";
+  import { appEvents } from "$lib/tidy/stores/notification.store";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.

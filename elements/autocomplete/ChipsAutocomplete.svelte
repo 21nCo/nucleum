@@ -13,7 +13,7 @@
   import { ChipVariant } from "$lib/tidy/types/chipVariant.enum";
   import type { ClassListProp } from "$lib/tidy/types/classListProp.type";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { appEvents } from "$lib/tidy/stores/app.store";
+  import { appEvents } from "$lib/tidy/stores/notification.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";

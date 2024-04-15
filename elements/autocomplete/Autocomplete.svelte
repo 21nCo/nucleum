@@ -9,7 +9,6 @@
   import type { AutocompleteListItemType } from "$lib/tidy/types/autocompleteListItem.type";
   import Search from "$lib/tidy/icons/Search.svelte";
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
-  import { appEvents, userPreferences } from "$lib/tidy/stores/app.store";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import Icon from "../Icon.svelte";
@@ -168,18 +167,18 @@
   //   }, 0);
   // });
 
-  const sub = appEvents.subscribe((x: AppEventType) => {
-    if (
-      x.event === AppEvent.WINDOW_CLICKED &&
-      x.value &&
-      x.value instanceof PointerEvent
-    ) {
-      actIfClickedOutside(x.value, containerId, hideOptions);
-    }
-  });
-  onDestroy(() => {
-    sub();
-  });
+  // const sub = appEvents.subscribe((x: AppEventType) => {
+  //   if (
+  //     x.event === AppEvent.WINDOW_CLICKED &&
+  //     x.value &&
+  //     x.value instanceof PointerEvent
+  //   ) {
+  //     actIfClickedOutside(x.value, containerId, hideOptions);
+  //   }
+  // });
+  // onDestroy(() => {
+  //   sub();
+  // });
 </script>
 
 <div

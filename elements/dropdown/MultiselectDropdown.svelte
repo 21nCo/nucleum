@@ -8,7 +8,7 @@
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { appEvents } from "$lib/tidy/stores/app.store";
+  import { appEvents } from "$lib/tidy/stores/notification.store";
   import Check from "$lib/tidy/icons/Check.svelte";
   import type { AppEventType } from "$lib/tidy/types/event.type";
   import { AppEvent } from "$lib/tidy/types/event.enum";

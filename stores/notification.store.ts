@@ -11,7 +11,23 @@ import view from "./view.store";
 import modalEvent from "../components/modal/modal.store";
 import { AppEvent } from "../types/event.enum";
 import { generateUID } from "../utils/utils";
+import type { AppEventType } from "../types/event.type";
 
+export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
+function initEventStore(seed: AppEventType) {
+  const { subscribe, set, update } = writable<AppEventType>(seed);
+  return {
+    subscribe,
+    set: (m: AppEventType) => {
+      set(m);
+    },
+    publish: (m: AppEvent, value: any = undefined) => {
+      update((n: AppEventType) => {
+        return { ...n, value, event: m };
+      });
+    }
+  };
+}
 export const scheduledNotifications = initScheduledNotificationStore();
 
 function initScheduledNotificationStore() {
