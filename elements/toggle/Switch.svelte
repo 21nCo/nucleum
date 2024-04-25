@@ -5,29 +5,32 @@
   export let label = "";
   export let id = "toggle-switch" + generateUID();
   export let size: Size.sm | Size.lg = Size.lg;
-  function toggle() {
-    on = !on;
-  }
+  export let isDisabled = false;
 </script>
 
-<label for={id} class="flex items-center cursor-pointer">
+<label
+  for={id}
+  class="flex items-center {isDisabled
+    ? 'cursor-not-allowed opacity-40'
+    : 'cursor-pointer'}"
+>
   <div class="relative">
     <input
       type="checkbox"
       {id}
-      checked={on}
+      bind:checked={on}
       class="sr-only"
-      on:change={toggle}
+      disabled={isDisabled}
     />
     <div
       class={"block bg-bgs4 rounded-full" +
-        (size == Size.sm ? " w-7 h-4" : " w-14 h-8")}
+        (size == Size.sm ? " w-7 h-4" : " w-[48px] h-6")}
     />
     <div
-      class={"dot absolute bg-fgs1 rounded-full transition" +
+      class={"dot absolute bg-bgs1 rounded-full transition" +
         (size == Size.sm
           ? " w-3 h-3 left-0.5 top-0.5"
-          : " w-6 h-6 left-1 top-1")}
+          : " w-[22px] h-5 left-0.5 top-0.5")}
     />
   </div>
   <div class="ml-3 text-fgs2 font-medium">{label}</div>

@@ -150,7 +150,9 @@
       }
     } else if (type == "secondary") {
       classList += " text-fgs2 hover:text-aps1";
-      if (style != ButtonStyle.PLAIN) {
+      if (style === ButtonStyle.OUTLINED) {
+        classList += " border border-brs3 text-fgs1 hover:border-aps1";
+      } else if (style != ButtonStyle.PLAIN) {
         classList += " " + bgClass($appearance, parentBackgroundIndex);
       }
     } else if (type == "danger") {

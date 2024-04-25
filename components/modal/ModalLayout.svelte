@@ -61,7 +61,7 @@
       .layout?.ignoreSafeArea
       ? size === Size.xs
         ? 'p-2 lg:p-4 gap-4'
-        : 'py-4 lg:py-8 px-3 md:px-4 lg:px-8 gap-8'
+        : 'py-4 lg:py-6 px-3 md:px-4 lg:px-6 gap-8'
       : ''}"
     in:fly={{
       duration: 400,
