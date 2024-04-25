@@ -43,7 +43,7 @@
   }}
   bind:this={buttonRef}
 >
-  <Icon icon="info" size={Size.sm} />
+  <Icon icon="info" size={info.size ?? Size.sm} />
   <div bind:this={toolTipRef}>
     <Tooltip {info} />
   </div>

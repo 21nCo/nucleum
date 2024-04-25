@@ -2,6 +2,8 @@
   import { Direction } from "$lib/tidy/types/direction.enum";
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
   import { actIfClickedOutside, generateUID } from "$lib/tidy/utils/utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let placement: Direction = Direction.Down;
   export let triggerClass: string = "";
   export let isPreventDefault: boolean = false;
@@ -12,8 +14,10 @@
   let popoverId = generateUID();
   export function toggle() {
     isPopoverVisible = !isPopoverVisible;
-    if (isPopoverVisible) show();
-    else hide();
+    if (isPopoverVisible) {
+      show();
+      dispatch("show");
+    } else hide();
   }
   export function show() {
     renderPopoverv2(triggerRef, popOverRef, placement);

@@ -15,6 +15,7 @@
   import appearance from "$lib/tidy/stores/appearance.store";
   import InlineMarkdownTextInput from "$lib/tidy/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Search from "$lib/tidy/icons/Search.svelte";
+  import Icon from "../Icon.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
@@ -37,6 +38,7 @@
     | { min: number; max: number; step: number }
     | undefined = undefined;
   export let isExperimentalMdInput: boolean = false;
+  export let icon: string | undefined = undefined;
   const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
   type SearchItem = Partial<DbRecordWithLabel & Record<string, unknown>>;
@@ -57,8 +59,8 @@
   }
   let inputRef: any;
   export let isDisabled = false;
-  let inputClasses: string = "text-input w-full rounded-sm";
-  let unitClasses: string = "outline outline-bgs2 outline-2 rounded-sm";
+  let inputClasses: string = "text-input w-full rounded-md";
+  let unitClasses: string = "outline outline-bgs2 outline-2 rounded-md";
   let currentUnit: string | undefined = undefined;
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
@@ -84,22 +86,34 @@
     ) {
       inputClasses += " focus:border-aps1 focus:outline-none";
       if (style === TextInputStyle.OUTLINED)
-        inputClasses += ` border border-2  border-brs2 p-2`;
+        inputClasses += ` border border border-brs3`;
+      if (size === Size.md || size === Size.lg) {
+        inputClasses += " p-2";
+      } else {
+        inputClasses += " p-1";
+      }
     } else {
       inputClasses += " focus:border-none focus:outline-none";
     }
-    if (size == Size.xl) inputClasses += " text-h3";
-    else if (size == Size.lg) inputClasses += " text-h4";
-    else if (size == Size.md)
-      inputClasses +=
-        " text-base " +
-        (width
-          ? width
-          : labelOrientation === Orientation.Vertical
-            ? "max-w-md"
-            : "max-w-[16rem]");
-    else if (size == Size.sm) inputClasses += " text-b2";
-    else if (size == Size.xs) inputClasses += " text-b3";
+
+    if (icon) {
+      inputClasses += " pl-6";
+    }
+    /**
+     *text size propagated from parent - css
+     */
+    // if (size == Size.xl) inputClasses += " text-h3";
+    // else if (size == Size.lg) inputClasses += " text-h4";
+    // else if (size == Size.md)
+    //   inputClasses +=
+    //     " text-base " +
+    //     (width
+    //       ? width
+    //       : labelOrientation === Orientation.Vertical
+    //         ? "max-w-md"
+    //         : "max-w-[16rem]");
+    // else if (size == Size.sm) inputClasses += " text-b2";
+    // else if (size == Size.xs) inputClasses += " text-b3";
   });
   function onUnitClick() {
     if (units?.length == 2) {
@@ -279,6 +293,11 @@
         disabled={isDisabled}
         bind:this={inputRef}
       />
+      {#if icon}
+        <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
+          <Icon {icon} size={Size.sm} />
+        </div>
+      {/if}
     {/if}
 
     {#if value && isSearchEnabled && isShowSearchResults}

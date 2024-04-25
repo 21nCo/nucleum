@@ -99,6 +99,8 @@ export function renderPopoverv2(
     popRef.style.bottom = `${documentHeight - triggerRect.top + 2}px`;
   } else if (location === Direction.Down) {
     popRef.style.top = `${triggerRect.bottom + 2}px`;
+    popRef.style.left = `${triggerRect.left}px`;
+    popRef.style.width = `${triggerRect.width}px`;
   }
   // console.log({
   //   triggerRect,

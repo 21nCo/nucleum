@@ -3,6 +3,7 @@
   import FormControlLabel from "$lib/tidy/elements/text/formLabel/FormControlLabel.svelte";
   import {
     DropDownStyle,
+    type DropdownGroup,
     type DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
@@ -10,16 +11,30 @@
   import appearance from "$lib/tidy/stores/appearance.store";
   import BackgroundElement from "../style/BackgroundElement.svelte";
   import Popover from "../popover/Popover.svelte";
+  import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
+  import TextInput from "../input/TextInput.svelte";
+  import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
+  export let groups: DropdownGroup[] = [];
   export let value: string | number;
-  export let parentBackgroundIndex: number = 1;
+  export let parentBackgroundIndex: number = 0;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;
   export let style: DropDownStyle = DropDownStyle.DEFAULT;
   export let isActive: boolean = false;
+  let search: string = "";
+  let searchInputRef: any;
+  let popoverRef: any;
   let isShowOptions: boolean = false;
   let classList = "relative flex flex-col items-start gap-1 w-full";
+  items = items.map((x) => {
+    x.groupId = x.groupId ?? "Nongroup";
+    return x;
+  });
+  groups = [...groups, { id: "Nongroup", label: "Nongroup", order: -1 }];
+  groups = groups.sort((a, b) => a.order - b.order);
+  let filtered = groups;
   $: {
     console.log("isActive ", isActive);
     if (isActive) {
@@ -31,9 +46,37 @@
     classList = classList;
   }
   $: selected = items.find((x) => x.value === value) ?? items[0];
+  $: console.log("filtered", filtered);
+  // $: if (search.length > 0) {
+  //   filtered = groups.map((group) => {
+  //     return {
+  //       ...group,
+  //       items: items.filter(
+  //         (x) =>
+  //           x.groupId === group.id &&
+  //           x.label.toLowerCase().includes(search.toLowerCase())
+  //       )
+  //     };
+  //   });
+  // } else {
+  //   filtered = groups;
+  // }
+
+  function resolveItems(groupId: string, search: string) {
+    return items.filter(
+      (x) =>
+        x.groupId === groupId &&
+        x.label.toLowerCase().includes(search.toLowerCase())
+    );
+  }
 </script>
 
-<Popover>
+<Popover
+  bind:this={popoverRef}
+  on:show={() => {
+    searchInputRef.focus();
+  }}
+>
   <div class={classList} slot="trigger">
     {#if label}
       <FormControlLabel {label} info={{ body: info ?? "" }} />
@@ -42,7 +85,7 @@
       class="flex w-full justify-between gap-4 items-center p-2 {isShowOptions
         ? 'rounded-t-md'
         : 'rounded-md'} {style === DropDownStyle.OUTLINED
-        ? 'border border-bgs3'
+        ? 'border border-brs3'
         : style === DropDownStyle.PANEL_SWITCH
           ? 'text-h4 font-medium'
           : ''}"
@@ -58,30 +101,52 @@
   </div>
   <svelte:fragment slot="popover">
     <BackgroundElement
-      class="absolute max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md search-results"
+      class="absolute max-h-80 overflow-y-auto flex flex-col gap-4 items-start rounded-b-md search-results w-full shadow-md border border-brs1 py-4"
       parentBgIndex={parentBackgroundIndex}
     >
-      {#each items as item, index}
-        <button
-          class="text-left px-4 py-2 hover:bg-bgs4 w-full {item.disabled
-            ? 'text-fgs3'
-            : 'text-fgs1'} {index === items.length - 1
-            ? 'hover:rounded-b-md'
-            : ''}"
-          on:click={() => {
-            if (item.disabled) return;
-            value = item.value;
-            isShowOptions = false;
-            dispatch("select", item.value);
-          }}
-        >
-          <div class="flex gap-2">
-            {#if item.icon}
-              <Icon icon={item.icon} size={Size.sm} />
-            {/if}
-            {item.label}
-          </div>
-        </button>
+      <div class="px-3 w-full">
+        <TextInput
+          bind:this={searchInputRef}
+          bind:value={search}
+          size={Size.sm}
+          icon="search"
+          placeholder="search"
+        />
+      </div>
+      {#each filtered as group}
+        <div class="flex flex-col w-full">
+          {#if isValidArrayWithData(resolveItems(group.id, search))}
+            <div class="flex gap-1 text-b3 text-fgs3 px-3 mb-1">
+              {group.label === "Nongroup" ? "" : group.label}
+              {#if group.info && group.info.body}
+                <FormLabelTooltip info={group.info} />
+              {/if}
+            </div>
+          {/if}
+          {#each resolveItems(group.id, search) as item, index}
+            <button
+              class="text-left px-3 py-2 hover:bg-bgs2 w-full {item.disabled
+                ? 'text-fgs3'
+                : 'text-fgs1'} {index === items.length - 1
+                ? 'hover:rounded-b-md'
+                : ''}"
+              on:click={() => {
+                if (item.disabled) return;
+                value = item.value;
+                isShowOptions = false;
+                dispatch("select", item.value);
+                popoverRef.hide();
+              }}
+            >
+              <div class="flex gap-2">
+                {#if item.icon}
+                  <Icon icon={item.icon} size={Size.sm} />
+                {/if}
+                {item.label}
+              </div>
+            </button>
+          {/each}
+        </div>
       {/each}
     </BackgroundElement>
   </svelte:fragment>
