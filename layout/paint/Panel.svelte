@@ -22,7 +22,7 @@
       <div
         class="flex justify-between w-full {$view.isPortrait
           ? 'px-4 py-2'
-          : 'p-4'}"
+          : 'px-4 pt-4 pb-2'}"
       >
         <Text style={titleStyle} content={title} />
         <slot name="toprightactions" />

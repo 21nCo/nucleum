@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { TileScale } from "$lib/tidy/types/CalendarHeatMap.enum";
   import { startTouch } from "$lib/tidy/utils/touchGesture";
   import MonthsHeader from "./MonthsHeader.svelte";
   import WeekDays from "./WeekDays.svelte";
+  import { TileScale } from "./calendarHeatmap.types";
   export let data: any;
   export let scale: TileScale;
   export let numberOfColumns: number = 3;

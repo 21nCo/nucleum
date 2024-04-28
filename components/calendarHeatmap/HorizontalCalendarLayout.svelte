@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TileScale } from "$lib/tidy/types/CalendarHeatMap.enum";
+  import { TileScale } from "./calendarHeatmap.types";
   import { startTouch } from "$lib/tidy/utils/touchGesture";
   import WeekDays from "./WeekDays.svelte";
   export let scale: TileScale;

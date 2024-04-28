@@ -86,7 +86,7 @@
             classList += " h-8 gap-2 text-b2";
             break;
           case Size.xs:
-            classList += " h-8 gap-1 text-b4";
+            classList += " h-6 gap-1 text-b4";
             break;
           case Size.xxs:
             classList += " h-6 gap-1 text-b5";
@@ -107,7 +107,7 @@
             classList += " h-10 gap-2 text-b2";
             break;
           case Size.xs:
-            classList += " h-8 gap-1 text-b4";
+            classList += " h-6 gap-1 text-b4";
             break;
           case Size.xxs:
             classList += " h-6 gap-1 text-b5";
@@ -134,7 +134,7 @@
           classList += " py-2 px-6";
           break;
         case Size.xs:
-          classList += " py-1.5 px-3";
+          classList += " py-1 px-3";
           break;
         case Size.xxs:
           classList += " py-1 px-2";
@@ -199,33 +199,36 @@
   on:blur={toggleHoveringState}
   disabled={isDisabled}
 >
-  {#if icon && !isLoading}
-    <Icon
-      {icon}
-      {size}
-      color={type === ButtonVariant.DANGER && style === ButtonStyle.OUTLINED
-        ? currentColors.ars1
-        : type != "secondary" && !$appearance.colorScheme.isActiveFgFg
-          ? currentColors.bgs1
-          : (isHovering && type == "secondary") || isStayActive
-            ? currentColors.aps1
-            : type === "secondary"
-              ? currentColors.fgs2
-              : currentColors.fgs1}
-      selectionStyle={type != "secondary"
-        ? SelectionItemActiveStyle.ACCENT_BACKGROUND
-        : SelectionItemActiveStyle.NONE}
-    />
-  {:else if isLoading}
+  {#if isLoading}
     <InlineLoadingAnimation />
-  {/if}
-  {#if label && !isLoading}
-    <div class="min-w-fit">
-      {label}
-    </div>
   {:else}
-    <slot />
+    {#if icon}
+      <Icon
+        {icon}
+        {size}
+        color={type === ButtonVariant.DANGER && style === ButtonStyle.OUTLINED
+          ? currentColors.ars1
+          : type != "secondary" && !$appearance.colorScheme.isActiveFgFg
+            ? currentColors.bgs1
+            : (isHovering && type == "secondary") || isStayActive
+              ? currentColors.aps1
+              : type === "secondary"
+                ? currentColors.fgs2
+                : currentColors.fgs1}
+        selectionStyle={type != "secondary"
+          ? SelectionItemActiveStyle.ACCENT_BACKGROUND
+          : SelectionItemActiveStyle.NONE}
+      />
+    {/if}
+    {#if label}
+      <div class="min-w-fit">
+        {label}
+      </div>
+    {:else}
+      <slot />
+    {/if}
   {/if}
+
   {#if tooltip}
     <div bind:this={toolTipRef}>
       <Tooltip {tooltip} />

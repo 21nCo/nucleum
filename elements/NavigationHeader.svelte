@@ -5,9 +5,10 @@
   export let label: string;
   export let textStyle: TextStyle = TextStyle.PANEL_HEADING;
   export let backCallback: () => void;
+  export let height = "h-16";
 </script>
 
-<div class="flex justify-between items-center w-full h-16">
+<div class="flex justify-between items-center w-full {height}">
   <BackButton
     on:click={() => {
       backCallback();

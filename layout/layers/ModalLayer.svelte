@@ -165,6 +165,7 @@
     show={modal.isShow}
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
+    isShowOverlay={modal.isShowOverlay ?? true}
     isUseDialog={modal.layout?.size != Size.full}
     size={modal.layout?.size ?? Size.md}
     orientation={modal.layout?.orientation}

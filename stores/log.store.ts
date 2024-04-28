@@ -1,4 +1,4 @@
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
 // import { appStore } from "./app.store";
 // import { postToParent } from "../utils/embed.utils";
 import type { LogStore } from "../types/log.type";

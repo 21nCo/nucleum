@@ -152,7 +152,7 @@
       inputRef.blur();
       dispatch("blur");
     }
-    dispatch("keyup", { value });
+    dispatch("keyup", { value, event });
   }
   function onSearchResultSelection(item: SearchItem) {
     dispatch("select", { item });
@@ -197,6 +197,7 @@
       currentValue = (event.target as HTMLInputElement).value;
       debouncedSearch();
     }
+    dispatch("keyup", { value, event, isShowSearchResults });
   }
   let debouncedSearch = debouncer(search, 100);
   async function search() {
@@ -302,10 +303,10 @@
 
     {#if value && isSearchEnabled && isShowSearchResults}
       <div
-        class="search-results bg-bgs2 mt-[0.75rem] shadow-md overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
+        class="search-results bg-bgs1 shadow-md border border-brs2 overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
         5
           ? 'max-h-60 h-60'
-          : 'h-48'}"
+          : 'h-48'} {style === TextInputStyle.PLAIN ? 'mt-[0.75rem]' : 'mt-1'}"
       >
         <div class="flex flex-col flex-grow items-center w-full">
           {#if searchResults && searchResults.length > 0}
@@ -331,11 +332,11 @@
             </div>
           {/if}
         </div>
-        <div class="w-full bg-bgs2 flex justify-center">
+        <div class="w-full flex justify-center">
           <Button
             size={Size.sm}
             label="close"
-            parentBackgroundIndex={1}
+            parentBackgroundIndex={0}
             on:click={() => {
               value = "";
               resetSearch();
@@ -376,6 +377,6 @@
     left: 0;
     right: 0;
     border-top: none;
-    z-index: 10;
+    z-index: 60;
   }
 </style>

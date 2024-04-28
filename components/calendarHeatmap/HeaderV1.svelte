@@ -5,10 +5,11 @@
     DropDownStyle,
     type DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
-  import {
-    fetchDailyDataForTheYear,
-    fetchLast12MonthsDailyData
-  } from "$lib/tidy/utils/CalendarHeatMap.utils";
+  import { DataManager } from "./calendarHeatMap.utils";
+  import type { CalendarHeatMapDataProvider } from "./calendarHeatmap.types";
+
+  export let provider: CalendarHeatMapDataProvider;
+  let dataManager = new DataManager(provider);
   let logstartdate = "2000-01-01"; //fetch log start date and put here
   let logstartYear = new Date(logstartdate).getFullYear();
   let currentYear = new Date().getFullYear();
@@ -25,12 +26,12 @@
     isLast365 = false;
     const year = event.detail;
     console.log("in handle select e.target.value", year);
-    fetchDailyDataForTheYear(year);
+    dataManager.fetchDailyDataForTheYear(year);
   }
   function handleLast365() {
     isLast365 = true;
     console.log("in handle last 365");
-    fetchLast12MonthsDailyData();
+    dataManager.fetchLast12MonthsDailyData();
   }
 </script>
 

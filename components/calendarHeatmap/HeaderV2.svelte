@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { TileScale } from "$lib/tidy/types/CalendarHeatMap.enum";
+  import { TileScale } from "./calendarHeatmap.types";
   import { createEventDispatcher } from "svelte";
   import { isTouchDevice } from "$lib/tidy/stores/app.store";
   import { moveTouch } from "$lib/tidy/utils/touchGesture";

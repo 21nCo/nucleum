@@ -26,30 +26,30 @@
     isUnitDropdownOpen = false;
     selectedIndex = -1;
   }
-  function handleTimeUnitItemClick(item: TimeUnit) {
-    return () => {
-      if (currentTimeUnit !== item) {
-        dispatch("change", {
-          unit: {
-            new: item,
-            old: currentTimeUnit
-          }
-        });
-        currentTimeUnit = item;
-      }
-      closeUnitDropdown();
-    };
+  function handleTimeUnitItemClick(event: CustomEvent<TimeUnit>) {
+    const item = event.detail;
+    timeUnitSelection(item);
   }
-  function handleIsUnitDropDownOpen(isOpen: boolean) {
-    return () => {
-      isUnitDropdownOpen = isOpen;
-      if (isOpen) selectedIndex = units.indexOf(currentTimeUnit);
-    };
+  function timeUnitSelection(item: TimeUnit) {
+    if (currentTimeUnit !== item) {
+      dispatch("change", {
+        unit: {
+          new: item,
+          old: currentTimeUnit
+        }
+      });
+      currentTimeUnit = item;
+    }
+    closeUnitDropdown();
+  }
+  function handleIsUnitDropDownOpen() {
+    isUnitDropdownOpen = !isUnitDropdownOpen;
+    if (isUnitDropdownOpen) selectedIndex = units.indexOf(currentTimeUnit);
   }
   function handleKeyDownInDropdown(event: KeyboardEvent) {
     if (!isUnitDropdownOpen) return;
     if (event.key === "Enter") {
-      handleTimeUnitItemClick(units[selectedIndex])();
+      timeUnitSelection(units[selectedIndex]);
     } else if (event.key === "ArrowDown") {
       selectedIndex = Math.min(selectedIndex + 1, units.length - 1);
     } else if (event.key === "ArrowUp") {
@@ -58,19 +58,7 @@
       closeUnitDropdown();
     }
   }
-
-  const appEventSub = appEvents.subscribe((x: AppEventType) => {
-    if (
-      x.event === AppEvent.WINDOW_CLICKED &&
-      x.value &&
-      x.value instanceof PointerEvent
-    ) {
-      actIfClickedOutside(x.value, containerId, closeUnitDropdown);
-    }
-  });
-  onDestroy(() => {
-    appEventSub();
-  });
+  //TODO - clicking outside scenario for unit dropdown
 </script>
 
 <!-- In the below div we are getting a warning A11y: noninteractive element cannot have nonnegative tabIndex value svelte(a11y-no-noninteractive-tabindex), to fix this, later we'll attach a select field to this and use that just for its interactivity but for functionality and UI we'll use the below code-->
@@ -78,12 +66,12 @@
 <div
   id={containerId}
   tabindex="0"
-  on:click={handleIsUnitDropDownOpen(!isUnitDropdownOpen)}
+  on:click={handleIsUnitDropDownOpen}
   on:keydown={handleKeyDownInDropdown}
   class={unitClasses}
 >
   <div class="current-unit flex items-center gap-1">
-    <span>{currentTimeUnit}</span>
+    <span class="flex justify-center items-center h-6">{currentTimeUnit}</span>
     <div
       class={`drop-down-indicator transition-all duration-300 ease-out w-[0.5rem] h-[0.375rem] bg-fgs2 ${
         isUnitDropdownOpen ? `rotate-180` : `rotate-0`
@@ -100,9 +88,9 @@
       {#each units as unit, index}
         <TimeUnitItem
           isActive={currentTimeUnit === unit || selectedIndex === index}
-          on:click={handleTimeUnitItemClick(unit)}
-          on:keydown={() => handleTimeUnitItemClick(unit)}>{unit}</TimeUnitItem
-        >
+          {unit}
+          on:click={handleTimeUnitItemClick}
+        />
       {/each}
     {/if}
   </div>

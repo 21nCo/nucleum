@@ -24,12 +24,15 @@
   let left: any;
   /**
    * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
+   *
+   * TODO: This is a hack to remove focus from dialog element which is happening in safari - disabled for now as it is interfering with textbox focus - workaround - check if the document.activeElement is input and then proceed to remove focus
+   *
    */
   let focusTrap: HTMLDivElement;
   export let id = generateUID();
   $: if (show) {
     dialog?.showModal();
-    setTimeout(() => focusTrap?.focus(), 0);
+    // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
     console.log("overlayClicked", event, id);
@@ -153,8 +156,9 @@
       <dialog
         bind:this={dialog}
         {id}
-        class="rounded-md flex flex-col p-0 bg-bgs1 text-fgs1 shadow-xl {!isShowOverlay &&
-          'bg-none'} {$appStore.launchContext === LaunchContext.EMBED &&
+        class="rounded-md flex flex-col p-0 text-fgs1 shadow-xl {isShowOverlay
+          ? 'bg-bgs1 overlay'
+          : 'bg-none'} {$appStore.launchContext === LaunchContext.EMBED &&
         $appStore.embedContext === EmbedContext.SHEET
           ? 'w-full h-full'
           : sizingClass}"
@@ -183,7 +187,7 @@
     transform: translate3d(0, 0, 0);
   }
 
-  dialog::backdrop {
+  dialog.overlay::backdrop {
     background-color: rgba(0, 0, 0, 0.05);
     backdrop-filter: blur(4px);
   }

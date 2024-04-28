@@ -2,7 +2,7 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import CloseButton from "$lib/tidy/elements/button/CloseButton.svelte";
   import view from "$lib/tidy/stores/view.store";
-  import type { ButtonParams } from "$lib/tidy/types/button.type";
+  import { ButtonStyle, type ButtonParams } from "$lib/tidy/types/button.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let isShowClose: boolean = false;
@@ -13,7 +13,10 @@
   export async function close(
     from: "primary" | "secondary" | "close" = "close"
   ) {
-    if (isPreventAutoClose) return false;
+    if (isPreventAutoClose) {
+      isActionInProgress = false;
+      return false;
+    }
     dispatch("close", from);
   }
 </script>
@@ -27,7 +30,6 @@
       on:click={async () => {
         isActionInProgress = true;
         if (primaryAction?.callback) await primaryAction?.callback();
-        isActionInProgress = false;
         close("primary");
       }}
       label={primaryAction.label}
@@ -57,7 +59,7 @@
       }}
     />
   {:else if isShowClose}
-    <Button on:click={() => close("close")}>
+    <Button on:click={() => close("close")} style={ButtonStyle.OUTLINED}>
       close
       {#if !$view.isPortrait}
         <span class="text-b3">Esc</span>

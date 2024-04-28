@@ -1,24 +1,18 @@
 <script lang="ts">
   import {
-    CalendarHeatMapData,
-    CalendarHeatMapLayout,
-    calendarHmContext,
     selectedTimePeriod,
     isTouchDevice
   } from "$lib/tidy/stores/app.store";
   import {
-    CalendarHmVariant,
-    TileScale
-  } from "$lib/tidy/types/CalendarHeatMap.enum";
+    CalendarHeatMapData,
+    CalendarHeatMapLayout
+  } from "./calendarHeatmap.store";
   import {
-    paginateMonthlyAggData,
-    fetchMonthlyAggData,
-    paginateYearlyAggData,
-    fetchYearlyAggData,
-    paginateDailyData,
-    fetchDailyDataForTheYear,
-    fetchLast12MonthsDailyData
-  } from "$lib/tidy/utils/CalendarHeatMap.utils";
+    TileScale,
+    CalendarHmVariant,
+    type CalendarHeatMapDataProvider
+  } from "./calendarHeatmap.types";
+  import { DataManager } from "$lib/tidy/components/calendarHeatmap/calendarHeatMap.utils";
   import { onMount } from "svelte";
   import Footer from "./Footer.svelte";
   import HeaderV1 from "./HeaderV1.svelte";
@@ -31,23 +25,24 @@
   import VerticalYearsLayout from "./VerticalYearsLayout.svelte";
   import YearsLayout from "./YearsLayout.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import Icon from "$lib/tidy/elements/Icon.svelte";
   import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   export let variant: CalendarHmVariant = CalendarHmVariant.PLAIN;
   export let orientation: Orientation;
   export let touchDevice: boolean;
-  export let context: string;
+  export let provider: CalendarHeatMapDataProvider;
+  // export let context: string;
+  let dataManager = new DataManager(provider);
   let data: any;
   let isLoading = false;
   const currentYear = new Date().getFullYear();
   const endYear = currentYear;
   export let tileScale: TileScale = TileScale.DAYS;
-  calendarHmContext.set(context);
   $: {
     $CalendarHeatMapLayout = orientation;
   }
   $: $isTouchDevice = touchDevice;
+
   function viewChangeHandler(e: any) {
     console.log("viewChangeHandler", e.detail);
     tileScale = e.detail;
@@ -65,44 +60,44 @@
       tileScale === TileScale.DAYS &&
       variant != CalendarHmVariant.SCALE_SWITCH
     ) {
-      await fetchLast12MonthsDailyData();
+      await dataManager.fetchLast12MonthsDailyData();
     } else if (
       tileScale === TileScale.DAYS &&
       variant === CalendarHmVariant.SCALE_SWITCH
     )
-      await fetchDailyDataForTheYear(new Date().getFullYear());
+      await dataManager.fetchDailyDataForTheYear(new Date().getFullYear());
     else if (tileScale == TileScale.MONTHS) {
       const startYear = currentYear - 21;
-      fetchMonthlyAggData(startYear, endYear);
+      dataManager.fetchMonthlyAggData(startYear, endYear);
     } else if (tileScale == TileScale.YEARS) {
       const startYear = currentYear - 47;
-      fetchYearlyAggData(startYear, endYear);
+      dataManager.fetchYearlyAggData(startYear, endYear);
     }
     refreshSelectedTile();
     isLoading = false;
   }
   async function prev() {
-    if (tileScale == TileScale.DAYS) await paginateDailyData("prev");
-    else if (tileScale == TileScale.MONTHS) paginateMonthlyAggData("prev");
-    else paginateYearlyAggData("prev");
+    if (tileScale == TileScale.DAYS)
+      await dataManager.paginateDailyData("prev");
+    else if (tileScale == TileScale.MONTHS)
+      dataManager.paginateMonthlyAggData("prev");
+    else dataManager.paginateYearlyAggData("prev");
   }
   async function next() {
-    if (tileScale == TileScale.DAYS) await paginateDailyData("next");
-    else if (tileScale == TileScale.MONTHS) paginateMonthlyAggData("next");
-    else paginateYearlyAggData("next");
+    if (tileScale == TileScale.DAYS)
+      await dataManager.paginateDailyData("next");
+    else if (tileScale == TileScale.MONTHS)
+      dataManager.paginateMonthlyAggData("next");
+    else dataManager.paginateYearlyAggData("next");
   }
   onMount(async () => {
     await refreshData();
     const hmsub = CalendarHeatMapData.subscribe((x) => {
       data = undefined;
-      data = x.data;
-    });
-    const hmselection = selectedTimePeriod.subscribe((x) => {
-      console.log("selectedTimePeriod", x);
+      data = x;
     });
     return () => {
       hmsub();
-      hmselection();
     };
   });
 </script>
@@ -111,7 +106,7 @@
   {#if variant === CalendarHmVariant.PLAIN}
     <!-- <Icon icon="chevup" on:click={prev} /> -->
   {:else if variant === CalendarHmVariant.YEARS_SWITCH}
-    <HeaderV1 />
+    <HeaderV1 {provider} />
   {:else if variant === CalendarHmVariant.SCALE_SWITCH}
     <HeaderV2
       on:switch={viewChangeHandler}
