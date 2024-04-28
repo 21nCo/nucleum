@@ -1,17 +1,12 @@
 <script lang="ts">
-  import {
-    CalendarHeatMapLayout,
-    selectedTimePeriod
-  } from "$lib/tidy/stores/app.store";
-  import type {
-    DailyData,
-    MonthlyData
-  } from "$lib/tidy/types/CalendarHeatMapData.type";
+  import { selectedTimePeriod } from "$lib/tidy/stores/app.store";
   import { Direction, Orientation } from "$lib/tidy/types/direction.enum";
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { formatDate } from "$lib/tidy/utils/time.utils";
   import { renderPopoverv2 } from "$lib/tidy/utils/browser.utils";
+  import type { DailyData, MonthlyData } from "./calendarHeatmap.types";
+  import { CalendarHeatMapLayout } from "./calendarHeatmap.store";
 
   export let data: DailyData | MonthlyData | {};
   export let classList: string = "";

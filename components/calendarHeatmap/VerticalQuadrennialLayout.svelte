@@ -1,7 +1,7 @@
 <script lang="ts">
   import { plainCSSHMColorIndex5 } from "$lib/tidy/stores/app.store";
-  import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
   import MacroIndicatorTIle from "./MacroIndicatorTIle.svelte";
+  import { TileAppearance } from "./calendarHeatmap.types";
   export let data: any;
   let [QD, QDData] = data;
   $: {

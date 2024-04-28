@@ -3,6 +3,7 @@
   import { isValidString } from "$lib/tidy/utils/text.utils";
   import { onMount } from "svelte";
   import BackgroundElement from "$lib/tidy/elements/style/BackgroundElement.svelte";
+  import { logger } from "$lib/tidy/stores/log.store";
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
@@ -21,13 +22,13 @@
         let response = await fetch(x.userInfo?.profilePictureUrl!, {
           method: "GET"
         });
-        console.log("profilepic", { response });
+        logger.log({ context: "profilepic", response });
         if (response.status === 200) {
           profilePictureUrl = x.userInfo?.profilePictureUrl;
           return;
         }
       } catch (e) {
-        console.log("profilepic error", { e });
+        logger.logError({ context: "profilepic error", e });
       }
       // profilePictureUrl = x.userInfo?.profilePictureUrl;
       // return;

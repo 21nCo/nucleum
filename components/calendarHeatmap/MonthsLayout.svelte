@@ -1,7 +1,7 @@
 <script lang="ts">
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
-  import { TileAppearance } from "$lib/tidy/types/CalendarHeatMap.enum";
   import { plainCSSHMColorIndex5 } from "$lib/tidy/stores/app.store";
+  import { TileAppearance } from "./calendarHeatmap.types";
   // export let view: "V1" | "V2";
   // export const days = 30;
   export let data: any;

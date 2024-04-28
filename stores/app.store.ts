@@ -22,7 +22,6 @@ import type {
   UserAppearanceSettings,
   UserGlobalPreferences
 } from "$lib/tidy/types/preferences.type";
-import type { AppEventType } from "../types/event.type";
 import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/tidy/data/blank.json";
 import colorSchemes from "$lib/tidy/theme/colorschemes.json";
@@ -45,7 +44,6 @@ import {
 } from "../types/data.type";
 import { dataManager } from "./data.store";
 import modalEvent from "../components/modal/modal.store";
-import account from "./account.store";
 import { detectTimeZone } from "../utils/time.utils";
 
 // export const app = writable<{ product: string; env: string }>({
@@ -75,26 +73,6 @@ export const appStoreEmojis = writable<any>({
 export const appStoreShuffleEmojis = writable(shuffleEmojis);
 export const splitView = writable<string[]>([]);
 export const intercomId = import.meta.env.VITE_INTERCOM_ID ?? "esh1m4xq";
-
-/**
- * Calendar Heatmap stores
- */
-export const CalendarHeatMapData = writable<{
-  data: any;
-  target: number;
-}>({ data: [], target: 0 });
-export const CalendarHeatMapLayout = writable<
-  Orientation.Horizontal | Orientation.Vertical
->(Orientation.Horizontal);
-export const calendarHmContext = writable<string>("");
-export const CalendarHeatMapstoreColors = readable<string[]>([
-  "#D8E4D8",
-  "#B2CAB1",
-  "#9FBD9D",
-  "#79A376",
-  "#5B8958",
-  "#407C3C"
-]);
 export const selectedTimePeriod = writable<Date>(new Date());
 export const plainCSSHMColorIndex5 = writable<string | undefined>("");
 /**
@@ -314,7 +292,6 @@ function initUserPreferences() {
     // console.log("persisting global preferences", { n });
     cache(get(userPreferences));
     persistLocally(Item.globalPreferences, get(userPreferences));
-    if (!get(account).isLoggedIn) return;
     // persistance.update({
     //   ...n,
     //   id: userPreferencesId

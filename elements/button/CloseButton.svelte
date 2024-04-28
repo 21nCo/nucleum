@@ -2,7 +2,8 @@
   import view from "$lib/tidy/stores/view.store";
   import {
     ButtonVariant,
-    type ButtonParams
+    type ButtonParams,
+    ButtonStyle
   } from "$lib/tidy/types/button.type";
   import Button from "./Button.svelte";
   export let params: ButtonParams;
@@ -12,6 +13,7 @@
   type={params.variant ?? "secondary"}
   icon={params.icon}
   size={params.size}
+  style={ButtonStyle.OUTLINED}
   on:click={() => {
     if (params?.callback) params.callback();
   }}

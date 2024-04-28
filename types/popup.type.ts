@@ -17,6 +17,7 @@ export type ModalEvent = ModalParams & {
 export type ModalParams = {
   isShowAsSheet?: boolean;
   isDismissable?: boolean;
+  isShowOverlay?: boolean;
   title?: string;
   componentParams?: any;
   layout?: ModalLayoutParams;

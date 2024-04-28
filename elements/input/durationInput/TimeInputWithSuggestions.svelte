@@ -87,10 +87,37 @@
     currentUnit = event.detail.item.unit;
     dispatch("change", { value: duration, unit: currentUnit });
   }
+  function onkeyup(
+    x: CustomEvent<{
+      value: string;
+      event: KeyboardEvent;
+      isShowSearchResults: boolean;
+    }>
+  ) {
+    console.log("onkeyup", x);
+    const event = x.detail.event;
+    if (x.detail.isShowSearchResults) return;
+    if (!/^\d+$/.test(x.detail.value)) return;
+    if (event.key === "ArrowDown") {
+      value = (+value - 1).toString();
+    } else if (event.key === "ArrowUp") {
+      value = (+value + 1).toString();
+    }
+    duration =
+      +value *
+      (currentUnit === TimeUnit.HOURS
+        ? 3600
+        : currentUnit === TimeUnit.MINUTES
+          ? 60
+          : 1);
+    dispatch("change", { value: duration, unit: currentUnit });
+    event.preventDefault();
+  }
 </script>
 
 <TextInput
   bind:value
+  on:keyup={onkeyup}
   placeholder="Duration"
   searchCallback={onsearch}
   on:select={onselect}

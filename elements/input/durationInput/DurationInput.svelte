@@ -2,6 +2,7 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import { TimeUnit } from "$lib/tidy/types/time.type";
+  import { createEventDispatcher } from "svelte";
   import FormControlLabelWrapper from "../../text/formLabel/FormControlLabelWrapper.svelte";
   import TimeInputWithSuggestions from "./TimeInputWithSuggestions.svelte";
   import TimeUnitDropdown from "./TimeUnitDropdown.svelte";
@@ -11,9 +12,10 @@
   export let info: FormLabelInfoTooltip | undefined = undefined;
   export let labelOrientation: Orientation = Orientation.Vertical;
   export let placeholder: string | undefined = undefined;
+  const dispatch = createEventDispatcher();
   let inputRef: any;
 
-  let units: TimeUnit[] = [TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS];
+  let units: TimeUnit[] = [TimeUnit.MINUTES, TimeUnit.HOURS];
   let currentUnit: TimeUnit;
 
   $: currentUnit =
@@ -53,6 +55,7 @@
       value = value * 3600;
     else if (newTimeUnit === TimeUnit.SECONDS && oldTimeUnit === TimeUnit.HOURS)
       value = value / 3600;
+    dispatch("change", value);
   }
 </script>
 

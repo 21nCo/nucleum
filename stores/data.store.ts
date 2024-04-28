@@ -1,4 +1,5 @@
 import { SurrealDatabase } from "$lib/tidy/access/surrealHelper";
+import account from "./account.store";
 import { appStore, cacheableStoresTable } from "$lib/tidy/stores/app.store";
 import { get, writable } from "svelte/store";
 import { Item, type ItemType } from "../types/item.enum";
@@ -28,10 +29,9 @@ import {
 import { CacheManager } from "./cache";
 import { logger } from "./log.store";
 import { prefixTable } from "../utils/text.utils";
-
 export const dataManager = init();
 // const surrealDb = new SurrealDatabase();
-
+export type DataMangerStore = ReturnType<typeof init>;
 const allResources = Object.values(Item);
 
 function init() {
@@ -91,12 +91,12 @@ function init() {
         refreshStores([store], isShowRefreshingState);
       }
     },
-    refreshMultiple: async (storeIdentifiers: string[]) => {
+    refreshPage: async (storeIdentifiers: string[]) => {
       const stores = cacheableStoresTable.filter((x) =>
         storeIdentifiers.includes(get(x).id)
       );
       if (isValidArrayWithData(stores)) {
-        refreshStores(stores, false);
+        refreshStores(stores, false, true);
       }
     },
     cache: (store: CacheableStore) => {
@@ -207,6 +207,7 @@ async function performMutation(
     action,
     data
   });
+  if (!get(account).isLoggedIn) return;
   const dm = get(dataManager);
   let mutatingResources: string[] = [];
   if (isMutatingSelfOnly) {
@@ -421,7 +422,8 @@ async function refreshStaleData() {
  */
 async function refreshStores(
   storesThatNeedRefresh: CacheableStoreContract[],
-  isShowRefreshingState: boolean = true
+  isShowRefreshingState: boolean = true,
+  isPageRefresh: boolean = false
 ) {
   try {
     const dm = get(dataManager);
@@ -429,6 +431,8 @@ async function refreshStores(
     if (!isValidArrayWithData(storesThatNeedRefresh)) return;
     if (isShowRefreshingState)
       await setRefreshingState(storesThatNeedRefresh, true);
+    if (isPageRefresh)
+      await setPageRefreshingState(storesThatNeedRefresh, true);
     const query = await resolveStoresRefreshQuery(storesThatNeedRefresh);
     let response = await surrealDb.executeReadFn(query);
     if (!isValidArrayWithData(response)) return;
@@ -447,9 +451,26 @@ async function refreshStores(
     logger.logError({ context: "Error refreshing stores", error });
   } finally {
     await setRefreshingState(storesThatNeedRefresh, false);
+    if (isPageRefresh)
+      await setPageRefreshingState(storesThatNeedRefresh, false);
   }
 }
-
+/**
+ * Sets the refreshing state for the page in child stores.
+ * @param stores Stores to set the refreshing state for.
+ * @param val value to set the refreshing state to. true if refreshing, false otherwise.
+ */
+async function setPageRefreshingState(
+  stores: CacheableStoreContract[],
+  val: boolean
+) {
+  stores.forEach((store) => {
+    store.update((x) => {
+      x.isPageRefreshing = val;
+      return x;
+    });
+  });
+}
 /**
  * Sets the refreshing state for the stores.
  * @param stores Stores to set the refreshing state for.
@@ -479,6 +500,7 @@ async function resolveStoresRefreshQuery(stores: CacheableStoreContract[]) {
       if (store?.dataType === StoreDataType.IFR)
         return resolveRefreshQueryForIFR(store);
       else if (store?.refreshQuery) return store.refreshQuery;
+      else if (x.resolveRefreshQuery) return x.resolveRefreshQuery();
       else return resolveRefreshQuery(store.id, store.dataType);
     })
   );
@@ -501,7 +523,6 @@ async function resolveRefreshQueryForIFR(storeData: CacheableStore) {
   const since =
     latestRecord?.modifiedAt ??
     new Date(new Date().getTime() - 365 * 24 * 60 * 60 * 1000);
-  console.log({ latestRecord, since });
   if (!customQuery) {
     query = resolveRefreshQuery(storeData.id, StoreDataType.IFR);
   } else query = customQuery;

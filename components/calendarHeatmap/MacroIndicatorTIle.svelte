@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { YearlyData } from "$lib/tidy/types/CalendarHeatMapData.type";
   import { onMount } from "svelte";
+  import type { YearlyData } from "./calendarHeatmap.types";
   export let data: YearlyData;
   export let tileValue: string = "";
   $: if (tileValue == "") {

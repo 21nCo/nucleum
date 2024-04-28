@@ -1,6 +1,7 @@
 import type { LocalDexie } from "$lib/local/stores/local.dexie";
 import type { Writable } from "svelte/store";
 import type { SurrealDatabase } from "../access/surrealHelper";
+import type { ItemType } from "./item.enum";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -8,6 +9,7 @@ import type { SurrealDatabase } from "../access/surrealHelper";
 export interface CacheableStoreContract extends Writable<any> {
   loader?: (data: any) => void;
   search?: (query: string) => Promise<any>;
+  resolveRefreshQuery?: () => string;
   propagateDependencyChanges?: (params: any) => void;
 }
 
@@ -47,6 +49,10 @@ export interface CacheableStore {
    * The state of the store when it is refreshing
    */
   isRefreshing?: boolean;
+  /**
+   * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
+   */
+  isPageRefreshing?: boolean;
 }
 
 /**

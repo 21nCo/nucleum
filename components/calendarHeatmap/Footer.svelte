@@ -1,6 +1,6 @@
 <script>
-  import { CalendarHeatMapstoreColors } from "$lib/tidy/stores/app.store";
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
+  import { CalendarHeatMapstoreColors } from "./calendarHeatmap.store";
 
   let colors = $CalendarHeatMapstoreColors;
 </script>

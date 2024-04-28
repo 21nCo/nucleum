@@ -3,7 +3,7 @@ import type { View } from "../types/view.type";
 import { resolveComponentFromPath } from "../utils/utils";
 import { goto } from "$app/navigation";
 import { logger } from "./log.store";
-import { appStore } from "./app.store";
+// import { appStore } from "./app.store";
 
 const view = initViewStore({
   height: 0,
@@ -98,7 +98,8 @@ function initViewStore(settings: View) {
     },
     gotoPath: async (path: string, params: any = null) => {
       logger.log({ method: "gotoPath", path });
-      appStore.hideFullScreenPlayer();
+      //TODO
+      // appStore.hideFullScreenPlayer();
       update((n: View) => {
         n = {
           ...n,

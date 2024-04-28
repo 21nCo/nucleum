@@ -90,7 +90,11 @@ export function isValidMarkdown(md: Markdown) {
       md.blocks.length > 1)
   );
 }
-
+/**
+ * Checks if a string is valid and not empty or null or any other falsy value as string. Returns the string if valid, otherwise returns undefined.
+ * @param str The string to check
+ * @returns The string if valid, otherwise undefined
+ */
 export function isValidString(str: string | undefined | null) {
   const isValid = str && str != "" && str != "null" && str != "undefined";
   if (isValid) return str;
