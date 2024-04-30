@@ -20896,7 +20896,8 @@ export const emojis = {
     [{ name: "star-struck", code: "&#X1F929" }],
     [{ name: "face blowing a kiss", code: "&#X1F618" }],
     [{ name: "kissing face", code: "&#X1F617" }],
-    [{ name: "smiling face", code: "&#X263A" }],
+    // TODO - check - not rendering natively on iOS without noto-color-emoji-mod
+    // [{ name: "smiling face", code: "&#X263A" }],
     [{ name: "kissing face with closed eyes", code: "&#X1F61A" }],
     [{ name: "kissing face with smiling eyes", code: "&#X1F619" }],
     [{ name: "smiling face with tear", code: "&#X1F972" }],
@@ -20954,7 +20955,8 @@ export const emojis = {
     [{ name: "face with diagonal mouth", code: "&#X1FAE4" }],
     [{ name: "worried face", code: "&#X1F61F" }],
     [{ name: "slightly frowning face", code: "&#X1F641" }],
-    [{ name: "frowning face", code: "&#X2639" }],
+    // TODO - check - not rendering natively on iOS
+    // [{ name: "frowning face", code: "&#X2639" }],
     [{ name: "face with open mouth", code: "&#X1F62E" }],
     [{ name: "hushed face", code: "&#X1F62F" }],
     [{ name: "astonished face", code: "&#X1F632" }],

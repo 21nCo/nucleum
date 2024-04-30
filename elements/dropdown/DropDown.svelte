@@ -14,6 +14,7 @@
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import TextInput from "../input/TextInput.svelte";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
+  import type { PopoverOptions } from "$lib/tidy/types/popover.type";
   const dispatch = createEventDispatcher();
   export let items: DropdownItem[];
   export let groups: DropdownGroup[] = [];
@@ -28,6 +29,13 @@
   let popoverRef: any;
   let isShowOptions: boolean = false;
   let classList = "relative flex flex-col items-start gap-1 w-full";
+  let popoverOptions: PopoverOptions = {
+    element: "div",
+    class:
+      "max-h-80 overflow-y-auto flex flex-col gap-4 items-start search-results py-4",
+    parentBgIndex: parentBackgroundIndex,
+    isSpanToTriggerWidth: true
+  };
   items = items.map((x) => {
     x.groupId = x.groupId ?? "Nongroup";
     return x;
@@ -76,6 +84,8 @@
   on:show={() => {
     searchInputRef.focus();
   }}
+  isPreventDefaultStyling={false}
+  options={popoverOptions}
 >
   <div class={classList} slot="trigger">
     {#if label}
@@ -100,54 +110,49 @@
     </button>
   </div>
   <svelte:fragment slot="popover">
-    <BackgroundElement
-      class="absolute max-h-80 overflow-y-auto flex flex-col gap-4 items-start rounded-b-md search-results w-full shadow-md border border-brs1 py-4"
-      parentBgIndex={parentBackgroundIndex}
-    >
-      <div class="px-3 w-full">
-        <TextInput
-          bind:this={searchInputRef}
-          bind:value={search}
-          size={Size.sm}
-          icon="search"
-          placeholder="search"
-        />
-      </div>
-      {#each filtered as group}
-        <div class="flex flex-col w-full">
-          {#if isValidArrayWithData(resolveItems(group.id, search))}
-            <div class="flex gap-1 text-b3 text-fgs3 px-3 mb-1">
-              {group.label === "Nongroup" ? "" : group.label}
-              {#if group.info && group.info.body}
-                <FormLabelTooltip info={group.info} />
+    <div class="px-3 w-full">
+      <TextInput
+        bind:this={searchInputRef}
+        bind:value={search}
+        size={Size.sm}
+        icon="search"
+        placeholder="search"
+      />
+    </div>
+    {#each filtered as group}
+      <div class="flex flex-col w-full">
+        {#if isValidArrayWithData(resolveItems(group.id, search))}
+          <div class="flex gap-1 text-b3 text-fgs3 px-3 mb-1">
+            {group.label === "Nongroup" ? "" : group.label}
+            {#if group.info && group.info.body}
+              <FormLabelTooltip info={group.info} />
+            {/if}
+          </div>
+        {/if}
+        {#each resolveItems(group.id, search) as item, index}
+          <button
+            class="text-left px-3 py-2 hover:bg-bgs2 w-full {item.disabled
+              ? 'text-fgs3'
+              : 'text-fgs1'} {index === items.length - 1
+              ? 'hover:rounded-b-md'
+              : ''}"
+            on:click={() => {
+              if (item.disabled) return;
+              value = item.value;
+              isShowOptions = false;
+              dispatch("select", item.value);
+              popoverRef.hide();
+            }}
+          >
+            <div class="flex gap-2">
+              {#if item.icon}
+                <Icon icon={item.icon} size={Size.sm} />
               {/if}
+              {item.label}
             </div>
-          {/if}
-          {#each resolveItems(group.id, search) as item, index}
-            <button
-              class="text-left px-3 py-2 hover:bg-bgs2 w-full {item.disabled
-                ? 'text-fgs3'
-                : 'text-fgs1'} {index === items.length - 1
-                ? 'hover:rounded-b-md'
-                : ''}"
-              on:click={() => {
-                if (item.disabled) return;
-                value = item.value;
-                isShowOptions = false;
-                dispatch("select", item.value);
-                popoverRef.hide();
-              }}
-            >
-              <div class="flex gap-2">
-                {#if item.icon}
-                  <Icon icon={item.icon} size={Size.sm} />
-                {/if}
-                {item.label}
-              </div>
-            </button>
-          {/each}
-        </div>
-      {/each}
-    </BackgroundElement>
+          </button>
+        {/each}
+      </div>
+    {/each}
   </svelte:fragment>
 </Popover>

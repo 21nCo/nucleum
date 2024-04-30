@@ -16,10 +16,19 @@
   import InlineMarkdownTextInput from "$lib/tidy/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Search from "$lib/tidy/icons/Search.svelte";
   import Icon from "../Icon.svelte";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
+
+  /**
+   * !Deprecated
+   * Use duration input instead
+   */
   export let units: string[] | undefined = undefined;
+  let unitClasses: string = "outline outline-bgs2 outline-2 rounded-md";
+  let currentUnit: string | undefined = undefined;
+
   export let style: TextInputStyle = TextInputStyle.OUTLINED;
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
@@ -59,46 +68,33 @@
   }
   let inputRef: any;
   export let isDisabled = false;
-  let inputClasses: string = "text-input w-full rounded-md";
-  let unitClasses: string = "outline outline-bgs2 outline-2 rounded-md";
-  let currentUnit: string | undefined = undefined;
+  let inputClasses: string = "text-input w-full";
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
   let debounceTimeoutId: any;
   let isShowSearchResults: boolean = false;
   const dispatch = createEventDispatcher();
   onMount(() => {
-    if (!currentUnit) currentUnit = units ? units[0] : "";
-    if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
-      inputClasses += " bg-transparent";
-    } else if (style === TextInputStyle.WITH_BACKGROUND) {
-      inputClasses += ` ${bgClass($appearance, 0)} border-2 ${borderClass(
-        $appearance
-      )} p-2`;
-      unitClasses = unitClasses + " p-2";
-    }
-    if (style == TextInputStyle.WITH_BACKGROUND && units && units.length > 0) {
-      inputClasses += " rounded-r-none";
-      unitClasses = unitClasses + " rounded-l-none";
-    } else if (
-      style === TextInputStyle.WITH_BACKGROUND ||
-      style === TextInputStyle.OUTLINED
-    ) {
-      inputClasses += " focus:border-aps1 focus:outline-none";
-      if (style === TextInputStyle.OUTLINED)
-        inputClasses += ` border border border-brs3`;
-      if (size === Size.md || size === Size.lg) {
-        inputClasses += " p-2";
-      } else {
-        inputClasses += " p-1";
-      }
-    } else {
-      inputClasses += " focus:border-none focus:outline-none";
-    }
+    inputClasses = inputClasses + " " + resolveStyles().join(" ");
+  });
 
+  function resolveStyles() {
+    /**
+     * !Deprecated
+     * Units are deprecated. Use duration input instead
+     */
+    if (!currentUnit) currentUnit = units ? units[0] : "";
+
+    let styles: string[] = [];
+    styles = [
+      ...(resolveBackground() ?? []),
+      ...(resolveBorder() ?? []),
+      ...(resolvePadding() ?? [])
+    ];
     if (icon) {
-      inputClasses += " pl-6";
+      styles.push("pl-8");
     }
+    return styles;
     /**
      *text size propagated from parent - css
      */
@@ -114,7 +110,51 @@
     //         : "max-w-[16rem]");
     // else if (size == Size.sm) inputClasses += " text-b2";
     // else if (size == Size.xs) inputClasses += " text-b3";
-  });
+
+    function resolveBackground() {
+      if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
+        return ["bg-transparent"];
+      } else if (style === TextInputStyle.WITH_BACKGROUND) {
+        return [bgClass($appearance, 0)];
+      }
+    }
+
+    function resolveBorder() {
+      if (
+        style == TextInputStyle.WITH_BACKGROUND &&
+        units &&
+        units.length > 0
+      ) {
+        return ["rounded-r-none"];
+      } else if (style === TextInputStyle.WITH_BACKGROUND) {
+        //TODO - check if border required
+        return ["rounded-md", "focus:border-aps1", "focus:outline-none"];
+      } else if (style === TextInputStyle.OUTLINED) {
+        return [
+          "rounded-md",
+          "border",
+          borderClass($appearance, ColorStrength.Strong),
+          "focus:border-aps1",
+          "focus:outline-none"
+        ];
+      } else {
+        return ["focus:border-none", "focus:outline-none"];
+      }
+    }
+    function resolvePadding() {
+      if (style === TextInputStyle.PLAIN) return;
+      if (size === Size.md || size === Size.lg) {
+        return ["p-2"];
+      } else {
+        return ["p-1"];
+      }
+    }
+  }
+
+  /**
+   * !Deprecated
+   * Use duration input instead
+   */
   function onUnitClick() {
     if (units?.length == 2) {
       if (currentUnit == units[0]) currentUnit = units[1];

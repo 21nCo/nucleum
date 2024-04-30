@@ -51,7 +51,8 @@ export function renderPopover(parentRef: HTMLElement, popRef: HTMLElement) {
 export function renderPopoverv2(
   parentRef: HTMLElement,
   popRef: HTMLElement,
-  location: Direction = Direction.Down
+  location: Direction = Direction.Down,
+  isSpanToTriggerWidth = false
 ) {
   const triggerRect = parentRef.getBoundingClientRect();
   popRef.style.display = "block";
@@ -100,8 +101,8 @@ export function renderPopoverv2(
   } else if (location === Direction.Down) {
     popRef.style.top = `${triggerRect.bottom + 2}px`;
     popRef.style.left = `${triggerRect.left}px`;
-    popRef.style.width = `${triggerRect.width}px`;
   }
+  if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
   // console.log({
   //   triggerRect,
   //   popRect,

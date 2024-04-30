@@ -1,17 +1,23 @@
 <script lang="ts">
   import { appConstants } from "$lib/tidy/stores/app.store";
   import appearance from "$lib/tidy/stores/appearance.store";
-  import { resolveSaturationAndLightness } from "$lib/tidy/utils/theme.utils";
+  import {
+    resolveIfActiveFgFg,
+    resolveSaturationAndLightness,
+    retrieveCurrentColors
+  } from "$lib/tidy/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
-
-  export let hue: number | undefined | null = 0;
+  export let hue: number | undefined = 0;
   export let saturation: number = 50;
   export let lightness: number = 50;
+  const currentColors = retrieveCurrentColors($appearance);
+  export let fgColorHsl: string = refreshFgColorHsl(hue);
+  $: fgColorHsl = refreshFgColorHsl(hue);
   const dispatch = createEventDispatcher();
   const handleHueChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     hue = parseInt(target.value);
-    dispatch("value-change", hue);
+    dispatch("change", hue);
   };
   let values = resolveSaturationAndLightness(
     $appearance,
@@ -21,21 +27,31 @@
     saturation = values.saturation;
     lightness = values.lightness;
   }
+  function refreshFgColorHsl(hue: number = 0) {
+    const val = resolveIfActiveFgFg(hue ?? undefined, $appearance)
+      ? currentColors["fgs1"]
+      : currentColors["bgs1"];
+    return val!;
+  }
 </script>
 
-<div class="hue-slider" style="--sat: {saturation}%; --lig: {lightness}%;">
+<div
+  class="color-range border border-fgs3 rounded-full w-full h-6"
+  style="--sat: {saturation}%; --lig: {lightness}%; --thumb-border: {fgColorHsl}"
+>
   <input
     type="range"
     min="0"
     max="360"
     value={hue}
     on:input={handleHueChange}
+    class="w-full h-3 bg-transparent appearance-none focus:outline-none"
     style="--hue: {hue};"
   />
 </div>
 
 <style>
-  .hue-slider {
+  .color-range {
     background: linear-gradient(
       to right,
       hsl(0, var(--sat), var(--lig)),
@@ -46,31 +62,17 @@
       hsl(300, var(--sat), var(--lig)),
       hsl(360, var(--sat), var(--lig))
     );
-    height: 20px;
-    width: 100%;
-    border-radius: 1000px;
   }
 
-  .hue-slider input[type="range"] {
+  .color-range input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    background: transparent;
-    width: 100%;
-    height: 10px;
-    border-radius: 5px;
-  }
-
-  .hue-slider input[type="range"]:focus {
-    outline: none;
-  }
-
-  .hue-slider input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 34px;
-    width: 34px;
+    height: 36px;
+    width: 36px;
     border-radius: 50%;
     background: hsl(var(--hue), var(--sat), var(--lig));
     cursor: pointer;
-    margin-top: -5px;
-    border: solid 2px rgba(var(--colors-fgs1));
+    margin-top: 6px;
+    box-shadow: 0px 0px 2px 0px hsl(var(--hue), var(--sat), 60%);
+    border: solid 1px var(--thumb-border);
   }
 </style>
