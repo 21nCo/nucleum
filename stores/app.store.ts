@@ -60,16 +60,7 @@ export const appLoadingState = writable<{
 }>({ isBaseLoaded: false, isLocalLoaded: false });
 export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
-export const appStoreMaterialSymbols = writable<any>({
-  "Frequently Used": [],
-  Custom: [],
-  Actions: materialSymbols
-});
-export const appStoreEmojis = writable<any>({
-  "Frequently Used": [],
-  Custom: [],
-  ...emojis
-});
+
 export const appStoreShuffleEmojis = writable(shuffleEmojis);
 export const splitView = writable<string[]>([]);
 export const intercomId = import.meta.env.VITE_INTERCOM_ID ?? "esh1m4xq";

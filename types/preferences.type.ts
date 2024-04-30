@@ -1,6 +1,6 @@
 import type { AppSkin, Theme } from "$lib/tidy/types/appearance.type";
 import type { TimeScale } from "./time.type";
-import type { avatarWithCode, avatarWithURL } from "./iconPicker.type";
+import type { Avatar } from "./avatar.type";
 import type { CacheableStore } from "./data.type";
 export type UserGlobalPreferences = CacheableStore & {
   nickName: string;
@@ -27,10 +27,10 @@ export type UserGlobalPreferences = CacheableStore & {
   };
   avatarPicker: {
     skinIndex: number;
-    usedEmojis: (avatarWithCode | avatarWithURL)[];
+    usedEmojis: [Avatar][];
     iconColor: string;
     filled: boolean;
-    usedIcons: (avatarWithCode | avatarWithURL)[];
+    usedIcons: [Avatar][];
   };
   annotations: any[];
 };
