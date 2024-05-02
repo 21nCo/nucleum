@@ -1,84 +1,83 @@
 <script lang="ts">
-  import PanelSwitcher from "../elements/switcher/PanelSwitcher.svelte";
-  import { ColorStrength } from "../types/appearance.type";
-  import { deepCopy } from "../utils/obj.utils";
-  import Divider from "../elements/Divider.svelte";
-  import Switch from "../elements/toggle/Switch.svelte";
-  import Button from "../elements/button/Button.svelte";
-  import Icon from "../elements/Icon.svelte";
+  import PanelSwitcher from "../switcher/PanelSwitcher.svelte";
+  import { ColorStrength } from "../../types/appearance.type";
+  import { deepCopy } from "../../utils/obj.utils";
+  import Divider from "../Divider.svelte";
+  import Button from "../button/Button.svelte";
+  import Icon from "../Icon.svelte";
   import {
-    appStoreEmojis,
-    appStoreMaterialSymbols,
     appStoreShuffleEmojis,
     userPreferences
-  } from "../stores/app.store";
-  import { Size } from "../types/size.enum";
-  import { createEventDispatcher } from "svelte";
-  import { debouncer } from "../utils/utils";
-  import { ButtonStyle } from "../types/button.type";
-  import type { avatarWithCode, avatarWithURL } from "../types/iconPicker.type";
-  import { iconPickerType } from "../types/iconPicker.type";
-  import { Persistance } from "../stores/persistance";
-  import { IconVariant } from "../types/icon.type";
-  import { PanelSwitcherStyle } from "../types/switcher.enum";
-  import Text from "../elements/text/Text.svelte";
-  import { TextStyle } from "../types/text.enum";
-  import ActiveBackgroundElement from "../elements/style/ActiveBackgroundElement.svelte";
-  import BackgroundElement from "../elements/style/BackgroundElement.svelte";
-  export let mode: iconPickerType.EMOJI | iconPickerType.ICON =
-    iconPickerType.ICON;
+  } from "../../stores/app.store";
+  import { Size } from "../../types/size.enum";
+  import { createEventDispatcher, onMount } from "svelte";
+  import { debouncer } from "../../utils/utils";
+  import {
+    AvatarType,
+    type Avatar,
+    type CustomUploadedAvatar,
+    type AvatarWithCode,
+    type IconAvatar,
+    type EmojiAvatar,
+    AvatarPickerContext
+  } from "../../types/avatar.type";
+  import { Persistance } from "../../stores/persistance";
+  import { IconVariant } from "../../types/icon.type";
+  import { PanelSwitcherStyle } from "../../types/switcher.enum";
+  import Text from "../text/Text.svelte";
+  import { TextStyle } from "../../types/text.enum";
+  import ActiveBackgroundElement from "../style/ActiveBackgroundElement.svelte";
+  import BackgroundElement from "../style/BackgroundElement.svelte";
+  import AvatarView from "./AvatarView.svelte";
+  import { emojis, materialSymbols } from "$lib/tidy/data/avatars";
+  import SwitchInput from "../toggle/SwitchInput.svelte";
+  export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
+  export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
+  type StoreAvatars = {
+    "Frequently Used": Avatar[][];
+    Custom: Avatar[][];
+  } & {
+    [category: string]: { name: string; code: string }[][];
+  };
 
-  // onMount(() => {
-  //   $userPreferences.avatarPicker = {
-  //     skinIndex: 0,
-  //     usedEmojis: [],
-  //     iconColor: "#C14D8A",
-  //     filled: false,
-  //     usedIcons: []
-  //   }; //for reseting to initial state during testing
-  // });
+  let materialSymbolsWithCategories: StoreAvatars = {
+    "Frequently Used": [],
+    Custom: [],
+    Actions: materialSymbols
+  };
+  let emojisWithCategories: StoreAvatars = {
+    "Frequently Used": [],
+    Custom: [],
+    ...emojis
+  };
   /**
    * A copy of the store avatars based on the mode. Whose items wont be modified except for the frequently used and custom as we add them later.
    * @summary To store the avatars based on the mode.
    */
   let storeAvatars =
-    mode == "ICON" ? $appStoreMaterialSymbols : $appStoreEmojis;
+    mode == AvatarType.ICON
+      ? materialSymbolsWithCategories
+      : emojisWithCategories;
 
-  $: storeAvatars = mode == "ICON" ? $appStoreMaterialSymbols : $appStoreEmojis;
-  /**
-   * Whenever the used list is updated, the frequently used is updated with the top 50 avatars whose frequency is greater than 3.
-   */
-  $: storeAvatars["Frequently Used"] = (
-    mode == "ICON"
-      ? $userPreferences.avatarPicker.usedIcons
-      : $userPreferences.avatarPicker.usedEmojis
-  )
-    ?.slice(0, 50)
-    .filter((emote) => emote[0]?.frequency > 3);
-  /**
-   * Whenever the used list is updated, the custom is updated with custom avatars if any.
-   */
-  $: storeAvatars["Custom"] = (
-    mode == "ICON"
-      ? $userPreferences.avatarPicker.usedIcons
-      : $userPreferences.avatarPicker.usedEmojis
-  )?.filter((emote) => emote[0]?.URL);
+  $: if (mode === AvatarType.ICON) {
+    storeAvatars = materialSymbolsWithCategories;
+    avatars = storeAvatars;
+  } else {
+    storeAvatars = emojisWithCategories;
+    avatars = storeAvatars;
+  }
   /**
    * A copy of the store avatars based on the mode. Whose items will be modified based on the search input.
-   * @summary Muttable Store Avatar for Search purpose.
+   * @summary Mutable Store Avatar for Search purpose.
    */
   let avatars = storeAvatars;
-  $: avatars = storeAvatars;
-  /**
-   * To indicate to svelte that the frequently used or custom was updated so that it can re-render those.
-   */
-  $: if (avatars["Frequently Used"] || avatars["Custom"]) avatars = avatars;
   let avatarsParentContainer: HTMLDivElement;
   $: if (mode && avatarsParentContainer)
     avatarsParentContainer?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   let avatarKeys: string[] = Object.keys(avatars);
   $: avatarKeys = Object.keys(avatars);
+  $: console.log({ avatarKeys, avatars });
   let checked: boolean = $userPreferences.avatarPicker.filled;
   $: $userPreferences.avatarPicker.filled = checked;
   let skinTones = [
@@ -98,6 +97,30 @@
   let eventDispatcher = createEventDispatcher();
   let shuffleEmojis = $appStoreShuffleEmojis;
 
+  onMount(() => {
+    let userPrefSub: any;
+    if (context === AvatarPickerContext.DEFAULT) {
+      userPrefSub = userPreferences.subscribe((prefs) => {
+        storeAvatars["Frequently Used"] = (
+          mode == AvatarType.ICON
+            ? prefs.avatarPicker.usedIcons
+            : prefs.avatarPicker.usedEmojis
+        )
+          ?.slice(0, 50)
+          .filter((emote) => emote[0]?.frequency > 2);
+        storeAvatars["Custom"] = (
+          mode == AvatarType.ICON
+            ? prefs.avatarPicker.usedIcons
+            : prefs.avatarPicker.usedEmojis
+        )?.filter((emote) => "URL" in emote[0] && emote[0].URL);
+        avatars = storeAvatars;
+      });
+    }
+    return () => {
+      if (userPrefSub) userPrefSub();
+    };
+  });
+
   /**
    * Invoked when the shuffle button is clicked.Depending on the mode It picks a random emoji from $appStoreShuffleEmojis or random icon from the used list and emits the avatar clicked. Finally closes the avatar picker.
    * @summary To pick a random emoji or icon.
@@ -105,7 +128,7 @@
   function ShufflePick() {
     eventDispatcher(
       "avatarClicked",
-      mode == "ICON"
+      mode == AvatarType.ICON
         ? $userPreferences.avatarPicker.usedIcons[
             Math.floor(
               Math.random() * $userPreferences.avatarPicker.usedIcons.length
@@ -187,19 +210,24 @@
    * @param emote - The clicked emoji or icon.
    */
   function addToUsedList(emote: any) {
-    let tempEmote = deepCopy(emote);
-    if (mode == "ICON") {
+    let tempEmote = deepCopy(emote) as Avatar;
+    if (mode == AvatarType.ICON) {
       let index = $userPreferences.avatarPicker.usedIcons?.findIndex((el) => {
         return (
           el[0].name == emote.name &&
-          (el[0].URL !== undefined ||
-            (el[0].color == iconColor && el[0].fill == checked))
+          (("URL" in el[0] && el[0].URL !== undefined) ||
+            ("color" in el[0] &&
+              el[0].color == iconColor &&
+              "isFilled" in el[0] &&
+              el[0].isFilled == checked))
         );
       });
       if (index == -1) {
+        tempEmote = tempEmote as AvatarWithCode<IconAvatar>;
+        tempEmote.type = AvatarType.ICON;
         tempEmote.frequency = 1;
         tempEmote.color = iconColor;
-        tempEmote.fill = checked;
+        tempEmote.isFilled = checked;
         $userPreferences.avatarPicker.usedIcons = [
           ...$userPreferences?.avatarPicker?.usedIcons,
           [tempEmote]
@@ -213,11 +241,16 @@
       );
     } else {
       let index = $userPreferences.avatarPicker.usedEmojis?.findIndex((el) => {
-        return el[0].name == emote.name && el[0].code == emote.code;
+        return (
+          el[0].name == emote.name &&
+          (("URL" in el[0] && el[0].URL !== undefined) ||
+            ("code" in el[0] && el[0].code == emote.code))
+        );
       });
       if (index == -1) {
+        tempEmote = tempEmote as AvatarWithCode<EmojiAvatar>;
+        tempEmote.type = AvatarType.EMOJI;
         tempEmote.frequency = 1;
-
         $userPreferences.avatarPicker.usedEmojis = [
           ...$userPreferences.avatarPicker.usedEmojis,
           [tempEmote]
@@ -268,8 +301,9 @@
     return {
       name: customName,
       URL: s3URL,
-      frequency: 0
-    };
+      frequency: 0,
+      type: AvatarType.CUSTOM_UPLOAD
+    } as CustomUploadedAvatar;
   }
   /**
    * Invoked when the click event happens on file input element. It first checks the filename already exists if not then uploads the custom avatar to the s3 and adds the avatar returned URL to the used list.
@@ -278,7 +312,7 @@
   async function customUploadHandler(event: any) {
     let input = event.target.files[0];
     let customName = input.name.split(".")[0].trim();
-    if (mode == iconPickerType.ICON) {
+    if (mode == AvatarType.ICON) {
       for (let icon of $userPreferences.avatarPicker.usedIcons) {
         if (icon[0].name.toLowerCase() == customName.toLowerCase()) {
           alert("The icon name already exists. Please rename and upload");
@@ -307,19 +341,23 @@
 </script>
 
 <div
-  class="bg-bgs1 rounded-md shadow-lg border border-brs3 h-[28rem] w-[35rem]"
+  class="h-[28rem] {context === AvatarPickerContext.DEFAULT
+    ? 'w-[35rem]'
+    : 'w-[24rem]'}"
 >
   <div class="flex h-12 border-b border-b-brs2 p-2">
-    <div class="flex w-3/10 h-full px-2">
-      <PanelSwitcher
-        items={["Icon", "Emoji"]}
-        size={Size.xs}
-        style={PanelSwitcherStyle.TRAIN}
-        selected={mode == iconPickerType.ICON ? "Icon" : "Emoji"}
-        on:switch={(event) => (mode = event.detail.toUpperCase())}
-      />
-    </div>
-    <div class="flex h-full justify-around w-7/10">
+    {#if context === AvatarPickerContext.DEFAULT}
+      <div class="flex w-3/10 h-full px-2">
+        <PanelSwitcher
+          items={["Icon", "Emoji"]}
+          size={Size.xs}
+          style={PanelSwitcherStyle.TRAIN}
+          selected={mode == AvatarType.ICON ? "Icon" : "Emoji"}
+          on:switch={(event) => (mode = event.detail.toUpperCase())}
+        />
+      </div>
+    {/if}
+    <div class="flex h-full justify-around grow">
       <div class="flex rounded-md w-8/10 px-1 border border-brs2">
         <Icon icon="search-mini" variant={IconVariant.Outline} size={Size.sm} />
         <input
@@ -342,54 +380,56 @@
     </div>
   </div>
   <div class="flex h-9/10">
-    <div
-      class="relative w-3/10 h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
-    >
-      <div class="px-2">
-        <Text content="Category" style={TextStyle.SECTION_HEADING_SMALL} />
+    {#if context === AvatarPickerContext.DEFAULT}
+      <div
+        class="relative w-3/10 min-w-[30%] h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
+      >
+        <div class="px-2">
+          <Text content="Category" style={TextStyle.SECTION_HEADING_SMALL} />
+        </div>
+        <div class="flex flex-col gap-1">
+          {#each avatarKeys as key, index (index)}
+            {#if avatars[key] !== undefined && avatars[key].length > 0}
+              <ActiveBackgroundElement
+                isBackgroundActive={activeCategory == "AVT" + index}
+                id={"avt" + index}
+                class={"block w-full px-2 py-0.5 text-b2 text-left hover:bg-bgs2 rounded-md"}
+                on:click={PanelItemClickHandler}
+              >
+                {key}
+              </ActiveBackgroundElement>
+            {/if}
+          {/each}
+        </div>
+        {#if mode == AvatarType.ICON}
+          <Divider colorStrength={ColorStrength.Strong} thickness={2} />
+          <SwitchInput label="Fill" bind:checked size={Size.sm} />
+        {/if}
+        <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
+          <input
+            style="visibility:hidden;height:0px;width:0px;"
+            type="file"
+            id="myFile"
+            name="filename"
+            accept="image/*"
+            on:input={customUploadHandler}
+          />
+          <Button
+            icon="upload"
+            label="Upload"
+            size={Size.sm}
+            on:click={triggerFileInput}
+          />
+          <!-- </div> -->
+        </div>
       </div>
-      <div class="flex flex-col gap-1">
-        {#each avatarKeys as key, index (index)}
-          {#if avatars[key] !== undefined && avatars[key].length > 0}
-            <ActiveBackgroundElement
-              isBackgroundActive={activeCategory == "AVT" + index}
-              id={"avt" + index}
-              class={"block w-full px-2 py-0.5 text-b2 text-left hover:bg-bgs2 rounded-md"}
-              on:click={PanelItemClickHandler}
-            >
-              {key}
-            </ActiveBackgroundElement>
-          {/if}
-        {/each}
-      </div>
-      {#if mode == iconPickerType.ICON}
-        <Divider colorStrength={ColorStrength.Strong} thickness={2} />
-        <Switch label="Fill" bind:on={checked} size={Size.sm} />
-      {/if}
-      <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
-        <input
-          style="visibility:hidden;height:0px;width:0px;"
-          type="file"
-          id="myFile"
-          name="filename"
-          accept="image/*"
-          on:input={customUploadHandler}
-        />
-        <Button
-          icon="upload"
-          label="Upload"
-          size={Size.sm}
-          on:click={triggerFileInput}
-        />
-        <!-- </div> -->
-      </div>
-    </div>
-    <div class="flex flex-col w-7/10 h-full">
+    {/if}
+    <div class="flex flex-col grow h-full">
       <BackgroundElement
         class="w-full h-1/10 flex items-center gap-3 px-4 border-b border-b-brs2"
         parentBgIndex={1}
       >
-        {#if mode == iconPickerType.ICON}
+        {#if mode == AvatarType.ICON}
           {#each colorPalate as color}
             <span
               id={"colPalate" + color}
@@ -433,84 +473,51 @@
             <div id={"AVT" + index} class="AVT flex flex-col p-2">
               <p class="text-b4 text-fgs3 px-2">{key}</p>
               <div class="flex flex-wrap">
-                {#if key == "Custom"}
-                  {#each avatars[key] as emote}
-                    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-                    <button
-                      on:click={() => itemClickHandler(emote)}
-                      on:mouseenter={() => {
-                        searchRef.placeholder = emote[0].name;
+                {#each avatars[key] as emote, index (index)}
+                  <button
+                    on:click={() => itemClickHandler(emote)}
+                    on:mouseenter={() => {
+                      searchRef.placeholder = emote[0].name;
+                    }}
+                    on:mouseleave={() => {
+                      searchRef.placeholder = "Search";
+                    }}
+                    class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2"
+                  >
+                    <AvatarView
+                      avatar={{
+                        code:
+                          "code" in emote[0]
+                            ? emote.length == 1
+                              ? emote[0].code
+                              : emote[skinIndex].code
+                            : "",
+                        color:
+                          "color" in emote[0] &&
+                          typeof emote[0].color === "string"
+                            ? emote[0]?.color
+                            : iconColor,
+                        isFilled:
+                          "isFilled" in emote[0] &&
+                          typeof emote[0].isFilled == "boolean"
+                            ? emote[0]?.isFilled
+                            : checked,
+                        type: mode,
+                        name: emote[0].name,
+                        frequency:
+                          "frequency" in emote[0] &&
+                          typeof emote[0].frequency === "number"
+                            ? emote[0].frequency
+                            : 0,
+                        URL:
+                          "URL" in emote[0] && typeof emote[0].URL === "string"
+                            ? emote[0].URL
+                            : ""
                       }}
-                      on:mouseleave={() => {
-                        searchRef.placeholder = "Search";
-                      }}
-                      class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2 rounded-md"
-                    >
-                      <img
-                        id={emote[0].name}
-                        src={emote[0].URL}
-                        alt={emote[0].name}
-                      />
-                    </button>
-                  {/each}
-                {:else if key == "Frequently Used"}
-                  {#each avatars[key] as emote, index (index)}
-                    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-                    <button
-                      on:click={() => itemClickHandler(emote)}
-                      on:mouseenter={() => {
-                        searchRef.placeholder = emote[0].name;
-                      }}
-                      on:mouseleave={() => {
-                        searchRef.placeholder = "Search";
-                      }}
-                      class={(mode == iconPickerType.ICON
-                        ? "material-symbols-rounded"
-                        : "noto-color-emoji-mod flex") +
-                        " justify-center items-center h-8 w-8 p-1 hover:bg-bgs4"}
-                      style="font-variation-settings: 'FILL' {emote[0]?.fill
-                        ? 1
-                        : 0}, 'wght' 700, 'GRAD' 0, 'opsz' 48; color:{emote[0]
-                        .color || iconColor};"
-                    >
-                      {#if emote[0]?.code}
-                        {@html emote[0].code}
-                      {:else}
-                        <img
-                          id={emote[0].name}
-                          src={emote[0].URL}
-                          alt={emote[0].name}
-                        />
-                      {/if}
-                    </button>
-                  {/each}
-                {:else}
-                  {#each avatars[key] as emote}
-                    <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-                    <button
-                      on:click={() => itemClickHandler(emote)}
-                      on:mouseenter={() => {
-                        searchRef.placeholder = emote[0].name;
-                      }}
-                      on:mouseleave={() => {
-                        searchRef.placeholder = "Search";
-                      }}
-                      class={(mode == iconPickerType.ICON
-                        ? "material-symbols-rounded"
-                        : "noto-color-emoji-mod flex") +
-                        " justify-center items-center p-1 hover:bg-bgs4"}
-                      style="font-variation-settings: 'FILL' {checked
-                        ? 1
-                        : 0}, 'wght' 700, 'GRAD' 0, 'opsz' 48; color:{iconColor};height:11%;width:11%;"
-                    >
-                      {#if emote.length == 1}
-                        {@html emote[0].code}
-                      {:else}
-                        {@html emote[skinIndex].code}
-                      {/if}
-                    </button>
-                  {/each}
-                {/if}
+                      size={Size.lg}
+                    />
+                  </button>
+                {/each}
               </div>
             </div>
           {/if}

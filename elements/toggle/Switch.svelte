@@ -2,9 +2,9 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { generateUID } from "$lib/tidy/utils/utils";
   export let on = false;
-  export let label = "";
+  // export let label = "";
   export let id = "toggle-switch" + generateUID();
-  export let size: Size.sm | Size.lg = Size.lg;
+  export let size: Size = Size.md;
   export let isDisabled = false;
 </script>
 
@@ -33,7 +33,6 @@
           : " w-[22px] h-5 left-0.5 top-0.5")}
     />
   </div>
-  <div class="ml-3 text-fgs2 font-medium">{label}</div>
 </label>
 
 <style>
