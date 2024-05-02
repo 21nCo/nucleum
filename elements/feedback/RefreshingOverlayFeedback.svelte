@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class="absolute w-full flex justify-center h-8 min-h-[2rem]"
+  class="absolute w-full flex justify-center h-8 min-h-[2rem] z-50"
   in:fly={{ y: -200, duration: 300 }}
   out:fly={{ y: -200, duration: 200 }}
 >

@@ -1,17 +1,19 @@
 import { TileAppearance } from "./calendarHeatmap.types";
 import { plainCSSHMColorIndex5 } from "../../stores/app.store";
 import { get } from "svelte/store";
-import { isValidArrayWithData } from "../../utils/obj.utils";
+import { deepCopy, isValidArrayWithData } from "../../utils/obj.utils";
 import { heatMapColorRange } from "../../utils/theme.utils";
 import appearance from "../../stores/appearance.store";
 import type {
   CalendarHeatMapDataProvider,
+  CalendarHeatmapOptions,
   DailyData,
   MonthlyData,
   YearlyData
 } from "./calendarHeatmap.types";
 import { CalendarHeatMapData } from "./calendarHeatmap.store";
 import { TimeScale } from "$lib/tidy/types/time.type";
+import { kmeans } from "ml-kmeans";
 
 let profileStartdate = "2023-02-19"; //replace the value with with logs start date variable
 let profileStartmonth = profileStartdate.slice(0, 7); //*important don't delete even if it shows value never used
@@ -157,7 +159,7 @@ function generateYearlyDataInRange(
   }
   return yearlyData;
 }
-function checkStreakDisplay(prev: any, curr: any, next: any, target: number) {
+function resolveStrealDisplay(prev: any, curr: any, next: any, target: number) {
   if (
     (prev == null || prev.value < target) &&
     next !== null &&
@@ -175,104 +177,6 @@ function checkStreakDisplay(prev: any, curr: any, next: any, target: number) {
   }
 }
 
-function findTileColorAndAppearance(
-  prev: any,
-  tileItem: any,
-  next: any,
-  target: number,
-  colors: string[]
-) {
-  let noOfColors = colors.length; //exluding the base color
-  let variantRange = target / (noOfColors - 2);
-  if (tileItem.value > target) {
-    return [checkStreakDisplay(prev, tileItem, next, target), colors[6]];
-  } else if (tileItem.value == target) {
-    return [checkStreakDisplay(prev, tileItem, next, target), colors[5]];
-  } else if (tileItem.value >= target - variantRange) {
-    return [Number(TileAppearance.DEFAULT), colors[4]];
-  } else if (tileItem.value >= target - 2 * variantRange) {
-    return [Number(TileAppearance.DEFAULT), colors[3]];
-  } else if (tileItem.value >= target - 3 * variantRange) {
-    return [Number(TileAppearance.DEFAULT), colors[2]];
-  } else if (tileItem.value > 0) {
-    return [Number(TileAppearance.DEFAULT), colors[1]];
-  } else {
-    return [Number(TileAppearance.DEFAULT), colors[0]];
-  }
-}
-
-function findHeatandStreak(
-  inputData: any[],
-  prevEnd: any,
-  nextStart: any,
-  dataType: "date" | "month" | "year"
-) {
-  let length = inputData.length;
-  // let target = inputData.target;
-  let maxValue = Math.max(...inputData.map((x: any) => x.value));
-  // if (target === 0) target = 1;
-  const colors = heatMapColorRange(get(appearance), "aps1", 6);
-  plainCSSHMColorIndex5.set(colors[5]);
-  if (
-    new Date(`prevEnd.${dataType}`) <=
-    new Date(`profileStart${dataType}`.toString())
-  ) {
-    const returnValue: any = findTileColorAndAppearance(
-      null,
-      inputData[0],
-      inputData[1],
-      Math.min(inputData[0].target, maxValue),
-      colors
-    );
-    inputData[0].display = returnValue[0];
-    inputData[0].color = returnValue[1];
-  } else {
-    const returnValue: any = findTileColorAndAppearance(
-      prevEnd,
-      inputData[0],
-      inputData[1],
-      Math.min(inputData[0].target, maxValue),
-      colors
-    );
-    inputData[0].display = returnValue[0];
-    inputData[0].color = returnValue[1];
-  }
-  for (let i = 1; i < length - 1; i++) {
-    const returnValue = findTileColorAndAppearance(
-      inputData[i - 1],
-      inputData[i],
-      inputData[i + 1],
-      Math.min(inputData[i].target, maxValue),
-      colors
-    );
-    inputData[i].display = returnValue[0];
-    inputData[i].color = returnValue[1];
-  }
-  if (
-    new Date(`nextStart.${dataType}`) >=
-    new Date(`current${dataType}`.toString())
-  ) {
-    const returnValue: any = findTileColorAndAppearance(
-      inputData[length - 2],
-      inputData[length - 1],
-      null,
-      Math.min(inputData[length - 1].target, maxValue),
-      colors
-    );
-    inputData[length - 1].display = returnValue[0];
-    inputData[length - 1].color = returnValue[1];
-  } else {
-    const returnValue: any = findTileColorAndAppearance(
-      inputData[length - 2],
-      inputData[length - 1],
-      nextStart,
-      Math.min(inputData[length - 1].target, maxValue),
-      colors
-    );
-    inputData[length - 1].display = returnValue[0];
-    inputData[length - 1].color = returnValue[1];
-  }
-}
 function getMonthName(month: number) {
   const monthNames = [
     "Jan",
@@ -361,8 +265,116 @@ function convertToOriginalForm(data: any) {
 export class DataManager {
   defaultTarget = 9999999999;
   provider: CalendarHeatMapDataProvider;
-  constructor(provider: CalendarHeatMapDataProvider) {
+  options: CalendarHeatmapOptions;
+  constructor(
+    provider: CalendarHeatMapDataProvider,
+    options: CalendarHeatmapOptions
+  ) {
     this.provider = provider;
+    this.options = options;
+  }
+
+  resolveTileColorAndStreakDisplay(prev: any, tileItem: any, next: any) {
+    const target: number = tileItem.target;
+    const colors = heatMapColorRange(get(appearance), "aps1", 6);
+    plainCSSHMColorIndex5.set(colors[5]);
+    let noOfColors = colors.length; //exluding the base color
+    let variantRange = target / (noOfColors - 2);
+    if (tileItem.value > target) {
+      return [resolveStrealDisplay(prev, tileItem, next, target), colors[6]];
+    } else if (tileItem.value == target) {
+      return [resolveStrealDisplay(prev, tileItem, next, target), colors[5]];
+    } else if (tileItem.value >= target - variantRange) {
+      return [Number(TileAppearance.DEFAULT), colors[4]];
+    } else if (tileItem.value >= target - 2 * variantRange) {
+      return [Number(TileAppearance.DEFAULT), colors[3]];
+    } else if (tileItem.value >= target - 3 * variantRange) {
+      return [Number(TileAppearance.DEFAULT), colors[2]];
+    } else if (tileItem.value > 0) {
+      return [Number(TileAppearance.DEFAULT), colors[1]];
+    } else {
+      return [Number(TileAppearance.DEFAULT), colors[0]];
+    }
+  }
+
+  resolveTileColorAndStreakDisplay2(prev: any, current: any, next: any) {
+    const colors = heatMapColorRange(get(appearance), "aps1", 6);
+    plainCSSHMColorIndex5.set(colors[5]);
+    let color = colors[current.clusterIndex + 1];
+    let display = Number(TileAppearance.DEFAULT);
+    if (current.value >= current.target) {
+      color = colors[5];
+      display = resolveStrealDisplay(prev, current, next, 0);
+    }
+    return [display, color];
+  }
+
+  findHeatandStreak(
+    inputData: any[],
+    prevEnd: any,
+    nextStart: any,
+    dataType: "date" | "month" | "year"
+  ) {
+    let length = inputData.length;
+    const nonZeroValues = inputData.filter((x) => x.value > 0);
+    const valuesForK = nonZeroValues.map((x) => [x.value]);
+    const k = kmeans(valuesForK, 6, {});
+    inputData = inputData.map((x, i) => {
+      if (x.value === 0) return { ...x, clusterIndex: -1 };
+      const index = nonZeroValues.findIndex((y) => y === x);
+      return { ...x, clusterIndex: k.clusters[index] };
+    });
+    if (
+      new Date(`prevEnd.${dataType}`) <=
+      new Date(`profileStart${dataType}`.toString())
+    ) {
+      const returnValue: any = this.resolveTileColorAndStreakDisplay2(
+        null,
+        inputData[0],
+        inputData[1]
+      );
+      inputData[0].display = returnValue[0];
+      inputData[0].color = returnValue[1];
+    } else {
+      const returnValue: any = this.resolveTileColorAndStreakDisplay2(
+        prevEnd,
+        inputData[0],
+        inputData[1]
+      );
+      inputData[0].display = returnValue[0];
+      inputData[0].color = returnValue[1];
+    }
+    for (let i = 1; i < length - 1; i++) {
+      const returnValue = this.resolveTileColorAndStreakDisplay2(
+        inputData[i - 1],
+        inputData[i],
+        inputData[i + 1]
+      );
+      inputData[i].display = returnValue[0];
+      inputData[i].color = returnValue[1];
+    }
+    if (
+      new Date(`nextStart.${dataType}`) >=
+      new Date(`current${dataType}`.toString())
+    ) {
+      const returnValue: any = this.resolveTileColorAndStreakDisplay2(
+        inputData[length - 2],
+        inputData[length - 1],
+        null
+      );
+      inputData[length - 1].display = returnValue[0];
+      inputData[length - 1].color = returnValue[1];
+    } else {
+      const returnValue: any = this.resolveTileColorAndStreakDisplay2(
+        inputData[length - 2],
+        inputData[length - 1],
+        nextStart
+      );
+      inputData[length - 1].display = returnValue[0];
+      inputData[length - 1].color = returnValue[1];
+    }
+    // console.log({ inputData: deepCopy(inputData) });
+    return inputData;
   }
 
   async fetchMonthlyDataAndMerge(
@@ -433,7 +445,7 @@ export class DataManager {
         startYear,
         endYear
       );
-      findHeatandStreak(
+      this.findHeatandStreak(
         mergedData.monthlyData,
         mergedData.prevEnd,
         mergedData.nextStart,
@@ -460,7 +472,7 @@ export class DataManager {
         startYear,
         endYear
       );
-      findHeatandStreak(
+      this.findHeatandStreak(
         mergedData.monthlyData,
         mergedData.prevEnd,
         mergedData.nextStart,
@@ -491,7 +503,7 @@ export class DataManager {
       startYear,
       endYear
     );
-    findHeatandStreak(
+    this.findHeatandStreak(
       mergedData.monthlyData,
       mergedData.prevEnd,
       mergedData.nextStart,
@@ -559,7 +571,7 @@ export class DataManager {
         startYear,
         endYear
       );
-      findHeatandStreak(
+      this.findHeatandStreak(
         mergedData.yearlyData,
         mergedData.prevEnd,
         mergedData.nextStart,
@@ -581,7 +593,7 @@ export class DataManager {
         startYear,
         endYear
       );
-      findHeatandStreak(
+      this.findHeatandStreak(
         mergedData.yearlyData,
         mergedData.prevEnd,
         mergedData.nextStart,
@@ -612,7 +624,7 @@ export class DataManager {
       startYear,
       endYear
     );
-    findHeatandStreak(
+    this.findHeatandStreak(
       mergedData.yearlyData,
       mergedData.prevEnd,
       mergedData.nextStart,
@@ -664,13 +676,14 @@ export class DataManager {
       startDate,
       endDate
     );
-    findHeatandStreak(
+    const transformedData = this.findHeatandStreak(
       mergedData.dailyData,
       mergedData.prevEnd,
       mergedData.nextStart,
       "date"
     );
-    let monthWiseData = convertToMonthWiseData(mergedData.dailyData);
+    let monthWiseData = convertToMonthWiseData(transformedData);
+    console.log({ monthWiseData });
     CalendarHeatMapData.set(monthWiseData);
     return true;
   }
@@ -699,7 +712,7 @@ export class DataManager {
         dates.firstMonthEndDate,
         dates.lastMonthStartDate
       );
-      findHeatandStreak(
+      this.findHeatandStreak(
         mergedData.dailyData,
         mergedData.prevEnd,
         mergedData.nextStart,
@@ -726,7 +739,7 @@ export class DataManager {
         dates.firstMonthEndDate,
         dates.lastMonthStartDate
       );
-      findHeatandStreak(
+      this.findHeatandStreak(
         mergedData.dailyData,
         mergedData.prevEnd,
         mergedData.nextStart,

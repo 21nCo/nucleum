@@ -10,7 +10,8 @@
   import {
     TileScale,
     CalendarHmVariant,
-    type CalendarHeatMapDataProvider
+    type CalendarHeatMapDataProvider,
+    type CalendarHeatmapOptions
   } from "./calendarHeatmap.types";
   import { DataManager } from "$lib/tidy/components/calendarHeatmap/calendarHeatMap.utils";
   import { onMount } from "svelte";
@@ -31,8 +32,9 @@
   export let orientation: Orientation;
   export let touchDevice: boolean;
   export let provider: CalendarHeatMapDataProvider;
+  export let options: CalendarHeatmapOptions = {};
   // export let context: string;
-  let dataManager = new DataManager(provider);
+  let dataManager = new DataManager(provider, options);
   let data: any;
   let isLoading = false;
   const currentYear = new Date().getFullYear();

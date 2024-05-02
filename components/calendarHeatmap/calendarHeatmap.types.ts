@@ -63,3 +63,7 @@ export type HeatmapDataItem = {
   value: number;
   target?: number;
 };
+
+export type CalendarHeatmapOptions = {
+  isShowStreakline?: boolean;
+};

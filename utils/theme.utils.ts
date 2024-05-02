@@ -281,7 +281,6 @@ export function heatMapColorRange(
       lightness = values.lightness;
     }
   }
-  console.log({ hue });
   colors = Array.from({ length: numberOfColors }, (_, i) => {
     const s = +saturation - i * (appearance.colorScheme.isDark ? 4 : 8);
     const l = +lightness + i * (appearance.colorScheme.isDark ? 4 : 6);
