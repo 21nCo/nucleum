@@ -10,7 +10,7 @@
 </script>
 
 <div
-  class="w-full h-full intialRenderAnimation flex items-center justify-center"
+  class="w-full h-full bg-bgs1 flex items-center justify-center fixed z-[200]"
 >
   <div class="flex items-center justify-center">
     {#if $appStore.embedContext === EmbedContext.SHEET}
@@ -32,45 +32,3 @@
     {/if}
   </div>
 </div>
-
-<style>
-  /* .intialRenderAnimation .line {
-    width: 5.25rem;
-    height: 5.25rem;
-    background-color: transparent;
-    border-left: 4px solid rgba(var(--colors-fgs1), 1);
-    animation: lineAnimation 1s forwards cubic-bezier(0.215, 0.61, 0.355, 1);
-    animation-delay: 1s;
-    transform: scale(0.95) translate(5.25rem, 0);
-    border-radius: 50%;
-  }
-  .intialRenderAnimation .circle {
-    width: 4.25rem;
-    height: 4.25rem;
-    animation: circleAnimation 1s forwards cubic-bezier(0.215, 0.61, 0.355, 1);
-  } */
-  /* @keyframes lineAnimation {
-    0% {
-      border-radius: 50%;
-    }
-    50% {
-    }
-    100% {
-      border-radius: 0;
-    }
-  }
-  @keyframes circleAnimation {
-    0% {
-      transform: scale(10);
-    }
-    70% {
-      transform: scale(0.9);
-    }
-    85% {
-      transform: scale(1.1);
-    }
-    100% {
-      transform: scale(1);
-    }
-  } */
-</style>

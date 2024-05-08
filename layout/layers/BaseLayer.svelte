@@ -36,6 +36,8 @@
   import appearance from "$lib/tidy/stores/appearance.store";
   import { detectTimeZone } from "$lib/tidy/utils/time.utils";
   import { appEvents } from "$lib/tidy/stores/notification.store";
+  import context from "$lib/tidy/stores/context.store";
+  import { Embed } from "$lib/tidy/types/context.type";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -93,8 +95,10 @@
       (<any>window).Intercom("update", {
         hide_default_launcher: true
       });
-    await parseEmbedToken();
-    await initializeData();
+    if (!$context.isSheet) {
+      await parseEmbedToken();
+      await initializeData();
+    }
     view.update(window.innerWidth, window.innerHeight);
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
@@ -170,24 +174,37 @@
       const appDetails = extractProduct(host);
       appStore.initializeProductInformation(appDetails);
       let subdomain = window?.location.host.split(".")[0];
-      let isSheet = $page.url?.searchParams?.get("isSheet");
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||
         import.meta.env.VITE_DEBUG_MODE === "true";
       if (isDebugMode) {
         $appStore.isDebugMode = true;
       }
-      //$appStore.launchContext = LaunchContext.EMBED;
+      const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
       let browserAgent = navigator?.userAgent;
       if (
         subdomain?.includes("embed") ||
-        $appStore.isDebugEmbedMode ||
+        isDebugEmbedMode ||
         browserAgent.includes("embed")
       ) {
+        $context.isEmbed = true;
         $appStore.launchContext = LaunchContext.EMBED;
       }
+      const isDebugHandheldMode =
+        import.meta.env.VITE_IS_DEBUG_HANDSET === "true";
+      if (browserAgent.includes("handset") || isDebugHandheldMode) {
+        $context.embed = Embed.HANDSET;
+      } else if (browserAgent.includes("tablet")) {
+        $context.embed = Embed.TABLET;
+      } else {
+        $context.embed = Embed.DESKTOP;
+      }
+      let isSheet = $page.url?.searchParams?.get("isSheet");
+      let sheetPath = $page.url?.searchParams?.get("spath");
       if (isSheet) {
+        $context.isSheet = true;
         $appStore.embedContext = EmbedContext.SHEET;
+        if (sheetPath) $view.sheetPath = sheetPath;
       }
     } catch (e) {
       postToParent({ type: "ERROR", message: e });

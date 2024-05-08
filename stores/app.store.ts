@@ -163,8 +163,6 @@ const isDebugMode =
 const isExperimentalMode =
   import.meta.env.DEV && import.meta.env.VITE_ISEXPERIMENTAL === "true";
 
-const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
-
 let themes = [AppSkin.Clean, AppSkin.Glassy];
 if (isDebugMode) themes = themes.concat([AppSkin.Vibrant, AppSkin.Futuristic]);
 export const appConstants = {
@@ -379,7 +377,6 @@ export const appStore = initAppStore({
   env: "dev",
   isDebugMode,
   isExperimentalMode,
-  isDebugEmbedMode,
   launchContext: LaunchContext.DEFAULT,
   embedContext: EmbedContext.NONE,
   appData: cachedAppData ?? defaultAppData

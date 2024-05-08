@@ -59,7 +59,7 @@
     ) {
       inputClasses += " focus:outline-aps1";
       if (style === TextInputStyle.OUTLINED)
-        inputClasses += ` border-none outline outline-2 outline-brs3 p-2`;
+        inputClasses += ` border-none outline outline outline-brs3 p-2`;
     } else {
       inputClasses += " focus:border-none focus:outline-none";
     }

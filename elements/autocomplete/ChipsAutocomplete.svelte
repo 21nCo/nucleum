@@ -191,10 +191,10 @@
     ) {
       defaultInputClasses += " bg-transparent";
     } else if (inputStyle === TextInputStyle.WITH_BACKGROUND) {
-      defaultInputClasses += ` bg-${backgroundColor} outline outline-1 p-2`;
+      defaultInputClasses += ` bg-${backgroundColor} outline p-2`;
     }
     if (inputStyle === TextInputStyle.OUTLINED)
-      defaultInputClasses += ` outline outline-1 p-2`;
+      defaultInputClasses += ` outline p-2`;
 
     if (size == Size.xl) defaultInputClasses += " text-h3";
     else if (size == Size.lg) defaultInputClasses += " text-base";
@@ -233,7 +233,7 @@
           toggleActiveState(true);
         }
       }}
-      class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline-2 {isFocusing
+      class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline {isFocusing
         ? 'outline-aps1'
         : 'outline-brs3'}"
     >

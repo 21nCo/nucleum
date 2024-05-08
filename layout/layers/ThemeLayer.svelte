@@ -11,11 +11,11 @@
   $: document.documentElement.style.fontSize = `${rootFontSize}px`;
   onMount(() => {
     refreshTheme();
-    const userPrefSub = userPreferences.subscribe(() => {
+    const appearanceSub = appearance.subscribe(() => {
       refreshTheme();
     });
     return () => {
-      userPrefSub();
+      appearanceSub();
     };
   });
 
@@ -37,20 +37,60 @@
       else defaultRootFontSize = 16;
     }
   }
+
+  /**
+   *
+   * Sending the colorscheme to the parent in embed context.
+   *
+   * Note: most of the colors are reassigned to new object instead of posting $appearance.colorScheme directly as the original json contains keys which are not accepted by the iOS app.
+   */
   function refreshTailwind() {
-    fontFamily = $appearance.skin === AppSkin.Clean ? "Avenir" : "Avenir";
-    //BlinkMacSystemFont Cantarell Nunito sans-serif
+    fontFamily = $appearance.typeface ?? "Avenir";
+    //BlinkMacSystemFont
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
     );
     if ($appearance?.colorScheme)
       postToParent({
-        colorscheme: JSON.stringify($appearance?.colorScheme),
+        colorscheme: JSON.stringify({
+          id: $appearance?.colorScheme?.id,
+          label: $appearance?.colorScheme?.label,
+          isDark: $appearance?.colorScheme?.isDark ?? false,
+          theme: $appearance?.colorScheme?.theme ?? "",
+          colors: {
+            bgs1: $appearance?.colorScheme?.colors.bgs1 ?? "",
+            bgs2: $appearance?.colorScheme?.colors.bgs2 ?? "",
+            bgs3: $appearance?.colorScheme?.colors.bgs3 ?? "",
+            bgs4: $appearance?.colorScheme?.colors.bgs4 ?? "",
+            fgs1: $appearance?.colorScheme?.colors.fgs1 ?? "",
+            fgs2: $appearance?.colorScheme?.colors.fgs2 ?? "",
+            fgs3: $appearance?.colorScheme?.colors.fgs3 ?? "",
+            fgs4: $appearance?.colorScheme?.colors.fgs4 ?? "",
+            aps1: $appearance?.colorScheme?.colors.aps1 ?? "",
+            aps2: $appearance?.colorScheme?.colors.aps2 ?? "",
+            aps3: $appearance?.colorScheme?.colors.aps3 ?? "",
+            ass1: $appearance?.colorScheme?.colors.ass1 ?? "",
+            ass2: $appearance?.colorScheme?.colors.ass2 ?? "",
+            ass3: $appearance?.colorScheme?.colors.ass3 ?? "",
+            brs1: $appearance?.colorScheme?.colors.brs1 ?? "",
+            brs2: $appearance?.colorScheme?.colors.brs2 ?? "",
+            brs3: $appearance?.colorScheme?.colors.brs3 ?? ""
+          }
+        }),
         rootFontSize
       });
   }
 </script>
+
+<svelte:head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Teachers:ital,wght@0,400..800;1,400..800&display=swap"
+    rel="stylesheet"
+  />
+</svelte:head>
 
 <div
   class="flex h-full w-full {$appearance?.skin == AppSkin.Glassy

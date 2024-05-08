@@ -82,4 +82,5 @@ export type AppearanceStore = CacheableStore & {
   darkColorSchemeId: string;
   userThemeSetting: Theme;
   systemTheme: Theme;
+  typeface: string;
 };

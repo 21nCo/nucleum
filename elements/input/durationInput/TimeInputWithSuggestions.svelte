@@ -3,10 +3,16 @@
   import { TimeUnit } from "$lib/tidy/types/time.type";
   import { createEventDispatcher } from "svelte";
   import TextInput from "../TextInput.svelte";
+  import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
+  import { borderClass } from "$lib/tidy/utils/theme.utils";
+  import appearance from "$lib/tidy/stores/appearance.store";
+  import { ColorStrength } from "$lib/tidy/types/appearance.type";
+  import { cn } from "$lib/tidy/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let units: TimeUnit[];
   export let duration: number;
   export let currentUnit: TimeUnit;
+  let isFocusing: boolean = false;
   let value = "";
   $: {
     if (currentUnit === TimeUnit.HOURS) {
@@ -115,10 +121,20 @@
   }
 </script>
 
-<TextInput
-  bind:value
-  on:keyup={onkeyup}
-  placeholder="Duration"
-  searchCallback={onsearch}
-  on:select={onselect}
-/>
+<div
+  class={cn("flex w-full rounded-l-md border p-2", {
+    [borderClass($appearance, ColorStrength.Strong)]: !isFocusing,
+    "border-aps1": isFocusing
+  })}
+>
+  <TextInput
+    bind:value
+    on:keyup={onkeyup}
+    on:focus={() => (isFocusing = true)}
+    on:blur={() => (isFocusing = false)}
+    style={TextInputStyle.PLAIN}
+    placeholder="Duration"
+    searchCallback={onsearch}
+    on:select={onselect}
+  />
+</div>

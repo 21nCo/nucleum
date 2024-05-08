@@ -15,6 +15,7 @@
   import Divider from "$lib/tidy/elements/Divider.svelte";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { Size } from "$lib/tidy/types/size.enum";
+  import context from "$lib/tidy/stores/context.store";
   let environment: string;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
@@ -55,8 +56,12 @@
     >
       <Icon icon="minus-circled" />
     </button>
-    <DebugInfoItem label="Launch context" value={$appStore.launchContext} />
+    <DebugInfoItem
+      label="Context"
+      value={` isEmbed: ${$context.isEmbed}, isSheet: ${$context.isSheet}, embed: ${$context.embed}`}
+    />
     <DebugInfoItem label="Host" value={window.location.host} />
+    <DebugInfoItem label="Agent" value={navigator?.userAgent} />
     <DebugInfoItem label="Path" value={window.location.pathname} />
     <DebugInfoItem
       label="Dimensions (W x H)"
@@ -74,6 +79,7 @@
         "  " +
         $appearance.colorScheme.tailwindSelector}
     />
+    <DebugInfoItem label="Typeface" value={$appearance.typeface} />
     <DebugInfoItem label="Portrait mode" value={$view.isPortrait} />
     <DebugInfoItem label="Dbo version" value={$dboVersion.version} />
     <DebugInfoItem

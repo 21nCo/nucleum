@@ -1,4 +1,6 @@
 <script lang="ts">
+  import modalEvent from "$lib/tidy/components/modal/modal.store";
+  import { AppEvent } from "$lib/tidy/types/event.enum";
   import ModalFooter from "../../components/modal/ModalFooter.svelte";
   import { toasts } from "../../stores/notification.store";
   import type { Toast } from "../../types/notification.type";
@@ -12,10 +14,12 @@
   <ToastNotification {notification} isShownAsModal={true} />
 {/if}
 <ModalFooter
+  isPreventAutoClose={true}
   primaryAction={{
     label: "Done",
     callback: async () => {
       notification?.callback?.();
+      modalEvent.hideSpecific(AppEvent.MOBILE_TOAST);
     }
   }}
 />

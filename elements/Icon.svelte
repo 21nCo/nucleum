@@ -285,6 +285,8 @@
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
         <Cross {variant} isCircled={false} />
+        {:else if icon === "cross-mini"}
+        <Cross isCircled={false} variant={IconVariant.Mini} />
       {:else if icon === "trash"}
         <Trash {variant} />
       {:else if icon === "pause"}

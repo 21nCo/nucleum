@@ -2,6 +2,7 @@
   import { isInEditMode } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
   import Button from "../button/Button.svelte";
+  import Switch from "./Switch.svelte";
   export let isReadModeVariant: boolean = false;
 </script>
 
@@ -14,9 +15,8 @@
     on:click={() => isInEditMode.toggle()}
   />
 {:else}
-  <Button
-    label={"edit: " + ($isInEditMode ? "on" : "off")}
-    size={Size.xs}
-    on:click={() => isInEditMode.toggle()}
-  />
+  <button class="rounded-full flex items-center gap-2 px-3 py-1">
+    <span class="text-fgs3 text-b2"> edit: </span>
+    <Switch bind:on={$isInEditMode} size={Size.sm} />
+  </button>
 {/if}

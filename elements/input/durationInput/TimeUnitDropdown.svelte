@@ -16,8 +16,8 @@
   let isUnitDropdownOpen: boolean;
   let selectedIndex: number = -1; // -1 means no item is selected
   let unitClasses: string =
-    "border-2 rounded-sm py-2 px-4 rounded-l-none min-w-[90px] cursor-pointer flex justify-center relative select-none " +
-    borderClass($appearance);
+    "border rounded-r-md py-2 px-4 min-w-[90px] cursor-pointer flex justify-center relative select-none " +
+    borderClass($appearance, ColorStrength.Strong);
   const containerId = "units-dropdown-container";
 
   const dispatch = createEventDispatcher();

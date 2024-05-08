@@ -10,10 +10,12 @@
   import { handleOAuthRedirection } from "$lib/tidy/utils/oauth.utils";
   import { onMount } from "svelte";
   $: os = detectSystemOS();
+  let debugMessage = "debug";
   onMount(async () => {
     let codeQueryParam = $page.url.searchParams.get("code");
     let token = $page.url.searchParams.get("token");
     if (token) {
+      debugMessage = "token present";
       const isSignup = $page.url?.searchParams?.get("signup");
       if (os == OS.IOS) {
         handleEmbedRedirection(token, isSignup === "true" ?? false);
@@ -27,10 +29,13 @@
     }
   });
   async function processOAuthRedirection(code: string) {
+    debugMessage = "code present. processing oauth";
     let response = await handleOAuthRedirection($page.params.slug, code);
     if (!response) return;
     const json = await response.json();
+    debugMessage = "json received";
     if (os == OS.IOS) {
+      debugMessage = "ios - embed redirection";
       handleEmbedRedirection(json.token, json.isSignup);
     } else {
       await account.signIn(json, { isFromSignup: json.isSignup });
@@ -45,4 +50,5 @@
   }
 </script>
 
-<AppLoadingView message="Signing in" />
+<!-- <AppLoadingView message="Signing in" /> -->
+<AppLoadingView message={debugMessage} />

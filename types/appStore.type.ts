@@ -6,8 +6,15 @@ export type AppStore = {
   appData: any;
   isDebugMode: boolean;
   isExperimentalMode: boolean;
-  isDebugEmbedMode: boolean;
+  /**
+   * !Deprecated
+   * Use context.store instead
+   */
   launchContext: LaunchContext;
+  /**
+   * !Deprecated
+   * Use context.store instead
+   */
   embedContext?: EmbedContext;
   pageMenu?: string[];
   player?: string;

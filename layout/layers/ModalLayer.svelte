@@ -12,7 +12,6 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
-  import WithYStack from "../paint/painters/YStack/WithYStack.svelte";
   import { onMount } from "svelte";
   import type { ModalEvent } from "$lib/tidy/types/popup.type";
   import { LaunchContext } from "$lib/tidy/types/appStore.type";
@@ -23,15 +22,15 @@
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import Icon from "$lib/tidy/elements/Icon.svelte";
   import { runAction } from "$lib/tidy/utils/utils";
-  import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/tidy/types/button.type";
   import { logger } from "$lib/tidy/stores/log.store";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { liveQuery } from "dexie";
   import { AlertType } from "$lib/tidy/types/notification.type";
+  import context from "$lib/tidy/stores/context.store";
+  import { Embed } from "$lib/tidy/types/context.type";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -53,16 +52,18 @@
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
-          pop: JSON.stringify(x)
+          modal: JSON.stringify(x)
         });
       } else if (
         $appStore.launchContext == LaunchContext.EMBED &&
         x.isShowAsSheet
       ) {
         postToParent({
-          pop: JSON.stringify({
+          modal: JSON.stringify({
             isShow: x.isShow,
-            path: x.path
+            path: x.path,
+            title: x.title,
+            params: x.componentParams
             // id: x.id TODO - send component params
           })
         });
@@ -166,7 +167,8 @@
     id={modal.path}
     isDismissable={modal.isDismissable ?? true}
     isShowOverlay={modal.isShowOverlay ?? true}
-    isUseDialog={modal.layout?.size != Size.full}
+    isUseDialog={modal.layout?.size != Size.full &&
+      $context.embed != Embed.HANDSET}
     size={modal.layout?.size ?? Size.md}
     orientation={modal.layout?.orientation}
   >

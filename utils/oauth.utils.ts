@@ -6,9 +6,10 @@ import type {
   OAuthProviderConfig
 } from "../types/oauth.type";
 import { openLink, performApiCall } from "./utils";
-import { LaunchContext } from "../types/appStore.type";
+import context from "../stores/context.store";
 
 export function initiateOAuth2Flow(provider: IdentityProvider) {
+  const ctx = get(context);
   const oAuthConfig: OAuthProviderConfig[] = get(appStore).appData?.oAuthConfig;
   console.log(oAuthConfig, window.location);
   if (!oAuthConfig || oAuthConfig.length < 1) return;
@@ -28,8 +29,11 @@ export function initiateOAuth2Flow(provider: IdentityProvider) {
     redirectUri = import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
     // redirectUri = "https://dev.pointron.io/r/apple";
     url += "&response_mode=form_post";
-  } else {
+  } else if (!ctx.isEmbed) {
     redirectUri = window.location.origin + "/r/" + config.oauth_slug;
+  } else {
+    redirectUri =
+      "https://" + import.meta.env.VITE_APP + "/r/" + config.oauth_slug;
   }
   if (config.code_challenge_method) {
     //TODO generate code challenge
@@ -38,8 +42,9 @@ export function initiateOAuth2Flow(provider: IdentityProvider) {
       config.code_challenge_method;
   }
   if (!redirectUri) return;
-  url += "&redirect_uri=" + encodeURIComponent(redirectUri);
-  if (get(appStore).launchContext == LaunchContext.EMBED) {
+  url += "&redirect_uri=" + redirectUri;
+  // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
+  if (ctx.isEmbed) {
     openLink(url);
   } else {
     goto(url);

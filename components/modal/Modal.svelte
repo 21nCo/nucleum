@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { appStore } from "$lib/tidy/stores/app.store";
   import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { confirmationNotification } from "$lib/tidy/stores/notification.store";
   import { fade } from "svelte/transition";
@@ -7,8 +6,6 @@
   import { generateUID } from "$lib/tidy/utils/utils";
   import { Size } from "$lib/tidy/types/size.enum";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import { EmbedContext, LaunchContext } from "$lib/tidy/types/appStore.type";
-  import { onMount } from "svelte";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
@@ -69,10 +66,12 @@
     confirmationNotification.reset();
   }
   function resolveSize() {
+    // if ($appStore.launchContext === LaunchContext.EMBED) return;
     if (orientation === Orientation.Vertical) {
       switch (size) {
         case Size.xs:
-          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
+          sizingClass =
+            "w-[18rem] md:w-[20rem] h-20 md:h-[20rem] min-h-[15rem]";
           break;
         case Size.sm:
           sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
@@ -158,10 +157,7 @@
         {id}
         class="rounded-md flex flex-col p-0 text-fgs1 shadow-xl {isShowOverlay
           ? 'bg-bgs1 overlay'
-          : 'bg-none'} {$appStore.launchContext === LaunchContext.EMBED &&
-        $appStore.embedContext === EmbedContext.SHEET
-          ? 'w-full h-full'
-          : sizingClass}"
+          : 'bg-none'} {sizingClass}"
       >
         <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
         <slot />
@@ -177,7 +173,9 @@
           <slot />
         </div>
       </div> -->
-      <slot />
+      <div class="bg-bgs1 w-full h-full">
+        <slot />
+      </div>
     {/if}
   </button>
 {/if}

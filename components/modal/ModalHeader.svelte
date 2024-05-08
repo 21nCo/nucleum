@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Icon from "$lib/tidy/elements/Icon.svelte";
+  import Button from "$lib/tidy/elements/button/Button.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { createEventDispatcher } from "svelte";
@@ -12,7 +12,7 @@
   <Text style={TextStyle.PANEL_HEADING} width="min-w-fit" content={title} />
   {#if isShowClose}
     <div class="w-full flex justify-end text-b2">
-      <Icon icon="cross" on:click={() => dispatch("close")} />
+      <Button icon="cross-circled" on:click={() => dispatch("close")} />
     </div>
   {/if}
 </div>

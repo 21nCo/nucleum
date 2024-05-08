@@ -14,11 +14,15 @@ import { userPreferences } from "./app.store";
 
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
-const seedAppearance = {
+const seedAppearance: AppearanceStore = {
   id: Item.appearance,
   dataType: StoreDataType.NON_PERSISTING,
   skin: AppSkin.Clean,
   theme: Theme.LIGHT,
+  userThemeSetting: Theme.LIGHT,
+  systemTheme: Theme.LIGHT,
+  typeface:
+    " Avenir, Montserrat, Teachers, Hanken Grotesk, Proxima Nova,  Poppins, Noto Sans, Nunito ",
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
   colorScheme:
@@ -26,6 +30,7 @@ const seedAppearance = {
     colorSchemes[0]
 };
 const cachedAppearance = retrieveLocally(Item.appearance) as AppearanceStore;
+if (cachedAppearance) cachedAppearance.typeface = seedAppearance.typeface;
 export const appearance = initAppearanceStore();
 
 function initAppearanceStore() {

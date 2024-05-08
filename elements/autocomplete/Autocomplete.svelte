@@ -84,7 +84,7 @@
     handleResultItemClick(detail);
   }
 
-  function focusOnInput() {
+  export function focus() {
     if (inputRef) inputRef.focus();
   }
 

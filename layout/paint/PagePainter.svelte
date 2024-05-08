@@ -8,7 +8,6 @@
     ThinModeBehavior
   } from "$lib/tidy/types/action.type";
   import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
-  import WithPanelOnLeft from "./painters/!WithPanelOnLeft.svelte";
   import {
     appStore,
     excludedPathsForRedirectionCheck
@@ -16,9 +15,9 @@
   import view from "$lib/tidy/stores/view.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import WithYStack from "./painters/YStack/WithYStack.svelte";
-  import WithYMenuThinMode from "./painters/YMenuThinMode/WithYMenuThinMode.svelte";
   import { performRedirectionChecks } from "$lib/tidy/utils/account.utils";
+  import { EmbedContext } from "$lib/tidy/types/appStore.type";
+  import context from "$lib/tidy/stores/context.store";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
   let currentComponent: Action | null;
@@ -44,6 +43,10 @@
 
   function resolveCurrentPath() {
     if (path) return path;
+    if ($context.isSheet) {
+      console.log("embedcontext, sheetPath", $view.sheetPath);
+      return $view.sheetPath ?? "";
+    }
     let currentPath = $page?.params?.route;
     //console.log({ currentPath, page: $page, appData: $appStore.appData, path });
     if (prefix) {
@@ -63,7 +66,12 @@
     currentComponent = resolveComponentFromPath(currentPath);
 
     if (!currentComponent) {
-      console.log({ currentPath, currentComponent });
+      console.log({
+        currentPath,
+        currentComponent,
+        homePath: $appStore.appData.homePath,
+        notFoundPath: $appStore.appData.notFoundPath
+      });
       if (currentPath == "") {
         view.gotoPath($appStore.appData.homePath ?? "/home");
       } else {
@@ -72,6 +80,8 @@
     }
     $view.currentComponent = currentComponent ?? undefined;
     if (currentComponent && currentComponent.isMenuHidden) {
+      $view.isMenuHidden = true;
+    } else if ($appStore.embedContext === EmbedContext.SHEET) {
       $view.isMenuHidden = true;
     }
     if (currentComponent && currentComponent.fn) {

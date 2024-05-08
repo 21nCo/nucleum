@@ -11,4 +11,5 @@ export type View = {
   currentPath: string;
   isMenuHidden: boolean;
   currentComponent?: Action;
+  sheetPath?: string;
 };

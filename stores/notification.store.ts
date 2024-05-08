@@ -8,9 +8,8 @@ import {
 import { postMessageToParent } from "../utils/embed.utils";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import view from "./view.store";
-import modalEvent from "../components/modal/modal.store";
 import { AppEvent } from "../types/event.enum";
-import { generateUID } from "../utils/utils";
+import { generateUID, runAction } from "../utils/utils";
 import type { AppEventType } from "../types/event.type";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
@@ -75,12 +74,7 @@ function initToastStore() {
       return n;
     });
     if (get(view).isPortrait) {
-      modalEvent.notify({
-        path: AppEvent.MOBILE_TOAST,
-        componentParams: { id: event.id },
-        isShow: true,
-        isDismissable: true
-      });
+      runAction(AppEvent.MOBILE_TOAST, { id: event.id });
     } else {
       timer = setTimeout(() => {
         update((n: Toast[]) => {
