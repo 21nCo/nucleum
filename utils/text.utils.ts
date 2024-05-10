@@ -105,3 +105,8 @@ export function truncateString(str: string, length: number) {
   if (str.length > length) return str.slice(0, length) + "...";
   return str;
 }
+
+export function enumToString(val: any, isProperCase: boolean = true) {
+  const str = val.toString().split("_").join(" ").split("-").join(" ");
+  return isProperCase ? properCase(str) : str;
+}

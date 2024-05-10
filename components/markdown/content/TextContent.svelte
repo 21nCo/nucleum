@@ -24,9 +24,10 @@
   export let isFocusing: boolean = false;
   $: {
     if (isHovering) assignPlaceholder();
-    else if (!isFocusing) placeholder = "";
+    else if (!isFocusing && !isFirstBlockAndIsEmpty) placeholder = "";
   }
   const mdStore = getMdStore(mdId);
+  const isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
   let textRef: any;
   let sizing = "";
   const defaultPlaceholder =
@@ -450,7 +451,7 @@
           }}
           on:blur={() => {
             isFocusing = false;
-            placeholder = "";
+            if (!isFirstBlockAndIsEmpty) placeholder = "";
             dispatch("blur");
           }}
           bind:placeholder

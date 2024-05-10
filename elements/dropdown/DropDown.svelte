@@ -1,33 +1,35 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import FormControlLabel from "$lib/tidy/elements/text/formLabel/FormControlLabel.svelte";
-  import {
-    DropDownStyle,
-    type DropdownGroup,
-    type DropdownItem
+  import type {
+    DropdownGroup,
+    DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import appearance from "$lib/tidy/stores/appearance.store";
-  import BackgroundElement from "../style/BackgroundElement.svelte";
   import Popover from "../popover/Popover.svelte";
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import TextInput from "../input/TextInput.svelte";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import type { PopoverOptions } from "$lib/tidy/types/popover.type";
+  import { InputStyle, type InputLabel } from "$lib/tidy/types/input.type";
+  import DropDownItemView from "./DropDownItemView.svelte";
+  import InputBaseElement from "../InputBaseElement.svelte";
   const dispatch = createEventDispatcher();
+  /**
+   * items to be displayed in the dropdown
+   */
   export let items: DropdownItem[];
   export let groups: DropdownGroup[] = [];
   export let value: string | number;
   export let parentBackgroundIndex: number = 0;
-  export let label: string | undefined = undefined;
-  export let info: string | undefined = undefined;
-  export let style: DropDownStyle = DropDownStyle.DEFAULT;
+  export let label: InputLabel | undefined = undefined;
+  export let style: InputStyle = InputStyle.BORDERED;
   export let isActive: boolean = false;
   let search: string = "";
   let searchInputRef: any;
   let popoverRef: any;
-  let isShowOptions: boolean = false;
+  let isOptionsVisible: boolean = false;
   let classList = "relative flex flex-col items-start gap-1 w-full";
   let popoverOptions: PopoverOptions = {
     element: "div",
@@ -86,29 +88,27 @@
   }}
   isPreventDefaultStyling={false}
   options={popoverOptions}
+  triggerClass={classList}
+  bind:isPopoverVisible={isOptionsVisible}
 >
-  <div class={classList} slot="trigger">
-    {#if label}
-      <FormControlLabel {label} info={{ body: info ?? "" }} />
-    {/if}
-    <button
-      class="flex w-full justify-between gap-4 items-center p-2 {isShowOptions
-        ? 'rounded-t-md'
-        : 'rounded-md'} {style === DropDownStyle.OUTLINED
-        ? 'border border-brs3'
-        : style === DropDownStyle.PANEL_SWITCH
-          ? 'text-h4 font-medium'
-          : ''}"
+  <slot slot="trigger" name="trigger">
+    <InputBaseElement
+      class="justify-between gap-4"
+      {style}
+      {label}
+      isActive={isOptionsVisible}
     >
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
         {#if selected.icon}
           <Icon icon={selected.icon} size={Size.sm} />
         {/if}
-        {selected?.label}
+        <span>
+          {selected?.label}
+        </span>
       </div>
-      <Icon icon={isShowOptions ? "chevup" : "chevdown"} size={Size.sm} />
-    </button>
-  </div>
+      <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
+    </InputBaseElement>
+  </slot>
   <svelte:fragment slot="popover">
     <div class="px-3 w-full">
       <TextInput
@@ -129,28 +129,16 @@
             {/if}
           </div>
         {/if}
-        {#each resolveItems(group.id, search) as item, index}
-          <button
-            class="text-left px-3 py-2 hover:bg-bgs2 w-full {item.disabled
-              ? 'text-fgs3'
-              : 'text-fgs1'} {index === items.length - 1
-              ? 'hover:rounded-b-md'
-              : ''}"
+        {#each resolveItems(group.id, search) as item}
+          <DropDownItemView
+            {item}
             on:click={() => {
               if (item.disabled) return;
               value = item.value;
-              isShowOptions = false;
               dispatch("select", item.value);
               popoverRef.hide();
             }}
-          >
-            <div class="flex gap-2">
-              {#if item.icon}
-                <Icon icon={item.icon} size={Size.sm} />
-              {/if}
-              {item.label}
-            </div>
-          </button>
+          />
         {/each}
       </div>
     {/each}

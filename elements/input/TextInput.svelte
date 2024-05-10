@@ -4,7 +4,6 @@
   import { createEventDispatcher, onMount } from "svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
   import { Persistance } from "$lib/tidy/stores/persistance";
-  import { bgClass, borderClass } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
@@ -12,31 +11,27 @@
   import Button from "../button/Button.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { debouncer } from "$lib/tidy/utils/utils";
-  import appearance from "$lib/tidy/stores/appearance.store";
   import InlineMarkdownTextInput from "$lib/tidy/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import Search from "$lib/tidy/icons/Search.svelte";
   import Icon from "../Icon.svelte";
-  import { ColorStrength } from "$lib/tidy/types/appearance.type";
+  import { InputStyle } from "$lib/tidy/types/input.type";
+  import InputBaseElement from "../InputBaseElement.svelte";
   export let value: any;
   export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
-
-  /**
-   * !Deprecated
-   * Use duration input instead
-   */
-  export let units: string[] | undefined = undefined;
-  let unitClasses: string = "outline outline-bgs2 outline-2 rounded-md";
-  let currentUnit: string | undefined = undefined;
-
-  export let style: TextInputStyle = TextInputStyle.OUTLINED;
+  export let style: TextInputStyle | InputStyle = InputStyle.BORDERED;
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
   export let info: string | undefined = undefined;
   export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
+  /**
+   * @deprecated - Use TextSearchInput instead
+   */
   export let searchStoreId: string | undefined = undefined;
+  /**
+   * @deprecated - Use TextSearchInput instead
+   */
   export let searchCallback: Function | undefined = undefined;
   $: isSearchEnabled = searchStoreId || searchCallback;
   export let id: string = "";
@@ -56,6 +51,7 @@
   let previousValue: string = "";
   let currentValue: string;
   let isSearchInProgress: boolean = false;
+  let isFocused: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
   }
@@ -68,7 +64,8 @@
   }
   let inputRef: any;
   export let isDisabled = false;
-  let inputClasses: string = "text-input w-full";
+  let inputClasses: string =
+    "text-input w-full bg-transparent focus:outline-none focus:border-none";
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
   let debounceTimeoutId: any;
@@ -79,89 +76,11 @@
   });
 
   function resolveStyles() {
-    /**
-     * !Deprecated
-     * Units are deprecated. Use duration input instead
-     */
-    if (!currentUnit) currentUnit = units ? units[0] : "";
-
     let styles: string[] = [];
-    styles = [
-      ...(resolveBackground() ?? []),
-      ...(resolveBorder() ?? []),
-      ...(resolvePadding() ?? [])
-    ];
     if (icon) {
       styles.push("pl-8");
     }
     return styles;
-    /**
-     *text size propagated from parent - css
-     */
-    // if (size == Size.xl) inputClasses += " text-h3";
-    // else if (size == Size.lg) inputClasses += " text-h4";
-    // else if (size == Size.md)
-    //   inputClasses +=
-    //     " text-base " +
-    //     (width
-    //       ? width
-    //       : labelOrientation === Orientation.Vertical
-    //         ? "max-w-md"
-    //         : "max-w-[16rem]");
-    // else if (size == Size.sm) inputClasses += " text-b2";
-    // else if (size == Size.xs) inputClasses += " text-b3";
-
-    function resolveBackground() {
-      if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
-        return ["bg-transparent"];
-      } else if (style === TextInputStyle.WITH_BACKGROUND) {
-        return [bgClass($appearance, 0)];
-      }
-    }
-
-    function resolveBorder() {
-      if (
-        style == TextInputStyle.WITH_BACKGROUND &&
-        units &&
-        units.length > 0
-      ) {
-        return ["rounded-r-none"];
-      } else if (style === TextInputStyle.WITH_BACKGROUND) {
-        //TODO - check if border required
-        return ["rounded-md", "focus:border-aps1", "focus:outline-none"];
-      } else if (style === TextInputStyle.OUTLINED) {
-        return [
-          "rounded-md",
-          "border",
-          borderClass($appearance, ColorStrength.Strong),
-          "focus:border-aps1",
-          "focus:outline-none"
-        ];
-      } else {
-        return ["focus:border-none", "focus:outline-none"];
-      }
-    }
-    function resolvePadding() {
-      if (style === TextInputStyle.PLAIN) return;
-      if (size === Size.md || size === Size.lg) {
-        return ["p-2"];
-      } else {
-        return ["p-1"];
-      }
-    }
-  }
-
-  /**
-   * !Deprecated
-   * Use duration input instead
-   */
-  function onUnitClick() {
-    if (units?.length == 2) {
-      if (currentUnit == units[0]) currentUnit = units[1];
-      else currentUnit = units[0];
-    }
-    //todo - if more than 2 units - show dropdown
-    dispatch("unitChange", { unit: currentUnit });
   }
   function onChange() {
     dispatch("input", { value });
@@ -262,10 +181,12 @@
 </script>
 
 <FormControlLabelWrapper
-  {label}
-  info={info ? { body: info } : infoParams}
-  {isRequired}
-  orientation={labelOrientation}
+  props={{
+    label: label ?? "",
+    tooltip: info ? { body: info } : infoParams,
+    orientation: labelOrientation,
+    isRequiredMarker: isRequired
+  }}
 >
   {#if type === "password"}
     <div>
@@ -317,28 +238,45 @@
         />
       </div>
     {:else}
-      <input
-        {id}
-        class={inputClasses}
-        bind:value
-        on:change|stopPropagation
-        on:keydown
-        on:keyup|stopPropagation={isSearchEnabled
-          ? handleKeyUpForSearch
-          : handleKeyUp}
-        on:blur
-        on:focus
-        on:input|stopPropagation={onChange}
-        type="text"
-        {placeholder}
-        disabled={isDisabled}
-        bind:this={inputRef}
-      />
-      {#if icon}
-        <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
-          <Icon {icon} size={Size.sm} />
-        </div>
-      {/if}
+      <InputBaseElement
+        style={style === TextInputStyle.PLAIN
+          ? InputStyle.PLAIN
+          : style === TextInputStyle.OUTLINED
+            ? InputStyle.BORDERED
+            : style === TextInputStyle.WITH_BACKGROUND
+              ? InputStyle.FILLED
+              : style}
+        isActive={isFocused}
+      >
+        <input
+          {id}
+          class={inputClasses}
+          bind:value
+          on:change|stopPropagation
+          on:keydown
+          on:keyup|stopPropagation={isSearchEnabled
+            ? handleKeyUpForSearch
+            : handleKeyUp}
+          on:blur={() => {
+            isFocused = false;
+            dispatch("blur");
+          }}
+          on:focus={() => {
+            isFocused = true;
+            dispatch("focus");
+          }}
+          on:input|stopPropagation={onChange}
+          type="text"
+          {placeholder}
+          disabled={isDisabled}
+          bind:this={inputRef}
+        />
+        {#if icon}
+          <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
+            <Icon {icon} size={Size.sm} />
+          </div>
+        {/if}
+      </InputBaseElement>
     {/if}
 
     {#if value && isSearchEnabled && isShowSearchResults}
@@ -346,7 +284,10 @@
         class="search-results bg-bgs1 shadow-md border border-brs2 overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
         5
           ? 'max-h-60 h-60'
-          : 'h-48'} {style === TextInputStyle.PLAIN ? 'mt-[0.75rem]' : 'mt-1'}"
+          : 'h-48'} {style === InputStyle.PLAIN ||
+        style === TextInputStyle.PLAIN
+          ? 'mt-[0.75rem]'
+          : 'mt-1'}"
       >
         <div class="flex flex-col flex-grow items-center w-full">
           {#if searchResults && searchResults.length > 0}
@@ -386,24 +327,7 @@
       </div>
     {/if}
   {/if}
-  <!-- {#if isEnableSaveFeedback && isShowSaveFeedback}
-      <div class="absolute right-0 text-b2 text-fgs2">saved</div>
-    {/if}
-    {#if units}
-      <div class={unitClasses}>
-        <button on:click={onUnitClick}>
-          {currentUnit}
-        </button>
-      </div>
-    {/if}
-    {#if $$slots && $$slots.default}
-      <div class="ml-4">
-        <slot />
-      </div>
-    {/if} -->
 </FormControlLabelWrapper>
-
-<!-- placeholder={placeholder ?? ""} -->
 
 <style>
   input::placeholder {

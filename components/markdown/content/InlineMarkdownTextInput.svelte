@@ -139,7 +139,7 @@
   }
 
   /**
-   * !Deprecated
+   * @deprecated
    * T1 of saving caret position
    */
   function insertCaretMarker() {
@@ -284,7 +284,7 @@
     }
   }
   /**
-   * !Deprecated
+   * @deprecated
    * Restore cursor position using comment marker
    */
   function restoreCursorPosition() {
@@ -409,7 +409,7 @@
   }
 
   /**
-   * !Deprecated
+   * @deprecated
    * @param element
    * @param index
    */

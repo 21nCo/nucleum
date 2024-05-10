@@ -36,14 +36,12 @@ export enum VerticalSwitcherStyle {
   BAR_V2
 }
 
+/**
+ * @deprecated
+ * Use SelectItem instead
+ */
 export type SwitchItem = {
   label: string;
   icon?: string;
   isDisabled?: boolean;
 };
-
-export enum OptionSelectorStyle {
-  TRAIN,
-  OUTLINE,
-  CHECK_CIRCLE
-}

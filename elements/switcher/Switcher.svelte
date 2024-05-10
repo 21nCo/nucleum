@@ -16,6 +16,7 @@
   import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
   import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import type { InputLabel } from "$lib/tidy/types/input.type";
 
   const dispatch = createEventDispatcher();
   export let items: string[];
@@ -25,11 +26,24 @@
     SelectionItemActiveStyle.UNKNOWN;
   export let parentBackgroundIndex: number = 1;
   export let style: SwitcherStyle = SwitcherStyle.HorizontalAndWraps;
+  export let labelProps: InputLabel | undefined = undefined;
+  /**
+   * @deprecated - use label props instead
+   */
   export let label: string | undefined = undefined;
+  /**
+   * @deprecated - use label props instead
+   */
   export let info: string | undefined = undefined;
+  /**
+   * @deprecated - use label props instead
+   */
   export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
+  /**
+   * @deprecated - use label props instead
+   */
   export let labelOrientation: Orientation = Orientation.Vertical;
   let backgroundColor: string = "";
   let classList: string;
@@ -85,9 +99,11 @@
 </script>
 
 <FormControlLabelWrapper
-  {label}
-  info={info ? { body: info } : infoParams}
-  orientation={labelOrientation}
+  props={labelProps ?? {
+    label: label ?? "",
+    tooltip: info ? { body: info } : infoParams,
+    orientation: labelOrientation
+  }}
 >
   {#if selectionStyle === SelectionItemActiveStyle.ACCENTROUNDEDBACKGROUND}
     <div class={classList}>
