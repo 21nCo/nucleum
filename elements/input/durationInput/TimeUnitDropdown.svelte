@@ -81,7 +81,7 @@
 
   <!-- In the below div, we added 2px along with 100% to overcome 2px outline, which is not included in the dimension of the element, similar reason for addition of 2px in right value-->
   <div
-    class="units-dropdown absolute bg-bgs2 top-[calc(100%+2px)] -right-[2px] w-full rounded-sm flex flex-col gap-1 z-[40000]"
+    class="units-dropdown absolute bg-bgs2 top-[calc(100%+2px)] -right-[2px] w-full rounded-sm flex flex-col gap-1 z-[200]"
   >
     <!-- the function under on:keydown listener is not working as expected right, need to fix that (when navigated to a specific unit through a tab and hit enter then we want to update the unit to that) -->
     {#if units.length > 1 && isUnitDropdownOpen}

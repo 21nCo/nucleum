@@ -1,5 +1,8 @@
 import type { Size } from "./size.enum";
 
+/**
+ * @deprecated - use InputLabel instead
+ */
 export type FormLabelInfoTooltip = {
   body: string;
   link?: string;

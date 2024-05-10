@@ -268,7 +268,7 @@ export function performApiCall(
 }
 
 /**
- * !Deprecated - Use performApiCall
+ * @deprecated - Use performApiCall
  * @param endpoint
  * @param method
  * @param body
@@ -293,6 +293,12 @@ export function copyToClipboard(text: string) {
 }
 /**
  * Checks if the event target is outside the target element and performs the action if true.
+ *
+ * Note: pop-overlay, input are excluded for the following reasons.
+ *
+ * pop-overlay is getting triggered when space is pressed on the input field.
+ * input is excluded to prevent the action from being triggered when the input field is clicked.
+ *
  * @param event the event object
  * @param target the target element
  * @param action the action to be performed
@@ -302,6 +308,12 @@ export function actIfClickedOutside(
   target: string | string[],
   action: any
 ) {
+  if (!(event.target instanceof Element)) return;
+  if (
+    event.target.classList.contains("pop-overlay") ||
+    event.target.nodeName === "INPUT"
+  )
+    return;
   const targets = Array.isArray(target) ? target : [target];
   const clickedOutsideAllTargets = targets.every((t) => {
     const nodeTarget = document.querySelector("#" + t);
@@ -457,3 +469,6 @@ export function debouncer(func: any, timeout: number) {
     }, timeout);
   };
 }
+
+export const activeResourceFilter = (x: any) =>
+  !x.isArchived && !x.trashInformation;

@@ -7,5 +7,5 @@
 
 <div class="flex w-full gap-2 items-center {width}">
   <input type="checkbox" bind:checked />
-  <FormControlLabel {label} />
+  <FormControlLabel props={{ label }} />
 </div>

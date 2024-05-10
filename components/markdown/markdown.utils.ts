@@ -1,7 +1,8 @@
 import type {
   Block,
   MdStore,
-  ListBlockWithChildren
+  ListBlockWithChildren,
+  Markdown
 } from "$lib/tidy/types/md.type";
 import type { ListChild, ListContent, Node } from "$lib/tidy/types/node.type";
 import { deepCopy } from "$lib/tidy/utils/obj.utils";
@@ -216,4 +217,11 @@ export function replaceSymbolPatterns(text: string) {
     html = html.replace(pattern.regex, pattern.replacement);
   });
   return html;
+}
+
+export function isEmptyMd(md: Markdown) {
+  return (
+    md.blocks.length === 0 ||
+    ("body" in md.blocks[0] && md.blocks[0].body === "")
+  );
 }

@@ -15,8 +15,14 @@ export type DropdownGroup = {
   info?: FormLabelInfoTooltip;
 };
 
+/**
+ * @deprecated - Use InputStyle instead
+ */
 export enum DropDownStyle {
   DEFAULT,
   OUTLINED,
+  /**
+   * @deprecated - Use PanelSwitcher instead
+   */
   PANEL_SWITCH
 }

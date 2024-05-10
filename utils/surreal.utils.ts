@@ -11,7 +11,7 @@ export function surrealUnixTimestamp(date?: string | Date) {
 
 export function resolveRefreshQuery(id: string, dataType: StoreDataType) {
   if (dataType === StoreDataType.KVO)
-    return `array::first(select * from ${id});`;
+    return `array::first(select * from kv:${id});`;
   else if (dataType === StoreDataType.FIR) return `select * from ${id};`;
   else if (dataType === StoreDataType.IFR) {
     return `select * from ${id} where modifiedAt > $since;`;
@@ -27,12 +27,13 @@ function mutationMapEntry(recordId: string) {
 
 export function resolveMutationQuery(
   type: PersistanceActionType,
-  record: string
+  record: string,
+  userId?: string
 ) {
   let modifiedQuery: string = "";
   switch (type) {
     case PersistanceActionType.DELETE:
-      modifiedQuery = `DELETE ${record};`;
+      modifiedQuery = `return fn::global::resource::delete(${record}, ${userId});`;
       break;
     case PersistanceActionType.INSERT:
       modifiedQuery = `INSERT INTO ${record} $data RETURN id;`;
@@ -59,7 +60,9 @@ export function replaceParams(query: string, params: any) {
   for (const key in params) {
     let replaceWith;
     if (typeof params[key] === "object")
-      replaceWith = JSON.stringify(params[key]);
+      replaceWith = JSON.stringify(params[key], (key, value) =>
+        value === undefined ? null : value
+      );
     else if (typeof params[key] === "string") replaceWith = `"${params[key]}"`;
     else replaceWith = params[key];
     query = query.replaceAll("$" + key, `${replaceWith}`);

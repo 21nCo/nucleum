@@ -408,6 +408,23 @@ function initMarkdownStore() {
         return n;
       });
       return text;
+    },
+    isFirstBlockAndIsEmpty: (id: string) => {
+      let isFirstBlock = false;
+      let isEmpty = false;
+      update((n) => {
+        const firstBlock = n.blocks[0];
+        isFirstBlock = firstBlock.id === id;
+        if (isFirstBlock) {
+          if (firstBlock.type === NodeType.SIMPLE_TEXT) {
+            isEmpty = !firstBlock.body;
+          } else if (firstBlock.type === NodeType.LIST) {
+            isEmpty = !firstBlock.children || !firstBlock.children.length;
+          }
+        }
+        return n;
+      });
+      return isFirstBlock && isEmpty;
     }
     //Not required for simple markdown editor - can save blocks instead of nested md
     // fetchAsNestedMd: () => {

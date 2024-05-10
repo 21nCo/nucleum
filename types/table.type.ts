@@ -1,8 +1,5 @@
-import type {
-  DropDownStyle,
-  DropdownGroup,
-  DropdownItem
-} from "./dropdownItem.type";
+import type { DropdownGroup, DropdownItem } from "./dropdownItem.type";
+import type { InputStyle } from "./input.type";
 
 export type TableColumn = {
   /**
@@ -14,6 +11,7 @@ export type TableColumn = {
 } & (
   | IconActionColumn
   | DropdownActionColumn
+  | TextInputColumn
   | CustomColumn
   | (BaseColumn & {
       align?: "left" | "center" | "right";
@@ -29,11 +27,16 @@ type BaseColumn = {
   width?: number;
 };
 
+export type TextInputColumn = BaseColumn & {
+  type: TableCellType.TEXT_INPUT;
+  placeholder?: string | ((row: any) => string);
+};
+
 export type DropdownActionColumn = BaseColumn & {
   type: TableCellType.DROPDOWN;
   options: DropdownItem[];
   groups?: DropdownGroup[];
-  style?: DropDownStyle;
+  style?: InputStyle;
 };
 
 export type CustomColumn = BaseColumn & {

@@ -173,7 +173,7 @@ export const appConstants = {
 };
 const seedDboVersion = {
   version: 0,
-  id: "kv:" + Item.dboVersion,
+  id: Item.dboVersion,
   dataType: StoreDataType.KVO
 };
 const locallyPersistedDboVersion = retrieveLocally(Item.dboVersion);
@@ -210,12 +210,12 @@ function initDboVersionStore() {
   };
 }
 
-const userPreferencesId = "kv:" + Item.globalPreferences;
+// const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 
 export const seedUserPreferences: UserGlobalPreferences = {
-  id: userPreferencesId,
+  id: Item.globalPreferences,
   dataType: StoreDataType.KVO,
   nickName: "",
   dayStartHour: 0,
@@ -271,7 +271,7 @@ function initUserPreferences() {
   } = writable<UserGlobalPreferences>(
     locallyPersistedPreferences ?? seedUserPreferences
   );
-  dataManager.retrieveCache(userPreferencesId).then((x) => {
+  dataManager.retrieveCache(Item.globalPreferences).then((x) => {
     if (x) {
       setRaw(x as UserGlobalPreferences);
       previousValue = JSON.stringify(x);
@@ -286,10 +286,10 @@ function initUserPreferences() {
     //   id: userPreferencesId
     // });
     dataManager.performMutation(
-      userPreferencesId,
+      Item.globalPreferences,
       {
         ...n,
-        id: userPreferencesId
+        id: Item.globalPreferences
       },
       PersistanceActionType.MERGE
     );
@@ -312,8 +312,9 @@ function initUserPreferences() {
       if (data.isAnonymousAnalyticsEnabled === undefined)
         data.isAnonymousAnalyticsEnabled = true;
       if (!data.dataType) data.dataType = StoreDataType.KVO;
-      set(data);
-      cache(data);
+      const val = { ...data, id: Item.globalPreferences };
+      set(val);
+      cache(val);
     },
     loadSeedData: () => {
       set(seedUserPreferences);

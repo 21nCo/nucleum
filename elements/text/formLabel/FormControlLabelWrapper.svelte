@@ -1,21 +1,20 @@
 <script lang="ts">
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
+  import type { InputLabel } from "$lib/tidy/types/input.type";
+  import { cn } from "$lib/tidy/utils/ui.utils";
   import FormControlLabel from "./FormControlLabel.svelte";
-
-  export let label: string | undefined = undefined;
-  export let info: FormLabelInfoTooltip | undefined = undefined;
-  export let isRequired: boolean = false;
-  export let orientation: Orientation = Orientation.Vertical;
+  export let props: InputLabel | undefined = undefined;
 </script>
 
 <div
-  class="relative flex w-full gap-2 {orientation === Orientation.Vertical
-    ? 'flex-col'
-    : 'flex-row justify-between'}"
+  class={cn("relative flex w-full", {
+    "flex-col gap-2": props?.orientation === Orientation.Vertical,
+    "flex-row justify-between items-center":
+      props?.orientation === Orientation.Horizontal
+  })}
 >
-  {#if label}
-    <FormControlLabel {label} {info} {isRequired} />
+  {#if props?.label}
+    <FormControlLabel {props} />
   {/if}
   <slot />
 </div>
