@@ -29,6 +29,7 @@ import {
 import { CacheManager } from "./cache";
 import { logger } from "./log.store";
 import { prefixTable } from "../utils/text.utils";
+import type { Table } from "dexie";
 export const dataManager = init();
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
@@ -63,18 +64,30 @@ function init() {
       data: any,
       query?: string
     ) => {
+      let localPersistancePromise;
       const dexie = get(dataManager).cacheSource.dexie;
       data = { id: prefixTable(generateUID(), item), ...data };
       // @ts-ignore
-      const table = dexie[item];
+      const table: Table = dexie[item];
       if (action === PersistanceActionType.DELETE) {
-        table.delete(data.id);
+        // table.delete(data.id);
+        localPersistancePromise = table.update(data.id, {
+          trashInformation: {
+            deletedAt: new Date().toISOString(),
+            deletedBy: get(account)?.userInfo?.id
+          }
+        });
       } else if (action === PersistanceActionType.CREATE) {
-        table.add(data);
+        localPersistancePromise = table.add(data);
       } else if (action === PersistanceActionType.UPDATE) {
-        table.update(data.id, data);
+        localPersistancePromise = table.put(data);
+      } else if (action === PersistanceActionType.MERGE) {
+        localPersistancePromise = table.update(data.id, data);
       }
-      performMutation(item, data, action, query, true);
+      return Promise.all([
+        localPersistancePromise,
+        performMutation(item, data, action, query, true)
+      ]);
     },
     search: async (storeId: string, query: string) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
@@ -210,6 +223,7 @@ async function performMutation(
   if (!get(account).isLoggedIn) return;
   const dm = get(dataManager);
   let mutatingResources: string[] = [];
+  let isKVStore: boolean = false;
   if (isMutatingSelfOnly) {
     const mutatedAt = surrealUnixTimestamp();
     dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
@@ -220,10 +234,11 @@ async function performMutation(
     if (!store) return;
     const storeData = get(store);
     mutatingResources = storeData.mutatingResources;
+    if (storeData.dataType === StoreDataType.KVO) {
+      isKVStore = true;
+    }
     if (!mutatingResources) {
-      if (storeData.dataType === StoreDataType.KVO) {
-        mutatingResources = [storeId.split(":")[1]];
-      } else mutatingResources = [storeId];
+      mutatingResources = [storeId];
     }
   }
   const defferedStores = propagateToEagerStores(mutatingResources, data);
@@ -232,7 +247,18 @@ async function performMutation(
   let mutationQuery: string = "";
   if (action === PersistanceActionType.CUSTOM_QUERY && query)
     mutationQuery = query;
-  else mutationQuery = resolveMutationQuery(action, data?.id);
+  else {
+    let id = data?.id;
+    if (isKVStore && !storeId.includes("kv:")) {
+      id = "kv:" + storeId;
+      data.id = id;
+    }
+    mutationQuery = resolveMutationQuery(
+      action,
+      id,
+      get(account)?.userInfo?.id
+    );
+  }
   let dbFullQuery: string = `${mutationQuery};`;
   if (refreshQueryForDeferredStores) {
     dbFullQuery += `${refreshQueryForDeferredStores}`;

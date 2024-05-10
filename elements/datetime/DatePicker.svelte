@@ -5,10 +5,14 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import Popover from "../popover/Popover.svelte";
   import { formatDate } from "$lib/tidy/utils/time.utils";
+  import { InputStyle, type InputLabel } from "$lib/tidy/types/input.type";
+  import InputBaseElement from "../InputBaseElement.svelte";
   import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date;
+  export let style: InputStyle = InputStyle.BORDERED;
+  export let label: InputLabel | undefined = undefined;
   export let variant:
     | "wide-v1"
     | "wide"
@@ -16,8 +20,12 @@
     | "icon"
     | "use-time-period-picker" = "wide";
   let popoverRef: any;
+  /**
+   * @deprecated
+   */
   let isPopoverActive: boolean = false;
   let backgroundColor: string;
+  let isPopoverVisible: boolean = false;
   let dateInput: HTMLInputElement;
   onMount(() => {
     let colors = resolveBackgroundClass(parentBackgroundIndex);
@@ -28,6 +36,7 @@
     date = newDate;
     dispatch("change", { date });
   }
+  $: console.log({ date });
 </script>
 
 {#if variant == "wide-v1"}
@@ -40,16 +49,20 @@
     />
   </label>
 {:else if variant == "wide"}
-  <Popover bind:this={popoverRef}>
-    <button
-      slot="trigger"
-      class="flex items-center gap-2 min-w-fit rounded-md bg-bgs2 p-2 w-40 focus:outline focus:outline-aps1"
-    >
-      <Icon icon="calendar" size={Size.md} />
-      <span class="text-fgs2 text-base">
-        {formatDate(date)}
-      </span>
-    </button>
+  <Popover bind:this={popoverRef} bind:isPopoverVisible triggerClass="w-full">
+    <slot:fragment name="trigger" slot="trigger">
+      <InputBaseElement
+        class="gap-2 min-w-fit"
+        {style}
+        {label}
+        isActive={isPopoverVisible}
+      >
+        <Icon icon="calendar" size={Size.md} />
+        <span class="text-fgs2 text-base">
+          {formatDate(date)}
+        </span>
+      </InputBaseElement>
+    </slot:fragment>
     <slot:fragment slot="popover">
       <AbsoluteTimeRangePopover
         isDatePickerMode={true}

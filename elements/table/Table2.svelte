@@ -1,6 +1,6 @@
 <script lang="ts">
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import { DropDownStyle } from "$lib/tidy/types/dropdownItem.type";
+  import { InputStyle } from "$lib/tidy/types/input.type";
   import { TableCellType, type TableColumn } from "$lib/tidy/types/table.type";
   import Button from "../button/Button.svelte";
   import DropDown from "../dropdown/DropDown.svelte";
@@ -74,7 +74,15 @@
   >
     {#each columns as column}
       {#if column.type === TableCellType.TEXT_INPUT}
-        <TextInput bind:value={row[column.key]} />
+        <TextInput
+          bind:value={row[column.key]}
+          placeholder={"placeholder" in column &&
+          typeof column.placeholder === "string"
+            ? column.placeholder
+            : "placeholder" in column && column.placeholder instanceof Function
+              ? column.placeholder(row)
+              : ""}
+        />
       {:else if column.type === TableCellType.TOGGLE}
         <Switch
           bind:on={row[column.key]}
@@ -86,7 +94,7 @@
           items={column.options}
           groups={column.groups}
           bind:value={row[column.key]}
-          style={column.style ?? DropDownStyle.OUTLINED}
+          style={column.style ?? InputStyle.BORDERED}
         />
       {:else if column.type === TableCellType.ACTION}
         <Button icon={column.key} on:click={() => resolveAction(column, row)} />

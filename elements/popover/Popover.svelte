@@ -9,7 +9,7 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   /**
-   * !Deprecated
+   * @deprecated
    * Use options instead.
    */
   export let placement: Direction = Direction.Down;
@@ -31,7 +31,11 @@
     options.parentBgIndex = defaultOptions.parentBgIndex;
   let triggerRef: HTMLElement;
   let popOverRef: HTMLElement;
-  let isPopoverVisible = false;
+  /**
+   * Export only for read-only purpose to check if the popover is visible.
+   * Use toggle() to toggle the visibility. Use show() and hide() to show and hide the popover. Changing this value directly will not affect the popover visibility.
+   */
+  export let isPopoverVisible = false;
   let containerId = generateUID();
   export function toggle() {
     isPopoverVisible = !isPopoverVisible;
@@ -60,7 +64,9 @@
     };
   }
   function onWindowClick(x: MouseEvent) {
-    if (options.id) actIfClickedOutside(x, [containerId, options.id], hide);
+    if (!options.id || !isPopoverVisible) return;
+    // console.log({ x, containerId, id: options.id });
+    actIfClickedOutside(x, [containerId, options.id], hide);
   }
 </script>
 

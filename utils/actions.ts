@@ -1,3 +1,6 @@
+/**
+ * @deprecated
+ */
 import { appEvents } from "$lib/tidy/stores/notification.store";
 import view from "$lib/tidy/stores/view.store";
 import { AppEvent } from "$lib/tidy/types/event.enum";

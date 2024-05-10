@@ -1,4 +1,5 @@
 import type { MemotronItemBase } from "$lib/memotronlib/types/common.type";
+import type { PropertyValue } from "$lib/memotronlib/types/type.type";
 import type { DbRecordBase } from "$lib/tidy/types/dbrecord.type";
 import type { Markdown } from "./md.type";
 
@@ -240,3 +241,8 @@ export type NodeMetadata = NodeMetadataCapturedAtClient & {
 };
 
 export type NodeLocalRecord = NodeBase;
+
+export type NodeProperty = {
+  id: string;
+  value: PropertyValue | null;
+};

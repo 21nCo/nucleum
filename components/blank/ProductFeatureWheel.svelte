@@ -5,7 +5,6 @@
     type FeatureWheelGroup,
     type FeatureWheelContemporary
   } from "$lib/tidy/types/featureWheel.type";
-  import { OptionSelectorStyle } from "$lib/tidy/types/switcher.enum";
   import SubAtomLogo from "$lib/tidy/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/tidy/utils/text.utils";
   import FeatureWheel from "../featureWheel/FeatureWheel.svelte";
@@ -13,6 +12,7 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import DropDown from "$lib/tidy/elements/dropdown/DropDown.svelte";
+  import { OptionSelectorStyle } from "$lib/tidy/types/select.type";
   export let isShowInfoPanel = true;
   export let mode = FeatureWheelMode.DEFAULT;
   export let product: string = "memotron";
@@ -118,12 +118,12 @@
       <div class="flex flex-col w-full">
         <OptionSelector
           label="Mode"
-          items={[
-            { label: FeatureWheelMode.DEFAULT },
+          options={[
+            { value: FeatureWheelMode.DEFAULT },
 
-            { label: FeatureWheelMode.PROGRESS },
+            { value: FeatureWheelMode.PROGRESS },
             {
-              label: FeatureWheelMode.CONTEMPORARY
+              value: FeatureWheelMode.CONTEMPORARY
             }
           ]}
           style={OptionSelectorStyle.CHECK_CIRCLE}
