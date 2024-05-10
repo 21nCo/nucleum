@@ -49,7 +49,7 @@
     );
   }
   export function hide() {
-    console.log("hide", { id: options.id });
+    // console.log("hide", { id: options.id });
     isPopoverVisible = false;
     if (popOverRef) popOverRef.style.display = "none";
   }

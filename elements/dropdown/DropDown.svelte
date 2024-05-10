@@ -44,7 +44,6 @@
   groups = groups.sort((a, b) => a.order - b.order);
   let filtered = groups;
   $: {
-    console.log("isActive ", isActive);
     if (isActive) {
       classList = "relative flex flex-col items-start gap-1 w-full";
       classList +=
@@ -54,7 +53,7 @@
     classList = classList;
   }
   $: selected = items.find((x) => x.value === value) ?? items[0];
-  $: console.log("filtered", filtered);
+  // $: console.log("filtered", filtered);
   // $: if (search.length > 0) {
   //   filtered = groups.map((group) => {
   //     return {

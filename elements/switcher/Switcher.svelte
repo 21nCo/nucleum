@@ -1,3 +1,4 @@
+<!-- @deprecated - use OptionSelector instead -->
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
   import {

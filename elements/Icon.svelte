@@ -104,6 +104,7 @@
   import GlobeAlt from "../icons/GlobeAlt.svelte";
   import DocumentText from "../icons/DocumentText.svelte";
   import appearance from "../stores/appearance.store";
+  import Funnel from "../icons/Funnel.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -285,7 +286,7 @@
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
         <Cross {variant} isCircled={false} />
-        {:else if icon === "cross-mini"}
+      {:else if icon === "cross-mini"}
         <Cross isCircled={false} variant={IconVariant.Mini} />
       {:else if icon === "trash"}
         <Trash {variant} />
@@ -443,6 +444,8 @@
         <GlobeAlt {variant} />
       {:else if icon === "document-text"}
         <DocumentText {variant} />
+      {:else if icon === "funnel"}
+        <Funnel {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

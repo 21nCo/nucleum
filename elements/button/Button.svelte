@@ -107,7 +107,7 @@
             classList += " h-10 gap-2 text-b2";
             break;
           case Size.xs:
-            classList += " h-6 gap-1 text-b4";
+            classList += " h-7 gap-1 text-b3";
             break;
           case Size.xxs:
             classList += " h-6 gap-1 text-b5";

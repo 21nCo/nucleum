@@ -105,9 +105,9 @@
     const darkModeMediaQuery = window.matchMedia(
       "(prefers-color-scheme: dark)"
     );
-    appearance.modifySystemTheme(darkModeMediaQuery.matches);
+    appearance.setSystemTheme(darkModeMediaQuery.matches);
     darkModeMediaQuery.addEventListener("change", (e) => {
-      appearance.modifySystemTheme(e.matches);
+      appearance.setSystemTheme(e.matches);
     });
 
     return () => {
@@ -123,6 +123,7 @@
     if (e.event === AppEvent.USER_LOGIN) {
       if (e.value) dataManager.initialize();
     } else if (e.event === AppEvent.USER_SIGNUP) {
+      //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
       userPreferences.loadSeedData();
       refreshTimeZone(true);
       dataManager.initialize();

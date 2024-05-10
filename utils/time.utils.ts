@@ -126,7 +126,7 @@ export function determineTimePeriod(period: TimePeriod) {
   let end = new Date();
   let title;
   if (
-    period.value.type === TimePeriodType.START_END &&
+    period.value.type === TimePeriodType.ABSOLUTE &&
     period.value instanceof Object &&
     "start" in period.value &&
     "end" in period.value

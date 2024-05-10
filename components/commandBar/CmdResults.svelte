@@ -17,7 +17,7 @@
   $: if (search) {
     filteredActions = search
       ? allActions.filter((x) =>
-          x.label.toLowerCase().includes(search.toLowerCase())
+          x.cmdLabel.toLowerCase().includes(search.toLowerCase())
         )
       : allActions;
     selectedAction = filteredActions?.[0]?.action;
@@ -70,7 +70,7 @@
 
   function loadAllActions() {
     const rawActions = $actions;
-    allActions = rawActions.filter(
+    const primitive = rawActions.filter(
       (action) =>
         action.label &&
         !action.isInactive &&
@@ -81,14 +81,26 @@
         ) &&
         (action.cmdBarPreCondition ? action.cmdBarPreCondition() : true)
     );
-    allActions = allActions.map((x) => {
-      if (x.cmdLabel) {
-        return x;
+    primitive.forEach((action) => {
+      if (!action.cmdLabel) {
+        action.cmdLabel = action.label;
       }
-      return {
-        ...x,
-        cmdLabel: x.label
-      };
+      if (action.cmdLabel && typeof action.cmdLabel === "string") {
+        allActions.push(action);
+      } else if (
+        action.cmdLabel &&
+        typeof action.cmdLabel != "string" &&
+        action.cmdLabel.length > 0
+      ) {
+        allActions.push(
+          ...action.cmdLabel.map((x) => {
+            return {
+              ...action,
+              cmdLabel: x
+            };
+          })
+        );
+      }
     });
   }
   function loadDefaultFilteredActions() {

@@ -83,7 +83,7 @@
       valueFormatter: (d: any) => d
     },
     legend: {
-      enabled: true,
+      enabled: false,
       alignment: Alignments.CENTER,
       clickable: true,
       truncation: {

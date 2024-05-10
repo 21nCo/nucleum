@@ -19,6 +19,7 @@ const seedAppearance: AppearanceStore = {
   dataType: StoreDataType.NON_PERSISTING,
   skin: AppSkin.Clean,
   theme: Theme.LIGHT,
+  isSyncWithSystem: true,
   userThemeSetting: Theme.LIGHT,
   systemTheme: Theme.LIGHT,
   typeface:
@@ -46,6 +47,7 @@ function initAppearanceStore() {
     userPreferences.setAppearance({
       skin: store.skin,
       theme: store.theme,
+      isSyncWithSystem: store.isSyncWithSystem,
       lightColorSchemeId: store.lightColorSchemeId,
       darkColorSchemeId: store.darkColorSchemeId
     });
@@ -100,7 +102,6 @@ function initAppearanceStore() {
     setTheme: (skin: AppSkin, colorSchemeId: string) => {
       let cs = colorSchemes.find((cs) => cs.id == colorSchemeId);
       if (!cs) cs = colorSchemes[0];
-      console.log("setting theme", { skin, cs });
       if (!cs) return;
       update((a) => {
         const modified = { ...a, skin, colorScheme: cs as ColorScheme };
@@ -111,15 +112,18 @@ function initAppearanceStore() {
     setColorScheme: (colorSchemeId: string) => {
       let cs = colorSchemes.find((cs) => cs.id == colorSchemeId);
       if (!cs) return;
-      console.log("setting color scheme", { cs });
       update((a) => {
-        let modified = {
-          ...a,
-          colorScheme: cs as ColorScheme
-        };
-        if (a.theme === Theme.LIGHT)
-          modified.lightColorSchemeId = colorSchemeId;
-        if (a.theme === Theme.DARK) modified.darkColorSchemeId = colorSchemeId;
+        let modified;
+        if (a.isSyncWithSystem && a.systemTheme != a.userThemeSetting) {
+          modified = a;
+        } else {
+          modified = {
+            ...a,
+            colorScheme: cs as ColorScheme
+          };
+        }
+        if (!cs.isDark) modified.lightColorSchemeId = colorSchemeId;
+        else modified.darkColorSchemeId = colorSchemeId;
         persist(modified);
         return modified;
       });
@@ -127,7 +131,7 @@ function initAppearanceStore() {
     modifyUserThemeSetting: (theme: Theme) => {
       update((a) => {
         let modified: AppearanceStore = { ...a, userThemeSetting: theme };
-        if (theme != Theme.SYSTEM) {
+        if (!a.isSyncWithSystem) {
           modified = switchTheme(theme, modified);
         } else {
           modified = switchTheme(a.systemTheme, modified);
@@ -136,11 +140,23 @@ function initAppearanceStore() {
         return modified;
       });
     },
-    modifySystemTheme: (isDark: boolean) => {
+    modifySyncWithSystem: (isSync: boolean) => {
       update((a) => {
-        const theme = isDark ? Theme.DARK : Theme.LIGHT;
+        let modified = { ...a, isSyncWithSystem: isSync };
+        if (isSync) {
+          modified = switchTheme(a.systemTheme, modified);
+        } else {
+          modified = switchTheme(a.userThemeSetting, modified);
+        }
+        persist(modified);
+        return modified;
+      });
+    },
+    setSystemTheme: (isDark: boolean) => {
+      const theme = isDark ? Theme.DARK : Theme.LIGHT;
+      update((a) => {
         let modified: AppearanceStore = { ...a, systemTheme: theme };
-        if (a.userThemeSetting == Theme.SYSTEM) {
+        if (a.isSyncWithSystem) {
           modified = switchTheme(theme, modified);
         }
         persist(modified);

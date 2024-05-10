@@ -13,6 +13,7 @@
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
+  export let isExpandToFullWidth: boolean = false;
   let backgroundColor: string = "";
   let classList: string = "flex ";
   onMount(() => {
@@ -50,7 +51,9 @@
 </script>
 
 <div
-  class="relative {style === PanelSwitcherStyle.BAR ? 'w-full' : 'max-w-fit'}"
+  class="relative {style === PanelSwitcherStyle.BAR && isExpandToFullWidth
+    ? 'w-full'
+    : 'max-w-fit'}"
 >
   <div class={classList}>
     {#each items as item, index}

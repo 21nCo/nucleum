@@ -4,8 +4,8 @@
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import Popover from "../popover/Popover.svelte";
-  import TimePeriodPicker from "./TimePeriodPicker.svelte";
   import { formatDate } from "$lib/tidy/utils/time.utils";
+  import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date;
@@ -51,7 +51,7 @@
       </span>
     </button>
     <slot:fragment slot="popover">
-      <TimePeriodPicker
+      <AbsoluteTimeRangePopover
         isDatePickerMode={true}
         bind:selectedDate={date}
         on:change={() => {
