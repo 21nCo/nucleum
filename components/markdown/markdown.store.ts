@@ -33,13 +33,13 @@ import type {
 } from "$lib/tidy/types/md.type";
 
 export const emptyBlock: Block = {
-  type: NodeType.SIMPLE_TEXT,
+  contentType: NodeType.SIMPLE_TEXT,
   body: "",
   id: generateUID()
 };
 export const emptyNode: Node = {
   children: [],
-  type: NodeType.NON_NODULAR_MARKDOWN,
+  contentType: NodeType.NON_NODULAR_MARKDOWN,
   body: {
     blocks: [emptyBlock]
   },
@@ -113,20 +113,20 @@ function initMarkdownStore() {
       ) {
         newBlock = {
           id: generateUID(),
-          type: params.blockType ?? NodeType.SIMPLE_TEXT,
+          contentType: params.blockType ?? NodeType.SIMPLE_TEXT,
           body: ""
         } as Block<TextContent | LayoutContent | StructuralContent>;
       } else if (params.blockType === NodeType.LIST) {
         newBlock = {
           id: generateUID(),
-          type: NodeType.LIST,
+          contentType: NodeType.LIST,
           listType: params.listType ?? ListType.UNORDERED,
           body: ""
         };
       } else {
         newBlock = {
           id: generateUID(),
-          type: NodeType.SIMPLE_TEXT,
+          contentType: NodeType.SIMPLE_TEXT,
           body: ""
         };
       }
@@ -161,7 +161,7 @@ function initMarkdownStore() {
       );
       const newBlock: Block<StructuralContent> = {
         id: generateUID(),
-        type: blockType
+        contentType: blockType
       };
       n.blocks = [
         ...n.blocks.slice(0, contextBlockIndex),
@@ -214,7 +214,7 @@ function initMarkdownStore() {
         const currentBlock = blocks[contextBlockIndex];
         let newBlock: Block<ListContent> = {
           id: generateUID(),
-          type: NodeType.LIST,
+          contentType: NodeType.LIST,
           listType: ListType.UNORDERED,
           body: "",
           children: []
@@ -262,7 +262,7 @@ function initMarkdownStore() {
     update((n) => {
       const block = n.blocks.find((b) => b.id === id);
       if (block && "body" in block) {
-        block.type = params.blockType;
+        block.contentType = params.blockType;
         if (params.blockType === NodeType.LIST) {
           (block as ListContent).listType =
             params.listType ?? ListType.UNORDERED;
@@ -288,7 +288,7 @@ function initMarkdownStore() {
       update((n) => {
         const currentBlockIndex = n.blocks.findIndex((b) => b.id === id);
         let previousSibling = n.blocks[currentBlockIndex - 1];
-        if (previousSibling.type != NodeType.LIST) return n;
+        if (previousSibling.contentType != NodeType.LIST) return n;
         const currentBlock = { ...n.blocks[currentBlockIndex] };
         previousSibling = moveAsChild(
           currentBlock,
@@ -416,9 +416,9 @@ function initMarkdownStore() {
         const firstBlock = n.blocks[0];
         isFirstBlock = firstBlock.id === id;
         if (isFirstBlock) {
-          if (firstBlock.type === NodeType.SIMPLE_TEXT) {
+          if (firstBlock.contentType === NodeType.SIMPLE_TEXT) {
             isEmpty = !firstBlock.body;
-          } else if (firstBlock.type === NodeType.LIST) {
+          } else if (firstBlock.contentType === NodeType.LIST) {
             isEmpty = !firstBlock.children || !firstBlock.children.length;
           }
         }

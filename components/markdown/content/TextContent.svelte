@@ -53,9 +53,9 @@
    * Checks if the block is of type code or quote and prevents the insertion of a new block on pressing enter - inserts a new line instead
    */
   $: isPreventInsertOnEnter =
-    block.type === NodeType.CODE || block.type === NodeType.QUOTE;
+    block.contentType === NodeType.CODE || block.contentType === NodeType.QUOTE;
   $: {
-    switch (block.type) {
+    switch (block.contentType) {
       case NodeType.HEADING1:
         sizing = "text-h1 font-bold";
         blockSpecificPlaceholder = "Heading 1";
@@ -151,7 +151,7 @@
     for (const func of functions) {
       if (func()) return;
     }
-    const isRelayOperations = block.type === NodeType.LIST;
+    const isRelayOperations = block.contentType === NodeType.LIST;
     // context === BlockContext.LIST_CHILD
 
     if (event.key === "Tab") {
@@ -183,7 +183,7 @@
     listType?: ListType
   ) {
     if (
-      block.type === NodeType.SIMPLE_TEXT &&
+      block.contentType === NodeType.SIMPLE_TEXT &&
       caretPositionT2 &&
       caretPositionT2.endContainer.nodeType === 3 &&
       caretPositionT2.endContainer.nodeValue &&
@@ -230,7 +230,7 @@
         if (block.body.startsWith(shortcut)) {
           block.body = block.body.replace(shortcut, "");
           textRef.replace(shortcut, "");
-          block.type = type;
+          block.contentType = type;
           return true;
         } else {
           return handleEscShortcutForSecondaryLines(shortcut, type);
@@ -244,7 +244,7 @@
           block.body = "";
           textRef.set("");
           //TODO - handling structural block insertion for list
-          if (block.type === NodeType.LIST || !block.id) return false;
+          if (block.contentType === NodeType.LIST || !block.id) return false;
           mdStore.insertStructualBlock(block.id, type as StructuralNodeType);
           return true;
         }
@@ -317,11 +317,11 @@
      */
     function handleBackspaceAtBeginOfLine() {
       if (event.key != "Backspace" || !(caretPosition === 0)) return false;
-      if (block.type === NodeType.LIST) {
+      if (block.contentType === NodeType.LIST) {
         // context === BlockContext.LIST_CHILD
         mdStore.convert(block.id!, { blockType: NodeType.SIMPLE_TEXT });
-      } else if (block.type != NodeType.SIMPLE_TEXT) {
-        block.type = NodeType.SIMPLE_TEXT;
+      } else if (block.contentType != NodeType.SIMPLE_TEXT) {
+        block.contentType = NodeType.SIMPLE_TEXT;
       } else if (block.body != "") {
         //TODO - Move the content to the previous block, delete the current block and focus the previous block
         mdStore.focusPreviousSibling(block.id);
@@ -424,7 +424,7 @@
       <div
         id={block.id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none py-2 {sizing} {block.type ===
+        class="w-full h-full outline-none py-2 {sizing} {block.contentType ===
         NodeType.QUOTE
           ? 'px-2'
           : 'px-1'}"
@@ -436,7 +436,7 @@
         class={cn(
           sizing,
           "w-full flex justify-start",
-          block.type === NodeType.QUOTE ? "pl-2" : ""
+          block.contentType === NodeType.QUOTE ? "pl-2" : ""
         )}
       >
         <InlineMarkdownTextInput
@@ -458,7 +458,7 @@
         />
       </div>
     {/if}
-    {#if block.type === NodeType.QUOTE}
+    {#if block.contentType === NodeType.QUOTE}
       <div class="absolute top-0 left-0 h-full w-0.5 bg-aps1"></div>
     {/if}
   </div>

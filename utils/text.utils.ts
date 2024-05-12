@@ -41,7 +41,7 @@ export function frameEmailFromParts(parts: EmailParts) {
 export function generateMarkdownText(blocks: Block[]) {
   return blocks
     .map((b) => {
-      switch (b.type) {
+      switch (b.contentType) {
         case NodeType.SIMPLE_TEXT:
           b.body = b.body.replaceAll(/\n/g, "  \n");
           b.body = b.body.replaceAll("<div><br></div>", "  \n");
