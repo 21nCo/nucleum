@@ -1,6 +1,7 @@
 import type { MemotronItemBase } from "$lib/memotronlib/types/common.type";
-import type { PropertyValue } from "$lib/memotronlib/types/type.type";
+import type { PropertyValue, Type } from "$lib/memotronlib/types/type.type";
 import type { DbRecordBase } from "$lib/tidy/types/dbrecord.type";
+import type { Avatar } from "./avatar.type";
 import type { Markdown } from "./md.type";
 
 export type Node = NodeBase &
@@ -27,11 +28,17 @@ export type NodeThumbnail = NodeBase &
 export type NodeBase = Omit<MemotronItemBase, "label"> & {
   label?: string;
   generatedLabel?: string;
-  avatar?: string;
-  createdBy: string;
+  avatar?: Avatar;
+  properties?: NodeProperty[];
+  /**
+   * Type of the node - type:sometype
+   */
+  type?: string;
 };
 
-export type ActiveNodeStore = Node & {};
+export type ActiveNodeStore = Node & {
+  associatedType: Type;
+};
 
 export type NodeContent =
   | TextContent
@@ -44,12 +51,12 @@ export type NodeContent =
   | OtherContent;
 
 export type TextContent = {
-  type: TextNodeType;
+  contentType: TextNodeType;
   body: string; //| SpanContent[];
 };
 
 export type ListContent = {
-  type: NodeType.LIST;
+  contentType: NodeType.LIST;
   listType: ListType;
   body: string;
   children?: ListChild[];
@@ -61,32 +68,32 @@ export type ListChild<T = NodeContent> = T & {
 };
 
 export type StructuralContent = {
-  type: StructuralNodeType;
+  contentType: StructuralNodeType;
 };
 
 export type LayoutContent = {
-  type: LayoutNodeType;
+  contentType: LayoutNodeType;
   body: any;
 };
 
 export type MediaContent = {
-  type: MediaNodeType;
+  contentType: MediaNodeType;
   body: MediaBody;
 };
 
 export type NonNodularMarkdownContent = {
-  type: NodeType.NON_NODULAR_MARKDOWN;
+  contentType: NodeType.NON_NODULAR_MARKDOWN;
   body: Markdown;
 };
 
 export type ClipContent = {
-  type: ClipType;
+  contentType: ClipType;
   body: any;
 };
 
 //TODO - temp
 export type OtherContent = {
-  type: OtherNodeType;
+  contentType: OtherNodeType;
   body: any;
 };
 
@@ -96,16 +103,6 @@ export enum ListType {
   CHECKLIST = "CHECKLIST",
   TOGGLELIST = "TOGGLELIST"
 }
-
-export type TextNodeType =
-  | NodeType.SIMPLE_TEXT
-  | NodeType.QUOTE
-  | NodeType.CODE
-  | NodeType.HEADING1
-  | NodeType.HEADING2
-  | NodeType.HEADING3
-  | NodeType.HEADING4
-  | NodeType.HEADING5;
 
 export type LayoutNodeType =
   | NodeType.GRID
@@ -194,6 +191,27 @@ export enum NodeType {
   PDF_CLIP = "PDF_CLIP",
   VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP"
 }
+
+export const TextNodeTypeList = [
+  NodeType.SIMPLE_TEXT,
+  NodeType.QUOTE,
+  NodeType.CODE,
+  NodeType.HEADING1,
+  NodeType.HEADING2,
+  NodeType.HEADING3,
+  NodeType.HEADING4,
+  NodeType.HEADING5
+];
+
+export type TextNodeType =
+  | NodeType.SIMPLE_TEXT
+  | NodeType.QUOTE
+  | NodeType.CODE
+  | NodeType.HEADING1
+  | NodeType.HEADING2
+  | NodeType.HEADING3
+  | NodeType.HEADING4
+  | NodeType.HEADING5;
 
 export type MediaBody = {
   url: string;

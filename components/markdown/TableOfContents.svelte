@@ -23,12 +23,13 @@
   function refresh(blocks: Block[]) {
     headingBlocks = blocks
       .filter(
-        (block: Block) => block.type.startsWith("HEADING") && "body" in block
+        (block: Block) =>
+          block.contentType.startsWith("HEADING") && "body" in block
       )
       .map((block: Block) => ({
         content: block.body,
         id: "toc-" + block.id,
-        HEADING: Number(block.type.slice(-1))
+        HEADING: Number(block.contentType.slice(-1))
       }));
     if (!(headingBlocks.length > 0)) return;
     isHeadingAvailable = true;
@@ -37,9 +38,6 @@
 
 {#if isHeadingAvailable}
   <div class="w-full text-left">
-    <div>
-      <Text content="Table of Contents" style={TextStyle.SECTION_HEADING} />
-    </div>
     <div class="sticky top-10 pt-4">
       {#each headingBlocks as block}
         <a

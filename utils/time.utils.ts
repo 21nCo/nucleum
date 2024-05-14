@@ -405,3 +405,13 @@ export function attachTimeToDate(date: Date, time: string) {
   date.setMinutes(parseInt(minutes));
   return date;
 }
+
+export function formatDatetime(
+  userPreferences: UserGlobalPreferences,
+  date: Date
+) {
+  console.log("formatDatetime", userPreferences, date);
+  const formattedDate = formatDate(date);
+  const formattedTime = formatTime(userPreferences, date);
+  return `${formattedDate} ${formattedTime}`;
+}
