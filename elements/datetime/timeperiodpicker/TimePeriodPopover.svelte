@@ -12,6 +12,7 @@
   import PanelSwitcher from "../../switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import AbsoluteTimeRangePopover from "../absolute/AbsoluteTimeRangePopover.svelte";
+  import { OptionSelectorStyle } from "$lib/tidy/types/select.type";
   const dispatch = createEventDispatcher();
   export let period: TimePeriod;
   let selectedPeriodType = "Relative";
@@ -34,7 +35,7 @@
 <div class="flex flex-col items-center gap-4 w-full">
   <PanelSwitcher
     items={["Relative", "Absolute"]}
-    bind:selected={selectedPeriodType}
+    bind:value={selectedPeriodType}
     style={PanelSwitcherStyle.TRAIN}
     size={Size.sm}
     on:switch={(event) => {
@@ -58,13 +59,14 @@
     }}
   />
   <OptionSelector
-    label="Choose time scale"
+    labelProps={{ label: "Choose time scale" }}
+    style={OptionSelectorStyle.TRAIN}
     size={Size.sm}
-    items={scales.map((scale) => ({
-      label: scale
+    options={scales.map((scale) => ({
+      value: scale
     }))}
     bind:selected={selectedScale}
-    on:switch={() => {
+    on:select={() => {
       period.scale = selectedScale;
       if (selectedPeriodType === "Relative") {
         previouslySelectedRelative.scale = selectedScale;

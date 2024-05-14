@@ -3,7 +3,6 @@
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import Popover from "../popover/Popover.svelte";
   import { formatDate } from "$lib/tidy/utils/time.utils";
   import { InputStyle, type InputLabel } from "$lib/tidy/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
@@ -14,8 +13,8 @@
   export let style: InputStyle = InputStyle.BORDERED;
   export let label: InputLabel | undefined = undefined;
   export let variant:
-    | "wide-v1"
     | "wide"
+    | "wide-center"
     | "inline"
     | "icon"
     | "use-time-period-picker" = "wide";
@@ -39,30 +38,23 @@
   $: console.log({ date });
 </script>
 
-{#if variant == "wide-v1"}
-  <label class="block max-w-md w-full rounded-md">
-    <input
-      type="date"
-      on:input={updateDate}
-      value={date.toISOString().substr(0, 10)}
-      class="mt-1 block w-full {backgroundColor} py-1 px-2 rounded-md"
-    />
-  </label>
-{:else if variant == "wide"}
-  <Popover bind:this={popoverRef} bind:isPopoverVisible triggerClass="w-full">
-    <slot:fragment name="trigger" slot="trigger">
-      <InputBaseElement
-        class="gap-2 min-w-fit"
-        {style}
-        {label}
-        isActive={isPopoverVisible}
-      >
-        <Icon icon="calendar" size={Size.md} />
-        <span class="text-fgs2 text-base">
-          {formatDate(date)}
-        </span>
-      </InputBaseElement>
-    </slot:fragment>
+{#if variant == "wide" || variant == "wide-center"}
+  <InputBaseElement
+    class="gap-2 min-w-fit {variant === 'wide-center'
+      ? 'justify-center'
+      : 'justify-start'}"
+    {style}
+    {label}
+    isFocused={isPopoverVisible}
+    popoverOptions={{
+      isSpanToTriggerWidth: false,
+      parentBgIndex: parentBackgroundIndex
+    }}
+  >
+    <Icon icon="calendar" size={Size.md} />
+    <span class="text-fgs2 text-base">
+      {formatDate(date)}
+    </span>
     <slot:fragment slot="popover">
       <AbsoluteTimeRangePopover
         isDatePickerMode={true}
@@ -73,7 +65,7 @@
         }}
       />
     </slot:fragment>
-  </Popover>
+  </InputBaseElement>
 {:else}
   <div class="relative">
     <input

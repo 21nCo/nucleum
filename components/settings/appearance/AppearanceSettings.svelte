@@ -69,7 +69,13 @@
   <SwitchInput
     bind:checked={$appearance.isSyncWithSystem}
     on:change={switchTheme}
-    label="Sync with system"
+    isExpanded={true}
+    label={{
+      label: "Sync with system",
+      tooltip: {
+        body: "Enable this to automatically switch between light and dark themes based on your system settings."
+      }
+    }}
   />
   {#if $appearance.skin === AppSkin.Clean && !$appearance.isSyncWithSystem}
     <Switcher

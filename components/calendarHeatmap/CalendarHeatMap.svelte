@@ -108,7 +108,7 @@
   {#if variant === CalendarHmVariant.PLAIN}
     <!-- <Icon icon="chevup" on:click={prev} /> -->
   {:else if variant === CalendarHmVariant.YEARS_SWITCH}
-    <HeaderV1 {provider} />
+    <HeaderV1 {provider} {options} />
   {:else if variant === CalendarHmVariant.SCALE_SWITCH}
     <HeaderV2
       on:switch={viewChangeHandler}

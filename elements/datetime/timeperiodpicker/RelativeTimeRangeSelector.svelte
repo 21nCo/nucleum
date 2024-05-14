@@ -7,7 +7,7 @@
   import { timePeriodLabel } from "$lib/tidy/utils/time.utils";
   import { createEventDispatcher } from "svelte";
   import DropDown from "../../dropdown/DropDown.svelte";
-  import { DropDownStyle } from "$lib/tidy/types/dropdownItem.type";
+  import { InputStyle } from "$lib/tidy/types/input.type";
   const dispatch = createEventDispatcher();
   export let scale: TimeScale;
   export let value: TimePeriodValue;
@@ -37,8 +37,8 @@
         value: item
       }))}
       bind:value={value.param}
-      style={DropDownStyle.OUTLINED}
-      label="Choose time period"
+      style={InputStyle.BORDERED}
+      label={{ label: "Choose time period" }}
       on:select={() => {
         dispatch("change", value.param);
       }}

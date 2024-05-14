@@ -221,7 +221,7 @@
 
 <div id={wrapperId} class="relative w-full">
   <div class="relative flex flex-col gap-1 w-full items-start">
-    <FormControlLabel {label} forId={id} />
+    <FormControlLabel props={{ label }} forId={id} />
     <div
       tabindex="0"
       on:click={() => {
@@ -233,9 +233,9 @@
           toggleActiveState(true);
         }
       }}
-      class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline {isFocusing
-        ? 'outline-aps1'
-        : 'outline-brs3'}"
+      class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline-none border {isFocusing
+        ? 'border-aps1'
+        : 'border-brs3'}"
     >
       {#each selected as value}
         <Chip on:click hideCloseIcon variant={chipsVariant}>{value.label}</Chip>

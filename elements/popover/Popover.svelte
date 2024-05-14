@@ -23,7 +23,8 @@
     isPreventDefaultStyling: false,
     parentBgIndex: 0,
     placement: Direction.Down,
-    isSpanToTriggerWidth: false
+    isSpanToTriggerWidth: false,
+    offsetInPx: 2
   };
   export let options: PopoverOptions = defaultOptions;
   if (!options.id) options.id = defaultOptions.id;
@@ -49,7 +50,8 @@
       triggerRef,
       popOverRef,
       options.placement ?? placement ?? Direction.Down,
-      options.isSpanToTriggerWidth ?? false
+      options.isSpanToTriggerWidth ?? false,
+      options.offsetInPx ?? 2
     );
   }
   export function hide() {
@@ -73,10 +75,11 @@
 <button
   id={containerId}
   bind:this={triggerRef}
-  on:click={() => {
+  on:click={(e) => {
     if (!isPreventDefault) {
       toggle();
     }
+    if (isPopoverVisible) e.stopPropagation();
   }}
   class={triggerClass}
 >
@@ -85,9 +88,13 @@
 <svelte:element
   this={options.element ?? "div"}
   id={options.id}
-  class={cn(options.class, bgClass($appearance, options.parentBgIndex), {
-    "shadow-md border border-brs2 rounded-md": !isPreventDefaultStyling
-  })}
+  class={cn(
+    options.class,
+    bgClass($appearance, options.parentBgIndex ? options.parentBgIndex - 1 : 0),
+    {
+      "shadow-md border border-brs2 rounded-md": !isPreventDefaultStyling
+    }
+  )}
   bind:this={popOverRef}
   use:onPopoverMount
 >

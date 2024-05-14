@@ -67,6 +67,7 @@
     pie: {
       alignment: Alignments.CENTER,
       labels: {
+        enabled: true,
         formatter: pieLabelFormatter
       }
     },
@@ -83,12 +84,12 @@
       valueFormatter: (d: any) => d
     },
     legend: {
-      enabled: false,
+      enabled: true,
       alignment: Alignments.CENTER,
       clickable: true,
       truncation: {
         // threshold: 50,
-        numCharacter: 20
+        numCharacter: 10
       }
     },
     toolbar: {
@@ -131,7 +132,7 @@
         ...additionalOptions,
         curve: "curveMonotoneX"
       };
-    } else if (type === ChartType.PIE) {
+    } else if (type === ChartType.PIE || type === ChartType.DOUGHNUT) {
       options = {
         ...defaultOptions,
         ...additionalOptions,
@@ -256,7 +257,8 @@
   {:else if type === ChartType.AREA}
     <AreaChart {data} {options} />
   {:else if type === ChartType.PIE}
-    <!-- <PieChart {data} {options} /> -->
+    <PieChart {data} {options} />
+  {:else if type === ChartType.DOUGHNUT}
     <DonutChart {data} {options} />
   {:else if type === ChartType.GUAGE}
     <GaugeChart {data} {options} />

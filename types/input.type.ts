@@ -1,4 +1,5 @@
 import type { Orientation } from "./direction.enum";
+import type { PopoverOptions } from "./popover.type";
 import type { Size } from "./size.enum";
 
 export enum InputStyle {
@@ -19,4 +20,9 @@ export type InputLabelInfoToolTip = {
   action?: string;
   actionText?: string;
   size?: Size;
+};
+
+export type PopoverInputOptions = PopoverOptions & {
+  isPreventDefault?: boolean;
+  isPreventDefaultStyling?: boolean;
 };

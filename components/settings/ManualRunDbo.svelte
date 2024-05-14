@@ -7,7 +7,11 @@
   let isDboUpdateInProgress: boolean = false;
 </script>
 
-<TextInput type="number" bind:value label="Set last run changeId" />
+<TextInput
+  type="number"
+  bind:value
+  label={{ label: "Set last run changeId" }}
+/>
 <Button
   width="w-full"
   isLoading={isDboUpdateInProgress}

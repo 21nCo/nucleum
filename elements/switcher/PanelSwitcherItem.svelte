@@ -1,19 +1,30 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/tidy/types/switcher.enum";
+  import {
+    PanelSwitcherStyle,
+    SelectionItemActiveStyle
+  } from "$lib/tidy/types/switcher.enum";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { bgClass, textColorClass } from "$lib/tidy/utils/theme.utils";
   import appearance from "$lib/tidy/stores/appearance.store";
-  import { fade, fly } from "svelte/transition";
-  import { quintOut } from "svelte/easing";
-  export let item: string;
+  import Icon from "../Icon.svelte";
+  import { createEventDispatcher } from "svelte";
+  import { cn } from "$lib/tidy/utils/ui.utils";
+  import type { SelectItem } from "$lib/tidy/types/select.type";
+  import TextInput from "../input/TextInput.svelte";
+  import { InputStyle } from "$lib/tidy/types/input.type";
+  import Popover from "../popover/Popover.svelte";
+  const dispatch = createEventDispatcher();
+  export let item: SelectItem;
   export let size: Size;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
   export let activeColor: number | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
+  export let isInEditMode: boolean = false;
+  let labelEditPopoverRef: any;
+  $: isAddNewItem = item.value === "Add";
 </script>
 
 {#if style === PanelSwitcherStyle.BAR}
@@ -39,7 +50,7 @@
               ? 'text-b2'
               : 'text-h4'}"
     >
-      {item}
+      {item.label}
     </div>
     {#if isActive}
       <div
@@ -64,7 +75,7 @@
             ? 'text-h4'
             : 'text-h3'} {isActive ? 'activeFgColor' : 'text-fgs3'}"
     >
-      {item}
+      {item.label}
     </div>
     {#if isActive}
       <div
@@ -75,27 +86,81 @@
   </button>
 {:else if style === PanelSwitcherStyle.TRAIN}
   <button
-    class="relative min-w-fit {size === Size.md
-      ? 'rounded-full px-6 py-3'
-      : size === Size.sm
-        ? 'rounded-md px-3 py-1 w-24 '
-        : 'rounded-md px-2 py-0.5 w-16 '} {isActive ? 'activeBgColor' : ''}"
-    on:click
+    class={cn("relative min-w-fit", {
+      "rounded-full px-6 py-3": size === Size.md,
+      "rounded-md px-3 py-1 w-24": size === Size.sm,
+      "rounded-md px-2 py-0.5 w-16": size === Size.xs,
+      activeBgColor: isActive
+    })}
+    on:click={() => {
+      if (isAddNewItem) {
+        dispatch("add");
+      } else {
+        dispatch("click", item.value);
+      }
+    }}
     disabled={isDisabled}
   >
     <div
-      class="{size === Size.md && $view.isPortrait
-        ? 'text-base font-medium'
-        : size === Size.sm || size === Size.xs
-          ? 'text-b2'
-          : 'text-b3'} {textColorClass(
-        $appearance,
-        ColorStrength.Normal,
-        isActive,
-        activeColor
-      )}"
+      class={cn(
+        "flex gap-1 justify-center items-center",
+        textColorClass(
+          $appearance,
+          ColorStrength.Normal,
+          isActive,
+          activeColor
+        ),
+        {
+          "text-base font-medium": size === Size.md && $view.isPortrait,
+          "text-b2": size === Size.sm || size === Size.xs,
+          "text-fgs3": isAddNewItem
+        }
+      )}
     >
-      {item}
+      {#if isInEditMode && isAddNewItem}
+        <Icon icon="plus" {size} />
+      {/if}
+      {#if isInEditMode && !isAddNewItem}
+        <div class="flex gap-4">
+          <Popover bind:this={labelEditPopoverRef} isPreventDefault={true}>
+            <div slot="trigger">
+              {item.label}
+            </div>
+            <div slot="popover" class="w-60 h-20 p-4">
+              <TextInput
+                bind:value={item.label}
+                on:input={(e) => {
+                  dispatch("change", { ...item });
+                }}
+              />
+            </div>
+          </Popover>
+          <div class="flex gap-2">
+            <Icon
+              icon="pencil-square"
+              {size}
+              {isActive}
+              selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+              on:click={(e) => {
+                labelEditPopoverRef.toggle();
+                e.stopPropagation();
+              }}
+            />
+            <Icon
+              icon="cross-circled"
+              {size}
+              {isActive}
+              selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+              on:click={(e) => {
+                dispatch("remove", item.value);
+                e.stopPropagation();
+              }}
+            />
+          </div>
+        </div>
+      {:else}
+        {item.label}
+      {/if}
     </div>
   </button>
 {/if}

@@ -97,7 +97,7 @@
           style={TextStyle.PANEL_HEADING}
         />
       </div>
-      <div class="flex w-full justify-start items-start grow">
+      <div class="flex w-full max-w-xl justify-start items-start grow">
         <ComponentResolver action={pageAction} />
       </div>
     {/if}

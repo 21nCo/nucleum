@@ -1,36 +1,33 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
-  import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
-  import { bgClass, borderClass } from "$lib/tidy/utils/theme.utils";
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
-  import { Orientation } from "$lib/tidy/types/direction.enum";
-  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
-  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import Button from "../button/Button.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { debouncer } from "$lib/tidy/utils/utils";
-  import appearance from "$lib/tidy/stores/appearance.store";
-  import { ColorStrength } from "$lib/tidy/types/appearance.type";
-  import Popover from "../popover/Popover.svelte";
+  import InputBaseElement from "../InputBaseElement.svelte";
+  import {
+    InputStyle,
+    type InputLabel,
+    type PopoverInputOptions
+  } from "$lib/tidy/types/input.type";
   export let value: any;
-  export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
-  export let style: TextInputStyle = TextInputStyle.OUTLINED;
-  export let size: Size = Size.md;
-  export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
+  export let style: InputStyle = InputStyle.BORDERED;
+  export let label: InputLabel | undefined = undefined;
   export let id: string = "";
-  export let labelOrientation: Orientation = Orientation.Vertical;
   export let icon: string | undefined = undefined;
+  export let popoverOptions: PopoverInputOptions | undefined = undefined;
   type SearchItem = Partial<DbRecordWithLabel & Record<string, unknown>>;
   let results: SearchItem[] = [];
   let selectedIndex: number = 0;
   let previousValue: string = "";
   let currentValue: string;
   let isSearchInProgress: boolean = false;
+  let isFocused: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
   }
@@ -43,7 +40,8 @@
   }
   let inputRef: any;
   export let isDisabled = false;
-  let inputClasses: string = "text-input w-full";
+  let inputClasses: string =
+    "text-input w-full bg-transparent focus:outline-none focus:border-none";
   const dispatch = createEventDispatcher();
   onMount(() => {
     inputClasses = inputClasses + " " + resolveStyles().join(" ");
@@ -51,48 +49,10 @@
 
   function resolveStyles() {
     let styles: string[] = [];
-    styles = [
-      ...(resolveBackground() ?? []),
-      ...(resolveBorder() ?? []),
-      ...(resolvePadding() ?? [])
-    ];
     if (icon) {
       styles.push("pl-8");
     }
     return styles;
-
-    function resolveBackground() {
-      if (style == TextInputStyle.PLAIN || style == TextInputStyle.OUTLINED) {
-        return ["bg-transparent"];
-      } else if (style === TextInputStyle.WITH_BACKGROUND) {
-        return [bgClass($appearance, 0)];
-      }
-    }
-
-    function resolveBorder() {
-      if (style === TextInputStyle.WITH_BACKGROUND) {
-        //TODO - check if border required
-        return ["rounded-md", "focus:border-aps1", "focus:outline-none"];
-      } else if (style === TextInputStyle.OUTLINED) {
-        return [
-          "rounded-md",
-          "border",
-          borderClass($appearance, ColorStrength.Strong),
-          "focus:border-aps1",
-          "focus:outline-none"
-        ];
-      } else {
-        return ["focus:border-none", "focus:outline-none"];
-      }
-    }
-    function resolvePadding() {
-      if (style === TextInputStyle.PLAIN) return;
-      if (size === Size.md || size === Size.lg) {
-        return ["p-2"];
-      } else {
-        return ["p-1"];
-      }
-    }
   }
   function onSearchResultSelection(item: SearchItem) {
     dispatch("select", { item });
@@ -166,52 +126,49 @@
 
   let popoverRef: any;
   function show() {
-    popoverRef?.show();
+    popoverRef?.showPopover();
   }
   function hide() {
-    popoverRef?.hide();
+    popoverRef?.hidePopover();
   }
 </script>
 
-<Popover
+<InputBaseElement
   bind:this={popoverRef}
-  isPreventDefault={true}
-  options={{
+  popoverOptions={{
     class: "overflow-y-auto flex flex-col justify-between gap-1 items-start",
-    isSpanToTriggerWidth: true
+    isSpanToTriggerWidth: true,
+    isPreventDefault: true,
+    ...popoverOptions
   }}
-  triggerClass="w-full"
+  {label}
+  {style}
+  {isFocused}
+  class="w-full"
 >
-  <slot name="trigger" slot="trigger">
-    <FormControlLabelWrapper
-      {label}
-      info={infoParams}
-      orientation={labelOrientation}
-    >
-      <input
-        {id}
-        class={inputClasses}
-        bind:value
-        on:change|stopPropagation
-        on:keydown
-        on:keyup|stopPropagation={handleKeyUpForSearch}
-        on:blur
-        on:focus
-        on:input
-        type="text"
-        {placeholder}
-        disabled={isDisabled}
-        bind:this={inputRef}
-      />
-    </FormControlLabelWrapper>
-  </slot>
+  <input
+    {id}
+    class={inputClasses}
+    bind:value
+    on:change|stopPropagation
+    on:keydown
+    on:keyup|stopPropagation={handleKeyUpForSearch}
+    on:blur
+    on:blur={() => {
+      isFocused = false;
+      dispatch("blur");
+    }}
+    on:focus={() => {
+      isFocused = true;
+      dispatch("focus");
+    }}
+    type="text"
+    {placeholder}
+    disabled={isDisabled}
+    bind:this={inputRef}
+  />
   <slot name="popover" slot="popover">
-    <div
-      class="{results?.length > 5 ? 'max-h-60 h-60' : 'h-48'} {style ===
-      TextInputStyle.PLAIN
-        ? 'mt-[0.75rem]'
-        : 'mt-1'}"
-    >
+    <div class={results?.length > 5 ? "max-h-60 h-60" : "h-48"}>
       <div class="flex flex-col flex-grow items-center w-full">
         {#if results && results.length > 0}
           {#each results as item, index}
@@ -249,7 +206,7 @@
       </div>
     </div>
   </slot>
-</Popover>
+</InputBaseElement>
 
 <style>
   input::placeholder {

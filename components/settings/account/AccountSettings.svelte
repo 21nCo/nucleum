@@ -20,13 +20,6 @@
 
 <div class="flex flex-col w-full gap-12 items-start justify-center">
   <div class="flex flex-col items-start gap-4 w-80 md:w-96 px-4">
-    <!-- <TextInput bind:value={firstName} label="First name" placeholder="John" />
-      <TextInput bind:value={lastName} label="Last name" placeholder="Legend" /> -->
-    <!-- <TextInput
-        bind:value={email}
-        label="Email address"
-        placeholder="john@legend.com"
-      /> -->
     <div class="flex flex-col items-start">
       <div>Name</div>
       <div class="text-b2 text-fgs3">{nickName}</div>
@@ -39,7 +32,6 @@
     {/if}
   </div>
   <div class="flex justify-center w-full gap-4">
-    <!-- <Button label="Update" on:click={onUpdateClicked} /> -->
     <Button
       icon="logout"
       label="Sign out"

@@ -2,12 +2,12 @@
   import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
   import { TimeUnit } from "$lib/tidy/types/time.type";
   import { createEventDispatcher } from "svelte";
-  import TextInput from "../TextInput.svelte";
-  import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { borderClass } from "$lib/tidy/utils/theme.utils";
   import appearance from "$lib/tidy/stores/appearance.store";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import { cn } from "$lib/tidy/utils/ui.utils";
+  import TextSearchInput from "../TextSearchInput.svelte";
+  import { InputStyle } from "$lib/tidy/types/input.type";
   const dispatch = createEventDispatcher();
   export let units: TimeUnit[];
   export let duration: number;
@@ -127,14 +127,15 @@
     "border-aps1": isFocusing
   })}
 >
-  <TextInput
+  <TextSearchInput
     bind:value
     on:keyup={onkeyup}
     on:focus={() => (isFocusing = true)}
     on:blur={() => (isFocusing = false)}
-    style={TextInputStyle.PLAIN}
+    style={InputStyle.PLAIN}
     placeholder="Duration"
     searchCallback={onsearch}
     on:select={onselect}
+    popoverOptions={{ offsetInPx: 10 }}
   />
 </div>

@@ -1,16 +1,14 @@
 <script lang="ts">
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import { TimeUnit } from "$lib/tidy/types/time.type";
   import { createEventDispatcher } from "svelte";
   import FormControlLabelWrapper from "../../text/formLabel/FormControlLabelWrapper.svelte";
   import TimeInputWithSuggestions from "./TimeInputWithSuggestions.svelte";
   import TimeUnitDropdown from "./TimeUnitDropdown.svelte";
+  import type { InputLabel } from "$lib/tidy/types/input.type";
   export let parentBackgroundIndex: number = 1;
   export let value: number;
-  export let label: string | undefined = undefined;
-  export let info: FormLabelInfoTooltip | undefined = undefined;
-  export let labelOrientation: Orientation = Orientation.Vertical;
+  export let label: InputLabel | undefined = undefined;
   export let placeholder: string | undefined = undefined;
   const dispatch = createEventDispatcher();
   let inputRef: any;
@@ -18,12 +16,7 @@
   let units: TimeUnit[] = [TimeUnit.MINUTES, TimeUnit.HOURS];
   let currentUnit: TimeUnit;
 
-  $: currentUnit =
-    value < 60
-      ? TimeUnit.SECONDS
-      : value < 3600
-        ? TimeUnit.MINUTES
-        : TimeUnit.HOURS;
+  $: currentUnit = value < 3600 ? TimeUnit.MINUTES : TimeUnit.HOURS;
 
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -59,9 +52,9 @@
   }
 </script>
 
-<FormControlLabelWrapper {label} orientation={labelOrientation} {info}>
+<FormControlLabelWrapper props={label}>
   <div
-    class={labelOrientation === Orientation.Vertical
+    class={label?.orientation === Orientation.Vertical
       ? "max-w-md"
       : "max-w-[16rem]"}
   >

@@ -264,6 +264,8 @@
         <Music {variant} />
       {:else if icon === "pencil"}
         <Pencil {variant} />
+      {:else if icon === "pencil-mini"}
+        <Pencil variant={IconVariant.Mini} />
       {:else if icon === "pencil-square"}
         <Pencil {variant} isWithSquare={true} />
       {:else if icon === "play"}

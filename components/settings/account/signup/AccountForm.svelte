@@ -14,6 +14,7 @@
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import account from "$lib/tidy/stores/account.store";
   import view from "$lib/tidy/stores/view.store";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -111,39 +112,35 @@
 <div class="flex flex-col {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
   <div class="flex flex-col gap-2 justify-center items-center w-80">
     <div class="flex flex-col w-full gap-4">
-      <!-- <TextInput
-          bind:value={nickName}
-          label="What should we call you?"
-          infoParams={{
-            body: "Leave this blank if you don't want to share your name.",
-            link: $appStore.appData?.urls?.privacy,
-            linkText: "Learn more about our privay policy"
-          }}
-          placeholder="nickname or leave it empty"
-        /> -->
       <TextInput
         bind:value={email}
-        label="Email"
-        isRequired={true}
-        infoParams={isSignup
-          ? {
-              body:
-                $appStore.appData.name +
-                " doesn't store your email or password.",
-              link: $appStore.appData?.urls?.privacy
-            }
-          : undefined}
+        label={{
+          label: "Email",
+          orientation: Orientation.Vertical,
+          tooltip: isSignup
+            ? {
+                body:
+                  $appStore.appData.name +
+                  " doesn't store your email or password.",
+                action: $appStore.appData?.urls?.privacy
+              }
+            : undefined
+        }}
         placeholder="username@email.com"
       />
       <TextInput
         bind:value={pass}
-        label="Password"
+        label={{
+          label: "Password",
+          orientation: Orientation.Vertical,
+          tooltip: isSignup
+            ? {
+                body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
+              }
+            : undefined
+        }}
         type="password"
-        isRequired={true}
         placeholder="********"
-        info={isSignup
-          ? "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
-          : ""}
       />
       <!-- <button
         class="flex items-center gap-2 w-full"
