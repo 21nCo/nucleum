@@ -145,7 +145,7 @@
 </script>
 
 {#if icon}
-  <button class="flex items-center justify-center" on:click>
+  <button class="inline-flex items-center justify-center" on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
