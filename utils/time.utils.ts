@@ -23,6 +23,8 @@ const months = [
   "Dec"
 ];
 
+const locale = navigator.language || navigator.languages[0];
+console.log("locale", locale);
 export function formatTime(
   userPreferences: UserGlobalPreferences,
   date: Date,
@@ -365,7 +367,13 @@ export function incrementTime(
 
 export function formatDate(
   date: Date,
-  format: "iso" | "iso-short" | "verbose" = "verbose"
+  format:
+    | "iso"
+    | "iso-short"
+    | "verbose"
+    | "mm-dd"
+    | "mmm-dd"
+    | "mmm-yy" = "verbose"
 ) {
   if (format === "iso" || format === "iso-short") {
     let year = date.getFullYear();
@@ -373,12 +381,28 @@ export function formatDate(
     let day = date.getDate().toString().padStart(2, "0");
     if (format === "iso") return `${year}-${month}-${day}T00:00:00.000Z`;
     else return `${year}-${month}-${day}`;
+  } else if (format === "verbose") {
+    return date.toLocaleDateString(locale, {
+      month: "short",
+      day: "2-digit",
+      year: "numeric"
+    });
+  } else if (format === "mmm-dd") {
+    return date.toLocaleDateString(locale, {
+      month: "short",
+      day: "2-digit"
+    });
+  } else if (format === "mm-dd") {
+    return date.toLocaleDateString(locale, {
+      month: "2-digit",
+      day: "2-digit"
+    });
+  } else if (format === "mmm-yy") {
+    return date.toLocaleDateString(locale, {
+      month: "short",
+      year: "2-digit"
+    });
   }
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric"
-  });
 }
 
 export function isSameDay(date1: Date, date2: Date) {

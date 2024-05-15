@@ -17,6 +17,7 @@
   import type { ChartDataPoint } from "$lib/tidy/types/chartDataPoint.type";
   import { scale } from "svelte/transition";
   import appearance from "$lib/tidy/stores/appearance.store";
+  import view from "$lib/tidy/stores/view.store";
 
   export let data: ChartDataPoint[] = [];
   export let options: any;
@@ -60,10 +61,12 @@
     height: "100%"
   };
 
-  // below default values are in px
+  /**
+   * Setting the bars width and space between the bars
+   */
   const DEFAULT_BARS = {
-    width: 50,
-    spacingFactor: 0.2 // this is not in px
+    width: 70,
+    spacingFactor: 0.4 // this is not in px
   };
   // below default values are in px
   const DEFAULT_MARGIN = {
@@ -76,7 +79,7 @@
   // below default values are in px
   const FIXED_AXES_DIMENSION = {
     x: 40, //if x-axis is fixed(meaning: non-scrollable) then this will be used as height
-    y: 50 //if y-axis is fixed(meaning: non-scrollable) then this will be used as width
+    y: $view.isPortrait ? 10 : 50 //if y-axis is fixed(meaning: non-scrollable) then this will be used as width
   };
 
   // below default values are in px
@@ -610,7 +613,7 @@
     // );
 
     if (
-      options.timeInterval == "MONTHS" &&
+      // options.timeInterval == "MONTHS" &&
       orientation === Orientation.Vertical &&
       options?.xDomain?.length > 10
     ) {
@@ -618,6 +621,7 @@
         .selectAll("text")
         .attr("transform", "rotate(-25)")
         .style("text-anchor", "end")
+        .classed("text-b5 fill-fgs2", true)
         // .style("font-size", "10px")
         .filter(function (d: any, i: number) {
           return i === 0;
@@ -786,7 +790,7 @@
         .attr("text-anchor", () => {
           return orientation == Orientation.Vertical ? "middle" : "start";
         })
-        .classed("cc-value-label text-b5 text-fgs1 fill-fgs1 font-bold", true);
+        .classed("cc-value-label text-b5 fill-fgs1 font-medium", true);
     }
 
     // dotted line for the max value
@@ -958,7 +962,7 @@
       <!-- <LegendItem label={dataItem[0].group} checked={true} /> -->
       <label
         for={dataItem[0].group + dataItem[0].key + dataItem[0].value + chartID}
-        class="flex gap-2 items-center justify-center text-b5 cursor-pointer"
+        class="flex gap-2 items-center justify-center text-b3 cursor-pointer"
       >
         <div class="checkbox-container">
           <input
