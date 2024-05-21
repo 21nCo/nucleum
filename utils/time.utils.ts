@@ -90,39 +90,66 @@ export function formatSecondsToTimeInDecimals(
 export function timePeriodLabel(period: TimePeriod) {
   const { scale, value } = period;
   if (typeof value.param != "number") return;
-  if (value.type === TimePeriodType.RELATIVE) {
+  if (
+    value.type === TimePeriodType.RELATIVE ||
+    value.type === TimePeriodType.UPPER_RELATIVE
+  ) {
     if (value.param === 0) {
-      if (scale === TimeScale.DAYS) return "Today";
-      else return `This ${scale.slice(0, scale.length - 1).toLowerCase()}`;
+      if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
+        return "Today";
+      else if (value.type === TimePeriodType.UPPER_RELATIVE) {
+        if (scale === TimeScale.DAYS) return "This Month";
+        else if (scale === TimeScale.MONTHS) return "This Year";
+      } else return `This ${scale.slice(0, scale.length - 1).toLowerCase()}`;
     } else if (value.param === 1) {
-      if (scale === TimeScale.DAYS) return "Tomorrow";
+      if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
+        return "Tomorrow";
       else return `Next ${scale.toLowerCase()}`;
     } else if (value.param === -1) {
-      if (scale === TimeScale.DAYS) return "Yesterday";
-      else return `Last ${scale.toLowerCase().slice(0, scale.length - 1)}`;
+      if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
+        return "Yesterday";
+      else if (value.type === TimePeriodType.UPPER_RELATIVE) {
+        if (scale === TimeScale.DAYS) return "Last Month";
+        else if (scale === TimeScale.MONTHS) return "Last Year";
+      } else return `Last ${scale.toLowerCase().slice(0, scale.length - 1)}`;
     } else if (value.param < 0) {
       return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;
     } else if (value.param > 0) {
       return `Next ${value} ${scale.toLowerCase()}`;
     }
   }
-  // else if (type === TimePeriodType.HORIZON) {
-  //   if (scale === TimeScale.DAYS) {
-  //     if (value === 0) return "Today";
-  //     else if (value === -1) return "Yesterday";
-  //     else if (value === -365) return "Same day last year";
-  //     else if (value < 0) return `${Math.abs(value)} days ago`;
-  //     else return `${value} days ago`;
-  //   } else {
-  //     if (value === 0) return "This " + scale.toLowerCase().split("s")[0];
-  //     else if (value === -1) return "Last " + scale.toLowerCase().split("s")[0];
-  //     else if (value < 0)
-  //       return `${Math.abs(value)} ${scale.toLowerCase()}s ago`;
-  //     else return `${value} ${scale.toLowerCase()}s ago`;
-  //   }
-  // }
 }
 
+export function determinePreviousTimePeriod(period: TimePeriod) {
+  const val = determineTimePeriodv2(period);
+  let previous = val.begin;
+  switch (period.scale) {
+    case TimeScale.DAYS:
+      const numberOfDays = Math.floor(
+        (val.end.getTime() - val.begin.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      previous.setDate(val.begin.getDate() - numberOfDays);
+      break;
+    case TimeScale.MONTHS:
+      const numberOfMonths = Math.floor(
+        (val.end.getTime() - val.begin.getTime()) / (1000 * 60 * 60 * 24) / 30
+      );
+      previous.setMonth(val.begin.getMonth() - numberOfMonths);
+      break;
+    case TimeScale.YEARS:
+      const numberOfYears = Math.floor(
+        (val.end.getTime() - val.begin.getTime()) / (1000 * 60 * 60 * 24) / 365
+      );
+      break;
+  }
+  return previous;
+}
+
+/**
+ * @deprecated - Use {@link determineTimePeriodv2} instead
+ * @param period
+ * @returns
+ */
 export function determineTimePeriod(period: TimePeriod) {
   let begin = new Date();
   let end = new Date();
@@ -213,6 +240,63 @@ export function determineTimePeriod(period: TimePeriod) {
       end.setDate(31);
       title = `Year ${year}`;
     }
+  }
+  begin.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+  return { begin, end, title };
+}
+
+export function determineTimePeriodv2(period: TimePeriod) {
+  let begin = new Date();
+  let end = new Date();
+  let title = timePeriodLabel(period);
+  if (
+    period.value.type === TimePeriodType.ABSOLUTE &&
+    period.value instanceof Object &&
+    "start" in period.value &&
+    "end" in period.value
+  ) {
+    begin = period.value.param.start;
+    end = period.value.param.end;
+    return { begin, end, title: "" };
+  }
+  if (
+    period.scale === TimeScale.DAYS &&
+    period.value.type === TimePeriodType.RELATIVE &&
+    typeof period.value.param === "number"
+  ) {
+    begin.setDate(begin.getDate() + period.value.param);
+    if (period.value.param === -1) {
+      end.setDate(end.getDate() - 1);
+    }
+  } else if (
+    ((period.scale === TimeScale.MONTHS &&
+      period.value.type === TimePeriodType.RELATIVE) ||
+      (period.scale === TimeScale.DAYS &&
+        period.value.type === TimePeriodType.UPPER_RELATIVE)) &&
+    typeof period.value.param === "number"
+  ) {
+    begin.setMonth(begin.getMonth() + period.value.param);
+    if (period.value.param === -1) {
+      end.setMonth(end.getMonth() - 1);
+    }
+    begin.setDate(1);
+    end.setDate(31);
+  } else if (
+    ((period.scale === TimeScale.YEARS &&
+      period.value.type === TimePeriodType.RELATIVE) ||
+      (period.scale === TimeScale.MONTHS &&
+        period.value.type === TimePeriodType.UPPER_RELATIVE)) &&
+    typeof period.value.param === "number"
+  ) {
+    begin.setFullYear(begin.getFullYear() + period.value.param);
+    if (period.value.param === -1) {
+      end.setFullYear(end.getFullYear() - 1);
+    }
+    begin.setDate(1);
+    end.setDate(31);
+    begin.setMonth(0);
+    end.setMonth(11);
   }
   begin.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
@@ -434,7 +518,6 @@ export function formatDatetime(
   userPreferences: UserGlobalPreferences,
   date: Date
 ) {
-  console.log("formatDatetime", userPreferences, date);
   const formattedDate = formatDate(date);
   const formattedTime = formatTime(userPreferences, date);
   return `${formattedDate} ${formattedTime}`;

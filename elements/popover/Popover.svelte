@@ -55,7 +55,7 @@
     );
   }
   export function hide() {
-    // console.log("hide", { id: options.id });
+    console.log("hiding", { id: options.id });
     isPopoverVisible = false;
     if (popOverRef) popOverRef.style.display = "none";
   }
@@ -67,7 +67,6 @@
   }
   function onWindowClick(x: MouseEvent) {
     if (!options.id || !isPopoverVisible) return;
-    // console.log({ x, containerId, id: options.id });
     actIfClickedOutside(x, [containerId, options.id], hide);
   }
 </script>

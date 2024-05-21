@@ -60,7 +60,7 @@
         isDatePickerMode={true}
         bind:selectedDate={date}
         on:change={() => {
-          popoverRef.toggle();
+          // popoverRef?.toggle();
           dispatch("change", { date });
         }}
       />

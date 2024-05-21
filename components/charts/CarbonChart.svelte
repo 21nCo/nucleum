@@ -157,16 +157,10 @@
           arcWidth: additionalOptions?.arcWidth ?? 10,
           alignment: Alignments.CENTER,
           showPercentageSymbol: false,
-          numberFormatter: (d: any) => d.toFixed(0) + " %",
-          valueFontSize: (v: any) => {
-            if (v < 10) {
-              return 2;
-            } else if (v < 100) {
-              return 12;
-            } else {
-              return 2;
-            }
-          }
+          numberFormatter: (d: any) => {
+            return parseFloat(d).toFixed(0) + " %";
+          },
+          valueFontSize: additionalOptions.valueFontSize
         },
         legend: {
           enabled: false
@@ -181,6 +175,7 @@
   }
 
   function manipulateCarbonToTidy() {
+    alterGuageArcBackground();
     let backdrops = document.getElementsByClassName("chart-grid-backdrop");
     // console.log({ backdrops });
     for (let i = 0; i < backdrops.length; i++) {
@@ -201,6 +196,14 @@
     //   mainDonutFigure.style.fill = currentColors?.fgs1!;
     //   mainDonutFigure.style.fontSize = "5rem";
     // }
+  }
+  function alterGuageArcBackground() {
+    let guageArcBackground = document.getElementsByClassName("arc-background");
+    if (!guageArcBackground || guageArcBackground.length === 0) return;
+    for (let i = 0; i < guageArcBackground.length; i++) {
+      let guageArc = guageArcBackground[i] as HTMLElement;
+      guageArc.style.fill = currentColors?.aps2!;
+    }
   }
 
   function paintAdditionalBarOptions() {

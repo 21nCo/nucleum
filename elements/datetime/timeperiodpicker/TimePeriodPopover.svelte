@@ -2,7 +2,8 @@
   import {
     type TimePeriod,
     TimeScale,
-    TimePeriodType
+    TimePeriodType,
+    type RelativeTimePeriodValue
   } from "$lib/tidy/types/time.type";
   import { createEventDispatcher } from "svelte";
   import { userPreferences } from "$lib/tidy/stores/app.store";
@@ -16,9 +17,9 @@
   const dispatch = createEventDispatcher();
   export let period: TimePeriod;
   let selectedPeriodType = "Relative";
-  let previouslySelectedRelative: { scale: TimeScale; param: number } = {
+  let previouslySelectedRelative: TimePeriod<RelativeTimePeriodValue> = {
     scale: TimeScale.DAYS,
-    param: 0
+    value: { type: TimePeriodType.RELATIVE, param: 0 }
   };
   let previouslySelectedAbsolute: {
     scale: TimeScale;
@@ -43,8 +44,8 @@
         selectedPeriodType === "Relative"
           ? {
               value: {
-                type: TimePeriodType.RELATIVE,
-                param: previouslySelectedRelative.param
+                type: previouslySelectedRelative.value.type,
+                param: previouslySelectedRelative.value.param
               },
               scale: previouslySelectedRelative.scale
             }
@@ -59,7 +60,7 @@
     }}
   />
   <OptionSelector
-    labelProps={{ label: "Choose time scale" }}
+    labelProps={{ label: "Group by" }}
     style={OptionSelectorStyle.TRAIN}
     size={Size.sm}
     options={scales.map((scale) => ({
@@ -84,7 +85,7 @@
         if (selectedPeriodType === "Relative") {
           previouslySelectedRelative = {
             scale: selectedScale,
-            param: event.detail
+            value: event.detail
           };
         } else {
           previouslySelectedAbsolute = {
