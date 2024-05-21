@@ -7,5 +7,5 @@
 
 <button class="flex items-center" on:click>
   <Icon icon="chevleft" size={Size.sm} {color} />
-  <div class="pr-1">{text ?? "Back"}</div>
+  <div class="pr-1 text-fgs1">{text ?? "Back"}</div>
 </button>

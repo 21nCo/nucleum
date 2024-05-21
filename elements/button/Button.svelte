@@ -18,8 +18,12 @@
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
-  export let type: "primary" | "secondary" | "tertiary" | ButtonVariant =
-    "secondary";
+  export let type:
+    | "primary"
+    | "secondary"
+    | "tertiary"
+    | "danger"
+    | ButtonVariant = "secondary";
   export let size: Size = Size.md;
   export let width: string = "min-w-fit max-w-fit";
   export let style: ButtonStyle = ButtonStyle.DEFAULT;

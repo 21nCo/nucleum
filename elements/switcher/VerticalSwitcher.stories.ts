@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 import VerticalSwitcher from "./VerticalSwitcher.svelte";
 import { VerticalSwitcherStyle } from "$lib/tidy/types/switcher.enum";
+import { Size } from "$lib/tidy/types/size.enum";
+import { Direction } from "$lib/tidy/types/direction.enum";
 
 const meta = {
   component: VerticalSwitcher,
@@ -23,6 +25,17 @@ const meta = {
       control: { type: "select" },
       description: "Style of the switcher",
       options: [VerticalSwitcherStyle.BAR, VerticalSwitcherStyle.GRADIENT]
+    },
+    itemProps: {
+      // size: {
+      //   control: { type: "select" },
+      //   options: [Size.xxs, Size.xs, Size.sm, Size.md, Size.lg, Size.xl]
+      // },
+      // activeStatusPlacement: {
+      //   control: { type: "select" },
+      //   options: [Direction.Left, Direction.Right]
+      // },
+      isHideLabel: Boolean
     }
   }
 } satisfies Meta<VerticalSwitcher>;
@@ -30,7 +43,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const BarStyleWithLabels: Story = {
+export const Default: Story = {
   args: {
     items: [
       {
@@ -47,11 +60,38 @@ export const BarStyleWithLabels: Story = {
       }
     ],
     selected: "overview",
-    style: VerticalSwitcherStyle.BAR
+    style: VerticalSwitcherStyle.BAR,
+    itemProps: {
+      size: Size.md,
+      activeStatusPlacement: Direction.Right
+    }
   }
 };
 
-export const BarStyleWithoutLabels: Story = {
+export const Left: Story = {
+  args: {
+    items: [...Default.args.items],
+    selected: "overview",
+    style: VerticalSwitcherStyle.BAR,
+    itemProps: {
+      size: Size.md,
+      activeStatusPlacement: Direction.Left
+    }
+  }
+};
+
+export const Right: Story = {
+  args: {
+    items: [...Default.args.items],
+    selected: "overview",
+    style: VerticalSwitcherStyle.BAR,
+    itemProps: {
+      size: Size.md,
+      activeStatusPlacement: Direction.Right
+    }
+  }
+};
+export const LeftWithoutLabels: Story = {
   args: {
     items: [
       {
@@ -67,9 +107,21 @@ export const BarStyleWithoutLabels: Story = {
         label: "traces"
       }
     ],
-    selected: "overview",
+    selected: "Information",
     style: VerticalSwitcherStyle.BAR,
     itemProps: {
+      size: Size.md,
+      activeStatusPlacement: Direction.Left,
+      isHideLabel: true
+    }
+  }
+};
+export const RightWithoutLabels: Story = {
+  args: {
+    ...LeftWithoutLabels.args,
+    itemProps: {
+      size: Size.md,
+      activeStatusPlacement: Direction.Right,
       isHideLabel: true
     }
   }
