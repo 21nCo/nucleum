@@ -70,8 +70,7 @@ export enum ColorType {
 
 export enum Theme {
   LIGHT = "light",
-  DARK = "dark",
-  SYSTEM = "system"
+  DARK = "dark"
 }
 
 export type AppearanceStore = CacheableStore & {
@@ -81,6 +80,7 @@ export type AppearanceStore = CacheableStore & {
   lightColorSchemeId: string;
   darkColorSchemeId: string;
   userThemeSetting: Theme;
+  isSyncWithSystem: boolean;
   systemTheme: Theme;
   typeface: string;
 };

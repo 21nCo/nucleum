@@ -8,4 +8,5 @@ export type PopoverOptions = {
   parentBgIndex?: number;
   placement?: Direction;
   isSpanToTriggerWidth?: boolean;
+  offsetInPx?: number;
 };

@@ -50,7 +50,7 @@
     <div class="flex flex-col gap-6">
       <PanelSwitcher
         items={["Sign up", "Sign in"]}
-        selected="Sign up"
+        value="Sign up"
         style={PanelSwitcherStyle.BAR}
         on:switch={(e) => {
           if (e.detail === "Sign up") {

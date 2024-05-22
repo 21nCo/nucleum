@@ -1,56 +1,26 @@
 <script lang="ts">
   import { Size } from "$lib/tidy/types/size.enum";
-  import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import SearchResultItem from "./SearchResultItem.svelte";
-  import { Persistance } from "$lib/tidy/stores/persistance";
-  import type { DbRecordWithLabel } from "$lib/tidy/types/dbrecord.type";
-  import { Orientation } from "$lib/tidy/types/direction.enum";
-  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
-  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
-  import Button from "../button/Button.svelte";
-  import { dataManager } from "$lib/tidy/stores/data.store";
-  import { debouncer } from "$lib/tidy/utils/utils";
   import InlineMarkdownTextInput from "$lib/tidy/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Icon from "../Icon.svelte";
-  import { InputStyle } from "$lib/tidy/types/input.type";
+  import { InputStyle, type InputLabel } from "$lib/tidy/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   export let value: any;
-  export let label: string | undefined = undefined;
   export let placeholder: string | undefined = undefined;
-  export let style: TextInputStyle | InputStyle = InputStyle.BORDERED;
+  export let label: InputLabel | undefined = undefined;
+  export let style: InputStyle = InputStyle.BORDERED;
   export let size: Size = Size.md;
   export let parentBackgroundIndex: number = 1;
-  export let info: string | undefined = undefined;
-  export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let isEnableSaveFeedback: boolean = false;
   export let type: string = "text";
-  /**
-   * @deprecated - Use TextSearchInput instead
-   */
-  export let searchStoreId: string | undefined = undefined;
-  /**
-   * @deprecated - Use TextSearchInput instead
-   */
-  export let searchCallback: Function | undefined = undefined;
-  $: isSearchEnabled = searchStoreId || searchCallback;
   export let id: string = "";
   export let width: string | undefined = undefined;
-  export let isRequired: boolean = false;
-  export let labelOrientation: Orientation = Orientation.Vertical;
   export let numberInputParams:
     | { min: number; max: number; step: number }
     | undefined = undefined;
   export let isExperimentalMdInput: boolean = false;
   export let icon: string | undefined = undefined;
-  const persistance = new Persistance();
   let isShowSaveFeedback: boolean = false;
-  type SearchItem = Partial<DbRecordWithLabel & Record<string, unknown>>;
-  let searchResults: SearchItem[] = [];
-  let selectedIndex: number = 0;
-  let previousValue: string = "";
-  let currentValue: string;
-  let isSearchInProgress: boolean = false;
   let isFocused: boolean = false;
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -59,17 +29,14 @@
     if (inputRef) inputRef.blur();
   }
   export function reset() {
-    resetSearch();
     value = "";
   }
   let inputRef: any;
   export let isDisabled = false;
   let inputClasses: string =
-    "text-input w-full bg-transparent focus:outline-none focus:border-none";
+    "text-input text-fgs2 w-full bg-transparent focus:outline-none focus:border-none";
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
-  let debounceTimeoutId: any;
-  let isShowSearchResults: boolean = false;
   const dispatch = createEventDispatcher();
   onMount(() => {
     inputClasses = inputClasses + " " + resolveStyles().join(" ");
@@ -113,83 +80,44 @@
     }
     dispatch("keyup", { value, event });
   }
-  function onSearchResultSelection(item: SearchItem) {
-    dispatch("select", { item });
-    isShowSearchResults = false;
-  }
-  function resetSearch() {
-    searchResults = [];
-    selectedIndex = 0;
-  }
-  function handleKeyUpForSearch(event: any) {
-    if (event.key === "Escape") {
-      resetSearch();
-      inputRef.blur();
-      dispatch("blur");
-    } else if (event.key === "ArrowDown") {
-      selectedIndex = Math.min(selectedIndex + 1);
-      if (selectedIndex === searchResults?.length) {
-        selectedIndex = 0;
-      }
-    } else if (event.key === "ArrowUp") {
-      selectedIndex = Math.max(selectedIndex - 1, -1);
-      if (selectedIndex === -1) {
-        selectedIndex = searchResults?.length;
-      }
-    } else if (event.key === "Backspace") {
-      previousValue = currentValue;
-      currentValue = (event.target as HTMLInputElement).value;
-      if (previousValue?.length > currentValue.length) {
-        const deletedChar = previousValue.charAt(previousValue.length - 1);
-        if (deletedChar === "#") {
-          //
-        }
-      }
-      debouncedSearch();
-    } else if (event.key === "Enter" && value) {
-      if (searchResults && searchResults.length > 0) {
-        onSearchResultSelection(searchResults[selectedIndex]);
-      } else {
-        //save();
-      }
-    } else {
-      currentValue = (event.target as HTMLInputElement).value;
-      debouncedSearch();
-    }
-    dispatch("keyup", { value, event, isShowSearchResults });
-  }
-  let debouncedSearch = debouncer(search, 100);
-  async function search() {
-    isShowSearchResults = true;
-    isSearchInProgress = true;
-    selectedIndex = 0;
-    if (!value) {
-      searchResults = [];
-      return;
-    }
-    if (searchCallback) {
-      let result = await searchCallback(value);
-      // console.log("result of search callback: ", result);
-      if (result) searchResults = result;
-      isSearchInProgress = false;
-      return;
-    }
-    if (searchStoreId)
-      searchResults = await dataManager.search(searchStoreId, value);
-    isSearchInProgress = false;
-  }
 </script>
 
-<FormControlLabelWrapper
-  props={{
-    label: label ?? "",
-    tooltip: info ? { body: info } : infoParams,
-    orientation: labelOrientation,
-    isRequiredMarker: isRequired
-  }}
->
-  {#if type === "password"}
-    <div>
+{#if isExperimentalMdInput}
+  <div class={inputClasses}>
+    <InlineMarkdownTextInput
+      bind:content={value}
+      {placeholder}
+      on:keydown
+      on:keyup
+      on:focus
+      on:blur
+    />
+  </div>
+{:else}
+  <InputBaseElement {style} {isFocused} {label}>
+    {#if type === "password"}
+      <input
+        {id}
+        class={inputClasses}
+        bind:value
+        on:change|stopPropagation
+        on:keydown|stopPropagation
+        on:keyup|stopPropagation
+        on:input|stopPropagation={onChange}
+        type="password"
+        on:blur={() => {
+          isFocused = false;
+          dispatch("blur");
+        }}
+        on:focus={() => {
+          isFocused = true;
+          dispatch("focus");
+        }}
+        {placeholder}
+        disabled={isDisabled}
+        bind:this={inputRef}
+      />
+    {:else if type === "number"}
       <input
         {id}
         class={inputClasses}
@@ -200,147 +128,41 @@
         on:blur
         on:focus
         on:input|stopPropagation={onChange}
-        type="password"
+        type="number"
+        min={numberInputParams?.min}
+        max={numberInputParams?.max}
+        step={numberInputParams?.step}
         {placeholder}
         disabled={isDisabled}
         bind:this={inputRef}
       />
-    </div>
-  {:else if type === "number"}
-    <input
-      {id}
-      class={inputClasses}
-      bind:value
-      on:change|stopPropagation
-      on:keydown|stopPropagation
-      on:keyup|stopPropagation
-      on:blur
-      on:focus
-      on:input|stopPropagation={onChange}
-      type="number"
-      min={numberInputParams?.min}
-      max={numberInputParams?.max}
-      step={numberInputParams?.step}
-      {placeholder}
-      disabled={isDisabled}
-      bind:this={inputRef}
-    />
-  {:else}
-    {#if isExperimentalMdInput}
-      <div class={inputClasses}>
-        <InlineMarkdownTextInput
-          bind:content={value}
-          {placeholder}
-          on:keydown
-          on:keyup
-          on:focus
-          on:blur
-        />
-      </div>
     {:else}
-      <InputBaseElement
-        style={style === TextInputStyle.PLAIN
-          ? InputStyle.PLAIN
-          : style === TextInputStyle.OUTLINED
-            ? InputStyle.BORDERED
-            : style === TextInputStyle.WITH_BACKGROUND
-              ? InputStyle.FILLED
-              : style}
-        isActive={isFocused}
-      >
-        <input
-          {id}
-          class={inputClasses}
-          bind:value
-          on:change|stopPropagation
-          on:keydown
-          on:keyup|stopPropagation={isSearchEnabled
-            ? handleKeyUpForSearch
-            : handleKeyUp}
-          on:blur={() => {
-            isFocused = false;
-            dispatch("blur");
-          }}
-          on:focus={() => {
-            isFocused = true;
-            dispatch("focus");
-          }}
-          on:input|stopPropagation={onChange}
-          type="text"
-          {placeholder}
-          disabled={isDisabled}
-          bind:this={inputRef}
-        />
-        {#if icon}
-          <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
-            <Icon {icon} size={Size.sm} />
-          </div>
-        {/if}
-      </InputBaseElement>
-    {/if}
-
-    {#if value && isSearchEnabled && isShowSearchResults}
-      <div
-        class="search-results bg-bgs1 shadow-md border border-brs2 overflow-y-auto rounded-b-md flex flex-col justify-between gap-1 items-start {searchResults?.length >
-        5
-          ? 'max-h-60 h-60'
-          : 'h-48'} {style === InputStyle.PLAIN ||
-        style === TextInputStyle.PLAIN
-          ? 'mt-[0.75rem]'
-          : 'mt-1'}"
-      >
-        <div class="flex flex-col flex-grow items-center w-full">
-          {#if searchResults && searchResults.length > 0}
-            {#each searchResults as item, index}
-              <SearchResultItem
-                label={item.label ??
-                  ("name" in item && typeof item.name == "string"
-                    ? item.name
-                    : "")}
-                isActive={selectedIndex === index}
-                on:click={() => {
-                  onSearchResultSelection(item);
-                }}
-              />
-            {/each}
-          {:else}
-            <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
-              {#if isSearchInProgress}
-                Searching...
-              {:else if searchResults.length === 0}
-                No results found
-              {/if}
-            </div>
-          {/if}
+      <input
+        {id}
+        class={inputClasses}
+        bind:value
+        on:change|stopPropagation
+        on:keydown
+        on:keyup|stopPropagation={handleKeyUp}
+        on:blur={() => {
+          isFocused = false;
+          dispatch("blur");
+        }}
+        on:focus={() => {
+          isFocused = true;
+          dispatch("focus");
+        }}
+        on:input|stopPropagation={onChange}
+        type="text"
+        {placeholder}
+        disabled={isDisabled}
+        bind:this={inputRef}
+      />
+      {#if icon}
+        <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
+          <Icon {icon} size={Size.sm} />
         </div>
-        <div class="w-full flex justify-center">
-          <Button
-            size={Size.sm}
-            label="close"
-            parentBackgroundIndex={0}
-            on:click={() => {
-              value = "";
-              resetSearch();
-            }}
-          />
-        </div>
-      </div>
+      {/if}
     {/if}
-  {/if}
-</FormControlLabelWrapper>
-
-<style>
-  input::placeholder {
-    font-weight: lighter;
-    /* font-style: italic; */
-    color: rgba(var(--colors-fgs2), 0.5);
-  }
-  .search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    border-top: none;
-    z-index: 60;
-  }
-</style>
+  </InputBaseElement>
+{/if}

@@ -10,6 +10,9 @@
   export let label: InputLabel;
   export let style: InputStyle = InputStyle.PLAIN;
   export let checked: boolean = false;
+  /**
+   * @deprecated
+   */
   export let width: string | undefined = undefined;
   export let size: Size = Size.md;
   export let isExpanded: boolean = true;

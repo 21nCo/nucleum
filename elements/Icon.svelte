@@ -104,6 +104,7 @@
   import GlobeAlt from "../icons/GlobeAlt.svelte";
   import DocumentText from "../icons/DocumentText.svelte";
   import appearance from "../stores/appearance.store";
+  import Funnel from "../icons/Funnel.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -145,7 +146,7 @@
 </script>
 
 {#if icon}
-  <button class="flex items-center justify-center" on:click>
+  <button class="inline-flex items-center justify-center" on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
@@ -263,6 +264,8 @@
         <Music {variant} />
       {:else if icon === "pencil"}
         <Pencil {variant} />
+      {:else if icon === "pencil-mini"}
+        <Pencil variant={IconVariant.Mini} />
       {:else if icon === "pencil-square"}
         <Pencil {variant} isWithSquare={true} />
       {:else if icon === "play"}
@@ -285,7 +288,7 @@
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
         <Cross {variant} isCircled={false} />
-        {:else if icon === "cross-mini"}
+      {:else if icon === "cross-mini"}
         <Cross isCircled={false} variant={IconVariant.Mini} />
       {:else if icon === "trash"}
         <Trash {variant} />
@@ -311,6 +314,10 @@
         <Arrow direction={Direction.Left} />
       {:else if icon === "arrow-right"}
         <Arrow direction={Direction.Right} />
+      {:else if icon === "arrow-up"}
+        <Arrow direction={Direction.Up} />
+      {:else if icon === "arrow-down"}
+        <Arrow direction={Direction.Down} />
       {:else if icon === "arrow-down-right"}
         <Arrow direction={Direction.BottomRight} />
       {:else if icon === "arrow-down-left"}
@@ -443,6 +450,8 @@
         <GlobeAlt {variant} />
       {:else if icon === "document-text"}
         <DocumentText {variant} />
+      {:else if icon === "funnel"}
+        <Funnel {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

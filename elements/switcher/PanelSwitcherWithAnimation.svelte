@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import PanelSwitcher from "./PanelSwitcher.svelte";
   export let items: string[];
-  export let selected: string;
+  export let value: string;
   export let style: PanelSwitcherStyle;
   export let interval: number = 4000;
   let intervalTimer: any;
@@ -15,16 +15,16 @@
   });
   function startIntervalTimer() {
     return setInterval(() => {
-      let selectedIndex = items.indexOf(selected);
+      let selectedIndex = items.indexOf(value);
       selectedIndex = (selectedIndex + 1) % items.length;
-      selected = items[selectedIndex];
+      value = items[selectedIndex];
     }, interval);
   }
 </script>
 
 <PanelSwitcher
   {items}
-  bind:selected
+  bind:value
   {style}
   on:switch={() => {
     clearInterval(intervalTimer);

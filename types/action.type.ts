@@ -11,7 +11,7 @@ export type Action = {
   cmdBarPreCondition?: () => void;
   component?: any;
   label?: string;
-  alternateLabel?: string;
+  cmdLabel?: string | string[];
   icon?: string;
   sections?: string[];
   pagePaint?: PaintType;
@@ -24,7 +24,6 @@ export type Action = {
   isInactive?: boolean;
   modalParams?: ModalParams;
   confirmation?: ConfirmationNotification;
-  cmdLabel?: string;
   loadingComponent?: any;
   searchActionParams?: {
     searchItemType: ItemType;

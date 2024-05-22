@@ -11,6 +11,8 @@
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import appearance from "$lib/tidy/stores/appearance.store";
   import ColorSchemeSelector from "$lib/tidy/components/settings/appearance/ColorSchemeSelector.svelte";
+  import SwitchInput from "$lib/tidy/elements/toggle/SwitchInput.svelte";
+  import InlineInfoBanner from "$lib/tidy/elements/text/InlineInfoBanner.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedSkinIndex: number = 0;
   let selectedTheme: number;
@@ -50,6 +52,9 @@
     const theme = Object.values(Theme)[selectedTheme];
     appearance.modifyUserThemeSetting(theme);
   }
+
+  //TODO - use change event on switchInput instead
+  $: appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
 </script>
 
 <div class="flex flex-col gap-8 max-w-md">
@@ -61,7 +66,18 @@
     on:switch={onSkinChange}
     bind:selectedIndex={selectedThemeIndex}
   /> -->
-  {#if $appearance.skin === AppSkin.Clean}
+  <SwitchInput
+    bind:checked={$appearance.isSyncWithSystem}
+    on:change={switchTheme}
+    isExpanded={true}
+    label={{
+      label: "Sync with system",
+      tooltip: {
+        body: "Enable this to automatically switch between light and dark themes based on your system settings."
+      }
+    }}
+  />
+  {#if $appearance.skin === AppSkin.Clean && !$appearance.isSyncWithSystem}
     <Switcher
       label="Theme"
       {parentBackgroundIndex}
@@ -74,12 +90,35 @@
   {:else if $appearance.skin === AppSkin.Glassy}
     <div class="text-b3 text-fgs2">{`[ Experimental theme ]`}</div>
   {/if}
-  <ColorSchemeSelector
-    {parentBackgroundIndex}
-    theme={$appearance.userThemeSetting}
-    selectedSchemeId={$appearance.colorScheme.id}
-    on:select={saveColorScheme}
-  />
+  {#if !$appearance.isSyncWithSystem}
+    <ColorSchemeSelector
+      {parentBackgroundIndex}
+      theme={$appearance.userThemeSetting}
+      selectedSchemeId={$appearance.colorScheme.id}
+      on:select={saveColorScheme}
+    />
+  {:else}
+    <div class="flex flex-col gap-4">
+      <div>
+        <ColorSchemeSelector
+          label="Light color scheme"
+          {parentBackgroundIndex}
+          theme={Theme.LIGHT}
+          selectedSchemeId={$appearance.lightColorSchemeId}
+          on:select={saveColorScheme}
+        />
+      </div>
+      <div>
+        <ColorSchemeSelector
+          label="Dark color scheme"
+          {parentBackgroundIndex}
+          theme={Theme.DARK}
+          selectedSchemeId={$appearance.darkColorSchemeId}
+          on:select={saveColorScheme}
+        />
+      </div>
+    </div>
+  {/if}
   {#if $appStore.isDebugMode}
     <div>
       <Switcher
@@ -91,5 +130,12 @@
         bind:selectedIndex={selectedTempSchemeIndex}
       />
     </div>
+  {/if}
+  {#if $appearance.isSyncWithSystem}
+    <InlineInfoBanner
+      content="Dark and light themes will be switched automatically according to the system
+setting on your device."
+      action="faqs"
+    />
   {/if}
 </div>

@@ -49,6 +49,7 @@ type UiState = {
 export type UserAppearanceSettings = {
   skin: AppSkin;
   theme: Theme;
+  isSyncWithSystem: boolean;
   lightColorSchemeId: string;
   darkColorSchemeId: string;
 };

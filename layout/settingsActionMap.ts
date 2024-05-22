@@ -30,8 +30,8 @@ export const settingsAsPages: Action[] = [
   },
   {
     action: "theme",
-    label: "Appearance Settings",
-    alternateLabel: "Appearance",
+    label: "Appearance",
+    cmdLabel: ["Appearance Settings", "Switch Theme"],
     path: "cp/theme",
     icon: "palette",
     type: ActionType.PAGE,
@@ -55,8 +55,8 @@ export const settingsAsPages: Action[] = [
   },
   {
     action: "datetime-settings",
-    label: "Date & Time Settings",
-    alternateLabel: "Date & Time",
+    cmdLabel: "Date & Time Settings",
+    label: "Date & Time",
     path: "cp/datetime-settings",
     icon: "sun",
     type: ActionType.PAGE,
@@ -64,8 +64,8 @@ export const settingsAsPages: Action[] = [
   },
   {
     action: "accessibility",
-    label: "Accessibility Settings",
-    alternateLabel: "Accessibility",
+    cmdLabel: "Accessibility Settings",
+    label: "Accessibility",
     path: "cp/accessibility",
     icon: "cube",
     type: ActionType.PAGE,
@@ -106,8 +106,8 @@ export const settingsAsModal: Action[] = [
   },
   {
     action: "theme",
-    label: "Appearance Settings",
-    alternateLabel: "Appearance",
+    label: "Appearance",
+    cmdLabel: ["Appearance Settings", "Switch Theme"],
     icon: "palette",
     type: ActionType.MODAL,
     component: ThemeSettingView,
@@ -119,16 +119,16 @@ export const settingsAsModal: Action[] = [
   },
   {
     action: "datetime-settings",
-    label: "Date & Time Settings",
-    alternateLabel: "Date & Time",
+    cmdLabel: "Date & Time Settings",
+    label: "Date & Time",
     icon: "sun",
     type: ActionType.MODAL,
     component: DateTimeSettings
   },
   {
     action: "accessibility",
-    label: "Accessibility Settings",
-    alternateLabel: "Accessibility",
+    cmdLabel: "Accessibility Settings",
+    label: "Accessibility",
     icon: "cube",
     type: ActionType.MODAL,
     component: AccessibilitySettings

@@ -44,7 +44,7 @@ export type CustomColumn = BaseColumn & {
   /**
    * The component to be rendered in the cell. Uses ComponentResolver to resolve the component. List the component in actionMap to resolve it.
    */
-  component: string;
+  component: string | ConstructorOfATypedSvelteComponent;
 };
 
 export type IconActionColumn = {

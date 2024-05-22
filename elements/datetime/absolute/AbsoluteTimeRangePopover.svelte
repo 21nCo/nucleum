@@ -1,14 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Divider from "../Divider.svelte";
-  import Icon from "../Icon.svelte";
+  import Divider from "../../Divider.svelte";
+  import Icon from "../../Icon.svelte";
   import dayjs from "dayjs";
   import "dayjs/locale/en";
-  import { Size } from "../../types/size.enum";
-  import { TimeScale } from "../../types/time.type";
-  import BackgroundElement from "../style/BackgroundElement.svelte";
-  import Button from "../button/Button.svelte";
-  import ActiveBackgroundElement from "../style/ActiveBackgroundElement.svelte";
+  import { Size } from "../../../types/size.enum";
+  import { TimeScale } from "../../../types/time.type";
+  import BackgroundElement from "../../style/BackgroundElement.svelte";
+  import Button from "../../button/Button.svelte";
+  import ActiveBackgroundElement from "../../style/ActiveBackgroundElement.svelte";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =

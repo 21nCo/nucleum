@@ -53,9 +53,11 @@
 </script>
 
 <FormControlLabelWrapper
-  {label}
-  info={{ body: info ?? "" }}
-  orientation={labelOrientation}
+  props={{
+    label: label ?? "",
+    tooltip: { body: info ?? "" },
+    orientation: labelOrientation
+  }}
 >
   <div class="flex items-center space-x-2">
     <select

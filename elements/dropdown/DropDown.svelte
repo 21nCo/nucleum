@@ -1,13 +1,11 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import type {
     DropdownGroup,
     DropdownItem
   } from "$lib/tidy/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
-  import appearance from "$lib/tidy/stores/appearance.store";
-  import Popover from "../popover/Popover.svelte";
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import TextInput from "../input/TextInput.svelte";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
@@ -15,6 +13,8 @@
   import { InputStyle, type InputLabel } from "$lib/tidy/types/input.type";
   import DropDownItemView from "./DropDownItemView.svelte";
   import InputBaseElement from "../InputBaseElement.svelte";
+  import { cn } from "$lib/tidy/utils/ui.utils";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
   const dispatch = createEventDispatcher();
   /**
    * items to be displayed in the dropdown
@@ -22,106 +22,103 @@
   export let items: DropdownItem[];
   export let groups: DropdownGroup[] = [];
   export let value: string | number;
-  export let parentBackgroundIndex: number = 0;
+  export let parentBackgroundIndex: number = 1;
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
-  export let isActive: boolean = false;
+  export let isDisableSearch: boolean = false;
+  let isGrouped: boolean = groups.length > 0;
+  let baseRef: any;
   let search: string = "";
   let searchInputRef: any;
-  let popoverRef: any;
-  let isOptionsVisible: boolean = false;
-  let classList = "relative flex flex-col items-start gap-1 w-full";
+  let isActive: boolean = false;
   let popoverOptions: PopoverOptions = {
     element: "div",
-    class:
-      "max-h-80 overflow-y-auto flex flex-col gap-4 items-start search-results py-4",
+    class: "max-h-80 overflow-y-auto py-4",
     parentBgIndex: parentBackgroundIndex,
     isSpanToTriggerWidth: true
   };
-  items = items.map((x) => {
-    x.groupId = x.groupId ?? "Nongroup";
-    return x;
-  });
-  groups = [...groups, { id: "Nongroup", label: "Nongroup", order: -1 }];
+  if (isGrouped) {
+    items = items.map((x) => {
+      x.groupId = x.groupId ?? "Nongroup";
+      return x;
+    });
+  }
+  groups = [
+    ...groups,
+    ...(groups.find((x) => x.id === "Nongroup")
+      ? []
+      : [{ id: "Nongroup", label: "Nongroup", order: -1 }])
+  ];
   groups = groups.sort((a, b) => a.order - b.order);
   let filtered = groups;
-  $: {
-    console.log("isActive ", isActive);
-    if (isActive) {
-      classList = "relative flex flex-col items-start gap-1 w-full";
-      classList +=
-        " bg-aps1" +
-        (!$appearance.colorScheme.isActiveFgFg ? " text-bgs1" : "");
-    } else classList = "relative flex flex-col items-start gap-1 w-full";
-    classList = classList;
-  }
   $: selected = items.find((x) => x.value === value) ?? items[0];
-  $: console.log("filtered", filtered);
-  // $: if (search.length > 0) {
-  //   filtered = groups.map((group) => {
-  //     return {
-  //       ...group,
-  //       items: items.filter(
-  //         (x) =>
-  //           x.groupId === group.id &&
-  //           x.label.toLowerCase().includes(search.toLowerCase())
-  //       )
-  //     };
-  //   });
-  // } else {
-  //   filtered = groups;
-  // }
-
   function resolveItems(groupId: string, search: string) {
     return items.filter(
       (x) =>
-        x.groupId === groupId &&
-        x.label.toLowerCase().includes(search.toLowerCase())
+        ((isGrouped && x.groupId === groupId) || !isGrouped) &&
+        ((!isDisableSearch &&
+          search &&
+          x.label.toLowerCase().includes(search.toLowerCase())) ||
+          !search ||
+          isDisableSearch)
     );
+  }
+
+  /**
+   *
+   *
+   * TODO - Delay is added to hide popover - Without delay, this is interfering with selected label getting updated on the UI. Need to find a better way to handle this.
+   *
+   * @param e MouseEvent
+   * @param item DropdownItem
+   */
+  function onitemclick(e: MouseEvent, item: DropdownItem) {
+    if (item.disabled) return;
+    value = item.value;
+    dispatch("select", item.value);
+    setTimeout(() => {
+      if (baseRef) baseRef.hidePopover();
+    }, 100);
   }
 </script>
 
-<Popover
-  bind:this={popoverRef}
-  on:show={() => {
-    searchInputRef.focus();
-  }}
-  isPreventDefaultStyling={false}
-  options={popoverOptions}
-  triggerClass={classList}
-  bind:isPopoverVisible={isOptionsVisible}
+<InputBaseElement
+  {style}
+  {label}
+  bind:isActive
+  bind:this={baseRef}
+  {popoverOptions}
+  class={cn("flex justify-between gap-4 items-center", {
+    "w-full": !label?.label,
+    "w-80":
+      label?.label &&
+      (label?.orientation === Orientation.Horizontal || !label?.orientation)
+  })}
 >
-  <slot slot="trigger" name="trigger">
-    <InputBaseElement
-      class="justify-between gap-4"
-      {style}
-      {label}
-      isActive={isOptionsVisible}
-    >
-      <div class="flex items-center gap-2">
-        {#if selected.icon}
-          <Icon icon={selected.icon} size={Size.sm} />
-        {/if}
-        <span>
-          {selected?.label}
-        </span>
+  <div class="flex items-center gap-2">
+    {#if selected.icon}
+      <Icon icon={selected.icon} size={Size.sm} />
+    {/if}
+    <span class="min-w-fit">
+      {selected?.label}
+    </span>
+  </div>
+  <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />
+  <div class="flex flex-col gap-2" slot="popover">
+    {#if !isDisableSearch}
+      <div class="px-3 w-full">
+        <TextInput
+          bind:this={searchInputRef}
+          bind:value={search}
+          size={Size.sm}
+          icon="search"
+          placeholder="search"
+        />
       </div>
-      <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
-    </InputBaseElement>
-  </slot>
-  <svelte:fragment slot="popover">
-    <div class="px-3 w-full">
-      <TextInput
-        bind:this={searchInputRef}
-        bind:value={search}
-        size={Size.sm}
-        icon="search"
-        placeholder="search"
-      />
-    </div>
+    {/if}
     {#each filtered as group}
       <div class="flex flex-col w-full">
-        {#if isValidArrayWithData(resolveItems(group.id, search))}
+        {#if isGrouped && isValidArrayWithData(resolveItems(group.id, search))}
           <div class="flex gap-1 text-b3 text-fgs3 px-3 mb-1">
             {group.label === "Nongroup" ? "" : group.label}
             {#if group.info && group.info.body}
@@ -130,17 +127,9 @@
           </div>
         {/if}
         {#each resolveItems(group.id, search) as item}
-          <DropDownItemView
-            {item}
-            on:click={() => {
-              if (item.disabled) return;
-              value = item.value;
-              dispatch("select", item.value);
-              popoverRef.hide();
-            }}
-          />
+          <DropDownItemView {item} on:click={(e) => onitemclick(e, item)} />
         {/each}
       </div>
     {/each}
-  </svelte:fragment>
-</Popover>
+  </div>
+</InputBaseElement>

@@ -4,7 +4,6 @@
   import OptionSelectorItem from "./OptionSelectorItem.svelte";
   import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import type { FormLabelInfoTooltip } from "$lib/tidy/types/text.type";
   import {
     OptionSelectorStyle,
     type SelectItem
@@ -14,33 +13,20 @@
   const dispatch = createEventDispatcher();
   export let options: SelectItem[];
   export let labelProps: InputLabel | undefined = undefined;
-  /**
-   * @deprecated - use label props instead
-   */
-  export let label: string = "";
   export let selected: string | undefined = undefined;
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
   export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;
   export let iconOrientation: Orientation = Orientation.Horizontal;
-  /**
-   * @deprecated - use label props instead
-   */
-  export let labelOrientation: Orientation = Orientation.Vertical;
-  /**
-   * @deprecated - use label props instead
-   */
-  export let info: FormLabelInfoTooltip | undefined = undefined;
   let classList: string = "flex w-full";
   if (selected === undefined) selected = options[0].value;
 </script>
 
-<FormControlLabelWrapper
-  props={labelProps ?? { label, tooltip: info, orientation: labelOrientation }}
+<FormControlLabelWrapper props={labelProps}
   ><div
     class={cn({
-      "relative w-full": labelOrientation === Orientation.Vertical,
-      "max-w-[16rem] grow": labelOrientation === Orientation.Horizontal
+      "relative w-full": labelProps?.orientation === Orientation.Vertical,
+      "max-w-[16rem] grow": labelProps?.orientation === Orientation.Horizontal
     })}
   >
     <div

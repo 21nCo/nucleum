@@ -117,7 +117,7 @@
       </div>
       <div class="flex flex-col w-full">
         <OptionSelector
-          label="Mode"
+          labelProps={{ label: "Mode" }}
           options={[
             { value: FeatureWheelMode.DEFAULT },
 
@@ -132,7 +132,7 @@
       </div>
       {#if mode === FeatureWheelMode.CONTEMPORARY}
         <DropDown
-          label="Compare with contemporary"
+          label={{ label: "Compare with contemporary" }}
           parentBackgroundIndex={2}
           items={productContemporaries.map((contemporary) => {
             return { label: contemporary, value: contemporary };

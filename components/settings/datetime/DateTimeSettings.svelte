@@ -4,16 +4,15 @@
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import DropDown from "$lib/tidy/elements/dropdown/DropDown.svelte";
   import MultiselectDropdown from "$lib/tidy/elements/dropdown/MultiselectDropdown.svelte";
-  import {
-    DropDownStyle,
-    type DropdownItem
-  } from "$lib/tidy/types/dropdownItem.type";
+  import type { DropdownItem } from "$lib/tidy/types/dropdownItem.type";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/tidy/types/button.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TimeScale } from "$lib/tidy/types/time.type";
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { getTimeZonesWithOffsets } from "$lib/tidy/utils/time.utils";
+  import { InputStyle } from "$lib/tidy/types/input.type";
+  import { Orientation } from "$lib/tidy/types/direction.enum";
   let timeZones: (Omit<DropdownItem, "value"> & { value: number })[];
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
@@ -43,23 +42,34 @@
 
 <div class="flex flex-col max-w-lg w-full gap-4">
   <MultiselectDropdown
-    label="Time scales"
-    info="Only selected time scales will be used throughout the application eg: Analytics, targets etc"
+    label={{
+      label: "Time scales",
+      tooltip: {
+        body: "Only selected time scales will be used throughout the application eg: Analytics, targets etc"
+      }
+    }}
     options={timescaleOptions}
     bind:selected={$userPreferences.timeScales}
-    style={DropDownStyle.OUTLINED}
+    style={InputStyle.BORDERED}
   />
   {#if timeZones && timeZones.length > 0}
-    <DropDown
-      label="Timezone"
-      style={DropDownStyle.OUTLINED}
-      info="The timezone used to calculate your daily target and streak."
-      items={timeZones}
-      on:select={(e) => {
-        userPreferences.setTimeZone(e.detail.value * 60);
-      }}
-      value={$userPreferences.timeZoneOffset}
-    />
+    <div>
+      <DropDown
+        label={{
+          label: "Timezone",
+          orientation: Orientation.Horizontal,
+          tooltip: {
+            body: "The timezone used to calculate your daily target and streak."
+          }
+        }}
+        style={InputStyle.BORDERED}
+        items={timeZones}
+        on:select={(e) => {
+          userPreferences.setTimeZone(e.detail.value * 60);
+        }}
+        value={$userPreferences.timeZoneOffset}
+      />
+    </div>
     <Button
       label="Auto detect time zone"
       icon="sync"

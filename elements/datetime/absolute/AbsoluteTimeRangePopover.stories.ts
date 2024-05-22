@@ -1,5 +1,5 @@
 import { TimeScale } from "$lib/tidy/types/time.type";
-import CustomDatePicker from "./TimePeriodPicker.svelte";
+import CustomDatePicker from "./AbsoluteTimeRangePopover.svelte";
 
 export default {
   component: CustomDatePicker,

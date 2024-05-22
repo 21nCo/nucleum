@@ -1,10 +1,10 @@
 <script lang="ts">
   import { formatDate } from "$lib/tidy/utils/time.utils";
   import { selectedTimePeriod } from "$lib/tidy/stores/app.store";
-  import TimePeriodPicker from "./TimePeriodPicker.svelte";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import Popover from "../popover/Popover.svelte";
+  import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
   export let size: Size = Size.md;
   let ref: any;
 </script>
@@ -28,7 +28,7 @@
     </span>
   </button>
   <slot:fragment slot="popover">
-    <TimePeriodPicker
+    <AbsoluteTimeRangePopover
       isDatePickerMode={true}
       bind:selectedDate={$selectedTimePeriod}
       on:change={() => ref.toggle()}

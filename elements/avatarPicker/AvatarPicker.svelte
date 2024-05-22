@@ -352,7 +352,7 @@
           items={["Icon", "Emoji"]}
           size={Size.xs}
           style={PanelSwitcherStyle.TRAIN}
-          selected={mode == AvatarType.ICON ? "Icon" : "Emoji"}
+          value={mode == AvatarType.ICON ? "Icon" : "Emoji"}
           on:switch={(event) => (mode = event.detail.toUpperCase())}
         />
       </div>

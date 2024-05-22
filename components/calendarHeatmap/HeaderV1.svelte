@@ -1,15 +1,17 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import DropDown from "$lib/tidy/elements/dropdown/DropDown.svelte";
-  import {
-    DropDownStyle,
-    type DropdownItem
-  } from "$lib/tidy/types/dropdownItem.type";
+  import type { DropdownItem } from "$lib/tidy/types/dropdownItem.type";
+  import { InputStyle } from "$lib/tidy/types/input.type";
   import { DataManager } from "./calendarHeatMap.utils";
-  import type { CalendarHeatMapDataProvider } from "./calendarHeatmap.types";
+  import type {
+    CalendarHeatMapDataProvider,
+    CalendarHeatmapOptions
+  } from "./calendarHeatmap.types";
 
   export let provider: CalendarHeatMapDataProvider;
-  let dataManager = new DataManager(provider);
+  export let options: CalendarHeatmapOptions = {};
+  let dataManager = new DataManager(provider, options);
   let logstartdate = "2000-01-01"; //fetch log start date and put here
   let logstartYear = new Date(logstartdate).getFullYear();
   let currentYear = new Date().getFullYear();
@@ -39,10 +41,9 @@
   <span class="w-fit"
     ><DropDown
       on:select={handleSelect}
-      isActive={!isLast365 ? true : false}
       {items}
-      {value}
-      style={DropDownStyle.OUTLINED}
+      bind:value
+      style={InputStyle.BORDERED}
     /></span
   >
   <Button

@@ -30,7 +30,7 @@
     <div class="flex ml-auto">
       <PanelSwitcher
         items={Object.values(TileScale)}
-        bind:selected={activeButton}
+        bind:value={activeButton}
         size={Size.sm}
         style={PanelSwitcherStyle.TRAIN}
         on:switch

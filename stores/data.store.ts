@@ -101,7 +101,7 @@ function init() {
     ) => {
       const store = cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
-        refreshStores([store], isShowRefreshingState);
+        return refreshStores([store], isShowRefreshingState);
       }
     },
     refreshPage: async (storeIdentifiers: string[]) => {
@@ -382,6 +382,7 @@ async function fetchServerMutationMap() {
 function resolveDependantStores(resource: string) {
   return cacheableStoresTable.filter((x) => {
     let store = get(x);
+    if (!store) return false;
     if (!store.dependencies) {
       return (
         ((store.dataType === StoreDataType.FIR ||
@@ -479,6 +480,7 @@ async function refreshStores(
     await setRefreshingState(storesThatNeedRefresh, false);
     if (isPageRefresh)
       await setPageRefreshingState(storesThatNeedRefresh, false);
+    return true;
   }
 }
 /**

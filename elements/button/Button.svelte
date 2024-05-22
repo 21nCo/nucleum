@@ -18,8 +18,12 @@
   export let parentBackgroundIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
-  export let type: "primary" | "secondary" | "tertiary" | ButtonVariant =
-    "secondary";
+  export let type:
+    | "primary"
+    | "secondary"
+    | "tertiary"
+    | "danger"
+    | ButtonVariant = "secondary";
   export let size: Size = Size.md;
   export let width: string = "min-w-fit max-w-fit";
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
@@ -107,7 +111,7 @@
             classList += " h-10 gap-2 text-b2";
             break;
           case Size.xs:
-            classList += " h-6 gap-1 text-b4";
+            classList += " h-7 gap-1 text-b3";
             break;
           case Size.xxs:
             classList += " h-6 gap-1 text-b5";

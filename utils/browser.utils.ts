@@ -52,7 +52,8 @@ export function renderPopoverv2(
   parentRef: HTMLElement,
   popRef: HTMLElement,
   location: Direction = Direction.Down,
-  isSpanToTriggerWidth = false
+  isSpanToTriggerWidth = false,
+  offsetInPx = 2
 ) {
   const triggerRect = parentRef.getBoundingClientRect();
   popRef.style.display = "block";
@@ -80,26 +81,26 @@ export function renderPopoverv2(
   }
   if (location === Direction.BottomLeft) {
     popRef.style.left = `${triggerRect.left}px`;
-    popRef.style.top = `${triggerRect.bottom + 2}px`;
+    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
   } else if (location === Direction.TopLeft) {
     popRef.style.left = `${triggerRect.left}px`;
-    popRef.style.bottom = `${documentHeight - triggerRect.top + 2}px`;
+    popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
   } else if (location === Direction.BottomRight) {
     popRef.style.right = `${documentWidth - triggerRect.right}px`;
-    popRef.style.top = `${triggerRect.bottom + 2}px`;
+    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
   } else if (location === Direction.TopRight) {
     popRef.style.right = `${documentWidth - triggerRect.right}px`;
-    popRef.style.bottom = `${documentHeight - triggerRect.top + 2}px`;
+    popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
   } else if (location === Direction.Right) {
-    popRef.style.left = `${triggerRect.right + 2}px`;
+    popRef.style.left = `${triggerRect.right + offsetInPx}px`;
     // popRef.style.top = `${triggerRect.top}px`;
   } else if (location === Direction.Left) {
-    popRef.style.right = `${documentWidth - triggerRect.left + 2}px`;
+    popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
     popRef.style.top = `$-{triggerRect.top - triggerRect.height / 2}px`;
   } else if (location === Direction.Up) {
-    popRef.style.bottom = `${documentHeight - triggerRect.top + 2}px`;
+    popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
   } else if (location === Direction.Down) {
-    popRef.style.top = `${triggerRect.bottom + 2}px`;
+    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
     popRef.style.left = `${triggerRect.left}px`;
   }
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;

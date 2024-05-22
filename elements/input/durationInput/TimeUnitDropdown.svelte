@@ -1,14 +1,10 @@
 <script lang="ts">
-  import { AppEvent } from "$lib/tidy/types/event.enum";
-  import type { AppEventType } from "$lib/tidy/types/event.type";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
   import type { TimeUnit } from "$lib/tidy/types/time.type";
   import { borderClass } from "$lib/tidy/utils/theme.utils";
-  import { actIfClickedOutside } from "$lib/tidy/utils/utils";
   import TimeUnitItem from "./TimeUnitItem.svelte";
-  import { createEventDispatcher, onDestroy } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import appearance from "$lib/tidy/stores/appearance.store";
-  import { appEvents } from "$lib/tidy/stores/notification.store";
 
   export let units: TimeUnit[];
   export let currentTimeUnit: TimeUnit;
@@ -61,9 +57,7 @@
   //TODO - clicking outside scenario for unit dropdown
 </script>
 
-<!-- In the below div we are getting a warning A11y: noninteractive element cannot have nonnegative tabIndex value svelte(a11y-no-noninteractive-tabindex), to fix this, later we'll attach a select field to this and use that just for its interactivity but for functionality and UI we'll use the below code-->
-<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-<div
+<button
   id={containerId}
   tabindex="0"
   on:click={handleIsUnitDropDownOpen}
@@ -78,12 +72,9 @@
       }`}
     />
   </div>
-
-  <!-- In the below div, we added 2px along with 100% to overcome 2px outline, which is not included in the dimension of the element, similar reason for addition of 2px in right value-->
   <div
     class="units-dropdown absolute bg-bgs2 top-[calc(100%+2px)] -right-[2px] w-full rounded-sm flex flex-col gap-1 z-[200]"
   >
-    <!-- the function under on:keydown listener is not working as expected right, need to fix that (when navigated to a specific unit through a tab and hit enter then we want to update the unit to that) -->
     {#if units.length > 1 && isUnitDropdownOpen}
       {#each units as unit, index}
         <TimeUnitItem
@@ -94,7 +85,7 @@
       {/each}
     {/if}
   </div>
-</div>
+</button>
 
 <style>
   .drop-down-indicator {

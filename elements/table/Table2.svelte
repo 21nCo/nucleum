@@ -99,7 +99,11 @@
       {:else if column.type === TableCellType.ACTION}
         <Button icon={column.key} on:click={() => resolveAction(column, row)} />
       {:else if column.type === TableCellType.CUSTOM && "component" in column}
-        <ComponentResolver path={column.component} params={{ row }} />
+        {#if typeof column.component === "string"}
+          <ComponentResolver path={column.component} params={{ row }} />
+        {:else}
+          <svelte:component this={column.component} {row} />
+        {/if}
       {:else}
         <div>{row[column.key]}</div>
       {/if}
