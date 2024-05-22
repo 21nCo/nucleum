@@ -314,6 +314,10 @@
         <Arrow direction={Direction.Left} />
       {:else if icon === "arrow-right"}
         <Arrow direction={Direction.Right} />
+      {:else if icon === "arrow-up"}
+        <Arrow direction={Direction.Up} />
+      {:else if icon === "arrow-down"}
+        <Arrow direction={Direction.Down} />
       {:else if icon === "arrow-down-right"}
         <Arrow direction={Direction.BottomRight} />
       {:else if icon === "arrow-down-left"}

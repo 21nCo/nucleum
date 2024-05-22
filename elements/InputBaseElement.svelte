@@ -23,10 +23,10 @@
   $: isActive = isFocused || isOptionsVisible;
 
   export function showPopover() {
-    popoverRef.show();
+    if (popoverRef) popoverRef.show();
   }
   export function hidePopover() {
-    popoverRef.hide();
+    if (popoverRef) popoverRef.hide();
   }
 </script>
 
