@@ -12,11 +12,11 @@ export const memotronWheel: FeatureWheelGroup[] = [
       {
         label: "Adv. audio capture",
         contemporaries: [],
-        progress: 0.3,
+        progress: 0.4,
         isNovel: true
       },
       { label: "Sketch capture", contemporaries: [], progress: 0 },
-      { label: "Type capture", contemporaries: [] },
+      { label: "Type capture", contemporaries: [], progress: 0.8 },
       {
         label: "Outlining",
         contemporaries: [
@@ -54,7 +54,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.8
           }
         ],
-        progress: 0.3,
+        progress: 0.35,
         isProminent: true
       },
       {
@@ -65,7 +65,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.7
           }
         ],
-        progress: 0.6
+        progress: 0.7
       },
       {
         label: "Adv. Markdown",
@@ -75,7 +75,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.7
           }
         ],
-        progress: 0
+        progress: 0.3
       },
       {
         label: "Traces",
@@ -176,7 +176,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
       {
         label: "Forelinking",
         contemporaries: [],
-        progress: 0.1,
+        progress: 0.6,
         isNovel: true
       },
       {
@@ -191,7 +191,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.5
           }
         ],
-        progress: 0
+        progress: 0.5
       },
       {
         label: "Adv. filter query",
@@ -223,7 +223,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
     label: "Curation views",
     color: "#c9409a",
     spokes: [
-      { label: "Infinite grid", contemporaries: [], isNovel: true },
+      { label: "Bird view", contemporaries: [], isNovel: true, progress: 0.1 },
       {
         label: "Sub tree",
         contemporaries: [
@@ -260,9 +260,9 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.7
           }
         ],
-        progress: 0
+        progress: 0.1
       },
-      { label: "Graph traversal", contemporaries: [], progress: 0 },
+      // { label: "Graph traversal", contemporaries: [], progress: 0 },
       {
         label: "Time & Space views",
         contemporaries: [],

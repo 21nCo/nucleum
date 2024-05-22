@@ -79,7 +79,8 @@ export const excludedPathsForRedirectionCheck = [
   "welcome",
   "play",
   "r",
-  "fw"
+  "fw",
+  "ext-login"
 ];
 
 let persistance = new Persistance();

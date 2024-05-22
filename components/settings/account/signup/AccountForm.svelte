@@ -5,9 +5,12 @@
   import InlineErrorMessage from "$lib/tidy/elements/text/InlineErrorMessage.svelte";
   import { appStore } from "$lib/tidy/stores/app.store";
   import { EmbedMessage } from "$lib/tidy/types/embedMessage.enum";
-  import { postMessageToParent } from "$lib/tidy/utils/embed.utils";
+  import {
+    postMessageToParent,
+    postTokenToExtension
+  } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
-  import { performApiCall } from "$lib/tidy/utils/utils";
+  import { performApiCall, runAction } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import OAuthButtons from "./OAuthButtons.svelte";
@@ -21,10 +24,16 @@
   let error: string | null = null;
   let isTrusted = true;
   let actionInProgress = false;
+  let isLoginFromExtension = false;
   onMount(() => {
     postMessageToParent(EmbedMessage.MOUNT);
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
+    const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
+    if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
+      isLoginFromExtension = true;
+      console.log("isLoginFromExtension", isLoginFromExtension);
+    }
   });
   async function handleClick() {
     if (!isValidFormData()) return;
@@ -59,7 +68,10 @@
       actionInProgress = false;
       return;
     }
-    await account.signIn(json, { isFromSignup: isSignup });
+    if (isLoginFromExtension) {
+      postTokenToExtension(json);
+      runAction("ext-login");
+    } else await account.signIn(json, { isFromSignup: isSignup });
     actionInProgress = false;
   }
   function isValidFormData() {

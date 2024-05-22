@@ -9,6 +9,8 @@
   import { onMount } from "svelte";
   import account from "$lib/tidy/stores/account.store";
   import view from "$lib/tidy/stores/view.store";
+  import { postTokenToExtension } from "$lib/tidy/utils/embed.utils";
+  import { runAction } from "$lib/tidy/utils/utils";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -22,7 +24,14 @@
     }
   }
   onMount(() => {
-    if ($account.isLoggedIn) view.gotoPath("/");
+    if (!$account.isLoggedIn) return;
+    const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
+    if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
+      const token = localStorage.getItem("surreal-token");
+      const userInfo = localStorage.getItem("userInfo");
+      postTokenToExtension({ token, userInfo });
+      runAction("ext-login");
+    } else view.gotoPath("/");
   });
 </script>
 

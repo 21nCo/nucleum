@@ -42,3 +42,13 @@ export function hapticFeedback(haptic: HapticFeedback) {
     haptic
   });
 }
+
+export function postTokenToExtension(json: any) {
+  window.postMessage(
+    {
+      type: "signin",
+      token: json
+    },
+    "*"
+  );
+}

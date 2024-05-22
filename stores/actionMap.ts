@@ -20,6 +20,7 @@ import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 import OAuthRedirect from "../components/settings/account/OAuthRedirect.svelte";
+import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
 
 export const globalActions: Action[] = [
   {
@@ -31,6 +32,12 @@ export const globalActions: Action[] = [
     action: "offline",
     type: ActionType.META_PAGE,
     component: Offline
+  },
+  {
+    action: "ext-login",
+    type: ActionType.META_PAGE,
+    component: ExtensionLoginStatusPage,
+    isMenuHidden: true
   },
   {
     action: "signup",
