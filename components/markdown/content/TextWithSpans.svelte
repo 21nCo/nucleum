@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SpanContent } from "$lib/tidy/types/md.type";
+  import type { SpanContent } from "$lib/tidy/types/memotron/md.type";
   import SpanContentView from "./SpanContent.svelte";
   export let content: SpanContent[];
 </script>

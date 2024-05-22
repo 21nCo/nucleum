@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BlockContext, type Block } from "$lib/tidy/types/md.type";
+  import { BlockContext, type Block } from "$lib/tidy/types/memotron/md.type";
   import { NodeType, TextNodeTypeList } from "$lib/tidy/types/node.type";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";

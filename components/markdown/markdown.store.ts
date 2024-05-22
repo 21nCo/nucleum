@@ -10,7 +10,7 @@ import {
   type StructuralContent,
   type NodeContent,
   type StructuralNodeType
-} from "$lib/tidy/types/node.type";
+} from "$lib/tidy/types/memotron/node.type";
 
 import {
   deepCopy,
@@ -30,7 +30,7 @@ import type {
   MdParams,
   MdStore,
   Markdown
-} from "$lib/tidy/types/md.type";
+} from "$lib/tidy/types/memotron/md.type";
 
 export const emptyBlock: Block = {
   contentType: NodeType.SIMPLE_TEXT,

@@ -1,7 +1,7 @@
 <script lang="ts">
   import AppLoadingView from "$lib/tidy/layout/paint/AppLoadingView.svelte";
   import { appStore } from "$lib/tidy/stores/app.store";
-  import type { Markdown } from "$lib/tidy/types/md.type";
+  import type { Markdown } from "$lib/tidy/types/memotron/md.type";
   import { onMount, tick } from "svelte";
   import MarkdownView from "./Markdown.svelte";
   export let md: Markdown | undefined = undefined;

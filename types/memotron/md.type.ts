@@ -1,4 +1,4 @@
-import type { DbRecordBase } from "./dbrecord.type";
+import type { DbRecordBase } from "../dbrecord.type";
 import type {
   NodeContent,
   ListChild,

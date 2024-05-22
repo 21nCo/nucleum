@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { type SpanContent, SpanType } from "$lib/tidy/types/md.type";
+  import { type SpanContent, SpanType } from "$lib/tidy/types/memotron/md.type";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/tidy/utils/utils";
   import {

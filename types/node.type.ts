@@ -1,8 +1,8 @@
-import type { MemotronItemBase } from "$lib/memotronlib/types/common.type";
-import type { PropertyValue, Type } from "$lib/memotronlib/types/type.type";
+import type { MemotronItemBase } from "$lib/tidy/types/memotron/common.type";
+import type { PropertyValue, Type } from "$lib/tidy/types/memotron/type.type";
 import type { DbRecordBase } from "$lib/tidy/types/dbrecord.type";
 import type { Avatar } from "./avatar.type";
-import type { Markdown } from "./md.type";
+import type { Markdown } from "./memotron/md.type";
 
 export type Node = NodeBase &
   NodeContent & {

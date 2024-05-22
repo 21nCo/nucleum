@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import type { MdStore, Block } from "$lib/tidy/types/md.type";
+  import type { MdStore, Block } from "$lib/tidy/types/memotron/md.type";
   import { getMdStore, mdContentChangeEvent } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { Direction } from "$lib/tidy/types/direction.enum";

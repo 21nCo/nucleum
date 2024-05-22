@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import type { InlineType } from "$lib/tidy/types/md.type";
+  import type { InlineType } from "$lib/tidy/types/memotron/md.type";
   import type { NodeType } from "$lib/tidy/types/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { createEventDispatcher } from "svelte";

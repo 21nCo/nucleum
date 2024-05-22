@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 11.446 2.045 L 11.446 3.833 L 11.446 4.833 L 11.446 5.333 L 11.946 5.333 L 12.946 5.333 L 14.878 5.333 L 14.878 4.333 L 12.946 4.333 L 12.446 4.333 L 12.446 3.833 L 12.446 2.045 L 11.446 2.045 Z" style="fill: none;"/>
+  <path style="paint-order: fill; stroke: rgb(148, 163, 184); fill: rgba(0, 0, 0, 0); stroke-linejoin: bevel;" d="M 5.032 2.38 L 7.276 4.052 L 7.24 12.88 L 1.231 12.878 L 1.231 2.382 L 5.032 2.38 Z"/>
+  <path d="M 3.88 2 L 3.88 3.788 L 3.88 4.788 L 3.88 5.288 L 4.38 5.288 L 5.38 5.288 L 7.312 5.288 L 7.312 4.288 L 5.38 4.288 L 4.88 4.288 L 4.88 3.788 L 4.88 2 L 3.88 2 Z" style="fill: none;"/>
+  <path style="stroke: rgb(148, 163, 184); fill: rgba(0, 0, 0, 0); stroke-linejoin: bevel;" d="M 4.38 2.254 L 4.38 5.042 L 7.312 5.042"/>
+  <path style="paint-order: fill; stroke: rgb(148, 163, 184); fill: rgba(0, 0, 0, 0); stroke-linejoin: bevel;" d="M 12.501 2.471 L 14.745 4.143 L 14.709 12.971 L 8.7 12.969 L 8.7 2.473 L 12.501 2.471 Z"/>
+  <path d="M 11.319 2.054 L 11.319 3.842 L 11.319 4.842 L 11.319 5.342 L 11.819 5.342 L 12.819 5.342 L 14.751 5.342 L 14.751 4.342 L 12.819 4.342 L 12.319 4.342 L 12.319 3.842 L 12.319 2.054 L 11.319 2.054 Z" style="fill: none;"/>
+  <path style="stroke: rgb(148, 163, 184); fill: rgba(0, 0, 0, 0); stroke-linejoin: bevel;" d="M 11.819 2.308 L 11.819 5.096 L 14.751 5.096"/>
+</svg>

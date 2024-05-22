@@ -3,8 +3,12 @@ import type {
   MdStore,
   ListBlockWithChildren,
   Markdown
-} from "$lib/tidy/types/md.type";
-import type { ListChild, ListContent, Node } from "$lib/tidy/types/node.type";
+} from "$lib/tidy/types/memotron/md.type";
+import type {
+  ListChild,
+  ListContent,
+  Node
+} from "$lib/tidy/types/memotron/node.type";
 import { deepCopy } from "$lib/tidy/utils/obj.utils";
 
 /**

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Block, MdStore } from "$lib/tidy/types/md.type";
+  import type { Block, MdStore } from "$lib/tidy/types/memotron/md.type";
   import { onMount } from "svelte";
   import { getMdStore } from "./markdown.store";
   import Text from "$lib/tidy/elements/text/Text.svelte";

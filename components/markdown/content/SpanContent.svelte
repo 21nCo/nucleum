@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SpanType, type SpanContent } from "$lib/tidy/types/md.type";
+  import { SpanType, type SpanContent } from "$lib/tidy/types/memotron/md.type";
   import TextWithSpans from "./TextWithSpans.svelte";
   export let span: SpanContent;
   let style: string = "";

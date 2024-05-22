@@ -1,7 +1,7 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
-  import { InlineType } from "$lib/tidy/types/md.type";
+  import { InlineType } from "$lib/tidy/types/memotron/md.type";
   import { NodeType, ListType } from "$lib/tidy/types/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";

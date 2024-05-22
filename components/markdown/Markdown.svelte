@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Markdown, MdParams } from "$lib/tidy/types/md.type";
+  import type { Markdown, MdParams } from "$lib/tidy/types/memotron/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
   import { getMdStore, mdContentChangeEvent } from "./markdown.store";

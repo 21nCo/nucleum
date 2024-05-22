@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Block } from "$lib/tidy/types/md.type";
+  import type { Block } from "$lib/tidy/types/memotron/md.type";
   import {
     ListType,
     NodeType,

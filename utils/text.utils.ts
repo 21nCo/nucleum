@@ -1,7 +1,11 @@
 import type { ItemType } from "$lib/tidy/types/item.enum";
 import type { EmailParts } from "../types/account.type";
-import type { Block, Markdown } from "../types/md.type";
-import { ListType, NodeType, type TextContent } from "../types/node.type";
+import type { Block, Markdown } from "../types/memotron/md.type";
+import {
+  ListType,
+  NodeType,
+  type TextContent
+} from "../types/memotron/node.type";
 import { isValidArrayWithData } from "./obj.utils";
 
 export function properCase(str: string) {
