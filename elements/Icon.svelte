@@ -105,6 +105,7 @@
   import DocumentText from "../icons/DocumentText.svelte";
   import appearance from "../stores/appearance.store";
   import Funnel from "../icons/Funnel.svelte";
+  import PaperClip from "../icons/PaperClip.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -452,6 +453,8 @@
         <DocumentText {variant} />
       {:else if icon === "funnel"}
         <Funnel {variant} />
+      {:else if icon === "paper-clip"}
+        <PaperClip {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

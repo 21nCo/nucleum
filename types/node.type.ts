@@ -23,6 +23,7 @@ export type NodeDbType = Node & DbRecordBase;
 export type NodeThumbnail = NodeBase &
   NodeContent & {
     links: LinkThumbnail[];
+    children?: NodeThumbnail[];
   };
 
 export type NodeBase = Omit<MemotronItemBase, "label"> & {
@@ -134,7 +135,7 @@ export type OtherNodeType =
   | NodeType.COLLECTION_AS_EMBED;
 
 export type ClipType =
-  | NodeType.WEBPAGE_CLIP
+  | NodeType.WEBPAGE
   | NodeType.TEXT_CLIP
   | NodeType.IMAGE_CLIP
   | NodeType.AUDIO_CLIP
@@ -183,7 +184,7 @@ export enum NodeType {
   ACCORDION = "ACCORDION",
 
   //CLIPS
-  WEBPAGE_CLIP = "WEBPAGE_CLIP",
+  WEBPAGE = "WEBPAGE",
   TEXT_CLIP = "TEXT_CLIP",
   IMAGE_CLIP = "IMAGE_CLIP",
   AUDIO_CLIP = "AUDIO_CLIP",
@@ -191,6 +192,16 @@ export enum NodeType {
   PDF_CLIP = "PDF_CLIP",
   VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP"
 }
+
+export const ClipNodeTypeList = [
+  NodeType.WEBPAGE,
+  NodeType.TEXT_CLIP,
+  NodeType.IMAGE_CLIP,
+  NodeType.AUDIO_CLIP,
+  NodeType.VIDEO_CLIP,
+  NodeType.PDF_CLIP,
+  NodeType.VIDEO_TIMESTAMP_CLIP
+];
 
 export const TextNodeTypeList = [
   NodeType.SIMPLE_TEXT,

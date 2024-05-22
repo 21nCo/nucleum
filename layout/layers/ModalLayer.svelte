@@ -175,7 +175,7 @@
     <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver
         path={modal.path}
-        params={{ ...modal.componentParams }}
+        params={{ ...modal.componentParams, isModal: true }}
       />
     </ModalLayout>
   </Modal>
