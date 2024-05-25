@@ -1,12 +1,12 @@
 <script lang="ts">
-  import view from "$lib/tidy/stores/view.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   export let label: string = "";
   export let path: string = "";
   export let isDisabled: boolean = false;
   export let isLast: boolean = false;
 
   function handleClick() {
-    view.gotoPath(path);
+    appStore.gotoPath(path);
   }
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") {

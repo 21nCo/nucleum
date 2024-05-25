@@ -1,7 +1,6 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { appStore } from "$lib/tidy/stores/app.store";
-  import { initiateOAuth2Flow } from "$lib/tidy/utils/oauth.utils";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import { properCase } from "$lib/tidy/utils/text.utils";
 </script>
@@ -31,7 +30,7 @@
         label={"Continue with " + properCase(provider.oauth_slug)}
         on:click={() => {
           // if (provider.oauth_slug === "apple") return;
-          initiateOAuth2Flow(provider.provider);
+          appStore.initiateOAuth2Flow(provider.provider);
         }}
       />
     {/each}

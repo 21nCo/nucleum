@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { generateUID, performApiCall } from "$lib/tidy/utils/utils";
+  import { generateUID } from "$lib/tidy/utils/utils";
   import NodeLoadingPulse from "$lib/tidy/elements/feedback/animations/NodeLoadingPulse.svelte";
   import Markdown from "$lib/tidy/components/markdown/Markdown.svelte";
-  import type { Node } from "$lib/tidy/types/node.type";
+  import type { Node } from "$lib/tidy/types/memotron/node.type";
   import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
+  import { performApiCall } from "$lib/tidy/utils/network.utils";
   export let spaceId: string;
   export let documentId: string;
   export let mdId = generateUID();

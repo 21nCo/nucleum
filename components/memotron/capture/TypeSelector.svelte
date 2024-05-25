@@ -1,13 +1,14 @@
 <script lang="ts">
   import { CaptureType } from "$lib/tidy/types/memotron/capture.type";
-  import { MemotronEvent } from "$lib/local/types/event.enum";
+  import { MemotronEvent } from "$lib/tidy/types/memotron/memotronEvent.enum";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import OptionSelector from "$lib/tidy/elements/select/OptionSelector.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import type { SelectItem } from "$lib/tidy/types/select.type";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { activeResourceFilter, runAction } from "$lib/tidy/utils/utils";
+  import { activeResourceFilter } from "$lib/tidy/utils/utils";
   import { captureStore } from "./capture.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   refreshTypes();
   const contentTypes: SelectItem[] = [
     // { label: CaptureType.ANY, icon: "cube" },
@@ -45,7 +46,7 @@
     label="edit types"
     size={Size.xs}
     on:click={() => {
-      runAction(MemotronEvent.DIRECTORY);
+      appStore.runAction(MemotronEvent.DIRECTORY);
     }}
   />
 </div>

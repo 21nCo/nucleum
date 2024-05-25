@@ -3,7 +3,7 @@
   import view from "$lib/tidy/stores/view.store";
   import { cn } from "$lib/tidy/utils/ui.utils";
   import PropertyItem from "./PropertyItem.svelte";
-  import type { NodeProperty } from "$lib/tidy/types/node.type";
+  import type { NodeProperty } from "$lib/tidy/types/memotron/node.type";
   export let properties: NodeProperty[] = [];
   export let nodeId: string | undefined = undefined;
   export let type: any;

@@ -31,13 +31,15 @@
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { logger } from "$lib/tidy/stores/log.store";
   import view from "$lib/tidy/stores/view.store";
-  import actions from "$lib/tidy/stores/actions.store";
   import account from "$lib/tidy/stores/account.store";
   import appearance from "$lib/tidy/stores/appearance.store";
   import { detectTimeZone } from "$lib/tidy/utils/time.utils";
   import { appEvents } from "$lib/tidy/stores/notification.store";
   import context from "$lib/tidy/stores/context.store";
   import { Embed } from "$lib/tidy/types/context.type";
+  import { globalActions } from "$lib/tidy/stores/actionMap";
+  import { localActions } from "$lib/local/local";
+  import { settingsAsModal, settingsAsPages } from "../settingsActionMap";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -134,7 +136,7 @@
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
-    view.setCurrentPath(window.location.pathname);
+    appStore.setCurrentPath(window.location.pathname);
   }
   async function parseEmbedToken() {
     const token = $page.url?.searchParams?.get("token");
@@ -147,11 +149,11 @@
     //todo - check if the saved timezone is different from current user timezone
     new Persistance().initializeAppData();
     if ($account.isLoggedIn) await dataManager.initialize();
-    actions.updateSettingsActionMap();
+    initActions();
     const currentVersion = $appStore.appData.version;
     if (
       !excludedPathsForRedirectionCheck.includes(
-        $view.currentPath.split("/")[1]
+        $appStore.currentPath.split("/")[1]
       )
     ) {
       const isProceed = await performRedirectionChecks();
@@ -161,6 +163,13 @@
         else await ping();
       }
     }
+  }
+  function initActions() {
+    const modifiedGlobalActions = globalActions.filter(
+      (x) => !localActions.some((y) => y.action === x.action)
+    );
+    let actions = [...modifiedGlobalActions, ...localActions];
+    appStore.initActions(actions, settingsAsModal, settingsAsPages);
   }
   function runCurrentTime() {
     clearInterval(timer);
@@ -205,7 +214,7 @@
       if (isSheet) {
         $context.isSheet = true;
         $appStore.embedContext = EmbedContext.SHEET;
-        if (sheetPath) $view.sheetPath = sheetPath;
+        if (sheetPath) $appStore.sheetPath = sheetPath;
       }
     } catch (e) {
       postToParent({ type: "ERROR", message: e });
@@ -217,7 +226,7 @@
     // window?.addEventListener("click", windowClickEventListener);
     // window?.addEventListener("message", messageReceivedListener);
     window.onpopstate = () => {
-      view.setCurrentPath(document.location.pathname);
+      appStore.setCurrentPath(document.location.pathname);
     };
   }
 </script>

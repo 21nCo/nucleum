@@ -1,12 +1,12 @@
 import { get, writable } from "svelte/store";
-import view from "./view.store";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { postToParent } from "../utils/embed.utils";
 import { AppEvent } from "../types/event.enum";
 import { Persistance } from "./persistance";
 import { ButtonVariant } from "../types/button.type";
-import { performApiCall } from "../utils/utils";
+import { performApiCall } from "../utils/network.utils";
 import { confirmationNotification, appEvents } from "./notification.store";
+import { appStore } from "./app.store";
 
 const account = initAccount({
   isLoggedIn: false,
@@ -76,12 +76,12 @@ function initAccount(seed: UserAccount) {
     });
     if (!params.isIgnoreRefresh && !params.isFromSignup) {
       appEvents.publish(AppEvent.USER_LOGIN, true);
-      view.gotoPath("/");
+      appStore.gotoPath("/");
     } else if (params.isFromSignup) {
       appEvents.publish(AppEvent.USER_SIGNUP, true);
-      view.gotoPath("/onboarding");
+      appStore.gotoPath("/onboarding");
     } else if (!params.isFromSignup) {
-      view.gotoPath("/");
+      appStore.gotoPath("/");
     }
   };
   const expire = () => {
@@ -106,7 +106,7 @@ function initAccount(seed: UserAccount) {
       localStorage.removeItem("surreal-token");
       localStorage.removeItem("userInfo");
       localStorage.removeItem("isOnboardingComplete");
-      view.gotoPath("/signup?msg=signedout");
+      appStore.gotoPath("/signup?msg=signedout");
     },
     signIn: signin,
     expire,
@@ -147,7 +147,7 @@ function initAccount(seed: UserAccount) {
       });
       console.log("deleting account", { acc });
       account.signOut();
-      view.gotoPath("/signup?msg=deleted");
+      appStore.gotoPath("/signup?msg=deleted");
     }
   };
 }

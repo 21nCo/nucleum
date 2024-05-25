@@ -3,7 +3,7 @@
   import TextInput from "../elements/input/TextInput.svelte";
   import { Size } from "../types/size.enum";
   import { isValidEmail } from "../utils/text.utils";
-  import { performApiCall } from "../utils/utils";
+  import { performApiCall } from "../utils/network.utils";
   let email = "";
   let message = "";
   let error: string | null = null;
@@ -19,7 +19,7 @@
     }
     let response = await performApiCall("subscribe", "POST", {
       email,
-      context: "earlyaccess",
+      context: "earlyaccess"
     });
     if (response && response.ok) {
       let jsonValue = await response.json();

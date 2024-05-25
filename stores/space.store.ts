@@ -4,7 +4,7 @@ import { Item } from "../types/item.enum";
 import { StoreDataType } from "../types/data.type";
 import type { Space, SpaceStore } from "../types/space.type";
 import { logger } from "./log.store";
-import { performApiCall } from "../utils/utils";
+import { performApiCall } from "../utils/network.utils";
 import { retrieveLocally } from "./persistance";
 
 const cachedSpaceInContext = retrieveLocally(Item.spaceInContext);

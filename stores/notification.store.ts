@@ -9,8 +9,9 @@ import { postMessageToParent } from "../utils/embed.utils";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import view from "./view.store";
 import { AppEvent } from "../types/event.enum";
-import { generateUID, runAction } from "../utils/utils";
+import { generateUID } from "../utils/utils";
 import type { AppEventType } from "../types/event.type";
+import { appStore } from "./app.store";
 
 export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 function initEventStore(seed: AppEventType) {
@@ -74,7 +75,7 @@ function initToastStore() {
       return n;
     });
     if (get(view).isPortrait) {
-      runAction(AppEvent.MOBILE_TOAST, { id: event.id });
+      appStore.runAction(AppEvent.MOBILE_TOAST, { id: event.id });
     } else {
       timer = setTimeout(() => {
         update((n: Toast[]) => {

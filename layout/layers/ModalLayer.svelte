@@ -22,7 +22,6 @@
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import ModalLayout from "$lib/tidy/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/tidy/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { runAction } from "$lib/tidy/utils/utils";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/tidy/types/button.type";
   import { logger } from "$lib/tidy/stores/log.store";
@@ -113,7 +112,7 @@
       type={ButtonVariant.PRIMARY}
       style={ButtonStyle.ROUNDED}
       on:click={() => {
-        runAction($appStore.appData?.bottomRightAction);
+        appStore.runAction($appStore.appData?.bottomRightAction);
       }}
     />
   </div>
@@ -147,19 +146,6 @@
     {/if}
   </div>
 {/if}
-
-<!-- <Modal
-  size={Size.xl}
-  show={isShowAppearancePreview}
-  isOnRight={true}
-  isShowOverlay={false}
-  title={"Appearance"}
->
-  <WithYStack
-    path={"settings/appearance"}
-    params={{ parentBackgroundIndex: 2, hidePageHeading: true }}
-  />
-</Modal> -->
 
 {#each modals as modal (modal.path)}
   <Modal

@@ -7,12 +7,12 @@ export type AppStore = {
   isDebugMode: boolean;
   isExperimentalMode: boolean;
   /**
-   * !Deprecated
+   * @deprecated
    * Use context.store instead
    */
   launchContext: LaunchContext;
   /**
-   * !Deprecated
+   * @deprecated
    * Use context.store instead
    */
   embedContext?: EmbedContext;
@@ -22,6 +22,11 @@ export type AppStore = {
   dynamicBlocks?: Action[];
   fullScreenComponentPath?: string;
   isPipOn?: boolean;
+  currentPath: string;
+  isMenuHidden?: boolean;
+  currentComponent?: Action;
+  sheetPath?: string;
+  actions: Action[];
 };
 
 export enum LaunchContext {

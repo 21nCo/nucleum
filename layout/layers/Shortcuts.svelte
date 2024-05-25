@@ -4,7 +4,6 @@
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
   import { isTextElement } from "$lib/tidy/utils/browser.utils";
-  import { runAction } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
   let userKeyMap = $userPreferences?.shortcuts;
@@ -30,7 +29,7 @@
     if (isTextElement(target)) return;
     if (event.key === "q") {
       event.preventDefault();
-      runAction(AppEvent.TOGGLE_SIDEBAR);
+      appStore.runAction(AppEvent.TOGGLE_SIDEBAR);
       return true;
     }
   }
@@ -79,7 +78,7 @@
       return s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()));
     });
     if (!shortcut) return;
-    runAction(shortcut.action);
+    appStore.runAction(shortcut.action);
     return true;
   }
 </script>

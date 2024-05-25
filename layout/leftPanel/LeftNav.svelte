@@ -14,7 +14,7 @@
   import { bgClass, borderClass } from "$lib/tidy/utils/theme.utils";
   import { AppSkin, ColorStrength } from "$lib/tidy/types/appearance.type";
   import { onMount } from "svelte";
-  import { resolveUiState, runAction, setUiState } from "$lib/tidy/utils/utils";
+  import { resolveUiState } from "$lib/tidy/utils/utils";
   import { UiState } from "$lib/tidy/types/uiState.enum";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import appearance from "$lib/tidy/stores/appearance.store";
@@ -159,7 +159,7 @@
                 size={Size.lg}
                 icon="command"
                 color="fgs2"
-                on:click={() => runAction(AppEvent.CMD)}
+                on:click={() => appStore.runAction(AppEvent.CMD)}
                 hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
               />
             {:else}
@@ -169,7 +169,8 @@
                     $appearance,
                     2
                   )}"
-                  on:click={() => runAction(AppEvent.CMD)}>Cmd + K</button
+                  on:click={() => appStore.runAction(AppEvent.CMD)}
+                  >Cmd + K</button
                 > for command bar
               </div>
             {/if}

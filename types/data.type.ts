@@ -1,7 +1,6 @@
-import type { LocalDexie } from "$lib/local/stores/local.dexie";
 import type { Writable } from "svelte/store";
-import type { SurrealDatabase } from "../access/surrealHelper";
-import type { ItemType } from "./item.enum";
+import type { LocalDexie } from "$lib/local/local";
+import type { ISurrealDatabase } from "./db.type";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -100,7 +99,7 @@ export enum CacheStrategy {
  */
 export interface DataManager {
   cacheSource: CacheSource;
-  db: SurrealDatabase;
+  db: ISurrealDatabase;
 }
 
 /**

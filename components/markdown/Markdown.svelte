@@ -8,7 +8,7 @@
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import { generateUID } from "$lib/tidy/utils/utils";
-  import type { Node } from "$lib/tidy/types/node.type";
+  import type { Node } from "$lib/tidy/types/memotron/node.type";
   export let md: Node | Markdown;
   export let params: MdParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;

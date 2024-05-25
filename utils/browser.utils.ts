@@ -2,6 +2,7 @@ import { get } from "svelte/store";
 import view from "$lib/tidy/stores/view.store";
 import { Direction } from "../types/direction.enum";
 import { OS } from "../types/os.enum";
+import { appStore } from "../stores/app.store";
 
 function documentDimensions() {
   let documentWidth = get(view).width;
@@ -136,12 +137,12 @@ export function toggleSearchParam(
   if (value !== undefined) {
     const url = new URL(window.location.href);
     url.searchParams.set(param, value.toString());
-    view.gotoPath(url.href);
+    appStore.gotoPath(url.href);
     return;
   }
   const url = new URL(window.location.href);
   url.searchParams.delete(param);
-  view.gotoPath(url.href);
+  appStore.gotoPath(url.href);
 }
 
 export function detectSystemOS() {

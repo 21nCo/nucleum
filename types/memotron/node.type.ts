@@ -14,6 +14,7 @@ export type Node = NodeBase &
 
 export type NodeCapture = NodeBase &
   NodeContent & {
+    type: string;
     metadata: NodeMetadataCapturedAtClient;
     links?: Link[];
   };
@@ -34,11 +35,11 @@ export type NodeBase = Omit<MemotronItemBase, "label"> & {
   /**
    * Type of the node - type:sometype
    */
-  type?: string;
+  type?: Type;
 };
 
 export type ActiveNodeStore = Node & {
-  associatedType: Type;
+  type: Type;
 };
 
 export type NodeContent =
@@ -275,3 +276,9 @@ export type NodeProperty = {
   id: string;
   value: PropertyValue | null;
 };
+
+export enum NodeThumbnailVariant {
+  LIST = "LIST",
+  GRID = "GRID",
+  TIMELINE = "TIMELINE"
+}

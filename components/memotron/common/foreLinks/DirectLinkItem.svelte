@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import type { LinkThumbnail } from "$lib/tidy/types/node.type";
+  import type { LinkThumbnail } from "$lib/tidy/types/memotron/node.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let link: LinkThumbnail;

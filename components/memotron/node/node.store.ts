@@ -108,8 +108,6 @@ function initActiveNodeStore() {
     fetch: async (id: string) => {
       const result = await new NodePersistance().fetch(id);
       if (result) {
-        if (result.type)
-          result.associatedType = await resolveAssociatedType(result.type);
         set(result);
       }
     }

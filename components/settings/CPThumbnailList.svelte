@@ -4,8 +4,8 @@
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { ColorStrength } from "$lib/tidy/types/appearance.type";
-  import { resolveNavigationAction } from "$lib/tidy/utils/utils";
   import CpThumbnail from "./CPThumbnail.svelte";
+  import { appStore } from "$lib/tidy/stores/app.store";
   export let items: string[] = [];
   export let sectionName: string;
   export let orientation: Orientation = Orientation.Horizontal;
@@ -29,7 +29,7 @@
           action={item}
           setActiveByPath={true}
           on:click={() => {
-            resolveNavigationAction(item);
+            appStore.resolveNavigationAction(item);
           }}
         />
         {#if orientation === Orientation.Horizontal}

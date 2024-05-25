@@ -1,4 +1,5 @@
 import { get, writable } from "svelte/store";
+import { Item } from "../types/item.enum";
 import {
   AppSkin,
   Theme,
@@ -8,7 +9,6 @@ import {
 import colorSchemes from "$lib/tidy/theme/colorschemes.json";
 import { StoreDataType } from "../types/data.type";
 import { persistLocally, retrieveLocally } from "./persistance";
-import { Item } from "../types/item.enum";
 import type { UserAppearanceSettings } from "../types/preferences.type";
 import { userPreferences } from "./app.store";
 

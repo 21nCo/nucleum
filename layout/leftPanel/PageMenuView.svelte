@@ -1,7 +1,6 @@
 <script lang="ts">
   import Switcher from "$lib/tidy/elements/switcher/Switcher.svelte";
   import { appStore } from "$lib/tidy/stores/app.store";
-  import view from "$lib/tidy/stores/view.store";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import {
@@ -20,7 +19,7 @@
   function onSwitch(event: any) {
     if (!event.detail || !$appStore.pageMenu) return;
     const path = $appStore.pageMenu[event.detail.selected];
-    view.gotoPath("/" + path);
+    appStore.gotoPath("/" + path);
   }
 </script>
 

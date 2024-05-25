@@ -389,7 +389,7 @@ function resolveDependantStores(resource: string) {
           store.dataType === StoreDataType.IFR) &&
           resource === store.id) ||
         (store.dataType === StoreDataType.KVO &&
-          store.id.split(":")[1] === resource)
+          store.id?.split(":")[1] === resource)
       );
     } else
       return store.dependencies.some(

@@ -1,4 +1,4 @@
-import type { LocalDbRecord } from "$lib/local/types/item.type";
+import type { LocalDbRecord } from "$lib/local/local";
 import type { TimeZoneRecord, UserGlobalPreferences } from "./preferences.type";
 
 export interface DbRecordBase {

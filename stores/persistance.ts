@@ -10,7 +10,8 @@ import type {
   DbRecordBase,
   DbRecordWithLabel
 } from "../types/dbrecord.type";
-import { interceptSurrealResponse, performApiCall } from "../utils/utils";
+import { interceptSurrealResponse } from "../utils/utils";
+import { performApiCall } from "../utils/network.utils";
 import { isValidArrayWithData } from "../utils/obj.utils";
 import { logger } from "./log.store";
 

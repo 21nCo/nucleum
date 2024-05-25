@@ -3,30 +3,25 @@
   import BackgroundElement from "$lib/tidy/elements/style/BackgroundElement.svelte";
   import { userPreferences } from "$lib/tidy/stores/app.store";
   import { dataManager } from "$lib/tidy/stores/data.store";
-  import { NodeType, type NodeThumbnail } from "$lib/tidy/types/node.type";
+  import {
+    NodeType,
+    type NodeThumbnail
+  } from "$lib/tidy/types/memotron/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { isValidArrayWithData, objIsEmpty } from "$lib/tidy/utils/obj.utils";
   import { properCase } from "$lib/tidy/utils/text.utils";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
   import { formatDate, formatTime } from "$lib/tidy/utils/time.utils";
-  import Memocon from "./Memocon.svelte";
-  import DLinks from "./foreLinks/DirectLinks.svelte";
+  import Memocon from "../Memocon.svelte";
+  import DLinks from "../foreLinks/DirectLinks.svelte";
   // export let id: string;
   export let node: NodeThumbnail | undefined;
-  // $: if (id) refresh();
-
-  // async function refresh() {
-  //   let record = await $dataManager.cacheSource.dexie.node.get(id);
-  //   // console.log("NodeThumbnail", { id, record });
-  //   node = record;
-  // }
   export let parentBackgrounIndex: number = 0;
-  export let variant: "timeline_v1" | "timeline_v2" | "space_doc" =
-    "timeline_v2";
+  export let variant: "v1" | "v2" = "v2";
 </script>
 
 {#if node}
-  {#if variant === "timeline_v1"}
+  {#if variant === "v1"}
     <BackgroundElement
       parentBgIndex={parentBackgrounIndex}
       class="flex flex-col gap-1 max-h-fit rounded-md w-full p-4"
@@ -49,33 +44,6 @@
       <div class="pt-4">
         <DLinks links={node.links} context="nodethumbnail" />
       </div>
-    </BackgroundElement>
-  {:else if variant === "space_doc"}
-    <BackgroundElement
-      parentBgIndex={parentBackgrounIndex}
-      class="flex flex-col gap-1 max-h-fit rounded-md w-full p-4 hover:bg-bgs2"
-      on:click
-    >
-      <div class="flex w-full justify-between">
-        <span class="text-b3 text-fgs3">
-          {formatDate(new Date(node.createdAt))}
-          {formatTime($userPreferences, new Date(node.createdAt))}
-        </span>
-        <span class="bg-aps2 rounded-md px-2 text-b3">
-          {properCase(node.contentType)}
-        </span>
-      </div>
-      <div class="w-full text-left truncate text-fgs2 font-medium text-h5">
-        {node.label ?? ""}
-      </div>
-      {#if node.contentType === NodeType.AUDIO}
-        <audio class="bg-transparent" controls src={node.body.url} />
-      {/if}
-      {#if node.links}
-        <div class="pt-4">
-          <DLinks links={node.links} context="nodethumbnail" />
-        </div>
-      {/if}
     </BackgroundElement>
   {:else}
     <!-- TODO - bg on hover -->

@@ -10,7 +10,6 @@
     postTokenToExtension
   } from "$lib/tidy/utils/embed.utils";
   import { isValidEmail } from "$lib/tidy/utils/text.utils";
-  import { performApiCall, runAction } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import OAuthButtons from "./OAuthButtons.svelte";
@@ -18,6 +17,7 @@
   import account from "$lib/tidy/stores/account.store";
   import view from "$lib/tidy/stores/view.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
+  import { performApiCall } from "$lib/tidy/utils/network.utils";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -71,7 +71,7 @@
     }
     if (isLoginFromExtension) {
       postTokenToExtension(json);
-      runAction("ext-login");
+      appStore.runAction("ext-login");
     } else await account.signIn(json, { isFromSignup: isSignup });
     actionInProgress = false;
   }

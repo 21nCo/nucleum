@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LinkThumbnail } from "$lib/tidy/types/node.type";
+  import type { LinkThumbnail } from "$lib/tidy/types/memotron/node.type";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
   import DLinkItem from "./DirectLinkItem.svelte";
   export let links: LinkThumbnail[] = [];

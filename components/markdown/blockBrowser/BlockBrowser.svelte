@@ -2,7 +2,7 @@
   import EmptyStatusView from "$lib/tidy/elements/feedback/EmptyStatusView.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { InlineType } from "$lib/tidy/types/memotron/md.type";
-  import { NodeType, ListType } from "$lib/tidy/types/node.type";
+  import { NodeType, ListType } from "$lib/tidy/types/memotron/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import {

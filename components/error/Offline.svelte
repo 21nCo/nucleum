@@ -1,5 +1,5 @@
 <script>
-  import view from "$lib/tidy/stores/view.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
 </script>
 
 <div class="w-full h-full flex flex-col gap-12 justify-center items-center p-4">
@@ -12,7 +12,7 @@
   <button
     class="bg-bgs2 rounded-full px-4 py-2"
     on:click={() => {
-      view.gotoPath($view.currentPath);
+      appStore.gotoPath($appStore.currentPath);
     }}
   >
     Try again

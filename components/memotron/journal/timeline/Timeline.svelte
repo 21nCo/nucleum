@@ -30,10 +30,6 @@
     <TodayButton parentBackgroundIndex={parentBgIndex} />
   </div>
   <div class="flex-grow w-full">
-    <TimelineItems
-      parentBackgroundIndex={parentBgIndex}
-      {context}
-      bind:nodeCount
-    />
+    <TimelineItems {parentBgIndex} {context} bind:nodeCount />
   </div>
 </div>

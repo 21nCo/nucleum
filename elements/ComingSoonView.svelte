@@ -5,8 +5,8 @@
   import Link from "./text/Link.svelte";
   import { LinkVariant } from "../types/button.type";
   import Button from "./button/Button.svelte";
-  import { runAction } from "../utils/utils";
   import { AppEvent } from "../types/event.enum";
+  import { appStore } from "../stores/app.store";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
@@ -31,7 +31,7 @@
   <div class="text-b3 text-fgs2">
     <Link
       on:click={() => {
-        runAction(AppEvent.ROADMAP);
+        appStore.runAction(AppEvent.ROADMAP);
       }}
       label="See roadmap"
       variant={LinkVariant.DOTTED}

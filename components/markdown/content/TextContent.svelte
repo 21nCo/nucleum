@@ -11,7 +11,7 @@
     type StructuralNodeType,
     type TextContent,
     type TextNodeType
-  } from "$lib/tidy/types/node.type";
+  } from "$lib/tidy/types/memotron/node.type";
   import { cn } from "$lib/tidy/utils/ui.utils";
   import Popover from "$lib/tidy/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";

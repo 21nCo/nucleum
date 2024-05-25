@@ -8,7 +8,7 @@
     LinkType,
     NodeType,
     RightPanelType
-  } from "$lib/tidy/types/node.type";
+  } from "$lib/tidy/types/memotron/node.type";
   import { VerticalSwitcherStyle } from "$lib/tidy/types/switcher.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { cn } from "$lib/tidy/utils/ui.utils";

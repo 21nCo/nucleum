@@ -30,8 +30,8 @@
     <div class="flex gap-4 grow">
       <!-- TODO - reenable after loading time issue of Avatar picker -->
       <!-- <Memocon bind:avatar={$node.avatar} /> -->
-      {#if $node.associatedType?.avatar}
-        <AvatarView avatar={$node.associatedType?.avatar} size={Size.md} />
+      {#if $node.type?.avatar}
+        <AvatarView avatar={$node.type?.avatar} size={Size.md} />
       {/if}
       {#if $isInEditMode}
         <TextInput

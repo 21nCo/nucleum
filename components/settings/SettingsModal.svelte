@@ -4,7 +4,6 @@
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import CpThumbnail from "../settings/CPThumbnail.svelte";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import { resolveComponent, runNavigationAction } from "$lib/tidy/utils/utils";
   import { ActionType, type Action } from "$lib/tidy/types/action.type";
   import { onMount } from "svelte";
   import type { AppStore } from "$lib/tidy/types/appStore.type";
@@ -28,12 +27,12 @@
   function resolveAction(slug: string) {
     console.log(slug);
     if (!slug) return;
-    const result = resolveComponent(slug);
+    const result = appStore.resolveComponent(slug);
     if (!result) return;
     if (result.type === ActionType.FUNCTION) {
       result.fn?.();
     } else if (result?.type === ActionType.LINK) {
-      runNavigationAction(result);
+      appStore.runNavigationAction(result);
     } else {
       pageAction = result;
     }

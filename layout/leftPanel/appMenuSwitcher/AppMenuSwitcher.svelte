@@ -2,11 +2,8 @@
   import { LayoutContext } from "$lib/tidy/types/layout.type";
   import { onMount } from "svelte";
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
-  import {
-    resolveNavigationAction,
-    resolveComponent
-  } from "$lib/tidy/utils/utils";
   import type { Action } from "$lib/tidy/types/action.type";
+  //TODO - remove dependency on local
   import { userLocalPreferences } from "$lib/local/stores/local.store";
   import type { UserLocalPreferences } from "$lib/local/types/userLocalPreferences.type";
   import { resolveBackgroundClass } from "$lib/tidy/utils/theme.utils";
@@ -33,7 +30,7 @@
         items = x.appMenu.filter((item) => item !== "cp");
       }
       items.forEach((action: string) => {
-        const currentPage = resolveComponent(action);
+        const currentPage = appStore.resolveComponent(action);
         if (currentPage) {
           pages.push(currentPage);
         }
@@ -68,7 +65,7 @@
           (layoutContext === LayoutContext.MINIMIZED && isHovered)}
         on:click={() => {
           selected = index;
-          resolveNavigationAction(item.action);
+          appStore.resolveNavigationAction(item.action);
         }}
         {item}
       />

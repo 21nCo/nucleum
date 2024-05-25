@@ -1,13 +1,14 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Icon from "$lib/tidy/elements/Icon.svelte";
-  import { runAction } from "$lib/tidy/utils/utils";
   import { onMount } from "svelte";
   import TopNavItem from "./TopNavItem.svelte";
   import account from "$lib/tidy/stores/account.store";
   import Button from "$lib/tidy/elements/button/Button.svelte";
+  //TODO - remove dependency on localEvent
   import { GatheryEvent } from "$lib/local/types/localEvent.enum";
   import { spaceInContext } from "$lib/tidy/stores/space.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   export let items: string[];
   let selected: string = items[0];
   let isCollapsed: boolean = false;
@@ -31,7 +32,7 @@
       <div class="flex items-center px-4">
         <Button
           label={$spaceInContext?.label ?? "none selected"}
-          on:click={() => runAction(GatheryEvent.SPACE_BROWSER)}
+          on:click={() => appStore.runAction(GatheryEvent.SPACE_BROWSER)}
         />
         &nbsp;&nbsp;⏐&nbsp;&nbsp;
         <!-- <span class="text-fgs2 text-b2">
@@ -44,7 +45,7 @@
           isActive={selected === item}
           on:click={() => {
             selected = item;
-            runAction(item);
+            appStore.runAction(item);
           }}
         />
       {/each}
@@ -61,7 +62,7 @@
         item={selected}
         isActive={false}
         isShowLabel={true}
-        on:click={() => runAction(selected)}
+        on:click={() => appStore.runAction(selected)}
       />
     {/if}
 

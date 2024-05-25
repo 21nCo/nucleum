@@ -7,11 +7,12 @@
   import ProductInfoFooter from "../settings/about/ProductInfoFooter.svelte";
   import BackButton from "$lib/tidy/elements/button/BackButton.svelte";
   import ComponentResolver from "$lib/tidy/layout/paint/ComponentResolver.svelte";
-  import { resolveComponent, runNavigationAction } from "$lib/tidy/utils/utils";
+
   import { ActionType, type Action } from "$lib/tidy/types/action.type";
   import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import NavigationHeader from "$lib/tidy/elements/NavigationHeader.svelte";
+  import { appStore } from "$lib/tidy/stores/app.store";
   let pageAction: Action | null = null;
   let config = [
     {
@@ -41,13 +42,13 @@
   function resolveAction(slug: string) {
     console.log(slug);
     if (!slug) return;
-    const result = resolveComponent(slug);
+    const result = appStore.resolveComponent(slug);
     if (!result) return;
     if (result.type === ActionType.FUNCTION) {
       result.fn?.();
       if (slug === "chat") modalEvent.hideSpecific(AppEvent.HELP);
     } else if (result?.type === ActionType.LINK) {
-      runNavigationAction(result);
+      appStore.runNavigationAction(result);
     } else {
       pageAction = result;
     }

@@ -4,7 +4,7 @@ import {
   type CacheSource,
   type CacheableStore
 } from "../types/data.type";
-import { LocalDexie } from "$lib/local/stores/local.dexie";
+import { LocalDexie } from "$lib/local/local";
 
 /**
  * The cache manager for the application.

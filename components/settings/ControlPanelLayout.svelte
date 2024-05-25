@@ -41,7 +41,7 @@
     <NavigationHeader
       label={$view.currentComponent?.label ?? ""}
       backCallback={() => {
-        view.gotoPath("/cp");
+        appStore.gotoPath("/cp");
       }}
     />
     <div class="flex flex-col flex-grow">
@@ -57,7 +57,7 @@
           ? 'pb-40'
           : 'pb-20'}"
       >
-        <ProfileCpSection on:click={() => view.gotoPath("/cp/account")} />
+        <ProfileCpSection on:click={() => appStore.gotoPath("/cp/account")} />
         {#if cpConfiguration}
           {#each cpConfiguration as item}
             <CpThumbnailList

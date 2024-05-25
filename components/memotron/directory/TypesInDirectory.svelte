@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { MemotronEvent } from "$lib/local/types/event.enum";
+  import { MemotronEvent } from "$lib/tidy/types/memotron/memotronEvent.enum";
   import AvatarView from "$lib/tidy/elements/avatarPicker/AvatarView.svelte";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import FloatingButton from "$lib/tidy/elements/button/FloatingButton.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { activeResourceFilter, runAction } from "$lib/tidy/utils/utils";
+  import { activeResourceFilter } from "$lib/tidy/utils/utils";
   import { types } from "../type/type.store";
   import { confirmationNotification } from "$lib/tidy/stores/notification.store";
   import { ButtonVariant } from "$lib/tidy/types/button.type";
   import { liveQuery } from "dexie";
+  import { appStore } from "$lib/tidy/stores/app.store";
   let allTypes = liveQuery(() =>
     $dataManager.cacheSource.dexie.type.filter(activeResourceFilter).toArray()
   );
@@ -53,7 +54,7 @@
     params={{
       label: "Create new type",
       callback: async () => {
-        runAction(MemotronEvent.CREATE_TYPE);
+        appStore.runAction(MemotronEvent.CREATE_TYPE);
       }
     }}
   />

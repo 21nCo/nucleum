@@ -4,7 +4,7 @@
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import Text from "$lib/tidy/elements/text/Text.svelte";
   import { isInEditMode } from "$lib/tidy/stores/app.store";
-  import { NodeType } from "$lib/tidy/types/node.type";
+  import { NodeType } from "$lib/tidy/types/memotron/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { resolveActiveNodeStore } from "./node.store";

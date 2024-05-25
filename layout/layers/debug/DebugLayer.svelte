@@ -8,7 +8,6 @@
   import { onMount } from "svelte";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonVariant } from "$lib/tidy/types/button.type";
-  import { runAction } from "$lib/tidy/utils/utils";
   import { AppEvent } from "$lib/tidy/types/event.enum";
   import { logger } from "$lib/tidy/stores/log.store";
   import appearance from "$lib/tidy/stores/appearance.store";
@@ -117,7 +116,7 @@
       width="w-full"
       icon="play"
       on:click={() => {
-        runAction(AppEvent.MANUAL_RUN_DBO);
+        appStore.runAction(AppEvent.MANUAL_RUN_DBO);
       }}
       label="Run manual dbo update"
     />

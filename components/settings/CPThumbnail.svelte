@@ -1,11 +1,10 @@
 <script lang="ts">
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import ActiveBackgroundElement from "$lib/tidy/elements/style/ActiveBackgroundElement.svelte";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import view from "$lib/tidy/stores/view.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
-  import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
-  import { resolveComponent } from "$lib/tidy/utils/utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let width: string = "w-24";
@@ -13,7 +12,7 @@
   export let isActive: boolean = false;
   export let setActiveByPath: boolean = false;
   let selectionStyle = SelectionItemActiveStyle.ACCENT_BACKGROUND;
-  let component = resolveComponent(action);
+  let component = appStore.resolveComponent(action);
   $: if (setActiveByPath)
     isActive = $view.currentPath === "/" + component?.path;
 </script>

@@ -2,7 +2,7 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { appStore } from "$lib/tidy/stores/app.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { openLink } from "$lib/tidy/utils/utils";
+
   import ProductInfoFooter from "./ProductInfoFooter.svelte";
   import view from "$lib/tidy/stores/view.store";
   let size = Size.sm;
@@ -25,7 +25,7 @@
       icon="link"
       width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
-        openLink($appStore.appData.urls.roadmap);
+        appStore.openLink($appStore.appData.urls.roadmap);
       }}
     />
     <Button
@@ -34,7 +34,7 @@
       icon="link"
       width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
-        openLink($appStore.appData.urls.discord);
+        appStore.openLink($appStore.appData.urls.discord);
       }}
     />
     <Button
@@ -43,7 +43,7 @@
       icon="link"
       width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
-        openLink($appStore.appData.urls.blank);
+        appStore.openLink($appStore.appData.urls.blank);
       }}
     />
   </div>

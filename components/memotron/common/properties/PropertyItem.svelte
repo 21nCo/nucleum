@@ -11,7 +11,7 @@
   import view from "$lib/tidy/stores/view.store";
   import { Orientation } from "$lib/tidy/types/direction.enum";
   import { InputStyle } from "$lib/tidy/types/input.type";
-  import type { NodeProperty } from "$lib/tidy/types/node.type";
+  import type { NodeProperty } from "$lib/tidy/types/memotron/node.type";
   import { Size } from "$lib/tidy/types/size.enum";
   import { enumToString } from "$lib/tidy/utils/text.utils";
   import { cn } from "$lib/tidy/utils/ui.utils";

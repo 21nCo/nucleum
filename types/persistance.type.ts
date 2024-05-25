@@ -1,13 +1,12 @@
-import type { DbRecordType } from "$lib/local/types/item.type";
+import type { DbRecord } from "./dbrecord.type";
 
 export type QueryParams =
   | string
   | number
   | boolean
   | string[]
-  | DbRecordType
-  | DbRecordType[]
+  | DbRecord
+  | DbRecord[]
   | MergeRecord;
 
-export type MergeRecord = Partial<DbRecordType> &
-  Required<Pick<DbRecordType, "id">>;
+export type MergeRecord = Partial<DbRecord> & Required<Pick<DbRecord, "id">>;

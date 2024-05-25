@@ -8,7 +8,6 @@
   import { Size } from "$lib/tidy/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/tidy/types/switcher.enum";
   import { bgClass } from "$lib/tidy/utils/theme.utils";
-  import { openLink, runAction } from "$lib/tidy/utils/utils";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   //let isCpActive: boolean = false;
@@ -34,7 +33,7 @@
         isRounded
           ? 'rounded-bl-lg'
           : ''} {isCpActive ? 'bg-aps1' : ''}"
-        on:click={() => runAction(AppEvent.SETTINGS)}
+        on:click={() => appStore.runAction(AppEvent.SETTINGS)}
       >
         <Icon
           icon="settings"
@@ -49,7 +48,7 @@
           : 'rounded-br-lg'}"
         on:click={() => {
           // openLink($appStore?.appData?.urls?.help);
-          runAction(AppEvent.HELP);
+          appStore.runAction(AppEvent.HELP);
         }}
       >
         <Icon icon="help" size={isInThinMode ? Size.lg : Size.md} />

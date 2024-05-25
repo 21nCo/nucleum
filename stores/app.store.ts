@@ -1,11 +1,5 @@
-import { get, readable, writable } from "svelte/store";
-import {
-  generateUID,
-  resolveComponentFromPath,
-  resolveUiState,
-  runAction,
-  setUiState
-} from "$lib/tidy/utils/utils";
+import { get, writable } from "svelte/store";
+import { generateUID, resolveUiState, setUiState } from "$lib/tidy/utils/utils";
 import {
   AppSkin,
   Theme,
@@ -28,10 +22,7 @@ import colorSchemes from "$lib/tidy/theme/colorschemes.json";
 import { Persistance, persistLocally, retrieveLocally } from "./persistance";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { Item } from "$lib/tidy/types/item.enum";
-import {
-  defaultAppData,
-  localCacheableStores
-} from "$lib/local/stores/local.store";
+import { localCacheableStores } from "$lib/local/local";
 import { TimeScale } from "../types/time.type";
 import { Orientation } from "../types/direction.enum";
 import { UiState } from "../types/uiState.enum";
@@ -45,6 +36,17 @@ import {
 import { dataManager } from "./data.store";
 import modalEvent from "../components/modal/modal.store";
 import { detectTimeZone } from "../utils/time.utils";
+import { defaultAppData } from "$lib/local/local";
+import { postToParent } from "../utils/embed.utils";
+import view from "./view.store";
+import { ActionType, type Action } from "../types/action.type";
+import { confirmationNotification } from "./notification.store";
+import { goto } from "$app/navigation";
+import context from "./context.store";
+import type {
+  IdentityProvider,
+  OAuthProviderConfig
+} from "../types/oauth.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -381,11 +383,188 @@ export const appStore = initAppStore({
   isExperimentalMode,
   launchContext: LaunchContext.DEFAULT,
   embedContext: EmbedContext.NONE,
-  appData: cachedAppData ?? defaultAppData
+  appData: cachedAppData ?? defaultAppData,
+  currentPath: "",
+  isMenuHidden: false,
+  actions: []
 });
 
 function initAppStore(seed: AppStore) {
   const { subscribe, set, update } = writable<AppStore>(seed);
+
+  const resolveComponentFromPath = (path: string) => {
+    const actions = get(appStore).actions;
+    let component = actions.find((x) => x.path == path);
+    if (component) return component;
+    component = actions.find((x) => x.action == path);
+    if (component) return component;
+    if (component) return component;
+    return null;
+  };
+  /**
+   * Determines whether the app menu should be hidden for a path
+   * @param newPath path which needs to checked
+   * @param n view
+   * @returns a boolean whether app menu should be hidden or not
+   */
+  const checkIfNeedToHideMenu = (newPath: string) => {
+    const n = get(view);
+    const path = newPath.split("?")[0];
+    if (path.split("/")[1]) {
+      let component = resolveComponentFromPath(path.split("/")[1]);
+      if (component?.isMenuHidden) return true;
+    }
+    const listOfPathsToHideMenu = {
+      portrait: ["/goals/*", "/cp/*"],
+      landscape: []
+    };
+    if (!path) return false;
+    let pathParts = path.split("/").filter((p) => p);
+    if (n.isPortrait) {
+      if (listOfPathsToHideMenu.portrait.includes(path)) return true;
+      //currently only supports one level deep, but can be extended to support more
+      else if (
+        pathParts.length > 1 &&
+        listOfPathsToHideMenu.portrait.includes(`/${pathParts[0]}/*`)
+      )
+        return true;
+    } else {
+      //check for landscape
+    }
+    return false;
+  };
+  const gotoPath = async (path: string, params: any = null) => {
+    // logger.log({ method: "gotoPath", path });
+    //TODO
+    // appStore.hideFullScreenPlayer();
+    update((n: AppStore) => {
+      n = {
+        ...n,
+        currentPath: path,
+        isMenuHidden: checkIfNeedToHideMenu(path)
+      };
+      return n;
+    });
+    // if (!navigator.onLine) {
+    //   path = "/offline";
+    // }
+    if (params) goto(path, params);
+    else goto(path);
+  };
+  const resolveComponent = (action: string) => {
+    let component = get(appStore).actions.find(
+      (x) => x.action.toLowerCase() == action.toLowerCase()
+    );
+    if (component) return component;
+    return null;
+  };
+  const runAction = async (
+    action: string,
+    componentParams: any = undefined
+  ) => {
+    let component = resolveComponent(action);
+    if (!component) {
+      gotoPath("404");
+      return;
+    }
+    if (
+      component.type === ActionType.MODAL ||
+      component.type === ActionType.META_MODAL
+    ) {
+      modalEvent.notify({
+        path: component.action,
+        isShow: true,
+        componentParams,
+        ...component.modalParams
+      });
+    } else if (
+      component.type === ActionType.CONFIRMATION &&
+      component.confirmation
+    ) {
+      confirmationNotification.notify(component.confirmation);
+    } else if (component.fn) return await component.fn(componentParams);
+    else resolveNavigationAction(action);
+  };
+  const openLink = (url: string) => {
+    if (!url) return;
+    if (!url.includes("http")) {
+      gotoPath(url);
+      return;
+    }
+    if (get(appStore).launchContext == LaunchContext.EMBED) {
+      postToParent({
+        link: url
+      });
+    } else {
+      let win = window?.open(url, "_blank");
+      if (win) {
+        win.focus();
+      }
+    }
+  };
+  const runNavigationAction = (action: Action) => {
+    if (action.type === ActionType.LINK && action.link) {
+      const url = get(appStore).appData.urls[action.link];
+      if (url) openLink(url);
+    } else if (action.component) {
+      gotoPath("/" + (action.path ?? action.action));
+      return;
+    }
+  };
+  const resolveNavigationAction = (action: string) => {
+    let component = resolveComponent(action);
+    if (!component) {
+      gotoPath("404");
+      return;
+    }
+    runNavigationAction(component);
+  };
+
+  const initiateOAuth2Flow = (provider: IdentityProvider) => {
+    const ctx = get(context);
+    const oAuthConfig: OAuthProviderConfig[] =
+      get(appStore).appData?.oAuthConfig;
+    console.log(oAuthConfig, window.location);
+    if (!oAuthConfig || oAuthConfig.length < 1) return;
+    const config = oAuthConfig.find((c) => c.provider === provider);
+    if (!config) return;
+    const app = import.meta.env.VITE_APP ?? window.location.hostname;
+    let url =
+      config.authorise_url +
+      "?client_id=" +
+      config.client_id +
+      "&scope=" +
+      config.scope +
+      "&response_type=code&state=" +
+      app;
+    let redirectUri = "";
+    if (config.response_mode === "form_post") {
+      redirectUri =
+        import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
+      // redirectUri = "https://dev.pointron.io/r/apple";
+      url += "&response_mode=form_post";
+    } else if (!ctx.isEmbed) {
+      redirectUri = window.location.origin + "/r/" + config.oauth_slug;
+    } else {
+      redirectUri =
+        "https://" + import.meta.env.VITE_APP + "/r/" + config.oauth_slug;
+    }
+    if (config.code_challenge_method) {
+      //TODO generate code challenge
+      url +=
+        "&code_challenge=challenge&code_challenge_method=" +
+        config.code_challenge_method;
+    }
+    if (!redirectUri) return;
+    url += "&redirect_uri=" + redirectUri;
+    // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
+    if (ctx.isEmbed) {
+      openLink(url);
+    } else {
+      goto(url);
+    }
+  };
+
   return {
     subscribe,
     set: (m: AppStore) => {
@@ -476,7 +655,56 @@ function initAppStore(seed: AppStore) {
         !val
       );
       userPreferences.setUiStates(newUiStates);
-    }
+    },
+    toggleMenuVisibility: (isHidden?: boolean) => {
+      update((n: AppStore) => {
+        if (isHidden !== undefined && isHidden !== null) {
+          n = { ...n, isMenuHidden: isHidden };
+        } else {
+          n = { ...n, isMenuHidden: !n.isMenuHidden };
+        }
+        return n;
+      });
+    },
+    toggleTopBar: (isMinimal: boolean) => {
+      update((n: AppStore) => {
+        n = { ...n, isMinimalTopBar: isMinimal };
+        return n;
+      });
+    },
+    setCurrentPath: (path: string) => {
+      update((n: AppStore) => {
+        n = {
+          ...n,
+          currentPath: path,
+          isMenuHidden: checkIfNeedToHideMenu(path)
+        };
+        return n;
+      });
+    },
+    initActions: (
+      actions: Action[],
+      settingsAsModal: Action[],
+      settingsAsPages: Action[]
+    ) => {
+      const isInPortraitMode = get(view).isPortrait;
+      update((n: AppStore) => {
+        if (!n.actions) n.actions = [];
+        const isSettingsAsModal = n.appData?.isSettingsAsModal;
+        if (isInPortraitMode || !isSettingsAsModal)
+          n.actions = [...actions, ...settingsAsPages];
+        else n.actions = [...actions, ...settingsAsModal];
+        return n;
+      });
+    },
+    gotoPath,
+    resolveComponent,
+    resolveComponentFromPath,
+    openLink,
+    runAction,
+    resolveNavigationAction,
+    runNavigationAction,
+    initiateOAuth2Flow
   };
 }
 

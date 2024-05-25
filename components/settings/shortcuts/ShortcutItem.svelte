@@ -1,9 +1,8 @@
 <script lang="ts">
   import Button from "$lib/tidy/elements/button/Button.svelte";
-  import { userPreferences } from "$lib/tidy/stores/app.store";
+  import { appStore, userPreferences } from "$lib/tidy/stores/app.store";
   import type { KeyboardShortcut } from "$lib/tidy/types/preferences.type";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { resolveComponent } from "$lib/tidy/utils/utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let shortcut: KeyboardShortcut;
@@ -14,7 +13,7 @@
   let key: string;
   let modifiers: string[] = [];
   let inputRef: HTMLInputElement;
-  const action = resolveComponent(shortcut.action);
+  const action = appStore.resolveComponent(shortcut.action);
   const systemShortcuts = [
     {
       key: "p",

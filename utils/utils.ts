@@ -1,21 +1,11 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/tidy/types/userDate.type";
-import { appStore } from "../stores/app.store";
-import actions from "$lib/tidy/stores/actions.store";
 import view from "$lib/tidy/stores/view.store";
-import modalEvent from "../components/modal/modal.store";
-import {
-  toasts,
-  confirmationNotification
-} from "$lib/tidy/stores/notification.store";
+import { toasts } from "$lib/tidy/stores/notification.store";
 import { get } from "svelte/store";
-import { LaunchContext } from "../types/appStore.type";
 import { FileSizeMeasurement } from "../types/fileSizeMeasurement.enum";
-import { postToParent } from "./embed.utils";
-import { detectTimeZone } from "./time.utils";
 import { ActionType, type Action } from "../types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
-import { resolveToken } from "./account.utils";
 
 export function onInterval(
   callback: () => void,
@@ -146,127 +136,6 @@ export function generateSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 
-export function resolveComponent(action: string) {
-  let component = get(actions).find(
-    (x) => x.action.toLowerCase() == action.toLowerCase()
-  );
-  if (component) return component;
-  return null;
-}
-
-export function resolveComponentFromPath(path: string) {
-  let component = get(actions).find((x) => x.path == path);
-  if (component) return component;
-  component = get(actions).find((x) => x.action == path);
-  if (component) return component;
-  if (component) return component;
-  return null;
-}
-
-export function openLink(url: string) {
-  if (!url) return;
-  if (!url.includes("http")) {
-    view.gotoPath(url);
-    return;
-  }
-  if (get(appStore).launchContext == LaunchContext.EMBED) {
-    postToParent({
-      link: url
-    });
-  } else {
-    let win = window?.open(url, "_blank");
-    if (win) {
-      win.focus();
-    }
-  }
-}
-
-export async function runAction(
-  action: string,
-  componentParams: any = undefined
-) {
-  let component = resolveComponent(action);
-  if (!component) {
-    view.gotoPath("404");
-    return;
-  }
-  if (
-    component.type === ActionType.MODAL ||
-    component.type === ActionType.META_MODAL
-  ) {
-    modalEvent.notify({
-      path: component.action,
-      isShow: true,
-      componentParams,
-      ...component.modalParams
-    });
-  } else if (
-    component.type === ActionType.CONFIRMATION &&
-    component.confirmation
-  ) {
-    confirmationNotification.notify(component.confirmation);
-  } else if (component.fn) return await component.fn(componentParams);
-  else resolveNavigationAction(action);
-}
-
-export function resolveNavigationAction(action: string) {
-  let component = resolveComponent(action);
-  if (!component) {
-    view.gotoPath("404");
-    return;
-  }
-  runNavigationAction(component);
-}
-export function runNavigationAction(action: Action) {
-  if (action.type === ActionType.LINK && action.link) {
-    const url = get(appStore).appData.urls[action.link];
-    if (url) openLink(url);
-  } else if (action.component) {
-    view.gotoPath("/" + (action.path ?? action.action));
-    return;
-  }
-}
-
-export function getAssociatedPlayerFromPath(path: string) {
-  let player = undefined;
-  let component = get(actions).find((x) => x.associatedPlayer == path);
-  if (component) player = component;
-  return player;
-}
-export function getAppLoadContext() {
-  const app = import.meta.env.VITE_APP;
-  const urlParams = new URLSearchParams(window.location.search);
-  return {
-    userAgent: navigator.userAgent,
-    host: app ?? window.location.host,
-    href: window.location.href,
-    timezone: detectTimeZone(),
-    geo: null,
-    referrer: document.referrer,
-    urlParams: Object.fromEntries(urlParams.entries())
-  };
-}
-
-export function performApiCall(
-  endpoint: string,
-  method: string,
-  body: any = {}
-) {
-  let token = resolveToken();
-  try {
-    return fetch(import.meta.env.VITE_API_URL + "/" + endpoint, {
-      method: method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({ ...body, context: getAppLoadContext() })
-    });
-  } catch (err) {
-    console.error(err);
-  }
-}
-
 /**
  * @deprecated - Use performApiCall
  * @param endpoint
@@ -344,6 +213,10 @@ export function convertFileSize(
   }
 }
 
+/**
+ * @deprecated
+ * TODO - send view.isPortrait as prop or move this as view.store method.
+ */
 export function resolveUiState(uiStates: any, property: string) {
   if (!uiStates) return undefined;
   let value = undefined;

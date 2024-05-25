@@ -1,6 +1,10 @@
+import { Item } from "../types/item.enum";
 import { get } from "svelte/store";
-import { isRefreshingToken, userPreferences } from "../stores/app.store";
-import view from "$lib/tidy/stores/view.store";
+import {
+  appStore,
+  isRefreshingToken,
+  userPreferences
+} from "../stores/app.store";
 import account from "$lib/tidy/stores/account.store";
 import { wait } from "./time.utils";
 import jwt_decode from "jwt-decode";
@@ -8,7 +12,6 @@ import { Persistance, retrieveLocally } from "../stores/persistance";
 import { resolveUiState } from "./utils";
 import { UiState } from "../types/uiState.enum";
 import { logger } from "../stores/log.store";
-import { Item } from "../types/item.enum";
 
 export async function performRedirectionChecks() {
   return await performLoginStatusCheck();
@@ -17,7 +20,7 @@ export async function performRedirectionChecks() {
 export async function performLoginStatusCheck() {
   const token = localStorage.getItem("surreal-token");
   if (!token) {
-    view.gotoPath("/signup");
+    appStore.gotoPath("/signup");
     return false;
   }
   let isSessionExpiredOrRefreshing = await checkIfSessionExpired();
@@ -28,7 +31,7 @@ export async function performLoginStatusCheck() {
   }
   isSessionExpiredOrRefreshing = await checkIfSessionExpired();
   if (isSessionExpiredOrRefreshing) {
-    view.gotoPath("/signup?msg=expired");
+    appStore.gotoPath("/signup?msg=expired");
     return false;
   } else return true;
 }
@@ -39,7 +42,7 @@ export async function onBoardingStatusCheck() {
   )
     return true;
   else {
-    view.gotoPath("/onboarding");
+    appStore.gotoPath("/onboarding");
     return false;
   }
 }

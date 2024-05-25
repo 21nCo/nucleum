@@ -7,7 +7,6 @@
     type Action,
     ThinModeBehavior
   } from "$lib/tidy/types/action.type";
-  import { resolveComponentFromPath } from "$lib/tidy/utils/utils";
   import {
     appStore,
     excludedPathsForRedirectionCheck
@@ -16,7 +15,6 @@
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import { Size } from "$lib/tidy/types/size.enum";
   import { performRedirectionChecks } from "$lib/tidy/utils/account.utils";
-  import { EmbedContext } from "$lib/tidy/types/appStore.type";
   import context from "$lib/tidy/stores/context.store";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
@@ -32,7 +30,7 @@
     await resolve(resolveCurrentPath());
     const sub = page.subscribe(async () => {
       let currentPath = resolveCurrentPath();
-      if ($view.currentPath.includes(currentPath)) {
+      if ($appStore.currentPath?.includes(currentPath)) {
         await resolve(currentPath);
       }
     });
@@ -63,7 +61,7 @@
     }
     parentComponent = null;
     grandPa = null;
-    currentComponent = resolveComponentFromPath(currentPath);
+    currentComponent = appStore.resolveComponentFromPath(currentPath);
 
     if (!currentComponent) {
       console.log({
@@ -73,16 +71,16 @@
         notFoundPath: $appStore.appData.notFoundPath
       });
       if (currentPath == "") {
-        view.gotoPath($appStore.appData.homePath ?? "/home");
+        appStore.gotoPath($appStore.appData.homePath ?? "/home");
       } else {
-        view.gotoPath($appStore.appData.notFoundPath ?? "/404");
+        appStore.gotoPath($appStore.appData.notFoundPath ?? "/404");
       }
     }
-    $view.currentComponent = currentComponent ?? undefined;
+    $appStore.currentComponent = currentComponent ?? undefined;
     if (currentComponent && currentComponent.isMenuHidden) {
-      $view.isMenuHidden = true;
-    } else if ($appStore.embedContext === EmbedContext.SHEET) {
-      $view.isMenuHidden = true;
+      $appStore.isMenuHidden = true;
+    } else if ($context.isSheet) {
+      $appStore.isMenuHidden = true;
     }
     if (currentComponent && currentComponent.fn) {
       currentComponent.fn();
@@ -90,12 +88,12 @@
     let parts = currentPath.split("/");
     if (parts && parts.length > 1) {
       const parent = parts.slice(0, parts.length - 1).join("/");
-      parentComponent = resolveComponentFromPath(parent);
+      parentComponent = appStore.resolveComponentFromPath(parent);
       if (parentComponent) {
         parts = parent.split("/");
         if (parts && parts.length > 1) {
           const grandPaPath = parts.slice(0, parts.length - 1).join("/");
-          grandPa = resolveComponentFromPath(grandPaPath);
+          grandPa = appStore.resolveComponentFromPath(grandPaPath);
         }
       }
     }
@@ -117,7 +115,7 @@
   function paint() {
     const isSet = setPageMenuIfRequired(currentComponent!);
     if (isSet && currentComponent?.sections) {
-      view.gotoPath(
+      appStore.gotoPath(
         currentComponent.path + "/" + currentComponent.sections[0],
         {
           replaceState: true
@@ -154,31 +152,13 @@
   }
 </script>
 
-<!-- {#if currentComponent && currentComponent.sections && currentComponent.sections.length > 0}
-  {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && !$view.isPortrait}
-    <WithPanelOnLeft {currentComponent} />
-  {:else}
-    <div
-      class="w-full {$view.isPortrait ? 'mb-40' : ''}"
-      style="padding: {pad / 4}px;"
-    >
-      {#if currentComponent.pagePaint === PaintType.PANEL_ON_LEFT && $view.isPortrait && currentComponent.thinModeBehavior === ThinModeBehavior.RIGHT_PANEL_AS_PLAYER}
-        <ComponentResolver path={currentComponent.sections[0]} />
-      {:else if currentComponent.pagePaint === PaintType.YSTACK || ($view.isPortrait && currentComponent.thinModeBehavior === ThinModeBehavior.YSTACK)}
-        <WithYStack {currentComponent} />
-      {:else if currentComponent.pagePaint === PaintType.YMENU && $view.isPortrait}
-        <WithYMenuThinMode {currentComponent} />
-      {/if}
-    </div>
-  {/if}
-{:else} -->
 <div class="flex flex-col gap-4 w-full h-full">
   {#if $view.isPortrait && (parentComponent?.pagePaint === PaintType.YMENU || grandPa?.thinModeBehavior === ThinModeBehavior.GRAND_CHILDREN_ON_MENU)}
     <Button
       label="go back"
       size={Size.sm}
       on:click={() => {
-        view.gotoPath(
+        appStore.gotoPath(
           "/" +
             (parentComponent?.pagePaint === PaintType.YMENU
               ? parentComponent?.path
@@ -193,4 +173,3 @@
     {/if} -->
   <ComponentResolver action={currentComponent} />
 </div>
-<!-- {/if} -->

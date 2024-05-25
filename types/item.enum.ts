@@ -16,4 +16,4 @@ export const Item = {
   ...GlobalItem,
   ...LocalItem
 };
-export type ItemType = LocalItem | GlobalItem;
+export type ItemType = GlobalItem | LocalItem;

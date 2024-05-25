@@ -4,7 +4,7 @@
     ListType,
     NodeType,
     type ListContent
-  } from "$lib/tidy/types/node.type";
+  } from "$lib/tidy/types/memotron/node.type";
   import { getMdStore } from "../markdown.store";
   import BlockContent from "./BlockContent.svelte";
   import TextContent from "./TextContent.svelte";

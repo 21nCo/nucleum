@@ -1,30 +1,18 @@
 <script lang="ts">
   import PageLoadingPulse from "$lib/tidy/elements/feedback/animations/PageLoadingPulse.svelte";
-  import { toggleSearchParam } from "$lib/tidy/utils/browser.utils";
+  import { NodeThumbnailVariant } from "$lib/tidy/types/memotron/node.type";
   import { isValidArrayWithData } from "$lib/tidy/utils/obj.utils";
-  import { runAction } from "$lib/tidy/utils/utils";
-  import NodeThumbnail from "../../common/NodeThumbnailTimeline.svelte";
+  import NodeItemsView from "../../common/NodeItemsView.svelte";
   import { resolveActiveCurationStore } from "../curation.store";
   export let id: string;
+  let arrangement = NodeThumbnailVariant.LIST;
   $: collection = resolveActiveCurationStore(id);
 </script>
 
-<div class="w-full grow flex justify-center items-center p-2">
+<div class="w-full flex-grow flex justify-center items-center p-2">
   <!-- Temporary default view -->
   {#if !$collection.isRefreshing && "views" in $collection && isValidArrayWithData($collection.views?.[0]?.data)}
-    <div class="flex flex-col h-full w-full justify-start gap-4">
-      {#each $collection.views[0].data as item}
-        <span class="w-full">
-          <!-- <NodeThumbnail
-            id={item}
-            on:click={() => {
-              toggleSearchParam("node", item);
-              runAction(MemotronEvent.JOURNAL_MODAL_VIEWER);
-            }}
-          /> -->
-        </span>
-      {/each}
-    </div>
+    <NodeItemsView nodes={$collection.views[0].data} {arrangement} />
   {:else if $collection.isRefreshing}
     <PageLoadingPulse />
   {:else}

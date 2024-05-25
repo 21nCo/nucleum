@@ -1,8 +1,7 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/tidy/components/markdown/markdown.utils";
-  import { Size } from "$lib/tidy/types/size.enum";
+  import { appStore } from "$lib/tidy/stores/app.store";
   import { InfoTextType } from "$lib/tidy/types/text.type";
-  import { runAction } from "$lib/tidy/utils/utils";
   import Icon from "../Icon.svelte";
   import Link from "./Link.svelte";
   export let content: string | undefined = undefined;
@@ -31,7 +30,7 @@
         <Link
           label="Learn more"
           on:click={() => {
-            if (action) runAction(action);
+            if (action) appStore.runAction(action);
           }}
         />
       </div>

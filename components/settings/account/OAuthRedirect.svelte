@@ -22,7 +22,7 @@
       } else
         await account.embedOAuthSignin(token, isSignup === "true" ?? false);
     } else if (!codeQueryParam) {
-      view.gotoPath("/signup?msg=invalidoauth");
+      appStore.gotoPath("/signup?msg=invalidoauth");
       return;
     } else {
       await processOAuthRedirection(codeQueryParam);

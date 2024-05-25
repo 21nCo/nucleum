@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { curationsSeedDataAr } from "$lib/local/stores/seed";
+  import { curationsSeedDataAr } from "$lib/tidy/components/memotron/common/seed";
   import type {
     CurationType,
     CurationThumbnail
   } from "$lib/tidy/types/memotron/curation.type";
-  import { MemotronEvent } from "$lib/local/types/event.enum";
+  import { MemotronEvent } from "$lib/tidy/types/memotron/memotronEvent.enum";
   import { resourceClickHandler } from "$lib/tidy/utils/memotron.utils";
   import Icon from "$lib/tidy/elements/Icon.svelte";
   import Button from "$lib/tidy/elements/button/Button.svelte";
@@ -19,11 +19,12 @@
   import { TextStyle } from "$lib/tidy/types/text.enum";
   import { TextInputStyle } from "$lib/tidy/types/textinput.enum";
   import { toggleSearchParam } from "$lib/tidy/utils/browser.utils";
-  import { activeResourceFilter, runAction } from "$lib/tidy/utils/utils";
+  import { activeResourceFilter } from "$lib/tidy/utils/utils";
   import { liveQuery } from "dexie";
   import CurationThumbnailView from "./CurationThumbnailView.svelte";
   import { dataManager } from "$lib/tidy/stores/data.store";
   import { curations as curationsStore } from "./curation.store";
+  import { appStore } from "$lib/tidy/stores/app.store";
   curationsStore.refresh();
   let searchQuery: string = "";
   // let curations: CurationThumbnail[] = [];
@@ -58,7 +59,7 @@
 <Panel
   floatingButton={{
     label: "Create curation",
-    callback: async () => runAction(MemotronEvent.CREATE_CURATION),
+    callback: async () => appStore.runAction(MemotronEvent.CREATE_CURATION),
     icon: "plus",
     variant: ButtonVariant.PRIMARY
   }}
@@ -118,7 +119,7 @@
             <div class="mx-4 flex grow justify-between">
               <PanelSwitcher
                 items={["All", "Starred"]}
-                bind:selected={selectedPanel}
+                bind:value={selectedPanel}
                 style={PanelSwitcherStyle.DOT}
               />
               <Button icon="bars-center-left" size={Size.sm} />

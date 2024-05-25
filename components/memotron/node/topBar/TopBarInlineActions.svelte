@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { MemotronEvent } from "$lib/local/types/event.enum";
+  import { MemotronEvent } from "$lib/tidy/types/memotron/memotronEvent.enum";
   import Button from "$lib/tidy/elements/button/Button.svelte";
   import EditToggleButton from "$lib/tidy/elements/toggle/EditModeToggle.svelte";
   import modalEvent from "$lib/tidy/components/modal/modal.store";
   import { Size } from "$lib/tidy/types/size.enum";
-  import { runAction } from "$lib/tidy/utils/utils";
   import { createEventDispatcher } from "svelte";
+  import { appStore } from "$lib/tidy/stores/app.store";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let isClonesShown: boolean = false;
@@ -31,7 +31,7 @@
     tooltip="Publish"
     icon="share"
     on:click={() => {
-      runAction(MemotronEvent.PUBLISH, { id });
+      appStore.runAction(MemotronEvent.PUBLISH, { id });
     }}
   />
   <Button
@@ -39,7 +39,7 @@
     tooltip="Serendipity"
     icon="light-bulb"
     on:click={() => {
-      runAction(MemotronEvent.SERENDIPITY, { id });
+      appStore.runAction(MemotronEvent.SERENDIPITY, { id });
     }}
   />
   {#if !Boolean(backlinksRendered)}

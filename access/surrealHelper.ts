@@ -1,14 +1,15 @@
 import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb.js";
-import type { DbRecordType } from "$lib/local/types/item.type";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
 import {
   performLoginStatusCheck,
   resolveToken
 } from "$lib/tidy/utils/account.utils";
-import { performApiCall } from "../utils/utils";
+import { performApiCall } from "../utils/network.utils";
 import { replaceParams, resolveMutationQuery } from "../utils/surreal.utils";
 import { PersistanceActionType } from "../types/data.type";
+import type { DbRecord } from "../types/dbrecord.type";
+import type { ISurrealDatabase } from "../types/db.type";
 
 const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -33,7 +34,7 @@ export class SurrealDatabaseUsingRest {
    * @param data data to be created
    * @returns Id of the created record or null if failed
    */
-  async create(recordId: string, data: DbRecordType) {
+  async create(recordId: string, data: DbRecord) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.CREATE, recordId),
       {
@@ -41,7 +42,7 @@ export class SurrealDatabaseUsingRest {
       }
     );
   }
-  async insert(tableName: string, data: DbRecordType[]) {
+  async insert(tableName: string, data: DbRecord[]) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.INSERT, tableName),
       {
@@ -63,7 +64,7 @@ export class SurrealDatabaseUsingRest {
       }
     );
   }
-  async update(recordId: string, data: DbRecordType) {
+  async update(recordId: string, data: DbRecord) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.UPDATE, recordId),
       {
@@ -285,7 +286,7 @@ export class SurrealDatabaseUsingSdk {
   }
 }
 
-export class SurrealDatabase {
+export class SurrealDatabase implements ISurrealDatabase {
   token: string | null;
   db: string | undefined;
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
