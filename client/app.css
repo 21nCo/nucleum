@@ -1,0 +1,95 @@
+@import url(https://fonts.googleapis.com/css2?family=Noto+Color+Emoji+Compat);
+@import url(https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.flex-grow {
+  @apply grow overflow-auto;
+}
+
+:root {
+  overflow: hidden;
+}
+.glass {
+  background: rgba(204, 204, 214, 0.2);
+  /* border: 1px solid white; */
+  backdrop-filter: blur(25px);
+}
+.glassthick {
+  background: rgba(204, 204, 214, 0.2);
+  /* border: 1px solid white; */
+  backdrop-filter: blur(55px);
+}
+.glassmenubar {
+  background: rgba(204, 204, 214, 0.1);
+  /* border: 1px solid white; */
+  backdrop-filter: blur(35px);
+}
+
+/**
+* user-select: none is used to provide native experience for touch devices
+*/
+body {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+@layer base {
+  /* @font-face {
+        font-family: 'HkGrotesk';
+        src: url('fonts/HKGrotesk-Medium.otf');
+    } */
+
+  /* Hide scrollbar for IOS webview and other scenarios */
+  ::-webkit-scrollbar {
+    width: 0em;
+  }
+
+  .no-scrollbar {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important; /* Safari and Chrome */
+  }
+
+  .styledscroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .styledscroll::-webkit-scrollbar {
+    height: 2px;
+    width: 0.5em;
+  }
+
+  .styledscroll::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: rgba(var(--colors-bgs2));
+  }
+
+  .styledscroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(var(--colors-bgs3));
+    width: 1rem;
+  }
+
+  button,
+  div {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* button:active,
+  button:focus {
+    outline: none;
+    background: transparent;
+  } */
+  .custom-focus-outline:focus {
+    outline: 1px auto -webkit-focus-ring-color;
+  }
+}
+.noto-color-emoji-mod {
+  font-family: "Noto Color Emoji Compat", sans-serif;
+  font-size: 1.5rem;
+}

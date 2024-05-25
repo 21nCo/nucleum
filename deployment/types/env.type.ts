@@ -1,0 +1,21 @@
+export type Environment = {
+  subdomain?: string;
+  domain: string;
+  isUseParentZone?: boolean;
+  filesBucketPrefix: string;
+  jwtSecret: string;
+  jwtPublicKey: string;
+  googleSecret: string;
+  appleOAuthSecret: string;
+  allRegionList: string[];
+  region: string;
+  tidyregion: string;
+  dbUser: string;
+  dbPass: string;
+  adminNamespace: string;
+  adminDatabase: string;
+  userNamespace: string;
+  spaceNamespace: string;
+  token: string;
+  db: string;
+};

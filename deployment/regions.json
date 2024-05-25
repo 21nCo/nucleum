@@ -1,0 +1,65 @@
+[
+  {
+    "code": "useast",
+    "location": "virginia",
+    "label": "United States",
+    "aws": "us-east-1",
+    "gcp": "us-east4",
+    "azure": "useast",
+    "isAvailable": true
+  },
+  {
+    "code": "euwest",
+    "location": "london",
+    "label": "Europe",
+    "aws": "eu-west-2",
+    "gcp": "europe-west2",
+    "azure": "uksouth",
+    "isAvailable": true
+  },
+  {
+    "code": "insouth",
+    "location": "hyderabad",
+    "label": "Asia Pacific",
+    "aws": "ap-south-2",
+    "gcp": "asia-south1",
+    "azure": "southindia",
+    "isAvailable": true
+  },
+  {
+    "code": "uswest",
+    "location": "california",
+    "label": "US West",
+    "aws": "us-west-2",
+    "gcp": "uswest2",
+    "azure": "westus",
+    "isAvailable": false
+  },
+  {
+    "code": "aseast",
+    "location": "hongkong",
+    "label": "East Asia",
+    "aws": "ap-east-1",
+    "gcp": "asia-east2",
+    "azure": "eastasia",
+    "isAvailable": false
+  },
+  {
+    "code": "afsouth",
+    "location": "southafrica",
+    "label": "Africa",
+    "aws": "af-south-1",
+    "gcp": "africa-south1",
+    "azure": "southaftricanorth",
+    "isAvailable": false
+  },
+  {
+    "code": "aueast",
+    "location": "sydney",
+    "label": "Australia",
+    "aws": "ap-southeast-2",
+    "gcp": "australia-southeast1",
+    "azure": "australiaeast",
+    "isAvailable": false
+  }
+]

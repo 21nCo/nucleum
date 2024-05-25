@@ -1,0 +1,192 @@
+<script lang="ts">
+  import Modal from "$lib/client/components/modal/Modal.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
+  import modalEvent from "$lib/client/components/modal/modal.store";
+  import {
+    toasts,
+    confirmationNotification,
+    fullPageLoadingScreen,
+    appEvents
+  } from "$lib/client/stores/notification.store";
+  import { Size } from "$lib/client/types/size.enum";
+  import { fly, slide } from "svelte/transition";
+  import ComponentResolver from "../paint/ComponentResolver.svelte";
+  import { onMount } from "svelte";
+  import type { ModalEvent } from "$lib/client/types/popup.type";
+  import { LaunchContext } from "$lib/client/types/appStore.type";
+  import { AppEvent } from "$lib/client/types/event.enum";
+  import type { AppEventType } from "$lib/client/types/event.type";
+  import { postToParent } from "$lib/client/utils/embed.utils";
+  import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
+  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
+  import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { logger } from "$lib/client/stores/log.store";
+  import { dataManager } from "$lib/client/stores/data.store";
+  import { liveQuery } from "dexie";
+  import { AlertType } from "$lib/client/types/notification.type";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
+
+  let modals: ModalEvent[] = [];
+  let dialogRef: HTMLDialogElement;
+  let isShowAppearancePreview: boolean = false;
+  $: if (dialogRef) dialogRef.showModal();
+  //TODO offline mode detection and showing changes pending sync
+  let mutationQueue = liveQuery(() =>
+    $dataManager.cacheSource.dexie.mutationQueue.toArray()
+  );
+  onMount(() => {
+    const appEventSub = appEvents.subscribe((x: AppEventType) => {
+      if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
+        isShowAppearancePreview = x.value ?? false;
+      } else if (x.event === AppEvent.USER_LOGIN) {
+        modals = [];
+      }
+    });
+    const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
+      if (!x.isShow) {
+        modals = modals.filter((y) => y.path != x.path);
+        postToParent({
+          modal: JSON.stringify(x)
+        });
+      } else if (
+        $appStore.launchContext == LaunchContext.EMBED &&
+        x.isShowAsSheet
+      ) {
+        postToParent({
+          modal: JSON.stringify({
+            isShow: x.isShow,
+            path: x.path,
+            title: x.title,
+            params: x.componentParams
+            // id: x.id TODO - send component params
+          })
+        });
+      } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
+        // modals = [x];
+        modals = [...modals, x];
+      }
+      logger.log({ modals });
+    });
+    () => {
+      appEventSub();
+      modalEventSub();
+    };
+  });
+</script>
+
+<!-- {#if $appStore.fullScreenComponentPath}
+  <div
+    class="fixed left-0 top-0 w-full h-full flex flex-col z-40"
+    transition:fly={{ y: 200, duration: 100 }}
+  >
+    <ComponentResolver path={$appStore.fullScreenComponentPath} />
+  </div>
+{/if} -->
+{#if $fullPageLoadingScreen.isShow}
+  <div class="fixed left-0 top-0 w-full h-full flex flex-col z-[100]">
+    <div
+      class="h-full w-full flex flex-col gap-4 justify-center items-center bg-bgs1"
+      transition:fly={{ y: 200, duration: 100 }}
+    >
+      <PageLoadingAnimation variant="page" />
+      <div class="text-b2">
+        {$fullPageLoadingScreen.text}
+      </div>
+    </div>
+  </div>
+{/if}
+{#if $appStore.player && !$view.isPortrait}
+  <div class="fixed bottom-0 right-0">
+    <ComponentResolver path={$appStore.player} />
+  </div>
+{/if}
+{#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
+  <div class="fixed bottom-0 right-0 mr-6 mb-6">
+    <Button
+      icon={$appStore.appData?.bottomRightAction}
+      type={ButtonVariant.PRIMARY}
+      style={ButtonStyle.ROUNDED}
+      on:click={() => {
+        appStore.runAction($appStore.appData?.bottomRightAction);
+      }}
+    />
+  </div>
+{/if}
+
+{#if (isValidArrayWithData($toasts) || isValidArrayWithData($mutationQueue)) && !$view.isPortrait}
+  <div
+    class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
+    transition:slide={{ duration: 200 }}
+  >
+    {#each $toasts as toast}
+      <ToastNotification notification={toast} />
+    {/each}
+    {#if isValidArrayWithData($mutationQueue)}
+      <ToastNotification
+        notification={{
+          id: "syncNotification",
+          type: AlertType.WARNING,
+          message:
+            $mutationQueue.length +
+            ($mutationQueue.length === 1 ? " change" : " changes") +
+            " pending sync",
+          title: "Sync error - we're sorry!",
+          actionText: "Sync manually",
+          callback: () => {
+            dataManager.syncPendingMutations();
+          },
+          isHideClose: true
+        }}
+      />
+    {/if}
+  </div>
+{/if}
+
+{#each modals as modal (modal.path)}
+  <Modal
+    show={modal.isShow}
+    id={modal.path}
+    isDismissable={modal.isDismissable ?? true}
+    isShowOverlay={modal.isShowOverlay ?? true}
+    isUseDialog={modal.layout?.size != Size.full &&
+      $context.embed != Embed.HANDSET}
+    size={modal.layout?.size ?? Size.md}
+    orientation={modal.layout?.orientation}
+  >
+    <ModalLayout path={modal.path} bind:params={modal}>
+      <ComponentResolver
+        path={modal.path}
+        params={{ ...modal.componentParams, isModal: true }}
+      />
+    </ModalLayout>
+  </Modal>
+{/each}
+
+{#if $confirmationNotification}
+  <Modal show={true} id="confirmation" isDismissable={true} size={Size.xs}>
+    <ModalLayout
+      path={AppEvent.CONFIRMATION}
+      params={{
+        title: $confirmationNotification.title,
+        layout: {
+          size: Size.xs,
+          primaryAction: $confirmationNotification.confirmAction,
+          secondaryAction: $confirmationNotification.cancelAction ?? {
+            label: "Cancel"
+          }
+        }
+      }}
+    >
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <div class="text-b1">{$confirmationNotification?.message}</div>
+        </div>
+      </div>
+    </ModalLayout>
+  </Modal>
+{/if}
