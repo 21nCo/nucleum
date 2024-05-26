@@ -22,12 +22,12 @@ stages:
     - npm install -g aws-cdk
     - apt-get update && apt-get install -y awscli
     - export AWS_DEFAULT_REGION="us-east-1"
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
     - cd lib/deployment
     - npm install
     - cd ../../deploy
     - rm -rf node_modules package-lock.json
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
     - npm install && npm run build
     - cdk deploy --all --require-approval never
 
