@@ -1,0 +1,68 @@
+stages:
+  - build
+  - deploy
+.base_build_job:
+  stage: build
+  image: node:latest
+  script:
+    - rm -rf node_modules package-lock.json
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+    - npm install
+    - cat $APP_ENV_VARS > .env
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 hour
+.base_cdk_deploy_job:
+  stage: deploy
+  image: node:latest
+  script:
+    - npm install -g aws-cdk
+    - apt-get update && apt-get install -y awscli
+    - export AWS_DEFAULT_REGION="us-east-1"
+    - cd lib/deployment
+    - npm install
+    - cd ../../deploy
+    - rm -rf node_modules package-lock.json
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+    - npm install && npm run build
+    - cdk deploy --all --require-approval never
+
+#Dev
+dev_build_job:
+  extends: .base_build_job
+  environment: dev
+  only:
+    - dev
+dev_cdk_deploy_job:
+  extends: .base_cdk_deploy_job
+  environment: dev
+  only:
+    - dev
+
+#Pre
+pre_build_job:
+  extends: .base_build_job
+  environment: pre
+  only:
+    - pre
+pre_cdk_deploy_job:
+  extends: .base_cdk_deploy_job
+  environment: pre
+  only:
+    - pre
+
+#Live
+live_build_job:
+  extends: .base_build_job
+  environment: live
+  only:
+    - live
+live_cdk_deploy_job:
+  extends: .base_cdk_deploy_job
+  environment: live
+  only:
+    - live
