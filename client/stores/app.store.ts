@@ -1,9 +1,6 @@
 import { get, writable } from "svelte/store";
-import {
-  generateUID,
-  resolveUiState,
-  setUiState
-} from "$lib/client/utils/utils";
+import { goto } from "$app/navigation";
+
 import {
   AppSkin,
   Theme,
@@ -20,15 +17,10 @@ import type {
   UserAppearanceSettings,
   UserGlobalPreferences
 } from "$lib/client/types/preferences.type";
-import { Cloud } from "../types/cloud.enum";
 import blankJson from "$lib/client/data/blank.json";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
-import { Persistance, persistLocally, retrieveLocally } from "./persistance";
-import { deepCopy, objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
 import { Item } from "$lib/client/types/item.enum";
-import { localCacheableStores } from "$local/local";
 import { TimeScale } from "../types/time.type";
-import { Orientation } from "../types/direction.enum";
 import { UiState } from "../types/uiState.enum";
 import { emojis, materialSymbols, shuffleEmojis } from "../data/avatars";
 import {
@@ -37,20 +29,30 @@ import {
   type CacheableStore,
   type CacheableStoreContract
 } from "../types/data.type";
-import { dataManager } from "$lib/client/stores/data.store";
-import modalEvent from "../components/modal/modal.store";
-import { detectTimeZone } from "$lib/client/utils/time.utils";
-import { defaultAppData } from "$local/local";
-import { postToParent } from "$lib/client/utils/embed.utils";
-import view from "$lib/client/stores/view.store";
 import { ActionType, type Action } from "../types/action.type";
-import { confirmationNotification } from "$lib/client/stores/notification.store";
-import { goto } from "$app/navigation";
-import context from "$lib/client/stores/context.store";
 import type {
   IdentityProvider,
   OAuthProviderConfig
 } from "../types/oauth.type";
+
+import { generateUID } from "$lib/client/utils/utils";
+import {
+  persistLocally,
+  retrieveLocally
+} from "$lib/client/utils/storage.utils";
+import { deepCopy, objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
+import { detectTimeZone } from "$lib/client/utils/time.utils";
+import { postToParent } from "$lib/client/utils/embed.utils";
+
+import { Persistance } from "./persistance";
+import { dataManager } from "$lib/client/stores/data.store";
+
+import modalEvent from "../components/modal/modal.store";
+import view from "$lib/client/stores/view.store";
+import context from "$lib/client/stores/context.store";
+import { confirmationNotification } from "$lib/client/stores/notification.store";
+
+import { defaultAppData } from "$local/local";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -58,8 +60,6 @@ import type {
 // });
 // export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
 export const currentTime = writable<Date>(new Date());
-export const cloudProvider = writable(Cloud.surreal);
-export const isRefreshingToken = writable(false);
 export const appLoadingState = writable<{
   isBaseLoaded: boolean;
   isLocalLoaded: boolean;
@@ -194,6 +194,15 @@ function initDboVersionStore() {
   dataManager.retrieveCache(seedDboVersion.id).then((x) => {
     if (x) set(x as dbVersionStore);
   });
+  const setVersion = (version: number) => {
+    console.log("setting db version", { version });
+    update((n: dbVersionStore) => {
+      n.version = version;
+      persistLocally(Item.dboVersion, n);
+      dataManager.cache(n);
+      return n;
+    });
+  };
   return {
     subscribe,
     set,
@@ -204,16 +213,17 @@ function initDboVersionStore() {
       persistLocally(Item.dboVersion, n);
       dataManager.cache(n);
     },
-    setVersion: (version: number) => {
-      console.log("setting db version", { version });
-      update((n: dbVersionStore) => {
-        n.version = version;
-        persistLocally(Item.dboVersion, n);
-        dataManager.cache(n);
-        return n;
-      });
-    },
-    update
+    setVersion,
+    update,
+    runDboUpdate: async (fromVersion: number | undefined = undefined) => {
+      const version = get(dboVersion).version;
+      const response = await new Persistance().updateDbo(
+        fromVersion ?? version
+      );
+      if (response.version) {
+        setVersion(response.version);
+      }
+    }
   };
 }
 
@@ -308,6 +318,34 @@ function initUserPreferences() {
     setRaw(x);
     previousValue = JSON.stringify(x);
   };
+  const resolveUiState = (property: string) => {
+    const uiStates = get(userPreferences).uiStates;
+    let value = undefined;
+    if (get(view).isPortrait) {
+      value = uiStates["portrait"][property];
+    } else {
+      value = uiStates["desktop"][property];
+    }
+    if (value === undefined) {
+      value = uiStates["all"][property];
+    }
+    return value;
+  };
+  const setUiState = (
+    uiStates: any,
+    property: string,
+    value: any,
+    isForAll: boolean = false
+  ) => {
+    if (isForAll) {
+      uiStates["all"][property] = value;
+    } else if (get(view).isPortrait) {
+      uiStates["portrait"][property] = value;
+    } else {
+      uiStates["desktop"][property] = value;
+    }
+    return uiStates;
+  };
   return {
     subscribe,
     update,
@@ -374,6 +412,15 @@ function initUserPreferences() {
         );
         return n;
       });
+    },
+    resolveUiState,
+    setUiState,
+    onBoardingStatusCheck() {
+      if (resolveUiState(UiState.isOnboardingComplete)) return true;
+      else {
+        appStore.gotoPath("/onboarding");
+        return false;
+      }
     }
   };
 }
@@ -569,6 +616,38 @@ function initAppStore(seed: AppStore) {
     }
   };
 
+  function runClientUpdate() {
+    console.log("running client update");
+    //todo - show user a message that an update is available - auto updating for now
+    window?.location?.reload();
+  }
+
+  const checkForUpdates = async () => {
+    console.log("checking for updates");
+    let latestVersion = get(appStore).appData?.version;
+    try {
+      if (!latestVersion) {
+        const app = import.meta.env.VITE_APP ?? window.location.hostname;
+        if (!app) return;
+        latestVersion = await new Persistance().getLatestAppVersion(app);
+      }
+      if (!latestVersion) return;
+      const appVersionOnClient = localStorage.getItem("appVersion");
+      if (!appVersionOnClient) {
+        localStorage.setItem("appVersion", latestVersion);
+        await dboVersion.runDboUpdate();
+        return true;
+      } else if (appVersionOnClient != latestVersion) {
+        localStorage.setItem("appVersion", latestVersion);
+        runClientUpdate();
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  };
+
   return {
     subscribe,
     set: (m: AppStore) => {
@@ -651,9 +730,9 @@ function initAppStore(seed: AppStore) {
     },
     toggleSidebar() {
       const userPref = get(userPreferences);
-      const val = resolveUiState(userPref.uiStates, UiState.isInThinMode);
+      const val = userPreferences.resolveUiState(UiState.isInThinMode);
       console.log({ val, userPref });
-      let newUiStates = setUiState(
+      let newUiStates = userPreferences.setUiState(
         deepCopy(userPref.uiStates),
         UiState.isInThinMode,
         !val
@@ -708,7 +787,8 @@ function initAppStore(seed: AppStore) {
     runAction,
     resolveNavigationAction,
     runNavigationAction,
-    initiateOAuth2Flow
+    initiateOAuth2Flow,
+    checkForUpdates
   };
 }
 
@@ -726,8 +806,7 @@ function initEditModeStore() {
     }
   };
 }
-const cacheableStores: CacheableStoreContract[] = [userPreferences, dboVersion];
-export const cacheableStoresTable = [
-  ...localCacheableStores,
-  ...cacheableStores
+export const cacheableStores: CacheableStoreContract[] = [
+  userPreferences,
+  dboVersion
 ];

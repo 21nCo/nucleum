@@ -13,6 +13,7 @@ export type InputLabel = {
   orientation?: Orientation;
   tooltip?: InputLabelInfoToolTip;
   isMarkRequired?: boolean;
+  isShrink?: boolean;
 };
 
 export type InputLabelInfoToolTip = {

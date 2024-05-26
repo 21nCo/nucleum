@@ -1,6 +1,6 @@
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import type { CurationCreationForm } from "../types/memotron/curation.type";
+import type { ICurationCreationForm } from "../types/memotron/curation.type";
 
 const surrealDb = new SurrealDatabase();
 export class CurationPersistance {
@@ -10,7 +10,7 @@ export class CurationPersistance {
    * @param curation
    * @returns
    */
-  async create(curation: CurationCreationForm) {
+  async create(curation: ICurationCreationForm) {
     let response = await surrealDb.query(
       "return fn::memotron::curation::create($curation);",
       {

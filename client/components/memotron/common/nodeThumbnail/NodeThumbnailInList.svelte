@@ -4,7 +4,7 @@
   import { userPreferences } from "$lib/client/stores/app.store";
   import {
     NodeType,
-    type NodeThumbnail
+    type INodeThumbnail
   } from "$lib/client/types/memotron/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { contentPreview } from "$lib/client/utils/node.utils";
@@ -15,7 +15,7 @@
     formatTime
   } from "$lib/client/utils/time.utils";
   export let parentBgIndex: number = 0;
-  export let node: NodeThumbnail;
+  export let node: INodeThumbnail;
   export let version: 1 | 2 = 2;
 </script>
 
@@ -58,7 +58,7 @@
     on:click
   >
     <span class="flex flex-col items-start gap-2 grow max-w-[70%] h-full">
-      <span class="flex items-center gap-1 w-full">
+      <span class="flex items-center gap-2 w-full">
         {#if node.type?.avatar}
           <AvatarView avatar={node.type.avatar} size={Size.sm} />
         {/if}
@@ -74,7 +74,7 @@
     </span>
     <span class="min-w-fit">
       <!-- selected properties -->
-      <span class="text-b3 text-fgs3">
+      <span class="text-b4 text-fgs3">
         {formatDatetime($userPreferences, new Date(node.createdAt))}
       </span>
     </span></button

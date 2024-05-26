@@ -3,24 +3,24 @@ import type {
   AvatarWithCode,
   IconAvatar
 } from "$lib/client/types/avatar.type";
-import type { MemotronItemBase } from "./common.type";
+import type { IMemotronItemBase } from "./common.type";
 
-type TypeBase = MemotronItemBase & {
+type TypeBase = IMemotronItemBase & {
   avatar: Avatar;
 };
-export type Type = TypeBase & {
-  properties: Property[];
+export type IType = TypeBase & {
+  properties: IProperty[];
 };
 
-export type ActiveTypeStore = Type;
+export type ActiveTypeStore = IType;
 
 export type TypeCreationForm = {
   label: string;
   avatar: string;
-  properties: Property[];
+  properties: IProperty[];
 };
 
-export type Property = {
+export type IProperty = {
   id: string;
   label: string;
   type: PropertyType;

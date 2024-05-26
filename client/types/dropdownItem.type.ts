@@ -1,10 +1,7 @@
+import type { SelectItem } from "./select.type";
 import type { FormLabelInfoTooltip } from "./text.type";
 
-export type DropdownItem = {
-  label: string;
-  value: string | number;
-  icon?: string;
-  disabled?: boolean;
+export type DropdownItem = SelectItem & {
   groupId?: string;
 };
 

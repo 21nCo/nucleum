@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+//logger is used everywhere - this should not have any dependencies other than on types
 // import { appStore } from "./app.store";
 // import { postToParent } from "$lib/client/utils/embed.utils";
 import type { LogStore } from "../types/log.type";

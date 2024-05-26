@@ -1,6 +1,6 @@
 <script lang="ts">
   import type {
-    Property,
+    IProperty,
     PropertyConfigOption
   } from "$lib/client/types/memotron/type.type";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -17,7 +17,7 @@
   import SelectPropertyItem from "./SelectPropertyItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   const dispatch = createEventDispatcher();
-  export let property: Property;
+  export let property: IProperty;
   export let style: InputStyle = InputStyle.FILLED;
   export let label: InputLabel | undefined = undefined;
   export let value: string;

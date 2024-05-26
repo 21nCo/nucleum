@@ -2,19 +2,27 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import type { InputLabel } from "$lib/client/types/input.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import FormControlLabel from "./FormControlLabel.svelte";
   export let props: InputLabel | undefined = undefined;
+  export let size: Size.md | Size.sm = Size.md;
 </script>
 
 <div
-  class={cn("relative flex w-full", {
-    "flex-col gap-2":
+  class={cn("relative flex", {
+    "flex-col gap-3":
       props?.orientation === Orientation.Vertical ||
       (!props?.orientation && $view.isPortrait),
-    "flex-row justify-between items-center":
+    "flex-row items-center gap-2":
       props?.orientation === Orientation.Horizontal ||
-      (!props?.orientation && !$view.isPortrait)
+      (!props?.orientation && !$view.isPortrait),
+    "text-b2": size === Size.sm,
+    "w-full": !props?.isShrink,
+    "justify-between":
+      !props?.isShrink &&
+      (props?.orientation === Orientation.Horizontal ||
+        (!props?.orientation && !$view.isPortrait))
   })}
 >
   {#if props?.label}

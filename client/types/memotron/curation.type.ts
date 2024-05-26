@@ -1,20 +1,26 @@
-import type { MemotronItemBase } from "./common.type";
+import type { IMemotronItemBase } from "./common.type";
+import type { INodeThumbnail, NodeThumbnailVariant } from "./node.type";
+import type { IType } from "./type.type";
 
-export interface CurationBase extends MemotronItemBase {
+export interface ICurationBase extends IMemotronItemBase {
   description?: string;
 }
 
-export interface CurationCreationForm {
+export interface ICurationCreationForm {
   label: string;
   type: CurationType;
-  defaultView: string;
+  defaultLayout: CollectionLayout;
   query?: string;
   cover?: string;
   description?: string;
   isStarred?: boolean;
+  /**
+   * Associated type of the collection - string identifier ex: type:sometype
+   */
+  associatedType?: string;
 }
 
-export interface CurationThumbnail extends CurationBase {
+export interface CurationThumbnail extends ICurationBase {
   type: CurationType;
   itemCount?: number;
   children?: CombinationChild[];
@@ -22,22 +28,47 @@ export interface CurationThumbnail extends CurationBase {
 
 export type CombinationChild = CurationThumbnail | CombinationNodeThumbnail;
 
-export type CombinationNodeThumbnail = MemotronItemBase & {
+export type CombinationNodeThumbnail = IMemotronItemBase & {
   children?: CombinationChild[];
 };
 
-export interface Collection extends CurationBase {
-  views: CollectionView[];
-  defaultView: string;
+export interface ICollection extends ICurationBase {
+  views: ICollectionView[];
   query?: string;
+  /**
+   * Associated type of the collection
+   */
+  associatedType?: IType;
   cover?: string;
 }
 
-export interface CollectionView extends CurationBase {
-  type: CollectionViewType;
-  data: any;
+export interface ICollectionView extends IMemotronItemBase {
+  layout: CollectionLayout;
+  data: INodeThumbnail[];
+  arrangement?: NodeThumbnailVariant;
+  /**
+   * Property id to show as tabs.
+   * "none" for no tabs.
+   */
+  tabBy?: string;
+  /**
+   * Property id to group by.
+   * "none" for no grouping.
+   */
+  groupBy?: string;
+  /**
+   * Property id to sub group by.
+   * "none" for no sub grouping.
+   */
+  subGroupBy?: string;
+  /**
+   * Configured tabs for non select type property.
+   *
+   * Ex: datetime, location or text property with criteria etc
+   */
+  tabs?: any[];
 }
-export interface Combination extends CurationBase {
+export interface ICombination extends ICurationBase {
   layout: CombinationViewType;
   data: any;
 }
@@ -49,8 +80,8 @@ export enum CurationType {
   NODELINKS = "links"
 }
 
-export enum CollectionViewType {
-  BASIC = "BASIC",
+export enum CollectionLayout {
+  BOARD = "BOARD",
   TABLE = "TABLE",
   HEATMAP = "HEATMAP",
   GEOMAP = "GEOMAP"
@@ -63,11 +94,11 @@ export enum CombinationViewType {
   WHITEBOARD = "WHITEBOARD"
 }
 
-export type ActiveCurationStore<T = Collection | Combination> = {
+export type ActiveCurationStore<T = ICollection | ICombination> = {
   type: CurationType;
   isRefreshing: boolean;
 } & T;
 
-export type CurationLocalRecord = CurationBase & {
+export type CurationLocalRecord = ICurationBase & {
   type: CurationType;
 };

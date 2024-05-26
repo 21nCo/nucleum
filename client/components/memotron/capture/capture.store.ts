@@ -1,42 +1,42 @@
 import { get, writable } from "svelte/store";
+import { Item } from "$lib/client/types/item.enum";
+import type { IProperty } from "$lib/client/types/memotron/type.type";
+import {
+  PersistanceActionType,
+  StoreDataType
+} from "$lib/client/types/data.type";
+import { CurationType } from "$lib/client/types/memotron/curation.type";
+import {
+  NodeType,
+  type LinkThumbnail,
+  type INodeCapture,
+  LinkType,
+  type NodeProperty
+} from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,
   type CaptureStore,
   type FileDetails
 } from "$lib/client/types/memotron/capture.type";
+import { AlertType } from "$lib/client/types/notification.type";
 import {
   activeResourceFilter,
   debouncer,
   generateUID,
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
-import {
-  NodeType,
-  type LinkThumbnail,
-  type NodeCapture,
-  LinkType,
-  type NodeProperty
-} from "$lib/client/types/memotron/node.type";
 import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
-import { toasts } from "$lib/client/stores/notification.store";
-import { AlertType } from "$lib/client/types/notification.type";
+import { getGeoLocation } from "$lib/client/utils/browser.utils";
+import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
 import {
-  Persistance,
   persistLocally,
   retrieveLocally
-} from "$lib/client/stores/persistance";
-import { getGeoLocation } from "$lib/client/utils/browser.utils";
-import { nodes } from "../node/node.store";
-import { dataManager } from "$lib/client/stores/data.store";
-import { CurationType } from "$lib/client/types/memotron/curation.type";
-import {
-  PersistanceActionType,
-  StoreDataType
-} from "$lib/client/types/data.type";
-import { Item } from "$lib/client/types/item.enum";
+} from "$lib/client/utils/storage.utils";
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
-import type { Property } from "$lib/client/types/memotron/type.type";
-import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
+import { dataManager } from "$lib/client/stores/data.store";
+import account from "$lib/client/stores/account.store";
+import { nodes } from "../node/node.store";
+import { toasts } from "$lib/client/stores/notification.store";
 
 const seedStore: CaptureStore = {
   id: Item.capture,
@@ -67,10 +67,10 @@ export const captureStore = initCaptureStore();
  * @param properties
  * @returns
  */
-function resolvePropertiesForCapture(properties: Property[]) {
+function resolvePropertiesForCapture(properties: IProperty[]) {
   if (!isValidArrayWithData(properties)) return [];
   return properties
-    .filter((item: Property) => {
+    .filter((item: IProperty) => {
       return item.isShowOnCapture;
     })
     .map((y) => {
@@ -124,7 +124,7 @@ async function save(setter: any) {
   }
   console.log("capture store", { val, geoLocation });
   let nodeToBeSaved: Omit<
-    NodeCapture,
+    INodeCapture,
     "id" | "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
   > = {
     label: val.label ?? "",
@@ -158,7 +158,7 @@ async function save(setter: any) {
     // const blob = new Blob(val.fileDetails.data, {
     //   type: contentType,
     // });
-    const result = await new Persistance().uploadFile(
+    const result = await account.uploadFile(
       contentType,
       val.fileDetails.name,
       val.fileDetails.data

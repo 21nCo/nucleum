@@ -8,9 +8,11 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Popover from "./popover/Popover.svelte";
   import FormControlLabelWrapper from "./text/formLabel/FormControlLabelWrapper.svelte";
+  import { Size } from "../types/size.enum";
   let classList = "";
   export { classList as class };
   export let style: InputStyle = InputStyle.BORDERED;
+  export let size: Size.md | Size.sm = Size.md;
   export let label: InputLabel | undefined = undefined;
   export let isFocused: boolean = false;
   export let popoverOptions: PopoverInputOptions | undefined = undefined;
@@ -30,7 +32,7 @@
   }
 </script>
 
-<FormControlLabelWrapper props={label}>
+<FormControlLabelWrapper props={label} {size}>
   <Popover
     bind:this={popoverRef}
     on:show
@@ -40,7 +42,8 @@
     bind:isPopoverVisible={isOptionsVisible}
     triggerClass={cn("flex items-center rounded-md", classList, {
       "w-full": label?.orientation === Orientation.Vertical || !label?.label,
-      "p-2": style != InputStyle.PLAIN,
+      "p-2": style != InputStyle.PLAIN && size === Size.md,
+      "px-1.5 py-1 text-b2": style != InputStyle.PLAIN && size === Size.sm,
       "border border-brs3": style === InputStyle.BORDERED && !isActive,
       "border border-aps1":
         isActive &&

@@ -1,4 +1,4 @@
-export interface MemotronItemBase {
+export interface IMemotronItemBase {
   id: string;
   label: string;
   isStarred?: boolean;

@@ -1,8 +1,8 @@
 <script lang="ts">
   import {
     PropertyType,
-    type Property,
-    type Type
+    type IProperty,
+    type IType
   } from "$lib/client/types/memotron/type.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -18,12 +18,14 @@
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
   import SingleSelectProperty from "./SingleSelectProperty.svelte";
   export let property: NodeProperty;
-  export let type: Type;
+  export let type: IType;
   export let nodeId: string | undefined = undefined;
   export let isPropertiesPaneContext: boolean = false;
   export let isReadMode: boolean = false;
   let style = InputStyle.FILLED;
-  let config: Property = type.properties.find((x: any) => x.id === property.id);
+  let config: IProperty = type.properties.find(
+    (x: any) => x.id === property.id
+  );
   if (config.type === PropertyType.DATE && typeof property.value === "string") {
     property.value = new Date(property.value);
   }

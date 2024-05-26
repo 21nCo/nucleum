@@ -10,12 +10,12 @@
     resolveActiveNodeStore,
     type ActiveNodeStoreType
   } from "./node.store";
-  import CurationView from "../curation/CurationView.svelte";
+  import Curation from "../curation/Curation.svelte";
   import { CurationType } from "$lib/client/types/memotron/curation.type";
   import { Item } from "$lib/client/types/item.enum";
   import { prefixTable } from "$lib/client/utils/text.utils";
   import { dataManager } from "$lib/client/stores/data.store";
-  import type { Type } from "$lib/client/types/memotron/type.type";
+  import type { IType } from "$lib/client/types/memotron/type.type";
   import NodeRightPanel from "./rightPanel/NodeRightPanel.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   export let id: string;
@@ -52,7 +52,7 @@
     <SplitView {id} split={prefixTable(id, Item.nodelinks)} />
   {:else if $node && !isLoading}
     {#if isShowBacklinks}
-      <CurationView
+      <Curation
         id={prefixTable(id, Item.nodelinks)}
         on:back={() => {
           isShowBacklinks = false;

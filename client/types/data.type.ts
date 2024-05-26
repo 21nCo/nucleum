@@ -100,6 +100,7 @@ export enum CacheStrategy {
 export interface DataManager {
   cacheSource: CacheSource;
   db: ISurrealDatabase;
+  cacheableStoresTable: CacheableStoreContract[];
 }
 
 /**

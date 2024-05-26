@@ -15,7 +15,7 @@
   export let labelProps: InputLabel | undefined = undefined;
   export let selected: string | undefined = undefined;
   export let parentBackgroundIndex: number = 1;
-  export let size: Size = Size.md;
+  export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;
   export let iconOrientation: Orientation = Orientation.Horizontal;
   let classList: string = "flex w-full";
@@ -32,9 +32,9 @@
     <div
       class={cn(classList, {
         "rounded-md": style === OptionSelectorStyle.TRAIN,
-        "border border-brs3":
-          style === OptionSelectorStyle.TRAIN && size != Size.sm,
+        "border border-brs3": style === OptionSelectorStyle.TRAIN,
         "flex-wrap overflow-y-auto": style === OptionSelectorStyle.OUTLINE,
+        "gap-6": style === OptionSelectorStyle.OUTLINE && size === Size.lg,
         "gap-4": style === OptionSelectorStyle.OUTLINE && size === Size.md,
         "gap-2": style === OptionSelectorStyle.OUTLINE && size === Size.sm,
         "justify-around grow gap-2": style === OptionSelectorStyle.CHECK_CIRCLE

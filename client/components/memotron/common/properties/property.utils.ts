@@ -1,10 +1,10 @@
 import {
   PropertyType,
-  type Property
+  type IProperty
 } from "$lib/client/types/memotron/type.type";
 import type { NodeProperty } from "$lib/client/types/memotron/node.type";
 
-export function resolvePropertyDefaultValue(property: Property) {
+export function resolvePropertyDefaultValue(property: IProperty) {
   let fallback;
   switch (property.type) {
     case PropertyType.TEXT:
@@ -30,7 +30,7 @@ export function resolvePropertyDefaultValue(property: Property) {
 }
 
 export function mapPropertyValues(
-  properties: Property[],
+  properties: IProperty[],
   nodeProperties: NodeProperty[] | undefined
 ) {
   return properties.map((property) => {

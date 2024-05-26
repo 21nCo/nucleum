@@ -1,13 +1,13 @@
 <script lang="ts">
   import {
     PropertyType,
-    type Property
+    type IProperty
   } from "$lib/client/types/memotron/type.type";
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
   import EndText from "./EndText.svelte";
   import RatingPropertyConfig from "./RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "./selectProperty/SelectPropertyConfig.svelte";
-  export let row: Property;
+  export let row: IProperty;
   $: console.log({ row });
   let propertyTypesWithOptions = [
     PropertyType.SINGLE_SELECT,

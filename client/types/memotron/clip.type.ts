@@ -1,9 +1,9 @@
-import type { NodeBase, NodeType } from "$lib/client/types/memotron/node.type";
+import type { INodeBase, NodeType } from "$lib/client/types/memotron/node.type";
 
 /**
  * TODO - check duplication with tidy lib - Node with ClipContent
  */
-export type Clip<T = ClipContent> = NodeBase &
+export type IClip<T = ClipContent> = INodeBase &
   T & {
     parent: string;
   };

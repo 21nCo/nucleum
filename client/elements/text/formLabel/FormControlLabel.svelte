@@ -6,7 +6,9 @@
 </script>
 
 <label class="flex gap-2 items-center" for={forId}>
-  <div class="text-fgs2 min-w-fit text-left">{props.label}</div>
+  <div class="text-fgs2 min-w-fit whitespace-nowrap text-left">
+    {props.label}
+  </div>
   {#if props.tooltip && props.tooltip.body}
     <FormLabelTooltip info={props.tooltip} />
   {/if}

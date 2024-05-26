@@ -1,14 +1,5 @@
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
-import account from "$lib/client/stores/account.store";
-import { appStore, cacheableStoresTable } from "$lib/client/stores/app.store";
 import { get, writable } from "svelte/store";
 import { Item, type ItemType } from "../types/item.enum";
-import {
-  checkSurrealResponse,
-  generateUID,
-  interceptSurrealResponse
-} from "$lib/client/utils/utils";
-import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import {
   CacheStrategy,
   StoreDataType,
@@ -19,18 +10,25 @@ import {
   DependencySyncType,
   PersistanceActionType
 } from "../types/data.type";
-
 import {
   surrealUnixTimestamp,
   replaceParams,
   resolveMutationQuery,
   resolveRefreshQuery
 } from "$lib/client/utils/surreal.utils";
+import {
+  checkSurrealResponse,
+  extractProduct,
+  generateUID,
+  interceptSurrealResponse
+} from "$lib/client/utils/utils";
+import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import type { Table } from "dexie";
-export const dataManager = init();
+import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
 const allResources = Object.values(Item);
@@ -39,7 +37,11 @@ function init() {
   const cacheSource = new CacheManager();
   cacheSource.initialize();
   const db = new SurrealDatabase();
-  const { subscribe, set, update } = writable<DataManager>({ cacheSource, db });
+  const { subscribe, set, update } = writable<DataManager>({
+    cacheSource,
+    db,
+    cacheableStoresTable: []
+  });
   return {
     subscribe,
     set,
@@ -48,7 +50,8 @@ function init() {
     performMutation,
     refreshOnAppear,
     refreshForIFR: async (item: ItemType) => {
-      const store = cacheableStoresTable.find((x) => get(x).id === item);
+      const dm = get(dataManager);
+      const store = dm.cacheableStoresTable.find((x) => get(x).id === item);
       if (!store) return;
       const query = await resolveRefreshQueryForIFR(get(store));
       if (!query) return;
@@ -90,7 +93,8 @@ function init() {
       ]);
     },
     search: async (storeId: string, query: string) => {
-      const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+      const dm = get(dataManager);
+      const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
         return store?.search?.(query);
       }
@@ -99,13 +103,15 @@ function init() {
       storeId: string,
       isShowRefreshingState: boolean = false
     ) => {
-      const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+      const dm = get(dataManager);
+      const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
       if (store) {
         return refreshStores([store], isShowRefreshingState);
       }
     },
     refreshPage: async (storeIdentifiers: string[]) => {
-      const stores = cacheableStoresTable.filter((x) =>
+      const dm = get(dataManager);
+      const stores = dm.cacheableStoresTable.filter((x) =>
         storeIdentifiers.includes(get(x).id)
       );
       if (isValidArrayWithData(stores)) {
@@ -133,9 +139,10 @@ function init() {
       const cacheSource = get(dataManager).cacheSource;
       return await cacheSource.retrieveCache(storeId);
     },
-    initialize: async () => {
+    initialize: async (stores: CacheableStoreContract[]) => {
       update((x) => {
         x.cacheSource = new CacheManager();
+        x.cacheableStoresTable = stores;
         return x;
       });
       const dm = get(dataManager);
@@ -176,8 +183,10 @@ function init() {
     }
   };
 }
+export const dataManager = init();
 async function refreshOnAppear() {
-  const storesThatNeedRefresh = cacheableStoresTable.filter(
+  const dm = get(dataManager);
+  const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
     (x) => (get(x) as CacheableStore).priorityRefreshOnAppAppear
   );
   if (!isValidArrayWithData(storesThatNeedRefresh)) return;
@@ -220,7 +229,7 @@ async function performMutation(
     action,
     data
   });
-  if (!get(account).isLoggedIn) return;
+  // if (!get(account).isLoggedIn) return;
   const dm = get(dataManager);
   let mutatingResources: string[] = [];
   let isKVStore: boolean = false;
@@ -230,7 +239,7 @@ async function performMutation(
     data = { ...data, mutatedAt };
     mutatingResources = [storeId];
   } else {
-    const store = cacheableStoresTable.find((x) => get(x).id === storeId);
+    const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
     if (!store) return;
     const storeData = get(store);
     mutatingResources = storeData.mutatingResources;
@@ -255,8 +264,9 @@ async function performMutation(
     }
     mutationQuery = resolveMutationQuery(
       action,
-      id,
-      get(account)?.userInfo?.id
+      id
+      //TODO - removed dependency on account store - todo userId
+      //get(account)?.userInfo?.id
     );
   }
   let dbFullQuery: string = `${mutationQuery};`;
@@ -342,7 +352,9 @@ async function performMutation(
  */
 async function fetchServerMutationMap() {
   const surrealDb = get(dataManager).db;
-  const appName = get(appStore).product;
+  const appDetails = extractProduct();
+  const appName = appDetails?.product;
+  if (!appName) return;
   let serverMutationMap: any = {};
   const response = await surrealDb.executeReadFn(
     "return fn::global::fetchMutationMap();",
@@ -380,7 +392,8 @@ async function fetchServerMutationMap() {
  * @returns a list of dependant stores.
  */
 function resolveDependantStores(resource: string) {
-  return cacheableStoresTable.filter((x) => {
+  const dm = get(dataManager);
+  return dm.cacheableStoresTable.filter((x) => {
     let store = get(x);
     if (!store) return false;
     if (!store.dependencies) {

@@ -1,8 +1,8 @@
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
-import { IHostedZone } from "aws-cdk-lib/aws-route53";
+import type { Construct } from "constructs";
+import type { IHostedZone } from "aws-cdk-lib/aws-route53";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import { resolveDomainName } from "./deployutils";
 

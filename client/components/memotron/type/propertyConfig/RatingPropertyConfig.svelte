@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Property } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/types/memotron/type.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import AvatarPicker from "$lib/client/elements/avatarPicker/AvatarPicker.svelte";
@@ -13,7 +13,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import RatingPropertyPreview from "./RatingPropertyPreview.svelte";
-  export let property: Property;
+  export let property: IProperty;
   let ref: any;
   let popoverOptions = {};
   if (!property.config || !property.config?.ratingAvatar) {

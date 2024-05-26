@@ -31,6 +31,7 @@
   import AvatarView from "./AvatarView.svelte";
   import { emojis, materialSymbols } from "$lib/client/data/avatars";
   import SwitchInput from "../toggle/SwitchInput.svelte";
+  import account from "$lib/client/stores/account.store";
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
@@ -292,12 +293,12 @@
   async function uploadedImageToEmote(input: any) {
     let imageLocalURL = new Blob([input], { type: input.type });
     let customName = input.name.split(".")[0].trim();
-    let s3Response = await new Persistance().uploadFile(
+    let s3Response = await account.uploadFile(
       input.type,
       customName,
       imageLocalURL
     );
-    let s3URL = s3Response.uploadURL.split("?")[0];
+    let s3URL = s3Response?.uploadURL.split("?")[0];
     return {
       name: customName,
       URL: s3URL,

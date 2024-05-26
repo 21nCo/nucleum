@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Property } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/types/memotron/type.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -14,7 +14,7 @@
   let label: string;
   let errMsg: string;
   let isCreationInProgress: boolean = false;
-  let properties: Property[] = [];
+  let properties: IProperty[] = [];
 </script>
 
 <div class="flex flex-col items-start gap-4 w-full h-full bg-bgs1 p-8">

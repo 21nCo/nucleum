@@ -1,10 +1,10 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
 import { get } from "svelte/store";
-import { cloudProvider } from "$lib/client/stores/app.store";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import type { NodeCapture } from "../types/memotron/node.type";
+import type { INodeCapture } from "../types/memotron/node.type";
 import { formatDate } from "$lib/client/utils/time.utils";
+import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { cloudProvider } from "./persistance";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 
@@ -15,7 +15,7 @@ export class NodePersistance {
    * @param node
    * @returns
    */
-  async save(node: NodeCapture) {
+  async save(node: INodeCapture) {
     switch (get(cloudProvider) as Cloud) {
       case Cloud.local:
       //

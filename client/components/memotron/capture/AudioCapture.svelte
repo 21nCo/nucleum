@@ -14,6 +14,7 @@
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { userPreferences } from "$lib/client/stores/app.store";
   import appearance from "$lib/client/stores/appearance.store";
+  import account from "$lib/client/stores/account.store";
   const dispatch = createEventDispatcher();
   let fileDetails: FileDetails;
   let recordingDuration: number = 0;
@@ -164,7 +165,7 @@
 
   async function uploadTest() {
     const contentType = "audio/webm";
-    const result = await new Persistance().uploadFile(
+    const result = await account.uploadFile(
       contentType,
       `${id}.webm`,
       blobRefernce

@@ -8,7 +8,10 @@ import {
 } from "../types/appearance.type";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { StoreDataType } from "../types/data.type";
-import { persistLocally, retrieveLocally } from "./persistance";
+import {
+  persistLocally,
+  retrieveLocally
+} from "$lib/client/utils/storage.utils";
 import type { UserAppearanceSettings } from "../types/preferences.type";
 import { userPreferences } from "./app.store";
 

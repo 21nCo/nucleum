@@ -14,7 +14,7 @@
   import { bgClass, borderClass } from "$lib/client/utils/theme.utils";
   import { AppSkin, ColorStrength } from "$lib/client/types/appearance.type";
   import { onMount } from "svelte";
-  import { resolveUiState } from "$lib/client/utils/utils";
+
   import { UiState } from "$lib/client/types/uiState.enum";
   import { AppEvent } from "$lib/client/types/event.enum";
   import appearance from "$lib/client/stores/appearance.store";
@@ -23,10 +23,7 @@
   let headerHeight: number = 150;
   let isHovered: boolean = false;
   let testingInMobileBrowser: boolean = false;
-  $: isInThinMode = resolveUiState(
-    $userPreferences.uiStates,
-    UiState.isInThinMode
-  );
+  $: isInThinMode = userPreferences.resolveUiState(UiState.isInThinMode);
   $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
   onMount(() => {
     if ($view.landscapiness < 1.25) {

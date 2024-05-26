@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Type } from "$lib/client/types/memotron/type.type";
+  import type { IType } from "$lib/client/types/memotron/type.type";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";

@@ -1,14 +1,14 @@
 <script lang="ts">
   import {
     PropertyType,
-    type Property
+    type IProperty
   } from "$lib/client/types/memotron/type.type";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { resolveActiveNodeStore } from "../../node/node.store";
   import { lookupAddressFromLatLong } from "./property.utils";
-  export let config: Property;
+  export let config: IProperty;
   export let nodeId: string;
   let address: string;
   const node = resolveActiveNodeStore(nodeId);

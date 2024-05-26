@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     PropertyType,
-    type Property
+    type IProperty
   } from "$lib/client/types/memotron/type.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
@@ -22,8 +22,13 @@
     properCase
   } from "$lib/client/utils/text.utils";
   import { generateUID } from "$lib/client/utils/utils";
-  export let properties: Property[] = [];
-  const autoPropertiesGroupLabel = "Automatic";
+  import {
+    autoPropertiesGroupLabel,
+    metaPropertyOptions,
+    propertyOptions
+  } from "./type.store";
+  export let properties: IProperty[] = [];
+
   let columns: TableColumn[] = [
     {
       label: "Type",
@@ -42,61 +47,7 @@
           order: 0
         }
       ],
-      options: [
-        {
-          label: "Text",
-          icon: "bars",
-          value: PropertyType.TEXT
-        },
-        {
-          label: "Rating",
-          icon: "star",
-          value: PropertyType.RATING
-        },
-        {
-          label: "Single select",
-          icon: "chevdown",
-          value: PropertyType.SINGLE_SELECT
-        },
-        {
-          label: "Multi select",
-          icon: "bars",
-          value: PropertyType.MULTI_SELECT
-        },
-        {
-          label: "Date",
-          icon: "calendar",
-          value: PropertyType.DATE
-        },
-        {
-          label: "Checkbox",
-          icon: "bolt",
-          value: PropertyType.CHECKBOX
-        },
-        {
-          label: "Attachement(s)",
-          icon: "upload",
-          value: PropertyType.FILE
-        },
-        {
-          label: "Created time",
-          icon: "clock",
-          value: PropertyType.CREATED_TIME,
-          groupId: autoPropertiesGroupLabel
-        },
-        {
-          label: "Modified time",
-          icon: "clock",
-          value: PropertyType.MODIFIED_TIME,
-          groupId: autoPropertiesGroupLabel
-        },
-        {
-          label: "Location",
-          icon: "map",
-          value: PropertyType.LOCATION,
-          groupId: autoPropertiesGroupLabel
-        }
-      ]
+      options: [...propertyOptions, ...metaPropertyOptions]
     },
     {
       label: "Label",
@@ -131,7 +82,7 @@
     }
   ];
 
-  let seedData: Property[] = [
+  let seedData: IProperty[] = [
     // {
     //   id: "property:one",
     //   label: "Description",

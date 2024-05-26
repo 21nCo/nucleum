@@ -9,7 +9,7 @@ import {
 import { Item } from "$lib/client/types/item.enum";
 import type {
   ActiveNodeStore,
-  NodeCapture
+  INodeCapture
 } from "$lib/client/types/memotron/node.type";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
@@ -38,9 +38,9 @@ function initNodeStore() {
     subscribe,
     set,
     update,
-    create: async (node: Partial<NodeCapture>) => {
+    create: async (node: Partial<INodeCapture>) => {
       const userId = get(account)?.userInfo?.id ?? "user:undetermined";
-      const data: NodeCapture = {
+      const data: INodeCapture = {
         id: prefixTable(generateUID(), Item.node),
         ...node,
         createdBy: userId,
@@ -88,7 +88,7 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
   return val!;
 }
 
-async function resolveAssociatedType(typeId: string) {
+export async function resolveAssociatedType(typeId: string) {
   if (!typeId) return null;
   const tb = get(dataManager).cacheSource.dexie.type;
   return tb.get(typeId);

@@ -1,12 +1,12 @@
 <script>
   import { page } from "$app/stores";
-  import CurationView from "$lib/client/components/memotron/curation/CurationView.svelte";
+  import Curation from "$lib/client/components/memotron/curation/Curation.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   $: id = $page.url.searchParams.get("main");
 </script>
 
 {#if id}
-  <CurationView {id} />
+  <Curation {id} />
 {:else}
   <EmptyStatusView
     mainText="Nothing selected."

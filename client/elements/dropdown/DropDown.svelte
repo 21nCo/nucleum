@@ -15,6 +15,7 @@
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { properCase } from "$lib/client/utils/text.utils";
   const dispatch = createEventDispatcher();
   /**
    * items to be displayed in the dropdown
@@ -26,6 +27,8 @@
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;
   export let isDisableSearch: boolean = false;
+  export let size: Size.md | Size.sm = Size.md;
+  export let width: string = "w-80";
   let isGrouped: boolean = groups.length > 0;
   let baseRef: any;
   let search: string = "";
@@ -58,7 +61,7 @@
         ((isGrouped && x.groupId === groupId) || !isGrouped) &&
         ((!isDisableSearch &&
           search &&
-          x.label.toLowerCase().includes(search.toLowerCase())) ||
+          x.label?.toLowerCase().includes(search.toLowerCase())) ||
           !search ||
           isDisableSearch)
     );
@@ -73,7 +76,7 @@
    * @param item DropdownItem
    */
   function onitemclick(e: MouseEvent, item: DropdownItem) {
-    if (item.disabled) return;
+    if (item.isDisabled) return;
     value = item.value;
     dispatch("select", item.value);
     setTimeout(() => {
@@ -85,22 +88,29 @@
 <InputBaseElement
   {style}
   {label}
+  {size}
   bind:isActive
   bind:this={baseRef}
   {popoverOptions}
-  class={cn("flex justify-between gap-4 items-center", {
-    "w-full": !label?.label,
-    "w-80":
+  class={cn(
+    "flex justify-between gap-4 items-center",
+    `${
       label?.label &&
       (label?.orientation === Orientation.Horizontal || !label?.orientation)
-  })}
+        ? width
+        : "w-full"
+    }`,
+    {
+      "w-full": !label?.label
+    }
+  )}
 >
   <div class="flex items-center gap-2">
     {#if selected.icon}
       <Icon icon={selected.icon} size={Size.sm} />
     {/if}
     <span class="min-w-fit">
-      {selected?.label}
+      {selected?.label ?? properCase(selected?.value)}
     </span>
   </div>
   <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />

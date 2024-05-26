@@ -1,8 +1,5 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/client/types/userDate.type";
-import view from "$lib/client/stores/view.store";
-import { toasts } from "$lib/client/stores/notification.store";
-import { get } from "svelte/store";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
 import { ActionType, type Action } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
@@ -213,39 +210,6 @@ export function convertFileSize(
   }
 }
 
-/**
- * @deprecated
- * TODO - send view.isPortrait as prop or move this as view.store method.
- */
-export function resolveUiState(uiStates: any, property: string) {
-  if (!uiStates) return undefined;
-  let value = undefined;
-  if (get(view).isPortrait) {
-    value = uiStates["portrait"][property];
-  } else {
-    value = uiStates["desktop"][property];
-  }
-  if (value === undefined) {
-    value = uiStates["all"][property];
-  }
-  return value;
-}
-export function setUiState(
-  uiStates: any,
-  property: string,
-  value: any,
-  isForAll: boolean = false
-) {
-  if (isForAll) {
-    uiStates["all"][property] = value;
-  } else if (get(view).isPortrait) {
-    uiStates["portrait"][property] = value;
-  } else {
-    uiStates["desktop"][property] = value;
-  }
-  return uiStates;
-}
-
 // export function isClient() {
 //   return typeof window !== "undefined";
 // }
@@ -283,8 +247,9 @@ export function checkSurrealResponse(
   isShowErrMessage: boolean = false
 ) {
   if (response.status === "ERR") {
-    if (isShowErrMessage)
-      toasts.error("Something went wrong. Please try again", "ERR: S001");
+    //TODO - removed dependency on notification store and toasts
+    // if (isShowErrMessage)
+    //   toasts.error("Something went wrong. Please try again", "ERR: S001");
     const pattern = /Database record `.*` already exists/;
     const match = pattern.test(response.result);
     if (match) return "Record already exists";
@@ -296,7 +261,9 @@ export function checkSurrealResponse(
   }
 }
 
-export function extractProduct(host: string) {
+export function extractProduct(host: string | null = null) {
+  if (!host) host = import.meta.env.VITE_APP ?? window.location.host;
+  if (!host) return;
   const domain = host.split(/\.com|\.org|\.io|\.run/)[0];
   const parts = domain.split(".");
   const product = parts[parts.length - 1];

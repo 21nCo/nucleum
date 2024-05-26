@@ -7,12 +7,12 @@
 
   import {
     NodeThumbnailVariant,
-    type NodeThumbnail
+    type INodeThumbnail
   } from "$lib/client/types/memotron/node.type";
-  import NodeItemsView from "../../common/NodeItemsView.svelte";
+  import NodeItems from "$lib/client/components/memotron/common/NodeItems.svelte";
   export let context: "journal" | "journal-modal-viewer" = "journal";
   export let parentBgIndex: number = 0;
-  export let nodes: NodeThumbnail[] = [];
+  export let nodes: INodeThumbnail[] = [];
   export let nodeCount: number | undefined = undefined;
   let isLoadingState = false;
   $: if ($selectedTimePeriod) refresh();
@@ -25,7 +25,7 @@
     );
     if (isValidArrayWithData(result)) {
       nodes = result.sort(
-        (a: NodeThumbnail, b: NodeThumbnail) =>
+        (a: INodeThumbnail, b: INodeThumbnail) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
     }
@@ -37,7 +37,7 @@
 
 <div class="flex h-full w-full">
   {#if isValidArrayWithData(nodes) && !isLoadingState}
-    <NodeItemsView
+    <NodeItems
       {nodes}
       arrangement={NodeThumbnailVariant.LIST}
       {parentBgIndex}

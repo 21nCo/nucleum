@@ -1,8 +1,6 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
-import type { JsonValue } from "$lib/client/types/json.type";
 import { get, writable } from "svelte/store";
-import { appStore, cloudProvider, dboVersion } from "./app.store";
-import account from "$lib/client/stores/account.store";
+import type { JsonValue } from "$lib/client/types/json.type";
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
 import { Item as ItemEnum, type ItemType } from "$lib/client/types/item.enum";
 import type {
@@ -14,6 +12,12 @@ import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { performApiCall } from "$lib/client/utils/network.utils";
 import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { logger } from "$lib/client/stores/log.store";
+import {
+  persistLocally,
+  retrieveLocally
+} from "$lib/client/utils/storage.utils";
+
+export const cloudProvider = writable(Cloud.surreal);
 
 export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   const toString = (value: T) => JSON.stringify(value, null, 2);
@@ -36,39 +40,6 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   };
 };
 
-export function resetLocalStorage() {
-  if (import.meta.env?.SSR) {
-    return;
-  }
-  window?.localStorage.clear();
-  window?.location.reload();
-}
-
-export function persistLocally<T extends JsonValue>(
-  itemType: ItemType,
-  item: T
-) {
-  if (import.meta.env?.SSR) {
-    return;
-  }
-  window?.localStorage.setItem(ItemEnum[itemType], JSON.stringify(item));
-}
-export function retrieveLocally(itemType: ItemType) {
-  try {
-    if (import.meta.env?.SSR) {
-      return null;
-    }
-    let value = window?.localStorage.getItem(ItemEnum[itemType]);
-    if (value) {
-      return JSON.parse(value);
-    } else {
-      return null;
-    }
-  } catch {
-    return null;
-  }
-}
-
 export class Persistance {
   surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
   refreshToken = async () => {
@@ -84,7 +55,8 @@ export class Persistance {
       if (!data?.token) return;
       if (!data.userInfo)
         data.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
-      account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
+      // TODO - perform singin at the source of the method - to remove circular dependency of persistance on account.store.
+      // account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;
     } catch (err) {
       logger.logError(err);
@@ -107,17 +79,14 @@ export class Persistance {
   };
   updateDbo = async (fromVersion: number | undefined = undefined) => {
     try {
-      const dbo = get(dboVersion);
       const response = await performApiCall("account/n/updateDb", "POST", {
-        fromVersion: fromVersion ?? dbo?.version ?? 1
+        fromVersion: fromVersion ?? 1
       });
       if (!response?.ok) {
         return;
       }
       const data = await response.json();
-      console.log({ data });
-      if (data.version) dboVersion.setVersion(data.version);
-      return isValidArrayWithData(data);
+      return data;
     } catch (err) {
       logger.logError(err);
     }
@@ -149,7 +118,7 @@ export class Persistance {
       logger.logError(err);
     }
   };
-  initializeAppData = async () => {
+  fetchAppData = async () => {
     try {
       const app = import.meta.env.VITE_APP ?? window.location.hostname;
       console.log({ app });
@@ -160,7 +129,7 @@ export class Persistance {
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;
-        appStore.loadAppData(jsonValue);
+        return jsonValue;
       }
     } catch (err) {
       logger.logError(err);
@@ -391,9 +360,7 @@ export class Persistance {
     });
     return interceptSurrealResponse(response, query);
   }
-  async getSignedUrl(contentType: string, fileName: string) {
-    const acc = get(account);
-    const userId = acc.userInfo?.id.split(":")[1];
+  async getSignedUrl(userId: string, contentType: string, fileName: string) {
     const response = await performApiCall("utils/n/getsignedurl", "POST", {
       contentType,
       fileName,
@@ -401,18 +368,17 @@ export class Persistance {
     });
     return await response?.json();
   }
-  async uploadFile(contentType: string, fileName: string, blob: any) {
-    const signedUrlResponse = await this.getSignedUrl(contentType, fileName);
-    const result = await fetch(signedUrlResponse.uploadURL, {
+  async uploadFile(uploadUrl: string, contentType: string, blob: any) {
+    const result = await fetch(uploadUrl, {
       method: "PUT",
       body: blob,
       headers: {
-        "Content-Type": contentType,
-        "x-amz-acl": "public-read"
+        "Content-Type": contentType
+        // "x-amz-acl": "public-read"
       }
     });
     if (result.status === 200) {
-      return signedUrlResponse;
+      return uploadUrl;
     } else {
       return null;
     }

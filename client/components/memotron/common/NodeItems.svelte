@@ -3,13 +3,13 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
   import {
-    type NodeThumbnail,
+    type INodeThumbnail,
     NodeThumbnailVariant
   } from "$lib/client/types/memotron/node.type";
   import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import { cn } from "$lib/client/utils/ui.utils";
-  import NodeThumbnailView from "./nodeThumbnail/NodeThumbnailView.svelte";
-  export let nodes: NodeThumbnail[] = [];
+  import NodeThumbnail from "./nodeThumbnail/NodeThumbnail.svelte";
+  export let nodes: INodeThumbnail[] = [];
   export let arrangement: NodeThumbnailVariant = NodeThumbnailVariant.LIST;
   export let parentBgIndex = 1;
 </script>
@@ -24,7 +24,7 @@
   })}
 >
   {#each nodes as item}
-    <NodeThumbnailView
+    <NodeThumbnail
       node={item}
       {parentBgIndex}
       variant={arrangement}

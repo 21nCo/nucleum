@@ -14,8 +14,8 @@
   import view from "$lib/client/stores/view.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { performRedirectionChecks } from "$lib/client/utils/account.utils";
   import context from "$lib/client/stores/context.store";
+  import account from "$lib/client/stores/account.store";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
   let currentComponent: Action | null;
@@ -54,7 +54,7 @@
   }
   async function resolve(currentPath: string) {
     if (!excludedPathsForRedirectionCheck.includes(currentPath)) {
-      const isProceed = await performRedirectionChecks();
+      const isProceed = await account.performRedirectionCheck();
       if (!isProceed) {
         return;
       }

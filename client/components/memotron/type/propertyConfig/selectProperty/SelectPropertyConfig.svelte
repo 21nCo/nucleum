@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Property } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/types/memotron/type.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
@@ -8,7 +8,7 @@
   import type { PopoverOptions } from "$lib/client/types/popover.type";
   import EndText from "../EndText.svelte";
   import SelectOptionsEditor from "./SelectOptionsEditor.svelte";
-  export let property: Property;
+  export let property: IProperty;
   let popoverOptions: PopoverOptions = {
     id: "select-property-config-popover",
     class: "h-96",

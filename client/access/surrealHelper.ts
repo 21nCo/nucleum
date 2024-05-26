@@ -1,10 +1,7 @@
 import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb.js";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
-import {
-  performLoginStatusCheck,
-  resolveToken
-} from "$lib/client/utils/account.utils";
+import { resolveToken } from "$lib/client/utils/account.utils";
 import { performApiCall } from "$lib/client/utils/network.utils";
 import {
   replaceParams,
@@ -101,9 +98,11 @@ export class SurrealDatabaseUsingRest {
     isReadOperation: boolean = false
   ) {
     try {
-      const isValid = await performLoginStatusCheck();
-      if (!isValid) return null;
-      this.token = resolveToken();
+      // const isValid = await performLoginStatusCheck();
+      // if (!isValid) return null;
+      const token = resolveToken();
+      if (!token) return null;
+      this.token = token;
       let decodedToken: any = jwt_decode(this.token!);
       this.db = decodedToken?.db ?? "";
       query = replaceParams(query, params);
@@ -177,8 +176,8 @@ export class SurrealDatabaseUsingSdk {
   }
   async reconnectIfRequired() {
     console.log("reconnectIfRequired", this.surreal.status);
-    const isValid = await performLoginStatusCheck();
-    if (!isValid) return false;
+    // const isValid = await performLoginStatusCheck();
+    // if (!isValid) return false;
     if (this.surreal.status === 0) return true;
     else {
       let isConnected = await this.connect();

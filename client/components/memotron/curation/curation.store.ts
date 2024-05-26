@@ -1,9 +1,10 @@
 import { CurationPersistance } from "$lib/client/stores/curation.persistance";
 import {
-  CollectionViewType,
+  CollectionLayout,
+  CombinationViewType,
   CurationType,
   type ActiveCurationStore,
-  type CurationCreationForm
+  type ICurationCreationForm
 } from "$lib/client/types/memotron/curation.type";
 import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/stores/data.store";
@@ -17,6 +18,8 @@ import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get, writable } from "svelte/store";
+import { resolveAssociatedType } from "../node/node.store";
+import type { IType } from "$lib/client/types/memotron/type.type";
 
 const seedCurationsStore: CurationStore = {
   id: Item.curation,
@@ -48,7 +51,7 @@ function initCurationStore() {
     refresh: () => {
       return dataManager.refreshForIFR(Item.curation);
     },
-    create: async (curation: CurationCreationForm) => {
+    create: async (curation: ICurationCreationForm) => {
       const data = {
         id: prefixTable(
           generateUID(),
@@ -142,9 +145,7 @@ function initActiveCurationStore() {
           createdAt: record?.createdAt ?? new Date().toISOString(),
           modifiedAt: record?.modifiedAt ?? new Date().toISOString(),
           views: [],
-          isRefreshing: true,
-          defaultView: CollectionViewType.BASIC
-          // defaultView: CollectionViewType.BASIC,
+          isRefreshing: true
         });
       } else {
         const record = await dm.cacheSource.dexie.curation.get(id);
@@ -153,14 +154,20 @@ function initActiveCurationStore() {
             ...record,
             type,
             isRefreshing: true,
-            views: [],
-            defaultView: ""
+            views: []
           });
         }
       }
       //TODO - fetch full curation from db
       const response = await new CurationPersistance().fetch(id);
       console.log({ response });
+      let associatedType: IType | null = null;
+      //TEMP - reading from local - send full type from db itself...
+      if (response.curation?.associatedType) {
+        associatedType =
+          (await resolveAssociatedType(response.curation.associatedType)) ??
+          null;
+      }
       if (
         type === CurationType.COLLECTION &&
         response.curation &&
@@ -175,6 +182,11 @@ function initActiveCurationStore() {
           store.views = [
             { ...response.curation.views?.[0], data: response.entries }
           ];
+          if (associatedType) store.associatedType = associatedType;
+          //TEMP - for testing
+          if (!store.cover) store.cover = "";
+          // store.cover =
+          //   "https://s3.us-east-1.amazonaws.com/tidyfilesdevfive.us-east-1/428bavow4oj5a56mfuvw/image/21625c64-f959-4329-8c79-590f4c3a7af7_lily-banse--YHSwy6uqvk-unsplash.jpg";
           console.log({ store });
           return store;
         });
@@ -199,3 +211,23 @@ function initActiveCurationStore() {
     }
   };
 }
+
+export const collectionLayoutOptions = [
+  {
+    value: CollectionLayout.BOARD,
+    icon: "rectangle-stack"
+  },
+  {
+    value: CollectionLayout.TABLE,
+    icon: "table-cells"
+  },
+  { value: CollectionLayout.HEATMAP, icon: "calendar-days" },
+  { value: CollectionLayout.GEOMAP, icon: "map" }
+];
+
+export const combinationLayoutOptions = [
+  { value: CombinationViewType.TREE, icon: "rectangle-stack" },
+  { value: CombinationViewType.GRAPH, icon: "graph" },
+  { value: CombinationViewType.WHITEBOARD, icon: "whiteboard" },
+  { value: CombinationViewType.INFIGRID, icon: "infigrid" }
+];

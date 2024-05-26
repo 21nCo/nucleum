@@ -4,7 +4,6 @@
   import { appStore, dboVersion } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { LaunchContext } from "$lib/client/types/appStore.type";
-  import { runDboUpdate } from "$lib/client/utils/account.utils";
   import { onMount } from "svelte";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
@@ -106,7 +105,7 @@
       isLoading={isDboUpdateInProgress}
       on:click={async () => {
         isDboUpdateInProgress = true;
-        await runDboUpdate($dboVersion.version);
+        await dboVersion.runDboUpdate();
         isDboUpdateInProgress = false;
       }}
       icon="sync"

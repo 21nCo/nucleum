@@ -5,7 +5,7 @@
   import { dataManager } from "$lib/client/stores/data.store";
   import {
     NodeType,
-    type NodeThumbnail
+    type INodeThumbnail
   } from "$lib/client/types/memotron/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import {
@@ -18,7 +18,7 @@
   import Memocon from "../Memocon.svelte";
   import DLinks from "../foreLinks/DirectLinks.svelte";
   // export let id: string;
-  export let node: NodeThumbnail | undefined;
+  export let node: INodeThumbnail | undefined;
   export let parentBackgrounIndex: number = 0;
   export let variant: "v1" | "v2" = "v2";
 </script>

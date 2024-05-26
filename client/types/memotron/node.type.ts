@@ -1,10 +1,10 @@
-import type { MemotronItemBase } from "$lib/client/types/memotron/common.type";
-import type { PropertyValue, Type } from "./type.type";
+import type { IMemotronItemBase } from "$lib/client/types/memotron/common.type";
+import type { PropertyValue, IType } from "./type.type";
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { Avatar } from "../avatar.type";
 import type { Markdown } from "./md.type";
 
-export type Node = NodeBase &
+export type Node = INodeBase &
   NodeContent & {
     metadata: NodeMetadata;
     children?: Node[];
@@ -12,7 +12,7 @@ export type Node = NodeBase &
     forelinks?: LinkThumbnail[];
   };
 
-export type NodeCapture = NodeBase &
+export type INodeCapture = INodeBase &
   NodeContent & {
     type: string;
     metadata: NodeMetadataCapturedAtClient;
@@ -21,13 +21,13 @@ export type NodeCapture = NodeBase &
 
 export type NodeDbType = Node & DbRecordBase;
 
-export type NodeThumbnail = NodeBase &
+export type INodeThumbnail = INodeBase &
   NodeContent & {
     links: LinkThumbnail[];
-    children?: NodeThumbnail[];
+    children?: INodeThumbnail[];
   };
 
-export type NodeBase = Omit<MemotronItemBase, "label"> & {
+export type INodeBase = Omit<IMemotronItemBase, "label"> & {
   label?: string;
   generatedLabel?: string;
   avatar?: Avatar;
@@ -35,11 +35,11 @@ export type NodeBase = Omit<MemotronItemBase, "label"> & {
   /**
    * Type of the node - type:sometype
    */
-  type?: Type;
+  type?: IType;
 };
 
 export type ActiveNodeStore = Node & {
-  type: Type;
+  type: IType;
 };
 
 export type NodeContent =
@@ -270,7 +270,7 @@ export type NodeMetadata = NodeMetadataCapturedAtClient & {
   updatedBy: string;
 };
 
-export type NodeLocalRecord = NodeBase;
+export type NodeLocalRecord = INodeBase;
 
 export type NodeProperty = {
   id: string;

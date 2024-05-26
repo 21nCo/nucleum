@@ -10,7 +10,7 @@
   $: bilinksRenderedAlongWithNode = $page.url.searchParams.get("blr");
 </script>
 
-<div class="w-full flex text-h3 justify-between items-center p-4">
+<div class="w-full flex justify-between items-center">
   {#if $collection.type === CurationType.NODELINKS}
     {#if bilinksRenderedAlongWithNode}
       <span class="text-h4">Links</span>
@@ -26,7 +26,11 @@
       </div>
     {/if}
   {:else}
-    {$collection.label}
+    <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
+    <!-- TODO - back button to previous resource - if launched from a mention or links -->
+    <span class="font-bold text-h1">
+      {$collection.label}
+    </span>
   {/if}
   <EditModeToggle />
 </div>

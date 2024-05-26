@@ -10,6 +10,10 @@ import {
   appEvents
 } from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
+import jwt_decode from "jwt-decode";
+import { wait } from "../utils/time.utils";
+
+export const isRefreshingToken = writable(false);
 
 const account = initAccount({
   isLoggedIn: false,
@@ -32,6 +36,49 @@ function initAccount(seed: UserAccount) {
     })
   });
   const { subscribe, set, update } = writable<UserAccount>(seed);
+  const checkIfSessionExpired = async () => {
+    const token = localStorage.getItem("surreal-token");
+    if (!token) {
+      account.expire();
+      return true;
+    }
+    let decodedToken: any = jwt_decode(token);
+    let exp = decodedToken?.exp ?? 0;
+    const currentTime = new Date().getTime() / 1000;
+    //console.log({ currentTime, exp });
+    if (currentTime < exp) {
+      return false;
+    }
+    console.log("token expired");
+    const refreshToken = localStorage.getItem("refresh-token");
+    if (!refreshToken) {
+      account.expire();
+      return true;
+    }
+    let decodedRefreshToken: any = jwt_decode(refreshToken);
+    let refreshExp = decodedRefreshToken?.exp ?? 0;
+    if (currentTime > refreshExp) {
+      account.expire();
+      return true;
+    }
+    if (!get(isRefreshingToken)) {
+      account.expire();
+      return true;
+      //TODO - not refreshing token as refresh token logic is not robust on the backend and also refreshToken - CORS config is not added on backend which is causing issues
+      console.log("refreshing token");
+      isRefreshingToken.set(true);
+      const response = await new Persistance().refreshToken();
+      if (response) {
+        isRefreshingToken.set(false);
+        return false;
+      } else {
+        isRefreshingToken.set(false);
+        return true;
+      }
+    } else {
+      return true;
+    }
+  };
   const addSeedUserInfo = (n: UserAccount) => {
     let seedUserInfo = {
       email: "john.legend@gmail.com",
@@ -101,6 +148,29 @@ function initAccount(seed: UserAccount) {
       })
     });
   };
+  const performLoginStatusCheck = async () => {
+    const token = localStorage.getItem("surreal-token");
+    if (!token) {
+      appStore.gotoPath("/signup");
+      return false;
+    }
+    let isSessionExpiredOrRefreshing = await checkIfSessionExpired();
+    if (isSessionExpiredOrRefreshing && get(isRefreshingToken)) {
+      while (get(isRefreshingToken)) {
+        await wait(1000);
+      }
+    }
+    isSessionExpiredOrRefreshing = await checkIfSessionExpired();
+    if (isSessionExpiredOrRefreshing) {
+      appStore.gotoPath("/signup?msg=expired");
+      return false;
+    } else return true;
+  };
+  const getSignedUrl = (contentType: string, fileName: string) => {
+    const acc = get(account);
+    const userId = acc.userInfo?.id.split(":")[1] ?? "";
+    return new Persistance().getSignedUrl(userId, contentType, fileName);
+  };
   return {
     subscribe,
     set,
@@ -151,6 +221,23 @@ function initAccount(seed: UserAccount) {
       console.log("deleting account", { acc });
       account.signOut();
       appStore.gotoPath("/signup?msg=deleted");
+    },
+    performLoginStatusCheck,
+    performRedirectionCheck: performLoginStatusCheck,
+    ping: async () => {
+      return new Persistance().ping();
+    },
+    getSignedUrl,
+    uploadFile: async (contentType: string, fileName: string, blob: any) => {
+      const signedUrlResponse = await getSignedUrl(contentType, fileName);
+      if (signedUrlResponse?.uploadURL) {
+        await new Persistance().uploadFile(
+          signedUrlResponse.uploadURL,
+          contentType,
+          blob
+        );
+        return signedUrlResponse;
+      } else return null;
     }
   };
 }

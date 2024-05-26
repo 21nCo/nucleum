@@ -4,7 +4,7 @@
     type ActiveCurationStoreType
   } from "./curation.store";
   import { CurationType } from "$lib/client/types/memotron/curation.type";
-  import CollectionView from "./collection/CollectionView.svelte";
+  import Collection from "./collection/Collection.svelte";
   export let id: string;
   let curation: ActiveCurationStoreType;
   $: if (id) {
@@ -13,7 +13,7 @@
   }
 </script>
 
-<div class="grow h-full flex text-fgs3 justify-center items-center">
+<div class="grow h-full flex justify-center items-center">
   {#if $curation && $curation.type === CurationType.COMBINATION}
     <!-- TODO -->
     <div
@@ -22,6 +22,6 @@
       {id}
     </div>
   {:else}
-    <CollectionView {id} on:back />
+    <Collection {id} on:back />
   {/if}
 </div>
