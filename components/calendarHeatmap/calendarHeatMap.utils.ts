@@ -318,7 +318,8 @@ export class DataManager {
     let length = inputData.length;
     const nonZeroValues = inputData.filter((x) => x.value > 0);
     const valuesForK = nonZeroValues.map((x) => [x.value]);
-    const k = kmeans(valuesForK, 6, {});
+    const clusterCount = Math.min(valuesForK.length, 6);
+    const k = kmeans(valuesForK,clusterCount, {});
     inputData = inputData.map((x, i) => {
       if (x.value === 0) return { ...x, clusterIndex: -1 };
       const index = nonZeroValues.findIndex((y) => y === x);
