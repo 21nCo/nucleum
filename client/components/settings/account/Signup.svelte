@@ -34,7 +34,7 @@
   });
 </script>
 
-<div class="flex flex-col w-full h-full justify-start pt-8 xl:pt-12">
+<div class="flex flex-col w-full h-full justify-start pt-8 dp:pt-12">
   <div
     class="w-full flex flex-col justify-start items-center {$view.scale > 0.6
       ? 'gap-16'

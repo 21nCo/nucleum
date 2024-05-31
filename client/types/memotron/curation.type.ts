@@ -1,3 +1,4 @@
+import type { ICacheableStore } from "../data.type";
 import type { IMemotronItemBase } from "./common.type";
 import type { INodeThumbnail, NodeThumbnailVariant } from "./node.type";
 import type { IType } from "./type.type";
@@ -18,6 +19,7 @@ export interface ICurationCreationForm {
    * Associated type of the collection - string identifier ex: type:sometype
    */
   associatedType?: string;
+  isSearchQuery?: boolean;
 }
 
 export interface CurationThumbnail extends ICurationBase {
@@ -44,23 +46,23 @@ export interface ICollection extends ICurationBase {
 
 export interface ICollectionView extends IMemotronItemBase {
   layout: CollectionLayout;
-  data: INodeThumbnail[];
+  data?: INodeThumbnail[];
   arrangement?: NodeThumbnailVariant;
   /**
    * Property id to show as tabs.
    * "none" for no tabs.
    */
-  tabBy?: string;
+  tabBy: string;
   /**
    * Property id to group by.
    * "none" for no grouping.
    */
-  groupBy?: string;
+  groupBy: string;
   /**
    * Property id to sub group by.
    * "none" for no sub grouping.
    */
-  subGroupBy?: string;
+  subGroupBy: string;
   /**
    * Configured tabs for non select type property.
    *
@@ -94,11 +96,13 @@ export enum CombinationViewType {
   WHITEBOARD = "WHITEBOARD"
 }
 
-export type ActiveCurationStore<T = ICollection | ICombination> = {
+export type IActiveCollection = {
   type: CurationType;
   isRefreshing: boolean;
-} & T;
+} & ICollection;
 
 export type CurationLocalRecord = ICurationBase & {
   type: CurationType;
 };
+
+export interface ICurationStore extends ICacheableStore {}

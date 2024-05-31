@@ -58,7 +58,7 @@
       "modal flex flex-col items-center justify-between w-full h-full",
       {
         "p-2 lg:p-4 gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-        "py-4 lg:py-6 px-3 md:px-4 lg:px-6 gap-4 lg:gap-8":
+        "py-4 lg:py-6 px-3 tp:px-4 lg:px-6 gap-4 lg:gap-8":
           !params.layout?.ignoreSafeArea && size !== Size.xs
       }
     )}

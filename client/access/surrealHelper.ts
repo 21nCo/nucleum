@@ -77,9 +77,9 @@ export class SurrealDatabaseUsingRest {
     if (response?.length > 0) return response[0];
     else return null;
   }
-  async delete(recordId: string) {
+  async delete(recordId: string, userId?: string) {
     return await this.query(
-      resolveMutationQuery(PersistanceActionType.DELETE, recordId)
+      resolveMutationQuery(PersistanceActionType.DELETE, recordId, userId)
     );
   }
   async executeReadFn(
@@ -254,7 +254,7 @@ export class SurrealDatabaseUsingSdk {
       this.close();
     }
   }
-  async delete(recordId: string) {
+  async delete(recordId: string, userId?: string) {
     try {
       // this.reconnectIfRequired();
       let response = await this.surreal.delete(recordId);
@@ -320,8 +320,8 @@ export class SurrealDatabase implements ISurrealDatabase {
   select(recordId: string) {
     return this.surreal.select(recordId);
   }
-  delete(recordId: string) {
-    return this.surreal.delete(recordId);
+  delete(recordId: string, userId?: string) {
+    return this.surreal.delete(recordId, userId);
   }
   executeReadFn(
     query: string,

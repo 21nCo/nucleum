@@ -2,7 +2,7 @@ import localforage from "localforage";
 import {
   CacheStrategy,
   type CacheSource,
-  type CacheableStore
+  type ICacheableStore
 } from "../types/data.type";
 import { LocalDexie } from "$local/local";
 
@@ -65,7 +65,7 @@ export class CacheManager implements CacheSource {
   }
 
   cacheStore(
-    store: CacheableStore,
+    store: ICacheableStore,
     strategy: CacheStrategy | undefined = undefined
   ) {
     if (!strategy || strategy === CacheStrategy.WHOLE) {
@@ -76,6 +76,6 @@ export class CacheManager implements CacheSource {
   }
 
   async retrieveCache(storeId: string) {
-    return (await this.indxDb.getItem(storeId)) as CacheableStore;
+    return (await this.indxDb.getItem(storeId)) as ICacheableStore;
   }
 }

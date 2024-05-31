@@ -4,12 +4,16 @@
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
   import { getMdStore } from "./markdown.store";
+  import { NodeType } from "$lib/client/types/memotron/node.type";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
   export let block: Block;
   export let mdId: string;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let isReRendering: boolean = false;
-  let isShowBgOnFocus: boolean = false;
+  let isShowBgOnFocus: boolean = true;
   const mdStore = getMdStore(mdId);
   onMount(() => {
     //TODO - check the need for rerendering
@@ -38,11 +42,20 @@
     isHovering = false;
   }}
 >
-  <div class="absolute -left-10 flex h-full justify-center">
-    {#if isHovering || isFocusing}
+  {#if isHovering || isFocusing}
+    <div class="absolute -left-8 flex h-full items-center justify-center">
       <LeftControls {mdId} />
+    </div>
+    {#if block.contentType === NodeType.HEADING1}
+      <div class="absolute right-10 flex h-full items-center justify-center">
+        <Button
+          label="focus (Cmd + M)"
+          type={ButtonVariant.PRIMARY}
+          size={Size.xs}
+        />
+      </div>
     {/if}
-  </div>
+  {/if}
   <div
     id="sss"
     class="-ml-10 pl-10 flex grow rounded-md {(isHovering || isFocusing) &&

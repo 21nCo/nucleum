@@ -7,6 +7,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { toggleSearchParam } from "$lib/client/utils/browser.utils";
+  import { closeResource } from "$lib/client/utils/utils";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let isClonesShown: boolean = false;
@@ -53,11 +55,5 @@
   {/if}
   <Button icon="ellipsis-vertical" tooltip="More actions" />
   <!--TODO Show close only if launched from modal -->
-  <Button
-    icon="cross-circled"
-    tooltip="Close"
-    on:click={() => {
-      modalEvent.hide();
-    }}
-  />
+  <Button icon="cross-circled" tooltip="Close" on:click={closeResource} />
 </div>

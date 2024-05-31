@@ -1,11 +1,5 @@
 <script lang="ts">
-  import { curationsSeedDataAr } from "$lib/client/components/memotron/common/seed";
-  import type {
-    CurationType,
-    CurationThumbnail
-  } from "$lib/client/types/memotron/curation.type";
   import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
-  import { resourceClickHandler } from "$lib/client/utils/memotron.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -18,13 +12,16 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { TextInputStyle } from "$lib/client/types/textinput.enum";
-  import { toggleSearchParam } from "$lib/client/utils/browser.utils";
-  import { activeResourceFilter } from "$lib/client/utils/utils";
+  import {
+    activeResourceFilter,
+    resourceClickHandler
+  } from "$lib/client/utils/utils";
   import { liveQuery } from "dexie";
   import CurationThumbnailView from "./CurationThumbnailView.svelte";
   import { dataManager } from "$lib/client/stores/data.store";
   import { curations as curationsStore } from "./curation.store";
   import { appStore } from "$lib/client/stores/app.store";
+  import { ResourceAccessMode } from "$lib/client/types/action.type";
   curationsStore.refresh();
   let searchQuery: string = "";
   // let curations: CurationThumbnail[] = [];
@@ -130,7 +127,7 @@
               {#each filteredItems as curation}
                 <CurationThumbnailView
                   {curation}
-                  on:click={resourceClickHandler}
+                  on:click={(e) => resourceClickHandler(e, curation.id)}
                 />
               {/each}
             </div>

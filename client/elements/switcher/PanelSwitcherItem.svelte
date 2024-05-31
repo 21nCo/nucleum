@@ -2,66 +2,111 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import {
+    BarStyle,
     PanelSwitcherStyle,
-    SelectionItemActiveStyle
+    type PanelSwitcherEditModeOptions
   } from "$lib/client/types/switcher.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { bgClass, textColorClass } from "$lib/client/utils/theme.utils";
+  import { textColorClass } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
-  import Icon from "../Icon.svelte";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { SelectItem } from "$lib/client/types/select.type";
-  import TextInput from "../input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import Popover from "../popover/Popover.svelte";
+  import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
   const dispatch = createEventDispatcher();
   export let item: SelectItem;
-  export let size: Size;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
   export let activeColor: number | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
   export let isInEditMode: boolean = false;
-  let labelEditPopoverRef: any;
-  $: isAddNewItem = item.value === "Add";
+  export let barStyle: BarStyle = BarStyle.EXACT;
+  export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
+    undefined;
+  export let triggerItemEdit: string | null = null;
+  function onClick() {
+    if (item.value === "$add") {
+      dispatch("add");
+    } else {
+      dispatch("click", item.value);
+    }
+  }
 </script>
 
+<!-- TODO - svelte 5 snippets for PanelSwitcherItemLabel multiple references -->
 {#if style === PanelSwitcherStyle.BAR}
   <button
-    class="flex relative bg-transparent {size === Size.md
-      ? 'px-6'
-      : size === Size.sm
-        ? 'px-4'
-        : 'px-3'}"
-    on:click
+    class={cn("flex relative bg-transparent", {
+      "px-4":
+        (size === Size.md || size === Size.lg) &&
+        barStyle === BarStyle.OVERFLOW,
+      "px-3": size === Size.sm || barStyle != BarStyle.OVERFLOW,
+      "px-2": size === Size.xs,
+      "py-2": barStyle != BarStyle.EXACT,
+      "border-b-2": barStyle === BarStyle.OVERFLOW,
+      activeBorderColor: isActive && barStyle === BarStyle.OVERFLOW,
+      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW
+    })}
+    on:click={onClick}
     disabled={isDisabled}
   >
     <div
-      class="font-medium min-w-fit {isActive
-        ? 'activeFgColor'
-        : 'text-fgs4'} {size === Size.md && $view.isPortrait
-        ? 'text-base'
-        : size === Size.sm && $view.isPortrait
-          ? 'text-b2'
-          : size === Size.sm
-            ? 'text-base'
-            : size === Size.xs
-              ? 'text-b2'
-              : 'text-h4'}"
+      class={cn("flex items-center min-w-fit", {
+        "text-base": (size === Size.md && $view.isPortrait) || size === Size.sm,
+        "text-b2": (size === Size.sm && $view.isPortrait) || size === Size.xs,
+        "text-h4": size === Size.lg,
+        "text-fgs3": !isActive,
+        activeFgColor: isActive && !isInEditMode,
+        "py-2 border-b-2": barStyle === BarStyle.EXACT,
+        activeBorderColor: isActive && barStyle === BarStyle.EXACT,
+        "border-transparent": !isActive && barStyle === BarStyle.EXACT
+      })}
     >
-      {item.label}
+      <PanelSwitcherItemLabel
+        {item}
+        {isInEditMode}
+        {editModeOptions}
+        {size}
+        {isActive}
+        bind:triggerItemEdit
+        on:remove
+        on:change
+      />
     </div>
-    {#if isActive}
+    {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
       <div
-        class="absolute opacity-80 w-full rounded-lg left-0 -bottom-1 z-10 activeBgColor"
-        style="height: 5%;"
+        class={cn("absolute bottom-0", {
+          "activeBgColor left-1/2 w-1 h-1 rounded-full":
+            barStyle === BarStyle.DOT,
+          "border-b-2 activeBorderColor left-1/3 w-1/3":
+            barStyle === BarStyle.UNDER
+        })}
       />
-    {:else}
-      <button
-        class="absolute w-full {bgClass($appearance, 2)} left-0 -bottom-1 z-10"
-        style="height: 5%;"
-      />
+    {/if}
+  </button>
+{:else if style === PanelSwitcherStyle.SNAKE}
+  <button
+    class={cn("relative flex items-center gap-1 px-4 py-2", {
+      "border border-brs3 rounded-t-md text-fgs1": isActive,
+      "activeBorderColor- activeFgColor": isActive && !isInEditMode,
+      "border border-transparent text-fgs3": !isActive
+    })}
+    disabled={isDisabled}
+    on:click={onClick}
+  >
+    <PanelSwitcherItemLabel
+      {item}
+      {isInEditMode}
+      {editModeOptions}
+      {size}
+      {isActive}
+      bind:triggerItemEdit
+      on:remove
+      on:change
+    />
+    {#if isActive}
+      <div class="absolute h-1 w-full bg-bgs1 -bottom-1 left-0" />
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.DOT}
@@ -92,13 +137,7 @@
       "rounded-md px-2 py-0.5 w-16": size === Size.xs,
       activeBgColor: isActive
     })}
-    on:click={() => {
-      if (isAddNewItem) {
-        dispatch("add");
-      } else {
-        dispatch("click", item.value);
-      }
-    }}
+    on:click={onClick}
     disabled={isDisabled}
   >
     <div
@@ -112,55 +151,20 @@
         ),
         {
           "text-base font-medium": size === Size.md && $view.isPortrait,
-          "text-b2": size === Size.sm || size === Size.xs,
-          "text-fgs3": isAddNewItem
+          "text-b2": size === Size.sm || size === Size.xs
         }
       )}
     >
-      {#if isInEditMode && isAddNewItem}
-        <Icon icon="plus" {size} />
-      {/if}
-      {#if isInEditMode && !isAddNewItem}
-        <div class="flex gap-4">
-          <Popover bind:this={labelEditPopoverRef} isPreventDefault={true}>
-            <div slot="trigger">
-              {item.label}
-            </div>
-            <div slot="popover" class="w-60 h-20 p-4">
-              <TextInput
-                bind:value={item.label}
-                on:input={(e) => {
-                  dispatch("change", { ...item });
-                }}
-              />
-            </div>
-          </Popover>
-          <div class="flex gap-2">
-            <Icon
-              icon="pencil-square"
-              {size}
-              {isActive}
-              selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-              on:click={(e) => {
-                labelEditPopoverRef.toggle();
-                e.stopPropagation();
-              }}
-            />
-            <Icon
-              icon="cross-circled"
-              {size}
-              {isActive}
-              selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-              on:click={(e) => {
-                dispatch("remove", item.value);
-                e.stopPropagation();
-              }}
-            />
-          </div>
-        </div>
-      {:else}
-        {item.label}
-      {/if}
+      <PanelSwitcherItemLabel
+        {item}
+        {isInEditMode}
+        {editModeOptions}
+        {size}
+        {isActive}
+        bind:triggerItemEdit
+        on:remove
+        on:change
+      />
     </div>
   </button>
 {/if}
@@ -169,6 +173,9 @@
   .activeBgColor {
     background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
     /* transition: background-color 0.2s ease-in-out; */
+  }
+  .activeBorderColor {
+    border-color: var(--customcolor, rgba(var(--colors-aps1), 1));
   }
   .activeFgColor {
     color: var(--customcolor, rgba(var(--colors-aps1), 1));

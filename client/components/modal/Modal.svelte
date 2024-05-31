@@ -3,9 +3,10 @@
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { closeResource, generateUID } from "$lib/client/utils/utils";
   import { Size } from "$lib/client/types/size.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
@@ -15,8 +16,6 @@
   export let size: Size = Size.md;
   export let orientation: Orientation = Orientation.Vertical;
   let dialog: HTMLDialogElement;
-  let sizingClass = "";
-  resolveSize();
   let width: number;
   let left: any;
   /**
@@ -64,66 +63,7 @@
     show = false;
     modalEvent.hideSpecific(id, "Modal.svelte");
     confirmationNotification.reset();
-  }
-  function resolveSize() {
-    // if ($appStore.launchContext === LaunchContext.EMBED) return;
-    if (orientation === Orientation.Vertical) {
-      switch (size) {
-        case Size.xs:
-          sizingClass =
-            "w-[18rem] md:w-[20rem] h-20 md:h-[20rem] min-h-[15rem]";
-          break;
-        case Size.sm:
-          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
-          break;
-        case Size.md:
-          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
-          break;
-        case Size.lg:
-          sizingClass =
-            "w-[21rem] sm:w-[28rem] md:w-[35rem] h-[45rem] min-h-[40rem]";
-          break;
-        case Size.xl:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[50rem] min-h-[45rem]";
-          break;
-        case Size.full:
-          sizingClass = "w-full h-full min-h-screen min-w-screen";
-          break;
-        default:
-          sizingClass = "w-[20rem] md:w-[30rem] h-[35rem] min-h-[30rem]";
-          break;
-      }
-      return;
-    } else if (orientation === Orientation.Horizontal) {
-      switch (size) {
-        case Size.xs:
-          sizingClass = "w-[18rem] md:w-[20rem] h-[20rem] min-h-[15rem]";
-          break;
-        case Size.sm:
-          sizingClass = "w-[20rem] md:w-[25rem] h-[25rem] min-h-[20rem]";
-          break;
-        case Size.md:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[45rem] h-[30rem] min-h-[30rem]";
-          break;
-        case Size.lg:
-          sizingClass =
-            "w-[21rem] sm:w-[35rem] md:w-[50rem] h-[45rem] min-h-[45rem]";
-          break;
-        case Size.xl:
-          sizingClass = "w-[21rem] sm:w-[80%] 2xl:w-[100rem] h-[90%]";
-          break;
-        case Size.full:
-          sizingClass = "w-full h-full min-h-screen min-w-screen";
-          break;
-        default:
-          sizingClass =
-            "w-[21rem] sm:w-[30rem] md:w-[40rem] h-[25rem] min-h-[25rem]";
-          break;
-      }
-      return;
-    }
+    closeResource(true);
   }
 </script>
 
@@ -155,9 +95,28 @@
       <dialog
         bind:this={dialog}
         {id}
-        class="rounded-md flex flex-col p-0 text-fgs1 shadow-xl {isShowOverlay
-          ? 'bg-bgs1 overlay'
-          : 'bg-none'} {sizingClass}"
+        class={cn(
+          "rounded-md flex flex-col p-0 text-fgs1 shadow-xl cw:w-full ch:h-full",
+          {
+            "bg-bgs1 overlay": isShowOverlay,
+            "bg-none": !isShowOverlay,
+            "w-full h-full min-h-screen min-w-screen": size === Size.full,
+            "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
+            "w-[18rem] tp:w-[20rem] h-[20rem] min-h-[15rem]": size === Size.xs,
+            "w-[60vw] tp:h-[55rem] 2k:h-[60rem]":
+              orientation === Orientation.Vertical && size === Size.xl,
+            "w-[35rem] 2k:w-[40rem] h-[50rem] 2k:h-[55rem]":
+              orientation === Orientation.Vertical && size === Size.lg,
+            "w-[30rem] 2k:w-[35rem] h-[35rem] 2k:h-[50rem]":
+              orientation === Orientation.Vertical && size === Size.md,
+            "w-[80%] 2k:w-[100rem] h-[90%] vm:h-[80rem]":
+              orientation === Orientation.Horizontal && size === Size.xl,
+            "w-[50rem] 2k:w-[60rem] h-[45rem] 2k:h-[50rem]":
+              orientation === Orientation.Horizontal && size === Size.lg,
+            "w-[45rem] 2k:w-[50rem] h-[30rem] 2k:h-[40rem]":
+              orientation === Orientation.Horizontal && size === Size.md
+          }
+        )}
       >
         <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
         <slot />

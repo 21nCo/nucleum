@@ -1,28 +1,33 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { splitView } from "../stores/app.store";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-  import Divider from "../elements/Divider.svelte";
-  import { Orientation } from "../types/direction.enum";
   import ResourceResolver from "./paint/ResourceResolver.svelte";
+  import { page } from "$app/stores";
+  import { ResourceAccessMode } from "../types/action.type";
+  import RightSplit from "./RightSplit.svelte";
   export let id: string;
-  export let split: string | undefined = undefined;
+  let split: string | undefined = undefined;
+  export let componentParams: any = {};
   onMount(() => {
-    const splitSub = splitView.subscribe((value) => {
-      if (!isValidArrayWithData(value)) return;
-      id = value[0];
-      split = value[1];
+    const sub = page.subscribe((value) => {
+      split =
+        value.url.searchParams.get(ResourceAccessMode.FSPLIT) ?? undefined;
     });
-    return () => splitSub();
+    return () => {
+      sub();
+    };
   });
 </script>
 
 <div class="flex w-full h-full">
   <div class="flex h-full {split ? 'w-1/2' : 'w-full'}">
-    <ResourceResolver {id} isFromSplitView={true} />
+    <slot>
+      <ResourceResolver
+        {id}
+        componentParams={{ ...componentParams, isFromSplitView: true }}
+      />
+    </slot>
   </div>
   {#if split}
-    <Divider orientation={Orientation.Vertical} />
-    <ResourceResolver id={split} isFromSplitView={true} />
+    <RightSplit {split} />
   {/if}
 </div>

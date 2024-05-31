@@ -32,7 +32,7 @@
       Browse files
     </div>
   {:else if "blocks" in $captureStore.body}
-    <div class="overflow-auto h-full w-full xl:px-10">
+    <div class="overflow-auto h-full w-full dp:px-10">
       <Markdown
         bind:md={$captureStore.body}
         params={{

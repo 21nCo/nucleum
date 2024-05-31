@@ -48,7 +48,7 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col gap-6 p-4 bg-bgs1">
-        <header class="flex justify-between w-full xl:px-10">
+        <header class="flex justify-between w-full dp:px-10">
           <div class="flex gap-4 grow">
             {#if $captureStore.type?.avatar}
               <!-- TODO - AvatarPicker component - increasing loading time -->
@@ -108,8 +108,11 @@
             <Writer bind:isEmptyState />
           </div>
           {#if isEmptyState}
-            <div class="w-full xl:px-10 xl:my-10">
+            <div class="w-full dp:px-10 dp:my-10">
               <TypeSelector
+                bind:selected={$captureStore.captureType}
+                label={{ label: "Select a type" }}
+                isCapturePage={true}
                 on:select={(e) => {
                   isEmptyState = false;
                   captureStore.onTypeSelect(e.detail);
@@ -119,7 +122,7 @@
           {/if}
         </main>
         {#if !isEmptyState}
-          <footer class="w-full xl:px-10 min-h-[10rem]">
+          <footer class="w-full dp:px-10 min-h-[10rem]">
             <Linkbox />
           </footer>
         {/if}

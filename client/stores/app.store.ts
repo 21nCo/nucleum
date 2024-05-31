@@ -26,7 +26,7 @@ import { emojis, materialSymbols, shuffleEmojis } from "../data/avatars";
 import {
   PersistanceActionType,
   StoreDataType,
-  type CacheableStore,
+  type ICacheableStore,
   type CacheableStoreContract
 } from "../types/data.type";
 import { ActionType, type Action } from "../types/action.type";
@@ -68,7 +68,6 @@ export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
 
 export const appStoreShuffleEmojis = writable(shuffleEmojis);
-export const splitView = writable<string[]>([]);
 export const intercomId = import.meta.env.VITE_INTERCOM_ID ?? "esh1m4xq";
 export const selectedTimePeriod = writable<Date>(new Date());
 export const plainCSSHMColorIndex5 = writable<string | undefined>("");
@@ -273,7 +272,7 @@ export const seedUserPreferences: UserGlobalPreferences = {
   annotations: []
 };
 const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
-type dbVersionStore = CacheableStore & {
+type dbVersionStore = ICacheableStore & {
   version: number;
 };
 

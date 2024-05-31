@@ -250,8 +250,10 @@
 {#if $appStore.isDebugMode}
   <DebugLayer />
 {/if}
-<ModalLayer />
-<Shortcuts />
+{#if $appLoadingState.isBaseLoaded}
+  <ModalLayer />
+  <Shortcuts />
+{/if}
 <Intercom />
 <CacheLayer />
 <svelte:window

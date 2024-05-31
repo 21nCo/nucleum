@@ -13,15 +13,12 @@
     curation.createdAt &&
     new Date(curation.createdAt) >
       new Date(new Date().setDate(new Date().getDate() - 7));
-  function handleClick(event: MouseEvent) {
-    dispatch("click", { id: curation.id, event });
-  }
 </script>
 
 <button
   class="flex justify-between items-center w-full p-2 rounded-md hover:bg-bgs2"
   id={curation.id}
-  on:click={handleClick}
+  on:click
 >
   <span class="flex gap-2">
     {#if isValidArrayWithData(curation.children)}

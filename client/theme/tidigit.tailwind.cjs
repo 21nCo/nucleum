@@ -112,15 +112,47 @@ module.exports = {
   content: ["./src/**/*.{html,js,svelte,ts}", "./lib/**/*.{html,js,svelte,ts}"],
   theme: {
     screens: {
+      /**
+       * @deprecated
+       */
       xs: "480px",
       sm: "640px",
       md: "768px",
       lg: "1024px",
       xl: "1280px",
-      "2xl": "1536px",
-      "3xl": "1800px",
-      "4xl": "1920px",
-      "5xl": "2200px"
+
+      /**
+       * Mobile devices
+       */
+      mo: { raw: "(max-width: 600px) and (max-height: 1000px)" },
+      /**
+       * Tablet in portrait, or vertical splits on laptop/desktop/tablet in landscape
+       */
+      tp: { raw: "(min-width: 600px) and (min-height: 800px)" },
+      /**
+       * Tablet in landscape, desktop and laptop
+       */
+      dp: { raw: "(min-width: 1024px) and (min-height: 800px)" },
+      /**
+       * 2k : 2K monitors and above, TVs etc
+       */
+      "2k": { raw: "(min-width: 2000px) and (min-height: 1000px)" },
+      /**
+       * Constrained width: handheld devices like phones, vertical narrow splits on desktop/laptop/tablet
+       */
+      cw: { raw: "(max-width: 600px)" },
+      /**
+       * Ultra wide
+       */
+      uw: "4000px",
+      /**
+       * Constrained height: Horizontal splits on desktop/laptop/tablet or when opened from laptop browser with too many toolbars i.e. tab bar, bookmark bar, address bar, system menu bar etc
+       */
+      ch: { raw: "(max-height: 800px)" },
+      /**
+       * Vertical monitor
+       */
+      vm: { raw: "(min-height: 1500px)" }
     },
     extend: {
       fontSize: {

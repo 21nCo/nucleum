@@ -1,27 +1,35 @@
 <script lang="ts">
   import {
-    resolveActiveCurationStore,
-    type ActiveCurationStoreType
+    determineCurationType,
+    resolveActiveCollectionStore,
+    type IActiveCollectionStore
   } from "./curation.store";
   import { CurationType } from "$lib/client/types/memotron/curation.type";
   import Collection from "./collection/Collection.svelte";
+  import { onMount } from "svelte";
   export let id: string;
-  let curation: ActiveCurationStoreType;
-  $: if (id) {
-    curation = resolveActiveCurationStore(id);
-    curation.init(id);
-  }
+  let collection: IActiveCollectionStore;
+  let combination: any;
+  let type: CurationType;
+  onMount(async () => {
+    console.log("curation onMount", { id });
+    if (!id) return;
+    type = determineCurationType(id);
+    if (type === CurationType.COLLECTION)
+      collection = resolveActiveCollectionStore(id);
+    console.log({ type, collection });
+  });
 </script>
 
-<div class="grow h-full flex justify-center items-center">
-  {#if $curation && $curation.type === CurationType.COMBINATION}
+<div class="w-full h-full flex justify-center items-center">
+  {#if $combination}
     <!-- TODO -->
     <div
       class="w-full h-full flex justify-center items-center text-fgs4 text-b3"
     >
       {id}
     </div>
-  {:else}
+  {:else if collection}
     <Collection {id} on:back />
   {/if}
 </div>

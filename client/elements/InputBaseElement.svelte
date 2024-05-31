@@ -41,7 +41,9 @@
     isPreventDefaultStyling={popoverOptions?.isPreventDefaultStyling}
     bind:isPopoverVisible={isOptionsVisible}
     triggerClass={cn("flex items-center rounded-md", classList, {
-      "w-full": label?.orientation === Orientation.Vertical || !label?.label,
+      "w-full":
+        (label?.orientation === Orientation.Vertical && !label?.isShrink) ||
+        !label?.label,
       "p-2": style != InputStyle.PLAIN && size === Size.md,
       "px-1.5 py-1 text-b2": style != InputStyle.PLAIN && size === Size.sm,
       "border border-brs3": style === InputStyle.BORDERED && !isActive,

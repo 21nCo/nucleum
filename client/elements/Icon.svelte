@@ -106,6 +106,7 @@
   import appearance from "../stores/appearance.store";
   import Funnel from "../icons/Funnel.svelte";
   import PaperClip from "../icons/PaperClip.svelte";
+  import Eye from "../icons/Eye.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -455,6 +456,9 @@
         <Funnel {variant} />
       {:else if icon === "paper-clip"}
         <PaperClip {variant} />
+        <!-- TODO - TEMP - bird view icon is mapped to eye -->
+      {:else if icon === "eye" || icon === "bird"}
+        <Eye {variant} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

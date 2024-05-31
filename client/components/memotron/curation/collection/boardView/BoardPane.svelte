@@ -4,30 +4,36 @@
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import NodeItems from "../../../common/NodeItems.svelte";
   import { resolvePropertyOptions } from "../../curation.utils";
-  import BoardPane from "./BoardPane.svelte";
   export let view: ICollectionView;
+  export let data: any;
   export let properties: IProperty[] | null = null;
-  $: groups = resolveBoards(view.groupBy);
+  $: subGroups = resolveBoards(view.subGroupBy);
   function resolveBoards(id: string) {
     // if (view.groups) return view.groups;
     return resolvePropertyOptions(id, properties);
   }
-  function filterGroupData(group: string) {
+  function filterSubGroupData(subGroup: string) {
     return view.data?.filter((node) => {
       return (
-        node.properties?.find((p) => p.id === view.groupBy)?.value === group
+        node.properties?.find((p) => p.id === view.subGroupBy)?.value ===
+        subGroup
       );
     });
   }
-  $: console.log({ groups });
+  $: console.log({ groups: subGroups });
 </script>
 
-{#if isValidArrayWithData(groups)}
-  <div class="w-full h-full flex overflow-auto gap-4">
-    {#each groups as group}
-      <BoardPane {view} data={filterGroupData(group.value)} />
-    {/each}
-  </div>
-{:else}
-  <NodeItems nodes={view.data} arrangement={view.arrangement} />
-{/if}
+<div
+  class="border border-brs3 rounded-md h-full w-[28rem] min-w-[20rem] overflow-auto p-2"
+>
+  {#if isValidArrayWithData(subGroups)}
+    <div class="w-full flex flex-col gap-4">
+      <NodeItems
+        nodes={filterSubGroupData(data)}
+        arrangement={view.arrangement}
+      />
+    </div>
+  {:else}
+    <NodeItems nodes={data} arrangement={view.arrangement} />
+  {/if}
+</div>

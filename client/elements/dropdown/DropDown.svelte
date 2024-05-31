@@ -96,7 +96,9 @@
     "flex justify-between gap-4 items-center",
     `${
       label?.label &&
-      (label?.orientation === Orientation.Horizontal || !label?.orientation)
+      (label?.orientation === Orientation.Horizontal ||
+        !label?.orientation ||
+        (label?.orientation === Orientation.Vertical && label?.isShrink))
         ? width
         : "w-full"
     }`,

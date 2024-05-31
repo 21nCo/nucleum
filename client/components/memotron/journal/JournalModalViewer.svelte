@@ -17,7 +17,7 @@
 </script>
 
 <div class="flex w-full h-full bg-bgs1 gap-2 p-4">
-  <!-- <div class="bg-bgs2 p-4 2xl:p-6 w-[24rem] min-w-[24rem] 2xl:min-w-[32rem]">
+  <!-- <div class="bg-bgs2 p-4 2k:p-6 w-[24rem] min-w-[24rem] 2k:min-w-[32rem]">
     <Timeline parentBgIndex={2} context="journal-modal-viewer" />
   </div> -->
   <NodeView {id} />

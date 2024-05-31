@@ -3,14 +3,20 @@
   import { CurationType } from "$lib/client/types/memotron/curation.type";
   import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { createEventDispatcher } from "svelte";
-  import { resolveActiveCurationStore } from "../curation.store";
+  import { resolveActiveCollectionStore } from "../curation.store";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let id: string;
-  $: collection = resolveActiveCurationStore(id);
+  $: collection = resolveActiveCollectionStore(id);
   $: bilinksRenderedAlongWithNode = $page.url.searchParams.get("blr");
+  let buttonProps = {
+    style: ButtonStyle.DEFAULT
+  };
 </script>
 
-<div class="w-full flex justify-between items-center">
+<div class="w-full flex justify-between items-center sticky top-0">
   {#if $collection.type === CurationType.NODELINKS}
     {#if bilinksRenderedAlongWithNode}
       <span class="text-h4">Links</span>
@@ -32,5 +38,12 @@
       {$collection.label}
     </span>
   {/if}
-  <EditModeToggle />
+  <span class="flex gap-4">
+    <EditModeToggle />
+    <Button icon="search" tooltip="search" {...buttonProps} />
+    <Button icon="bird" tooltip="bird view" {...buttonProps} />
+    <Button icon="rectangle-stack" tooltip="flashcards" {...buttonProps} />
+    <Button icon="share" tooltip="share" {...buttonProps} />
+    <Button icon="ellipsis-vertical" {...buttonProps} />
+  </span>
 </div>

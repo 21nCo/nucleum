@@ -1,8 +1,13 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/client/types/userDate.type";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
-import { ActionType, type Action } from "$lib/client/types/action.type";
+import {
+  ActionType,
+  ResourceAccessMode,
+  type Action
+} from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
+import { toggleSearchParam } from "$lib/client/utils/browser.utils";
 
 export function onInterval(
   callback: () => void,
@@ -236,7 +241,12 @@ export function download(data: string, label: string | null = null) {
   link.click();
   URL.revokeObjectURL(url);
 }
-
+/**
+ * TODO - move to surreal.utils
+ * @param response
+ * @param context
+ * @returns
+ */
 export function interceptSurrealResponse(response: any, context: string = "") {
   console.log({ context, response });
   if (!response || !isValidArrayWithData(response)) return null;
@@ -312,3 +322,43 @@ export function debouncer(func: any, timeout: number) {
 
 export const activeResourceFilter = (x: any) =>
   !x.isArchived && !x.trashInformation;
+
+export function resourceClickHandler(
+  event: MouseEvent,
+  id: string,
+  defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
+) {
+  //TODO - shortcuts from user settings
+  if (!id) return;
+  toggleSearchParam("view");
+  if (event.shiftKey) {
+    toggleSearchParam(ResourceAccessMode.FOCUS, id);
+  } else if (event.altKey) {
+    const isFromFocusOrPop = isFSplit();
+    if (isFromFocusOrPop) toggleSearchParam(ResourceAccessMode.FSPLIT, id);
+    else toggleSearchParam(ResourceAccessMode.SPLIT, id);
+  } else if (event.metaKey) {
+    // TODO - open in new tab
+  } else {
+    toggleSearchParam(defaultTo, id);
+  }
+}
+
+export function isFSplit() {
+  return (
+    new URLSearchParams(window.location.search).get(ResourceAccessMode.FOCUS) ||
+    new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
+  );
+}
+
+export function closeResource(isCloseAllModal: boolean = false) {
+  if (isCloseAllModal) {
+    toggleSearchParam(ResourceAccessMode.FSPLIT);
+    debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
+    return;
+  }
+  toggleSearchParam(ResourceAccessMode.SPLIT);
+  toggleSearchParam(ResourceAccessMode.FOCUS);
+  toggleSearchParam(ResourceAccessMode.POP);
+  toggleSearchParam(ResourceAccessMode.FSPLIT);
+}

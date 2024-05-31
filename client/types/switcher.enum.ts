@@ -8,9 +8,13 @@ export enum SwitcherStyle {
 export enum PanelSwitcherStyle {
   DEFAULT,
   BAR,
+  /**
+   * @deprecated - use BAR with barStyle as DOT instead
+   */
   DOT,
   BAR_WITH_BG,
-  TRAIN
+  TRAIN,
+  SNAKE
 }
 
 export enum SelectionItemActiveStyle {
@@ -44,4 +48,16 @@ export type SwitchItem = {
   label: string;
   icon?: string;
   isDisabled?: boolean;
+};
+
+export enum BarStyle {
+  DOT = "DOT",
+  UNDER = "UNDER",
+  EXACT = "EXACT",
+  OVERFLOW = "OVERFLOW"
+}
+
+export type PanelSwitcherEditModeOptions = {
+  removeTooltip?: string;
+  addText?: string;
 };

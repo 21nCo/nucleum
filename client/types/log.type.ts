@@ -1,6 +1,6 @@
-import type { CacheableStore } from "./data.type";
+import type { ICacheableStore } from "./data.type";
 
-export interface LogStore extends CacheableStore {
+export interface LogStore extends ICacheableStore {
   items: DebugLog[];
 }
 

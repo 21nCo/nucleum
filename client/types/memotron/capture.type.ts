@@ -1,5 +1,5 @@
 import type { Avatar } from "$lib/client/types/avatar.type";
-import type { CacheableStore } from "$lib/client/types/data.type";
+import type { ICacheableStore } from "$lib/client/types/data.type";
 import type { Markdown } from "$lib/client/types/memotron/md.type";
 import type { LinkThumbnail, MediaBody, NodeProperty } from "./node.type";
 
@@ -11,7 +11,7 @@ export enum CaptureType {
   UPLOAD = "UPLOAD"
 }
 
-export type CaptureStore = CacheableStore & {
+export type CaptureStore = ICacheableStore & {
   label: string | null;
   /**
    * @deprecated

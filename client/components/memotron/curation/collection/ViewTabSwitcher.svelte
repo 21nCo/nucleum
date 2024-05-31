@@ -4,24 +4,32 @@
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import type { SelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { resolvePropertyOptions } from "../curation.utils";
   export let view: ICollectionView;
   export let properties: IProperty[] | null = null;
   export let value: string;
-  let tabs: SelectItem[] = resolveTabs();
-  function resolveTabs() {
-    if (!view.tabBy) return [];
+  let tabs: SelectItem[] = [];
+  $: tabs = resolveTabs(view.tabBy);
+  $: label = resolveLabel(view.tabBy);
+  function resolveTabs(tabBy: string) {
     if (view.tabs) return view.tabs;
-    if (!properties) return [];
-    const property = properties.find((p) => p.id === view.tabBy);
-    if (!property?.config?.options) return [];
-    return property.config.options.map((option) => ({
-      value: option.id,
-      label: option.label
-    }));
+    return resolvePropertyOptions(tabBy, properties);
   }
-  $: console.log("tabs", tabs);
+  function resolveLabel(tabBy: string) {
+    if (!view.tabBy || !properties) return "";
+    const property = properties.find((p) => p.id === tabBy);
+    return property?.label ?? "";
+  }
+  $: console.log("tabs", { tabs, properties, view });
 </script>
 
-{#if tabs && tabs.length > 0}
-  <OptionSelector options={tabs} size={Size.sm} bind:selected={value} />
+{#if label && tabs}
+  <div class="flex gap-2 items-center">
+    <span class="text-fgs2 text-b2 min-w-fit whitespace-nowrap"
+      >{label + ":"}</span
+    >
+    {#if tabs && tabs.length > 0}
+      <OptionSelector options={tabs} size={Size.sm} bind:selected={value} />
+    {/if}
+  </div>
 {/if}

@@ -12,8 +12,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
-  import { onMount } from "svelte";
-  import type { ModalEvent } from "$lib/client/types/popup.type";
+  import { onDestroy, onMount } from "svelte";
+  import type { ModalEvent, ModalParams } from "$lib/client/types/popup.type";
   import { LaunchContext } from "$lib/client/types/appStore.type";
   import { AppEvent } from "$lib/client/types/event.enum";
   import type { AppEventType } from "$lib/client/types/event.type";
@@ -30,10 +30,16 @@
   import { AlertType } from "$lib/client/types/notification.type";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import { page } from "$app/stores";
+  import ResourceResolver from "../paint/ResourceResolver.svelte";
+  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import SplitView from "../SplitView.svelte";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
+  let zen: string | undefined;
+  let pop: { path: string; resource: string; params: ModalParams } | undefined;
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let mutationQueue = liveQuery(() =>
@@ -45,6 +51,16 @@
         isShowAppearancePreview = x.value ?? false;
       } else if (x.event === AppEvent.USER_LOGIN) {
         modals = [];
+      }
+    });
+    const pageSub = page.subscribe((value) => {
+      zen = value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
+      const popParam =
+        value.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
+      if (popParam) {
+        resolvePop(popParam);
+      } else {
+        pop = undefined;
       }
     });
     const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
@@ -75,8 +91,24 @@
     () => {
       appEventSub();
       modalEventSub();
+      pageSub();
     };
   });
+  function resolvePop(resourceId: string) {
+    if (resourceId && resourceId.split(":").length > 1) {
+      const slug = resourceId.split(":")[0];
+      const action = appStore.resolveComponent(slug);
+      if (!action) return;
+      pop = {
+        path: slug,
+        resource: resourceId,
+        params: {
+          ...action.modalParams
+        }
+      };
+    }
+  }
+  $: console.log({ zen });
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -189,4 +221,36 @@
       </div>
     </ModalLayout>
   </Modal>
+{/if}
+
+{#if zen}
+  <Modal
+    show={true}
+    id={zen}
+    isDismissable={true}
+    isShowOverlay={true}
+    isUseDialog={false}
+    size={Size.full}
+  >
+    <ModalLayout path={zen} params={{ layout: { size: Size.full } }}>
+      <SplitView id={zen} componentParams={{ isModal: true }} />
+    </ModalLayout>
+  </Modal>
+{/if}
+{#if pop}
+  {#key pop.resource}
+    <Modal
+      show={true}
+      id={pop.path}
+      isDismissable={pop.params?.isDismissable ?? true}
+      isShowOverlay={pop.params?.isShowOverlay ?? true}
+      isUseDialog={pop.params?.layout?.size != Size.full &&
+        $context.embed != Embed.HANDSET}
+      size={pop.params?.layout?.size ?? Size.md}
+    >
+      <ModalLayout path={pop.path} params={{ ...pop?.params }}>
+        <SplitView id={pop.resource} componentParams={{ isModal: true }} />
+      </ModalLayout>
+    </Modal>
+  {/key}
 {/if}

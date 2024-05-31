@@ -3,7 +3,7 @@ import { Item, type ItemType } from "../types/item.enum";
 import {
   CacheStrategy,
   StoreDataType,
-  type CacheableStore,
+  type ICacheableStore,
   type CacheableStoreContract,
   type DataManager,
   type ResourceDependency,
@@ -118,7 +118,7 @@ function init() {
         refreshStores(stores, false, true);
       }
     },
-    cache: (store: CacheableStore) => {
+    cache: (store: ICacheableStore) => {
       let strategy = store.cacheStrategy;
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
@@ -187,7 +187,7 @@ export const dataManager = init();
 async function refreshOnAppear() {
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
-    (x) => (get(x) as CacheableStore).priorityRefreshOnAppAppear
+    (x) => (get(x) as ICacheableStore).priorityRefreshOnAppAppear
   );
   if (!isValidArrayWithData(storesThatNeedRefresh)) return;
   return refreshStores(storesThatNeedRefresh);
@@ -537,7 +537,7 @@ async function setRefreshingState(
 async function resolveStoresRefreshQuery(stores: CacheableStoreContract[]) {
   const queries = await Promise.all(
     stores.map(async (x) => {
-      const store = get(x) as CacheableStore;
+      const store = get(x) as ICacheableStore;
       if (store?.dataType === StoreDataType.IFR)
         return resolveRefreshQueryForIFR(store);
       else if (store?.refreshQuery) return store.refreshQuery;
@@ -553,7 +553,7 @@ async function resolveStoresRefreshQuery(stores: CacheableStoreContract[]) {
  * @param storeData
  * @returns
  */
-async function resolveRefreshQueryForIFR(storeData: CacheableStore) {
+async function resolveRefreshQueryForIFR(storeData: ICacheableStore) {
   let customQuery: string | undefined = storeData.refreshQuery;
   let query: string | undefined = undefined;
   let dm = get(dataManager);

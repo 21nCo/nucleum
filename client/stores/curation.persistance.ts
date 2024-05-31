@@ -1,6 +1,9 @@
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import type { ICurationCreationForm } from "../types/memotron/curation.type";
+import type {
+  ICollectionView,
+  ICurationCreationForm
+} from "../types/memotron/curation.type";
 
 const surrealDb = new SurrealDatabase();
 export class CurationPersistance {
@@ -20,9 +23,29 @@ export class CurationPersistance {
     return interceptSurrealResponse(response, "create curation");
   }
 
-  async fetch(id: string) {
-    const query = `fn::memotron::curation::fetch($id)`;
-    const response = await surrealDb.query(query, { id });
+  async fetch(id: string, viewId?: string) {
+    const query = `fn::memotron::curation::fetch($id, $viewId)`;
+    const response = await surrealDb.executeReadFn(
+      query,
+      viewId ? { id, viewId } : { id }
+    );
     return interceptSurrealResponse(response, "fetch curation");
+  }
+
+  async createView(view: ICollectionView, collectionId: string) {
+    const query = `fn::memotron::collection::createView($view, $collectionId)`;
+    const response = await surrealDb.query(query, {
+      view,
+      collectionId
+    });
+    return interceptSurrealResponse(response, "create view");
+  }
+  async fetchViewData(viewId: string, collectionId: string) {
+    const query = `fn::memotron::collection::fetchData($viewId, $collectionId)`;
+    const response = await surrealDb.query(query, {
+      viewId,
+      collectionId
+    });
+    return interceptSurrealResponse(response, "fetch view data");
   }
 }

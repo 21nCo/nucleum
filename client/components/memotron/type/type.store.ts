@@ -7,14 +7,14 @@ import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/stores/data.store";
 import {
   StoreDataType,
-  type CacheableStore,
+  type ICacheableStore,
   PersistanceActionType
 } from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get, writable } from "svelte/store";
-type TypeStore = CacheableStore;
+type TypeStore = ICacheableStore;
 
 const seedTypeStore: TypeStore = {
   id: Item.type,

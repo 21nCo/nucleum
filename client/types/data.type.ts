@@ -15,7 +15,7 @@ export interface CacheableStoreContract extends Writable<any> {
 /**
  * The store which can be cached and retrieved
  */
-export interface CacheableStore {
+export interface ICacheableStore {
   /**
    * The unique identifier of the store which is used to cache and retrieve the store. see dataManager
    */
@@ -109,7 +109,7 @@ export interface DataManager {
 export interface CacheSource {
   dexie: LocalDexie;
   initialize: () => void;
-  cacheStore: (store: CacheableStore, strategy: CacheStrategy) => void;
+  cacheStore: (store: ICacheableStore, strategy: CacheStrategy) => void;
   retrieveCache: (storeId: string) => Promise<any>;
   fetchClientMutationMap: () => Promise<any>;
   updateClientMutationMap: (clientMutationMap: Record<string, number>) => void;

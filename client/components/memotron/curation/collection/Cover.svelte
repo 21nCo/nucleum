@@ -10,6 +10,7 @@
   let file: File;
   let fileInput: HTMLInputElement;
   let isUploadInProgress = false;
+  export let isRoundedExperimental = false;
   function triggerFileSelect() {
     fileInput.click();
   }
@@ -46,18 +47,21 @@
 
 {#if (isValidString(src) && !$isInEditMode) || $isInEditMode}
   <button
-    class={cn(
-      "relative h-72 w-full flex justify-center items-center px-4 pt-4",
-      {
-        "bg-bgs2 cursor-pointer": !src,
-        "cursor-default": src
-      }
-    )}
+    class={cn("relative h-72 w-full flex justify-center items-center", {
+      "bg-bgs2 cursor-pointer": !src,
+      "cursor-default": src,
+      "px-4 pt-4": isRoundedExperimental
+    })}
     on:click={onCoverClick}
   >
     {#if src}
       <!-- svelte-ignore a11y-missing-attribute -->
-      <img {src} class="h-full w-full object-cover rounded-xl" />
+      <img
+        {src}
+        class={cn("h-full w-full object-cover", {
+          "rounded-xl": isRoundedExperimental
+        })}
+      />
       <!-- TODO - if src and isInEditMode - drag to reposition -->
     {:else if $isInEditMode && !isUploadInProgress}
       + Add cover photo

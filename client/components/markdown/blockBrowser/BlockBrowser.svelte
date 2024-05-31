@@ -18,14 +18,8 @@
   let focusedItem: any;
   let config = [
     {
-      section: "text",
+      section: "headings",
       children: [
-        {
-          label: "Paragraph",
-          description: "Paragraph block",
-          type: NodeType.SIMPLE_TEXT,
-          icon: "text"
-        },
         {
           label: "Heading 1",
           description: "Heading 1 block",
@@ -55,6 +49,17 @@
           description: "Heading 5 block",
           type: NodeType.HEADING5,
           icon: "heading5"
+        }
+      ]
+    },
+    {
+      section: "text",
+      children: [
+        {
+          label: "Paragraph",
+          description: "Paragraph block",
+          type: NodeType.SIMPLE_TEXT,
+          icon: "text"
         },
         {
           label: "Quote",
@@ -112,23 +117,6 @@
       ]
     },
     {
-      section: "dividers",
-      children: [
-        {
-          label: "Divider",
-          description: "Divider block",
-          type: NodeType.DIVIDER,
-          icon: "divider"
-        },
-        {
-          label: "Double Divider",
-          description: "Divider block",
-          type: NodeType.DOUBLE_DIVIDER,
-          icon: "divider"
-        }
-      ]
-    },
-    {
       section: "lists",
       children: [
         {
@@ -151,13 +139,59 @@
           type: NodeType.LIST,
           sub: ListType.CHECKLIST,
           icon: "checklist"
+        }
+      ]
+    },
+    {
+      section: "structure",
+      children: [
+        {
+          label: "Divider",
+          description: "Divider block",
+          type: NodeType.DIVIDER,
+          icon: "divider"
         },
         {
-          label: "Toggle list",
-          description: "Toggle list block",
-          type: NodeType.LIST,
-          sub: ListType.TOGGLELIST,
-          icon: "task"
+          label: "Double Divider",
+          description: "Divider block",
+          type: NodeType.DOUBLE_DIVIDER,
+          icon: "divider"
+        },
+        {
+          label: "Table",
+          description: "Table block",
+          type: NodeType.TABLE,
+          icon: "table"
+        },
+        {
+          label: "Grid",
+          description: "Grid block",
+          type: NodeType.GRID,
+          icon: "squares-2x2"
+        },
+        {
+          label: "Accordion",
+          description: "Accordion block",
+          type: NodeType.ACCORDION,
+          icon: "queue-list"
+        },
+        {
+          label: "Tabs",
+          description: "Tabs block",
+          type: NodeType.TABS,
+          icon: "tabs"
+        },
+        {
+          label: "Media stack",
+          description: "Media stack block",
+          type: NodeType.MEDIA_STACK,
+          icon: "rectangle-stack"
+        },
+        {
+          label: "Media grid",
+          description: "Media grid block",
+          type: NodeType.MEDIA_GRID,
+          icon: "rectangle-group"
         }
       ]
     },
@@ -193,47 +227,6 @@
           description: "File block",
           type: NodeType.FILE,
           icon: "attachment"
-        },
-        {
-          label: "Media stack",
-          description: "Media stack block",
-          type: NodeType.MEDIA_STACK,
-          icon: "rectangle-stack"
-        },
-        {
-          label: "Media grid",
-          description: "Media grid block",
-          type: NodeType.MEDIA_GRID,
-          icon: "rectangle-group"
-        }
-      ]
-    },
-    {
-      section: "layout",
-      children: [
-        {
-          label: "Columns",
-          description: "Columns block",
-          type: NodeType.COLUMNS,
-          icon: "columns"
-        },
-        {
-          label: "Grid",
-          description: "Grid block",
-          type: NodeType.GRID,
-          icon: "squares-2x2"
-        },
-        {
-          label: "Accordion",
-          description: "Accordion block",
-          type: NodeType.ACCORDION,
-          icon: "queue-list"
-        },
-        {
-          label: "Tabs",
-          description: "Tabs block",
-          type: NodeType.TABS,
-          icon: "tabs"
         }
       ]
     },
@@ -241,22 +234,16 @@
       section: "advanced",
       children: [
         {
-          label: "Table",
-          description: "Table block",
-          type: NodeType.TABLE,
-          icon: "table"
+          label: "Table of contents",
+          description: "Embed table of contents block",
+          type: NodeType.TOC,
+          icon: "list"
         },
         {
           label: "Embed",
           description: "Embed block",
           type: NodeType.EMBED,
           icon: "code"
-        },
-        {
-          label: "Table of contents",
-          description: "Embed table of contents block",
-          type: NodeType.TOC,
-          icon: "list"
         },
         {
           label: "Embed collection",

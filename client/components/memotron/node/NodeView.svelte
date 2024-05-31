@@ -1,7 +1,4 @@
 <script lang="ts">
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import SplitView from "$lib/client/layout/SplitView.svelte";
-  import view from "$lib/client/stores/view.store";
   import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import NodeTopBar from "./topBar/NodeTopBar.svelte";
@@ -11,19 +8,19 @@
     type ActiveNodeStoreType
   } from "./node.store";
   import Curation from "../curation/Curation.svelte";
-  import { CurationType } from "$lib/client/types/memotron/curation.type";
   import { Item } from "$lib/client/types/item.enum";
   import { prefixTable } from "$lib/client/utils/text.utils";
-  import { dataManager } from "$lib/client/stores/data.store";
-  import type { IType } from "$lib/client/types/memotron/type.type";
   import NodeRightPanel from "./rightPanel/NodeRightPanel.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { generateUID, isFSplit } from "$lib/client/utils/utils";
+  import { ResourceAccessMode } from "$lib/client/types/action.type";
   export let id: string;
   export let isFromSplitView: boolean = false;
   export let nodePageVariant: "v1" | "v2" = "v2";
   let mdId = generateUID();
-  $: isRenderSplitView =
-    !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
+  let isRenderSplitView = false;
+  $: console.log({ id });
+  // $: isRenderSplitView =
+  //   !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
   let isShowBacklinks = false;
   let node: ActiveNodeStoreType;
   $: if (id) node = resolveActiveNodeStore(id);
@@ -32,10 +29,13 @@
     fetchNode();
   }
   $: if (isRenderSplitView) {
+    toggleSearchParam(
+      isFSplit() ? ResourceAccessMode.FSPLIT : ResourceAccessMode.SPLIT,
+      prefixTable(id, Item.nodelinks)
+    );
     setTimeout(() => {
       toggleSearchParam("blr", true);
     }, 100);
-    // searchParam("blr", true);
   }
   async function fetchNode() {
     console.log("fetching node", id, new Date());
@@ -48,9 +48,7 @@
 </script>
 
 <div class="w-full h-full flex flex-col bg-bgs1">
-  {#if isRenderSplitView && id}
-    <SplitView {id} split={prefixTable(id, Item.nodelinks)} />
-  {:else if $node && !isLoading}
+  {#if $node && !isLoading}
     {#if isShowBacklinks}
       <Curation
         id={prefixTable(id, Item.nodelinks)}

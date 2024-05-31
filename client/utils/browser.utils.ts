@@ -141,6 +141,7 @@ export function toggleSearchParam(
     return;
   }
   const url = new URL(window.location.href);
+  if (!url.searchParams.get(param)) return;
   url.searchParams.delete(param);
   appStore.gotoPath(url.href);
 }

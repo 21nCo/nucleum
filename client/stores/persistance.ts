@@ -236,7 +236,7 @@ export class Persistance {
    * @param itemType ItemType
    * @returns true if deleted successfully else false
    */
-  delete(itemId: string, itemType: ItemType) {
+  delete(itemId: string, itemType: ItemType, userId?: string) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
         let items = retrieveLocally(itemType);
@@ -245,7 +245,7 @@ export class Persistance {
         break;
       }
       case Cloud.surreal:
-        return this.surrealDb.delete(itemId);
+        return this.surrealDb.delete(itemId, userId);
     }
   }
   retrieve(itemId: string, itemType: ItemType | undefined = undefined) {

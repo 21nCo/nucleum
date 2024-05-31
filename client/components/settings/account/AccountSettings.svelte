@@ -19,7 +19,7 @@
 </script>
 
 <div class="flex flex-col w-full gap-12 items-start justify-center">
-  <div class="flex flex-col items-start gap-4 w-80 md:w-96 px-4">
+  <div class="flex flex-col items-start gap-4 w-80 tp:w-96 px-4">
     <div class="flex flex-col items-start">
       <div>Name</div>
       <div class="text-b2 text-fgs3">{nickName}</div>

@@ -2,11 +2,14 @@
   import { page } from "$app/stores";
   import Curation from "$lib/client/components/memotron/curation/Curation.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  $: id = $page.url.searchParams.get("main");
+  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
 </script>
 
 {#if id}
-  <Curation {id} />
+  {#key id}
+    <Curation {id} />
+  {/key}
 {:else}
   <EmptyStatusView
     mainText="Nothing selected."

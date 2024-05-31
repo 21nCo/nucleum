@@ -18,18 +18,29 @@
     combinationLayoutOptions,
     curations
   } from "./curation.store";
-  import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import TypeSelector from "../capture/TypeSelector.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
   let title: string;
   let errMsg: string;
   let isCreationInProgress: boolean = false;
   let isStarred: boolean = false;
   let selectedType: CurationType = CurationType.COLLECTION;
   let selectedView: CollectionLayout | CombinationViewType;
+  let associatedType: string = "";
+  let isSearchQuery: boolean = false;
   const formLabelConfig = {
     orientation: Orientation.Vertical
   };
+  function onTypeSelect(e: CustomEvent) {
+    console.log("type selected", e.detail, associatedType);
+    if (associatedType === "add") {
+      appStore.runAction(MemotronEvent.CREATE_TYPE);
+    }
+  }
 </script>
 
 <div class="flex flex-col w-full h-full items-start gap-4 p-4">
@@ -69,21 +80,18 @@
       size={Size.lg}
     />
     {#if selectedType === CurationType.COLLECTION}
-      <OptionSelector
-        style={OptionSelectorStyle.TRAIN}
-        options={[
-          { label: "Simple linking", value: "linking", icon: "at-symbol" },
-          { label: "Advanced filter query", value: "filter", icon: "search" }
-        ]}
-        labelProps={{
+      <SwitchInput
+        label={{
           ...formLabelConfig,
-          label: "Items condition",
+          label: "Advanced search query",
+          orientation: Orientation.Horizontal,
           tooltip: {
-            body: "Choose advanced filter query to filter items based on specified conditions. It works as a live query.",
+            body: "Choose advanced search query to create a collection using a search criteria. Items will be automatically added to the collection if they match the criteria.",
             actionText: "Learn more about advanced filter query",
             action: "/kb/advanced-filter-query"
           }
         }}
+        bind:checked={isSearchQuery}
       />
       <OptionSelector
         options={collectionLayoutOptions}
@@ -99,7 +107,9 @@
         }}
         bind:selected={selectedView}
       />
-      <!-- Type selector if simple linking -->
+      {#if !isSearchQuery}
+        <TypeSelector on:select={onTypeSelect} bind:selected={associatedType} />
+      {/if}
     {:else}
       <!-- COMBINATION OPTIONS  -->
       <OptionSelector
@@ -133,7 +143,9 @@
             label: title,
             type: selectedType,
             defaultLayout: selectedView,
-            isStarred
+            isStarred,
+            associatedType,
+            isSearchQuery
           });
           isCreationInProgress = false;
           if (!errMsg) modalEvent.hide();

@@ -23,7 +23,7 @@
 </script>
 
 {#if md}
-  <article class="p-6 md:p-10 xl:p-16">
+  <article class="p-6 tp:p-10 dp:p-16">
     <MarkdownView {md} params={{ isReadOnly: true }} />
   </article>
 {:else}

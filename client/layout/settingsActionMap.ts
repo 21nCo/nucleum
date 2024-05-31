@@ -99,7 +99,7 @@ export const settingsAsModal: Action[] = [
     modalParams: {
       layout: {
         size: Size.xl,
-        orientation: Orientation.Horizontal,
+        orientation: Orientation.Vertical,
         ignoreSafeArea: true
       }
     }

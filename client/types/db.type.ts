@@ -9,7 +9,7 @@ export interface ISurrealDatabase {
   merge(recordId: string, data: any): Promise<any>;
   update(recordId: string, data: any): Promise<any>;
   select(recordId: string): Promise<any>;
-  delete(recordId: string): Promise<any>;
+  delete(recordId: string, userId?: string): Promise<any>;
   executeReadFn(
     query: string,
     params: { [key: string]: QueryParams }

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import {
     CollectionLayout,
     type ICollectionView
@@ -7,13 +9,18 @@
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import BoardView from "./boardView/BoardView.svelte";
   export let view: ICollectionView;
+  export let properties: IProperty[] | null = null;
+
+  $: console.log({ view });
 </script>
 
 {#if isValidArrayWithData(view.data)}
   {#if view.layout === CollectionLayout.BOARD}
-    <BoardView {view} />
+    <BoardView {view} {properties} />
   {:else}
     <!-- TODO -->
-    <BoardView {view} />
+    <ComingSoonView subText="View not built yet. Stay tuned." />
   {/if}
+{:else}
+  <EmptyStatusView subText="No records match the criteria." />
 {/if}

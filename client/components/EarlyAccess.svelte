@@ -39,7 +39,7 @@
 
 <div class="relative flex flex-col w-full items-center">
   <div class="flex gap-4 flex-wrap justify-center items-center">
-    <div class="w-full md:w-96">
+    <div class="w-full tp:w-96">
       <TextInput
         size={Size.sm}
         placeholder="Your email address"

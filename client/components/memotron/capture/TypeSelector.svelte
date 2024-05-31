@@ -7,8 +7,12 @@
   import type { SelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { captureStore } from "./capture.store";
   import { appStore } from "$lib/client/stores/app.store";
+  import type { InputLabel } from "$lib/client/types/input.type";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  export let isCapturePage: boolean = false;
+  export let label: InputLabel = { label: "Select Type" };
+  export let selected: string;
   refreshTypes();
   const contentTypes: SelectItem[] = [
     // { label: CaptureType.ANY, icon: "cube" },
@@ -16,6 +20,10 @@
     { label: CaptureType.AUDIO, icon: "microphone", value: CaptureType.AUDIO },
     { label: CaptureType.CAMERA, icon: "camera", value: CaptureType.CAMERA },
     { label: CaptureType.UPLOAD, icon: "upload", value: CaptureType.UPLOAD }
+  ];
+  const collectionTypes: SelectItem[] = [
+    { label: "Add new", icon: "plus", value: "add" },
+    { label: "None", icon: "cube-transparent", value: "none" }
   ];
   let types: SelectItem[] = [];
 
@@ -36,17 +44,21 @@
 <div class="h-full w-full flex flex-col items-center gap-4">
   {#key types}
     <OptionSelector
-      label="Select a type"
-      bind:selected={$captureStore.captureType}
-      options={[...contentTypes, ...types]}
+      labelProps={{ ...label, orientation: Orientation.Vertical }}
+      bind:selected
+      options={isCapturePage
+        ? [...contentTypes, ...types]
+        : [...collectionTypes, ...types]}
       on:select
     />
   {/key}
-  <Button
-    label="edit types"
-    size={Size.xs}
-    on:click={() => {
-      appStore.runAction(MemotronEvent.DIRECTORY);
-    }}
-  />
+  {#if isCapturePage}
+    <Button
+      label="edit types"
+      size={Size.xs}
+      on:click={() => {
+        appStore.runAction(MemotronEvent.DIRECTORY);
+      }}
+    />
+  {/if}
 </div>

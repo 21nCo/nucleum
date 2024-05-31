@@ -11,9 +11,17 @@
 
 <div
   class={cn("relative flex", {
-    "flex-col gap-3":
+    "flex-col":
       props?.orientation === Orientation.Vertical ||
       (!props?.orientation && $view.isPortrait),
+    "gap-3":
+      (props?.orientation === Orientation.Vertical ||
+        (!props?.orientation && $view.isPortrait)) &&
+      size === Size.md,
+    "gap-2":
+      (props?.orientation === Orientation.Vertical ||
+        (!props?.orientation && $view.isPortrait)) &&
+      size === Size.sm,
     "flex-row items-center gap-2":
       props?.orientation === Orientation.Horizontal ||
       (!props?.orientation && !$view.isPortrait),

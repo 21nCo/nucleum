@@ -4,7 +4,7 @@ import { dataManager } from "$lib/client/stores/data.store";
 import {
   PersistanceActionType,
   StoreDataType,
-  type CacheableStore
+  type ICacheableStore
 } from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
 import type {
@@ -30,7 +30,7 @@ const seedNodeStore: NodeStore = {
  */
 export const nodes = initNodeStore();
 
-type NodeStore = CacheableStore;
+type NodeStore = ICacheableStore;
 
 function initNodeStore() {
   const { subscribe, set, update } = writable<NodeStore>(seedNodeStore);
