@@ -48,6 +48,14 @@ function cssStyle(color: string, colorType: ColorType) {
   }
 }
 
+/**
+ * @deprecated use CustomColorPropagator.svelte or {@link generateCustomColorShade} instead
+ * @param appearance
+ * @param fallback
+ * @param hue
+ * @param shade
+ * @returns
+ */
 export function customColorShade(
   appearance: AppearanceStore,
   fallback: string,
@@ -59,6 +67,8 @@ export function customColorShade(
     alpha = appearance.colorScheme.isDark ? 0.35 : 0.15;
   } else if (shade === 2) {
     alpha = appearance.colorScheme.isDark ? 0.5 : 0.3;
+  } else if (shade === 0) {
+    alpha = 1;
   }
   let color: string;
   const currentColors = retrieveCurrentColors(appearance);
@@ -80,6 +90,59 @@ export function customColorShade(
   return color;
 }
 
+export function generateCustomColorShade(
+  appearance: AppearanceStore,
+  hue: number,
+  shade: number = 1
+) {
+  let color: string;
+  let saturation: number = 50;
+  let lightness: number = 50;
+  let values = resolveSaturationAndLightness(
+    appearance,
+    appConstants.colorSchemeSLConfig
+  );
+  if (values) {
+    saturation = values.saturation;
+    lightness = values.lightness;
+  }
+  if (shade === 1) {
+    lightness = appearance.colorScheme.isDark ? 10 : 98;
+  } else if (shade === 2) {
+    lightness = appearance.colorScheme.isDark ? 15 : 90;
+  } else if (shade === 3) {
+    lightness = appearance.colorScheme.isDark ? 20 : 85;
+  } else if (shade === 4) {
+    lightness = appearance.colorScheme.isDark ? 25 : 80;
+  }
+  color = `hsl(${hue} ${saturation}% ${lightness}% / 1)`;
+  return color;
+}
+
+/**
+ * Without using alpha - using lightness and saturation
+ * @param appearance
+ * @param fallback
+ * @param hue
+ * @param shade
+ * @returns
+ */
+export function generateCustomColorShades(
+  appearance: AppearanceStore,
+  hue: number
+) {
+  return [0, 1, 2, 3].map((shade) => {
+    return generateCustomColorShade(appearance, hue, shade);
+  });
+}
+
+/**
+ * @deprecated use CustomColorPropagator.svelte or {@link generateCustomColorShade} with shade as 0 instead
+ * @param appearance
+ * @param fallback
+ * @param hue
+ * @returns
+ */
 export function customColor(
   appearance: AppearanceStore,
   fallback: string,

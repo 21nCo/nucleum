@@ -7,6 +7,8 @@
   import BoardPane from "./BoardPane.svelte";
   export let view: ICollectionView;
   export let properties: IProperty[] | null = null;
+  export let isBoardOverflow = false;
+
   $: groups = resolveBoards(view.groupBy);
   function resolveBoards(id: string) {
     // if (view.groups) return view.groups;
@@ -23,9 +25,15 @@
 </script>
 
 {#if isValidArrayWithData(groups)}
-  <div class="w-full h-full flex overflow-auto gap-4">
+  <div class="w-full h-full flex overflow-x-auto overflow-y-hidden gap-4">
     {#each groups as group}
-      <BoardPane {view} data={filterGroupData(group.value)} />
+      <BoardPane
+        {view}
+        {group}
+        {isBoardOverflow}
+        {properties}
+        data={filterGroupData(group.value)}
+      />
     {/each}
   </div>
 {:else}

@@ -55,5 +55,11 @@
   {/if}
   <Button icon="ellipsis-vertical" tooltip="More actions" />
   <!--TODO Show close only if launched from modal -->
-  <Button icon="cross-circled" tooltip="Close" on:click={closeResource} />
+  <Button
+    icon="cross-circled"
+    tooltip="Close"
+    on:click={() => {
+      closeResource();
+    }}
+  />
 </div>

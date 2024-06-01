@@ -1,39 +1,75 @@
 <script lang="ts">
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import { Size } from "$lib/client/types/size.enum";
+  import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   import NodeItems from "../../../common/NodeItems.svelte";
   import { resolvePropertyOptions } from "../../curation.utils";
+  import SubGroup from "./SubGroup.svelte";
   export let view: ICollectionView;
+  export let group: any;
   export let data: any;
   export let properties: IProperty[] | null = null;
+  export let isBoardOverflow = false;
+  let isRenderColors = true;
   $: subGroups = resolveBoards(view.subGroupBy);
   function resolveBoards(id: string) {
-    // if (view.groups) return view.groups;
+    // if (view.subGroups) return view.subGroups;
     return resolvePropertyOptions(id, properties);
   }
-  function filterSubGroupData(subGroup: string) {
-    return view.data?.filter((node) => {
+  function filterSubGroupData(val: string) {
+    return data?.filter((node) => {
       return (
-        node.properties?.find((p) => p.id === view.subGroupBy)?.value ===
-        subGroup
+        node.properties?.find((p) => p.id === view.subGroupBy)?.value === val
       );
     });
   }
-  $: console.log({ groups: subGroups });
+  $: console.log({ subGroups, subGroupBy: view.subGroupBy, properties });
 </script>
 
-<div
-  class="border border-brs3 rounded-md h-full w-[28rem] min-w-[20rem] overflow-auto p-2"
->
-  {#if isValidArrayWithData(subGroups)}
-    <div class="w-full flex flex-col gap-4">
-      <NodeItems
-        nodes={filterSubGroupData(data)}
-        arrangement={view.arrangement}
-      />
+<CustomColorPropagator color={group.color} isPreventDefault={!isRenderColors}>
+  <div
+    class={cn(
+      "board relative h-full min-w-[24rem] dp:w-[28rem] 2k:w-[30rem] flex flex-col gap-2 border border-brs3 px-4 mb-2 rounded-md",
+      {
+        "overflow-y-auto": isBoardOverflow
+      }
+    )}
+    style="height: calc(100vh - 95px);"
+  >
+    <div
+      class="board-title sticky top-0 flex items-center w-full justify-between py-4 bg-bgs1"
+    >
+      <Text content={group.label} style={TextStyle.PANEL_HEADING_SMALL} />
+      <Button icon="ellipsis-vertical" />
     </div>
-  {:else}
-    <NodeItems nodes={data} arrangement={view.arrangement} />
-  {/if}
-</div>
+    <div class="grow w-full flex flex-col gap-2">
+      {#if isValidArrayWithData(subGroups)}
+        {#each subGroups as subGroup}
+          <SubGroup
+            {subGroup}
+            data={filterSubGroupData(subGroup.value)}
+            arrangement={view.arrangement}
+          />
+        {/each}
+      {:else}
+        <NodeItems nodes={data} arrangement={view.arrangement} />
+      {/if}
+    </div>
+  </div>
+</CustomColorPropagator>
+
+<style>
+  .board,
+  .board-title {
+    background-color: var(--customcolorshadeone, rgba(var(--colors-bgs1)));
+  }
+  .board {
+    border-color: var(--customcolorshadethree, rgba(var(--colors-brs3)));
+  }
+</style>

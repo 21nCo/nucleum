@@ -22,7 +22,9 @@
       {:else}
         <LocalLeftNav />
         <div
-          class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'grow'}"
+          class="flex flex-col h-full {$view.isPortrait
+            ? 'w-full'
+            : 'flex-grow'}"
         >
           <AppSplitView>
             <slot name="main" slot="main">

@@ -10,13 +10,13 @@
   import BoardView from "./boardView/BoardView.svelte";
   export let view: ICollectionView;
   export let properties: IProperty[] | null = null;
-
+  export let isBoardOverflow = false;
   $: console.log({ view });
 </script>
 
 {#if isValidArrayWithData(view.data)}
   {#if view.layout === CollectionLayout.BOARD}
-    <BoardView {view} {properties} />
+    <BoardView {view} {properties} {isBoardOverflow} />
   {:else}
     <!-- TODO -->
     <ComingSoonView subText="View not built yet. Stay tuned." />

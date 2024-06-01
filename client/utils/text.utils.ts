@@ -100,7 +100,15 @@ export function isValidMarkdown(md: Markdown) {
  * @returns The string if valid, otherwise undefined
  */
 export function isValidString(str: string | undefined | null) {
-  const isValid = str && str != "" && str != "null" && str != "undefined";
+  const isValid =
+    str &&
+    str != "" &&
+    str != "null" &&
+    str != "undefined" &&
+    str != "NaN" &&
+    str != "false" &&
+    str != "0" &&
+    str != "none";
   if (isValid) return str;
   return undefined;
 }

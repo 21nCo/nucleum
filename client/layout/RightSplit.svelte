@@ -10,7 +10,7 @@
 
 <div
   transition:fly={{ x: 1000, opacity: 0, easing: cubicOut }}
-  class="flex h-full grow max-w-1/2 bg-bgs1"
+  class="flex h-full flex-grow max-w-1/2 bg-bgs1"
 >
   <Divider
     orientation={Orientation.Vertical}

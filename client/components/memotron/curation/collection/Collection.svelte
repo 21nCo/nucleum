@@ -33,6 +33,7 @@
   import type { SelectItem } from "$lib/client/types/select.type";
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { isValidString } from "$lib/client/utils/text.utils";
   export let id: string;
   let activeView: ICollectionView | null = null;
   let selectedViewId: string;
@@ -49,7 +50,7 @@
   let viewsForSwitcher: SelectItem[];
   let isRefreshing = true;
   let isNotInlineAccess: boolean = false;
-  // $: console.log({ activeView, views });
+  $: console.log({ activeView });
   function resolvePropertyList(type: any) {
     //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
     const noneOption = {
@@ -212,7 +213,7 @@
             />
           </span>
         </PanelSwitcher>
-        {#if activeView}
+        {#if activeView && ($isInEditMode || isValidString(activeView.tabBy))}
           <div class="px-4 pb-4 flex flex-col gap-6">
             {#if $isInEditMode}
               <ViewSettingsBar
@@ -237,6 +238,7 @@
         {:else if !$collection.isRefreshing && activeView}
           <View
             view={activeView}
+            isBoardOverflow={isStickied}
             properties={$collection?.associatedType?.properties}
           />
         {:else}

@@ -54,7 +54,7 @@
   </BackgroundElement>
 {:else if version == 2}
   <button
-    class="flex justify-between border border-brs3 p-4 rounded-md w-full hover:bg-bgs2"
+    class="nodethumbnail flex justify-between border border-brs3 p-4 rounded-md w-full"
     on:click
   >
     <span class="flex flex-col items-start gap-2 grow max-w-[70%] h-full">
@@ -80,3 +80,12 @@
     </span></button
   >
 {/if}
+
+<style>
+  .nodethumbnail {
+    border-color: var(--customcolorshadethree, rgba(var(--colors-brs3)));
+  }
+  .nodethumbnail:hover {
+    background-color: var(--customcolorshadetwo, rgba(var(--colors-bgs2), 1));
+  }
+</style>
