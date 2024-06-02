@@ -8,11 +8,11 @@
   import { easeBackOut, easeBounceIn, easeCircleIn } from "d3";
   import {
     OptionSelectorStyle,
-    type SelectItem
+    type ISelectItem
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import AvatarView from "../avatarPicker/AvatarView.svelte";
-  export let item: SelectItem;
+  export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
   export let style: OptionSelectorStyle = OptionSelectorStyle.TRAIN;

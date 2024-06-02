@@ -1,10 +1,10 @@
 <script lang="ts">
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import type { Markdown } from "$lib/client/types/memotron/md.type";
+  import type { IMarkdown } from "$lib/client/types/memotron/md.type";
   import { onMount, tick } from "svelte";
   import MarkdownView from "./Markdown.svelte";
-  export let md: Markdown | undefined = undefined;
+  export let md: IMarkdown | undefined = undefined;
   export let src: string | undefined = undefined;
   window.scrollTo(0, 0);
   $: if (src) {

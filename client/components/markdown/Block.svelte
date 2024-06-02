@@ -1,23 +1,26 @@
 <script lang="ts">
-  import type { Block, MdStore } from "$lib/client/types/memotron/md.type";
+  import type {
+    Block,
+    IMarkdownStore
+  } from "$lib/client/types/memotron/md.type";
   import { onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
-  import { getMdStore } from "./markdown.store";
+  import type { MdStoreType } from "./markdown.store";
   import { NodeType } from "$lib/client/types/memotron/node.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   export let block: Block;
-  export let mdId: string;
+  export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let isReRendering: boolean = false;
   let isShowBgOnFocus: boolean = true;
-  const mdStore = getMdStore(mdId);
+  // const mdStore = getMdStore(mdId);
   onMount(() => {
     //TODO - check the need for rerendering
-    const mdStoreSub = mdStore.subscribe((md: MdStore) => {
+    const mdStoreSub = mdStore.subscribe((md: IMarkdownStore) => {
       // console.log("re-render block", md.reRenderBlock);
       if (md.reRenderBlock === block.id) {
         // console.log("re-rendering block", block.id);
@@ -44,7 +47,7 @@
 >
   {#if isHovering || isFocusing}
     <div class="absolute -left-8 flex h-full items-center justify-center">
-      <LeftControls {mdId} />
+      <LeftControls {mdStore} />
     </div>
     {#if block.contentType === NodeType.HEADING1}
       <div class="absolute right-10 flex h-full items-center justify-center">
@@ -66,9 +69,11 @@
   >
     <BlockContent
       {block}
-      {mdId}
+      {mdStore}
       {isHovering}
       bind:isFocusing
+      on:change
+      on:insert
       on:blur={() => {
         isHovering = false;
       }}

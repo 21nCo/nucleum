@@ -11,6 +11,7 @@ export type ButtonParams = {
   label?: string;
   icon?: string;
   callback?: () => Promise<any>;
+  action?: string;
   size?: Size;
   variant?: ButtonVariant;
 };

@@ -3,10 +3,7 @@
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import NodeTopBar from "./topBar/NodeTopBar.svelte";
   import NodeMainPanel from "./NodeMainPanel.svelte";
-  import {
-    resolveActiveNodeStore,
-    type ActiveNodeStoreType
-  } from "./node.store";
+  import { resolveActiveNodeStore, type IActiveNodeStore } from "./node.store";
   import Curation from "../curation/Curation.svelte";
   import { Item } from "$lib/client/types/item.enum";
   import { prefixTable } from "$lib/client/utils/text.utils";
@@ -22,7 +19,7 @@
   // $: isRenderSplitView =
   //   !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
   let isShowBacklinks = false;
-  let node: ActiveNodeStoreType;
+  let node: IActiveNodeStore;
   $: if (id) node = resolveActiveNodeStore(id);
   let isLoading = false;
   $: if (id && (isFromSplitView || !isRenderSplitView)) {
@@ -41,7 +38,7 @@
     console.log("fetching node", id, new Date());
     isLoading = true;
     isShowBacklinks = false;
-    await node.fetch(id);
+    await node.fetch();
     console.log("fetch node complete", id, new Date());
     isLoading = false;
   }

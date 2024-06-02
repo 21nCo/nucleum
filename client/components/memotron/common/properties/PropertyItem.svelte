@@ -11,13 +11,13 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
-  import type { NodeProperty } from "$lib/client/types/memotron/node.type";
+  import type { INodeProperty } from "$lib/client/types/memotron/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { enumToString } from "$lib/client/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
   import SingleSelectProperty from "./SingleSelectProperty.svelte";
-  export let property: NodeProperty;
+  export let property: INodeProperty;
   export let type: IType;
   export let nodeId: string | undefined = undefined;
   export let isPropertiesPaneContext: boolean = false;
@@ -33,7 +33,7 @@
     label: config.label ? config.label : enumToString(config.type),
     orientation: Orientation.Vertical
   };
-  $: console.log({ property, details: config });
+  // $: console.log({ property, details: config });
 </script>
 
 <div
@@ -67,6 +67,7 @@
       {label}
       property={config}
       bind:value={property.value}
+      on:change
     />
   {:else if config.type === PropertyType.DATE && property.value && property.value instanceof Date}
     <DatePicker bind:date={property.value} {label} {style} />

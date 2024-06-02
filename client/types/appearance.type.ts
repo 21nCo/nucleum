@@ -84,3 +84,11 @@ export type AppearanceStore = ICacheableStore & {
   systemTheme: Theme;
   typeface: string;
 };
+
+export enum ColorAccent {
+  PRIMARY = "PRIMARY",
+  SECONDARY = "SECONDARY",
+  RED = "RED",
+  GREEN = "GREEN",
+  CUSTOM = "CUSTOM"
+}

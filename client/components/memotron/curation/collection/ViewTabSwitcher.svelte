@@ -2,13 +2,13 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
-  import type { SelectItem } from "$lib/client/types/select.type";
+  import type { ISelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { resolvePropertyOptions } from "../curation.utils";
   export let view: ICollectionView;
   export let properties: IProperty[] | null = null;
   export let value: string;
-  let tabs: SelectItem[] = [];
+  let tabs: ISelectItem[] = [];
   $: tabs = resolveTabs(view.tabBy);
   $: label = resolveLabel(view.tabBy);
   function resolveTabs(tabBy: string) {

@@ -4,9 +4,10 @@
     NodeType,
     TextNodeTypeList
   } from "$lib/client/types/memotron/node.type";
+  import type { MdStoreType } from "../markdown.store";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
-  export let mdId: string;
+  export let mdStore: MdStoreType;
   export let block: Block;
   export let parentHierarchy: string[] = [];
   export let isHovering: boolean = false;
@@ -27,19 +28,22 @@
       {block}
       {isHovering}
       {parentHierarchy}
-      {mdId}
+      {mdStore}
       bind:isFocusing
       on:blur
+      on:change
+      on:insert
     />
   {:else if TextNodeTypeList.includes(block.contentType) && "body" in block}
     <TextContent
       {block}
-      {mdId}
+      {mdStore}
       {context}
       {isHovering}
       bind:isFocusing
       on:insert
       on:blur
+      on:change
     />
   {/if}
 </div>

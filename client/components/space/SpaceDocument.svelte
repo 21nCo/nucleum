@@ -2,13 +2,13 @@
   import { generateUID } from "$lib/client/utils/utils";
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
-  import type { Node } from "$lib/client/types/memotron/node.type";
+  import type { INode } from "$lib/client/types/memotron/node.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { performApiCall } from "$lib/client/utils/network.utils";
   export let spaceId: string;
   export let documentId: string;
   export let mdId = generateUID();
-  let document: Node;
+  let document: INode;
   let isLoading: boolean = true;
   let isValidDocIdNotPresent: boolean = false;
   // console.log("SpaceDocument", spaceId, documentId);

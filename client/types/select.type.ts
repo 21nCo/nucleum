@@ -1,6 +1,6 @@
 import type { Avatar } from "./avatar.type";
 
-export type SelectItem = {
+export type ISelectItem = {
   value: string;
   label?: string;
   icon?: string | Avatar;
@@ -12,3 +12,7 @@ export enum OptionSelectorStyle {
   OUTLINE,
   CHECK_CIRCLE
 }
+
+export type IContextMenuItem = ISelectItem & {
+  callback: () => void;
+};

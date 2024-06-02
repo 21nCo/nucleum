@@ -621,6 +621,7 @@
     if (event.target.innerHTML === "<br>" || event.target.innerHTML === "") {
       event.target.innerHTML = "";
     }
+    dispatch("input", event);
   }
 </script>
 

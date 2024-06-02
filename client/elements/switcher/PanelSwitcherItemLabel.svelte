@@ -6,11 +6,11 @@
   import Icon from "../Icon.svelte";
   import Button from "../button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import type { SelectItem } from "$lib/client/types/select.type";
+  import type { ISelectItem } from "$lib/client/types/select.type";
   import Popover from "../popover/Popover.svelte";
   import TextInput from "../input/TextInput.svelte";
   const dispatch = createEventDispatcher();
-  export let item: SelectItem;
+  export let item: ISelectItem;
   export let isInEditMode: boolean = false;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =

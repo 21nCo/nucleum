@@ -4,7 +4,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { dataManager } from "$lib/client/stores/data.store";
-  import type { SelectItem } from "$lib/client/types/select.type";
+  import type { ISelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { appStore } from "$lib/client/stores/app.store";
@@ -14,18 +14,18 @@
   export let label: InputLabel = { label: "Select Type" };
   export let selected: string;
   refreshTypes();
-  const contentTypes: SelectItem[] = [
+  const contentTypes: ISelectItem[] = [
     // { label: CaptureType.ANY, icon: "cube" },
     { label: CaptureType.MARKDOWN, value: CaptureType.MARKDOWN },
     { label: CaptureType.AUDIO, icon: "microphone", value: CaptureType.AUDIO },
     { label: CaptureType.CAMERA, icon: "camera", value: CaptureType.CAMERA },
     { label: CaptureType.UPLOAD, icon: "upload", value: CaptureType.UPLOAD }
   ];
-  const collectionTypes: SelectItem[] = [
+  const collectionTypes: ISelectItem[] = [
     { label: "Add new", icon: "plus", value: "add" },
     { label: "None", icon: "cube-transparent", value: "none" }
   ];
-  let types: SelectItem[] = [];
+  let types: ISelectItem[] = [];
 
   function refreshTypes() {
     $dataManager.cacheSource.dexie.type

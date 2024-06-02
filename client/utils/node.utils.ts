@@ -1,9 +1,9 @@
-import type { Markdown } from "$lib/client/types/memotron/md.type";
+import type { IMarkdown } from "$lib/client/types/memotron/md.type";
 import { truncateString } from "$lib/client/utils/text.utils";
 import { NodeType } from "$lib/client/types/memotron/node.type";
 import type { ClipContent } from "$lib/client/types/clip.type";
 
-export function contentPreview(body: Markdown | ClipContent) {
+export function contentPreview(body: IMarkdown | ClipContent) {
   if (body && "blocks" in body) {
     const block = body.blocks[0];
     let strValue = "";

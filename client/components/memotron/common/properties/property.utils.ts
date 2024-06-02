@@ -2,7 +2,7 @@ import {
   PropertyType,
   type IProperty
 } from "$lib/client/types/memotron/type.type";
-import type { NodeProperty } from "$lib/client/types/memotron/node.type";
+import type { INodeProperty } from "$lib/client/types/memotron/node.type";
 
 export function resolvePropertyDefaultValue(property: IProperty) {
   let fallback;
@@ -31,7 +31,7 @@ export function resolvePropertyDefaultValue(property: IProperty) {
 
 export function mapPropertyValues(
   properties: IProperty[],
-  nodeProperties: NodeProperty[] | undefined
+  nodeProperties: INodeProperty[] | undefined
 ) {
   return properties.map((property) => {
     const nodeProperty = nodeProperties?.find((v) => v.id === property.id);

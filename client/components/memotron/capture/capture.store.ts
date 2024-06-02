@@ -11,7 +11,7 @@ import {
   type LinkThumbnail,
   type INodeCapture,
   LinkType,
-  type NodeProperty
+  type INodeProperty
 } from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,

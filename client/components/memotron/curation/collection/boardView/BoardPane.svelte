@@ -29,7 +29,6 @@
       );
     });
   }
-  $: console.log({ subGroups, subGroupBy: view.subGroupBy, properties });
 </script>
 
 <CustomColorPropagator color={group.color} isPreventDefault={!isRenderColors}>

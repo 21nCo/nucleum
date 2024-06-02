@@ -108,7 +108,7 @@
       };
     }
   }
-  $: console.log({ zen });
+  $: console.log({ zen, pop });
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -247,6 +247,7 @@
       isUseDialog={pop.params?.layout?.size != Size.full &&
         $context.embed != Embed.HANDSET}
       size={pop.params?.layout?.size ?? Size.md}
+      orientation={pop.params?.layout?.orientation}
     >
       <ModalLayout path={pop.path} params={{ ...pop?.params }}>
         <SplitView id={pop.resource} componentParams={{ isModal: true }} />

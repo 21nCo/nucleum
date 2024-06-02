@@ -3,19 +3,17 @@ import type {
   NodeContent,
   ListChild,
   ListContent,
-  Node,
-  TextContent
+  TextContent,
+  NodeType,
+  ListType
 } from "./node.type";
 
-export type MdStore = Markdown & {
-  node?: Node;
+export type IMarkdownStore = IMarkdown & {
   blockToFocus?: string;
   reRenderBlock?: string;
-  params?: MdParams;
+  params?: IMarkdownParams;
 };
-export type Markdown = {
-  blocks: Block[];
-};
+export type IMarkdown = { blocks: Block[] };
 export type DbBlock = DbRecordBase & Block;
 
 export type Block<T = NodeContent> = T & {
@@ -34,7 +32,7 @@ export enum InlineType {
   SUPERSCRIPT = "SUPERSCRIPT"
 }
 
-export type MdParams = {
+export type IMarkdownParams = {
   isNodular?: boolean;
   placeholder?: string;
   actions?: string[];
@@ -74,3 +72,15 @@ export enum SpanType {
 //   id: string;
 //   blocks: Block[];
 // };
+
+export type IListOperation = {
+  operation: "tab" | "shifttab";
+  id: string;
+  parentHierarchy: string[];
+};
+
+export type IBlockOperationContext = {
+  id: string;
+  blockType?: NodeType;
+  listType?: ListType;
+};

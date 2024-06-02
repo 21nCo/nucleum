@@ -1,13 +1,14 @@
 import type { IMemotronItemBase } from "$lib/client/types/memotron/common.type";
-import type { PropertyValue, IType } from "./type.type";
+import type { PropertyValue as IPropertyValue, IType } from "./type.type";
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { Avatar } from "../avatar.type";
-import type { Markdown } from "./md.type";
+import type { IMarkdown } from "./md.type";
+import type { ICacheableStore } from "../data.type";
 
-export type Node = INodeBase &
+export type INode = INodeBase &
   NodeContent & {
     metadata: NodeMetadata;
-    children?: Node[];
+    children?: INode[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
   };
@@ -19,7 +20,7 @@ export type INodeCapture = INodeBase &
     links?: Link[];
   };
 
-export type NodeDbType = Node & DbRecordBase;
+export type NodeDbType = INode & DbRecordBase;
 
 export type INodeThumbnail = INodeBase &
   NodeContent & {
@@ -31,14 +32,14 @@ export type INodeBase = Omit<IMemotronItemBase, "label"> & {
   label?: string;
   generatedLabel?: string;
   avatar?: Avatar;
-  properties?: NodeProperty[];
+  properties?: INodeProperty[];
   /**
    * Type of the node - type:sometype
    */
   type?: IType;
 };
 
-export type ActiveNodeStore = Node & {
+export type IActiveNode = INode & {
   type: IType;
 };
 
@@ -85,7 +86,7 @@ export type MediaContent = {
 
 export type NonNodularMarkdownContent = {
   contentType: NodeType.NON_NODULAR_MARKDOWN;
-  body: Markdown;
+  body: IMarkdown;
 };
 
 export type ClipContent = {
@@ -233,7 +234,7 @@ export type MediaBody = {
 
 export enum RightPanelType {
   NONE = "NONE",
-  TOC = "TOC",
+  OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
   TRACES = "TRACES",
   METADATA = "METADATA",
@@ -272,9 +273,9 @@ export type NodeMetadata = NodeMetadataCapturedAtClient & {
 
 export type NodeLocalRecord = INodeBase;
 
-export type NodeProperty = {
+export type INodeProperty = {
   id: string;
-  value: PropertyValue | null;
+  value: IPropertyValue | null;
 };
 
 export enum NodeThumbnailVariant {
@@ -282,3 +283,5 @@ export enum NodeThumbnailVariant {
   GRID = "GRID",
   TIMELINE = "TIMELINE"
 }
+
+export interface INodeStore extends ICacheableStore {}

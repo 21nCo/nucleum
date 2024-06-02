@@ -135,7 +135,7 @@
     <InlineInfoBanner
       content="Dark and light themes will be switched automatically according to the system
 setting on your device."
-      action="faqs"
+      action={{ action: "faqs" }}
     />
   {/if}
 </div>

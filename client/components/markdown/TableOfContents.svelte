@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { Block, MdStore } from "$lib/client/types/memotron/md.type";
+  import type {
+    Block,
+    IMarkdownStore
+  } from "$lib/client/types/memotron/md.type";
   import { onMount } from "svelte";
   import { getMdStore } from "./markdown.store";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -13,7 +16,7 @@
   onMount(() => {
     let mdContainerElement = document.getElementById(mdcontainerID);
     mdContainerHeight = mdContainerElement?.offsetHeight;
-    const sub = mdStore.subscribe((x: MdStore) => {
+    const sub = mdStore.subscribe((x: IMarkdownStore) => {
       refresh(x.blocks);
     });
     return () => {

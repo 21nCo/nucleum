@@ -21,7 +21,6 @@
       );
     });
   }
-  $: console.log({ groups });
 </script>
 
 {#if isValidArrayWithData(groups)}

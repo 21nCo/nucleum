@@ -69,7 +69,11 @@ function init() {
     ) => {
       let localPersistancePromise;
       const dexie = get(dataManager).cacheSource.dexie;
-      data = { id: prefixTable(generateUID(), item), ...data };
+      data = {
+        id: prefixTable(generateUID(), item),
+        modifiedAt: new Date().toISOString(),
+        ...data
+      };
       // @ts-ignore
       const table: Table = dexie[item];
       if (action === PersistanceActionType.DELETE) {
@@ -77,8 +81,10 @@ function init() {
         localPersistancePromise = table.update(data.id, {
           trashInformation: {
             deletedAt: new Date().toISOString(),
-            deletedBy: get(account)?.userInfo?.id
-          }
+            deletedBy: data.modifiedBy
+          },
+          modifiedBy: data.modifiedBy,
+          modifiedAt: new Date().toISOString()
         });
       } else if (action === PersistanceActionType.CREATE) {
         localPersistancePromise = table.add(data);
@@ -264,9 +270,8 @@ async function performMutation(
     }
     mutationQuery = resolveMutationQuery(
       action,
-      id
-      //TODO - removed dependency on account store - todo userId
-      //get(account)?.userInfo?.id
+      id,
+      data.modifiedBy ? data.modifiedBy : ""
     );
   }
   let dbFullQuery: string = `${mutationQuery};`;

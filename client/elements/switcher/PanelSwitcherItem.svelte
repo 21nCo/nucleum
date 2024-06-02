@@ -11,10 +11,10 @@
   import appearance from "$lib/client/stores/appearance.store";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { SelectItem } from "$lib/client/types/select.type";
+  import type { ISelectItem } from "$lib/client/types/select.type";
   import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
   const dispatch = createEventDispatcher();
-  export let item: SelectItem;
+  export let item: ISelectItem;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;

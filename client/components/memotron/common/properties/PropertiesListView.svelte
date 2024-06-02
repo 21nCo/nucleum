@@ -3,8 +3,8 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import PropertyItem from "./PropertyItem.svelte";
-  import type { NodeProperty } from "$lib/client/types/memotron/node.type";
-  export let properties: NodeProperty[] = [];
+  import type { INodeProperty } from "$lib/client/types/memotron/node.type";
+  export let properties: INodeProperty[] = [];
   export let nodeId: string | undefined = undefined;
   export let type: any;
   export let isPropertiesPaneContext: boolean = false;
@@ -70,6 +70,7 @@
               {nodeId}
               {isPropertiesPaneContext}
               {isReadMode}
+              on:change
             />
           {/each}
         </div>

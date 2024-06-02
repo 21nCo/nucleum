@@ -11,6 +11,7 @@
   } from "$lib/client/types/memotron/node.type";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { properCase } from "$lib/client/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import DirectLinks from "../../common/foreLinks/DirectLinks.svelte";
   import { resolveActiveNodeStore } from "../node.store";
@@ -19,7 +20,7 @@
   export let id: string;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v1";
-  let selectedRightPanel = RightPanelType.TOC;
+  let selectedRightPanel = RightPanelType.OUTLINE;
   let isRightPanelCollapsed = true;
   const node = resolveActiveNodeStore(id);
   let verticalSwitcherItems = [
@@ -40,7 +41,7 @@
     $node?.contentType === NodeType.PDF
   ) {
     verticalSwitcherItems = [
-      { label: RightPanelType.TOC, icon: "bars-center-left" },
+      { label: RightPanelType.OUTLINE, icon: "bars-center-left" },
       { label: RightPanelType.TRACES, icon: "bookmark" },
       ...verticalSwitcherItems
     ];
@@ -57,24 +58,6 @@
       selectedRightPanel = e.detail;
     }
   }
-  function resolveHeading(selectedRightPanel: RightPanelType) {
-    switch (selectedRightPanel) {
-      case RightPanelType.TOC:
-        return "Table of Contents";
-      case RightPanelType.FORELINKS:
-        return "Forelinks";
-      case RightPanelType.PROPERTIES:
-        return "Properties";
-      case RightPanelType.METADATA:
-        return "Metadata";
-      case RightPanelType.TRACES:
-        return "Traces";
-      case RightPanelType.MENTIONS:
-        return "Mentions";
-      default:
-        return "";
-    }
-  }
 </script>
 
 <aside
@@ -88,10 +71,10 @@
   {#if !isRightPanelCollapsed}
     <div class="flex flex-col h-full flex-grow items-start gap-3">
       <Text
-        content={resolveHeading(selectedRightPanel)}
+        content={properCase(selectedRightPanel)}
         style={TextStyle.SECTION_HEADING}
       />
-      {#if selectedRightPanel === RightPanelType.TOC}
+      {#if selectedRightPanel === RightPanelType.OUTLINE}
         <TableOfContents {mdId} />
       {:else if selectedRightPanel === RightPanelType.FORELINKS}
         <div class="flex flex-col items-start gap-4 h-full w-full">

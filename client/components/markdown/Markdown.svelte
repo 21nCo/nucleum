@@ -1,5 +1,8 @@
 <script lang="ts">
-  import type { Markdown, MdParams } from "$lib/client/types/memotron/md.type";
+  import type {
+    IMarkdown,
+    IMarkdownParams
+  } from "$lib/client/types/memotron/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
   import { getMdStore, mdContentChangeEvent } from "./markdown.store";
@@ -8,9 +11,8 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { generateUID } from "$lib/client/utils/utils";
-  import type { Node } from "$lib/client/types/memotron/node.type";
-  export let md: Node | Markdown;
-  export let params: MdParams | undefined = undefined;
+  export let md: IMarkdown;
+  export let params: IMarkdownParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
   const dispatch = createEventDispatcher();
   export let id: string | undefined = undefined;
@@ -22,7 +24,7 @@
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       // console.log("md content changed", val);
-      dispatch("change", $mdStore.blocks);
+      dispatch("blocks", $mdStore.blocks);
       if ("blocks" in md) md = { ...md, blocks: $mdStore.blocks };
     });
     return () => {
@@ -76,7 +78,7 @@
   </div>
   <div class="grow w-full">
     {#each $mdStore.blocks as block (block.id)}
-      <Block {block} {mdId} />
+      <Block {block} {mdStore} {mdId} on:change on:insert />
     {/each}
   </div>
 </div>

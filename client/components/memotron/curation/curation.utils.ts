@@ -1,10 +1,10 @@
 import type { IProperty } from "$lib/client/types/memotron/type.type";
-import type { SelectItem } from "$lib/client/types/select.type";
+import type { ISelectItem } from "$lib/client/types/select.type";
 
 export function resolvePropertyOptions(
   id: string,
   properties: IProperty[] | null
-): SelectItem[] {
+): ISelectItem[] {
   if (!id || !properties) return [];
   const property = properties.find((p) => p.id === id);
   if (!property?.config?.options) return [];

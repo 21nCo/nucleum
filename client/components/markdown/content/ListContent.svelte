@@ -5,15 +5,14 @@
     NodeType,
     type ListContent
   } from "$lib/client/types/memotron/node.type";
-  import { getMdStore } from "../markdown.store";
+  import type { MdStoreType } from "../markdown.store";
   import BlockContent from "./BlockContent.svelte";
   import TextContent from "./TextContent.svelte";
-  export let mdId: string;
+  export let mdStore: MdStoreType;
   export let block: Block<ListContent>;
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;
   export let parentHierarchy: string[] = [];
-  const mdStore = getMdStore(mdId);
   function handleInsert(event: any) {
     console.log("insert in list", event.detail, parentHierarchy);
     const insertContextId = event.detail;
@@ -21,7 +20,12 @@
   }
   function handleTab(event: CustomEvent) {
     // console.log("tab in list", event.detail, parentHierarchy);
-    mdStore.listOperation(event.type, block.id, parentHierarchy);
+    if (event.type != "tab" && event.type != "shifttab") return;
+    mdStore.listOperation({
+      operation: event.type,
+      id: block.id,
+      parentHierarchy
+    });
   }
 </script>
 
@@ -44,10 +48,14 @@
     <TextContent
       bind:isFocusing
       on:blur
-      on:insert={handleInsert}
+      on:insertrelay={handleInsert}
+      on:deleterelay
       on:tab={handleTab}
       on:shifttab={handleTab}
-      {mdId}
+      on:change
+      on:insert
+      on:delete
+      {mdStore}
       {isHovering}
       {block}
     />
@@ -55,12 +63,14 @@
       <!--           context={BlockContext.LIST_CHILD} -->
       {#each block.children as item (item)}
         <BlockContent
-          {mdId}
+          {mdStore}
           {isHovering}
           parentHierarchy={block.id
             ? [...parentHierarchy, block.id]
             : parentHierarchy}
           block={item}
+          on:change
+          on:insert
         />
       {/each}
     {/if}

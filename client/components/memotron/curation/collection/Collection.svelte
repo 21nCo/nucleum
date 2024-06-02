@@ -30,7 +30,7 @@
   import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import type { SelectItem } from "$lib/client/types/select.type";
+  import type { ISelectItem } from "$lib/client/types/select.type";
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import { isValidString } from "$lib/client/utils/text.utils";
@@ -47,7 +47,7 @@
   };
   let collection: IActiveCollectionStore;
   let properties: DropdownItem[];
-  let viewsForSwitcher: SelectItem[];
+  let viewsForSwitcher: ISelectItem[];
   let isRefreshing = true;
   let isNotInlineAccess: boolean = false;
   $: console.log({ activeView });

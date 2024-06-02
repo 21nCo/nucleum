@@ -55,7 +55,7 @@
     );
   }
   export function hide() {
-    console.log("hiding", { id: options.id });
+    // console.log("hiding", { id: options.id });
     isPopoverVisible = false;
     if (popOverRef) popOverRef.style.display = "none";
     dispatch("hide");

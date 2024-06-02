@@ -1,7 +1,7 @@
 import type { Avatar } from "$lib/client/types/avatar.type";
 import type { ICacheableStore } from "$lib/client/types/data.type";
-import type { Markdown } from "$lib/client/types/memotron/md.type";
-import type { LinkThumbnail, MediaBody, NodeProperty } from "./node.type";
+import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+import type { LinkThumbnail, MediaBody, INodeProperty } from "./node.type";
 
 export enum CaptureType {
   ANY = "Any",
@@ -20,10 +20,10 @@ export type CaptureStore = ICacheableStore & {
   avatar?: Avatar;
   captureType: CaptureType | string;
   type?: any;
-  body: Markdown | MediaBody;
+  body: IMarkdown | MediaBody;
   fileDetails?: FileDetails;
   links: LinkThumbnail[];
-  properties?: NodeProperty[];
+  properties?: INodeProperty[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
    * as change of body object in markdown is not detected by svelte

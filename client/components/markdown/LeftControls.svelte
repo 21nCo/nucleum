@@ -1,9 +1,8 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
-  import { getMdStore } from "./markdown.store";
-  export let mdId: string;
-  const mdStore = getMdStore(mdId);
+  import type { MdStoreType } from "./markdown.store";
+  export let mdStore: MdStoreType;
 </script>
 
 <div class="flex gap-0.5 h-10 items-center justify-end">

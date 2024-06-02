@@ -1,9 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import type { MdStore, Block } from "$lib/client/types/memotron/md.type";
-  import { getMdStore, mdContentChangeEvent } from "../markdown.store";
+  import type {
+    IMarkdownStore,
+    Block
+  } from "$lib/client/types/memotron/md.type";
+  import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+
   import {
     ListType,
     NodeType,
@@ -15,9 +18,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
-  import Node from "$lib/client/icons/Node.svelte";
+
   const dispatch = createEventDispatcher();
-  export let mdId: string;
+  export let mdStore: MdStoreType;
   export let block: Block<TextContent | ListContent>;
   // export let context: BlockContext = BlockContext.DEFAULT;
   export let isHovering: boolean = false;
@@ -26,7 +29,6 @@
     if (isHovering) assignPlaceholder();
     else if (!isFocusing && !isFirstBlockAndIsEmpty) placeholder = "";
   }
-  const mdStore = getMdStore(mdId);
   const isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
   let textRef: any;
   let sizing = "";
@@ -94,7 +96,7 @@
    */
   onMount(() => {
     hideBlockBrowser();
-    const focusBlockSub = mdStore.subscribe((md: MdStore) => {
+    const focusBlockSub = mdStore.subscribe((md: IMarkdownStore) => {
       if (md.blockToFocus === block.id) {
         setTimeout(() => {
           textRef.focus();
@@ -167,12 +169,20 @@
       (event.key === "Enter" && !isPreventInsertOnEnter && !event.shiftKey) ||
       (event.key === "Enter" && event.metaKey)
     ) {
-      if (block.id && !isRelayOperations) mdStore.insert(block.id);
-      else if (block.body != "") dispatch("insert", block.id);
+      if (block.id && !isRelayOperations) {
+        mdStore.insert({ id: block.id });
+        dispatch("insert", block.id);
+      } else if (block.body != "") {
+        dispatch("insertrelay", block.id);
+      }
       event.preventDefault();
     } else if (event.key === "Backspace" && !block.body) {
-      if (block.id && !isRelayOperations) mdStore.deleteBlock(block.id);
-      else dispatch("delete", block.id);
+      if (block.id && !isRelayOperations) {
+        mdStore.deleteBlock(block.id);
+        dispatch("delete", block.id);
+      } else {
+        dispatch("deleterelay", block.id);
+      }
       event.preventDefault();
     }
   }
@@ -192,7 +202,7 @@
       //delete the parent <div> of the text node and insert new block with the type
       block.body = block.body.replace(shortcut, "");
       textRef.replace(shortcut, "");
-      if (block.id) mdStore.insert(block.id, { blockType: type, listType });
+      if (block.id) mdStore.insert({ id: block.id, blockType: type, listType });
       setTimeout(() => {
         let parent = undefined;
         if (block.id) parent = document.getElementById(block.id);
@@ -257,7 +267,7 @@
         if (block.body.startsWith(shortcut)) {
           block.body = block.body.replace(shortcut, "");
           textRef.replace(shortcut, "");
-          mdStore.convert(block.id!, { blockType: NodeType.LIST, listType });
+          mdStore.convert({ id: block.id, blockType: NodeType.LIST, listType });
           return true;
         }
         return handleEscShortcutForSecondaryLines(
@@ -319,7 +329,7 @@
       if (event.key != "Backspace" || !(caretPosition === 0)) return false;
       if (block.contentType === NodeType.LIST) {
         // context === BlockContext.LIST_CHILD
-        mdStore.convert(block.id!, { blockType: NodeType.SIMPLE_TEXT });
+        mdStore.convert({ id: block.id, blockType: NodeType.SIMPLE_TEXT });
       } else if (block.contentType != NodeType.SIMPLE_TEXT) {
         block.contentType = NodeType.SIMPLE_TEXT;
       } else if (block.body != "") {
@@ -392,11 +402,12 @@
     if (parts[0]) {
       block.body = parts[0];
       textRef.removeSlashText();
-      mdStore.insert(block.id, { blockType: event.detail.type });
+      mdStore.insert({ id: block.id, blockType: event.detail.type });
     } else {
       block.body = "";
       textRef.set("");
-      if (block.id) mdStore.convert(block.id, { blockType: event.detail.type });
+      if (block.id)
+        mdStore.convert({ id: block.id, blockType: event.detail.type });
     }
     hideBlockBrowser();
   }
@@ -446,6 +457,9 @@
           isMarkdown={true}
           on:keydown={handleKeyDown}
           on:keyup={handleKeyUp}
+          on:input={() => {
+            dispatch("change", { id: block.id, body: block.body });
+          }}
           on:focus={() => {
             isFocusing = true;
           }}

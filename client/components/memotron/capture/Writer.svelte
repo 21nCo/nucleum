@@ -16,6 +16,12 @@
       "blocks" in $captureStore.body &&
       isEmptyMd($captureStore.body);
   }
+  function onBlockChanges(event: any) {
+    console.log("onBlockChanges", { event, body: $captureStore.body });
+  }
+  function onBlockInsert(event: any) {
+    console.log("onBlockInsert", { event, body: $captureStore.body });
+  }
 </script>
 
 <div class="flex w-full h-full max-h-full justify-between">
@@ -38,9 +44,12 @@
         params={{
           isNodular: true,
           placeholder: "Start typing or choose a type to get started...",
-          canUseSlashShortcut: true
+          canUseSlashShortcut: true,
+          isReadOnly: false
         }}
-        on:change={refreshEmptyState}
+        on:blocks={refreshEmptyState}
+        on:change={onBlockChanges}
+        on:insert={onBlockInsert}
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

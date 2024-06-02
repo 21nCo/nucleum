@@ -1,13 +1,13 @@
 import type {
   Block,
-  MdStore,
+  IMarkdownStore,
   ListBlockWithChildren,
-  Markdown
+  IMarkdown
 } from "$lib/client/types/memotron/md.type";
 import type {
   ListChild,
   ListContent,
-  Node
+  INode
 } from "$lib/client/types/memotron/node.type";
 import { deepCopy } from "$lib/client/utils/obj.utils";
 
@@ -16,7 +16,7 @@ import { deepCopy } from "$lib/client/utils/obj.utils";
  * @param md Node markdown with children in each node
  * @returns children of the node and all its children
  */
-export function recursivelyExtractAllChildrenIntoArray(md: Node) {
+export function recursivelyExtractAllChildrenIntoArray(md: INode) {
   let children: Block[] = [];
   if (md.children && md.children.length > 0) {
     md.children.forEach((child) => {
@@ -27,7 +27,7 @@ export function recursivelyExtractAllChildrenIntoArray(md: Node) {
   return children;
 }
 
-export function parseBlocksIntoNestedMd(mdStore: MdStore) {
+export function parseBlocksIntoNestedMd(mdStore: IMarkdownStore) {
   const md = deepCopy(mdStore.node);
   md.children = recursivelyFormParentFromChildren(
     mdStore.blocks,
@@ -40,12 +40,12 @@ export function recursivelyFormParentFromChildren(
   blocks: Block[],
   childrenHierarchy: string[] | undefined
 ) {
-  let children: Node[] = [];
+  let children: INode[] = [];
   if (childrenHierarchy && childrenHierarchy.length > 0) {
     childrenHierarchy.forEach((childId) => {
       const child = blocks.find((b) => b.id === childId);
       if (child) {
-        const newChild: Node = {
+        const newChild: INode = {
           ...child,
           children: recursivelyFormParentFromChildren(
             blocks,
@@ -58,15 +58,22 @@ export function recursivelyFormParentFromChildren(
   }
   return children;
 }
-
+/**
+ * @deprecated
+ * @param store
+ * @param contextBlockId
+ * @param newBlock
+ * @param isStructuralBlock
+ * @returns
+ */
 export function handleNodeMarkdownChildHierarchyChanges(
-  n: MdStore,
+  store: IMarkdownStore,
   contextBlockId: string,
   newBlock: Block,
   isStructuralBlock: boolean
 ) {
-  if (!n.params?.isNodular) return n;
-  const parent = n.blocks.find((b) =>
+  if (!store.params?.isNodular) return store;
+  const parent = store.blocks.find((b) =>
     b.childrenHierarchy?.includes(contextBlockId)
   );
   if (parent && parent.childrenHierarchy) {
@@ -87,7 +94,7 @@ export function handleNodeMarkdownChildHierarchyChanges(
       )
     ];
   }
-  return n;
+  return store;
 }
 
 /**
@@ -223,7 +230,7 @@ export function replaceSymbolPatterns(text: string) {
   return html;
 }
 
-export function isEmptyMd(md: Markdown) {
+export function isEmptyMd(md: IMarkdown) {
   return (
     md.blocks.length === 0 ||
     ("body" in md.blocks[0] && md.blocks[0].body === "")

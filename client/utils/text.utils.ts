@@ -1,6 +1,6 @@
 import type { ItemType } from "$lib/client/types/item.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
-import type { Block, Markdown } from "$lib/client/types/memotron/md.type";
+import type { Block, IMarkdown } from "$lib/client/types/memotron/md.type";
 import {
   ListType,
   NodeType,
@@ -82,7 +82,7 @@ export function generateMarkdownText(blocks: Block[]) {
     .join("\n");
 }
 
-export function isValidMarkdown(md: Markdown) {
+export function isValidMarkdown(md: IMarkdown) {
   return (
     md &&
     md.blocks &&

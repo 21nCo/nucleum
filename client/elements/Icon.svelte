@@ -107,15 +107,18 @@
   import Funnel from "../icons/Funnel.svelte";
   import PaperClip from "../icons/PaperClip.svelte";
   import Eye from "../icons/Eye.svelte";
+  import { ColorAccent } from "../types/appearance.type";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
   export let color: string | undefined = undefined; //" text-bgs1";
+  export let accent: ColorAccent | undefined = undefined;
   export let bgColorHue: number | undefined = undefined;
   export let isOutlineForActive: boolean = false;
   $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $appearance);
-  $: defaultColor = retrieveCurrentColors($appearance)?.fgs2 ?? "";
+  $: currentColors = retrieveCurrentColors($appearance);
+  $: defaultColor = currentColors?.fgs2 ?? "";
   $: if (icon === "capture") isOutlineForActive = true;
   export let selectionStyle: SelectionItemActiveStyle =
     SelectionItemActiveStyle.NONE;
@@ -144,6 +147,14 @@
       icon?.includes("-mini")
         ? IconVariant.Solid
         : IconVariant.Outline;
+  }
+  function resolveColorFromAccentType() {
+    if (accent === ColorAccent.PRIMARY) return currentColors.aps1;
+    else if (accent === ColorAccent.SECONDARY) return currentColors.ass1;
+    else if (accent === ColorAccent.RED) return currentColors.ars1;
+    else if (accent === ColorAccent.GREEN) return currentColors.ags1;
+    else if (accent === ColorAccent.CUSTOM) return "var(--customcolor)";
+    else return "var(--customcolor)";
   }
 </script>
 
@@ -190,7 +201,7 @@
           : ' hover:fill-aps1'}"
       style={!isActive
         ? variant === IconVariant.Outline
-          ? `stroke: ${color ?? defaultColor}`
+          ? `stroke: ${accent ? resolveColorFromAccentType() : color ?? defaultColor}`
           : `fill: ${color ?? defaultColor}`
         : ""}
     >
