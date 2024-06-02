@@ -1,9 +1,12 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
+  import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
@@ -22,8 +25,8 @@
     // if (view.subGroups) return view.subGroups;
     return resolvePropertyOptions(id, properties);
   }
-  function filterSubGroupData(val: string) {
-    return data?.filter((node) => {
+  function filterSubGroupData(val: ISelectValue) {
+    return data?.filter((node: INodeThumbnail) => {
       return (
         node.properties?.find((p) => p.id === view.subGroupBy)?.value === val
       );
@@ -56,8 +59,10 @@
             arrangement={view.arrangement}
           />
         {/each}
-      {:else}
+      {:else if isValidArrayWithData(data)}
         <NodeItems nodes={data} arrangement={view.arrangement} />
+      {:else}
+        <EmptyStatusView size={Size.sm} subText="No items meet this criteria" />
       {/if}
     </div>
   </div>

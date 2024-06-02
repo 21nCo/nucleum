@@ -1,28 +1,34 @@
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import type {
-  ICollectionView,
-  ICurationCreationForm
+import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
+import { Item } from "../types/item.enum";
+import {
+  CurationType,
+  type ICollectionView,
+  type ICurationCreationForm
 } from "../types/memotron/curation.type";
+import { prefixTable } from "../utils/text.utils";
+import { ResourcePersistance } from "./resource.persistance";
 
 const surrealDb = new SurrealDatabase();
-export class CurationPersistance {
-  /**
-   * ! Deprecated
-   * dataManager delegation - performMutation, performMutationForIFR is being used
-   * @param curation
-   * @returns
-   */
-  async create(curation: ICurationCreationForm) {
-    let response = await surrealDb.query(
-      "return fn::memotron::curation::create($curation);",
-      {
-        curation
-      }
-    );
-    return interceptSurrealResponse(response, "create curation");
+export class CurationPersistance extends ResourcePersistance {
+  refreshQuery = "return fn::memotron::curation::fetchAll($since);";
+  constructor(userId: string) {
+    super(Item.curation, userId);
   }
-
+  create(resource: ICurationCreationForm) {
+    return super.create(
+      {
+        id: prefixTable(
+          generateUID(),
+          resource.type === CurationType.COLLECTION
+            ? Item.collection
+            : Item.combination
+        ),
+        ...resource
+      },
+      "return fn::memotron::curation::create($curation, $mutatedAt);"
+    );
+  }
   async fetch(id: string, viewId?: string) {
     const query = `fn::memotron::curation::fetch($id, $viewId)`;
     const response = await surrealDb.executeReadFn(

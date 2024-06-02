@@ -42,7 +42,7 @@
           <span
             class={cn({
               "text-ars1": isRedAccent(item)
-            })}>{item.label ?? properCase(item.value)}</span
+            })}>{item.label ?? properCase(item.value.toString())}</span
           >
         </button>
       {/each}

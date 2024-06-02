@@ -30,6 +30,6 @@
       {id}
     </div>
   {:else if collection}
-    <Collection {id} on:back />
+    <Collection {collection} on:back />
   {/if}
 </div>

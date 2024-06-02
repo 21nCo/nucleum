@@ -37,6 +37,9 @@ import { dataManager } from "$lib/client/stores/data.store";
 import account from "$lib/client/stores/account.store";
 import { nodes } from "../node/node.store";
 import { toasts } from "$lib/client/stores/notification.store";
+import { NodePersistance } from "$lib/client/stores/node.persistance";
+
+const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 const seedStore: CaptureStore = {
   id: Item.capture,
@@ -181,7 +184,7 @@ async function save(setter: any) {
     };
   }
   console.log({ nodeToBeSaved });
-  let result = await nodes.create(nodeToBeSaved);
+  let result = await new NodePersistance(currentUserId).create(nodeToBeSaved);
   if (result) {
     setter({ ...seedStore });
     toasts.trigger({

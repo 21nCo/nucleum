@@ -49,6 +49,11 @@ function init() {
     refreshStaleData,
     performMutation,
     refreshOnAppear,
+    /**
+     * TODO - use item param to determine the store to refresh instead of relying on cacheableStoresTable - since IFR stores like nodes, curations are refactored to use ResourcePersistance classes and inheritance instead and there is no need to maintain IFR stores except for customRefreshQuery and refresh
+     * @param item
+     * @returns
+     */
     refreshForIFR: async (item: ItemType) => {
       const dm = get(dataManager);
       const store = dm.cacheableStoresTable.find((x) => get(x).id === item);
@@ -86,8 +91,13 @@ function init() {
           modifiedBy: data.modifiedBy,
           modifiedAt: new Date().toISOString()
         });
-      } else if (action === PersistanceActionType.CREATE) {
+      } else if (
+        action === PersistanceActionType.CREATE ||
+        action === PersistanceActionType.CUSTOM_CREATE
+      ) {
         localPersistancePromise = table.add(data);
+        if (action === PersistanceActionType.CUSTOM_CREATE)
+          action = PersistanceActionType.CUSTOM_QUERY;
       } else if (action === PersistanceActionType.UPDATE) {
         localPersistancePromise = table.put(data);
       } else if (action === PersistanceActionType.MERGE) {

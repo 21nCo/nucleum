@@ -6,6 +6,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { isValidString } from "$lib/client/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let src: string | undefined = undefined;
   let file: File;
   let fileInput: HTMLInputElement;
@@ -27,6 +29,7 @@
     let s3URL = s3Response?.uploadURL.split("?")[0];
     if (s3URL) {
       src = s3URL;
+      dispatch("change", src);
     }
     isUploadInProgress = false;
   }
@@ -41,17 +44,22 @@
   }
   function onremove(e: MouseEvent) {
     src = undefined;
+    dispatch("change", src);
     e.stopPropagation();
   }
 </script>
 
+<!-- TODO - Cover photo popover with upload, from link, solid colors, graphics and unsplash options -->
 {#if (isValidString(src) && !$isInEditMode) || $isInEditMode}
   <button
-    class={cn("relative h-72 w-full flex justify-center items-center", {
-      "bg-bgs2 cursor-pointer": !src,
-      "cursor-default": src,
-      "px-4 pt-4": isRoundedExperimental
-    })}
+    class={cn(
+      "relative h-72 min-h-[18rem] w-full flex justify-center items-center",
+      {
+        "bg-bgs2 cursor-pointer": !src,
+        "cursor-default": src,
+        "px-4 pt-4": isRoundedExperimental
+      }
+    )}
     on:click={onCoverClick}
   >
     {#if src}

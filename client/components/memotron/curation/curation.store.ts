@@ -4,6 +4,7 @@ import {
   CombinationViewType,
   CurationType,
   type IActiveCollection,
+  type ICollection,
   type ICollectionView,
   type ICurationCreationForm,
   type ICurationStore
@@ -22,6 +23,7 @@ import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
 import { Persistance } from "$lib/client/stores/persistance";
 import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
+import { ActiveResourceStore } from "$lib/client/stores/resource.store";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -34,7 +36,8 @@ const seedCurationsStore: ICurationStore = {
   mutatingResources: [Item.curation]
 };
 /**
- *
+ * @deprecated - Use ResourcePersistance instead
+ * TODO - refreshQuery flow for refreshing IFR stores.
  * Experimental - Will be removed if the need for IFR store is not substantial.
  * Ideation: https://www.notion.so/blanklabs/Caching-IFR-searchable-resources-ideation-5859a07de2774c2690124a907bf8a3ac?pvs=4#9911afedc2824aedb8d1bed1312e735d
  *
@@ -86,7 +89,7 @@ function initCurationStore() {
       return dataManager.refreshForIFR(Item.curation);
     },
     create: createCuration,
-    modify: () => {
+    modify: (id: string, val: Partial<ICollection>) => {
       //delegated from active curation individual stores
     },
     delete: (id: string) => {
@@ -99,14 +102,16 @@ function initCurationStore() {
   };
 }
 
-export type IActiveCollectionStore = ReturnType<
-  typeof generateActiveCollectionStore
->;
+// export type IActiveCollectionStore = ReturnType<
+//   typeof generateActiveCollectionStore
+//   >;
+export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 /**
  * Curation stores map for holding the state of active i.e. currently open curations in the UI
  */
 const activeCurationStores = new Map<string, IActiveCollectionStore>();
+const curationPersistance = new CurationPersistance(currentUserId);
 
 /**
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
@@ -116,7 +121,8 @@ const activeCurationStores = new Map<string, IActiveCollectionStore>();
  */
 export function resolveActiveCollectionStore(id: string, context: string = "") {
   if (!activeCurationStores.has(id)) {
-    activeCurationStores.set(id, generateActiveCollectionStore(id));
+    // activeCurationStores.set(id, generateActiveCollectionStore(id));
+    activeCurationStores.set(id, new ActiveCollectionStore(id));
   }
   let val = activeCurationStores.get(id);
   return val!;
@@ -142,7 +148,7 @@ async function initializeCollection(
 ) {
   const dm = get(dataManager);
   let type = determineCurationType(id);
-  const response = await new CurationPersistance().fetch(id, viewId);
+  const response = await curationPersistance.fetch(id, viewId);
   // console.log("curation fetch response", { response });
   if (type === CurationType.COLLECTION && response.curation) {
     updater((store: IActiveCollection) => {
@@ -151,12 +157,6 @@ async function initializeCollection(
       if (viewId && store.views.some((x) => x.id === viewId))
         store.views.find((x) => x.id === viewId)!.data = response.data;
       else store.views[0].data = response.data;
-      //TEMP - for testing
-      if (!store.cover)
-        // store.cover = "";
-        store.cover =
-          "https://s3.us-east-1.amazonaws.com/tidyfilesdevfive.us-east-1/428bavow4oj5a56mfuvw/image/21625c64-f959-4329-8c79-590f4c3a7af7_lily-banse--YHSwy6uqvk-unsplash.jpg";
-      // console.log({ store });
       return store;
     });
   } else if (type === CurationType.NODELINKS && response.node) {
@@ -253,7 +253,7 @@ async function createView(
     val.views.push(newView);
     return val;
   });
-  new CurationPersistance().createView(newView, collectionId);
+  curationPersistance.createView(newView, collectionId);
   return newView.id;
 }
 
@@ -273,7 +273,7 @@ async function deleteView(
   await new Persistance().delete(id, Item.view, currentUserId);
 }
 
-const debouncedPersist = debouncer((view: ICollectionView) => {
+const debouncedPersistView = debouncer((view: ICollectionView) => {
   new Persistance().update(view);
 }, 2000);
 
@@ -288,7 +288,7 @@ async function updateView(
     return val;
   });
   delete view.data;
-  debouncedPersist(view);
+  debouncedPersistView(view);
 }
 
 async function refreshViewData(
@@ -300,7 +300,7 @@ async function refreshViewData(
     val.isRefreshing = true;
     return val;
   });
-  const response = await new CurationPersistance().fetchViewData(
+  const response = await curationPersistance.fetchViewData(
     viewId,
     collectionId
   );
@@ -314,24 +314,50 @@ async function refreshViewData(
 }
 
 /**
+ * @deprecated - Use ActiveCollectionStore instead
  * Initializes the active curation store. This store will hold the state of the active curation in the UI.
  * @returns The active curation store
  */
 function generateActiveCollectionStore(collectionId: string) {
   const id = collectionId;
   const { subscribe, set, update } = writable<IActiveCollection>();
+  const updatePropagator = (val: Partial<ICollection>) =>
+    curationPersistance.modify(id, val);
+  const debouncedPersist = debouncer(updatePropagator, 2000);
   return {
     subscribe,
     set,
     update,
     init: (id: string, viewId?: string) =>
       initializeCollection(id, set, update, viewId),
+    propagateTitleChange: async (label: string) => {
+      return debouncedPersist({ label });
+    },
     createView: (viewToDuplicate?: string) =>
       createView(update, id, viewToDuplicate),
     deleteView: (id: string) => deleteView(update, id),
     updateView: (view: ICollectionView) => updateView(update, view),
     refreshViewData: (viewId: string) => refreshViewData(update, viewId, id)
   };
+}
+
+class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection> {
+  constructor(collectionId: string) {
+    super(collectionId, curationPersistance, currentUserId);
+  }
+
+  init = (viewId?: string) =>
+    initializeCollection(this.id, this.set, this.update, viewId);
+
+  createView = (viewToDuplicate?: string) =>
+    createView(this.update, this.id, viewToDuplicate);
+
+  deleteView = (id: string) => deleteView(this.update, id);
+
+  updateView = (view: ICollectionView) => updateView(this.update, view);
+
+  refreshViewData = (viewId: string) =>
+    refreshViewData(this.update, viewId, this.id);
 }
 
 export const collectionLayoutOptions = [

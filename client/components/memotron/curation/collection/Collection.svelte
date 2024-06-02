@@ -3,10 +3,7 @@
     CurationType,
     type ICollectionView
   } from "$lib/client/types/memotron/curation.type";
-  import {
-    resolveActiveCollectionStore,
-    type IActiveCollectionStore
-  } from "../curation.store";
+  import type { IActiveCollectionStore } from "../curation.store";
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
   import View from "./View.svelte";
@@ -24,20 +21,32 @@
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
+  import {
+    NodeThumbnailVariant,
+    type INodeThumbnail
+  } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import type { ISelectItem } from "$lib/client/types/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "$lib/client/types/select.type";
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import { isValidString } from "$lib/client/utils/text.utils";
-  export let id: string;
+  import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
+  /**
+   * @deprecated - use collection directly
+   */
+  export let id: string = "";
+  export let collection: IActiveCollectionStore;
   let activeView: ICollectionView | null = null;
+  let filteredViewData: INodeThumbnail[] = [];
   let selectedViewId: string;
-  let selectedTab: string;
+  let selectedTab: ISelectValue | undefined = undefined;
   let isRoundedExperimental = false;
   let isStickied = false;
   let triggerItemEdit = "";
@@ -45,7 +54,6 @@
     style: ButtonStyle.OUTLINED,
     size: Size.xs
   };
-  let collection: IActiveCollectionStore;
   let properties: DropdownItem[];
   let viewsForSwitcher: ISelectItem[];
   let isRefreshing = true;
@@ -130,7 +138,7 @@
   }
   onMount(async () => {
     // console.log("onMount - collection", { id });
-    collection = resolveActiveCollectionStore(id);
+    // collection = resolveActiveCollectionStore(id);
     const viewQueryParam = new URLSearchParams(location.search).get("view");
     const focusParam = new URLSearchParams(location.search).get(
       ResourceAccessMode.FOCUS
@@ -138,11 +146,14 @@
     const splitParam = new URLSearchParams(location.search).get(
       ResourceAccessMode.SPLIT
     );
-    isNotInlineAccess = focusParam === id || splitParam === id ? true : false;
+    isNotInlineAccess =
+      focusParam === collection.id || splitParam === collection.id
+        ? true
+        : false;
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
     }
-    await collection.init(id, selectedViewId);
+    await collection.init(selectedViewId);
     setActiveView();
     if (!activeView) {
       activeView =
@@ -153,23 +164,52 @@
     }
     properties = resolvePropertyList($collection?.associatedType);
     refreshViewsOnSwitcher();
+    refreshFilters();
     isRefreshing = false;
   });
+  function refreshFilters() {
+    if (!activeView) return;
+    const tabBy = activeView.tabBy;
+    if (!tabBy || (tabBy && selectedTab === "all")) {
+      filteredViewData = activeView.data ?? [];
+    } else if (tabBy && selectedTab !== undefined) {
+      filteredViewData =
+        activeView.data?.filter((x) => {
+          return (
+            x.properties?.find((p) => p.id === tabBy)?.value === selectedTab
+          );
+        }) ?? [];
+    } else {
+      filteredViewData = activeView.data ?? [];
+    }
+  }
+  function onTabSwitch(e: CustomEvent) {
+    console.log("onTabSwitch", selectedTab);
+    refreshFilters();
+  }
+  function onCoverChange(e: CustomEvent) {
+    console.log("onCoverChange", e.detail);
+    collection.modify({ cover: e.detail });
+  }
 </script>
 
 {#if isRefreshing}
   <PageLoadingPulse />
 {:else if $collection}
   <div
-    class="relative flex flex-col gap-4 w-full h-full overflow-auto"
+    class="relative flex flex-col w-full h-full overflow-auto"
     on:scroll={onScroll}
   >
-    {#if $collection.type != CurationType.NODELINKS && "cover" in $collection}
-      <Cover bind:src={$collection.cover} {isRoundedExperimental} />
+    {#if $collection.type != CurationType.NODELINKS}
+      <Cover
+        bind:src={$collection.cover}
+        {isRoundedExperimental}
+        on:change={onCoverChange}
+      />
     {/if}
-    <div class={cn("flex flex-col gap-6 grow w-full")}>
+    <div class={cn("flex flex-col gap-6 pt-4 grow w-full")}>
       <div class="px-4">
-        <CollectionTitleBar on:back {id} />
+        <CollectionTitleBar on:back {collection} />
       </div>
       <header
         class={cn("sticky top-0 flex flex-col gap-6 bg-bgs1 w-full", {
@@ -227,17 +267,25 @@
                 view={activeView}
                 bind:value={selectedTab}
                 properties={$collection?.associatedType?.properties}
+                on:select={onTabSwitch}
               />
             {/if}
           </div>
         {/if}
       </header>
-      <main class={cn("w-full grow flex justify-center items-center px-4", {})}>
+      <main
+        class={cn(
+          "w-full grow flex flex-col gap-2 justify-center items-center px-4",
+          {}
+        )}
+      >
+        <ResourceStatusBanner resource={collection} />
         {#if $collection.isRefreshing}
           <PageLoadingPulse />
         {:else if !$collection.isRefreshing && activeView}
           <View
             view={activeView}
+            data={filteredViewData}
             isBoardOverflow={isStickied}
             properties={$collection?.associatedType?.properties}
           />

@@ -7,15 +7,12 @@
   import { createEventDispatcher } from "svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { closeResource } from "$lib/client/utils/utils";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
   import { resolveActiveNodeStore } from "../node.store";
+  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   const dispatch = createEventDispatcher();
   export let id: string;
   const node = resolveActiveNodeStore(id);
   export let isClonesShown: boolean = false;
-  let contextMenuPopoverRef: any;
   $: backlinksRendered = $page.url.searchParams.get("blr");
   let contextMenu = [];
   $: contextMenu = [
@@ -120,19 +117,7 @@
       }}
     />
   {/if}
-  <Popover bind:this={contextMenuPopoverRef} placement={Direction.BottomRight}>
-    <slot name="trigger" slot="trigger">
-      <Button icon="ellipsis-vertical" tooltip="More actions" />
-    </slot>
-    <slot name="popover" slot="popover">
-      <ContextMenu
-        menu={contextMenu}
-        on:select={() => {
-          contextMenuPopoverRef.hide();
-        }}
-      />
-    </slot>
-  </Popover>
+  <ContextMenuAction {contextMenu} />
   <!--TODO Show close only if launched from modal -->
   <Button
     icon="cross-circled"

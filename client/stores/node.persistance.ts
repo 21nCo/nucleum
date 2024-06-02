@@ -1,38 +1,30 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
 import { get } from "svelte/store";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import type { INodeCapture } from "../types/memotron/node.type";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
 import { cloudProvider } from "./persistance";
+import { ResourcePersistance } from "./resource.persistance";
+import { Item } from "../types/item.enum";
+import type { INodeCapture } from "../types/memotron/node.type";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 
-export class NodePersistance {
+export class NodePersistance extends ResourcePersistance {
+  constructor(userId: string) {
+    super(Item.node, userId);
+  }
+  create(resource: Partial<INodeCapture>) {
+    return super.create(
+      resource,
+      "return fn::memotron::node::save($node, $links, $mutatedAt);"
+    );
+  }
   /**
-   * ! Deprecated
-   * nodes.create store in combination with dataManager performMutation is used instead.
-   * @param node
+   * @deprecated
+   * @param query
    * @returns
    */
-  async save(node: INodeCapture) {
-    switch (get(cloudProvider) as Cloud) {
-      case Cloud.local:
-      //
-      case Cloud.surreal: {
-        let response = await surrealDb.query(
-          "return fn::memotron::node::save($node, $links);",
-          {
-            node,
-            links: node.links ?? []
-          }
-        );
-        return interceptSurrealResponse(response, "save node");
-      }
-      default:
-        return null;
-    }
-  }
   async searchForLinking(query: string) {
     switch (get(cloudProvider) as Cloud) {
       case Cloud.local:

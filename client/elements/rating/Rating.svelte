@@ -8,6 +8,8 @@
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import InputBaseElement from "../InputBaseElement.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let avatar: AvatarWithCode<IconAvatar>;
   export let count: number;
   export let value: number;
@@ -21,11 +23,15 @@
     {#each Array(count) as _, item}
       <button
         on:click={() => {
-          value = +item;
+          value = +item + 1;
+          dispatch("change", value);
         }}
         class="flex items-center h-full"
       >
-        <AvatarView avatar={{ ...avatar, isFilled: +item <= value }} {size} />
+        <AvatarView
+          avatar={{ ...avatar, isFilled: +item + 1 <= value }}
+          {size}
+        />
       </button>
     {/each}
   </div>

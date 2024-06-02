@@ -5,6 +5,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
+  import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import NodeContent from "./NodeContent.svelte";
   import NodePropertiesOnMainPanel from "./NodePropertiesOnMainPanel.svelte";
   import { resolveActiveNodeStore } from "./node.store";
@@ -28,41 +29,7 @@
       >
     </div>
   {/if}
-  {#if $node.trashInformation}
-    <div class="px-4">
-      <InlineInfoBanner
-        type={InfoTextType.ERROR}
-        content={"This node was moved to trash on: *" +
-          formatDatetime(
-            $userPreferences,
-            new Date($node.trashInformation.deletedAt)
-          ) +
-          "*"}
-        action={{
-          label: "Restore",
-          callback: async () => {
-            return node.restore();
-          }
-        }}
-      />
-    </div>
-  {/if}
-  {#if $node.isArchived}
-    <div class="px-4">
-      <InlineInfoBanner
-        type={InfoTextType.INFO}
-        content={"This node was archived on: *" +
-          formatDatetime($userPreferences, new Date($node.modifiedAt)) +
-          "*"}
-        action={{
-          label: "Unarchive",
-          callback: async () => {
-            return node.unarchive();
-          }
-        }}
-      />
-    </div>
-  {/if}
+  <ResourceStatusBanner resource={node} />
   {#if $node.type && $node.properties && $node.properties.length > 0}
     <div class="px-2">
       <NodePropertiesOnMainPanel {id} />

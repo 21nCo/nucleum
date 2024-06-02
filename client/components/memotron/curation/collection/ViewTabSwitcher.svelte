@@ -2,18 +2,27 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
-  import type { ISelectItem } from "$lib/client/types/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { resolvePropertyOptions } from "../curation.utils";
   export let view: ICollectionView;
   export let properties: IProperty[] | null = null;
-  export let value: string;
+  export let value: ISelectValue | undefined = undefined;
   let tabs: ISelectItem[] = [];
   $: tabs = resolveTabs(view.tabBy);
   $: label = resolveLabel(view.tabBy);
   function resolveTabs(tabBy: string) {
     if (view.tabs) return view.tabs;
-    return resolvePropertyOptions(tabBy, properties);
+    return [
+      {
+        label: "All",
+        value: "all"
+      },
+      ...resolvePropertyOptions(tabBy, properties)
+    ];
   }
   function resolveLabel(tabBy: string) {
     if (!view.tabBy || !properties) return "";
@@ -29,7 +38,12 @@
       >{label + ":"}</span
     >
     {#if tabs && tabs.length > 0}
-      <OptionSelector options={tabs} size={Size.sm} bind:selected={value} />
+      <OptionSelector
+        options={tabs}
+        size={Size.sm}
+        bind:selected={value}
+        on:select
+      />
     {/if}
   </div>
 {/if}

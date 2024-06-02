@@ -24,6 +24,8 @@
   import TypeSelector from "../capture/TypeSelector.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
+  import { CurationPersistance } from "$lib/client/stores/curation.persistance";
+  import account from "$lib/client/stores/account.store";
   let title: string;
   let errMsg: string;
   let isCreationInProgress: boolean = false;
@@ -139,7 +141,15 @@
           //   type: selectedType,
           //   defaultView: selectedView
           // })
-          curations.create({
+          // curations.create({
+          //   label: title,
+          //   type: selectedType,
+          //   defaultLayout: selectedView,
+          //   isStarred,
+          //   associatedType,
+          //   isSearchQuery
+          // });
+          new CurationPersistance($account.userInfo?.id ?? "").create({
             label: title,
             type: selectedType,
             defaultLayout: selectedView,

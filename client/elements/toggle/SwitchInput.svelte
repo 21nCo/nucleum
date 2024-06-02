@@ -35,6 +35,6 @@
   </div>
 {:else}
   <InputBaseElement {style} {label}>
-    <Switch bind:on={checked} {size} />
+    <Switch bind:on={checked} {size} on:change />
   </InputBaseElement>
 {/if}

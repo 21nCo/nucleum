@@ -51,6 +51,7 @@
   }
   function onChange() {
     dispatch("input", { value });
+    dispatch("change", { value });
     isShowSaveFeedback = false;
     resetChangeTimer();
   }

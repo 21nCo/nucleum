@@ -91,6 +91,7 @@
   id={options.id}
   class={cn(
     options.class,
+    options.placement,
     bgClass($appearance, options.parentBgIndex ? options.parentBgIndex - 1 : 0),
     {
       "shadow-md border border-brs2 rounded-md": !isPreventDefaultStyling

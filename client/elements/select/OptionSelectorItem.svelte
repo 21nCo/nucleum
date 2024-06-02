@@ -56,7 +56,7 @@
       {:else if item.icon && typeof item.icon === "object"}
         <AvatarView avatar={item.icon} {size} />
       {/if}
-      {properCase(item.label ?? item.value)}
+      {properCase(item.label ?? item.value.toString())}
     </div>
   </button>
 {:else if style === OptionSelectorStyle.CHECK_CIRCLE}
@@ -79,7 +79,7 @@
       {/if}
     </div>
     <div class="w-full truncate text-left {item.isDisabled ? 'text-fgs4' : ''}">
-      {properCase(item.label ?? item.value)}
+      {properCase(item.label ?? item.value.toString())}
     </div>
   </button>
 {/if}

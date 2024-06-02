@@ -48,10 +48,11 @@
       bind:value={property.value}
       label={label.label}
       placeholder="Enter text"
+      on:change
     />
   {:else if config.type === PropertyType.CHECKBOX && typeof property.value === "boolean"}
     <!-- <CheckboxInput bind:checked={property.value} label={details.label} /> -->
-    <SwitchInput bind:checked={property.value} {label} {style} />
+    <SwitchInput bind:checked={property.value} {label} {style} on:change />
   {:else if config.type === PropertyType.RATING && config.config?.ratingAvatar && typeof property.value === "number"}
     <Rating
       {label}
@@ -60,6 +61,7 @@
       avatar={config.config.ratingAvatar}
       bind:value={property.value}
       count={5}
+      on:change
     />
   {:else if config.type === PropertyType.SINGLE_SELECT && config.config?.options && typeof property.value === "string"}
     <SingleSelectProperty
@@ -70,7 +72,7 @@
       on:change
     />
   {:else if config.type === PropertyType.DATE && property.value && property.value instanceof Date}
-    <DatePicker bind:date={property.value} {label} {style} />
+    <DatePicker bind:date={property.value} {label} {style} on:change />
   {:else if nodeId}
     <MetaPropertyItem {config} {nodeId} />
   {/if}

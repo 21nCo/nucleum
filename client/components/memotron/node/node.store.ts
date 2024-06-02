@@ -17,6 +17,7 @@ import type {
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
+import { ActiveResourceStore } from "$lib/client/stores/resource.store";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -28,6 +29,8 @@ const seedNodeStore: INodeStore = {
   mutatingResources: [Item.node]
 };
 /**
+ *
+ * @deprecated - Use ResourcePersistance instead
  * Store for handling mutations on nodes.
  * Fetching will be directly done accessing dexie store's node resource.
  */
@@ -43,15 +46,12 @@ async function createNode(node: Partial<INodeCapture>) {
     modifiedAt: new Date().toISOString(),
     isArchived: false
   };
-  const dm = get(dataManager);
-  dm.cacheSource.dexie.node.add(data);
   return dataManager.performMutationForIFR(
     Item.node,
-    PersistanceActionType.CUSTOM_QUERY,
+    PersistanceActionType.CUSTOM_CREATE,
     { node: data, links: data.links ?? [] },
     "return fn::memotron::node::save($node, $links, $mutatedAt);"
   );
-  // return await new NodePersistance().save(data);
 }
 
 async function modifyNode(id: string, node: Partial<INode>) {
@@ -89,13 +89,14 @@ function initNodeStore() {
   };
 }
 
-export type IActiveNodeStore = ReturnType<typeof initActiveNodeStore>;
+// export type IActiveNodeStore = ReturnType<typeof initActiveNodeStore>;
+export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 /**
  * Node store map for individual nodes that are open in the UI.
  */
 const activeNodeStores = new Map<string, IActiveNodeStore>();
-
+const nodePersistance = new NodePersistance(currentUserId);
 /**
  * Resolves the active node store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the node
@@ -105,7 +106,8 @@ const activeNodeStores = new Map<string, IActiveNodeStore>();
 export function resolveActiveNodeStore(id: string, context: string = "") {
   if (!activeNodeStores.has(id)) {
     //console.log("init node store from: " + context + " id: " + id);
-    activeNodeStores.set(id, initActiveNodeStore(id));
+    // activeNodeStores.set(id, initActiveNodeStore(id));
+    activeNodeStores.set(id, new ActiveNodeStore(id));
   }
   let val = activeNodeStores.get(id);
   return val!;
@@ -121,7 +123,7 @@ async function fetchNode(
   id: string,
   setter: (this: void, value: IActiveNode) => void
 ) {
-  const result = await new NodePersistance().fetch(id);
+  const result = await nodePersistance.fetch(id);
   if (result) {
     setter(result);
   }
@@ -133,17 +135,19 @@ async function updateProperties(
   properties: INodeProperty[]
 ) {
   updater((prev) => ({ ...prev, properties }));
-  return nodes.modify(id, { properties });
+  return nodePersistance.modify(id, { properties });
 }
 
 /**
+ * @deprecated - Use ActiveNodeStore class instead
  * Initializes the active node store. This store will hold the state of the active node in the UI.
  * @returns The active node store
  */
 function initActiveNodeStore(node: string) {
   const id = node;
   const { subscribe, set, update } = writable<IActiveNode>();
-  const updatePropagator = (val: Partial<INode>) => nodes.modify(id, val);
+  const updatePropagator = (val: Partial<INode>) =>
+    nodePersistance.modify(id, val);
   const debouncedPersist = debouncer(updatePropagator, 2000);
   return {
     subscribe,
@@ -164,7 +168,7 @@ function initActiveNodeStore(node: string) {
           deletedAt: new Date().toISOString()
         }
       }));
-      return nodes.delete(id);
+      return nodePersistance.delete(id);
     },
     archive: async () => {
       update((prev) => ({
@@ -173,7 +177,7 @@ function initActiveNodeStore(node: string) {
         modifiedBy: currentUserId,
         modifiedAt: new Date().toISOString()
       }));
-      return nodes.modify(id, { isArchived: true });
+      return nodePersistance.modify(id, { isArchived: true });
     },
     unarchive: async () => {
       update((prev) => ({
@@ -182,11 +186,20 @@ function initActiveNodeStore(node: string) {
         modifiedBy: currentUserId,
         modifiedAt: new Date().toISOString()
       }));
-      return nodes.modify(id, { isArchived: false });
+      return nodePersistance.modify(id, { isArchived: false });
     },
     restore: async () => {
       update((prev) => ({ ...prev, trashInformation: undefined }));
-      return nodes.modify(id, { trashInformation: undefined });
+      return nodePersistance.modify(id, { trashInformation: undefined });
     }
   };
+}
+
+class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
+  constructor(node: string) {
+    super(node, nodePersistance, currentUserId);
+  }
+  fetch = () => fetchNode(this.id, this.set);
+  updateProperties = async (properties: INodeProperty[]) =>
+    updateProperties(this.id, this.update, properties);
 }

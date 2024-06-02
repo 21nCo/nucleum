@@ -14,7 +14,7 @@
   const node = resolveActiveNodeStore(id);
   function onLabelChange(e: any) {
     console.log("onLabelChange", e);
-    if ($node.label) node.propagateTitleChange($node.label);
+    if ($node.label) node.debouncedModify({ label: $node.label });
   }
 </script>
 

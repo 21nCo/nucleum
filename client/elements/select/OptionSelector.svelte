@@ -6,14 +6,15 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import {
     OptionSelectorStyle,
-    type ISelectItem
+    type ISelectItem,
+    type ISelectValue
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { InputLabel } from "$lib/client/types/input.type";
   const dispatch = createEventDispatcher();
   export let options: ISelectItem[];
   export let labelProps: InputLabel | undefined = undefined;
-  export let selected: string | undefined = undefined;
+  export let selected: ISelectValue | undefined = undefined;
   export let parentBackgroundIndex: number = 1;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;

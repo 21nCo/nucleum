@@ -9,7 +9,7 @@
   import LogsLoadingPulse from "./animations/LogsPulse/LogsLoadingPulse.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
-  export let size: Size = Size.md;
+  export let size: Size.sm | Size.md = Size.md;
   export let isLoadingState: boolean = false;
   export let actionText: string | undefined = undefined;
   export let loadingText: string = "Refreshing...";

@@ -21,6 +21,7 @@
       bind:checked={on}
       class="sr-only"
       disabled={isDisabled}
+      on:change
     />
     <div
       class={"block bg-bgs4 rounded-full" +
