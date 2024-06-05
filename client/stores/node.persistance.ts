@@ -7,6 +7,7 @@ import { cloudProvider } from "./persistance";
 import { ResourcePersistance } from "./resource.persistance";
 import { Item } from "../types/item.enum";
 import type { INodeCapture } from "../types/memotron/node.type";
+import type { IMutationQueueParams } from "../types/data.type";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 
@@ -14,10 +15,14 @@ export class NodePersistance extends ResourcePersistance {
   constructor(userId: string) {
     super(Item.node, userId);
   }
-  create(resource: Partial<INodeCapture>) {
+  createNode(
+    capture: INodeCapture,
+    mutatationQueueParams?: IMutationQueueParams
+  ) {
     return super.create(
-      resource,
-      "return fn::memotron::node::save($node, $links, $mutatedAt);"
+      capture,
+      "return fn::memotron::node::createMany($resources, $mutatedAt);",
+      mutatationQueueParams
     );
   }
   /**

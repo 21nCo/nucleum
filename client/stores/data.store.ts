@@ -8,7 +8,9 @@ import {
   type DataManager,
   type ResourceDependency,
   DependencySyncType,
-  PersistanceActionType
+  PersistanceActionType,
+  type IMutationQueueParams,
+  type IMutationParams
 } from "../types/data.type";
 import {
   surrealUnixTimestamp,
@@ -68,9 +70,8 @@ function init() {
     },
     performMutationForIFR: (
       item: ItemType,
-      action: PersistanceActionType,
       data: any,
-      query?: string
+      params: IMutationParams
     ) => {
       let localPersistancePromise;
       const dexie = get(dataManager).cacheSource.dexie;
@@ -81,7 +82,7 @@ function init() {
       };
       // @ts-ignore
       const table: Table = dexie[item];
-      if (action === PersistanceActionType.DELETE) {
+      if (params.action === PersistanceActionType.DELETE) {
         // table.delete(data.id);
         localPersistancePromise = table.update(data.id, {
           trashInformation: {
@@ -92,20 +93,20 @@ function init() {
           modifiedAt: new Date().toISOString()
         });
       } else if (
-        action === PersistanceActionType.CREATE ||
-        action === PersistanceActionType.CUSTOM_CREATE
+        params.action === PersistanceActionType.CREATE ||
+        params.action === PersistanceActionType.CUSTOM_CREATE
       ) {
         localPersistancePromise = table.add(data);
-        if (action === PersistanceActionType.CUSTOM_CREATE)
-          action = PersistanceActionType.CUSTOM_QUERY;
-      } else if (action === PersistanceActionType.UPDATE) {
+        if (params.action === PersistanceActionType.CUSTOM_CREATE)
+          params.action = PersistanceActionType.CUSTOM_QUERY;
+      } else if (params.action === PersistanceActionType.UPDATE) {
         localPersistancePromise = table.put(data);
-      } else if (action === PersistanceActionType.MERGE) {
+      } else if (params.action === PersistanceActionType.MERGE) {
         localPersistancePromise = table.update(data.id, data);
       }
       return Promise.all([
         localPersistancePromise,
-        performMutation(item, data, action, query, true)
+        performMutation(item, data, params)
       ]);
     },
     search: async (storeId: string, query: string) => {
@@ -182,7 +183,7 @@ function init() {
     syncPendingMutations: async () => {
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
-      const mutationQueue = cacheSource.dexie.mutationQueue;
+      const mutationQueue = cacheSource.dexie.mutationQueuev2;
       const mutations = await mutationQueue.toArray();
       let masterQuery = "";
       if (mutations.length > 0) {
@@ -215,9 +216,10 @@ async function refreshOnAppear() {
  * @param query db query to be added to the mutation queue
  * @param params db query params to be added to the mutation queue
  */
-async function addToMutationQueue(query: string, params: any) {
+async function addToMutationQueue(id: string, query: string, params: any) {
   const cacheSource = get(dataManager).cacheSource;
-  cacheSource.dexie.mutationQueue.add({
+  cacheSource.dexie.mutationQueuev2.put({
+    id,
     timestamp: new Date().getTime(),
     query,
     params
@@ -235,66 +237,35 @@ async function addToMutationQueue(query: string, params: any) {
 async function performMutation(
   storeId: string,
   data: any,
-  action: PersistanceActionType,
-  query?: string,
-  isMutatingSelfOnly: boolean = false
+  params: IMutationParams
 ) {
-  logger.log({
-    context: "dataManager.performMutation",
-    storeId,
-    action,
-    data
-  });
-  // if (!get(account).isLoggedIn) return;
   const dm = get(dataManager);
-  let mutatingResources: string[] = [];
-  let isKVStore: boolean = false;
-  if (isMutatingSelfOnly) {
-    const mutatedAt = surrealUnixTimestamp();
-    dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
-    data = { ...data, mutatedAt };
-    mutatingResources = [storeId];
-  } else {
-    const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
-    if (!store) return;
-    const storeData = get(store);
-    mutatingResources = storeData.mutatingResources;
-    if (storeData.dataType === StoreDataType.KVO) {
-      isKVStore = true;
-    }
-    if (!mutatingResources) {
-      mutatingResources = [storeId];
-    }
+  const mutatedAt = surrealUnixTimestamp();
+  data = { ...data, mutatedAt };
+  const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
+  const mutationQuery = resolveMutationQuery2();
+  const mutationParams =
+    params.action === PersistanceActionType.CUSTOM_QUERY
+      ? { ...data }
+      : { data };
+  const mutationId = params.queueParams?.mutationId ?? generateUID();
+  if (params.queueParams?.isUseQueueFirstApproach) {
+    addToMutationQueue(mutationId, mutationQuery, mutationParams);
+    return;
   }
-  const defferedStores = propagateToEagerStores(mutatingResources, data);
+  const defferedStores = propagateToEagerStores(resources, data);
   const refreshQueryForDeferredStores =
     await resolveStoresRefreshQuery(defferedStores);
-  let mutationQuery: string = "";
-  if (action === PersistanceActionType.CUSTOM_QUERY && query)
-    mutationQuery = query;
-  else {
-    let id = data?.id;
-    if (isKVStore && !storeId.includes("kv:")) {
-      id = "kv:" + storeId;
-      data.id = id;
-    }
-    mutationQuery = resolveMutationQuery(
-      action,
-      id,
-      data.modifiedBy ? data.modifiedBy : ""
-    );
-  }
+
   let dbFullQuery: string = `${mutationQuery};`;
   if (refreshQueryForDeferredStores) {
     dbFullQuery += `${refreshQueryForDeferredStores}`;
   }
-  const mutationParams =
-    action === PersistanceActionType.CUSTOM_QUERY ? { ...data } : { data };
   logger.log({ context: "mutation full query:", dbFullQuery });
   const surrealDb = dm.db;
   let response = await surrealDb.query(dbFullQuery, mutationParams);
   if (!isValidArrayWithData(response)) {
-    addToMutationQueue(mutationQuery, mutationParams);
+    addToMutationQueue(mutationId, mutationQuery, mutationParams);
     return;
   }
   response = response.map((x: any) => checkSurrealResponse(x));
@@ -302,7 +273,47 @@ async function performMutation(
   propagateToDefferedStores(defferedStores, response);
   //TODO - if required - fetch serverMutationMap along with response of mutation and run refreshStaleData
   if (mutationResponse) return mutationResponse;
-  addToMutationQueue(mutationQuery, mutationParams);
+  addToMutationQueue(mutationId, mutationQuery, mutationParams);
+
+  function resolveMutationQuery2() {
+    if (params.action === PersistanceActionType.CUSTOM_QUERY && params.query)
+      return params.query;
+    else {
+      let id = data?.id;
+      if (isKVStore && !storeId.includes("kv:")) {
+        id = "kv:" + storeId;
+        data.id = id;
+      }
+      return resolveMutationQuery(
+        params.action,
+        id,
+        data.modifiedBy ? data.modifiedBy : ""
+      );
+    }
+  }
+
+  /**
+   * Resolves the resources that are being mutated and updates the mutation map. These resources are used to determine the dependant stores.
+   * @returns the resources that are being mutated.
+   */
+  function resolveMutatingResources(
+    mutatedAt: number = +(new Date().getTime() / 1000).toFixed()
+  ) {
+    if (params.isMutatingSelfOnly) {
+      dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
+      return { resources: [storeId], isKVStore: false };
+    } else {
+      const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
+      if (!store) return { resources: [], isKVStore: false };
+      const storeData = get(store);
+      const mutatingResources = storeData.mutatingResources;
+      if (mutatingResources) return mutatingResources;
+      return {
+        resources: [storeId],
+        isKVStore: storeData.dataType === StoreDataType.KVO
+      };
+    }
+  }
 
   /**
    * Propagates the changes to the dependant stores with eager sync type and returns the deffered stores.
@@ -312,6 +323,7 @@ async function performMutation(
    */
   function propagateToEagerStores(mutatingResources: string[], data: any) {
     let defferedStores: CacheableStoreContract[] = [];
+    if (!mutatingResources) return defferedStores;
     mutatingResources.forEach((resource: string) => {
       const dependantStores = resolveDependantStores(resource);
       dependantStores.forEach((x) => {

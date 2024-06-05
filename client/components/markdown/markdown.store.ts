@@ -16,7 +16,10 @@ import {
   isEmptyArray,
   isValidArrayWithData
 } from "$lib/client/utils/obj.utils";
-import { generateMarkdownText } from "$lib/client/utils/text.utils";
+import {
+  generateMarkdownText,
+  prefixTable
+} from "$lib/client/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
 import {
@@ -31,6 +34,7 @@ import type {
   IListOperation,
   IBlockOperationContext
 } from "$lib/client/types/memotron/md.type";
+import { Item } from "$lib/client/types/item.enum";
 
 export const emptyBlock: Block = {
   contentType: NodeType.SIMPLE_TEXT,
@@ -80,33 +84,33 @@ function insertBlock(
   params: IBlockOperationContext
 ) {
   const { id, blockType, listType } = params;
+  let newBlock: Partial<Block<NodeContent>> = {
+    id: prefixTable(generateUID(), Item.node),
+    body: ""
+  };
+  if (
+    params.blockType &&
+    params.blockType != NodeType.LIST &&
+    params.blockType != NodeType.NODULAR_MARKDOWN
+  ) {
+    newBlock = {
+      ...newBlock,
+      contentType: params.blockType ?? NodeType.SIMPLE_TEXT
+    } as Block<TextContent | LayoutContent | StructuralContent>;
+  } else if (params.blockType === NodeType.LIST) {
+    newBlock = {
+      ...newBlock,
+      contentType: NodeType.LIST,
+      listType: params.listType ?? ListType.UNORDERED
+    };
+  } else {
+    newBlock = {
+      ...newBlock,
+      contentType: NodeType.SIMPLE_TEXT
+    };
+  }
   updater((store) => {
     const contextBlockIndex = store.blocks.findIndex((b) => b.id === id);
-    let newBlock: Block<NodeContent>;
-    if (
-      params.blockType &&
-      params.blockType != NodeType.LIST &&
-      params.blockType != NodeType.NODULAR_MARKDOWN
-    ) {
-      newBlock = {
-        id: generateUID(),
-        contentType: params.blockType ?? NodeType.SIMPLE_TEXT,
-        body: ""
-      } as Block<TextContent | LayoutContent | StructuralContent>;
-    } else if (params.blockType === NodeType.LIST) {
-      newBlock = {
-        id: generateUID(),
-        contentType: NodeType.LIST,
-        listType: params.listType ?? ListType.UNORDERED,
-        body: ""
-      };
-    } else {
-      newBlock = {
-        id: generateUID(),
-        contentType: NodeType.SIMPLE_TEXT,
-        body: ""
-      };
-    }
     if (!newBlock) return store;
     store.blocks = [
       ...store.blocks.slice(0, contextBlockIndex + 1),
@@ -117,6 +121,7 @@ function insertBlock(
     // store = handleNodeMarkdownChildHierarchyChanges(store, id, newBlock, true);
     return store;
   });
+  return newBlock.id;
 }
 
 /**
@@ -134,7 +139,7 @@ function insertStructualBlock(
       (b) => b.id === contextBlockId
     );
     const newBlock: Block<StructuralContent> = {
-      id: generateUID(),
+      id: prefixTable(generateUID(), Item.node),
       contentType: blockType
     };
     store.blocks = [

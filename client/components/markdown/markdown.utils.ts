@@ -232,7 +232,9 @@ export function replaceSymbolPatterns(text: string) {
 
 export function isEmptyMd(md: IMarkdown) {
   return (
-    md.blocks.length === 0 ||
-    ("body" in md.blocks[0] && md.blocks[0].body === "")
+    md?.blocks?.length === 0 ||
+    (md?.blocks?.length === 1 &&
+      "body" in md.blocks[0] &&
+      md.blocks[0].body === "")
   );
 }

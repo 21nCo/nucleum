@@ -1,31 +1,76 @@
 <script lang="ts">
-  import { contentPreview } from "$lib/client/utils/node.utils";
-  import Markdown from "$lib/client/components/markdown/Markdown.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import { isInEditMode } from "$lib/client/stores/app.store";
-  import { NodeType } from "$lib/client/types/memotron/node.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import {
+    NodeType,
+    type INodeStructure
+  } from "$lib/client/types/memotron/node.type";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { resolveActiveNodeStore } from "./node.store";
+  import { hierarchyFactorLimit, resolveActiveNodeStore } from "./node.store";
+  import NodularMarkdown from "../../markdown/NodularMarkdown.svelte";
+  import {
+    deepCopy,
+    isValidArrayWithData,
+    shallowDiff
+  } from "$lib/client/utils/obj.utils";
   export let id: string;
   export let mdId: string;
+  let previousRootStructure: string[] = [];
   const node = resolveActiveNodeStore(id);
+  // const nodePersistance = new NodePersistance($account.userInfo?.id ?? "");
+  function onMarkdownContentChange(e: CustomEvent) {
+    console.log("Markdown content changed", { e });
+    if (e.detail.block.id && "body" in e.detail.block) {
+      node.updateBlock(e.detail.block.id, { body: e.detail.block.body });
+    }
+  }
+  async function onMarkdownInsertChanges(e: CustomEvent) {
+    console.log("Markdown insert changes", { e });
+    const detail = e.detail;
+    if (!detail?.id) return;
+    const result = await node.createBlock(
+      detail.id,
+      detail.blockType ?? NodeType.SIMPLE_TEXT
+    );
+  }
+  function onMarkdownConvertChanges(e: CustomEvent) {
+    console.log("Markdown convert changes", { e });
+    if (e.detail.id && e.detail.blockType) {
+      node.updateBlock(e.detail.id, { contentType: e.detail.blockType });
+    }
+  }
+  function onMarkdownBlockDelete(e: CustomEvent) {
+    console.log("Markdown block deleted", { e });
+    if (!e.detail.id) return;
+    node.deleteBlock(e.detail.id);
+  }
+  function onReStructure(e: CustomEvent) {
+    console.log("Markdown restructured", { e });
+    const differences = shallowDiff(previousRootStructure, e.detail.root);
+    console.log("Differences", differences);
+    if (isValidArrayWithData(differences)) {
+      node.updateBlock(id, { children: e.detail.root });
+    }
+    previousRootStructure = deepCopy(e.detail.root);
+    if (!e.detail.children) return;
+    e.detail.children
+      .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
+      .forEach((child: INodeStructure) => {
+        node.updateBlock(child.id, { children: child.children });
+      });
+  }
 </script>
 
 <div class="flex flex-col h-full flex-grow pl-12 pt-2">
   {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node))}
-    <Markdown
-      id={mdId}
-      md={"body" in $node &&
-      $node?.contentType === NodeType.NON_NODULAR_MARKDOWN
-        ? $node.body
-        : $node}
-      params={{
-        isNodular: true,
-        isReadOnly: false,
-        actions: ["cop--y", "cop--yRaw"]
-      }}
+    <NodularMarkdown
+      node={$node}
+      {mdId}
+      md={$node.md}
+      on:change={onMarkdownContentChange}
+      on:insert={onMarkdownInsertChanges}
+      on:convert={onMarkdownConvertChanges}
+      on:delete={onMarkdownBlockDelete}
+      on:restructure={onReStructure}
     />
   {:else if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
     <audio controls src={$node.body?.url} />

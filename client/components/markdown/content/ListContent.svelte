@@ -54,6 +54,7 @@
       on:shifttab={handleTab}
       on:change
       on:insert
+      on:convert
       on:delete
       {mdStore}
       {isHovering}
@@ -71,6 +72,8 @@
           block={item}
           on:change
           on:insert
+          on:convert
+          on:delete
         />
       {/each}
     {/if}

@@ -170,8 +170,8 @@
       (event.key === "Enter" && event.metaKey)
     ) {
       if (block.id && !isRelayOperations) {
-        mdStore.insert({ id: block.id });
-        dispatch("insert", block.id);
+        const newBlockId = mdStore.insert({ id: block.id });
+        dispatch("insert", { insertedAt: block.id, id: newBlockId });
       } else if (block.body != "") {
         dispatch("insertrelay", block.id);
       }
@@ -179,7 +179,7 @@
     } else if (event.key === "Backspace" && !block.body) {
       if (block.id && !isRelayOperations) {
         mdStore.deleteBlock(block.id);
-        dispatch("delete", block.id);
+        dispatch("delete", { id: block.id });
       } else {
         dispatch("deleterelay", block.id);
       }
@@ -202,7 +202,19 @@
       //delete the parent <div> of the text node and insert new block with the type
       block.body = block.body.replace(shortcut, "");
       textRef.replace(shortcut, "");
-      if (block.id) mdStore.insert({ id: block.id, blockType: type, listType });
+      if (block.id) {
+        const newBlockId = mdStore.insert({
+          id: block.id,
+          blockType: type,
+          listType
+        });
+        dispatch("insert", {
+          insertedAt: block.id,
+          blockType: type,
+          listType,
+          id: newBlockId
+        });
+      }
       setTimeout(() => {
         let parent = undefined;
         if (block.id) parent = document.getElementById(block.id);
@@ -239,8 +251,10 @@
       ({ shortcut, type }) => {
         if (block.body.startsWith(shortcut)) {
           block.body = block.body.replace(shortcut, "");
+          dispatchChangeEvent();
           textRef.replace(shortcut, "");
           block.contentType = type;
+          dispatch("convert", { id: block.id, blockType: type });
           return true;
         } else {
           return handleEscShortcutForSecondaryLines(shortcut, type);
@@ -252,6 +266,7 @@
       ({ shortcut, type }) => {
         if (block.body === shortcut) {
           block.body = "";
+          dispatchChangeEvent();
           textRef.set("");
           //TODO - handling structural block insertion for list
           if (block.contentType === NodeType.LIST || !block.id) return false;
@@ -266,6 +281,7 @@
       ({ shortcut, listType }) => {
         if (block.body.startsWith(shortcut)) {
           block.body = block.body.replace(shortcut, "");
+          dispatchChangeEvent();
           textRef.replace(shortcut, "");
           mdStore.convert({ id: block.id, blockType: NodeType.LIST, listType });
           return true;
@@ -283,6 +299,9 @@
       isStructuralShortcutPresent ||
       isListShortcutPresent
     );
+  }
+  function dispatchChangeEvent() {
+    dispatch("change", { id: block.id, body: block.body });
   }
   /**
    * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
@@ -306,9 +325,10 @@
       handleBackspaceAtBeginOfLine
     ];
     for (const func of steps) {
-      if (func()) return;
+      if (func()) break;
     }
     mdContentChangeEvent.trigger();
+    dispatchChangeEvent();
     /**
      * Handles backspace key entry if occured at the start of the block
      *
@@ -324,6 +344,8 @@
      * If the block is empty: Deletes the block and shifts focus to the previous block if it exists
      *
      *
+     * TODO - check for the need for dispatch("delete") in else - delete of block and delete relay is happening in keydown fn.. this is causing issues in Nodular Markdown - double delete events and this event is passing previous block id
+     *
      */
     function handleBackspaceAtBeginOfLine() {
       if (event.key != "Backspace" || !(caretPosition === 0)) return false;
@@ -332,12 +354,13 @@
         mdStore.convert({ id: block.id, blockType: NodeType.SIMPLE_TEXT });
       } else if (block.contentType != NodeType.SIMPLE_TEXT) {
         block.contentType = NodeType.SIMPLE_TEXT;
+        dispatch("convert", { id: block.id, blockType: NodeType.SIMPLE_TEXT });
       } else if (block.body != "") {
         //TODO - Move the content to the previous block, delete the current block and focus the previous block
         mdStore.focusPreviousSibling(block.id);
         event.preventDefault();
       } else {
-        dispatch("delete", { id: block.id });
+        // dispatch("delete", { id: block.id });
       }
       return true;
     }
@@ -402,12 +425,22 @@
     if (parts[0]) {
       block.body = parts[0];
       textRef.removeSlashText();
-      mdStore.insert({ id: block.id, blockType: event.detail.type });
+      const newBlockId = mdStore.insert({
+        id: block.id,
+        blockType: event.detail.type
+      });
+      dispatch("insert", {
+        insertedAt: block.id,
+        blockType: event.detail.type,
+        id: newBlockId
+      });
     } else {
       block.body = "";
       textRef.set("");
-      if (block.id)
+      if (block.id) {
         mdStore.convert({ id: block.id, blockType: event.detail.type });
+        dispatch("convert", { id: block.id, blockType: event.detail.type });
+      }
     }
     hideBlockBrowser();
   }
@@ -457,9 +490,7 @@
           isMarkdown={true}
           on:keydown={handleKeyDown}
           on:keyup={handleKeyUp}
-          on:input={() => {
-            dispatch("change", { id: block.id, body: block.body });
-          }}
+          on:change={dispatchChangeEvent}
           on:focus={() => {
             isFocusing = true;
           }}

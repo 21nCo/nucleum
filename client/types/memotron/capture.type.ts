@@ -1,7 +1,12 @@
 import type { Avatar } from "$lib/client/types/avatar.type";
 import type { ICacheableStore } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
-import type { LinkThumbnail, MediaBody, INodeProperty } from "./node.type";
+import type {
+  LinkThumbnail,
+  MediaBody,
+  INodeProperty,
+  INodeStructure
+} from "./node.type";
 
 export enum CaptureType {
   ANY = "Any",
@@ -21,6 +26,8 @@ export type CaptureStore = ICacheableStore & {
   captureType: CaptureType | string;
   type?: any;
   body: IMarkdown | MediaBody;
+  childrenWithStructure: INodeStructure[];
+  rootStructure: string[];
   fileDetails?: FileDetails;
   links: LinkThumbnail[];
   properties?: INodeProperty[];

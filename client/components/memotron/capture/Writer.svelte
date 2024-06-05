@@ -1,26 +1,21 @@
 <script lang="ts">
   import { captureStore } from "$lib/client/components/memotron/capture/capture.store";
   import { CaptureType } from "$lib/client/types/memotron/capture.type";
-  import Markdown from "$lib/client/components/markdown/Markdown.svelte";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import AudioCapture from "./AudioCapture.svelte";
+  import NodularMarkdown from "../../markdown/NodularMarkdown.svelte";
+  import { deepCopy } from "$lib/client/utils/obj.utils";
   export let isEmptyState: boolean = true;
   refreshEmptyState();
   let isShowTOC: boolean = false;
   function onFileChanges(event: any) {
     captureStore.setFile(event.detail);
   }
-  function refreshEmptyState() {
+  function refreshEmptyState(e?: CustomEvent) {
     isEmptyState =
       $captureStore.captureType === CaptureType.MARKDOWN &&
       "blocks" in $captureStore.body &&
-      isEmptyMd($captureStore.body);
-  }
-  function onBlockChanges(event: any) {
-    console.log("onBlockChanges", { event, body: $captureStore.body });
-  }
-  function onBlockInsert(event: any) {
-    console.log("onBlockInsert", { event, body: $captureStore.body });
+      isEmptyMd(e?.detail || $captureStore.body);
   }
 </script>
 
@@ -39,17 +34,13 @@
     </div>
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px-10">
-      <Markdown
+      <NodularMarkdown
+        isNodular={true}
+        mdId={$captureStore.id}
         bind:md={$captureStore.body}
-        params={{
-          isNodular: true,
-          placeholder: "Start typing or choose a type to get started...",
-          canUseSlashShortcut: true,
-          isReadOnly: false
-        }}
-        on:blocks={refreshEmptyState}
-        on:change={onBlockChanges}
-        on:insert={onBlockInsert}
+        bind:childrenWithStructure={$captureStore.childrenWithStructure}
+        bind:rootStructure={$captureStore.rootStructure}
+        on:change={refreshEmptyState}
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

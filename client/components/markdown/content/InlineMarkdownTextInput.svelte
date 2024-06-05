@@ -99,6 +99,8 @@
   }
   export function removeSlashText() {
     innerHTML = innerHTML.split("/")[0];
+    content = blockRef.textContent;
+    dispatch("change", content);
   }
 
   /**

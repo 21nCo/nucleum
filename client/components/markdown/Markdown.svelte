@@ -18,14 +18,17 @@
   export let id: string | undefined = undefined;
   let mdId: string = id ?? generateUID();
   const mdStore = getMdStore(mdId);
-  console.log("md", md);
+  // console.log(
+  //   "md",
+  //   md.blocks.map((x) => x.id)
+  // );
   mdStore.load(md, params);
   // $: console.log("blocks", $mdStore.blocks);
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       // console.log("md content changed", val);
-      dispatch("blocks", $mdStore.blocks);
       if ("blocks" in md) md = { ...md, blocks: $mdStore.blocks };
+      dispatch("blocks", $mdStore.blocks);
     });
     return () => {
       mdChangeSub();
@@ -78,7 +81,34 @@
   </div>
   <div class="grow w-full">
     {#each $mdStore.blocks as block (block.id)}
-      <Block {block} {mdStore} {mdId} on:change on:insert />
+      <Block
+        {block}
+        {mdStore}
+        on:change={(e) => {
+          dispatch("change", {
+            ...e.detail,
+            md: { ...md, blocks: $mdStore.blocks }
+          });
+        }}
+        on:insert={(e) => {
+          dispatch("insert", {
+            ...e.detail,
+            md: { ...md, blocks: $mdStore.blocks }
+          });
+        }}
+        on:delete={(e) => {
+          dispatch("delete", {
+            ...e.detail,
+            md: { ...md, blocks: $mdStore.blocks }
+          });
+        }}
+        on:convert={(e) => {
+          dispatch("convert", {
+            ...e.detail,
+            md: { ...md, blocks: $mdStore.blocks }
+          });
+        }}
+      />
     {/each}
   </div>
 </div>

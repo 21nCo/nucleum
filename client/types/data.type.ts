@@ -147,3 +147,15 @@ export enum PersistanceActionType {
   CUSTOM_QUERY = "CUSTOM_QUERY",
   CUSTOM_CREATE = "CUSTOM_CREATE"
 }
+
+export interface IMutationParams {
+  action: PersistanceActionType;
+  query?: string;
+  isMutatingSelfOnly?: boolean;
+  queueParams?: IMutationQueueParams;
+}
+
+export interface IMutationQueueParams {
+  isUseQueueFirstApproach: boolean;
+  mutationId: string;
+}

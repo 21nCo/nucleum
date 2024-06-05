@@ -307,7 +307,7 @@ function initUserPreferences() {
         ...n,
         id: Item.globalPreferences
       },
-      PersistanceActionType.MERGE
+      { action: PersistanceActionType.MERGE }
     );
   };
   const cache = async (n: UserGlobalPreferences) => {

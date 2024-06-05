@@ -10,6 +10,7 @@
     type INodeThumbnail
   } from "$lib/client/types/memotron/node.type";
   import NodeItems from "$lib/client/components/memotron/common/NodeItems.svelte";
+  import account from "$lib/client/stores/account.store";
   export let context: "journal" | "journal-modal-viewer" = "journal";
   export let parentBgIndex: number = 0;
   export let nodes: INodeThumbnail[] = [];
@@ -20,9 +21,9 @@
   async function refresh() {
     isLoadingState = true;
     nodes = [];
-    const result = await new NodePersistance().fetchTimeline(
-      $selectedTimePeriod
-    );
+    const result = await new NodePersistance(
+      $account.userInfo?.id ?? ""
+    ).fetchTimeline($selectedTimePeriod);
     if (isValidArrayWithData(result)) {
       nodes = result.sort(
         (a: INodeThumbnail, b: INodeThumbnail) =>

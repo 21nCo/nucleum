@@ -74,6 +74,8 @@
       bind:isFocusing
       on:change
       on:insert
+      on:convert
+      on:delete
       on:blur={() => {
         isHovering = false;
       }}

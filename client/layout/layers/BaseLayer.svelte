@@ -42,6 +42,7 @@
   import { settingsAsModal, settingsAsPages } from "../settingsActionMap";
   import { localActions } from "$local/stores/localActionMap";
   import { localCacheableStores } from "$local/stores/localStoresMap";
+  import MutationQueueLayer from "./MutationQueueLayer.svelte";
   // import { localActions, localCacheableStores } from "$local/local";
 
   /**
@@ -253,6 +254,7 @@
 {#if $appLoadingState.isBaseLoaded}
   <ModalLayer />
   <Shortcuts />
+  <MutationQueueLayer />
 {/if}
 <Intercom />
 <CacheLayer />

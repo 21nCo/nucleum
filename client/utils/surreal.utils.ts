@@ -54,6 +54,13 @@ export function resolveMutationQuery(
   return modifiedQuery + mutationMapEntry(record);
 }
 
+/**
+ *
+ * Any object property where the value is undefined is replaced with $NONE and further replaced with non string NONE - this is to remove the existing value for that field on Surreal effectively as sending "NONE" or null will not remove the field and also cause field type mismatch for SCHEMAFULL tables
+ * @param query
+ * @param params
+ * @returns
+ */
 export function replaceParams(query: string, params: any) {
   // if (params) {
   //   for (const key in params) {
@@ -64,11 +71,12 @@ export function replaceParams(query: string, params: any) {
     let replaceWith;
     if (typeof params[key] === "object")
       replaceWith = JSON.stringify(params[key], (key, value) =>
-        value === undefined ? null : value
+        value === undefined ? `$NONE` : value
       );
     else if (typeof params[key] === "string") replaceWith = `"${params[key]}"`;
     else replaceWith = params[key];
     query = query.replaceAll("$" + key, `${replaceWith}`);
+    query = query.replaceAll(`"$NONE"`, `NONE`);
   }
   return query;
 }

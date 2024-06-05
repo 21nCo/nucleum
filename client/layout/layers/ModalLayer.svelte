@@ -42,8 +42,9 @@
   let pop: { path: string; resource: string; params: ModalParams } | undefined;
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
+  let isShowSyncErrorMessage: boolean = false;
   let mutationQueue = liveQuery(() =>
-    $dataManager.cacheSource.dexie.mutationQueue.toArray()
+    $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
   );
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: AppEventType) => {
@@ -150,7 +151,7 @@
   </div>
 {/if}
 
-{#if (isValidArrayWithData($toasts) || isValidArrayWithData($mutationQueue)) && !$view.isPortrait}
+{#if (isValidArrayWithData($toasts) || (isValidArrayWithData($mutationQueue) && isShowSyncErrorMessage)) && !$view.isPortrait}
   <div
     class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}

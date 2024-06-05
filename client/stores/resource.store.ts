@@ -6,7 +6,7 @@ import type { ResourcePersistance } from "./resource.persistance";
 export class ActiveResourceStore<T> {
   id: string;
   protected store = writable<T>();
-  protected debouncedPersist: any;
+  protected debouncedPersistBlock: any;
   protected persistance: ResourcePersistance;
   protected currentUserId: string;
   subscribe = this.store.subscribe;
@@ -22,7 +22,7 @@ export class ActiveResourceStore<T> {
     this.currentUserId = currentUserId;
     const updatePropagator = (val: Partial<DbRecord>) =>
       this.persistance.modify(this.id, val);
-    this.debouncedPersist = debouncer(updatePropagator, 2000);
+    this.debouncedPersistBlock = debouncer(updatePropagator, 2000);
   }
   modify(val: Partial<T>) {
     this.update((prev: T) => ({ ...prev, ...val }));
@@ -30,13 +30,13 @@ export class ActiveResourceStore<T> {
   }
   debouncedModify(val: Partial<T>) {
     this.update((prev: T) => ({ ...prev, ...val }));
-    return this.debouncedPersist(val);
+    return this.debouncedPersistBlock(val);
   }
   /**
    * @deprecated - use {@link debouncedModify} instead
    */
   propagateTitleChange(label: string) {
-    return this.debouncedPersist({ label });
+    return this.debouncedPersistBlock({ label });
   }
   delete() {
     this.update((prev: T) => ({

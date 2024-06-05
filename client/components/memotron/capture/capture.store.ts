@@ -11,7 +11,8 @@ import {
   type LinkThumbnail,
   type INodeCapture,
   LinkType,
-  type INodeProperty
+  type INodeProperty,
+  type INodeItemCaptured
 } from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,
@@ -26,7 +27,6 @@ import {
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
 import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
-import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
 import {
   persistLocally,
@@ -35,32 +35,38 @@ import {
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
 import { dataManager } from "$lib/client/stores/data.store";
 import account from "$lib/client/stores/account.store";
-import { nodes } from "../node/node.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import { NodePersistance } from "$lib/client/stores/node.persistance";
+import { prefixTable } from "$lib/client/utils/text.utils";
+import { resolveNodeCaptureMetadata } from "$lib/client/utils/node.utils";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-const seedStore: CaptureStore = {
-  id: Item.capture,
-  dataType: StoreDataType.KVO,
-  captureType: CaptureType.MARKDOWN,
-  refreshId: new Date().getTime(),
-  type: null,
-  label: "",
-  properties: [],
-  links: [],
-  avatar: undefined,
-  body: {
-    blocks: [
-      {
-        contentType: NodeType.SIMPLE_TEXT,
-        body: "",
-        id: generateUID()
-      }
-    ]
-  }
-};
+function generateSeedStore(): CaptureStore {
+  const blockId = prefixTable(generateUID(), Item.node);
+  return {
+    id: Item.capture,
+    dataType: StoreDataType.KVO,
+    captureType: CaptureType.MARKDOWN,
+    refreshId: new Date().getTime(),
+    type: null,
+    label: "",
+    properties: [],
+    links: [],
+    avatar: undefined,
+    childrenWithStructure: [],
+    rootStructure: [],
+    body: {
+      blocks: [
+        {
+          contentType: NodeType.SIMPLE_TEXT,
+          body: "",
+          id: blockId
+        }
+      ]
+    }
+  };
+}
 const locallyPersistedCapture = retrieveLocally(Item.capture);
 
 export const captureStore = initCaptureStore();
@@ -118,44 +124,31 @@ async function onTypeSelect(updater: any, val: CaptureType | string) {
 async function save(setter: any) {
   const val = get(captureStore);
   //TODO - extract nodes from markdown blocks and save
-  //Ask for location
-  let geoLocation: GeolocationPosition | undefined;
-  try {
-    geoLocation = await getGeoLocation();
-  } catch (e) {
-    console.error({ e });
-  }
-  console.log("capture store", { val, geoLocation });
-  let nodeToBeSaved: Omit<
-    INodeCapture,
-    "id" | "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
-  > = {
+  const metadata = await resolveNodeCaptureMetadata();
+  console.log("capture store", { val, metadata });
+  let root: INodeItemCaptured = {
+    id: prefixTable(generateUID(), Item.node),
     label: val.label ?? "",
-    avatar: val.avatar,
     properties: val.properties,
     type: val.type?.id,
+    body: "",
     contentType:
       val.captureType === CaptureType.AUDIO
         ? NodeType.AUDIO
         : val.captureType === CaptureType.CAMERA
           ? NodeType.IMAGE
           : val.captureType === CaptureType.MARKDOWN
-            ? NodeType.NON_NODULAR_MARKDOWN
+            ? NodeType.NODULAR_MARKDOWN
             : val.captureType.includes("type:")
-              ? NodeType.NON_NODULAR_MARKDOWN
+              ? NodeType.NODULAR_MARKDOWN
               : NodeType.SIMPLE_TEXT,
-    metadata: {
-      location: {
-        latitude: geoLocation?.coords.latitude ?? 0,
-        longitude: geoLocation?.coords.longitude ?? 0,
-        accuracy: geoLocation?.coords.accuracy ?? 0
-      }
-    },
+    metadata,
     links:
       val.links?.map((link) => {
         return { id: link.id, linkType: link.linkType };
       }) ?? []
   };
+  let remainingResources: INodeItemCaptured[] = [];
   if (val.fileDetails) {
     const contentType = val.fileDetails.type;
     // const blob = new Blob(val.fileDetails.data, {
@@ -168,8 +161,8 @@ async function save(setter: any) {
     );
     console.log("save file:", { result });
     if (result) {
-      nodeToBeSaved = {
-        ...nodeToBeSaved,
+      root = {
+        ...root,
         body: {
           ...val.fileDetails,
           ...result,
@@ -178,15 +171,33 @@ async function save(setter: any) {
       };
     }
   } else if ("blocks" in val.body) {
-    nodeToBeSaved = {
-      ...nodeToBeSaved,
-      body: val.body
+    root = {
+      ...root,
+      children: val.rootStructure
     };
+    remainingResources = val.childrenWithStructure.map((block) => {
+      const correspondingContent = val.body.blocks.find(
+        (b) => b.id === block.id
+      );
+      //TODO - links for each block
+      return {
+        id: block.id,
+        contentType: correspondingContent.contentType,
+        body: correspondingContent.body,
+        metadata: root.metadata,
+        creationContext: root.id,
+        children: block.children,
+        links: []
+      };
+    });
   }
-  console.log({ nodeToBeSaved });
-  let result = await new NodePersistance(currentUserId).create(nodeToBeSaved);
+  let nodeCapture: INodeCapture = {
+    resources: [root, ...remainingResources]
+  };
+  console.log({ nodeToBeSaved: nodeCapture });
+  let result = await new NodePersistance(currentUserId).createNode(nodeCapture);
   if (result) {
-    setter({ ...seedStore });
+    setter({ ...generateSeedStore() });
     toasts.trigger({
       id: generateUID(),
       type: AlertType.SUCCESS,
@@ -206,7 +217,7 @@ async function save(setter: any) {
 
 function initCaptureStore() {
   const { subscribe, set, update } = writable<CaptureStore>(
-    locallyPersistedCapture ?? deepCopy(seedStore)
+    locallyPersistedCapture ?? { ...generateSeedStore() }
   );
   dataManager.retrieveCache(Item.capture).then((x) => {
     if (x) {
@@ -218,7 +229,7 @@ function initCaptureStore() {
     dataManager.performMutation(
       Item.capture,
       { ...val },
-      PersistanceActionType.MERGE
+      { action: PersistanceActionType.MERGE }
     );
   };
   const cache = (val: CaptureStore) => {
@@ -229,12 +240,12 @@ function initCaptureStore() {
   return {
     subscribe,
     set: (val: CaptureStore) => {
-      // console.log("set capture store", val);
       set(val);
       debouncedPersist(val);
     },
     update,
     reset: () => {
+      const seedStore = generateSeedStore();
       set({ ...seedStore, refreshId: new Date().getTime() });
       persist({ ...seedStore, refreshId: new Date().getTime() });
       console.log("reset capture store", get(captureStore));

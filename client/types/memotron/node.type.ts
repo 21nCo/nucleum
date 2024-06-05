@@ -8,17 +8,29 @@ import type { ICacheableStore } from "../data.type";
 export type INode = INodeBase &
   NodeContent & {
     metadata: NodeMetadata;
-    children?: INode[];
+    children?: INode[] | string[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
   };
 
-export type INodeCapture = INodeBase &
+export type INodeItemCaptured = Omit<
+  INodeBase,
+  "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
+> &
   NodeContent & {
-    type: string;
-    metadata: NodeMetadataCapturedAtClient;
+    type?: string;
+    children?: string[];
+    /**
+     * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
+     * This helps in determining what to show as items on a timeline etc.
+     */
+    creationContext?: string;
+    metadata?: NodeMetadataCapturedAtClient;
     links?: Link[];
   };
+export type INodeCapture = {
+  resources: INodeItemCaptured[];
+};
 
 export type NodeDbType = INode & DbRecordBase;
 
@@ -41,6 +53,7 @@ export type INodeBase = Omit<IMemotronItemBase, "label"> & {
 
 export type IActiveNode = INode & {
   type: IType;
+  md: IMarkdown;
 };
 
 export type NodeContent =
@@ -155,7 +168,7 @@ export enum NodeType {
   HEADING3 = "HEADING3",
   HEADING4 = "HEADING4",
   HEADING5 = "HEADING5",
-  SIMPLE_TEXT = "SIMEPLE_TEXT",
+  SIMPLE_TEXT = "SIMPLE_TEXT",
   QUOTE = "QUOTE",
   CODE = "CODE",
   MATH = "MATH",
@@ -204,16 +217,18 @@ export const ClipNodeTypeList = [
   NodeType.PDF_CLIP,
   NodeType.VIDEO_TIMESTAMP_CLIP
 ];
-
-export const TextNodeTypeList = [
-  NodeType.SIMPLE_TEXT,
-  NodeType.QUOTE,
-  NodeType.CODE,
+export const headingNodeTypes = [
   NodeType.HEADING1,
   NodeType.HEADING2,
   NodeType.HEADING3,
   NodeType.HEADING4,
   NodeType.HEADING5
+];
+export const TextNodeTypeList = [
+  NodeType.SIMPLE_TEXT,
+  NodeType.QUOTE,
+  NodeType.CODE,
+  ...headingNodeTypes
 ];
 
 export type TextNodeType =
@@ -285,3 +300,25 @@ export enum NodeThumbnailVariant {
 }
 
 export interface INodeStore extends ICacheableStore {}
+
+export type INodeHierarchyV1 = {
+  id: string;
+  factor: number;
+  children: INodeHierarchyV1[];
+};
+
+export type INodeStructure = {
+  id: string;
+  /**
+   * Hierarchy factor to determine the nesting of the blocks in nodular markdown
+   * Ex: Heading 1 -> 1
+   *    Heading 2 -> 2
+   */
+  factor: number;
+  children: string[];
+};
+
+export enum MdChangePropagationType {
+  IMMEDIATE = "IMMEDIATE",
+  DEFERRED = "DEFERRED"
+}

@@ -66,9 +66,11 @@ function initTypeStore() {
       return dataManager.performMutation(
         Item.type,
         { type, properties },
-        PersistanceActionType.CUSTOM_QUERY,
-        "return fn::memotron::type::create($type, $properties);",
-        true
+        {
+          action: PersistanceActionType.CUSTOM_QUERY,
+          query: "return fn::memotron::type::create($type, $properties);",
+          isMutatingSelfOnly: true
+        }
       );
     },
     modify: () => {
@@ -77,8 +79,8 @@ function initTypeStore() {
     delete: (id: string) => {
       return dataManager.performMutationForIFR(
         Item.type,
-        PersistanceActionType.DELETE,
-        { id }
+        { id },
+        { action: PersistanceActionType.DELETE }
       );
     }
   };

@@ -47,6 +47,7 @@ const seedCurationsStore: ICurationStore = {
 export const curations = initCurationStore();
 
 /**
+ * @deprecated
  * Creates a new curation - propagates the mutation to the server and updates the local cache.
  * @param curation
  * @returns The created curation
@@ -72,9 +73,11 @@ async function createCuration(curation: ICurationCreationForm) {
   return dataManager.performMutation(
     Item.curation,
     { curation: data },
-    PersistanceActionType.CUSTOM_QUERY,
-    "return fn::memotron::curation::create($curation, $mutatedAt);",
-    true
+    {
+      action: PersistanceActionType.CUSTOM_QUERY,
+      query: "return fn::memotron::curation::create($curation, $mutatedAt);",
+      isMutatingSelfOnly: true
+    }
   );
 }
 
@@ -95,8 +98,10 @@ function initCurationStore() {
     delete: (id: string) => {
       return dataManager.performMutationForIFR(
         Item.curation,
-        PersistanceActionType.DELETE,
-        { id }
+        { id },
+        {
+          action: PersistanceActionType.DELETE
+        }
       );
     }
   };

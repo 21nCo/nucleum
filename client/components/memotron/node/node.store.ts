@@ -12,13 +12,15 @@ import type {
   INode,
   INodeCapture,
   INodeProperty,
-  INodeStore
+  INodeStore,
+  NodeType
 } from "$lib/client/types/memotron/node.type";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
 import { ActiveResourceStore } from "$lib/client/stores/resource.store";
 
+export const hierarchyFactorLimit = 5;
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 const seedNodeStore: INodeStore = {
@@ -48,9 +50,11 @@ async function createNode(node: Partial<INodeCapture>) {
   };
   return dataManager.performMutationForIFR(
     Item.node,
-    PersistanceActionType.CUSTOM_CREATE,
     { node: data, links: data.links ?? [] },
-    "return fn::memotron::node::save($node, $links, $mutatedAt);"
+    {
+      action: PersistanceActionType.CUSTOM_CREATE,
+      query: "return fn::memotron::node::save($node, $links, $mutatedAt);"
+    }
   );
 }
 
@@ -60,18 +64,16 @@ async function modifyNode(id: string, node: Partial<INode>) {
     ...node,
     modifiedBy: currentUserId
   };
-  return dataManager.performMutationForIFR(
-    Item.node,
-    PersistanceActionType.MERGE,
-    data
-  );
+  return dataManager.performMutationForIFR(Item.node, data, {
+    action: PersistanceActionType.MERGE
+  });
 }
 
 async function deleteNode(id: string) {
   return dataManager.performMutationForIFR(
     Item.node,
-    PersistanceActionType.DELETE,
-    { id, modifiedBy: currentUserId }
+    { id, modifiedBy: currentUserId },
+    { action: PersistanceActionType.DELETE }
   );
 }
 
@@ -199,7 +201,59 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
   constructor(node: string) {
     super(node, nodePersistance, currentUserId);
   }
+  debouncers = new Map<string, any>();
+  updateBlockPropagator = (
+    id: string,
+    mutationId: string,
+    changedProps: { body?: string; children?: string[] }
+  ) =>
+    nodePersistance.modify(id, changedProps, {
+      mutationId,
+      isUseQueueFirstApproach: true
+    });
+  resolveDebouncerForBlockPersistance(id: string) {
+    if (!this.debouncers.has(id)) {
+      this.debouncers.set(id, debouncer(this.updateBlockPropagator, 2000));
+    }
+    let val = this.debouncers.get(id);
+    return val!;
+  }
   fetch = () => fetchNode(this.id, this.set);
   updateProperties = async (properties: INodeProperty[]) =>
     updateProperties(this.id, this.update, properties);
+  updateBlock = (id: string, changedProps: any) => {
+    const mutationId =
+      `${id}-` +
+      ("children" in changedProps
+        ? "children"
+        : "body" in changedProps
+          ? "body"
+          : "block");
+    const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
+    debouncer(id, mutationId, changedProps);
+  };
+  createBlock = async (id: string, contentType: any) => {
+    return nodePersistance.createNode(
+      {
+        resources: [
+          {
+            id,
+            body: "",
+            contentType,
+            creationContext: this.id
+          }
+        ]
+      },
+      {
+        isUseQueueFirstApproach: true,
+        mutationId: `${id}-create`
+      }
+    );
+  };
+  deleteBlock = async (id: string) => {
+    return nodePersistance.delete(id, {
+      isUseQueueFirstApproach: true,
+      mutationId: `${id}-delete`
+    });
+  };
 }
