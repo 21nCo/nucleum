@@ -9,3 +9,14 @@ import { clsx } from "clsx";
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
+
+/**
+ * A utility function to create an empty transition to be used for conditional transitions
+ * @returns
+ */
+export function emptyTranstition() {
+  return {
+    duration: 1,
+    css: () => `transition: none;`
+  };
+}

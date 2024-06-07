@@ -12,6 +12,7 @@
   export let units: TimeUnit[];
   export let duration: number;
   export let currentUnit: TimeUnit;
+  export let hoursLimit: number | undefined = undefined;
   let isFocusing: boolean = false;
   let value = "";
   $: {
@@ -39,7 +40,7 @@
 
     if (
       units.includes(TimeUnit.HOURS) &&
-      input <= 20 &&
+      ((hoursLimit && input <= hoursLimit) || !hoursLimit) &&
       (!hasLetter || /h(o(u(r)?)?)?.*/i.test(searchQuery.toLowerCase()))
     ) {
       const hours = Math.floor(input);

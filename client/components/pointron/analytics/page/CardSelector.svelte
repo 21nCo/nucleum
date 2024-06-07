@@ -73,14 +73,12 @@
   ];
 </script>
 
-<div class="w-48">
-  <DropDown
-    parentBackgroundIndex={1}
-    on:select
-    bind:value={selected}
-    items={chartTypes}
-    {groups}
-    style={InputStyle.BORDERED}
-    isDisableSearch={true}
-  />
-</div>
+<DropDown
+  parentBackgroundIndex={1}
+  on:select
+  bind:value={selected}
+  items={chartTypes}
+  {groups}
+  style={InputStyle.BORDERED}
+  isDisableSearch={true}
+/>

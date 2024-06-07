@@ -21,15 +21,15 @@
     await dataManager.refresh(Item.pointAnalyticsConfig);
     refreshId = new Date().getTime();
   });
-  function onadd() {
+  function onAddPageClicked() {
     analyticsConfigStore.addPage();
     refreshId = new Date().getTime();
   }
-  function onremove(e: CustomEvent<string>) {
+  function onRemovePageClicked(e: CustomEvent<string>) {
     analyticsConfigStore.removePage(e.detail);
     refreshId = new Date().getTime();
   }
-  function onselect(e: CustomEvent<string>) {
+  function onPageSwitch(e: CustomEvent<string>) {
     console.log("select", e.detail);
     selectedPageId =
       $analyticsConfigStore.pages.find((page) => page.id === e.detail)?.id ??
@@ -41,7 +41,7 @@
       analyticsConfigStore: $analyticsConfigStore
     });
   }
-  function onpagelabelchange(e: CustomEvent<{ value: string; label: string }>) {
+  function onPagelabelChange(e: CustomEvent<{ value: string; label: string }>) {
     if (!e.detail.label || !e.detail.value) return;
     analyticsConfigStore.editPageLabel(e.detail.value, e.detail.label);
   }
@@ -60,38 +60,43 @@
       : 'px-4 pt-4 pb-2'}"
   >
     <div class="flex gap-6 items-center grow">
-      <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
+      {#if $view.isPortrait}
+        <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
+      {/if}
       {#if $view.isPortrait}
         <DropDown
           items={pages}
           value={selectedPageId}
           isDisableSearch={true}
-          on:select={onselect}
+          on:select={onPageSwitch}
         />
+        <EditModeToggle />
       {:else}
         <PanelSwitcher
+          title="Analytics"
           items={pages}
-          style={PanelSwitcherStyle.TRAIN}
-          size={Size.sm}
+          style={PanelSwitcherStyle.SNAKE}
+          isExpandToFullWidth={true}
+          isEnableAnimationForTitle={false}
           isInEditMode={$isInEditMode}
-          on:switch={onselect}
-          on:add={onadd}
-          on:remove={onremove}
-          on:change={onpagelabelchange}
-        />
+          on:switch={onPageSwitch}
+          on:add={onAddPageClicked}
+          on:remove={onRemovePageClicked}
+          on:change={onPagelabelChange}
+        >
+          <div class="flex items-center gap-2" slot="right">
+            {#if $isInEditMode}
+              <Button
+                icon="sync"
+                label="reset"
+                size={Size.xs}
+                on:click={analyticsConfigStore.reset}
+              />
+            {/if}
+            <EditModeToggle />
+          </div>
+        </PanelSwitcher>
       {/if}
-    </div>
-
-    <div class="flex items-center gap-2">
-      {#if $isInEditMode && !$view.isPortrait}
-        <Button
-          icon="sync"
-          label="reset"
-          size={Size.xs}
-          on:click={analyticsConfigStore.reset}
-        />
-      {/if}
-      <EditModeToggle />
     </div>
   </div>
   {#key refreshId}

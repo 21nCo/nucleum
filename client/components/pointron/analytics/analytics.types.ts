@@ -30,6 +30,7 @@ export enum AnalyticsCardGrouping {
 export type AnalyticsPageStore = {
   id: string;
   config: AnalyticsPage;
+  isRefreshing: boolean;
   data: { cards: any; colors: any; previous: any };
 };
 

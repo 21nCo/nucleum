@@ -253,8 +253,17 @@ function initAnalyticsPageStore(config: AnalyticsPage) {
     reset: () => {},
     refresh: async () => {
       console.log("refresh analytics page", { id });
+      update((n) => {
+        return { ...n, isRefreshing: true };
+      });
       const config = get(analyticsConfigStore).pages.find((p) => p.id === id);
-      if (!config) return false;
+      if (!config) {
+        console.error("config not found", id);
+        update((n) => {
+          return { ...n, isRefreshing: false };
+        });
+        return false;
+      }
       // const params = generateParamsForCharts(config.cards.map((c) => c.period));
       const params = generateParamsForCards(config.cards);
       const db = new SurrealDatabase();
@@ -265,8 +274,14 @@ function initAnalyticsPageStore(config: AnalyticsPage) {
         }
       );
       const data = interceptSurrealResponse(res);
-      if (!data) return false;
-      set({ data, id, config });
+      if (!data) {
+        console.error("data not found", id);
+        update((n) => {
+          return { ...n, isRefreshing: false };
+        });
+        return false;
+      }
+      set({ data, id, config, isRefreshing: false });
       console.log("refreshed analytics page", { config, id, data });
       return true;
     }

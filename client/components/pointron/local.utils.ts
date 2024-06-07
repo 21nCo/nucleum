@@ -5,7 +5,6 @@ import {
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
 import {
-  type PointSessionDbType,
   type IntervalBlock,
   BlockType
 } from "$lib/client/types/pointron/session.type";
@@ -45,7 +44,6 @@ export function getTotalsFromComposition(
       sum + (item.type === BlockType.BREAK ? item.duration ?? 0 : 0),
     0
   );
-  console.log({ duration, focus, brek });
   return { duration, focus, brek };
 }
 export function generateBarsFromComposition(composition: SessionComposition) {

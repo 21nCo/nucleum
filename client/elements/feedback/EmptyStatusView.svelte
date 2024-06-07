@@ -7,15 +7,17 @@
   import Button from "../button/Button.svelte";
   import PageLoadingPulse from "./animations/PageLoadingPulse.svelte";
   import LogsLoadingPulse from "./animations/LogsPulse/LogsLoadingPulse.svelte";
+  import DashboardLoadingPulse from "./animations/DashboardPulse/DashboardLoadingPulse.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md = Size.md;
   export let isLoadingState: boolean = false;
   export let actionText: string | undefined = undefined;
-  export let loadingText: string = "Refreshing...";
+  export let loadingText: string | undefined = undefined;
   export let loadingAnimation: LoadingAnimationType =
     LoadingAnimationType.SPINNER;
   export let pulseCount: number = 0;
+  export let parentBgIndex: number = 1;
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center gap-2 px-2">
@@ -23,12 +25,16 @@
     <div class="text-fgs3 text-b3 flex flex-col gap-2 items-center">
       <!-- <InlineLoadingAnimation /> -->
       <PageLoadingAnimation variant="panel-refresh" />
-      <div>{loadingText}</div>
+      {#if loadingText}
+        <div>{loadingText}</div>
+      {/if}
     </div>
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.PAGE_PULSE}
     <PageLoadingPulse />
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.LOGS_PULSE}
     <LogsLoadingPulse count={pulseCount} />
+  {:else if isLoadingState && loadingAnimation === LoadingAnimationType.DASHBOARD_PULSE}
+    <DashboardLoadingPulse />
   {:else}
     <div class="flex flex-col gap-1 items-center">
       {#if size === Size.sm}
@@ -46,7 +52,12 @@
       {/if}
     </div>
     {#if actionText}
-      <Button label={actionText} size={Size.xs} on:click />
+      <Button
+        label={actionText}
+        size={Size.xs}
+        on:click
+        parentBackgroundIndex={parentBgIndex}
+      />
     {/if}
   {/if}
 </div>

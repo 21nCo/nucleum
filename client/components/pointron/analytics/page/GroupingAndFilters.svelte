@@ -2,6 +2,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
+  import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
@@ -9,14 +10,17 @@
     type AnalyticsCard
   } from "../analytics.types";
   export let card: AnalyticsCard;
+  export let parentBgIndex: number = 1;
 </script>
 
 <Popover>
   <slot name="trigger" slot="trigger">
     <Button
       icon="funnel"
-      tooltip="filters and grouping"
-      size={Size.sm}
+      label={$view.isPortrait ? "" : "Options"}
+      parentBackgroundIndex={parentBgIndex}
+      tooltip={$view.isPortrait ? "Filters and grouping" : ""}
+      size={$view.isPortrait ? Size.sm : Size.xs}
       on:click={() => {
         //TODO - open popover
       }}

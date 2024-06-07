@@ -189,6 +189,9 @@
       let sk = skel[i] as HTMLElement;
       sk.style.width = "100%";
     }
+    let pieChartCalloutMarkers = document.querySelector("g.callouts");
+    if (pieChartCalloutMarkers)
+      (pieChartCalloutMarkers as HTMLElement).style.display = "none";
     // let mainDonutFigure = document.getElementsByClassName(
     //   "donut-figure"
     // )[0] as HTMLElement;

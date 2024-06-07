@@ -12,6 +12,9 @@
   import AnalyticsCardView from "./AnalyticsCardView.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   export let id: string;
   let refreshId = new Date().getTime();
   let config = $analyticsConfigStore.pages.find((x) => x.id === id);
@@ -20,7 +23,7 @@
     store = resolveAnalyticsPageStore(config);
     store.refresh();
   }
-  // $: console.log($store.config.charts.length);
+  $: console.log($store.data?.cards);
   async function onCardConfigChange() {
     await store.refresh();
     refreshId = new Date().getTime();
@@ -32,7 +35,7 @@
   }
 </script>
 
-{#if $store?.data?.cards}
+{#if (isValidArrayWithData($store?.data?.cards) && !$store.isRefreshing) || $isInEditMode}
   {#key `${refreshId}-${$isInEditMode}`}
     <div
       class={cn("flex gap-2 h-full max-h-full p-2", {
@@ -74,4 +77,10 @@
       {/if}
     </div>
   {/key}
+{:else}
+  <EmptyStatusView
+    isLoadingState={$store.isRefreshing}
+    mainText="Shoot! No cards configured."
+    subText="Please click on edit and add cards to display them here."
+  />
 {/if}

@@ -19,12 +19,14 @@
   import GroupingAndFilters from "./GroupingAndFilters.svelte";
   import CardResolver from "./CardResolver.svelte";
   import Analytics from "../Analytics.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   export let card: AnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
   export let data: AnalyticsDataRecord[];
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
   export let goalColors: any;
+  let parentBgIndex = $view.isPortrait ? 1 : 2;
   const dispatch = createEventDispatcher();
   $: timePeriod = timePeriodLabel(card.period);
   $: isCarbonChart =
@@ -59,6 +61,11 @@
     });
     dispatch("change", card);
   }
+  function onCardLabelChange() {
+    analyticsConfigStore.updateCardConfig(pageId, {
+      ...card
+    });
+  }
 </script>
 
 <div
@@ -83,49 +90,57 @@
 >
   <header
     class={cn("w-full", {
-      "h-6": !$view.isPortrait || ($view.isPortrait && !$isInEditMode),
-      "h-32": $view.isPortrait && $isInEditMode
+      "h-6": !$isInEditMode,
+      "h-32": $isInEditMode
     })}
   >
     {#if $isInEditMode}
       <div
-        class={cn("w-full", {
-          "flex flex-col gap-3": $view.isPortrait,
-          "flex justify-between items-center": !$view.isPortrait
-        })}
+        class={cn(
+          "w-full flex flex-col gap-3 border border-dashed border-brs3 rounded-md p-2 dp:p-3",
+          {}
+        )}
       >
-        <span
-          class={cn({
-            "w-full": $view.isPortrait,
-            "w-54": !$view.isPortrait
-          })}
-        >
+        <span class="flex justify-between w-full">
           <TextInput
             bind:value={card.label}
             placeholder="chart title"
             style={InputStyle.PLAIN}
+            on:change={onCardLabelChange}
           />
+          <span class="flex gap-2 items-center">
+            <GroupingAndFilters
+              {card}
+              on:select={onGroupingAndFilterChange}
+              {parentBgIndex}
+            />
+            <Button
+              icon="cross-circled"
+              tooltip={$view.isPortrait ? "Remove" : ""}
+              label={$view.isPortrait ? "" : "Remove"}
+              parentBackgroundIndex={parentBgIndex}
+              type={ButtonVariant.DANGER}
+              style={ButtonStyle.OUTLINED}
+              size={$view.isPortrait ? Size.md : Size.xs}
+              on:click={onRemoveClick}
+            />
+          </span>
         </span>
-        <span class="flex flex-wrap gap-2">
+        <span class="flex w-full gap-2">
           {#if card.type != AnalyticsCardType.TARGETS}
-            <span class="w-48">
+            <span class="w-1/2">
               <TimePeriodPicker
                 bind:period={card.period}
                 on:change={onTimePeriodChange}
               />
             </span>
           {/if}
-          <CardSelector
-            bind:selected={card.type}
-            on:select={onCardTypeChange}
-          />
-          <GroupingAndFilters {card} on:select={onGroupingAndFilterChange} />
-          <Button
-            icon="cross-circled"
-            tooltip="Remove"
-            size={Size.md}
-            on:click={onRemoveClick}
-          />
+          <span class="w-1/2">
+            <CardSelector
+              bind:selected={card.type}
+              on:select={onCardTypeChange}
+            />
+          </span>
         </span>
       </div>
     {:else}
@@ -148,20 +163,36 @@
       "h-[24rem]": $view.isPortrait && $isInEditMode,
       "h-[22.5rem]": $view.isPortrait && !$isInEditMode
     })}
-    style={!$view.isPortrait ? "height: calc(100% - 2rem)" : ""}
+    style={!$view.isPortrait && !$isInEditMode
+      ? "height: calc(100% - 2rem)"
+      : !$view.isPortrait
+        ? "height: calc(100% - 6rem)"
+        : ""}
   >
     {#if $isInEditMode}
       <div
         class={cn("w-full", {
-          "h-5/6": !$view.isPortrait,
+          "h-7/10": !$view.isPortrait,
           "h-4/5": $view.isPortrait && isCarbonChart,
           "h-full": $view.isPortrait && !isCarbonChart
         })}
       >
-        <CardResolver {card} {data} {goalColors} {previousTimePeriodData} />
+        <CardResolver
+          {card}
+          {data}
+          {goalColors}
+          {previousTimePeriodData}
+          {parentBgIndex}
+        />
       </div>
     {:else}
-      <CardResolver {card} {data} {goalColors} {previousTimePeriodData} />
+      <CardResolver
+        {card}
+        {data}
+        {goalColors}
+        {previousTimePeriodData}
+        {parentBgIndex}
+      />
     {/if}
   </div>
 </div>

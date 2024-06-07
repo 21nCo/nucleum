@@ -96,6 +96,7 @@
     }
   }
   function initializeData() {
+    if (!rawData) return;
     data = rawData.map((r: any) => {
       const focus = $userLocalPreferences.isIncludeBreakInAnalytics
         ? r.focus + r.brek

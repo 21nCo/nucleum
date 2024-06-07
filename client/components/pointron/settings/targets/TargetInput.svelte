@@ -7,7 +7,7 @@
   export let item: TimeScale;
   let value: number;
   function onInput(event: any) {
-    // console.log({ event });
+    console.log({ event });
     if (!$userLocalPreferences.horizonTargets)
       $userLocalPreferences.horizonTargets = [];
     let targets = $userLocalPreferences.horizonTargets?.filter(

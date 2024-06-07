@@ -12,6 +12,7 @@
   import view from "$lib/client/stores/view.store";
   export let card: AnalyticsCard;
   export let data: AnalyticsDataRecord[];
+  export let parentBgIndex: number = 1;
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
   export let goalColors: any;
 </script>
@@ -19,7 +20,11 @@
 {#if card.type === AnalyticsCardType.PIE || card.type === AnalyticsCardType.DONUT || card.type === AnalyticsCardType.AREA || card.type === AnalyticsCardType.LINE || card.type === AnalyticsCardType.BAR}
   <AnalyticsChart chart={card} rawData={data} {goalColors} />
 {:else if card.type === AnalyticsCardType.TARGETS}
-  <TargetGuages size={$view.isPortrait ? Size.md : Size.lg} type="full" />
+  <TargetGuages
+    size={$view.isPortrait ? Size.md : Size.lg}
+    {parentBgIndex}
+    type="full"
+  />
 {:else}
   <div class="flex self-start w-full h-full p-3">
     {#if card.type === AnalyticsCardType.TOP_N}

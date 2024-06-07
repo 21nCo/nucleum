@@ -67,7 +67,9 @@
             icon="chevleft"
             size={Size.lg}
             on:click={() => {
-              date.setDate(date.getDate() - 1);
+              let newDate = new Date(date.getTime());
+              newDate.setDate(newDate.getDate() - 1);
+              date = newDate;
               refresh();
             }}
           />
@@ -84,7 +86,7 @@
           /> -->
           <DatePicker
             variant="wide-center"
-            {date}
+            bind:date
             on:change={(e) => {
               date = e.detail.date;
               refresh();
@@ -94,7 +96,9 @@
             icon="chevright"
             size={Size.lg}
             on:click={() => {
-              date.setDate(date.getDate() + 1);
+              let newDate = new Date(date.getTime());
+              newDate.setDate(date.getDate() + 1);
+              date = newDate;
               refresh();
             }}
           />
@@ -134,7 +138,8 @@
         size={Size.sm}
         loadingAnimation={LoadingAnimationType.LOGS_PULSE}
         pulseCount={2}
-        isLoadingState={$logsPaneStore.isRefreshing}
+        isLoadingState={$logsPaneStore.isRefreshing ||
+          $logsPaneStore.isPageRefreshing}
         mainText="No session logs for this date"
         subText="Please select a different date to see logs"
       />

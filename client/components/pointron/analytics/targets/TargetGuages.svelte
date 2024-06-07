@@ -6,8 +6,12 @@
   import { TimeScale } from "$lib/client/types/time.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   export let size: Size = Size.sm;
   export let type: "semi" | "full" = "semi";
+  export let parentBgIndex: number = 1;
   export let data:
     | {
         scale: TimeScale;
@@ -47,7 +51,7 @@
               getCorrespoingHorizonFrequencyLabel(item.scale) +
               (size != Size.sm ? " target" : "");
             items.push({
-              total: item.target * 60 * 60,
+              total: item.target,
               actual,
               label,
               streak: item.streak?.value
@@ -86,5 +90,15 @@
         {/if}
       </div>
     {/each}
+  {:else}
+    <EmptyStatusView
+      mainText="No targets set."
+      subText="Please set targets to see them here."
+      actionText="Set targets"
+      {parentBgIndex}
+      on:click={() => {
+        appStore.runAction(PointronEventEnum.SET_TARGETS);
+      }}
+    />
   {/if}
 </div>

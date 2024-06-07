@@ -67,13 +67,15 @@ function initFocusHeatmapStore() {
     },
     fetchDailyJournal: async (start: Date, end: Date) => {
       const n: FocusHeatMapStore = get(focusHeatmapStore);
+      console.log({ start, end, n });
       if (n.dailyJournal.length > 0) {
+        console.log("Returning from cache");
         return n.dailyJournal;
       } else {
-        const result = await refresh();
-        if (result === -1) {
-          if (n.dailyJournal.length === 0) await refresh();
+        while (get(focusHeatmapStore).isPageRefreshing) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
+        if (get(focusHeatmapStore).dailyJournal.length === 0) await refresh();
         return get(focusHeatmapStore).dailyJournal;
       }
     },

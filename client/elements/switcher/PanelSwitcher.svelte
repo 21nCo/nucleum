@@ -11,15 +11,18 @@
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import appearance from "$lib/client/stores/appearance.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ISelectItem } from "$lib/client/types/select.type";
+  import { cn, emptyTranstition } from "$lib/client/utils/ui.utils";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "$lib/client/types/select.type";
   import BackgroundElement from "../style/BackgroundElement.svelte";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { fade, fly, slide } from "svelte/transition";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
-  export let value: string | undefined = undefined;
+  export let value: ISelectValue | undefined = undefined;
   export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
   export let parentBackgroundIndex: number = 1;
@@ -27,6 +30,7 @@
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
   export let isExpandToFullWidth: boolean = false;
+  export let isEnableAnimationForTitle: boolean = false;
   export let title: string = "";
   export let barStyle: BarStyle = BarStyle.EXACT;
   export let triggerItemEdit: string | null = null;
@@ -61,6 +65,12 @@
   //     parent.style.width = `${child.offsetWidth}px`;
   //   }
   // };
+  function conditionalTransition(node: any) {
+    if (isEnableAnimationForTitle) {
+      return fly(node, { y: -100, duration: 300 });
+    }
+    return emptyTranstition();
+  }
 </script>
 
 {#key isInEditMode}
@@ -105,7 +115,7 @@
         : 0}
     >
       {#if title || $$slots.left}
-        <span class="mr-6" transition:fly={{ y: -100, duration: 300 }}>
+        <span class="mr-6" transition:conditionalTransition>
           <slot name="left">
             <Text content={title} style={TextStyle.PANEL_HEADING_SMALL} />
           </slot>
