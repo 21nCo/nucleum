@@ -1,6 +1,4 @@
-import { LocalItem } from "$local/types/item.enum";
-
-export enum GlobalItem {
+export enum Item {
   ALL = "ALL",
   globalPreferences = "globalPreferences",
   TailwindTheme = "TailwindTheme",
@@ -9,11 +7,36 @@ export enum GlobalItem {
   spaceInContext = "spaceInContext",
   appearance = "appearance",
   dboVersion = "dboVersion",
-  tz = "tz"
-}
+  tz = "tz",
+  kv = "kv",
 
-export const Item = {
-  ...GlobalItem,
-  ...LocalItem
-};
-export type ItemType = GlobalItem | LocalItem;
+  //Pointron
+  pointronPreferences = "pointronPreferences",
+  SessionStore = "SessionStore",
+  SessionStoreV2 = "SessionStoreV2",
+  pointSessionSnapshot = "pointSessionSnapshot",
+  pointSessionFocusItems = "pointSessionFocusItems",
+  Routine = "Routine",
+  CurrentTask = "CurrentTask",
+  PointSession = "PointSession",
+  PointTask = "PointTask",
+  PointTag = "PointTag",
+  PointLog = "PointLog",
+  PointTimer = "PointTimer",
+  PointGoal = "PointGoal",
+  logsPane = "logsPane",
+  targetsPane = "targetsPane",
+  focusHeatmap = "focusHeatmap",
+  pointAnalyticsConfig = "pointAnalyticsConfig",
+
+  //Memotron
+  node = "node",
+  curation = "curation",
+  type = "type",
+  property = "property",
+  collection = "collection",
+  combination = "combination",
+  nodelinks = "nodelinks",
+  capture = "capture",
+  view = "view"
+}

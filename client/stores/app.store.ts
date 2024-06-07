@@ -1,4 +1,4 @@
-import { get, writable } from "svelte/store";
+import { get, writable, type Updater } from "svelte/store";
 import { goto } from "$app/navigation";
 
 import {
@@ -13,16 +13,17 @@ import {
 } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
-import type {
-  UserAppearanceSettings,
-  UserGlobalPreferences
+import {
+  UIState,
+  type UIStateProps,
+  type UserAppearanceSettings,
+  type UserGlobalPreferences
 } from "$lib/client/types/preferences.type";
 import blankJson from "$lib/client/data/blank.json";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Item } from "$lib/client/types/item.enum";
 import { TimeScale } from "../types/time.type";
-import { UiState } from "../types/uiState.enum";
-import { emojis, materialSymbols, shuffleEmojis } from "../data/avatars";
+import { shuffleEmojis } from "../data/avatars";
 import {
   PersistanceActionType,
   StoreDataType,
@@ -53,6 +54,7 @@ import context from "$lib/client/stores/context.store";
 import { confirmationNotification } from "$lib/client/stores/notification.store";
 
 import { defaultAppData } from "$local/local";
+import { KeyValueStore } from "./kv.store";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -233,6 +235,7 @@ const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 export const seedUserPreferences: UserGlobalPreferences = {
   id: Item.globalPreferences,
   dataType: StoreDataType.KVO,
+  priorityRefreshOnAppAppear: true,
   nickName: "",
   dayStartHour: 0,
   dayStartMinute: 0,
@@ -246,7 +249,8 @@ export const seedUserPreferences: UserGlobalPreferences = {
   isAnonymousAnalyticsEnabled: true,
   appearance: {
     skin: AppSkin.Clean,
-    theme: Theme.SYSTEM,
+    theme: Theme.LIGHT,
+    isSyncWithSystem: true,
     lightColorSchemeId: defaultColorSchemeId,
     darkColorSchemeId: defaultDarkColorSchemeId
   },
@@ -276,8 +280,115 @@ type dbVersionStore = ICacheableStore & {
   version: number;
 };
 
-export const userPreferences = initUserPreferences();
+class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
+  constructor() {
+    super(Item.globalPreferences, seedUserPreferences, {
+      priorityRefreshOnAppAppear: true,
+      isSynchronousCache: true
+    });
+  }
+  loader(data: UserGlobalPreferences) {
+    if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
+    if (!data.avatarPicker)
+      data.avatarPicker = seedUserPreferences.avatarPicker;
+    if (!data.annotations) data.annotations = seedUserPreferences.annotations;
+    if (data.isAnonymousAnalyticsEnabled === undefined)
+      data.isAnonymousAnalyticsEnabled = true;
+    if (!data.dataType) data.dataType = StoreDataType.KVO;
+    const val = {
+      ...data,
+      id: this.item,
+      dataType: this.dataType,
+      priorityRefreshOnAppAppear: this.priorityRefreshOnAppAppear
+    };
+    this.setNewValue(val);
+  }
+  setAppearance(x: UserAppearanceSettings) {
+    this.update((n: UserGlobalPreferences) => {
+      const appearance = { ...n.appearance, ...x };
+      n.appearance = appearance;
+      this.persist({ appearance });
+      return n;
+    });
+  }
+  /**
+   * Date().getTimezoneOffset() returns the offset in minutes and calculates offfset by measuring current user's timezone as 0 and relative measure of UTC from that.
+   *
+   * Ex: If user is in UTC+5:30, getTimezoneOffset() will return -330 which is UTC is -330 minutes away from current user's timezone.
+   *
+   * On the database, the offset is stored as an offset of user's zone from UTC, so the offset is stored as +330 for UTC+5:30
+   *
+   * @param offset
+   * @param label
+   */
+  setTimeZone(offset?: number, label?: string) {
+    if (offset === undefined) {
+      offset = -new Date().getTimezoneOffset() * 60;
+      label = detectTimeZone()?.label ?? "UTC";
+    }
+    console.log("setting time zone", { offset, label });
+    this.update((n: UserGlobalPreferences) => {
+      n.timeZoneOffset = offset;
+      this.persist({ timeZoneOffset: offset, timeZoneLabel: label });
+      persistance.create(
+        { offset, date: new Date().toISOString(), label: label ?? "" },
+        Item.tz
+      );
+      return n;
+    });
+    return { offset, label };
+  }
+  onBoardingStatusCheck() {
+    if (this.resolveUiState(UIState.isOnboardingComplete)) return true;
+    else {
+      appStore.gotoPath("/onboarding");
+      return false;
+    }
+  }
+  resolveUiState(property: string) {
+    const uiStates = get(userPreferences).uiStates;
+    let value = undefined;
+    if (get(view).isPortrait) {
+      //@ts-ignore
+      value = uiStates?.portrait[property];
+    } else {
+      //@ts-ignore
+      value = uiStates?.desktop[property];
+    }
+    if (value === undefined) {
+      //@ts-ignore
+      value = uiStates?.all[property];
+    }
+    return value;
+  }
+  setUiState({ property, value, isGlobal }: UIStateProps) {
+    const uiStates = get(userPreferences).uiStates;
+    if (!uiStates) return;
+    if (isGlobal) {
+      //@ts-ignore
+      uiStates.all[property] = value;
+    } else if (get(view).isPortrait) {
+      //@ts-ignore
+      uiStates.portrait[property] = value;
+    } else {
+      //@ts-ignore
+      uiStates.desktop[property] = value;
+    }
+    this.update((n: UserGlobalPreferences) => {
+      n.uiStates = uiStates;
+      this.persist({ uiStates });
+      return n;
+    });
+  }
+}
 
+// export const userPreferences = initUserPreferences();
+export const userPreferences = new UserPreferencesStore();
+
+/**
+ * @deprecated - using UserGlobalPreferences class based store instead
+ * @returns
+ */
 function initUserPreferences() {
   let previousValue: string;
   const {
@@ -317,38 +428,43 @@ function initUserPreferences() {
     setRaw(x);
     previousValue = JSON.stringify(x);
   };
+  //TODO - resolveUiState - for local User preferences - may be a super class - common methods for preferences store
   const resolveUiState = (property: string) => {
     const uiStates = get(userPreferences).uiStates;
     let value = undefined;
     if (get(view).isPortrait) {
-      value = uiStates["portrait"][property];
+      value = uiStates?.portrait[property];
     } else {
-      value = uiStates["desktop"][property];
+      value = uiStates?.desktop[property];
     }
     if (value === undefined) {
-      value = uiStates["all"][property];
+      value = uiStates?.all[property];
     }
     return value;
   };
-  const setUiState = (
-    uiStates: any,
-    property: string,
-    value: any,
-    isForAll: boolean = false
+  const setUIState = (
+    updater: (this: void, updater: Updater<UserGlobalPreferences>) => void,
+    { property, value, isGlobal }: UIStateProps
   ) => {
-    if (isForAll) {
-      uiStates["all"][property] = value;
+    const uiStates = get(userPreferences).uiStates;
+    if (!uiStates) return;
+    if (isGlobal) {
+      uiStates.all[property] = value;
     } else if (get(view).isPortrait) {
-      uiStates["portrait"][property] = value;
+      uiStates.portrait[property] = value;
     } else {
-      uiStates["desktop"][property] = value;
+      uiStates.desktop[property] = value;
     }
-    return uiStates;
+    updater((n: UserGlobalPreferences) => {
+      n.uiStates = uiStates;
+      return n;
+    });
   };
   return {
     subscribe,
     update,
     loader: (data: UserGlobalPreferences) => {
+      console.log("loading user preferences", { data });
       if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
       if (!data.avatarPicker)
         data.avatarPicker = seedUserPreferences.avatarPicker;
@@ -413,9 +529,9 @@ function initUserPreferences() {
       });
     },
     resolveUiState,
-    setUiState,
+    setUiState: (props: UIStateProps) => setUIState(update, props),
     onBoardingStatusCheck() {
-      if (resolveUiState(UiState.isOnboardingComplete)) return true;
+      if (resolveUiState(UIState.isOnboardingComplete)) return true;
       else {
         appStore.gotoPath("/onboarding");
         return false;
@@ -728,15 +844,11 @@ function initAppStore(seed: AppStore) {
       });
     },
     toggleSidebar() {
-      const userPref = get(userPreferences);
-      const val = userPreferences.resolveUiState(UiState.isInThinMode);
-      console.log({ val, userPref });
-      let newUiStates = userPreferences.setUiState(
-        deepCopy(userPref.uiStates),
-        UiState.isInThinMode,
-        !val
-      );
-      userPreferences.setUiStates(newUiStates);
+      const val = userPreferences.resolveUiState(UIState.isInThinMode);
+      userPreferences.setUiState({
+        property: UIState.isInThinMode,
+        value: !val
+      });
     },
     toggleMenuVisibility: (isHidden?: boolean) => {
       update((n: AppStore) => {
@@ -773,6 +885,7 @@ function initAppStore(seed: AppStore) {
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
         const isSettingsAsModal = n.appData?.isSettingsAsModal;
+        console.log({ isSettingsAsModal, isInPortraitMode });
         if (isInPortraitMode || !isSettingsAsModal)
           n.actions = [...actions, ...settingsAsPages];
         else n.actions = [...actions, ...settingsAsModal];

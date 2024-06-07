@@ -1,4 +1,4 @@
-import type { ItemType } from "$lib/client/types/item.enum";
+import type { Item } from "$lib/client/types/item.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
 import type { Block, IMarkdown } from "$lib/client/types/memotron/md.type";
 import {
@@ -17,7 +17,7 @@ export function properCase(str: string) {
   // });
 }
 
-export function prefixTable(id: string | number, itemType: ItemType) {
+export function prefixTable(id: string | number, itemType: Item) {
   return `${itemType}:${id}`;
 }
 

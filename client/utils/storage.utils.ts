@@ -1,5 +1,5 @@
 import type { JsonValue } from "$lib/client/types/json.type";
-import { Item as ItemEnum, type ItemType } from "$lib/client/types/item.enum";
+import { Item } from "$lib/client/types/item.enum";
 
 export function resetLocalStorage() {
   if (import.meta.env?.SSR) {
@@ -9,21 +9,18 @@ export function resetLocalStorage() {
   window?.location.reload();
 }
 
-export function persistLocally<T extends JsonValue>(
-  itemType: ItemType,
-  item: T
-) {
+export function persistLocally<T extends JsonValue>(itemType: Item, item: T) {
   if (import.meta.env?.SSR) {
     return;
   }
-  window?.localStorage.setItem(ItemEnum[itemType], JSON.stringify(item));
+  window?.localStorage.setItem(Item[itemType], JSON.stringify(item));
 }
-export function retrieveLocally(itemType: ItemType) {
+export function retrieveLocally(itemType: Item) {
   try {
     if (import.meta.env?.SSR) {
       return null;
     }
-    let value = window?.localStorage.getItem(ItemEnum[itemType]);
+    let value = window?.localStorage.getItem(Item[itemType]);
     if (value) {
       return JSON.parse(value);
     } else {

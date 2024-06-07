@@ -1,0 +1,39 @@
+<script lang="ts">
+  import view from "$lib/client/stores/view.store";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import type {
+    AnalyticsCard,
+    AnalyticsDataRecord
+  } from "../../analytics.types";
+  import MetricItem from "./MetricItem.svelte";
+  export let card: AnalyticsCard;
+  export let data: AnalyticsDataRecord[];
+  export let goalColors: { label: string; color: number }[] = [];
+  export let previousTimePeriodData: AnalyticsDataRecord[] = [];
+  $: totalFocus = data.reduce((acc, curr) => acc + curr.focus, 0);
+  $: totalBreak = data.reduce((acc, curr) => acc + curr.brek, 0);
+  $: total = totalFocus + totalBreak;
+  $: previousFocus = previousTimePeriodData.reduce(
+    (acc, curr) => acc + curr.focus,
+    0
+  );
+  $: previousBreak = previousTimePeriodData.reduce(
+    (acc, curr) => acc + curr.brek,
+    0
+  );
+  $: previousTotal = previousFocus + previousBreak;
+</script>
+
+<div
+  class={cn(
+    "w-full h-full flex flex-wrap justify-start items-start content-start",
+    {
+      "gap-3": $view.isPortrait,
+      "gap-4": !$view.isPortrait
+    }
+  )}
+>
+  <MetricItem type="total" value={total} previousValue={previousTotal} />
+  <MetricItem type="focus" value={totalFocus} previousValue={previousFocus} />
+  <MetricItem type="break" value={totalBreak} previousValue={previousBreak} />
+</div>

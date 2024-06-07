@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Item, type ItemType } from "../types/item.enum";
+import { Item } from "../types/item.enum";
 import {
   CacheStrategy,
   StoreDataType,
@@ -9,7 +9,6 @@ import {
   type ResourceDependency,
   DependencySyncType,
   PersistanceActionType,
-  type IMutationQueueParams,
   type IMutationParams
 } from "../types/data.type";
 import {
@@ -56,7 +55,7 @@ function init() {
      * @param item
      * @returns
      */
-    refreshForIFR: async (item: ItemType) => {
+    refreshForIFR: async (item: Item) => {
       const dm = get(dataManager);
       const store = dm.cacheableStoresTable.find((x) => get(x).id === item);
       if (!store) return;
@@ -68,11 +67,7 @@ function init() {
         mergeIFRRecords(item, result);
       }
     },
-    performMutationForIFR: (
-      item: ItemType,
-      data: any,
-      params: IMutationParams
-    ) => {
+    performMutationForIFR: (item: Item, data: any, params: IMutationParams) => {
       let localPersistancePromise;
       const dexie = get(dataManager).cacheSource.dexie;
       data = {
@@ -243,6 +238,7 @@ async function performMutation(
   const mutatedAt = surrealUnixTimestamp();
   data = { ...data, mutatedAt };
   const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
+  console.log({ resources, isKVStore, storeId });
   const mutationQuery = resolveMutationQuery2();
   const mutationParams =
     params.action === PersistanceActionType.CUSTOM_QUERY
@@ -303,14 +299,20 @@ async function performMutation(
       dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
       return { resources: [storeId], isKVStore: false };
     } else {
+      console.log({
+        storeId,
+        stores: dm.cacheableStoresTable.map((x) => get(x).id)
+      });
       const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
       if (!store) return { resources: [], isKVStore: false };
       const storeData = get(store);
+      console.log({ storeData });
+      const isKVStore = storeData.dataType === StoreDataType.KVO;
       const mutatingResources = storeData.mutatingResources;
-      if (mutatingResources) return mutatingResources;
+      if (mutatingResources) return { resources: mutatingResources, isKVStore };
       return {
         resources: [storeId],
-        isKVStore: storeData.dataType === StoreDataType.KVO
+        isKVStore
       };
     }
   }
@@ -598,7 +600,7 @@ async function resolveRefreshQueryForIFR(storeData: ICacheableStore) {
   return query;
 }
 
-async function mergeIFRRecords(item: ItemType, records: any[]) {
+async function mergeIFRRecords(item: Item, records: any[]) {
   let dm = get(dataManager);
   const dexie = dm.cacheSource.dexie;
   // @ts-ignore

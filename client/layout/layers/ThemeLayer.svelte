@@ -8,14 +8,19 @@
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   $: rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
+  $: console.log("rootFontSize", rootFontSize);
   $: document.documentElement.style.fontSize = `${rootFontSize}px`;
   onMount(() => {
     refreshTheme();
     const appearanceSub = appearance.subscribe(() => {
       refreshTheme();
     });
+    const userPreferencesSub = userPreferences.subscribe(() => {
+      refreshSizing();
+    });
     return () => {
       appearanceSub();
+      userPreferencesSub();
     };
   });
 
@@ -24,7 +29,11 @@
     refreshTailwind();
   }
   function refreshSizing() {
-    if (!$userPreferences?.accessibilitySizingFactor) return;
+    if (
+      $userPreferences?.accessibilitySizingFactor === undefined ||
+      $userPreferences?.accessibilitySizingFactor === null
+    )
+      return;
     if ($userPreferences.accessibilitySizingFactor == 0) {
       if ($view.scale > 0.55) defaultRootFontSize = 14;
       else defaultRootFontSize = 12;

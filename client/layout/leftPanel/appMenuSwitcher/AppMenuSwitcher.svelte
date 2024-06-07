@@ -4,7 +4,7 @@
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import type { Action } from "$lib/client/types/action.type";
   //TODO - remove dependency on local
-  import { userLocalPreferences } from "$local/stores/local.store";
+  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
   import type { UserLocalPreferences } from "$local/types/userLocalPreferences.type";
   import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";

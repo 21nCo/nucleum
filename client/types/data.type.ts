@@ -52,6 +52,10 @@ export interface ICacheableStore {
    * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
    */
   isPageRefreshing?: boolean;
+  /**
+   * When this is turned on, local storage is used to cache the store.
+   */
+  isSynchronousCache?: boolean;
 }
 
 /**

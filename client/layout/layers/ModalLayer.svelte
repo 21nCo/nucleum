@@ -34,6 +34,7 @@
   import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import SplitView from "../SplitView.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -189,7 +190,7 @@
     isUseDialog={modal.layout?.size != Size.full &&
       $context.embed != Embed.HANDSET}
     size={modal.layout?.size ?? Size.md}
-    orientation={modal.layout?.orientation}
+    orientation={modal.layout?.orientation ?? Orientation.Vertical}
   >
     <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver
@@ -248,7 +249,7 @@
       isUseDialog={pop.params?.layout?.size != Size.full &&
         $context.embed != Embed.HANDSET}
       size={pop.params?.layout?.size ?? Size.md}
-      orientation={pop.params?.layout?.orientation}
+      orientation={pop.params?.layout?.orientation ?? Orientation.Horizontal}
     >
       <ModalLayout path={pop.path} params={{ ...pop?.params }}>
         <SplitView id={pop.resource} componentParams={{ isModal: true }} />

@@ -21,9 +21,9 @@ export type UserGlobalPreferences = ICacheableStore & {
   recentCommands?: string[];
   shortcuts?: KeyboardShortcut[];
   uiStates: {
-    all: UiState;
-    desktop: UiState;
-    portrait: UiState;
+    all: IUIState;
+    desktop: IUIState;
+    portrait: IUIState;
   };
   avatarPicker: {
     skinIndex: number;
@@ -41,10 +41,26 @@ export type KeyboardShortcut = {
   modifiers: string[];
 };
 
-type UiState = {
+type IUIState = {
   isOnboardingComplete?: boolean;
   isInThinMode: boolean;
 };
+
+export type UIStateProps = {
+  property: string;
+  value: any;
+  isGlobal?: boolean;
+};
+
+export enum UIState {
+  isOnboardingComplete = "isOnboardingComplete",
+  isInThinMode = "isInThinMode",
+
+  //Pointron
+  quickFocusLayout = "quickFocusLayout",
+  advancedComposeType = "advancedComposeType",
+  advancedMode = "advancedMode"
+}
 
 export type UserAppearanceSettings = {
   skin: AppSkin;

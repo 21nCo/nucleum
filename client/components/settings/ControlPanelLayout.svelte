@@ -8,20 +8,14 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
   import { page } from "$app/stores";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
   import { isValidArray, sortArrayByOrder } from "$lib/client/utils/obj.utils";
-  import ProductInfoFooter from "./about/ProductInfoFooter.svelte";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import view from "$lib/client/stores/view.store";
-  import account from "$lib/client/stores/account.store";
   import appearance from "$lib/client/stores/appearance.store";
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
+  import SettingsFooter from "./SettingsFooter.svelte";
+
   $: isCpHome = $page?.url.pathname === "/cp" || $page?.url.pathname === "/cp/";
   let cpConfiguration: any;
   let color = retrieveCurrentColors($appearance)?.aps1;
@@ -37,9 +31,9 @@
 </script>
 
 {#if $view.isPortrait && !isCpHome}
-  <div class="flex flex-col h-full gap-2 px-4 py-2">
+  <div class="flex flex-col h-full w-full gap-2 px-4 py-2">
     <NavigationHeader
-      label={$view.currentComponent?.label ?? ""}
+      label={$appStore.currentComponent?.label ?? ""}
       backCallback={() => {
         appStore.gotoPath("/cp");
       }}
@@ -69,17 +63,7 @@
             />
           {/each}
         {/if}
-        <div class="flex w-full justify-center">
-          <Button
-            width="w-2/5"
-            icon="logout"
-            label="Sign out"
-            on:click={() => {
-              account.signOut();
-            }}
-          />
-        </div>
-        <ProductInfoFooter />
+        <SettingsFooter />
       </div>
       <slot name="right" slot="right">
         <div class="p-4 flex flex-col gap-4 w-full h-full items-start">
