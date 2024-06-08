@@ -49,7 +49,7 @@
     <div class="absolute -left-8 flex h-full items-center justify-center">
       <LeftControls {mdStore} />
     </div>
-    {#if block.contentType === NodeType.HEADING1}
+    {#if $mdStore.params?.isNodular && block.contentType === NodeType.HEADING1}
       <div class="absolute right-10 flex h-full items-center justify-center">
         <Button
           label="focus (Cmd + M)"
@@ -63,6 +63,7 @@
     id="sss"
     class="-ml-10 pl-10 flex grow rounded-md {(isHovering || isFocusing) &&
     isShowBgOnFocus &&
+    $mdStore.params?.isNodular &&
     !$mdStore.params?.isReadOnly
       ? 'bg-bgs2'
       : ''}"

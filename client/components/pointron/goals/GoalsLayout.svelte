@@ -28,18 +28,18 @@
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import TreeMapItem from "$lib/client/components/treeMap/TreeMapItem.svelte";
   import TreeMap from "$lib/client/components/treeMap/TreeMap.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/elements/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { tagStore } from "../local.store";
 
-  export let isGoalsHome = window.location.pathname === "/goals";
+  export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
 
   let color = retrieveCurrentColors($appearance).aps1;
   let selectedGoalId: string = "";
   let selectedTagId: TagId | string = TagId.ALL;
   $: isGoalsHome =
-    $page?.url.pathname === "/goals" || $page?.url.pathname === "/goals/";
+    $page?.url.pathname === "/goal" || $page?.url.pathname === "/goal/";
   $: selectedTagName =
     selectedTagId &&
     selectedTagId != TagId.ALL &&
@@ -71,12 +71,12 @@
   });
   function onGoalClick(event: CustomEvent<string>) {
     selectedGoalId = event.detail;
-    appStore.gotoPath(`/goals/${selectedGoalId}`);
+    appStore.gotoPath(`/goal/${selectedGoalId}`);
   }
 </script>
 
 {#if $view.isPortrait && !isGoalsHome}
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full w-full">
     <!-- <button
       class="flex max-w-min bg-bgs2 px-2"
       on:click={() => {
@@ -90,7 +90,7 @@
       class="flex mt-4 gap-1 items-center min-w-fit p-4 h-2 text-aps1"
       style="top: 1.75rem;"
       on:click={() => {
-        appStore.gotoPath("/goals");
+        appStore.gotoPath("/goal");
       }}
     >
       <Icon icon="chevleft" size={Size.sm} {color} />
@@ -190,7 +190,13 @@
                     /> -->
                   </div>
                   {#if isArchivedGoalsVisible}
-                    {#each $goalStore.archivedGoals as goal}
+                    <TreeMap
+                      items={$goalStore.archivedGoals.map((x) => x.id)}
+                      contentCallback={goalStore.get}
+                      childrenCallback={goalStore.children}
+                      on:click={onGoalClick}
+                    />
+                    <!-- {#each $goalStore.archivedGoals as goal}
                       <NestedGoalAccordion
                         id={goal.id}
                         label={goal.label}
@@ -201,7 +207,7 @@
                         on:state-change={handleAccordionStateChange}
                       />
                       <div class="line-bottom bg-bgs2 w-full h-[1px]" />
-                    {/each}
+                    {/each} -->
                     <div class="pb-32"></div>
                   {/if}
                 </div>

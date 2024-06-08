@@ -6,8 +6,8 @@
   let total = totalFocus + totalBreak;
 </script>
 
-<div class="flex flex-wrap justify-between w-full">
-  <LogTotalCard value={total} type="total" />
+<div class="flex flex-wrap gap-2 justify-between w-full">
   <LogTotalCard value={totalFocus} type="focus" />
   <LogTotalCard value={totalBreak} type="break" />
+  <LogTotalCard value={total} type="total" />
 </div>

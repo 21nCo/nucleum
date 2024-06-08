@@ -20,6 +20,8 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowSave: boolean = false;
@@ -159,34 +161,37 @@
         labelOrientation={Orientation.Horizontal}
         on:change
       /> -->
-    {:else if composition.type === SessionCompositionType.TOTAL_DURATION || composition.type === SessionCompositionType.TARGET_FOCUS}
-      <DurationInput
-        bind:value={composition.totalDuration}
-        label={{ label: "Total duration", orientation: Orientation.Horizontal }}
-        on:change
-      />
-      <SwitchInput
-        bind:checked={isTargetFocus}
-        label={{
-          label: "Adjust end time until target is reached",
-          tooltip: {
-            body: "If you take breaks in between, the end time will be auto adjusted until you reach the target duration entered above. Turn this off to keep the end time fixed."
-          }
-        }}
-      />
-    {/if}
-    {#if composition.type === SessionCompositionType.TOTAL_DURATION || composition.type === SessionCompositionType.TARGET_FOCUS || composition.type === SessionCompositionType.COUNTUP}
-      <!--       bind:breakInput={composition.breakDuration}
-        bind:numberOfBreaksInput={composition.numberOfBreaks}
-        bind:reminderInput={composition.breakReminder}
-        bind:selectedBreakType={composition.breakType} -->
-      <ComposeBreak
-        {composition}
-        isDisablePredefined={composition.type ===
-          SessionCompositionType.COUNTUP ||
-          composition.type === SessionCompositionType.TARGET_FOCUS}
-        on:change
-      />
+    {:else}
+      <div class="flex flex-col gap-6 h-96 overflow-y-auto">
+        {#if composition.type != SessionCompositionType.COUNTUP}
+          <DurationInput
+            bind:value={composition.totalDuration}
+            label={{
+              label: "Total duration",
+              orientation: Orientation.Vertical
+            }}
+            on:change
+          />
+          <SwitchInput
+            bind:checked={isTargetFocus}
+            label={{
+              label: "Adjust end time until target is reached",
+              tooltip: {
+                body: "If you take breaks in between, the end time will be auto adjusted until you reach the target duration entered above. Turn this off to keep the end time fixed."
+              }
+            }}
+          />
+          <Divider />
+        {/if}
+        <ComposeBreak
+          {composition}
+          isDisablePredefined={composition.type ===
+            SessionCompositionType.COUNTUP ||
+            composition.type === SessionCompositionType.TARGET_FOCUS}
+          on:change
+        />
+        <ScrollViewBottomSpacer />
+      </div>
     {/if}
   </div>
 </div>

@@ -57,7 +57,7 @@
       else userPreferences.setTimeZone();
       return;
     }
-    if (!timeZone) return;
+    if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
       userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
     }

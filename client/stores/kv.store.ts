@@ -41,10 +41,22 @@ export class KeyValueStore<T = ICacheableStore> {
         };
         this.setRaw(cachedValue);
         this.previousValue = JSON.stringify(cachedValue);
+      } else {
+        const seed = {
+          ...deepCopy(this.seed),
+          ...this.resolveStoreConstants()
+        };
+        this.setNewValue(seed);
       }
     } else {
       dataManager.retrieveCache(this.item).then((x) => {
-        if (!x) return;
+        if (!x) {
+          const seed = {
+            ...deepCopy(this.seed),
+            ...this.resolveStoreConstants()
+          };
+          this.setNewValue(seed);
+        }
         const cachedValue = {
           ...x,
           ...this.resolveStoreConstants()

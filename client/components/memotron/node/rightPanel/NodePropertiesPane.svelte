@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ScrollViewBottomSpacer from "$lib/client/elements/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
   import type { INodeProperty } from "$lib/client/types/memotron/node.type";
   import PropertiesListView from "../../common/properties/PropertiesListView.svelte";

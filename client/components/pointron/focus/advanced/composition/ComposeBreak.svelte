@@ -13,7 +13,7 @@
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isDisablePredefined: boolean = false;
-  const labelOrientation = Orientation.Horizontal;
+  const labelProps = { orientation: Orientation.Vertical };
   if (!composition.breakReminder || composition.breakReminder == 0)
     composition.breakReminder = $userLocalPreferences.breakReminder;
   if (!composition.breakDuration || composition.breakDuration == 0)
@@ -36,14 +36,15 @@
         }
       ]}
       labelProps={{
+        ...labelProps,
         label: "Break type",
-        orientation: labelOrientation,
         tooltip: {
           body: `Choose **Reminder** to recieve a break notification every certain time, or **Predefined** to have a fixed number of breaks with a fixed duration.`
         }
       }}
       on:select={(e) => {
-        composition.breakType = e.detail.label;
+        console.log({ e });
+        composition.breakType = e.detail;
         dispatch("change");
       }}
       style={OptionSelectorStyle.CHECK_CIRCLE}
@@ -54,19 +55,19 @@
         bind:value={composition.numberOfBreaks}
         placeholder="No. of breaks"
         on:change
-        label={{ label: "No. of breaks", orientation: labelOrientation }}
+        label={{ ...labelProps, label: "No. of breaks" }}
         type="number"
       />
       <DurationInput
         bind:value={composition.breakDuration}
         on:change
-        label={{ label: "Break duration" }}
+        label={{ ...labelProps, label: "Break duration" }}
       />
     {:else}
       <DurationInput
         bind:value={composition.breakReminder}
         on:change
-        label={{ label: "Remind every" }}
+        label={{ ...labelProps, label: "Remind every" }}
       />
     {/if}
   </div>

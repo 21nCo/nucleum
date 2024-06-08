@@ -3,14 +3,16 @@
   import { TimeFormat } from "$lib/client/types/time.type";
   import { properCase } from "$lib/client/utils/text.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let value: number;
   export let type: "total" | "focus" | "break" = "total";
 </script>
 
 <div
-  class="flex flex-col items-start border border-brs3 rounded-md {$view.isPortrait
-    ? 'w-24 sm:w-32 md:w-40 p-2 h-16'
-    : 'w-40 xl:w-[11rem] p-4 h-20'}"
+  class={cn("flex flex-col grow items-start border border-brs3 rounded-md", {
+    "w-24 sm:w-32 md:w-40 p-2 h-16": $view.isPortrait,
+    "w-40 xl:w-[11rem] p-4 h-20": !$view.isPortrait
+  })}
 >
   <div class="text-b3">
     {properCase(type)}

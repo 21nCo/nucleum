@@ -5,7 +5,7 @@
 </script>
 
 <div class="flex flex-col gap-4 w-full">
-  <div>
+  <!-- <div>
     <DurationInput
       label={{
         label: "Extend duration",
@@ -16,7 +16,7 @@
       }}
       bind:value={$userLocalPreferences.extendDuration}
     />
-  </div>
+  </div> -->
   <div>
     <DurationInput
       label={{

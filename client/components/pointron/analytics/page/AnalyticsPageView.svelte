@@ -7,7 +7,7 @@
     resolveAnalyticsPageStore,
     type AnalyticsPageStoreType
   } from "../analytics.store";
-  import ScrollViewBottomSpacer from "$lib/client/elements/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import AnalyticsCardView from "./AnalyticsCardView.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
@@ -23,7 +23,7 @@
     store = resolveAnalyticsPageStore(config);
     store.refresh();
   }
-  $: console.log($store.data?.cards);
+  $: console.log($store?.data?.cards);
   async function onCardConfigChange() {
     await store.refresh();
     refreshId = new Date().getTime();
@@ -44,17 +44,19 @@
       })}
     >
       {#each $store.config.cards as card, index}
-        <AnalyticsCardView
-          {card}
-          data={$store.data?.cards[index]}
-          previousTimePeriodData={$store.data?.previous[index]}
-          goalColors={$store.data?.colors}
-          position={{ index, total: $store.config.cards.length }}
-          pageId={id}
-          on:change={onCardConfigChange}
-        />
+        {#if $store.data?.cards?.[index]}
+          <AnalyticsCardView
+            {card}
+            data={$store.data?.cards?.[index]}
+            previousTimePeriodData={$store.data?.previous?.[index]}
+            goalColors={$store.data?.colors}
+            position={{ index, total: $store.config.cards.length }}
+            pageId={id}
+            on:change={onCardConfigChange}
+          />
+        {/if}
       {/each}
-      {#if $isInEditMode && $store.config.cards.length < 4}
+      {#if $isInEditMode && $store.config.cards.length < 10}
         <div>
           <button
             class={cn(
@@ -80,7 +82,11 @@
 {:else}
   <EmptyStatusView
     isLoadingState={$store.isRefreshing}
-    mainText="Shoot! No cards configured."
-    subText="Please click on edit and add cards to display them here."
+    mainText={$store.data?.cards === undefined
+      ? "Geez Something went wrong!"
+      : "Shoot! No cards configured."}
+    subText={$store.data?.cards === undefined
+      ? "Please try again after sometime or chat with us"
+      : "Please click on edit and add cards to display them here."}
   />
 {/if}

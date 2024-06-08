@@ -16,7 +16,9 @@
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { UIState } from "$lib/client/types/preferences.type";
   export let isExpandedMode: boolean = true;
-  let selectedMode: number = 0;
+  let selectedMode: number = userPreferences.resolveUiState(
+    UIState.advancedMode
+  );
   let selectedDynamicDuration: number = 0;
   $: parentBackgroundIndex = isExpandedMode ? 1 : 2;
   function onDynamicSliderChange(event: any) {
@@ -32,20 +34,18 @@
     sessionStore.onComposeComplete();
   }
   function onModeSwitch(event: any) {
+    console.log({ event });
     const selected = event.detail === "Presets" ? 0 : 1;
     userPreferences.setUiState({
       property: UIState.advancedMode,
       value: selected
     });
   }
-  $: selectedMode = userPreferences.resolveUiState(UIState.advancedMode);
-  // onMount(() => {
-  //   setTimeout(() => {}, 5000);
-  //   setInterval(() => {
-  //     selectedDynamicDuration = selectedDynamicDuration + 100;
-  //     sessionStore.onSliderDurationChange(selectedDynamicDuration);
-  //   }, 100);
-  // });
+  onMount(() => {
+    userPreferences.subscribe((value) => {
+      selectedMode = userPreferences.resolveUiState(UIState.advancedMode);
+    });
+  });
 </script>
 
 <div

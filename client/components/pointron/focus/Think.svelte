@@ -5,7 +5,8 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { Size } from "$lib/client/types/size.enum";
   import FocusPlayerTimeText from "./player/FocusPlayerTimeText.svelte";
-  import FocusNotes from "./FocusNotes.svelte";
+  import SessionNotes from "./notes/SessionNotes.svelte";
+  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
 </script>
 
 <div
@@ -19,11 +20,11 @@
       <TypewritingText text="Thinking..." />
     </div>
     <div
-      class="bg-bgs2 p-6 rounded-md flex flex-col items-start {$view.isPortrait
+      class="bg-bgs2 p-10 rounded-md flex flex-col items-start {$view.isPortrait
         ? 'h-2/5'
         : 'w-1/2'}"
     >
-      <FocusNotes />
+      <SessionNotes />
     </div>
   </div>
   <div class="flex w-full text-b2 text-fgs3 justify-between items-center">
@@ -33,7 +34,7 @@
         label="close"
         size={Size.sm}
         on:click={() => {
-          modalEvent.hide();
+          modalEvent.hideSpecific(PointronEventEnum.THINK_MODE);
         }}
       />
     </div>

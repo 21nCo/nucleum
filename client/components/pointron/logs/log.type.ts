@@ -50,10 +50,10 @@ export type PointLogDbType = DbRecordBase & {
 };
 
 export interface PointLogStore extends ICacheableStore {
-  manualLogs: ManualLogForm[];
+  manualLogs: IManualSessionLogForm[];
 }
 
-export type ManualLogForm = {
+export type IManualSessionLogForm = {
   id: string;
   startTime: string;
   startDate: Date;
@@ -61,6 +61,7 @@ export type ManualLogForm = {
   endDate: Date;
   goalId: string;
   duration: number;
+  notes: IMarkdown;
 };
 
 export interface LogsPaneStore extends ICacheableStore {

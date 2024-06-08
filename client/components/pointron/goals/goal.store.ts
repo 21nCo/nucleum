@@ -1,4 +1,4 @@
-import { generateUID } from "$lib/client/utils/utils";
+import { activeResourceFilter, generateUID } from "$lib/client/utils/utils";
 import { get, writable } from "svelte/store";
 import type {
   Goal,
@@ -153,7 +153,7 @@ function initNewGoalStore() {
       setTimeout(() => {
         if (n.goal.isPinnedForQuickStart) appStore.gotoPath("/focus");
         else {
-          appStore.gotoPath("/goals");
+          appStore.gotoPath(Item.goal);
         }
       }, 1000);
       toasts.trigger({
@@ -268,7 +268,7 @@ function initGoalsStore() {
         label: goal?.label ?? "",
         id: goal?.id,
         color: goal?.color ?? goal?.parent?.color,
-        childrenCount: goal?.subGoals?.length ?? 0
+        childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0
       };
     },
     children: (id: string) => {

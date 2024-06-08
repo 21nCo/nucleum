@@ -16,6 +16,7 @@
   import { logsPaneStore } from "./log.store";
   import DaySummaryPart from "./daySummary/DaySummaryPart.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   export let date: Date = new Date();
   export let context: "journal" | "logs" = "logs";
   let selectedId: string | undefined = undefined;
@@ -107,13 +108,12 @@
     {/if}
     {#if !$logsPaneStore.isRefreshing && $logsPaneStore.logs.length > 0}
       <DaySummaryPart summary={$logsPaneStore.summary} />
-      <div
-        class="w-full flex flex-col gap-4 pb-20 flex-grow overflow-y-auto {context ===
-        'logs'
-          ? $view.isPortrait
-            ? 'px-2'
-            : 'px-8'
-          : ''}"
+      <ScrollView
+        class={{
+          "w-full flex flex-col gap-4 flex-grow": true,
+          "px-2": $view.isPortrait && context === "logs",
+          "px-8": !$view.isPortrait && context === "logs"
+        }}
       >
         {#each $logsPaneStore.logs as log, index}
           <LogThumbnailItem
@@ -132,7 +132,7 @@
             on:refresh={refresh}
           />
         {/each}
-      </div>
+      </ScrollView>
     {:else}
       <EmptyStatusView
         size={Size.sm}

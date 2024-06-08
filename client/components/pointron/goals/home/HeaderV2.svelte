@@ -7,6 +7,7 @@
   import view from "$lib/client/stores/view.store";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { Item } from "$lib/client/types/item.enum";
   let parentBreadcrumbs: BreadcrumbItem[] = [];
   $: refresh($currentGoal);
   function refresh(goal: Goal) {
@@ -18,13 +19,16 @@
           item.label && item.label.length > 25
             ? `${item.label.slice(0, 25)}...`
             : item.label,
-        path: `/goals/${item.id}`
+        path: `/${Item.goal}/${item.id}`
       })) ?? [];
 
     parentBreadcrumbs = isValidArrayWithData(parentHierarchy)
       ? [
           ...parentHierarchy,
-          { label: $currentGoal.label, path: `/goals/${$currentGoal.id}` }
+          {
+            label: $currentGoal.label,
+            path: `/${Item.goal}/${$currentGoal.id}`
+          }
         ]
       : [];
   }

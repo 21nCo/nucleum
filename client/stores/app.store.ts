@@ -305,6 +305,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
   }
   setAppearance(x: UserAppearanceSettings) {
     this.update((n: UserGlobalPreferences) => {
+      console.log("setting appearance", { x, n });
       const appearance = { ...n.appearance, ...x };
       n.appearance = appearance;
       this.persist({ appearance });
@@ -581,7 +582,7 @@ function initAppStore(seed: AppStore) {
       if (component?.isMenuHidden) return true;
     }
     const listOfPathsToHideMenu = {
-      portrait: ["/goals/*", "/cp/*"],
+      portrait: ["/goal/*", "/cp/*"],
       landscape: []
     };
     if (!path) return false;
@@ -614,6 +615,19 @@ function initAppStore(seed: AppStore) {
     // if (!navigator.onLine) {
     //   path = "/offline";
     // }
+    if (params) goto(path, params);
+    else goto(path);
+  };
+  const gotoResource = async (item: Item, id: string, params: any = null) => {
+    const path = `/${item}/${id}`;
+    update((n: AppStore) => {
+      n = {
+        ...n,
+        currentPath: path,
+        isMenuHidden: checkIfNeedToHideMenu(path)
+      };
+      return n;
+    });
     if (params) goto(path, params);
     else goto(path);
   };
@@ -893,6 +907,7 @@ function initAppStore(seed: AppStore) {
       });
     },
     gotoPath,
+    gotoResource,
     resolveComponent,
     resolveComponentFromPath,
     openLink,

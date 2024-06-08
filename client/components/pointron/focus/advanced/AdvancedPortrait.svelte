@@ -13,7 +13,6 @@
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import { focusItemsStore } from "$lib/client/components/pointron/focus/session.store";
   import { appStore } from "$lib/client/stores/app.store";
-  export let action: ButtonParams;
 </script>
 
 <!-- <div class="flex flex-col gap-8 flex-grow w-full">
@@ -59,4 +58,3 @@
     on:click={() => appStore.runAction(PointronEventEnum.SHOW_FOCUSITEMS_MODAL)}
   /> -->
 </div>
-<FloatingButton params={action} />

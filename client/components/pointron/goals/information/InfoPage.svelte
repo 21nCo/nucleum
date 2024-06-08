@@ -6,14 +6,16 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
   import { ChipVariant } from "$lib/client/types/chipVariant.enum";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import type { InputLabel } from "$lib/client/types/input.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
   import GoalInsights from "../../insights/GoalInsights.svelte";
   import GoalColorPickerWithPreview from "../GoalColorPickerWithPreview.svelte";
   import GoalActions from "../home/GoalActions.svelte";
   import SubGoalList from "../subGoals/SubGoalList.svelte";
-
   $: goalTags = $tagStore.tags.filter((x) => $currentGoal.tags?.includes(x.id));
+  let labelProps: Partial<InputLabel> = { orientation: Orientation.Vertical };
 </script>
 
 <div class="flex flex-col gap-10">
@@ -26,7 +28,7 @@
       <TextArea
         placeholder="Type description of the goal here"
         bind:value={$currentGoal.description}
-        label={{ label: "Description" }}
+        label={{ ...labelProps, label: "Description" }}
         rows={3}
       />
       <ChipsAutocomplete

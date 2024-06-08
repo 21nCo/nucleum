@@ -20,8 +20,9 @@
   import Extras from "../elements/controls/Extras.svelte";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import appearance from "$lib/client/stores/appearance.store";
+
   import SimpleDigitalClock from "../../clocks/SimpleDigitalClock.svelte";
-  import FocusNotes from "../FocusNotes.svelte";
+  import SessionNotes from "../notes/SessionNotes.svelte";
   export let isInline: boolean = false;
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
@@ -176,7 +177,7 @@
     {#if isExtraLargeScreen}
       <div class="w-1/4 p-4 bg-bgs2">
         <!-- <SimpleDigitalClock /> -->
-        <FocusNotes />
+        <SessionNotes />
       </div>
     {/if}
   </div>

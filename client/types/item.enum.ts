@@ -24,6 +24,7 @@ export enum Item {
   PointLog = "PointLog",
   PointTimer = "PointTimer",
   PointGoal = "PointGoal",
+  goal = "goal",
   logsPane = "logsPane",
   targetsPane = "targetsPane",
   focusHeatmap = "focusHeatmap",

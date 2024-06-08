@@ -23,7 +23,7 @@
     <div class="w-full flex justify-between gap-3 pr-10 overflow-x-auto">
       {#each $userLocalPreferences.manualEntryQuickDurations as item}
         <ActiveBackgroundElement
-          class="px-3 py-1 rounded-md min-w-fit bg-bgs2"
+          class="px-4 py-1 rounded-md min-w-fit bg-bgs2 hover:bg-bgs3"
           isBackgroundActive={item === selectedItem}
           on:click={() => {
             selectedItem = item;

@@ -11,12 +11,16 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import AddNewSubGoal from "./AddNewSubGoal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { Item } from "$lib/client/types/item.enum";
 
   let isArchivedGoalsVisible: boolean = false;
 
   function toggleArchivedVisibility() {
     isArchivedGoalsVisible = !isArchivedGoalsVisible;
   }
+  $: archivedSubgoals = $currentGoal.subGoals.filter(
+    (item) => item.isArchived && item
+  );
 </script>
 
 <div class="flex flex-col gap-4 items-start bg-bgs2 rounded-md p-4">
@@ -26,11 +30,26 @@
       <div class="flex flex-col w-full">
         {#each $currentGoal.subGoals.filter((item) => !item.isArchived && item) as item}
           <SubGoalListItem
-            on:click={() => appStore.gotoPath(`/goals/${item.id}`)}
+            on:click={() => appStore.gotoResource(Item.goal, item.id)}
             >{item.label}
           </SubGoalListItem>
         {/each}
       </div>
+      {#if archivedSubgoals.length > 0}
+        <Divider />
+        <div class="flex flex-col w-full">
+          <Text
+            content="Archived sub goals"
+            style={TextStyle.SECTION_HEADING_SMALL}
+          />
+          {#each archivedSubgoals as item}
+            <SubGoalListItem
+              on:click={() => appStore.gotoResource(Item.goal, item.id)}
+              >{item.label}
+            </SubGoalListItem>
+          {/each}
+        </div>
+      {/if}
     {:else}
       <EmptyStatusView subText="No sub goals found" size={Size.sm} />
     {/if}
@@ -59,7 +78,8 @@
   {#if isArchivedGoalsVisible}
     <div class="flex flex-col w-full">
       {#each $currentGoal.subGoals.filter((item) => item.isArchived && item) as item}
-        <SubGoalListItem on:click={() => appStore.gotoPath(`/goals/${item.id}`)}
+        <SubGoalListItem
+          on:click={() => appStore.gotoResource(Item.goal, item.id)}
           >{item.label}
         </SubGoalListItem>
       {/each}

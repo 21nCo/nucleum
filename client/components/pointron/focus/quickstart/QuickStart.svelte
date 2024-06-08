@@ -18,6 +18,7 @@
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { UIState } from "$lib/client/types/preferences.type";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   let isLoadingState = false;
   let searchInput = "";
@@ -71,9 +72,10 @@
     <div
       id="QSinner"
       on:touchstart|stopPropagation={startTouch}
-      class="relative flex w-full pb-60 {layout === Layout.LIST
-        ? 'flex-col gap-3 flex-grow overflow-y-auto'
-        : 'flex-wrap gap-2 overflow-y-auto'}"
+      class={cn("relative flex w-full overflow-y-auto pb-60", {
+        "flex-col gap-3 flex-grow": layout === Layout.LIST,
+        "flex-wrap gap-2": layout === Layout.GRID
+      })}
     >
       <!-- TODO - attach swipe refresh on touch device -->
       {#if $quickFocusItemStore.isRefreshing}

@@ -8,6 +8,7 @@
   import { afterUpdate, createEventDispatcher } from "svelte";
   import { customColorStyle } from "$lib/client/utils/theme.utils";
   import { ColorType } from "$lib/client/types/appearance.type";
+  import { Item } from "$lib/client/types/item.enum";
 
   // Goal Props
   export let id: string = "";
@@ -26,7 +27,7 @@
   let isActive: boolean = false;
 
   function handleClick() {
-    appStore.gotoPath(`/goals/${id}`);
+    appStore.gotoResource(Item.goal, id);
   }
 
   function handleStateChange() {
@@ -56,7 +57,7 @@
     hasSubGoals = subGoalCount > 0;
   }
 
-  $: isActive = $view.currentPath === `/goals/${id}`;
+  $: isActive = $appStore.currentPath.includes(id);
 
   $: headerContent = getHeaderContent(parent);
 </script>

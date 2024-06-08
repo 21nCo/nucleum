@@ -22,7 +22,7 @@ import {
   type DaySummary,
   type LogThumbnail,
   type LogsPaneStore,
-  type ManualLogForm,
+  type IManualSessionLogForm,
   type PointLogDbType,
   type PointLogStore,
   type PointSessionDbType
@@ -37,6 +37,7 @@ import {
   sessionTotals
 } from "$lib/client/components/pointron/local.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
+import { NodeType } from "$lib/client/types/memotron/node.type";
 
 export const pointLogStore = initPointLogStore();
 
@@ -53,14 +54,23 @@ function initPointLogStore() {
   reset();
   function generateNewLog(goalId: string | undefined = undefined) {
     const userGlobalPreferences = get(userPreferences);
-    let newLog: ManualLogForm = {
+    let newLog: IManualSessionLogForm = {
       startDate: new Date(), //.toISOString().split("T")[0],
       endDate: new Date(), //.toISOString().split("T")[0],
       endTime: formatTime(userGlobalPreferences, get(currentTime), "24")!,
       startTime: formatTime(userGlobalPreferences, get(currentTime), "24")!,
       id: generateUID(),
       goalId: goalId ?? "",
-      duration: 0
+      duration: 0,
+      notes: {
+        blocks: [
+          {
+            id: generateUID(),
+            contentType: NodeType.SIMPLE_TEXT,
+            body: ""
+          }
+        ]
+      }
     };
     return newLog;
   }
@@ -81,7 +91,7 @@ function initPointLogStore() {
         return n;
       });
     },
-    updateManualLog: (log: ManualLogForm) => {
+    updateManualLog: (log: IManualSessionLogForm) => {
       update((n) => {
         let index = n.manualLogs.findIndex((x) => x.id == log.id);
         n.manualLogs[index] = log;
@@ -118,7 +128,7 @@ function initPointLogStore() {
           manualEntryId: entry.id,
           logs: [{ ...log, start: start.getTime(), end: end.getTime() }],
           blocks: [],
-          notes: {
+          notes: entry.notes ?? {
             blocks: []
           },
           tasks: [

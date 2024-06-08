@@ -13,7 +13,6 @@
   import TopBarActions from "../elements/TopBarActions.svelte";
   import TimeComposition from "./composition/TimeComposition.svelte";
   import SimpleDigitalClock from "../../clocks/SimpleDigitalClock.svelte";
-  export let action: ButtonParams;
   $: isExpandedMode =
     ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3;
   $: isExtraLargeScreen = $view.landscapiness > 1.5 && $view.scale > 1.5;
@@ -25,7 +24,7 @@
     <!-- <TopBarActions {isExpandedMode} /> -->
   </div>
   {#if !isExpandedMode}
-    <AdvancedPortrait {action} />
+    <AdvancedPortrait />
   {:else}
     <div class="flex w-full flex-grow pb-10">
       <div class="flex flex-col gap-8 py-4 w-1/2 max-w-xl h-full">
@@ -52,7 +51,5 @@
         </div>
       {/if}
     </div>
-    <!-- TODO fix - causing shift of the right panel after session finish -->
-    <FloatingButton params={action} />
   {/if}
 </div>

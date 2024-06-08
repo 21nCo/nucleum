@@ -65,7 +65,7 @@
   async function handleDeleteGoal() {
     await new Persistance().delete($currentGoal.id, Item.PointGoal);
     // check if success then redirect to the parent goal or /goals(if the parent does not exists)
-    if (!parent || parent.length === 0) appStore.gotoPath("/goals");
+    if (!parent || parent.length === 0) appStore.gotoPath(Item.goal);
     else appStore.gotoPath(`/goals`);
     currentGoal.propagateChangesTemp();
   }
@@ -120,7 +120,7 @@
 <div class="flex flex-wrap gap-3">
   {#each goalActions as action}
     <Button
-      size={Size.sm}
+      size={$view.isPortrait ? Size.sm : Size.xs}
       label={!$view.isPortrait ? action.label : action.label}
       icon={action.icon}
       type={action.label == "Delete"

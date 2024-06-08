@@ -14,17 +14,22 @@
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { pointLogStore } from "../log.store";
   import TimeInput from "$lib/client/elements/datetime/TimeInput.svelte";
-  import type { ManualLogForm } from "../log.type";
+  import type { IManualSessionLogForm } from "../log.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
-  export let item: ManualLogForm;
+  import FocusNotes from "../../focus/notes/FocusNotes.svelte";
+  export let item: IManualSessionLogForm;
   let label: string = "";
   let selectedGoal: any = undefined;
   let inputRef: any;
   let selectedQuickAddItem: number = 0;
   if (item.goalId !== "") selectedGoal = { label: $swipeLabel };
-  onMount(() => {});
+  onMount(() => {
+    setTimeout(() => {
+      if (inputRef) inputRef.focus();
+    }, 100);
+  });
   function onGoalSelect(event: any) {
     selectedGoal = event?.detail?.item;
     item.goalId = selectedGoal.id;
@@ -127,4 +132,5 @@
       on:change={ondurationchange}
     />
   </div>
+  <FocusNotes bind:md={item.notes} />
 </div>

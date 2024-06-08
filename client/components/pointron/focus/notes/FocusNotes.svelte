@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { sessionStore } from "$lib/client/components/pointron/focus/session.store";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
+  import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+  export let md: IMarkdown;
+  export let parentBgIndex: number = 1;
 </script>
 
 <Markdown
-  bind:md={$sessionStore.notes}
-  parentBackgroundIndex={2}
+  bind:md
+  parentBackgroundIndex={parentBgIndex}
   params={{
     placeholder: "Start typing...",
     actions: ["copy"],
@@ -13,7 +15,5 @@
     isReadOnly: false,
     canUseSlashShortcut: false
   }}
-  on:change={(e) => {
-    sessionStore.persist(true);
-  }}
+  on:change
 />

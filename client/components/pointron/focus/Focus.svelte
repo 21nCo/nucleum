@@ -65,6 +65,7 @@
     }
   });
   async function onManualLogClicked() {
+    console.log("onManualLogClicked");
     pointLogStore.reset();
     appStore.runAction(PointronEventEnum.MANUAL_FOCUS_ENTRY_POP);
   }
@@ -109,7 +110,8 @@
             </div>
             <!-- <ManualFocusLog /> -->
           {:else}
-            <AdvancedPortrait action={startSessionButton} />
+            <AdvancedPortrait />
+            <FloatingButton params={startSessionButton} />
           {/if}
         </div>
       {/if}
@@ -138,7 +140,8 @@
           {#if $sessionStore.isSessionRunning}
             <Zen isInline={true} />
           {:else}
-            <Advanced action={startSessionButton} />
+            <Advanced />
+            <FloatingButton params={startSessionButton} />
           {/if}
         </slot>
       </Panel>

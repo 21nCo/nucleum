@@ -83,7 +83,7 @@ const sessionStoreId = Item.pointSessionSnapshot;
 const seedSessionStore: SessionStore = {
   id: sessionStoreId,
   dataType: StoreDataType.KVO,
-  mutatingResources: [Item.PointSession, Item.PointLog],
+  mutatingResources: [],
   priorityRefreshOnAppAppear: true,
   currentSessionId: undefined,
   isQuickStartOn: false,
