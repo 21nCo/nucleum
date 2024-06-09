@@ -48,7 +48,7 @@ import {
   PersistanceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import { logger } from "$lib/client/stores/log.store";
 import appearance from "$lib/client/stores/appearance.store";
 import { SessionType } from "$lib/client/components/pointron/logs/log.type";

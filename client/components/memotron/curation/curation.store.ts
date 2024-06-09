@@ -10,7 +10,7 @@ import {
   type ICurationStore
 } from "$lib/client/types/memotron/curation.type";
 import account from "$lib/client/stores/account.store";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   StoreDataType,
   type ICacheableStore,

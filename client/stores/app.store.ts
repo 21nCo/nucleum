@@ -46,7 +46,7 @@ import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 
 import { Persistence } from "../persistence/persistence";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";

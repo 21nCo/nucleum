@@ -1,6 +1,6 @@
-import { NodePersistance } from "$lib/client/stores/node.persistance";
+import { NodePersistence } from "$lib/client/components/memotron/node/node.persistence";
 import account from "$lib/client/stores/account.store";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   PersistanceActionType,
   StoreDataType,

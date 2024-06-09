@@ -9,7 +9,7 @@ import {
 } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { getprevDateRange } from "$lib/client/components/calendarHeatmap/calendarHeatMap.utils";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import { logger } from "$lib/client/stores/log.store";
 export type FocusHeatmapStoreContract = ReturnType<
   typeof initFocusHeatmapStore

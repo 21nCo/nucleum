@@ -1,8 +1,8 @@
-import { AppDexie } from "$lib/client/stores/dexie";
 import type { Table } from "dexie";
-import type { CurationLocalRecord } from "../types/memotron/curation.type";
 import type { NodeLocalRecord } from "$lib/client/types/memotron/node.type";
-import type { TypeLocalRecord } from "../types/memotron/type.type";
+import type { TypeLocalRecord } from "$lib/client/types/memotron/type.type";
+import type { CurationLocalRecord } from "$lib/client/types/memotron/curation.type";
+import { AppDexie } from "$lib/client/persistence/dexie";
 
 export class MemotronDexie extends AppDexie {
   node!: Table<NodeLocalRecord>;

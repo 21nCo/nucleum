@@ -18,7 +18,7 @@ import { objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { Layout } from "$lib/client/types/layout.type";
 import type { Tag, TagStore } from "$lib/client/types/pointron/tag.type";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   StoreDataType,
   PersistanceActionType

@@ -14,7 +14,7 @@ import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/stores/log.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { pointronEvents, pointronPreferences } from "../pointron.store";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import { toasts } from "$lib/client/stores/notification.store";
 import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
 import {

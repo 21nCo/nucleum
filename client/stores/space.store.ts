@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import { Item } from "../types/item.enum";
 import { StoreDataType } from "../types/data.type";
 import type { Space, SpaceStore } from "../types/space.type";

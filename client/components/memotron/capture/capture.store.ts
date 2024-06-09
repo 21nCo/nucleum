@@ -33,12 +33,12 @@ import {
   retrieveLocally
 } from "$lib/client/utils/storage.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { NodePersistance } from "$lib/client/stores/node.persistance";
+import { NodePersistence } from "$lib/client/components/memotron/node/node.persistence";
 import { prefixTable } from "$lib/client/utils/text.utils";
-import { resolveNodeCaptureMetadata } from "$lib/client/utils/node.utils";
+import { resolveNodeCaptureMetadata } from "$lib/client/components/memotron/node/node.utils";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -195,7 +195,7 @@ async function save(setter: any) {
     resources: [root, ...remainingResources]
   };
   console.log({ nodeToBeSaved: nodeCapture });
-  let result = await new NodePersistance(currentUserId).createNode(nodeCapture);
+  let result = await new NodePersistence(currentUserId).createNode(nodeCapture);
   if (result) {
     setter({ ...generateSeedStore() });
     toasts.trigger({

@@ -4,7 +4,7 @@ import {
   type TypeCreationForm
 } from "$lib/client/types/memotron/type.type";
 import account from "$lib/client/stores/account.store";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   StoreDataType,
   type ICacheableStore,

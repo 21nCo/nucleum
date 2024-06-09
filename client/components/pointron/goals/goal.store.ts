@@ -28,7 +28,7 @@ import {
   PersistanceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
-import { dataManager } from "$lib/client/stores/data.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
 import { logger } from "$lib/client/stores/log.store";
 
