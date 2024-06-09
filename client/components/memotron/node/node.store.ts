@@ -98,7 +98,7 @@ export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
  * Node store map for individual nodes that are open in the UI.
  */
 const activeNodeStores = new Map<string, IActiveNodeStore>();
-const nodePersistance = new NodePersistance(currentUserId);
+const nodePersistance = new NodePersistence(currentUserId);
 /**
  * Resolves the active node store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the node

@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
 import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
 import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
-import { Persistance } from "$lib/client/stores/persistence";
+
 import { Item } from "$lib/client/types/item.enum";
 import { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
 import {
@@ -27,8 +27,9 @@ import { logger } from "$lib/client/stores/log.store";
 import type { PointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { defaultAppMenu } from "$local/local";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { Persistence } from "$lib/client/persistence/persistence";
 
-const persistance = new Persistance();
+const persistance = new Persistence();
 export const swipeLabel = writable("");
 
 const seedPresets: SessionComposition[] = [

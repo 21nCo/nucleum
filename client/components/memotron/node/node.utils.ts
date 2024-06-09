@@ -4,8 +4,8 @@ import {
   NodeType,
   type NodeMetadataCapturedAtClient
 } from "$lib/client/types/memotron/node.type";
-import type { ClipContent } from "$lib/client/types/clip.type";
-import { getGeoLocation } from "./browser.utils";
+import type { ClipContent } from "$lib/client/types/memotron/clip.type";
+import { getGeoLocation } from "$lib/client/utils/browser.utils";
 
 export function contentPreview(body: IMarkdown | ClipContent) {
   if (body && typeof body === "object" && "blocks" in body) {

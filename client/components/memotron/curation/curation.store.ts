@@ -1,4 +1,3 @@
-import { CurationPersistance } from "$lib/client/stores/curation.persistance";
 import {
   CollectionLayout,
   CombinationViewType,
@@ -21,9 +20,10 @@ import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
-import { Persistance } from "$lib/client/stores/persistence";
 import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
 import { ActiveResourceStore } from "$lib/client/stores/resource.store";
+import { CurationPersistence } from "./curation.persistence";
+import { Persistence } from "$lib/client/persistence/persistence";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -116,7 +116,7 @@ export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
  * Curation stores map for holding the state of active i.e. currently open curations in the UI
  */
 const activeCurationStores = new Map<string, IActiveCollectionStore>();
-const curationPersistance = new CurationPersistance(currentUserId);
+const curationPersistance = new CurationPersistence(currentUserId);
 
 /**
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
@@ -275,11 +275,11 @@ async function deleteView(
     };
     return val;
   });
-  await new Persistance().delete(id, Item.view, currentUserId);
+  await new Persistence().delete(id, Item.view, currentUserId);
 }
 
 const debouncedPersistView = debouncer((view: ICollectionView) => {
-  new Persistance().update(view);
+  new Persistence().update(view);
 }, 2000);
 
 async function updateView(

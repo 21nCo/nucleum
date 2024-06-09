@@ -10,7 +10,8 @@
   import WaveSurfer from "wavesurfer.js";
   import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
   import { captureStore, currentUserId } from "./capture.store";
-  import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+  import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+
   export let body: any = {};
   export let url: string = "";
   export let isReplaceable: boolean = false;

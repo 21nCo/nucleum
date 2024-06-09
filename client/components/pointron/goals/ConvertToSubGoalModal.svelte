@@ -2,8 +2,6 @@
   import view from "$lib/client/stores/view.store";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Persistence } from "$lib/client/persistence/persistence";
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import { GoalPersistence } from "$lib/client/components/pointron/goals/goal.persistence";
   import type { Goal } from "$lib/client/types/pointron/goal.type";
@@ -23,7 +21,6 @@
 
   let value: AutocompleteListItemType;
 
-  const persistance = new Persistence();
   const goalPersistance = new GoalPersistence();
 
   async function onConvert() {
