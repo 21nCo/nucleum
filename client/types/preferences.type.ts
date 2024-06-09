@@ -38,6 +38,14 @@ export type UserGlobalPreferences = ICacheableStore & {
    * Temporary
    */
   mediaGridTestitems: any[];
+  /**
+   * @deprecated
+   * Temporary for testing
+   */
+  infiniteGrid: {
+    isGridCreated: boolean;
+    grid: any[];
+  };
 };
 
 export type KeyboardShortcut = {

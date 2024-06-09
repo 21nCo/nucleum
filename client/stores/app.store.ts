@@ -278,7 +278,11 @@ export const seedUserPreferences: UserGlobalPreferences = {
     usedIcons: []
   },
   annotations: [],
-  mediaGridTestitems: []
+  mediaGridTestitems: [],
+  infiniteGrid: {
+    isGridCreated: false,
+    grid: []
+  }
 };
 const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
 type dbVersionStore = ICacheableStore & {
