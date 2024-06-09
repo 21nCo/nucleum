@@ -13,7 +13,7 @@ import {
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/stores/log.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
-import { pointronEvents, userLocalPreferences } from "../local.store";
+import { pointronEvents, pointronPreferences } from "../pointron.store";
 import { dataManager } from "$lib/client/stores/data.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
@@ -118,7 +118,7 @@ function initPointLogStore() {
           goalId: entry.goalId,
           manualEntryId: entry.id,
           tzOffset: get(userPreferences).timeZoneOffset,
-          targets: get(userLocalPreferences).horizonTargets
+          targets: get(pointronPreferences).horizonTargets
         };
         const session: PointSessionDbType = {
           start: start.toISOString(),
@@ -244,7 +244,7 @@ function initPointLogStore() {
           sessionId: m.id,
           taskName,
           tzOffset: get(userPreferences).timeZoneOffset,
-          targets: get(userLocalPreferences).horizonTargets
+          targets: get(pointronPreferences).horizonTargets
         };
       });
       dataManager.performMutation(

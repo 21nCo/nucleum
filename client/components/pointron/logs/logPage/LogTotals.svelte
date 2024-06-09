@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sessionTotals } from "$lib/client/components/pointron/local.utils";
+  import { sessionTotals } from "$lib/client/components/pointron/pointron.utils";
   import LogTotalCard from "./LogTotalCard.svelte";
   export let log: any;
   const { totalFocus, totalBreak } = sessionTotals(log);

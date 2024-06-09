@@ -10,8 +10,8 @@
   } from "$lib/client/stores/notification.store";
   import {
     tagStore,
-    userLocalPreferences
-  } from "$lib/client/components/pointron/local.store";
+    pointronPreferences
+  } from "$lib/client/components/pointron/pointron.store";
   import {
     StatusMessageType,
     type StatusMessage
@@ -31,7 +31,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import ExportData from "./ExportData.svelte";
   import ImportData from "./ImportData.svelte";
-  import { LocalPersistance } from "$lib/client/components/pointron/local.persistance";
+  import { PointronPersistence } from "$lib/client/components/pointron/pointron.persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { download, generateUID } from "$lib/client/utils/utils";
   import { AlertType } from "$lib/client/types/notification.type";
@@ -57,7 +57,7 @@
     });
   }
   async function revertImport(id: string) {
-    let response = await new LocalPersistance().revertImport(id);
+    let response = await new PointronPersistence().revertImport(id);
     if (response) {
       toasts.success("Import reverted successfully");
       refreshImportHistory();
@@ -163,7 +163,7 @@
     appStore.runAction(PointronEventEnum.IMPORT_APP_DATA, { id });
   }
   async function refreshImportHistory() {
-    let response = await new LocalPersistance().fetchImportHistory();
+    let response = await new PointronPersistence().fetchImportHistory();
     importHistoryData = response;
     if (importHistoryData.length > 0) {
       importHistoryData = importHistoryData.map((item) => {

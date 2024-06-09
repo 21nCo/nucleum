@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
 </script>
@@ -26,7 +26,7 @@
         },
         orientation: Orientation.Vertical
       }}
-      bind:value={$userLocalPreferences.breakReminder}
+      bind:value={$pointronPreferences.breakReminder}
     />
   </div>
 </div>

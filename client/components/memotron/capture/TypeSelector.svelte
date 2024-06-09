@@ -3,7 +3,7 @@
   import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";

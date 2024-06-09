@@ -13,7 +13,7 @@
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/local.utils";
+  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/pointron.utils";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ColorType } from "$lib/client/types/appearance.type";

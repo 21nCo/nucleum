@@ -1,7 +1,7 @@
 <script lang="ts">
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { generateUID } from "$lib/client/utils/utils";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import {
     SessionCompositionType,
     type SessionComposition,
@@ -28,7 +28,7 @@
     totalDuration: 0,
     breakType: BreakCompositionType.PREDEFINED,
     numberOfBreaks: 1,
-    breakReminder: $userLocalPreferences.breakReminder
+    breakReminder: $pointronPreferences.breakReminder
   };
   // $sessionStore.composition ?? {
   //   id: "",
@@ -50,27 +50,27 @@
   onMount(() => {
     if (id) {
       composition = deepCopy(
-        $userLocalPreferences.presets.find((x) => x.id === id)!
+        $pointronPreferences.presets.find((x) => x.id === id)!
       );
     } else {
       composition = deepCopy(seedPreset);
     }
   });
-  $: console.log({ composition, savedPresets: $userLocalPreferences.presets });
+  $: console.log({ composition, savedPresets: $pointronPreferences.presets });
   async function close() {
     return modalEvent.hideSpecific(PointronEventEnum.EDIT_PRESET);
   }
   async function saveHandler() {
     if (id) {
-      userLocalPreferences.updatePreset(composition);
+      pointronPreferences.updatePreset(composition);
     } else {
-      userLocalPreferences.addPreset(composition);
+      pointronPreferences.addPreset(composition);
     }
     return close();
   }
   function deleteHandler() {
     if (composition && composition.id)
-      userLocalPreferences.removePreset(composition.id);
+      pointronPreferences.removePreset(composition.id);
     return close();
   }
 </script>

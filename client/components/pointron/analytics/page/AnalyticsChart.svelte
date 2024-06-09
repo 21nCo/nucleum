@@ -7,7 +7,7 @@
     formatDate,
     formatSeconds
   } from "$lib/client/utils/time.utils";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import { appConstants } from "$lib/client/stores/app.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -68,7 +68,7 @@
     };
   }
   function setTargetLine() {
-    const targetValue = $userLocalPreferences.horizonTargets?.find(
+    const targetValue = $pointronPreferences.horizonTargets?.find(
       (x) => x.scale === chart.period.scale
     )?.target;
     if (targetValue) {
@@ -98,7 +98,7 @@
   function initializeData() {
     if (!rawData) return;
     data = rawData.map((r: any) => {
-      const focus = $userLocalPreferences.isIncludeBreakInAnalytics
+      const focus = $pointronPreferences.isIncludeBreakInAnalytics
         ? r.focus + r.brek
         : r.focus;
       return {

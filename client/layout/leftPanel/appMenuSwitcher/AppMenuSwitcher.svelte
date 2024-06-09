@@ -4,7 +4,7 @@
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import type { Action } from "$lib/client/types/action.type";
   //TODO - remove dependency on local
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import type { UserLocalPreferences } from "$lib/client/types/memotron/memotronPreferences.type";
   import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
@@ -16,7 +16,7 @@
   let backgroundColor: string;
   let selected: number;
   onMount(() => {
-    userLocalPreferences.subscribe((x: UserLocalPreferences) => {
+    pointronPreferences.subscribe((x: UserLocalPreferences) => {
       pages = [];
       let items = [];
       if (!x?.appMenu) return;

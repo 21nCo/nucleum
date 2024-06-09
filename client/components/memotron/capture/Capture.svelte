@@ -11,7 +11,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { Item } from "$lib/client/types/item.enum";
   import Memocon from "../common/Memocon.svelte";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";

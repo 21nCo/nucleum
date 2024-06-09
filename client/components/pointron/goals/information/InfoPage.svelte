@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentGoal } from "$lib/client/components/pointron/goals/goal.store";
-  import { tagStore } from "$lib/client/components/pointron/local.store";
+  import { tagStore } from "$lib/client/components/pointron/pointron.store";
   import ChipsAutocomplete from "$lib/client/elements/autocomplete/ChipsAutocomplete.svelte";
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";

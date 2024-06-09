@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
   import PresetItem from "./PresetItem.svelte";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import { appStore } from "$lib/client/stores/app.store";
@@ -11,9 +11,7 @@
   let selectedPreset: SessionComposition;
   function presetClickHandler(event: any) {
     selectedPreset = event.detail.preset;
-    selectedPresetIndex = $userLocalPreferences.presets.indexOf(
-      selectedPreset!
-    );
+    selectedPresetIndex = $pointronPreferences.presets.indexOf(selectedPreset!);
     showEditor(selectedPreset.id);
   }
   function onAddNewClicked() {
@@ -25,7 +23,7 @@
   }
 </script>
 
-{#each $userLocalPreferences.presets as preset, index}
+{#each $pointronPreferences.presets as preset, index}
   <PresetItem
     {preset}
     {parentBackgroundIndex}

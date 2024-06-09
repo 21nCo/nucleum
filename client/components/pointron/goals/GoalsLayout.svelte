@@ -22,7 +22,7 @@
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import { onMount } from "svelte";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { Item } from "$lib/client/types/item.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
@@ -30,7 +30,7 @@
   import TreeMap from "$lib/client/components/treeMap/TreeMap.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { tagStore } from "../local.store";
+  import { tagStore } from "../pointron.store";
 
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;

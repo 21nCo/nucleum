@@ -18,7 +18,7 @@
   } from "$lib/client/utils/utils";
   import { liveQuery } from "dexie";
   import CurationThumbnailView from "./CurationThumbnailView.svelte";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { curations as curationsStore } from "./curation.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/types/action.type";

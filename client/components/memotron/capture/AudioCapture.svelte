@@ -5,7 +5,7 @@
   import { TimeFormat } from "$lib/client/types/time.type";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { createEventDispatcher, onMount } from "svelte";
-  import { Persistance } from "$lib/client/stores/persistance";
+  import { Persistence } from "$lib/client/persistence/persistence";
   import { generateUID } from "$lib/client/utils/utils";
   import type { FileDetails } from "$lib/client/types/memotron/capture.type";
   import WaveSurfer from "wavesurfer.js";

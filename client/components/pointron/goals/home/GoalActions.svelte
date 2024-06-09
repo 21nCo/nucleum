@@ -1,12 +1,12 @@
 <script lang="ts">
   import { currentGoal } from "$lib/client/components/pointron/goals/goal.store";
-  import { pointronEvents } from "$lib/client/components/pointron/local.store";
+  import { pointronEvents } from "$lib/client/components/pointron/pointron.store";
   import { GoalContextMenuAction } from "$lib/client/types/pointron/goalContextMenuAction.enum";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import view from "$lib/client/stores/view.store";
-  import { Persistance } from "$lib/client/stores/persistance";
+  import { Persistence } from "$lib/client/persistence/persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Item } from "$lib/client/types/item.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -63,7 +63,7 @@
   }
 
   async function handleDeleteGoal() {
-    await new Persistance().delete($currentGoal.id, Item.PointGoal);
+    await new Persistence().delete($currentGoal.id, Item.PointGoal);
     // check if success then redirect to the parent goal or /goals(if the parent does not exists)
     if (!parent || parent.length === 0) appStore.gotoPath(Item.goal);
     else appStore.gotoPath(`/goals`);

@@ -3,13 +3,13 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { Persistance } from "$lib/client/stores/persistance";
+  import { Persistence } from "$lib/client/persistence/persistence";
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
-  import { GoalPersistance } from "$lib/client/components/pointron/goals/goal.persistance";
+  import { GoalPersistence } from "$lib/client/components/pointron/goals/goal.persistence";
   import type { Goal } from "$lib/client/types/pointron/goal.type";
   import { onMount } from "svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
-  import { pointronEvents } from "$lib/client/components/pointron/local.store";
+  import { pointronEvents } from "$lib/client/components/pointron/pointron.store";
   import { Size } from "$lib/client/types/size.enum";
   import { currentGoal } from "$lib/client/components/pointron/goals/goal.store";
 
@@ -23,8 +23,8 @@
 
   let value: AutocompleteListItemType;
 
-  const persistance = new Persistance();
-  const goalPersistance = new GoalPersistance();
+  const persistance = new Persistence();
+  const goalPersistance = new GoalPersistence();
 
   async function onConvert() {
     if (!selectedGoalId) return;

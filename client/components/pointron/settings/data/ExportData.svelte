@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LocalPersistance } from "$lib/client/components/pointron/local.persistance";
+  import { PointronPersistence } from "$lib/client/components/pointron/pointron.persistence";
   import Button from "$lib/client/elements/button/Button.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import context from "$lib/client/stores/context.store";
@@ -7,7 +7,7 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import { download } from "$lib/client/utils/utils";
   async function exportData() {
-    let response = await new LocalPersistance().exportData();
+    let response = await new PointronPersistence().exportData();
     if (response) {
       const data = JSON.stringify(response);
       download(data, `pointron_export_${formatDate(new Date())}`);

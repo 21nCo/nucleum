@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
 </script>
@@ -10,6 +10,6 @@
       label: "Include break in analytics",
       orientation: Orientation.Horizontal
     }}
-    bind:checked={$userLocalPreferences.isIncludeBreakInAnalytics}
+    bind:checked={$pointronPreferences.isIncludeBreakInAnalytics}
   />
 </div>

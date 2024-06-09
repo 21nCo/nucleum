@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { contentPreview } from "$lib/client/utils/node.utils";
+  import { contentPreview } from "$lib/client/components/memotron/node/node.utils";
   import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import {
     NodeType,
     type INodeThumbnail

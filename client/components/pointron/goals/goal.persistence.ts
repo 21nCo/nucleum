@@ -1,4 +1,4 @@
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { PointGoalDbType } from "$lib/client/types/pointron/goal.type";
 import { Item } from "$lib/client/types/item.enum";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
@@ -7,7 +7,7 @@ const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 
 const tableName = Item[Item.PointGoal];
 
-export class GoalPersistance {
+export class GoalPersistence {
   async create(goals: PointGoalDbType[]) {
     let response = await surrealDb.insert(tableName, goals);
     return response && response.length > 0;

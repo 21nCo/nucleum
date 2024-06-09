@@ -1,16 +1,16 @@
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
-import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
-import { Item } from "../types/item.enum";
+import { ResourcePersistence } from "$lib/client/persistence/resource.persistence";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { Item } from "$lib/client/types/item.enum";
 import {
   CurationType,
   type ICollectionView,
   type ICurationCreationForm
-} from "../types/memotron/curation.type";
-import { prefixTable } from "../utils/text.utils";
-import { ResourcePersistance } from "./resource.persistance";
+} from "$lib/client/types/memotron/curation.type";
+import { prefixTable } from "$lib/client/utils/text.utils";
+import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
 
 const surrealDb = new SurrealDatabase();
-export class CurationPersistance extends ResourcePersistance {
+export class CurationPersistence extends ResourcePersistence {
   refreshQuery = "return fn::memotron::curation::fetchAll($since);";
   constructor(userId: string) {
     super(Item.curation, userId);

@@ -4,7 +4,7 @@
   import SearchResultItem from "./SearchResultItem.svelte";
   import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import Button from "../button/Button.svelte";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { debouncer } from "$lib/client/utils/utils";
   import InputBaseElement from "../InputBaseElement.svelte";
   import {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { NodePersistance } from "$lib/client/stores/node.persistance";
+  import { NodePersistence } from "$lib/client/components/memotron/node/node.persistence";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
@@ -21,7 +21,7 @@
   async function refresh() {
     isLoadingState = true;
     nodes = [];
-    const result = await new NodePersistance(
+    const result = await new NodePersistence(
       $account.userInfo?.id ?? ""
     ).fetchTimeline($selectedTimePeriod);
     if (isValidArrayWithData(result)) {

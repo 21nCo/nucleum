@@ -14,9 +14,9 @@
   import { onMount } from "svelte";
   import Horizons from "./Horizons.svelte";
   import TargetGuages from "./targets/TargetGuages.svelte";
-  import { AnalyticsPersistance } from "$lib/client/components/pointron/analytics/analytics.persistance";
+  import { AnalyticsPersistence } from "$lib/client/components/pointron/analytics/analytics.persistence";
   import type { TimeScale } from "$lib/client/types/time.type";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
@@ -26,7 +26,7 @@
   let selectedView = 0;
   let isShowFilters = true;
   let isLoadingState = false;
-  const aggPersistance = new AnalyticsPersistance();
+  const aggPersistance = new AnalyticsPersistence();
   let data: {
     horizons: {
       charts: any[];
@@ -44,7 +44,7 @@
   async function fetchAnalytics() {
     isLoadingState = true;
     data = await aggPersistance.fetchAnalytics(
-      $userLocalPreferences.horizonCharts
+      $pointronPreferences.horizonCharts
     );
     //if (data) console.log("Horizons Fetched ", data);
     //else console.log("error happened during surreal fetch");
@@ -89,7 +89,7 @@
           <Button
             label="reset"
             size={Size.xs}
-            on:click={userLocalPreferences.resetHorizonChartConfiguration}
+            on:click={pointronPreferences.resetHorizonChartConfiguration}
           />
         {/if}
         <EditToggleButton />
@@ -145,7 +145,7 @@
             <Button
               label="reset"
               size={Size.xs}
-              on:click={userLocalPreferences.resetHorizonChartConfiguration}
+              on:click={pointronPreferences.resetHorizonChartConfiguration}
             />
           {/if}
           <EditToggleButton />

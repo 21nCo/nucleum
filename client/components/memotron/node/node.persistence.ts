@@ -2,16 +2,16 @@ import { Cloud } from "$lib/client/types/cloud.enum";
 import { get } from "svelte/store";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
-import { cloudProvider } from "./persistance";
-import { ResourcePersistance } from "./resource.persistance";
-import { Item } from "../types/item.enum";
-import type { INodeCapture } from "../types/memotron/node.type";
-import type { IMutationQueueParams } from "../types/data.type";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { cloudProvider } from "../../../persistence/persistence";
+import { ResourcePersistence } from "../../../persistence/resource.persistence";
+import { Item } from "../../../types/item.enum";
+import type { INodeCapture } from "../../../types/memotron/node.type";
+import type { IMutationQueueParams } from "../../../types/data.type";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 
-export class NodePersistance extends ResourcePersistance {
+export class NodePersistence extends ResourcePersistence {
   constructor(userId: string) {
     super(Item.node, userId);
   }

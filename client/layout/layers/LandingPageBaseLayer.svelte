@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import ThemeLayer from "./ThemeLayer.svelte";
-  import { Persistance } from "$lib/client/stores/persistance";
+  import { Persistence } from "$lib/client/persistence/persistence";
   import { appStore } from "$lib/client/stores/app.store";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   onMount(async () => {
-    await new Persistance().initializeAppData();
+    await new Persistence().initializeAppData();
   });
 </script>
 

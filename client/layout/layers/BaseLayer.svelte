@@ -11,8 +11,8 @@
   import { extractProduct } from "$lib/client/utils/utils";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
 
-  import { Persistance } from "$lib/client/stores/persistance";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { Persistence } from "$lib/client/persistence/persistence";
+  import { dataManager } from "$lib/client/persistence/dataManager";
 
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
@@ -144,6 +144,14 @@
     addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
+    initializeServiceWorker();
+  }
+  function initializeServiceWorker() {
+    if (!$context.isEmbed) {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/worker.js");
+      }
+    }
   }
   async function parseEmbedToken() {
     const token = $page.url?.searchParams?.get("token");
@@ -154,7 +162,7 @@
   }
   async function initializeData() {
     //todo - check if the saved timezone is different from current user timezone
-    const appData = await new Persistance().fetchAppData();
+    const appData = await new Persistence().fetchAppData();
     appStore.loadAppData(appData);
     if ($account.isLoggedIn)
       await dataManager.initialize([

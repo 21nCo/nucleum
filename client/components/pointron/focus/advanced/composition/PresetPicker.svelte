@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import { sessionStore } from "$lib/client/components/pointron/focus/session.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -8,14 +8,14 @@
   export let isExpandedVariant: boolean = false;
   let isInEditMode: boolean = false;
   let selectedPresetIndex: number = $sessionStore.composition
-    ? $userLocalPreferences.presets.indexOf($sessionStore.composition)
+    ? $pointronPreferences.presets.indexOf($sessionStore.composition)
     : 0;
   export let parentBackgroundIndex: number = 1;
 
   function onPresetSelection(event: any) {
     const preset = event.detail.preset;
     sessionStore.onPresetSelection(preset);
-    selectedPresetIndex = $userLocalPreferences.presets.indexOf(preset);
+    selectedPresetIndex = $pointronPreferences.presets.indexOf(preset);
   }
 </script>
 
@@ -33,7 +33,7 @@
       {#if isInEditMode}
         <Presets {parentBackgroundIndex} {isExpandedVariant} />
       {:else}
-        {#each $userLocalPreferences.presets as preset, index}
+        {#each $pointronPreferences.presets as preset, index}
           <PresetItem
             {parentBackgroundIndex}
             {preset}

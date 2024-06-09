@@ -1,5 +1,5 @@
 <script>
-  import { backgroundSoundStore } from "$lib/client/components/pointron/local.store";
+  import { backgroundSoundStore } from "$lib/client/components/pointron/pointron.store";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";

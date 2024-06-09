@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { hexToRGBA } from "$lib/client/utils/pdfAnnotator.utils";
+  import { hexToRGBA } from "$lib/client/components/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { createEventDispatcher } from "svelte";
   let dispatchEvent = createEventDispatcher();

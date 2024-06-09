@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AnalyticsPersistance } from "$lib/client/components/pointron/analytics/analytics.persistance";
+  import { AnalyticsPersistence } from "$lib/client/components/pointron/analytics/analytics.persistence";
   import { currentGoal } from "$lib/client/components/pointron/goals/goal.store";
   import { TimeScale } from "$lib/client/types/time.type";
   import { onMount } from "svelte";
@@ -19,7 +19,7 @@
       return;
     }
     isLoadingState = true;
-    const response = await new AnalyticsPersistance().fetchGoalAnalytics(
+    const response = await new AnalyticsPersistence().fetchGoalAnalytics(
       $currentGoal.id,
       $currentGoal.analytics?.periods
     );

@@ -25,7 +25,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { logger } from "$lib/client/stores/log.store";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { liveQuery } from "dexie";
   import { AlertType } from "$lib/client/types/notification.type";
   import context from "$lib/client/stores/context.store";

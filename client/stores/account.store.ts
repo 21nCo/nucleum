@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { AppEvent } from "../types/event.enum";
-import { Persistance } from "./persistance";
+import { Persistence } from "../persistence/persistence";
 import { ButtonVariant } from "../types/button.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
 import {
@@ -67,7 +67,7 @@ function initAccount(seed: UserAccount) {
       //TODO - not refreshing token as refresh token logic is not robust on the backend and also refreshToken - CORS config is not added on backend which is causing issues
       console.log("refreshing token");
       isRefreshingToken.set(true);
-      const response = await new Persistance().refreshToken();
+      const response = await new Persistence().refreshToken();
       if (response) {
         isRefreshingToken.set(false);
         return false;
@@ -169,7 +169,7 @@ function initAccount(seed: UserAccount) {
   const getSignedUrl = (contentType: string, fileName: string) => {
     const acc = get(account);
     const userId = acc.userInfo?.id.split(":")[1] ?? "";
-    return new Persistance().getSignedUrl(userId, contentType, fileName);
+    return new Persistence().getSignedUrl(userId, contentType, fileName);
   };
   return {
     subscribe,
@@ -185,7 +185,7 @@ function initAccount(seed: UserAccount) {
     expire,
     embedOAuthSignin: async (token: string, isSignup: boolean) => {
       localStorage.setItem("surreal-token", token);
-      let response = await new Persistance().getUserInfo(token);
+      let response = await new Persistence().getUserInfo(token);
       if (response?.userInfo) {
         await signin(
           {
@@ -225,13 +225,13 @@ function initAccount(seed: UserAccount) {
     performLoginStatusCheck,
     performRedirectionCheck: performLoginStatusCheck,
     ping: async () => {
-      return new Persistance().ping();
+      return new Persistence().ping();
     },
     getSignedUrl,
     uploadFile: async (contentType: string, fileName: string, blob: any) => {
       const signedUrlResponse = await getSignedUrl(contentType, fileName);
       if (signedUrlResponse?.uploadURL) {
-        await new Persistance().uploadFile(
+        await new Persistence().uploadFile(
           signedUrlResponse.uploadURL,
           contentType,
           blob

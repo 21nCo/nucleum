@@ -1,6 +1,6 @@
 <script lang="ts">
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { tagStore } from "$lib/client/components/pointron/local.store";
+  import { tagStore } from "$lib/client/components/pointron/pointron.store";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import modalEvent from "$lib/client/components/modal/modal.store";

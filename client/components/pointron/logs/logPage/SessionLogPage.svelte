@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FocusPersistance } from "$lib/client/components/pointron/focus/focus.persistance";
+  import { FocusPersistence } from "$lib/client/components/pointron/focus/focus.persistence";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -18,7 +18,7 @@
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  const focusPersistance = new FocusPersistance();
+  const focusPersistance = new FocusPersistence();
   export let id: string;
   export let log: any = undefined;
   let selectedTab: "Summary" | "Notes" = "Summary";

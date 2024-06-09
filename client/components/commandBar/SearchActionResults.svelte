@@ -1,7 +1,7 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { Persistance } from "$lib/client/stores/persistance";
+  import { Persistence } from "$lib/client/persistence/persistence";
   import type { Action } from "$lib/client/types/action.type";
   import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -23,7 +23,7 @@
     if (!action.searchActionParams?.searchItemType) return;
     isSearchInProgress = true;
     selectedIndex = 0;
-    results = await new Persistance().searchByLabel(
+    results = await new Persistence().searchByLabel(
       search,
       action.searchActionParams?.searchItemType
     );

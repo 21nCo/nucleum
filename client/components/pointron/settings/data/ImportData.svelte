@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LocalPersistance } from "$lib/client/components/pointron/local.persistance";
+  import { PointronPersistence } from "$lib/client/components/pointron/pointron.persistence";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
@@ -56,7 +56,7 @@
   }
   async function processImport() {
     isProcessingImport = true;
-    const response = await new LocalPersistance().importData(
+    const response = await new PointronPersistence().importData(
       jsonData,
       fileName,
       fileSize

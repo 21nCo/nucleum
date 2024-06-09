@@ -1,13 +1,13 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
 import { Item } from "$lib/client/types/item.enum";
 import { get } from "svelte/store";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { cloudProvider } from "$lib/client/stores/persistance";
 import { retrieveLocally } from "$lib/client/utils/storage.utils";
+import { cloudProvider } from "$lib/client/persistence/persistence";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
-export class FocusPersistance {
+export class FocusPersistence {
   async resetSession() {
     let response;
     switch (get(cloudProvider)) {

@@ -9,7 +9,7 @@
   import {
     pointronEvents,
     tagStore
-  } from "$lib/client/components/pointron/local.store";
+  } from "$lib/client/components/pointron/pointron.store";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";

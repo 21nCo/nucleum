@@ -1,11 +1,11 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
 import { Item } from "$lib/client/types/item.enum";
 import { get } from "svelte/store";
-import { retrieveLocally } from "$lib/client/stores/persistance";
-import { cloudProvider } from "$lib/client/stores/app.store";
 import type { Tag } from "$lib/client/types/pointron/tag.type";
+import { cloudProvider } from "$lib/client/persistence/persistence";
+import { retrieveLocally } from "$lib/client/utils/storage.utils";
 
-export class TagPersistance {
+export class TagPersistence {
   search(query: string) {
     switch (get(cloudProvider)) {
       case Cloud.local:

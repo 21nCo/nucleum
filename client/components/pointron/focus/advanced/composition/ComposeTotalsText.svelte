@@ -4,7 +4,7 @@
     SessionCompositionType,
     type SessionComposition
   } from "$lib/client/types/pointron/sessionComposition.type";
-  import { getTotalsFromComposition } from "$lib/client/components/pointron/local.utils";
+  import { getTotalsFromComposition } from "$lib/client/components/pointron/pointron.utils";
   import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   // export let totals: { duration: number; focus: number; brek: number };

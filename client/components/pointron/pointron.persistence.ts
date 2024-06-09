@@ -1,6 +1,6 @@
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { appStore, seedUserPreferences } from "$lib/client/stores/app.store";
-import { seedLocalPreferences } from "./local.store";
+import { seedLocalPreferences } from "./pointron.store";
 import {
   focusItemsStore,
   sessionStore,
@@ -10,7 +10,7 @@ import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/stores/log.store";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
-export class LocalPersistance {
+export class PointronPersistence {
   async syncSeedDataToCloud() {
     const kvalues: any[] = [
       seedLocalPreferences,

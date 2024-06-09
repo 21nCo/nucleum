@@ -21,7 +21,7 @@ import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { debouncer, generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
-import { Persistance } from "$lib/client/stores/persistance";
+import { Persistance } from "$lib/client/stores/persistence";
 import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
 import { ActiveResourceStore } from "$lib/client/stores/resource.store";
 

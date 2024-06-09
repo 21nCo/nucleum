@@ -9,7 +9,7 @@
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { pointronEvents } from "$lib/client/components/pointron/local.store";
+  import { pointronEvents } from "$lib/client/components/pointron/pointron.store";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import LogThumbnailItem from "./LogThumbnailItem.svelte";

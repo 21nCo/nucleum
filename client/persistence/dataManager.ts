@@ -28,7 +28,7 @@ import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import type { Table } from "dexie";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;

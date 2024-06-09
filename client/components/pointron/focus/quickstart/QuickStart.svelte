@@ -7,7 +7,7 @@
   import { onMount } from "svelte";
   import QuickStartThumbnail from "./QuickStartThumbnail.svelte";
   import view from "$lib/client/stores/view.store";
-  import { tagStore } from "$lib/client/components/pointron/local.store";
+  import { tagStore } from "$lib/client/components/pointron/pointron.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import QuickStartActions from "./actions/QuickStartActions.svelte";

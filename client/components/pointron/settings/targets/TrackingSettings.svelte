@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import MultiselectDropdown from "$lib/client/elements/dropdown/MultiselectDropdown.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { TimeScale } from "$lib/client/types/time.type";
@@ -19,8 +19,8 @@
         };
       });
   onMount(() => {
-    $userLocalPreferences.horizonsWithTarget =
-      $userLocalPreferences.horizonsWithTarget?.filter((x) =>
+    $pointronPreferences.horizonsWithTarget =
+      $pointronPreferences.horizonsWithTarget?.filter((x) =>
         $userPreferences.timeScales?.some((y) => y == x)
       );
   });
@@ -33,12 +33,12 @@
       orientation: Orientation.Vertical
     }}
     options={timescaleOptions}
-    bind:selected={$userLocalPreferences.horizonsWithTarget}
+    bind:selected={$pointronPreferences.horizonsWithTarget}
     style={InputStyle.BORDERED}
   />
 
-  {#if $userLocalPreferences.horizonsWithTarget && $userLocalPreferences.horizonsWithTarget.length > 0}
-    {#each $userLocalPreferences.horizonsWithTarget as item}
+  {#if $pointronPreferences.horizonsWithTarget && $pointronPreferences.horizonsWithTarget.length > 0}
+    {#each $pointronPreferences.horizonsWithTarget as item}
       <TargetInput {item} />
     {/each}
   {/if}

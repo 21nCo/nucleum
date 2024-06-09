@@ -21,7 +21,7 @@
     type EmojiAvatar,
     AvatarPickerContext
   } from "../../types/avatar.type";
-  import { Persistance } from "../../stores/persistance";
+  import { Persistence } from "../../persistence/persistence";
   import { IconVariant } from "../../types/icon.type";
   import { PanelSwitcherStyle } from "../../types/switcher.enum";
   import Text from "../text/Text.svelte";

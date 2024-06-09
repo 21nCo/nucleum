@@ -22,8 +22,8 @@ import { FocusPersistance } from "$lib/client/components/pointron/focus/focus.pe
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
 import {
   pointronEvents,
-  userLocalPreferences
-} from "$lib/client/components/pointron/local.store";
+  pointronPreferences
+} from "$lib/client/components/pointron/pointron.store";
 import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
 import {
   SessionCompositionType,
@@ -215,7 +215,7 @@ function initSessionStore(seed: SessionStore) {
     console.log("resetting session store", { seedSessionStore });
     let newSession: SessionStore = deepCopy(seedSessionStore);
     newSession.composition.breakReminder =
-      get(userLocalPreferences).breakReminder;
+      get(pointronPreferences).breakReminder;
     return newSession;
   };
   const clearTimers = () => {
@@ -275,7 +275,7 @@ function initSessionStore(seed: SessionStore) {
       breakReminderSetting =
         n.composition.breakType === BreakCompositionType.REMINDER
           ? n.composition.breakReminder ??
-            get(userLocalPreferences).breakReminder
+            get(pointronPreferences).breakReminder
           : undefined;
       if (!breakReminderSetting) return;
       timeRemainingToTakeBreak = breakReminderSetting - n.timeElapsed;
@@ -597,7 +597,7 @@ function initSessionStore(seed: SessionStore) {
         clearTimers();
         if (n.currentBlock.index == n.blocks.length - 1) {
           sessionStore.finishSession();
-        } else if (get(userLocalPreferences).isEnableAutoStartInterval) {
+        } else if (get(pointronPreferences).isEnableAutoStartInterval) {
           n.currentBlock.index += 1;
           isContinueSession = true;
         } else {
@@ -981,7 +981,7 @@ function initSessionStore(seed: SessionStore) {
       });
     },
     extendSession: async () => {
-      let extendDurationSetting = get(userLocalPreferences).extendDuration * 60;
+      let extendDurationSetting = get(pointronPreferences).extendDuration * 60;
       let n = get(sessionStore);
       n.totalExtended = n.totalExtended + extendDurationSetting;
       n.plannedDuration = n.plannedDuration + extendDurationSetting;
@@ -1034,7 +1034,7 @@ function initSessionStore(seed: SessionStore) {
           focusDuration: 0,
           breakDuration: 0,
           numberOfBreaks: 0,
-          breakReminder: get(userLocalPreferences).breakReminder ?? 0,
+          breakReminder: get(pointronPreferences).breakReminder ?? 0,
           id: "slider",
           breakType: BreakCompositionType.REMINDER
         };
@@ -1097,7 +1097,7 @@ function initSessionStore(seed: SessionStore) {
       let n = get(sessionStore);
       if (!n.composition) return;
       const name = get(newPresetLabel);
-      return userLocalPreferences.addPreset({
+      return pointronPreferences.addPreset({
         ...n.composition,
         name,
         id: generateUID()

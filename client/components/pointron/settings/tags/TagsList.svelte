@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tagStore } from "$lib/client/components/pointron/local.store";
+  import { tagStore } from "$lib/client/components/pointron/pointron.store";
   import TagItem from "./TagItem.svelte";
   tagStore.refresh();
 </script>

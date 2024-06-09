@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { liveQuery } from "dexie";
   let mutationQueue = liveQuery(() =>

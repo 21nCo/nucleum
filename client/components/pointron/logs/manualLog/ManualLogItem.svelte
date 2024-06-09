@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { swipeLabel } from "$lib/client/components/pointron/local.store";
+  import { swipeLabel } from "$lib/client/components/pointron/pointron.store";
   import { Item } from "$lib/client/types/item.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";

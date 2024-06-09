@@ -20,7 +20,7 @@ import {
 import { Item } from "$lib/client/types/item.enum";
 import { dataManager } from "$lib/client/stores/data.store";
 import { deepCopy } from "$lib/client/utils/obj.utils";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
   generateParamsForCards,
   generateParamsForCharts

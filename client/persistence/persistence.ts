@@ -1,7 +1,7 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
 import { get, writable } from "svelte/store";
 import type { JsonValue } from "$lib/client/types/json.type";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { Item } from "$lib/client/types/item.enum";
 import type {
   DbRecord,
@@ -40,7 +40,7 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
   };
 };
 
-export class Persistance {
+export class Persistence {
   surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
   refreshToken = async () => {
     try {

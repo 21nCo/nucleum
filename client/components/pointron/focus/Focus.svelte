@@ -20,7 +20,7 @@
     type ButtonParams
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { quickFocusItemsStoreId } from "$lib/client/components/pointron/goals/goal.store";
   import { Item } from "$lib/client/types/item.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";

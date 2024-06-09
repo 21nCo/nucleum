@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { LocalPersistance } from "$lib/client/components/pointron/local.persistance";
+  import { PointronPersistence } from "$lib/client/components/pointron/pointron.persistence";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
-  const localPersistance = new LocalPersistance();
+  const localPersistance = new PointronPersistence();
   export let isExpandedMode: boolean = false;
 </script>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { tagStore } from "$lib/client/components/pointron/local.store";
+  import { tagStore } from "$lib/client/components/pointron/pointron.store";
   import { onMount } from "svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";

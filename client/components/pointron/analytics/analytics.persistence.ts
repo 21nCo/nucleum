@@ -1,4 +1,4 @@
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { HorizonChart } from "$lib/client/types/analytics.type";
 import { TimeScale, type TimePeriod } from "$lib/client/types/time.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
@@ -6,7 +6,7 @@ import { generateParamsForCharts } from "$lib/client/components/pointron/analyti
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 
-export class AnalyticsPersistance {
+export class AnalyticsPersistence {
   //TODO - remove this defunct function
   async fetchAggFocusByCurrentTimeHorizon(scale: TimeScale) {
     let response = await surrealDb.query(

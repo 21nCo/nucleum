@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { FocusPersistance } from "$lib/client/components/pointron/focus/focus.persistance";
+  import { FocusPersistence } from "$lib/client/components/pointron/focus/focus.persistence";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/local.utils";
+  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/pointron.utils";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";

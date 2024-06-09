@@ -8,7 +8,7 @@
     SessionStore
   } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/local.utils";
+  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/pointron.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";

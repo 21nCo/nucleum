@@ -6,12 +6,12 @@ import type { DbRecord } from "../types/dbrecord.type";
 import type { Item } from "../types/item.enum";
 import { prefixTable } from "../utils/text.utils";
 import { generateUID } from "../utils/utils";
-import { dataManager } from "./data.store";
+import { dataManager } from "./dataManager";
 
 /**
  * For IFR Resources - delegated from active resource stores.
  */
-export class ResourcePersistance {
+export class ResourcePersistence {
   currentUserId: string;
   resourceType: Item;
   constructor(resourceType: Item, currentUserId: string) {

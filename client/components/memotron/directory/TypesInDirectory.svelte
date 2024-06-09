@@ -3,7 +3,7 @@
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { types } from "../type/type.store";

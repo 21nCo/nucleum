@@ -4,12 +4,12 @@ import {
   StoreDataType,
   type ICacheableStore
 } from "../types/data.type";
-import { dataManager } from "./data.store";
-import { Persistance } from "./persistance";
+import { dataManager } from "../persistence/dataManager";
+import { Persistence } from "../persistence/persistence";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
-const persistance = new Persistance();
+const persistance = new Persistence();
 
 export class KeyValueStore<T = ICacheableStore> {
   item: Item;

@@ -45,7 +45,7 @@ import { deepCopy, objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
 import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 
-import { Persistance } from "./persistance";
+import { Persistence } from "../persistence/persistence";
 import { dataManager } from "$lib/client/stores/data.store";
 
 import modalEvent from "../components/modal/modal.store";
@@ -90,7 +90,7 @@ export const excludedPathsForRedirectionCheck = [
   "ext-login"
 ];
 
-let persistance = new Persistance();
+let persistance = new Persistence();
 
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
@@ -218,7 +218,7 @@ function initDboVersionStore() {
     update,
     runDboUpdate: async (fromVersion: number | undefined = undefined) => {
       const version = get(dboVersion).version;
-      const response = await new Persistance().updateDbo(
+      const response = await new Persistence().updateDbo(
         fromVersion ?? version
       );
       if (response.version) {
@@ -758,7 +758,7 @@ function initAppStore(seed: AppStore) {
       if (!latestVersion) {
         const app = import.meta.env.VITE_APP ?? window.location.hostname;
         if (!app) return;
-        latestVersion = await new Persistance().getLatestAppVersion(app);
+        latestVersion = await new Persistence().getLatestAppVersion(app);
       }
       if (!latestVersion) return;
       const appVersionOnClient = localStorage.getItem("appVersion");

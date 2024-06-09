@@ -32,7 +32,7 @@ import {
   persistLocally,
   retrieveLocally
 } from "$lib/client/utils/storage.utils";
-import { SurrealDatabase } from "$lib/client/access/surrealHelper";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { dataManager } from "$lib/client/stores/data.store";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import type { TimeScale } from "$lib/client/types/time.type";
   import { getCorrespoingHorizonFrequencyLabel } from "$lib/client/utils/time.utils";
@@ -8,17 +8,17 @@
   let value: number;
   function onInput(event: any) {
     console.log({ event });
-    if (!$userLocalPreferences.horizonTargets)
-      $userLocalPreferences.horizonTargets = [];
-    let targets = $userLocalPreferences.horizonTargets?.filter(
+    if (!$pointronPreferences.horizonTargets)
+      $pointronPreferences.horizonTargets = [];
+    let targets = $pointronPreferences.horizonTargets?.filter(
       (x) => x.scale != item
     );
     targets?.push({ scale: item, target: +event.detail.value });
-    $userLocalPreferences.horizonTargets = targets;
+    $pointronPreferences.horizonTargets = targets;
   }
   onMount(() => {
     value =
-      $userLocalPreferences.horizonTargets?.find((x) => x.scale == item)
+      $pointronPreferences.horizonTargets?.find((x) => x.scale == item)
         ?.target ?? 0;
   });
 </script>

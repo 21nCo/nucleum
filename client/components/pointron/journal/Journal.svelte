@@ -9,7 +9,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import LogsPane from "../logs/LogsPane.svelte";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { Item } from "$lib/client/types/item.enum";
   import { CalendarHmVariant } from "$lib/client/components/calendarHeatmap/calendarHeatmap.types";
   import { focusHeatmapStore } from "./journal.store";

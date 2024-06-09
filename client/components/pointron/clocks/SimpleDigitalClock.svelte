@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AnalyticsPersistance } from "$lib/client/components/pointron/analytics/analytics.persistance";
+  import { AnalyticsPersistence } from "$lib/client/components/pointron/analytics/analytics.persistence";
   import { currentTime, userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { TimeScale } from "$lib/client/types/time.type";
@@ -15,7 +15,7 @@
     year: "numeric"
   });
   let focusToday: number;
-  let aggPersistance = new AnalyticsPersistance();
+  let aggPersistance = new AnalyticsPersistence();
   onMount(async () => {
     await refresh();
   });

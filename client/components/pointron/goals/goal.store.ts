@@ -8,10 +8,10 @@ import type {
   QuickFocusItem,
   QuickFocusItemStore
 } from "$lib/client/types/pointron/goal.type";
-import { GoalPersistance } from "./goal.persistance";
+import { GoalPersistence } from "./goal.persistence";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { Item } from "$lib/client/types/item.enum";
-import { Persistance } from "$lib/client/stores/persistance";
+import { Persistance } from "$lib/client/stores/persistence";
 import {
   deepCopy,
   isValidArrayWithData,
@@ -429,7 +429,7 @@ function initCurrentGoalStore(initialValue: Goal) {
     return new Persistance().update({ ...n, id: get(currentGoal).id });
   };
   const fetchGoal = async (id: string) => {
-    return await new GoalPersistance().fetch(id);
+    return await new GoalPersistence().fetch(id);
   };
   const propagateChangesTemp = () => {
     goalStore.refresh(
@@ -536,7 +536,7 @@ function initCurrentGoalStore(initialValue: Goal) {
         ...(parent.parent?.hierarchy.map((x) => x.id) ?? []),
         parent.id
       ];
-      await new GoalPersistance().create([
+      await new GoalPersistence().create([
         {
           id,
           label,

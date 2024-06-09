@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import {
     BreakCompositionType,
     type SessionComposition
@@ -15,7 +15,7 @@
   export let isDisablePredefined: boolean = false;
   const labelProps = { orientation: Orientation.Vertical };
   if (!composition.breakReminder || composition.breakReminder == 0)
-    composition.breakReminder = $userLocalPreferences.breakReminder;
+    composition.breakReminder = $pointronPreferences.breakReminder;
   if (!composition.breakDuration || composition.breakDuration == 0)
     composition.breakDuration = 5 * 60;
   if (!composition.numberOfBreaks || composition.numberOfBreaks == 0)

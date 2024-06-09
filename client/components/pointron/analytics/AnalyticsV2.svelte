@@ -4,7 +4,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
-  import { dataManager } from "$lib/client/stores/data.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import view from "$lib/client/stores/view.store";
   import { Item } from "$lib/client/types/item.enum";
   import { Size } from "$lib/client/types/size.enum";

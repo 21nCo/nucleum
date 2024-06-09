@@ -17,7 +17,7 @@
     getPagesFromRange,
     isHTMLElement,
     viewportToScaled
-  } from "$lib/client/utils/pdfAnnotator.utils";
+  } from "$lib/client/components/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { debouncer, generateUID } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
@@ -7,21 +7,21 @@
   const dispatch = createEventDispatcher();
   export let selectedItem: number = 0;
   onMount(() => {
-    $userLocalPreferences.manualEntryQuickDurations = [];
+    $pointronPreferences.manualEntryQuickDurations = [];
     if (
-      !$userLocalPreferences.manualEntryQuickDurations ||
-      $userLocalPreferences.manualEntryQuickDurations.length === 0
+      !$pointronPreferences.manualEntryQuickDurations ||
+      $pointronPreferences.manualEntryQuickDurations.length === 0
     ) {
-      $userLocalPreferences.manualEntryQuickDurations = [10, 15, 30, 60, 120];
+      $pointronPreferences.manualEntryQuickDurations = [10, 15, 30, 60, 120];
     }
   });
 </script>
 
-{#if $userLocalPreferences.manualEntryQuickDurations && $userLocalPreferences.manualEntryQuickDurations.length > 0}
+{#if $pointronPreferences.manualEntryQuickDurations && $pointronPreferences.manualEntryQuickDurations.length > 0}
   <div class="flex-col items-start flex w-full gap-2">
     <FormControlLabel props={{ label: "Quick add" }} />
     <div class="w-full flex justify-between gap-3 pr-10 overflow-x-auto">
-      {#each $userLocalPreferences.manualEntryQuickDurations as item}
+      {#each $pointronPreferences.manualEntryQuickDurations as item}
         <ActiveBackgroundElement
           class="px-4 py-1 rounded-md min-w-fit bg-bgs2 hover:bg-bgs3"
           isBackgroundActive={item === selectedItem}

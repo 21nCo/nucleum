@@ -8,11 +8,11 @@
   import SwitchItem from "$lib/client/elements/switcher/SwitchItem.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { getTotalsFromComposition } from "$lib/client/components/pointron/local.utils";
+  import { getTotalsFromComposition } from "$lib/client/components/pointron/pointron.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import PresetDurationText from "./PresetDurationText.svelte";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   const dispatch = createEventDispatcher();
   export let preset: SessionComposition;
   export let isActive: boolean = false;
@@ -24,7 +24,7 @@
     dispatch("click", { preset });
   }
   function deleteHandler(event: any) {
-    if (preset && preset.id) userLocalPreferences.removePreset(preset.id);
+    if (preset && preset.id) pointronPreferences.removePreset(preset.id);
     event.stopPropagation();
   }
 </script>

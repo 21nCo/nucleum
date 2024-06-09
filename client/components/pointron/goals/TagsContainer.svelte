@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tagStore } from "$lib/client/components/pointron/local.store";
+  import { tagStore } from "$lib/client/components/pointron/pointron.store";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import type { Tag } from "$lib/client/types/pointron/tag.type";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";

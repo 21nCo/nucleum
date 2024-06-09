@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import { generateUID } from "$lib/client/utils/utils";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import {
     SessionCompositionType,
     type SessionComposition,
@@ -9,7 +9,7 @@
   } from "$lib/client/types/pointron/sessionComposition.type";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { getTotalsFromComposition } from "$lib/client/components/pointron/local.utils";
+  import { getTotalsFromComposition } from "$lib/client/components/pointron/pointron.utils";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import PomodoroUnitView from "../presets/PomodoroUnitView.svelte";
@@ -85,7 +85,7 @@
   }
   function deleteHandler() {
     if (composition && composition.id)
-      userLocalPreferences.removePreset(composition.id);
+      pointronPreferences.removePreset(composition.id);
   }
 </script>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, afterUpdate, createEventDispatcher } from "svelte";
-  import { roundOffToNdigitsAfterDecimal } from "$lib/client/components/pointron/local.utils";
+  import { roundOffToNdigitsAfterDecimal } from "$lib/client/components/pointron/pointron.utils";
   import { sessionStore } from "$lib/client/components/pointron/focus/session.store";
   import type { SessionStore } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";

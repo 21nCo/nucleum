@@ -1,6 +1,6 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
-  import { swipeLabel } from "$lib/client/components/pointron/local.store";
+  import { swipeLabel } from "$lib/client/components/pointron/pointron.store";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import {
     focusItemsStore,
@@ -8,7 +8,7 @@
   } from "$lib/client/components/pointron/focus/session.store";
   import type { Goal } from "$lib/client/types/pointron/goal.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/local.utils";
+  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/pointron.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import {
     appStore,
@@ -24,7 +24,7 @@
   import { onMount } from "svelte";
   import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { GoalPersistance } from "$lib/client/components/pointron/goals/goal.persistance";
+  import { GoalPersistence } from "$lib/client/components/pointron/goals/goal.persistence";
   import appearance from "$lib/client/stores/appearance.store";
   import { pointLogStore } from "../../logs/log.store";
   export let goal: Pick<Goal, "id" | "label" | "color" | "parent"> & {
@@ -44,7 +44,7 @@
   let distanceWindow: number;
   let variableDistanceWindow: number;
   let resetTouchEvent = true;
-  let goalPersistance = new GoalPersistance();
+  let goalPersistance = new GoalPersistence();
   let rem: number;
   function enableManualLog() {
     handleSwipeRightEndOnleftThresholdCrossed();

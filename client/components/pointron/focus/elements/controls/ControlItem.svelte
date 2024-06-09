@@ -2,7 +2,7 @@
   import Extend from "$lib/client/icons/Extend.svelte";
   import { Control } from "$lib/client/types/pointron/control.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import { userLocalPreferences } from "$lib/client/components/pointron/local.store";
+  import { pointronPreferences } from "$lib/client/components/pointron/pointron.store";
   import { Size } from "$lib/client/types/size.enum";
   import {
     customColorStyle,
@@ -18,7 +18,7 @@
   export let isProminent: boolean = false;
   export let contextSize: Size = Size.md;
   export let width: number = 68;
-  $: extendDuration = $userLocalPreferences.extendDuration;
+  $: extendDuration = $pointronPreferences.extendDuration;
   let timer: any;
   const dispatch = createEventDispatcher();
   function clickHandler() {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { sessionStore } from "$lib/client/components/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
-  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/local.utils";
+  import { calculateTotalFocusAndBreak } from "$lib/client/components/pointron/pointron.utils";
   import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";

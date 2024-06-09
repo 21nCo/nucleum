@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
 import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
 import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
-import { Persistance } from "$lib/client/stores/persistance";
+import { Persistance } from "$lib/client/stores/persistence";
 import { Item } from "$lib/client/types/item.enum";
 import { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
 import {
@@ -200,7 +200,7 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     this.persist({ horizonCharts: defaultHorizonChartConfiguration });
   }
   async updatePreset(preset: SessionComposition) {
-    let m = get(userLocalPreferences);
+    let m = get(pointronPreferences);
     let n = m.presets;
     let currentPresetIndex = n.findIndex((p) => p.id == preset.id);
     let presetsToRight = n.slice(currentPresetIndex + 1);
@@ -212,7 +212,7 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     return this.persist({ presets: n });
   }
   async removePreset(presetId: string) {
-    let m = get(userLocalPreferences);
+    let m = get(pointronPreferences);
     let n = m.presets;
     n = n.filter((x: SessionComposition) => x.id != presetId);
     m.presets = n;
@@ -220,14 +220,14 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     return this.persist({ presets: n });
   }
   async addPreset(preset: SessionComposition) {
-    let m = get(userLocalPreferences);
+    let m = get(pointronPreferences);
     m.presets.push(preset);
     this.setNewValue(m);
     return this.persist({ presets: m.presets });
   }
 }
 // export const userLocalPreferences = initUserLocalPreferences();
-export const userLocalPreferences = new PointronPreferencesStore();
+export const pointronPreferences = new PointronPreferencesStore();
 /**
  * @deprecated - using PointronPreferencesStore instead
  * @returns
@@ -251,7 +251,7 @@ function initUserLocalPreferences() {
       id: userLocalPreferencesId,
       modifiedAt: new Date().toISOString()
     });
-    cache(get(userLocalPreferences));
+    cache(get(pointronPreferences));
   };
   const cache = async (n: PointronPreferences) => {
     dataManager.cache(n);
@@ -307,7 +307,7 @@ function initUserLocalPreferences() {
       persist({ horizonCharts: defaultHorizonChartConfiguration });
     },
     updatePreset: async (preset: SessionComposition) => {
-      let m = get(userLocalPreferences);
+      let m = get(pointronPreferences);
       let n = m.presets;
       let currentPresetIndex = n.findIndex((p) => p.id == preset.id);
       let presetsToRight = n.slice(currentPresetIndex + 1);
@@ -319,7 +319,7 @@ function initUserLocalPreferences() {
       return persist({ presets: n });
     },
     removePreset: async (presetId: string) => {
-      let m = get(userLocalPreferences);
+      let m = get(pointronPreferences);
       let n = m.presets;
       n = n.filter((x: SessionComposition) => x.id != presetId);
       m.presets = n;
@@ -327,13 +327,13 @@ function initUserLocalPreferences() {
       return persist({ presets: n });
     },
     addPreset: async (preset: SessionComposition) => {
-      let m = get(userLocalPreferences);
+      let m = get(pointronPreferences);
       m.presets.push(preset);
       set(m);
       return persist({ presets: m.presets });
     },
     updateHorizonChart: async (chart: HorizonChart) => {
-      let m = get(userLocalPreferences);
+      let m = get(pointronPreferences);
       let n = m.horizonCharts;
       let currentChartIndex = n.findIndex((p) => p.id == chart.id);
       let chartsToRight = n.slice(currentChartIndex + 1);

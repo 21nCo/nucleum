@@ -16,7 +16,7 @@
   import view from "$lib/client/stores/view.store";
   import { handleFocusItemsDND } from "$lib/client/utils/dragDrop";
   import { LaunchContext } from "$lib/client/types/appStore.type";
-  import { pointronEvents } from "$lib/client/components/pointron/local.store";
+  import { pointronEvents } from "$lib/client/components/pointron/pointron.store";
   import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";

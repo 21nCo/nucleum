@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AnalyticsPersistance } from "$lib/client/components/pointron/analytics/analytics.persistance";
+  import { AnalyticsPersistence } from "$lib/client/components/pointron/analytics/analytics.persistence";
   import { getCorrespoingHorizonFrequencyLabel } from "$lib/client/utils/time.utils";
   import Guage from "../charts/Guage.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -27,7 +27,7 @@
     actual: number;
     streak: number;
   }[];
-  const aggPersistance = new AnalyticsPersistance();
+  const aggPersistance = new AnalyticsPersistence();
   refresh();
   async function refresh() {
     let items: {

@@ -1,20 +1,20 @@
 import { writable } from "svelte/store";
 import type { DbRecord } from "../types/dbrecord.type";
 import { debouncer } from "../utils/utils";
-import type { ResourcePersistance } from "./resource.persistance";
+import type { ResourcePersistence } from "../persistence/resource.persistence";
 
 export class ActiveResourceStore<T> {
   id: string;
   protected store = writable<T>();
   protected debouncedPersistBlock: any;
-  protected persistance: ResourcePersistance;
+  protected persistance: ResourcePersistence;
   protected currentUserId: string;
   subscribe = this.store.subscribe;
   set = this.store.set;
   update = this.store.update;
   constructor(
     id: string,
-    persistance: ResourcePersistance,
+    persistance: ResourcePersistence,
     currentUserId: string
   ) {
     this.id = id;

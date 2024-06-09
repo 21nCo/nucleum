@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { backgroundSoundStore } from "$lib/client/components/pointron/local.store";
+  import { backgroundSoundStore } from "$lib/client/components/pointron/pointron.store";
   import { sessionStore } from "$lib/client/components/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
   import { isValidString } from "$lib/client/utils/text.utils";
