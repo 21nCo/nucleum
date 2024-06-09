@@ -32,6 +32,7 @@
   import { emojis, materialSymbols } from "$lib/client/data/avatars";
   import SwitchInput from "../toggle/SwitchInput.svelte";
   import account from "$lib/client/stores/account.store";
+  import UploadButton from "$lib/elements/button/UploadButton.svelte";
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
@@ -407,21 +408,7 @@
           <SwitchInput label="Fill" bind:checked size={Size.sm} />
         {/if}
         <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
-          <input
-            style="visibility:hidden;height:0px;width:0px;"
-            type="file"
-            id="myFile"
-            name="filename"
-            accept="image/*"
-            on:input={customUploadHandler}
-          />
-          <Button
-            icon="upload"
-            label="Upload"
-            size={Size.sm}
-            on:click={triggerFileInput}
-          />
-          <!-- </div> -->
+          <UploadButton size={Size.sm} on:input={customUploadHandler} />
         </div>
       </div>
     {/if}
