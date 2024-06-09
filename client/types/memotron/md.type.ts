@@ -13,10 +13,10 @@ export type IMarkdownStore = IMarkdown & {
   reRenderBlock?: string;
   params?: IMarkdownParams;
 };
-export type IMarkdown = { blocks: Block[] };
-export type DbBlock = DbRecordBase & Block;
+export type IMarkdown = { blocks: IBlock[] };
+export type DbBlock = DbRecordBase & IBlock;
 
-export type Block<T = NodeContent> = T & {
+export type IBlock<T = NodeContent> = T & {
   id: string;
   childrenHierarchy?: string[];
 };
@@ -48,7 +48,7 @@ export enum BlockContext {
 
 export type ListBlockWithChildren =
   | ListChild<Required<Pick<ListContent, "children">>>
-  | Block<Required<Pick<ListContent, "children">>>;
+  | IBlock<Required<Pick<ListContent, "children">>>;
 
 export type SpanContent = {
   type: SpanType;

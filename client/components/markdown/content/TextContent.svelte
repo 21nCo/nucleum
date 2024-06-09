@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import type {
     IMarkdownStore,
-    Block
+    IBlock
   } from "$lib/client/types/memotron/md.type";
   import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
@@ -21,7 +21,7 @@
 
   const dispatch = createEventDispatcher();
   export let mdStore: MdStoreType;
-  export let block: Block<TextContent | ListContent>;
+  export let block: IBlock<TextContent | ListContent>;
   // export let context: BlockContext = BlockContext.DEFAULT;
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;

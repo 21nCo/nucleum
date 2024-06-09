@@ -1,6 +1,6 @@
 import type { Item } from "$lib/client/types/item.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
-import type { Block, IMarkdown } from "$lib/client/types/memotron/md.type";
+import type { IBlock, IMarkdown } from "$lib/client/types/memotron/md.type";
 import {
   ListType,
   NodeType,
@@ -42,7 +42,7 @@ export function frameEmailFromParts(parts: EmailParts) {
   return `${parts.firstFew}...${parts.lastFew ?? ""}@${parts.emailDomain}`;
 }
 
-export function generateMarkdownText(blocks: Block[]) {
+export function generateMarkdownText(blocks: IBlock[]) {
   return blocks
     .map((b) => {
       switch (b.contentType) {

@@ -52,6 +52,7 @@ function generateSeedStore(): CaptureStore {
     type: null,
     label: "",
     properties: [],
+    fileDetails: undefined,
     links: [],
     avatar: undefined,
     childrenWithStructure: [],

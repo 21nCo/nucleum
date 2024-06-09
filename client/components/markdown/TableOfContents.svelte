@@ -1,6 +1,6 @@
 <script lang="ts">
   import type {
-    Block,
+    IBlock,
     IMarkdownStore
   } from "$lib/client/types/memotron/md.type";
   import { onMount } from "svelte";
@@ -23,13 +23,13 @@
       sub();
     };
   });
-  function refresh(blocks: Block[]) {
+  function refresh(blocks: IBlock[]) {
     headingBlocks = blocks
       .filter(
-        (block: Block) =>
+        (block: IBlock) =>
           block.contentType.startsWith("HEADING") && "body" in block
       )
-      .map((block: Block) => ({
+      .map((block: IBlock) => ({
         content: block.body,
         id: "toc-" + block.id,
         HEADING: Number(block.contentType.slice(-1))

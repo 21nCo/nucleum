@@ -1,6 +1,6 @@
 <script lang="ts">
   import type {
-    Block,
+    IBlock,
     IMarkdownStore
   } from "$lib/client/types/memotron/md.type";
   import { createEventDispatcher, onMount } from "svelte";
@@ -13,7 +13,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
-  export let block: Block;
+  export let block: IBlock;
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;

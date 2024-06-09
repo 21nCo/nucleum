@@ -1,5 +1,5 @@
 import type {
-  Block,
+  IBlock,
   IMarkdownStore,
   ListBlockWithChildren,
   IMarkdown
@@ -17,7 +17,7 @@ import { deepCopy } from "$lib/client/utils/obj.utils";
  * @returns children of the node and all its children
  */
 export function recursivelyExtractAllChildrenIntoArray(md: INode) {
-  let children: Block[] = [];
+  let children: IBlock[] = [];
   if (md.children && md.children.length > 0) {
     md.children.forEach((child) => {
       children.push(child);
@@ -37,7 +37,7 @@ export function parseBlocksIntoNestedMd(mdStore: IMarkdownStore) {
 }
 
 export function recursivelyFormParentFromChildren(
-  blocks: Block[],
+  blocks: IBlock[],
   childrenHierarchy: string[] | undefined
 ) {
   let children: INode[] = [];
@@ -69,7 +69,7 @@ export function recursivelyFormParentFromChildren(
 export function handleNodeMarkdownChildHierarchyChanges(
   store: IMarkdownStore,
   contextBlockId: string,
-  newBlock: Block,
+  newBlock: IBlock,
   isStructuralBlock: boolean
 ) {
   if (!store.params?.isNodular) return store;
@@ -110,12 +110,12 @@ function getChild(block: ListBlockWithChildren, childId: string) {
 }
 
 export function resolveImmediateParent(
-  mdBlocks: Block[],
+  mdBlocks: IBlock[],
   parentHierarchy: string[]
 ) {
   const topMostParentId = parentHierarchy.shift();
   const topMostParent = mdBlocks.find((b) => b.id === topMostParentId);
-  let iterParent: ListBlockWithChildren = topMostParent as Block<
+  let iterParent: ListBlockWithChildren = topMostParent as IBlock<
     Required<Pick<ListContent, "children">>
   >;
   let parentOneAbove: ListBlockWithChildren | undefined;

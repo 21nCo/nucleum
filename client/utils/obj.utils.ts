@@ -104,6 +104,17 @@ export function isValidArrayWithData(arr: any[] | undefined) {
   }
   return false;
 }
+export function isValidAndUniqueArray(arr: any[] | undefined) {
+  if (!arr || !isValidArrayWithData(arr)) return false;
+  const uniqueIds = new Set();
+  for (const item of arr) {
+    if (uniqueIds.has(item.id)) {
+      return false;
+    }
+    uniqueIds.add(item.id);
+  }
+  return true;
+}
 export function isEmptyArray(arr: any[] | undefined) {
   return arr && Array.isArray(arr) && arr.length === 0;
 }

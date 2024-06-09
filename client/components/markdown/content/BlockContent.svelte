@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { BlockContext, type Block } from "$lib/client/types/memotron/md.type";
+  import {
+    BlockContext,
+    type IBlock
+  } from "$lib/client/types/memotron/md.type";
   import {
     NodeType,
     TextNodeTypeList
@@ -8,7 +11,7 @@
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";
   export let mdStore: MdStoreType;
-  export let block: Block;
+  export let block: IBlock;
   export let parentHierarchy: string[] = [];
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;

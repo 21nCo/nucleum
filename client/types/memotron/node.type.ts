@@ -317,8 +317,3 @@ export type INodeStructure = {
   factor: number;
   children: string[];
 };
-
-export enum MdChangePropagationType {
-  IMMEDIATE = "IMMEDIATE",
-  DEFERRED = "DEFERRED"
-}

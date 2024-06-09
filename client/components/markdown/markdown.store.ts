@@ -27,7 +27,7 @@ import {
   resolveImmediateParent
 } from "./markdown.utils";
 import type {
-  Block,
+  IBlock,
   IMarkdownParams,
   IMarkdownStore,
   IMarkdown,
@@ -36,7 +36,7 @@ import type {
 } from "$lib/client/types/memotron/md.type";
 import { Item } from "$lib/client/types/item.enum";
 
-export const emptyBlock: Block = {
+export const emptyBlock: IBlock = {
   contentType: NodeType.SIMPLE_TEXT,
   body: "",
   id: generateUID()
@@ -84,7 +84,7 @@ function insertBlock(
   params: IBlockOperationContext
 ) {
   const { id, blockType, listType } = params;
-  let newBlock: Partial<Block<NodeContent>> = {
+  let newBlock: Partial<IBlock<NodeContent>> = {
     id: prefixTable(generateUID(), Item.node),
     body: ""
   };
@@ -96,7 +96,7 @@ function insertBlock(
     newBlock = {
       ...newBlock,
       contentType: params.blockType ?? NodeType.SIMPLE_TEXT
-    } as Block<TextContent | LayoutContent | StructuralContent>;
+    } as IBlock<TextContent | LayoutContent | StructuralContent>;
   } else if (params.blockType === NodeType.LIST) {
     newBlock = {
       ...newBlock,
@@ -138,7 +138,7 @@ function insertStructualBlock(
     const contextBlockIndex = store.blocks.findIndex(
       (b) => b.id === contextBlockId
     );
-    const newBlock: Block<StructuralContent> = {
+    const newBlock: IBlock<StructuralContent> = {
       id: prefixTable(generateUID(), Item.node),
       contentType: blockType
     };
@@ -188,11 +188,11 @@ function handleInsertForExistingList(
      * @returns the new blocks and the id of the new block
      */
     function handleInsertion(
-      blocks: Block<NodeContent>[] | ListChild<NodeContent>[]
+      blocks: IBlock<NodeContent>[] | ListChild<NodeContent>[]
     ) {
       const contextBlockIndex = blocks.findIndex((b) => b.id === contextId);
       const currentBlock = blocks[contextBlockIndex];
-      let newBlock: Block<ListContent> = {
+      let newBlock: IBlock<ListContent> = {
         id: generateUID(),
         contentType: NodeType.LIST,
         listType: ListType.UNORDERED,
@@ -266,7 +266,7 @@ function listOperation(
       const currentBlock = { ...n.blocks[currentBlockIndex] };
       previousSibling = moveAsChild(
         currentBlock,
-        previousSibling as Block<ListContent>
+        previousSibling as IBlock<ListContent>
       );
       n.blocks = n.blocks.filter((b) => b.id !== id);
       //n.reRenderBlock = previousSibling.id;
@@ -333,8 +333,8 @@ function listOperation(
    * @returns the parent block with the current block moved as a child
    */
   function moveAsChild(
-    blockToBeMoved: Block | ListChild,
-    parent: Block<ListContent> | ListChild<ListContent>
+    blockToBeMoved: IBlock | ListChild,
+    parent: IBlock<ListContent> | ListChild<ListContent>
   ) {
     if (!parent.children) parent.children = [];
     parent.children = [...parent.children, blockToBeMoved];
@@ -384,7 +384,7 @@ function initMarkdownStore() {
     generateMarkdownText: () => {
       let text = "";
       update((n) => {
-        const blocks: Block[] = deepCopy(n.blocks);
+        const blocks: IBlock[] = deepCopy(n.blocks);
         text = generateMarkdownText(blocks);
         return n;
       });

@@ -1,7 +1,8 @@
 <script lang="ts">
   export let error: string | null = null;
+  export let isDissappear: boolean = true;
   let timer: any;
-  $: if (error) {
+  $: if (error && isDissappear) {
     clearTimeout(timer);
     timer = setTimeout(() => {
       error = null;

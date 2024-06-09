@@ -1,13 +1,13 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
-  import type { Block } from "$lib/client/types/memotron/md.type";
+  import type { IBlock } from "$lib/client/types/memotron/md.type";
   import { headingNodeTypes } from "$lib/client/types/memotron/node.type";
   import { createEventDispatcher } from "svelte";
   import type { MdStoreType } from "./markdown.store";
   import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
-  export let block: Block;
+  export let block: IBlock;
   export let mdStore: MdStoreType;
 </script>
 

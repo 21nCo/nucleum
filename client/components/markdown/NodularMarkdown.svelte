@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+  import type { IBlock, IMarkdown } from "$lib/client/types/memotron/md.type";
   import {
-    MdChangePropagationType,
     NodeType,
     headingNodeTypes,
     type INode,
@@ -15,32 +14,68 @@
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
   const dispatch = createEventDispatcher();
+
+  /**
+   * Markdown in node form i.e. blocks of the markdown stored as node: records and nested under each node
+   */
   export let node: INode | undefined = undefined;
+
+  /**
+   * Markdown in block form i.e. blocks of the markdown stored as a single record.
+   *
+   * This is used to back propagate block content changes to the parent component even in the case of Nodular Markdown.
+   *
+   * See {@link propagateChanges} and {@link onBlockChanges} for more details on propagation.
+   */
   export let md: IMarkdown;
+
   /**
    * @readonly
    * List of all blocks with their structure i.e. children parsed from the markdown
    */
   export let childrenWithStructure: INodeStructure[] = [];
+
   /**
    * @readonly
-   * The list of block ids in the root of the markdown - to maintain the structure of the root markdown and propagate the changes
+   * List of all children blocks with their structure when a heading is focused i.e. children parsed from the focused heading markdown.
+   */
+  export let focusedBlockChildrenWithStructure: INodeStructure[] = [];
+
+  /**
+   * @readonly
+   * The list of block ids in the root of the markdown - to maintain the structure of the root markdown and propagate the changes back to the parent component.
+   *
+   * See {@link reCalculateStructure} and {@link extractRootStructure} for more details on how this is calculated.
    */
   export let rootStructure: string[] | undefined = undefined;
   export let mdId: string;
   export let isNodular: boolean = node != undefined;
-  export let changePropagationMethod: MdChangePropagationType =
-    MdChangePropagationType.DEFERRED;
   let refreshId: number = new Date().getTime();
+
+  /**
+   * Scoped blocks from {@link md} which is used to render the markdown.
+   *
+   * This is used to render the markdown when a heading is focused.
+   */
   let _md: IMarkdown;
+
   /**
    * @deprecated - children structure determination trail 1
    */
   let hierarchyV1: INodeHierarchyV1[] = [];
+
   /**
-   * @readonly
+   * The heading block which is focused when nodularity is enabled via {@link isNodular}
    */
   let focusedBlock: string | undefined = undefined;
+
+  /**
+   * The block in main root markdown until which the blocks are clipped starting from focused heading block when a heading is focused.
+   *
+   * This is used to reverse propagate the changes that happened when a heading block is focused.
+   *
+   * {@link md} and {@link childrenWithStructure} maintains the root blocks and structure of the markdown. Using this anchorBlock, {@link _md} and {@link focusedBlockChildrenWithStructure} - changes are propagated back to {@link md} and {@link childrenWithStructure}.
+   */
   let anchorBlock: string | undefined = undefined;
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
@@ -148,17 +183,21 @@
     }
   }
 
+  /**
+   * Extracts the structure of the children blocks from the markdown.
+   * @param blocks
+   */
   function extractStructureForChildren(blocks: IMarkdown): INodeStructure[] {
-    let hierarchy: INodeStructure[] = [];
+    let structure: INodeStructure[] = [];
     let collapsedHierarchy: INodeStructure[] = [];
-    hierarchy = blocks.blocks.map((block) => {
+    structure = blocks.blocks.map((block) => {
       return {
         id: block.id,
         factor: resolveFactor(block.contentType as NodeType),
         children: []
       };
     });
-    let leftovers: INodeStructure[] = [...hierarchy];
+    let leftovers: INodeStructure[] = [...structure];
     [5, 4, 3, 2, 1].forEach((level) => {
       const levelBlocks = leftovers.filter((block) => block.factor === level);
       if (levelBlocks.length === 0) return;
@@ -179,12 +218,15 @@
       collapsedHierarchy = [...collapsedHierarchy, ...levelBlocks];
     });
     collapsedHierarchy.forEach((block) => {
-      const item = hierarchy.find((x) => x.id === block.id);
+      const item = structure.find((x) => x.id === block.id);
       if (item) item.children = block.children;
     });
-    console.log({ collapsedHierarchy, hierarchy });
-    return hierarchy;
+    console.log({ collapsedHierarchy, structure });
+    return structure;
   }
+  /**
+   * Extracts the root structure of the markdown from the children structure.
+   */
   function extractRootStructure() {
     let rootBlocks: any = [];
     let firstHeadingHit = false;
@@ -203,21 +245,49 @@
     });
     return rootBlocks;
   }
+  /**
+   *
+   * calculates the structure of the root markdown upon changes in structure of the markdown.
+   *
+   * Root structure will not change when a heading is focused since the user cannot add headings greater or equal in hierarchy to the focused heading.
+   *
+   * @param md
+   * @param isInitCalculation
+   */
   function reCalculateStructure(md: IMarkdown, isInitCalculation = false) {
     const result = extractStructureForChildren(md);
     if (!focusedBlock) childrenWithStructure = result;
     else {
-      const remaining = childrenWithStructure.filter((block) => {
-        return !result.some((y) => y.id === block.id);
-      });
-      childrenWithStructure = [...remaining, ...result];
+      focusedBlockChildrenWithStructure = result;
+      //Parse using achorBlock as below will disturb hierarchy
+      // const remaining = childrenWithStructure.filter((block) => {
+      //   return !result.some((y) => y.id === block.id);
+      // });
+      // childrenWithStructure = [...remaining, ...result];
+      const focusedBlockIndex = childrenWithStructure.findIndex(
+        (x) => x.id === focusedBlock
+      );
+      const anchorBlockIndex = childrenWithStructure.findIndex(
+        (x) => x.id === anchorBlock
+      );
+      let succeedingBlocks: INodeStructure[] = [];
+      const preBlocks = childrenWithStructure.slice(0, focusedBlockIndex);
+      if (anchorBlockIndex > 0)
+        succeedingBlocks = childrenWithStructure.slice(anchorBlockIndex);
+      childrenWithStructure = [
+        ...preBlocks,
+        ...focusedBlockChildrenWithStructure,
+        ...succeedingBlocks
+      ];
     }
-    rootStructure = extractRootStructure().map((x) => x.id);
+    if (!focusedBlock) rootStructure = extractRootStructure().map((x) => x.id);
     if (isInitCalculation) return;
     //TODO - if focused - propagate only children of the focusedNode
     dispatch("restructure", {
       root: rootStructure,
-      children: childrenWithStructure
+      children: focusedBlock
+        ? focusedBlockChildrenWithStructure
+        : childrenWithStructure
     });
   }
   function onBlockStructuralChanges(event: any) {
@@ -243,10 +313,27 @@
     dispatch("delete", event.detail);
     onBlockStructuralChanges(event);
   }
+  /**
+   * Merges the focused markdown with the root markdown when a heading is focused.
+   * @param focusedMd - the markdown of the focused heading
+   * @returns - the merged markdown
+   */
   function mergeFocusedMd(focusedMd: IMarkdown) {
-    //TODO - merge focusedMd into md using anchorBlock and focusedBlock
-    return focusedMd;
+    const focusedBlockIndex = md.blocks.findIndex((x) => x.id === focusedBlock);
+    const anchorBlockIndex = md.blocks.findIndex((x) => x.id === anchorBlock);
+    let succeedingBlocks: IBlock[] = [];
+    const preBlocks = md.blocks.slice(0, focusedBlockIndex);
+    if (anchorBlockIndex > 0)
+      succeedingBlocks = md.blocks.slice(anchorBlockIndex);
+    return {
+      blocks: [...preBlocks, ...focusedMd.blocks, ...succeedingBlocks]
+    };
   }
+  /**
+   * Propagates changes back to the {@link md} when content in markdown changes.
+   * md returned from events is used instead of using _md directly as {@link Markdown} component used md store internally to maintain the state of the markdown. _md binding is back propagated from Markdown with a delay.
+   * @param updatedMd - the updated markdown parsed from events from {@link Markdown}
+   */
   function propagateChanges(updatedMd: IMarkdown) {
     if (!focusedBlock) md = updatedMd;
     else md = mergeFocusedMd(updatedMd);
@@ -254,12 +341,14 @@
   function onBlockChanges(event: any) {
     // console.log("onBlockChanges", { event });
     const detail = event.detail;
-    if (changePropagationMethod === MdChangePropagationType.IMMEDIATE) {
-      //TODO - dispatch update event - node in scope
-    }
     propagateChanges(detail.md);
     dispatch("change", { md, block: detail });
   }
+  /**
+   * Resolves the anchor block when a heading is focused.
+   * @param focusedBlock - the focused block id
+   * @returns - the anchor block id and the index of the anchor block in the root markdown and the index of the focused block in the root markdown
+   */
   function resolveAnchorBlock(focusedBlock: string) {
     let focusBlockIndex = -1;
     let anchorBlockIndex = undefined;
@@ -292,14 +381,6 @@
       resolveAnchorBlock(focusedBlock);
     anchorBlock = id;
     const blocks = md.blocks.slice(focusBlockIndex, anchorBlockIndex);
-    console.log("onBlockFocus", {
-      event,
-      focusedBlock,
-      focusBlockIndex,
-      anchorBlockIndex,
-      anchorBlock,
-      blocks
-    });
     _md = { blocks };
     refreshId = new Date().getTime();
   }

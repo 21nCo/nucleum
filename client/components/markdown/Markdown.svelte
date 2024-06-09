@@ -11,6 +11,8 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { generateUID } from "$lib/client/utils/utils";
+  import { isValidAndUniqueArray } from "$lib/client/utils/obj.utils";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   export let md: IMarkdown;
   export let params: IMarkdownParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
@@ -80,41 +82,48 @@
     </div>
   </div>
   <div class="grow w-full">
-    {#each $mdStore.blocks as block (block.id)}
-      <Block
-        {block}
-        {mdStore}
-        on:focus={(e) => {
-          dispatch("focus", {
-            ...e.detail,
-            md: { ...md, blocks: $mdStore.blocks }
-          });
-        }}
-        on:change={(e) => {
-          dispatch("change", {
-            ...e.detail,
-            md: { ...md, blocks: $mdStore.blocks }
-          });
-        }}
-        on:insert={(e) => {
-          dispatch("insert", {
-            ...e.detail,
-            md: { ...md, blocks: $mdStore.blocks }
-          });
-        }}
-        on:delete={(e) => {
-          dispatch("delete", {
-            ...e.detail,
-            md: { ...md, blocks: $mdStore.blocks }
-          });
-        }}
-        on:convert={(e) => {
-          dispatch("convert", {
-            ...e.detail,
-            md: { ...md, blocks: $mdStore.blocks }
-          });
-        }}
+    {#if isValidAndUniqueArray($mdStore.blocks)}
+      {#each $mdStore.blocks as block (block.id)}
+        <Block
+          {block}
+          {mdStore}
+          on:focus={(e) => {
+            dispatch("focus", {
+              ...e.detail,
+              md: { ...md, blocks: $mdStore.blocks }
+            });
+          }}
+          on:change={(e) => {
+            dispatch("change", {
+              ...e.detail,
+              md: { ...md, blocks: $mdStore.blocks }
+            });
+          }}
+          on:insert={(e) => {
+            dispatch("insert", {
+              ...e.detail,
+              md: { ...md, blocks: $mdStore.blocks }
+            });
+          }}
+          on:delete={(e) => {
+            dispatch("delete", {
+              ...e.detail,
+              md: { ...md, blocks: $mdStore.blocks }
+            });
+          }}
+          on:convert={(e) => {
+            dispatch("convert", {
+              ...e.detail,
+              md: { ...md, blocks: $mdStore.blocks }
+            });
+          }}
+        />
+      {/each}
+    {:else}
+      <InlineErrorMessage
+        isDissappear={false}
+        error="Invalid markdown content. Pleae try again after sometime."
       />
-    {/each}
+    {/if}
   </div>
 </div>
