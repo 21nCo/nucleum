@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { Action } from "$lib/client/types/action.type";
+  import type { IAction } from "$lib/client/types/action.type";
   import SearchActionResults from "./SearchActionResults.svelte";
   import CmdResults from "./CmdResults.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -11,7 +11,7 @@
   let inputRef: HTMLInputElement;
   let resultsRef: any;
   let isPerformingSearchAction: boolean = false;
-  let searchAction: Action;
+  let searchAction: IAction;
   let defaultPlaceholder =
     "Run a command or scroll to see list of all commands";
   let placeholder = defaultPlaceholder;

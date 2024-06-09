@@ -11,9 +11,9 @@ import type {
 import { GoalPersistence } from "./goal.persistence";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { Item } from "$lib/client/types/item.enum";
-import { Persistance } from "$lib/client/stores/persistence";
 import {
   deepCopy,
+  isValidArray,
   isValidArrayWithData,
   objIsEmpty,
   shallowDiff
@@ -31,6 +31,7 @@ import {
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
 import { logger } from "$lib/client/stores/log.store";
+import { Persistence } from "$lib/client/persistence/persistence";
 
 const seedGoal: Goal = {
   id: generateUID(),
@@ -243,7 +244,7 @@ function initGoalsStore() {
     set,
     loader: (data: any) => {
       logger.log("goalStore loader", data);
-      if (!data || !isValidArrayWithData(data)) return;
+      if (!data || !isValidArray(data)) return;
       update((store) => {
         store.goals = data;
         store.archivedGoals = data.filter((x: any) => x.isArchived);
@@ -371,7 +372,7 @@ function initQuickFocusItemStore() {
     set,
     loader: (data: any) => {
       logger.log("quickFocusItemStore loader", data);
-      if (!data || !isValidArrayWithData(data)) return;
+      if (!data || !isValidArray(data)) return;
       update((store) => {
         store.items = data;
         filter({ tag: TagId.ALL, searchText: "" });
@@ -426,7 +427,7 @@ function initCurrentGoalStore(initialValue: Goal) {
     previousValue = JSON.stringify(x);
   };
   const persist = async (n: Partial<Goal>) => {
-    return new Persistance().update({ ...n, id: get(currentGoal).id });
+    return new Persistence().update({ ...n, id: get(currentGoal).id });
   };
   const fetchGoal = async (id: string) => {
     return await new GoalPersistence().fetch(id);
@@ -514,7 +515,7 @@ function initCurrentGoalStore(initialValue: Goal) {
     update: async () => {
       let goal = get(currentGoal);
       if (!isGoalNameValid(goal.label)) return;
-      const response = await new Persistance().update({
+      const response = await new Persistence().update({
         id: goal.id,
         label: goal.label,
         color: goal.color,

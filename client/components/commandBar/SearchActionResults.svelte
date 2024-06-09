@@ -2,14 +2,14 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import { Persistence } from "$lib/client/persistence/persistence";
-  import type { Action } from "$lib/client/types/action.type";
+  import type { IAction } from "$lib/client/types/action.type";
   import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import ResultItem from "./ResultItem.svelte";
   const dispatch = createEventDispatcher();
-  export let action: Action;
+  export let action: IAction;
   export let search: string = "";
   let selectedIndex: number = 0;
   let isSearchInProgress: boolean = false;

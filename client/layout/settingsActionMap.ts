@@ -1,4 +1,4 @@
-import { ActionType, type Action } from "../types/action.type";
+import { ActionType, type IAction } from "../types/action.type";
 import AccountSettings from "../components/settings/account/AccountSettings.svelte";
 import ControlPanel from "../components/settings/ControlPanel.svelte";
 import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
@@ -13,7 +13,7 @@ import { AppEvent } from "../types/event.enum";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 
-export const settingsAsPages: Action[] = [
+export const settingsAsPages: IAction[] = [
   {
     action: AppEvent.SETTINGS,
     label: "Settings",
@@ -89,7 +89,7 @@ export const settingsAsPages: Action[] = [
   }
 ];
 
-export const settingsAsModal: Action[] = [
+export const settingsAsModal: IAction[] = [
   {
     action: AppEvent.SETTINGS,
     label: "Settings",

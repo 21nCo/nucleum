@@ -13,13 +13,16 @@
   import { onMount } from "svelte";
   import { analyticsConfigStore } from "./analytics.store";
   import AnalyticsPageView from "./page/AnalyticsPageView.svelte";
-  import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   let refreshId = new Date().getTime();
   let selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
     await dataManager.refresh(Item.pointAnalyticsConfig);
     refreshId = new Date().getTime();
+    if (!selectedPageId) {
+      selectedPageId = $analyticsConfigStore.pages[0]?.id;
+    }
   });
   function onAddPageClicked() {
     analyticsConfigStore.addPage();
@@ -103,7 +106,9 @@
     {#if selectedPageId}
       <AnalyticsPageView id={selectedPageId} />
     {:else}
-      <PageLoadingAnimation variant="page" />
+      <EmptyStatusView
+        subText="Please click on a view to see Analytic cards or click on edit to manage views"
+      />
     {/if}
   {/key}
 </div>

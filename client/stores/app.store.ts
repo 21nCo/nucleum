@@ -30,7 +30,7 @@ import {
   type ICacheableStore,
   type CacheableStoreContract
 } from "../types/data.type";
-import { ActionType, type Action } from "../types/action.type";
+import { ActionType, type IAction } from "../types/action.type";
 import type {
   IdentityProvider,
   OAuthProviderConfig
@@ -200,7 +200,6 @@ function initDboVersionStore() {
     if (x) set(x as dbVersionStore);
   });
   const setVersion = (version: number) => {
-    console.log("setting db version", { version });
     update((n: dbVersionStore) => {
       n.version = version;
       persistLocally(Item.dboVersion, n);
@@ -212,7 +211,6 @@ function initDboVersionStore() {
     subscribe,
     set,
     loader: (data: any) => {
-      console.log("loading db version", { data });
       const n = { ...seedDboVersion, ...data };
       set(n);
       persistLocally(Item.dboVersion, n);
@@ -316,7 +314,6 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
   }
   setAppearance(x: UserAppearanceSettings) {
     this.update((n: UserGlobalPreferences) => {
-      console.log("setting appearance", { x, n });
       const appearance = { ...n.appearance, ...x };
       n.appearance = appearance;
       this.persist({ appearance });
@@ -338,7 +335,6 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       offset = -new Date().getTimezoneOffset() * 60;
       label = detectTimeZone()?.label ?? "UTC";
     }
-    console.log("setting time zone", { offset, label });
     this.update((n: UserGlobalPreferences) => {
       n.timeZoneOffset = offset;
       this.persist({ timeZoneOffset: offset, timeZoneLabel: label });
@@ -476,7 +472,6 @@ function initUserPreferences() {
     subscribe,
     update,
     loader: (data: UserGlobalPreferences) => {
-      console.log("loading user preferences", { data });
       if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
       if (!data.avatarPicker)
         data.avatarPicker = seedUserPreferences.avatarPicker;
@@ -529,7 +524,6 @@ function initUserPreferences() {
         offset = -new Date().getTimezoneOffset() * 60;
         label = detectTimeZone()?.label ?? "UTC";
       }
-      console.log("setting time zone", { offset, label });
       update((n: UserGlobalPreferences) => {
         n.timeZoneOffset = offset;
         persist({ timeZoneOffset: offset, timeZoneLabel: label });
@@ -572,6 +566,7 @@ function initAppStore(seed: AppStore) {
 
   const resolveComponentFromPath = (path: string) => {
     const actions = get(appStore).actions;
+    console.log({ actions });
     let component = actions.find((x) => x.path == path);
     if (component) return component;
     component = actions.find((x) => x.action == path);
@@ -612,7 +607,7 @@ function initAppStore(seed: AppStore) {
     return false;
   };
   const gotoPath = async (path: string, params: any = null) => {
-    // logger.log({ method: "gotoPath", path });
+    console.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
     update((n: AppStore) => {
@@ -693,7 +688,7 @@ function initAppStore(seed: AppStore) {
       }
     }
   };
-  const runNavigationAction = (action: Action) => {
+  const runNavigationAction = (action: IAction) => {
     if (action.type === ActionType.LINK && action.link) {
       const url = get(appStore).appData.urls[action.link];
       if (url) openLink(url);
@@ -715,7 +710,6 @@ function initAppStore(seed: AppStore) {
     const ctx = get(context);
     const oAuthConfig: OAuthProviderConfig[] =
       get(appStore).appData?.oAuthConfig;
-    console.log(oAuthConfig, window.location);
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
@@ -763,7 +757,6 @@ function initAppStore(seed: AppStore) {
   }
 
   const checkForUpdates = async () => {
-    console.log("checking for updates");
     let latestVersion = get(appStore).appData?.version;
     try {
       if (!latestVersion) {
@@ -902,9 +895,9 @@ function initAppStore(seed: AppStore) {
       });
     },
     initActions: (
-      actions: Action[],
-      settingsAsModal: Action[],
-      settingsAsPages: Action[]
+      actions: IAction[],
+      settingsAsModal: IAction[],
+      settingsAsPages: IAction[]
     ) => {
       const isInPortraitMode = get(view).isPortrait;
       update((n: AppStore) => {
@@ -914,6 +907,12 @@ function initAppStore(seed: AppStore) {
         if (isInPortraitMode || !isSettingsAsModal)
           n.actions = [...actions, ...settingsAsPages];
         else n.actions = [...actions, ...settingsAsModal];
+        return n;
+      });
+    },
+    initActionsForSheet: (actions: IAction[]) => {
+      update((n: AppStore) => {
+        n.actions = [...actions];
         return n;
       });
     },

@@ -20,5 +20,5 @@
     content="We are sorry. Export feature is not currently available on mobile or tablet. Please use desktop or web app to export your data."
   />
 {:else}
-  <Button label="Export everything (json)" on:click={exportData} />
+  <Button label="Export everything (json format)" on:click={exportData} />
 {/if}

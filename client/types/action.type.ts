@@ -2,7 +2,7 @@ import type { Item } from "./item.enum";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
 
-export type Action = {
+export type IAction = {
   action: string;
   type?: ActionType;
   path?: string;

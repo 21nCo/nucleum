@@ -32,7 +32,7 @@
   import { emojis, materialSymbols } from "$lib/client/data/avatars";
   import SwitchInput from "../toggle/SwitchInput.svelte";
   import account from "$lib/client/stores/account.store";
-  import UploadButton from "$lib/elements/button/UploadButton.svelte";
+  import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";

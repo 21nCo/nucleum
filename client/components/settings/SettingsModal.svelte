@@ -4,7 +4,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import CpThumbnail from "../settings/CPThumbnail.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-  import { ActionType, type Action } from "$lib/client/types/action.type";
+  import { ActionType, type IAction } from "$lib/client/types/action.type";
   import { onMount } from "svelte";
   import type { AppStore } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
@@ -16,7 +16,7 @@
   let selected: string = "";
   let parentBgIndex: number = 2;
   // resolveAction("theme");
-  let pageAction: Action | null = null;
+  let pageAction: IAction | null = null;
   let config: any;
   onMount(() => {
     appStore.subscribe((x: AppStore) => {

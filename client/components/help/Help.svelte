@@ -8,12 +8,12 @@
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
 
-  import { ActionType, type Action } from "$lib/client/types/action.type";
+  import { ActionType, type IAction } from "$lib/client/types/action.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { AppEvent } from "$lib/client/types/event.enum";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  let pageAction: Action | null = null;
+  let pageAction: IAction | null = null;
   let config = [
     {
       section: "main",

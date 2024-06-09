@@ -2,7 +2,7 @@
   import { LayoutContext } from "$lib/client/types/layout.type";
   import { onMount } from "svelte";
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
-  import type { Action } from "$lib/client/types/action.type";
+  import type { IAction } from "$lib/client/types/action.type";
   //TODO - remove dependency on local
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import type { UserLocalPreferences } from "$lib/client/types/memotron/memotronPreferences.type";
@@ -12,7 +12,7 @@
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
-  let pages: Action[] = [];
+  let pages: IAction[] = [];
   let backgroundColor: string;
   let selected: number;
   onMount(() => {

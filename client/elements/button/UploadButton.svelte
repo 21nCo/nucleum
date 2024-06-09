@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ButtonVariant } from "$lib/tidy/types/button.type";
-  import { Size } from "$lib/tidy/types/size.enum";
+  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
   import Button from "./Button.svelte";
   export let size: Size = Size.md;
   export let type: ButtonVariant = ButtonVariant.PRIMARY;

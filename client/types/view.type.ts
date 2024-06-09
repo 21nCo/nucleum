@@ -1,4 +1,4 @@
-import type { Action } from "./action.type";
+import type { IAction } from "./action.type";
 
 export type View = {
   height: number;
@@ -19,7 +19,7 @@ export type View = {
   /**
    * @deprecated - use appStore.currentComponent
    */
-  currentComponent?: Action;
+  currentComponent?: IAction;
   /**
    * @deprecated - use appStore.sheetPath
    */

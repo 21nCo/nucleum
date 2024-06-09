@@ -10,10 +10,10 @@
   import type { InputLabel } from "$lib/client/types/input.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
-  import GoalInsights from "../../insights/GoalInsights.svelte";
   import GoalColorPickerWithPreview from "../GoalColorPickerWithPreview.svelte";
   import GoalActions from "../home/GoalActions.svelte";
   import SubGoalList from "../subGoals/SubGoalList.svelte";
+  import GoalInsightsCard from "./GoalInsightsCard.svelte";
   $: goalTags = $tagStore.tags.filter((x) => $currentGoal.tags?.includes(x.id));
   let labelProps: Partial<InputLabel> = { orientation: Orientation.Vertical };
 </script>
@@ -66,7 +66,7 @@
       />
     {:else}
       <SubGoalList />
-      <GoalInsights />
+      <GoalInsightsCard />
     {/if}
   </div>
   <footer class="flex justify-center text-fgs3 text-b4 min-w-fit pt-32 pb-10">

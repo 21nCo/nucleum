@@ -16,9 +16,8 @@ import {
   calculateTotalFocusAndBreak,
   generateBarsFromComposition,
   getTotalsFromComposition
-} from "$lib/client/products/pointron/local.utils";
+} from "$lib/client/products/pointron/pointron.utils";
 import { get, writable } from "svelte/store";
-import { FocusPersistance } from "$lib/client/products/pointron/focus/focus.persistance";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
 import {
   pointronEvents,
@@ -54,7 +53,8 @@ import appearance from "$lib/client/stores/appearance.store";
 import { SessionType } from "$lib/client/products/pointron/logs/log.type";
 import { pointLogStore } from "$lib/client/products/pointron/logs/log.store";
 import { NodeType } from "$lib/client/types/memotron/node.type";
-const focusPersistance = new FocusPersistance();
+import { FocusPersistence } from "./focus.persistence";
+const focusPersistance = new FocusPersistence();
 export const windowClickEvent = writable(null);
 
 export const todayFocusStore = initTodayFocus();
@@ -212,7 +212,6 @@ function initSessionStore(seed: SessionStore) {
     shallowReset();
     modalEvent.hideSpecific(PointronEventEnum.SESSION_FINISHED);
     modalEvent.hideSpecific(PointronEventEnum.BREAK_REMINDER);
-    console.log("resetting session store", { seedSessionStore });
     let newSession: SessionStore = deepCopy(seedSessionStore);
     newSession.composition.breakReminder =
       get(pointronPreferences).breakReminder;
@@ -229,7 +228,6 @@ function initSessionStore(seed: SessionStore) {
     ) {
       Notification.requestPermission();
     }
-    console.log("startsession", { n });
     const sessionId = generateSessionId(new Date().getTime());
     n.currentSessionId = sessionId;
     n = updateBlocks(n, BlockType.FOCUS);
@@ -472,7 +470,6 @@ function initSessionStore(seed: SessionStore) {
     } else {
       let currentBlock = n.blocks?.pop();
       let previousBlock = n.blocks?.pop();
-      console.log({ currentBlock, previousBlock });
       if (previousBlock && currentBlock) {
         previousBlock.end = new Date().getTime();
         n.blocks = [...(n.blocks ?? []), previousBlock, currentBlock];
@@ -487,7 +484,6 @@ function initSessionStore(seed: SessionStore) {
         start: n.currentBlock.start
       };
     }
-    console.log("updateBlocks", { blocks: deepCopy(n.blocks) });
     n.isSessionRunning = true;
     if (type == BlockType.FOCUS) {
       n.state = SessionState.FOCUS_RUNNING;
@@ -511,7 +507,6 @@ function initSessionStore(seed: SessionStore) {
     return n;
   }
   async function continueSession(n: SessionStore) {
-    console.log("continueSession", { n });
     if (n.state == SessionState.FOCUS_RUNNING) {
       pointronEvents.notify(PointronEventEnum.INTERVAL_ENDED);
       n = updateBlocks(n, BlockType.BREAK);
@@ -586,10 +581,6 @@ function initSessionStore(seed: SessionStore) {
     n.blocks.forEach((bar) => {
       let barDuration = bar.duration ?? 0;
       let refreshedProgress = 0;
-      console.log("refreshProgressOnBars", {
-        barDuration,
-        totalElapsedRemaining
-      });
       if (barDuration == totalElapsedRemaining) {
         refreshedProgress = 1;
         totalElapsedRemaining = 0;
@@ -686,7 +677,6 @@ function initSessionStore(seed: SessionStore) {
     n: SessionStore,
     isSessionFinish: boolean = false
   ) {
-    console.log("stopCurrentTaskOrGoal", { n });
     if (n.isQuickStartOn) n.isQuickStartOn = false;
     let end = new Date().getTime();
     let lastBlock = n.currentLog?.blocks?.pop();
@@ -696,10 +686,6 @@ function initSessionStore(seed: SessionStore) {
     }
     if ((n.currentLog.taskId || n.currentLog.goalId) && n.blocks) {
       let duration = calculateTotalFocusAndBreak(n.currentLog.blocks);
-      console.log("stopCurrentTaskOrGoal", {
-        duration,
-        currentLog: n.currentLog
-      });
       if (!isSessionFinish)
         await focusItemsStore.updateWorkedTime(
           isValidString(n.currentLog.taskId)
@@ -743,7 +729,6 @@ function initSessionStore(seed: SessionStore) {
     // },
     loader: async (savedSessionStore: SessionStore) => {
       logger.log({ context: "session store loader", savedSessionStore });
-      console.log({ context: "session store loader", savedSessionStore });
       savedSessionStore = { ...savedSessionStore, id: sessionStoreId };
       if (
         savedSessionStore.start &&
@@ -777,7 +762,6 @@ function initSessionStore(seed: SessionStore) {
       propagateMessageToParent(savedSessionStore);
     },
     loadEmptyState: () => {
-      console.log("loadEmptyState");
       set(reset());
       propagateMessageToParent(get(sessionStore));
     },
@@ -886,7 +870,6 @@ function initSessionStore(seed: SessionStore) {
     stopCurrentTaskOrGoal: async () => {
       let n = get(sessionStore);
       const newValue = await stopCurrentTaskOrGoal(n);
-      console.log("stopCurrentTaskOrGoal", { newValue: deepCopy(newValue) });
       set(newValue);
       return persist(newValue);
     },
@@ -1071,7 +1054,6 @@ function initSessionStore(seed: SessionStore) {
     onComposeComplete: async () => {
       let n = get(sessionStore);
       if (!n.composition) return;
-      console.log("onCompose", { n, type: n.composition.type });
       n = composeSession(n);
       n.preventSliderReverseEventTemp = true;
       set(n);
@@ -1166,7 +1148,6 @@ function initFocusItemsStore() {
     }
   });
   const persist = async (store: FocusItemsStore) => {
-    console.log("focusItemsStore.persist", { store });
     if (!store) store = get(focusItemsStore);
     //TODO - check where the id is being set to kv: prefix other than loader or in loader
     const val = { ...store, id: focusItemsStoreId };
@@ -1189,21 +1170,18 @@ function initFocusItemsStore() {
     },
     loader: (m: FocusItemsStore) => {
       logger.log({ context: "focusItemsStore.loader", m });
-      console.log({ context: "focusItemsStore.loader", m });
       if (m && m.items?.length > 0) {
         const store = {
           ...seedFocusItemsStore,
           items: m.items,
           id: focusItemsStoreId
         };
-        console.log("focusItemsStore.loader", { store });
         set(store);
         dataManager.cache(store);
       }
     },
     reset: () => {
       const store = deepCopy(seedFocusItemsStore);
-      console.log("reset focus items", { store });
       set(store);
       dataManager.cache(store);
       pointronEvents.notify(PointronEventEnum.REFRESH_FOCUSITEMS);
@@ -1228,7 +1206,6 @@ function initFocusItemsStore() {
     addGoal: async (goal: FocusItem, isPersist: boolean = true) => {
       update((n: FocusItemsStore) => {
         n.items.push({ ...goal });
-        console.log("addGoal", { goal, n });
         if (isPersist) persist(n);
         return n;
       });

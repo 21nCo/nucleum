@@ -4,7 +4,7 @@
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import {
     PaintType,
-    type Action,
+    type IAction,
     ThinModeBehavior
   } from "$lib/client/types/action.type";
   import {
@@ -18,9 +18,9 @@
   import account from "$lib/client/stores/account.store";
   export let path: string | undefined = undefined;
   export let prefix: string | undefined = undefined;
-  let currentComponent: Action | null;
-  let parentComponent: Action | null;
-  let grandPa: Action | null;
+  let currentComponent: IAction | null;
+  let parentComponent: IAction | null;
+  let grandPa: IAction | null;
   let pad: number;
   $: if ($view.height) {
     let rawPad = ($view.height / 10) * $view.scale;
@@ -134,7 +134,7 @@
     }
   }
 
-  function setPageMenuIfRequired(component: Action) {
+  function setPageMenuIfRequired(component: IAction) {
     if (
       component &&
       component.sections &&

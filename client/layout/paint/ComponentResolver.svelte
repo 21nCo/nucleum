@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ContentType, type Action } from "$lib/client/types/action.type";
+  import { ContentType, type IAction } from "$lib/client/types/action.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import SpaceDocument from "$lib/client/components/space/SpaceDocument.svelte";
@@ -9,7 +9,7 @@
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { appStore } from "$lib/client/stores/app.store";
-  export let action: Action | null = null;
+  export let action: IAction | null = null;
   export let path: string = "";
   export let params: any = {};
   onMount(() => {

@@ -72,55 +72,48 @@ export class PointronPersistence {
     }
   }
   async importData(data: any, fileName: string, fileSize: number) {
-    if (fileSize > 1000000) {
-      const mainImport = await this.import(
-        { goals: data.goals, tags: data.tags, sessions: [], logs: [] },
-        fileName
-      );
-      if (!mainImport.importId) return mainImport;
-      const importId = mainImport.importId;
-      if (data.sessions.length > 1000) {
-        for (let i = 0; i < data.sessions.length; i += 1000) {
-          await this.importChunk(
-            {
-              goals: [],
-              tags: [],
-              sessions: data.sessions.slice(i, i + 1000),
-              logs: []
-            },
-            importId
-          );
-        }
-      } else {
+    const mainImport = await this.import(
+      {
+        goals: data.goals,
+        tags: data.tags,
+        kv: data.kv,
+        tz: data.tz,
+        targets: data.targets
+      },
+      fileName
+    );
+    if (!mainImport.importId) return mainImport;
+    const importId = mainImport.importId;
+    if (data.sessions.length > 1000) {
+      for (let i = 0; i < data.sessions.length; i += 1000) {
         await this.importChunk(
-          { goals: [], tags: [], sessions: data.sessions, logs: [] },
+          {
+            sessions: data.sessions.slice(i, i + 1000),
+            logs: []
+          },
           importId
         );
       }
-      if (data.logs.length > 1000) {
-        for (let i = 0; i < data.logs.length; i += 1000) {
-          await this.importChunk(
-            {
-              goals: [],
-              tags: [],
-              sessions: [],
-              logs: data.logs.slice(i, i + 1000)
-            },
-            importId
-          );
-        }
-      } else {
-        await this.importChunk(
-          { goals: [], tags: [], sessions: [], logs: data.logs },
-          importId
-        );
-      }
-      return mainImport;
+    } else {
+      await this.importChunk({ sessions: data.sessions, logs: [] }, importId);
     }
-    return this.import(data, fileName);
+    if (data.logs.length > 1000) {
+      for (let i = 0; i < data.logs.length; i += 1000) {
+        await this.importChunk(
+          {
+            sessions: [],
+            logs: data.logs.slice(i, i + 1000)
+          },
+          importId
+        );
+      }
+    } else {
+      await this.importChunk({ sessions: [], logs: data.logs }, importId);
+    }
+    return mainImport;
   }
   async import(data: any, fileName: string) {
-    const query = `fn::pointron::import($tags, $goals, $sessions, $logs, $fileName)`;
+    const query = `fn::pointron::import($tags, $goals, $targets, $kv, $tz, $fileName)`;
     const response = await surrealDb.query(query, {
       ...data,
       fileName
@@ -128,7 +121,7 @@ export class PointronPersistence {
     return interceptSurrealResponse(response, query);
   }
   async importChunk(data: any, importId: string) {
-    const query = `fn::pointron::importChunk($tags, $goals, $sessions, $logs, $importId)`;
+    const query = `fn::pointron::importChunk($sessions, $logs, $importId)`;
     const response = await surrealDb.query(query, {
       ...data,
       importId

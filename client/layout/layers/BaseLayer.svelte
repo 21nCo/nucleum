@@ -43,7 +43,6 @@
   import { localActions } from "$local/stores/localActionMap";
   import { localCacheableStores } from "$local/stores/localStoresMap";
   import MutationQueueLayer from "./MutationQueueLayer.svelte";
-  // import { localActions, localCacheableStores } from "$local/local";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -104,7 +103,9 @@
       (<any>window).Intercom("update", {
         hide_default_launcher: true
       });
-    if (!$context.isSheet) {
+    if ($context.isSheet) {
+      initActions(true);
+    } else {
       await parseEmbedToken();
       await initializeData();
     }
@@ -183,12 +184,14 @@
       }
     }
   }
-  function initActions() {
+
+  function initActions(isSheet?: boolean) {
     const modifiedGlobalActions = globalActions.filter(
       (x) => !localActions.some((y) => y.action === x.action)
     );
     let actions = [...modifiedGlobalActions, ...localActions];
-    appStore.initActions(actions, settingsAsModal, settingsAsPages);
+    if (isSheet) appStore.initActionsForSheet(actions);
+    else appStore.initActions(actions, settingsAsModal, settingsAsPages);
   }
   function runCurrentTime() {
     clearInterval(timer);

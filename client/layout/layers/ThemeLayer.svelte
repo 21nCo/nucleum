@@ -8,7 +8,6 @@
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   $: rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
-  $: console.log("rootFontSize", rootFontSize);
   $: document.documentElement.style.fontSize = `${rootFontSize}px`;
   onMount(() => {
     refreshTheme();

@@ -14,7 +14,6 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   export let id: string;
   let refreshId = new Date().getTime();
   let config = $analyticsConfigStore.pages.find((x) => x.id === id);
@@ -81,11 +80,11 @@
   {/key}
 {:else}
   <EmptyStatusView
-    isLoadingState={$store.isRefreshing}
-    mainText={$store.data?.cards === undefined
+    isLoadingState={$store?.isRefreshing}
+    mainText={$store?.data?.cards === undefined
       ? "Geez Something went wrong!"
       : "Shoot! No cards configured."}
-    subText={$store.data?.cards === undefined
+    subText={$store?.data?.cards === undefined
       ? "Please try again after sometime or chat with us"
       : "Please click on edit and add cards to display them here."}
   />

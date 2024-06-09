@@ -6,7 +6,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import type { Action } from "$lib/client/types/action.type";
+  import type { IAction } from "$lib/client/types/action.type";
   import { Size } from "$lib/client/types/size.enum";
   import { HapticFeedback } from "$lib/client/types/haptic.enum";
   import { hapticFeedback } from "$lib/client/utils/embed.utils";
@@ -23,7 +23,7 @@
   } from "$lib/client/utils/browser.utils";
   import { Direction } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
-  export let item: Action;
+  export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   $: isActive =
     $page.params.route?.includes(item.path ?? item.action) ||

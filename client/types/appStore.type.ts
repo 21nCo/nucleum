@@ -1,4 +1,4 @@
-import type { Action } from "$lib/client/types/action.type";
+import type { IAction } from "$lib/client/types/action.type";
 
 export type AppStore = {
   product: string;
@@ -19,14 +19,14 @@ export type AppStore = {
   pageMenu?: string[];
   player?: string;
   //TACO - dynamic actions
-  dynamicBlocks?: Action[];
+  dynamicBlocks?: IAction[];
   fullScreenComponentPath?: string;
   isPipOn?: boolean;
   currentPath: string;
   isMenuHidden?: boolean;
-  currentComponent?: Action;
+  currentComponent?: IAction;
   sheetPath?: string;
-  actions: Action[];
+  actions: IAction[];
 };
 
 export enum LaunchContext {

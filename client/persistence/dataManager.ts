@@ -238,7 +238,7 @@ async function performMutation(
   const mutatedAt = surrealUnixTimestamp();
   data = { ...data, mutatedAt };
   const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
-  console.log({ resources, isKVStore, storeId });
+  // console.log({ resources, isKVStore, storeId });
   const mutationQuery = resolveMutationQuery2();
   const mutationParams =
     params.action === PersistanceActionType.CUSTOM_QUERY
@@ -299,14 +299,14 @@ async function performMutation(
       dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
       return { resources: [storeId], isKVStore: false };
     } else {
-      console.log({
-        storeId,
-        stores: dm.cacheableStoresTable.map((x) => get(x).id)
-      });
+      // console.log({
+      //   storeId,
+      //   stores: dm.cacheableStoresTable.map((x) => get(x).id)
+      // });
       const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
       if (!store) return { resources: [], isKVStore: false };
       const storeData = get(store);
-      console.log({ storeData });
+      // console.log({ storeData });
       const isKVStore = storeData.dataType === StoreDataType.KVO;
       const mutatingResources = storeData.mutatingResources;
       if (mutatingResources) return { resources: mutatingResources, isKVStore };

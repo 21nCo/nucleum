@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PagePainter from "$lib/client/layout/paint/PagePainter.svelte";
+  import PagePainterV2 from "$lib/client/layout/paint/PagePainterV2.svelte";
 </script>
 
-<PagePainter prefix={"cp"} />
+<PagePainterV2 prefix={"cp"} />

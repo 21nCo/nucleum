@@ -2,7 +2,7 @@ import AppearanceSettings from "$lib/client/components/settings/appearance/Appea
 import {
   ThinModeBehavior,
   PaintType,
-  type Action,
+  type IAction,
   ActionType,
   ContentType
 } from "$lib/client/types/action.type";
@@ -22,7 +22,7 @@ import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 import OAuthRedirect from "../components/settings/account/OAuthRedirect.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
 
-export const globalActions: Action[] = [
+export const globalActions: IAction[] = [
   {
     action: "404",
     type: ActionType.META_PAGE,

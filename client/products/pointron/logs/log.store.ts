@@ -35,7 +35,7 @@ import type {
 import {
   calculateTotalFocusAndBreak,
   sessionTotals
-} from "$lib/client/products/pointron/local.utils";
+} from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/types/memotron/node.type";
 

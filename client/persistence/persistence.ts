@@ -94,7 +94,7 @@ export class Persistence {
   ping = async () => {
     try {
       const response = await performApiCall("account/ping", "POST", {});
-      console.log({ response });
+      // console.log({ response });
       if (!response?.ok) {
         return;
       }
@@ -121,7 +121,7 @@ export class Persistence {
   fetchAppData = async () => {
     try {
       const app = import.meta.env.VITE_APP ?? window.location.hostname;
-      console.log({ app });
+      // console.log({ app });
       if (!app) return;
       let response = await performApiCall("utils/n/retrieveAppData", "POST", {
         app
@@ -360,7 +360,12 @@ export class Persistence {
     });
     return interceptSurrealResponse(response, query);
   }
-  async getSignedUrl(userId: string, contentType: string, fileName: string,isTemp:boolean) {
+  async getSignedUrl(
+    userId: string,
+    contentType: string,
+    fileName: string,
+    isTemp: boolean
+  ) {
     const response = await performApiCall("utils/n/getsignedurl", "POST", {
       contentType,
       fileName,

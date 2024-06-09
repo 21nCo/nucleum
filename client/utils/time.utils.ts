@@ -24,7 +24,6 @@ const months = [
 ];
 
 const locale = navigator.language || navigator.languages[0];
-console.log("locale", locale);
 export function formatTime(
   userPreferences: UserGlobalPreferences,
   date: Date,

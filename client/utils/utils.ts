@@ -4,7 +4,7 @@ import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum"
 import {
   ActionType,
   ResourceAccessMode,
-  type Action
+  type IAction
 } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
 import { toggleSearchParam } from "$lib/client/utils/browser.utils";
@@ -248,7 +248,7 @@ export function download(data: string, label: string | null = null) {
  * @returns
  */
 export function interceptSurrealResponse(response: any, context: string = "") {
-  console.log({ context, response });
+  // console.log({ context, response });
   if (!response || !isValidArrayWithData(response)) return null;
   return checkSurrealResponse(response[0], false);
 }

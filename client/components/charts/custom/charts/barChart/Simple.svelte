@@ -11,7 +11,7 @@
   } from "d3";
   import { createEventDispatcher, onMount } from "svelte";
   //TODO - import dependency on local
-  import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/local.utils";
+  import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/pointron.utils";
   import { customColor } from "$lib/client/utils/theme.utils";
   import { userPreferences } from "$lib/client/stores/app.store";
   import type { ChartDataPoint } from "$lib/client/types/chartDataPoint.type";
