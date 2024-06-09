@@ -11,7 +11,10 @@
   import { isValidArray, sortArrayByOrder } from "$lib/client/utils/obj.utils";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
   import { AppEvent } from "$lib/client/types/event.enum";
+  import SettingsFooter from "./SettingsFooter.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   let selected: string = "";
+  let parentBgIndex: number = 2;
   // resolveAction("theme");
   let pageAction: Action | null = null;
   let config: any;
@@ -85,10 +88,11 @@
             </div>
           </div>
         {/each}
+        <SettingsFooter {parentBgIndex} />
       </div>
     {/if}
   </div>
-  <div class="flex flex-col items-start grow h-full p-4">
+  <div class="flex flex-col items-start flex-grow h-full p-4">
     {#if pageAction}
       <div class="flex justify-start h-10">
         <Text
@@ -96,9 +100,11 @@
           style={TextStyle.PANEL_HEADING}
         />
       </div>
-      <div class="flex w-full max-w-xl justify-start items-start grow">
+      <div class="flex w-full max-w-xl justify-start items-start flex-grow">
         <ComponentResolver action={pageAction} />
       </div>
+    {:else}
+      <EmptyStatusView subText="Please select a setting to view it here" />
     {/if}
   </div>
 </div>

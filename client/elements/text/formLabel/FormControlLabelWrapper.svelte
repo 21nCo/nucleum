@@ -14,15 +14,15 @@
     "flex-col":
       props?.orientation === Orientation.Vertical ||
       (!props?.orientation && $view.isPortrait),
-    "gap-3":
-      (props?.orientation === Orientation.Vertical ||
-        (!props?.orientation && $view.isPortrait)) &&
-      size === Size.md,
     "gap-2":
       (props?.orientation === Orientation.Vertical ||
         (!props?.orientation && $view.isPortrait)) &&
+      size === Size.md,
+    "gap-1.5":
+      (props?.orientation === Orientation.Vertical ||
+        (!props?.orientation && $view.isPortrait)) &&
       size === Size.sm,
-    "flex-row items-center gap-2":
+    "flex-row flex-wrap items-center gap-2":
       props?.orientation === Orientation.Horizontal ||
       (!props?.orientation && !$view.isPortrait),
     "text-b2": size === Size.sm,

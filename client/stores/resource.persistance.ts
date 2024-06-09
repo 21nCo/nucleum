@@ -3,7 +3,7 @@ import {
   type IMutationQueueParams
 } from "../types/data.type";
 import type { DbRecord } from "../types/dbrecord.type";
-import type { ItemType } from "../types/item.enum";
+import type { Item } from "../types/item.enum";
 import { prefixTable } from "../utils/text.utils";
 import { generateUID } from "../utils/utils";
 import { dataManager } from "./data.store";
@@ -13,8 +13,8 @@ import { dataManager } from "./data.store";
  */
 export class ResourcePersistance {
   currentUserId: string;
-  resourceType: ItemType;
-  constructor(resourceType: ItemType, currentUserId: string) {
+  resourceType: Item;
+  constructor(resourceType: Item, currentUserId: string) {
     this.resourceType = resourceType;
     this.currentUserId = currentUserId;
   }

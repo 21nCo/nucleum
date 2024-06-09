@@ -468,7 +468,7 @@
       <div
         id={block.id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="w-full h-full outline-none py-2 {sizing} {block.contentType ===
+        class="flex justify-start w-full h-full outline-none py-2 {sizing} {block.contentType ===
         NodeType.QUOTE
           ? 'px-2'
           : 'px-1'}"

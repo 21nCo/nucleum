@@ -13,7 +13,12 @@
   import { getTimeZonesWithOffsets } from "$lib/client/utils/time.utils";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
-  let timeZones: (Omit<DropdownItem, "value"> & { value: number })[];
+  let timeZones: { label: string; offset: number }[] = [];
+  let timeZoneDropdownItems: (Omit<DropdownItem, "value"> & {
+    value: string;
+  })[];
+  let selectedTimezone: string;
+  let labelProps = { orientation: Orientation.Vertical };
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
       label: properCase(key),
@@ -21,28 +26,31 @@
     };
   });
   onMount(() => {
-    const rawZones = getTimeZonesWithOffsets();
-    timeZones = rawZones.map((zone) => {
+    timeZones = getTimeZonesWithOffsets();
+    if ($userPreferences.timeZoneOffset) {
+      const savedSetting = timeZones.find(
+        (zone) => zone.offset * 60 === $userPreferences.timeZoneOffset
+      )?.label;
+      if (savedSetting === undefined) {
+        const { offset, label } = userPreferences.setTimeZone();
+        selectedTimezone = label!;
+      } else {
+        selectedTimezone = savedSetting;
+      }
+    }
+    timeZoneDropdownItems = timeZones.map((zone) => {
       return {
         label: zone.label,
-        value: zone.offset
+        value: zone.label
       };
     });
-    let selectedTimezone;
-    if ($userPreferences.timeZoneOffset) {
-      selectedTimezone = timeZones.find(
-        (zone) => zone.value === $userPreferences.timeZoneOffset
-      )?.value;
-    }
-    if (selectedTimezone === undefined) {
-      userPreferences.setTimeZone();
-    }
   });
 </script>
 
 <div class="flex flex-col max-w-lg w-full gap-4">
   <MultiselectDropdown
     label={{
+      ...labelProps,
       label: "Time scales",
       tooltip: {
         body: "Only selected time scales will be used throughout the application eg: Analytics, targets etc"
@@ -52,22 +60,23 @@
     bind:selected={$userPreferences.timeScales}
     style={InputStyle.BORDERED}
   />
-  {#if timeZones && timeZones.length > 0}
+  {#if timeZoneDropdownItems && timeZoneDropdownItems.length > 0}
     <div>
       <DropDown
         label={{
+          ...labelProps,
           label: "Timezone",
-          orientation: Orientation.Horizontal,
           tooltip: {
             body: "The timezone used to calculate your daily target and streak."
           }
         }}
         style={InputStyle.BORDERED}
-        items={timeZones}
+        items={timeZoneDropdownItems}
         on:select={(e) => {
-          userPreferences.setTimeZone(e.detail.value * 60);
+          const zone = timeZones.find((z) => z.label === e.detail);
+          if (zone) userPreferences.setTimeZone(zone.offset * 60, zone.label);
         }}
-        value={$userPreferences.timeZoneOffset}
+        bind:value={selectedTimezone}
       />
     </div>
     <Button

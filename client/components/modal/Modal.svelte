@@ -7,6 +7,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import appearance from "$lib/client/stores/appearance.store";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
@@ -96,14 +97,16 @@
         bind:this={dialog}
         {id}
         class={cn(
-          "rounded-md flex flex-col p-0 text-fgs1 shadow-xl cw:w-full ch:h-full",
+          "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full",
           {
             "bg-bgs1 overlay": isShowOverlay,
+            "overlay-light": isShowOverlay && !$appearance.colorScheme.isDark,
+            "overlay-dark": isShowOverlay && $appearance.colorScheme.isDark,
             "bg-none": !isShowOverlay,
             "w-full h-full min-h-screen min-w-screen": size === Size.full,
             "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
             "w-[18rem] tp:w-[20rem] h-[20rem] min-h-[15rem]": size === Size.xs,
-            "w-[60vw] tp:h-[55rem] 2k:h-[60rem]":
+            "w-[60vw] 2k:w-[60rem] tp:h-[55rem] 2k:h-[60rem]":
               orientation === Orientation.Vertical && size === Size.xl,
             "w-[35rem] 2k:w-[40rem] h-[50rem] 2k:h-[55rem]":
               orientation === Orientation.Vertical && size === Size.lg,
@@ -145,8 +148,13 @@
   }
 
   dialog.overlay::backdrop {
+    backdrop-filter: blur(5px);
+  }
+  dialog.overlay-light::backdrop {
     background-color: rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(4px);
+  }
+  dialog.overlay-dark::backdrop {
+    background-color: rgba(251, 251, 251, 0.05);
   }
   dialog.bg-none::backdrop {
     background-color: transparent;

@@ -1,6 +1,9 @@
 <script lang="ts">
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import ShortcutItem from "./ShortcutItem.svelte";
@@ -18,18 +21,24 @@
 </script>
 
 <div class="flex flex-col gap-4 max-w-lg">
-  {#if isValidArrayWithData(keyMap)}
-    {#each keyMap as shortcut}
-      <ShortcutItem
-        {shortcut}
-        on:error={(e) => {
-          console.log({ e });
-          error = e.detail;
-        }}
-      />
-    {/each}
-  {/if}
-  {#if error}
-    <InlineErrorMessage bind:error />
+  {#if $context.embed === Embed.HANDSET || $context.embed === Embed.TABLET}
+    <InlineInfoBanner
+      content="We are sorry. Configuring shortcuts is not currently available on mobile or desktop. Please use desktop or web app to configure your shortcuts."
+    />
+  {:else}
+    {#if isValidArrayWithData(keyMap)}
+      {#each keyMap as shortcut}
+        <ShortcutItem
+          {shortcut}
+          on:error={(e) => {
+            console.log({ e });
+            error = e.detail;
+          }}
+        />
+      {/each}
+    {/if}
+    {#if error}
+      <InlineErrorMessage bind:error />
+    {/if}
   {/if}
 </div>

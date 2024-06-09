@@ -99,7 +99,7 @@ export const settingsAsModal: Action[] = [
     modalParams: {
       layout: {
         size: Size.xl,
-        orientation: Orientation.Vertical,
+        orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }
     }
@@ -127,11 +127,16 @@ export const settingsAsModal: Action[] = [
   },
   {
     action: "accessibility",
-    cmdLabel: "Accessibility Settings",
+    get cmdLabel() {
+      return this.modalParams?.title;
+    },
     label: "Accessibility",
     icon: "cube",
     type: ActionType.MODAL,
-    component: AccessibilitySettings
+    component: AccessibilitySettings,
+    modalParams: {
+      title: "Accessibility Settings"
+    }
   },
   {
     action: AppEvent.ACCOUNT,

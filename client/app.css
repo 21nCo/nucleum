@@ -88,8 +88,77 @@ body {
   .custom-focus-outline:focus {
     outline: 1px auto -webkit-focus-ring-color;
   }
+
+  .noto-color-emoji-mod {
+    font-family: "Noto Color Emoji Compat", sans-serif;
+    font-size: 1.5rem;
+  }
+
+
+  input::placeholder {
+    font-weight: lighter;
+    /* font-style: italic; */
+    color: rgba(var(--colors-fgs2), 0.5);
+  }
+
+  textarea::placeholder {
+    font-weight: lighter;
+    color: rgba(var(--colors-fgs2), 0.5);
+  }
+
+  /* Carbon chart overrides */
+  g.callouts {
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  div.legend {
+    max-height: 50px !important;
+    overflow: auto !important;
+  }
+
+  path.arc-background, .cds--cc--gauge path.arc-background, .arc-background {
+    fill: rgba(var(--colors-aps2), 1) !important;
+  }
+
 }
-.noto-color-emoji-mod {
-  font-family: "Noto Color Emoji Compat", sans-serif;
-  font-size: 1.5rem;
+
+@layer utilities {
+  .underline-dotted, .underline-dotted-primary {
+    position: relative;
+    /* text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: rgba(var(--colors-fgs3), 1); */
+  }
+
+  .underline-dotted::after {
+    content: "";
+    position: absolute;
+    left: 0%;
+    bottom: -0.2px;
+    height: 1.5px;
+    width: 100%;
+    background: repeating-linear-gradient(
+      to right,
+      rgba(var(--colors-fgs3), 1),
+      rgba(var(--colors-fgs3), 1) 2px,
+      transparent 1px,
+      transparent 4px
+    );
+  }
+  .underline-dotted-primary::after {
+    content: "";
+    position: absolute;
+    left: 0%;
+    bottom: -0.2px;
+    height: 1.5px;
+    width: 100%;
+    background: repeating-linear-gradient(
+      to right,
+      rgba(var(--colors-aps1), 1),
+      rgba(var(--colors-aps1), 1) 2px,
+      transparent 1px,
+      transparent 4px
+    );
+  }
 }

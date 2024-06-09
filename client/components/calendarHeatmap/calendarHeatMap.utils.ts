@@ -300,7 +300,7 @@ export class DataManager {
   resolveTileColorAndStreakDisplay2(prev: any, current: any, next: any) {
     const colors = heatMapColorRange(get(appearance), "aps1", 6);
     plainCSSHMColorIndex5.set(colors[5]);
-    let color = colors[current.clusterIndex + 1];
+    let color = colors[current.clusterIndex];
     let display = Number(TileAppearance.DEFAULT);
     if (current.value >= current.target) {
       color = colors[5];
@@ -318,12 +318,48 @@ export class DataManager {
     let length = inputData.length;
     const nonZeroValues = inputData.filter((x) => x.value > 0);
     const valuesForK = nonZeroValues.map((x) => [x.value]);
-    const k = kmeans(valuesForK, 6, {});
+    const maxVal = Math.max(...valuesForK.map((val) => val[0]));
+    const minVal = Math.min(...valuesForK.map((val) => val[0]));
+
+    const normalizedValuesForK = valuesForK.map((val) => [
+      (val[0] - minVal) / (maxVal - minVal)
+    ]);
+    if (valuesForK.length === 0) return inputData;
+    const clusterCount = Math.min(valuesForK.length, 6);
+    const k = kmeans(normalizedValuesForK, clusterCount, {});
     inputData = inputData.map((x, i) => {
       if (x.value === 0) return { ...x, clusterIndex: -1 };
-      const index = nonZeroValues.findIndex((y) => y === x);
+      const index = nonZeroValues.findIndex((y) => y.date === x.date);
       return { ...x, clusterIndex: k.clusters[index] };
     });
+    const grouped = inputData.reduce((acc, cur) => {
+      if (!acc[cur.clusterIndex]) {
+        acc[cur.clusterIndex] = {
+          sum: cur.value,
+          count: 1
+        };
+      } else {
+        acc[cur.clusterIndex].sum += cur.value;
+        acc[cur.clusterIndex].count++;
+      }
+      return acc;
+    }, {});
+
+    const means = Object.keys(grouped).map((clusterIndex) => ({
+      clusterIndex: parseInt(clusterIndex),
+      mean: grouped[clusterIndex].sum / grouped[clusterIndex].count
+    }));
+    means.sort((a, b) => a.mean - b.mean);
+    const clusterIndexMap = means.reduce((acc, cur, idx) => {
+      acc[cur.clusterIndex] = idx;
+      return acc;
+    }, {});
+    inputData = inputData.map((item) => ({
+      ...item,
+      clusterIndex: clusterIndexMap[item.clusterIndex]
+    }));
+    console.log({ inputData, nonZeroValues, valuesForK, clusters: k.clusters });
+
     if (
       new Date(`prevEnd.${dataType}`) <=
       new Date(`profileStart${dataType}`.toString())
@@ -683,7 +719,6 @@ export class DataManager {
       "date"
     );
     let monthWiseData = convertToMonthWiseData(transformedData);
-    console.log({ monthWiseData });
     CalendarHeatMapData.set(monthWiseData);
     return true;
   }

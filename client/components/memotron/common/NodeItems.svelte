@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ScrollViewBottomSpacer from "$lib/client/elements/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import {
     type INodeThumbnail,

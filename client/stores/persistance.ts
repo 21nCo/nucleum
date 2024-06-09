@@ -2,7 +2,7 @@ import { Cloud } from "$lib/client/types/cloud.enum";
 import { get, writable } from "svelte/store";
 import type { JsonValue } from "$lib/client/types/json.type";
 import { SurrealDatabase } from "$lib/client/access/surrealHelper";
-import { Item as ItemEnum, type ItemType } from "$lib/client/types/item.enum";
+import { Item } from "$lib/client/types/item.enum";
 import type {
   DbRecord,
   DbRecordBase,
@@ -141,7 +141,7 @@ export class Persistance {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  create(item: DbRecord, itemType: ItemType) {
+  create(item: DbRecord, itemType: Item) {
     item = {
       ...item,
       createdAt: new Date().toISOString(),
@@ -158,11 +158,11 @@ export class Persistance {
         break;
       case Cloud.surreal:
         if (item.id) {
-          const id = ItemEnum[itemType] + `:${item.id}`;
+          const id = Item[itemType] + `:${item.id}`;
           item.id = id;
           return this.surrealDb.create(id, item);
         } else {
-          return this.surrealDb.create(ItemEnum[itemType], item);
+          return this.surrealDb.create(Item[itemType], item);
         }
     }
     return item.id;
@@ -173,7 +173,7 @@ export class Persistance {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  createMultiple<T extends DbRecordBase>(items: T[], itemType: ItemType) {
+  createMultiple<T extends DbRecordBase>(items: T[], itemType: Item) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let allItems = retrieveLocally(itemType);
@@ -187,9 +187,9 @@ export class Persistance {
         //todo - replace with surreal query for bulk create
         items.forEach((item: T) => {
           if (item.id) {
-            this.surrealDb.create(ItemEnum[itemType] + `:${item.id}`, item);
+            this.surrealDb.create(Item[itemType] + `:${item.id}`, item);
           } else {
-            this.surrealDb.create(ItemEnum[itemType], item);
+            this.surrealDb.create(Item[itemType], item);
           }
         });
         break;
@@ -204,7 +204,7 @@ export class Persistance {
    */
   update(
     item: Partial<DbRecord> & Required<Pick<DbRecord, "id">>,
-    itemType?: ItemType
+    itemType?: Item
   ) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
@@ -222,7 +222,7 @@ export class Persistance {
         item.modifiedAt = new Date().toISOString();
         return this.surrealDb.merge(
           itemType
-            ? `${ItemEnum[itemType]}:${item.id}`
+            ? `${Item[itemType]}:${item.id}`
             : typeof item.id === "string"
               ? item.id
               : "",
@@ -236,7 +236,7 @@ export class Persistance {
    * @param itemType ItemType
    * @returns true if deleted successfully else false
    */
-  delete(itemId: string, itemType: ItemType, userId?: string) {
+  delete(itemId: string, itemType: Item, userId?: string) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
         let items = retrieveLocally(itemType);
@@ -248,7 +248,7 @@ export class Persistance {
         return this.surrealDb.delete(itemId, userId);
     }
   }
-  retrieve(itemId: string, itemType: ItemType | undefined = undefined) {
+  retrieve(itemId: string, itemType: Item | undefined = undefined) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
         if (!itemType) break;
@@ -263,7 +263,7 @@ export class Persistance {
         return this.surrealDb.select(itemId);
     }
   }
-  retrieveAll(itemType: ItemType) {
+  retrieveAll(itemType: Item) {
     try {
       switch (get(cloudProvider)) {
         case Cloud.local: {
@@ -271,7 +271,7 @@ export class Persistance {
           return items;
         }
         case Cloud.surreal:
-          return this.surrealDb.select(ItemEnum[itemType]);
+          return this.surrealDb.select(Item[itemType]);
       }
       return [];
     } catch (error) {
@@ -280,7 +280,7 @@ export class Persistance {
   }
   async searchByLabel(
     searchString: string,
-    itemType: ItemType
+    itemType: Item
   ): Promise<DbRecordWithLabel[]> {
     let results: DbRecordWithLabel[] = [];
     switch (get(cloudProvider)) {
@@ -321,9 +321,9 @@ export class Persistance {
       // }
       // break;
       case Cloud.surreal:
-        if (itemType != ItemEnum.ALL) {
+        if (itemType != Item.ALL) {
           const response = await this.surrealDb.executeReadFn(
-            `select * from ${ItemEnum[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
+            `select * from ${Item[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
               searchString: searchString.toLowerCase()
             }

@@ -1,0 +1,310 @@
+<script lang="ts">
+  import Header from "./OnboardingHeader.svelte";
+  import Footer from "./OnboardingFooter.svelte";
+  import { userPreferences, appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { onMount } from "svelte";
+  import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
+  import { postMessageToParent } from "$lib/client/utils/embed.utils";
+  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import { UIState } from "$lib/client/types/preferences.type";
+
+  let currentStep = 0;
+
+  let isPortraitModeInitialRender = true;
+  $: isOnboardingComplete = userPreferences.resolveUiState(
+    UIState.isOnboardingComplete
+  );
+
+  let videoDuration: number;
+  let stepsJson = [
+    {
+      title: "Pointron",
+      description:
+        "In a world that is constantly distracting, maintaining time awareness is vital for both productivity and personal well-being. Pointron simplifies this for you",
+      img: ""
+    },
+    {
+      title: "1. Create goals",
+      description:
+        "You can create goals and infinitely nest sub goals, attach tags to goals to track your progress across various goals of your life in a more granular manner",
+      img: "images/onboarding/goals.gif"
+    },
+    {
+      title: "2. Focus using focus sessions",
+      description:
+        "Begin focusing by tapping on a goal in quick focus section or composing your own advanced focus session.",
+      img: "images/onboarding/custom.gif"
+    },
+    {
+      title: "3. Analyse and repeat",
+      description:
+        "When its time, make thoughtful decisions or track the progress of your days using the powerful analytics provided by Pointron",
+      img: "images/onboarding/analytics.gif"
+    }
+  ];
+
+  const steps: {
+    landscape: { title: string; description: string; img: string }[];
+    portrait: { title: string; description: string; img: string }[];
+  } = {
+    landscape: [...stepsJson],
+    portrait: [...stepsJson]
+  };
+
+  function handleStartTutorial(e: any) {
+    onFinish();
+  }
+
+  function onSkip() {
+    $view.isPortrait
+      ? (currentStep = steps.portrait.length - 1)
+      : (currentStep = steps.landscape.length - 1);
+  }
+
+  function onFinish() {
+    userPreferences.setUiState({
+      property: UIState.isOnboardingComplete,
+      value: true,
+      isGlobal: true
+    });
+    appStore.gotoPath("/");
+  }
+
+  function handleStepButtonClick(action: "+" | "-") {
+    return () => {
+      console.log("clicked");
+      if (action === "+") {
+        currentStep === steps.landscape.length - 1 && onSkip();
+        $view.isPortrait
+          ? currentStep < steps.portrait.length - 1 && currentStep++
+          : currentStep < steps.landscape.length - 1 && currentStep++;
+      } else if (action === "-") {
+        currentStep > 0 && currentStep--;
+      }
+    };
+  }
+
+  onMount(() => {
+    postMessageToParent(EmbedMessage.MOUNT);
+    // if (isOnboardingComplete) {
+    //   windowObject.gotoPath("/");
+    // }
+    setTimeout(() => {
+      isPortraitModeInitialRender = false;
+    }, 1000);
+  });
+</script>
+
+<section class="w-full h-full bg-bgs1 flex justify-center items-center">
+  <!-- <Header
+    isLastStep={$windowObject.isInPortraitMode
+      ? currentStep === steps.portrait.length - 1
+      : currentStep === steps.landscape.length - 1}
+    on:back={handleStepButtonClick("-")}
+    on:skip={onFinish}
+  /> -->
+  {#if $view.isPortrait && isPortraitModeInitialRender}
+    <AppLoadingView />
+  {:else}
+    <div
+      class={`max-w-7xl w-full flex h-full flex-col items-center ${
+        $view.isPortrait
+          ? `px-8 py-10 justify-start  gap-8`
+          : `p-16 justify-between`
+      }`}
+    >
+      {#if $view.isPortrait}
+        {#if !isPortraitModeInitialRender}
+          <Header
+            totalSteps={$view.isPortrait
+              ? steps.portrait.length
+              : steps.landscape.length}
+            {currentStep}
+            on:back={handleStepButtonClick("-")}
+            on:skip={onSkip}
+            on:finish={onFinish}
+          />
+        {/if}
+      {:else}
+        <Header
+          totalSteps={$view.isPortrait
+            ? steps.portrait.length
+            : steps.landscape.length}
+          {currentStep}
+          on:back={handleStepButtonClick("-")}
+          on:skip={onSkip}
+          on:finish={onFinish}
+        />
+      {/if}
+      <div class="w-full h-full">
+        {#if $view.isPortrait}
+          <div
+            class="flex flex-col justify-start h-full gap-4 {steps.portrait[
+              currentStep
+            ].img
+              ? 'justify-start'
+              : 'justify-center'}"
+          >
+            <div class="flex flex-col text-center items-center gap-3">
+              <div class="text-h3 font-bold text-fgs1">
+                {steps.portrait[currentStep].title}
+              </div>
+              <div class="text-b2 text-fgs2">
+                {steps.portrait[currentStep].description}
+              </div>
+            </div>
+            {#if steps.portrait[currentStep].img}
+              <div class="bottom flex items-center justify-center">
+                <img
+                  class="rounded-md"
+                  src={steps.portrait[currentStep].img}
+                  alt={`step-${currentStep}`}
+                />
+                <!-- <VideoPlayer
+                  src={steps.portrait[currentStep].img}
+                  hideControls
+                  bind:duration={videoDuration}
+                  autoplay={$appStore.launchContext === LaunchContext.EMBED
+                    ? false
+                    : true}
+                /> -->
+                <!-- {#each steps.portrait as step, index}
+                  {#if currentStep === index}
+                    <dotlottie-player
+                      bind:this={lottiePlayer}
+                      id={index}
+                      src={step.img}
+                      background="transparent"
+                      speed="1"
+                      style="width: 100%;"
+                      direction="1"
+                      autoplay
+                      mode="normal"
+                    />
+                  {/if}
+                {/each} -->
+              </div>
+            {/if}
+          </div>
+        {:else}
+          <div
+            class="flex h-full items-center {currentStep === 0
+              ? ` text-center justify-center`
+              : ` gap-16 justify-between`}"
+          >
+            <div class="flex flex-col h-full justify-around">
+              <div
+                class="left flex flex-col justify-start gap-4 {currentStep === 0
+                  ? `max-w-3xl items-center`
+                  : `max-w-xl`}"
+              >
+                <div class="text-h1 font-bold text-fgs1 leading-[110%]">
+                  {steps.landscape[currentStep].title}
+                </div>
+                <div
+                  class="text-base text-fgs3 h-20 {currentStep === 0
+                    ? `max-w-[70%]`
+                    : `max-w-[100%]`}"
+                >
+                  {steps.landscape[currentStep].description}
+                </div>
+                <div class="flex flex-col buttons mt-8 h-32">
+                  {#if currentStep === 0}
+                    <Button
+                      on:click={handleStepButtonClick("+")}
+                      width="w-[12.5rem]"
+                      style={ButtonStyle.ROUNDED}
+                      type="primary"
+                    >
+                      Get Started
+                    </Button>
+                  {:else if currentStep !== steps.landscape.length - 1}
+                    <div class="flex flex-col w-fit items-center gap-4">
+                      <Button
+                        on:click={handleStepButtonClick("+")}
+                        style={ButtonStyle.ROUNDED}
+                        width="w-[12.5rem]"
+                        type="primary"
+                      >
+                        Next
+                      </Button>
+                      <Button
+                        on:click={onSkip}
+                        width="w-[12.5rem]"
+                        style={ButtonStyle.PLAIN}
+                      >
+                        Skip
+                      </Button>
+                      <!-- <Button
+                      on:click={handleStepButtonClick("-")}
+                      width="w-[12.5rem]"
+                      style={ButtonStyle.PLAIN}
+                    >
+                      Back
+                    </Button> -->
+                    </div>
+                  {:else}
+                    <div class="flex flex-col w-fit items-center gap-4">
+                      <Button
+                        on:click={handleStartTutorial}
+                        style={ButtonStyle.ROUNDED}
+                        width="w-[12.5rem]"
+                        type="primary"
+                      >
+                        Let's go
+                      </Button>
+                      <!-- <Button
+                      on:click={onFinish}
+                      width="w-[12.5rem]"
+                      style={ButtonStyle.PLAIN}
+                    >
+                      I will explore my self
+                    </Button> -->
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            </div>
+
+            {#if steps.landscape[currentStep].img}
+              <div class="right w-[500px]">
+                <img
+                  src={steps.landscape[currentStep].img}
+                  alt={`step-${currentStep}`}
+                />
+              </div>
+            {/if}
+          </div>
+        {/if}
+      </div>
+
+      {#if $view.isPortrait}
+        {#if !isPortraitModeInitialRender}
+          <Footer
+            on:next={handleStepButtonClick("+")}
+            on:final={handleStartTutorial}
+            activeStep={currentStep}
+            totalSteps={$view.isPortrait
+              ? steps.portrait.length
+              : steps.landscape.length}
+          />
+        {/if}
+      {:else}
+        <Footer
+          on:next={handleStepButtonClick("+")}
+          on:final={handleStartTutorial}
+          activeStep={currentStep}
+          totalSteps={$view.isPortrait
+            ? steps.portrait.length
+            : steps.landscape.length}
+        />
+      {/if}
+    </div>
+  {/if}
+</section>
+<!-- 
+  Note: Current steps start from 0, while total Step is the actual count of steps
+ -->

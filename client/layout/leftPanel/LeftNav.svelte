@@ -14,29 +14,36 @@
   import { bgClass, borderClass } from "$lib/client/utils/theme.utils";
   import { AppSkin, ColorStrength } from "$lib/client/types/appearance.type";
   import { onMount } from "svelte";
-
-  import { UiState } from "$lib/client/types/uiState.enum";
   import { AppEvent } from "$lib/client/types/event.enum";
   import appearance from "$lib/client/stores/appearance.store";
+  import { UIState } from "$lib/client/types/preferences.type";
   let isMinimized: boolean = false;
-  let isInThinMode: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
   let testingInMobileBrowser: boolean = false;
-  $: isInThinMode = userPreferences.resolveUiState(UiState.isInThinMode);
+  let isInThinMode = refreshSidebarCollapseState();
   $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
   onMount(() => {
     if ($view.landscapiness < 1.25) {
       isInThinMode = true;
     }
+    const sub = userPreferences.subscribe((x) => {
+      isInThinMode = refreshSidebarCollapseState();
+    });
+    return () => {
+      sub();
+    };
   });
+  function refreshSidebarCollapseState() {
+    return userPreferences.resolveUiState(UIState.isInThinMode);
+  }
   function onMinimizeToggled() {
     isMinimized = !isMinimized;
     if (isMinimized) isHovered = false;
   }
 </script>
 
-{#if !$view.isMenuHidden}
+{#if !$appStore.isMenuHidden}
   {#if $view.isPortrait}
     <div
       class="absolute {testingInMobileBrowser
@@ -112,11 +119,6 @@
               <Button
                 icon="sidebar-toggle"
                 on:click={() => {
-                  // $userPreferences.uiStates = setUiState(
-                  //   $userPreferences.uiStates,
-                  //   UiState.isInThinMode,
-                  //   !isInThinMode
-                  // );
                   appStore.toggleSidebar();
                 }}
               />

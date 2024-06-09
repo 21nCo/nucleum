@@ -1,0 +1,575 @@
+import { get, writable } from "svelte/store";
+import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
+import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
+import { Persistance } from "$lib/client/stores/persistance";
+import { Item } from "$lib/client/types/item.enum";
+import { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
+import {
+  SessionCompositionType,
+  type SessionComposition,
+  BreakCompositionType
+} from "$lib/client/types/pointron/sessionComposition.type";
+import { generateUID } from "$lib/client/utils/utils";
+import { toasts } from "$lib/client/stores/notification.store";
+import { ChartType } from "$lib/client/types/analytics.type";
+import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
+import { objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
+import { prefixTable } from "$lib/client/utils/text.utils";
+import { Layout } from "$lib/client/types/layout.type";
+import type { Tag, TagStore } from "$lib/client/types/pointron/tag.type";
+import { dataManager } from "$lib/client/stores/data.store";
+import {
+  StoreDataType,
+  PersistanceActionType
+} from "$lib/client/types/data.type";
+import { logger } from "$lib/client/stores/log.store";
+import type { PointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
+import { defaultAppMenu } from "$local/local";
+import { KeyValueStore } from "$lib/client/stores/kv.store";
+
+const persistance = new Persistance();
+export const swipeLabel = writable("");
+
+const seedPresets: SessionComposition[] = [
+  {
+    id: generateUID(),
+    type: SessionCompositionType.POMODORO,
+    numberOfFocusRounds: 4,
+    focusDuration: 28 * 60,
+    breakDuration: 2 * 60,
+    totalDuration: 0,
+    breakReminder: 60,
+    numberOfBreaks: 1,
+    name: "Preset 1",
+    breakType: BreakCompositionType.PREDEFINED
+  },
+  {
+    id: generateUID(),
+    type: SessionCompositionType.POMODORO,
+    numberOfFocusRounds: 3,
+    focusDuration: 10 * 60,
+    breakDuration: 2 * 60,
+    totalDuration: 0,
+    breakReminder: 60,
+    numberOfBreaks: 1,
+    name: "Morning focus",
+    breakType: BreakCompositionType.PREDEFINED
+  },
+  {
+    id: generateUID(),
+    type: SessionCompositionType.TOTAL_DURATION,
+    focusDuration: 0,
+    breakDuration: 10 * 60,
+    totalDuration: 10 * 60 * 60,
+    numberOfBreaks: 9,
+    breakReminder: 60,
+    name: "10 hr deep study",
+    breakType: BreakCompositionType.PREDEFINED
+  }
+];
+
+export const defaultHorizonChartConfiguration: HorizonChart[] = [
+  {
+    id: "topleft",
+    period: {
+      scale: TimeScale.DAYS,
+      value: {
+        type: TimePeriodType.RELATIVE,
+        param: -1
+      }
+    },
+    type: ChartType.PIE
+  },
+  {
+    id: "topright",
+    period: {
+      scale: TimeScale.DAYS,
+      value: {
+        type: TimePeriodType.RELATIVE,
+        param: 0
+      }
+    },
+    type: ChartType.PIE
+  },
+  {
+    id: "bottomleft",
+    period: {
+      scale: TimeScale.DAYS,
+      value: {
+        type: TimePeriodType.RELATIVE,
+        param: -7
+      }
+    },
+    type: ChartType.STACKEDBAR
+  },
+  {
+    id: "bottomright",
+    period: {
+      scale: TimeScale.MONTHS,
+      value: {
+        type: TimePeriodType.RELATIVE,
+        param: -6
+      }
+    },
+    type: ChartType.STACKEDBAR
+  }
+];
+
+// const userLocalPreferencesId = "Preferences:" + appName.toLowerCase();
+const userLocalPreferencesId = Item.pointronPreferences;
+const storeConfig = {
+  id: userLocalPreferencesId,
+  dataType: StoreDataType.KVO,
+  priorityRefreshOnAppAppear: true
+};
+export const seedLocalPreferences: PointronPreferences = {
+  ...storeConfig,
+  isEnableAgeCounter: false,
+  extendDuration: 5,
+  presets: seedPresets,
+  isEnableAutoStartInterval: true,
+  isIncludeBreakInAnalytics: false,
+  timerMode: TimerMode.JOURNAL,
+  appMenu: defaultAppMenu,
+  manualEntryQuickDurations: [5, 10, 15, 30, 60],
+  horizonCharts: defaultHorizonChartConfiguration,
+  horizonsWithTarget: [],
+  horizonTargets: [],
+  breakReminder: 60,
+  uiStates: {
+    all: {
+      quickFocusLayout: Layout.LIST,
+      advancedComposeType: SessionCompositionType.POMODORO,
+      advancedMode: 0
+    },
+    desktop: {
+      quickFocusLayout: Layout.LIST,
+      advancedComposeType: SessionCompositionType.POMODORO,
+      advancedMode: 0
+    },
+    portrait: {
+      quickFocusLayout: Layout.GRID,
+      advancedComposeType: SessionCompositionType.POMODORO,
+      advancedMode: 0
+    }
+  }
+};
+class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
+  constructor() {
+    super(Item.pointronPreferences, seedLocalPreferences, {
+      priorityRefreshOnAppAppear: true
+    });
+  }
+  loader(data: PointronPreferences) {
+    console.log("Loading userLocalPreferences", data);
+    data.appMenu = defaultAppMenu;
+    if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
+    if (!data.presets) data.presets = seedPresets;
+    //m.horizonCharts = defaultHorizonChartConfiguration;
+    if (!data.dataType) data.dataType = StoreDataType.KVO;
+    this.setNewValue(data);
+  }
+  async set(newValue: PointronPreferences) {
+    let changedProperties: any = {};
+    if (this.previousValue) {
+      let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
+      differences.forEach((key: string) => {
+        changedProperties[key] = newValue[key as keyof PointronPreferences];
+      });
+      if (differences.some((x) => x === "horizonsWithTarget")) {
+        let horizonTargets = newValue.horizonTargets?.filter((x) =>
+          newValue.horizonsWithTarget?.some((y) => y === x.scale)
+        );
+        changedProperties.horizonTargets = horizonTargets;
+      }
+    }
+    // console.log({
+    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
+    //   newValue,
+    //   changedProperties
+    // });
+    this.setNewValue(newValue);
+    if (!objIsEmpty(changedProperties)) await this.persist(changedProperties);
+  }
+  resetHorizonChartConfiguration() {
+    this.update((n: PointronPreferences) => {
+      n.horizonCharts = defaultHorizonChartConfiguration;
+      return n;
+    });
+    this.persist({ horizonCharts: defaultHorizonChartConfiguration });
+  }
+  async updatePreset(preset: SessionComposition) {
+    let m = get(userLocalPreferences);
+    let n = m.presets;
+    let currentPresetIndex = n.findIndex((p) => p.id == preset.id);
+    let presetsToRight = n.slice(currentPresetIndex + 1);
+    n = n.slice(0, currentPresetIndex);
+    n = [...n, preset];
+    n = n.concat(presetsToRight);
+    m.presets = n;
+    this.setNewValue(m);
+    return this.persist({ presets: n });
+  }
+  async removePreset(presetId: string) {
+    let m = get(userLocalPreferences);
+    let n = m.presets;
+    n = n.filter((x: SessionComposition) => x.id != presetId);
+    m.presets = n;
+    this.setNewValue(m);
+    return this.persist({ presets: n });
+  }
+  async addPreset(preset: SessionComposition) {
+    let m = get(userLocalPreferences);
+    m.presets.push(preset);
+    this.setNewValue(m);
+    return this.persist({ presets: m.presets });
+  }
+}
+// export const userLocalPreferences = initUserLocalPreferences();
+export const userLocalPreferences = new PointronPreferencesStore();
+/**
+ * @deprecated - using PointronPreferencesStore instead
+ * @returns
+ */
+function initUserLocalPreferences() {
+  let previousValue: string;
+  const {
+    subscribe,
+    set: setRaw,
+    update
+  } = writable<PointronPreferences>(seedLocalPreferences);
+  dataManager.retrieveCache(userLocalPreferencesId).then((x) => {
+    if (!x) return;
+    const cachedPreferences = { ...x, ...storeConfig };
+    setRaw(cachedPreferences);
+    previousValue = JSON.stringify(cachedPreferences);
+  });
+  const persist = async (n: Partial<PointronPreferences>) => {
+    await persistance.update({
+      ...n,
+      id: userLocalPreferencesId,
+      modifiedAt: new Date().toISOString()
+    });
+    cache(get(userLocalPreferences));
+  };
+  const cache = async (n: PointronPreferences) => {
+    dataManager.cache(n);
+  };
+  const set = (x: PointronPreferences) => {
+    setRaw(x);
+    previousValue = JSON.stringify(x);
+  };
+  return {
+    subscribe,
+    update,
+    loader: (data: PointronPreferences) => {
+      console.log("Loading userLocalPreferences", data);
+      data.appMenu = defaultAppMenu;
+      if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
+      if (!data.presets) data.presets = seedPresets;
+      //m.horizonCharts = defaultHorizonChartConfiguration;
+      if (!data.dataType) data.dataType = StoreDataType.KVO;
+      set(data);
+      cache(data);
+    },
+    loadSeedData: async () => {
+      set(seedLocalPreferences);
+      cache(seedLocalPreferences);
+    },
+    set: async (newValue: PointronPreferences) => {
+      let changedProperties: any = {};
+      if (previousValue) {
+        let differences = shallowDiff(newValue, JSON.parse(previousValue));
+        differences.forEach((key: string) => {
+          changedProperties[key] = newValue[key as keyof PointronPreferences];
+        });
+        if (differences.some((x) => x === "horizonsWithTarget")) {
+          let horizonTargets = newValue.horizonTargets?.filter((x) =>
+            newValue.horizonsWithTarget?.some((y) => y === x.scale)
+          );
+          changedProperties.horizonTargets = horizonTargets;
+        }
+      }
+      console.log({
+        previousValue: previousValue ? JSON.parse(previousValue) : null,
+        newValue,
+        changedProperties
+      });
+      set(newValue);
+      if (!objIsEmpty(changedProperties)) await persist(changedProperties);
+    },
+    resetHorizonChartConfiguration: () => {
+      update((n: PointronPreferences) => {
+        n.horizonCharts = defaultHorizonChartConfiguration;
+        return n;
+      });
+      persist({ horizonCharts: defaultHorizonChartConfiguration });
+    },
+    updatePreset: async (preset: SessionComposition) => {
+      let m = get(userLocalPreferences);
+      let n = m.presets;
+      let currentPresetIndex = n.findIndex((p) => p.id == preset.id);
+      let presetsToRight = n.slice(currentPresetIndex + 1);
+      n = n.slice(0, currentPresetIndex);
+      n = [...n, preset];
+      n = n.concat(presetsToRight);
+      m.presets = n;
+      set(m);
+      return persist({ presets: n });
+    },
+    removePreset: async (presetId: string) => {
+      let m = get(userLocalPreferences);
+      let n = m.presets;
+      n = n.filter((x: SessionComposition) => x.id != presetId);
+      m.presets = n;
+      set(m);
+      return persist({ presets: n });
+    },
+    addPreset: async (preset: SessionComposition) => {
+      let m = get(userLocalPreferences);
+      m.presets.push(preset);
+      set(m);
+      return persist({ presets: m.presets });
+    },
+    updateHorizonChart: async (chart: HorizonChart) => {
+      let m = get(userLocalPreferences);
+      let n = m.horizonCharts;
+      let currentChartIndex = n.findIndex((p) => p.id == chart.id);
+      let chartsToRight = n.slice(currentChartIndex + 1);
+      n = n.slice(0, currentChartIndex);
+      n = [...n, chart];
+      n = n.concat(chartsToRight);
+      m.horizonCharts = [...n];
+      set(m);
+      pointronEvents.notify(PointronEventEnum.REFRESH_HORIZON_CHARTS);
+      return persist({ horizonCharts: n });
+    }
+  };
+}
+
+export const pointronEvents = initEventStore({
+  event: PointronEventEnum.NONE,
+  value: false
+});
+
+function initEventStore(seed: PointronEvent) {
+  const { subscribe, set, update } = writable<PointronEvent>(seed);
+  return {
+    subscribe,
+    set: (m: PointronEvent) => {
+      set(m);
+    },
+    reset: () => {
+      update((n: PointronEvent) => {
+        return { ...n, event: PointronEventEnum.NONE };
+      });
+    },
+    notify: (m: PointronEventEnum, value: any = undefined) => {
+      update((n: PointronEvent) => {
+        return { ...n, value, event: m };
+      });
+    }
+  };
+}
+
+export const pointronConstants = initPointronConstants({
+  timerModes: ["Minimal", "Journal"],
+  focusPlaceholderText: [
+    "cooking ice cream",
+    "cleaning wordle",
+    "coding dishes",
+    "showering",
+    "draining umbrella",
+    "commanding alexa"
+  ],
+  runningOutDuration: 5,
+  gapThreshold: 60
+});
+
+function initPointronConstants(seed: PointronConstants) {
+  const { subscribe, set, update } = writable<PointronConstants>(seed);
+  return {
+    subscribe,
+    set: (m: PointronConstants) => {
+      set(m);
+    },
+    update
+  };
+}
+
+export const oasisOidcConfig = {
+  authority: "https://auth.oasislabs.com",
+  // Replace with your app's frontend client ID.
+  client_id: import.meta.env.VITE_OASIS_CLIENT_ID,
+  redirect_uri: `${window.location.origin}/play`,
+  response_type: "code",
+  scope: "openid profile email parcel.public",
+  filterProtocolClaims: false,
+  loadUserInfo: false,
+  extraQueryParams: {
+    audience: "https://api.oasislabs.com/parcel"
+  },
+  extraTokenParams: {
+    audience: "https://api.oasislabs.com/parcel"
+  }
+};
+
+export const seedSessions = [
+  {
+    elapsed: 60 * 60,
+    focus: 47 * 60,
+    brek: 13 * 60,
+    extended: 0,
+    startTime: new Date(2022, 1, 11, 13),
+    endTime: new Date(2022, 1, 11, 14),
+    id: new Date(2022, 1, 11, 13).getTime(),
+    intention: ""
+  },
+  {
+    elapsed: 60 * 60,
+    focus: 47 * 60,
+    brek: 13 * 60,
+    extended: 0,
+    startTime: new Date(2022, 1, 11, 14, 30),
+    id: new Date(2022, 1, 11, 14, 30).getTime(),
+    endTime: new Date(2022, 1, 11, 17),
+    intention: "ID Card insurance project"
+  },
+  {
+    elapsed: 60 * 60,
+    focus: 47 * 60,
+    brek: 13 * 60,
+    extended: 0,
+    startTime: new Date(2022, 1, 11, 17),
+    id: new Date(2022, 1, 11, 17).getTime(),
+    endTime: new Date(2022, 1, 11, 17, 32),
+    intention: "de picto"
+  },
+  {
+    elapsed: 60 * 60,
+    focus: 47 * 60,
+    brek: 13 * 60,
+    extended: 0,
+    startTime: new Date(2022, 1, 11, 19, 21),
+    id: new Date(2022, 1, 11, 19, 21).getTime(),
+    endTime: new Date(2022, 1, 11, 23),
+    intention: ""
+  }
+];
+
+export const seedTasks = [
+  { label: "first task", estimate: 0, workedFor: 15, checked: true },
+  {
+    label: "second sdfasdfs task",
+    estimate: 35,
+    workedFor: 15,
+    checked: false,
+    isInprogress: true
+  },
+  { label: "third task", estimate: 35, workedFor: 45, checked: false }
+];
+
+const seedTagStore = {
+  tags: [],
+  dataType: StoreDataType.FIR,
+  id: Item.PointTag,
+  mutatingResources: [Item.PointTag]
+};
+export const tagStore = initTagStore();
+
+function initTagStore() {
+  const { subscribe, set, update } = writable<TagStore>(seedTagStore);
+  dataManager.retrieveCache(Item.PointTag).then((x) => {
+    if (x) {
+      const n = { ...seedTagStore, tags: x.tags };
+      set(n);
+    }
+  });
+  const cache = async (n: TagStore) => {
+    dataManager.cache(n);
+  };
+  const mutation = async (
+    action: PersistanceActionType,
+    record: string | Tag
+  ) => {
+    const data = typeof record === "string" ? { id: record } : record;
+    return dataManager.performMutation(Item.PointTag, data, { action });
+  };
+  return {
+    subscribe,
+    set,
+    update,
+    loader: async (data: Tag[]) => {
+      logger.log({ context: "tagStore loader", data });
+      update((x: TagStore) => {
+        x.tags = data;
+        cache(x);
+        return x;
+      });
+    },
+    refresh: async () => {
+      logger.log("Refreshing tagStore");
+      await dataManager.refresh(Item.PointTag);
+    },
+    create: async (label: string) => {
+      const newTag = { label, id: prefixTable(generateUID(), Item.PointTag) };
+      mutation(PersistanceActionType.CREATE, newTag);
+      update((x: TagStore) => {
+        x.tags.push(newTag);
+        cache(x);
+        return x;
+      });
+      toasts.success("Tag created successfully");
+    },
+    updateTag: async (tag: Tag) => {
+      mutation(PersistanceActionType.UPDATE, tag);
+      update((x: TagStore) => {
+        x.tags = x.tags.filter((t) => t.id != tag.id);
+        x.tags.push(tag);
+        cache(x);
+        return x;
+      });
+      toasts.success("Tag updated successfully");
+    },
+    delete: async (id: string) => {
+      mutation(PersistanceActionType.DELETE, id);
+      update((x: TagStore) => {
+        x.tags = x.tags.filter((t) => t.id != id);
+        cache(x);
+        return x;
+      });
+      toasts.success("Tag deleted successfully");
+    },
+    retrieve: () => {
+      subscribe((x: TagStore) => {
+        return x;
+      });
+    }
+  };
+}
+
+export const backgroundSoundStore = initBackgroundSoundStore();
+
+function initBackgroundSoundStore() {
+  const { subscribe, set, update } = writable<{
+    systemSound?: string;
+    youtubeUrl?: string;
+  }>({});
+  return {
+    subscribe,
+    set,
+    playYoutube: (url: string) => {
+      set({ youtubeUrl: url });
+    },
+    resetYoutube: () => {
+      update((x) => {
+        x.youtubeUrl = undefined;
+        return x;
+      });
+    },
+    reset: () => {
+      set({ systemSound: undefined });
+    }
+  };
+}

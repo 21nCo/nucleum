@@ -11,7 +11,7 @@
   } from "d3";
   import { createEventDispatcher, onMount } from "svelte";
   //TODO - import dependency on local
-  import { roundOffToNdigitsAfterDecimal } from "$local/utils/local.utils";
+  import { roundOffToNdigitsAfterDecimal } from "$lib/client/components/pointron/local.utils";
   import { customColor } from "$lib/client/utils/theme.utils";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { generateUID } from "$lib/client/utils/utils";

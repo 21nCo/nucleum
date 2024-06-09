@@ -3,9 +3,8 @@ import { dataManager } from "$lib/client/stores/data.store";
 import { Item } from "../types/item.enum";
 import { StoreDataType } from "../types/data.type";
 import type { Space, SpaceStore } from "../types/space.type";
-import { logger } from "$lib/client/stores/log.store";
 import { performApiCall } from "$lib/client/utils/network.utils";
-import { retrieveLocally } from "./persistance";
+import { retrieveLocally } from "../utils/storage.utils";
 
 const cachedSpaceInContext = retrieveLocally(Item.spaceInContext);
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);

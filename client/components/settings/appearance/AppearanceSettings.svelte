@@ -13,6 +13,7 @@
   import ColorSchemeSelector from "$lib/client/components/settings/appearance/ColorSchemeSelector.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedSkinIndex: number = 0;
   let selectedTheme: number;
@@ -57,7 +58,7 @@
   $: appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
 </script>
 
-<div class="flex flex-col gap-8 max-w-md">
+<ScrollView class="flex flex-col gap-8 dp:max-w-md" bottomSpacerSize={Size.sm}>
   <!-- <Switcher
     label="Theme"
     {parentBackgroundIndex}
@@ -138,4 +139,4 @@ setting on your device."
       action={{ action: "faqs" }}
     />
   {/if}
-</div>
+</ScrollView>

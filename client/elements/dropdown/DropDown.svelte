@@ -16,6 +16,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { properCase } from "$lib/client/utils/text.utils";
+  import AvatarView from "../avatarPicker/AvatarView.svelte";
   const dispatch = createEventDispatcher();
   /**
    * items to be displayed in the dropdown
@@ -76,6 +77,7 @@
    * @param item DropdownItem
    */
   function onitemclick(e: MouseEvent, item: DropdownItem) {
+    console.log({ item });
     if (item.isDisabled) return;
     value = item.value;
     dispatch("select", item.value);
@@ -108,11 +110,13 @@
   )}
 >
   <div class="flex items-center gap-2">
-    {#if selected.icon}
+    {#if selected.icon && typeof selected.icon === "string"}
       <Icon icon={selected.icon} size={Size.sm} />
+    {:else if selected.icon && typeof selected.icon === "object"}
+      <AvatarView avatar={selected.icon} size={Size.sm} />
     {/if}
     <span class="min-w-fit">
-      {selected?.label ?? properCase(selected?.value)}
+      {selected?.label ?? properCase(selected?.value.toString())}
     </span>
   </div>
   <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />

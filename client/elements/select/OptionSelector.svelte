@@ -38,7 +38,13 @@
         "gap-6": style === OptionSelectorStyle.OUTLINE && size === Size.lg,
         "gap-4": style === OptionSelectorStyle.OUTLINE && size === Size.md,
         "gap-2": style === OptionSelectorStyle.OUTLINE && size === Size.sm,
-        "justify-around grow gap-2": style === OptionSelectorStyle.CHECK_CIRCLE
+        grow: style === OptionSelectorStyle.CHECK_CIRCLE,
+        "justify-start gap-8":
+          style === OptionSelectorStyle.CHECK_CIRCLE &&
+          labelProps?.orientation === Orientation.Vertical,
+        "justify-around gap-2":
+          style === OptionSelectorStyle.CHECK_CIRCLE &&
+          labelProps?.orientation === Orientation.Horizontal
       })}
     >
       {#each options as item, index}

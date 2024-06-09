@@ -30,10 +30,10 @@
     console.log("in handle select e.target.value", year);
     dataManager.fetchDailyDataForTheYear(year);
   }
-  function handleLast365() {
+  async function handleLast365() {
     isLast365 = true;
     console.log("in handle last 365");
-    dataManager.fetchLast12MonthsDailyData();
+    await dataManager.fetchLast12MonthsDailyData();
   }
 </script>
 

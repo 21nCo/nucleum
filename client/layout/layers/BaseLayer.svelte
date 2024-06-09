@@ -57,7 +57,7 @@
       else userPreferences.setTimeZone();
       return;
     }
-    if (!timeZone) return;
+    if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
       userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
     }
@@ -67,7 +67,9 @@
     pingParent(true);
     refreshTimeZone();
     if (
-      excludedPathsForRedirectionCheck.includes($view.currentPath.split("/")[1])
+      excludedPathsForRedirectionCheck.includes(
+        $appStore.currentPath.split("/")[1]
+      )
     )
       return;
     let isValid = await account.performLoginStatusCheck();
@@ -97,6 +99,7 @@
   pingParent();
   bootup();
   onMount(async () => {
+    view.update(window.innerWidth, window.innerHeight);
     if ((<any>window).Intercom)
       (<any>window).Intercom("update", {
         hide_default_launcher: true
@@ -105,7 +108,6 @@
       await parseEmbedToken();
       await initializeData();
     }
-    view.update(window.innerWidth, window.innerHeight);
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
     const darkModeMediaQuery = window.matchMedia(

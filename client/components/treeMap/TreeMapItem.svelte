@@ -6,6 +6,7 @@
   import { createEventDispatcher } from "svelte";
   import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
+  import { appStore } from "$lib/client/stores/app.store";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let contentCallback: (id: string) => TreeMapContent;
@@ -30,8 +31,8 @@
     isCollapsed = !isCollapsed;
     e.stopPropagation();
   }
-  $: console.log("view current path", $view.currentPath);
-  $: isActive = $view.currentPath.includes(id);
+  $: console.log("view current path", $appStore.currentPath);
+  $: isActive = $appStore.currentPath.includes(id);
 </script>
 
 {#if content}
