@@ -3,7 +3,7 @@
     Block,
     IMarkdownStore
   } from "$lib/client/types/memotron/md.type";
-  import { onMount } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
@@ -11,6 +11,8 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
+  const dispatch = createEventDispatcher();
   export let block: Block;
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
@@ -37,7 +39,11 @@
 </script>
 
 <div
-  class="relative flex items-start w-full"
+  class="flex w-full items-center gap-2 rounded-md {isHovering &&
+  isShowBgOnFocus &&
+  !$mdStore.params?.isReadOnly
+    ? 'bg-bgs2'
+    : ''}"
   on:pointerenter={() => {
     isHovering = true;
   }}
@@ -45,28 +51,14 @@
     isHovering = false;
   }}
 >
-  {#if isHovering || isFocusing}
-    <div class="absolute -left-8 flex h-full items-center justify-center">
-      <LeftControls {mdStore} />
-    </div>
-    {#if block.contentType === NodeType.HEADING1}
-      <div class="absolute right-10 flex h-full items-center justify-center">
-        <Button
-          label="focus (Cmd + M)"
-          type={ButtonVariant.PRIMARY}
-          size={Size.xs}
-        />
-      </div>
-    {/if}
-  {/if}
   <div
-    id="sss"
-    class="-ml-10 pl-10 flex grow rounded-md {(isHovering || isFocusing) &&
-    isShowBgOnFocus &&
-    !$mdStore.params?.isReadOnly
-      ? 'bg-bgs2'
-      : ''}"
+    class={cn("opacity-0 w-12 min-w-[3rem] flex h-full", {
+      "opacity-100": isHovering || isFocusing
+    })}
   >
+    <LeftControls {mdStore} {block} on:focus />
+  </div>
+  <div class="grow">
     <BlockContent
       {block}
       {mdStore}

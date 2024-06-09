@@ -84,6 +84,12 @@
       <Block
         {block}
         {mdStore}
+        on:focus={(e) => {
+          dispatch("focus", {
+            ...e.detail,
+            md: { ...md, blocks: $mdStore.blocks }
+          });
+        }}
         on:change={(e) => {
           dispatch("change", {
             ...e.detail,

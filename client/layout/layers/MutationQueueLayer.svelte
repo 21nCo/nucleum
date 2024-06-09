@@ -13,5 +13,5 @@
         $mutationQueue.map((m) => m.id)
       );
     }
-  }, 2000);
+  }, 1500);
 </script>

@@ -62,14 +62,14 @@
             isShowBacklinks = true;
           }}
         />
-        <div class="w-full flex-grow flex gap-4">
+        <div class="w-full flex-grow flex gap-4 p-6">
           <NodeMainPanel {id} {mdId} />
           <NodeRightPanel {id} {mdId} {nodePageVariant} />
         </div>
       </div>
     {/if}
   {:else}
-    <div class="w-full h-full pl-12 pt-4">
+    <div class="w-full h-full pt-4 px-20">
       <NodeLoadingPulse />
     </div>
   {/if}

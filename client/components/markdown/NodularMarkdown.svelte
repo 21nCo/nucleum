@@ -12,6 +12,7 @@
   import Markdown from "./Markdown.svelte";
   import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";
   import { hierarchyFactorLimit } from "../memotron/node/node.store";
+  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   const dispatch = createEventDispatcher();
   export let node: INode | undefined = undefined;
   export let md: IMarkdown;
@@ -29,6 +30,7 @@
   export let isNodular: boolean = node != undefined;
   export let changePropagationMethod: MdChangePropagationType =
     MdChangePropagationType.DEFERRED;
+  let refreshId: number = new Date().getTime();
   let _md: IMarkdown;
   /**
    * @deprecated - children structure determination trail 1
@@ -41,6 +43,7 @@
   let anchorBlock: string | undefined = undefined;
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
+    reCalculateStructure(_md, true);
   } else {
     _md = md;
   }
@@ -199,7 +202,7 @@
     });
     return rootBlocks;
   }
-  function reCalculateStructure(md: IMarkdown) {
+  function reCalculateStructure(md: IMarkdown, isInitCalculation = false) {
     const result = extractStructureForChildren(md);
     if (!focusedBlock) childrenWithStructure = result;
     else {
@@ -209,6 +212,7 @@
       childrenWithStructure = [...remaining, ...result];
     }
     rootStructure = extractRootStructure().map((x) => x.id);
+    if (isInitCalculation) return;
     //TODO - if focused - propagate only children of the focusedNode
     dispatch("restructure", {
       root: rootStructure,
@@ -256,36 +260,72 @@
     dispatch("change", { md, block: detail });
   }
   function resolveAnchorBlock(focusedBlock: string) {
-    const index = childrenWithStructure.findIndex((x) => x.id === focusedBlock);
+    let focusBlockIndex = -1;
+    let anchorBlockIndex = undefined;
+    let anchorBlock;
+    focusBlockIndex =
+      childrenWithStructure.findIndex((x) => x.id === focusedBlock) ??
+      focusBlockIndex;
     const factor = childrenWithStructure.find(
       (x) => x.id === focusedBlock
     )?.factor;
-    if (!factor) return;
-    const succeedingBlocks = childrenWithStructure.splice(index + 1);
-    const anchorBlock = succeedingBlocks.find((b) => b.factor <= factor);
-    return anchorBlock?.id;
+    console.log({ focusBlockIndex, factor });
+    if (!factor) return { focusBlockIndex, anchorBlockIndex };
+    const succeedingBlocks = childrenWithStructure.slice(focusBlockIndex + 1);
+    anchorBlock = succeedingBlocks.find((b) => b.factor <= factor);
+    if (anchorBlock)
+      anchorBlockIndex = childrenWithStructure.findIndex(
+        (x) => x.id === anchorBlock?.id
+      );
+    return {
+      id: anchorBlock?.id,
+      focusBlockIndex,
+      anchorBlockIndex
+    };
   }
   function onBlockFocus(event: any) {
-    console.log("onBlockFocus", event);
     propagateChanges(event.detail.md);
     focusedBlock = event.detail.id;
-    if (focusedBlock) anchorBlock = resolveAnchorBlock(focusedBlock);
-    // TODO - filter _md
+    if (!focusedBlock) return;
+    const { id, anchorBlockIndex, focusBlockIndex } =
+      resolveAnchorBlock(focusedBlock);
+    anchorBlock = id;
+    const blocks = md.blocks.slice(focusBlockIndex, anchorBlockIndex);
+    console.log("onBlockFocus", {
+      event,
+      focusedBlock,
+      focusBlockIndex,
+      anchorBlockIndex,
+      anchorBlock,
+      blocks
+    });
+    _md = { blocks };
+    refreshId = new Date().getTime();
+  }
+  function unFocus() {
+    focusedBlock = undefined;
+    _md = { blocks: md.blocks };
+    refreshId = new Date().getTime();
   }
 </script>
 
-<Markdown
-  bind:md={_md}
-  id={mdId}
-  params={{
-    isNodular,
-    placeholder: "Start typing or choose a type to get started...",
-    canUseSlashShortcut: true,
-    isReadOnly: false
-  }}
-  on:change={onBlockChanges}
-  on:insert={onBlockInsertV2}
-  on:convert={onBlockConvert}
-  on:focus={onBlockFocus}
-  on:delete={onBlockDelete}
-/>
+{#if focusedBlock}
+  <BackButton on:click={unFocus} />
+{/if}
+{#key refreshId}
+  <Markdown
+    bind:md={_md}
+    id={mdId}
+    params={{
+      isNodular,
+      placeholder: "Start typing or choose a type to get started...",
+      canUseSlashShortcut: true,
+      isReadOnly: false
+    }}
+    on:change={onBlockChanges}
+    on:insert={onBlockInsertV2}
+    on:convert={onBlockConvert}
+    on:focus={onBlockFocus}
+    on:delete={onBlockDelete}
+  />
+{/key}

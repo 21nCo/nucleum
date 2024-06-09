@@ -5,7 +5,7 @@
   import type { Action } from "$lib/client/types/action.type";
   //TODO - remove dependency on local
   import { userLocalPreferences } from "$local/stores/local.store";
-  import type { UserLocalPreferences } from "$local/types/userLocalPreferences.type";
+  import type { UserLocalPreferences } from "$lib/client/types/memotron/memotronPreferences.type";
   import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
   import { appStore } from "$lib/client/stores/app.store";

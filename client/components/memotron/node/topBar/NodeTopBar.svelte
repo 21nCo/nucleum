@@ -20,7 +20,7 @@
 
 {#if $node}
   <div
-    class="flex gap-4 items-center justify-between pl-12 pr-2 py-4 {nodePageVariant ===
+    class="flex gap-4 items-center justify-between px-20 py-4 {nodePageVariant ===
     'v1'
       ? ''
       : 'border-b border-brs2'}"

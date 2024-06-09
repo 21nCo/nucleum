@@ -60,7 +60,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full flex-grow pl-12 pt-2">
+<div class="flex flex-col h-full flex-grow pt-2">
   {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node))}
     <NodularMarkdown
       node={$node}

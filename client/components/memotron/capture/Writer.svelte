@@ -33,7 +33,7 @@
       Browse files
     </div>
   {:else if "blocks" in $captureStore.body}
-    <div class="overflow-auto h-full w-full dp:px-10">
+    <div class="overflow-auto h-full w-full dp:px--10">
       <NodularMarkdown
         isNodular={true}
         mdId={$captureStore.id}
