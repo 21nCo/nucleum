@@ -41,6 +41,7 @@
 <div
   class="flex w-full items-center gap-2 rounded-md {isHovering &&
   isShowBgOnFocus &&
+  $mdStore.params?.isNodular &&
   !$mdStore.params?.isReadOnly
     ? 'bg-bgs2'
     : ''}"
@@ -53,7 +54,7 @@
 >
   <div
     class={cn("opacity-0 w-12 min-w-[3rem] flex h-full", {
-      "opacity-100": isHovering || isFocusing
+      "opacity-100": (isHovering || isFocusing) && $mdStore.params?.isNodular
     })}
   >
     <LeftControls {mdStore} {block} on:focus />
