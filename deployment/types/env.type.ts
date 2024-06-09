@@ -3,6 +3,7 @@ export type Environment = {
   domain: string;
   isUseParentZone?: boolean;
   filesBucketPrefix: string;
+  tempBucketPrefix: string;
   jwtSecret: string;
   jwtPublicKey: string;
   googleSecret: string;
