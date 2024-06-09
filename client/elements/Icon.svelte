@@ -108,6 +108,7 @@
   import PaperClip from "../icons/PaperClip.svelte";
   import Eye from "../icons/Eye.svelte";
   import { ColorAccent } from "../types/appearance.type";
+  import AltText from "../icons/AltText.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
@@ -116,6 +117,8 @@
   export let accent: ColorAccent | undefined = undefined;
   export let bgColorHue: number | undefined = undefined;
   export let isOutlineForActive: boolean = false;
+  // <!-- TODO: abstract situations like these - remove classList and slot -->
+  export let classList = "";
   $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $appearance);
   $: currentColors = retrieveCurrentColors($appearance);
   $: defaultColor = currentColors?.fgs2 ?? "";
@@ -159,7 +162,7 @@
 </script>
 
 {#if icon}
-  <button class="inline-flex items-center justify-center" on:click>
+  <button class="inline-flex items-center justify-center {classList}" on:click>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
@@ -470,6 +473,8 @@
         <!-- TODO - TEMP - bird view icon is mapped to eye -->
       {:else if icon === "eye" || icon === "bird"}
         <Eye {variant} />
+      {:else if icon === "alt-text"}
+        <AltText />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"
@@ -484,5 +489,7 @@
         />
       {/if}
     </svg>
+    <!-- TODO: abstract situations like these - remove classList and slot -->
+    <slot />
   </button>
 {/if}

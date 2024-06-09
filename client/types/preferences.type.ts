@@ -33,6 +33,11 @@ export type UserGlobalPreferences = ICacheableStore & {
     usedIcons: [Avatar][];
   };
   annotations: any[];
+  /**
+   * @deprecated
+   * Temporary
+   */
+  mediaGridTestitems: any[];
 };
 
 export type KeyboardShortcut = {

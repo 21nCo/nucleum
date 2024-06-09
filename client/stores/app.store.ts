@@ -104,10 +104,12 @@ function createDragAndDropStore() {
     dragItem: {},
     dropItem: {},
     dragEnterItem: {},
+    dragLeaveItem: {},
     dragStatus: DragStatus.NONE,
     dragId: "",
     dragEnterId: "",
-    dropId: ""
+    dropId: "",
+    forwardDrop: false
   });
 
   return {
@@ -119,10 +121,12 @@ function createDragAndDropStore() {
         dragItem: {},
         dropItem: {},
         dragEnterItem: {},
+        dragLeaveItem: {},
         dragStatus: DragStatus.NONE,
         dragId: "",
         dragEnterId: "",
-        dropId: ""
+        dropId: "",
+        forwardDrop: false
       });
     }
   };
@@ -273,7 +277,8 @@ export const seedUserPreferences: UserGlobalPreferences = {
     filled: false,
     usedIcons: []
   },
-  annotations: []
+  annotations: [],
+  mediaGridTestitems: []
 };
 const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
 type dbVersionStore = ICacheableStore & {
@@ -292,6 +297,8 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
     if (!data.avatarPicker)
       data.avatarPicker = seedUserPreferences.avatarPicker;
     if (!data.annotations) data.annotations = seedUserPreferences.annotations;
+    if (!data.mediaGridTestitems)
+      data.mediaGridTestitems = seedUserPreferences.mediaGridTestitems;
     if (data.isAnonymousAnalyticsEnabled === undefined)
       data.isAnonymousAnalyticsEnabled = true;
     if (!data.dataType) data.dataType = StoreDataType.KVO;
