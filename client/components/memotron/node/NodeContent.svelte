@@ -12,11 +12,17 @@
     isValidArrayWithData,
     shallowDiff
   } from "$lib/client/utils/obj.utils";
+  import AudioScrubablePreview from "../capture/AudioScrubablePreview.svelte";
   export let id: string;
   export let mdId: string;
   let previousRootStructure: string[] = [];
   const node = resolveActiveNodeStore(id);
+  let refreshId = Date.now();
   // const nodePersistance = new NodePersistance($account.userInfo?.id ?? "");
+  function retireveNode() {
+    node.fetch();
+    refreshId = Date.now();
+  }
   function onMarkdownContentChange(e: CustomEvent) {
     console.log("Markdown content changed", { e });
     if (e.detail.block.id && "body" in e.detail.block) {
@@ -60,30 +66,37 @@
   }
 </script>
 
-<div class="flex flex-col h-full flex-grow pt-2">
-  {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node))}
-    <NodularMarkdown
-      node={$node}
-      {mdId}
-      md={$node.md}
-      on:change={onMarkdownContentChange}
-      on:insert={onMarkdownInsertChanges}
-      on:convert={onMarkdownConvertChanges}
-      on:delete={onMarkdownBlockDelete}
-      on:restructure={onReStructure}
-    />
-  {:else if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
-    <audio controls src={$node.body?.url} />
-  {:else if $node?.contentType === NodeType.WEBPAGE && $node.children && $node.children.length > 0}
-    <div class="flex flex-col items-start gap-4">
-      <Text content="Clips" style={TextStyle.SECTION_HEADING} />
-      <div class="flex flex-col items-start gap-2 overflow-auto">
-        {#each $node.children as clip}
-          <div class="bg-bgs2 rounded-md p-2">
-            {clip?.body?.text}
-          </div>
-        {/each}
+{#key refreshId}
+  <div class="flex flex-col h-full flex-grow pt-2">
+    {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node))}
+      <NodularMarkdown
+        node={$node}
+        {mdId}
+        md={$node.md}
+        on:change={onMarkdownContentChange}
+        on:insert={onMarkdownInsertChanges}
+        on:convert={onMarkdownConvertChanges}
+        on:delete={onMarkdownBlockDelete}
+        on:restructure={onReStructure}
+      />
+    {:else if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
+      <!-- <audio controls src={$node.body?.url} /> -->
+      <AudioScrubablePreview
+        on:refresh={retireveNode}
+        body={$node?.body}
+        nodeId={$node.id}
+      />
+    {:else if $node?.contentType === NodeType.WEBPAGE && $node.children && $node.children.length > 0}
+      <div class="flex flex-col items-start gap-4">
+        <Text content="Clips" style={TextStyle.SECTION_HEADING} />
+        <div class="flex flex-col items-start gap-2 overflow-auto">
+          {#each $node.children as clip}
+            <div class="bg-bgs2 rounded-md p-2">
+              {clip?.body?.text}
+            </div>
+          {/each}
+        </div>
       </div>
-    </div>
-  {/if}
-</div>
+    {/if}
+  </div>
+{/key}

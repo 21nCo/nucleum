@@ -166,10 +166,19 @@ function initAccount(seed: UserAccount) {
       return false;
     } else return true;
   };
-  const getSignedUrl = (contentType: string, fileName: string) => {
+  const getSignedUrl = (
+    contentType: string,
+    fileName: string,
+    isTemp: boolean
+  ) => {
     const acc = get(account);
     const userId = acc.userInfo?.id.split(":")[1] ?? "";
-    return new Persistence().getSignedUrl(userId, contentType, fileName);
+    return new Persistence().getSignedUrl(
+      userId,
+      contentType,
+      fileName,
+      isTemp
+    );
   };
   return {
     subscribe,
@@ -228,8 +237,17 @@ function initAccount(seed: UserAccount) {
       return new Persistence().ping();
     },
     getSignedUrl,
-    uploadFile: async (contentType: string, fileName: string, blob: any) => {
-      const signedUrlResponse = await getSignedUrl(contentType, fileName);
+    uploadFile: async (
+      contentType: string,
+      fileName: string,
+      blob: any,
+      isTemp: boolean = false
+    ) => {
+      const signedUrlResponse = await getSignedUrl(
+        contentType,
+        fileName,
+        isTemp
+      );
       if (signedUrlResponse?.uploadURL) {
         await new Persistence().uploadFile(
           signedUrlResponse.uploadURL,

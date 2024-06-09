@@ -28,7 +28,7 @@ export type CaptureStore = ICacheableStore & {
   body: IMarkdown | MediaBody;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
-  fileDetails?: FileDetails;
+  fileDetails: FileDetails;
   links: LinkThumbnail[];
   properties?: INodeProperty[];
   /**
@@ -39,8 +39,11 @@ export type CaptureStore = ICacheableStore & {
 };
 
 export type FileDetails = {
-  data: any;
   name: string;
+  data:Blob;
+  url: any;
   type: string;
   duration?: number;
+  transcription?:string;
+  initTranscription?:boolean;
 };

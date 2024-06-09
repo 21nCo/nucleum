@@ -40,7 +40,7 @@ import { NodePersistance } from "$lib/client/stores/node.persistance";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/utils/node.utils";
 
-const currentUserId: string = get(account)?.userInfo?.id ?? "";
+export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): CaptureStore {
   const blockId = prefixTable(generateUID(), Item.node);
