@@ -360,11 +360,12 @@ export class Persistence {
     });
     return interceptSurrealResponse(response, query);
   }
-  async getSignedUrl(userId: string, contentType: string, fileName: string) {
+  async getSignedUrl(userId: string, contentType: string, fileName: string,isTemp:boolean) {
     const response = await performApiCall("utils/n/getsignedurl", "POST", {
       contentType,
       fileName,
-      userId
+      userId,
+      isTemp
     });
     return await response?.json();
   }
