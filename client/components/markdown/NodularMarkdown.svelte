@@ -11,8 +11,9 @@
   import { createEventDispatcher } from "svelte";
   import Markdown from "./Markdown.svelte";
   import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";
-  import { hierarchyFactorLimit } from "../memotron/node/node.store";
+
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
+  import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
   const dispatch = createEventDispatcher();
   export let node: INode | undefined = undefined;
   export let md: IMarkdown;

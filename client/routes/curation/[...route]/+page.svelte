@@ -1,6 +1,6 @@
 <script>
   import { page } from "$app/stores";
-  import Curation from "$lib/client/components/memotron/curation/Curation.svelte";
+  import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);

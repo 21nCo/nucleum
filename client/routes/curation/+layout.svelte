@@ -1,5 +1,5 @@
 <script>
-  import CurationsLayout from "$lib/client/components/memotron/curation/CurationsLayout.svelte";
+  import CurationsLayout from "$lib/client/products/memotron/curation/CurationsLayout.svelte";
 </script>
 
 <CurationsLayout>

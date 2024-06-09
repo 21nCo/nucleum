@@ -1,5 +1,5 @@
 <script>
-  import PropertiesEditor from "$lib/client/components/memotron/type/PropertiesEditor.svelte";
+  import PropertiesEditor from "$lib/client/products/memotron/type/PropertiesEditor.svelte";
   import RiveAnimatedIcon from "$lib/client/icons/RiveAnimatedIcon.svelte";
   import CaretPlay from "./CaretPlay.svelte";
 </script>

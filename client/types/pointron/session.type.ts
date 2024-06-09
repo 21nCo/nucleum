@@ -2,7 +2,7 @@ import type { SessionComposition } from "$lib/client/types/pointron/sessionCompo
 import type { SessionState } from "./sessionState.enum";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
 import type { ICacheableStore } from "$lib/client/types/data.type";
-import type { SessionType } from "$lib/client/components/pointron/logs/log.type";
+import type { SessionType } from "$lib/client/products/pointron/logs/log.type";
 
 export type SessionStore = ICacheableStore & {
   currentSessionId: string | undefined;
