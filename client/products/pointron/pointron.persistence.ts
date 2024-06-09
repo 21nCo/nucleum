@@ -19,6 +19,11 @@ export class PointronPersistence {
     ];
     await surrealDb.query(`insert into kv $kvalues`, { kvalues });
   }
+  /**
+   * @deprecated - dataManager is used to sync user data
+   * @param isSyncFocusState
+   * @returns
+   */
   async syncUserData(isSyncFocusState: boolean) {
     let query = `return fn::pointron::load::v2(false);`;
     if (isSyncFocusState) query = `return fn::pointron::load::v2(true);`;
