@@ -53,7 +53,6 @@
         <div>
           <Button
             icon="copy"
-            tooltip="Copy markdown"
             label="Copy markdown"
             size={Size.xs}
             {parentBackgroundIndex}

@@ -49,13 +49,11 @@
    * @param isSignup - If the user is signing up
    */
   function refreshTimeZone(isSignup?: boolean) {
-    const timeZone = detectTimeZone();
     if (isSignup) {
-      if (timeZone)
-        userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
-      else userPreferences.setTimeZone();
+      userPreferences.initializeTimeZoneForSignup();
       return;
     }
+    const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
       userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);

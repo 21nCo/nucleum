@@ -67,9 +67,7 @@ function initFocusHeatmapStore() {
     },
     fetchDailyJournal: async (start: Date, end: Date) => {
       const n: FocusHeatMapStore = get(focusHeatmapStore);
-      console.log({ start, end, n });
       if (n.dailyJournal.length > 0) {
-        console.log("Returning from cache");
         return n.dailyJournal;
       } else {
         while (get(focusHeatmapStore).isPageRefreshing) {

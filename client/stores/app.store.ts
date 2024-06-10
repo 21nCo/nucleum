@@ -327,24 +327,62 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
    *
    * On the database, the offset is stored as an offset of user's zone from UTC, so the offset is stored as +330 for UTC+5:30
    *
-   * @param offset
-   * @param label
    */
-  setTimeZone(offset?: number, label?: string) {
-    if (offset === undefined) {
-      offset = -new Date().getTimezoneOffset() * 60;
-      label = detectTimeZone()?.label ?? "UTC";
-    }
+  resolveTimezoneFallback() {
+    const offset = -new Date().getTimezoneOffset() * 60;
+    const label = detectTimeZone()?.label ?? "UTC";
+    return { offset, label };
+  }
+  _setTimezone(offset: number, label?: string) {
     this.update((n: UserGlobalPreferences) => {
       n.timeZoneOffset = offset;
       this.persist({ timeZoneOffset: offset, timeZoneLabel: label });
-      persistance.create(
-        { offset, date: new Date().toISOString(), label: label ?? "" },
-        Item.tz
-      );
       return n;
     });
     return { offset, label };
+  }
+  /**
+   * Sets the timezone offset and label for the user
+   * @param offset
+   * @param label
+   * @returns
+   */
+  setTimeZone(offset?: number, label?: string) {
+    if (offset === undefined) {
+      const val = this.resolveTimezoneFallback();
+      offset = val.offset;
+      label = val.label;
+    }
+    persistance.create(
+      { offset, date: new Date().toISOString(), label: label ?? "" },
+      Item.tz
+    );
+    return this._setTimezone(offset, label);
+  }
+  /**
+   * Adds a timezone record to the database on signup with 1970 as lowest to enable adding manual logs in the past or importing data from the past.
+   *
+   * Note: Any manual logs or imports prior to 1970 should not be allowed as it might cause unexpected errors since aggregate table views and many calculations rely on tz table and timezone offset.
+   * @returns
+   */
+  initializeTimeZoneForSignup() {
+    let offset = 0;
+    let label: string | undefined;
+    const timeZone = detectTimeZone();
+    if (!timeZone) {
+      const val = this.resolveTimezoneFallback();
+      offset = val.offset;
+      label = val.label;
+    }
+    persistance.create(
+      {
+        offset,
+        date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
+        label: label ?? ""
+      },
+      Item.tz
+    );
+    return this._setTimezone(offset, label);
   }
   onBoardingStatusCheck() {
     if (this.resolveUiState(UIState.isOnboardingComplete)) return true;
@@ -566,7 +604,6 @@ function initAppStore(seed: AppStore) {
 
   const resolveComponentFromPath = (path: string) => {
     const actions = get(appStore).actions;
-    console.log({ actions });
     let component = actions.find((x) => x.path == path);
     if (component) return component;
     component = actions.find((x) => x.action == path);
@@ -607,7 +644,7 @@ function initAppStore(seed: AppStore) {
     return false;
   };
   const gotoPath = async (path: string, params: any = null) => {
-    console.log({ method: "gotoPath", path });
+    // console.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
     update((n: AppStore) => {
@@ -903,7 +940,6 @@ function initAppStore(seed: AppStore) {
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
         const isSettingsAsModal = n.appData?.isSettingsAsModal;
-        console.log({ isSettingsAsModal, isInPortraitMode });
         if (isInPortraitMode || !isSettingsAsModal)
           n.actions = [...actions, ...settingsAsPages];
         else n.actions = [...actions, ...settingsAsModal];

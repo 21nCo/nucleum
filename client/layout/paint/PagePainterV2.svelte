@@ -12,6 +12,7 @@
   export let prefix: string | undefined = undefined;
   let action: IAction | null = null;
   let pageSub: any;
+  const fileBasedRoutes = ["goal", "cp", "curation"];
   function resolvePath() {
     if ($context.isSheet) {
       return $appStore.sheetPath;
@@ -32,7 +33,11 @@
   });
   async function refresh() {
     const path = resolvePath();
-    console.log({ path });
+    if (
+      fileBasedRoutes.some((x) => window.location.pathname.startsWith("/" + x))
+    ) {
+      return;
+    }
     if (path === "") {
       appStore.gotoPath($appStore.appData.homePath ?? "/home");
       return;
@@ -45,7 +50,6 @@
       return;
     }
     action = appStore.resolveComponentFromPath(path);
-    console.log({ path, action });
     if (!action) {
       appStore.gotoPath("/404");
       return;

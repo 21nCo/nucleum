@@ -1,12 +1,7 @@
 <script lang="ts">
-  import {
-    startTouch,
-    moveTouch,
-    swipeIsRefreshing
-  } from "$lib/client/utils/touchGesture";
+  import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import view from "$lib/client/stores/view.store";
   import { page } from "$app/stores";
-  import NestedGoalAccordion from "$lib/client/products/pointron/goals/NestedGoalAccordion.svelte";
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import TagsContainer from "$lib/client/products/pointron/goals/TagsContainer.svelte";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
@@ -24,9 +19,7 @@
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Item } from "$lib/client/types/item.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
-  import TreeMapItem from "$lib/client/components/treeMap/TreeMapItem.svelte";
   import TreeMap from "$lib/client/components/treeMap/TreeMap.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";

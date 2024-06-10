@@ -19,6 +19,9 @@
   import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
   import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import Autocomplete from "./Autocomplete.svelte";
+  import Button from "../button/Button.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;
@@ -194,7 +197,7 @@
       defaultInputClasses += ` bg-${backgroundColor} outline p-2`;
     }
     if (inputStyle === TextInputStyle.OUTLINED)
-      defaultInputClasses += ` outline p-2`;
+      defaultInputClasses += ` outline px-2 py-1`;
 
     if (size == Size.xl) defaultInputClasses += " text-h3";
     else if (size == Size.lg) defaultInputClasses += " text-base";
@@ -222,62 +225,77 @@
 <div id={wrapperId} class="relative w-full">
   <div class="relative flex flex-col gap-1 w-full items-start">
     <FormControlLabel props={{ label }} forId={id} />
-    <div
-      tabindex="0"
-      on:click={() => {
-        toggleActiveState(true);
-        updateListVisibility(true);
-      }}
-      on:keydown={(e) => {
-        if (e.key === "Enter") {
-          toggleActiveState(true);
-        }
-      }}
-      class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline-none border {isFocusing
-        ? 'border-aps1'
-        : 'border-brs3'}"
-    >
-      {#each selected as value}
-        <Chip on:click hideCloseIcon variant={chipsVariant}>{value.label}</Chip>
-      {/each}
-      <input
-        {id}
-        on:focusin={() => {
-          toggleActiveState(true);
-          updateListVisibility(true);
-        }}
-        type="text"
-        {placeholder}
-        bind:value={inputValue}
-        on:input|stopPropagation
-        on:focus={() => {
-          isFocusing = true;
-        }}
-        on:focusout={() => {
-          isFocusing = false;
-        }}
-        on:keydown|stopPropagation={handleKeyDownInDropdown}
-        class="bg-transparent pl-1 py-1 text-base min-w-[100px] flex-1 outline-none"
-        aria-label="Search"
-        aria-describedby="search-addon"
-      />
-    </div>
-  </div>
-  {#if filteredOptions && filteredOptions.length > 0 && isListVisible}
-    <!-- mt-1 is given because of the outline, since the outline is not the part of box model, it takes up extra space causing the overlap between outline, and the below list-->
-    <div
-      style={listContainerStyle}
-      class={`absolute w-full z-[10] mt-1 max-h-[10rem] overflow-auto ${listContainerClassList}`}
-    >
-      {#each filteredOptions as listItem, index}
-        <AutocompleteResultItem
-          {...listItem}
-          isSelected={selected.some((x) => x.id === listItem.id)}
-          isActive={selectedListItemIndex === index}
-          style={listItemStyle}
-          on:click={handleResultItemClickViaCustomEvent}
+    <span class="flex w-full items-center gap-2">
+      <span class="relative w-full">
+        <span
+          tabindex="0"
+          on:click={() => {
+            toggleActiveState(true);
+            updateListVisibility(true);
+          }}
+          on:keydown={(e) => {
+            if (e.key === "Enter") {
+              toggleActiveState(true);
+            }
+          }}
+          class="{'w-full flex flex-wrap p-2 gap-1'} {defaultInputClasses} outline-none border {isFocusing
+            ? 'border-aps1'
+            : 'border-brs3'}"
+        >
+          {#each selected as value}
+            <Chip on:click hideCloseIcon variant={chipsVariant}
+              >{value.label}</Chip
+            >
+          {/each}
+          <input
+            {id}
+            on:focusin={() => {
+              toggleActiveState(true);
+              updateListVisibility(true);
+            }}
+            type="text"
+            {placeholder}
+            bind:value={inputValue}
+            on:input|stopPropagation
+            on:focus={() => {
+              isFocusing = true;
+            }}
+            on:focusout={() => {
+              isFocusing = false;
+            }}
+            on:keydown|stopPropagation={handleKeyDownInDropdown}
+            class="bg-transparent pl-1 py-1 text-base min-w-[100px] flex-1 outline-none"
+            aria-label="Search"
+            aria-describedby="search-addon"
+          />
+        </span>
+        {#if filteredOptions && filteredOptions.length > 0 && isListVisible}
+          <!-- mt-1 is given because of the outline, since the outline is not the part of box model, it takes up extra space causing the overlap between outline, and the below list-->
+          <div
+            style={listContainerStyle}
+            class={`absolute w-full z-[10] mt-1 max-h-[10rem] overflow-auto ${listContainerClassList}`}
+          >
+            {#each filteredOptions as listItem, index}
+              <AutocompleteResultItem
+                {...listItem}
+                isSelected={selected.some((x) => x.id === listItem.id)}
+                isActive={selectedListItemIndex === index}
+                style={listItemStyle}
+                on:click={handleResultItemClickViaCustomEvent}
+              />
+            {/each}
+          </div>
+        {/if}
+      </span>
+
+      <span>
+        <Button
+          icon="settings"
+          on:click={() => {
+            appStore.runAction(PointronEventEnum.TAGS);
+          }}
         />
-      {/each}
-    </div>
-  {/if}
+      </span>
+    </span>
+  </div>
 </div>

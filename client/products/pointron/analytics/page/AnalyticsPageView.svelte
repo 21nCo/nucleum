@@ -22,7 +22,6 @@
     store = resolveAnalyticsPageStore(config);
     store.refresh();
   }
-  $: console.log($store?.data?.cards);
   async function onCardConfigChange() {
     await store.refresh();
     refreshId = new Date().getTime();

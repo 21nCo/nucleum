@@ -163,7 +163,6 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     });
   }
   loader(data: PointronPreferences) {
-    console.log("Loading userLocalPreferences", data);
     data.appMenu = defaultAppMenu;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
     if (!data.presets) data.presets = seedPresets;
@@ -265,7 +264,6 @@ function initUserLocalPreferences() {
     subscribe,
     update,
     loader: (data: PointronPreferences) => {
-      console.log("Loading userLocalPreferences", data);
       data.appMenu = defaultAppMenu;
       if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
       if (!data.presets) data.presets = seedPresets;
@@ -292,11 +290,11 @@ function initUserLocalPreferences() {
           changedProperties.horizonTargets = horizonTargets;
         }
       }
-      console.log({
-        previousValue: previousValue ? JSON.parse(previousValue) : null,
-        newValue,
-        changedProperties
-      });
+      // console.log({
+      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
+      //   newValue,
+      //   changedProperties
+      // });
       set(newValue);
       if (!objIsEmpty(changedProperties)) await persist(changedProperties);
     },

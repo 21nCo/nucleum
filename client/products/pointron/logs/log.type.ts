@@ -51,6 +51,7 @@ export type PointLogDbType = DbRecordBase & {
 
 export interface PointLogStore extends ICacheableStore {
   manualLogs: IManualSessionLogForm[];
+  manualLogError?: string;
 }
 
 export type IManualSessionLogForm = {

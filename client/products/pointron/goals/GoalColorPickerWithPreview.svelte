@@ -37,7 +37,7 @@
           >
             {isValidString(label)
               ? truncateString(label, 8)
-              : $appStore.product}
+              : $appStore.product ?? "Preview"}
           </ActiveBackgroundElement>
         </div>
       </div>

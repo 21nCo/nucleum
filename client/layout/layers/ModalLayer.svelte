@@ -44,15 +44,21 @@
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let isShowSyncErrorMessage: boolean = false;
-  let mutationQueue = liveQuery(() =>
-    $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
-  );
+  let mutationQueue = refreshMutationQueueLiveQuery();
+  function refreshMutationQueueLiveQuery() {
+    return liveQuery(() =>
+      $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
+    );
+  }
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: AppEventType) => {
       if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
       } else if (x.event === AppEvent.USER_LOGIN) {
         modals = [];
+      }
+      if (x.event === AppEvent.USER_SIGNUP || x.event === AppEvent.USER_LOGIN) {
+        mutationQueue = refreshMutationQueueLiveQuery();
       }
     });
     const pageSub = page.subscribe((value) => {
@@ -110,7 +116,6 @@
       };
     }
   }
-  $: console.log({ zen, pop });
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -160,7 +165,7 @@
     {#each $toasts as toast}
       <ToastNotification notification={toast} />
     {/each}
-    {#if isValidArrayWithData($mutationQueue)}
+    <!-- {#if isValidArrayWithData($mutationQueue)}
       <ToastNotification
         notification={{
           id: "syncNotification",
@@ -177,7 +182,7 @@
           isHideClose: true
         }}
       />
-    {/if}
+    {/if} -->
   </div>
 {/if}
 

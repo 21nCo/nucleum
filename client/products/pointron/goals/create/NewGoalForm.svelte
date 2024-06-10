@@ -15,6 +15,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { isValidString } from "$lib/client/utils/text.utils";
   function getUsedColors() {
     return [];
   }
@@ -48,13 +49,15 @@
     bind:values={$newGoalStore.goal.tags}
     chipsVariant={ChipVariant.OUTLINED}
     placeholder={$newGoalStore.goal.tags?.length
-      ? "type to add"
-      : "start typing to add tags"}
+      ? "type to select"
+      : "start typing to select tags"}
     options={tagOptions}
   />
   <GoalColorPickerWithPreview
     bind:hue={$newGoalStore.goal.color}
-    label={$newGoalStore.goal.label}
+    label={isValidString($newGoalStore.goal.label)
+      ? $newGoalStore.goal.label
+      : "Preview"}
   />
   <SwitchInput
     label={{ label: "Pin goal to quick focus" }}

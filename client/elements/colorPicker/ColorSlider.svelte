@@ -71,7 +71,7 @@
     border-radius: 50%;
     background: hsl(var(--hue), var(--sat), var(--lig));
     cursor: pointer;
-    margin-top: 6px;
+    /* margin-top: 6px; */
     box-shadow: 0px 0px 2px 0px hsl(var(--hue), var(--sat), 60%);
     border: solid 1px var(--thumb-border);
   }

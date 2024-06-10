@@ -1,7 +1,11 @@
 import { TileAppearance } from "./calendarHeatmap.types";
 import { plainCSSHMColorIndex5 } from "../../stores/app.store";
 import { get } from "svelte/store";
-import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import {
+  deepCopy,
+  isArrayWithSameValue,
+  isValidArrayWithData
+} from "$lib/client/utils/obj.utils";
 import { heatMapColorRange } from "$lib/client/utils/theme.utils";
 import appearance from "../../stores/appearance.store";
 import type {
@@ -309,22 +313,31 @@ export class DataManager {
     return [display, color];
   }
 
-  findHeatandStreak(
-    inputData: any[],
-    prevEnd: any,
-    nextStart: any,
-    dataType: "date" | "month" | "year"
-  ) {
-    let length = inputData.length;
+  assignClusterIndex(inputData: any[]) {
+    inputData = inputData.map((x) => {
+      return { ...x, clusterIndex: 0 };
+    });
     const nonZeroValues = inputData.filter((x) => x.value > 0);
+    console.log({
+      nonZeroValues
+    });
+    if (!isValidArrayWithData(nonZeroValues)) {
+      return inputData;
+    } else if (
+      nonZeroValues.length == 1 ||
+      isArrayWithSameValue(nonZeroValues.map((x) => x.value))
+    ) {
+      return inputData.map((x) => ({
+        ...x,
+        clusterIndex: x.value > 0 ? 4 : 0
+      }));
+    }
     const valuesForK = nonZeroValues.map((x) => [x.value]);
     const maxVal = Math.max(...valuesForK.map((val) => val[0]));
     const minVal = Math.min(...valuesForK.map((val) => val[0]));
-
     const normalizedValuesForK = valuesForK.map((val) => [
       (val[0] - minVal) / (maxVal - minVal)
     ]);
-    if (valuesForK.length === 0) return inputData;
     const clusterCount = Math.min(valuesForK.length, 6);
     const k = kmeans(normalizedValuesForK, clusterCount, {});
     inputData = inputData.map((x, i) => {
@@ -344,7 +357,6 @@ export class DataManager {
       }
       return acc;
     }, {});
-
     const means = Object.keys(grouped).map((clusterIndex) => ({
       clusterIndex: parseInt(clusterIndex),
       mean: grouped[clusterIndex].sum / grouped[clusterIndex].count
@@ -358,8 +370,17 @@ export class DataManager {
       ...item,
       clusterIndex: clusterIndexMap[item.clusterIndex]
     }));
-    console.log({ inputData, nonZeroValues, valuesForK, clusters: k.clusters });
+    return inputData;
+  }
 
+  findHeatandStreak(
+    inputData: any[],
+    prevEnd: any,
+    nextStart: any,
+    dataType: "date" | "month" | "year"
+  ) {
+    let length = inputData.length;
+    inputData = this.assignClusterIndex(inputData);
     if (
       new Date(`prevEnd.${dataType}`) <=
       new Date(`profileStart${dataType}`.toString())

@@ -67,8 +67,11 @@
     };
   }
   function onWindowClick(x: MouseEvent) {
-    // console.log("window click", { id: options.id, isPopoverVisible });
-    if (!options.id || !isPopoverVisible) return;
+    // console.log("window click", {
+    //   options,
+    //   isPopoverVisible,
+    // });
+    if (!options?.id || !isPopoverVisible) return;
     actIfClickedOutside(x, [containerId, options.id], hide);
   }
 </script>
@@ -87,12 +90,15 @@
   <slot name="trigger" />
 </button>
 <svelte:element
-  this={options.element ?? "div"}
-  id={options.id}
+  this={options?.element ?? "div"}
+  id={options?.id}
   class={cn(
-    options.class,
-    options.placement,
-    bgClass($appearance, options.parentBgIndex ? options.parentBgIndex - 1 : 0),
+    options?.class,
+    options?.placement,
+    bgClass(
+      $appearance,
+      options?.parentBgIndex ? options?.parentBgIndex - 1 : 0
+    ),
     {
       "shadow-md border border-brs2 rounded-md": !isPreventDefaultStyling
     }

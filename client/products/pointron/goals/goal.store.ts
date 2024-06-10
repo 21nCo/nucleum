@@ -154,7 +154,7 @@ function initNewGoalStore() {
       setTimeout(() => {
         if (n.goal.isPinnedForQuickStart) appStore.gotoPath("/focus");
         else {
-          appStore.gotoPath(Item.goal);
+          // appStore.gotoPath(Item.goal);
         }
       }, 1000);
       toasts.trigger({
@@ -162,7 +162,13 @@ function initNewGoalStore() {
         message: "Created successfully",
         type: AlertType.SUCCESS,
         id: generateUID(),
-        actionText: "View"
+        actionText: "View",
+        callback: () => {
+          appStore.gotoResource(
+            Item.goal,
+            prefixTable(n.goal.id, Item.PointGoal)
+          );
+        }
       });
     }
   };

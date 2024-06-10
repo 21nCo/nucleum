@@ -52,13 +52,15 @@
     isHovering = false;
   }}
 >
-  <div
-    class={cn("opacity-0 w-12 min-w-[3rem] flex h-full", {
-      "opacity-100": (isHovering || isFocusing) && $mdStore.params?.isNodular
-    })}
-  >
-    <LeftControls {mdStore} {block} on:focus />
-  </div>
+  {#if $mdStore.params?.isNodular}
+    <div
+      class={cn("opacity-0 w-12 min-w-[3rem] flex h-full", {
+        "opacity-100": (isHovering || isFocusing) && $mdStore.params?.isNodular
+      })}
+    >
+      <LeftControls {mdStore} {block} on:focus />
+    </div>
+  {/if}
   <div class="grow">
     <BlockContent
       {block}

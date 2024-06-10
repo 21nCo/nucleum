@@ -5,8 +5,8 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { LaunchContext } from "$lib/client/types/appStore.type";
   import { Direction } from "$lib/client/types/direction.enum";
+  import context from "$lib/client/stores/context.store";
   export let isInFullScreen: boolean = false;
   let toolTipPlacement = Direction.Up;
 
@@ -47,7 +47,7 @@
       }}
     />
   {/if}
-  {#if !$view.isPortrait && $appStore.launchContext != LaunchContext.EMBED}
+  {#if !$view.isPortrait && !$context.isEmbed}
     <Button
       icon="pip"
       tooltip="Picture in picture"

@@ -33,7 +33,7 @@
     {style}
     on:click={handleClick}
     on:keydown={handleKeyDown}
-    class={`cursor-pointer text-b3 py-2 px-2.5  ${classList.common} ${
+    class={`cursor-pointer text-b2 py-2 px-2.5  ${classList.common} ${
       isSelected
         ? classList.selected
         : isActive

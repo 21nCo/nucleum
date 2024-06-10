@@ -18,10 +18,10 @@
   };
 </script>
 
-<FormControlLabelWrapper info={infoParams} {label}>
+<FormControlLabelWrapper props={{ label, tooltip: infoParams }}>
   <button class="relative text-b2 cursor-pointer w-full" on:click={copyText}>
     <BackgroundElement
-      classList="flex justify-between w-full px-3 py-2 text-fgs3 rounded-md border-none outline-none"
+      class="flex justify-between w-full px-3 py-2 text-fgs3 rounded-md border-none outline-none"
       parentBgIndex={parentBackgroundIndex}
     >
       {text}

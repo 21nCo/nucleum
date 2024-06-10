@@ -74,7 +74,7 @@
       on:touchstart|stopPropagation={startTouch}
       class={cn("relative flex w-full overflow-y-auto pb-60", {
         "flex-col gap-3 flex-grow": layout === Layout.LIST,
-        "flex-wrap gap-2": layout === Layout.GRID
+        "flex-wrap gap-2": layout != Layout.LIST
       })}
     >
       <!-- TODO - attach swipe refresh on touch device -->

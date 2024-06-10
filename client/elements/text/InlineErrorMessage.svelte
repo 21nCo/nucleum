@@ -12,7 +12,7 @@
 
 <div class="h-6 w-full flex justify-center">
   {#if error}
-    <div class="text-ars1 text-b3">
+    <div class="text-ars1 text-b2">
       {error}
     </div>
   {/if}

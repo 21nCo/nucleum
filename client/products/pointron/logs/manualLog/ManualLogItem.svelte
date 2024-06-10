@@ -19,11 +19,13 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import FocusNotes from "../../focus/notes/FocusNotes.svelte";
+  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   export let item: IManualSessionLogForm;
   let label: string = "";
   let selectedGoal: any = undefined;
   let inputRef: any;
   let selectedQuickAddItem: number = 0;
+  let error: string = "";
   if (item.goalId !== "") selectedGoal = { label: $swipeLabel };
   onMount(() => {
     setTimeout(() => {
@@ -49,6 +51,7 @@
   function onTimeChange(event: any) {
     let start: Date;
     let end: Date;
+    if (!performValidationChecks()) return;
     start = attachTimeToDate(item.startDate, item.startTime);
     end = attachTimeToDate(item.endDate, item.endTime);
     item.duration = (end.getTime() - start.getTime()) / 1000;
@@ -60,6 +63,26 @@
   function ondurationchange(event: any) {
     selectedQuickAddItem = 0;
     refreshStartTime();
+  }
+  function performValidationChecks() {
+    if (item.startDate.getFullYear() < 1971) {
+      error = "Please select a valid date. Year should be greater than 1971.";
+      return;
+    }
+    if (
+      (item.startDate.getTime() === item.endDate.getTime() &&
+        item.startTime > item.endTime) ||
+      item.startDate.getTime() > item.endDate.getTime()
+    ) {
+      error = "Start time should be less than end time.";
+      return;
+    }
+    if (item.duration <= 0) {
+      error = "Duration should be greater than 0.";
+      return;
+    }
+    error = "";
+    return true;
   }
 </script>
 
@@ -132,5 +155,8 @@
       on:change={ondurationchange}
     />
   </div>
-  <FocusNotes bind:md={item.notes} />
+  <div class="p-2 bg-bgs2 rounded-md">
+    <FocusNotes bind:md={item.notes} />
+  </div>
+  <InlineErrorMessage bind:error />
 </div>

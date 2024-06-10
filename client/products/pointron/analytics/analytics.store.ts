@@ -21,22 +21,19 @@ import { Item } from "$lib/client/types/item.enum";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { deepCopy } from "$lib/client/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import {
-  generateParamsForCards,
-  generateParamsForCharts
-} from "./analytics.utils";
+import { generateParamsForCards } from "./analytics.utils";
 
 const analyticsConfigStoreId = Item.pointAnalyticsConfig;
 
 const seedPage: AnalyticsPage = {
   id: generateUID(),
-  label: "new page",
+  label: "View 1",
   cards: [
     {
       id: generateUID(),
       grouping: AnalyticsCardGrouping.DEFAULT,
       filter: [],
-      type: AnalyticsCardType.PIE,
+      type: AnalyticsCardType.DONUT,
       period: {
         scale: TimeScale.DAYS,
         value: {
@@ -49,12 +46,12 @@ const seedPage: AnalyticsPage = {
       id: generateUID(),
       grouping: AnalyticsCardGrouping.DEFAULT,
       filter: [],
-      type: AnalyticsCardType.PIE,
+      type: AnalyticsCardType.TOP_N,
       period: {
         scale: TimeScale.DAYS,
         value: {
           type: TimePeriodType.RELATIVE,
-          param: -1
+          param: -7
         }
       }
     },
@@ -106,14 +103,12 @@ function initAnalyticsConfigStore() {
     const val = { ...seedAnalyticsConfig, pages: [deepCopy(seedPage)] };
     set(val);
     debounedPersist(val);
-    console.log("loading seed data - analytics config", val);
   };
   return {
     subscribe,
     update,
     loadSeedData,
     set: (config: AnalyticsConfigStore) => {
-      console.log("set analytics config", config);
       set(config);
       debounedPersist(config);
     },
@@ -123,7 +118,6 @@ function initAnalyticsConfigStore() {
       debounedPersist(val);
     },
     loader: (data: AnalyticsConfigStore) => {
-      console.log("load analytics config", data);
       // loadSeedData();
       if (!data.id || data.pages.length === 0) {
         loadSeedData();
@@ -135,25 +129,21 @@ function initAnalyticsConfigStore() {
     },
     updateCardConfig: (pageId: string, config: AnalyticsCard) => {
       update((state) => {
-        console.log("update card config", { pageId, config, state });
         const page = state.pages.find((p) => p.id === pageId);
         if (!page) return state;
         const chart = page.cards.find((c) => c.id === config.id);
         if (!chart) return state;
         Object.assign(chart, config);
-        console.log("updated card config", { pageId, config, state });
         return state;
       });
       debounedPersist(get(analyticsConfigStore));
     },
     removeCard: (pageId: string, chartId: string) => {
       update((state) => {
-        console.log("remove card", { pageId, chartId, state });
         const page = state.pages.find((p) => p.id === pageId);
         if (!page) return state;
         const index = page.cards.findIndex((c) => c.id === chartId);
         if (index > -1) {
-          console.log("remove card", { index });
           page.cards.splice(index, 1);
         }
         return state;
@@ -183,7 +173,6 @@ function initAnalyticsConfigStore() {
     },
     addPage: () => {
       update((state) => {
-        console.log("add page");
         state.pages.push({ ...seedPage, id: generateUID() });
         return state;
       });
@@ -202,14 +191,8 @@ function initAnalyticsConfigStore() {
       update((state) => {
         const index = state.pages.findIndex((p) => p.id === id);
         if (index > -1) {
-          console.log("remove page", { id, index });
           state.pages.splice(index, 1);
         }
-        console.log("removed page - pages after removal", {
-          id,
-          index,
-          state
-        });
         return state;
       });
       debounedPersist(get(analyticsConfigStore));
@@ -252,7 +235,6 @@ function initAnalyticsPageStore(config: AnalyticsPage) {
     update,
     reset: () => {},
     refresh: async () => {
-      console.log("refresh analytics page", { id });
       update((n) => {
         return { ...n, isRefreshing: true };
       });
@@ -282,7 +264,6 @@ function initAnalyticsPageStore(config: AnalyticsPage) {
         return false;
       }
       set({ data, id, config, isRefreshing: false });
-      console.log("refreshed analytics page", { config, id, data });
       return true;
     }
   };

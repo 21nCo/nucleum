@@ -101,6 +101,7 @@ function initPointLogStore() {
     saveManualLogs: async () => {
       let n = get(pointLogStore);
       logger.log({ context: "saving manual logs", n });
+      //TODO: Add validation and set error message in store
       let sessionEntries: PointSessionDbType[] = [];
       let logEntries: PointLogDbType[] = [];
       n.manualLogs.forEach((entry) => {
@@ -296,7 +297,6 @@ function initLogsPaneStore() {
     set,
     update,
     reset: () => {
-      console.log("resetting logsPaneStore");
       update((n) => {
         n.date = new Date();
         return n;
@@ -304,7 +304,6 @@ function initLogsPaneStore() {
     },
     loader: (data: any) => {
       const n = get(logsPaneStore);
-      console.log({ context: "logsPaneStore.loader", data });
       let logs = [];
       if (data && data.length > 0) {
         logs = data.map((x: any) => {

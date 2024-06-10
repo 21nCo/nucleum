@@ -122,6 +122,10 @@ export function isValidArray(arr: any) {
   return arr && Array.isArray(arr);
 }
 
+export function isArrayWithSameValue(arr: any[]) {
+  return arr.every((val, i, arr) => val === arr[0]);
+}
+
 export function deepCopy(obj: any) {
   return JSON.parse(JSON.stringify(obj));
 }
