@@ -10,6 +10,8 @@
   import account from "$lib/client/stores/account.store";
   import view from "$lib/client/stores/view.store";
   import { postTokenToExtension } from "$lib/client/utils/embed.utils";
+  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import { properCase } from "$lib/client/utils/text.utils";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -34,7 +36,7 @@
   });
 </script>
 
-<div class="flex flex-col w-full h-full justify-start pt-8 dp:pt-12">
+<div class="flex flex-col w-full h-full justify-center pt-8 dp:pt-12">
   <div
     class="w-full flex flex-col justify-start items-center {$view.scale > 0.6
       ? 'gap-16'
@@ -46,19 +48,30 @@
         {$appStore.appData.name}
       </div>
     </div> -->
+
     <div class="flex flex-col gap-6">
-      <PanelSwitcher
-        items={["Sign up", "Sign in"]}
-        value="Sign up"
-        style={PanelSwitcherStyle.BAR}
-        on:switch={(e) => {
-          if (e.detail === "Sign up") {
-            isSignup = true;
-          } else {
-            isSignup = false;
-          }
-        }}
-      />
+      <!-- TODO - reenable email signin/signup upon completion of forgot password flow -->
+      {#if $appStore.isDebugMode}
+        <PanelSwitcher
+          items={["Sign up", "Sign in"]}
+          value="Sign up"
+          style={PanelSwitcherStyle.BAR}
+          on:switch={(e) => {
+            if (e.detail === "Sign up") {
+              isSignup = true;
+            } else {
+              isSignup = false;
+            }
+          }}
+        />
+      {:else}
+        <div class="w-full flex flex-col justify-center items-center h-40">
+          <SubAtomLogo />
+          <div>
+            {properCase($appStore.product)}
+          </div>
+        </div>
+      {/if}
       {#if message}
         <div class="font-medium px-4 text-center text-ass1 text-b2 -mb-4">
           {message}

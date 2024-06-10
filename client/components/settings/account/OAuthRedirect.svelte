@@ -50,5 +50,5 @@
   }
 </script>
 
-<!-- <AppLoadingView message="Signing in" /> -->
-<AppLoadingView message={debugMessage} />
+<AppLoadingView message="Signing in" />
+<!-- <AppLoadingView message={debugMessage} /> -->

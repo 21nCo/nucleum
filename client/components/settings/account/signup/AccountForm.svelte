@@ -121,40 +121,42 @@
 </script>
 
 <!-- transition:fade -->
-<div class="flex flex-col {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
-  <div class="flex flex-col gap-2 justify-center items-center w-80">
-    <div class="flex flex-col w-full gap-4">
-      <TextInput
-        bind:value={email}
-        label={{
-          label: "Email",
-          orientation: Orientation.Vertical,
-          tooltip: isSignup
-            ? {
-                body:
-                  $appStore.appData.name +
-                  " doesn't store your email or password.",
-                action: $appStore.appData?.urls?.privacy
-              }
-            : undefined
-        }}
-        placeholder="username@email.com"
-      />
-      <TextInput
-        bind:value={pass}
-        label={{
-          label: "Password",
-          orientation: Orientation.Vertical,
-          tooltip: isSignup
-            ? {
-                body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
-              }
-            : undefined
-        }}
-        type="password"
-        placeholder="********"
-      />
-      <!-- <button
+<div class="flex flex-col w-80 {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
+  <!-- TODO - reenable email signin/signup upon completion of forgot password flow -->
+  {#if $appStore.isDebugMode}
+    <div class="flex flex-col gap-2 justify-center items-center">
+      <div class="flex flex-col w-full gap-4">
+        <TextInput
+          bind:value={email}
+          label={{
+            label: "Email",
+            orientation: Orientation.Vertical,
+            tooltip: isSignup
+              ? {
+                  body:
+                    $appStore.appData.name +
+                    " doesn't store your email or password.",
+                  action: $appStore.appData?.urls?.privacy
+                }
+              : undefined
+          }}
+          placeholder="username@email.com"
+        />
+        <TextInput
+          bind:value={pass}
+          label={{
+            label: "Password",
+            orientation: Orientation.Vertical,
+            tooltip: isSignup
+              ? {
+                  body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
+                }
+              : undefined
+          }}
+          type="password"
+          placeholder="********"
+        />
+        <!-- <button
         class="flex items-center gap-2 w-full"
         on:click={() => {
           isTrusted = !isTrusted;
@@ -163,28 +165,33 @@
         <input type="checkbox" class="h-4 w-4" bind:checked={isTrusted} />
         <div class="text-fgs3">Trust this device for 30 days</div>
       </button> -->
+      </div>
+      <InlineErrorMessage bind:error />
+      <Button
+        width="w-full"
+        type="primary"
+        label={isSignup
+          ? actionInProgress
+            ? "Signing up..."
+            : "Sign up with email"
+          : actionInProgress
+            ? "Signing in..."
+            : "Sign in"}
+        isLoading={actionInProgress}
+        on:click={handleClick}
+      />
     </div>
-    <InlineErrorMessage bind:error />
-    <Button
-      width="w-full"
-      type="primary"
-      label={isSignup
-        ? actionInProgress
-          ? "Signing up..."
-          : "Sign up with email"
-        : actionInProgress
-          ? "Signing in..."
-          : "Sign in"}
-      isLoading={actionInProgress}
-      on:click={handleClick}
-    />
-  </div>
+  {/if}
   {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
-    <div class="w-full flex justify-center items-center text-fgs3 text-b3 px-4">
-      <hr class="grow border-t border-bgs4" />
-      <div class="px-2">or</div>
-      <hr class="grow border-t border-bgs4" />
-    </div>
+    {#if $appStore.isDebugMode}
+      <div
+        class="w-full flex justify-center items-center text-fgs3 text-b3 px-4"
+      >
+        <hr class="grow border-t border-bgs4" />
+        <div class="px-2">or</div>
+        <hr class="grow border-t border-bgs4" />
+      </div>
+    {/if}
     <div class="w-full flex justify-center">
       <OAuthButtons />
     </div>

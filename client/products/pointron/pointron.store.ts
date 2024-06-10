@@ -40,7 +40,7 @@ const seedPresets: SessionComposition[] = [
     focusDuration: 28 * 60,
     breakDuration: 2 * 60,
     totalDuration: 0,
-    breakReminder: 60,
+    breakReminder: 600,
     numberOfBreaks: 1,
     name: "Preset 1",
     breakType: BreakCompositionType.PREDEFINED
@@ -52,7 +52,7 @@ const seedPresets: SessionComposition[] = [
     focusDuration: 10 * 60,
     breakDuration: 2 * 60,
     totalDuration: 0,
-    breakReminder: 60,
+    breakReminder: 600,
     numberOfBreaks: 1,
     name: "Morning focus",
     breakType: BreakCompositionType.PREDEFINED
@@ -64,7 +64,7 @@ const seedPresets: SessionComposition[] = [
     breakDuration: 10 * 60,
     totalDuration: 10 * 60 * 60,
     numberOfBreaks: 9,
-    breakReminder: 60,
+    breakReminder: 600,
     name: "10 hr deep study",
     breakType: BreakCompositionType.PREDEFINED
   }
@@ -137,7 +137,7 @@ export const seedLocalPreferences: PointronPreferences = {
   horizonCharts: defaultHorizonChartConfiguration,
   horizonsWithTarget: [],
   horizonTargets: [],
-  breakReminder: 60,
+  breakReminder: 60 * 30,
   uiStates: {
     all: {
       quickFocusLayout: Layout.LIST,
