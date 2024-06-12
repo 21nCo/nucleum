@@ -1,10 +1,10 @@
 import { get, writable } from "svelte/store";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { Item } from "../types/item.enum";
-import { StoreDataType } from "../types/data.type";
-import type { Space, SpaceStore } from "../types/space.type";
+import { Item } from "../../types/item.enum";
+import { StoreDataType } from "../../types/data.type";
+import type { Space, SpaceStore } from "../../types/space.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
-import { retrieveLocally } from "../utils/storage.utils";
+import { retrieveLocally } from "../../utils/storage.utils";
 
 const cachedSpaceInContext = retrieveLocally(Item.spaceInContext);
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);
@@ -32,6 +32,15 @@ function initSpaceStore() {
       spaces: n.spaces
     } as SpaceStore);
   };
+  const switchSpace = async (data: any, space: Space) => {
+    if (data.id && data.token) {
+      localStorage.setItem("token-" + data.id, data.token);
+    }
+    spaceInContext.set(space);
+    localStorage.setItem(Item.spaceInContext, JSON.stringify(space));
+    //modalEvent.hideSpecific(GatheryEvent.SPACE_BROWSER);
+    return true;
+  };
   return {
     subscribe,
     set,
@@ -40,10 +49,8 @@ function initSpaceStore() {
       const response = await performApiCall("space/n/action", "POST", {
         action: "get_all"
       });
-      console.log({ response });
       if (response?.ok) {
         const data = await response.json();
-        console.log({ data });
         update((n) => {
           n.spaces = data.map(
             (x: { role: string; details: any; id: string }) => {
@@ -56,8 +63,25 @@ function initSpaceStore() {
         });
       }
     },
-    switchToSpace: async (space: Space) => {
-      //TODO - loading - switching
+    createSpace: async (name: string) => {
+      const response = await performApiCall("space/n/action", "POST", {
+        action: "create",
+        name
+      });
+      if (response?.ok) {
+        const data = await response.json();
+        if (!data) return;
+        switchSpace(data, { id: data.id, label: data.name } as Space);
+        update((n) => {
+          n.spaces = [...n.spaces, { id: data.id, label: data.name, slug: "" }];
+          cache(n);
+          return n;
+        });
+      }
+    },
+    switchToSpace: async (id: string) => {
+      const space = get(spaceStore).spaces.find((x) => x.id === id);
+      if (!space) return;
       const response = await performApiCall("space/n/action", "POST", {
         action: "switch",
         id: space.id
@@ -65,12 +89,7 @@ function initSpaceStore() {
       if (response?.ok) {
         const data = await response.json();
         console.log("switch response:", { data });
-        if (data.id && data.token) {
-          localStorage.setItem("token-" + data.id, data.token);
-        }
-        spaceInContext.set(space);
-        localStorage.setItem(Item.spaceInContext, JSON.stringify(space));
-        //modalEvent.hideSpecific(GatheryEvent.SPACE_BROWSER);
+        return switchSpace(data, space);
       }
     }
   };

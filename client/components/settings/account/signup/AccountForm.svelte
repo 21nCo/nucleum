@@ -144,6 +144,7 @@
         />
         <TextInput
           bind:value={pass}
+          id="password"
           label={{
             label: "Password",
             orientation: Orientation.Vertical,
