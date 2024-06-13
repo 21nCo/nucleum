@@ -157,7 +157,8 @@ export const globalActions: IAction[] = [
     icon: "lock-closed",
     type: ActionType.MODAL,
     contentType: ContentType.SPACE_DOC,
-    link: "e0t7ukrazp277ukhj0sj:7l5gyy2n5fdyqhnklk34"
+    // link: "e0t7ukrazp277ukhj0sj:7l5gyy2n5fdyqhnklk34"
+    link: "lfaa8ndolu6jfe5y5o8w:lx9776rm8dfmu4vr74bvopep"
   },
   {
     action: "changelog",

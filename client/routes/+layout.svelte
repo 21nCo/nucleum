@@ -13,12 +13,11 @@
     $appearance.colorScheme.tailwindSelector}"
 >
   <BaseLayer>
+    {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
+      <AppLoadingView />
+    {/if}
     <LocalBaseLayer>
-      {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
-        <AppLoadingView />
-      {:else}
-        <slot />
-      {/if}
+      <slot />
     </LocalBaseLayer>
   </BaseLayer>
 </div>

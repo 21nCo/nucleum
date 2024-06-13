@@ -250,7 +250,7 @@
 {#if $appStore?.appData?.isAnalyticsEnabled}
   <AnalyticsLayer />
 {/if}
-<title>{$appStore.appData.name}</title>
+<title>{$appStore?.appData?.name ?? "Loading..."}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>
     <slot />
