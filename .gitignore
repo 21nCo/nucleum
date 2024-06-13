@@ -12,3 +12,8 @@ vite.config.ts.timestamp-*
 
 #circular dependency graphs generated using madge
 graph*.png
+
+
+#Cdk specific
+**/cdk.**.json
+**/cdk.out
