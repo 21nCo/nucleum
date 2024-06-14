@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { IBlock, IMarkdown } from "$lib/client/types/memotron/md.type";
+  import type {
+    IBlock,
+    IMarkdown,
+    IMarkdownParams
+  } from "$lib/client/types/memotron/md.type";
   import {
     NodeType,
     headingNodeTypes,
@@ -77,6 +81,7 @@
    * {@link md} and {@link childrenWithStructure} maintains the root blocks and structure of the markdown. Using this anchorBlock, {@link _md} and {@link focusedBlockChildrenWithStructure} - changes are propagated back to {@link md} and {@link childrenWithStructure}.
    */
   let anchorBlock: string | undefined = undefined;
+  export let params: IMarkdownParams | undefined = undefined;
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
     reCalculateStructure(_md, true);
@@ -402,7 +407,7 @@
       isNodular,
       placeholder: "Start typing or choose a type to get started...",
       canUseSlashShortcut: true,
-      isReadOnly: false
+      ...params
     }}
     on:change={onBlockChanges}
     on:insert={onBlockInsertV2}

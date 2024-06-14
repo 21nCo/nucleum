@@ -20,7 +20,7 @@
     <QuickStartLayoutToggle />
   </div> -->
 {:else}
-  <div class="flex gap-1 w-full max-w-full items-center h-10 min-h-[2.5rem]">
+  <div class="flex gap-3 w-full max-w-full items-center h-10 min-h-[2.5rem]">
     {#if isShowSearchBar}
       <div class="flex-grow">
         <Autocomplete

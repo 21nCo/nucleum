@@ -138,44 +138,69 @@ export const globalActions: IAction[] = [
   },
   {
     action: "credits",
-    label: "Credits",
+    get label() {
+      return this.modalParams?.title;
+    },
     icon: "face-smile",
     type: ActionType.MODAL,
     contentType: ContentType.SPACE_DOC,
-    link: "credits"
+    modalParams: {
+      title: "Credits",
+      layout: {
+        size: Size.lg
+      }
+    }
   },
   {
     action: "git",
     label: "Star us on git",
     icon: "star",
-    type: ActionType.LINK,
-    link: "git"
+    type: ActionType.LINK
   },
   {
     action: "privacy",
-    label: "Privacy policy",
+    get label() {
+      return this.modalParams?.title;
+    },
     icon: "lock-closed",
     type: ActionType.MODAL,
     contentType: ContentType.SPACE_DOC,
-    // link: "e0t7ukrazp277ukhj0sj:7l5gyy2n5fdyqhnklk34"
-    link: "lfaa8ndolu6jfe5y5o8w:lx9776rm8dfmu4vr74bvopep"
+    modalParams: {
+      title: "Privacy policy",
+      layout: {
+        size: Size.xl
+      }
+    }
   },
   {
     action: "changelog",
-    label: "What's new",
+    get label() {
+      return this.modalParams?.title;
+    },
     icon: "sparkles",
     type: ActionType.MODAL,
     contentType: ContentType.SPACE_DOC,
-    link: "changelog"
+    modalParams: {
+      title: "What's new",
+      layout: {
+        size: Size.xl
+      }
+    }
   },
   {
     action: AppEvent.ROADMAP,
-    label: "Roadmap",
+    get label() {
+      return this.modalParams?.title;
+    },
     icon: "map",
     type: ActionType.MODAL,
     contentType: ContentType.SPACE_DOC,
-    link: "roadmap"
-    // on db - gathery id will be saved for this key ex: roadmap: "gathery:page:id"
+    modalParams: {
+      title: "Roadmap",
+      layout: {
+        size: Size.xl
+      }
+    }
   },
   {
     action: "feedback",

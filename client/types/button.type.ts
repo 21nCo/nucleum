@@ -14,6 +14,7 @@ export type ButtonParams = {
   action?: string;
   size?: Size;
   variant?: ButtonVariant;
+  style?: ButtonStyle;
 };
 
 export enum ButtonVariant {
