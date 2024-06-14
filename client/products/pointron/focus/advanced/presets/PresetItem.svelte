@@ -63,7 +63,9 @@
           >
             {#if preset.name}
               <div
-                class="{isExpandedVariant ? 'text-b2' : 'text-b3'} font-medium"
+                class="{isExpandedVariant
+                  ? 'text-b2'
+                  : 'text-b3'} font-medium w-24 truncate"
               >
                 {preset.name}
               </div>

@@ -18,6 +18,16 @@
     }
     if ($context.isSheet) postMessageToParent(EmbedMessage.SHEET_MOUNTED);
   });
+  function resolveSpaceDocumentParams(link: string) {
+    if (!link) return { spaceId: "", documentId: "" };
+    if (!link.includes(":")) {
+      link = $appStore.appData.urls[link];
+      console.log({ link, urls: $appStore.appData.urls });
+    }
+    if (!link || link.includes("http")) return { spaceId: "", documentId: "" };
+    const [spaceId, documentId] = link.split(":");
+    return { spaceId, documentId };
+  }
 </script>
 
 {#if action?.contentType === ContentType.BUTTON}
@@ -29,12 +39,9 @@
     }}
   />
 {:else if action?.contentType === ContentType.SPACE_DOC}
-  {#if action.link}
-    <SpaceDocument
-      documentId={action.link.split(":")[1]}
-      spaceId={action.link.split(":")[0]}
-    />
-  {/if}
+  <SpaceDocument
+    params={resolveSpaceDocumentParams(action.link ?? action.action)}
+  />
 {:else if $context.isSheet && action}
   <ModalLayout path={action.action} params={action.modalParams ?? {}}>
     <svelte:component this={action?.component} {...params} />

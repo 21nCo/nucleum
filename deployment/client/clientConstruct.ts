@@ -8,17 +8,18 @@ import * as cloudfront_origins from "aws-cdk-lib/aws-cloudfront-origins";
 import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
-import { CommonStack } from "./commonStack";
-import type { ClientStackProps } from "./types/clientStackProps.type";
-import { resolveDomainName } from "./deployutils";
+import { CommonStack } from "../commonStack";
+import type { ClientStackProps } from "../types/clientStackProps.type";
+import { resolveDomainName } from "../deployutils";
 
-export class ClientStack extends Construct {
+export class ClientConstruct extends Construct {
   constructor(parent: Stack, name: string, props: ClientStackProps) {
     super(parent, name);
     const siteDomain = resolveDomainName(props);
     const { zone, certificate } = new CommonStack(this, "CommonStack", props, {
       domain: props.domain,
-      subdomain: props.subdomain
+      subdomain: props.subdomain,
+      isUseParentZone: props.isUseParentZone
     });
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(
       this,
@@ -90,7 +91,7 @@ export class ClientStack extends Construct {
     });
 
     new s3deploy.BucketDeployment(this, "DeployWithInvalidation", {
-      sources: [s3deploy.Source.asset("./../build")],
+      sources: [s3deploy.Source.asset("./../../../build")],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"]

@@ -6,8 +6,8 @@
   import account from "$lib/client/stores/account.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   //TODO - remove dependency on localEvent
-  import { GatheryEvent } from "$local/types/localEvent.enum";
-  import { spaceInContext } from "$lib/client/stores/space.store";
+  import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
+  import { spaceInContext } from "$lib/client/products/gathery/space.store";
   import { appStore } from "$lib/client/stores/app.store";
   export let items: string[];
   let selected: string = items[0];

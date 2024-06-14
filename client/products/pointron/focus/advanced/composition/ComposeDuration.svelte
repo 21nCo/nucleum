@@ -131,7 +131,7 @@
   </div>
   <div class="flex flex-col flex-grow gap-8">
     {#if composition.type === SessionCompositionType.POMODORO}
-      <div class="flex flex-col gap-2 items-center h-96 overflow-y-auto">
+      <div class="flex flex-col gap-6 items-center h-96 overflow-y-auto">
         <PomodoroUnitView bind:composition on:change />
         {#if composition.additional && composition.additional.length > 0}
           {#each composition.additional as item}

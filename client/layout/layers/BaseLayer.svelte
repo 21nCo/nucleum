@@ -74,9 +74,6 @@
     dataManager.refreshOnAppear();
     appStore.checkForUpdates();
     account.ping();
-
-    //Removed - Use <svelte:document on:visibilitychange={handleVisibilityChange} /> in the required component instead
-    //appEvents.publish(AppEvent.WINDOW_VISIBILITY_CHANGED, event);
   };
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
@@ -253,7 +250,7 @@
 {#if $appStore?.appData?.isAnalyticsEnabled}
   <AnalyticsLayer />
 {/if}
-<title>{$appStore.appData.name}</title>
+<title>{$appStore?.appData?.name ?? "Loading..."}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>
     <slot />

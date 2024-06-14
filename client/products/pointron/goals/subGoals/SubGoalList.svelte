@@ -53,7 +53,7 @@
     {:else}
       <EmptyStatusView subText="No sub goals found" size={Size.sm} />
     {/if}
-    <div class="flex flex-col">
+    <div class="flex flex-col gap-4">
       <Divider colorStrength={ColorStrength.Strong} />
       <AddNewSubGoal />
     </div>
