@@ -1,4 +1,4 @@
-import { performAdminQuery } from "./surrealHelpers";
+import { performAdminQuery, performMasterQuery } from "./surrealHelpers";
 
 export function extractProduct(host: string) {
   const domain = host.split(/\.com|\.org|\.io|\.run/)[0];
@@ -36,13 +36,13 @@ export async function retrieveAppData(body: any) {
   const product = extractProduct(body.app);
   //   console.log({ product });
   const query = `select * from product:${product.product}`;
-  const queryResponseJson = await performAdminQuery(query);
+  const queryResponseJson = await performMasterQuery(query);
   //   console.log({ queryResponseJson });
   const result = queryResponseJson[0].result[0];
   let appData = {
     ...result,
     env: product.env,
-    product: product.product,
+    product: product.product
   };
   if (result.env?.[product.env]) {
     appData = { ...appData, ...result.env[product.env] };
@@ -60,7 +60,7 @@ export async function saveSubscription(body: any) {
     const { email, app, context } = body;
     let createQuery = "";
     const product = extractProduct(app);
-    const userResponseJson = await performAdminQuery(
+    const userResponseJson = await performMasterQuery(
       `select value meta::id(id) from user where email = "${email}" or emailhash = crypto::md5("${email}"); 
       select value meta::id(id) from product where urls.landing = "${app}";`
     );
@@ -86,7 +86,7 @@ export async function retrieveUrlForShortener(slug: string) {
   console.log({ slug });
   try {
     const query = "select value url from slug:" + slug;
-    const queryResponseJson = await performAdminQuery(query);
+    const queryResponseJson = await performMasterQuery(query);
     console.log({ queryResponseJson });
     const result = queryResponseJson[0].result[0];
     return result;

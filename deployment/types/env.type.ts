@@ -13,10 +13,12 @@ export type Environment = {
   tidyregion: string;
   dbUser: string;
   dbPass: string;
+  masterDbPass: string;
   adminNamespace: string;
   adminDatabase: string;
   userNamespace: string;
   spaceNamespace: string;
   token: string;
   db: string;
+  masterDb: string;
 };

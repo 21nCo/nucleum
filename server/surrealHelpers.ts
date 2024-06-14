@@ -16,13 +16,20 @@ export async function performQuery(body: any) {
       Authorization: "Basic " + process.env.VITE_AUTH,
       Accept: "application/json",
       NS: process.env.USER_NS ?? "",
-      DB: process.env.SURREAL_USER_DB ?? "",
-    },
+      DB: process.env.SURREAL_USER_DB ?? ""
+    }
   });
   console.log({ body, response });
   return await response.json();
 }
-
+export async function performMasterQuery(query: any) {
+  return performRootQuery({
+    query,
+    dbType: CONTEXT.ADMIN,
+    instance: process.env.MASTER_DB_INSTANCE,
+    isMasterDb: true
+  });
+}
 export async function performAdminQuery(query: any) {
   return performRootQuery({ query, dbType: CONTEXT.ADMIN });
 }
@@ -33,7 +40,7 @@ export async function performScopeQuery(query: any, agent: Agent) {
   return performRootQuery({
     query,
     dbType,
-    db: agent.db,
+    db: agent.db
   });
 }
 
@@ -43,7 +50,12 @@ async function performRootQuery(params: DatabaseQueryParams) {
   headers.append("Content-Type", "text/plain");
   headers.append(
     "Authorization",
-    "Basic " + btoa(process.env.DB_USER + ":" + process.env.DB_PASS)
+    "Basic " +
+      btoa(
+        process.env.DB_USER +
+          ":" +
+          (params.isMasterDb ? process.env.MASTER_DB_PASS : process.env.DB_PASS)
+      )
   );
   headers.append("Accept", "application/json");
   headers.append(
@@ -66,14 +78,14 @@ async function performRootQuery(params: DatabaseQueryParams) {
     headers:
       headers instanceof Headers
         ? Object.fromEntries(headers.entries())
-        : headers,
+        : headers
   });
-  let endPoint = process.env.DB_INSTANCE + "/sql";
+  let endPoint = (params.instance ?? process.env.DB_INSTANCE) + "/sql";
   // console.log({ endPoint });
   const response = await fetch(endPoint, {
     method: "POST",
     body,
-    headers,
+    headers
   });
   console.log({ endPoint, response });
   // const json = await response.text();

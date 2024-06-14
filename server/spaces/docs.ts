@@ -7,7 +7,7 @@ export async function retrieveDoc(body: any, agent: Agent) {
   const response = await performScopeQuery(query, {
     db: spaceId,
     context: CONTEXT.SPACE,
-    id: agent.id,
+    id: spaceId
   });
   return response[0];
 }
