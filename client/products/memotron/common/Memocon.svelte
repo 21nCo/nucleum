@@ -2,11 +2,11 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import AvatarPicker from "$lib/client/elements/avatarPicker/AvatarPicker.svelte";
   import { captureStore } from "../capture/capture.store";
-  import { AvatarType, type Avatar } from "$lib/client/types/avatar.type";
+  import { AvatarType, type IAvatar } from "$lib/client/types/avatar.type";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
-  export let avatar: Avatar | undefined = undefined;
+  export let avatar: IAvatar | undefined = undefined;
   export let size: Size = Size.md;
   let ref: any;
   $isInEditMode = true;

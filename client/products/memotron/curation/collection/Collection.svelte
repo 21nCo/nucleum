@@ -218,6 +218,7 @@
       >
         <PanelSwitcher
           items={viewsForSwitcher}
+          isEnableAnimationForTitle={true}
           style={PanelSwitcherStyle.BAR}
           title={isStickied ? $collection.label : ""}
           isExpandToFullWidth={true}

@@ -145,7 +145,8 @@ export const inlineStylingPatterns = [
     replacement: encapsulateInlinePattern("**", "<b>$1</b>")
   },
   {
-    regex: /_((?:\s*\S)+?)_/g,
+    // regex: /_((?:\s*\S)+?)_/g,
+    regex: /_(.*?)_/g,
     replacement: encapsulateInlinePattern("_", "<u>$1</u>")
   },
   {
@@ -237,4 +238,66 @@ export function isEmptyMd(md: IMarkdown) {
       "body" in md.blocks[0] &&
       md.blocks[0].body === "")
   );
+}
+
+export const htmlToMarkdownPatterns = [
+  {
+    regex: /<i>(.*?)<\/i>/g,
+    replacement: "*$1*"
+  },
+  {
+    regex: /<b>(.*?)<\/b>/g,
+    replacement: "**$1**"
+  },
+  {
+    regex: /<u>(.*?)<\/u>/g,
+    replacement: "_$1_"
+  },
+  {
+    regex: /<s>(.*?)<\/s>/g,
+    replacement: "~~$1~~"
+  },
+  {
+    regex: /<span class=["']bg-aps2 px-1 font-mono["']>(.*?)<\/span>/g,
+    replacement: "`$1`"
+  },
+  {
+    regex:
+      /<button[^>]*id=\"(.*?)\"[^>]*class=\".*?mention.*?\"[^>]*>(.*?)<\/button>/g,
+    replacement: (match, id, label) => `[${label}](resource=${id})`
+  }
+];
+
+function replaceNestedSpans(html: string): string {
+  const spanRegex = /<span[^>]*>(.*?)<\/span>/gs;
+  let replacedHtml = html;
+  let previousHtml = "";
+  while (previousHtml !== replacedHtml) {
+    previousHtml = replacedHtml;
+    replacedHtml = replacedHtml.replace(spanRegex, (_, group1) =>
+      group1.replace(/&nbsp;/g, " ")
+    );
+  }
+  return replacedHtml;
+}
+
+function removeHtmlComments(html: string): string {
+  const commentRegex = /<!--(.*?)-->/gs;
+  let replacedHtml = html;
+  let previousHtml = "";
+  while (previousHtml !== replacedHtml) {
+    previousHtml = replacedHtml;
+    replacedHtml = replacedHtml.replace(commentRegex, "");
+  }
+  return replacedHtml;
+}
+
+export function extractInlineMarkdownFromHtml(html: any) {
+  let markdown = html;
+  htmlToMarkdownPatterns.forEach((pattern) => {
+    markdown = markdown.replaceAll(pattern.regex, pattern.replacement);
+  });
+  markdown = replaceNestedSpans(markdown);
+  markdown = removeHtmlComments(markdown);
+  return markdown;
 }

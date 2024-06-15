@@ -9,7 +9,7 @@
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import TextInput from "../input/TextInput.svelte";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-  import type { PopoverOptions } from "$lib/client/types/popover.type";
+  import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import DropDownItemView from "./DropDownItemView.svelte";
   import InputBaseElement from "../InputBaseElement.svelte";
@@ -35,7 +35,7 @@
   let search: string = "";
   let searchInputRef: any;
   let isActive: boolean = false;
-  let popoverOptions: PopoverOptions = {
+  let popoverOptions: IPopoverOptions = {
     element: "div",
     class: "max-h-80 overflow-y-auto py-4",
     parentBgIndex: parentBackgroundIndex,

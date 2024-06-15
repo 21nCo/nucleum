@@ -22,7 +22,7 @@ export type AvatarWithCode<T = EmojiAvatar | IconAvatar> = {
   code: string;
 } & T;
 
-export type Avatar<T = EmojiAvatar | IconAvatar> =
+export type IAvatar<T = EmojiAvatar | IconAvatar> =
   | AvatarWithCode<T>
   | CustomUploadedAvatar;
 

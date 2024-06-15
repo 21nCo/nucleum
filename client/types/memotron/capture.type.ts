@@ -1,4 +1,4 @@
-import type { Avatar } from "$lib/client/types/avatar.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { ICacheableStore } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
 import type {
@@ -22,7 +22,7 @@ export type CaptureStore = ICacheableStore & {
    * @deprecated
    * There will no avatar for non type based entries. Use type.avatar instead
    */
-  avatar?: Avatar;
+  avatar?: IAvatar;
   captureType: CaptureType | string;
   type?: any;
   body: IMarkdown | MediaBody;

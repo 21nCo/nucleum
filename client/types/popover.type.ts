@@ -1,6 +1,6 @@
 import type { Direction } from "./direction.enum";
 
-export type PopoverOptions = {
+export type IPopoverOptions = {
   element?: "div" | "button";
   class?: string;
   id?: string;
@@ -9,4 +9,13 @@ export type PopoverOptions = {
   placement?: Direction;
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
+  isPlaceAtCaret?: boolean;
+};
+
+export type IPopoverRenderParams = {
+  triggerRect: DOMRect;
+  popRef: HTMLElement;
+  location: Direction;
+  isSpanToTriggerWidth: boolean;
+  offsetInPx: number;
 };

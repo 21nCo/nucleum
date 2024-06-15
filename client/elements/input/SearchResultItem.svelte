@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { cn } from "$lib/client/utils/ui.utils";
+
   export let label: string;
   export let isActive: boolean = false;
   let itemRef: HTMLButtonElement;
@@ -9,9 +11,14 @@
 <button
   bind:this={itemRef}
   on:click
-  class="p-2 truncate w-full h-10 min-h-[2.5rem] hover:bg-bgs2 flex {isActive
-    ? ' bg-bgs2 bg-opacity-70 font-medium'
-    : ''}"
+  class={cn("p-2 w-full hover:bg-bgs2 flex items-start", {
+    "bg-bgs2 bg-opacity-70 font-medium": isActive,
+    "min-h-[2.5rem] h-10": !$$slots.default
+  })}
 >
-  {label}
+  <slot>
+    <span class="truncate">
+      {label}
+    </span>
+  </slot>
 </button>

@@ -14,7 +14,7 @@
   import { debouncer } from "$lib/client/utils/utils";
   import {
     AvatarType,
-    type Avatar,
+    type IAvatar,
     type CustomUploadedAvatar,
     type AvatarWithCode,
     type IconAvatar,
@@ -37,8 +37,8 @@
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
   type StoreAvatars = {
-    "Frequently Used": Avatar[][];
-    Custom: Avatar[][];
+    "Frequently Used": IAvatar[][];
+    Custom: IAvatar[][];
   } & {
     [category: string]: { name: string; code: string }[][];
   };
@@ -212,7 +212,7 @@
    * @param emote - The clicked emoji or icon.
    */
   function addToUsedList(emote: any) {
-    let tempEmote = deepCopy(emote) as Avatar;
+    let tempEmote = deepCopy(emote) as IAvatar;
     if (mode == AvatarType.ICON) {
       let index = $userPreferences.avatarPicker.usedIcons?.findIndex((el) => {
         return (

@@ -5,11 +5,11 @@
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import type { PopoverOptions } from "$lib/client/types/popover.type";
+  import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import EndText from "../EndText.svelte";
   import SelectOptionsEditor from "./SelectOptionsEditor.svelte";
   export let property: IProperty;
-  let popoverOptions: PopoverOptions = {
+  let popoverOptions: IPopoverOptions = {
     id: "select-property-config-popover",
     class: "h-96",
     isSpanToTriggerWidth: true

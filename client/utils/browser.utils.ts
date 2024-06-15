@@ -3,6 +3,7 @@ import view from "$lib/client/stores/view.store";
 import { Direction } from "$lib/client/types/direction.enum";
 import { OS } from "$lib/client/types/os.enum";
 import { appStore } from "../stores/app.store";
+import type { IPopoverRenderParams } from "../types/popover.type";
 
 function documentDimensions() {
   let documentWidth = get(view).width;
@@ -49,6 +50,22 @@ export function renderPopover(parentRef: HTMLElement, popRef: HTMLElement) {
   // console.log({ popRef, popRect });
 }
 
+/**
+ * Renders a popover at the caret position
+ * @param params
+ * @returns
+ */
+export function renderPopoverAtCaretPosition(
+  params: Omit<IPopoverRenderParams, "triggerRect" | "isSpanToTriggerWidth">
+) {
+  const selection = window.getSelection();
+  if (selection?.rangeCount === 0) return;
+  const range = selection?.getRangeAt(0);
+  const rect = range?.getBoundingClientRect();
+  if (!rect) return;
+  _renderPopover({ ...params, triggerRect: rect, isSpanToTriggerWidth: false });
+}
+
 export function renderPopoverv2(
   parentRef: HTMLElement,
   popRef: HTMLElement,
@@ -57,6 +74,18 @@ export function renderPopoverv2(
   offsetInPx = 2
 ) {
   const triggerRect = parentRef.getBoundingClientRect();
+  _renderPopover({
+    triggerRect,
+    popRef,
+    location,
+    isSpanToTriggerWidth,
+    offsetInPx
+  });
+}
+
+function _renderPopover(params: IPopoverRenderParams) {
+  let { triggerRect, popRef, location, isSpanToTriggerWidth, offsetInPx } =
+    params;
   popRef.style.display = "block";
   popRef.style.opacity = "0";
   let popRect = popRef.getBoundingClientRect();
@@ -64,21 +93,19 @@ export function renderPopoverv2(
   popRef.style.position = "fixed";
   //set z index
   popRef.style.zIndex = "100";
-  if (
-    location === Direction.BottomLeft &&
-    documentHeight - triggerRect.bottom < popRect.height
-  ) {
-    location = Direction.TopLeft;
-  } else if (
-    location === Direction.TopLeft &&
-    triggerRect.top < popRect.height
-  ) {
-    location = Direction.BottomLeft;
-  } else if (
-    location === Direction.Down &&
-    documentHeight - triggerRect.bottom < popRect.height
-  ) {
-    location = Direction.Up;
+
+  if (triggerRect.top < popRect.height) {
+    if (location === Direction.TopLeft) location = Direction.BottomLeft;
+  }
+  if (documentHeight - triggerRect.bottom < popRect.height) {
+    if (location === Direction.Down) location = Direction.Up;
+    else if (location === Direction.BottomLeft) location = Direction.TopLeft;
+    else if (location === Direction.BottomRight) location = Direction.TopRight;
+  }
+  if (documentWidth - triggerRect.right < popRect.width) {
+    if (location === Direction.Right) location = Direction.Left;
+    if (location === Direction.Down) location = Direction.BottomRight;
+    if (location === Direction.Up) location = Direction.TopRight;
   }
   if (location === Direction.BottomLeft) {
     popRef.style.left = `${triggerRect.left}px`;

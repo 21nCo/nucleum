@@ -1,6 +1,6 @@
 import type { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { TimeScale } from "./time.type";
-import type { Avatar } from "./avatar.type";
+import type { IAvatar } from "./avatar.type";
 import type { ICacheableStore } from "./data.type";
 export type UserGlobalPreferences = ICacheableStore & {
   nickName: string;
@@ -27,10 +27,10 @@ export type UserGlobalPreferences = ICacheableStore & {
   };
   avatarPicker: {
     skinIndex: number;
-    usedEmojis: [Avatar][];
+    usedEmojis: [IAvatar][];
     iconColor: string;
     filled: boolean;
-    usedIcons: [Avatar][];
+    usedIcons: [IAvatar][];
   };
   annotations: any[];
   /**

@@ -7,11 +7,15 @@
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import {
+    extractInlineMarkdownFromHtml,
     findInlineStylingPatterns,
     findSymbolPatterns,
+    replaceInlineStylePatterns,
     replaceSymbolPatterns
   } from "../markdown.utils";
   import { deepCopy } from "$lib/client/utils/obj.utils";
+  import type { deprecated } from "pdfjs-dist/types/src/display/display_utils";
+  import InlineMention from "./InlineMention.svelte";
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
@@ -70,15 +74,31 @@
   let caretPositionT1: number | undefined = undefined;
   let markerId = "caret-marker";
   let isNewSpanInserted = false;
+  /**
+   * @deprecated
+   * @param text
+   */
   let spans: SpanContent[] =
     typeof content === "string" ? parseSpansFromText(content) : [];
   // replaceInlineStyling();
 
   onMount(() => {
     customCaret = document.getElementById("customcaret");
-    innerHTML = content ?? "";
+    innerHTML = content ? replaceInlineStylePatterns(content) : "";
+    renderMentionPlaceholders();
+    setTimeout(() => {
+      renderMentions(true);
+    }, 10);
+    console.log("onMount", { content, innerHTML });
   });
 
+  function renderMentionPlaceholders() {
+    const regex = /\[(.*?)\]\(resource=(.*?)\)/g;
+    innerHTML = innerHTML.replace(
+      regex,
+      (match, p1, p2) => `<mention data-id='${p2}'></mention>`
+    );
+  }
   export function focus(offset: number = 0) {
     const element = blockRef;
     if (!element) return;
@@ -94,6 +114,27 @@
   export function replace(target: string, replacement: string) {
     innerHTML = innerHTML.replace(target, replacement);
   }
+  export function addMention(item: any) {
+    console.log("addMention - start", { item, content, innerHTML });
+    const query = content?.split("@")[1];
+    content = content?.replace(
+      "@" + query,
+      `[${item.label}](resource=${item.id})`
+    );
+    innerHTML = innerHTML.replace(
+      "@" + query,
+      `<mention data-id='${item.id}'></mention>`
+    );
+    console.log("addMention - after adding placeholder", {
+      query,
+      content,
+      innerHTML
+    });
+    setTimeout(() => {
+      renderMentions();
+    }, 10);
+    // refreshMentions();
+  }
   export function set(content: string) {
     innerHTML = content;
   }
@@ -101,6 +142,58 @@
     innerHTML = innerHTML.split("/")[0];
     content = blockRef.textContent;
     dispatch("change", content);
+  }
+
+  /**
+   * @deprecated
+   */
+  export function renderMentionsv1() {
+    const mentions = document.querySelectorAll("mention");
+    console.log("refreshMentions", mentions);
+    document.querySelectorAll("mention").forEach((el) => {
+      const id = el.getAttribute("data-id") ? el.getAttribute("data-id") : "";
+      console.log("refreshMentions", { el, id });
+      new InlineMention({ target: el, props: { id } });
+
+      // Restore the caret position
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.setStartAfter(el);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+  }
+  export function renderMentions(isInitialRender: boolean = false) {
+    const container = document.getElementById(id);
+    if (!container) return;
+    const mentions = container.querySelectorAll("mention");
+    console.log("refreshMentions", mentions);
+    mentions.forEach((el) => {
+      const id = el.getAttribute("data-id") ? el.getAttribute("data-id") : "";
+      console.log("refreshMentions", { el, id });
+      const placeholder = document.createElement("div");
+      const inlineMention = new InlineMention({
+        target: placeholder,
+        props: { id }
+      });
+      if (isInitialRender) {
+        el.replaceWith(...placeholder.childNodes);
+        return;
+      }
+      newInlineSpanId = generateUID();
+      caretPositionT2 = {
+        ...caretPositionT2,
+        index: caretPositionT2?.index ?? 0,
+        elementId: newInlineSpanId
+      };
+      let newSpan = document.createElement("span");
+      newSpan.id = newInlineSpanId;
+      newSpan.innerHTML = "&#8203;";
+      placeholder.appendChild(newSpan);
+      el.replaceWith(...placeholder.childNodes);
+      restoreCaretPosition();
+    });
   }
 
   /**
@@ -474,9 +567,14 @@
    * @param event
    */
   function handleKeyUp(event: KeyboardEvent) {
-    // console.log("keyup", event);
+    const parsedMdContent = extractInlineMarkdownFromHtml(blockRef.innerHTML);
+    console.log("keyup", {
+      event,
+      textContent: deepCopy(blockRef.textContent),
+      parsedMdContent
+    });
     saveCaretPosition();
-    content = blockRef.textContent ?? "";
+    content = parsedMdContent ?? "";
     const steps = [replaceInlineSymbols, () => replaceInlineStyling(event)];
     for (const func of steps) {
       if (func()) return;

@@ -1,8 +1,11 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
   import { Direction } from "$lib/client/types/direction.enum";
-  import type { PopoverOptions } from "$lib/client/types/popover.type";
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import type { IPopoverOptions } from "$lib/client/types/popover.type";
+  import {
+    renderPopoverAtCaretPosition,
+    renderPopoverv2
+  } from "$lib/client/utils/browser.utils";
   import { bgClass } from "$lib/client/utils/theme.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
@@ -16,7 +19,7 @@
   export let triggerClass: string = "";
   export let isPreventDefault: boolean = false;
   export let isPreventDefaultStyling: boolean = false;
-  const defaultOptions: PopoverOptions = {
+  const defaultOptions: IPopoverOptions = {
     element: "div",
     class: "",
     id: generateUID(),
@@ -26,7 +29,7 @@
     isSpanToTriggerWidth: false,
     offsetInPx: 2
   };
-  export let options: PopoverOptions = defaultOptions;
+  export let options: IPopoverOptions = defaultOptions;
   if (!options.id) options.id = defaultOptions.id;
   if (!options.parentBgIndex)
     options.parentBgIndex = defaultOptions.parentBgIndex;
@@ -46,13 +49,21 @@
     } else hide();
   }
   export function show() {
-    renderPopoverv2(
-      triggerRef,
-      popOverRef,
-      options.placement ?? placement ?? Direction.Down,
-      options.isSpanToTriggerWidth ?? false,
-      options.offsetInPx ?? 2
-    );
+    if (options.isPlaceAtCaret) {
+      renderPopoverAtCaretPosition({
+        popRef: popOverRef,
+        location: options.placement ?? placement ?? Direction.Down,
+        offsetInPx: options.offsetInPx ?? 2
+      });
+    } else {
+      renderPopoverv2(
+        triggerRef,
+        popOverRef,
+        options.placement ?? placement ?? Direction.Down,
+        options.isSpanToTriggerWidth ?? false,
+        options.offsetInPx ?? 2
+      );
+    }
   }
   export function hide() {
     // console.log("hiding", { id: options.id });

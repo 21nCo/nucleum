@@ -12,7 +12,8 @@ import {
   type INodeCapture,
   LinkType,
   type INodeProperty,
-  type INodeItemCaptured
+  type INodeItemCaptured,
+  headingNodeTypes
 } from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,
@@ -264,42 +265,6 @@ function initCaptureStore() {
     },
     onTypeSelect: (val: CaptureType | string) => onTypeSelect(update, val),
     save: () => save(set),
-    searchForLinking: async (query: string) => {
-      // return new NodePersistance().searchForLinking(searchQuery);
-      const dexie = get(dataManager).cacheSource.dexie;
-      // const nodesPromise = dexie.node
-      //   .where("title")
-      //   .anyOfIgnoreCase(query)
-      //   .toArray()
-      //   .then((nodes) => nodes.map((node) => ({ ...node, label: node.title })));
-      const nodesPromise = dexie.node
-        .filter(activeResourceFilter)
-        .filter(
-          (node) =>
-            (node.label &&
-              node.label.toLowerCase().includes(query.toLowerCase())) ||
-            false
-        )
-        .toArray()
-        .then((nodes) => nodes.map((node) => ({ ...node, label: node.label })));
-
-      // const collectionsPromise = dexie.curation
-      //   .where("label")
-      //   .anyOfIgnoreCase(query)
-      //   .and((collection) => collection.type === CurationType.COLLECTION)
-      //   .toArray();
-      const collectionsPromise = dexie.curation
-        .where({ type: CurationType.COLLECTION })
-        .filter(activeResourceFilter)
-        .filter((collection) =>
-          collection.label.toLowerCase().includes(query.toLowerCase())
-        )
-        .toArray();
-      // return nodesPromise;
-      return Promise.all([nodesPromise, collectionsPromise]).then(
-        ([nodes, collections]) => nodes.concat(collections)
-      );
-    },
     directLink: (item: LinkThumbnail) => {
       update((val) => {
         val.links = val.links ?? [];

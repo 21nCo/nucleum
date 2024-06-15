@@ -91,7 +91,8 @@ function init() {
         params.action === PersistanceActionType.CREATE ||
         params.action === PersistanceActionType.CUSTOM_CREATE
       ) {
-        localPersistancePromise = table.add(data);
+        if (!("resources" in data)) localPersistancePromise = table.add(data);
+        else table.bulkAdd(data.resources);
         if (params.action === PersistanceActionType.CUSTOM_CREATE)
           params.action = PersistanceActionType.CUSTOM_QUERY;
       } else if (params.action === PersistanceActionType.UPDATE) {

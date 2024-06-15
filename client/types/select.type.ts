@@ -1,9 +1,9 @@
-import type { Avatar } from "./avatar.type";
+import type { IAvatar } from "./avatar.type";
 
 export type ISelectItem = {
   value: ISelectValue;
   label?: string;
-  icon?: string | Avatar;
+  icon?: string | IAvatar;
   isDisabled?: boolean;
 };
 

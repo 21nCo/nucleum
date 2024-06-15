@@ -7,7 +7,7 @@
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { TextInputStyle } from "$lib/client/types/textinput.enum";
-  import Linkbox from "./Linkbox.svelte";
+  import Linkbox from "../common/linkbox/Linkbox.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -16,6 +16,7 @@
   import Memocon from "../common/Memocon.svelte";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import PropertiesListView from "../common/properties/PropertiesListView.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -47,8 +48,8 @@
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
-      <div class="w-full max-w-5xl h-full flex flex-col gap-6 p-4 bg-bgs1">
-        <header class="flex justify-between w-full dp:px-10">
+      <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
+        <header class="flex justify-between w-full dp:px-14">
           <div class="flex gap-4 grow">
             {#if $captureStore.type?.avatar}
               <!-- TODO - AvatarPicker component - increasing loading time -->
@@ -58,7 +59,7 @@
             <div class="text-h4 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
-                style={TextInputStyle.PLAIN}
+                style={InputStyle.PLAIN}
                 isExperimentalMdInput={true}
                 placeholder="Title"
               />

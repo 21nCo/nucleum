@@ -18,6 +18,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
+  import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
+  import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
+  import { searchForLinking } from "$lib/client/products/memotron/memotron.store";
 
   const dispatch = createEventDispatcher();
   export let mdStore: MdStoreType;
@@ -39,7 +42,10 @@
   let placeholder: string;
   let popoverRef: any;
   let blockBrowserRef: any;
+  let mentionSearchRef: any;
   let isBlockBrowserRendered: boolean = false;
+  let isRenderMentionSearch: boolean = false;
+  let shiftKeyPressed: boolean = false;
   let caretPositionT2:
     | {
         element?: any;
@@ -95,7 +101,7 @@
    * TODO - mode blockToFocus as its own store and send offset in case of tab operations and caret at the end or in the middle before tab operations - currently caret is being set to the start if no timeout is used since the focus is being set before the block is rendered - subscribe to blockToFocus in inlineMarkdownTextInput and set the focus there if that's the last resort (but try avoiding any md related features in inlineMarkdownTextInput)
    */
   onMount(() => {
-    hideBlockBrowser();
+    hidePopover();
     const focusBlockSub = mdStore.subscribe((md: IMarkdownStore) => {
       if (md.blockToFocus === block.id) {
         setTimeout(() => {
@@ -108,9 +114,19 @@
       focusBlockSub();
     };
   });
-  function hideBlockBrowser() {
-    isBlockBrowserRendered = false;
+  function hidePopover(
+    popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
+  ) {
+    if (popover === "blockBrowser") isBlockBrowserRendered = false;
+    else isRenderMentionSearch = false;
     popoverRef.hide();
+  }
+  function showPopover(
+    popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
+  ) {
+    if (popover === "blockBrowser") isBlockBrowserRendered = true;
+    else isRenderMentionSearch = true;
+    popoverRef.show();
   }
   /**
    * Handles block browser shortcuts.
@@ -122,8 +138,8 @@
   ) {
     if (!$mdStore.params?.canUseSlashShortcut) return false;
     if (type === "keyup" && event.key === "/") {
-      isBlockBrowserRendered = true;
-      popoverRef.show();
+      console.log("block browser shortcut");
+      showPopover("blockBrowser");
       return true;
     } else if (!isBlockBrowserRendered) {
       return false;
@@ -131,7 +147,7 @@
       type === "keyup" &&
       (event.key === "Escape" || !block.body.includes("/"))
     ) {
-      hideBlockBrowser();
+      hidePopover("blockBrowser");
     } else if (
       type === "keydown" &&
       (event.key === "ArrowDown" ||
@@ -146,9 +162,46 @@
     return true;
   }
 
+  function handleMentionShortcut(
+    event: KeyboardEvent,
+    type: "keyup" | "keydown" = "keydown"
+  ) {
+    if (!$mdStore.params?.canUseSlashShortcut) return false;
+    if (event.key === "Shift") {
+      shiftKeyPressed = true;
+    } else if (event.key != "2") {
+      shiftKeyPressed = false;
+    }
+    if (type === "keyup" && event.key === "2" && shiftKeyPressed) {
+      console.log("mention shortcut");
+      showPopover("mentionSearch");
+      return true;
+    } else if (!isRenderMentionSearch) {
+      return false;
+    } else if (
+      type === "keyup" &&
+      (event.key === "Escape" || !block.body.includes("@"))
+    ) {
+      hidePopover("mentionSearch");
+    } else if (type === "keyup") {
+      mentionSearchRef.keyup(event);
+    } else if (
+      type === "keydown" &&
+      (event.key === "ArrowDown" ||
+        event.key === "ArrowUp" ||
+        event.key === "Enter")
+    ) {
+      event.preventDefault();
+    }
+    return true;
+  }
+
   function handleKeyDown(e: CustomEvent<KeyboardEvent>) {
     const event = e.detail;
-    const functions = [() => handleBlockBrowser(event)];
+    const functions = [
+      () => handleBlockBrowser(event),
+      () => handleMentionShortcut(event)
+    ];
 
     for (const func of functions) {
       if (func()) return;
@@ -320,6 +373,7 @@
     const caretPosition = e.detail.caretPosition;
     const steps = [
       () => handleBlockBrowser(event, "keyup"),
+      () => handleMentionShortcut(event, "keyup"),
       //performEscapeShortcutsT1(),
       performEscapeShortcutsT2,
       handleBackspaceAtBeginOfLine
@@ -442,7 +496,18 @@
         dispatch("convert", { id: block.id, blockType: event.detail.type });
       }
     }
-    hideBlockBrowser();
+    hidePopover();
+  }
+  function onMentionSearch(searchQuery: string) {
+    console.log("mention search", searchQuery);
+    return searchForLinking(searchQuery);
+  }
+
+  function onMentionSelect(event: CustomEvent) {
+    console.log("mention select", event.detail);
+    const item = event.detail.item;
+    textRef.addMention(item);
+    hidePopover("mentionSearch");
   }
 </script>
 
@@ -461,7 +526,12 @@
   </button> -->
 {/if}
 
-<Popover bind:this={popoverRef} triggerClass="w-full" isPreventDefault={true}>
+<Popover
+  bind:this={popoverRef}
+  options={{ isPlaceAtCaret: true, offsetInPx: 10 }}
+  triggerClass="w-full"
+  isPreventDefault={true}
+>
   <div class="relative w-full flex justify-start" slot="trigger">
     <!--  || !$isInEditMode -->
     {#if $mdStore.params?.isReadOnly}
@@ -508,6 +578,21 @@
     {/if}
   </div>
   <slot:fragment slot="popover">
-    <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
+    {#if isBlockBrowserRendered}
+      <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
+    {:else if isRenderMentionSearch}
+      <div class="w-[30rem]">
+        <SearchResultsPopover
+          bind:this={mentionSearchRef}
+          searchResultComponent={LinkSuggestionItem}
+          searchCallback={onMentionSearch}
+          shortcutTrigger="@"
+          on:select={onMentionSelect}
+          on:reset={() => {
+            hidePopover("mentionSearch");
+          }}
+        />
+      </div>
+    {/if}
   </slot:fragment>
 </Popover>

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { AvatarType, type Avatar } from "$lib/client/types/avatar.type";
+  import { AvatarType, type IAvatar } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
-  export let avatar: Avatar;
+  export let avatar: IAvatar;
   export let size: Size | number;
   $: fontSize =
     typeof size === "number"

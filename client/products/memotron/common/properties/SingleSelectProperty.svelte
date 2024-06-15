@@ -8,7 +8,7 @@
   import { createEventDispatcher } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-  import type { PopoverOptions } from "$lib/client/types/popover.type";
+  import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InputBaseElement from "$lib/client/elements/InputBaseElement.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -28,7 +28,7 @@
   let isOptionsVisible: boolean = false;
   let options: PropertyConfigOption[] = property.config?.options ?? [];
   let classList = "relative flex flex-col items-start gap-1 w-full";
-  let popoverOptions: PopoverOptions = {
+  let popoverOptions: IPopoverOptions = {
     element: "div",
     class:
       "max-h-80 overflow-y-auto flex flex-col gap-4 items-start search-results py-4",

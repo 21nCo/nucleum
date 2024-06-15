@@ -115,12 +115,6 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
   return val!;
 }
 
-export async function resolveAssociatedType(typeId: string) {
-  if (!typeId) return null;
-  const tb = get(dataManager).cacheSource.dexie.type;
-  return tb.get(typeId);
-}
-
 async function fetchNode(
   id: string,
   setter: (this: void, value: IActiveNode) => void

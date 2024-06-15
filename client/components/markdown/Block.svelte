@@ -18,7 +18,7 @@
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let isReRendering: boolean = false;
-  let isShowBgOnFocus: boolean = true;
+  let isShowBgOnFocus: boolean = false;
   // const mdStore = getMdStore(mdId);
   onMount(() => {
     //TODO - check the need for rerendering

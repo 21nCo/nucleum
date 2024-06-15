@@ -1,12 +1,12 @@
 import type {
-  Avatar,
+  IAvatar,
   AvatarWithCode,
   IconAvatar
 } from "$lib/client/types/avatar.type";
 import type { IMemotronItemBase } from "./common.type";
 
 type TypeBase = IMemotronItemBase & {
-  avatar: Avatar;
+  avatar: IAvatar;
 };
 export type IType = TypeBase & {
   properties: IProperty[];

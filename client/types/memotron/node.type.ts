@@ -1,7 +1,7 @@
 import type { IMemotronItemBase } from "$lib/client/types/memotron/common.type";
 import type { PropertyValue as IPropertyValue, IType } from "./type.type";
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
-import type { Avatar } from "../avatar.type";
+import type { IAvatar } from "../avatar.type";
 import type { IMarkdown } from "./md.type";
 import type { ICacheableStore } from "../data.type";
 
@@ -43,7 +43,7 @@ export type INodeThumbnail = INodeBase &
 export type INodeBase = Omit<IMemotronItemBase, "label"> & {
   label?: string;
   generatedLabel?: string;
-  avatar?: Avatar;
+  avatar?: IAvatar;
   properties?: INodeProperty[];
   /**
    * Type of the node - type:sometype
@@ -286,7 +286,7 @@ export type NodeMetadata = NodeMetadataCapturedAtClient & {
   updatedBy: string;
 };
 
-export type NodeLocalRecord = INodeBase;
+export type NodeLocalRecord = INode;
 
 export type INodeProperty = {
   id: string;

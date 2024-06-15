@@ -12,7 +12,7 @@ export class MemotronDexie extends AppDexie {
     super(scope);
     this.version(this.dbVersion)
       .stores({
-        node: "id, title, createdAt, modifiedAt",
+        node: "id, title, children, contentType, createdAt, modifiedAt",
         curation: "id, type, label, createdAt, modifiedAt",
         type: "id, label, createdAt, modifiedAt"
       })

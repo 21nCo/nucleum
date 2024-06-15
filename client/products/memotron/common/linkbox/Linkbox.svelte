@@ -1,21 +1,23 @@
 <script lang="ts">
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
-  import DirectLinks from "../common/foreLinks/DirectLinks.svelte";
+  import DirectLinks from "../foreLinks/DirectLinks.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
-  import { TextInputStyle } from "$lib/client/types/textinput.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { InputStyle } from "$lib/client/types/input.type";
+  import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
+  import { searchForLinking } from "../../memotron.store";
   let link: string;
   function onsearch(searchQuery: string) {
-    return captureStore.searchForLinking(searchQuery);
+    return searchForLinking(searchQuery);
   }
 </script>
 
-<section class="flex flex-col gap-4 w-full">
-  <div class="h-6">
+<section class="flex flex-col gap-2 w-full">
+  <div class="h-8">
     {#if isValidArrayWithData($captureStore.links)}
       <DirectLinks
         links={$captureStore.links}
@@ -33,7 +35,11 @@
     </div>
     <TextSearchInput
       bind:value={link}
-      style={TextInputStyle.PLAIN}
+      style={InputStyle.PLAIN}
+      searchResultComponent={LinkSuggestionItem}
+      popoverOptions={{
+        offsetInPx: 12
+      }}
       on:select={(e) => {
         console.log("select", e.detail);
         captureStore.directLink(e.detail.item);
