@@ -45,6 +45,7 @@
   let mentionSearchRef: any;
   let isBlockBrowserRendered: boolean = false;
   let isRenderMentionSearch: boolean = false;
+  let blockSearchQuery = "";
   let shiftKeyPressed: boolean = false;
   let caretPositionT2:
     | {
@@ -121,12 +122,26 @@
     else isRenderMentionSearch = false;
     popoverRef.hide();
   }
+  /**
+   * @description
+   * A delay of 10ms is added as without this - renderPopover in Popover.svelte is not calculating the popover width, height correctly. This is happening because, the popover content is being rendered dynamically switching between blockBrowser and mentionSearch.
+   *
+   * Alternatives to this approach:
+   * 1. Add height, width to the {@link Popover} - options like below:
+   * <Popover bind:this={popoverRef}  options={{ ... class: cn("h-48", { "w-72": blockSearchQuery, "w-[30rem]": !blockSearchQuery }) }}
+   * With this approach, it is required that both mention search and block browser should have same height and width and also the height, width is not handled at the respective components which is not a good approach.
+   *
+   * 2. Create multiple instances of Popover for blockBrowser and mentionSearch and show/hide them based on the popover to be shown. This approach might not be ideal as this increased boilerplace code.
+   * @param popover
+   */
   function showPopover(
     popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
   ) {
     if (popover === "blockBrowser") isBlockBrowserRendered = true;
     else isRenderMentionSearch = true;
-    popoverRef.show();
+    setTimeout(() => {
+      popoverRef.show();
+    }, 10);
   }
   /**
    * Handles block browser shortcuts.
@@ -528,7 +543,15 @@
 
 <Popover
   bind:this={popoverRef}
-  options={{ isPlaceAtCaret: true, offsetInPx: 10 }}
+  options={{
+    isPlaceAtCaret: true,
+    offsetInPx: 10,
+    id: isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover",
+    class: cn({
+      "w-72": blockSearchQuery,
+      "w-[30rem]": !blockSearchQuery
+    })
+  }}
   triggerClass="w-full"
   isPreventDefault={true}
 >
@@ -577,22 +600,24 @@
       <div class="absolute top-0 left-0 h-full w-0.5 bg-aps1"></div>
     {/if}
   </div>
-  <slot:fragment slot="popover">
+  <slot slot="popover" name="popover">
     {#if isBlockBrowserRendered}
-      <BlockBrowser bind:this={blockBrowserRef} on:select={onBlockSelect} />
+      <BlockBrowser
+        bind:this={blockBrowserRef}
+        on:select={onBlockSelect}
+        bind:searchQueryString={blockSearchQuery}
+      />
     {:else if isRenderMentionSearch}
-      <div class="w-[30rem]">
-        <SearchResultsPopover
-          bind:this={mentionSearchRef}
-          searchResultComponent={LinkSuggestionItem}
-          searchCallback={onMentionSearch}
-          shortcutTrigger="@"
-          on:select={onMentionSelect}
-          on:reset={() => {
-            hidePopover("mentionSearch");
-          }}
-        />
-      </div>
+      <SearchResultsPopover
+        bind:this={mentionSearchRef}
+        searchResultComponent={LinkSuggestionItem}
+        searchCallback={onMentionSearch}
+        shortcutTrigger="@"
+        on:select={onMentionSelect}
+        on:reset={() => {
+          hidePopover("mentionSearch");
+        }}
+      />
     {/if}
-  </slot:fragment>
+  </slot>
 </Popover>

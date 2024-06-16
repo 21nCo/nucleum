@@ -267,7 +267,10 @@
   });
   selectedSection = filteredResults[0].section;
   focusedItem = filteredResults[0].children[0];
-  let searchQueryString = "";
+  /**
+   * @readonly
+   */
+  export let searchQueryString = "";
 
   function mapSectionNameToBlock(c: any, sectionName: string) {
     return {

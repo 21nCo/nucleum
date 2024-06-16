@@ -23,6 +23,11 @@ function documentDimensions() {
   };
 }
 
+/**
+ * @deprecated Use renderPopoverv2 instead
+ * @param parentRef
+ * @param popRef
+ */
 export function renderPopover(parentRef: HTMLElement, popRef: HTMLElement) {
   const triggerRect = parentRef.getBoundingClientRect();
   let popRect = popRef.getBoundingClientRect();
@@ -63,7 +68,11 @@ export function renderPopoverAtCaretPosition(
   const range = selection?.getRangeAt(0);
   const rect = range?.getBoundingClientRect();
   if (!rect) return;
-  _renderPopover({ ...params, triggerRect: rect, isSpanToTriggerWidth: false });
+  return _renderPopover({
+    ...params,
+    triggerRect: rect,
+    isSpanToTriggerWidth: false
+  });
 }
 
 export function renderPopoverv2(
@@ -77,68 +86,73 @@ export function renderPopoverv2(
   _renderPopover({
     triggerRect,
     popRef,
-    location,
+    placement: location,
     isSpanToTriggerWidth,
     offsetInPx
   });
 }
-
-function _renderPopover(params: IPopoverRenderParams) {
-  let { triggerRect, popRef, location, isSpanToTriggerWidth, offsetInPx } =
+/**
+ * Renders a popover at the specified location and auto adjusts if the popover is going out of the screen.
+ * @param params
+ */
+async function _renderPopover(params: IPopoverRenderParams) {
+  let { triggerRect, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
     params;
   popRef.style.display = "block";
   popRef.style.opacity = "0";
   let popRect = popRef.getBoundingClientRect();
   const { documentWidth, documentHeight } = documentDimensions();
   popRef.style.position = "fixed";
-  //set z index
   popRef.style.zIndex = "100";
-
   if (triggerRect.top < popRect.height) {
-    if (location === Direction.TopLeft) location = Direction.BottomLeft;
+    if (placement === Direction.TopLeft) placement = Direction.BottomLeft;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
-    if (location === Direction.Down) location = Direction.Up;
-    else if (location === Direction.BottomLeft) location = Direction.TopLeft;
-    else if (location === Direction.BottomRight) location = Direction.TopRight;
+    if (placement === Direction.Down) placement = Direction.Up;
+    else if (placement === Direction.BottomLeft) placement = Direction.TopLeft;
+    else if (placement === Direction.BottomRight)
+      placement = Direction.TopRight;
   }
   if (documentWidth - triggerRect.right < popRect.width) {
-    if (location === Direction.Right) location = Direction.Left;
-    if (location === Direction.Down) location = Direction.BottomRight;
-    if (location === Direction.Up) location = Direction.TopRight;
+    if (placement === Direction.Right) placement = Direction.Left;
+    if (placement === Direction.Down) placement = Direction.BottomRight;
+    if (placement === Direction.Up) placement = Direction.TopRight;
   }
-  if (location === Direction.BottomLeft) {
+
+  if (placement === Direction.BottomLeft || placement === Direction.TopLeft) {
     popRef.style.left = `${triggerRect.left}px`;
-    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
-  } else if (location === Direction.TopLeft) {
-    popRef.style.left = `${triggerRect.left}px`;
-    popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
-  } else if (location === Direction.BottomRight) {
+    popRef.style.right = "";
+  } else if (
+    placement === Direction.BottomRight ||
+    placement === Direction.TopRight
+  ) {
     popRef.style.right = `${documentWidth - triggerRect.right}px`;
-    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
-  } else if (location === Direction.TopRight) {
-    popRef.style.right = `${documentWidth - triggerRect.right}px`;
+    popRef.style.left = "";
+  }
+  if (
+    placement === Direction.TopLeft ||
+    placement === Direction.TopRight ||
+    placement === Direction.Up
+  ) {
     popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
-  } else if (location === Direction.Right) {
+    popRef.style.top = "";
+  } else if (
+    placement === Direction.BottomLeft ||
+    placement === Direction.BottomRight ||
+    placement === Direction.Down
+  ) {
+    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
+    popRef.style.bottom = "";
+  }
+
+  if (placement === Direction.Right) {
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
-    // popRef.style.top = `${triggerRect.top}px`;
-  } else if (location === Direction.Left) {
+  } else if (placement === Direction.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
-    popRef.style.top = `$-{triggerRect.top - triggerRect.height / 2}px`;
-  } else if (location === Direction.Up) {
-    popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
-  } else if (location === Direction.Down) {
-    popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
+  } else if (placement === Direction.Up || placement === Direction.Down) {
     popRef.style.left = `${triggerRect.left}px`;
   }
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
-  // console.log({
-  //   triggerRect,
-  //   popRect,
-  //   location,
-  //   documentWidth,
-  //   documentHeight
-  // });
   popRef.style.opacity = "1";
 }
 

@@ -50,9 +50,9 @@
   }
   export function show() {
     if (options.isPlaceAtCaret) {
-      renderPopoverAtCaretPosition({
+      return renderPopoverAtCaretPosition({
         popRef: popOverRef,
-        location: options.placement ?? placement ?? Direction.Down,
+        placement: options.placement ?? placement ?? Direction.Down,
         offsetInPx: options.offsetInPx ?? 2
       });
     } else {

@@ -149,10 +149,8 @@
    */
   export function renderMentionsv1() {
     const mentions = document.querySelectorAll("mention");
-    console.log("refreshMentions", mentions);
     document.querySelectorAll("mention").forEach((el) => {
       const id = el.getAttribute("data-id") ? el.getAttribute("data-id") : "";
-      console.log("refreshMentions", { el, id });
       new InlineMention({ target: el, props: { id } });
 
       // Restore the caret position
@@ -168,14 +166,12 @@
     const container = document.getElementById(id);
     if (!container) return;
     const mentions = container.querySelectorAll("mention");
-    console.log("refreshMentions", mentions);
     mentions.forEach((el) => {
       const id = el.getAttribute("data-id") ? el.getAttribute("data-id") : "";
-      console.log("refreshMentions", { el, id });
       const placeholder = document.createElement("div");
       const inlineMention = new InlineMention({
         target: placeholder,
-        props: { id }
+        props: { id: id ?? "" }
       });
       if (isInitialRender) {
         el.replaceWith(...placeholder.childNodes);
@@ -568,11 +564,11 @@
    */
   function handleKeyUp(event: KeyboardEvent) {
     const parsedMdContent = extractInlineMarkdownFromHtml(blockRef.innerHTML);
-    console.log("keyup", {
-      event,
-      textContent: deepCopy(blockRef.textContent),
-      parsedMdContent
-    });
+    // console.log("keyup", {
+    //   event,
+    //   textContent: deepCopy(blockRef.textContent),
+    //   parsedMdContent
+    // });
     saveCaretPosition();
     content = parsedMdContent ?? "";
     const steps = [replaceInlineSymbols, () => replaceInlineStyling(event)];

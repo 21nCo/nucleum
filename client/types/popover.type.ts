@@ -15,7 +15,7 @@ export type IPopoverOptions = {
 export type IPopoverRenderParams = {
   triggerRect: DOMRect;
   popRef: HTMLElement;
-  location: Direction;
+  placement: Direction;
   isSpanToTriggerWidth: boolean;
   offsetInPx: number;
 };
