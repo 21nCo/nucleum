@@ -1,18 +1,16 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-  import {
-    ButtonStyle,
-    type ButtonParams
-  } from "$lib/client/types/button.type";
+  import type { IButtonParams } from "$lib/client/types/button.type";
   import BottomFloat from "../BottomFloat.svelte";
-  export let params: ButtonParams;
+  export let params: IButtonParams;
 </script>
 
 <BottomFloat>
   <Button
     {...params}
+    parentBackgroundIndex={params.parentBgIndex}
     type={params.variant}
-    style={params.style ?? ButtonStyle.ROUNDED}
+    style={params.style}
     width="w-[13rem]"
     on:click={async () => {
       if (params.callback) await params?.callback();

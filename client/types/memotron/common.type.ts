@@ -10,6 +10,9 @@ export interface IMemotronItemBase {
   modifiedBy: string;
 }
 
+/**
+ * @deprecated - Use ITrashInformation from resource.type.ts instead
+ */
 export interface TrashInformation {
   deletedAt: string;
   deletedBy: string;

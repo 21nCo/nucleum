@@ -482,7 +482,6 @@
                 on:click={() => {
                   inputRef.click();
                 }}
-                type="tertiary"
               >
                 Browse
               </Button>
@@ -532,42 +531,32 @@
   >
     {#if $view.isPortrait}
       {#if activeStepIndex !== steps[id]?.length - 1}
-        <Button size={Size.sm} on:click={onJumpToUpload} type="tertiary">
-          Jump to upload
-        </Button>
+        <Button size={Size.sm} on:click={onJumpToUpload}>Jump to upload</Button>
       {:else}
-        <Button size={Size.sm} on:click={onClose} type="tertiary">Cancel</Button
-        >
+        <Button size={Size.sm} on:click={onClose}>Cancel</Button>
       {/if}
     {:else if activeStepIndex !== steps[id]?.length - 1}
-      <Button size={Size.sm} on:click={onJumpToUpload} type="tertiary"
-        >Jump to upload</Button
-      >
+      <Button size={Size.sm} on:click={onJumpToUpload}>Jump to upload</Button>
     {:else}
-      <Button size={Size.sm} on:click={onBack} type="tertiary">Back</Button>
+      <Button size={Size.sm} on:click={onBack}>Back</Button>
     {/if}
     <div class="ml-auto flex gap-3">
       {#if !$view.isPortrait}
         {#if activeStepIndex !== 0 && activeStepIndex !== steps[id]?.length - 1}
-          <Button size={Size.sm} on:click={onBack} type="tertiary">Back</Button>
+          <Button size={Size.sm} on:click={onBack}>Back</Button>
         {:else if activeStepIndex === steps[id]?.length - 1}
-          <Button size={Size.sm} on:click={onClose} type="tertiary"
-            >Cancel</Button
-          >
+          <Button size={Size.sm} on:click={onClose}>Cancel</Button>
         {/if}
       {/if}
 
       {#if activeStepIndex !== steps[id]?.length - 1}
-        <Button size={Size.sm} on:click={onNext} type="tertiary">Next</Button>
+        <Button size={Size.sm} on:click={onNext}>Next</Button>
       {:else if activeStepIndex === steps[id]?.length - 1 && !isEverythingUploaded}
-        <Button
-          isLoading={isUploading}
-          size={Size.sm}
-          on:click={onUpload}
-          type="tertiary">Upload</Button
+        <Button isLoading={isUploading} size={Size.sm} on:click={onUpload}
+          >Upload</Button
         >
       {:else if activeStepIndex === steps[id]?.length - 1 && isEverythingUploaded}
-        <Button size={Size.sm} on:click={onClose} type="tertiary">Done</Button>
+        <Button size={Size.sm} on:click={onClose}>Done</Button>
       {/if}
     </div>
   </div>

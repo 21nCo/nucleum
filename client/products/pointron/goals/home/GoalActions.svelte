@@ -66,7 +66,7 @@
     await new Persistence().delete($currentGoal.id, Item.PointGoal);
     // check if success then redirect to the parent goal or /goals(if the parent does not exists)
     if (!parent || parent.length === 0) appStore.gotoPath(Item.goal);
-    else appStore.gotoPath(`/goals`);
+    else appStore.gotoPath(`/goal`);
     currentGoal.propagateChangesTemp();
   }
 
@@ -120,7 +120,7 @@
 <div class="flex flex-wrap gap-3">
   {#each goalActions as action}
     <Button
-      size={$view.isPortrait ? Size.sm : Size.xs}
+      size={Size.sm}
       label={!$view.isPortrait ? action.label : action.label}
       icon={action.icon}
       type={action.label == "Delete"

@@ -6,7 +6,7 @@
   import { createEventDispatcher } from "svelte";
   import Divider from "../Divider.svelte";
   import Icon from "../Icon.svelte";
-  import { ColorAccent } from "$lib/client/types/appearance.type";
+  import { Color } from "$lib/client/types/appearance.type";
   const dispatch = createEventDispatcher();
   export let menu: { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -36,7 +36,7 @@
             <Icon
               size={Size.sm}
               icon={item.icon}
-              accent={isRedAccent(item) ? ColorAccent.RED : undefined}
+              accent={isRedAccent(item) ? Color.RED : undefined}
             />
           {/if}
           <span

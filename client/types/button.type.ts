@@ -3,32 +3,25 @@ import type { Size } from "./size.enum";
 export enum ButtonStyle {
   DEFAULT = "default",
   PLAIN = "plain",
-  OUTLINED = "outlined",
-  ROUNDED = "rounded"
+  OUTLINED = "outlined"
 }
 
-export type ButtonParams = {
+export type IButtonParams = {
   label?: string;
   icon?: string;
   callback?: () => Promise<any>;
   action?: string;
-  size?: Size;
+  size?: Size.xs | Size.sm | Size.md | Size.lg;
   variant?: ButtonVariant;
   style?: ButtonStyle;
+  parentBgIndex?: number;
 };
 
 export enum ButtonVariant {
-  DEFAULT = "default",
   PRIMARY = "primary",
   SECONDARY = "secondary",
   DANGER = "danger",
-  TERTIARY = "tertiary",
-  SUCCESS = "success",
-  WARNING = "warning",
-  INFO = "info",
-  LIGHT = "light",
-  DARK = "dark",
-  LINK = "link"
+  SUCCESS = "success"
 }
 
 export enum LinkVariant {

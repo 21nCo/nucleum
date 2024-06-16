@@ -4,14 +4,14 @@
   import view from "$lib/client/stores/view.store";
   import {
     ButtonStyle,
-    type ButtonParams
+    type IButtonParams
   } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
-  export let primaryAction: ButtonParams | undefined = undefined;
-  export let secondaryAction: ButtonParams | undefined = undefined;
+  export let primaryAction: IButtonParams | undefined = undefined;
+  export let secondaryAction: IButtonParams | undefined = undefined;
   let isActionInProgress = false;
   export async function close(
     from: "primary" | "secondary" | "close" = "close"

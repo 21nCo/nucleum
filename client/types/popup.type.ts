@@ -1,4 +1,4 @@
-import type { ButtonParams } from "./button.type";
+import type { IButtonParams } from "./button.type";
 import type { Orientation } from "./direction.enum";
 import type { Size } from "./size.enum";
 
@@ -26,8 +26,8 @@ export type ModalParams = {
 export type ModalLayoutParams = {
   size?: Size;
   orientation?: Orientation;
-  primaryAction?: ButtonParams;
-  secondaryAction?: ButtonParams;
+  primaryAction?: IButtonParams;
+  secondaryAction?: IButtonParams;
   ignoreSafeArea?: boolean;
   isShowClose?: boolean;
 };

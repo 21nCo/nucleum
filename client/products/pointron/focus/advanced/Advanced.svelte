@@ -4,8 +4,6 @@
   import FocusItemList from "../elements/focusitem/FocusItemList.svelte";
   import IntervalBar from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
   import view from "$lib/client/stores/view.store";
-  import type { ButtonParams } from "$lib/client/types/button.type";
-  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import AdvancedPortrait from "./AdvancedPortrait.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";

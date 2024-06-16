@@ -82,7 +82,7 @@
   style:--height={height + "px"}
   on:click
   on:mouseover={toggleHoveringState}
-  on:mouseout={toggleHoveringState}
+  on:mouseleave={toggleHoveringState}
   on:focus={toggleHoveringState}
   on:blur={toggleHoveringState}
 >

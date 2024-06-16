@@ -40,6 +40,7 @@
     bind:this={inputRef}
     searchStoreId={Item.PointGoal}
     style={InputStyle.PLAIN}
+    popoverOptions={{ offsetInPx: 16 }}
     placeholder="+ start typing a goal name..."
   />
 

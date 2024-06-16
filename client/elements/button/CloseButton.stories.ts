@@ -26,15 +26,6 @@ type Story = {
   };
 };
 
-export const Default: Story = {
-  args: {
-    params: {
-      ...meta?.args?.params,
-      variant: ButtonVariant.DEFAULT
-    }
-  }
-};
-
 export const Primary: Story = {
   args: {
     params: {

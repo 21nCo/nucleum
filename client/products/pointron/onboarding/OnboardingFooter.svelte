@@ -28,12 +28,7 @@
   {#if $view.isPortrait}
     <div class="button mb-4 w-full">
       {#if activeStep !== totalSteps - 1}
-        <Button
-          width="w-full"
-          on:click={handleNext}
-          style={ButtonStyle.ROUNDED}
-          type="primary"
-        >
+        <Button width="w-full" on:click={handleNext} type="primary">
           {#if activeStep === 0}
             Get Started
           {:else}
@@ -41,12 +36,7 @@
           {/if}
         </Button>
       {:else}
-        <Button
-          width="w-full"
-          on:click={handleStartTutorial}
-          style={ButtonStyle.ROUNDED}
-          type="primary"
-        >
+        <Button width="w-full" on:click={handleStartTutorial} type="primary">
           Let's go
         </Button>
       {/if}

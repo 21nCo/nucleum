@@ -1,4 +1,8 @@
-import { activeResourceFilter, generateUID } from "$lib/client/utils/utils";
+import {
+  activeResourceFilter,
+  generateUID,
+  nonTrashFilter
+} from "$lib/client/utils/utils";
 import { get, writable } from "svelte/store";
 import type {
   Goal,
@@ -178,7 +182,7 @@ function filterGoals(
   allItems: (Goal | QuickFocusItem)[],
   filters: { tag?: TagId | string; searchText?: string }
 ) {
-  let filteredGoals = allItems;
+  let filteredGoals = allItems.filter(nonTrashFilter);
   if (filters.tag) {
     if (filters.tag === TagId.ALL) {
       filteredGoals = allItems;
@@ -219,7 +223,9 @@ function initGoalsStore() {
       isRefreshing: false,
       goals: (goalStoreCache as GoalStore)?.goals ?? [],
       archivedGoals:
-        (goalStoreCache as GoalStore)?.goals.filter((x) => x.isArchived) ?? []
+        (goalStoreCache as GoalStore)?.goals.filter(
+          (x) => x.isArchived && !x.trashInformation
+        ) ?? []
     }));
     filter({ tag: TagId.ALL, searchText: "", isArchived: false });
   });
@@ -233,15 +239,17 @@ function initGoalsStore() {
   }) => {
     update((store) => {
       let filteredGoals = filterGoals(store.goals, filters);
-      store.filteredGoals = (filteredGoals as Goal[]).filter(
-        (x) =>
-          ((filters.isArchived && x.isArchived) || !x.isArchived) &&
-          ((filters.tag === TagId.ALL &&
-            !filters.searchText &&
-            x.parent?.hierarchy?.length === 0) ||
-            filters.tag !== TagId.ALL ||
-            filters.searchText)
-      );
+      store.filteredGoals = (filteredGoals as Goal[])
+        .filter(nonTrashFilter)
+        .filter(
+          (x) =>
+            ((filters.isArchived && x.isArchived) || !x.isArchived) &&
+            ((filters.tag === TagId.ALL &&
+              !filters.searchText &&
+              x.parent?.hierarchy?.length === 0) ||
+              filters.tag !== TagId.ALL ||
+              filters.searchText)
+        );
       return store;
     });
   };
@@ -253,7 +261,9 @@ function initGoalsStore() {
       if (!data || !isValidArray(data)) return;
       update((store) => {
         store.goals = data;
-        store.archivedGoals = data.filter((x: any) => x.isArchived);
+        store.archivedGoals = data.filter(
+          (x: any) => x.isArchived && !x.trashInformation
+        );
         filter({ tag: TagId.ALL, searchText: "", isArchived: false });
         cache(store);
         return store;
@@ -263,10 +273,9 @@ function initGoalsStore() {
     search: async (query: string) => {
       const goals = get(goalStore).goals;
       if (!query) return;
-      return goals.filter(
-        (x) =>
-          x.label.toLowerCase().includes(query.toLowerCase()) && !x.isArchived
-      );
+      return goals
+        .filter(activeResourceFilter)
+        .filter((x) => x.label.toLowerCase().includes(query.toLowerCase()));
     },
     get: (id: string) => {
       const goals = get(goalStore).goals;
@@ -282,7 +291,7 @@ function initGoalsStore() {
       const goals = get(goalStore).goals;
       const goal = goals.find((x) => x.id === id);
       console.log("children", { goal });
-      return goal?.subGoals.filter((x) => !x.isArchived).map((x) => x.id) ?? [];
+      return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
     },
     resolveSubGoalsIfNotPresent: async (goalId: string) => {
       const goals = get(goalStore).goals;
@@ -498,6 +507,7 @@ function initCurrentGoalStore(initialValue: Goal) {
       if (!goal) {
         goal = await fetchGoal(id);
       }
+      console.log("currentGoal", { goal });
       if (!goal) return;
       if (!goal.analytics) goal.analytics = seedGoal.analytics;
       if (!goal.tags) goal.tags = [];

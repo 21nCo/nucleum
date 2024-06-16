@@ -149,7 +149,6 @@
     <Button
       icon={$appStore.appData?.bottomRightAction}
       type={ButtonVariant.PRIMARY}
-      style={ButtonStyle.ROUNDED}
       on:click={() => {
         appStore.runAction($appStore.appData?.bottomRightAction);
       }}

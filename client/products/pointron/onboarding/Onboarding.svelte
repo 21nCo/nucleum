@@ -216,7 +216,6 @@
                     <Button
                       on:click={handleStepButtonClick("+")}
                       width="w-[12.5rem]"
-                      style={ButtonStyle.ROUNDED}
                       type="primary"
                     >
                       Get Started
@@ -225,7 +224,6 @@
                     <div class="flex flex-col w-fit items-center gap-4">
                       <Button
                         on:click={handleStepButtonClick("+")}
-                        style={ButtonStyle.ROUNDED}
                         width="w-[12.5rem]"
                         type="primary"
                       >
@@ -250,7 +248,6 @@
                     <div class="flex flex-col w-fit items-center gap-4">
                       <Button
                         on:click={handleStartTutorial}
-                        style={ButtonStyle.ROUNDED}
                         width="w-[12.5rem]"
                         type="primary"
                       >

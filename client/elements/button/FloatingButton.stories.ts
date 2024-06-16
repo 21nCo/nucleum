@@ -14,7 +14,7 @@ const meta: Meta<FloatingButton> = {
       },
       variant: {
         control: { type: "select" },
-        options: ["primary", "secondary", "tertiary", "danger"]
+        options: ["primary", "secondary", "danger"]
       }
     }
   },
@@ -24,7 +24,7 @@ const meta: Meta<FloatingButton> = {
       icon: "cross",
       callback: () => Promise.resolve(),
       size: Size.md,
-      variant: ButtonVariant.DEFAULT
+      variant: ButtonVariant.SECONDARY
     }
   }
 };

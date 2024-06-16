@@ -13,11 +13,10 @@
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import AdvancedPortrait from "./advanced/AdvancedPortrait.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import {
+    ButtonStyle,
     ButtonVariant,
-    type ButtonParams
+    type IButtonParams
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
@@ -29,13 +28,15 @@
   import { appStore } from "$lib/client/stores/app.store";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
-  let addManualLogButton = {
+  let addManualLogButton: IButtonParams = {
     label: "Add manual log",
     callback: onManualLogClicked,
     icon: "plus",
-    variant: $view.isPortrait ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY
+    variant: $view.isPortrait ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY,
+    parentBgIndex: $view.isPortrait ? 1 : 3,
+    style: $view.isPortrait ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED
   };
-  let startSessionButton: ButtonParams = {
+  let startSessionButton: IButtonParams = {
     label: "Start session",
     callback: onStartSessionClicked,
     icon: "play",

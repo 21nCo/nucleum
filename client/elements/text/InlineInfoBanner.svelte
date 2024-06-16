@@ -1,10 +1,10 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ColorAccent } from "$lib/client/types/appearance.type";
+  import { Color } from "$lib/client/types/appearance.type";
   import {
     ButtonVariant,
-    type ButtonParams
+    type IButtonParams
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
@@ -14,7 +14,7 @@
   import Link from "./Link.svelte";
   export let content: string | undefined = undefined;
   export let type: InfoTextType = InfoTextType.INFO;
-  export let action: ButtonParams | undefined = undefined;
+  export let action: IButtonParams | undefined = undefined;
 </script>
 
 <div
@@ -27,9 +27,7 @@
   <span class="flex gap-2 items-center">
     <Icon
       icon={type === InfoTextType.ERROR ? "help" : type}
-      accent={type === InfoTextType.ERROR
-        ? ColorAccent.RED
-        : ColorAccent.PRIMARY}
+      accent={type === InfoTextType.ERROR ? Color.RED : Color.PRIMARY}
     />
     {#if content}
       <div class="text-left">

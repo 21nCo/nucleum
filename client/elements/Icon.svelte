@@ -107,14 +107,17 @@
   import Funnel from "../icons/Funnel.svelte";
   import PaperClip from "../icons/PaperClip.svelte";
   import Eye from "../icons/Eye.svelte";
-  import { ColorAccent } from "../types/appearance.type";
+  import { Color } from "../types/appearance.type";
   import AltText from "../icons/AltText.svelte";
   export let icon: string | undefined = undefined;
   export let variant: IconVariant = IconVariant.Outline;
   export let size: Size = Size.md;
   export let isActive: boolean = false;
+  /**
+   * @deprecated - use accent instead
+   */
   export let color: string | undefined = undefined; //" text-bgs1";
-  export let accent: ColorAccent | undefined = undefined;
+  export let accent: Color | undefined = undefined;
   export let bgColorHue: number | undefined = undefined;
   export let isOutlineForActive: boolean = false;
   // <!-- TODO: abstract situations like these - remove classList and slot -->
@@ -151,12 +154,19 @@
         ? IconVariant.Solid
         : IconVariant.Outline;
   }
-  function resolveColorFromAccentType() {
-    if (accent === ColorAccent.PRIMARY) return currentColors.aps1;
-    else if (accent === ColorAccent.SECONDARY) return currentColors.ass1;
-    else if (accent === ColorAccent.RED) return currentColors.ars1;
-    else if (accent === ColorAccent.GREEN) return currentColors.ags1;
-    else if (accent === ColorAccent.CUSTOM) return "var(--customcolor)";
+  function resolveColorFromAccentType(config: any) {
+    currentColors = retrieveCurrentColors(config);
+    isActiveFgFg = resolveIfActiveFgFg(bgColorHue, config);
+    if (accent === Color.PRIMARY) return currentColors.aps1;
+    else if (accent === Color.SECONDARY) return currentColors.ass1;
+    else if (accent === Color.ACTIVE_FG)
+      return isActiveFgFg ? currentColors.fgs1 : currentColors.bgs1;
+    else if (accent === Color.FG) return currentColors.fgs1;
+    else if (accent === Color.FGS2) return currentColors.fgs2;
+    else if (accent === Color.BG) return currentColors.bgs1;
+    else if (accent === Color.RED) return currentColors.ars1;
+    else if (accent === Color.GREEN) return currentColors.ags1;
+    else if (accent === Color.CUSTOM) return "var(--customcolor)";
     else return "var(--customcolor)";
   }
 </script>
@@ -204,7 +214,7 @@
           : ' hover:fill-aps1'}"
       style={!isActive
         ? variant === IconVariant.Outline
-          ? `stroke: ${accent ? resolveColorFromAccentType() : color ?? defaultColor}`
+          ? `stroke: ${accent ? resolveColorFromAccentType($appearance) : color ?? defaultColor}`
           : `fill: ${color ?? defaultColor}`
         : ""}
     >

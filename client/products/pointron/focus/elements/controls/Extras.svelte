@@ -7,9 +7,13 @@
   import view from "$lib/client/stores/view.store";
   import { Direction } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
+  import { Size } from "$lib/client/types/size.enum";
   export let isInFullScreen: boolean = false;
   let toolTipPlacement = Direction.Up;
-
+  const buttonProps: { size: Size.lg; toolTipPlacement: Direction } = {
+    size: Size.lg,
+    toolTipPlacement
+  };
   function onFullScreenToggle() {
     if (!isInFullScreen) {
       appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
@@ -32,7 +36,7 @@
   <Button
     icon="zen"
     tooltip="Think mode"
-    {toolTipPlacement}
+    {...buttonProps}
     on:click={() => {
       appStore.runAction(PointronEventEnum.THINK_MODE);
     }}
@@ -41,7 +45,7 @@
     <Button
       icon="cross-circled"
       tooltip="Abandon focus session"
-      {toolTipPlacement}
+      {...buttonProps}
       on:click={() => {
         appStore.runAction(PointronEventEnum.ABANDON_SESSION);
       }}
@@ -51,7 +55,7 @@
     <Button
       icon="pip"
       tooltip="Picture in picture"
-      {toolTipPlacement}
+      {...buttonProps}
       on:click={() => {
         appStore.togglePip(PointronEventEnum.FOCUS_PLAYER);
       }}
@@ -60,7 +64,7 @@
   <Button
     icon="settings"
     tooltip="Session settings"
-    {toolTipPlacement}
+    {...buttonProps}
     on:click={() => {
       appStore.runAction(PointronEventEnum.SESSION_SETTINGS_MODAL);
     }}
@@ -68,7 +72,7 @@
   <Button
     icon={isInFullScreen ? "collapse" : "full-screen"}
     tooltip={isInFullScreen ? "Exit full screen" : "Full screen"}
-    {toolTipPlacement}
+    {...buttonProps}
     on:click={onFullScreenToggle}
   />
 </div>

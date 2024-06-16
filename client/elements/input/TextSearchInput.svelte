@@ -54,6 +54,9 @@
     } else show();
     searchResultsPopover.keyup(event);
   }
+  export function reset() {
+    onReset();
+  }
   function onReset() {
     value = "";
     hide();

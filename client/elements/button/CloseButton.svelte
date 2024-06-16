@@ -2,17 +2,18 @@
   import view from "$lib/client/stores/view.store";
   import {
     ButtonVariant,
-    type ButtonParams,
+    type IButtonParams,
     ButtonStyle
   } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
   import Button from "./Button.svelte";
-  export let params: ButtonParams;
+  export let params: IButtonParams;
 </script>
 
 <Button
   type={params.variant ?? "secondary"}
   icon={params.icon}
-  size={params.size}
+  size={params.size ?? Size.md}
   style={ButtonStyle.OUTLINED}
   on:click={() => {
     if (params?.callback) params.callback();

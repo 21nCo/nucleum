@@ -1,12 +1,15 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
   import { ColorStrength, ColorType } from "$lib/client/types/appearance.type";
+  import { resolveHoverState } from "$lib/client/utils/browser.utils";
+
   import {
     bgClass,
     customColorShade,
     customColorStyle,
     textColorClass
   } from "$lib/client/utils/theme.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let bgWhenInactive: number = 0;
   export let isBackgroundActive: boolean = false;
   export let isIncludeActiveBorder: boolean = false;
@@ -19,6 +22,10 @@
   export let transition: string = "";
   export let id: string = "";
   export { classList as class };
+  /**
+   * @readonly
+   */
+  export let isHovering: boolean = false;
   function bgfgClasses(
     parentBackgroundIndex: number = 1,
     isActive: boolean = false,
@@ -34,16 +41,18 @@
     );
     return `${background} ${foreground}`;
   }
+  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
+    isHovering = resolveHoverState(event);
+  };
 </script>
 
 <button
   {id}
-  class="{classList} {bgfgClasses(
-    bgWhenInactive - 1,
-    isBackgroundActive,
-    fgColorStrength,
-    color
-  )} {transition}"
+  class={cn(
+    classList,
+    bgfgClasses(bgWhenInactive - 1, isBackgroundActive, fgColorStrength, color),
+    transition
+  )}
   style={customColorStyle(
     $appearance,
     isBackgroundActive && isIncludeActiveBorder
@@ -66,6 +75,10 @@
   on:touchend
   on:touchmove
   on:touchstart
+  on:mouseover={toggleHoveringState}
+  on:mouseleave={toggleHoveringState}
+  on:focus={toggleHoveringState}
+  on:blur={toggleHoveringState}
   {tabindex}
 >
   <slot />

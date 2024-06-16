@@ -134,6 +134,10 @@
               {item}
               isActive={selectedIndex === index}
             />
+          {:else}
+            <span>
+              {item.label}
+            </span>
           {/if}
         </SearchResultItem>
       {/each}

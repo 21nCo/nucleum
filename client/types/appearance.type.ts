@@ -85,9 +85,16 @@ export type AppearanceStore = ICacheableStore & {
   typeface: string;
 };
 
-export enum ColorAccent {
+export enum Color {
   PRIMARY = "PRIMARY",
   SECONDARY = "SECONDARY",
+  /**
+   * Foreground color when the element is rendered on active background
+   */
+  ACTIVE_FG = "ACTIVE_FG",
+  FG = "FG",
+  FGS2 = "FGS2",
+  BG = "BG",
   RED = "RED",
   GREEN = "GREEN",
   CUSTOM = "CUSTOM"

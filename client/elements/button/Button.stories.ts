@@ -28,12 +28,7 @@ const meta = {
     },
     style: {
       control: { type: "select" },
-      options: [
-        ButtonStyle.DEFAULT,
-        ButtonStyle.PLAIN,
-        ButtonStyle.OUTLINED,
-        ButtonStyle.ROUNDED
-      ]
+      options: [ButtonStyle.DEFAULT, ButtonStyle.PLAIN, ButtonStyle.OUTLINED]
     },
     isDisabled: { control: { type: "boolean" } },
     isStayActive: { control: { type: "boolean" } },

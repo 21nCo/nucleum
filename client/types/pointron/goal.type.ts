@@ -1,6 +1,7 @@
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { ICacheableStore } from "$lib/client/types/data.type";
 import type { TimePeriod } from "$lib/client/types/time.type";
+import type { ITrashInformation } from "../resource.type";
 
 export type Goal = {
   id: string;
@@ -20,6 +21,7 @@ export type Goal = {
   pendingChanges?: boolean;
   created?: string;
   modified?: string;
+  trashInformation?: ITrashInformation;
 };
 
 type GoalParent = {

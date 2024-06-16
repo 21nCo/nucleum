@@ -3,13 +3,13 @@
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import view from "$lib/client/stores/view.store";
-  import type { ButtonParams } from "$lib/client/types/button.type";
+  import type { IButtonParams } from "$lib/client/types/button.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   export let title: string | undefined = undefined;
   export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
-  export let floatingButton: ButtonParams | undefined = undefined;
+  export let floatingButton: IButtonParams | undefined = undefined;
 </script>
 
 <div class="flex w-full h-full">

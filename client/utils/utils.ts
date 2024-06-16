@@ -323,6 +323,8 @@ export function debouncer(func: any, timeout: number) {
 export const activeResourceFilter = (x: any) =>
   !x.isArchived && !x.trashInformation;
 
+export const nonTrashFilter = (x: any) => !x.trashInformation;
+
 export function resourceClickHandler(
   event: MouseEvent,
   id: string,

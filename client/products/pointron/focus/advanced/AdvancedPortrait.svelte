@@ -2,7 +2,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import StartEndBar from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
-  import type { ButtonParams } from "$lib/client/types/button.type";
+  import type { IButtonParams } from "$lib/client/types/button.type";
   import TimeComposition from "./composition/TimeComposition.svelte";
   import FocusItemList from "../elements/focusitem/FocusItemList.svelte";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
