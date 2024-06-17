@@ -1,5 +1,33 @@
 import { writable } from "svelte/store";
-import type { View } from "../types/view.type";
+import { Display, type View } from "../types/view.type";
+
+/**
+ * Programmatically set the screen size - Refer tidigit.tailwind.cjs for more details
+ * @param width
+ * @param height
+ * @returns
+ */
+function calculateScreen(width: number, height: number): Display {
+  if (width <= 600 && height <= 1000) {
+    return Display.MO;
+  } else if (width >= 600 && height >= 800) {
+    return Display.TP;
+  } else if (width >= 1024 && height >= 800) {
+    return Display.DP;
+  } else if (width >= 2000 && height >= 1000) {
+    return Display.TK;
+  } else if (width <= 600) {
+    return Display.CW;
+  } else if (width >= 4000) {
+    return Display.UW;
+  } else if (height <= 600) {
+    return Display.CH;
+  } else if (height >= 1500) {
+    return Display.VM;
+  } else {
+    return Display.DP;
+  }
+}
 
 const view = initViewStore({
   height: 0,
@@ -9,7 +37,8 @@ const view = initViewStore({
   isPortrait: false,
   firstLoad: new Date().getTime(),
   currentPath: "",
-  isMenuHidden: false
+  isMenuHidden: false,
+  display: Display.DP
 });
 
 function initViewStore(settings: View) {
@@ -30,6 +59,7 @@ function initViewStore(settings: View) {
           scale: (width / 1000 + height / 1000) / 2,
           isPortrait: false
         };
+        n.display = calculateScreen(width, height);
         n.isPortrait = n.landscapiness < 1;
         return n;
       });

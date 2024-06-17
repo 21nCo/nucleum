@@ -14,18 +14,16 @@
 </script>
 
 <Popover options={{ placement: Direction.BottomRight }}>
-  <slot name="trigger" slot="trigger">
-    <Button
-      icon="funnel"
-      label={$view.isPortrait ? "" : "Options"}
-      parentBackgroundIndex={parentBgIndex}
-      tooltip={$view.isPortrait ? "Filters and grouping" : ""}
-      size={$view.isPortrait ? Size.sm : Size.xs}
-      on:click={() => {
-        //TODO - open popover
-      }}
-    />
-  </slot>
+  <Button
+    icon="funnel"
+    label={$view.isPortrait ? "" : "Options"}
+    parentBackgroundIndex={parentBgIndex}
+    tooltip={$view.isPortrait ? "Filters and grouping" : ""}
+    size={$view.isPortrait ? Size.sm : Size.xs}
+    on:click={() => {
+      //TODO - open popover
+    }}
+  />
   <div class="w-96 h-60 flex flex-col p-2 items-center" slot="popover">
     <span> Grouping and Filters </span>
     <DropDown

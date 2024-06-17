@@ -63,16 +63,19 @@ body {
 
   .styledscroll::-webkit-scrollbar {
     height: 2px;
-    width: 0.5em;
+    width: 0.3em;
   }
-
+  /* .styledscroll::-webkit-scrollbar:hover {
+    height: 2px;
+    width: 0.5em;
+  } */
   .styledscroll::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background-color: rgba(var(--colors-bgs2));
+    background-color: rgba(var(--colors-bgs3));
   }
 
   .styledscroll::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(var(--colors-bgs3));
+    background-color: rgba(var(--colors-bgs4));
     width: 1rem;
   }
 

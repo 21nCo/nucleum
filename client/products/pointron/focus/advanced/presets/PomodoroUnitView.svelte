@@ -7,6 +7,8 @@
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowRemove: boolean = false;
@@ -35,10 +37,22 @@
     error = "Max allowed rounds is 20";
 </script>
 
-<div class="flex flex-col gap-8 p-6 rounded-md border-2 border-bgs2">
+<div
+  class="relative flex flex-col gap-6 2k:gap-8 p-3 dp:p-4 2k:p-6 rounded-md border-2 border-bgs2"
+>
   {#if isShowRemove}
-    <div class="self-end">
+    <!-- <div class="self-end">
       <Button icon="cross" on:click={onRemoveClicked} />
+    </div> -->
+    <div class="absolute bg-bgs1 right-1 -top-3">
+      <Button
+        icon="minus-circled"
+        size={Size.xs}
+        type={ButtonVariant.DANGER}
+        style={ButtonStyle.OUTLINED}
+        label="Remove"
+        on:click={onRemoveClicked}
+      />
     </div>
   {/if}
   <div class="flex flex-col gap-1">

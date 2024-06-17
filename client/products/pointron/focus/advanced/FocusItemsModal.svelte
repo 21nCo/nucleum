@@ -3,5 +3,5 @@
 </script>
 
 <div class="flex flex-col w-full items-start gap-4">
-  <FocusItemList />
+  <FocusItemList isInEditMode={true} />
 </div>

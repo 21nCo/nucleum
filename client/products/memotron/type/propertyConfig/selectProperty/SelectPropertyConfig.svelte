@@ -29,22 +29,20 @@
     options={popoverOptions}
     triggerClass="flex gap-2 w-full h-full items-center"
   >
-    <svelte:fragment slot="trigger">
-      <span class="flex items-center w-1/5 h-full gap-2">
-        <Icon icon="list" />
-        <Icon icon="chevdown" />
+    <span class="flex items-center w-1/5 h-full gap-2">
+      <Icon icon="list" />
+      <Icon icon="chevdown" />
+    </span>
+    <span class="flex gap-2 items-center w-4/5 h-full">
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Strong}
+      />
+      <span class="flex w-full justify-between items-center">
+        <span>-</span>
+        <EndText text="Default" />
       </span>
-      <span class="flex gap-2 items-center w-4/5 h-full">
-        <Divider
-          orientation={Orientation.Vertical}
-          colorStrength={ColorStrength.Strong}
-        />
-        <span class="flex w-full justify-between items-center">
-          <span>-</span>
-          <EndText text="Default" />
-        </span>
-      </span>
-    </svelte:fragment>
+    </span>
     <svelte:fragment slot="popover">
       <SelectOptionsEditor bind:config={property.config} />
     </svelte:fragment>

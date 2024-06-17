@@ -53,7 +53,7 @@
     'flex-grow'}"
 >
   {#if isExpandedMode}
-    <div class="flex flex-col items-center w-full gap-8">
+    <div class="flex flex-col items-center w-full gap-4 dp:gap-8">
       <!-- <div class="relative flex justify-center gap-2 w-full max-w-[28rem]">
         <div class="w-full">
           <Slider
@@ -89,7 +89,7 @@
         </div>
         <Button
           label="cancel"
-          size={Size.xs}
+          size={Size.sm}
           icon="cross"
           on:click={() => {
             sessionStore.resetComposition();

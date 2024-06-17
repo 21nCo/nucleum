@@ -8,7 +8,6 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import TopBarActions from "../elements/TopBarActions.svelte";
   import TimeComposition from "./composition/TimeComposition.svelte";
   import SimpleDigitalClock from "../../clocks/SimpleDigitalClock.svelte";
   $: isExpandedMode =
@@ -41,7 +40,7 @@
         <div>
           <Text style={TextStyle.SECTION_HEADING} content="Focus Items" />
         </div>
-        <FocusItemList />
+        <FocusItemList isInEditMode={true} />
       </div>
       {#if isExtraLargeScreen}
         <div class="w-1/2 h-full p-4 flex items-center justify-center">

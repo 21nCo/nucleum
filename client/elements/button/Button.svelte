@@ -33,6 +33,10 @@
   export let toolTipPlacement: Direction = Direction.Down;
   export let isLoading: boolean = false;
   /**
+   * Applicable when {@link ButtonStyle.PLAIN} style is choosen
+   */
+  export let isUnderlined: boolean = false;
+  /**
    * @deprecated - Use toggle instead
    */
   export let isStayActive: boolean = false;
@@ -80,15 +84,19 @@
     "flex flex-row justify-center items-center min-w-fit rounded-full",
     width,
     {
-      "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled
+      "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled,
+      "gap-4 text-base": size === Size.lg,
+      "gap-2 text-b2 dp:text-base": size === Size.md,
+      "gap-2 text-b3 dp:text-b2": size === Size.sm,
+      "gap-1 text-b4 dp:text-b3": size === Size.xs
     },
     style != ButtonStyle.PLAIN &&
       (label || $$slots.default) && {
         "shadow--md": true,
-        "h-12 gap-4 text-base py-4 px-6": size === Size.lg,
-        "h-[2.75rem] gap-2 text-b2 dp:text-base py-3 px-5": size === Size.md,
-        "h-6 dp:h-8 gap-2 text-b3 dp:text-b2 py-2 px-4": size === Size.sm,
-        "h-6 gap-1 text-b4 dp:text-b3 py-1 px-3": size === Size.xs
+        "h-12 py-4 px-6": size === Size.lg,
+        "h-[2.75rem] py-3 px-5": size === Size.md,
+        "h-8 py-2 px-4": size === Size.sm,
+        "h-6 py-1 px-3": size === Size.xs
       },
     style === ButtonStyle.DEFAULT && [
       (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER) &&
@@ -99,7 +107,9 @@
         "hover:opacity-90":
           type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
         "bg-aps1": type === ButtonVariant.PRIMARY,
-        "bg-ars1": type === ButtonVariant.DANGER
+        "bg-ars1": type === ButtonVariant.DANGER,
+        "border border-transparent hover:border-brs3":
+          type === ButtonVariant.SECONDARY
       }
     ],
     style === ButtonStyle.OUTLINED && [
@@ -107,9 +117,15 @@
       {
         border: true,
         "border-aps1 text-aps1": type === ButtonVariant.PRIMARY,
-        "border-brs3 text:fgs1 hover:border-fgs3":
+        "border-brs3 text-fgs2 hover:text-fgs1 hover:border-fgs3":
           type === ButtonVariant.SECONDARY,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
+      }
+    ],
+    style === ButtonStyle.PLAIN && [
+      "text-fgs2 hover:text-aps1",
+      {
+        "underline-dotted hover:underline-dotted-primary": isUnderlined
       }
     ]
   )}

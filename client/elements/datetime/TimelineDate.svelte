@@ -14,7 +14,6 @@
     class="flex underline-dotted items-center {size === Size.lg
       ? 'gap-2'
       : 'gap-1'}"
-    slot="trigger"
   >
     <Icon icon="calendar" {size} />
     <span

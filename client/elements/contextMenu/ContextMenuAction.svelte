@@ -12,9 +12,7 @@
   bind:this={contextMenuPopoverRef}
   options={{ placement: Direction.BottomRight }}
 >
-  <slot name="trigger" slot="trigger">
-    <Button icon="ellipsis-vertical" tooltip="More actions" />
-  </slot>
+  <Button icon="ellipsis-vertical" tooltip="More actions" />
   <slot name="popover" slot="popover">
     <ContextMenu
       menu={contextMenu}

@@ -32,13 +32,15 @@
     </div>
   </div>
 </div> -->
-<div class="relative flex flex-col items-center gap-12 h-full w-full">
-  <div class="flex flex-col gap-8 w-full">
+<div
+  class="relative flex flex-col items-center gap-4 dp:gap-12 flex-grow w-full"
+>
+  <div class="flex flex-col gap-4 dp:gap-8 w-full flex-grow">
     <IntervalBar />
     <TimeComposition isExpandedMode={true} />
   </div>
   <button
-    class="flex flex-col items-center gap-1"
+    class="flex flex-col items-center gap-1 pb-40"
     on:click={() => appStore.runAction(PointronEventEnum.SHOW_FOCUSITEMS_MODAL)}
   >
     <!-- TODO - count should ignore parent goal if tasks added -->

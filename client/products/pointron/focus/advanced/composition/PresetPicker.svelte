@@ -5,6 +5,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import PresetItem from "../presets/PresetItem.svelte";
   import Presets from "../presets/Presets.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   export let isExpandedVariant: boolean = false;
   let isInEditMode: boolean = false;
   let selectedPresetIndex: number = $sessionStore.composition
@@ -21,35 +23,23 @@
 
 <div class="flex flex-col w-full flex-grow gap-2">
   <div
-    class="flex gap-2 {isExpandedVariant
+    class="flex gap-2 h-full {isExpandedVariant
       ? 'w-full flex-col flex-grow'
       : 'w-72 md:w-96 lg:w-[30rem]'}"
   >
-    <div
-      class="flex h-full styledscroll {isExpandedVariant
-        ? 'flex-col items-center gap-3 overflow-y-auto'
-        : 'flex-row gap-2 overflow-x-auto'}"
-    >
-      {#if isInEditMode}
-        <Presets {parentBackgroundIndex} {isExpandedVariant} />
-      {:else}
-        {#each $pointronPreferences.presets as preset, index}
-          <PresetItem
-            {parentBackgroundIndex}
-            {preset}
-            {isInEditMode}
-            {isExpandedVariant}
-            isActive={selectedPresetIndex === index}
-            on:click={onPresetSelection}
-          />
-        {/each}
-      {/if}
-    </div>
+    <Presets
+      {parentBackgroundIndex}
+      {isExpandedVariant}
+      {isInEditMode}
+      on:select={onPresetSelection}
+    />
   </div>
   <div class="flex flex-col items-center gap-2 min-h-[3rem]">
     {#if isExpandedVariant}
       <Button
         size={Size.sm}
+        style={ButtonStyle.PLAIN}
+        isUnderlined={true}
         on:click={() => {
           isInEditMode = !isInEditMode;
         }}

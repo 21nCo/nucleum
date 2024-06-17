@@ -24,6 +24,7 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Embed } from "$lib/client/types/context.type";
   import context from "$lib/client/stores/context.store";
+  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
   export let item: any;
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
@@ -129,6 +130,13 @@
             item.color
           )}
         >
+          <div>
+            <BreadcrumbMini
+              hierarchy={item.hierarchy}
+              slice={3}
+              truncateLength={15}
+            />
+          </div>
           {item.label}
           <!-- TODO - drag the entire focus item for rearranging -->
           <!-- <span
@@ -180,6 +188,13 @@
       on:click={clickHandler}
     >
       <div class="text-left truncate w-4/5">
+        <div>
+          <BreadcrumbMini
+            hierarchy={item.hierarchy}
+            slice={3}
+            truncateLength={15}
+          />
+        </div>
         {item.label}
       </div>
       {#if isInprogress}

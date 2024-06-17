@@ -54,9 +54,7 @@
       "border border-bgs2 ": style === InputStyle.FILLED && !isActive
     })}
   >
-    <slot slot="trigger" name="trigger">
-      <slot>Input element</slot>
-    </slot>
+    <slot>Input element</slot>
     <slot slot="popover" name="popover">
       <slot name="popover">popover content</slot>
     </slot>

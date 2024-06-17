@@ -555,7 +555,7 @@
   triggerClass="w-full"
   isPreventDefault={true}
 >
-  <div class="relative w-full flex justify-start" slot="trigger">
+  <div class="relative w-full flex justify-start">
     <!--  || !$isInEditMode -->
     {#if $mdStore.params?.isReadOnly}
       <div

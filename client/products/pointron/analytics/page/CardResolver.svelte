@@ -19,16 +19,16 @@
 
 {#if card.type === AnalyticsCardType.PIE || card.type === AnalyticsCardType.DONUT || card.type === AnalyticsCardType.AREA || card.type === AnalyticsCardType.LINE || card.type === AnalyticsCardType.BAR}
   <AnalyticsChart chart={card} rawData={data} {goalColors} />
-{:else if card.type === AnalyticsCardType.TARGETS}
-  <TargetGuages
-    size={$view.isPortrait ? Size.md : Size.lg}
-    {parentBgIndex}
-    type="full"
-  />
 {:else}
-  <div class="flex self-start w-full h-full p-3">
+  <div class="flex self-start w-full h-full p-3 overflow-auto">
     {#if card.type === AnalyticsCardType.TOP_N}
       <TopNCard {card} {data} {goalColors} {previousTimePeriodData} />
+    {:else if card.type === AnalyticsCardType.TARGETS}
+      <TargetGuages
+        size={$view.isPortrait ? Size.md : Size.lg}
+        {parentBgIndex}
+        type="full"
+      />
     {:else if card.type === AnalyticsCardType.METRICS}
       <MetricsCard {card} {data} {goalColors} {previousTimePeriodData} />
     {/if}

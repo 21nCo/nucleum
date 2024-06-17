@@ -31,7 +31,7 @@
   let addManualLogButton: IButtonParams = {
     label: "Add manual log",
     callback: onManualLogClicked,
-    icon: "plus",
+    icon: "clock",
     variant: $view.isPortrait ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY,
     parentBgIndex: $view.isPortrait ? 1 : 3,
     style: $view.isPortrait ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED

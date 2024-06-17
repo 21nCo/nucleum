@@ -7,6 +7,8 @@ import {
   type TextContent
 } from "$lib/client/types/memotron/node.type";
 import { isValidArrayWithData } from "./obj.utils";
+import { Display } from "../types/view.type";
+import { Size } from "../types/size.enum";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -121,4 +123,41 @@ export function truncateString(str: string, length: number) {
 export function enumToString(val: any, isProperCase: boolean = true) {
   const str = val.toString().split("_").join(" ").split("-").join(" ");
   return isProperCase ? properCase(str) : str;
+}
+
+export function determineTruncateLength(
+  display: Display,
+  space: Size.sm | Size.md | Size.lg = Size.md
+) {
+  if (space === Size.lg) {
+    if (display === Display.MO || display === Display.CW) {
+      return 20;
+    } else if (display === Display.TP || display === Display.DP) {
+      return 30;
+    } else if (display === Display.TK) {
+      return 40;
+    } else {
+      return 20;
+    }
+  } else if (space === Size.md) {
+    if (display === Display.MO || display === Display.CW) {
+      return 12;
+    } else if (display === Display.TP || display === Display.DP) {
+      return 20;
+    } else if (display === Display.TK) {
+      return 30;
+    } else {
+      return 12;
+    }
+  } else {
+    if (display === Display.MO || display === Display.CW) {
+      return 8;
+    } else if (display === Display.TP || display === Display.DP) {
+      return 12;
+    } else if (display === Display.TK) {
+      return 20;
+    } else {
+      return 8;
+    }
+  }
 }

@@ -8,11 +8,7 @@
   import FocusItem from "./FocusItem.svelte";
   import AddGoal from "./AddGoal.svelte";
   import AddTask from "./AddTask.svelte";
-  import {
-    appStore,
-    dragAndDropStore,
-    isInEditMode
-  } from "$lib/client/stores/app.store";
+  import { appStore, dragAndDropStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { handleFocusItemsDND } from "$lib/client/utils/dragDrop";
   import { LaunchContext } from "$lib/client/types/appStore.type";
@@ -24,6 +20,8 @@
   import { transformFocusItems } from "$lib/client/products/pointron/focus/session.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let isInEditMode: boolean = false;
   let items: any[] = [];
   let goalEntry: string = "";
   let isFocusingAddGoal: boolean = false;
@@ -72,8 +70,13 @@
   }
 </script>
 
-<div class="flex flex-col w-full h-full gap-6 pb-36 mt-3" bind:this={ref}>
-  {#if items.length === 0 && !$isInEditMode && $sessionStore.isSessionRunning}
+<div
+  class={cn("flex flex-col w-full h-full gap-6 pb-48 overflow-auto", {
+    "pt-6": isInEditMode
+  })}
+  bind:this={ref}
+>
+  {#if items.length === 0 && !isInEditMode && $sessionStore.isSessionRunning}
     <div class="h-full">
       <EmptyStatusView
         size={Size.sm}
@@ -84,7 +87,7 @@
   {:else}
     {#each items as item, index (item)}
       <FocusItem
-        isInEditMode={$isInEditMode}
+        {isInEditMode}
         {item}
         isFocusAddTask={$lastActiveGoalIdForEditing
           ? $lastActiveGoalIdForEditing === item.goalId
@@ -93,7 +96,7 @@
     {/each}
   {/if}
 
-  {#if !$sessionStore.isSessionRunning || $isInEditMode}
+  {#if !$sessionStore.isSessionRunning || isInEditMode}
     <div class="flex flex-col gap-2 w-full pt-4">
       <div
         class="flex items-center w-full border rounded-md {isFocusingAddGoal

@@ -8,6 +8,9 @@
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { Item } from "$lib/client/types/item.enum";
+  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
+  import { determineTruncateLength } from "$lib/client/utils/text.utils";
+  import { Size } from "$lib/client/types/size.enum";
   let parentBreadcrumbs: BreadcrumbItem[] = [];
   $: refresh($currentGoal);
   function refresh(goal: Goal) {
@@ -15,10 +18,7 @@
     let parentHierarchy = [];
     parentHierarchy =
       goal.parent?.hierarchy?.map((item, index) => ({
-        label:
-          item.label && item.label.length > 25
-            ? `${item.label.slice(0, 25)}...`
-            : item.label,
+        label: item.label,
         path: `/${Item.goal}/${item.id}`
       })) ?? [];
 
@@ -47,9 +47,12 @@
         }`}
       />
     {:else}
-      <span class={$view.isPortrait ? `text-h3` : `text-h2 font-medium`}
-        >{$currentGoal.label}</span
-      >
+      <span class={$view.isPortrait ? `text-h3` : `text-h2 font-medium`}>
+        <TextWithHoverTooltip
+          text={$currentGoal.label}
+          truncateLength={determineTruncateLength($view.display, Size.lg)}
+        />
+      </span>
     {/if}
   </div>
   <div class="flex items-center gap-8 min-w-fit">

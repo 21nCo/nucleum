@@ -23,10 +23,10 @@
   import { formatTime, formatSeconds } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { GoalPersistence } from "$lib/client/products/pointron/goals/goal.persistence";
   import appearance from "$lib/client/stores/appearance.store";
   import { pointLogStore } from "../../logs/log.store";
+  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
   export let goal: Pick<Goal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
@@ -238,11 +238,16 @@
             ? customColorStyle($appearance, ColorType.Fg, "fgs1", color)
             : ``}
         >
-          {#if parentLabels.length > 0}
+          <!-- {#if parentLabels.length > 0}
             <div class="text-start text-b4 truncate actualQSContent">
               {parentLabels.slice(-2).join(" ・ ")}
             </div>
-          {/if}
+          {/if} -->
+          {#key parentLabels}
+            <div class="text-fgs3">
+              <BreadcrumbMini hierarchy={parentLabels} slice={2} />
+            </div>
+          {/key}
           <div class="font-medium text-left truncate actualQSContent">
             {goal.label ?? ""}
           </div>

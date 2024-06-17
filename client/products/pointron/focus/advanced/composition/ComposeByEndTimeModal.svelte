@@ -3,7 +3,6 @@
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import TimeSelector from "$lib/client/components/TimeSelector.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { deepCopy } from "$lib/client/utils/obj.utils";
   import { incrementTime } from "$lib/client/utils/time.utils";
   import ComposeBreak from "./ComposeBreak.svelte";
   import ComposeTotalsText from "./ComposeTotalsText.svelte";

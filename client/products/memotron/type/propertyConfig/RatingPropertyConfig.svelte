@@ -41,10 +41,8 @@
       triggerClass="flex items-center w-1/5 h-full gap-2"
       options={popoverOptions}
     >
-      <svelte:fragment slot="trigger">
-        <AvatarView avatar={property.config?.ratingAvatar} size={Size.md} />
-        <Icon icon="chevdown" />
-      </svelte:fragment>
+      <AvatarView avatar={property.config?.ratingAvatar} size={Size.md} />
+      <Icon icon="chevdown" />
       <svelte:fragment slot="popover">
         <!-- TODO - only show icons that can be fillable -->
         <AvatarPicker

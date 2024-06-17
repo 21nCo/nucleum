@@ -57,7 +57,6 @@
       }}
     >
       <button
-        slot="trigger"
         class="min-w-fit whitespace-nowrap"
         on:dblclick={() => {
           labelEditPopoverRef.toggle();

@@ -2,7 +2,7 @@
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { IntervalBarContext } from "$lib/client/types/pointron/session.type";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import SessionTimeText from "../elements/sessionTimeText/SessionTimeText.svelte";
@@ -91,7 +91,7 @@
           : ''}"
       >
         <FocusItemsHeading />
-        <FocusItemList />
+        <FocusItemList isInEditMode={$isInEditMode} />
       </div>
     </div>
     {#if !isInline}
@@ -170,7 +170,7 @@
       >
         <FocusItemsHeading />
         <div class="overflow-y-auto h-full">
-          <FocusItemList />
+          <FocusItemList isInEditMode={$isInEditMode} />
         </div>
       </div>
     {/if}

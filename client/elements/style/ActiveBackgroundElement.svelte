@@ -10,6 +10,8 @@
     textColorClass
   } from "$lib/client/utils/theme.utils";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let bgWhenInactive: number = 0;
   export let isBackgroundActive: boolean = false;
   export let isIncludeActiveBorder: boolean = false;
@@ -43,6 +45,7 @@
   }
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
     isHovering = resolveHoverState(event);
+    dispatch("hover", isHovering);
   };
 </script>
 

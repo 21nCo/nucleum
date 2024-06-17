@@ -6,10 +6,12 @@
   import { Direction } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
+  import GoalSearchThumbnail from "../../../goals/thumbnails/GoalSearchThumbnail.svelte";
   export let label: string = "";
   let inputRef: any;
   async function save(event: any) {
     let goal = event?.detail?.item;
+    console.log("Goal: ", goal);
     if (!goal || !goal.id) return;
     if ($focusItemsStore.items.some((x) => x.goalId === goal.id)) {
       toasts.error("Goal already exists in focus list");
@@ -23,7 +25,8 @@
       order: $focusItemsStore.items.length,
       estimated: 0,
       checked: false,
-      worked: 0
+      worked: 0,
+      hierarchy: goal.parent?.hierarchy?.map((x: any) => x.label)
     });
   }
   function reset() {
@@ -38,6 +41,7 @@
     on:select={save}
     bind:value={label}
     bind:this={inputRef}
+    searchResultComponent={GoalSearchThumbnail}
     searchStoreId={Item.PointGoal}
     style={InputStyle.PLAIN}
     popoverOptions={{ offsetInPx: 16 }}

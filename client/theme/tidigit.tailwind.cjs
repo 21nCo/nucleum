@@ -148,7 +148,7 @@ module.exports = {
       /**
        * Constrained height: Horizontal splits on desktop/laptop/tablet or when opened from laptop browser with too many toolbars i.e. tab bar, bookmark bar, address bar, system menu bar etc
        */
-      ch: { raw: "(max-height: 800px)" },
+      ch: { raw: "(max-height: 600px)" },
       /**
        * Vertical monitor
        */

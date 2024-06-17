@@ -98,7 +98,7 @@
   }}
   class={triggerClass}
 >
-  <slot name="trigger" />
+  <slot />
 </button>
 <svelte:element
   this={options?.element ?? "div"}

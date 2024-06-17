@@ -7,6 +7,9 @@
   import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { appStore } from "$lib/client/stores/app.store";
+  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
+  import { determineTruncateLength } from "$lib/client/utils/text.utils";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let contentCallback: (id: string) => TreeMapContent;
@@ -60,7 +63,13 @@
             on:click={onchevclick}
           />
         {/if}
-        {content.label}
+        <TextWithHoverTooltip
+          text={content.label}
+          truncateLength={determineTruncateLength(
+            $view.display,
+            nestingLevel ? Size.md : Size.lg
+          )}
+        />
       </span>
       {#if content.icon && content.childrenCount > 0}
         <Icon

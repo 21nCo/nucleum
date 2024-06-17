@@ -7,7 +7,10 @@
     type SessionComposition,
     BreakCompositionType
   } from "$lib/client/types/pointron/sessionComposition.type";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { getTotalsFromComposition } from "$lib/client/products/pointron/pointron.utils";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
@@ -89,47 +92,50 @@
   }
 </script>
 
-<div class="flex flex-col flex-grow w-full my-2 gap-8">
-  <div class="w-full flex {isShowSave ? 'justify-between' : 'justify-center'}">
-    <PanelSwitcher
-      items={["Countup", "Countdown", "Pomodoro"]}
-      size={Size.sm}
-      bind:value={selectedType}
-      style={PanelSwitcherStyle.BAR}
-      on:switch={() => {
-        if (selectedType === "Pomodoro") {
-          composition.type = SessionCompositionType.POMODORO;
-          if (!composition.numberOfFocusRounds) {
-            composition.numberOfFocusRounds = 1;
-          }
-          composition.breakType = BreakCompositionType.PREDEFINED;
-          // composition.type = SessionCompositionType.POMODORO;
-        } else if (selectedType === "Countdown") {
-          composition.type = SessionCompositionType.TOTAL_DURATION;
-          if (!composition.numberOfBreaks) composition.numberOfBreaks = 0;
-          if (!composition.breakDuration) composition.breakDuration = 0;
-          composition.totalDuration = totals.duration;
-          // numberOfBreaksInput = composition.numberOfFocusRounds - 1;
-          // breakInput = composition.breakDuration;
-          // composition.type = SessionCompositionType.TOTAL_DURATION;
-        } else if (selectedType === "Countup") {
-          composition.type = SessionCompositionType.COUNTUP;
-          composition.breakType = BreakCompositionType.REMINDER;
+<div class="flex flex-col items-center flex-grow w-full my-2 gap-8">
+  <PanelSwitcher
+    items={["Countup", "Countdown", "Pomodoro"]}
+    size={Size.sm}
+    bind:value={selectedType}
+    style={PanelSwitcherStyle.BAR}
+    isExpandToFullWidth={isShowSave}
+    barStyle={BarStyle.EXACT}
+    on:switch={() => {
+      if (selectedType === "Pomodoro") {
+        composition.type = SessionCompositionType.POMODORO;
+        if (!composition.numberOfFocusRounds) {
+          composition.numberOfFocusRounds = 1;
         }
-        dispatch("change", composition);
-      }}
-    />
-    {#if isShowSave}
-      <Button
-        icon="bookmark"
-        on:click={() => {
-          appStore.runAction(PointronEventEnum.SAVE_PRESET_MODAL);
-        }}
-        tooltip="Save as preset"
-      />
-    {/if}
-  </div>
-  <div class="flex flex-col flex-grow gap-8">
+        composition.breakType = BreakCompositionType.PREDEFINED;
+        // composition.type = SessionCompositionType.POMODORO;
+      } else if (selectedType === "Countdown") {
+        composition.type = SessionCompositionType.TOTAL_DURATION;
+        if (!composition.numberOfBreaks) composition.numberOfBreaks = 0;
+        if (!composition.breakDuration) composition.breakDuration = 0;
+        composition.totalDuration = totals.duration;
+        // numberOfBreaksInput = composition.numberOfFocusRounds - 1;
+        // breakInput = composition.breakDuration;
+        // composition.type = SessionCompositionType.TOTAL_DURATION;
+      } else if (selectedType === "Countup") {
+        composition.type = SessionCompositionType.COUNTUP;
+        composition.breakType = BreakCompositionType.REMINDER;
+      }
+      dispatch("change", composition);
+    }}
+  >
+    <slot name="right" slot="right">
+      {#if isShowSave}
+        <Button
+          icon="bookmark"
+          on:click={() => {
+            appStore.runAction(PointronEventEnum.SAVE_PRESET_MODAL);
+          }}
+          tooltip="Save as preset"
+        />
+      {/if}
+    </slot>
+  </PanelSwitcher>
+  <div class="flex flex-col w-full flex-grow gap-8">
     {#if composition.type === SessionCompositionType.POMODORO}
       <div class="flex flex-col gap-6 items-center h-96 overflow-y-auto">
         <PomodoroUnitView bind:composition on:change />
@@ -147,6 +153,8 @@
           <Button
             on:click={onAddAdditionalClicked}
             style={ButtonStyle.OUTLINED}
+            size={Size.sm}
+            icon="plus"
             label="add another round"
           />
         </div>

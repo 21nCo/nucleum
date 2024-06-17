@@ -70,6 +70,7 @@
       value={$view.landscapiness.toFixed(2)}
     />
     <DebugInfoItem label="Scale" value={$view.scale.toFixed(2)} />
+    <DebugInfoItem label="Display" value={$view.display} />
     <DebugInfoItem label="Skin" value={$appearance.skin} />
     <DebugInfoItem
       label="Theme & Color scheme"

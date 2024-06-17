@@ -60,20 +60,18 @@
   triggerClass={classList}
   bind:isPopoverVisible={isOptionsVisible}
 >
-  <slot slot="trigger" name="trigger">
-    <InputBaseElement
-      class="justify-between gap-4"
-      {style}
-      {label}
-      isActive={isOptionsVisible}
-    >
-      <SelectPropertyItem
-        item={property.config?.options?.find((x) => x.id === value)}
-        isSelectedContext={true}
-      />
-      <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
-    </InputBaseElement>
-  </slot>
+  <InputBaseElement
+    class="justify-between gap-4"
+    {style}
+    {label}
+    isActive={isOptionsVisible}
+  >
+    <SelectPropertyItem
+      item={property.config?.options?.find((x) => x.id === value)}
+      isSelectedContext={true}
+    />
+    <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
+  </InputBaseElement>
   <svelte:fragment slot="popover">
     <div class="flex gap-2 px-3 w-full text-b2">
       <TextInput

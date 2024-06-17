@@ -46,19 +46,17 @@
       id: "colorpickerforoption"
     }}
   >
-    <svelte:fragment slot="trigger">
+    <ActiveBackgroundElement
+      isBackgroundActive={true}
+      color={option.color}
+      class="relative rounded-full h-5 w-5"
+    >
       <ActiveBackgroundElement
         isBackgroundActive={true}
         color={option.color}
-        class="relative rounded-full h-5 w-5"
-      >
-        <ActiveBackgroundElement
-          isBackgroundActive={true}
-          color={option.color}
-          class="absolute top-0.5 left-0.5 rounded-full h-4 w-4 border-[1.5px] border-brs2"
-        />
-      </ActiveBackgroundElement>
-    </svelte:fragment>
+        class="absolute top-0.5 left-0.5 rounded-full h-4 w-4 border-[1.5px] border-brs2"
+      />
+    </ActiveBackgroundElement>
     <svelte:fragment slot="popover">
       <ColorPicker
         bind:hue={option.color}

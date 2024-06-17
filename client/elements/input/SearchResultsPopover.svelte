@@ -119,7 +119,7 @@
 >
   <div class="flex flex-col flex-grow items-center w-full">
     {#if results && results.length > 0}
-      {#each results as item, index (item.id)}
+      {#each results as item, index ((item.id ?? "") + item.value)}
         <SearchResultItem
           label={item.label ??
             ("name" in item && typeof item.name == "string" ? item.name : "")}

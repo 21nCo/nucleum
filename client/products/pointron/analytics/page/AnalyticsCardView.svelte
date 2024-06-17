@@ -172,9 +172,8 @@
     {#if $isInEditMode}
       <div
         class={cn("w-full", {
-          "h-7/10": !$view.isPortrait,
-          "h-4/5": $view.isPortrait && isCarbonChart,
-          "h-full": $view.isPortrait && !isCarbonChart
+          "h-full": !$view.isPortrait || ($view.isPortrait && !isCarbonChart),
+          "h-4/5": $view.isPortrait && isCarbonChart
         })}
       >
         <CardResolver

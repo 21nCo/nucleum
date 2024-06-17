@@ -56,6 +56,11 @@
   }
   async function processImport() {
     isProcessingImport = true;
+    if (!jsonData) {
+      toasts.error("Please select a valid file");
+      isProcessingImport = false;
+      return;
+    }
     const response = await new PointronPersistence().importData(
       jsonData,
       fileName,

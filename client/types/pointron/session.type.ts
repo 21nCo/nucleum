@@ -95,6 +95,7 @@ export type FocusItem = {
   estimated: number;
   checked: boolean;
   order: number;
+  hierarchy?: string[];
 };
 
 export enum IntervalBarContext {
