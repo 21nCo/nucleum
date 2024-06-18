@@ -116,6 +116,8 @@
               md: { ...md, blocks: $mdStore.blocks }
             });
           }}
+          on:mention
+          on:unmention
         />
       {/each}
     {:else}

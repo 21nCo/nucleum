@@ -7,13 +7,14 @@ import {
   type ICacheableStore
 } from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
-import type {
-  IActiveNode,
-  INode,
-  INodeCapture,
-  INodeProperty,
-  INodeStore,
-  NodeType
+import {
+  LinkType,
+  type IActiveNode,
+  type INode,
+  type INodeCapture,
+  type INodeProperty,
+  type INodeStore,
+  type NodeType
 } from "$lib/client/types/memotron/node.type";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { debouncer, generateUID } from "$lib/client/utils/utils";
@@ -249,5 +250,8 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
       isUseQueueFirstApproach: true,
       mutationId: `${id}-delete`
     });
+  };
+  mention = async (location: string, id: string) => {
+    return nodePersistance.link(location, id, LinkType.MENTION);
   };
 }

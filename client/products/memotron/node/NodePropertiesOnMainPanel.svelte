@@ -1,13 +1,10 @@
 <script lang="ts">
   import type { INodeProperty } from "$lib/client/types/memotron/node.type";
   import PropertiesListView from "../common/properties/PropertiesListView.svelte";
-  import {
-    mapPropertyValues,
-    resolvePropertyDefaultValue
-  } from "../common/properties/property.utils";
-  import { resolveActiveNodeStore } from "./node.store";
-  export let id: string;
-  const node = resolveActiveNodeStore(id);
+  import { mapPropertyValues } from "../common/properties/property.utils";
+  import type { IActiveNodeStore } from "./node.store";
+
+  export let node: IActiveNodeStore;
 
   let propertiesOnMainPanel = $node?.type?.properties?.filter(
     (x) => x.isShowOnNodePage

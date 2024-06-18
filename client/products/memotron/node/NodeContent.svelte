@@ -2,10 +2,11 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import {
     NodeType,
+    headingNodeTypes,
     type INodeStructure
   } from "$lib/client/types/memotron/node.type";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { hierarchyFactorLimit, resolveActiveNodeStore } from "./node.store";
+  import { hierarchyFactorLimit, type IActiveNodeStore } from "./node.store";
 
   import {
     deepCopy,
@@ -14,10 +15,9 @@
   } from "$lib/client/utils/obj.utils";
   import AudioScrubablePreview from "../capture/AudioScrubablePreview.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  export let id: string;
+  export let node: IActiveNodeStore;
   export let mdId: string;
   let previousRootStructure: string[] = [];
-  const node = resolveActiveNodeStore(id);
   let refreshId = Date.now();
   // const nodePersistance = new NodePersistance($account.userInfo?.id ?? "");
   function retireveNode() {
@@ -55,7 +55,7 @@
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
-      node.updateBlock(id, { children: e.detail.root });
+      node.updateBlock($node.id, { children: e.detail.root });
     }
     previousRootStructure = deepCopy(e.detail.root);
     if (!e.detail.children) return;
@@ -65,11 +65,20 @@
         node.updateBlock(child.id, { children: child.children });
       });
   }
+  function onMention(e: CustomEvent) {
+    const detail = e.detail;
+    console.log("Mention", { e });
+    if (!detail.id || !detail.location) return;
+    node.mention(detail.location, detail.id);
+  }
+  function onUnMention(e: CustomEvent) {
+    console.log("Unmention", { e });
+  }
 </script>
 
 {#key refreshId}
   <div class="flex flex-col h-full flex-grow pt-2">
-    {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node))}
+    {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
       <NodularMarkdown
         node={$node}
         {mdId}
@@ -79,6 +88,8 @@
         on:convert={onMarkdownConvertChanges}
         on:delete={onMarkdownBlockDelete}
         on:restructure={onReStructure}
+        on:mention={onMention}
+        on:unmention={onUnMention}
       />
     {:else if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
       <!-- <audio controls src={$node.body?.url} /> -->

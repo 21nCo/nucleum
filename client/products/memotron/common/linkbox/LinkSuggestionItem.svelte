@@ -14,16 +14,15 @@
   } from "$lib/client/types/memotron/node.type";
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   export let item: any;
   export let isActive: boolean = false;
   let avatar: IAvatar | undefined = undefined;
   let parentHierarchy: any[] = [];
   onMount(async () => {
     avatar = await resolveAvatar();
-    console.log({ item, avatar });
     if (headingNodeTypes.includes(item.contentType)) {
       parentHierarchy = await resolveNodeParentHierarchy(item.id);
-      console.log({ item, parentHierarchy });
     }
   });
   async function resolveAvatar() {
@@ -41,7 +40,7 @@
     "h-8": parentHierarchy.length == 0
   })}
 >
-  <span class="flex flex-col h-full">
+  <span class="flex flex-col h-full mo:w-4/5 w-3/4">
     {#if parentHierarchy.length > 0}
       <div>
         <Breadcrumb
@@ -53,15 +52,16 @@
         />
       </div>
     {/if}
-    <div class="flex gap-2">
+    <div class="flex gap-2 w-full">
       {#if avatar}
         <span>
           <AvatarView {avatar} size={Size.md} />
         </span>
       {/if}
-      <span>
-        {item.label}
-      </span>
+      <TextWithHoverTooltip
+        text={item.label}
+        class="text-left truncate w-full"
+      />
     </div>
   </span>
   <span class="text-b3 text-fgs3"

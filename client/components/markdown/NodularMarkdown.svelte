@@ -414,5 +414,7 @@
     on:convert={onBlockConvert}
     on:focus={onBlockFocus}
     on:delete={onBlockDelete}
+    on:mention
+    on:unmention
   />
 {/key}

@@ -5,7 +5,8 @@ import type {
   LinkThumbnail,
   MediaBody,
   INodeProperty,
-  INodeStructure
+  INodeStructure,
+  LinkType
 } from "./node.type";
 
 export enum CaptureType {
@@ -29,7 +30,8 @@ export type CaptureStore = ICacheableStore & {
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
   fileDetails?: FileDetails;
-  links: LinkThumbnail[];
+  directLinks: LinkThumbnail[];
+  links?: ILink[];
   properties?: INodeProperty[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
@@ -46,4 +48,10 @@ export type FileDetails = {
   duration?: number;
   transcription?: string;
   initTranscription?: boolean;
+};
+
+export type ILink = {
+  from: string;
+  to: string;
+  linkType: LinkType;
 };

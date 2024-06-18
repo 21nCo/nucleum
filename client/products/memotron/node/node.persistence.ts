@@ -6,7 +6,7 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { cloudProvider } from "../../../persistence/persistence";
 import { ResourcePersistence } from "../../../persistence/resource.persistence";
 import { Item } from "../../../types/item.enum";
-import type { INodeCapture } from "../../../types/memotron/node.type";
+import type { INodeCapture, LinkType } from "../../../types/memotron/node.type";
 import type { IMutationQueueParams } from "../../../types/data.type";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
@@ -58,5 +58,17 @@ export class NodePersistence extends ResourcePersistence {
     const query = `fn::memotron::node::fetch($nodeId)`;
     const response = await surrealDb.executeReadFn(query, { nodeId });
     return interceptSurrealResponse(response, "fetch node");
+  }
+
+  async link(from: string, to: string, linkType: LinkType) {
+    let response = await surrealDb.query(
+      "return fn::memotron::link($from, $to, $linkType);",
+      {
+        from,
+        to,
+        linkType
+      }
+    );
+    return interceptSurrealResponse(response, "link");
   }
 }

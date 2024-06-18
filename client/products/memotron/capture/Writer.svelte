@@ -16,6 +16,16 @@
       "blocks" in $captureStore.body &&
       isEmptyMd(e?.detail || $captureStore.body);
   }
+  function onMention(e: CustomEvent) {
+    const detail = e.detail;
+    if (!detail.id || !detail.location) return;
+    captureStore.addMentionLink(detail.location, detail.id);
+  }
+  function onUnmention(e: CustomEvent) {
+    const detail = e.detail;
+    if (!detail.id || !detail.location) return;
+    captureStore.removeMentionLink(detail.location, detail.id);
+  }
 </script>
 
 <div class="flex w-full h-full max-h-full justify-between">
@@ -40,6 +50,8 @@
         bind:childrenWithStructure={$captureStore.childrenWithStructure}
         bind:rootStructure={$captureStore.rootStructure}
         on:change={refreshEmptyState}
+        on:mention={onMention}
+        on:unmention={onUnmention}
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

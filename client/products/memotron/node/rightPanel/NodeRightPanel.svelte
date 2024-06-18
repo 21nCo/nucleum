@@ -14,15 +14,14 @@
   import { properCase } from "$lib/client/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import DirectLinks from "../../common/foreLinks/DirectLinks.svelte";
-  import { resolveActiveNodeStore } from "../node.store";
+  import type { IActiveNodeStore } from "../node.store";
   import NodeMetadataPane from "./NodeMetadataPane.svelte";
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
-  export let id: string;
+  export let node: IActiveNodeStore;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v1";
   let selectedRightPanel = RightPanelType.OUTLINE;
   let isRightPanelCollapsed = true;
-  const node = resolveActiveNodeStore(id);
   let verticalSwitcherItems = [
     { label: RightPanelType.FORELINKS, icon: "arrow-up-right" },
     { label: RightPanelType.PROPERTIES, icon: "widget" },
@@ -91,11 +90,11 @@
           </div>
         </div>
       {:else if selectedRightPanel === RightPanelType.PROPERTIES}
-        <NodePropertiesPane {id} />
+        <NodePropertiesPane {node} />
       {:else if selectedRightPanel === RightPanelType.TRACES}
-        <NodeMetadataPane {id} />
+        <NodeMetadataPane {node} />
       {:else if selectedRightPanel === RightPanelType.METADATA}
-        <NodeMetadataPane {id} />
+        <NodeMetadataPane {node} />
       {/if}
     </div>
   {/if}

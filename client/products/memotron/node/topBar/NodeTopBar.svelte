@@ -5,13 +5,13 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { resolveActiveNodeStore } from "../node.store";
   import TopBarInlineActions from "./TopBarInlineActions.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
-  export let id: string;
+  import type { IActiveNodeStore } from "../node.store";
+  export let node: IActiveNodeStore;
+
   export let isClonesShown: boolean = false;
   export let nodePageVariant: "v1" | "v2" = "v1";
-  const node = resolveActiveNodeStore(id);
   function onLabelChange(e: any) {
     console.log("onLabelChange", e);
     if ($node.label) node.debouncedModify({ label: $node.label });
@@ -41,13 +41,13 @@
         />
       {:else}
         <Text
-          content={$node.label ?? ""}
+          content={$node.label ?? $node.body ?? ""}
           style={TextStyle.PANEL_HEADING_SMALL}
         />
       {/if}
     </div>
     <div class="flex items-center gap-4 mx-4">
-      <TopBarInlineActions {id} on:backlinks on:clones {isClonesShown} />
+      <TopBarInlineActions {node} on:backlinks on:clones {isClonesShown} />
     </div>
   </div>
 {/if}

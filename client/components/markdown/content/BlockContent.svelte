@@ -38,6 +38,8 @@
       on:insert
       on:convert
       on:delete
+      on:mention
+      on:unmention
     />
   {:else if TextNodeTypeList.includes(block.contentType) && "body" in block}
     <TextContent
@@ -51,6 +53,8 @@
       on:delete
       on:blur
       on:change
+      on:mention
+      on:unmention
     />
   {/if}
 </div>

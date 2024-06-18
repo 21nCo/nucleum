@@ -58,7 +58,7 @@
     ? text.slice(0, truncateLength) +
       (text.length > truncateLength ? "..." : "")
     : text}
-  <div bind:this={toolTipRef}>
+  <span bind:this={toolTipRef} class="tooltip">
     <Tooltip tooltip={tooltip ?? text} />
-  </div>
+  </span>
 </span>

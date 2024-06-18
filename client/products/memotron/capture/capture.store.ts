@@ -54,7 +54,7 @@ function generateSeedStore(): CaptureStore {
     label: "",
     properties: [],
     fileDetails: undefined,
-    links: [],
+    directLinks: [],
     avatar: undefined,
     childrenWithStructure: [],
     rootStructure: [],
@@ -128,8 +128,9 @@ async function save(setter: any) {
   //TODO - extract nodes from markdown blocks and save
   const metadata = await resolveNodeCaptureMetadata();
   console.log("capture store", { val, metadata });
+  const id = prefixTable(generateUID(), Item.node);
   let root: INodeItemCaptured = {
-    id: prefixTable(generateUID(), Item.node),
+    id,
     label: val.label ?? "",
     properties: val.properties,
     type: val.type?.id,
@@ -145,10 +146,12 @@ async function save(setter: any) {
               ? NodeType.NODULAR_MARKDOWN
               : NodeType.SIMPLE_TEXT,
     metadata,
-    links:
-      val.links?.map((link) => {
-        return { id: link.id, linkType: link.linkType };
-      }) ?? []
+    links: [
+      ...(val.directLinks?.map((link) => {
+        return { from: id, to: link.id, linkType: link.linkType };
+      }) ?? []),
+      ...(val.links ?? [])
+    ]
   };
   let remainingResources: INodeItemCaptured[] = [];
   if (val.fileDetails) {
@@ -265,16 +268,31 @@ function initCaptureStore() {
     },
     onTypeSelect: (val: CaptureType | string) => onTypeSelect(update, val),
     save: () => save(set),
-    directLink: (item: LinkThumbnail) => {
+    addMentionLink: (from: string, to: string) => {
       update((val) => {
         val.links = val.links ?? [];
-        val.links.push({ ...item, linkType: LinkType.DIRECT });
+        val.links.push({ from, to, linkType: LinkType.MENTION });
+        return val;
+      });
+    },
+    removeMentionLink: (from: string, to: string) => {
+      update((val) => {
+        val.links = val.links?.filter(
+          (link) => link.from !== from || link.to !== to
+        );
+        return val;
+      });
+    },
+    directLink: (item: LinkThumbnail) => {
+      update((val) => {
+        val.directLinks = val.directLinks ?? [];
+        val.directLinks.push({ ...item, linkType: LinkType.DIRECT });
         return val;
       });
     },
     removeDLink: (id: string) => {
       update((val) => {
-        val.links = val.links?.filter((link) => link.id !== id);
+        val.directLinks = val.directLinks?.filter((link) => link.id !== id);
         return val;
       });
     },

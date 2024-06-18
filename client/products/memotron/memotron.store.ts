@@ -19,12 +19,10 @@ export function resolveNodeParent(id: string) {
 }
 
 export async function resolveNodeParentHierarchy(id: string) {
-  console.log("resolveNodeParentHierarchy", { id });
   const hierarchy = [];
   let traverseComplete = true;
   while (traverseComplete) {
     const parent = await resolveNodeParent(id);
-    console.log({ parent, id });
     if (parent) {
       hierarchy.push(parent);
       id = parent.id;

@@ -4,6 +4,7 @@ import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { IAvatar } from "../avatar.type";
 import type { IMarkdown } from "./md.type";
 import type { ICacheableStore } from "../data.type";
+import type { ILink } from "./capture.type";
 
 export type INode = INodeBase &
   NodeContent & {
@@ -26,7 +27,7 @@ export type INodeItemCaptured = Omit<
      */
     creationContext?: string;
     metadata?: NodeMetadataCapturedAtClient;
-    links?: Link[];
+    links?: ILink[];
   };
 export type INodeCapture = {
   resources: INodeItemCaptured[];

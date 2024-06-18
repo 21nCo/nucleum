@@ -4,9 +4,7 @@ import { ClientConstruct } from "./clientConstruct";
 const domain = process.env.domain ?? "tidigit.dev";
 const subdomain = process.env.subdomain;
 const appName = (subdomain ?? "") + domain.split(".")[0];
-const isUseParentZone = process.env.isUseParentZone
-  ? Boolean(process.env.isUseParentZone)
-  : true;
+const isUseParentZone = Boolean(process.env.isUseParentZone);
 
 console.log("FrontendStack", {
   appName,

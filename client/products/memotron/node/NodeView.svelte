@@ -35,11 +35,9 @@
     }, 100);
   }
   async function fetchNode() {
-    console.log("fetching node", id, new Date());
     isLoading = true;
     isShowBacklinks = false;
     await node.fetch();
-    console.log("fetch node complete", id, new Date());
     isLoading = false;
   }
 </script>
@@ -56,15 +54,15 @@
     {:else}
       <div class="flex flex-col h-full w-full gap-4">
         <NodeTopBar
-          {id}
+          {node}
           {nodePageVariant}
           on:backlinks={(e) => {
             isShowBacklinks = true;
           }}
         />
         <div class="w-full flex-grow flex gap-4 p-6">
-          <NodeMainPanel {id} {mdId} />
-          <NodeRightPanel {id} {mdId} {nodePageVariant} />
+          <NodeMainPanel {node} {mdId} />
+          <NodeRightPanel {node} {mdId} {nodePageVariant} />
         </div>
       </div>
     {/if}

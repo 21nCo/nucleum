@@ -4,9 +4,8 @@
   import type { INodeProperty } from "$lib/client/types/memotron/node.type";
   import PropertiesListView from "../../common/properties/PropertiesListView.svelte";
   import { mapPropertyValues } from "../../common/properties/property.utils";
-  import { resolveActiveNodeStore } from "../node.store";
-  export let id: string;
-  const node = resolveActiveNodeStore(id);
+  import type { IActiveNodeStore } from "../node.store";
+  export let node: IActiveNodeStore;
 
   let properties = $node?.type?.properties;
   let nodeProperties: INodeProperty[] = mapPropertyValues(
@@ -32,7 +31,7 @@
       type={$node.type}
       isPropertiesPaneContext={true}
       isReadMode={!$isInEditMode}
-      nodeId={id}
+      nodeId={$node.id}
       on:change={propagateChanges}
     />
   {/if}

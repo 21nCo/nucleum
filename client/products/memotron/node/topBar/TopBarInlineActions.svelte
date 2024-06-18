@@ -7,11 +7,10 @@
   import { createEventDispatcher } from "svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { closeResource } from "$lib/client/utils/utils";
-  import { resolveActiveNodeStore } from "../node.store";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
+  import type { IActiveNodeStore } from "../node.store";
   const dispatch = createEventDispatcher();
-  export let id: string;
-  const node = resolveActiveNodeStore(id);
+  export let node: IActiveNodeStore;
   export let isClonesShown: boolean = false;
   $: backlinksRendered = $page.url.searchParams.get("blr");
   let contextMenu = [];
@@ -41,7 +40,7 @@
           value: "share",
           icon: "share",
           callback: () => {
-            appStore.runAction(MemotronEvent.PUBLISH, { id });
+            appStore.runAction(MemotronEvent.PUBLISH, { id: $node.id });
           }
         },
         {
@@ -88,7 +87,7 @@
     isStayActive={isClonesShown}
     on:click={() => {
       // runAction(MemotronEvent.HISTORY, { id });
-      dispatch("clones", { id });
+      dispatch("clones", { id: $node.id });
     }}
   />
   <!--TODO Show only in case of Gathery -->
@@ -105,7 +104,7 @@
     tooltip="Serendipity"
     icon="light-bulb"
     on:click={() => {
-      appStore.runAction(MemotronEvent.SERENDIPITY, { id });
+      appStore.runAction(MemotronEvent.SERENDIPITY, { id: $node.id });
     }}
   />
   {#if !Boolean(backlinksRendered)}
@@ -113,7 +112,7 @@
       size={Size.xs}
       label="links"
       on:click={() => {
-        dispatch("backlinks", { id });
+        dispatch("backlinks", { id: $node.id });
       }}
     />
   {/if}

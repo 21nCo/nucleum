@@ -18,9 +18,9 @@
 
 <section class="flex flex-col gap-2 w-full">
   <div class="h-8">
-    {#if isValidArrayWithData($captureStore.links)}
+    {#if isValidArrayWithData($captureStore.directLinks)}
       <DirectLinks
-        links={$captureStore.links}
+        links={$captureStore.directLinks}
         on:remove={(e) => {
           console.log("remove", e);
           captureStore.removeDLink(e.detail.id);

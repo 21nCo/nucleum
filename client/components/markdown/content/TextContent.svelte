@@ -21,6 +21,7 @@
   import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
   import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
   import { searchForLinking } from "$lib/client/products/memotron/memotron.store";
+  import { deepCopy } from "$lib/client/utils/obj.utils";
 
   const dispatch = createEventDispatcher();
   export let mdStore: MdStoreType;
@@ -47,6 +48,7 @@
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
   let shiftKeyPressed: boolean = false;
+  let previousVal = deepCopy(block.body);
   let caretPositionT2:
     | {
         element?: any;
@@ -368,7 +370,28 @@
       isListShortcutPresent
     );
   }
+  function diffStrings(oldStr: string, newStr: string) {
+    let added = "";
+    let removed = "";
+
+    for (let i = 0; i < Math.max(oldStr.length, newStr.length); i++) {
+      if (oldStr[i] !== newStr[i]) {
+        if (oldStr[i] !== undefined) removed += oldStr[i];
+        if (newStr[i] !== undefined) added += newStr[i];
+      }
+    }
+
+    return { added, removed };
+  }
   function dispatchChangeEvent() {
+    const { added, removed } = diffStrings(previousVal, block.body);
+    const mentionPattern = /\[.*?\]\(resource=(.*?)\)/g;
+    let match;
+    while ((match = mentionPattern.exec(removed)) !== null) {
+      const id = match[1];
+      dispatch("unmention", { location: block.id, id });
+    }
+    previousVal = deepCopy(block.body);
     dispatch("change", { id: block.id, body: block.body });
   }
   /**
@@ -514,15 +537,14 @@
     hidePopover();
   }
   function onMentionSearch(searchQuery: string) {
-    console.log("mention search", searchQuery);
     return searchForLinking(searchQuery);
   }
 
   function onMentionSelect(event: CustomEvent) {
-    console.log("mention select", event.detail);
     const item = event.detail.item;
     textRef.addMention(item);
     hidePopover("mentionSearch");
+    dispatch("mention", { location: block.id, id: item.id });
   }
 </script>
 

@@ -56,6 +56,8 @@
       on:insert
       on:convert
       on:delete
+      on:mention
+      on:unmention
       {mdStore}
       {isHovering}
       {block}
@@ -74,6 +76,8 @@
           on:insert
           on:convert
           on:delete
+          on:mention
+          on:unmention
         />
       {/each}
     {/if}

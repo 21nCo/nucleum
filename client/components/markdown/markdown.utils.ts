@@ -292,6 +292,18 @@ function removeHtmlComments(html: string): string {
   return replacedHtml;
 }
 
+function removeTooltipElements(html: string): string {
+  const tooltipElementRegex =
+    /<(\w+)[^>]*class="[^"]*tooltip[^"]*">[\s\S]*?<\/\1>/gs;
+  let replacedHtml = html;
+  let previousHtml = "";
+  while (previousHtml !== replacedHtml) {
+    previousHtml = replacedHtml;
+    replacedHtml = replacedHtml.replace(tooltipElementRegex, "");
+  }
+  return replacedHtml;
+}
+
 export function extractInlineMarkdownFromHtml(html: any) {
   let markdown = html;
   htmlToMarkdownPatterns.forEach((pattern) => {
@@ -299,5 +311,6 @@ export function extractInlineMarkdownFromHtml(html: any) {
   });
   markdown = replaceNestedSpans(markdown);
   markdown = removeHtmlComments(markdown);
+  markdown = removeTooltipElements(markdown);
   return markdown;
 }

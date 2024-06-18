@@ -8,10 +8,9 @@
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import NodeContent from "./NodeContent.svelte";
   import NodePropertiesOnMainPanel from "./NodePropertiesOnMainPanel.svelte";
-  import { resolveActiveNodeStore } from "./node.store";
-  export let id: string;
+  import type { IActiveNodeStore } from "./node.store";
+  export let node: IActiveNodeStore;
   export let mdId: string;
-  const node = resolveActiveNodeStore(id);
 </script>
 
 <div class="flex flex-col gap-6 h-full grow">
@@ -32,8 +31,8 @@
   <ResourceStatusBanner resource={node} />
   {#if $node.type && $node.properties && $node.properties.length > 0}
     <div class="px-2">
-      <NodePropertiesOnMainPanel {id} />
+      <NodePropertiesOnMainPanel {node} />
     </div>
   {/if}
-  <NodeContent {id} {mdId} />
+  <NodeContent {node} {mdId} />
 </div>

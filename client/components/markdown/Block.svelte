@@ -71,6 +71,8 @@
       on:insert
       on:convert
       on:delete
+      on:mention
+      on:unmention
       on:blur={() => {
         isHovering = false;
       }}

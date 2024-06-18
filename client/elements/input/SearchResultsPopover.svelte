@@ -39,7 +39,8 @@
       (event.target as HTMLInputElement).value ??
       (event.target as HTMLElement).innerText;
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
-      value = value.split(shortcutTrigger)[1];
+      value = value.split(shortcutTrigger)[1].split(" ")[0];
+      console.log("shortcutTrigger", { value });
     }
     console.log("keyup - search results popover", { event, value });
     if (event.key === "Escape") {
