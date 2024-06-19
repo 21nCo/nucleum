@@ -13,14 +13,11 @@
   import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import Check from "$lib/client/icons/Check.svelte";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { TextInputStyle } from "$lib/client/types/textinput.enum";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { borderClass, textColorClass } from "$lib/client/utils/theme.utils";
+  import { ColorStrength, ColorType } from "$lib/client/types/appearance.type";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
@@ -29,6 +26,9 @@
   import { Direction } from "$lib/client/types/direction.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { textColorClass } from "$lib/client/utils/theme.utils";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   export let task: FocusItem & Required<Pick<FocusItem, "taskId">>;
   export let isInEditMode: boolean = false;
   export let context: "current" | "history" = "current";
@@ -132,15 +132,16 @@
   id={task.goalId ?? "soloTaskItem"}
   classList="flex gap-2 items-center w-full"
 >
-  <ActiveBackgroundElement
-    class="w-full flex gap-2 items-center justify-between px-4 rounded-md {task.goalId
-      ? 'h-12'
-      : 'h-14'}  {!task.goalId
-      ? ' border-2 ' + borderClass($appearance, ColorStrength.Subtle)
-      : ''}"
+  <CustomColorPropagator
+    class={cn(
+      "w-full flex gap-2 items-center justify-between px-4 rounded-md ",
+      {
+        "h-12": task.goalId,
+        "h-14 border-2 border-brs1": !task.goalId,
+        "bg-ccs1 border-ccs1": isInprogress
+      }
+    )}
     on:click={clickHandler}
-    isBackgroundActive={isInprogress}
-    isIncludeActiveBorder={true}
     color={task.color}
   >
     <div
@@ -150,12 +151,7 @@
       <Check
         isChecked={task.checked}
         on:click={onCheckClicked}
-        color={textColorClass(
-          $appearance,
-          ColorStrength.Normal,
-          isInprogress,
-          $sessionStore.currentLog.color
-        ).split("-")[1]}
+        isAccentBgActive={isInprogress}
       />
       {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
         <TextInput
@@ -227,7 +223,7 @@
         </div>
       </button>
     </div>
-  </ActiveBackgroundElement>
+  </CustomColorPropagator>
   {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
     <Button
       icon={task.goalId ? "cross" : "trash"}

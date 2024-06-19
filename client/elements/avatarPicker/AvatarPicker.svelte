@@ -21,18 +21,16 @@
     type EmojiAvatar,
     AvatarPickerContext
   } from "../../types/avatar.type";
-  import { Persistence } from "../../persistence/persistence";
   import { IconVariant } from "../../types/icon.type";
   import { PanelSwitcherStyle } from "../../types/switcher.enum";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "../../types/text.enum";
-  import ActiveBackgroundElement from "../style/ActiveBackgroundElement.svelte";
-  import BackgroundElement from "../style/BackgroundElement.svelte";
   import AvatarView from "./AvatarView.svelte";
   import { emojis, materialSymbols } from "$lib/client/data/avatars";
   import SwitchInput from "../toggle/SwitchInput.svelte";
   import account from "$lib/client/stores/account.store";
   import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
+  import { abg, cn } from "$lib/client/utils/ui.utils";
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
@@ -392,20 +390,25 @@
         <div class="flex flex-col gap-1">
           {#each avatarKeys as key, index (index)}
             {#if avatars[key] !== undefined && avatars[key].length > 0}
-              <ActiveBackgroundElement
-                isBackgroundActive={activeCategory == "AVT" + index}
+              <button
                 id={"avt" + index}
-                class={"block w-full px-2 py-0.5 text-b2 text-left hover:bg-bgs2 rounded-md"}
+                class={cn(
+                  "block w-full px-2 py-0.5 text-b2 text-left rounded-md",
+                  {
+                    [abg()]: activeCategory == "AVT" + index,
+                    "hover:bg-bgs2": activeCategory != "AVT" + index
+                  }
+                )}
                 on:click={PanelItemClickHandler}
               >
                 {key}
-              </ActiveBackgroundElement>
+              </button>
             {/if}
           {/each}
         </div>
         {#if mode == AvatarType.ICON}
           <Divider colorStrength={ColorStrength.Strong} thickness={2} />
-          <SwitchInput label="Fill" bind:checked size={Size.sm} />
+          <SwitchInput label={{ label: "Fill" }} bind:checked size={Size.sm} />
         {/if}
         <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
           <UploadButton size={Size.sm} on:input={customUploadHandler} />
@@ -413,9 +416,8 @@
       </div>
     {/if}
     <div class="flex flex-col grow h-full">
-      <BackgroundElement
-        class="w-full h-1/10 flex items-center gap-3 px-4 border-b border-b-brs2"
-        parentBgIndex={1}
+      <div
+        class="w-full h-1/10 flex items-center gap-3 px-4 border-b border-b-brs2 bg-bgs2"
       >
         {#if mode == AvatarType.ICON}
           {#each colorPalate as color}
@@ -450,7 +452,7 @@
             >
           {/each}
         {/if}
-      </BackgroundElement>
+      </div>
       <div
         bind:this={avatarsParentContainer}
         on:scroll={handleScroll}

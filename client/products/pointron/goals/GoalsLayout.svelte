@@ -135,19 +135,6 @@
           {/if}
           <div class="h-full w-full">
             {#if isValidArrayWithData($goalStore.filteredGoals)}
-              <!-- {#each $goalStore.filteredGoals as goal (goal.id)}
-                <NestedGoalAccordion
-                  id={goal.id}
-                  label={goal.label}
-                  subGoalCount={goal.subGoalCount}
-                  subGoals={goal.subGoals}
-                  color={goal.color}
-                  isArchived={goal.isArchived}
-                  parent={goal.parent?.hierarchy}
-                  on:state-change={handleAccordionStateChange}
-                />
-                <div class="line-bottom bg-bgs2 w-full h-[1px]" />
-              {/each} -->
               <div class="w-full grow">
                 <TreeMap
                   items={$goalStore.filteredGoals.map((x) => x.id)}
@@ -189,18 +176,6 @@
                       childrenCallback={goalStore.children}
                       on:click={onGoalClick}
                     />
-                    <!-- {#each $goalStore.archivedGoals as goal}
-                      <NestedGoalAccordion
-                        id={goal.id}
-                        label={goal.label}
-                        subGoalCount={goal.subGoalCount}
-                        subGoals={goal.subGoals}
-                        color={goal.color}
-                        isArchived={goal.isArchived}
-                        on:state-change={handleAccordionStateChange}
-                      />
-                      <div class="line-bottom bg-bgs2 w-full h-[1px]" />
-                    {/each} -->
                     <div class="pb-32"></div>
                   {/if}
                 </div>

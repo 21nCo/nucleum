@@ -5,7 +5,6 @@
     type SessionComposition
   } from "$lib/client/types/pointron/sessionComposition.type";
   import { getTotalsFromComposition } from "$lib/client/products/pointron/pointron.utils";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   // export let totals: { duration: number; focus: number; brek: number };
   // export let compositionType: SessionCompositionType;
@@ -16,7 +15,7 @@
   });
 </script>
 
-<BackgroundElement
+<div
   class="flex w-full justify-around opacity-90 text-fgs2 text-b3 sm:text-b2 py-2 rounded-md"
 >
   <div class="flex justify-start gap-1">
@@ -39,4 +38,4 @@
       ? "NA"
       : formatSeconds(totals.brek)}
   </div>
-</BackgroundElement>
+</div>

@@ -121,7 +121,7 @@
               <Button
                 label="compose"
                 size={Size.xs}
-                parentBackgroundIndex={2}
+                parentBgIndex={2}
                 on:click={() => {
                   appStore.runAction(PointronEventEnum.COMPOSE_TIME_MODAL);
                 }}

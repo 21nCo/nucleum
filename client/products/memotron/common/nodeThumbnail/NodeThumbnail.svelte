@@ -16,9 +16,5 @@
 {:else if variant === NodeThumbnailVariant.GRID}
   <NodeThumbnailInGrid {node} {parentBgIndex} on:click />
 {:else if variant === NodeThumbnailVariant.TIMELINE}
-  <NodeThumbnailInTimeline
-    {node}
-    on:click
-    parentBackgrounIndex={parentBgIndex}
-  />
+  <NodeThumbnailInTimeline {node} on:click {parentBgIndex} />
 {/if}

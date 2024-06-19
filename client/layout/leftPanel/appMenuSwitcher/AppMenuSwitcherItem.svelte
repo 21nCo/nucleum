@@ -4,24 +4,16 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import type { IAction } from "$lib/client/types/action.type";
   import { Size } from "$lib/client/types/size.enum";
   import { HapticFeedback } from "$lib/client/types/haptic.enum";
   import { hapticFeedback } from "$lib/client/utils/embed.utils";
-  import {
-    resolveIfActiveFgFg,
-    textColorClass
-  } from "$lib/client/utils/theme.utils";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import appearance from "$lib/client/stores/appearance.store";
   import Tooltip from "$lib/client/elements/text/Tooltip.svelte";
-  import {
-    renderPopoverv2,
-    resolveHoverState
-  } from "$lib/client/utils/browser.utils";
+  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
   import { Direction } from "$lib/client/types/direction.enum";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { abg, cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -56,8 +48,8 @@
   function hideToolTip() {
     toolTipRef.style.display = "none";
   }
-  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
-    if (resolveHoverState(event)) {
+  const toggleHoveringState = (event: CustomEvent) => {
+    if (isHovering) {
       isHovering = true;
       if (toolTipTimeout) clearTimeout(toolTipTimeout);
       if (toolTipRef && layoutContext === LayoutContext.THIN)
@@ -72,28 +64,22 @@
   };
 </script>
 
-<button
-  class="flex items-center {isShowLabel
-    ? layoutContext === LayoutContext.PORTRAIT
-      ? 'w-12 flex-col gap-1 text-b5 rounded-lg'
-      : 'text-b2 gap-2 rounded-lg p-3 h-10'
-    : 'p-4 rounded-full'} {isActive &&
-    (layoutContext === LayoutContext.DEFAULT ||
-      layoutContext === LayoutContext.MINIMIZED) &&
-    'bg-aps1'} {isActive && layoutContext === LayoutContext.PORTRAIT
-    ? ' text-aps1'
-    : textColorClass(
-        $appearance,
-        ColorStrength.Normal,
-        isActive && !(layoutContext === LayoutContext.PORTRAIT),
-        -1
-      )}"
+<HoverableElement
+  class={cn("flex items-center", {
+    "w-12 flex-col gap-1 text-b5 rounded-lg":
+      isShowLabel && layoutContext === LayoutContext.PORTRAIT,
+    "text-b2 gap-2 rounded-lg p-3 h-10":
+      isShowLabel && layoutContext != LayoutContext.PORTRAIT,
+    "p-4 rounded-full": !isShowLabel,
+    [abg()]:
+      (layoutContext === LayoutContext.DEFAULT ||
+        layoutContext === LayoutContext.MINIMIZED) &&
+      isActive,
+    "text-aps1": isActive && layoutContext === LayoutContext.PORTRAIT
+  })}
   on:click={onClick}
-  on:pointerenter={onHover}
-  on:mouseover={toggleHoveringState}
-  on:mouseout={toggleHoveringState}
-  on:focus={toggleHoveringState}
-  on:blur={toggleHoveringState}
+  bind:isHovering
+  on:hover={toggleHoveringState}
 >
   {#if item.icon && item.icon != "initials"}
     <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
@@ -122,4 +108,4 @@
   <div bind:this={toolTipRef}>
     <Tooltip tooltip={item.label} />
   </div>
-</button>
+</HoverableElement>

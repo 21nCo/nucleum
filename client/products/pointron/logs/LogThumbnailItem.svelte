@@ -11,18 +11,17 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { ColorStrength, ColorType } from "$lib/client/types/appearance.type";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
   import {
     generateMarkdownText,
     isValidMarkdown,
     truncateString
   } from "$lib/client/utils/text.utils";
-  import { customColorStyle } from "$lib/client/utils/theme.utils";
   import { formatSeconds, formatTime } from "$lib/client/utils/time.utils";
   import { createEventDispatcher } from "svelte";
-  import appearance from "$lib/client/stores/appearance.store";
   import type { LogThumbnail } from "./log.type";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   const dispatch = createEventDispatcher();
   export let log: LogThumbnail;
   export let context: "journal" | "logs" = "logs";
@@ -139,28 +138,15 @@
       <div class="flex flex-col">
         {#if log.goals && log.goals.length > 0}
           {#each log.goals as goal}
-            <div class="flex gap-2 text-base items-center">
-              <div
-                class="w-2 h-2 rounded-sm bg-fgs2"
-                style={customColorStyle(
-                  $appearance,
-                  ColorType.Bg,
-                  "fgs1",
-                  goal.color ?? goal.parent?.color
-                )}
-              />
-              <div
-                class="text-left {$view.isPortrait ? 'text-b3' : 'text-b2'}"
-                style={customColorStyle(
-                  $appearance,
-                  ColorType.Fg,
-                  "fgs1",
-                  goal.color ?? goal.parent?.color
-                )}
-              >
+            <CustomColorPropagator
+              color={goal.color ?? goal.parent?.color}
+              class="flex gap-2 text-base items-center"
+            >
+              <div class="w-2 h-2 rounded-sm bg-ccs1" />
+              <div class="text-left mo:text-b3 text-b2 text-ccs1">
                 {truncateString(goal.label, $view.isPortrait ? 20 : 25)}
               </div>
-            </div>
+            </CustomColorPropagator>
           {/each}
         {:else}
           <div class="text-b4 text-fgs2 font-medium">NO GOALS</div>

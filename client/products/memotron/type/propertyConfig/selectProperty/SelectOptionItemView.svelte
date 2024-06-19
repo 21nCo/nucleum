@@ -5,12 +5,12 @@
   import ColorPicker from "$lib/client/elements/colorPicker/ColorPicker.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher, onMount } from "svelte";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   const dispatch = createEventDispatcher();
   export let option: PropertyConfigOption;
   export let isFocusing: boolean = false;
@@ -46,17 +46,14 @@
       id: "colorpickerforoption"
     }}
   >
-    <ActiveBackgroundElement
-      isBackgroundActive={true}
+    <CustomColorPropagator
       color={option.color}
-      class="relative rounded-full h-5 w-5"
+      class="relative rounded-full h-5 w-5 bg-ccs1"
     >
-      <ActiveBackgroundElement
-        isBackgroundActive={true}
-        color={option.color}
-        class="absolute top-0.5 left-0.5 rounded-full h-4 w-4 border-[1.5px] border-brs2"
+      <div
+        class="absolute top-0.5 left-0.5 rounded-full h-4 w-4 border-[1.5px] border-brs2 bg-ccs1"
       />
-    </ActiveBackgroundElement>
+    </CustomColorPropagator>
     <svelte:fragment slot="popover">
       <ColorPicker
         bind:hue={option.color}

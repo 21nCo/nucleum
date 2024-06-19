@@ -1,9 +1,9 @@
 <script lang="ts">
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { createEventDispatcher, onMount } from "svelte";
+  import { abg, cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let selectedItem: number = 0;
   onMount(() => {
@@ -22,9 +22,11 @@
     <FormControlLabel props={{ label: "Quick add" }} />
     <div class="w-full flex justify-between gap-3 pr-10 overflow-x-auto">
       {#each $pointronPreferences.manualEntryQuickDurations as item}
-        <ActiveBackgroundElement
-          class="px-4 py-1 rounded-md min-w-fit bg-bgs2 hover:bg-bgs3"
-          isBackgroundActive={item === selectedItem}
+        <button
+          class={cn(
+            "px-4 py-1 rounded-md min-w-fit hover:bg-bgs3",
+            abg(item === selectedItem, 1)
+          )}
           on:click={() => {
             selectedItem = item;
             dispatch("select", item);
@@ -32,7 +34,7 @@
         >
           last
           {formatSeconds(item * 60)}
-        </ActiveBackgroundElement>
+        </button>
       {/each}
     </div>
   </div>

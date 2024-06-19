@@ -2,9 +2,6 @@
   import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import { TimeUnit } from "$lib/client/types/time.type";
   import { createEventDispatcher } from "svelte";
-  import { borderClass } from "$lib/client/utils/theme.utils";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import TextSearchInput from "../TextSearchInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -124,7 +121,7 @@
 
 <div
   class={cn("flex w-full rounded-l-md border p-2", {
-    [borderClass($appearance, ColorStrength.Strong)]: !isFocusing,
+    "border-brs3": !isFocusing,
     "border-aps1": isFocusing
   })}
 >

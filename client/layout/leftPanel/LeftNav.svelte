@@ -5,18 +5,16 @@
   import { LayoutContext } from "$lib/client/types/layout.type";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import PageMenuView from "./PageMenuView.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-
-  import { bgClass, borderClass } from "$lib/client/utils/theme.utils";
-  import { AppSkin, ColorStrength } from "$lib/client/types/appearance.type";
+  import { AppSkin } from "$lib/client/types/appearance.type";
   import { onMount } from "svelte";
   import { AppEvent } from "$lib/client/types/event.enum";
   import appearance from "$lib/client/stores/appearance.store";
   import { UIState } from "$lib/client/types/preferences.type";
+  import { cn } from "$lib/client/utils/ui.utils";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -54,13 +52,7 @@
         <ComponentResolver path={$appStore.player} />
       {/if}
       <div
-        class=" border-t border-bgs2 w-full min-w-min pb-8 pt-3 {$appearance.skin ===
-        AppSkin.Glassy
-          ? 'glassmenubar'
-          : bgClass($appearance, 0)} {borderClass(
-          $appearance,
-          ColorStrength.Subtle
-        )}"
+        class=" border-t border--bgs2 w-full min-w-min pb-8 pt-3 glassmenubar bg-bgs1 border-brs1"
       >
         <AppMenuSwitcher
           layoutContext={LayoutContext.PORTRAIT}
@@ -99,9 +91,13 @@
       on:mouseleave={() => (isHovered = false)}
     >
       <div
-        class="flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full {isRounded
-          ? 'rounded-lg ' + bgClass($appearance, 1)
-          : 'border-r border-bgs2 bg-bgs2'}"
+        class={cn(
+          "flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full bg-bgs2",
+          {
+            "rounded-lg": isRounded,
+            "border-r border-bgs2": !isRounded
+          }
+        )}
         style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
       >
         <div class="w-full flex flex-col gap-8">
@@ -134,9 +130,6 @@
                 ? LayoutContext.THIN
                 : LayoutContext.DEFAULT}
             />
-            {#if $appStore.pageMenu && $appStore.pageMenu.length > 0}
-              <PageMenuView />
-            {/if}
             {#if !isInThinMode}
               <slot name="mid" />
             {/if}
@@ -148,7 +141,7 @@
               on:click={onMinimizeToggled}
               size={Size.xs}
               label={isInThinMode ? "min" : "switch to min mode"}
-              parentBackgroundIndex={2}
+              parentBgIndex={2}
             />
           {/if}
           {#if $appStore?.appData?.isCmdBarEnabled === true}
@@ -164,10 +157,7 @@
             {:else}
               <div class="text-b3 text-fgs3 mb-4">
                 Press <button
-                  class="text-fgs2 px-2 py-0.5 rounded-md {bgClass(
-                    $appearance,
-                    2
-                  )}"
+                  class="text-fgs2 px-2 py-0.5 rounded-md bg-bgs3 hover:bg-bgs4"
                   on:click={() => appStore.runAction(AppEvent.CMD)}
                   >Cmd + K</button
                 > for command bar
@@ -181,11 +171,3 @@
     </div>
   {/if}
 {/if}
-
-<!-- <style>
-  .glass {
-    background: rgba(204, 204, 214, 0.2);
-    /* border: 1px solid white; */
-    backdrop-filter: blur(25px);
-  }
-</style> -->

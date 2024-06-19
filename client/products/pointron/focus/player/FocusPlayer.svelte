@@ -3,15 +3,10 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { ColorStrength, ColorType } from "$lib/client/types/appearance.type";
-  import {
-    customColorStyle,
-    textColorClass,
-    retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
+  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import ControlBar from "../elements/controls/ControlBar.svelte";
   import { onMount } from "svelte";
   import FocusPlayerTimeText from "./FocusPlayerTimeText.svelte";
@@ -20,6 +15,8 @@
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import appearance from "$lib/client/stores/appearance.store";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   let colors = retrieveCurrentColors($appearance);
   let playerContainerRef: any;
   let player: HTMLElement | null = document.getElementById("focusplayer");
@@ -129,33 +126,25 @@
   class={!$view.isPortrait ? "m-6" : "w-full"}
   bind:this={playerContainerRef}
 >
-  <button
+  <CustomColorPropagator
+    color={$sessionStore.currentLog.color}
     id="focusplayer"
-    class="flex h-full bg-fgs2 text-bgs1 border-t border-bgs3 border-opacity-50 justify-between items-center px-4 py-2 {$view.isPortrait ||
-    isPipOn
-      ? 'w-full'
-      : ' w-[26rem] rounded-md'} {textColorClass(
-      $appearance,
-      ColorStrength.Normal,
-      true,
-      $sessionStore.currentLog.color
-    )}"
-    style={customColorStyle(
-      $appearance,
-      ColorType.Bg,
-      $sessionStore.timeRemainingToTakeBreak != undefined &&
-        $sessionStore.timeRemainingToTakeBreak < 0
-        ? "ars1"
-        : isFocusing
-          ? "aps1"
-          : "ass1",
-      isFocusing &&
-        !(
+    class={cn(
+      "flex h-full bg-fgs2 text-bgs1 border-t border-bgs3 border-opacity-50 justify-between items-center px-4 py-2",
+      {
+        "w-full": $view.isPortrait || isPipOn,
+        "w-[26rem] rounded-md": !($view.isPortrait || isPipOn),
+        "bg-ars1":
           $sessionStore.timeRemainingToTakeBreak != undefined &&
-          $sessionStore.timeRemainingToTakeBreak < 0
-        )
-        ? $sessionStore.currentLog.color
-        : undefined
+          $sessionStore.timeRemainingToTakeBreak < 0,
+        "bg-ccs1":
+          isFocusing &&
+          !(
+            $sessionStore.timeRemainingToTakeBreak != undefined &&
+            $sessionStore.timeRemainingToTakeBreak < 0
+          ),
+        "bg-ass1": !isFocusing
+      }
     )}
     on:click={clickHandler}
   >
@@ -198,5 +187,5 @@
         {/if}
       </div>
     {/if}
-  </button>
+  </CustomColorPropagator>
 </div>

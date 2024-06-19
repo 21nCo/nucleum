@@ -1,23 +1,22 @@
-import { get } from "svelte/store";
 import {
-  AppSkin,
   ColorStrength,
-  ColorType,
   type ColorSchemeSLValues,
   type AppearanceStore
 } from "$lib/client/types/appearance.type";
-import { appConstants, userPreferences } from "../stores/app.store";
-import appearance from "../stores/appearance.store";
 
-export function resolveSaturationAndLightness(
-  appearance: AppearanceStore,
-  sLConfig: ColorSchemeSLValues[]
-) {
+const selectableColorParams: ColorSchemeSLValues[] = [
+  {
+    saturation: 55,
+    lightness: 65,
+    colorScheme: "colorscheme:solarizeddark"
+  }
+];
+
+export function resolveSaturationAndLightness(appearance: AppearanceStore) {
   let saturation = 75;
   let lightness = 55;
-  if (!appearance || !sLConfig || !appearance.colorScheme)
-    return { saturation, lightness };
-  let config = sLConfig.find(
+  if (!appearance || !appearance.colorScheme) return { saturation, lightness };
+  let config = selectableColorParams.find(
     (x: ColorSchemeSLValues) => x.colorScheme === appearance.colorScheme.id
   );
   if (config) {
@@ -31,65 +30,6 @@ export function retrieveCurrentColors(appearance: AppearanceStore) {
   return colorScheme;
 }
 
-function cssStyle(color: string, colorType: ColorType) {
-  switch (colorType) {
-    case ColorType.Bg:
-      return `background-color: ${color};`;
-    case ColorType.Fg:
-      return `color: ${color};`;
-    case ColorType.Outline:
-      return `outline-color: ${color};`;
-    case ColorType.Border:
-      return `border-color: ${color};`;
-    case ColorType.Fill:
-      return `fill: ${color};`;
-    default:
-      return ``;
-  }
-}
-
-/**
- * @deprecated use CustomColorPropagator.svelte or {@link generateCustomColorShade} instead
- * @param appearance
- * @param fallback
- * @param hue
- * @param shade
- * @returns
- */
-export function customColorShade(
-  appearance: AppearanceStore,
-  fallback: string,
-  hue: number | null | undefined = undefined,
-  shade: number = 1
-) {
-  let alpha = 0.3;
-  if (shade === 1) {
-    alpha = appearance.colorScheme.isDark ? 0.35 : 0.15;
-  } else if (shade === 2) {
-    alpha = appearance.colorScheme.isDark ? 0.5 : 0.3;
-  } else if (shade === 0) {
-    alpha = 1;
-  }
-  let color: string;
-  const currentColors = retrieveCurrentColors(appearance);
-  if (hue === undefined || hue === null || typeof hue !== "number") {
-    color = currentColors[fallback];
-  } else {
-    let saturation: number = 50;
-    let lightness: number = 50;
-    let values = resolveSaturationAndLightness(
-      appearance,
-      appConstants.colorSchemeSLConfig
-    );
-    if (values) {
-      saturation = values.saturation;
-      lightness = values.lightness;
-    }
-    color = `hsl(${hue} ${saturation}% ${lightness}% / ${alpha})`;
-  }
-  return color;
-}
-
 export function generateCustomColorShade(
   appearance: AppearanceStore,
   hue: number,
@@ -98,29 +38,26 @@ export function generateCustomColorShade(
   let color: string;
   let saturation: number = 50;
   let lightness: number = 50;
-  let values = resolveSaturationAndLightness(
-    appearance,
-    appConstants.colorSchemeSLConfig
-  );
+  let values = resolveSaturationAndLightness(appearance);
   if (values) {
     saturation = values.saturation;
     lightness = values.lightness;
   }
   if (shade === 1) {
-    lightness = appearance.colorScheme.isDark ? 10 : 98;
-  } else if (shade === 2) {
-    lightness = appearance.colorScheme.isDark ? 15 : 90;
-  } else if (shade === 3) {
-    lightness = appearance.colorScheme.isDark ? 20 : 85;
-  } else if (shade === 4) {
     lightness = appearance.colorScheme.isDark ? 25 : 80;
+  } else if (shade === 2) {
+    lightness = appearance.colorScheme.isDark ? 20 : 85;
+  } else if (shade === 3) {
+    lightness = appearance.colorScheme.isDark ? 15 : 90;
+  } else if (shade === 4) {
+    lightness = appearance.colorScheme.isDark ? 10 : 98;
   }
   color = `hsl(${hue} ${saturation}% ${lightness}% / 1)`;
   return color;
 }
 
 /**
- * Without using alpha - using lightness and saturation
+ * Generates custom color shades based on theme settings
  * @param appearance
  * @param fallback
  * @param hue
@@ -131,95 +68,39 @@ export function generateCustomColorShades(
   appearance: AppearanceStore,
   hue: number
 ) {
-  return [0, 1, 2, 3].map((shade) => {
+  return [0, 1, 2, 3, 4].map((shade) => {
     return generateCustomColorShade(appearance, hue, shade);
   });
 }
 
 /**
- * @deprecated use CustomColorPropagator.svelte or {@link generateCustomColorShade} with shade as 0 instead
+ * Use only to access custom color programatically. Use CustomColorPropagator.svelte for rendering custom colors in markup
  * @param appearance
  * @param fallback
  * @param hue
  * @returns
  */
-export function customColor(
-  appearance: AppearanceStore,
-  fallback: string,
-  hue: number | null | undefined = undefined
-) {
+export function customColor(appearance: AppearanceStore, hue: number) {
   let color: string;
-  const currentColors = retrieveCurrentColors(appearance);
-  if (hue === undefined || hue === null || typeof hue !== "number") {
-    color = currentColors[fallback];
-  } else {
-    let saturation: number = 50;
-    let lightness: number = 50;
-    let values = resolveSaturationAndLightness(
-      appearance,
-      appConstants.colorSchemeSLConfig
-    );
-    if (values) {
-      saturation = values.saturation;
-      lightness = values.lightness;
-    }
-    color = `hsl(${hue} ${saturation}% ${lightness}%)`;
+  let saturation: number = 50;
+  let lightness: number = 50;
+  let values = resolveSaturationAndLightness(appearance);
+  if (values) {
+    saturation = values.saturation;
+    lightness = values.lightness;
   }
+  color = `hsl(${hue} ${saturation}% ${lightness}%)`;
   return color;
 }
 
-export function customColorStyle(
-  appearance: AppearanceStore,
-  colorType: ColorType[] | ColorType,
-  fallback: string,
-  hue: number | null | undefined = undefined
-) {
-  let style: string = "";
-  const color = customColor(appearance, fallback, hue);
-  if (colorType instanceof Array) {
-    colorType.forEach((colorType) => {
-      style += cssStyle(color, colorType);
-    });
-  } else {
-    style = cssStyle(color, colorType);
-  }
-  return style;
-}
-
-export function borderClass(
-  appearance: AppearanceStore,
-  colorStrength: ColorStrength = ColorStrength.Normal
-) {
-  // if (theme === AppTheme.Glassy) return "border-none";
-  switch (colorStrength) {
-    case ColorStrength.Subtle:
-      return "border-brs1";
-    case ColorStrength.Normal:
-      return "border-brs2";
-    case ColorStrength.Strong:
-      return "border-brs3";
-    case ColorStrength.ExtraStrong:
-      return "border-brs4";
-    default:
-      return "border-brs2";
-  }
-}
-
-export function bgClass(
-  appearance: AppearanceStore,
-  parentBackgroundIndex: number = 1,
-  isActive: boolean = false
-) {
-  const colors = resolveBackgroundClass(parentBackgroundIndex);
-  let result = "";
-  if (appearance.skin === AppSkin.Glassy) {
-    result = isActive ? "glassactive" : "glass";
-  } else {
-    result = isActive ? colors.activeBackgroundColor : colors.backgroundColor;
-  }
-  return result;
-}
-
+/**
+ * @deprecated - use text-abg class instead if it is accent bg
+ * @param appearance
+ * @param textColorStrength
+ * @param isAccentBgActive
+ * @param bgColorHue
+ * @returns
+ */
 export function textColorClass(
   appearance: AppearanceStore,
   textColorStrength: ColorStrength = ColorStrength.Normal,
@@ -260,12 +141,21 @@ export function textColorClass(
   }
 }
 
-export function resolveBackgroundClass(parentBackgroundIndex: number = 1) {
+/**
+ * @deprecated - use bg(), abg() utils from ui.utils.ts
+ * @param appearance
+ * @param parentBackgroundIndex
+ * @returns
+ */
+export function resolveBackgroundClass(
+  appearance: AppearanceStore,
+  parentBackgroundIndex: number = 1
+) {
   let activeBackgroundColor;
   let backgroundColor;
   let activeBackgroundColorHex;
   let backgroundColorHex;
-  let currentColors = retrieveCurrentColors(get(appearance));
+  let currentColors = retrieveCurrentColors(appearance);
   if (parentBackgroundIndex === 1) {
     activeBackgroundColor = "bg-bgs3";
     activeBackgroundColorHex = currentColors?.bgs3;
@@ -335,10 +225,7 @@ export function heatMapColorRange(
     saturation = color.split(" ")[1].split("%")[0];
     lightness = color.split(" ")[2].split("%")[0];
   } else {
-    let values = resolveSaturationAndLightness(
-      appearance,
-      appConstants.colorSchemeSLConfig
-    );
+    let values = resolveSaturationAndLightness(appearance);
     if (values) {
       saturation = values.saturation;
       lightness = values.lightness;

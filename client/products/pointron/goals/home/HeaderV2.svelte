@@ -11,6 +11,7 @@
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { determineTruncateLength } from "$lib/client/utils/text.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   let parentBreadcrumbs: BreadcrumbItem[] = [];
   $: refresh($currentGoal);
   function refresh(goal: Goal) {
@@ -37,23 +38,26 @@
 <div class="flex justify-between">
   <div class="flex flex-col gap-1 w-full items-start">
     <Breadcrumb items={parentBreadcrumbs} />
-    {#if $isInEditMode}
-      <input
-        type="text"
-        bind:value={$currentGoal.label}
-        placeholder="Enter goal name"
-        class={`text-aps1 w-full bg-transparent focus:outline-none ${
-          $view.isPortrait ? `text-h3` : `text-h2 font-medium`
-        }`}
-      />
-    {:else}
-      <span class={$view.isPortrait ? `text-h3` : `text-h2 font-medium`}>
+    <span
+      class={cn("text-ccs1", {
+        "text-h3": $view.isPortrait,
+        "text-h2 font-medium": !$view.isPortrait
+      })}
+    >
+      {#if $isInEditMode}
+        <input
+          type="text"
+          bind:value={$currentGoal.label}
+          placeholder="Enter goal name"
+          class={cn("w-full bg-transparent focus:outline-none")}
+        />
+      {:else}
         <TextWithHoverTooltip
           text={$currentGoal.label}
           truncateLength={determineTruncateLength($view.display, Size.lg)}
         />
-      </span>
-    {/if}
+      {/if}
+    </span>
   </div>
   <div class="flex items-center gap-8 min-w-fit">
     <!-- <Button
@@ -68,10 +72,3 @@
     {/if}
   </div>
 </div>
-
-<style>
-  span,
-  input {
-    color: var(--customcolor);
-  }
-</style>

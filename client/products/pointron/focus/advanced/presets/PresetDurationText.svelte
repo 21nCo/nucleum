@@ -3,8 +3,8 @@
     SessionCompositionType,
     type SessionComposition
   } from "$lib/client/types/pointron/sessionComposition.type";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   export let preset: SessionComposition;
   export let isExpandedVariant: boolean;
   export let parentBackgroundIndex: number;
@@ -32,15 +32,17 @@
           {formatSeconds(preset.focusDuration)}
         </div>
         {#if preset.additional && preset.additional.length > 0}
-          <BackgroundElement
-            class="flex items-center text-b4 rounded-sm px-1 text-aps1"
-            parentBgIndex={parentBackgroundIndex}
+          <div
+            class={cn(
+              "flex items-center text-b4 rounded-sm px-1 text-aps1",
+              bg(parentBackgroundIndex)
+            )}
           >
             <div>+</div>
             <div>
               {preset.additional.length}
             </div>
-          </BackgroundElement>
+          </div>
         {/if}
       </div>
     </div>

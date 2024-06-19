@@ -1,13 +1,11 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
-  import view from "$lib/client/stores/view.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import { AppEvent } from "$lib/client/types/event.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { bgClass } from "$lib/client/utils/theme.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   //let isCpActive: boolean = false;
@@ -21,7 +19,12 @@
   // });
 </script>
 
-<div class="w-full {bgClass($appearance, 2)} {isInThinMode ? 'h-24' : 'h-12'}">
+<div
+  class={cn("w-full bg-bgs3", {
+    "h-24": isInThinMode,
+    "h-12": !isInThinMode
+  })}
+>
   {#if $appStore.appData.leftPanelFooter === "simple" || !$appStore.appData.leftPanelFooter}
     <div
       class="w-full h-full flex {isInThinMode

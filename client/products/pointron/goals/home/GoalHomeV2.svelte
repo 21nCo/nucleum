@@ -7,7 +7,6 @@
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Direction } from "$lib/client/types/direction.enum";
@@ -18,10 +17,9 @@
     PanelSwitcherStyle,
     VerticalSwitcherStyle
   } from "$lib/client/types/switcher.enum";
-  import { customColor } from "$lib/client/utils/theme.utils";
   import GoalPanelResolver from "./GoalPanelResolver.svelte";
   import HeaderV2 from "./HeaderV2.svelte";
-  import { fade } from "svelte/transition";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   let selectedTab: GoalTab = GoalTab.Overview;
   let isRefreshing = false;
   let isGoalLoaded = false;
@@ -43,13 +41,9 @@
   }
 </script>
 
-<div
+<CustomColorPropagator
   class="h-full w-full"
-  style:--customcolor={customColor(
-    $appearance,
-    "aps1",
-    $currentGoal.color ?? $currentGoal.parent?.color
-  )}
+  color={$currentGoal.color ?? $currentGoal.parent?.color}
 >
   {#if isRefreshing || !isGoalLoaded}
     <EmptyStatusView
@@ -72,7 +66,6 @@
         bind:value={selectedTab}
         items={defaultTabs}
         style={PanelSwitcherStyle.TRAIN}
-        activeColor={$currentGoal.color ?? $currentGoal.parent?.color}
       />
     </BottomFloat>
   {:else if isGoalLoaded}
@@ -133,7 +126,7 @@
         />
         <Button
           label="Discard"
-          parentBackgroundIndex={2}
+          parentBgIndex={2}
           size={Size.sm}
           on:click={() => {
             currentGoal.restore();
@@ -142,4 +135,4 @@
       </div>
     </BottomFloat>
   {/if}
-</div>
+</CustomColorPropagator>

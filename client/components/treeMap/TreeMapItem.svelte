@@ -2,14 +2,14 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import type { TreeMapContent } from "$lib/client/types/treeMap.type";
   import view from "$lib/client/stores/view.store";
-
   import { createEventDispatcher } from "svelte";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { determineTruncateLength } from "$lib/client/utils/text.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let contentCallback: (id: string) => TreeMapContent;
@@ -40,11 +40,12 @@
 
 {#if content}
   <button on:click={onclick} class="flex flex-col w-full">
-    <ActiveBackgroundElement
+    <CustomColorPropagator
       color={content.color}
-      isBackgroundActive={isActive}
-      class="flex justify-between w-full py-3 px-3"
-      styles="padding-left: {nestingLevel ? nestingLevel * 2.5 : 0.8}rem"
+      class={cn("flex justify-between w-full py-3 px-3", {
+        "bg-ccs1": isActive
+      })}
+      style="padding-left: {nestingLevel ? nestingLevel * 2.5 : 0.8}rem"
     >
       <span class="flex gap-2 text-left">
         {#if content.icon}
@@ -83,7 +84,7 @@
           {content.childrenCount}
         </span>
       {/if}
-    </ActiveBackgroundElement>
+    </CustomColorPropagator>
     <div class="w-full">
       {#if content.childrenCount > 0 && !isCollapsed && children}
         {#each children as child}

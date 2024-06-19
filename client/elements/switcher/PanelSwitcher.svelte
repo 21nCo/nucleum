@@ -3,27 +3,20 @@
     BarStyle,
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
-  import {
-    resolveBackgroundClass,
-    bgClass
-  } from "$lib/client/utils/theme.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { cn, emptyTranstition } from "$lib/client/utils/ui.utils";
+  import { bg, cn, emptyTranstition } from "$lib/client/utils/ui.utils";
   import type {
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
-  import BackgroundElement from "../style/BackgroundElement.svelte";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { fade, fly, slide } from "svelte/transition";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
-  export let activeColor: number | undefined = undefined;
   export let isDisableEnabled: boolean = false;
   export let parentBackgroundIndex: number = 1;
   export let isInEditMode: boolean = false;
@@ -38,7 +31,6 @@
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
     : items;
-  let backgroundColor: string = "";
   onMount(() => {
     if (value === undefined) value = _items[0]?.value;
   });
@@ -90,29 +82,30 @@
       "inline-block": style !== PanelSwitcherStyle.BAR || !isExpandToFullWidth
     })}
   >
-    <BackgroundElement
+    <div
       bind:this={child}
-      class={cn("flex min-w-fit items-center", {
-        "border-b border-brs3":
-          ((style === PanelSwitcherStyle.BAR &&
-            barStyle != BarStyle.UNDER &&
-            barStyle != BarStyle.DOT) ||
-            style === PanelSwitcherStyle.SNAKE) &&
-          !isExpandToFullWidth,
-        "items-center justify-around gap-6": style === PanelSwitcherStyle.DOT,
-        "border-brs3": style === PanelSwitcherStyle.TRAIN,
-        "rounded-full border-2":
-          style === PanelSwitcherStyle.TRAIN &&
-          (size === Size.md || size === Size.lg),
-        "rounded-md border":
-          style === PanelSwitcherStyle.TRAIN &&
-          (size === Size.sm || size === Size.xs),
-        //TEMP
-        "pr--2": style === PanelSwitcherStyle.TRAIN && isInEditMode
-      })}
-      parentBgIndex={style === PanelSwitcherStyle.TRAIN
-        ? parentBackgroundIndex
-        : 0}
+      class={cn(
+        "flex min-w-fit items-center",
+        bg(style === PanelSwitcherStyle.TRAIN ? parentBackgroundIndex : 0),
+        {
+          "border-b border-brs3":
+            ((style === PanelSwitcherStyle.BAR &&
+              barStyle != BarStyle.UNDER &&
+              barStyle != BarStyle.DOT) ||
+              style === PanelSwitcherStyle.SNAKE) &&
+            !isExpandToFullWidth,
+          "items-center justify-around gap-6": style === PanelSwitcherStyle.DOT,
+          "border-brs3": style === PanelSwitcherStyle.TRAIN,
+          "rounded-full border-2":
+            style === PanelSwitcherStyle.TRAIN &&
+            (size === Size.md || size === Size.lg),
+          "rounded-md border":
+            style === PanelSwitcherStyle.TRAIN &&
+            (size === Size.sm || size === Size.xs),
+          //TEMP
+          "pr--2": style === PanelSwitcherStyle.TRAIN && isInEditMode
+        }
+      )}
     >
       {#if title || $$slots.left}
         <span class="mr-6" transition:conditionalTransition>
@@ -125,7 +118,6 @@
         <PanelSwitcherItem
           {item}
           {size}
-          {activeColor}
           {style}
           {isInEditMode}
           {barStyle}
@@ -141,7 +133,7 @@
           on:remove
         />
       {/each}
-    </BackgroundElement>
+    </div>
     {#if $$slots.right}
       <span class="ml-6">
         <slot name="right">

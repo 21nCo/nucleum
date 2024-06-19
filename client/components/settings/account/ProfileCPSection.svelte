@@ -8,8 +8,8 @@
     isValidString
   } from "$lib/client/utils/text.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
   function determineLicense() {
@@ -34,9 +34,11 @@
   }
 </script>
 
-<BackgroundElement
-  class="h-40 min-h-[10rem] {context === 'page' ? 'mx-4 rounded-lg' : 'w-full'}"
-  parentBgIndex={parentBackgroundIndex}
+<div
+  class={cn("h-40 min-h-[10rem]", bg(parentBackgroundIndex), {
+    "mx-4 rounded-lg": context === "page",
+    "w-full": context !== "page"
+  })}
 >
   {#if $account.isLoggedIn}
     <button
@@ -86,11 +88,11 @@
       <div class="flex gap-4">
         <Button
           label="Go to signup/signin"
-          parentBackgroundIndex={2}
+          parentBgIndex={2}
           size={Size.sm}
           on:click
         />
       </div>
     </div>
   {/if}
-</BackgroundElement>
+</div>

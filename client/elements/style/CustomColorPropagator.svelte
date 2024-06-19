@@ -1,16 +1,21 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
-  import { generateCustomColorShades } from "$lib/client/utils/theme.utils";
+  import {
+    generateCustomColorShades,
+    resolveIfActiveFgFg,
+    retrieveCurrentColors
+  } from "$lib/client/utils/theme.utils";
   export let type: string = "div";
   export let id: string = "";
   export let color: number | undefined = undefined;
-  export let isPreventDefault: boolean = false;
-  let classList: string = "";
+  let classList: string = "w-full h-full";
+  let styles: string = "";
   export { classList as class };
+  export { styles as style };
   $: customColorShades =
-    color && !isPreventDefault
-      ? generateCustomColorShades($appearance, color)
-      : [];
+    color != undefined ? generateCustomColorShades($appearance, color) : [];
+  $: isActiveFgFg = resolveIfActiveFgFg(color, $appearance);
+  $: currentColors = retrieveCurrentColors($appearance);
 </script>
 
 <svelte:element
@@ -19,9 +24,56 @@
   class={classList}
   on:click
   style:--customcolor={customColorShades[0]}
-  style:--customcolorshadeone={customColorShades[1]}
-  style:--customcolorshadetwo={customColorShades[2]}
-  style:--customcolorshadethree={customColorShades[3]}
+  style:--customcolorshadetwo={customColorShades[1]}
+  style:--customcolorshadethree={customColorShades[2]}
+  style:--customcolorshadefour={customColorShades[3]}
+  style:--fgwhencustombg={isActiveFgFg
+    ? currentColors.fgs1
+    : currentColors.bgs1}
+  style={styles}
 >
   <slot />
 </svelte:element>
+
+<style>
+  :global(.bg-ccs1) {
+    background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
+    color: var(--fgwhencustombg, rgba(var(--fgwhenaccentbg), 1));
+  }
+  :global(.bg-ccs2) {
+    background-color: var(--customcolorshadetwo, rgba(var(--colors-aps2), 1));
+  }
+  :global(.bg-ccs3) {
+    background-color: var(--customcolorshadethree, rgba(var(--colors-aps3), 1));
+  }
+  :global(.bg-ccs4) {
+    background-color: var(--customcolorshadefour, rgba(var(--colors-aps4), 1));
+  }
+  :global(.border-ccs1) {
+    border-color: var(--customcolor, rgba(var(--colors-aps1), 1));
+  }
+  :global(.border-ccs2) {
+    border-color: var(--customcolorshadetwo, rgba(var(--colors-aps2), 1));
+  }
+  :global(.border-ccs3) {
+    border-color: var(--customcolorshadethree, rgba(var(--colors-aps3), 1));
+  }
+  :global(.border-ccs4) {
+    border-color: var(--customcolorshadefour, rgba(var(--colors-aps4), 1));
+  }
+  :global(.text-ccs1) {
+    color: var(--customcolor, rgba(var(--colors-aps1), 1));
+  }
+  :global(.text-ccs2) {
+    color: var(--customcolorshadetwo, rgba(var(--colors-aps2), 1));
+  }
+  :global(.text-ccs3) {
+    color: var(--customcolorshadethree, rgba(var(--colors-aps3), 1));
+  }
+  :global(.text-ccs4) {
+    color: var(--customcolorshadefour, rgba(var(--colors-aps4), 1));
+  }
+  :global(.transition-ease) {
+    transition: background-color 0.3s ease-in-out;
+  }
+</style>

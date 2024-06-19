@@ -19,10 +19,7 @@
     hue = parseInt(target.value);
     dispatch("change", hue);
   };
-  let values = resolveSaturationAndLightness(
-    $appearance,
-    appConstants.colorSchemeSLConfig
-  );
+  let values = resolveSaturationAndLightness($appearance);
   if (values) {
     saturation = values.saturation;
     lightness = values.lightness;

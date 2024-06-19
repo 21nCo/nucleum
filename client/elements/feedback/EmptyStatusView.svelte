@@ -52,12 +52,7 @@
       {/if}
     </div>
     {#if actionText}
-      <Button
-        label={actionText}
-        size={Size.xs}
-        on:click
-        parentBackgroundIndex={parentBgIndex}
-      />
+      <Button label={actionText} size={Size.xs} on:click {parentBgIndex} />
     {/if}
   {/if}
 </div>

@@ -53,7 +53,7 @@
         <Button
           on:click={notification.callback}
           size={Size.xs}
-          parentBackgroundIndex={2}
+          parentBgIndex={2}
         >
           {notification.actionText}
         </Button>

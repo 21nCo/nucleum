@@ -10,7 +10,7 @@
     width="w-2/5"
     icon="logout"
     label="Sign out"
-    parentBackgroundIndex={parentBgIndex}
+    {parentBgIndex}
     on:click={() => {
       account.signOut();
     }}

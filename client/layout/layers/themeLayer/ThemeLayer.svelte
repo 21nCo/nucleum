@@ -2,9 +2,12 @@
   import { onMount } from "svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { AppSkin } from "$lib/client/types/appearance.type";
+  import { AppSkin, Theme } from "$lib/client/types/appearance.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import appearance from "$lib/client/stores/appearance.store";
+  import ColorLayer from "./ColorLayer.svelte";
+  import GlassSkin from "./GlassSkin.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   $: rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
@@ -89,6 +92,8 @@
         rootFontSize
       });
   }
+
+  $: console.log({ theme: $appearance.theme });
 </script>
 
 <svelte:head>
@@ -101,11 +106,14 @@
 </svelte:head>
 
 <div
-  class="flex h-full w-full {$appearance?.skin == AppSkin.Glassy
-    ? 'glassy' + $appearance?.colorScheme?.label
-    : ''}"
+  class={cn("flex h-full w-full", {
+    glassy: $appearance?.skin == AppSkin.Glassy
+  })}
 >
-  <slot />
+  <ColorLayer>
+    <slot />
+  </ColorLayer>
+  <GlassSkin />
 </div>
 
 <style>

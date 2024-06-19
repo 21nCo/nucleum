@@ -17,7 +17,7 @@
   <Button
     icon="funnel"
     label={$view.isPortrait ? "" : "Options"}
-    parentBackgroundIndex={parentBgIndex}
+    {parentBgIndex}
     tooltip={$view.isPortrait ? "Filters and grouping" : ""}
     size={$view.isPortrait ? Size.sm : Size.xs}
     on:click={() => {

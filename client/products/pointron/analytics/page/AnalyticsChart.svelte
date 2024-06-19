@@ -183,10 +183,7 @@
       };
     }
     if (goalColors) {
-      let values = resolveSaturationAndLightness(
-        $appearance,
-        appConstants.colorSchemeSLConfig
-      );
+      let values = resolveSaturationAndLightness($appearance);
       if (!values) return;
       for (let item of goalColors) {
         const hueForOther = 10;

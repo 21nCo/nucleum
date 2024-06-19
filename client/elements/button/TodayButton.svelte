@@ -10,7 +10,7 @@
 {#if !isSameDay($selectedTimePeriod, new Date())}
   <Button
     label="Go to today"
-    {parentBackgroundIndex}
+    parentBgIndex={parentBackgroundIndex}
     size={Size.xs}
     style={ButtonStyle.OUTLINED}
     on:click={() => {

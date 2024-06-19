@@ -8,7 +8,7 @@
 <BottomFloat>
   <Button
     {...params}
-    parentBackgroundIndex={params.parentBgIndex}
+    parentBgIndex={params.parentBgIndex}
     type={params.variant}
     style={params.style}
     width="w-[13rem]"

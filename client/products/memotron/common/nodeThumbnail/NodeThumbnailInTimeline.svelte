@@ -1,6 +1,5 @@
 <script lang="ts">
   import { contentPreview } from "$lib/client/products/memotron/node/node.utils";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import {
@@ -13,21 +12,22 @@
     objIsEmpty
   } from "$lib/client/utils/obj.utils";
   import { properCase } from "$lib/client/utils/text.utils";
-  import { bgClass } from "$lib/client/utils/theme.utils";
   import { formatDate, formatTime } from "$lib/client/utils/time.utils";
-  import Memocon from "../Memocon.svelte";
   import DLinks from "../foreLinks/DirectLinks.svelte";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   // export let id: string;
   export let node: INodeThumbnail | undefined;
-  export let parentBackgrounIndex: number = 0;
+  export let parentBgIndex: number = 0;
   export let variant: "v1" | "v2" = "v2";
 </script>
 
 {#if node}
   {#if variant === "v1"}
-    <BackgroundElement
-      parentBgIndex={parentBackgrounIndex}
-      class="flex flex-col gap-1 max-h-fit rounded-md w-full p-4"
+    <button
+      class={cn(
+        "flex flex-col gap-1 max-h-fit rounded-md w-full p-4",
+        bg(parentBgIndex)
+      )}
       on:click
     >
       <div class="flex w-full justify-between">
@@ -47,21 +47,19 @@
       <div class="pt-4">
         <DLinks links={node.links} context="nodethumbnail" />
       </div>
-    </BackgroundElement>
+    </button>
   {:else}
     <!-- TODO - bg on hover -->
-    <BackgroundElement
-      parentBgIndex={parentBackgrounIndex - 1}
-      class="flex flex-col gap-2 rounded-md p-2"
+    <div
+      class={cn("flex flex-col gap-2 rounded-md p-2", bg(parentBgIndex - 1))}
     >
       <span class="text-left text-b3 text-fgs3">
         {formatTime($userPreferences, new Date(node.createdAt))}
       </span>
       <div class="flex">
-        <BackgroundElement
-          parentBgIndex={parentBackgrounIndex + 1}
-          class="h-[110%] w-0.5 ml-4 mr-2"
-        ></BackgroundElement>
+        <div
+          class={cn("h-[110%] w-0.5 ml-4 mr-2", bg(parentBgIndex + 1))}
+        ></div>
         <button
           class="flex flex-col gap-1 max-h-fit rounded-md w-full p-2 cursor-pointer"
           on:click
@@ -94,23 +92,24 @@
           {/if} -->
           <div class="flex gap-2">
             {#if node.children && node.children.length > 0}
-              <BackgroundElement
-                parentBgIndex={parentBackgrounIndex + 1}
-                class="rounded-md px-2 mt-4 text-b3"
+              <div
+                class={cn(
+                  "rounded-md px-2 mt-4 text-b3",
+                  bg(parentBgIndex + 1)
+                )}
               >
                 {node.children.length}
                 {node.contentType === NodeType.WEBPAGE ? " highlights" : ""}
-              </BackgroundElement>
+              </div>
             {/if}
-            <BackgroundElement
-              parentBgIndex={parentBackgrounIndex + 1}
-              class="rounded-md px-2 mt-4 text-b3"
+            <div
+              class={cn("rounded-md px-2 mt-4 text-b3", bg(parentBgIndex + 1))}
             >
               {properCase(node.contentType)}
-            </BackgroundElement>
+            </div>
           </div>
         </button>
       </div>
-    </BackgroundElement>
+    </div>
   {/if}
 {/if}

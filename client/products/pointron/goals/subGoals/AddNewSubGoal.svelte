@@ -78,14 +78,14 @@
         <Button
           icon="check-circle"
           label="add"
-          parentBackgroundIndex={2}
+          parentBgIndex={2}
           size={Size.xs}
           on:click={addNewSubGoal}
         />
         <Button
           icon="cross"
           label="clear"
-          parentBackgroundIndex={2}
+          parentBgIndex={2}
           size={Size.xs}
           on:click={() => (label = "")}
         />

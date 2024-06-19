@@ -30,7 +30,7 @@
   import context from "$lib/client/stores/context.store";
 
   import DebugLayer from "./debug/DebugLayer.svelte";
-  import ThemeLayer from "./ThemeLayer.svelte";
+  import ThemeLayer from "./themeLayer/ThemeLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import Shortcuts from "./Shortcuts.svelte";

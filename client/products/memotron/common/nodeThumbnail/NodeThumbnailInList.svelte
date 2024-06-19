@@ -1,6 +1,5 @@
 <script lang="ts">
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import {
     NodeType,
@@ -14,16 +13,18 @@
     formatDatetime,
     formatTime
   } from "$lib/client/utils/time.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   export let parentBgIndex: number = 0;
   export let node: INodeThumbnail;
   export let version: 1 | 2 = 2;
 </script>
 
 {#if version === 1}
-  <BackgroundElement
-    type="button"
-    {parentBgIndex}
-    class="flex flex-col gap-1 max-h-fit rounded-md w-full p-4 hover:bg-bgs2"
+  <button
+    class={cn(
+      "flex flex-col gap-1 max-h-fit rounded-md w-full p-4 hover:bg-bgs2",
+      bg(parentBgIndex)
+    )}
     on:click
   >
     <div class="flex w-full justify-between">
@@ -51,10 +52,10 @@
       <DLinks links={node.links} context="nodethumbnail" />
     </div> -->
     {/if}
-  </BackgroundElement>
+  </button>
 {:else if version == 2}
   <button
-    class="nodethumbnail flex justify-between border border-brs3 p-4 rounded-md w-full"
+    class="nodethumbnail flex justify-between border border-brs3 p-4 rounded-md w-full border-ccs2 hover:bg-ccs4"
     on:click
   >
     <span class="flex flex-col items-start gap-2 grow max-w-[70%] h-full">
@@ -80,12 +81,3 @@
     </span></button
   >
 {/if}
-
-<style>
-  .nodethumbnail {
-    border-color: var(--customcolorshadethree, rgba(var(--colors-brs3)));
-  }
-  .nodethumbnail:hover {
-    background-color: var(--customcolorshadetwo, rgba(var(--colors-bgs2), 1));
-  }
-</style>

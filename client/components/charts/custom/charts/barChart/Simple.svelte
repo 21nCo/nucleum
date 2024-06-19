@@ -12,8 +12,10 @@
   import { createEventDispatcher, onMount } from "svelte";
   //TODO - import dependency on local
   import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/pointron.utils";
-  import { customColor } from "$lib/client/utils/theme.utils";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import {
+    customColor,
+    retrieveCurrentColors
+  } from "$lib/client/utils/theme.utils";
   import type { ChartDataPoint } from "$lib/client/types/chartDataPoint.type";
   import { generateUID } from "$lib/client/utils/utils";
   import appearance from "$lib/client/stores/appearance.store";
@@ -23,7 +25,7 @@
   // in these options prop we can define, various options for the chart
   // like width, height, bars width, spacing between bars, etc.
   export let orientation: Orientation = Orientation.Vertical;
-
+  $: themeColors = retrieveCurrentColors($appearance);
   const chartID = generateUID();
 
   let containerRef: any = null;
@@ -517,7 +519,7 @@
               CHART_PADDING.bottom
           : SVGScrollableDimensionLength
       )
-      .attr("stroke", customColor($appearance, "fgs1"))
+      .attr("stroke", themeColors.fgs1)
       .attr("stroke-width", 1)
       // .attr("stroke-dasharray", "5,5")
       .attr("stroke-opacity", 1);
@@ -760,12 +762,12 @@
           //@ts-ignore, we are aware about the type problem here, but we cannot do much about it since the type of scale is provided in the library itself
           colors[group] = options.color.scale[group];
         } else {
-          colors[group] = customColor($appearance, "a", getRandomHue());
+          colors[group] = customColor($appearance, getRandomHue());
         }
       });
     } else {
       groups.forEach((group, groupIndex) => {
-        colors[group] = customColor($appearance, "a", getRandomHue());
+        colors[group] = customColor($appearance, getRandomHue());
       });
     }
 

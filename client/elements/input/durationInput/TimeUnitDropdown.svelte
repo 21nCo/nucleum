@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { ColorStrength } from "$lib/client/types/appearance.type";
   import type { TimeUnit } from "$lib/client/types/time.type";
-  import { borderClass } from "$lib/client/utils/theme.utils";
   import TimeUnitItem from "./TimeUnitItem.svelte";
   import { createEventDispatcher } from "svelte";
-  import appearance from "$lib/client/stores/appearance.store";
 
   export let units: TimeUnit[];
   export let currentTimeUnit: TimeUnit;
@@ -12,8 +9,7 @@
   let isUnitDropdownOpen: boolean;
   let selectedIndex: number = -1; // -1 means no item is selected
   let unitClasses: string =
-    "border rounded-r-md py-2 px-4 min-w-[90px] cursor-pointer flex justify-center relative select-none " +
-    borderClass($appearance, ColorStrength.Strong);
+    "border rounded-r-md py-2 px-4 min-w-[90px] cursor-pointer flex justify-center relative select-none border-brs3";
   const containerId = "units-dropdown-container";
 
   const dispatch = createEventDispatcher();

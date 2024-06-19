@@ -4,14 +4,13 @@
   import type { Tag } from "$lib/client/types/pointron/tag.type";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import TagItem from "$lib/client/elements/TagItem.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import appearance from "$lib/client/stores/appearance.store";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import { prefix } from "$lib/client/utils/text.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let selectedTagId: TagId | string;
-  export let disabled: boolean = false;
   export let isShowAddTag: boolean = false;
   let tagList: Tag[] = [];
   function handleTagClick(e: any) {
@@ -55,7 +54,6 @@
           label={tag.id === TagId.FAVORITES || tag.id === TagId.ALL
             ? tag.label
             : prefix(tag.label, "#")}
-          {disabled}
           icon={tag.id === TagId.FAVORITES ? `heart` : ``}
           isActive={tag.id === selectedTagId}
           on:click={handleTagClick}

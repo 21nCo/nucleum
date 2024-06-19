@@ -31,8 +31,8 @@
       "opacity-50": isDisabled,
       "cursor-default": path === "",
       "cursor-pointer": path !== "",
-      isLast,
-      isNotLast: !isLast
+      "text-ccs1": isLast,
+      "hover:underline": !isLast
     })}
   >
     <TextWithHoverTooltip
@@ -49,12 +49,5 @@
 <style>
   .triangle {
     clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
-  }
-  #breadcrumb-item-label:hover.isNotLast {
-    /* color: var(--customcolor); */
-    text-decoration: underline;
-  }
-  #breadcrumb-item-label.isLast {
-    color: var(--customcolor);
   }
 </style>

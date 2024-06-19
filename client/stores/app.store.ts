@@ -162,14 +162,6 @@ const selectableColors = [
   { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" }
 ];
 
-const selectableColorParams: ColorSchemeSLValues[] = [
-  {
-    saturation: 55,
-    lightness: 65,
-    colorScheme: "colorscheme:solarizeddark"
-  }
-];
-
 const isDebugMode =
   import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
 const isExperimentalMode =
@@ -180,8 +172,7 @@ if (isDebugMode) themes = themes.concat([AppSkin.Vibrant, AppSkin.Futuristic]);
 export const appConstants = {
   themes,
   colorSchemes,
-  tempColorSchemes,
-  colorSchemeSLConfig: selectableColorParams
+  tempColorSchemes
 };
 const seedDboVersion = {
   version: 0,

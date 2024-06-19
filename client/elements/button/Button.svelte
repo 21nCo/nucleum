@@ -3,11 +3,6 @@
   import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
   import { SelectionItemActiveStyle } from "../../types/switcher.enum";
-  import {
-    bgClass,
-    retrieveCurrentColors,
-    textColorClass
-  } from "$lib/client/utils/theme.utils";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import {
     renderPopoverv2,
@@ -16,10 +11,9 @@
   import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
   import { Direction } from "$lib/client/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Color, ColorStrength } from "$lib/client/types/appearance.type";
-  export let parentBackgroundIndex: number = 1;
+  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { Color } from "$lib/client/types/appearance.type";
+  export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
   export let type: "primary" | "secondary" | "danger" | ButtonVariant =
@@ -47,7 +41,6 @@
   let toolTipRef: any;
   let buttonRef: any;
   export let isHovering: boolean = false;
-  let currentColors = retrieveCurrentColors($appearance);
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
@@ -100,9 +93,8 @@
       },
     style === ButtonStyle.DEFAULT && [
       (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER) &&
-        textColorClass($appearance, ColorStrength.Normal, true),
-      type === ButtonVariant.SECONDARY &&
-        bgClass($appearance, parentBackgroundIndex),
+        "text-abg",
+      type === ButtonVariant.SECONDARY && bg(parentBgIndex),
       {
         "hover:opacity-90":
           type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
@@ -113,7 +105,7 @@
       }
     ],
     style === ButtonStyle.OUTLINED && [
-      bgClass($appearance, parentBackgroundIndex - 1),
+      bg(parentBgIndex - 1),
       {
         border: true,
         "border-aps1 text-aps1": type === ButtonVariant.PRIMARY,

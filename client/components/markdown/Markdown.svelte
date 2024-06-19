@@ -55,7 +55,7 @@
             icon="copy"
             label="Copy markdown"
             size={Size.xs}
-            {parentBackgroundIndex}
+            parentBgIndex={parentBackgroundIndex}
             on:click={() => {
               const markdownAsText = mdStore.generateMarkdownText();
               navigator.clipboard.writeText(markdownAsText);
@@ -70,7 +70,7 @@
             tooltip="Copy raw md"
             label="Copy raw md"
             size={Size.xs}
-            {parentBackgroundIndex}
+            parentBgIndex={parentBackgroundIndex}
             on:click={() => {
               const rawMdJson = JSON.stringify($mdStore.blocks);
               navigator.clipboard.writeText(rawMdJson);

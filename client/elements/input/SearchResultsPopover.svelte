@@ -153,11 +153,6 @@
     {/if}
   </div>
   <div class="w-full flex justify-center">
-    <Button
-      size={Size.sm}
-      label="close"
-      parentBackgroundIndex={0}
-      on:click={reset}
-    />
+    <Button size={Size.sm} label="close" parentBgIndex={0} on:click={reset} />
   </div>
 </div>

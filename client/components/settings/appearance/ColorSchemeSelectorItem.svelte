@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { bgClass } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import { AppSkin, type ColorScheme } from "$lib/client/types/appearance.type";
   import { properCase } from "$lib/client/utils/text.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let colorScheme: ColorScheme;
   export let isActive: boolean;
-  export let parentBackgroundIndex: number;
   function getColors(colorScheme: ColorScheme) {
     return [
       colorScheme.colors.bgs1 ?? "",
@@ -18,13 +17,13 @@
 
 <button
   on:click
-  class="relative flex flex-col items-center grow gap-2 mx-2 p-3 rounded-md max-w-[7rem] hover:{bgClass(
-    $appearance,
-    parentBackgroundIndex,
-    true
-  )} {isActive
-    ? bgClass($appearance, parentBackgroundIndex, true)
-    : bgClass($appearance, parentBackgroundIndex)}"
+  class={cn(
+    "relative flex flex-col items-center grow gap-2 mx-2 p-3 rounded-md max-w-[7rem] hover:bg-bgs3",
+    {
+      "bg-bgs3": isActive,
+      "bg-bgs2": !isActive
+    }
+  )}
 >
   {#if getColors(colorScheme) && $appearance.skin != AppSkin.Glassy}
     <div class="flex w-full shadow-sm">

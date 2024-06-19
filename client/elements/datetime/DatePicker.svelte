@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
-  import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
+  import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
@@ -23,13 +22,8 @@
    * @deprecated
    */
   let isPopoverActive: boolean = false;
-  let backgroundColor: string;
   let isPopoverVisible: boolean = false;
   let dateInput: HTMLInputElement;
-  onMount(() => {
-    let colors = resolveBackgroundClass(parentBackgroundIndex);
-    backgroundColor = colors.backgroundColor;
-  });
   function updateDate(e: any) {
     const newDate = new Date(e.target.value);
     date = newDate;

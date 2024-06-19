@@ -1,7 +1,7 @@
 <script lang="ts">
   import { IconVariant } from "$lib/client/types/icon.type";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "../Icon.svelte";
-  import BackgroundElement from "../style/BackgroundElement.svelte";
   export let icon: string;
   export let on: boolean = false;
   function onclick() {
@@ -9,10 +9,12 @@
   }
 </script>
 
-<BackgroundElement
-  parentBgIndex={on ? 2 : 1}
+<button
   on:click={onclick}
-  class="flex items-center justify-center h-10 px-3 py-2 rounded-md"
+  class={cn(
+    "flex items-center justify-center h-10 px-3 py-2 rounded-md",
+    bg(on ? 2 : 1)
+  )}
 >
   <Icon {icon} variant={on ? IconVariant.Solid : IconVariant.Outline} />
-</BackgroundElement>
+</button>

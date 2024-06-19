@@ -12,7 +12,6 @@
   import FocusItemsHeading from "./FocusItemsHeading.svelte";
   import TimeleftIndicator from "./timeleftindicator/TimeleftIndicator.svelte";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import { bgClass } from "$lib/client/utils/theme.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
@@ -20,9 +19,8 @@
   import Extras from "../elements/controls/Extras.svelte";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import appearance from "$lib/client/stores/appearance.store";
-
-  import SimpleDigitalClock from "../../clocks/SimpleDigitalClock.svelte";
   import SessionNotes from "../notes/SessionNotes.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let isInline: boolean = false;
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
@@ -55,10 +53,7 @@
         undefined,
         undefined
       )}
-    class="flex flex-col w-full h-full px-4 pt-4 pb-8 {$appearance.skin ===
-    AppSkin.Glassy
-      ? 'glassthick'
-      : bgClass($appearance, 0)}"
+    class="flex flex-col w-full h-full px-4 pt-4 pb-8 glassthick bg-bgs1"
   >
     {#if isInline}
       <div class="flex mb-10 justify-end w-full">
@@ -69,8 +64,6 @@
           on:click={() => onFullScreenToggle()}
         />
       </div>
-      <!-- {:else} //not required since swipe down gesture is there if design needs it disable the togglefunction inside fullmobile header component
-      <FullScreenMobileHeader /> -->
     {/if}
     <div class="flex flex-col gap-6 flex-grow w-full items-center">
       <IntervalBar />
@@ -85,10 +78,7 @@
       <div
         id="focusItems"
         on:touchstart|stopPropagation={startTouch}
-        class="flex flex-col flex-grow gap-2 p-2 w-full h-64 overflow-auto styledscroll rounded-md {$appearance.skin ===
-        AppSkin.Clean
-          ? bgClass($appearance, 0)
-          : ''}"
+        class="flex flex-col flex-grow gap-2 p-2 w-full h-64 overflow-auto styledscroll rounded-md bg-bgs1"
       >
         <FocusItemsHeading />
         <FocusItemList isInEditMode={$isInEditMode} />
@@ -118,13 +108,10 @@
     aria-roledescription="zen mode"
   >
     <div
-      class="flex flex-col items-center justify-center flex-grow {$appearance.skin ===
-      AppSkin.Clean
-        ? bgClass(
-            $appearance,
-            isInline && !$sessionStore.isQuickStartOn ? 0 : 1
-          )
-        : ''}"
+      class={cn("flex flex-col items-center justify-center flex-grow ", {
+        "bg-bgs1": isInline && !$sessionStore.isQuickStartOn,
+        "bg-bgs2": !isInline || $sessionStore.isQuickStartOn
+      })}
     >
       <div class="flex flex-col justify-between w-full h-full py-6 px-10">
         <IntervalBar
@@ -162,12 +149,7 @@
       {#if isInline}
         <Divider orientation={Orientation.Vertical} />
       {/if}
-      <div
-        class="flex flex-col gap-4 pt-6 p-6 w-96 xl:w-1/3 2xl:1/4 {$appearance.skin ===
-        AppSkin.Clean
-          ? bgClass($appearance, 0)
-          : ''}"
-      >
+      <div class="flex flex-col gap-4 pt-6 p-6 w-96 xl:w-1/3 2xl:1/4 bg-bgs1">
         <FocusItemsHeading />
         <div class="overflow-y-auto h-full">
           <FocusItemList isInEditMode={$isInEditMode} />

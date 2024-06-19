@@ -34,12 +34,14 @@
   }
 </script>
 
-<CustomColorPropagator color={group.color} isPreventDefault={!isRenderColors}>
+<CustomColorPropagator color={group.color}>
   <div
     class={cn(
       "board relative h-full min-w-[24rem] dp:w-[28rem] 2k:w-[30rem] flex flex-col gap-2 border border-brs3 px-4 mb-2 rounded-md",
       {
-        "overflow-y-auto": isBoardOverflow
+        "overflow-y-auto": isBoardOverflow,
+        "border-ccs2 bg-ccs3": isRenderColors,
+        "border-brs3 bg-bgs1": !isRenderColors
       }
     )}
     style="height: calc(100vh - 95px);"
@@ -67,13 +69,3 @@
     </div>
   </div>
 </CustomColorPropagator>
-
-<style>
-  .board,
-  .board-title {
-    background-color: var(--customcolorshadeone, rgba(var(--colors-bgs1)));
-  }
-  .board {
-    border-color: var(--customcolorshadethree, rgba(var(--colors-brs3)));
-  }
-</style>

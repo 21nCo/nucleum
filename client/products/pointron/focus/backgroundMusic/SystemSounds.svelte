@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Switcher from "$lib/client/elements/switcher/Switcher.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import {
     SelectionItemActiveStyle,
@@ -23,7 +22,7 @@
   {/each}
 </div> -->
 
-<Switcher
+<!-- <Switcher
   items={sounds}
   selectedIndex={sounds.indexOf(selectedSound) === -1
     ? 0
@@ -36,4 +35,4 @@
     console.log($event.detail);
     selectedSound = sounds[$event.detail.selected];
   }}
-/>
+/> -->

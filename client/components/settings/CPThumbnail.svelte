@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let width: string = "w-24";
@@ -18,15 +18,18 @@
 </script>
 
 {#if component}
-  <ActiveBackgroundElement
-    class="{orientation === Orientation.Vertical
-      ? 'px-2 py-3 rounded-md'
-      : 'flex px-4 py-3 w-full items-center justify-between'} {orientation ===
-      Orientation.Vertical && width}"
-    isBackgroundActive={isActive}
-    bgWhenInactive={orientation === Orientation.Vertical
-      ? parentBackgroundIndex + 1
-      : parentBackgroundIndex}
+  <button
+    class={cn(orientation === Orientation.Vertical ? width : "", {
+      "px-2 py-3 rounded-md": orientation === Orientation.Vertical,
+      "flex px-4 py-3 w-full items-center justify-between":
+        orientation === Orientation.Horizontal,
+      "bg-aps1": isActive,
+      [bg(
+        orientation === Orientation.Vertical
+          ? parentBackgroundIndex + 1
+          : parentBackgroundIndex
+      )]: !isActive
+    })}
     on:click
   >
     {#if orientation === Orientation.Horizontal}
@@ -45,5 +48,5 @@
         <div>{component.label}</div>
       </div>
     {/if}
-  </ActiveBackgroundElement>
+  </button>
 {/if}

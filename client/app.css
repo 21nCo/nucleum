@@ -11,21 +11,6 @@
 :root {
   overflow: hidden;
 }
-.glass {
-  background: rgba(204, 204, 214, 0.2);
-  /* border: 1px solid white; */
-  backdrop-filter: blur(25px);
-}
-.glassthick {
-  background: rgba(204, 204, 214, 0.2);
-  /* border: 1px solid white; */
-  backdrop-filter: blur(55px);
-}
-.glassmenubar {
-  background: rgba(204, 204, 214, 0.1);
-  /* border: 1px solid white; */
-  backdrop-filter: blur(35px);
-}
 
 /**
 * user-select: none is used to provide native experience for touch devices

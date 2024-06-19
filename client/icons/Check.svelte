@@ -1,6 +1,6 @@
 <script lang="ts">
   export let isChecked: boolean = false;
-  export let color: string = "fgs1";
+  export let isAccentBgActive: boolean = false;
 </script>
 
 <button on:click>
@@ -40,8 +40,14 @@
         width="14"
         height="14"
         rx="2.5"
-        class="stroke-{color}"
+        class={isAccentBgActive ? "custom-stroke" : "stroke-fgs1"}
       />
     </svg>
   {/if}
 </button>
+
+<style>
+  .custom-stroke {
+    stroke: var(--fgwhencustombg, rgba(var(--colors-fgs1), 1));
+  }
+</style>

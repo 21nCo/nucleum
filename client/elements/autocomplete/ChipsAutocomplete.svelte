@@ -1,27 +1,21 @@
 <script lang="ts">
-  import {
-    SvelteComponent,
-    createEventDispatcher,
-    onDestroy,
-    onMount
-  } from "svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
   import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
   import { TextInputStyle } from "$lib/client/types/textinput.enum";
   import Chip from "./Chip.svelte";
   import { ChipVariant } from "$lib/client/types/chipVariant.enum";
-  import type { ClassListProp } from "$lib/client/types/classListProp.type";
   import { Size } from "$lib/client/types/size.enum";
   import { appEvents } from "$lib/client/stores/notification.store";
   import type { AppEventType } from "$lib/client/types/event.type";
   import { AppEvent } from "$lib/client/types/event.enum";
-  import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
   import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import Autocomplete from "./Autocomplete.svelte";
   import Button from "../button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import appearance from "$lib/client/stores/appearance.store";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;
@@ -184,10 +178,6 @@
   }
 
   onMount(() => {
-    // this is taken from the TextInput.svelte component, because we want it look exactly like the text input, so we are using the same logic, but some of the parts has been changes, like how the focus state will be achieved, and how the outline will be applied
-
-    let colors = resolveBackgroundClass(parentBackgroundIndex);
-    backgroundColor = colors.backgroundColor;
     if (
       inputStyle == TextInputStyle.PLAIN ||
       inputStyle == TextInputStyle.OUTLINED

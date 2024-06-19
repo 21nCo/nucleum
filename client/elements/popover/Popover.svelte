@@ -1,13 +1,11 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
   import { Direction } from "$lib/client/types/direction.enum";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import {
     renderPopoverAtCaretPosition,
     renderPopoverv2
   } from "$lib/client/utils/browser.utils";
-  import { bgClass } from "$lib/client/utils/theme.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -106,10 +104,7 @@
   class={cn(
     options?.class,
     options?.placement,
-    bgClass(
-      $appearance,
-      options?.parentBgIndex ? options?.parentBgIndex - 1 : 0
-    ),
+    bg(options?.parentBgIndex ? options?.parentBgIndex - 1 : 0),
     {
       "shadow-md border border-brs2 rounded-md": !isPreventDefaultStyling
     }

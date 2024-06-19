@@ -1,21 +1,12 @@
 <script lang="ts">
-  import {
-    SvelteComponent,
-    createEventDispatcher,
-    onDestroy,
-    onMount
-  } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
-  import Search from "$lib/client/icons/Search.svelte";
-  import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
-  import type { AppEventType } from "$lib/client/types/event.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { generateUID } from "$lib/client/utils/utils";
   import Icon from "../Icon.svelte";
   import { IconVariant } from "$lib/client/types/icon.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { bgClass } from "$lib/client/utils/theme.utils";
-  import appearance from "$lib/client/stores/appearance.store";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -225,9 +216,13 @@
       on:focus={onFocus}
       on:keydown|stopPropagation={handleKeyDownInDropdown}
       on:keyup|stopPropagation={() => dispatch("search")}
-      class={`outline-none w-full py-2 px-2.5 text-b2 ${
-        hideSearchIcon && !icon ? `` : `pl-8`
-      } ${inputClassList} ` + bgClass($appearance, 1)}
+      class={cn(
+        "outline-none w-full py-2 px-2.5 text-b2 bg-bgs1",
+        inputClassList,
+        {
+          "pl-8": !(hideSearchIcon && !icon)
+        }
+      )}
       {placeholder}
       aria-label="Search"
       aria-describedby="search-addon"

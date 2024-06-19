@@ -61,8 +61,8 @@ export enum ColorStrength {
 
 export enum ColorType {
   None = "none",
-  Bg = "background",
-  Fg = "foreground",
+  Background = "background",
+  Foreground = "foreground",
   Outline = "outline",
   Border = "border",
   Fill = "fill"

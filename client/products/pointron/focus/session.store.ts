@@ -37,7 +37,10 @@ import {
   fullPageLoadingScreen
 } from "$lib/client/stores/notification.store";
 import { LaunchContext } from "$lib/client/types/appStore.type";
-import { customColor } from "$lib/client/utils/theme.utils";
+import {
+  customColor,
+  retrieveCurrentColors
+} from "$lib/client/utils/theme.utils";
 import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { AlertType } from "$lib/client/types/notification.type";
@@ -155,13 +158,16 @@ function initSessionStore(seed: SessionStore) {
     try {
       const todayFocus = get(todayFocusStore)?.focus;
       const isFocusing = n.currentBlock.type == BlockType.FOCUS;
+      const appearanceConfig = get(appearance);
+      const colors = retrieveCurrentColors(appearanceConfig);
       const widgetSnapshot = {
         goalName: n.currentLog?.taskName,
-        color: customColor(
-          get(appearance),
-          isFocusing ? "a1" : "a2",
-          isFocusing ? n.currentLog.color : undefined
-        ),
+        color:
+          isFocusing && n.currentLog.color
+            ? customColor(appearanceConfig, n.currentLog.color)
+            : isFocusing
+              ? colors.aps1
+              : colors.ass1,
         start:
           n.currentBlock.type == BlockType.FOCUS
             ? n.start?.toISOString()

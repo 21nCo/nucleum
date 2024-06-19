@@ -18,7 +18,6 @@
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isDisabled: boolean = false;
-  export let activeColor: number | undefined = undefined;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
   export let isInEditMode: boolean = false;
   export let barStyle: BarStyle = BarStyle.EXACT;
@@ -45,7 +44,7 @@
       "px-2": size === Size.xs,
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,
-      activeBorderColor: isActive && barStyle === BarStyle.OVERFLOW,
+      "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,
       "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW
     })}
     on:click={onClick}
@@ -57,9 +56,9 @@
         "text-b2": (size === Size.sm && $view.isPortrait) || size === Size.xs,
         "text-h4": size === Size.lg,
         "text-fgs3": !isActive,
-        activeFgColor: isActive && !isInEditMode,
+        "text-ccs1": isActive && !isInEditMode,
         "py-2 border-b-2": barStyle === BarStyle.EXACT,
-        activeBorderColor: isActive && barStyle === BarStyle.EXACT,
+        "border-ccs1": isActive && barStyle === BarStyle.EXACT,
         "border-transparent": !isActive && barStyle === BarStyle.EXACT
       })}
     >
@@ -77,10 +76,8 @@
     {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
       <div
         class={cn("absolute bottom-0", {
-          "activeBgColor left-1/2 w-1 h-1 rounded-full":
-            barStyle === BarStyle.DOT,
-          "border-b-2 activeBorderColor left-1/3 w-1/3":
-            barStyle === BarStyle.UNDER
+          "bg-ccs1 left-1/2 w-1 h-1 rounded-full": barStyle === BarStyle.DOT,
+          "border-b-2 border-ccs1 left-1/3 w-1/3": barStyle === BarStyle.UNDER
         })}
       />
     {/if}
@@ -89,7 +86,7 @@
   <button
     class={cn("relative flex items-center gap-1 px-4 py-2", {
       "border border-brs3 rounded-t-md text-fgs1": isActive,
-      "activeBorderColor- activeFgColor": isActive && !isInEditMode,
+      "border-ccs1- text-ccs1": isActive && !isInEditMode,
       "border border-transparent text-fgs3": !isActive
     })}
     disabled={isDisabled}
@@ -118,13 +115,13 @@
           ? 'text-base'
           : $view.isPortrait
             ? 'text-h4'
-            : 'text-h3'} {isActive ? 'activeFgColor' : 'text-fgs3'}"
+            : 'text-h3'} {isActive ? 'text-ccs1' : 'text-fgs3'}"
     >
       {item.label}
     </div>
     {#if isActive}
       <div
-        class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full activeBgColor"
+        class="absolute opacity-80 w-1 h-1 -bottom-1 rounded-full bg-ccs1"
         style="left: 40%;"
       />
     {/if}
@@ -135,25 +132,16 @@
       "rounded-full px-6 py-3": size === Size.md,
       "rounded-md px-3 py-1 w-24": size === Size.sm,
       "rounded-md px-2 py-0.5 w-16": size === Size.xs,
-      activeBgColor: isActive
+      "bg-ccs1 text-abg": isActive
     })}
     on:click={onClick}
     disabled={isDisabled}
   >
     <div
-      class={cn(
-        "flex gap-1 justify-center items-center",
-        textColorClass(
-          $appearance,
-          ColorStrength.Normal,
-          isActive,
-          activeColor
-        ),
-        {
-          "text-base font-medium": size === Size.md && $view.isPortrait,
-          "text-b2": size === Size.sm || size === Size.xs
-        }
-      )}
+      class={cn("flex gap-1 justify-center items-center", {
+        "text-base font-medium": size === Size.md && $view.isPortrait,
+        "text-b2": size === Size.sm || size === Size.xs
+      })}
     >
       <PanelSwitcherItemLabel
         {item}
@@ -168,16 +156,3 @@
     </div>
   </button>
 {/if}
-
-<style>
-  .activeBgColor {
-    background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
-    /* transition: background-color 0.2s ease-in-out; */
-  }
-  .activeBorderColor {
-    border-color: var(--customcolor, rgba(var(--colors-aps1), 1));
-  }
-  .activeFgColor {
-    color: var(--customcolor, rgba(var(--colors-aps1), 1));
-  }
-</style>

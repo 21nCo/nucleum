@@ -23,7 +23,7 @@ const meta = {
       control: { type: "select" },
       options: [Direction.Up, Direction.Down, Direction.Left, Direction.Right]
     },
-    parentBackgroundIndex: {
+    parentBgIndex: {
       control: { type: "number", min: 0, max: 3, step: 1 }
     },
     style: {

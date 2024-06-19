@@ -2,7 +2,6 @@
   import account from "$lib/client/stores/account.store";
   import { isValidString } from "$lib/client/utils/text.utils";
   import { onMount } from "svelte";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { logger } from "$lib/client/stores/log.store";
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
@@ -43,10 +42,7 @@
   }
 </script>
 
-<BackgroundElement
-  class="w-20 h-20 rounded-full flex justify-center items-center"
-  parentBgIndex={2}
->
+<div class="w-20 h-20 rounded-full flex justify-center items-center bg-bgs3">
   {#if initials}
     <div class="text-h3 text-fgs3">{initials}</div>
   {:else if profilePictureUrl}
@@ -56,4 +52,4 @@
       alt="Profile picture"
     />
   {/if}
-</BackgroundElement>
+</div>

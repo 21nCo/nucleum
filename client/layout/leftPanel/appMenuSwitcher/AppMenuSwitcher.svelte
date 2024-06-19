@@ -6,14 +6,12 @@
   //TODO - remove dependency on local
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import type { UserLocalPreferences } from "$lib/client/types/memotron/memotronPreferences.type";
-  import { resolveBackgroundClass } from "$lib/client/utils/theme.utils";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
   let pages: IAction[] = [];
-  let backgroundColor: string;
   let selected: number;
   onMount(() => {
     pointronPreferences.subscribe((x: UserLocalPreferences) => {
@@ -41,9 +39,6 @@
       );
       selected = currentPage ? pages.indexOf(currentPage) : 0;
     });
-
-    let colors = resolveBackgroundClass(parentBackgroundIndex);
-    backgroundColor = colors.backgroundColor;
   });
 </script>
 

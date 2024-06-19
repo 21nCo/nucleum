@@ -11,10 +11,10 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import PresetDurationText from "./PresetDurationText.svelte";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
+  import { abg, cn } from "$lib/client/utils/ui.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   const dispatch = createEventDispatcher();
   export let preset: SessionComposition;
   export let isActive: boolean = false;
@@ -33,12 +33,11 @@
 </script>
 
 {#if preset.focusDuration}
-  <ActiveBackgroundElement
+  <HoverableElement
     bind:isHovering
-    isBackgroundActive={isActive}
-    bgWhenInactive={parentBackgroundIndex + 1}
     class={cn(
       "relative flex items-center gap-1 justify-between px-2 2k:px-3 py-4 rounded-md border border-brs2 hover:bg-bgs3",
+      abg(isActive, parentBackgroundIndex),
       {
         "w-full max-w-md": isExpandedVariant,
         "w-36 min-w-[9rem] h-10": !isExpandedVariant
@@ -87,5 +86,5 @@
         <Button icon="trash" on:click={deleteHandler} tooltip="Delete preset" />
       </span>
     {/if}
-  </ActiveBackgroundElement>
+  </HoverableElement>
 {/if}

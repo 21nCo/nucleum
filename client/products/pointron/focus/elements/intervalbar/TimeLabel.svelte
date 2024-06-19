@@ -5,15 +5,12 @@
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import Tooltip from "$lib/client/elements/text/Tooltip.svelte";
   import {
     appStore,
     currentTime,
     userPreferences
   } from "$lib/client/stores/app.store";
-  import { Direction } from "$lib/client/types/direction.enum";
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
-  import { bgClass } from "$lib/client/utils/theme.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   export let label: "start" | "end" = "start";

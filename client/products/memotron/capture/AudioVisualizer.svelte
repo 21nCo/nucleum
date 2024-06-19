@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/stores/app.store";
-  import { customColor } from "$lib/client/utils/theme.utils";
+  import appearance from "$lib/client/stores/appearance.store";
+  import {
+    retrieveCurrentColors
+  } from "$lib/client/utils/theme.utils";
   import { onMount, onDestroy } from "svelte";
   let canvasElement: HTMLCanvasElement;
   let canvasContext: CanvasRenderingContext2D;
@@ -16,9 +18,10 @@
     | "CENTER_LEFT"
     | "CENTER_CENTER" = "CENTER_LEFT";
 
-  const bgHsl = customColor($userPreferences, "bgs1");
-  const apHsl = customColor($userPreferences, "aps1");
-  const apHue = apHsl.split(" ")[0].split("(")[1];
+  $: currentColors = retrieveCurrentColors($appearance);
+  const bgHsl = currentColors.bgs1;
+  const apHsl = currentColors.aps1;
+  const apHue = apHsl?.split(" ")[0].split("(")[1];
   onMount(() => {
     canvasContext = canvasElement.getContext("2d")!;
     // audioContext = new (window.AudioContext || window.webkitAudioContext)();

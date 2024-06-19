@@ -11,14 +11,16 @@
 
 <div class="flex flex-col gap-2">
   <button
-    class="label flex justify-between gap-2 w-full p-1 rounded-md"
+    class="label flex justify-between gap-2 w-full p-1 rounded-md hover:bg-ccs2"
     on:click={() => {
       isCollapsed = !isCollapsed;
     }}
   >
     <span class="flex gap-2 items-center">
       {subGroup.label}
-      <span class="text-b3 text-fgs2 badge px-2 rounded-md">{data.length}</span>
+      <span class="badge text-b3 text-fgs2 bg-ccs2 px-2 rounded-md"
+        >{data.length}</span
+      >
     </span>
     <Button icon={!isCollapsed ? "chevdown" : "chevup"} size={Size.sm} />
   </button>
@@ -28,10 +30,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  .badge,
-  .label:hover {
-    background-color: var(--customcolorshadethree, rgba(var(--colors-brs3)));
-  }
-</style>

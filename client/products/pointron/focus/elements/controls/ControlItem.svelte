@@ -4,17 +4,12 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    customColorStyle,
-    resolveIfActiveFgFg
-  } from "$lib/client/utils/theme.utils";
-  import { userPreferences } from "$lib/client/stores/app.store";
-  import { ColorType } from "$lib/client/types/appearance.type";
+  import { resolveIfActiveFgFg } from "$lib/client/utils/theme.utils";
   import ControlIcon from "./ControlIcon.svelte";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import appearance from "$lib/client/stores/appearance.store";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let control: Control;
-  export let color: number | undefined = undefined;
   export let isProminent: boolean = false;
   export let contextSize: Size = Size.md;
   export let width: number = 68;
@@ -52,29 +47,34 @@
   class="relative"
 >
   <div
-    class="relative {contextSize === Size.lg || contextSize === Size.xl
-      ? 'w-20 h-20'
-      : contextSize === Size.md
-        ? `w-16 h-16`
-        : 'w-12 h-12 border'} rounded-full flex items-center justify-center {contextSize ===
-      Size.sm &&
-    resolveIfActiveFgFg($sessionStore.currentLog.color, $appearance)
-      ? 'border-fgs1'
-      : 'border-bgs1'}"
-    style={contextSize != Size.sm
-      ? customColorStyle(
-          $appearance,
-          ColorType.Bg,
-          control === Control.BREAK
-            ? "ass1"
-            : control === Control.ABANDON
-              ? "bgs4"
-              : control === Control.RESUME
-                ? "ags1"
-                : "aps1",
-          color
-        )
-      : ""}
+    class={cn(
+      "relative rounded-full flex items-center justify-center",
+      {
+        "w-20 h-20": contextSize === Size.lg || contextSize === Size.xl,
+        "w-16 h-16": contextSize === Size.md,
+        "w-12 h-12 border": contextSize === Size.sm
+      },
+      contextSize === Size.sm
+        ? {
+            "border-fgs1": resolveIfActiveFgFg(
+              $sessionStore.currentLog.color,
+              $appearance
+            ),
+            "border-bgs1": !resolveIfActiveFgFg(
+              $sessionStore.currentLog.color,
+              $appearance
+            )
+          }
+        : {
+            "bg-ass1": control === Control.BREAK,
+            "bg-bgs4": control === Control.ABANDON,
+            "bg-ags1": control === Control.RESUME,
+            "bg-aps1":
+              control === Control.START ||
+              control === Control.SKIPBREAK ||
+              control === Control.FINISH
+          }
+    )}
   >
     {#if control === Control.START || control === Control.RESUME || control === Control.SKIPBREAK}
       <!-- <Start {width} /> -->

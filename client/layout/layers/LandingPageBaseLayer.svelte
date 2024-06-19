@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ThemeLayer from "./ThemeLayer.svelte";
+  import ThemeLayer from "./themeLayer/ThemeLayer.svelte";
   import { Persistence } from "$lib/client/persistence/persistence";
   import { appStore } from "$lib/client/stores/app.store";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";

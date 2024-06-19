@@ -10,6 +10,7 @@
   import { properCase } from "$lib/client/utils/text.utils";
   import { onMount } from "svelte";
   import Tooltip from "../text/Tooltip.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let item: SwitchItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let activeStatusPlacement: Direction = Direction.Left;
@@ -92,14 +93,19 @@
     : ""}
 >
   <button
-    class="flex flex-col items-center {sizeClasses} {isActive
-      ? activeClasses + ' active '
-      : inactiveClasses + ' inactive '} {style === VerticalSwitcherStyle.BAR &&
-    !isHideBar
-      ? activeStatusPlacement === Direction.Left
-        ? 'border-l-4'
-        : 'border-r-4'
-      : ''}"
+    class={cn("flex flex-col items-center", sizeClasses, {
+      [activeClasses]: isActive,
+      [inactiveClasses]: !isActive,
+      "border-ccs1": isActive,
+      "border-l-4":
+        style === VerticalSwitcherStyle.BAR &&
+        !isHideBar &&
+        activeStatusPlacement === Direction.Left,
+      "border-r-4":
+        style === VerticalSwitcherStyle.BAR &&
+        !isHideBar &&
+        activeStatusPlacement === Direction.Right
+    })}
     on:click
     bind:this={parentRef}
     on:pointerenter={() => {
@@ -131,9 +137,3 @@
     {/if}
   </button>
 </div>
-
-<style>
-  button.active {
-    border-color: var(--customcolor, rgba(var(--colors-aps1), 1));
-  }
-</style>

@@ -2,12 +2,12 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
   import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import SessionStatusLabel from "./SessionStatusLabel.svelte";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
   $: splits = calculateTotalFocusAndBreak($sessionStore.blocks);
@@ -44,11 +44,15 @@
       )}
     </div>
   </div>
-  <BackgroundElement
-    class="flex justify-evenly rounded-md py-3 w-full {$view.isPortrait
-      ? 'text-b3'
-      : 'text-b1'}"
-    parentBgIndex={parentBackgroundIndex}
+  <div
+    class={cn(
+      "flex justify-evenly rounded-md py-3 w-full",
+      bg(parentBackgroundIndex),
+      {
+        "text-b3": $view.isPortrait,
+        "text-b1": !$view.isPortrait
+      }
+    )}
   >
     <!-- <div class="font-medium">TOTALS</div> -->
     <div>
@@ -60,5 +64,5 @@
     <div class="text-ass1">
       B: {formatSeconds(totalBreak, TimeFormat.CLOCK)}
     </div>
-  </BackgroundElement>
+  </div>
 </div>

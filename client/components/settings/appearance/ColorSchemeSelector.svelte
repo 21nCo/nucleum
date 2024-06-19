@@ -10,7 +10,6 @@
   export let theme: Theme = Theme.LIGHT;
   export let label: string = "Color scheme";
   let filteredColorSchemes: ColorScheme[];
-  export let parentBackgroundIndex: number;
   export let selectedSchemeId: string;
   const dispatch = createEventDispatcher();
   $: if (theme) refreshColorSchemes();
@@ -33,7 +32,6 @@
     <div class="flex flex-wrap gap-6 text-b2 max-w-md">
       {#each filteredColorSchemes as colorScheme (colorScheme.id)}
         <ColorSchemeSelectorItem
-          {parentBackgroundIndex}
           {colorScheme}
           isActive={colorScheme.id === selectedSchemeId}
           on:click={() => {

@@ -1,6 +1,5 @@
 <script lang="ts">
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
-  import BackgroundElement from "$lib/client/elements/style/BackgroundElement.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
   import { Size } from "$lib/client/types/size.enum";

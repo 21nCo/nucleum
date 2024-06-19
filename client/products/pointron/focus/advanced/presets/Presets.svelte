@@ -51,7 +51,7 @@
   {/each}
   {#if isInEditMode}
     <Button
-      {parentBackgroundIndex}
+      parentBgIndex={parentBackgroundIndex}
       on:click={onAddNewClicked}
       style={ButtonStyle.OUTLINED}
       size={Size.sm}

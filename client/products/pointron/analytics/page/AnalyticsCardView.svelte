@@ -18,7 +18,6 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import GroupingAndFilters from "./GroupingAndFilters.svelte";
   import CardResolver from "./CardResolver.svelte";
-  import Analytics from "../Analytics.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   export let card: AnalyticsCard;
   export let position: { index: number; total: number };
@@ -118,7 +117,7 @@
               icon="cross-circled"
               tooltip={$view.isPortrait ? "Remove" : ""}
               label={$view.isPortrait ? "" : "Remove"}
-              parentBackgroundIndex={parentBgIndex}
+              {parentBgIndex}
               type={ButtonVariant.DANGER}
               style={ButtonStyle.OUTLINED}
               size={$view.isPortrait ? Size.md : Size.xs}

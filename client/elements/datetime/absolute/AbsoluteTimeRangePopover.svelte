@@ -6,9 +6,8 @@
   import "dayjs/locale/en";
   import { Size } from "../../../types/size.enum";
   import { TimeScale } from "../../../types/time.type";
-  import BackgroundElement from "../../style/BackgroundElement.svelte";
   import Button from "../../button/Button.svelte";
-  import ActiveBackgroundElement from "../../style/ActiveBackgroundElement.svelte";
+  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
@@ -345,9 +344,11 @@
 
 {#if isPickerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <BackgroundElement
-    {parentBgIndex}
-    class="flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2"
+  <div
+    class={cn(
+      "flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2",
+      bg(parentBgIndex)
+    )}
   >
     <div class="flex items-center w-full justify-between text-b2">
       <div class="flex gap-1">
@@ -362,13 +363,14 @@
               "-" +
               selectedDecade.toString().slice(2)}</button
           > -->
-          <BackgroundElement
-            {parentBgIndex}
-            class="focus:outline-none rounded-md px-2 py-1 text-center"
-            >{selectedDecade +
-              "-" +
-              (selectedDecade + 10).toString().slice(2)}</BackgroundElement
+          <div
+            class={cn(
+              "focus:outline-none rounded-md px-2 py-1 text-center",
+              bg(parentBgIndex)
+            )}
           >
+            {selectedDecade + "-" + (selectedDecade + 10).toString().slice(2)}
+          </div>
 
           <!-- <button on:click={nextDecade} class="focus:outline-none"
             >{selectedDecade +
@@ -384,7 +386,7 @@
       <Button
         icon="calendar"
         label="Jump to Today"
-        size={Size.xxs}
+        size={Size.xs}
         on:click={() => {
           // selectDate(thisYear, thisMonth, thisDay);
           selectedDate = new Date();
@@ -421,12 +423,12 @@
             )}</button
           >
 
-          <BackgroundElement
+          <div
             parentBgIndex={parentBgIndex + 1}
             classList="focus:outline-none rounded-md px-2 py-1 text-center"
             >{ucFirst(
               dayjs(mapYear + "-" + mapMonth).format("YYYY")
-            )}</BackgroundElement
+            )}</div
           >
 
           <button
@@ -448,18 +450,17 @@
             )}</button
           > -->
           {#each yearPool as year, index (year)}
-            <ActiveBackgroundElement
+            <button
               on:click={() => {
                 mapYear = yearPool[index];
                 handlePoolChangeForYears(index);
               }}
-              isBackgroundActive={mapYear == yearPool[index]}
-              class="focus:outline-none px-2 py-1 {mapYear == yearPool[index]
-                ? 'font-medium rounded-md text-center'
-                : ''}"
+              class={cn("focus:outline-none px-2 py-1", abg(), {
+                "font-medium rounded-md text-center": mapYear == yearPool[index]
+              })}
               >{ucFirst(
                 dayjs(yearPool[index] + "-" + mapMonth).format("YYYY")
-              )}</ActiveBackgroundElement
+              )}</button
             >
           {/each}
         </div>
@@ -488,21 +489,19 @@
           class="px-2 w-full flex items-center justify-evenly gap-3 flex-wrap"
         >
           {#each monthPool as month, index (month)}
-            <ActiveBackgroundElement
+            <button
               on:click={() => {
-                console.log("monthPool", monthPool);
                 mapMonth = monthPool[index];
                 handlePoolChange(index);
               }}
-              isBackgroundActive={mapMonth == monthPool[index]}
-              class="focus:outline-none px-1.5 py-1 {mapMonth ==
-              monthPool[index]
-                ? 'font-medium rounded-md  text-center'
-                : ''}"
+              class={cn("focus:outline-none px-1.5 py-1", abg(), {
+                "font-medium rounded-md  text-center":
+                  mapMonth == monthPool[index]
+              })}
               >{ucFirst(
                 dayjs(mapYear + "-" + monthPool[index]).format("MMM")
                 // .charAt(0)
-              )}</ActiveBackgroundElement
+              )}</button
             >
           {/each}
         </div>
@@ -543,11 +542,11 @@
                     <div class="flex w-full h-8 justify-center items-center">
                       {#if i > 0}
                         {#if (i === startDay && mapMonth === startMonth && mapYear === startYear && startSelected) || (i === endDay && mapMonth === endMonth && mapYear === endYear && endSelected)}
-                          <ActiveBackgroundElement
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center"
-                            isBackgroundActive={true}
-                            >{i}</ActiveBackgroundElement
+                          <div
+                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center bg-bgs1"
                           >
+                            {i}
+                          </div>
                         {:else if startDay && startMonth && startYear && laterDate(startDay, startMonth, startYear, i, mapMonth, mapYear) && endDay && endMonth && endYear && laterDate(i, mapMonth, mapYear, endDay, endMonth, endYear) && endSelected == true}
                           <button
                             class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-bgs1 text-b2 text-bgs1 bg-aps2"
@@ -700,9 +699,11 @@
       <div class="flex justify-between pt-1">
         <div class="flex flex-col w-4/10">
           <div class="text-b2">Start</div>
-          <BackgroundElement
-            parentBgIndex={parentBgIndex + 1}
-            class="text-b2 text-fgs3 p-1 rounded-sm"
+          <div
+            class={cn(
+              "text-b2 text-fgs3 p-1 rounded-sm",
+              bg(parentBgIndex + 1)
+            )}
           >
             {#if startSelected}
               {startString}<button
@@ -716,14 +717,16 @@
             {:else}
               {"-/-"}
             {/if}
-          </BackgroundElement>
+          </div>
         </div>
         <Icon icon="arrow-right" />
         <div class="flex flex-col w-4/10">
           <div class="text-b2">End</div>
-          <BackgroundElement
-            parentBgIndex={parentBgIndex + 1}
-            class="text-b2 text-fgs3 p-1 rounded-sm"
+          <div
+            class={cn(
+              "text-b2 text-fgs3 p-1 rounded-sm",
+              bg(parentBgIndex + 1)
+            )}
           >
             {#if endSelected}
               {endString}<button
@@ -737,11 +740,11 @@
             {:else}
               -/-
             {/if}
-          </BackgroundElement>
+          </div>
         </div>
       </div>
     {/if}
-  </BackgroundElement>
+  </div>
 {:else}
   <button on:click|stopPropagation={enablePicker} class="text-fgs1">
     -- Pick Range --

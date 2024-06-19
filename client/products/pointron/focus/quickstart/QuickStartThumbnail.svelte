@@ -17,16 +17,14 @@
   } from "$lib/client/stores/app.store";
   import { Layout } from "$lib/client/types/layout.type";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { ColorStrength, ColorType } from "$lib/client/types/appearance.type";
   import { TimeFormat } from "$lib/client/types/time.type";
-  import { customColorStyle } from "$lib/client/utils/theme.utils";
   import { formatTime, formatSeconds } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
   import { GoalPersistence } from "$lib/client/products/pointron/goals/goal.persistence";
-  import appearance from "$lib/client/stores/appearance.store";
   import { pointLogStore } from "../../logs/log.store";
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let goal: Pick<Goal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
@@ -217,26 +215,33 @@
     on:touchmove|stopPropagation={handleTouchMovements}
     on:touchend|stopPropagation={handleTouchEnd}
   >
-    <ActiveBackgroundElement
-      class="flex justify-between h-16 min-h-[4rem] w-full items-center rounded-r-md pr-4 z-10"
+    <CustomColorPropagator
+      class={cn(
+        "flex justify-between h-16 min-h-[4rem] w-full items-center rounded-r-md pr-4 z-10",
+        {
+          "bg-ccs1": $sessionStore.isSessionRunning && isActive,
+          "bg-bgs2": !($sessionStore.isSessionRunning && isActive)
+        }
+      )}
       {color}
-      isBackgroundActive={$sessionStore.isSessionRunning && isActive}
-      bgWhenInactive={2}
       on:click={toggleSession}
     >
       <div class="flex gap-2 items-center h-full">
         <!-- {#if !($sessionStore.isSessionRunning && isActive)} -->
-        <div
-          class="w-0.5 h-full rounded-full"
-          style={customColorStyle($appearance, ColorType.Bg, "fgs2", color)}
+        <CustomColorPropagator
+          {color}
+          class={cn("w-0.5 h-full rounded-full", {
+            "bg-ccs1": color,
+            "bg-fgs2": !color
+          })}
         />
         <!-- {/if} -->
         <div
-          class="flex flex-col items-start"
-          style={!($sessionStore.isSessionRunning && isActive) &&
-          isColorGoalTextExperimental
-            ? customColorStyle($appearance, ColorType.Fg, "fgs1", color)
-            : ``}
+          class={cn("flex flex-col items-start text-fgs1", {
+            "text-ccs1":
+              !($sessionStore.isSessionRunning && isActive) &&
+              isColorGoalTextExperimental
+          })}
         >
           <!-- {#if parentLabels.length > 0}
             <div class="text-start text-b4 truncate actualQSContent">
@@ -279,15 +284,19 @@
             : "Not focused today"}
         </div>
       {/if}
-    </ActiveBackgroundElement>
+    </CustomColorPropagator>
   </div>
   <div
     class="relativeQSThumbnailL1"
     class:relativeQSThumbnailL1Custom={rightthresholdCrossed}
   >
-    <ActiveBackgroundElement
-      class="flex justify-between h-16 min-h-[4rem] items-center w-full rounded-r-md pr-4 relative"
-      isBackgroundActive={!($sessionStore.isSessionRunning && isActive)}
+    <CustomColorPropagator
+      class={cn(
+        "flex justify-between h-16 min-h-[4rem] items-center w-full rounded-r-md pr-4 relative",
+        {
+          "bg-ccs1": !($sessionStore.isSessionRunning && isActive)
+        }
+      )}
       {color}
     >
       <div class="flex p-2 gap-3 text-white w-3/10" class:hidden={isActive}>
@@ -295,14 +304,12 @@
       </div>
       <div class="flex p-2 gap-3 text-fgs4 w-3/10" class:hidden={!isActive}>
         <Icon icon="arrow-right-circled" color="fgs4" />Finish
-      </div></ActiveBackgroundElement
+      </div></CustomColorPropagator
     >
   </div>
   <div class="relativeQSThumbnailL2">
-    <ActiveBackgroundElement
-      class="flex justify-between h-16 min-h-[4rem] items-center w-full rounded-r-md pr-4 relative"
-      isBackgroundActive={true}
-      color={225}
+    <div
+      class="flex justify-between h-16 min-h-[4rem] items-center w-full rounded-r-md pr-4 relative bg-ass1"
     >
       <div class="absolute right-0 flex divide-x-2 divide-inherit text-white">
         <button
@@ -317,19 +324,24 @@
         >
           <Icon icon="plus" color="white" />manual log</button
         >
-      </div></ActiveBackgroundElement
-    >
+      </div>
+    </div>
   </div>
 {:else}
-  <ActiveBackgroundElement
-    class="flex justify-between rounded-md h-16
-      flex-col items-start w-1/3 p-2"
-    styles="width: calc(50% - 0.33rem);"
-    bgWhenInactive={-1}
+  <CustomColorPropagator
+    class={cn(
+      "flex justify-between rounded-md h-16 flex-col items-start w-1/3 p-2 transition-ease",
+      {
+        "bg-ccs1 border border-ccs1":
+          $sessionStore.isSessionRunning && isActive,
+        "bg--ccs4 border border-ccs2": !(
+          $sessionStore.isSessionRunning && isActive
+        )
+      }
+    )}
+    style="width: calc(50% - 0.33rem);"
     {color}
-    isBackgroundActive={$sessionStore.isSessionRunning && isActive}
     on:click={toggleSession}
-    transition="ease"
   >
     <div class="flex gap-2 items-center">
       <div class="flex flex-col items-start">
@@ -356,7 +368,7 @@
           : "Not focused today"}
       </div>
     {/if}
-  </ActiveBackgroundElement>
+  </CustomColorPropagator>
 {/if}
 
 <style>

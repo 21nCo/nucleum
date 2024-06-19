@@ -16,15 +16,12 @@
   import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { ColorType } from "$lib/client/types/appearance.type";
-  import { userPreferences } from "$lib/client/stores/app.store";
-  import { customColorStyle } from "$lib/client/utils/theme.utils";
-  import ActiveBackgroundElement from "$lib/client/elements/style/ActiveBackgroundElement.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Embed } from "$lib/client/types/context.type";
   import context from "$lib/client/stores/context.store";
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let item: any;
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
@@ -121,13 +118,14 @@
   {#if (item.goalId && (!$sessionStore.isSessionRunning || isInEditMode)) || (item.goalId && item.tasks)}
     <div class="relative flex items-center gap-2 w-full">
       <div class="flex flex-col w-full pb-2 border-2 border-bgs2 rounded-md">
-        <div
-          class="text-left text-fgs1 py-4 px-4 font-medium truncate w-4/5"
-          style={customColorStyle(
-            $appearance,
-            ColorType.Fg,
-            "fgs2",
-            item.color
+        <CustomColorPropagator
+          color={item.color}
+          class={cn(
+            "text-left text-fgs1 py-4 px-4 font-medium truncate w-4/5",
+            {
+              "text-ccs1": item.color,
+              "text-fgs2": item.color
+            }
           )}
         >
           <div>
@@ -144,7 +142,7 @@
             on:touchstart={() => (isDragEnabled = true)}
             on:touchend={() => (isDragEnabled = false)}>&nbsp&nbsp⇳</span
           > -->
-        </div>
+        </CustomColorPropagator>
         <div class="px-4">
           {#if item.tasks && item.tasks.length > 0}
             {#each item.tasks as task, index (task.taskId)}
@@ -179,12 +177,15 @@
       {/if}
     </div>
   {:else if $sessionStore.isSessionRunning && item.goalId}
-    <ActiveBackgroundElement
-      class="flex justify-between items-center border-2 border-bgs2 w-full py-4 px-4 rounded-md"
+    <CustomColorPropagator
+      class={cn(
+        "flex justify-between items-center border-2 border-bgs2 w-full py-4 px-4 rounded-md",
+        {
+          "bg-ccs1 border-ccs1": isInprogress,
+          "text-ccs1": !isInprogress
+        }
+      )}
       color={item.color}
-      isBackgroundActive={isInprogress}
-      isIncludeActiveBorder={true}
-      isActivateFgWhenBgInactive={true}
       on:click={clickHandler}
     >
       <div class="text-left truncate w-4/5">
@@ -206,7 +207,7 @@
           {formatSeconds(workedTime)}
         </div>
       {/if}
-    </ActiveBackgroundElement>
+    </CustomColorPropagator>
   {:else}
     <Task task={item} {isInEditMode} context={contxt} />
   {/if}
