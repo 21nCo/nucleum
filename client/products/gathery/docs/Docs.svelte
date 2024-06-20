@@ -1,7 +1,6 @@
 <script>
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import NodeThumbnail from "$lib/client/products/memotron/common/nodeThumbnail/NodeThumbnail.svelte";
@@ -10,9 +9,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-  import { docStore } from "$local/stores/docs.store";
+  import { docStore } from "$local/client/products/gathery/docs.store";
   import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
   export let searchInput = "";
   docStore.refresh();
@@ -62,7 +60,7 @@
           <NodeThumbnail
             node={doc}
             on:click={() => {
-              toggleSearchParam("doc", doc.id);
+              appStore.toggleSearchParam("doc", doc.id);
               appStore.runAction(GatheryEvent.OPEN_DOC, doc);
             }}
           />

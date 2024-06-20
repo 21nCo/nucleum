@@ -7,7 +7,7 @@
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
   import View from "./View.svelte";
-  import { isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
   import { metaPropertyOptions, propertyOptions } from "../../type/type.store";
@@ -27,7 +27,6 @@
   } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import type {
@@ -50,7 +49,7 @@
   let isRoundedExperimental = false;
   let isStickied = false;
   let triggerItemEdit = "";
-  let viewRightButtonOptions = {
+  let viewRightButtonOptions: { size: Size.xs; style: ButtonStyle } = {
     style: ButtonStyle.OUTLINED,
     size: Size.xs
   };
@@ -112,7 +111,7 @@
   async function onViewSwitch() {
     const view = setActiveView();
     if (!view) return;
-    toggleSearchParam("view", view.id);
+    appStore.toggleSearchParam("view", view.id);
     await collection.refreshViewData(view.id);
   }
   function setActiveView() {

@@ -118,7 +118,11 @@
   disabled={isDisabled}
 >
   {#if isLoading}
-    <InlineLoadingAnimation />
+    <InlineLoadingAnimation
+      variant={type === ButtonVariant.SECONDARY
+        ? "bg-background"
+        : "accent-background"}
+    />
   {:else}
     {#if icon}
       <Icon

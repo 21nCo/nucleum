@@ -12,10 +12,7 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { TextInputStyle } from "$lib/client/types/textinput.enum";
-  import {
-    activeResourceFilter,
-    resourceClickHandler
-  } from "$lib/client/utils/utils";
+  import { activeResourceFilter } from "$lib/client/utils/utils";
   import { liveQuery } from "dexie";
   import CurationThumbnailView from "./CurationThumbnailView.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
@@ -127,7 +124,8 @@
               {#each filteredItems as curation}
                 <CurationThumbnailView
                   {curation}
-                  on:click={(e) => resourceClickHandler(e, curation.id)}
+                  on:click={(e) =>
+                    appStore.resourceClickHandler(e, curation.id)}
                 />
               {/each}
             </div>

@@ -1,12 +1,12 @@
 <script lang="ts">
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import {
     type INodeThumbnail,
     NodeThumbnailVariant
   } from "$lib/client/types/memotron/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { resourceClickHandler } from "$lib/client/utils/utils";
   import NodeThumbnail from "./nodeThumbnail/NodeThumbnail.svelte";
   export let nodes: INodeThumbnail[] = [];
   export let arrangement: NodeThumbnailVariant = NodeThumbnailVariant.LIST;
@@ -29,7 +29,7 @@
         {parentBgIndex}
         variant={arrangement}
         on:click={(e) =>
-          resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
       />
     {/each}
   </div>

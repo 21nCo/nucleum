@@ -4,10 +4,8 @@ import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum"
 import {
   ActionType,
   ResourceAccessMode,
-  type IAction
 } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
-import { toggleSearchParam } from "$lib/client/utils/browser.utils";
 
 export function onInterval(
   callback: () => void,
@@ -327,43 +325,3 @@ export const nonTrashFilter = (x: any) => !x.trashInformation;
 
 export const textTruncateMapper = (x: string, length: number = 15) =>
   x.length > length ? x.slice(0, length) + "..." : x;
-
-export function resourceClickHandler(
-  event: MouseEvent,
-  id: string,
-  defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
-) {
-  //TODO - shortcuts from user settings
-  if (!id) return;
-  toggleSearchParam("view");
-  if (event.shiftKey) {
-    toggleSearchParam(ResourceAccessMode.FOCUS, id);
-  } else if (event.altKey) {
-    const isFromFocusOrPop = isFSplit();
-    if (isFromFocusOrPop) toggleSearchParam(ResourceAccessMode.FSPLIT, id);
-    else toggleSearchParam(ResourceAccessMode.SPLIT, id);
-  } else if (event.metaKey) {
-    // TODO - open in new tab
-  } else {
-    toggleSearchParam(defaultTo, id);
-  }
-}
-
-export function isFSplit() {
-  return (
-    new URLSearchParams(window.location.search).get(ResourceAccessMode.FOCUS) ||
-    new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
-  );
-}
-
-export function closeResource(isCloseAllModal: boolean = false) {
-  if (isCloseAllModal) {
-    toggleSearchParam(ResourceAccessMode.FSPLIT);
-    debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
-    return;
-  }
-  toggleSearchParam(ResourceAccessMode.SPLIT);
-  toggleSearchParam(ResourceAccessMode.FOCUS);
-  toggleSearchParam(ResourceAccessMode.POP);
-  toggleSearchParam(ResourceAccessMode.FSPLIT);
-}

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { toggleSearchParam } from "$lib/client/utils/browser.utils";
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import NodeTopBar from "./topBar/NodeTopBar.svelte";
   import NodeMainPanel from "./NodeMainPanel.svelte";
@@ -8,8 +7,9 @@
   import { Item } from "$lib/client/types/item.enum";
   import { prefixTable } from "$lib/client/utils/text.utils";
   import NodeRightPanel from "./rightPanel/NodeRightPanel.svelte";
-  import { generateUID, isFSplit } from "$lib/client/utils/utils";
+  import { generateUID } from "$lib/client/utils/utils";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { appStore } from "$lib/client/stores/app.store";
   export let id: string;
   export let isFromSplitView: boolean = false;
   export let nodePageVariant: "v1" | "v2" = "v2";
@@ -26,12 +26,14 @@
     fetchNode();
   }
   $: if (isRenderSplitView) {
-    toggleSearchParam(
-      isFSplit() ? ResourceAccessMode.FSPLIT : ResourceAccessMode.SPLIT,
+    appStore.toggleSearchParam(
+      appStore.isFSplit()
+        ? ResourceAccessMode.FSPLIT
+        : ResourceAccessMode.SPLIT,
       prefixTable(id, Item.nodelinks)
     );
     setTimeout(() => {
-      toggleSearchParam("blr", true);
+      appStore.toggleSearchParam("blr", true);
     }, 100);
   }
   async function fetchNode() {

@@ -1,22 +1,10 @@
-import { get } from "svelte/store";
-import view from "$lib/client/stores/view.store";
 import { Direction } from "$lib/client/types/direction.enum";
 import { OS } from "$lib/client/types/os.enum";
-import { appStore } from "../stores/app.store";
 import type { IPopoverRenderParams } from "../types/popover.type";
 
 function documentDimensions() {
-  let documentWidth = get(view).width;
-  const rawDocumentWidth = window.innerWidth;
-  // console.log({ triggerRect, documentWidth, rawDocumentWidth, popRect });
-  if (documentWidth === 0) {
-    documentWidth = rawDocumentWidth;
-  }
-  let documentHeight = get(view).height;
-  const rawDocumentHeight = window.innerHeight;
-  if (documentHeight === 0) {
-    documentHeight = rawDocumentHeight;
-  }
+  const documentWidth = window.innerWidth;
+  const documentHeight = window.innerHeight;
   return {
     documentWidth,
     documentHeight
@@ -169,22 +157,6 @@ export function isTextElement(target: EventTarget | null) {
     (target instanceof HTMLElement &&
       (target as HTMLElement).contentEditable === "true")
   );
-}
-
-export function toggleSearchParam(
-  param: string,
-  value?: string | boolean | number
-) {
-  if (value !== undefined) {
-    const url = new URL(window.location.href);
-    url.searchParams.set(param, value.toString());
-    appStore.gotoPath(url.href);
-    return;
-  }
-  const url = new URL(window.location.href);
-  if (!url.searchParams.get(param)) return;
-  url.searchParams.delete(param);
-  appStore.gotoPath(url.href);
 }
 
 export function detectSystemOS() {

@@ -28,4 +28,7 @@
   :global(.stroke-abg) {
     stroke: var(--fgwhenaccentbg, rgba(var(--colors-fgs1), 1));
   }
+  :global(.border-abg) {
+    border-color: var(--fgwhenaccentbg, rgba(var(--colors-fgs1), 1));
+  }
 </style>

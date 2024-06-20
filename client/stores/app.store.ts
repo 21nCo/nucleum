@@ -30,13 +30,17 @@ import {
   type ICacheableStore,
   type CacheableStoreContract
 } from "../types/data.type";
-import { ActionType, type IAction } from "../types/action.type";
+import {
+  ActionType,
+  ResourceAccessMode,
+  type IAction
+} from "../types/action.type";
 import type {
   IdentityProvider,
   OAuthProviderConfig
 } from "../types/oauth.type";
 
-import { generateUID } from "$lib/client/utils/utils";
+import { debouncer, generateUID } from "$lib/client/utils/utils";
 import {
   persistLocally,
   retrieveLocally
@@ -809,6 +813,61 @@ function initAppStore(seed: AppStore) {
     return false;
   };
 
+  const toggleSearchParam = (
+    param: string,
+    value?: string | boolean | number
+  ) => {
+    if (value !== undefined) {
+      const url = new URL(window.location.href);
+      url.searchParams.set(param, value.toString());
+      appStore.gotoPath(url.href);
+      return;
+    }
+    const url = new URL(window.location.href);
+    if (!url.searchParams.get(param)) return;
+    url.searchParams.delete(param);
+    appStore.gotoPath(url.href);
+  };
+  const isFSplit = () => {
+    return (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.FOCUS
+      ) ||
+      new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
+    );
+  };
+  const resourceClickHandler = (
+    event: MouseEvent,
+    id: string,
+    defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
+  ) => {
+    //TODO - shortcuts from user settings
+    if (!id) return;
+    toggleSearchParam("view");
+    if (event.shiftKey) {
+      toggleSearchParam(ResourceAccessMode.FOCUS, id);
+    } else if (event.altKey) {
+      const isFromFocusOrPop = isFSplit();
+      if (isFromFocusOrPop) toggleSearchParam(ResourceAccessMode.FSPLIT, id);
+      else toggleSearchParam(ResourceAccessMode.SPLIT, id);
+    } else if (event.metaKey) {
+      // TODO - open in new tab
+    } else {
+      toggleSearchParam(defaultTo, id);
+    }
+  };
+  const closeResource = (isCloseAllModal: boolean = false) => {
+    if (isCloseAllModal) {
+      toggleSearchParam(ResourceAccessMode.FSPLIT);
+      debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
+      return;
+    }
+    toggleSearchParam(ResourceAccessMode.SPLIT);
+    toggleSearchParam(ResourceAccessMode.FOCUS);
+    toggleSearchParam(ResourceAccessMode.POP);
+    toggleSearchParam(ResourceAccessMode.FSPLIT);
+  };
+
   return {
     subscribe,
     set: (m: AppStore) => {
@@ -952,7 +1011,11 @@ function initAppStore(seed: AppStore) {
     resolveNavigationAction,
     runNavigationAction,
     initiateOAuth2Flow,
-    checkForUpdates
+    checkForUpdates,
+    toggleSearchParam,
+    resourceClickHandler,
+    isFSplit,
+    closeResource
   };
 }
 

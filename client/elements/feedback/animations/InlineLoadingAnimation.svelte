@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { resolveIfActiveFgFg } from "$lib/client/utils/theme.utils";
   import { onMount } from "svelte";
   export let variant: "accent-background" | "bg-background" =
     "accent-background";
@@ -12,13 +9,9 @@
   let squareML: any;
   let circleMT: any;
   let ranOnce: boolean = false;
-  $: isActiveFgFg = resolveIfActiveFgFg(-1, $appearance);
-  $: circleFill =
-    variant === "accent-background" && isActiveFgFg ? "fill-fgs1" : "fill-bgs1";
+  $: circleFill = variant === "accent-background" ? "fill-abg" : "fill-fgs1";
   $: squareBorder =
-    variant === "accent-background" && isActiveFgFg
-      ? "border-fgs1"
-      : "border-bgs1";
+    variant === "accent-background" ? "border-abg" : "border-fg1";
   onMount(() => {
     cssRoot = document.querySelector("#inlineLoadingAnim");
     div = document.getElementById("inlineLoadingAnim");
