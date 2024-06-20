@@ -66,7 +66,7 @@
 
 <HoverableElement
   class={cn("flex items-center", {
-    "w-12 flex-col gap-1 text-b5 rounded-lg":
+    "w-12 flex-col gap-1 text-b4 rounded-lg":
       isShowLabel && layoutContext === LayoutContext.PORTRAIT,
     "text-b2 gap-2 rounded-lg p-3 h-10":
       isShowLabel && layoutContext != LayoutContext.PORTRAIT,
@@ -86,15 +86,20 @@
     <div class="w-6 flex justify-center" bind:this={buttonRef}>
       <Icon
         icon={item.icon}
-        {isActive}
         size={layoutContext === LayoutContext.THIN ||
         layoutContext === LayoutContext.PORTRAIT
           ? Size.lg
           : Size.md}
-        selectionStyle={layoutContext === LayoutContext.PORTRAIT ||
-        layoutContext === LayoutContext.THIN
-          ? SelectionItemActiveStyle.ACCENT_COLOR
-          : SelectionItemActiveStyle.ACCENT_BACKGROUND}
+        class={cn({
+          "fill-aps1":
+            isActive &&
+            (layoutContext === LayoutContext.PORTRAIT ||
+              layoutContext === LayoutContext.THIN),
+          "fill-abg":
+            isActive &&
+            (layoutContext === LayoutContext.DEFAULT ||
+              layoutContext === LayoutContext.MINIMIZED)
+        })}
       />
     </div>
   {:else if item.icon == "initials"}

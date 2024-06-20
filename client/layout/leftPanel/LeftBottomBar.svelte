@@ -41,8 +41,7 @@
         <Icon
           icon="settings"
           size={isInThinMode ? Size.lg : Size.md}
-          isActive={isCpActive}
-          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+          isAccentBgContext={isCpActive}
         />
       </button>
       <button

@@ -119,7 +119,7 @@
 
         <Icon
           icon="alt-text"
-          classList="relative"
+          class="relative"
           on:click={() => (isAltTextEnabled = !isAltTextEnabled)}
         />
         {#if isAltTextEnabled}

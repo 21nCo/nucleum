@@ -15,7 +15,6 @@
     : currentColors.bgs1}
 >
   <slot />
-  <span class="hidden text-abg"></span>
 </div>
 
 <style>
@@ -23,7 +22,10 @@
   :global(.text-abg) {
     color: var(--fgwhenaccentbg, rgba(var(--colors-fgs1), 1));
   }
-  /* :global(.text-cbg) {
-    color: var(--fgwhencustombg, rgba(var(--colors-fgs1), 1));
-  } */
+  :global(.fill-abg) {
+    fill: var(--fgwhenaccentbg, rgba(var(--colors-fgs1), 1));
+  }
+  :global(.stroke-abg) {
+    stroke: var(--fgwhenaccentbg, rgba(var(--colors-fgs1), 1));
+  }
 </style>

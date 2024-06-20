@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { SelectionItemActiveStyle } from "../types/switcher.enum";
   import Settings from "../icons/Settings.svelte";
   import PieChart from "../icons/PieChart.svelte";
   import Bolt from "../icons/Bolt.svelte";
@@ -24,8 +23,6 @@
   import Arrow from "../icons/Arrow.svelte";
   import Plus from "../icons/Plus.svelte";
   import Cross from "../icons/Cross.svelte";
-  import { userPreferences } from "../stores/app.store";
-  import view from "$lib/client/stores/view.store";
   import Trash from "../icons/Trash.svelte";
   import Music from "../icons/Music.svelte";
   import Pencil from "../icons/Pencil.svelte";
@@ -38,10 +35,6 @@
   import BarChart from "../icons/BarChart.svelte";
   import LineChart from "../icons/LineChart.svelte";
   import AreaChart from "../icons/AreaChart.svelte";
-  import {
-    resolveIfActiveFgFg,
-    retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
   import Folder from "../icons/Folder.svelte";
   import SidebarToggle from "../icons/SidebarToggle.svelte";
   import Info from "../icons/Info.svelte";
@@ -103,76 +96,93 @@
   import TableCells from "../icons/TableCells.svelte";
   import GlobeAlt from "../icons/GlobeAlt.svelte";
   import DocumentText from "../icons/DocumentText.svelte";
-  import appearance from "../stores/appearance.store";
   import Funnel from "../icons/Funnel.svelte";
   import PaperClip from "../icons/PaperClip.svelte";
   import Eye from "../icons/Eye.svelte";
-  import { Color } from "../types/appearance.type";
   import AltText from "../icons/AltText.svelte";
+  import { cn } from "../utils/ui.utils";
   export let icon: string | undefined = undefined;
-  export let variant: IconVariant = IconVariant.Outline;
-  export let size: Size = Size.md;
-  export let isActive: boolean = false;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
-   * @deprecated - use accent instead
+   * When an icon context switches between normal and accent bg as its parent.
+   * If undefined, the icon will not change its appearance based on the context.
+   * If true, the icon will have fill considering the accent bg is active on the parent.
+   * If false, the icon will have stroke considering the accent bg is not active on the parent.
    */
-  export let color: string | undefined = undefined; //" text-bgs1";
-  export let accent: Color | undefined = undefined;
-  export let bgColorHue: number | undefined = undefined;
-  export let isOutlineForActive: boolean = false;
-  // <!-- TODO: abstract situations like these - remove classList and slot -->
-  export let classList = "";
-  $: isActiveFgFg = resolveIfActiveFgFg(bgColorHue, $appearance);
-  $: currentColors = retrieveCurrentColors($appearance);
-  $: defaultColor = currentColors?.fgs2 ?? "";
-  $: if (icon === "capture") isOutlineForActive = true;
-  export let selectionStyle: SelectionItemActiveStyle =
-    SelectionItemActiveStyle.NONE;
-  export let hoverStyle: SelectionItemActiveStyle =
-    SelectionItemActiveStyle.NONE;
+  export let isAccentBgContext: boolean | undefined = undefined;
+  /**
+   * Similar to accent color context, this is for custom bg context.
+   */
+  export let isCustomBgContext: boolean | undefined = undefined;
+  let classListParam = "";
+  export { classListParam as class };
+  let _classList = "";
+  let variant: IconVariant = IconVariant.Outline;
+  const solidOnlyIcons = [
+    "chevdoubleleft",
+    "chevdoubleright",
+    "history",
+    "pip",
+    "logout",
+    "link",
+    "google",
+    "apple",
+    "grab",
+    "apple-dark",
+    "capture2.0-mini"
+  ];
+  $: _classList = resolveClasses(
+    classListParam,
+    isAccentBgContext,
+    isCustomBgContext
+  );
 
-  $: {
-    variant =
-      (isActive &&
-        !isOutlineForActive &&
-        icon != "chevright" &&
-        icon != "chevleft" &&
-        icon != "chevdown" &&
-        icon != "chevup" &&
-        icon != "list") ||
-      icon == "chevdoubleleft" ||
-      icon == "chevdoubleright" ||
-      icon == "history" ||
-      icon == "pip" ||
-      icon == "logout" ||
-      icon == "link" ||
-      icon == "google" ||
-      icon == "apple" ||
-      icon == "grab" ||
-      icon == "apple-dark" ||
-      icon?.includes("-mini")
-        ? IconVariant.Solid
-        : IconVariant.Outline;
+  function resolveClasses(
+    clParam: string,
+    isAbgContext: boolean | undefined,
+    isCuBgContext: boolean | undefined
+  ) {
+    let classes = "stroke-fgs1";
+    if (isAbgContext != undefined) {
+      classes = isAbgContext ? "fill-abg" : "stroke-fgs1";
+    } else if (isCuBgContext != undefined) {
+      classes = isCuBgContext ? "fill-cbg" : "stroke-fgs1";
+    } else if (clParam) {
+      classes = clParam;
+    }
+    if (icon && solidOnlyIcons.includes(icon) && classes.includes("stroke-")) {
+      const color = classes.split("stroke-")[1];
+      classes = `fill-${color}`;
+    }
+    if (classes.includes("stroke-")) {
+      classes = classes + " fill-none";
+    } else if (classes.includes("fill-")) {
+      classes = classes + " stroke-none";
+    }
+    return classes;
   }
-  function resolveColorFromAccentType(config: any) {
-    currentColors = retrieveCurrentColors(config);
-    isActiveFgFg = resolveIfActiveFgFg(bgColorHue, config);
-    if (accent === Color.PRIMARY) return currentColors.aps1;
-    else if (accent === Color.SECONDARY) return currentColors.ass1;
-    else if (accent === Color.ACTIVE_FG)
-      return isActiveFgFg ? currentColors.fgs1 : currentColors.bgs1;
-    else if (accent === Color.FG) return currentColors.fgs1;
-    else if (accent === Color.FGS2) return currentColors.fgs2;
-    else if (accent === Color.BG) return currentColors.bgs1;
-    else if (accent === Color.RED) return currentColors.ars1;
-    else if (accent === Color.GREEN) return currentColors.ags1;
-    else if (accent === Color.CUSTOM) return "var(--customcolor)";
-    else return "var(--customcolor)";
+  $: variant = resolveVariant(icon, _classList, size);
+
+  function resolveVariant(icon: string | undefined, cls: string, size: Size) {
+    if (
+      (icon && solidOnlyIcons.includes(icon)) ||
+      icon?.includes("-mini") ||
+      size === Size.xs
+    ) {
+      return IconVariant.Solid;
+    } else {
+      return cls.includes("fill-none")
+        ? IconVariant.Outline
+        : IconVariant.Solid;
+    }
   }
 </script>
 
 {#if icon}
-  <button class="inline-flex items-center justify-center {classList}" on:click>
+  <button
+    class={cn("relative inline-flex items-center justify-center")}
+    on:click
+  >
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
@@ -180,43 +190,13 @@
         : icon == "capture2.0" || icon === "capture2.0-mini"
           ? "0 0 52 52"
           : "0 0 24 24"}
-      class="flex items-center justify-center {size == Size.xxl
-        ? 'w-10 h-10'
-        : size == Size.xl
-          ? 'w-8 h-8 '
-          : size == Size.lg
-            ? 'w-6 h-6'
-            : size == Size.md
-              ? 'w-[1.25rem] h-[1.25rem]'
-              : size == Size.sm
-                ? 'w-4 h-4'
-                : 'w-3 h-3'} {variant === IconVariant.Outline
-        ? (isActive
-            ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-              ? 'stroke-aps1'
-              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
-                  !isActiveFgFg
-                ? `stroke-bgs1`
-                : 'stroke-fgs1'
-            : `stroke-fgs3`) + ' stroke-[1.2] fill-none'
-        : (isActive
-            ? selectionStyle === SelectionItemActiveStyle.ACCENT_COLOR
-              ? 'fill-aps1'
-              : selectionStyle === SelectionItemActiveStyle.ACCENT_BACKGROUND &&
-                  !isActiveFgFg
-                ? `fill-bgs1`
-                : 'fill-fgs1'
-            : `fill-fgs3`) + ' stroke-none'} {hoverStyle ===
-        SelectionItemActiveStyle.NONE || $view.isPortrait
-        ? ''
-        : variant === IconVariant.Outline
-          ? ' hover:stroke-aps1'
-          : ' hover:fill-aps1'}"
-      style={!isActive
-        ? variant === IconVariant.Outline
-          ? `stroke: ${accent ? resolveColorFromAccentType($appearance) : color ?? defaultColor}`
-          : `fill: ${color ?? defaultColor}`
-        : ""}
+      class={cn("flex items-center justify-center", _classList, {
+        "w-8 h-8": size === Size.xl,
+        "w-6 h-6": size === Size.lg,
+        "w-[1.25rem] h-[1.25rem]": size === Size.md,
+        "w-4 h-4": size === Size.sm,
+        "w-3 h-3": size === Size.xs
+      })}
     >
       {#if icon === "home"}
         <Home {variant} />
@@ -370,9 +350,9 @@
         <ChevronDouble direction={Direction.Left} />
       {:else if icon === "chevdoubleright"}
         <ChevronDouble direction={Direction.Right} />
-      {:else if icon === "search"}
+      {:else if icon === "search" && size != Size.xs}
         <Search {variant} />
-      {:else if icon === "search-mini"}
+      {:else if icon === "search" && size === Size.xs}
         <Search variant={IconVariant.Mini} />
       {:else if icon === "heart"}
         <Heart {variant} />

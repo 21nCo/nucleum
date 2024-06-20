@@ -25,10 +25,10 @@
 </script>
 
 {#if $view.isPortrait}
-  <div class="h-full w-full flex flex-col items-start gap-4 p-2 px-4">
+  <div class="h-full w-full flex flex-col items-start gap-6 p-4">
     <div class="flex w-full justify-between items-center">
-      <!-- <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Journal" /> -->
-      <TimelineDate size={Size.md} />
+      <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Journal" />
+      <TimelineDate size={Size.lg} />
       <TodayButton />
     </div>
     <LogsPane date={$selectedTimePeriod} context="journal" />
@@ -58,9 +58,8 @@
     <div
       class="flex flex-col bg-bgs2 border-l border-l-brs3 items-start gap-4 justify-start h-full flex-grow p-4"
     >
-      <Text style={TextStyle.PANEL_HEADING_SMALL} content="Timeline" />
       <ComingSoonView
-        mainText="Landing soon..."
+        mainText="Timeline"
         subText="We are hard at work to build this feature. Stay tuned."
         size={Size.sm}
       />

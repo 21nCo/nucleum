@@ -128,13 +128,13 @@
       {#if isPaused}
         <div class="bg-[#A19BEC47] p-3 rounded-full">
           <div class="bg-[#383E47] w-fit p-3 rounded-full">
-            <Icon color="#ffffff" variant={IconVariant.Solid} icon="play" />
+            <Icon icon="play" />
           </div>
         </div>
       {:else if duration && showControls}
         <div class="bg-[#A19BEC47] p-3 rounded-full">
           <div class="bg-[#383E47] w-fit p-3 rounded-full">
-            <Icon color="#ffffff" variant={IconVariant.Solid} icon="pause" />
+            <Icon icon="pause" />
           </div>
         </div>
       {/if}

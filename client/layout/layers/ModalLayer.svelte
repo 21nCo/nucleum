@@ -35,6 +35,7 @@
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import SplitView from "../SplitView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import ColorLayer from "./themeLayer/ColorLayer.svelte";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -141,7 +142,9 @@
 {/if}
 {#if $appStore.player && !$view.isPortrait}
   <div class="fixed bottom-0 right-0">
-    <ComponentResolver path={$appStore.player} />
+    <ColorLayer>
+      <ComponentResolver path={$appStore.player} />
+    </ColorLayer>
   </div>
 {/if}
 {#if $appStore.appData?.bottomRightAction && !$view.isPortrait}

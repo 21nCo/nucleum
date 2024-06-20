@@ -51,16 +51,18 @@
         {#if content.icon}
           <Icon
             icon={content.icon}
-            bgColorHue={content.color}
-            {isActive}
-            selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+            class={cn({
+              "fill-ccs1": isActive,
+              "stroke-fgs1": !isActive
+            })}
           />
         {:else if content.childrenCount > 0}
           <Icon
             icon={isCollapsed ? "chevright" : "chevdown"}
-            bgColorHue={content.color}
-            {isActive}
-            selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+            class={cn({
+              "stroke-cbg": isActive,
+              "stroke-fgs1": !isActive
+            })}
             on:click={onchevclick}
           />
         {/if}
@@ -75,9 +77,10 @@
       {#if content.icon && content.childrenCount > 0}
         <Icon
           icon={isCollapsed ? "chevright" : "chevdown"}
-          bgColorHue={content.color}
-          {isActive}
-          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+          class={cn({
+            "stroke-cbg": isActive,
+            "stroke-fgs1": !isActive
+          })}
         />
       {:else if content.childrenCount > 0}
         <span class="text-b4 text-fgs2 bg-bgs2 rounded-md px-2 py-0.5">

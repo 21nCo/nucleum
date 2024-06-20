@@ -16,18 +16,14 @@
   import Check from "$lib/client/icons/Check.svelte";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { ColorStrength, ColorType } from "$lib/client/types/appearance.type";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
-  import appearance from "$lib/client/stores/appearance.store";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { Direction } from "$lib/client/types/direction.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { textColorClass } from "$lib/client/utils/theme.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   export let task: FocusItem & Required<Pick<FocusItem, "taskId">>;
   export let isInEditMode: boolean = false;
@@ -179,9 +175,9 @@
         <Icon
           icon="clock"
           size={Size.sm}
-          isActive={isInprogress}
-          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-          bgColorHue={$sessionStore.currentLog.color}
+          class={cn({
+            "fill-cbg": isInprogress
+          })}
         />
         <div
           class={task.estimated == 0 || isInprogress

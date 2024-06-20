@@ -8,14 +8,12 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { goalStore } from "./goal.store";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Item } from "$lib/client/types/item.enum";
@@ -28,7 +26,6 @@
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
 
-  let color = retrieveCurrentColors($appearance).aps1;
   let selectedGoalId: string = "";
   let selectedTagId: TagId | string = TagId.ALL;
   $: isGoalsHome =
@@ -86,7 +83,7 @@
         appStore.gotoPath("/goal");
       }}
     >
-      <Icon icon="chevleft" size={Size.sm} {color} />
+      <Icon icon="chevleft" size={Size.sm} class="stroke-aps1" />
       <div class="pr-1">Back</div>
     </button>
     <slot />

@@ -184,13 +184,9 @@
       >
         {#if icon}
           <!-- <svelte:component this={iconComponent || Search} /> -->
-          <Icon {icon} size={Size.sm} variant={IconVariant.Outline} />
+          <Icon {icon} size={Size.sm} />
         {:else if !hideSearchIcon}
-          <Icon
-            size={Size.sm}
-            icon="search-mini"
-            variant={IconVariant.Outline}
-          />
+          <Icon size={Size.sm} icon="search-mini" />
         {/if}
       </div>
     {/if}
@@ -198,12 +194,7 @@
       <div
         class="absolute right-0 mr-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
       >
-        <Icon
-          on:click={onReset}
-          size={Size.sm}
-          icon="cross"
-          variant={IconVariant.Outline}
-        />
+        <Icon on:click={onReset} size={Size.sm} icon="cross" />
       </div>
     {/if}
 
@@ -217,7 +208,7 @@
       on:keydown|stopPropagation={handleKeyDownInDropdown}
       on:keyup|stopPropagation={() => dispatch("search")}
       class={cn(
-        "outline-none w-full py-2 px-2.5 text-b2 bg-bgs1",
+        "outline-none w-full py-2 px-2.5 text-b2 bg-bgs2",
         inputClassList,
         {
           "pl-8": !(hideSearchIcon && !icon)

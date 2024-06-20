@@ -1,7 +1,6 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Color } from "$lib/client/types/appearance.type";
   import {
     ButtonVariant,
     type IButtonParams
@@ -27,7 +26,10 @@
   <span class="flex gap-2 items-center">
     <Icon
       icon={type === InfoTextType.ERROR ? "help" : type}
-      accent={type === InfoTextType.ERROR ? Color.RED : Color.PRIMARY}
+      class={cn({
+        "stroke-ars1": type === InfoTextType.ERROR,
+        "text-aps1": type === InfoTextType.INFO
+      })}
     />
     {#if content}
       <div class="text-left">

@@ -36,9 +36,15 @@
 </svelte:element>
 
 <style>
+  :global(.fill-cbg) {
+    fill: var(--fgwhencustombg, var(--fgwhenaccentbg));
+  }
+  :global(.stroke-cbg) {
+    stroke: var(--fgwhencustombg, var(--fgwhenaccentbg));
+  }
   :global(.bg-ccs1) {
     background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
-    color: var(--fgwhencustombg, rgba(var(--fgwhenaccentbg), 1));
+    color: var(--fgwhencustombg, var(--fgwhenaccentbg));
   }
   :global(.bg-ccs2) {
     background-color: var(--customcolorshadetwo, rgba(var(--colors-aps2), 1));
@@ -72,6 +78,12 @@
   }
   :global(.text-ccs4) {
     color: var(--customcolorshadefour, rgba(var(--colors-aps4), 1));
+  }
+  :global(.fill-ccs1) {
+    fill: var(--customcolor, rgba(var(--colors-aps1), 1));
+  }
+  :global(.stroke-ccs1) {
+    stroke: var(--customcolor, rgba(var(--colors-aps1), 1));
   }
   :global(.transition-ease) {
     transition: background-color 0.3s ease-in-out;

@@ -4,7 +4,6 @@
   import view from "$lib/client/stores/view.store";
   import Link from "./text/Link.svelte";
   import { LinkVariant } from "../types/button.type";
-  import Button from "./button/Button.svelte";
   import { AppEvent } from "../types/event.enum";
   import { appStore } from "../stores/app.store";
   export let mainText: string | undefined = undefined;

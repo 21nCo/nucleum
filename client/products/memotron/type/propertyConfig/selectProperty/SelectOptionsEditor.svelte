@@ -67,7 +67,7 @@
             e.stopPropagation();
           }}
         >
-          <Icon icon="plus" color="fgs3" />
+          <Icon icon="plus" class="stroke-fgs3" />
           <span> Add option </span>
         </button>
       {/if}

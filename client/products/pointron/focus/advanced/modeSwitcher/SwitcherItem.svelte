@@ -1,11 +1,8 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let mode: number = 0;
   export let isActive: boolean = false;
-  let color = retrieveCurrentColors($appearance).fgs3 ?? "";
 </script>
 
 <button
@@ -20,17 +17,19 @@
   {#if mode === 0}
     <Icon
       icon="folder"
-      {isActive}
-      selectionStyle={SelectionItemActiveStyle.ACCENT_COLOR}
-      {color}
+      class={cn({
+        "stroke-aps1": isActive,
+        "stroke-fgs3": !isActive
+      })}
     />
     Presets
   {:else}
     <Icon
       icon="clock"
-      {isActive}
-      {color}
-      selectionStyle={SelectionItemActiveStyle.ACCENT_COLOR}
+      class={cn({
+        "stroke-aps1": isActive,
+        "stroke-fgs3": !isActive
+      })}
     />
     Custom
   {/if}

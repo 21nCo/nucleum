@@ -455,9 +455,14 @@
                 mapYear = yearPool[index];
                 handlePoolChangeForYears(index);
               }}
-              class={cn("focus:outline-none px-2 py-1", abg(), {
-                "font-medium rounded-md text-center": mapYear == yearPool[index]
-              })}
+              class={cn(
+                "focus:outline-none px-2 py-1 rounded-md text-center",
+                abg(mapYear == yearPool[index]),
+                {
+                  "font-medium": mapYear == yearPool[index],
+                  "hover:bg-bgs2": mapMonth != monthPool[index]
+                }
+              )}
               >{ucFirst(
                 dayjs(yearPool[index] + "-" + mapMonth).format("YYYY")
               )}</button
@@ -494,10 +499,14 @@
                 mapMonth = monthPool[index];
                 handlePoolChange(index);
               }}
-              class={cn("focus:outline-none px-1.5 py-1", abg(), {
-                "font-medium rounded-md  text-center":
-                  mapMonth == monthPool[index]
-              })}
+              class={cn(
+                "focus:outline-none px-1.5 py-1 rounded-md  text-center",
+                abg(mapMonth == monthPool[index]),
+                {
+                  "font-medium": mapMonth == monthPool[index],
+                  "hover:bg-bgs2": mapMonth != monthPool[index]
+                }
+              )}
               >{ucFirst(
                 dayjs(mapYear + "-" + monthPool[index]).format("MMM")
                 // .charAt(0)
@@ -543,13 +552,16 @@
                       {#if i > 0}
                         {#if (i === startDay && mapMonth === startMonth && mapYear === startYear && startSelected) || (i === endDay && mapMonth === endMonth && mapYear === endYear && endSelected)}
                           <div
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center bg-bgs1"
+                            class={cn(
+                              "rounded-md w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center",
+                              abg()
+                            )}
                           >
                             {i}
                           </div>
                         {:else if startDay && startMonth && startYear && laterDate(startDay, startMonth, startYear, i, mapMonth, mapYear) && endDay && endMonth && endYear && laterDate(i, mapMonth, mapYear, endDay, endMonth, endYear) && endSelected == true}
                           <button
-                            class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-bgs1 text-b2 text-bgs1 bg-aps2"
+                            class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-abg text-b2 text-bgs1 bg-aps2"
                             on:click={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
@@ -558,7 +570,7 @@
                           </button>
                         {:else if i === thisDay && mapMonth === thisMonth && mapYear === thisYear}
                           <button
-                            class="rounded-full w-7 h-7 focus:ring-1 focus:opacity-90 hover:bg-aps1 hover:text-bgs1 text-base flex items-center justify-center font-medium text-bgs1 bg-ass1"
+                            class="rounded-full w-7 h-7 focus:ring-1 focus:opacity-90 hover:bg-aps1 text-base flex items-center justify-center font-medium text-abg bg-ass1"
                             on:click={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
@@ -567,7 +579,7 @@
                           </button>
                         {:else}
                           <button
-                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:bg-aps1 hover:text-bgs1 flex items-center justify-center"
+                            class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:bg-bgs2 flex items-center justify-center"
                             on:click={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
@@ -710,7 +722,7 @@
                 ><Icon
                   icon="cross-circled"
                   size={Size.xs}
-                  color="red"
+                  class="stroke-ars1"
                   on:click={() => reset(true, false)}
                 /></button
               >
@@ -733,7 +745,7 @@
                 ><Icon
                   icon="cross-circled"
                   size={Size.xs}
-                  color="red"
+                  class="stroke-ars1"
                   on:click={() => reset(false, true)}
                 /></button
               >

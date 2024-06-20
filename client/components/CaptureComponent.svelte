@@ -122,7 +122,6 @@
       >
         <Icon
           {icon}
-          color="white"
           size={fingerId == icon || (startedOnClick && iconClicked !== icon)
             ? Size.md
             : Size.sm}
@@ -158,11 +157,7 @@
       touchAndHold = !touchAndHold;
     }}
   >
-    <Icon
-      icon="capture2.0"
-      size={Size.xxl}
-      variant={touchAndHold ? IconVariant.Mini : IconVariant.Outline}
-    />
+    <Icon icon="capture2.0" size={touchAndHold ? Size.xs : Size.lg} />
   </div>
 </div>
 

@@ -36,11 +36,12 @@
   <HoverableElement
     bind:isHovering
     class={cn(
-      "relative flex items-center gap-1 justify-between px-2 2k:px-3 py-4 rounded-md border border-brs2 hover:bg-bgs3",
+      "relative flex items-center gap-1 justify-between px-2 2k:px-3 py-4 rounded-md border border-brs2",
       abg(isActive, parentBackgroundIndex),
       {
         "w-full max-w-md": isExpandedVariant,
-        "w-36 min-w-[9rem] h-10": !isExpandedVariant
+        "w-36 min-w-[9rem] h-10": !isExpandedVariant,
+        "hover:bg-bgs3": !isActive
       }
     )}
     on:click={handleClick}
@@ -53,9 +54,7 @@
             ? "bolt"
             : "clock"}
         size={isExpandedVariant ? Size.md : Size.sm}
-        {isActive}
-        bgColorHue={-1}
-        selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
+        isAccentBgContext={isActive}
       />
       <span
         class={cn("text-left truncate", {

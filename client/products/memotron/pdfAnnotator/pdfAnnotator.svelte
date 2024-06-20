@@ -825,11 +825,7 @@
     >
       <div class="w-6/10">
         <div class="inline-flex rounded h-8/10 w-8/10 bg-bgs2">
-          <Icon
-            icon="search-mini"
-            variant={IconVariant.Outline}
-            size={Size.xs}
-          />
+          <Icon icon="search" size={Size.xs} />
           <input
             type="search"
             placeholder="Search"

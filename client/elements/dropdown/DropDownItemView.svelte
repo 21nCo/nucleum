@@ -14,7 +14,7 @@
   })}
 >
   <div class="flex items-center gap-2">
-    {#if item.icon}
+    {#if item.icon && typeof item.icon === "string"}
       <Icon icon={item.icon} size={Size.sm} />
     {/if}
     <span>

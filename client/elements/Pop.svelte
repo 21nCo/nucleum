@@ -50,7 +50,7 @@
         >
       {/if}
       {#if !hideCloseButton}
-        <Icon on:click={handleClose} icon="cross" variant={IconVariant.Solid} />
+        <Icon on:click={handleClose} icon="cross" />
       {/if}
     </div>
   {/if}

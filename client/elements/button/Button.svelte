@@ -2,7 +2,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
-  import { SelectionItemActiveStyle } from "../../types/switcher.enum";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import {
     renderPopoverv2,
@@ -12,7 +11,6 @@
   import { Direction } from "$lib/client/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { Color } from "$lib/client/types/appearance.type";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -58,16 +56,6 @@
   function hideToolTip() {
     if (toolTipRef && toolTipRef?.style?.display != "none")
       toolTipRef.style.display = "none";
-  }
-  function resolveIconColor(isHovering: boolean = false) {
-    if (style === ButtonStyle.OUTLINED) {
-      if (type === ButtonVariant.PRIMARY) return Color.PRIMARY;
-      else if (type === ButtonVariant.DANGER) return Color.RED;
-    } else if (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER)
-      return Color.ACTIVE_FG;
-    else if (type === ButtonVariant.SECONDARY)
-      return isHovering ? Color.FG : Color.FGS2;
-    else return Color.FG;
   }
 </script>
 
@@ -136,10 +124,21 @@
       <Icon
         {icon}
         {size}
-        accent={resolveIconColor(isHovering)}
-        selectionStyle={type != "secondary"
-          ? SelectionItemActiveStyle.ACCENT_BACKGROUND
-          : SelectionItemActiveStyle.NONE}
+        class={cn({
+          "stroke-aps1":
+            style === ButtonStyle.OUTLINED && type === ButtonVariant.PRIMARY,
+          "stroke-ars1":
+            style === ButtonStyle.OUTLINED && type === ButtonVariant.DANGER,
+          "stroke-fgs2":
+            style === ButtonStyle.OUTLINED && type === ButtonVariant.SECONDARY,
+          "stroke-abg":
+            style === ButtonStyle.DEFAULT &&
+            (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER),
+          "stroke-fgs1":
+            style === ButtonStyle.DEFAULT &&
+            type === ButtonVariant.SECONDARY &&
+            isHovering
+        })}
       />
     {/if}
     {#if label}

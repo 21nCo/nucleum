@@ -18,7 +18,7 @@
       <div class="w-full flex justify-center px-2">
         <Icon
           icon={isInThinMode ? "chevdoubleleft" : "chevdoubleright"}
-          color="fgs2"
+          class="stroke-fgs2"
           on:click={() => {
             isInThinMode = !isInThinMode;
           }}

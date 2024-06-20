@@ -2,10 +2,9 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { UploadStatus } from "$lib/client/types/uploadStatus.enum";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
   import view from "$lib/client/stores/view.store";
-  import appearance from "$lib/client/stores/appearance.store";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let label: string;
   export let size: string;
@@ -25,9 +24,9 @@
   }`}
 >
   <Icon
-    color={uploadStatus === UploadStatus.NOT_STARTED
-      ? undefined
-      : retrieveCurrentColors($appearance)?.aps1}
+    class={cn({
+      "stroke-aps1": uploadStatus != UploadStatus.NOT_STARTED
+    })}
     icon="image"
   />
   <div class={`w-full flex flex-col  ${$view.isPortrait ? `gap-1` : `gap-2`}`}>

@@ -16,5 +16,11 @@
     bg(on ? 2 : 1)
   )}
 >
-  <Icon {icon} variant={on ? IconVariant.Solid : IconVariant.Outline} />
+  <Icon
+    {icon}
+    class={cn({
+      "fill-fgs1": on,
+      "stroke-fgs1": !on
+    })}
+  />
 </button>

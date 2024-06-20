@@ -6,6 +6,6 @@
 </script>
 
 <button class="flex items-center" on:click>
-  <Icon icon="chevleft" size={Size.sm} {color} />
+  <Icon icon="chevleft" size={Size.sm} class="stroke-ccs1" />
   <div class="pr-1 text-fgs1">{text ?? "Back"}</div>
 </button>

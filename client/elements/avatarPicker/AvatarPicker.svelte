@@ -359,7 +359,7 @@
     {/if}
     <div class="flex h-full justify-around grow">
       <div class="flex rounded-md w-8/10 px-1 border border-brs2">
-        <Icon icon="search-mini" variant={IconVariant.Outline} size={Size.sm} />
+        <Icon size={Size.xs} />
         <input
           type="search"
           placeholder="Search"

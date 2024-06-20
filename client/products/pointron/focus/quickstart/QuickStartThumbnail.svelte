@@ -16,7 +16,6 @@
     userPreferences
   } from "$lib/client/stores/app.store";
   import { Layout } from "$lib/client/types/layout.type";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { formatTime, formatSeconds } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
@@ -265,12 +264,7 @@
             <div>
               {formatTime($userPreferences, $sessionStore.start ?? new Date())}
             </div>
-            <Icon
-              icon="arrow-right-mini"
-              {isActive}
-              selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-              bgColorHue={color}
-            />
+            <Icon icon="arrow-right-mini" isCustomBgContext={isActive} />
             <div>Now</div>
           </div>
           <div class="text-h3 leading-none">
@@ -299,11 +293,11 @@
       )}
       {color}
     >
-      <div class="flex p-2 gap-3 text-white w-3/10" class:hidden={isActive}>
-        <Icon icon="play" color="white" />Start
+      <div class="flex p-2 gap-3 text-cbg w-3/10" class:hidden={isActive}>
+        <Icon icon="play" class="stroke-cbg" />Start
       </div>
       <div class="flex p-2 gap-3 text-fgs4 w-3/10" class:hidden={!isActive}>
-        <Icon icon="arrow-right-circled" color="fgs4" />Finish
+        <Icon icon="arrow-right-circled" class="stroke-fgs4" />Finish
       </div></CustomColorPropagator
     >
   </div>
@@ -311,18 +305,18 @@
     <div
       class="flex justify-between h-16 min-h-[4rem] items-center w-full rounded-r-md pr-4 relative bg-ass1"
     >
-      <div class="absolute right-0 flex divide-x-2 divide-inherit text-white">
+      <div class="absolute right-0 flex divide-x-2 divide-inherit text-abg">
         <button
           class="flex flex-col w-20 items-center text-xs p-2"
           on:click={unpinGoal}
         >
-          <Icon icon="unpin" color="white" />unpin</button
+          <Icon icon="unpin" class="stroke-abg" />unpin</button
         >
         <button
           class="flex flex-col w-20 items-center text-xs p-2"
           on:click={enableManualLog}
         >
-          <Icon icon="plus" color="white" />manual log</button
+          <Icon icon="plus" class="stroke-abg" />manual log</button
         >
       </div>
     </div>
@@ -334,7 +328,7 @@
       {
         "bg-ccs1 border border-ccs1":
           $sessionStore.isSessionRunning && isActive,
-        "bg--ccs4 border border-ccs2": !(
+        "bg-ccs4 border border-ccs2": !(
           $sessionStore.isSessionRunning && isActive
         )
       }

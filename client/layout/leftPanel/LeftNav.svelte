@@ -114,6 +114,7 @@
             {#if isHovered}
               <Button
                 icon="sidebar-toggle"
+                size={Size.lg}
                 on:click={() => {
                   appStore.toggleSidebar();
                 }}
@@ -150,9 +151,8 @@
               <Icon
                 size={Size.lg}
                 icon="command"
-                color="fgs2"
+                class="stroke-fgs2 hover:stroke-aps1"
                 on:click={() => appStore.runAction(AppEvent.CMD)}
-                hoverStyle={SelectionItemActiveStyle.ACCENT_COLOR}
               />
             {:else}
               <div class="text-b3 text-fgs3 mb-4">

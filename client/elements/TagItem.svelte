@@ -28,12 +28,7 @@
 >
   {#if icon}
     <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
-      <Icon
-        selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-        {isActive}
-        {icon}
-        variant={IconVariant.Outline}
-      />
+      <Icon isAccentBgContext={isActive} {icon} />
     </div>
   {/if}
   {label}

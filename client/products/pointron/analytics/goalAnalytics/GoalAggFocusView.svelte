@@ -17,7 +17,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col grow p-4 rounded-md", {
+  class={cn("flex flex-col grow p-4 rounded-md bg-bgs2", {
     "h-20": $view.isPortrait,
     "h-30": !$view.isPortrait
   })}

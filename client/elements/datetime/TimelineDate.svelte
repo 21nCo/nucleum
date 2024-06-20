@@ -5,23 +5,25 @@
   import { Size } from "$lib/client/types/size.enum";
   import Popover from "../popover/Popover.svelte";
   import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
-  export let size: Size = Size.md;
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
   let ref: any;
 </script>
 
 <Popover bind:this={ref}>
   <button
-    class="flex underline-dotted items-center {size === Size.lg
-      ? 'gap-2'
-      : 'gap-1'}"
+    class={cn("flex items-center", {
+      "gap-2": size === Size.lg,
+      "gap-1": size === Size.md || size === Size.sm
+    })}
   >
     <Icon icon="calendar" {size} />
     <span
-      class="text-fgs2 {size === Size.lg
-        ? 'text-h4'
-        : size === Size.md
-          ? 'text-base'
-          : 'text-b2'}"
+      class={cn("text-fgs2 underline-dotted", {
+        "text-h5 font-medium": size === Size.lg,
+        "text-base": size === Size.md,
+        "text-b2": size === Size.sm
+      })}
     >
       {formatDate($selectedTimePeriod)}
     </span>

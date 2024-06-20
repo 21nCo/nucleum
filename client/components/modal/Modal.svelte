@@ -8,6 +8,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
+  import ColorLayer from "$lib/client/layout/layers/themeLayer/ColorLayer.svelte";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
@@ -89,7 +90,9 @@
           />
         {/if}
         <div class="popover-body h-full w-full p-4 overflow-y-auto pb-40">
-          <slot />
+          <ColorLayer>
+            <slot />
+          </ColorLayer>
         </div>
       </div>
     {:else if isUseDialog}
@@ -122,7 +125,9 @@
         )}
       >
         <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
-        <slot />
+        <ColorLayer>
+          <slot />
+        </ColorLayer>
         <!-- <div class="popover-content" style="max-height: 80vh;" /> -->
       </dialog>
     {:else}
@@ -136,7 +141,9 @@
         </div>
       </div> -->
       <div class="bg-bgs1 w-full h-full">
-        <slot />
+        <ColorLayer>
+          <slot />
+        </ColorLayer>
       </div>
     {/if}
   </button>

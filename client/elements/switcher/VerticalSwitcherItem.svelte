@@ -15,7 +15,7 @@
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let activeStatusPlacement: Direction = Direction.Left;
   export let isHideLabel: boolean = false;
-  export let size: Size = Size.md;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isHideBar: boolean = false;
   // $: console.log({ isActive, item });
@@ -120,8 +120,10 @@
       <Icon
         icon={item.icon.toLowerCase()}
         {size}
-        {isActive}
-        color={!isActive ? "fgs3" : undefined}
+        class={cn({
+          "fill-fgs1": isActive,
+          "stroke-fgs3": !isActive
+        })}
       />
     {/if}
     <slot />

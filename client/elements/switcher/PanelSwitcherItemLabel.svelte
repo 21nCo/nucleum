@@ -1,7 +1,5 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
   import type { PanelSwitcherEditModeOptions } from "$lib/client/types/switcher.enum";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { createEventDispatcher } from "svelte";
   import Icon from "../Icon.svelte";
   import Button from "../button/Button.svelte";
@@ -9,6 +7,7 @@
   import type { ISelectItem } from "$lib/client/types/select.type";
   import Popover from "../popover/Popover.svelte";
   import TextInput from "../input/TextInput.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;
@@ -21,7 +20,6 @@
   let isHoveringOnAddNewItem = false;
   let labelEditPopoverRef: any;
   let inputRef: any;
-  let currentColors = retrieveCurrentColors($appearance);
   $: if (triggerItemEdit && triggerItemEdit === item.value) {
     console.log({ triggerItemEdit });
     labelEditPopoverRef?.show();
@@ -40,7 +38,9 @@
     <Icon
       icon="plus"
       {size}
-      color={isHoveringOnAddNewItem ? currentColors.aps1 : ""}
+      class={cn({
+        "stroke-aps1": isHoveringOnAddNewItem
+      })}
     />
     <span class="min-w-fit whitespace-nowrap">
       {editModeOptions?.addText ?? "Add new"}
