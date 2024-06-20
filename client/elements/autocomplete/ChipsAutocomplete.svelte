@@ -274,17 +274,19 @@
                 on:click={handleResultItemClickViaCustomEvent}
               />
             {/each}
+
+            <span class="w-full flex p-2 justify-center mb-1">
+              <Button
+                label="edit tags"
+                size={Size.xs}
+                parentBgIndex={2}
+                on:click={() => {
+                  appStore.runAction(PointronEventEnum.TAGS);
+                }}
+              />
+            </span>
           </div>
         {/if}
-      </span>
-
-      <span>
-        <Button
-          icon="settings"
-          on:click={() => {
-            appStore.runAction(PointronEventEnum.TAGS);
-          }}
-        />
       </span>
     </span>
   </div>

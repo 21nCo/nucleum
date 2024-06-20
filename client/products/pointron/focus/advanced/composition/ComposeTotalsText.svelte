@@ -16,7 +16,7 @@
 </script>
 
 <div
-  class="flex w-full justify-around opacity-90 text-fgs2 text-b3 sm:text-b2 py-2 rounded-md"
+  class="flex w-full justify-around opacity-90 text-fgs2 text-b3 sm:text-b2 py-2 rounded-md bg-bgs2"
 >
   <div class="flex justify-start gap-1">
     Total: <span class="min-w-[2rem]">

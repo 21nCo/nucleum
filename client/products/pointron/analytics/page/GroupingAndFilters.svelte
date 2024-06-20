@@ -33,14 +33,18 @@
         {
           value: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
           label: "Top level goals"
-        },
-        {
-          value: AnalyticsCardGrouping.TAGS,
-          label: "Tags"
         }
+        // {
+        //   value: AnalyticsCardGrouping.TAGS,
+        //   label: "Tags"
+        // }
       ]}
       bind:value={card.grouping}
+      isDisableSearch={true}
       on:select
     />
+    <span class="text-b3 text-fgs3 mt-2">
+      Group by tags and filtering goals will be available soon...</span
+    >
   </div>
 </Popover>

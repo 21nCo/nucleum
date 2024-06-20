@@ -3,12 +3,13 @@
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { fade } from "svelte/transition";
   import ModalHeader from "./ModalHeader.svelte";
-  import { closeResource, generateUID } from "$lib/client/utils/utils";
+  import { generateUID } from "$lib/client/utils/utils";
   import { Size } from "$lib/client/types/size.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import ColorLayer from "$lib/client/layout/layers/themeLayer/ColorLayer.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
@@ -65,7 +66,7 @@
     show = false;
     modalEvent.hideSpecific(id, "Modal.svelte");
     confirmationNotification.reset();
-    closeResource(true);
+    appStore.closeResource(true);
   }
 </script>
 

@@ -61,13 +61,14 @@
         <GoalPanelResolver {selectedTab} />
       </div>
     </div>
-    <BottomFloat isAppMenuHidden={true}>
+    <!-- TODO - disabling - feature roadmap -->
+    <!-- <BottomFloat isAppMenuHidden={true}>
       <PanelSwitcher
         bind:value={selectedTab}
         items={defaultTabs}
         style={PanelSwitcherStyle.TRAIN}
       />
-    </BottomFloat>
+    </BottomFloat> -->
   {:else if isGoalLoaded}
     <div class="flex w-full h-full justify-center p-4 2xl:p-8 pt-6 2xl:pt-8">
       <div class="flex h-full w-full max-w-7xl">
@@ -82,7 +83,8 @@
             <GoalPanelResolver {selectedTab} />
           </div>
         </div>
-        <aside>
+        <!-- TODO - disabling vertical switcher for now as Goal analytics, Goal logs, insights aren't built yet -->
+        <!-- <aside>
           <VerticalSwitcher
             items={[
               {
@@ -104,7 +106,7 @@
             }}
             style={VerticalSwitcherStyle.BAR}
           />
-        </aside>
+        </aside> -->
       </div>
     </div>
   {/if}

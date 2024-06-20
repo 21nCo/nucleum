@@ -13,7 +13,10 @@
   }
 </script>
 
-<button class="px-2 py-1 rounded-md border border-brs3" on:click={onClick}>
+<button
+  class="px-2 py-1 rounded-md border border-brs3 hover:bg-bgs2"
+  on:click={onClick}
+>
   {#if label}
     {label}
   {:else if isAddNew}

@@ -34,7 +34,8 @@
 </script>
 
 <div class="flex flex-col items-center gap-4 w-full">
-  <PanelSwitcher
+  <!-- TODO - fix Absolute time picking and re-enable -->
+  <!-- <PanelSwitcher
     items={["Relative", "Absolute"]}
     bind:value={selectedPeriodType}
     style={PanelSwitcherStyle.TRAIN}
@@ -58,7 +59,7 @@
             };
       dispatch("change", period);
     }}
-  />
+  /> -->
   <OptionSelector
     labelProps={{ label: "Group by" }}
     style={OptionSelectorStyle.TRAIN}

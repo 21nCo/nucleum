@@ -6,7 +6,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
-  import { closeResource } from "$lib/client/utils/utils";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import type { IActiveNodeStore } from "../node.store";
   const dispatch = createEventDispatcher();
@@ -122,7 +121,7 @@
     icon="cross-circled"
     tooltip="Close"
     on:click={() => {
-      closeResource();
+      appStore.closeResource();
     }}
   />
 </div>

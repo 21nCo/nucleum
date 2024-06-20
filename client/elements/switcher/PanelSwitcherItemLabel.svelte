@@ -48,7 +48,8 @@
   </button>
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
-    <Icon icon="grab" {size} />
+    <!-- TODO - rearrange - disabling until this feature is complete -->
+    <!-- <Icon icon="grab" {size} /> -->
     <Popover
       bind:this={labelEditPopoverRef}
       isPreventDefault={!isActive}

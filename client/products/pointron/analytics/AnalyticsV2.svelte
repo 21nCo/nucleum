@@ -62,7 +62,7 @@
       ? 'px-4 py-2'
       : 'px-4 pt-4 pb-2'}"
   >
-    <div class="flex gap-6 items-center grow">
+    <div class="flex gap-6 items-center flex-grow">
       {#if $view.isPortrait}
         <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
       {/if}
