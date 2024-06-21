@@ -44,10 +44,7 @@
 
 <div class="flex w-full h-7 relative items-center {isShowAddTag && 'pr-8'}">
   <div class="relative h-full w-full flex items-center">
-    <div
-      class="h-full w-full overflow-x-auto no-scrollbar flex gap-3 {isShowAddTag &&
-        'pr-4'}"
-    >
+    <div class="h-full w-full overflow-x-auto no-scrollbar flex gap-3 pr-3">
       {#each tagList as tag}
         <TagItem
           id={tag.id}

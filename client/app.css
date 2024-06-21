@@ -109,6 +109,24 @@ body {
     fill: rgba(var(--colors-aps2), 1) !important;
   }
 
+
+  /* Logo colors 
+  Notes:
+  Could have directly included in the <SubatomLogo> component but, dark: tailwind utility is not working in that case.
+  */
+  .fill-logo-dark {
+    fill: #393939;
+  }
+  .fill-logo-light {
+    fill: #ffffff;
+  }
+  .stroke-logo-dark {
+    stroke: #393939;
+  }
+  .stroke-logo-light {
+    stroke: #ffffff;
+  }
+
 }
 
 @layer utilities {

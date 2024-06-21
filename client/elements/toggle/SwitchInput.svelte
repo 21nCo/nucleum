@@ -17,6 +17,12 @@
   export let size: Size = Size.md;
   export let isExpanded: boolean = true;
   export let info: FormLabelInfoTooltip | undefined = undefined;
+  if (!label.orientation) {
+    label = {
+      ...label,
+      orientation: Orientation.Horizontal
+    };
+  }
 </script>
 
 {#if (label.orientation === Orientation.Horizontal || !label.orientation) && !isExpanded}

@@ -1,6 +1,8 @@
 <script lang="ts">
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   import TagsContainer from "../../../goals/TagsContainer.svelte";
   import QuickStartLayoutToggle from "./QuickStartLayoutToggle.svelte";
   export let searchInput = "";
@@ -20,9 +22,11 @@
     <QuickStartLayoutToggle />
   </div> -->
 {:else}
-  <div class="flex gap-3 w-full max-w-full items-center h-10 min-h-[2.5rem]">
+  <div
+    class={cn("flex w-full gap-3 max-w-full items-center h-10 min-h-[2.5rem]")}
+  >
     {#if isShowSearchBar}
-      <div class="flex-grow">
+      <div class="w-full">
         <Autocomplete
           bind:this={searchInputRef}
           inputClassList="rounded-full"
@@ -35,20 +39,21 @@
         />
       </div>
     {:else}
-      <div class="flex justify-center w-1/12">
+      <div class="flex justify-center w-[12%]">
         <Button
           icon="search"
+          size={Size.lg}
           on:click={() => {
             isShowSearchBar = true;
           }}
         />
       </div>
-      <div class="w-10/12 px--2">
+      <div class="w-[76%]">
         <TagsContainer bind:selectedTagId on:select />
       </div>
+      <div class="flex justify-center w-[12%]">
+        <QuickStartLayoutToggle />
+      </div>
     {/if}
-    <div class="flex justify-center w-1/12">
-      <QuickStartLayoutToggle />
-    </div>
   </div>
 {/if}

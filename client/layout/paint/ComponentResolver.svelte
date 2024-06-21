@@ -15,6 +15,7 @@
   onMount(() => {
     if (action === null && path !== "") {
       action = appStore.resolveComponentFromPath(path);
+      if (action) $appStore.currentComponent = action;
     }
     if ($context.isSheet) postMessageToParent(EmbedMessage.SHEET_MOUNTED);
   });

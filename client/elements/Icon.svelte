@@ -128,7 +128,6 @@
     "google",
     "apple",
     "grab",
-    "apple-dark",
     "capture2.0-mini"
   ];
   $: _classList = resolveClasses(
@@ -396,8 +395,6 @@
         <Youtube />
       {:else if icon === "apple"}
         <Apple />
-      {:else if icon === "apple-dark"}
-        <Apple isDark={true} />
       {:else if icon === "video-camera"}
         <VideoCamera {variant} />
       {:else if icon === "help"}

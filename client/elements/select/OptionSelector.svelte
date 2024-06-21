@@ -19,6 +19,7 @@
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;
   export let iconOrientation: Orientation = Orientation.Horizontal;
+  export let isPreventWrap: boolean = false;
   let classList: string = "flex w-full";
   if (selected === undefined) selected = options[0].value;
 </script>
@@ -34,7 +35,8 @@
       class={cn(classList, {
         "rounded-md": style === OptionSelectorStyle.TRAIN,
         "border border-brs3": style === OptionSelectorStyle.TRAIN,
-        "flex-wrap overflow-y-auto": style === OptionSelectorStyle.OUTLINE,
+        "flex-wrap overflow-y-auto":
+          style === OptionSelectorStyle.OUTLINE && !isPreventWrap,
         "gap-6": style === OptionSelectorStyle.OUTLINE && size === Size.lg,
         "gap-4": style === OptionSelectorStyle.OUTLINE && size === Size.md,
         "gap-2": style === OptionSelectorStyle.OUTLINE && size === Size.sm,

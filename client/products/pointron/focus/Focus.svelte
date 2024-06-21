@@ -1,6 +1,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import { onMount } from "svelte";
   import QuickStart from "./quickstart/QuickStart.svelte";
   import Advanced from "./advanced/Advanced.svelte";
@@ -26,7 +29,7 @@
   import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
   import { pointLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
-  let mode: number = 0;
+  let mode: number = -1;
   let isInlineEnabled: boolean = true;
   let addManualLogButton: IButtonParams = {
     label: "Add manual log",
@@ -94,7 +97,8 @@
               size={Size.lg}
               items={["Quick Focus", "Advanced"]}
               value={mode === 0 ? "Quick Focus" : "Advanced"}
-              style={PanelSwitcherStyle.DOT}
+              style={PanelSwitcherStyle.BAR}
+              barStyle={BarStyle.DOT}
               isDisableEnabled={$sessionStore.isSessionRunning}
               on:switch={(e) => {
                 mode = e.detail === "Quick Focus" ? 0 : 1;

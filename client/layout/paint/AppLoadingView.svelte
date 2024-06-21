@@ -4,7 +4,6 @@
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
   import { EmbedContext } from "$lib/client/types/appStore.type";
   export let message: string | undefined = undefined;
 </script>
@@ -22,7 +21,7 @@
       </div>
     {:else}
       <div class="flex flex-col items-center">
-        <SubAtomLogo isDark={$appearance?.colorScheme?.isDark} />
+        <SubAtomLogo />
         {#if message}
           <div class="font-medium px-4 text-center text-fgs2 text-b4">
             {message}

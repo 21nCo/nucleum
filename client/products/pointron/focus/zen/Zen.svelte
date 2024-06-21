@@ -53,18 +53,8 @@
         undefined,
         undefined
       )}
-    class="flex flex-col w-full h-full px-4 pt-4 pb-8 glassthick bg-bgs1"
+    class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1"
   >
-    {#if isInline}
-      <div class="flex mb-10 justify-end w-full">
-        <Button
-          icon="full-screen"
-          label="expand"
-          size={Size.xs}
-          on:click={() => onFullScreenToggle()}
-        />
-      </div>
-    {/if}
     <div class="flex flex-col gap-6 flex-grow w-full items-center">
       <IntervalBar />
       <div class="flex flex-col w-full items-center">

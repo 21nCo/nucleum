@@ -29,7 +29,6 @@
     <div class="flex w-full justify-between items-center">
       <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Journal" />
       <TimelineDate size={Size.lg} />
-      <TodayButton />
     </div>
     <LogsPane date={$selectedTimePeriod} context="journal" />
   </div>

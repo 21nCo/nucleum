@@ -199,6 +199,7 @@
     try {
       const appDetails = extractProduct();
       if (appDetails) appStore.initializeProductInformation(appDetails);
+      localStorage.setItem("subatom", appDetails?.product ?? "tidigit");
       let subdomain = window?.location.host.split(".")[0];
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||

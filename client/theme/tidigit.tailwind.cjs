@@ -121,6 +121,7 @@ module.exports = {
       lg: "1024px",
       xl: "1280px",
 
+      portrait: { raw: "(orientation: portrait)" },
       /**
        * Mobile devices
        */
@@ -195,6 +196,36 @@ module.exports = {
         "8/10": "80%",
         "9/10": "90%"
       }
+    }
+  },
+  darkMode: "class",
+  purge: {
+    content: ["./lib/**/*.html", "./lib/**/*.svelte"],
+    options: {
+      safelist: [
+        "cs_dracula",
+        "cs_dim",
+        "cs_tidigit_light",
+        "cs_tidigit_light_blue",
+        "cs_tidigit_light_iris",
+        "cs_tidigit_light_red",
+        "cs_tidigit_dark",
+        "cs_tidigit_dark_blue",
+        "cs_tidigit_dark_red",
+        "cs_tidigit_dark_bw",
+        "cs_tidigit_dark_iris",
+        "cs_solarized_light",
+        "cs_solarized_dark",
+        "border-brs1",
+        "border-brs2",
+        "border-brs3",
+        "border-a1s1",
+        "styledscroll",
+        /^theme_/,
+        /^cs_.*$/,
+        /^bg-/,
+        /^text-/
+      ]
     }
   },
   plugins: [

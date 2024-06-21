@@ -94,25 +94,19 @@
   bind:isActive
   bind:this={baseRef}
   {popoverOptions}
-  class={cn(
-    "flex justify-between gap-4 items-center",
-    `${
+  class={cn("flex justify-between gap-4 items-center", {
+    "w-full": !label?.label && style != InputStyle.PLAIN,
+    [width]:
       label?.label &&
       (label?.orientation === Orientation.Horizontal ||
         !label?.orientation ||
         (label?.orientation === Orientation.Vertical && label?.isShrink))
-        ? width
-        : "w-full"
-    }`,
-    {
-      "w-full": !label?.label
-    }
-  )}
+  })}
 >
   <div class="flex items-center gap-2">
-    {#if selected.icon && typeof selected.icon === "string"}
+    {#if selected?.icon && typeof selected?.icon === "string"}
       <Icon icon={selected.icon} size={Size.sm} />
-    {:else if selected.icon && typeof selected.icon === "object"}
+    {:else if selected?.icon && typeof selected?.icon === "object"}
       <AvatarView avatar={selected.icon} size={Size.sm} />
     {/if}
     <span class="min-w-fit">

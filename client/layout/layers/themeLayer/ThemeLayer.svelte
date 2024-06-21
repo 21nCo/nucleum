@@ -107,7 +107,8 @@
 
 <div
   class={cn("flex h-full w-full", {
-    glassy: $appearance?.skin == AppSkin.Glassy
+    glassy: $appearance?.skin == AppSkin.Glassy,
+    dark: $appearance?.colorScheme?.isDark
   })}
 >
   <ColorLayer>

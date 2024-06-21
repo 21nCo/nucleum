@@ -709,7 +709,7 @@ function initAppStore(seed: AppStore) {
       gotoPath(url);
       return;
     }
-    if (get(appStore).launchContext == LaunchContext.EMBED) {
+    if (get(context).isEmbed) {
       postToParent({
         link: url
       });
@@ -745,7 +745,8 @@ function initAppStore(seed: AppStore) {
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
-    const app = import.meta.env.VITE_APP ?? window.location.hostname;
+    const app =
+      import.meta.env.VITE_EMBED_OAUTH_REDIRECT ?? import.meta.env.VITE_APP;
     let url =
       config.authorise_url +
       "?client_id=" +
@@ -763,8 +764,7 @@ function initAppStore(seed: AppStore) {
     } else if (!ctx.isEmbed) {
       redirectUri = window.location.origin + "/r/" + config.oauth_slug;
     } else {
-      redirectUri =
-        "https://" + import.meta.env.VITE_APP + "/r/" + config.oauth_slug;
+      redirectUri = "https://" + app + "/r/" + config.oauth_slug;
     }
     if (config.code_challenge_method) {
       //TODO generate code challenge

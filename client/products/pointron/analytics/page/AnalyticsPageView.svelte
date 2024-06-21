@@ -36,9 +36,9 @@
 {#if (isValidArrayWithData($store?.data?.cards) && !$store.isRefreshing) || $isInEditMode}
   {#key `${refreshId}-${$isInEditMode}`}
     <div
-      class={cn("flex gap-2 h-full max-h-full p-2", {
-        "flex-col overflow-auto": $view.isPortrait,
-        "flex-wrap": !$view.isPortrait
+      class={cn("flex h-full max-h-full p-2", {
+        "flex-col gap-3 overflow-auto": $view.isPortrait,
+        "flex-wrap gap-2": !$view.isPortrait
       })}
     >
       {#each $store.config.cards as card, index}

@@ -8,9 +8,11 @@
   import Popover from "../popover/Popover.svelte";
   import TextInput from "../input/TextInput.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;
+  export let isDisabled: boolean = false;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
     undefined;
@@ -63,7 +65,7 @@
           labelEditPopoverRef.toggle();
         }}
       >
-        {item.label}
+        <TextWithHoverTooltip text={item.label} truncateLength={20} />
       </button>
       <button slot="popover" class="w-60 h-20 p-4" on:click|stopPropagation>
         <TextInput
@@ -88,8 +90,12 @@
     </span>
   </span>
 {:else}
-  <span class="min-w-fit whitespace-nowrap">
-    {item.label}
+  <span
+    class={cn("min-w-fit whitespace-nowrap", {
+      "text-bgs4": isDisabled
+    })}
+  >
+    <TextWithHoverTooltip text={item.label} truncateLength={20} />
   </span>
 {/if}
 

@@ -3,12 +3,12 @@
   import { page } from "$app/stores";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
   import { OS } from "$lib/client/types/os.enum";
   import { detectSystemOS } from "$lib/client/utils/browser.utils";
   import { handleOAuthRedirection } from "$lib/client/utils/oauth.utils";
   import { onMount } from "svelte";
+  import context from "$lib/client/stores/context.store";
   $: os = detectSystemOS();
   let debugMessage = "debug";
   onMount(async () => {
@@ -33,7 +33,7 @@
     let response = await handleOAuthRedirection($page.params.slug, code);
     if (!response) return;
     const json = await response.json();
-    debugMessage = "json received";
+    debugMessage = `isEmbed: ${$context.isEmbed} and os: ${os}`;
     if (os == OS.IOS) {
       debugMessage = "ios - embed redirection";
       handleEmbedRedirection(json.token, json.isSignup);
@@ -50,5 +50,5 @@
   }
 </script>
 
-<AppLoadingView message="Signing in" />
+<AppLoadingView message="Signing you in" />
 <!-- <AppLoadingView message={debugMessage} /> -->

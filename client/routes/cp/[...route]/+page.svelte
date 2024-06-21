@@ -1,5 +1,7 @@
 <script lang="ts">
-  import PagePainterV2 from "$lib/client/layout/paint/PagePainterV2.svelte";
+  import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
+  import { page } from "$app/stores";
+  const route = $page.params.route;
 </script>
 
-<PagePainterV2 prefix={"cp"} />
+<ComponentResolver path={"cp/" + route} />

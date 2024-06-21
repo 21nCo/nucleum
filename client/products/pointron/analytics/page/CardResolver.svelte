@@ -24,11 +24,13 @@
     {#if card.type === AnalyticsCardType.TOP_N}
       <TopNCard {card} {data} {goalColors} {previousTimePeriodData} />
     {:else if card.type === AnalyticsCardType.TARGETS}
-      <TargetGuages
-        size={$view.isPortrait ? Size.md : Size.lg}
-        {parentBgIndex}
-        type="full"
-      />
+      <div class="w-full h-full flex items-center">
+        <TargetGuages
+          size={$view.isPortrait ? Size.md : Size.lg}
+          {parentBgIndex}
+          type="full"
+        />
+      </div>
     {:else if card.type === AnalyticsCardType.METRICS}
       <MetricsCard {card} {data} {goalColors} {previousTimePeriodData} />
     {/if}

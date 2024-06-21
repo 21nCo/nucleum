@@ -12,7 +12,7 @@
   <div class="w-full h-full">
     {#each items as item}
       <TreeMapItem id={item} {contentCallback} {childrenCallback} on:click />
-      <Divider />
+      <!-- <Divider /> -->
     {/each}
   </div>
 {/if}

@@ -113,7 +113,7 @@
   </div>
   {#if contextSize != Size.sm}
     <div
-      class="absolute top-full left-0 text-fgs2 self-center flex w-full justify-center"
+      class="absolute top-full left-0 text-fgs2 self-center flex w-full justify-center mo:text-b3"
     >
       {#if control === Control.START}
         Start

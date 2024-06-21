@@ -159,20 +159,37 @@ export function isTextElement(target: EventTarget | null) {
   );
 }
 
+/**
+ *
+ *
+ * This is the value for userAgent - when opening using SafariViewController within an iOS app:
+ * UserAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) version/17.5 Mobile/15E148 Safari/604.1
+ *
+ * From MacOS app:
+ * UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) version/14.1.2 Safari/605.1.15
+ *
+ *
+ *
+ * Notes on  navigator.userAgentData:
+ * Supported in Chromium 90 and above
+ * Not supported in Safari as of 2024-06-21
+ *
+ * @returns
+ */
 export function detectSystemOS() {
   let os: OS;
   const userAgent = navigator.userAgent.toLowerCase();
   const platform = userAgent ?? navigator.platform.toLowerCase();
   if (platform.includes("win")) {
     os = OS.WINDOWS;
-  } else if (platform.includes("mac")) {
-    os = OS.MAC;
   } else if (
     platform.includes("iphone") ||
     platform.includes("ipad") ||
     platform.includes("iOS")
   ) {
     os = OS.IOS;
+  } else if (platform.includes("mac")) {
+    os = OS.MAC;
   } else if (platform.includes("android")) {
     os = OS.ANDROID;
   } else {
