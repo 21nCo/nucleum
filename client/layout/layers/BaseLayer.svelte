@@ -36,7 +36,6 @@
   import { logger } from "$lib/client/stores/log.store";
 
   import { globalActions } from "$lib/client/stores/actionMap";
-  import { settingsAsModal, settingsAsPages } from "../settingsActionMap";
   import { localActions } from "$local/stores/localActionMap";
   import { localCacheableStores } from "$local/stores/localStoresMap";
   import MutationQueueLayer from "./MutationQueueLayer.svelte";
@@ -45,6 +44,7 @@
     detectTouchDevice
   } from "$lib/client/utils/browser.utils";
   import { extractProduct } from "$lib/shared/utils/utils";
+  import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -189,7 +189,8 @@
     );
     let actions = [...modifiedGlobalActions, ...localActions];
     if (isSheet) appStore.initActionsForSheet(actions);
-    else appStore.initActions(actions, settingsAsModal, settingsAsPages);
+    else
+      appStore.initActions(actions, getSettingsAsModal(), getSettingsAsPages());
   }
   function runCurrentTime() {
     clearInterval(timer);
@@ -200,7 +201,9 @@
   }
   function setLaunchContext() {
     try {
-      const appDetails = extractProduct(window.location.host);
+      const appDetails = extractProduct(
+        import.meta.env.VITE_HOST ?? window.location.host
+      );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       localStorage.setItem("product", appDetails?.product ?? "tidigit");
       let subdomain = window?.location.host.split(".")[0];

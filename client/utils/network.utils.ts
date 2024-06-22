@@ -39,7 +39,8 @@ export function performApiCall(
     const urlParams = new URLSearchParams(window.location.search);
     return {
       userAgent: navigator.userAgent,
-      host: window.location.host,
+      origin: window.location.origin,
+      host: import.meta.env.VITE_HOST ?? window.location.host,
       href: window.location.href,
       timezone: detectTimeZone(),
       geo: null,

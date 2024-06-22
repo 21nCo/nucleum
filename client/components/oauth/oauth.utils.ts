@@ -5,7 +5,7 @@ export async function handleOAuthRedirection(
   code: string | null
 ) {
   if (!slug || !code) return;
-  const app = window.location.hostname;
+  const app = import.meta.env.VITE_HOST ?? window.location.hostname;
   const verifier = sessionStorage.getItem("verifier");
   const body = {
     slug,

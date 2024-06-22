@@ -736,7 +736,7 @@ function initAppStore(seed: AppStore) {
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
-    const app = window.location.hostname;
+    const host = import.meta.env.VITE_HOST ?? window.location.hostname;
     let url =
       config.authorise_url +
       "?client_id=" +
@@ -744,16 +744,14 @@ function initAppStore(seed: AppStore) {
       "&scope=" +
       config.scope +
       "&response_type=code&state=" +
-      app;
+      host;
     let redirectUri = "";
     if (config.response_mode === "form_post") {
       redirectUri =
         import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
       url += "&response_mode=form_post";
-    } else if (!ctx.isEmbed) {
-      redirectUri = window.location.origin + "/r/" + config.oauth_slug;
     } else {
-      redirectUri = "https://" + app + "/r/" + config.oauth_slug;
+      redirectUri = "https://" + host + "/r/" + config.oauth_slug;
     }
     if (config.code_challenge_method) {
       //TODO generate code challenge

@@ -21,6 +21,7 @@ import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 import OAuthRedirect from "../components/oauth/OAuthRedirect.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
+import DebugPage from "../layout/layers/debug/DebugPage.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -293,5 +294,11 @@ export const globalActions: IAction[] = [
     action: "oauthredirect",
     type: ActionType.PAGE,
     component: OAuthRedirect
+  },
+  {
+    action: "troubleshoot",
+    label: "Troubleshoot",
+    type: ActionType.PAGE,
+    component: DebugPage
   }
 ];

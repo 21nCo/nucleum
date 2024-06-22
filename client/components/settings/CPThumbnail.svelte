@@ -11,6 +11,7 @@
   export let isActive: boolean = false;
   export let setActiveByPath: boolean = false;
   let component = appStore.resolveComponent(action);
+  console.log({ component, action });
   $: if (setActiveByPath)
     isActive = $view.currentPath === "/" + component?.path;
 </script>
