@@ -100,7 +100,11 @@
       (<any>window).Intercom("update", {
         hide_default_launcher: true
       });
-    if (!$context.isSheet) {
+    if (
+      !$context.isSheet &&
+      $context.isEmbed &&
+      $context.protocol.includes(import.meta.env.VITE_CUSTOM_PROTOCOL)
+    ) {
       await parseEmbedToken();
     }
     await initializeData($context.isSheet);
@@ -239,6 +243,7 @@
       }
       $context.os = detectSystemOS();
       $context.isTouchDevice = detectTouchDevice();
+      $context.protocol = window.location.protocol;
     } catch (e) {
       postToParent({ type: "ERROR", message: e });
     }

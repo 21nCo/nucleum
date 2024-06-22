@@ -4,6 +4,7 @@ import { Embed, OperatingSystem, type Context } from "../types/context.type";
 const context = initContextStore({
   isEmbed: false,
   isSheet: false,
+  protocol: "",
   embed: Embed.NONE,
   os: OperatingSystem.MACOS,
   isTouchDevice: false

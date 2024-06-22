@@ -11,11 +11,17 @@
   import { logger } from "$lib/client/stores/log.store";
 
   let debugMessage = "debug";
+  $: {
+    if (debugMessage) {
+      logger.log(debugMessage);
+      console.log(debugMessage);
+    }
+  }
   onMount(async () => {
     let codeQueryParam = $page.url.searchParams.get("code");
     let token = $page.url.searchParams.get("token");
     if (token) {
-      logger.log("token present");
+      debugMessage = "token present";
       const isSignup =
         $page.url?.searchParams?.get("signup") === "true" ?? "false";
       handleOAuthCompletion({ token, isSignup });
@@ -23,7 +29,7 @@
       appStore.gotoPath("/signup?msg=invalidoauth");
       return;
     } else {
-      logger.log("code present. processing oauth");
+      debugMessage = "code present. processing oauth";
       let response = await handleOAuthRedirection(
         $page.params.slug,
         codeQueryParam
@@ -46,20 +52,20 @@
     } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
       handleMacOSEmbedRedirection(data.token, data.isSignup);
     } else if (data.userInfo) {
-      logger.log("signing in with oauth");
+      debugMessage = "signing in with oauth";
       await account.signIn(
         { ...data, userInfo: data.userInfo },
         { isFromSignup: data.isSignup }
       );
     } else if (data.token) {
-      logger.log("signing in using embed token");
+      debugMessage = "signing in using embed token";
       await account.embedOAuthSignin(data.token, data.isSignup);
     }
   }
 
   async function handleiOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
-      logger.log("ios - embed redirection");
+      debugMessage = "ios - embed redirection";
       if (isSignup) {
         goto($appStore.product + "://oauthsignup" + "?token=" + token);
       } else {
@@ -71,7 +77,7 @@
   }
   function handleMacOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
-      logger.log("macos - embed redirection");
+      debugMessage = "macos - embed redirection";
       goto(
         (import.meta.env.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
@@ -82,11 +88,11 @@
           "&debug=true"
       );
     } catch (err) {
-      logger.log("macos - embed redirection error: " + err);
+      debugMessage = "macos - embed redirection error" + err;
       goto("error");
     }
   }
 </script>
 
-<AppLoadingView message="Signing you in" />
-<!-- <AppLoadingView message={debugMessage} /> -->
+<!-- <AppLoadingView message="Signing you in" /> -->
+<AppLoadingView message={debugMessage} />

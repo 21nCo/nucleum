@@ -24,7 +24,6 @@
     return currentPath;
   }
   onMount(async () => {
-    console.log("PagePainterV2 onMount");
     pageSub = page.subscribe(async () => {
       await refresh();
     });

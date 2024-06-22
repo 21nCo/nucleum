@@ -2,6 +2,7 @@ export type Context = {
   isEmbed: boolean;
   isSheet: boolean;
   isTouchDevice: boolean;
+  protocol: string;
   embed: Embed;
   os: OperatingSystem;
 };
