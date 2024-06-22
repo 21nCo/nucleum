@@ -28,7 +28,7 @@
       icon={type === InfoTextType.ERROR ? "help" : type}
       class={cn({
         "stroke-ars1": type === InfoTextType.ERROR,
-        "text-aps1": type === InfoTextType.INFO
+        "stroke-aps1": type === InfoTextType.INFO
       })}
     />
     {#if content}

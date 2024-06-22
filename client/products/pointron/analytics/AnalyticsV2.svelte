@@ -13,9 +13,7 @@
   import { onMount } from "svelte";
   import { analyticsConfigStore } from "./analytics.store";
   import AnalyticsPageView from "./page/AnalyticsPageView.svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   let refreshId = new Date().getTime();
   let selectedPageId = $analyticsConfigStore.pages[0]?.id;
@@ -67,13 +65,6 @@
         <div class="flex flex-col gap-3 w-full">
           <div class="flex justify-between w-full">
             <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
-            <!-- <DropDown
-            items={pages}
-            value={selectedPageId}
-            isDisableSearch={true}
-            on:select={onPageSwitch}
-            style={InputStyle.PLAIN}
-            /> -->
             <EditModeToggle />
           </div>
           <div class="w-full overflow-x-auto">
@@ -81,6 +72,7 @@
               options={pages}
               size={Size.sm}
               isPreventWrap={true}
+              on:select={onPageSwitch}
             />
           </div>
         </div>

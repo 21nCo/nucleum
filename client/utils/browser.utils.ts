@@ -92,8 +92,12 @@ async function _renderPopover(params: IPopoverRenderParams) {
   const { documentWidth, documentHeight } = documentDimensions();
   popRef.style.position = "fixed";
   popRef.style.zIndex = "100";
+
   if (triggerRect.top < popRect.height) {
     if (placement === Direction.TopLeft) placement = Direction.BottomLeft;
+    else if (placement === Direction.TopRight)
+      placement = Direction.BottomRight;
+    else if (placement === Direction.Up) placement = Direction.Down;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
     if (placement === Direction.Down) placement = Direction.Up;
@@ -105,6 +109,11 @@ async function _renderPopover(params: IPopoverRenderParams) {
     if (placement === Direction.Right) placement = Direction.Left;
     if (placement === Direction.Down) placement = Direction.BottomRight;
     if (placement === Direction.Up) placement = Direction.TopRight;
+  }
+  if (triggerRect.left < popRect.width) {
+    if (placement === Direction.Left) placement = Direction.Right;
+    if (placement === Direction.Down) placement = Direction.BottomLeft;
+    if (placement === Direction.Up) placement = Direction.TopLeft;
   }
 
   if (placement === Direction.BottomLeft || placement === Direction.TopLeft) {
@@ -139,6 +148,15 @@ async function _renderPopover(params: IPopoverRenderParams) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
   } else if (placement === Direction.Up || placement === Direction.Down) {
     popRef.style.left = `${triggerRect.left}px`;
+  }
+  popRect = popRef.getBoundingClientRect();
+  if (popRect.width > documentWidth) {
+    popRef.style.width = `${documentWidth - 12}px`;
+  }
+  console.log({ triggerRect, popRect, placement, documentWidth });
+  if (popRect.left < 0 || popRect.right > documentWidth) {
+    popRef.style.left = "6px";
+    popRef.style.right = "6px";
   }
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
   popRef.style.opacity = "1";
@@ -216,5 +234,8 @@ export function getGeoLocation() {
 }
 
 export function resolveHoverState(event: MouseEvent | FocusEvent) {
-  return event.type === "mouseover" || event.type === "focus";
+  const isTouchDevice = window.matchMedia("(hover: none)").matches;
+  return (
+    !isTouchDevice && (event.type === "mouseover" || event.type === "focus")
+  );
 }

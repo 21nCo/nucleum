@@ -21,7 +21,7 @@
   export let iconOrientation: Orientation = Orientation.Horizontal;
   export let isPreventWrap: boolean = false;
   let classList: string = "flex w-full";
-  if (selected === undefined) selected = options[0].value;
+  if (selected === undefined) selected = options[0]?.value;
 </script>
 
 <FormControlLabelWrapper props={labelProps}

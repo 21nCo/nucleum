@@ -24,7 +24,6 @@
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
     isHovering = resolveHoverState(event);
     clearTimeout(timer);
-    console.log({ isHovering, text });
     if (!isHovering) {
       hideToolTip();
       return;

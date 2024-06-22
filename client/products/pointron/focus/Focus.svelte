@@ -29,7 +29,7 @@
   import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
   import { pointLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
-  let mode: number = -1;
+  let mode: number = 0;
   let isInlineEnabled: boolean = true;
   let addManualLogButton: IButtonParams = {
     label: "Add manual log",
@@ -113,6 +113,7 @@
             <div class="flex-grow w-full">
               <QuickStart />
             </div>
+            <FloatingButton params={addManualLogButton} />
             <!-- <ManualFocusLog /> -->
           {:else}
             <AdvancedPortrait />
@@ -121,9 +122,9 @@
         </div>
       {/if}
     </div>
-    {#if mode === 0}
+    <!-- {#if mode === 0}
       <FloatingButton params={addManualLogButton} />
-    {/if}
+    {/if} -->
   </div>
 {:else}
   <div class="flex w-full h-full">

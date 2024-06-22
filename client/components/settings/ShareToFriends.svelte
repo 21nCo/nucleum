@@ -13,9 +13,11 @@
     <div>
       <CopyableText
         parentBackgroundIndex={2}
-        text={($appStore.appData?.urls?.landing ?? "") +
+        text={($appStore.appData?.urls?.landing ?? window.location.origin) +
           "?referral=" +
-          ($account.userId ? $account.userId : "appuser")}
+          ($account.userId
+            ? $account.userId
+            : $account.userInfo?.id ?? "appuser")}
       />
     </div>
   </div>

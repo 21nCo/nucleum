@@ -21,7 +21,7 @@
       if (layoutContext === LayoutContext.PORTRAIT) {
         items = x.appMenu.slice(
           0,
-          $appStore.appData.isShowCaptureOnMobile ? 3 : 4
+          $appStore?.appData?.isShowCaptureOnMobile ? 3 : 4
         );
         items.push("cp");
       } else {
@@ -48,7 +48,7 @@
     : 'flex-col justify-center rounded-lg'} min-w-min w-full"
 >
   {#each pages as item, index}
-    {#if index == Math.floor(pages.length / 2) && layoutContext === LayoutContext.PORTRAIT && $appStore.appData.isShowCaptureOnMobile}
+    {#if index == Math.floor(pages.length / 2) && layoutContext === LayoutContext.PORTRAIT && $appStore.appData?.isShowCaptureOnMobile}
       <CaptureComponent />
     {/if}
     {#if layoutContext != LayoutContext.MINIMIZED || (layoutContext === LayoutContext.MINIMIZED && (isHovered || selected == index))}

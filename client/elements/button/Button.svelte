@@ -127,7 +127,7 @@
     {#if icon}
       <Icon
         {icon}
-        {size}
+        size={size === Size.xs ? Size.sm : size}
         class={cn({
           "stroke-aps1":
             style === ButtonStyle.OUTLINED && type === ButtonVariant.PRIMARY,

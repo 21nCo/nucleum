@@ -152,12 +152,16 @@ function init() {
       const cacheSource = get(dataManager).cacheSource;
       return await cacheSource.retrieveCache(storeId);
     },
-    initialize: async (stores: CacheableStoreContract[]) => {
+    initialize: async (
+      stores: CacheableStoreContract[],
+      isLiteMode: boolean = false
+    ) => {
       update((x) => {
         x.cacheSource = new CacheManager();
         x.cacheableStoresTable = stores;
         return x;
       });
+      if (isLiteMode) return;
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
       let seedMutationMap: any = {};

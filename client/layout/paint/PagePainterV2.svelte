@@ -24,6 +24,7 @@
     return currentPath;
   }
   onMount(async () => {
+    console.log("PagePainterV2 onMount");
     pageSub = page.subscribe(async () => {
       await refresh();
     });
@@ -46,6 +47,7 @@
       return;
     }
     const isProceed = await redirectionChecks(path);
+    console.log({ isProceed, path });
     if (!isProceed) {
       return;
     }

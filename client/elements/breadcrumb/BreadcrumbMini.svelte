@@ -22,7 +22,7 @@
           .join(" ・ ");
 </script>
 
-{#if hierarchy.length > 0}
+{#if hierarchy?.length > 0}
   <div class="text-start text-b4 truncate">
     <TextWithHoverTooltip text={val} tooltip={hierarchy.join(" ・ ")} />
   </div>

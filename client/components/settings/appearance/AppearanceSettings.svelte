@@ -129,7 +129,6 @@
     <InlineInfoBanner
       content="Dark and light themes will be switched automatically according to the system
 setting on your device."
-      action={{ action: "faqs" }}
     />
   {/if}
 </ScrollView>

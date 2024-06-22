@@ -19,12 +19,12 @@
     label={$view.isPortrait ? "" : "Options"}
     {parentBgIndex}
     tooltip={$view.isPortrait ? "Filters and grouping" : ""}
-    size={$view.isPortrait ? Size.sm : Size.xs}
-    on:click={() => {
-      //TODO - open popover
-    }}
+    size={$view.isPortrait ? Size.lg : Size.xs}
   />
-  <div class="w-96 h-60 flex flex-col p-2 items-center" slot="popover">
+  <div
+    class="mo:w-9/10 w-96 h-60 flex flex-col p-2 items-center"
+    slot="popover"
+  >
     <span> Grouping and Filters </span>
     <DropDown
       label={{ label: "Grouping", orientation: Orientation.Vertical }}

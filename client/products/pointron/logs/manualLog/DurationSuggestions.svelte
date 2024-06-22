@@ -17,15 +17,18 @@
   });
 </script>
 
-{#if $pointronPreferences.manualEntryQuickDurations && $pointronPreferences.manualEntryQuickDurations.length > 0}
+{#if $pointronPreferences?.manualEntryQuickDurations && $pointronPreferences.manualEntryQuickDurations.length > 0}
   <div class="flex-col items-start flex w-full gap-2">
     <FormControlLabel props={{ label: "Quick add" }} />
     <div class="w-full flex justify-between gap-3 pr-10 overflow-x-auto">
       {#each $pointronPreferences.manualEntryQuickDurations as item}
         <button
           class={cn(
-            "px-4 py-1 rounded-md min-w-fit hover:bg-bgs3",
-            abg(item === selectedItem, 1)
+            "px-4 py-1 rounded-md min-w-fit",
+            abg(item === selectedItem, 1),
+            {
+              "hover:bg-bgs3": item != selectedItem
+            }
           )}
           on:click={() => {
             selectedItem = item;

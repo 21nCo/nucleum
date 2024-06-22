@@ -20,7 +20,7 @@
       <TypewritingText text="Thinking..." />
     </div>
     <div
-      class="bg-bgs2 p-10 rounded-md flex flex-col items-start {$view.isPortrait
+      class="bg-bgs2 mo:p-4 p-6 2k:p-10 rounded-md flex flex-col items-start {$view.isPortrait
         ? 'h-2/5'
         : 'w-1/2'}"
     >

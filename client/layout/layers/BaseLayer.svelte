@@ -98,12 +98,10 @@
       (<any>window).Intercom("update", {
         hide_default_launcher: true
       });
-    if ($context.isSheet) {
-      initActions(true);
-    } else {
+    if (!$context.isSheet) {
       await parseEmbedToken();
-      await initializeData();
     }
+    await initializeData($context.isSheet);
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
     const darkModeMediaQuery = window.matchMedia(
@@ -156,16 +154,19 @@
       await account.embedOAuthSignin(token, isSignup === "true" ?? false);
     }
   }
-  async function initializeData() {
-    //todo - check if the saved timezone is different from current user timezone
-    const appData = await new Persistence().fetchAppData();
-    appStore.loadAppData(appData);
+  async function initializeData(isLiteMode: boolean = false) {
+    if (!isLiteMode) {
+      //todo - check if the saved timezone is different from current user timezone
+      const appData = await new Persistence().fetchAppData();
+      appStore.loadAppData(appData);
+    }
     if ($account.isLoggedIn)
-      await dataManager.initialize([
-        ...cacheableStores,
-        ...localCacheableStores
-      ]);
-    initActions();
+      await dataManager.initialize(
+        [...cacheableStores, ...localCacheableStores],
+        isLiteMode
+      );
+    initActions(isLiteMode);
+    if (isLiteMode) return;
     if (
       !excludedPathsForRedirectionCheck.includes(
         $appStore.currentPath.split("/")[1]
