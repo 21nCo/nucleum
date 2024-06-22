@@ -8,13 +8,14 @@
   import { onMount } from "svelte";
   import context from "$lib/client/stores/context.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
+  import { logger } from "$lib/client/stores/log.store";
 
   let debugMessage = "debug";
   onMount(async () => {
     let codeQueryParam = $page.url.searchParams.get("code");
     let token = $page.url.searchParams.get("token");
     if (token) {
-      debugMessage = "token present";
+      logger.log("token present");
       const isSignup =
         $page.url?.searchParams?.get("signup") === "true" ?? "false";
       handleOAuthCompletion({ token, isSignup });
@@ -22,7 +23,7 @@
       appStore.gotoPath("/signup?msg=invalidoauth");
       return;
     } else {
-      debugMessage = "code present. processing oauth";
+      logger.log("code present. processing oauth");
       let response = await handleOAuthRedirection(
         $page.params.slug,
         codeQueryParam
@@ -45,18 +46,20 @@
     } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
       handleMacOSEmbedRedirection(data.token, data.isSignup);
     } else if (data.userInfo) {
+      logger.log("signing in with oauth");
       await account.signIn(
         { ...data, userInfo: data.userInfo },
         { isFromSignup: data.isSignup }
       );
     } else if (data.token) {
+      logger.log("signing in using embed token");
       await account.embedOAuthSignin(data.token, data.isSignup);
     }
   }
 
   async function handleiOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
-      debugMessage = "ios - embed redirection";
+      logger.log("ios - embed redirection");
       if (isSignup) {
         goto($appStore.product + "://oauthsignup" + "?token=" + token);
       } else {
@@ -68,7 +71,7 @@
   }
   function handleMacOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
-      debugMessage = "macos - embed redirection";
+      logger.log("macos - embed redirection");
       goto(
         (import.meta.env.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
@@ -79,6 +82,7 @@
           "&debug=true"
       );
     } catch (err) {
+      logger.log("macos - embed redirection error: " + err);
       goto("error");
     }
   }
