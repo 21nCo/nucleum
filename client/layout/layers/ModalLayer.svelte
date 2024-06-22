@@ -12,9 +12,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import type { ModalEvent, ModalParams } from "$lib/client/types/popup.type";
-  import { LaunchContext } from "$lib/client/types/appStore.type";
   import { AppEvent } from "$lib/client/types/event.enum";
   import type { AppEventType } from "$lib/client/types/event.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
@@ -27,11 +26,9 @@
   import { logger } from "$lib/client/stores/log.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { liveQuery } from "dexie";
-  import { AlertType } from "$lib/client/types/notification.type";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { page } from "$app/stores";
-  import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import SplitView from "../SplitView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -79,7 +76,8 @@
           modal: JSON.stringify(x)
         });
       } else if (
-        $appStore.launchContext == LaunchContext.EMBED &&
+        $context.isEmbed &&
+        $context.embed === Embed.HANDSET &&
         x.isShowAsSheet
       ) {
         postToParent({

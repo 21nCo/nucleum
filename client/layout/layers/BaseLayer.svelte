@@ -1,14 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { page } from "$app/stores";
-
-  import { EmbedContext, LaunchContext } from "$lib/client/types/appStore.type";
   import { AppEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
 
   import type { AppEventType } from "$lib/client/types/event.type";
   import { pingParent, postToParent } from "$lib/client/utils/embed.utils";
-  import { extractProduct } from "$lib/client/utils/utils";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
 
   import { Persistence } from "$lib/client/persistence/persistence";
@@ -43,6 +40,11 @@
   import { localActions } from "$local/stores/localActionMap";
   import { localCacheableStores } from "$local/stores/localStoresMap";
   import MutationQueueLayer from "./MutationQueueLayer.svelte";
+  import {
+    detectSystemOS,
+    detectTouchDevice
+  } from "$lib/client/utils/browser.utils";
+  import { extractProduct } from "$lib/shared/utils/utils";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -198,9 +200,9 @@
   }
   function setLaunchContext() {
     try {
-      const appDetails = extractProduct();
+      const appDetails = extractProduct(window.location.host);
       if (appDetails) appStore.initializeProductInformation(appDetails);
-      localStorage.setItem("subatom", appDetails?.product ?? "tidigit");
+      localStorage.setItem("product", appDetails?.product ?? "tidigit");
       let subdomain = window?.location.host.split(".")[0];
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||
@@ -216,7 +218,6 @@
         browserAgent.includes("embed")
       ) {
         $context.isEmbed = true;
-        $appStore.launchContext = LaunchContext.EMBED;
       }
       const isDebugHandheldMode =
         import.meta.env.VITE_IS_DEBUG_HANDSET === "true";
@@ -231,9 +232,10 @@
       let sheetPath = $page.url?.searchParams?.get("spath");
       if (isSheet) {
         $context.isSheet = true;
-        $appStore.embedContext = EmbedContext.SHEET;
         if (sheetPath) $appStore.sheetPath = sheetPath;
       }
+      $context.os = detectSystemOS();
+      $context.isTouchDevice = detectTouchDevice();
     } catch (e) {
       postToParent({ type: "ERROR", message: e });
     }

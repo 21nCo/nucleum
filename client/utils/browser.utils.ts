@@ -1,5 +1,5 @@
 import { Direction } from "$lib/client/types/direction.enum";
-import { OS } from "$lib/client/types/os.enum";
+import { OperatingSystem } from "../types/context.type";
 import type { IPopoverRenderParams } from "../types/popover.type";
 
 function documentDimensions() {
@@ -195,23 +195,23 @@ export function isTextElement(target: EventTarget | null) {
  * @returns
  */
 export function detectSystemOS() {
-  let os: OS;
+  let os: OperatingSystem;
   const userAgent = navigator.userAgent.toLowerCase();
   const platform = userAgent ?? navigator.platform.toLowerCase();
   if (platform.includes("win")) {
-    os = OS.WINDOWS;
+    os = OperatingSystem.WINDOWS;
   } else if (
     platform.includes("iphone") ||
     platform.includes("ipad") ||
     platform.includes("iOS")
   ) {
-    os = OS.IOS;
+    os = OperatingSystem.IOS;
   } else if (platform.includes("mac")) {
-    os = OS.MAC;
+    os = OperatingSystem.MACOS;
   } else if (platform.includes("android")) {
-    os = OS.ANDROID;
+    os = OperatingSystem.ANDROID;
   } else {
-    os = OS.OTHER;
+    os = OperatingSystem.UNDETERMINED;
   }
   return os;
 }
@@ -233,8 +233,12 @@ export function getGeoLocation() {
   });
 }
 
+export function detectTouchDevice() {
+  return window.matchMedia("(hover: none)").matches;
+}
+
 export function resolveHoverState(event: MouseEvent | FocusEvent) {
-  const isTouchDevice = window.matchMedia("(hover: none)").matches;
+  const isTouchDevice = detectTouchDevice();
   return (
     !isTouchDevice && (event.type === "mouseover" || event.type === "focus")
   );

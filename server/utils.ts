@@ -1,35 +1,5 @@
+import { extractProduct } from "$lib/shared/utils/utils";
 import { performAdminQuery, performMasterQuery } from "./surrealHelpers";
-
-export function extractProduct(host: string) {
-  const domain = host.split(/\.com|\.org|\.io|\.run/)[0];
-  const parts = domain.split(".");
-  const product = parts[parts.length - 1];
-  const subdomain = parts[parts.length - 2];
-  const env = resolveEnv(subdomain);
-  return { product, env };
-}
-
-function resolveEnv(subdomain: string) {
-  if (!subdomain || subdomain.includes("landing")) {
-    return "landing";
-  } else if (subdomain.includes("dev")) {
-    return "dev";
-  } else if (subdomain.includes("pre")) {
-    return "pre";
-  } else if (
-    subdomain === "app" ||
-    subdomain === "embed" ||
-    subdomain === "ios" ||
-    subdomain === "android" ||
-    subdomain === "web" ||
-    subdomain === "www" ||
-    subdomain === "desktop"
-  ) {
-    return "live";
-  } else {
-    return "landing";
-  }
-}
 
 export async function retrieveAppData(body: any) {
   //   console.log({ body });

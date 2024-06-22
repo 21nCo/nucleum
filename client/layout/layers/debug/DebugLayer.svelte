@@ -3,8 +3,6 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore, dboVersion } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { LaunchContext } from "$lib/client/types/appStore.type";
-  import { onMount } from "svelte";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { AppEvent } from "$lib/client/types/event.enum";
@@ -14,23 +12,13 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
   import context from "$lib/client/stores/context.store";
-  let environment: string;
+  let environment: string = $appStore.env;
   let isShowDebugOverlay: boolean = false;
   let isShowLogs: boolean = false;
   let isDboUpdateInProgress: boolean = false;
   let storageQuota: number | undefined;
   let storageUsage: number | undefined;
   checkStorage();
-  onMount(() => {
-    if ($appStore.launchContext) {
-      if ($appStore.launchContext == LaunchContext.PREVIEW)
-        environment = "Preview";
-      else if ($appStore.launchContext == LaunchContext.DEV)
-        environment = "Dev";
-      else if ($appStore.launchContext == LaunchContext.EMBED)
-        environment = "Embed";
-    }
-  });
   function checkStorage() {
     try {
       navigator.storage.estimate().then((estimate) => {
@@ -58,7 +46,13 @@
       label="Context"
       value={` isEmbed: ${$context.isEmbed}, isSheet: ${$context.isSheet}, embed: ${$context.embed}`}
     />
-    <DebugInfoItem label="Host" value={window.location.host} />
+    <DebugInfoItem
+      label="Host"
+      value={"host: " +
+        window.location.host +
+        " protocol:" +
+        window.location.protocol}
+    />
     <DebugInfoItem label="Agent" value={navigator?.userAgent} />
     <DebugInfoItem label="Path" value={window.location.pathname} />
     <DebugInfoItem

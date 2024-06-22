@@ -3,8 +3,7 @@
 <script lang="ts">
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { EmbedContext } from "$lib/client/types/appStore.type";
+  import context from "$lib/client/stores/context.store";
   export let message: string | undefined = undefined;
 </script>
 
@@ -12,7 +11,7 @@
   class="w-full h-full bg-bgs1 flex items-center justify-center fixed z-[200]"
 >
   <div class="flex items-center justify-center">
-    {#if $appStore.embedContext === EmbedContext.SHEET}
+    {#if $context.isSheet}
       <div
         class="text-fgs3 text-b3 flex flex-col gap-2 justify-center items-center"
       >

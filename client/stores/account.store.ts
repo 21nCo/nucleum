@@ -96,7 +96,7 @@ function initAccount(seed: UserAccount) {
     data: {
       userInfo: UserInformation;
       token: string;
-      refreshToken: string;
+      refreshToken?: string;
     },
     params: {
       isIgnoreRefresh?: boolean;
@@ -105,7 +105,7 @@ function initAccount(seed: UserAccount) {
   ) => {
     console.log("signing in", { data });
     localStorage.setItem("surreal-token", data.token);
-    localStorage.setItem("refresh-token", data.refreshToken);
+    localStorage.setItem("refresh-token", data.refreshToken ?? "");
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     // isOnboardingComplete.check();
     postToParent({

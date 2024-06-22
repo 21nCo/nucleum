@@ -19,7 +19,6 @@ import {
 } from "$lib/client/utils/surreal.utils";
 import {
   checkSurrealResponse,
-  extractProduct,
   generateUID,
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
@@ -386,8 +385,7 @@ async function performMutation(
  */
 async function fetchServerMutationMap() {
   const surrealDb = get(dataManager).db;
-  const appDetails = extractProduct();
-  const appName = appDetails?.product;
+  const appName = localStorage.getItem("product");
   if (!appName) return;
   let serverMutationMap: any = {};
   const response = await surrealDb.executeReadFn(

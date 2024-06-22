@@ -1,16 +1,8 @@
 import { get, writable, type Updater } from "svelte/store";
 import { goto } from "$app/navigation";
 
-import {
-  AppSkin,
-  Theme,
-  type ColorSchemeSLValues
-} from "$lib/client/types/appearance.type";
-import {
-  LaunchContext,
-  type AppStore,
-  EmbedContext
-} from "$lib/client/types/appStore.type";
+import { AppSkin, Theme } from "$lib/client/types/appearance.type";
+import type { AppStore } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
 import {
@@ -59,6 +51,7 @@ import { confirmationNotification } from "$lib/client/stores/notification.store"
 
 import { defaultAppData } from "$local/local";
 import { KeyValueStore } from "./kv.store";
+import { Embed } from "../types/context.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -586,8 +579,6 @@ export const appStore = initAppStore({
   env: "dev",
   isDebugMode,
   isExperimentalMode,
-  launchContext: LaunchContext.DEFAULT,
-  embedContext: EmbedContext.NONE,
   appData: cachedAppData ?? defaultAppData,
   currentPath: "",
   isMenuHidden: false,
@@ -745,8 +736,7 @@ function initAppStore(seed: AppStore) {
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
-    const app =
-      import.meta.env.VITE_EMBED_OAUTH_REDIRECT ?? import.meta.env.VITE_APP;
+    const app = window.location.hostname;
     let url =
       config.authorise_url +
       "?client_id=" +
@@ -759,7 +749,6 @@ function initAppStore(seed: AppStore) {
     if (config.response_mode === "form_post") {
       redirectUri =
         import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
-      // redirectUri = "https://dev.pointron.io/r/apple";
       url += "&response_mode=form_post";
     } else if (!ctx.isEmbed) {
       redirectUri = window.location.origin + "/r/" + config.oauth_slug;
@@ -775,7 +764,7 @@ function initAppStore(seed: AppStore) {
     if (!redirectUri) return;
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
-    if (ctx.isEmbed) {
+    if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
       openLink(url);
     } else {
       goto(url);
@@ -792,7 +781,7 @@ function initAppStore(seed: AppStore) {
     let latestVersion = get(appStore).appData?.version;
     try {
       if (!latestVersion) {
-        const app = import.meta.env.VITE_APP ?? window.location.hostname;
+        const app = window.location.hostname;
         if (!app) return;
         latestVersion = await new Persistence().getLatestAppVersion(app);
       }

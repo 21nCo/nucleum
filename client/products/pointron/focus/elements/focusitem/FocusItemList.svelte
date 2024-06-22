@@ -7,11 +7,8 @@
   import { onDestroy, onMount } from "svelte";
   import FocusItem from "./FocusItem.svelte";
   import AddGoal from "./AddGoal.svelte";
-  import AddTask from "./AddTask.svelte";
   import { appStore, dragAndDropStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
   import { handleFocusItemsDND } from "$lib/client/utils/dragDrop";
-  import { LaunchContext } from "$lib/client/types/appStore.type";
   import { pointronEvents } from "$lib/client/products/pointron/pointron.store";
   import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
   import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
@@ -21,6 +18,8 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   export let isInEditMode: boolean = false;
   let items: any[] = [];
   let goalEntry: string = "";
@@ -61,9 +60,8 @@
   }
   function onBlur() {
     isFocusingAddGoal = false;
-    //to fix the bug of iOS keyboard displacing the web app in WebView
-    if ($appStore.launchContext === LaunchContext.EMBED)
-      appStore.gotoPath("/focus");
+    //TODO - this is Workaround - to fix the bug of iOS keyboard displacing the web app in WebView
+    if ($context.embed === Embed.HANDSET) appStore.gotoPath("/focus");
   }
   function onfocus() {
     isFocusingAddGoal = true;

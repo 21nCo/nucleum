@@ -19,7 +19,7 @@ import { AppEvent } from "../types/event.enum";
 import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
-import OAuthRedirect from "../components/settings/account/OAuthRedirect.svelte";
+import OAuthRedirect from "../components/oauth/OAuthRedirect.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
 
 export const globalActions: IAction[] = [

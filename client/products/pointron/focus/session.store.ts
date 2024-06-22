@@ -36,7 +36,6 @@ import {
   scheduledNotifications,
   fullPageLoadingScreen
 } from "$lib/client/stores/notification.store";
-import { LaunchContext } from "$lib/client/types/appStore.type";
 import {
   customColor,
   retrieveCurrentColors
@@ -57,6 +56,7 @@ import { SessionType } from "$lib/client/products/pointron/logs/log.type";
 import { pointLogStore } from "$lib/client/products/pointron/logs/log.store";
 import { NodeType } from "$lib/client/types/memotron/node.type";
 import { FocusPersistence } from "./focus.persistence";
+import context from "$lib/client/stores/context.store";
 const focusPersistance = new FocusPersistence();
 export const windowClickEvent = writable(null);
 
@@ -228,10 +228,7 @@ function initSessionStore(seed: SessionStore) {
     clearInterval(idleTimer);
   };
   const startSession = async (n: SessionStore) => {
-    if (
-      get(appStore).launchContext != LaunchContext.EMBED &&
-      Notification.permission !== "granted"
-    ) {
+    if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
     const sessionId = generateSessionId(new Date().getTime());

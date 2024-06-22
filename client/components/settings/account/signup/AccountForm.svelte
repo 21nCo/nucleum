@@ -12,7 +12,7 @@
   import { isValidEmail } from "$lib/client/utils/text.utils";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
-  import OAuthButtons from "./OAuthButtons.svelte";
+  import OAuthButtons from "../../../oauth/OAuthButtons.svelte";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import account from "$lib/client/stores/account.store";
   import view from "$lib/client/stores/view.store";

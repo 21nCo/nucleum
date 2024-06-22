@@ -1,11 +1,11 @@
-import { performApiCall } from "./network.utils";
+import { performApiCall } from "$lib/client/utils/network.utils";
 
 export async function handleOAuthRedirection(
   slug: string,
   code: string | null
 ) {
   if (!slug || !code) return;
-  const app = import.meta.env.VITE_APP ?? window.location.hostname;
+  const app = window.location.hostname;
   const verifier = sessionStorage.getItem("verifier");
   const body = {
     slug,

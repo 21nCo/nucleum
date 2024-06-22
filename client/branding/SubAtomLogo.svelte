@@ -3,7 +3,7 @@
   export let subatom: string | undefined = undefined;
   export let size: Size = Size.md;
   if (!subatom) {
-    subatom = localStorage.getItem("subatom") ?? "tidigit";
+    subatom = localStorage.getItem("product") ?? "tidigit";
   }
   let height = size === Size.md ? 61 : size === Size.sm ? 20 : Size.xs ? 4 : 61;
 </script>

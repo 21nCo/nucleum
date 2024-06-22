@@ -120,7 +120,7 @@ export class Persistence {
   };
   fetchAppData = async () => {
     try {
-      const app = import.meta.env.VITE_APP ?? window.location.hostname;
+      const app = window.location.hostname;
       // console.log({ app });
       if (!app) return;
       let response = await performApiCall("utils/n/retrieveAppData", "POST", {
