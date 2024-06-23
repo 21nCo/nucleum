@@ -164,8 +164,16 @@
   async function initializeData(isLiteMode: boolean = false) {
     if (!isLiteMode) {
       //todo - check if the saved timezone is different from current user timezone
-      const appData = await new Persistence().fetchAppData();
-      appStore.loadAppData(appData);
+      try {
+        const appData = await new Persistence().fetchAppData();
+        if (!appData) {
+          appStore.gotoErrorPage("App data not found");
+        }
+        appStore.loadAppData(appData);
+      } catch (e) {
+        logger.logError(e);
+        appStore.gotoErrorPage(e);
+      }
     }
     if ($account.isLoggedIn)
       await dataManager.initialize(

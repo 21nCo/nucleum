@@ -132,7 +132,7 @@ export class Persistence {
         return jsonValue;
       }
     } catch (err) {
-      logger.logError(err);
+      throw err;
     }
   };
   /**

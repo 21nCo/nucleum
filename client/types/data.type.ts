@@ -121,6 +121,7 @@ export interface CacheSource {
     newMap: Record<string, number>,
     existingMap?: Record<string, number>
   ) => Promise<Record<string, number>>;
+  clearCache: () => void;
 }
 
 /**

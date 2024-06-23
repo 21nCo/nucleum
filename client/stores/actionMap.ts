@@ -6,7 +6,7 @@ import {
   ActionType,
   ContentType
 } from "$lib/client/types/action.type";
-import NotFound from "../components/error/PageError.svelte";
+import PageError from "../components/error/PageError.svelte";
 import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
@@ -27,7 +27,14 @@ export const globalActions: IAction[] = [
   {
     action: "404",
     type: ActionType.META_PAGE,
-    component: NotFound
+    component: PageError,
+    isMenuHidden: true
+  },
+  {
+    action: "error",
+    type: ActionType.META_PAGE,
+    component: PageError,
+    isMenuHidden: true
   },
   {
     action: "offline",

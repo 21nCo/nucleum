@@ -34,7 +34,10 @@
         $page.params.slug,
         codeQueryParam
       );
-      if (!response) return;
+      if (!response) {
+        appStore.gotoErrorPage("OAuth failure");
+        return;
+      }
       const json = await response.json();
       debugMessage = `isEmbed: ${$context.isEmbed} and os: ${$context.os}`;
       handleOAuthCompletion(json);
@@ -72,27 +75,26 @@
         goto($appStore.product + "://oauthsignin" + "?token=" + token);
       }
     } catch (err) {
-      goto("error");
+      appStore.gotoErrorPage(debugMessage);
     }
   }
-  function handleMacOSEmbedRedirection(token: string, isSignup: boolean) {
+  async function handleMacOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
       debugMessage = "macos - embed redirection";
-      goto(
+      await goto(
         (import.meta.env.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
           "?token=" +
           token +
           "&signup=" +
-          isSignup +
-          "&debug=true"
+          isSignup
       );
     } catch (err) {
       debugMessage = "macos - embed redirection error" + err;
-      goto("error");
+      appStore.gotoErrorPage(debugMessage);
     }
   }
 </script>
 
-<!-- <AppLoadingView message="Signing you in" /> -->
-<AppLoadingView message={debugMessage} />
+<AppLoadingView message="Signing you in" />
+<!-- <AppLoadingView message={debugMessage} /> -->

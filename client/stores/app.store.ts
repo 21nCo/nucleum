@@ -647,6 +647,10 @@ function initAppStore(seed: AppStore) {
     if (params) goto(path, params);
     else goto(path);
   };
+  const gotoErrorPage = (err: any) => {
+    //TODO - log error, show error code on error page
+    gotoPath("/error");
+  };
   const gotoResource = async (item: Item, id: string, params: any = null) => {
     const path = `/${item}/${id}`;
     update((n: AppStore) => {
@@ -740,7 +744,7 @@ function initAppStore(seed: AppStore) {
       ? import.meta.env.VITE_HOST
       : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? "https://" + (import.meta.env.VITE_OAUTH_REDIRECT ?? host)
+      ? import.meta.env.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
     let url =
@@ -996,6 +1000,7 @@ function initAppStore(seed: AppStore) {
       });
     },
     gotoPath,
+    gotoErrorPage,
     gotoResource,
     resolveComponent,
     resolveComponentFromPath,

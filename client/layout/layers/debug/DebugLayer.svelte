@@ -4,7 +4,7 @@
   import { appStore, dboVersion } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import DebugInfoItem from "./DebugInfoItem.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { AppEvent } from "$lib/client/types/event.enum";
   import { logger } from "$lib/client/stores/log.store";
   import appearance from "$lib/client/stores/appearance.store";
@@ -13,6 +13,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import context from "$lib/client/stores/context.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { dataManager } from "$lib/client/persistence/dataManager";
+  import account from "$lib/client/stores/account.store";
   export let isShowAsPage: boolean = false;
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
@@ -31,6 +33,12 @@
     } catch (e) {
       console.log("Storage estimate not supported");
     }
+  }
+  function clearCache() {
+    localStorage.clear();
+    sessionStorage.clear();
+    $dataManager.cacheSource.clearCache();
+    account.signOut();
   }
 </script>
 
@@ -124,10 +132,10 @@
     <Button
       width="w-full"
       icon="trash"
-      on:click={() => {
-        localStorage.clear();
-      }}
-      label="Clear cache"
+      type={ButtonVariant.DANGER}
+      style={ButtonStyle.OUTLINED}
+      on:click={clearCache}
+      label="Clear cache and logout"
     />
     {#if !isShowAsPage}
       <Button
