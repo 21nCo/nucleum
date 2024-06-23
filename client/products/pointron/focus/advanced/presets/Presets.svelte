@@ -29,7 +29,9 @@
     showEditor();
   }
   function showEditor(id: string = "") {
-    appStore.runAction(PointronEventEnum.EDIT_PRESET, { id });
+    appStore.runAction(PointronEventEnum.EDIT_PRESET, {
+      componentParams: { id }
+    });
   }
 </script>
 

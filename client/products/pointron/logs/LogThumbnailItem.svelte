@@ -55,7 +55,9 @@
   }
 
   async function handleDelete(event: MouseEvent) {
-    appStore.runAction(PointronEventEnum.DELETE_SESSION, { id: log.id });
+    appStore.runAction(PointronEventEnum.DELETE_SESSION, {
+      componentParams: { id: log.id }
+    });
     event.stopPropagation();
   }
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {

@@ -160,7 +160,9 @@
   }
 
   function onImportButtonClick(id: OtherApps) {
-    appStore.runAction(PointronEventEnum.IMPORT_APP_DATA, { id });
+    appStore.runAction(PointronEventEnum.IMPORT_APP_DATA, {
+      componentParams: { id }
+    });
   }
   async function refreshImportHistory() {
     let response = await new PointronPersistence().fetchImportHistory();

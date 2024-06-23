@@ -39,7 +39,9 @@
           value: "share",
           icon: "share",
           callback: () => {
-            appStore.runAction(MemotronEvent.PUBLISH, { id: $node.id });
+            appStore.runAction(MemotronEvent.PUBLISH, {
+              componentParams: { id: $node.id }
+            });
           }
         },
         {
@@ -103,7 +105,9 @@
     tooltip="Serendipity"
     icon="light-bulb"
     on:click={() => {
-      appStore.runAction(MemotronEvent.SERENDIPITY, { id: $node.id });
+      appStore.runAction(MemotronEvent.SERENDIPITY, {
+        componentParams: { id: $node.id }
+      });
     }}
   />
   {#if !Boolean(backlinksRendered)}

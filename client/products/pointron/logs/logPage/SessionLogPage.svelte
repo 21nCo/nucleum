@@ -102,7 +102,9 @@
         icon: "trash",
         variant: ButtonVariant.DANGER,
         callback: async () => {
-          appStore.runAction(PointronEventEnum.DELETE_SESSION, { id: log.id });
+          appStore.runAction(PointronEventEnum.DELETE_SESSION, {
+            componentParams: { id: log.id }
+          });
         }
       }}
       secondaryAction={{ label: "Close" }}

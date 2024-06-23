@@ -4,17 +4,26 @@ import type { ModalParams } from "./popup.type";
 
 export type IAction = {
   action: string;
-  type?: ActionType;
+  type: ActionType;
+  isMeta?: boolean;
   path?: string;
-  link?: string;
   fn?: (params?: any) => Promise<any>;
   cmdBarPreCondition?: () => void;
   component?: any;
   label?: string;
   cmdLabel?: string | string[];
   icon?: string;
+  /**
+   * @deprecated
+   */
   sections?: string[];
+  /**
+   * @deprecated
+   */
   pagePaint?: PaintType;
+  /**
+   * @deprecated
+   */
   thinModeBehavior?: ThinModeBehavior;
   contentType?: ContentType;
   associatedPlayer?: string;
@@ -34,14 +43,21 @@ export type IAction = {
 
 export enum ActionType {
   PAGE = "PAGE",
+  /**
+   * Link action will open a link in a new tab if the context is web or
+   * will open in app browser if the context is embed.
+   */
   LINK = "LINK",
+  /**
+   * Modal action will open a modal.
+   */
   MODAL = "MODAL",
   INLINE = "INLINE",
+  /**
+   * Function action will execute a function.
+   */
   FUNCTION = "FUNCTION",
-  META = "META",
-  META_MODAL = "META_MODAL",
   CONFIRMATION = "CONFIRMATION_MODAL",
-  META_PAGE = "META_PAGE",
   SEARCH_CMD = "SEARCH_CMD"
 }
 

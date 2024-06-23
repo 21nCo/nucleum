@@ -5,99 +5,73 @@
   import CpThumbnail from "../settings/CPThumbnail.svelte";
   import AppNameWithVersion from "../settings/about/AppNameWithVersion.svelte";
   import ProductInfoFooter from "../settings/about/ProductInfoFooter.svelte";
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-
-  import { ActionType, type IAction } from "$lib/client/types/action.type";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import type { IAction } from "$lib/client/types/action.type";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { isValidString } from "$lib/client/utils/text.utils";
+  import { formatDate } from "$lib/client/utils/time.utils";
   let pageAction: IAction | null = null;
-  let config = [
-    {
-      section: "main",
-      children: [
-        "tutorial",
-        "productguide",
-        "chat",
-        "call",
-        "faqs",
-        "downloads"
-      ]
-    },
-    {
-      section: "Product direction",
-      children: ["changelog", "roadmap", "feedback", "requestfeature", "report"]
-    },
-    {
-      section: "Community",
-      children: ["discord", "opencollective", "twitter"]
-    },
-    {
-      section: "Learn more",
-      children: ["about", "privacy", "git", "credits"]
-    }
-  ];
-  function resolveAction(slug: string) {
-    console.log(slug);
+  $: config = $appStore?.appData?.help;
+  async function runAction(slug: string) {
     if (!slug) return;
-    const result = appStore.resolveComponent(slug);
+    const result = await appStore.runAction(slug, {
+      isReturnIfComponent: true
+    });
     if (!result) return;
-    if (result.type === ActionType.FUNCTION) {
-      result.fn?.();
-      if (slug === "chat") modalEvent.hideSpecific(AppEvent.HELP);
-    } else if (result?.type === ActionType.LINK) {
-      appStore.runNavigationAction(result);
-    } else {
-      pageAction = result;
-    }
+    pageAction = result;
   }
 </script>
 
-<div class="flex flex-col gap-6 w-full h-full p-8 pb-12">
-  {#if pageAction}
-    <div class="flex flex-col gap-1 h-full">
-      <NavigationHeader
-        label={pageAction.label ?? ""}
-        backCallback={() => {
-          pageAction = null;
-        }}
-      />
-      <ComponentResolver action={pageAction} />
-    </div>
-  {:else}
-    <div class="flex w-full justify-between">
-      <Text content="Help center" style={TextStyle.PAGE_HEADING} />
-      <span class="flex flex-col items-end text-b3 text-fgs3">
-        <AppNameWithVersion />
-        <div>Updated 4 days ago</div>
-      </span>
-    </div>
-    <div class="flex flex-col gap-12 w-full flex-grow overflow-auto py-6">
-      {#each config as section}
-        <div class="flex flex-col gap-2 items-start">
-          {#if section.section != "main"}
-            <!-- <Text content={section.section} style={TextStyle.PANEL_HEADING} /> -->
-            <div class="text-fgs3 text-b2 font-medium">{section.section}</div>
-          {/if}
-          <div class="flex flex-wrap gap-3">
-            {#if section.children}
-              {#each section.children as item}
-                <CpThumbnail
-                  orientation={Orientation.Vertical}
-                  action={item}
-                  width="w-40"
-                  on:click={() => {
-                    resolveAction(item);
-                  }}
-                />
-              {/each}
-            {/if}
+{#if config && config?.length > 0}
+  <div class="flex flex-col gap-6 w-full h-full p-8 pb-12">
+    {#if pageAction}
+      <div class="flex flex-col gap-1 h-full">
+        <NavigationHeader
+          label={pageAction.label ?? ""}
+          backCallback={() => {
+            pageAction = null;
+          }}
+        />
+        <ComponentResolver action={pageAction} />
+      </div>
+    {:else}
+      <div class="flex w-full justify-between">
+        <Text content="Help center" style={TextStyle.PAGE_HEADING} />
+        <span class="flex flex-col items-end text-b3 text-fgs3">
+          <AppNameWithVersion />
+          <div>
+            {isValidString($appStore?.appData?.updated)
+              ? "Updated: " + formatDate(new Date($appStore?.appData?.updated))
+              : ""}
           </div>
-        </div>
-      {/each}
-      <ProductInfoFooter />
-    </div>
-  {/if}
-</div>
+        </span>
+      </div>
+      <div class="flex flex-col gap-12 w-full flex-grow overflow-auto py-6">
+        {#each config as section}
+          <div class="flex flex-col gap-2 items-start">
+            {#if section.section != "main"}
+              <!-- <Text content={section.section} style={TextStyle.PANEL_HEADING} /> -->
+              <div class="text-fgs3 text-b2 font-medium">{section.section}</div>
+            {/if}
+            <div class="flex flex-wrap gap-3">
+              {#if section.children}
+                {#each section.children as item}
+                  <CpThumbnail
+                    orientation={Orientation.Vertical}
+                    action={item}
+                    width="w-40"
+                    on:click={() => {
+                      runAction(item);
+                    }}
+                  />
+                {/each}
+              {/if}
+            </div>
+          </div>
+        {/each}
+        <ProductInfoFooter />
+      </div>
+    {/if}
+  </div>
+{/if}

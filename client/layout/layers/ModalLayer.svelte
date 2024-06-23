@@ -104,7 +104,7 @@
   function resolvePop(resourceId: string) {
     if (resourceId && resourceId.split(":").length > 1) {
       const slug = resourceId.split(":")[0];
-      const action = appStore.resolveComponent(slug);
+      const action = appStore.resolveAction(slug);
       if (!action) return;
       pop = {
         path: slug,

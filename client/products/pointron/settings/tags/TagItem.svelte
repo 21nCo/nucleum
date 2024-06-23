@@ -8,7 +8,9 @@
     if (isAddNew) {
       appStore.runAction(PointronEventEnum.ADD_TAG);
     } else {
-      appStore.runAction(PointronEventEnum.EDIT_TAG, { id });
+      appStore.runAction(PointronEventEnum.EDIT_TAG, {
+        componentParams: { id }
+      });
     }
   }
 </script>

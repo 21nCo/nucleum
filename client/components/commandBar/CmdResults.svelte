@@ -72,11 +72,7 @@
       (action) =>
         action.label &&
         !action.isInactive &&
-        !(
-          action.type === ActionType.META ||
-          action.type === ActionType.META_MODAL ||
-          action.type === ActionType.META_PAGE
-        ) &&
+        !action.isMeta &&
         (action.cmdBarPreCondition ? action.cmdBarPreCondition() : true)
     );
     primitive.forEach((action) => {

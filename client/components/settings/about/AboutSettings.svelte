@@ -8,7 +8,7 @@
   let size = Size.sm;
 </script>
 
-<div class="flex flex-col gap-8 p-2 text-b2">
+<div class="flex flex-col gap-8 p-2 text-b2 text-left">
   {#if $appStore.appData.about}
     <div>
       {@html $appStore.appData.about}

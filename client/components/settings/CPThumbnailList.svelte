@@ -29,7 +29,7 @@
           action={item}
           setActiveByPath={true}
           on:click={() => {
-            appStore.resolveNavigationAction(item);
+            appStore.runAction(item);
           }}
         />
         {#if orientation === Orientation.Horizontal}

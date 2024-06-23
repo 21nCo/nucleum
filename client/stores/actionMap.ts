@@ -1,13 +1,9 @@
-import AppearanceSettings from "$lib/client/components/settings/appearance/AppearanceSettings.svelte";
 import {
-  ThinModeBehavior,
-  PaintType,
   type IAction,
   ActionType,
   ContentType
 } from "$lib/client/types/action.type";
 import PageError from "../components/error/PageError.svelte";
-import OpenPreviewMode from "../components/settings/appearance/OpenPreviewMode.svelte";
 import DebugLogs from "../components/error/DebugLogs.svelte";
 import Offline from "../components/error/Offline.svelte";
 import Signup from "../components/settings/account/Signup.svelte";
@@ -19,83 +15,69 @@ import { AppEvent } from "../types/event.enum";
 import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
-import OAuthRedirect from "../components/oauth/OAuthRedirect.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
 import DebugPage from "../layout/layers/debug/DebugPage.svelte";
+import modalEvent from "../components/modal/modal.store";
 
 export const globalActions: IAction[] = [
   {
     action: "404",
-    type: ActionType.META_PAGE,
+    type: ActionType.PAGE,
+    isMeta: true,
     component: PageError,
     isMenuHidden: true
   },
   {
     action: "error",
-    type: ActionType.META_PAGE,
+    type: ActionType.PAGE,
+    isMeta: true,
     component: PageError,
     isMenuHidden: true
   },
   {
     action: "offline",
-    type: ActionType.META_PAGE,
+    type: ActionType.PAGE,
+    isMeta: true,
     component: Offline
   },
   {
     action: "ext-login",
-    type: ActionType.META_PAGE,
+    type: ActionType.PAGE,
+    isMeta: true,
     component: ExtensionLoginStatusPage,
     isMenuHidden: true
   },
   {
     action: "signup",
     component: Signup,
-    type: ActionType.META_PAGE,
+    type: ActionType.PAGE,
+    isMeta: true,
     isMenuHidden: true
   },
   {
     action: "debuglogs",
     icon: "code",
-    type: ActionType.META_PAGE,
+    type: ActionType.PAGE,
+    isMeta: true,
     component: DebugLogs
   },
-  {
-    label: "Appearance",
-    action: "settings/appearance",
-    component: AppearanceSettings,
-    sections: ["openPreviewMode", "basics", "theme", "accessibility"],
-    pagePaint: PaintType.YSTACK,
-    isInactive: true,
-    thinModeBehavior: ThinModeBehavior.JUMP_TO_PARENT
-  },
-  {
-    action: "openPreviewMode",
-    label: "Open Preview Mode",
-    path: "settings/appearance/openPreviewMode",
-    pagePaint: PaintType.JUMP_TO_PARENT,
-    component: OpenPreviewMode,
-    type: ActionType.META,
-    thinModeBehavior: ThinModeBehavior.HIDE
-  },
-
   {
     action: "productguide",
     label: "Product guide",
     icon: "academic-cap",
-    link: "productguide"
+    type: ActionType.LINK
   },
   {
     action: "tutorial",
     label: "Start tutorial",
     icon: "play",
-    link: "productguide"
+    type: ActionType.LINK
   },
   {
     action: "downloads",
     label: "Downloads",
     icon: "download",
-    type: ActionType.LINK,
-    link: "downloads"
+    type: ActionType.LINK
   },
   {
     action: "chat",
@@ -103,6 +85,8 @@ export const globalActions: IAction[] = [
     icon: "chatleftright",
     type: ActionType.FUNCTION,
     fn: async () => {
+      modalEvent.hideSpecific(AppEvent.HELP);
+      modalEvent.hideSpecific(AppEvent.SETTINGS);
       setTimeout(() => {
         if ((window as any).Intercom) {
           (window as any).Intercom("boot", {
@@ -113,36 +97,37 @@ export const globalActions: IAction[] = [
           console.error("Intercom is not defined");
         }
       }, 300);
-    },
-    link: "chat"
+    }
   },
   {
     action: "call",
     label: "Book a call",
     icon: "video-camera",
-    type: ActionType.LINK,
-    link: "call"
+    type: ActionType.LINK
   },
   {
     action: "faqs",
     label: "FAQs",
     icon: "help",
-    type: ActionType.LINK,
-    link: "faqs"
+    type: ActionType.LINK
   },
   {
     action: "discord",
     label: "Join us on discord",
     icon: "users",
-    type: ActionType.LINK,
-    link: "discord"
+    type: ActionType.LINK
+  },
+  {
+    action: "opencollective",
+    label: "Support us",
+    icon: "gift",
+    type: ActionType.LINK
   },
   {
     action: "twitter",
     label: "Share on socials",
     icon: "megaphone",
-    type: ActionType.META,
-    link: "discord"
+    type: ActionType.LINK
   },
   {
     action: "credits",
@@ -214,31 +199,27 @@ export const globalActions: IAction[] = [
     action: "feedback",
     label: "Give feedback",
     icon: "chat-bubble-bottom-center",
-    type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
-    link: "tallyFeedback"
+    type: ActionType.LINK
   },
   {
     action: "requestfeature",
     label: "Request a feature",
     icon: "light-bulb",
     type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
-    link: "tallyFeedback"
+    isInactive: true
   },
   {
     action: "report",
     label: "Report an issue",
     icon: "flag",
     type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
-    link: "tallyFeedback"
-    //"gathery:form:id"
+    isInactive: true
   },
   {
     action: AppEvent.MOBILE_TOAST,
     component: ToastModalPortrait,
-    type: ActionType.META_MODAL,
+    type: ActionType.MODAL,
+    isMeta: true,
     modalParams: {
       layout: {
         size: Size.xs
@@ -248,7 +229,8 @@ export const globalActions: IAction[] = [
   {
     action: AppEvent.EDIT_MODE,
     fn: async () => isInEditMode.toggle(),
-    type: ActionType.META,
+    type: ActionType.FUNCTION,
+    isMeta: true,
     label: "Edit mode"
   },
   {
@@ -269,7 +251,8 @@ export const globalActions: IAction[] = [
     action: AppEvent.CMD,
     label: "Command bar",
     component: CommandBar,
-    type: ActionType.META_MODAL,
+    type: ActionType.MODAL,
+    isMeta: true,
     modalParams: {
       layout: {
         size: Size.md,
@@ -281,7 +264,8 @@ export const globalActions: IAction[] = [
   {
     action: AppEvent.MANUAL_RUN_DBO,
     component: ManualRunDbo,
-    type: ActionType.META_MODAL,
+    type: ActionType.MODAL,
+    isMeta: true,
     isMenuHidden: true,
     modalParams: {
       layout: {
@@ -296,11 +280,6 @@ export const globalActions: IAction[] = [
     fn: async () => {
       appStore.toggleSidebar();
     }
-  },
-  {
-    action: "oauthredirect",
-    type: ActionType.PAGE,
-    component: OAuthRedirect
   },
   {
     action: "troubleshoot",

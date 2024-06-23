@@ -75,7 +75,9 @@ function initToastStore() {
       return n;
     });
     if (get(view).isPortrait) {
-      appStore.runAction(AppEvent.MOBILE_TOAST, { id: event.id });
+      appStore.runAction(AppEvent.MOBILE_TOAST, {
+        componentParams: { id: event.id }
+      });
     } else {
       timer = setTimeout(() => {
         update((n: Toast[]) => {

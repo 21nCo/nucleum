@@ -4,7 +4,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import CpThumbnail from "../settings/CPThumbnail.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-  import { ActionType, type IAction } from "$lib/client/types/action.type";
+  import type { IAction } from "$lib/client/types/action.type";
   import { onMount } from "svelte";
   import type { AppStore } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
@@ -27,18 +27,13 @@
       }
     });
   });
-  function resolveAction(slug: string) {
-    console.log(slug);
+  async function runAction(slug: string) {
     if (!slug) return;
-    const result = appStore.resolveComponent(slug);
+    const result = await appStore.runAction(slug, {
+      isReturnIfComponent: true
+    });
     if (!result) return;
-    if (result.type === ActionType.FUNCTION) {
-      result.fn?.();
-    } else if (result?.type === ActionType.LINK) {
-      appStore.runNavigationAction(result);
-    } else {
-      pageAction = result;
-    }
+    pageAction = result;
   }
 </script>
 
@@ -51,7 +46,7 @@
       context="modal"
       parentBackgroundIndex={2}
       on:click={() => {
-        resolveAction(AppEvent.ACCOUNT);
+        runAction(AppEvent.ACCOUNT);
       }}
     />
     {#if config}
@@ -80,7 +75,7 @@
                     width="w-40"
                     on:click={() => {
                       selected = item;
-                      resolveAction(item);
+                      runAction(item);
                     }}
                   />
                 {/each}

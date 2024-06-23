@@ -664,47 +664,57 @@ function initAppStore(seed: AppStore) {
     if (params) goto(path, params);
     else goto(path);
   };
-  const resolveComponent = (action: string) => {
-    let component = get(appStore).actions.find(
-      (x) => x.action.toLowerCase() == action.toLowerCase()
+  const resolveAction = (slug: string) => {
+    let action = get(appStore).actions.find(
+      (x) => x.action.toLowerCase() == slug.toLowerCase()
     );
-    if (component) return component;
+    if (action) return action;
     return null;
   };
-  const runAction = async (
-    action: string,
-    componentParams: any = undefined
+  const runAction = (
+    slug: string,
+    params: { componentParams?: any; isReturnIfComponent?: boolean } = {
+      componentParams: undefined,
+      isReturnIfComponent: false
+    }
   ) => {
-    let component = resolveComponent(action);
-    if (!component) {
+    let action = resolveAction(slug);
+    if (!action) {
       gotoPath("404");
       return;
     }
-    if (
-      component.type === ActionType.MODAL ||
-      component.type === ActionType.META_MODAL
-    ) {
+    if (action.type === ActionType.LINK) {
+      const url = get(appStore).appData.urls[action.action];
+      if (!url) return;
+      if (url) return openLink(url);
+    } else if (action.type === ActionType.FUNCTION) {
+      if (!action.fn) return;
+      return action.fn(params?.componentParams);
+    } else if (action.type === ActionType.CONFIRMATION && action.confirmation) {
+      confirmationNotification.notify(action.confirmation);
+    } else if (params.isReturnIfComponent) {
+      return action;
+    } else if (action.type === ActionType.MODAL) {
       modalEvent.notify({
-        path: component.action,
+        path: action.action,
         isShow: true,
-        componentParams,
-        ...component.modalParams
+        componentParams: params?.componentParams,
+        ...action.modalParams
       });
-    } else if (
-      component.type === ActionType.CONFIRMATION &&
-      component.confirmation
-    ) {
-      confirmationNotification.notify(component.confirmation);
-    } else if (component.fn) return await component.fn(componentParams);
-    else resolveNavigationAction(action);
+    } else if (action.component) {
+      gotoPath("/" + (action.path ?? action.action));
+      return;
+    }
   };
   const openLink = (url: string) => {
+    console.log("opening link", url);
+    const ctx = get(context);
     if (!url) return;
     if (!url.includes("http")) {
       gotoPath(url);
       return;
     }
-    if (get(context).isEmbed) {
+    if (ctx.isEmbed) {
       postToParent({
         link: url
       });
@@ -714,23 +724,6 @@ function initAppStore(seed: AppStore) {
         win.focus();
       }
     }
-  };
-  const runNavigationAction = (action: IAction) => {
-    if (action.type === ActionType.LINK && action.link) {
-      const url = get(appStore).appData.urls[action.link];
-      if (url) openLink(url);
-    } else if (action.component) {
-      gotoPath("/" + (action.path ?? action.action));
-      return;
-    }
-  };
-  const resolveNavigationAction = (action: string) => {
-    let component = resolveComponent(action);
-    if (!component) {
-      gotoPath("404");
-      return;
-    }
-    runNavigationAction(component);
   };
 
   const initiateOAuth2Flow = (provider: IdentityProvider) => {
@@ -1002,12 +995,10 @@ function initAppStore(seed: AppStore) {
     gotoPath,
     gotoErrorPage,
     gotoResource,
-    resolveComponent,
+    resolveAction,
     resolveComponentFromPath,
     openLink,
     runAction,
-    resolveNavigationAction,
-    runNavigationAction,
     initiateOAuth2Flow,
     checkForUpdates,
     toggleSearchParam,

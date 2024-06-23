@@ -28,7 +28,7 @@
         items = x.appMenu.filter((item) => item !== "cp");
       }
       items.forEach((action: string) => {
-        const currentPage = appStore.resolveComponent(action);
+        const currentPage = appStore.resolveAction(action);
         if (currentPage) {
           pages.push(currentPage);
         }
@@ -60,7 +60,7 @@
           (layoutContext === LayoutContext.MINIMIZED && isHovered)}
         on:click={() => {
           selected = index;
-          appStore.resolveNavigationAction(item.action);
+          appStore.runAction(item.action);
         }}
         {item}
       />

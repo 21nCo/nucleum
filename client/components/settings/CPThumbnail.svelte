@@ -2,6 +2,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
+  import { ActionType } from "$lib/client/types/action.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { abg, bg, cn } from "$lib/client/utils/ui.utils";
   export let action: string;
@@ -10,7 +11,7 @@
   export let parentBackgroundIndex: number = 1;
   export let isActive: boolean = false;
   export let setActiveByPath: boolean = false;
-  let component = appStore.resolveComponent(action);
+  let component = appStore.resolveAction(action);
   console.log({ component, action });
   $: if (setActiveByPath)
     isActive = $view.currentPath === "/" + component?.path;
@@ -40,7 +41,7 @@
         <div>{component.label}</div>
       </div>
       <Icon
-        icon={component.link ? "link" : "chevright"}
+        icon={component.type === ActionType.LINK ? "link" : "chevright"}
         class={cn({
           "stroke-abg": isActive
         })}

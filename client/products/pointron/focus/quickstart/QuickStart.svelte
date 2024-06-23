@@ -99,7 +99,9 @@
         : ""}
       on:click={() => {
         appStore.runAction(PointronEventEnum.CREATE_EDIT_GOAL, {
-          isPinToQuickFocus: true
+          componentParams: {
+            isPinToQuickFocus: true
+          }
         });
       }}
     >

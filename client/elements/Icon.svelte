@@ -101,6 +101,7 @@
   import Eye from "../icons/Eye.svelte";
   import AltText from "../icons/AltText.svelte";
   import { cn } from "../utils/ui.utils";
+  import Gift from "../icons/Gift.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -462,6 +463,8 @@
         <Eye {variant} />
       {:else if icon === "alt-text"}
         <AltText />
+      {:else if icon === "gift"}
+        <Gift />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

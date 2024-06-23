@@ -123,7 +123,9 @@
             on:click={() => {
               if (context === "journal") {
                 appStore.runAction(PointronEventEnum.SESSION_LOG_MODAL, {
-                  id: log.id
+                  componentParams: {
+                    id: log.id
+                  }
                 });
                 return;
               }

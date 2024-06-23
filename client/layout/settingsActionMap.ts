@@ -13,7 +13,7 @@ import { AppEvent } from "../types/event.enum";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 
-const settings: IAction[] = [
+const settings: Partial<IAction>[] = [
   {
     action: AppEvent.SETTINGS,
     label: "Settings",
