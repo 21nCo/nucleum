@@ -82,9 +82,9 @@ export const excludedPathsForRedirectionCheck = [
   "error",
   "welcome",
   "play",
-  "r",
   "fw",
-  "ext-login"
+  "ext-login",
+  "oauth"
 ];
 
 let persistance = new Persistence();
@@ -757,7 +757,7 @@ function initAppStore(seed: AppStore) {
         import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
       url += "&response_mode=form_post";
     } else {
-      redirectUri = redirect + "/r/" + config.oauth_slug;
+      redirectUri = redirect + "/oauth/" + config.oauth_slug;
     }
     if (config.code_challenge_method) {
       //TODO generate code challenge
