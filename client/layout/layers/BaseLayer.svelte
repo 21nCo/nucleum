@@ -45,6 +45,7 @@
   } from "$lib/client/utils/browser.utils";
   import { extractProduct } from "$lib/shared/utils/utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
+  import MetadataLayer from "./MetadataLayer.svelte";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -262,7 +263,6 @@
 {#if $appStore?.appData?.isAnalyticsEnabled}
   <AnalyticsLayer />
 {/if}
-<title>{$appStore?.appData?.name ?? "Loading..."}</title>
 <div class="flex h-screen w-screen">
   <ThemeLayer>
     <slot />
@@ -272,6 +272,7 @@
   <DebugLayer />
 {/if}
 {#if $appLoadingState.isBaseLoaded}
+  <MetadataLayer />
   <ModalLayer />
   <Shortcuts />
   <MutationQueueLayer />
