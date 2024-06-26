@@ -36,7 +36,8 @@ export class ClientConstruct extends Construct {
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY, //TODO - check if needed for production
-      autoDeleteObjects: true
+      autoDeleteObjects: true,
+      versioned: true
     });
 
     siteBucket.addToResourcePolicy(
@@ -62,9 +63,15 @@ export class ClientConstruct extends Construct {
       errorResponses: [
         {
           httpStatus: 403,
-          responseHttpStatus: 403,
+          responseHttpStatus: 200,
           responsePagePath: "/index.html",
-          ttl: Duration.minutes(30)
+          ttl: Duration.minutes(0)
+        },
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: "/index.html",
+          ttl: Duration.minutes(0)
         }
       ],
       defaultBehavior: {
@@ -73,7 +80,8 @@ export class ClientConstruct extends Construct {
         }),
         compress: true,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED
       }
     });
 
