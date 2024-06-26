@@ -5,7 +5,7 @@ import { Agent, CONTEXT } from "./types/account.type";
 import {
   fetchDbDefinitionsQuery,
   initializeDatabaseAndDefinitions,
-  updateDbChangeRunStatus,
+  updateDbChangeRunStatus
 } from "./account";
 import { generateRefreshToken, generateUserToken } from "./token";
 import { retrieveAppData } from "./utils";
@@ -23,7 +23,7 @@ function frameNonSensitiveUserInfo(userInfo: {
     emailParts,
     nickName,
     profilePictureUrl,
-    joinDate,
+    joinDate
   };
 }
 
@@ -32,7 +32,7 @@ export async function generateToken(
   userInfo,
   params: { isTrusted?: boolean; isSignup?: boolean } = {
     isTrusted: false,
-    isSignup: false,
+    isSignup: false
   }
 ) {
   const nonSensitiveUserInfo = frameNonSensitiveUserInfo(userInfo);
@@ -45,7 +45,7 @@ export async function generateToken(
       userInfo: nonSensitiveUserInfo,
       token,
       refreshToken,
-      isSignup: params.isSignup ?? false,
+      isSignup: params.isSignup ?? false
     };
   } else {
     let token;
@@ -58,7 +58,7 @@ export async function generateToken(
       userInfo: nonSensitiveUserInfo,
       token,
       refreshToken,
-      isSignup: params.isSignup ?? false,
+      isSignup: params.isSignup ?? false
     };
   }
 }
@@ -86,7 +86,7 @@ export async function signup(data: any, isOAuth = false) {
   const response = await performAdminQuery(query);
   console.log("signup resp:", {
     response,
-    responseone: JSON.stringify(response[1]),
+    responseone: JSON.stringify(response[1])
   });
   if (response?.[1]?.result && response[1].result.userCount === undefined) {
     console.log("new user created, logging in");
@@ -107,7 +107,7 @@ export async function signup(data: any, isOAuth = false) {
       ...context,
       activity: "signupattempt",
       error: "user already exists",
-      email,
+      email
     });
     return response?.[1].result.userCount;
   }
@@ -183,7 +183,7 @@ export async function oauth(body: any) {
         profilePictureUrl: oAuthUserData.picture,
         sub: oAuthUserData.sub,
         context,
-        isTrusted: true,
+        isTrusted: true
       },
       true
     );
@@ -203,15 +203,21 @@ export async function oauthRedirect(
   apiUrl: string
 ) {
   console.log("oauthRedirect", { body, provider });
+  let app = "";
+  if (body.state.includes("embed.")) {
+    app = body.state.split("embed.")[1];
+  } else {
+    app = body.state;
+  }
   try {
     return oauth({
       code: body.code,
-      app: body.state,
+      app,
       slug: provider,
       context: {
         href: "https://" + apiUrl + "/oauth/" + provider,
-        host: body.state,
-      },
+        host: body.state
+      }
     });
   } catch (e) {
     console.error(e);
@@ -233,7 +239,7 @@ export function getEmailParts(email: string) {
     characterCount,
     firstFew,
     lastFew,
-    emailDomain,
+    emailDomain
   };
 }
 
