@@ -6,12 +6,18 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import SettingThumbnail from "../SettingThumbnail.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { ActionType } from "$lib/client/types/action.type";
   export let items: string[] = [];
   export let sectionName: string;
   export let orientation: Orientation = Orientation.Horizontal;
   function onClick(item: string) {
     const component = appStore.resolveAction(item);
-    if (component?.path) appStore.gotoPath(component.path);
+    if (
+      component?.type === ActionType.LINK ||
+      component?.type === ActionType.FUNCTION
+    )
+      appStore.runAction(item, { isReturnIfComponent: true });
+    else if (component?.path) appStore.gotoPath(component.path);
     else appStore.gotoPath("/cp/" + item);
   }
 </script>

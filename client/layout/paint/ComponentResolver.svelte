@@ -9,12 +9,17 @@
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { appStore } from "$lib/client/stores/app.store";
+  import PageError from "$lib/client/components/error/PageError.svelte";
   export let action: IAction | null = null;
   export let path: string = "";
   export let params: any = {};
   onMount(() => {
     if (action === null && path !== "") {
       action = appStore.resolveComponentFromPath(path);
+      if (!action && path.includes("/")) {
+        const pathWithPrefixStripped = path.split("/")[1];
+        action = appStore.resolveComponentFromPath(pathWithPrefixStripped);
+      }
       if (action) $appStore.currentComponent = action;
     }
     if ($context.isSheet) postMessageToParent(EmbedMessage.SHEET_MOUNTED);
@@ -44,6 +49,8 @@
   <ModalLayout path={action.action} params={action.modalParams ?? {}}>
     <svelte:component this={action?.component} {...params} />
   </ModalLayout>
-{:else}
+{:else if action}
   <svelte:component this={action?.component} {...params} />
+{:else}
+  <PageError />
 {/if}
