@@ -11,13 +11,13 @@ import ToastModalPortrait from "../elements/feedback/ToastModalPortrait.svelte";
 import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
-import { AppEvent } from "../types/event.enum";
 import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ManualRunDbo from "../components/settings/ManualRunDbo.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
 import DebugPage from "../layout/layers/debug/DebugPage.svelte";
 import modalEvent from "../components/modal/modal.store";
+import { Action } from "../types/action.enum";
 
 export const globalActions: IAction[] = [
   {
@@ -62,6 +62,13 @@ export const globalActions: IAction[] = [
     component: DebugLogs
   },
   {
+    action: "web",
+    label: "Open web app",
+    icon: "link",
+    isMeta: true,
+    type: ActionType.LINK
+  },
+  {
     action: "productguide",
     label: "Product guide",
     icon: "academic-cap",
@@ -85,8 +92,8 @@ export const globalActions: IAction[] = [
     icon: "chatleftright",
     type: ActionType.FUNCTION,
     fn: async () => {
-      modalEvent.hideSpecific(AppEvent.HELP);
-      modalEvent.hideSpecific(AppEvent.SETTINGS);
+      modalEvent.hideSpecific(Action.HELP);
+      modalEvent.hideSpecific(Action.SETTINGS);
       setTimeout(() => {
         if ((window as any).Intercom) {
           (window as any).Intercom("boot", {
@@ -151,7 +158,7 @@ export const globalActions: IAction[] = [
     type: ActionType.LINK
   },
   {
-    action: "privacy",
+    action: Action.PRIVACY_POLICY,
     get label() {
       return this.modalParams?.title;
     },
@@ -160,6 +167,21 @@ export const globalActions: IAction[] = [
     contentType: ContentType.SPACE_DOC,
     modalParams: {
       title: "Privacy policy",
+      layout: {
+        size: Size.xl
+      }
+    }
+  },
+  {
+    action: Action.TERMS_OF_SERVICE,
+    get label() {
+      return this.modalParams?.title;
+    },
+    icon: "lock-closed",
+    type: ActionType.MODAL,
+    contentType: ContentType.SPACE_DOC,
+    modalParams: {
+      title: "Terms of service",
       layout: {
         size: Size.xl
       }
@@ -181,7 +203,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: AppEvent.ROADMAP,
+    action: Action.ROADMAP,
     get label() {
       return this.modalParams?.title;
     },
@@ -216,7 +238,7 @@ export const globalActions: IAction[] = [
     isInactive: true
   },
   {
-    action: AppEvent.MOBILE_TOAST,
+    action: Action.MOBILE_TOAST,
     component: ToastModalPortrait,
     type: ActionType.MODAL,
     isMeta: true,
@@ -227,14 +249,14 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: AppEvent.EDIT_MODE,
+    action: Action.EDIT_MODE,
     fn: async () => isInEditMode.toggle(),
     type: ActionType.FUNCTION,
     isMeta: true,
     label: "Edit mode"
   },
   {
-    action: AppEvent.HELP,
+    action: Action.HELP,
     label: "Help",
     icon: "help",
     type: ActionType.MODAL,
@@ -248,7 +270,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: AppEvent.CMD,
+    action: Action.CMD,
     label: "Command bar",
     component: CommandBar,
     type: ActionType.MODAL,
@@ -262,7 +284,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: AppEvent.MANUAL_RUN_DBO,
+    action: Action.MANUAL_RUN_DBO,
     component: ManualRunDbo,
     type: ActionType.MODAL,
     isMeta: true,
@@ -274,7 +296,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: AppEvent.TOGGLE_SIDEBAR,
+    action: Action.TOGGLE_SIDEBAR,
     type: ActionType.FUNCTION,
     label: "Toggle sidebar",
     fn: async () => {

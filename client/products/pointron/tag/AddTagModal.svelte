@@ -2,7 +2,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { tagStore } from "$lib/client/products/pointron/pointron.store";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import modalEvent from "$lib/client/components/modal/modal.store";
   let label: string = "";
   let modalRef: any;
@@ -24,7 +24,7 @@
   />
   <ModalFooter
     on:close={() => {
-      modalEvent.hideSpecific(PointronEventEnum.ADD_TAG);
+      modalEvent.hideSpecific(PointronAction.ADD_TAG);
     }}
     primaryAction={{
       label: "Add",

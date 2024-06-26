@@ -8,8 +8,7 @@
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { pointronEvents } from "$lib/client/products/pointron/pointron.store";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import LogThumbnailItem from "./LogThumbnailItem.svelte";
@@ -17,6 +16,8 @@
   import DaySummaryPart from "./daySummary/DaySummaryPart.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   export let date: Date = new Date();
   export let context: "journal" | "logs" = "logs";
   let selectedId: string | undefined = undefined;
@@ -24,8 +25,8 @@
   $: if (dateString) refresh();
   onMount(async () => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
-    const sub = pointronEvents.subscribe(async (x) => {
-      if (x.event === PointronEventEnum.REFRESH_LOGS) {
+    const sub = appEvents.subscribe(async (x) => {
+      if (x.event === PointronEvent.REFRESH_LOGS) {
         await refresh();
       }
     });
@@ -122,7 +123,7 @@
             isLast={index === $logsPaneStore.logs.length - 1}
             on:click={() => {
               if (context === "journal") {
-                appStore.runAction(PointronEventEnum.SESSION_LOG_MODAL, {
+                appStore.runAction(PointronAction.SESSION_LOG_MODAL, {
                   componentParams: {
                     id: log.id
                   }

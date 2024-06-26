@@ -8,13 +8,12 @@
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import LeftBottomBar from "./LeftBottomBar.svelte";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import { onMount } from "svelte";
-  import { AppEvent } from "$lib/client/types/event.enum";
   import appearance from "$lib/client/stores/appearance.store";
   import { UIState } from "$lib/client/types/preferences.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { Action } from "$lib/client/types/action.enum";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -152,13 +151,13 @@
                 size={Size.lg}
                 icon="command"
                 class="stroke-fgs2 hover:stroke-aps1"
-                on:click={() => appStore.runAction(AppEvent.CMD)}
+                on:click={() => appStore.runAction(Action.CMD)}
               />
             {:else}
               <div class="text-b3 text-fgs3 mb-4">
                 Press <button
                   class="text-fgs2 px-2 py-0.5 rounded-md bg-bgs3 hover:bg-bgs4"
-                  on:click={() => appStore.runAction(AppEvent.CMD)}
+                  on:click={() => appStore.runAction(Action.CMD)}
                   >Cmd + K</button
                 > for command bar
               </div>

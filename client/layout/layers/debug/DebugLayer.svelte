@@ -5,7 +5,6 @@
   import view from "$lib/client/stores/view.store";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
   import { logger } from "$lib/client/stores/log.store";
   import appearance from "$lib/client/stores/appearance.store";
   import Divider from "$lib/client/elements/Divider.svelte";
@@ -15,6 +14,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import account from "$lib/client/stores/account.store";
+  import { Action } from "$lib/client/types/action.enum";
   export let isShowAsPage: boolean = false;
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
@@ -125,7 +125,7 @@
       width="w-full"
       icon="play"
       on:click={() => {
-        appStore.runAction(AppEvent.MANUAL_RUN_DBO);
+        appStore.runAction(Action.MANUAL_RUN_DBO);
       }}
       label="Run manual dbo update"
     />

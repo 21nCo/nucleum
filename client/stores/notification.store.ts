@@ -8,21 +8,31 @@ import {
 import { postMessageToParent } from "$lib/client/utils/embed.utils";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import view from "$lib/client/stores/view.store";
-import { AppEvent } from "../types/event.enum";
+import { GlobalEvent } from "../types/event.enum";
 import { generateUID } from "$lib/client/utils/utils";
-import type { AppEventType } from "../types/event.type";
+import type { IEvent } from "../types/event.type";
+import type { Event } from "../types/event.enum";
 import { appStore } from "./app.store";
+import { Action } from "../types/action.enum";
 
-export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
-function initEventStore(seed: AppEventType) {
-  const { subscribe, set, update } = writable<AppEventType>(seed);
+export const appEvents = initEventStore({
+  event: GlobalEvent.NONE,
+  value: false
+});
+function initEventStore(seed: IEvent) {
+  const { subscribe, set, update } = writable<IEvent>(seed);
   return {
     subscribe,
-    set: (m: AppEventType) => {
+    set: (m: IEvent) => {
       set(m);
     },
-    publish: (m: AppEvent, value: any = undefined) => {
-      update((n: AppEventType) => {
+    reset: () => {
+      update(() => {
+        return { event: GlobalEvent.NONE, value: false };
+      });
+    },
+    publish: (m: Event, value: any = undefined) => {
+      update((n: IEvent) => {
         return { ...n, value, event: m };
       });
     }
@@ -75,7 +85,7 @@ function initToastStore() {
       return n;
     });
     if (get(view).isPortrait) {
-      appStore.runAction(AppEvent.MOBILE_TOAST, {
+      appStore.runAction(Action.MOBILE_TOAST, {
         componentParams: { id: event.id }
       });
     } else {

@@ -7,10 +7,10 @@
   import type { ModalParams } from "$lib/client/types/popup.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import { AppEvent } from "$lib/client/types/event.enum";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { Action } from "$lib/client/types/action.enum";
   export let path: string;
   export let params: ModalParams;
   let size: Size = Size.md;
@@ -20,7 +20,7 @@
     footerRef.close();
   }
   function handleClose() {
-    if (path === AppEvent.CONFIRMATION) confirmationNotification.reset();
+    if (path === Action.CONFIRMATION) confirmationNotification.reset();
     else modalEvent.hideSpecific(path, "ModalLayout.svelte");
   }
 </script>

@@ -6,7 +6,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { Action } from "$lib/client/types/action.enum";
   let value: string = "";
   let inputRef: HTMLInputElement;
   let resultsRef: any;
@@ -41,7 +41,7 @@
     placeholder = "select a " + searchAction.searchActionParams?.itemLabel;
   }
   function close() {
-    modalEvent.hideSpecific(AppEvent.CMD);
+    modalEvent.hideSpecific(Action.CMD);
   }
 </script>
 

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { AppEvent } from "$lib/client/types/event.enum";
   import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
   import { isTextElement } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
+  import { Action } from "$lib/client/types/action.enum";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
   let userKeyMap = $userPreferences?.shortcuts;
   onMount(() => {
@@ -29,7 +29,7 @@
     if (isTextElement(target)) return;
     if (event.key === "q") {
       event.preventDefault();
-      appStore.runAction(AppEvent.TOGGLE_SIDEBAR);
+      appStore.runAction(Action.TOGGLE_SIDEBAR);
       return true;
     }
   }
@@ -50,10 +50,10 @@
     const isShortcutFound = runShortcut(event.key, modifiers);
     // if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
     //   event.preventDefault();
-    //   runAction(AppEvent.CMD);
+    //   runAction(Action.CMD);
     // } else if (event.key === "e" && (event.metaKey || event.ctrlKey)) {
     //   event.preventDefault();
-    //   runAction(AppEvent.EDIT_MODE);
+    //   runAction(Action.EDIT_MODE);
     // } else if (event.key === "Escape") {
     //   modalEvent.hide();
     // }

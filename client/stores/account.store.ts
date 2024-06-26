@@ -1,7 +1,7 @@
 import { get, writable } from "svelte/store";
 import type { UserAccount, UserInformation } from "../types/account.type";
 import { postToParent } from "$lib/client/utils/embed.utils";
-import { AppEvent } from "../types/event.enum";
+import { GlobalEvent } from "../types/event.enum";
 import { Persistence } from "../persistence/persistence";
 import { ButtonVariant } from "../types/button.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
@@ -12,6 +12,7 @@ import {
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { wait } from "../utils/time.utils";
+import { signout } from "../utils/account.utils";
 
 export const isRefreshingToken = writable(false);
 
@@ -125,10 +126,10 @@ function initAccount(seed: UserAccount) {
       };
     });
     if (!params.isIgnoreRefresh && !params.isFromSignup) {
-      appEvents.publish(AppEvent.USER_LOGIN, true);
+      appEvents.publish(GlobalEvent.USER_LOGIN, true);
       appStore.gotoPath("/");
     } else if (params.isFromSignup) {
-      appEvents.publish(AppEvent.USER_SIGNUP, true);
+      appEvents.publish(GlobalEvent.USER_SIGNUP, true);
       appStore.gotoPath("/onboarding");
     } else if (!params.isFromSignup) {
       appStore.gotoPath("/");
@@ -136,17 +137,11 @@ function initAccount(seed: UserAccount) {
   };
   const expire = () => {
     localStorage.removeItem("surreal-token");
-    // localStorage.removeItem("userInfo");
     update(() => {
       const n = { token: null, isLoggedIn: false };
       return n;
     });
-    appEvents.publish(AppEvent.USER_LOGIN, false);
-    postToParent({
-      account: JSON.stringify({
-        isLoggedIn: false
-      })
-    });
+    appEvents.publish(GlobalEvent.USER_LOGIN, false);
   };
   const performLoginStatusCheck = async () => {
     const token = localStorage.getItem("surreal-token");
@@ -185,10 +180,7 @@ function initAccount(seed: UserAccount) {
     set,
     signOut: () => {
       expire();
-      localStorage.removeItem("surreal-token");
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("isOnboardingComplete");
-      appStore.gotoPath("/signup?msg=signedout");
+      signout();
     },
     signIn: signin,
     expire,

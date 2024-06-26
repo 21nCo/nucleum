@@ -17,7 +17,9 @@
     type StatusMessage
   } from "$lib/client/types/statusMessage.type";
   import StatusMessageText from "$lib/client/elements/text/StatusMessageText.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { OtherApps } from "$lib/client/types/pointron/otherApps.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -160,7 +162,7 @@
   }
 
   function onImportButtonClick(id: OtherApps) {
-    appStore.runAction(PointronEventEnum.IMPORT_APP_DATA, {
+    appStore.runAction(PointronAction.IMPORT_APP_DATA, {
       componentParams: { id }
     });
   }
@@ -181,47 +183,56 @@
   });
 </script>
 
-<div class="flex flex-col gap-8 max-w-[1000px] h-full flex-grow">
-  <div class="flex flex-col gap-3">
-    <div class={`text-fgs2 ${$view.isPortrait ? `text-b4` : `text-base`}`}>
-      Importing from other apps will be available soon...
-    </div>
-    <div
-      class={$view.isPortrait
-        ? `grid grid-cols-2 gap-3`
-        : `flex gap-4 flex-wrap `}
-    >
-      <!-- {#each OtherAppsForImport as { label, id }}
+{#if $context.isEmbed}
+  <InlineInfoBanner
+    content="We are sorry. Export feature is not currently available on app store distributions. Please use web app to export your data."
+    action={{
+      label: "Open web app",
+      action: "web"
+    }}
+  />
+{:else}
+  <div class="flex flex-col gap-8 max-w-[1000px] h-full flex-grow">
+    <div class="flex flex-col gap-3">
+      <div class="text-left mo:text-b2 text-fgs2">
+        Importing from other apps will be available soon...
+      </div>
+      <div
+        class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
+      >
+        <!-- {#each OtherAppsForImport as { label, id }}
         <Button
           width={`${$windowObject.isInPortraitMode ? `w-full` : `w-fit`}`}
           on:click={() => onImportButtonClick(id)}
           {label}
         />
       {/each} -->
+      </div>
+      <ImportData on:refresh={refreshImportHistory} />
     </div>
-    <ImportData on:refresh={refreshImportHistory} />
-  </div>
 
-  <div class="flex flex-col gap-3">
-    <div class={`text-fgs1 ${$view.isPortrait ? `text-b2` : `text-base`}`}>
-      Import history
-    </div>
-    <div class={$view.isPortrait ? `` : `w-full max-w-[1000px]`}>
-      <Table
-        width={"w-full"}
-        columns={importHistoryColumns}
-        data={importHistoryData}
-      />
-      <!-- <ComingSoonView
+    <div class="flex flex-col gap-3">
+      <div class="text-left mo:text-b2">Import history</div>
+      <div class={$view.isPortrait ? `` : `w-full max-w-[1000px]`}>
+        <Table
+          width={"w-full"}
+          columns={importHistoryColumns}
+          data={importHistoryData}
+        />
+        <!-- <ComingSoonView
         size={Size.sm}
         subText="Import history will be available soon..."
       /> -->
+      </div>
     </div>
-  </div>
-  <div class={`flex flex-col ${$view.isPortrait ? `gap-3` : `gap-4`}`}>
-    <Text width="w-fit" style={TextStyle.PANEL_HEADING} content="Export data" />
-    <ExportData />
-    <!-- <div class="flex gap-2">
+    <div class={`flex flex-col ${$view.isPortrait ? `gap-3` : `gap-4`}`}>
+      <Text
+        width="w-fit"
+        style={TextStyle.PANEL_HEADING}
+        content="Export data"
+      />
+      <ExportData />
+      <!-- <div class="flex gap-2">
       <Button
         label={"Export session data (JSON)"}
         on:click={exportSessionData}
@@ -231,5 +242,6 @@
         on:click={exportPreferences}
       />
     </div> -->
+    </div>
   </div>
-</div>
+{/if}

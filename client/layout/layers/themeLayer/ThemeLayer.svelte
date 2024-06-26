@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { AppSkin, Theme } from "$lib/client/types/appearance.type";
+  import { AppSkin } from "$lib/client/types/appearance.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import ColorLayer from "./ColorLayer.svelte";
@@ -92,8 +92,6 @@
         rootFontSize
       });
   }
-
-  $: console.log({ theme: $appearance.theme });
 </script>
 
 <svelte:head>

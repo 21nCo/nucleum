@@ -13,15 +13,16 @@
     replaceInlineStylePatterns,
     replaceSymbolPatterns
   } from "../markdown.utils";
-  import { deepCopy } from "$lib/client/utils/obj.utils";
-  import type { deprecated } from "pdfjs-dist/types/src/display/display_utils";
   import InlineMention from "./InlineMention.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
   export let id: string = generateUID();
   export let content: string | undefined = "";
   export let placeholder: string | undefined = "";
   export let isMarkdown: boolean = false;
+  let classList: string = "";
+  export { classList as class };
   let blockRef: any;
 
   enum InlineCaretResolutionMethod {
@@ -727,9 +728,16 @@
       bind:this={blockRef}
       {id}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-      class="relative w-full h-full text-left outline-none py-2 {isCustomCaret
-        ? ' customcaret'
-        : 'noncustomcaret'} {typing ? 'typing' : 'nontyping'}"
+      class={cn(
+        "relative w-full h-full text-left outline-none py-2",
+        classList,
+        {
+          customcaret: isCustomCaret,
+          noncustomcaret: !isCustomCaret,
+          typing: typing,
+          nontyping: !typing
+        }
+      )}
       on:keyup={handleKeyUp}
       on:keydown={handleKeyDown}
       on:keypress={handleKeyPress}

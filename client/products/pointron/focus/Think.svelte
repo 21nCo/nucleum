@@ -6,7 +6,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import FocusPlayerTimeText from "./player/FocusPlayerTimeText.svelte";
   import SessionNotes from "./notes/SessionNotes.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 </script>
 
 <div
@@ -34,7 +34,7 @@
         label="close"
         size={Size.sm}
         on:click={() => {
-          modalEvent.hideSpecific(PointronEventEnum.THINK_MODE);
+          modalEvent.hideSpecific(PointronAction.THINK_MODE);
         }}
       />
     </div>

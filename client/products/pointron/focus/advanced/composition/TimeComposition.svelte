@@ -3,7 +3,7 @@
   import Slider from "../slider/Slider.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import AdvancedFocusModeSwitcher from "../modeSwitcher/AdvancedFocusModeSwitcher.svelte";
   import ComposeDuration from "./ComposeDuration.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
@@ -123,7 +123,7 @@
                 size={Size.xs}
                 parentBgIndex={2}
                 on:click={() => {
-                  appStore.runAction(PointronEventEnum.COMPOSE_TIME_MODAL);
+                  appStore.runAction(PointronAction.COMPOSE_TIME_MODAL);
                 }}
               />
             </div>

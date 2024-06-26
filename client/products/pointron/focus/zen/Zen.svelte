@@ -17,7 +17,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import Extras from "../elements/controls/Extras.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import appearance from "$lib/client/stores/appearance.store";
   import SessionNotes from "../notes/SessionNotes.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -29,7 +29,7 @@
   // }
   function onFullScreenToggle(isShowFullScreen: boolean = true) {
     if (isShowFullScreen) {
-      appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
+      appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
     } else {
       appStore.hideFullScreenPlayer();
     }

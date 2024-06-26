@@ -11,7 +11,7 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Zen from "./zen/Zen.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import AdvancedPortrait from "./advanced/AdvancedPortrait.svelte";
@@ -71,7 +71,7 @@
   async function onManualLogClicked() {
     console.log("onManualLogClicked");
     pointLogStore.reset();
-    appStore.runAction(PointronEventEnum.MANUAL_FOCUS_ENTRY_POP);
+    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   async function onStartSessionClicked() {
     await sessionStore.startSession();

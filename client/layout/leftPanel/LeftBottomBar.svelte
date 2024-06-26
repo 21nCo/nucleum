@@ -2,7 +2,7 @@
   import { page } from "$app/stores";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   export let isInThinMode: boolean = false;
@@ -35,7 +35,7 @@
         isRounded
           ? 'rounded-bl-lg'
           : ''} {isCpActive ? 'bg-aps1' : ''}"
-        on:click={() => appStore.runAction(AppEvent.SETTINGS)}
+        on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <Icon
           icon="settings"
@@ -49,7 +49,7 @@
           : 'rounded-br-lg'}"
         on:click={() => {
           // openLink($appStore?.appData?.urls?.help);
-          appStore.runAction(AppEvent.HELP);
+          appStore.runAction(Action.HELP);
         }}
       >
         <Icon icon="help" size={isInThinMode ? Size.lg : Size.md} />

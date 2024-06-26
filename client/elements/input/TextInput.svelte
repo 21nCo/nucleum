@@ -34,7 +34,7 @@
   let inputRef: any;
   export let isDisabled = false;
   let inputClasses: string =
-    "text-input text-fgs2 w-full bg-transparent focus:outline-none focus:border-none";
+    "text-input w-full bg-transparent focus:outline-none focus:border-none";
   let changeTimer: any;
   let changeElaspsedTime: number = 0;
   const dispatch = createEventDispatcher();
@@ -46,6 +46,9 @@
     let styles: string[] = [];
     if (icon) {
       styles.push("pl-8");
+    }
+    if (style != InputStyle.PLAIN) {
+      styles.push("text-fgs2");
     }
     return styles;
   }

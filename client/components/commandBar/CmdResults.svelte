@@ -1,7 +1,7 @@
 <script lang="ts">
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { ActionType } from "$lib/client/types/action.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import CmdResultItem from "./CmdResultItem.svelte";

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { page } from "$app/stores";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
 
-  import type { AppEventType } from "$lib/client/types/event.type";
+  import type { IEvent } from "$lib/client/types/event.type";
   import { pingParent, postToParent } from "$lib/client/utils/embed.utils";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
 
@@ -80,10 +80,9 @@
   };
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
-    appEvents.publish(AppEvent.WINDOW_RESIZED, event);
   };
   const windowClickEventListener = (event: MouseEvent) => {
-    appEvents.publish(AppEvent.WINDOW_CLICKED, event);
+    appEvents.publish(GlobalEvent.WINDOW_CLICKED, event);
   };
   const messageReceivedListener = (event: any) => {
     try {
@@ -122,30 +121,32 @@
     return () => {
       appEventSub();
       clearInterval(timer);
-      window?.removeEventListener("visibilitychange", visibilityChangeListener);
-      window?.removeEventListener("resize", windowResizeListener);
-      window?.removeEventListener("click", windowClickEventListener);
-      window?.removeEventListener("message", messageReceivedListener);
     };
   });
-  async function appEventHandler(e: AppEventType) {
-    if (e.event === AppEvent.USER_LOGIN) {
+  async function appEventHandler(e: IEvent) {
+    if (e.event === GlobalEvent.USER_LOGIN) {
       if (e.value)
         dataManager.initialize([...cacheableStores, ...localCacheableStores]);
-    } else if (e.event === AppEvent.USER_SIGNUP) {
+    } else if (e.event === GlobalEvent.USER_SIGNUP) {
       //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
       userPreferences.loadSeedData();
       refreshTimeZone(true);
       dataManager.initialize([...cacheableStores, ...localCacheableStores]);
     }
   }
+  /**
+   * Sets up the app for the first time when the app is loaded.
+   *
+   * Note: Later operations rely on earlier onces. So the order of operations is important.
+   */
   function bootup() {
-    refreshTimeZone();
     setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
+    checkForEnvironmentChange();
+    refreshTimeZone();
   }
   function initializeServiceWorker() {
     if (!$context.isEmbed) {
@@ -212,6 +213,9 @@
       $currentTime = new Date();
     }, 1000);
   }
+  /**
+   * Sets the launch context of the app. This includes the product, debug mode, embed mode, touch device, protocol, and OS.
+   */
   function setLaunchContext() {
     try {
       const appDetails = extractProduct(
@@ -219,7 +223,6 @@
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       localStorage.setItem("product", appDetails?.product ?? "tidigit");
-      let subdomain = window?.location.host.split(".")[0];
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||
         import.meta.env.VITE_DEBUG_MODE === "true";
@@ -228,11 +231,7 @@
       }
       const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
       let browserAgent = navigator?.userAgent;
-      if (
-        subdomain?.includes("embed") ||
-        isDebugEmbedMode ||
-        browserAgent.includes("embed")
-      ) {
+      if (isDebugEmbedMode || browserAgent.includes("embed")) {
         $context.isEmbed = true;
       }
       const isDebugHandheldMode =
@@ -257,11 +256,17 @@
       postToParent({ type: "ERROR", message: e });
     }
   }
+  /**
+   * Checks if the environment has changed and signs out the user if the environment has changed to avoid issues of using the cached token and 401 errors.
+   */
+  function checkForEnvironmentChange() {
+    const envCachedOnMachine = localStorage.getItem("env");
+    if ($appStore.env !== envCachedOnMachine) {
+      localStorage.setItem("env", $appStore.env);
+      account.signOut();
+    }
+  }
   function addWindowEventListeners() {
-    // window?.addEventListener("visibilitychange", visibilityChangeListener);
-    // window?.addEventListener("resize", windowResizeListener);
-    // window?.addEventListener("click", windowClickEventListener);
-    // window?.addEventListener("message", messageReceivedListener);
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };

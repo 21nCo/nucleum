@@ -3,7 +3,7 @@
   import PresetItem from "./PresetItem.svelte";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -29,7 +29,7 @@
     showEditor();
   }
   function showEditor(id: string = "") {
-    appStore.runAction(PointronEventEnum.EDIT_PRESET, {
+    appStore.runAction(PointronAction.EDIT_PRESET, {
       componentParams: { id }
     });
   }

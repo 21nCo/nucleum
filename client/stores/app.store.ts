@@ -211,7 +211,7 @@ function initDboVersionStore() {
       const response = await new Persistence().updateDbo(
         fromVersion ?? version
       );
-      if (response.version) {
+      if (response?.version) {
         setVersion(response.version);
       }
     }
@@ -629,7 +629,13 @@ function initAppStore(seed: AppStore) {
     }
     return false;
   };
-  const gotoPath = async (path: string, params: any = null) => {
+  const gotoPath = async (
+    path: string,
+    props?: {
+      queryParams?: any;
+      params?: any;
+    }
+  ) => {
     // console.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
@@ -641,10 +647,14 @@ function initAppStore(seed: AppStore) {
       };
       return n;
     });
+    if (props?.queryParams) {
+      const queryString = new URLSearchParams(props.queryParams).toString();
+      path += "?" + queryString;
+    }
     // if (!navigator.onLine) {
     //   path = "/offline";
     // }
-    if (params) goto(path, params);
+    if (props?.params) goto(path, props.params);
     else goto(path);
   };
   const gotoErrorPage = (err: any) => {
@@ -665,8 +675,9 @@ function initAppStore(seed: AppStore) {
     else goto(path);
   };
   const resolveAction = (slug: string) => {
-    let action = get(appStore).actions.find(
-      (x) => x.action.toLowerCase() == slug.toLowerCase()
+    const actions = get(appStore).actions;
+    let action = actions.find(
+      (x) => x.action?.toLowerCase() == slug.toLowerCase()
     );
     if (action) return action;
     return null;
@@ -702,6 +713,7 @@ function initAppStore(seed: AppStore) {
         ...action.modalParams
       });
     } else if (action.component) {
+      console.log("running action", { action });
       gotoPath("/" + (action.path ?? action.action));
       return;
     }
@@ -976,6 +988,11 @@ function initAppStore(seed: AppStore) {
       settingsAsModal: IAction[],
       settingsAsPages: IAction[]
     ) => {
+      console.log("init actions", {
+        actions,
+        settingsAsModal,
+        settingsAsPages
+      });
       const isInPortraitMode = get(view).isPortrait;
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];

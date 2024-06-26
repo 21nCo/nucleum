@@ -1,7 +1,7 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import { swipeLabel } from "$lib/client/products/pointron/pointron.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import {
     focusItemsStore,
     sessionStore
@@ -49,10 +49,12 @@
     pointLogStore.reset();
     pointLogStore.addNewManualLog(goal.id);
     swipeLabel.set(goal.label);
-    appStore.runAction(PointronEventEnum.MANUAL_FOCUS_ENTRY_POP);
+    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   $: isActive =
-    goal.id === $sessionStore.currentLog.goalId && $sessionStore.isQuickStartOn;
+    goal.id === $sessionStore.currentLog.goalId &&
+    $sessionStore.isQuickStartOn &&
+    $sessionStore.isSessionRunning;
 
   $: if (isActive || !isActive) {
     if (QSelement) {
@@ -93,15 +95,16 @@
     });
   });
   async function toggleSession() {
-    if ($sessionStore.isSessionRunning) {
-      if (isActive) {
-        await sessionStore.finishSession(true);
-      } else {
-        await sessionStore.finishSession(true);
-        await sessionStore.quickStart(goal.id, goal.label, color);
-      }
+    if (isActive) {
+      await sessionStore.finishSession(true);
     } else {
-      await sessionStore.quickStart(goal.id, goal.label, color);
+      if ($sessionStore.isSessionRunning)
+        await sessionStore.finishSession(true);
+      await sessionStore.quickStart({
+        ...goal,
+        color,
+        hierarchy: parentLabels
+      });
     }
   }
   function vibrate(duration: number) {
@@ -207,7 +210,7 @@
 {#if layout === Layout.LIST}
   <div
     id={goal.id}
-    class="actualQSElement {distance < 0 && !leftThresholdCrossed
+    class="cursor-pointer actualQSElement {distance < 0 && !leftThresholdCrossed
       ? 'ml-auto'
       : ''}"
     on:touchstart|stopPropagation={startTouch}
@@ -218,28 +221,24 @@
       class={cn(
         "flex justify-between h-16 min-h-[4rem] w-full items-center rounded-r-md pr-4 z-10",
         {
-          "bg-ccs1": $sessionStore.isSessionRunning && isActive,
-          "bg-bgs2": !($sessionStore.isSessionRunning && isActive)
+          "bg-ccs1": isActive,
+          "bg-bgs2": !isActive
         }
       )}
       {color}
       on:click={toggleSession}
     >
       <div class="flex gap-2 items-center h-full">
-        <!-- {#if !($sessionStore.isSessionRunning && isActive)} -->
-        <CustomColorPropagator
-          {color}
+        <div
           class={cn("w-0.5 h-full rounded-full", {
             "bg-ccs1": color,
             "bg-fgs2": !color
           })}
         />
-        <!-- {/if} -->
         <div
-          class={cn("flex flex-col items-start text-fgs1", {
-            "text-ccs1":
-              !($sessionStore.isSessionRunning && isActive) &&
-              isColorGoalTextExperimental
+          class={cn("flex flex-col items-start", {
+            "text-ccs1": !isActive && isColorGoalTextExperimental,
+            "text-fgs1": !isActive
           })}
         >
           <!-- {#if parentLabels.length > 0}
@@ -248,7 +247,11 @@
             </div>
           {/if} -->
           {#key parentLabels}
-            <div class="text-fgs3">
+            <div
+              class={cn({
+                "text-fgs3": !isActive
+              })}
+            >
               <BreadcrumbMini hierarchy={parentLabels} slice={2} />
             </div>
           {/key}
@@ -258,7 +261,7 @@
         </div>
       </div>
 
-      {#if $sessionStore.isSessionRunning && isActive}
+      {#if isActive}
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1 text-b4">
             <div>
@@ -288,7 +291,7 @@
       class={cn(
         "flex justify-between h-16 min-h-[4rem] items-center w-full rounded-r-md pr-4 relative",
         {
-          "bg-ccs1": !($sessionStore.isSessionRunning && isActive)
+          "bg-ccs1": !isActive
         }
       )}
       {color}
@@ -323,14 +326,12 @@
   </div>
 {:else}
   <CustomColorPropagator
+    type="button"
     class={cn(
       "flex justify-between rounded-md h-16 flex-col items-start w-1/3 p-2 transition-ease",
       {
-        "bg-ccs1 border border-ccs1":
-          $sessionStore.isSessionRunning && isActive,
-        "bg-ccs4 border border-ccs2": !(
-          $sessionStore.isSessionRunning && isActive
-        )
+        "bg-ccs1 border border-ccs1": isActive,
+        "bg-ccs4 border border-ccs2": !isActive
       }
     )}
     style="width: calc(50% - 0.33rem);"
@@ -344,7 +345,7 @@
         </div>
       </div>
     </div>
-    {#if $sessionStore.isSessionRunning && isActive}
+    {#if isActive}
       <div class="flex w-full justify-between text-h4">
         <!-- <div class="flex items-center gap-1 text-b5">
           <div>

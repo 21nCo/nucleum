@@ -6,8 +6,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { appEvents } from "$lib/client/stores/notification.store";
   import Check from "$lib/client/icons/Check.svelte";
-  import type { AppEventType } from "$lib/client/types/event.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   import view from "$lib/client/stores/view.store";
@@ -26,9 +26,9 @@
     selected.some((x) => x == item.value)
   );
   onMount(() => {
-    const sub = appEvents.subscribe((x: AppEventType) => {
+    const sub = appEvents.subscribe((x: IEvent) => {
       if (
-        x.event === AppEvent.WINDOW_CLICKED &&
+        x.event === GlobalEvent.WINDOW_CLICKED &&
         x.value &&
         x.value instanceof PointerEvent
       ) {

@@ -1,6 +1,6 @@
-import type { AppEvent } from "./event.enum";
+import type { Event } from "./event.enum";
 
-export type AppEventType = {
-  event: AppEvent;
+export type IEvent = {
+  event: Event;
   value: any;
 };

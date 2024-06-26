@@ -1,6 +1,4 @@
 import { get, writable } from "svelte/store";
-import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
 import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
 
 import { Item } from "$lib/client/types/item.enum";
@@ -27,9 +25,7 @@ import { logger } from "$lib/client/stores/log.store";
 import type { PointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { defaultAppMenu } from "$local/local";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
-import { Persistence } from "$lib/client/persistence/persistence";
 
-const persistance = new Persistence();
 export const swipeLabel = writable("");
 
 const seedPresets: SessionComposition[] = [
@@ -226,152 +222,8 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     return this.persist({ presets: m.presets });
   }
 }
-// export const userLocalPreferences = initUserLocalPreferences();
+
 export const pointronPreferences = new PointronPreferencesStore();
-/**
- * @deprecated - using PointronPreferencesStore instead
- * @returns
- */
-function initUserLocalPreferences() {
-  let previousValue: string;
-  const {
-    subscribe,
-    set: setRaw,
-    update
-  } = writable<PointronPreferences>(seedLocalPreferences);
-  dataManager.retrieveCache(userLocalPreferencesId).then((x) => {
-    if (!x) return;
-    const cachedPreferences = { ...x, ...storeConfig };
-    setRaw(cachedPreferences);
-    previousValue = JSON.stringify(cachedPreferences);
-  });
-  const persist = async (n: Partial<PointronPreferences>) => {
-    await persistance.update({
-      ...n,
-      id: userLocalPreferencesId,
-      modifiedAt: new Date().toISOString()
-    });
-    cache(get(pointronPreferences));
-  };
-  const cache = async (n: PointronPreferences) => {
-    dataManager.cache(n);
-  };
-  const set = (x: PointronPreferences) => {
-    setRaw(x);
-    previousValue = JSON.stringify(x);
-  };
-  return {
-    subscribe,
-    update,
-    loader: (data: PointronPreferences) => {
-      data.appMenu = defaultAppMenu;
-      if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
-      if (!data.presets) data.presets = seedPresets;
-      //m.horizonCharts = defaultHorizonChartConfiguration;
-      if (!data.dataType) data.dataType = StoreDataType.KVO;
-      set(data);
-      cache(data);
-    },
-    loadSeedData: async () => {
-      set(seedLocalPreferences);
-      cache(seedLocalPreferences);
-    },
-    set: async (newValue: PointronPreferences) => {
-      let changedProperties: any = {};
-      if (previousValue) {
-        let differences = shallowDiff(newValue, JSON.parse(previousValue));
-        differences.forEach((key: string) => {
-          changedProperties[key] = newValue[key as keyof PointronPreferences];
-        });
-        if (differences.some((x) => x === "horizonsWithTarget")) {
-          let horizonTargets = newValue.horizonTargets?.filter((x) =>
-            newValue.horizonsWithTarget?.some((y) => y === x.scale)
-          );
-          changedProperties.horizonTargets = horizonTargets;
-        }
-      }
-      // console.log({
-      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
-      //   newValue,
-      //   changedProperties
-      // });
-      set(newValue);
-      if (!objIsEmpty(changedProperties)) await persist(changedProperties);
-    },
-    resetHorizonChartConfiguration: () => {
-      update((n: PointronPreferences) => {
-        n.horizonCharts = defaultHorizonChartConfiguration;
-        return n;
-      });
-      persist({ horizonCharts: defaultHorizonChartConfiguration });
-    },
-    updatePreset: async (preset: SessionComposition) => {
-      let m = get(pointronPreferences);
-      let n = m.presets;
-      let currentPresetIndex = n.findIndex((p) => p.id == preset.id);
-      let presetsToRight = n.slice(currentPresetIndex + 1);
-      n = n.slice(0, currentPresetIndex);
-      n = [...n, preset];
-      n = n.concat(presetsToRight);
-      m.presets = n;
-      set(m);
-      return persist({ presets: n });
-    },
-    removePreset: async (presetId: string) => {
-      let m = get(pointronPreferences);
-      let n = m.presets;
-      n = n.filter((x: SessionComposition) => x.id != presetId);
-      m.presets = n;
-      set(m);
-      return persist({ presets: n });
-    },
-    addPreset: async (preset: SessionComposition) => {
-      let m = get(pointronPreferences);
-      m.presets.push(preset);
-      set(m);
-      return persist({ presets: m.presets });
-    },
-    updateHorizonChart: async (chart: HorizonChart) => {
-      let m = get(pointronPreferences);
-      let n = m.horizonCharts;
-      let currentChartIndex = n.findIndex((p) => p.id == chart.id);
-      let chartsToRight = n.slice(currentChartIndex + 1);
-      n = n.slice(0, currentChartIndex);
-      n = [...n, chart];
-      n = n.concat(chartsToRight);
-      m.horizonCharts = [...n];
-      set(m);
-      pointronEvents.notify(PointronEventEnum.REFRESH_HORIZON_CHARTS);
-      return persist({ horizonCharts: n });
-    }
-  };
-}
-
-export const pointronEvents = initEventStore({
-  event: PointronEventEnum.NONE,
-  value: false
-});
-
-function initEventStore(seed: PointronEvent) {
-  const { subscribe, set, update } = writable<PointronEvent>(seed);
-  return {
-    subscribe,
-    set: (m: PointronEvent) => {
-      set(m);
-    },
-    reset: () => {
-      update((n: PointronEvent) => {
-        return { ...n, event: PointronEventEnum.NONE };
-      });
-    },
-    notify: (m: PointronEventEnum, value: any = undefined) => {
-      update((n: PointronEvent) => {
-        return { ...n, value, event: m };
-      });
-    }
-  };
-}
-
 export const pointronConstants = initPointronConstants({
   timerModes: ["Minimal", "Journal"],
   focusPlaceholderText: [

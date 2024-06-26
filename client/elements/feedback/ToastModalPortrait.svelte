@@ -1,6 +1,6 @@
 <script lang="ts">
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { Action } from "$lib/client/types/action.enum";
   import ModalFooter from "../../components/modal/ModalFooter.svelte";
   import { toasts } from "../../stores/notification.store";
   import type { Toast } from "../../types/notification.type";
@@ -19,7 +19,7 @@
     label: "Done",
     callback: async () => {
       notification?.callback?.();
-      modalEvent.hideSpecific(AppEvent.MOBILE_TOAST);
+      modalEvent.hideSpecific(Action.MOBILE_TOAST);
     }
   }}
 />

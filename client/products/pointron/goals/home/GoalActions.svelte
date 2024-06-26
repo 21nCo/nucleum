@@ -1,8 +1,6 @@
 <script lang="ts">
   import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
-  import { pointronEvents } from "$lib/client/products/pointron/pointron.store";
   import { GoalContextMenuAction } from "$lib/client/types/pointron/goalContextMenuAction.enum";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import view from "$lib/client/stores/view.store";

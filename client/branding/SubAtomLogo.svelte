@@ -1,17 +1,20 @@
 <script lang="ts">
   import { Size } from "../types/size.enum";
   export let subatom: string | undefined = undefined;
-  export let size: Size = Size.md;
-  if (!subatom) {
-    subatom = localStorage.getItem("product") ?? "tidigit";
+  export let size: Size.sm | Size.md = Size.md;
+
+  $: {
+    if (!subatom) {
+      subatom = localStorage.getItem("product") ?? "tidigit";
+    }
+    console.log({ subatom });
   }
-  let height = size === Size.md ? 61 : size === Size.sm ? 20 : Size.xs ? 4 : 61;
+  $: height = size === Size.md ? 61 : size === Size.sm ? 40 : 61;
 </script>
 
 <button on:click>
   <svg
-    {height}
-    width={height}
+    class="w-16 h-16"
     viewBox="0 0 462 462"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

@@ -2,7 +2,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import CpThumbnail from "../settings/CPThumbnail.svelte";
+  import SettingThumbnail from "../settings/SettingThumbnail.svelte";
   import AppNameWithVersion from "../settings/about/AppNameWithVersion.svelte";
   import ProductInfoFooter from "../settings/about/ProductInfoFooter.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
@@ -57,7 +57,7 @@
             <div class="flex flex-wrap gap-3">
               {#if section.children}
                 {#each section.children as item}
-                  <CpThumbnail
+                  <SettingThumbnail
                     orientation={Orientation.Vertical}
                     action={item}
                     width="w-40"

@@ -15,7 +15,7 @@
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import { quickFocusItemStore } from "$lib/client/products/pointron/goals/goal.store";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { UIState } from "$lib/client/types/preferences.type";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -98,7 +98,7 @@
         ? "Create new goal"
         : ""}
       on:click={() => {
-        appStore.runAction(PointronEventEnum.CREATE_EDIT_GOAL, {
+        appStore.runAction(PointronAction.CREATE_EDIT_GOAL, {
           componentParams: {
             isPinToQuickFocus: true
           }

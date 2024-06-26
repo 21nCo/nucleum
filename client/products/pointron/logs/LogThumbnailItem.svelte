@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -55,7 +55,7 @@
   }
 
   async function handleDelete(event: MouseEvent) {
-    appStore.runAction(PointronEventEnum.DELETE_SESSION, {
+    appStore.runAction(PointronAction.DELETE_SESSION, {
       componentParams: { id: log.id }
     });
     event.stopPropagation();

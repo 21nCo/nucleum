@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tagStore } from "$lib/client/products/pointron/pointron.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import type { Tag } from "$lib/client/types/pointron/tag.type";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import TagItem from "$lib/client/elements/TagItem.svelte";
@@ -65,7 +65,7 @@
   </div>
   {#if isShowAddTag}
     <button
-      on:click={() => appStore.runAction(PointronEventEnum.ADD_TAG)}
+      on:click={() => appStore.runAction(PointronAction.ADD_TAG)}
       tabindex="0"
       class="hover:bg-bgs3 active:scale-105 transition-all hover:bg-opacity-20 w-8 h-8 rounded-full absolute right-0"
       title="Add a new tag"

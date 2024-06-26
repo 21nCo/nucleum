@@ -200,7 +200,7 @@
     >
       {#if icon === "home"}
         <Home {variant} />
-      {:else if icon === "bolt" || icon === "focus"}
+      {:else if icon === "bolt"}
         <Bolt {variant} />
       {:else if icon === "bolt-micro"}
         <Bolt variant={IconVariant.Micro} />

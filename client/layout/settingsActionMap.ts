@@ -1,6 +1,6 @@
 import { ActionType, type IAction } from "../types/action.type";
 import AccountSettings from "../components/settings/account/AccountSettings.svelte";
-import ControlPanel from "../components/settings/ControlPanel.svelte";
+import SettingsAsPage from "../components/settings/asPage/SettingsAsPage.svelte";
 import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
 import AboutSettings from "../components/settings/about/AboutSettings.svelte";
 import ShareToFriends from "../components/settings/ShareToFriends.svelte";
@@ -8,28 +8,14 @@ import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.s
 import AppMenuSettings from "../components/settings/AppMenuSettings.svelte";
 import AccessibilitySettings from "$lib/client/components/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import ThemeSettingView from "$lib/client/components/settings/appearance/AppearanceSettings.svelte";
-import SettingsModal from "../components/settings/SettingsModal.svelte";
-import { AppEvent } from "../types/event.enum";
+import SettingsAsModal from "../components/settings/SettingsAsModal.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
+import { Action } from "../types/action.enum";
 
-const settings: Partial<IAction>[] = [
+const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
-    action: AppEvent.SETTINGS,
-    label: "Settings",
-    icon: "settings",
-    // component: ControlPanel,
-    component: SettingsModal,
-    modalParams: {
-      layout: {
-        size: Size.xl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
-    action: AppEvent.ACCOUNT,
+    action: Action.ACCOUNT,
     label: "Account Settings",
     path: "cp/account",
     component: AccountSettings
@@ -99,22 +85,47 @@ const settings: Partial<IAction>[] = [
   }
 ];
 
-export function getSettingsAsPages() {
-  return settings.map((setting) => {
-    delete setting.modalParams;
-    return {
-      ...setting,
-      type: ActionType.PAGE
-    };
-  });
+export function getSettingsAsPages(): IAction[] {
+  return settings
+    .map((setting) => {
+      const settingCopy = { ...setting };
+      delete settingCopy.modalParams;
+      return {
+        ...settingCopy,
+        type: ActionType.PAGE
+      };
+    })
+    .concat({
+      action: Action.SETTINGS,
+      type: ActionType.PAGE,
+      label: "Settings",
+      icon: "settings",
+      component: SettingsAsPage
+    });
 }
 
-export function getSettingsAsModal() {
-  return settings.map((setting) => {
-    delete setting.path;
-    return {
-      ...setting,
-      type: ActionType.MODAL
-    };
-  });
+export function getSettingsAsModal(): IAction[] {
+  return settings
+    .map((setting) => {
+      const settingCopy = { ...setting };
+      delete settingCopy.path;
+      return {
+        ...settingCopy,
+        type: ActionType.MODAL
+      };
+    })
+    .concat({
+      action: Action.SETTINGS,
+      type: ActionType.MODAL,
+      label: "Settings",
+      icon: "settings",
+      component: SettingsAsModal,
+      modalParams: {
+        layout: {
+          size: Size.xl,
+          orientation: Orientation.Horizontal,
+          ignoreSafeArea: true
+        }
+      }
+    });
 }

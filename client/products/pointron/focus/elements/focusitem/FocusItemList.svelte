@@ -9,9 +9,6 @@
   import AddGoal from "./AddGoal.svelte";
   import { appStore, dragAndDropStore } from "$lib/client/stores/app.store";
   import { handleFocusItemsDND } from "$lib/client/utils/dragDrop";
-  import { pointronEvents } from "$lib/client/products/pointron/pointron.store";
-  import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
   import { DND } from "$lib/client/utils/DragDropTouch";
   import { transformFocusItems } from "$lib/client/products/pointron/focus/session.utils";
@@ -20,6 +17,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   export let isInEditMode: boolean = false;
   let items: any[] = [];
   let goalEntry: string = "";
@@ -29,8 +29,8 @@
   onMount(() => {
     refresh();
     DND(DragDropTouch || (DragDropTouch = {}), ref);
-    const eventSub = pointronEvents.subscribe((x: PointronEvent) => {
-      if (x.event === PointronEventEnum.REFRESH_FOCUSITEMS) {
+    const eventSub = appEvents.subscribe((x: IEvent) => {
+      if (x.event === PointronEvent.REFRESH_FOCUSITEMS) {
         refresh();
       }
     });

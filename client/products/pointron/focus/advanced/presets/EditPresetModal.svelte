@@ -10,7 +10,7 @@
   import ComposeDuration from "../composition/ComposeDuration.svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { deepCopy } from "$lib/client/utils/obj.utils";
   import { onMount } from "svelte";
@@ -58,7 +58,7 @@
   });
   $: console.log({ composition, savedPresets: $pointronPreferences.presets });
   async function close() {
-    return modalEvent.hideSpecific(PointronEventEnum.EDIT_PRESET);
+    return modalEvent.hideSpecific(PointronAction.EDIT_PRESET);
   }
   async function saveHandler() {
     if (id) {

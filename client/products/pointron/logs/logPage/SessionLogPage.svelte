@@ -15,7 +15,7 @@
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   const focusPersistance = new FocusPersistence();
@@ -102,7 +102,7 @@
         icon: "trash",
         variant: ButtonVariant.DANGER,
         callback: async () => {
-          appStore.runAction(PointronEventEnum.DELETE_SESSION, {
+          appStore.runAction(PointronAction.DELETE_SESSION, {
             componentParams: { id: log.id }
           });
         }
@@ -110,7 +110,7 @@
       secondaryAction={{ label: "Close" }}
       on:close={(event) => {
         if (event.detail === "primary") return;
-        modalEvent.hideSpecific(PointronEventEnum.SESSION_LOG_MODAL);
+        modalEvent.hideSpecific(PointronAction.SESSION_LOG_MODAL);
       }}
     />
   </div>

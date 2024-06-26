@@ -3,9 +3,7 @@
   import { Size } from "../types/size.enum";
   import view from "$lib/client/stores/view.store";
   import Link from "./text/Link.svelte";
-  import { LinkVariant } from "../types/button.type";
-  import { AppEvent } from "../types/event.enum";
-  import { appStore } from "../stores/app.store";
+  import { Action } from "../types/action.enum";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;
@@ -28,12 +26,6 @@
     {subText ?? ""}
   </div>
   <div class="text-b3 text-fgs2">
-    <Link
-      on:click={() => {
-        appStore.runAction(AppEvent.ROADMAP);
-      }}
-      label="See roadmap"
-      variant={LinkVariant.DOTTED}
-    />
+    <Link href={Action.ROADMAP} label="See roadmap" />
   </div>
 </div>

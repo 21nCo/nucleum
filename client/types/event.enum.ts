@@ -1,29 +1,27 @@
-export enum AppEvent {
+import type { PointronEvent } from "./pointron/pointronEvent.enum";
+
+export type Event = GlobalEvent | PointronEvent;
+
+export enum GlobalEvent {
   NONE = "NONE",
-  CMD = "CMD",
-  EDIT_MODE = "EDIT_MODE",
   SHOW_APPEARANCE_PREVIEW = "SHOW_APPEARANCE_PREVIEW",
-  PAGE_MENU_CHANGED = "PAGE_MENU_CHANGED",
-  MINIMIZE_POWERPANEL = "MINIMIZE_POWERPANEL",
-  POP_DISMISSED = "POP_DISMISSED",
-  THINMODE_PANELSWITCH = "THINMODE_PANELSWITCH",
   /**
    * @deprecated
    * Use svelte:window listener instead on the component
    */
   WINDOW_VISIBILITY_CHANGED = "WINDOW_VISIBILITY_CHANGED",
+  /**
+   * @deprecated
+   * Use svelte:window listener instead on the component
+   */
   WINDOW_CLICKED = "WINDOW_CLICKED",
+  /**
+   * @deprecated
+   * Use svelte:window listener instead on the component
+   */
   WINDOW_RESIZED = "WINDOW_RESIZED",
   USER_LOGIN = "USER_LOGIN",
-  USER_SIGNUP = "USER_SIGNUP",
-  HELP = "HELP",
-  SETTINGS = "cp",
-  ACCOUNT = "account",
-  MANUAL_RUN_DBO = "MANUAL_RUN_DBO",
-  TOGGLE_SIDEBAR = "TOGGLE_SIDEBAR",
-  MOBILE_TOAST = "MOBILE_TOAST",
-  CONFIRMATION = "CONFIRMATION",
-  ROADMAP = "roadmap"
+  USER_SIGNUP = "USER_SIGNUP"
 }
 
 export enum PlayActionState {

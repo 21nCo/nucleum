@@ -1,7 +1,7 @@
 <script lang="ts">
   import TimeComposition from "./composition/TimeComposition.svelte";
   import IntervalBar from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
   import { appStore } from "$lib/client/stores/app.store";
 </script>
@@ -15,7 +15,7 @@
   </div>
   <button
     class="flex flex-col items-center gap-1 pb-40"
-    on:click={() => appStore.runAction(PointronEventEnum.SHOW_FOCUSITEMS_MODAL)}
+    on:click={() => appStore.runAction(PointronAction.SHOW_FOCUSITEMS_MODAL)}
   >
     <!-- TODO - count should ignore parent goal if tasks added -->
     <span class="underline-dotted">

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
@@ -22,7 +22,7 @@
     label={isExpandedMode ? "logs" : undefined}
     size={isExpandedMode ? Size.xs : Size.md}
     on:click={() => {
-      appStore.runAction(PointronEventEnum.LOGS);
+      appStore.runAction(PointronAction.LOGS);
     }}
   />
 </div>

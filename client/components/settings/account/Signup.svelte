@@ -5,13 +5,13 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import Link from "$lib/client/elements/text/Link.svelte";
   import { page } from "$app/stores";
-  import { LinkVariant } from "$lib/client/types/button.type";
   import { onMount } from "svelte";
   import account from "$lib/client/stores/account.store";
   import view from "$lib/client/stores/view.store";
   import { postTokenToExtension } from "$lib/client/utils/embed.utils";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/client/utils/text.utils";
+  import { Action } from "$lib/client/types/action.enum";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -83,16 +83,11 @@
       <footer class="px-8">
         <div class="text-b3 text-fgs2 text-center">
           By signing up, you agree to our <Link
-            href={$appStore.appData?.urls?.tos}
-            variant={LinkVariant.DOTTED}
+            href={Action.TERMS_OF_SERVICE}
             label="Terms of Service"
           />
           and
-          <Link
-            href={$appStore.appData?.urls?.privacy}
-            variant={LinkVariant.DOTTED}
-            label="Privacy Policy"
-          />.
+          <Link href={Action.PRIVACY_POLICY} label="Privacy Policy" />.
         </div>
       </footer>
     {/if}

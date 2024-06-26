@@ -17,6 +17,7 @@
     pointronPreferences.subscribe((x: UserLocalPreferences) => {
       pages = [];
       let items = [];
+      console.log("appMenu", x?.appMenu);
       if (!x?.appMenu) return;
       if (layoutContext === LayoutContext.PORTRAIT) {
         items = x.appMenu.slice(

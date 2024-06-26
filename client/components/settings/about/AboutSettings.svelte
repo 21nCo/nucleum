@@ -20,30 +20,21 @@
       : 'flex-row flex-wrap'}"
   >
     <Button
-      label={$appStore.appData.name + " roadmap"}
-      {size}
-      icon="link"
-      width={$view.isPortrait ? "w-full" : "w-max"}
-      on:click={() => {
-        appStore.openLink($appStore.appData.urls.roadmap);
-      }}
-    />
-    <Button
       label="Join us on discord"
       {size}
       icon="link"
       width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
-        appStore.openLink($appStore.appData.urls.discord);
+        appStore.openLink($appStore.appData?.urls?.discord);
       }}
     />
     <Button
-      label="Read about Blank labs"
+      label="Read more about Blank"
       {size}
       icon="link"
       width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
-        appStore.openLink($appStore.appData.urls.blank);
+        appStore.openLink($appStore.appData?.urls?.blank);
       }}
     />
   </div>

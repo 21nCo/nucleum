@@ -1,6 +1,5 @@
 <script lang="ts">
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { appStore } from "$lib/client/stores/app.store";
   import {
     ButtonVariant,
     type IButtonParams
@@ -42,12 +41,7 @@
   {#if action}
     <div class="text-b3">
       {#if action.action}
-        <Link
-          label="Learn more"
-          on:click={() => {
-            if (action.action) appStore.runAction(action.action);
-          }}
-        />
+        <Link label={action.label ?? "Learn more"} href={action.action} />
       {:else}
         <Button
           size={action.size ?? Size.xs}

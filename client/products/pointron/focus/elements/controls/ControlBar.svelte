@@ -4,7 +4,7 @@
   import ControlItem from "./ControlItem.svelte";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import { appStore } from "$lib/client/stores/app.store";
   export let size: Size = Size.md;
@@ -25,7 +25,7 @@
     } else if (control === Control.EXTEND) {
       await sessionStore.extendSession();
     } else if (control === Control.ABANDON) {
-      appStore.runAction(PointronEventEnum.ABANDON_SESSION);
+      appStore.runAction(PointronAction.ABANDON_SESSION);
     } else {
       $sessionStore.state = SessionState.NOT_STARTED;
     }

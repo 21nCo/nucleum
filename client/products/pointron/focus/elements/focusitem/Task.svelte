@@ -20,7 +20,7 @@
   import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Direction, Orientation } from "$lib/client/types/direction.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -204,7 +204,10 @@
           <div class="w-full h-full">
             <DurationInput
               bind:value={task.estimated}
-              label={{ label: "Estimated time" }}
+              label={{
+                label: "Estimated time",
+                orientation: Orientation.Vertical
+              }}
             />
           </div>
           <Button

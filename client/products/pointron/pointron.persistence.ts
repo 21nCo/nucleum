@@ -1,13 +1,7 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { appStore, seedUserPreferences } from "$lib/client/stores/app.store";
+import { seedUserPreferences } from "$lib/client/stores/app.store";
 import { seedLocalPreferences } from "./pointron.store";
-import {
-  focusItemsStore,
-  sessionStore,
-  todayFocusStore
-} from "./focus/session.store";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { logger } from "$lib/client/stores/log.store";
 
 const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
 export class PointronPersistence {
@@ -18,58 +12,6 @@ export class PointronPersistence {
       { id: "mutationMap" }
     ];
     await surrealDb.query(`insert into kv $kvalues`, { kvalues });
-  }
-  /**
-   * @deprecated - dataManager is used to sync user data
-   * @param isSyncFocusState
-   * @returns
-   */
-  async syncUserData(isSyncFocusState: boolean) {
-    let query = `return fn::pointron::load::v2(false);`;
-    if (isSyncFocusState) query = `return fn::pointron::load::v2(true);`;
-    const response = await surrealDb.executeReadFn(query);
-    const value = interceptSurrealResponse(response, query);
-    if (!value) return;
-    // if (value.globalPreferences) {
-    //   userPreferences.loader(value.globalPreferences);
-    // }
-    // if (value.localPreferences) {
-    //   userLocalPreferences.loader(value.localPreferences);
-    // }
-    // if (value.tags) {
-    // tagStore.set(value.tags);
-    // tagStore.loader(value.tags);
-    // }
-    if (!isSyncFocusState) return;
-    if (value.focus?.todayFocus) {
-      todayFocusStore.set({
-        focus: value.focus.todayFocus,
-        streak: value.focus.streak
-      });
-    }
-    if (value.focus?.session?.snapshot)
-      sessionStore.loader(value.focus.session.snapshot);
-    else sessionStore.loadEmptyState();
-    if (value.focus?.session?.focusItems) {
-      focusItemsStore.loader(value.focus.session.focusItems);
-    }
-  }
-  async syncFocusState() {
-    try {
-      const query = `return fn::pointron::focus::sync::v2();`;
-      const response = await surrealDb.executeReadFn(query);
-      const value = interceptSurrealResponse(response, query);
-      if (!value) return;
-      if (value.todayFocus)
-        todayFocusStore.set({ focus: value.todayFocus, streak: value.streak });
-      if (value.session?.snapshot) sessionStore.loader(value.session.snapshot);
-      else sessionStore.loadEmptyState();
-      if (value.session?.focusItems) {
-        focusItemsStore.loader(value.session.focusItems);
-      }
-    } catch (e) {
-      logger.logError(e);
-    }
   }
   async importData(data: any, fileName: string, fileSize: number) {
     const mainImport = await this.import(
@@ -84,11 +26,11 @@ export class PointronPersistence {
     );
     if (!mainImport.importId) return mainImport;
     const importId = mainImport.importId;
-    if (data.sessions.length > 1000) {
-      for (let i = 0; i < data.sessions.length; i += 1000) {
+    if (data.sessions.length > 400) {
+      for (let i = 0; i < data.sessions.length; i += 400) {
         await this.importChunk(
           {
-            sessions: data.sessions.slice(i, i + 1000),
+            sessions: data.sessions.slice(i, i + 400),
             logs: []
           },
           importId
