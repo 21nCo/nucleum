@@ -51,7 +51,7 @@ import { confirmationNotification } from "$lib/client/stores/notification.store"
 
 import { defaultAppData } from "$local/local";
 import { KeyValueStore } from "./kv.store";
-import { Embed } from "../types/context.type";
+import { Embed, OperatingSystem } from "../types/context.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -746,12 +746,16 @@ function initAppStore(seed: AppStore) {
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
     const host = ctx.isEmbed
-      ? "embed." + import.meta.env.VITE_HOST
+      ? import.meta.env.VITE_HOST
       : window.location.hostname;
     const redirect = ctx.isEmbed
       ? import.meta.env.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
+    const state =
+      ctx.isEmbed && ctx.os === OperatingSystem.MACOS
+        ? "localredirect." + host
+        : host;
     let url =
       config.authorise_url +
       "?client_id=" +
@@ -759,7 +763,7 @@ function initAppStore(seed: AppStore) {
       "&scope=" +
       config.scope +
       "&response_type=code&state=" +
-      host;
+      state;
     let redirectUri = "";
     if (config.response_mode === "form_post") {
       redirectUri =
