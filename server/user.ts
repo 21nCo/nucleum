@@ -204,8 +204,8 @@ export async function oauthRedirect(
 ) {
   console.log("oauthRedirect", { body, provider });
   let app = "";
-  if (body.state.includes("embed.")) {
-    app = body.state.split("embed.")[1];
+  if (body.state.includes("localredirect.")) {
+    app = body.state.split("localredirect.")[1];
   } else {
     app = body.state;
   }
