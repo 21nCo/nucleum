@@ -113,7 +113,7 @@ export class KeyValueStore<T = ICacheableStore> {
       ...this.resolveStoreConstants()
     };
     this.setNewValue(seed);
-    this.persist(seed);
+    return this.persist(seed);
   }
   /**
    * Svelte store method which gets triggered on direct update of values using $ (dollar) syntax

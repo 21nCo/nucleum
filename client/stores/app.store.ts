@@ -335,13 +335,13 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
    * @param label
    * @returns
    */
-  setTimeZone(offset?: number, label?: string) {
+  async setTimeZone(offset?: number, label?: string) {
     if (offset === undefined) {
       const val = this.resolveTimezoneFallback();
       offset = val.offset;
       label = val.label;
     }
-    persistance.create(
+    await persistance.create(
       { offset, date: new Date().toISOString(), label: label ?? "" },
       Item.tz
     );
@@ -353,7 +353,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
    * Note: Any manual logs or imports prior to 1970 should not be allowed as it might cause unexpected errors since aggregate table views and many calculations rely on tz table and timezone offset.
    * @returns
    */
-  initializeTimeZoneForSignup() {
+  async initializeTimeZoneForSignup() {
     let offset = 0;
     let label: string | undefined;
     const timeZone = detectTimeZone();
@@ -362,7 +362,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       offset = val.offset;
       label = val.label;
     }
-    persistance.create(
+    await persistance.create(
       {
         offset,
         date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
@@ -746,7 +746,7 @@ function initAppStore(seed: AppStore) {
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
     const host = ctx.isEmbed
-      ? import.meta.env.VITE_HOST
+      ? "embed." + import.meta.env.VITE_HOST
       : window.location.hostname;
     const redirect = ctx.isEmbed
       ? import.meta.env.VITE_OAUTH_REDIRECT ?? "https://" + host

@@ -53,13 +53,12 @@
    */
   function refreshTimeZone(isSignup?: boolean) {
     if (isSignup) {
-      userPreferences.initializeTimeZoneForSignup();
-      return;
+      return userPreferences.initializeTimeZoneForSignup();
     }
     const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
-      userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
+      return userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
     }
   }
   const visibilityChangeListener = async (event: Event) => {
@@ -129,9 +128,12 @@
         dataManager.initialize([...cacheableStores, ...localCacheableStores]);
     } else if (e.event === GlobalEvent.USER_SIGNUP) {
       //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
-      userPreferences.loadSeedData();
-      refreshTimeZone(true);
-      dataManager.initialize([...cacheableStores, ...localCacheableStores]);
+      await userPreferences.loadSeedData();
+      await refreshTimeZone(true);
+      await dataManager.initialize([
+        ...cacheableStores,
+        ...localCacheableStores
+      ]);
     }
   }
   /**

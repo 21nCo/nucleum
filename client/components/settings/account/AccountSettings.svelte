@@ -2,7 +2,10 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import account from "$lib/client/stores/account.store";
   import { onMount } from "svelte";
-  import { frameEmailFromParts } from "$lib/client/utils/text.utils";
+  import {
+    frameEmailFromParts,
+    isValidString
+  } from "$lib/client/utils/text.utils";
   import type { EmailParts } from "$lib/client/types/account.type";
   import { ButtonVariant } from "$lib/client/types/button.type";
   let nickName = "";
@@ -22,7 +25,9 @@
   <div class="flex flex-col items-start gap-4 w-80 tp:w-96 px-4">
     <div class="flex flex-col items-start">
       <div>Name</div>
-      <div class="text-b2 text-fgs3">{nickName}</div>
+      <div class="text-b2 text-fgs3">
+        {isValidString(nickName) ? nickName : "Unknown"}
+      </div>
     </div>
     {#if emailParts}
       <div class="flex flex-col items-start">
