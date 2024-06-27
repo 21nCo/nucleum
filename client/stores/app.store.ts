@@ -762,7 +762,9 @@ function initAppStore(seed: AppStore) {
       config.client_id +
       "&scope=" +
       config.scope +
-      "&response_type=code&state=" +
+      "&response_type=" +
+      (config.response_type ?? "code") +
+      "&state=" +
       state;
     let redirectUri = "";
     if (config.response_mode === "form_post") {
