@@ -43,6 +43,8 @@ export type OAuthProviderConfig = {
   userdata_url?: string;
   accept_format?: string;
   authority?: string;
+  response_type?: string;
   response_mode?: "form_post" | "query";
   code_challenge_method?: "plain" | "S256";
+  isRedirectToClient?: boolean;
 };

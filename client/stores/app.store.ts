@@ -51,7 +51,7 @@ import { confirmationNotification } from "$lib/client/stores/notification.store"
 
 import { defaultAppData } from "$local/local";
 import { KeyValueStore } from "./kv.store";
-import { Embed } from "../types/context.type";
+import { Embed, OperatingSystem } from "../types/context.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -745,28 +745,36 @@ function initAppStore(seed: AppStore) {
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
-    const host = ctx.isEmbed
-      ? "embed." + import.meta.env.VITE_HOST
-      : window.location.hostname;
+    const dev = import.meta.env.DEV;
+    const host =
+      ctx.isEmbed || dev ? import.meta.env.VITE_HOST : window.location.hostname;
     const redirect = ctx.isEmbed
       ? import.meta.env.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
+    const state =
+      ctx.isEmbed && ctx.os === OperatingSystem.MACOS
+        ? "localredirect." + host
+        : host;
     let url =
       config.authorise_url +
       "?client_id=" +
       config.client_id +
       "&scope=" +
       config.scope +
-      "&response_type=code&state=" +
-      host;
+      "&response_type=" +
+      (config.response_type ?? "code") +
+      "&state=" +
+      state;
     let redirectUri = "";
     if (config.response_mode === "form_post") {
+      url += "&response_mode=form_post";
+    }
+    if (config.isRedirectToClient) {
+      redirectUri = redirect + "/oauth/" + config.oauth_slug;
+    } else {
       redirectUri =
         import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
-      url += "&response_mode=form_post";
-    } else {
-      redirectUri = redirect + "/oauth/" + config.oauth_slug;
     }
     if (config.code_challenge_method) {
       //TODO generate code challenge

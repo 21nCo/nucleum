@@ -209,7 +209,7 @@ function initAccount(seed: UserAccount) {
           label: "Delete",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            account.confirmDelete();
+            return account.confirmDelete();
           }
         }
       });
@@ -222,6 +222,7 @@ function initAccount(seed: UserAccount) {
       console.log("deleting account", { acc });
       account.signOut();
       appStore.gotoPath("/signup?msg=deleted");
+      return true;
     },
     performLoginStatusCheck,
     performRedirectionCheck: performLoginStatusCheck,
