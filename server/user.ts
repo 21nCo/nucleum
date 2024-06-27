@@ -1,14 +1,11 @@
-import { processOAuth } from "./oauthUtil";
+import { fetchOAuthUserData, parseOAuthUserDataForApple } from "./oauthUtil";
 import { log } from "./logger";
 import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
 import { Agent, CONTEXT } from "./types/account.type";
-import {
-  fetchDbDefinitionsQuery,
-  initializeDatabaseAndDefinitions,
-  updateDbChangeRunStatus
-} from "./account";
+import { initializeDatabaseAndDefinitions } from "./account";
 import { generateRefreshToken, generateUserToken } from "./token";
 import { retrieveAppData } from "./utils";
+import { OAuthUserData } from "./types/oauth.type";
 
 function frameNonSensitiveUserInfo(userInfo: {
   id: any;
@@ -153,40 +150,58 @@ export async function refreshToken(agent: Agent) {
   }
 }
 
+async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
+  return signup(
+    {
+      email: oAuthUserData.email,
+      nickName: oAuthUserData.name
+        ? oAuthUserData.name
+        : oAuthUserData.firstName && oAuthUserData.lastName
+        ? oAuthUserData.firstName + " " + oAuthUserData.lastName
+        : oAuthUserData.given_name
+        ? oAuthUserData.given_name
+        : "",
+      profilePictureUrl: oAuthUserData.picture,
+      sub: oAuthUserData.sub,
+      context: { ...context, oauthData: oAuthUserData },
+      isTrusted: true
+    },
+    true
+  );
+}
+
 /**
  * Processes the OAuth response (auth code) received from the OAuth provider, determines the user details using futher id API call or parsing the id_token and signs in or signs up the user.
  * @param body code: auth code received from the provider, app, slug, context
  * @returns user details and token
  */
 export async function oauth(body: any) {
-  const { code, app, slug, context } = body;
-  console.log({ code, app, slug });
-  if (!code || !app || !slug)
-    return { error: "code, app and slug are required" };
-  let config;
-  let appDataJson = await retrieveAppData({ app });
-  console.log({ appDataJson });
-  config = appDataJson?.oAuthConfig?.find((c) => c.oauth_slug === slug);
-  if (!config) {
-    return { error: "Unknown provider" };
-  }
-  const redirectUri = context.href.split("?")[0];
-  if (!code) return { error: "code is required" };
-  if (!redirectUri) return { error: "Unable to resolve Redirect URL" };
-  const oAuthUserData = await processOAuth(slug, config, code, redirectUri);
-  console.log({ oAuthUserData });
-  if (config.oauth_slug === "google" || config.oauth_slug === "apple") {
-    return await signup(
-      {
-        email: oAuthUserData.email,
-        nickName: oAuthUserData.name,
-        profilePictureUrl: oAuthUserData.picture,
-        sub: oAuthUserData.sub,
-        context,
-        isTrusted: true
-      },
-      true
-    );
+  try {
+    const { code, app, slug, context } = body;
+    console.log({ code, app, slug });
+    if (!code || !app || !slug)
+      return { error: "code, app and slug are required" };
+    let config;
+    let appDataJson = await retrieveAppData({ app });
+    console.log({ appDataJson });
+    config = appDataJson?.oAuthConfig?.find((c) => c.oauth_slug === slug);
+    if (!config) {
+      return { error: "Unknown provider" };
+    }
+    const redirectUri = context.href.split("?")[0];
+    if (!code) return { error: "code is required" };
+    if (!redirectUri) return { error: "Unable to resolve Redirect URL" };
+    const oAuthUserData = await fetchOAuthUserData(config, code, redirectUri);
+    console.log({ oAuthUserData });
+    if (
+      config.oauth_slug === "google" ||
+      (config.oauth_slug === "apple" && oAuthUserData)
+    ) {
+      return await signinOauthUser(oAuthUserData, context);
+    }
+  } catch (e) {
+    console.error(e);
+    return { status: "error", error: e };
   }
 }
 
@@ -203,22 +218,37 @@ export async function oauthRedirect(
   apiUrl: string
 ) {
   console.log("oauthRedirect", { body, provider });
-  let app = "";
-  if (body.state.includes("localredirect.")) {
-    app = body.state.split("localredirect.")[1];
-  } else {
-    app = body.state;
-  }
   try {
-    return oauth({
-      code: body.code,
-      app,
-      slug: provider,
-      context: {
-        href: "https://" + apiUrl + "/oauth/" + provider,
-        host: body.state
-      }
-    });
+    let app = "";
+    if (body.state?.includes("localredirect.")) {
+      app = body.state?.split("localredirect.")[1];
+    } else {
+      app = body.state;
+    }
+    const context = {
+      href: "https://" + apiUrl + "/oauth/" + provider,
+      host: body.state
+    };
+    if (provider === "apple" && (body.id_token || body.user)) {
+      if (body.user && typeof body.user === "string")
+        body.user = JSON.parse(body.user);
+      const oAuthUserData = parseOAuthUserDataForApple(body);
+      console.log("parsed OAuth user data - Apple", { oAuthUserData });
+      if (!oAuthUserData || !oAuthUserData.email)
+        return {
+          provider,
+          status: "error",
+          error: "Unable to parse Apple user data"
+        };
+      return await signinOauthUser(oAuthUserData, context);
+    } else if (body.code) {
+      return oauth({
+        code: body.code,
+        app,
+        slug: provider,
+        context
+      });
+    }
   } catch (e) {
     console.error(e);
     return { provider, status: "error", error: e };

@@ -40,9 +40,14 @@ export async function lambdaUsingNode(
     let httpMethod = event.httpMethod ?? event.requestContext.httpMethod;
     const contentType =
       event.headers["Content-Type"] ?? event.headers["content-type"];
-    console.log({ contentType });
-
-    if (httpMethod != "GET") {
+    console.log({ contentType, httpMethod });
+    if (httpMethod === "GET") {
+      body = { ...event.queryStringParameters };
+      console.log("GET request", {
+        body,
+        queryStringParameters: event.queryStringParameters
+      });
+    } else if (httpMethod === "POST") {
       if (contentType === "multipart/form-data") {
         // Parse form data - might need to use a library like `busboy` or `formidable` here
       } else if (contentType === "application/x-www-form-urlencoded") {
