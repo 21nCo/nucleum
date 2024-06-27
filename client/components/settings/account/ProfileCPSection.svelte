@@ -57,7 +57,7 @@
             <div class="text-h5">
               {isValidString($account.userInfo?.nickName) || "App user"}
             </div>
-            <div class="text-b2 text-fgs3">
+            <div class="text-b3 text-fgs3">
               {$account.userInfo?.emailParts
                 ? frameEmailFromParts($account.userInfo.emailParts)
                 : "NA"}
