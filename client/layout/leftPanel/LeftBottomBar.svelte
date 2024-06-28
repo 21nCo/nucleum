@@ -2,9 +2,8 @@
   import { page } from "$app/stores";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
@@ -25,7 +24,7 @@
     "h-12": !isInThinMode
   })}
 >
-  {#if $appStore.appData.leftPanelFooter === "simple" || !$appStore.appData.leftPanelFooter}
+  {#if $appStore.appData?.leftPanelFooter === "simple" || !$appStore.appData?.leftPanelFooter}
     <div
       class="w-full h-full flex {isInThinMode
         ? 'flex-col items-center'
@@ -36,7 +35,7 @@
         isRounded
           ? 'rounded-bl-lg'
           : ''} {isCpActive ? 'bg-aps1' : ''}"
-        on:click={() => appStore.runAction(AppEvent.SETTINGS)}
+        on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <Icon
           icon="settings"
@@ -50,7 +49,7 @@
           : 'rounded-br-lg'}"
         on:click={() => {
           // openLink($appStore?.appData?.urls?.help);
-          appStore.runAction(AppEvent.HELP);
+          appStore.runAction(Action.HELP);
         }}
       >
         <Icon icon="help" size={isInThinMode ? Size.lg : Size.md} />

@@ -1,7 +1,7 @@
+import { extractProduct } from "$lib/shared/utils/utils";
 import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
 import { validateToken } from "./token";
-import { Agent, CONTEXT } from "./types/account.type";
-import { extractProduct } from "./utils";
+import { type Agent, CONTEXT } from "./types/account.type";
 
 export async function fetchDbDefinitionsQuery(
   host: string,
@@ -30,7 +30,7 @@ export async function fetchDbDefinitionsQuery(
   }
   return {
     query: definitionQuery,
-    highestChangeId,
+    highestChangeId
   };
 }
 
@@ -84,7 +84,7 @@ export async function updateDbDefinitions(
     version:
       dbRunResponse && dbChangeUpdateStatus
         ? definitionsResult.highestChangeId
-        : fromVersion,
+        : fromVersion
   };
 }
 
@@ -95,7 +95,7 @@ export async function updateDb(body: any, agent: Agent) {
   console.log("running update db", {
     id: agent.id,
     fromVersion,
-    host,
+    host
   });
   return updateDbDefinitions(agent, host, fromVersion ?? 1);
 }

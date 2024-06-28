@@ -9,7 +9,7 @@
   export let parentBgIndex: number = 1;
   let isActive: boolean;
   let popoverOptions: PopoverInputOptions = {
-    class: "flex p-4 items-center justify-center w-96 h-96",
+    class: "flex p-4 items-center justify-center mo:w-9/10 w-96 h-96",
     parentBgIndex
   };
   $: label = timePeriodLabel(period);

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   onMount(() => {
     setTimeout(() => {
-      modalEvent.hideSpecific(PointronEventEnum.PREDEFINED_INTERVAL_NOTIFIER);
+      modalEvent.hideSpecific(PointronAction.PREDEFINED_INTERVAL_NOTIFIER);
     }, 2000);
   });
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
+  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -53,7 +53,7 @@
 <Panel
   floatingButton={{
     label: "Create curation",
-    callback: async () => appStore.runAction(MemotronEvent.CREATE_CURATION),
+    callback: async () => appStore.runAction(MemotronAction.CREATE_CURATION),
     icon: "plus",
     variant: ButtonVariant.PRIMARY
   }}
@@ -103,7 +103,7 @@
             {#each recentItems as curation}
               <CurationThumbnailView
                 {curation}
-                on:click={() => runAction(MemotronEvent.NODE, curation.id)}
+                on:click={() => runAction(MemotronAction.NODE, curation.id)}
               />
             {/each}
           </div>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { properCase } from "$lib/client/utils/text.utils";
 </script>
@@ -22,6 +23,7 @@
   {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
     {#each $appStore.appData.oAuthConfig as provider}
       <Button
+        size={Size.lg}
         id={provider.oauth_slug === "apple"
           ? "appleid-disabled-signin"
           : provider.oauth_slug + "-signin"}

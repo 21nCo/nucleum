@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import fs from "fs";
+import { OAuthUserData } from "./types/oauth.type";
 async function retrieveAccessToken(config, code, redirectUri) {
   console.log("retrieveAccessToken", { config, code });
   if (config.method_for_token === "GET") {
@@ -16,15 +16,15 @@ async function retrieveAccessToken(config, code, redirectUri) {
       "&grant_type=authorization_code";
     return fetch(url, {
       headers: {
-        Accept: "application/json",
-      },
+        Accept: "application/json"
+      }
     });
   } else {
     return fetch(config.token_url, {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body:
         "client_id=" +
@@ -36,7 +36,7 @@ async function retrieveAccessToken(config, code, redirectUri) {
         "&code=" +
         code +
         "&grant_type=authorization_code" +
-        "&code_verifier=challenge",
+        "&code_verifier=challenge"
     });
   }
 }
@@ -48,7 +48,7 @@ function generateClientSecret(config, privateKey: string) {
     audience: "https://appleid.apple.com",
     issuer: config.team_id,
     subject: config.client_id,
-    keyid: config.key_id,
+    keyid: config.key_id
   });
   console.log("client secret generated", token);
   return token;
@@ -66,7 +66,11 @@ function resolveClientSecret(config) {
   }
 }
 
-export async function processOAuth(slug, config, code, redirectUri) {
+export async function fetchOAuthUserData(
+  config: any,
+  code: string,
+  redirectUri: string
+) {
   if (!config.client_secret) {
     config.client_secret = resolveClientSecret(config);
   }
@@ -99,8 +103,8 @@ export async function processOAuth(slug, config, code, redirectUri) {
     let userDetailsResponse = await fetch(config.userdata_url, {
       headers: {
         Authorization: "Bearer " + accessToken,
-        Accept: config.accept_format ?? "application/json",
-      },
+        Accept: config.accept_format ?? "application/json"
+      }
     });
     // const responseForUserDetails = await userDetailsResponse.text();
     // console.log({ responseForUserDetails });
@@ -108,4 +112,35 @@ export async function processOAuth(slug, config, code, redirectUri) {
     console.log("userDetails", userDetails);
   }
   return userDetails;
+}
+
+export function parseOAuthUserDataForApple(authResponse: {
+  user?: {
+    email: string;
+    name?: {
+      firstName?: string;
+      lastName?: string;
+    };
+  };
+  id_token?: string;
+}): OAuthUserData {
+  const { id_token, user } = authResponse;
+  if (id_token && user) {
+    let decoded = jwt.decode(id_token, { complete: true });
+    return {
+      ...decoded.payload,
+      firstName: user.name?.firstName,
+      lastName: user.name?.lastName,
+      email: user.email
+    };
+  } else if (id_token) {
+    let decoded = jwt.decode(id_token, { complete: true });
+    return decoded.payload;
+  } else if (user) {
+    return {
+      firstName: user?.name?.firstName,
+      lastName: user?.name?.lastName,
+      email: user.email
+    };
+  }
 }

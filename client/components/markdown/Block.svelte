@@ -52,7 +52,7 @@
     isHovering = false;
   }}
 >
-  {#if $mdStore.params?.isNodular}
+  {#if $mdStore.params?.isNodular && !$mdStore.params?.isReadOnly}
     <div
       class={cn("opacity-0 w-12 min-w-[3rem] flex h-full", {
         "opacity-100": (isHovering || isFocusing) && $mdStore.params?.isNodular

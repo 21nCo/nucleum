@@ -1,19 +1,24 @@
 <script lang="ts">
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { appStore } from "$lib/client/stores/app.store";
   export let label: string | undefined = undefined;
   export let id: string | undefined = undefined;
   export let isAddNew: boolean = false;
   function onClick() {
     if (isAddNew) {
-      appStore.runAction(PointronEventEnum.ADD_TAG);
+      appStore.runAction(PointronAction.ADD_TAG);
     } else {
-      appStore.runAction(PointronEventEnum.EDIT_TAG, { id });
+      appStore.runAction(PointronAction.EDIT_TAG, {
+        componentParams: { id }
+      });
     }
   }
 </script>
 
-<button class="px-2 py-1 rounded-md border border-brs3" on:click={onClick}>
+<button
+  class="px-2 py-1 rounded-md border border-brs3 hover:bg-bgs2"
+  on:click={onClick}
+>
   {#if label}
     {label}
   {:else if isAddNew}

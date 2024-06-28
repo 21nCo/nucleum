@@ -8,7 +8,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let size: Size = Size.sm;
   export let type: "semi" | "full" = "semi";
   export let parentBgIndex: number = 1;
@@ -97,7 +97,7 @@
       actionText="Set targets"
       {parentBgIndex}
       on:click={() => {
-        appStore.runAction(PointronEventEnum.SET_TARGETS);
+        appStore.runAction(PointronAction.SET_TARGETS);
       }}
     />
   {/if}

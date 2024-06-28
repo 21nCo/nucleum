@@ -1,16 +1,5 @@
-import { todayFocusStore } from "./session.store";
-import { AnalyticsPersistence } from "../analytics/analytics.persistence";
-import { TimeScale } from "$lib/client/types/time.type";
 import { sortArrayByOrder } from "$lib/client/utils/obj.utils";
 import type { FocusItem } from "$lib/client/types/pointron/session.type";
-
-export async function refreshTodayFocus() {
-  let todayFocus =
-    await new AnalyticsPersistence().fetchAggFocusByCurrentTimeHorizon(
-      TimeScale.DAYS
-    );
-  todayFocusStore.set({ focus: todayFocus, streak: 0 });
-}
 
 export function transformFocusItems(rawItems: FocusItem[]) {
   let items: any[] = [];

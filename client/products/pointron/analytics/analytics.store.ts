@@ -21,13 +21,16 @@ import { Item } from "$lib/client/types/item.enum";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { deepCopy } from "$lib/client/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { generateParamsForCards } from "./analytics.utils";
+import {
+  generateAnalyticsSeedPages,
+  generateParamsForCards
+} from "./analytics.utils";
 
 const analyticsConfigStoreId = Item.pointAnalyticsConfig;
 
 const seedPage: AnalyticsPage = {
   id: generateUID(),
-  label: "View 1",
+  label: "New view",
   cards: [
     {
       id: generateUID(),
@@ -74,7 +77,7 @@ const seedAnalyticsConfig: AnalyticsConfigStore = {
   id: analyticsConfigStoreId,
   dataType: StoreDataType.KVO,
   isIncludeBreakInAnalytics: false,
-  pages: []
+  pages: generateAnalyticsSeedPages()
 };
 
 export const analyticsConfigStore = initAnalyticsConfigStore();
@@ -100,7 +103,7 @@ function initAnalyticsConfigStore() {
   };
   const debounedPersist = debouncer(persist, 1000);
   const loadSeedData = () => {
-    const val = { ...seedAnalyticsConfig, pages: [deepCopy(seedPage)] };
+    const val = { ...seedAnalyticsConfig, pages: generateAnalyticsSeedPages() };
     set(val);
     debounedPersist(val);
   };

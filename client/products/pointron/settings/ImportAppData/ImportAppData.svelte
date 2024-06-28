@@ -10,7 +10,7 @@
   import DropdownArrow from "$lib/client/icons/DropdownArrow.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import FileItem from "./FileItem.svelte";
   import { UploadStatus } from "$lib/client/types/uploadStatus.enum";
@@ -283,7 +283,7 @@
 
   function onClose() {
     resetFileInput();
-    modalEvent.hideSpecific(PointronEventEnum.IMPORT_APP_DATA);
+    modalEvent.hideSpecific(PointronAction.IMPORT_APP_DATA);
   }
 
   function getSizeString(sizeInBytes: number) {

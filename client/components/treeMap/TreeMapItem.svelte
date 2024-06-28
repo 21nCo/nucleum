@@ -39,15 +39,15 @@
 </script>
 
 {#if content}
-  <button on:click={onclick} class="flex flex-col w-full">
+  <button on:click={onclick} class="relative flex flex-col w-full">
     <CustomColorPropagator
       color={content.color}
-      class={cn("flex justify-between w-full py-3 px-3", {
+      class={cn("flex justify-between w-full p-3 mo:py-4", {
         "bg-ccs1": isActive
       })}
       style="padding-left: {nestingLevel ? nestingLevel * 2.5 : 0.8}rem"
     >
-      <span class="flex gap-2 text-left">
+      <span class="flex gap-2 text-left w-full">
         {#if content.icon}
           <Icon
             icon={content.icon}
@@ -68,25 +68,24 @@
         {/if}
         <TextWithHoverTooltip
           text={content.label}
-          truncateLength={determineTruncateLength(
-            $view.display,
-            nestingLevel ? Size.md : Size.lg
-          )}
+          class="w-7/10 portrait:w-4/5 truncate"
         />
       </span>
-      {#if content.icon && content.childrenCount > 0}
-        <Icon
-          icon={isCollapsed ? "chevright" : "chevdown"}
-          class={cn({
-            "stroke-cbg": isActive,
-            "stroke-fgs1": !isActive
-          })}
-        />
-      {:else if content.childrenCount > 0}
-        <span class="text-b4 text-fgs2 bg-bgs2 rounded-md px-2 py-0.5">
-          {content.childrenCount}
-        </span>
-      {/if}
+      <span class="absolute right-0 mr-3">
+        {#if content.icon && content.childrenCount > 0}
+          <Icon
+            icon={isCollapsed ? "chevright" : "chevdown"}
+            class={cn({
+              "stroke-cbg": isActive,
+              "stroke-fgs1": !isActive
+            })}
+          />
+        {:else if content.childrenCount > 0}
+          <span class="text-b4 text-fgs2 bg-bgs2 rounded-md px-2 py-0.5">
+            {content.childrenCount}
+          </span>
+        {/if}
+      </span>
     </CustomColorPropagator>
     <div class="w-full">
       {#if content.childrenCount > 0 && !isCollapsed && children}

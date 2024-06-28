@@ -1,4 +1,4 @@
-import { resolveToken } from "./account.utils";
+import { resolveToken, signout } from "./account.utils";
 import { detectTimeZone } from "./time.utils";
 
 export function resolveRegionalApiUrl() {
@@ -12,14 +12,14 @@ export function resolveRegionalApiUrl() {
   }
 }
 
-export function performApiCall(
+export async function performApiCall(
   endpoint: string,
   method: string,
   body: any = {}
 ) {
   let token = resolveToken();
   try {
-    return fetch(
+    const response = await fetch(
       (resolveRegionalApiUrl() ?? import.meta.env.VITE_API_URL) +
         "/" +
         endpoint,
@@ -32,15 +32,38 @@ export function performApiCall(
         body: JSON.stringify({ ...body, context: getAppLoadContext() })
       }
     );
-  } catch (err) {
-    console.error(err);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "API call failed with status:",
+        response.status,
+        "Response:",
+        errorText
+      );
+      if (response.status === 401) {
+        signout();
+      }
+      throw new Error(`API call failed with status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      console.error("Network error:", error.message);
+      throw new Error("Network error. Please check your internet connection.");
+    } else if (error instanceof Error) {
+      console.error("API call failed:", error.message);
+      throw error;
+    } else {
+      console.error("Unknown error:", error);
+      throw new Error("An unknown error occurred");
+    }
   }
   function getAppLoadContext() {
-    const app = import.meta.env.VITE_APP;
     const urlParams = new URLSearchParams(window.location.search);
     return {
       userAgent: navigator.userAgent,
-      host: app ?? window.location.host,
+      origin: window.location.origin,
+      host: import.meta.env.VITE_HOST ?? window.location.host,
       href: window.location.href,
       timezone: detectTimeZone(),
       geo: null,

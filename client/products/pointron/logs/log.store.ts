@@ -13,10 +13,9 @@ import {
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/stores/log.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
-import { pointronEvents, pointronPreferences } from "../pointron.store";
+import { pointronPreferences } from "../pointron.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { toasts } from "$lib/client/stores/notification.store";
-import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+import { appEvents, toasts } from "$lib/client/stores/notification.store";
 import {
   SessionType,
   type DaySummary,
@@ -38,6 +37,7 @@ import {
 } from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/types/memotron/node.type";
+import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 
 export const pointLogStore = initPointLogStore();
 
@@ -163,8 +163,8 @@ function initPointLogStore() {
       );
       reset();
       toasts.success("Manual log added successfully");
-      pointronEvents.notify(PointronEventEnum.REFRESH_QUICK_FOCUS, true);
-      pointronEvents.notify(PointronEventEnum.REFRESH_LOGS, true);
+      appEvents.publish(PointronEvent.REFRESH_QUICK_FOCUS, true);
+      appEvents.publish(PointronEvent.REFRESH_LOGS, true);
     },
     reset,
     deleteLog: async (id: string) => {

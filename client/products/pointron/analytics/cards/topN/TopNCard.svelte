@@ -1,10 +1,13 @@
 <script lang="ts">
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
   import view from "$lib/client/stores/view.store";
+  import { Size } from "$lib/client/types/size.enum";
   import {
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
+  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { isValidString } from "$lib/client/utils/text.utils";
   import {
     AnalyticsCardGrouping,
@@ -21,7 +24,6 @@
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
   export let goalColors: { label: string; color: number }[] = [];
   let top: TopNCardDataRecord[] = [];
-  console.log({ card, data, goalColors, previousTimePeriodData });
 
   calculate();
 
@@ -52,7 +54,6 @@
         sumFocusByGoal[resolveKey(record)] = record.focus;
       }
     }
-
     top = Object.entries(sumFocusByGoal)
       .sort(([, focusA], [, focusB]) => focusB - focusA)
       .map(([goal, focus]) => {
@@ -65,8 +66,6 @@
         };
       })
       .slice(0, 10);
-
-    console.log({ top });
   }
 
   function calculatePrevious(goal: string) {
@@ -116,4 +115,11 @@
 
 <div class="flex flex-col gap-2 w-full flex-grow">
   <Table2 {columns} data={top} />
+  {#if !isValidArrayWithData(top)}
+    <EmptyStatusView
+      size={Size.sm}
+      mainText="No data present."
+      subText="Please select a different time range to see data."
+    />
+  {/if}
 </div>

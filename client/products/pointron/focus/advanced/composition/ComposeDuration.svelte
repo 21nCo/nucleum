@@ -18,7 +18,7 @@
   import PomodoroUnitView from "../presets/PomodoroUnitView.svelte";
   import ComposeBreak from "./ComposeBreak.svelte";
   import { createEventDispatcher } from "svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
@@ -128,7 +128,7 @@
         <Button
           icon="bookmark"
           on:click={() => {
-            appStore.runAction(PointronEventEnum.SAVE_PRESET_MODAL);
+            appStore.runAction(PointronAction.SAVE_PRESET_MODAL);
           }}
           tooltip="Save as preset"
         />

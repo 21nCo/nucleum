@@ -23,7 +23,7 @@
 <div class="flex flex-col gap-4 max-w-lg">
   {#if $context.embed === Embed.HANDSET || $context.embed === Embed.TABLET}
     <InlineInfoBanner
-      content="We are sorry. Configuring shortcuts is not currently available on mobile or desktop. Please use desktop or web app to configure your shortcuts."
+      content="We are sorry. Configuring shortcuts is not currently available on mobile or tablet. Please use desktop or web app to configure your shortcuts."
     />
   {:else}
     {#if isValidArrayWithData(keyMap)}

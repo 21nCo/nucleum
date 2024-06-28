@@ -4,11 +4,22 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import CpThumbnail from "./CPThumbnail.svelte";
+  import SettingThumbnail from "../SettingThumbnail.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { ActionType } from "$lib/client/types/action.type";
   export let items: string[] = [];
   export let sectionName: string;
   export let orientation: Orientation = Orientation.Horizontal;
+  function onClick(item: string) {
+    const component = appStore.resolveAction(item);
+    if (
+      component?.type === ActionType.LINK ||
+      component?.type === ActionType.FUNCTION
+    )
+      appStore.runAction(item, { isReturnIfComponent: true });
+    else if (component?.path) appStore.gotoPath(component.path);
+    else appStore.gotoPath("/cp/" + item);
+  }
 </script>
 
 <div class="flex flex-col gap-2">
@@ -24,12 +35,12 @@
   >
     {#if items}
       {#each items as item}
-        <CpThumbnail
+        <SettingThumbnail
           {orientation}
           action={item}
           setActiveByPath={true}
           on:click={() => {
-            appStore.resolveNavigationAction(item);
+            onClick(item);
           }}
         />
         {#if orientation === Orientation.Horizontal}

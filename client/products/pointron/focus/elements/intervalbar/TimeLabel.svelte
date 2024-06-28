@@ -1,6 +1,6 @@
 <script lang="ts">
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { IntervalBarContext } from "$lib/client/types/pointron/session.type";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
@@ -92,7 +92,7 @@
           ? 'text--base px--2'
           : 'text--b3 px--2 py--[0.2rem]'}"
         on:click={() =>
-          appStore.runAction(PointronEventEnum.COMPOSE_BY_END_TIME_MODAL)}
+          appStore.runAction(PointronAction.COMPOSE_BY_END_TIME_MODAL)}
       >
         {#if $sessionStore.composition?.type === SessionCompositionType.END_TIME_FIXED && $sessionStore.end}
           {formatTime($userPreferences, $sessionStore.end)}

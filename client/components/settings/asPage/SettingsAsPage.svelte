@@ -1,10 +1,10 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ControlPanelLayout from "./ControlPanelLayout.svelte";
+  import SettingsAsPageLayout from "./SettingsAsPageLayout.svelte";
 </script>
 
-<ControlPanelLayout>
+<SettingsAsPageLayout>
   <EmptyStatusView
     subText="Please select an option from the left panel to get started"
   />
-</ControlPanelLayout>
+</SettingsAsPageLayout>

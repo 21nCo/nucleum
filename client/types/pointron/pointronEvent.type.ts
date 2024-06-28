@@ -1,7 +1,10 @@
-import type { PointronEventEnum } from "./pointronEvent.enum";
+import type { PointronAction } from "./pointronAction.enum";
 
-export type PointronEvent = {
-  event: PointronEventEnum;
+/**
+ * @deprecated - use IEvent instead
+ */
+export type IPointronEvent = {
+  event: PointronAction;
   value?: boolean | string | PointerEvent | PopupEvent;
 };
 

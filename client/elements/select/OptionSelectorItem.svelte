@@ -2,7 +2,7 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase, truncateString } from "$lib/client/utils/text.utils";
   import { fade, scale } from "svelte/transition";
   import Icon from "../Icon.svelte";
   import { easeBackOut, easeBounceIn, easeCircleIn } from "d3";
@@ -12,6 +12,7 @@
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import AvatarView from "../avatarPicker/AvatarView.svelte";
+  import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
   export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
   export let isActive: boolean = false;
@@ -52,11 +53,21 @@
           : 'text-base'}"
     >
       {#if item.icon && typeof item.icon === "string"}
-        <Icon icon={item.icon} isAccentBgContext={isActive} {size} />
+        <Icon
+          icon={item.icon}
+          class={cn({
+            "fill-fgs1": isActive,
+            "stroke-fgs1": !isActive
+          })}
+          {size}
+        />
       {:else if item.icon && typeof item.icon === "object"}
         <AvatarView avatar={item.icon} {size} />
       {/if}
-      {properCase(item.label ?? item.value.toString())}
+      <TextWithHoverTooltip
+        text={properCase(item.label ?? item.value.toString())}
+        truncateLength={20}
+      />
     </div>
   </button>
 {:else if style === OptionSelectorStyle.CHECK_CIRCLE}

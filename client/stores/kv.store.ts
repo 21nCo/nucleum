@@ -2,38 +2,39 @@ import { get, writable } from "svelte/store";
 import {
   PersistanceActionType,
   StoreDataType,
+  type CacheableStoreContract,
   type ICacheableStore
 } from "../types/data.type";
 import { dataManager } from "../persistence/dataManager";
-import { Persistence } from "../persistence/persistence";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
-const persistance = new Persistence();
 
-export class KeyValueStore<T = ICacheableStore> {
-  item: Item;
+export class KeyValueStore<T>
+  implements ICacheableStore, CacheableStoreContract
+{
+  id: Item;
   dataType: StoreDataType = StoreDataType.KVO;
   priorityRefreshOnAppAppear: boolean = false;
   isSynchronousCache: boolean = false;
-  previousValue: string = "";
-  seed: T;
-  protected store = writable<T>();
+  protected previousValue: string = "";
+  protected seed: T;
+  protected store = writable<T & ICacheableStore>();
   subscribe = this.store.subscribe;
-  setRaw = this.store.set;
   update = this.store.update;
+  private setRaw = this.store.set;
   constructor(
     item: Item,
     seed: T,
     params: Omit<ICacheableStore, "id" | "dataType">
   ) {
-    this.item = item;
+    this.id = item;
     this.seed = seed;
     this.priorityRefreshOnAppAppear =
       params.priorityRefreshOnAppAppear || false;
     this.isSynchronousCache = params.isSynchronousCache || false;
     if (params.isSynchronousCache) {
-      const localCacheValue = retrieveLocally(this.item);
+      const localCacheValue = retrieveLocally(this.id);
       if (localCacheValue) {
         const cachedValue = {
           ...localCacheValue,
@@ -43,17 +44,15 @@ export class KeyValueStore<T = ICacheableStore> {
         this.previousValue = JSON.stringify(cachedValue);
       } else {
         const seed = {
-          ...deepCopy(this.seed),
-          ...this.resolveStoreConstants()
+          ...deepCopy(this.seed)
         };
         this.setNewValue(seed);
       }
     } else {
-      dataManager.retrieveCache(this.item).then((x) => {
+      dataManager.retrieveCache(this.id).then((x) => {
         if (!x) {
           const seed = {
-            ...deepCopy(this.seed),
-            ...this.resolveStoreConstants()
+            ...deepCopy(this.seed)
           };
           this.setNewValue(seed);
         }
@@ -67,53 +66,71 @@ export class KeyValueStore<T = ICacheableStore> {
     }
   }
 
-  resolveStoreConstants() {
+  private resolveStoreConstants() {
     return {
-      id: this.item,
+      id: this.id,
       dataType: this.dataType,
-      priorityRefreshOnAppAppear: this.priorityRefreshOnAppAppear
+      priorityRefreshOnAppAppear: this.priorityRefreshOnAppAppear,
+      isSynchronousCache: this.isSynchronousCache
     };
   }
-
-  async cache(n: ICacheableStore) {
+  /**
+   * Caches the data locally
+   * @param n - store to be cached
+   */
+  protected async cache(n: ICacheableStore) {
     if (this.isSynchronousCache) {
-      persistLocally(this.item, n);
+      persistLocally(this.id, n);
       return;
     }
     dataManager.cache(n);
   }
-  async persist(n: Partial<T>) {
+  /**
+   * Persists the data to the server - uses MERGE action
+   * @param n
+   */
+  protected async persist(n: Partial<T>) {
     // await persistance.update({
     //   ...n,
     //   id: this.item,
     //   modifiedAt: new Date().toISOString()
     // });
-    dataManager.performMutation(
-      this.item,
+    return dataManager.performMutation(
+      this.id,
       {
         ...n,
-        id: this.item
+        id: this.id
       },
       { action: PersistanceActionType.MERGE }
     );
-    // this.cache(get(this) as ICacheableStore);
   }
-  setNewValue(x: T) {
+  /**
+   * Sets the new value of the store and caches it, but doesn't persist it
+   * @param x - new value of the store
+   */
+  protected setNewValue(x: T) {
     const newValue = { ...x, ...this.resolveStoreConstants() };
     this.setRaw(newValue);
     this.previousValue = JSON.stringify(newValue);
     this.cache(newValue as ICacheableStore);
   }
+  /**
+   * This function gets triggered from dataManager when the data is fetched from the server.
+   * @param data
+   */
   loader(data: T) {
-    this.setNewValue({ ...data, ...this.resolveStoreConstants() } as T);
+    this.setNewValue({ ...data });
   }
+  /**
+   * Loads the seed data initialized in the constructor and persists it
+   * @returns
+   */
   loadSeedData() {
     const seed = {
-      ...deepCopy(this.seed),
-      ...this.resolveStoreConstants()
+      ...deepCopy(this.seed)
     };
     this.setNewValue(seed);
-    this.persist(seed);
+    return this.persist(seed);
   }
   /**
    * Svelte store method which gets triggered on direct update of values using $ (dollar) syntax
@@ -134,5 +151,22 @@ export class KeyValueStore<T = ICacheableStore> {
     });
     this.setNewValue(newValue);
     if (!objIsEmpty(changedProperties)) this.persist(changedProperties);
+  }
+  /**
+   * Modifies the store and persists the changes
+   * @param n
+   * @returns
+   */
+  async modify(n: Partial<T>) {
+    const val = get(this.store);
+    this.setNewValue({ ...val, ...n });
+    return this.persist(n);
+  }
+  /**
+   * Gets the current value of the store
+   * @returns
+   */
+  get() {
+    return get(this.store);
   }
 }

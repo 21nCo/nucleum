@@ -46,11 +46,11 @@
       data={analytics.charts[0]}
     />
   {/if} -->
-    <div class="grow">
+    <!-- <div class="grow">
       <ComingSoonView
         subText="Detailed goal analytics and logs will be available soon..."
         size={Size.sm}
       />
-    </div>
+    </div> -->
   </div>
 {/if}

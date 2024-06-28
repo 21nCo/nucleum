@@ -1,7 +1,7 @@
 <script lang="ts">
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { ActionType } from "$lib/client/types/action.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import CmdResultItem from "./CmdResultItem.svelte";
@@ -72,11 +72,7 @@
       (action) =>
         action.label &&
         !action.isInactive &&
-        !(
-          action.type === ActionType.META ||
-          action.type === ActionType.META_MODAL ||
-          action.type === ActionType.META_PAGE
-        ) &&
+        !action.isMeta &&
         (action.cmdBarPreCondition ? action.cmdBarPreCondition() : true)
     );
     primitive.forEach((action) => {

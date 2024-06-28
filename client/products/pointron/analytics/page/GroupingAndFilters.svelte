@@ -19,12 +19,12 @@
     label={$view.isPortrait ? "" : "Options"}
     {parentBgIndex}
     tooltip={$view.isPortrait ? "Filters and grouping" : ""}
-    size={$view.isPortrait ? Size.sm : Size.xs}
-    on:click={() => {
-      //TODO - open popover
-    }}
+    size={$view.isPortrait ? Size.lg : Size.xs}
   />
-  <div class="w-96 h-60 flex flex-col p-2 items-center" slot="popover">
+  <div
+    class="mo:w-9/10 w-96 h-60 flex flex-col p-2 items-center"
+    slot="popover"
+  >
     <span> Grouping and Filters </span>
     <DropDown
       label={{ label: "Grouping", orientation: Orientation.Vertical }}
@@ -33,14 +33,18 @@
         {
           value: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
           label: "Top level goals"
-        },
-        {
-          value: AnalyticsCardGrouping.TAGS,
-          label: "Tags"
         }
+        // {
+        //   value: AnalyticsCardGrouping.TAGS,
+        //   label: "Tags"
+        // }
       ]}
       bind:value={card.grouping}
+      isDisableSearch={true}
       on:select
     />
+    <span class="text-b3 text-fgs3 mt-2">
+      Group by tags and filtering goals will be available soon...</span
+    >
   </div>
 </Popover>

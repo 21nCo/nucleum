@@ -120,7 +120,7 @@ export class Persistence {
   };
   fetchAppData = async () => {
     try {
-      const app = import.meta.env.VITE_APP ?? window.location.hostname;
+      const app = import.meta.env.VITE_HOST ?? window.location.hostname;
       // console.log({ app });
       if (!app) return;
       let response = await performApiCall("utils/n/retrieveAppData", "POST", {
@@ -132,7 +132,7 @@ export class Persistence {
         return jsonValue;
       }
     } catch (err) {
-      logger.logError(err);
+      throw err;
     }
   };
   /**

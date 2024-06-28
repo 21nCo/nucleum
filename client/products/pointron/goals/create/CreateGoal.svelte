@@ -8,7 +8,7 @@
   import NewGoalForm from "./NewGoalForm.svelte";
   import { page } from "$app/stores";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let isPinToQuickFocus: boolean = false;
   newGoalStore.reset();
   let isPinToQuickFocusParam = $page.url.searchParams.get("isPinToQuickFocus");
@@ -17,7 +17,7 @@
   }
   $newGoalStore.goal.isPinnedForQuickStart = isPinToQuickFocus;
   function close() {
-    modalEvent.hideSpecific(PointronEventEnum.CREATE_EDIT_GOAL);
+    modalEvent.hideSpecific(PointronAction.CREATE_EDIT_GOAL);
   }
 </script>
 

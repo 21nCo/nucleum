@@ -1,6 +1,6 @@
 <script lang="ts">
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -16,7 +16,7 @@
   };
   function onFullScreenToggle() {
     if (!isInFullScreen) {
-      appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
+      appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
     } else {
       appStore.hideFullScreenPlayer();
     }
@@ -38,7 +38,7 @@
     tooltip="Think mode"
     {...buttonProps}
     on:click={() => {
-      appStore.runAction(PointronEventEnum.THINK_MODE);
+      appStore.runAction(PointronAction.THINK_MODE);
     }}
   />
   {#if $sessionStore.type != SessionType.PREDEFINED_INTERVALS}
@@ -47,7 +47,7 @@
       tooltip="Abandon focus session"
       {...buttonProps}
       on:click={() => {
-        appStore.runAction(PointronEventEnum.ABANDON_SESSION);
+        appStore.runAction(PointronAction.ABANDON_SESSION);
       }}
     />
   {/if}
@@ -57,7 +57,7 @@
       tooltip="Picture in picture"
       {...buttonProps}
       on:click={() => {
-        appStore.togglePip(PointronEventEnum.FOCUS_PLAYER);
+        appStore.togglePip(PointronAction.FOCUS_PLAYER);
       }}
     />
   {/if}
@@ -66,7 +66,7 @@
     tooltip="Session settings"
     {...buttonProps}
     on:click={() => {
-      appStore.runAction(PointronEventEnum.SESSION_SETTINGS_MODAL);
+      appStore.runAction(PointronAction.SESSION_SETTINGS_MODAL);
     }}
   />
   <Button

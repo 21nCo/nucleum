@@ -101,6 +101,7 @@
   import Eye from "../icons/Eye.svelte";
   import AltText from "../icons/AltText.svelte";
   import { cn } from "../utils/ui.utils";
+  import Gift from "../icons/Gift.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -128,7 +129,6 @@
     "google",
     "apple",
     "grab",
-    "apple-dark",
     "capture2.0-mini"
   ];
   $: _classList = resolveClasses(
@@ -200,7 +200,7 @@
     >
       {#if icon === "home"}
         <Home {variant} />
-      {:else if icon === "bolt" || icon === "focus"}
+      {:else if icon === "bolt"}
         <Bolt {variant} />
       {:else if icon === "bolt-micro"}
         <Bolt variant={IconVariant.Micro} />
@@ -396,8 +396,6 @@
         <Youtube />
       {:else if icon === "apple"}
         <Apple />
-      {:else if icon === "apple-dark"}
-        <Apple isDark={true} />
       {:else if icon === "video-camera"}
         <VideoCamera {variant} />
       {:else if icon === "help"}
@@ -465,6 +463,8 @@
         <Eye {variant} />
       {:else if icon === "alt-text"}
         <AltText />
+      {:else if icon === "gift"}
+        <Gift />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

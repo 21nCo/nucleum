@@ -112,12 +112,7 @@
   }
 </script>
 
-<div
-  class={cn("flex flex-col justify-between", {
-    "max-h-60 h-60": results?.length > 5,
-    "h-48": results?.length <= 5
-  })}
->
+<div class={cn("flex flex-col justify-between max-h-60 h-60")}>
   <div class="flex flex-col flex-grow items-center w-full">
     {#if results && results.length > 0}
       {#each results as item, index ((item.id ?? "") + item.value)}

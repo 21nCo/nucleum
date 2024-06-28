@@ -3,6 +3,7 @@
   import { userPreferences } from "$lib/client/stores/app.store";
   import { Layout } from "$lib/client/types/layout.type";
   import { UIState } from "$lib/client/types/preferences.type";
+  import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   let layout = refreshLayoutState();
   onMount(() => {
@@ -20,6 +21,7 @@
 
 <Button
   icon={layout === Layout.LIST ? "bars" : "squares-2x2"}
+  size={Size.lg}
   on:click={() => {
     userPreferences.setUiState({
       property: UIState.quickFocusLayout,

@@ -33,7 +33,7 @@ const view = initViewStore({
   height: 0,
   width: 0,
   landscapiness: 0,
-  scale: 0,
+  scale: 1,
   isPortrait: false,
   firstLoad: new Date().getTime(),
   currentPath: "",

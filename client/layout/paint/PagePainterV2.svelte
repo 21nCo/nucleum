@@ -38,7 +38,7 @@
     ) {
       return;
     }
-    if (path === "") {
+    if (path === "" || path === "index.html") {
       appStore.gotoPath($appStore.appData.homePath ?? "/home");
       return;
     } else if (!path) {
@@ -51,7 +51,8 @@
     }
     action = appStore.resolveComponentFromPath(path);
     if (!action) {
-      appStore.gotoPath("/404");
+      if (path === "index.html") appStore.gotoPath("/");
+      else appStore.gotoPath("/404", { queryParams: { path } });
       return;
     }
     $appStore.currentComponent = action;

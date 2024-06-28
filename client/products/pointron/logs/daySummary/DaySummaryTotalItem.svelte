@@ -6,7 +6,7 @@
   export let type: "total" | "focus" | "break" = "total";
 </script>
 
-<span class="flex gap-1 items-center text-b3">
+<span class="flex gap-1 items-center text-b2">
   <span class="text-fgs3"> {properCase(type)}:</span>
   <span
     class={cn({

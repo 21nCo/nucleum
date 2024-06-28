@@ -19,11 +19,7 @@ import {
 } from "$lib/client/products/pointron/pointron.utils";
 import { get, writable } from "svelte/store";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-import {
-  pointronEvents,
-  pointronPreferences
-} from "$lib/client/products/pointron/pointron.store";
-import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
 import {
   SessionCompositionType,
   type SessionComposition,
@@ -34,9 +30,9 @@ import modalEvent from "$lib/client/components/modal/modal.store";
 import {
   toasts,
   scheduledNotifications,
-  fullPageLoadingScreen
+  fullPageLoadingScreen,
+  appEvents
 } from "$lib/client/stores/notification.store";
-import { LaunchContext } from "$lib/client/types/appStore.type";
 import {
   customColor,
   retrieveCurrentColors
@@ -57,6 +53,9 @@ import { SessionType } from "$lib/client/products/pointron/logs/log.type";
 import { pointLogStore } from "$lib/client/products/pointron/logs/log.store";
 import { NodeType } from "$lib/client/types/memotron/node.type";
 import { FocusPersistence } from "./focus.persistence";
+import context from "$lib/client/stores/context.store";
+import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 const focusPersistance = new FocusPersistence();
 export const windowClickEvent = writable(null);
 
@@ -216,8 +215,8 @@ function initSessionStore(seed: SessionStore) {
    */
   const reset = () => {
     shallowReset();
-    modalEvent.hideSpecific(PointronEventEnum.SESSION_FINISHED);
-    modalEvent.hideSpecific(PointronEventEnum.BREAK_REMINDER);
+    modalEvent.hideSpecific(PointronEvent.SESSION_FINISHED);
+    modalEvent.hideSpecific(PointronEvent.BREAK_REMINDER);
     let newSession: SessionStore = deepCopy(seedSessionStore);
     newSession.composition.breakReminder =
       get(pointronPreferences).breakReminder;
@@ -228,10 +227,7 @@ function initSessionStore(seed: SessionStore) {
     clearInterval(idleTimer);
   };
   const startSession = async (n: SessionStore) => {
-    if (
-      get(appStore).launchContext != LaunchContext.EMBED &&
-      Notification.permission !== "granted"
-    ) {
+    if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
     const sessionId = generateSessionId(new Date().getTime());
@@ -252,7 +248,7 @@ function initSessionStore(seed: SessionStore) {
       if (sessionTimeRemaining < 0) clearTimers();
       // if (n.type == SessionType.COUNTDOWN && sessionTimeRemaining < 0) {
       //   n.state = SessionState.TIME_IS_UP;
-      //   pointronEvents.notify(PointronEventEnum.SESSION_TIME_IS_UP);
+      //   appEvents.publish(PointronEventEnum.SESSION_TIME_IS_UP);
       // } else if (
       //   n.type == SessionType.COUNTDOWN &&
       //   sessionTimeRemaining < get(pointronConstants).runningOutDuration &&
@@ -284,7 +280,7 @@ function initSessionStore(seed: SessionStore) {
       if (!breakReminderSetting) return;
       timeRemainingToTakeBreak = breakReminderSetting - n.timeElapsed;
       if (timeRemainingToTakeBreak < 0 && !isIntervalTimeLimitNotified) {
-        pointronEvents.notify(PointronEventEnum.BREAK_REMINDER);
+        appEvents.publish(PointronEvent.BREAK_REMINDER);
         isIntervalTimeLimitNotified = true;
       }
     } else if (
@@ -295,7 +291,7 @@ function initSessionStore(seed: SessionStore) {
       if (currentBlock?.duration) {
         timeRemainingToTakeBreak = currentBlock.duration - n.timeElapsed;
         if (timeRemainingToTakeBreak < 0 && !isIntervalTimeLimitNotified) {
-          pointronEvents.notify(PointronEventEnum.PREDEFINED_INTERVAL_NOTIFIER);
+          appEvents.publish(PointronEvent.PREDEFINED_INTERVAL_NOTIFIER);
           isIntervalTimeLimitNotified = true;
         }
       }
@@ -307,7 +303,7 @@ function initSessionStore(seed: SessionStore) {
       if (currentBlock?.duration) {
         let timeRemainingToRefocus = currentBlock.duration - n.timeElapsed;
         if (timeRemainingToRefocus < 0) {
-          pointronEvents.notify(PointronEventEnum.PREDEFINED_INTERVAL_NOTIFIER);
+          appEvents.publish(PointronEvent.PREDEFINED_INTERVAL_NOTIFIER);
         }
       }
     }
@@ -514,10 +510,10 @@ function initSessionStore(seed: SessionStore) {
   }
   async function continueSession(n: SessionStore) {
     if (n.state == SessionState.FOCUS_RUNNING) {
-      pointronEvents.notify(PointronEventEnum.INTERVAL_ENDED);
+      appEvents.publish(PointronEvent.INTERVAL_ENDED);
       n = updateBlocks(n, BlockType.BREAK);
     } else {
-      pointronEvents.notify(PointronEventEnum.BREAK_ENDED);
+      appEvents.publish(PointronEvent.BREAK_ENDED);
       n = updateBlocks(n, BlockType.FOCUS);
       isIntervalTimeLimitNotified = false;
     }
@@ -604,9 +600,9 @@ function initSessionStore(seed: SessionStore) {
               : SessionState.BREAK_COMPLETED;
           n.currentBlock.index += 1;
           if (n.state === SessionState.FOCUS_COMPLETED) {
-            pointronEvents.notify(PointronEventEnum.INTERVAL_ENDED);
+            appEvents.publish(PointronEvent.INTERVAL_ENDED);
           } else if (n.state === SessionState.BREAK_COMPLETED) {
-            pointronEvents.notify(PointronEventEnum.BREAK_ENDED);
+            appEvents.publish(PointronEvent.BREAK_ENDED);
           }
           startIdleTime(n);
         }
@@ -719,7 +715,8 @@ function initSessionStore(seed: SessionStore) {
     let n = reset();
     set(n);
     dataManager.cache(n);
-    pointronEvents.notify(PointronEventEnum.SESSION_CLOSED);
+    propagateMessageToParent(n);
+    appEvents.publish(PointronEvent.SESSION_CLOSED);
     return (isPersist && result) || n;
   }
   return {
@@ -749,15 +746,15 @@ function initSessionStore(seed: SessionStore) {
         savedSessionStore.currentSessionId &&
         savedSessionStore.isSessionRunning
       ) {
-        modalEvent.hideSpecific(PointronEventEnum.SESSION_FINISHED);
-        appStore.showMiniPlayer(PointronEventEnum.FOCUS_PLAYER);
+        modalEvent.hideSpecific(PointronAction.SESSION_FINISHED);
+        appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
         savedSessionStore = await resumeTimer(savedSessionStore, {
           isPersist: false,
           isResetTimer: false
         });
       } else if (savedSessionStore.state === SessionState.FINISHED) {
         shallowReset();
-        appStore.runAction(PointronEventEnum.SESSION_FINISHED);
+        appStore.runAction(PointronEvent.SESSION_FINISHED);
         set(savedSessionStore);
       } else {
         focusItemsStore.reset();
@@ -798,7 +795,7 @@ function initSessionStore(seed: SessionStore) {
           update(() => {
             return n;
           });
-          pointronEvents.notify(PointronEventEnum.SESSION_FINISHED);
+          appEvents.publish(PointronEvent.SESSION_FINISHED);
         }
         fullPageLoadingScreen.hide();
       }
@@ -995,24 +992,25 @@ function initSessionStore(seed: SessionStore) {
       n = composeSession(n);
       n = await startSession(n);
       //todo - if auto open enabled
-      //pointronEvents.notify(PointronEventEnum.SHOW_ZEN_FOCUS, true);
-      appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
+      //appEvents.publish(PointronEventEnum.SHOW_ZEN_FOCUS, true);
+      appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
       // appStore.showMiniPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
       set(n);
     },
-    quickStart: async (
-      goalId: string,
-      goalLabel: string,
-      color: number | undefined
-    ) => {
+    quickStart: async (goal: {
+      id: string;
+      label: string;
+      color?: number;
+      hierarchy?: string[];
+    }) => {
       let n = reset();
       focusItemsStore.reset();
       try {
         n.type = SessionType.COUNTUP;
         n.currentLog = {
-          goalId,
-          taskName: goalLabel,
-          color,
+          goalId: goal.id,
+          taskName: goal.label,
+          color: goal.color,
           start: new Date().getTime()
         };
         n.isQuickStartOn = true;
@@ -1029,9 +1027,10 @@ function initSessionStore(seed: SessionStore) {
         };
         n = composeSession(n);
         await focusItemsStore.addGoal({
-          goalId,
-          label: goalLabel,
-          color,
+          goalId: goal.id,
+          label: goal.label,
+          color: goal.color,
+          hierarchy: goal.hierarchy,
           worked: 0,
           estimated: 0,
           checked: false,
@@ -1039,7 +1038,7 @@ function initSessionStore(seed: SessionStore) {
         });
         n = await startSession(n);
         //appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
-        appStore.showMiniPlayer(PointronEventEnum.FOCUS_PLAYER);
+        appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
       } catch (err) {
         logger.logError(err);
       }
@@ -1190,7 +1189,7 @@ function initFocusItemsStore() {
       const store = deepCopy(seedFocusItemsStore);
       set(store);
       dataManager.cache(store);
-      pointronEvents.notify(PointronEventEnum.REFRESH_FOCUSITEMS);
+      appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
     },
     addTask: async (label: string, goalId: string | undefined = undefined) => {
       let n = get(focusItemsStore);
@@ -1206,7 +1205,7 @@ function initFocusItemsStore() {
       n.items.push(newTask);
       set(n);
       if (goalId) lastActiveGoalIdForEditing.set(goalId);
-      pointronEvents.notify(PointronEventEnum.REFRESH_FOCUSITEMS);
+      appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
       persist(n);
     },
     addGoal: async (goal: FocusItem, isPersist: boolean = true) => {
@@ -1216,7 +1215,7 @@ function initFocusItemsStore() {
         return n;
       });
       lastActiveGoalIdForEditing.set(goal.goalId);
-      pointronEvents.notify(PointronEventEnum.REFRESH_FOCUSITEMS);
+      appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
     },
     updateTask: async (task: FocusItem, isUseDelay: boolean = false) => {
       update((n: FocusItemsStore) => {
@@ -1299,7 +1298,7 @@ function initFocusItemsStore() {
       }
       set(n);
       persist(n);
-      pointronEvents.notify(PointronEventEnum.REFRESH_FOCUSITEMS);
+      appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
     },
     deleteGoal: async (id: string) => {
       let n = get(focusItemsStore);
@@ -1308,7 +1307,7 @@ function initFocusItemsStore() {
       }
       set(n);
       persist(n);
-      pointronEvents.notify(PointronEventEnum.REFRESH_FOCUSITEMS);
+      appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
     },
     propagateDependencyChanges: (data: any) => {
       logger.log({

@@ -1,10 +1,7 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/client/types/userDate.type";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
-import {
-  ActionType,
-  ResourceAccessMode,
-} from "$lib/client/types/action.type";
+import { ActionType, ResourceAccessMode } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "./obj.utils";
 
 export function onInterval(
@@ -269,38 +266,6 @@ export function checkSurrealResponse(
   }
 }
 
-export function extractProduct(host: string | null = null) {
-  if (!host) host = import.meta.env.VITE_APP ?? window.location.host;
-  if (!host) return;
-  const domain = host.split(/\.com|\.org|\.io|\.run/)[0];
-  const parts = domain.split(".");
-  const product = parts[parts.length - 1];
-  const subdomain = parts[parts.length - 2];
-  const env = resolveEnv(subdomain);
-  return { product, env };
-}
-
-function resolveEnv(subdomain: string) {
-  if (!subdomain || subdomain.includes("landing")) {
-    return "landing";
-  } else if (subdomain.includes("dev")) {
-    return "dev";
-  } else if (subdomain.includes("pre")) {
-    return "pre";
-  } else if (
-    subdomain === "app" ||
-    subdomain === "embed" ||
-    subdomain === "ios" ||
-    subdomain === "android" ||
-    subdomain === "web" ||
-    subdomain === "www" ||
-    subdomain === "desktop"
-  ) {
-    return "live";
-  } else {
-    return "landing";
-  }
-}
 /**
  * Used to create a debounced version of a function so that the uneccessary calls to that function can be reduced. Closure is used to remember the previous timer. "this" is used here to remember the context of the func passed and "apply" is used to apply the remembered context.
  * @summary To create a debounced version of a function.

@@ -9,23 +9,28 @@
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { appStore } from "$lib/client/stores/app.store";
+  import PageError from "$lib/client/components/error/PageError.svelte";
   export let action: IAction | null = null;
   export let path: string = "";
   export let params: any = {};
   onMount(() => {
     if (action === null && path !== "") {
       action = appStore.resolveComponentFromPath(path);
+      if (!action && path.includes("/")) {
+        const pathWithPrefixStripped = path.split("/")[1];
+        action = appStore.resolveComponentFromPath(pathWithPrefixStripped);
+      }
+      if (action) $appStore.currentComponent = action;
     }
     if ($context.isSheet) postMessageToParent(EmbedMessage.SHEET_MOUNTED);
   });
-  function resolveSpaceDocumentParams(link: string) {
-    if (!link) return { spaceId: "", documentId: "" };
-    if (!link.includes(":")) {
-      link = $appStore.appData.urls[link];
-      console.log({ link, urls: $appStore.appData.urls });
+  function resolveSpaceDocumentParams(slug: string) {
+    if (!slug) return { spaceId: "", documentId: "" };
+    if (!slug.includes(":")) {
+      slug = $appStore.appData.urls[slug];
     }
-    if (!link || link.includes("http")) return { spaceId: "", documentId: "" };
-    const [spaceId, documentId] = link.split(":");
+    if (!slug || slug.includes("http")) return { spaceId: "", documentId: "" };
+    const [spaceId, documentId] = slug.split(":");
     return { spaceId, documentId };
   }
 </script>
@@ -39,13 +44,13 @@
     }}
   />
 {:else if action?.contentType === ContentType.SPACE_DOC}
-  <SpaceDocument
-    params={resolveSpaceDocumentParams(action.link ?? action.action)}
-  />
+  <SpaceDocument params={resolveSpaceDocumentParams(action.action)} />
 {:else if $context.isSheet && action}
   <ModalLayout path={action.action} params={action.modalParams ?? {}}>
     <svelte:component this={action?.component} {...params} />
   </ModalLayout>
-{:else}
+{:else if action}
   <svelte:component this={action?.component} {...params} />
+{:else}
+  <PageError />
 {/if}

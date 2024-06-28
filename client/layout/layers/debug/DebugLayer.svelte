@@ -3,34 +3,26 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore, dboVersion } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { LaunchContext } from "$lib/client/types/appStore.type";
-  import { onMount } from "svelte";
   import DebugInfoItem from "./DebugInfoItem.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { logger } from "$lib/client/stores/log.store";
   import appearance from "$lib/client/stores/appearance.store";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
   import context from "$lib/client/stores/context.store";
-  let environment: string;
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { dataManager } from "$lib/client/persistence/dataManager";
+  import account from "$lib/client/stores/account.store";
+  import { Action } from "$lib/client/types/action.enum";
+  export let isShowAsPage: boolean = false;
   let isShowDebugOverlay: boolean = false;
+  let environment: string = $appStore.env;
   let isShowLogs: boolean = false;
   let isDboUpdateInProgress: boolean = false;
   let storageQuota: number | undefined;
   let storageUsage: number | undefined;
   checkStorage();
-  onMount(() => {
-    if ($appStore.launchContext) {
-      if ($appStore.launchContext == LaunchContext.PREVIEW)
-        environment = "Preview";
-      else if ($appStore.launchContext == LaunchContext.DEV)
-        environment = "Dev";
-      else if ($appStore.launchContext == LaunchContext.EMBED)
-        environment = "Embed";
-    }
-  });
   function checkStorage() {
     try {
       navigator.storage.estimate().then((estimate) => {
@@ -42,23 +34,40 @@
       console.log("Storage estimate not supported");
     }
   }
+  function clearCache() {
+    localStorage.clear();
+    sessionStorage.clear();
+    $dataManager.cacheSource.clearCache();
+    account.signOut();
+  }
 </script>
 
-{#if isShowDebugOverlay}
+{#if isShowDebugOverlay || isShowAsPage}
   <div
-    class="absolute bottom-20 right-0 flex flex-col gap-2 p-10 bg-bgs3 text-fgs1 rounded-lg z-50"
+    class={cn("flex flex-col gap-2 p-2 dp:p-8 text-fgs1", {
+      "absolute z-50 bottom-20 right-0 bg-bgs3 rounded-lg": !isShowAsPage,
+      "w-full h-full": isShowAsPage
+    })}
   >
-    <button
-      class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
-      on:click={() => (isShowDebugOverlay = false)}
-    >
-      <Icon icon="minus-circled" />
-    </button>
+    {#if !isShowAsPage}
+      <button
+        class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
+        on:click={() => (isShowDebugOverlay = false)}
+      >
+        <Icon icon="minus-circled" />
+      </button>
+    {/if}
     <DebugInfoItem
       label="Context"
-      value={` isEmbed: ${$context.isEmbed}, isSheet: ${$context.isSheet}, embed: ${$context.embed}`}
+      value={` isEmbed: ${$context.isEmbed}, isSheet: ${$context.isSheet}, embed: ${$context.embed}, os: ${$context.os}`}
     />
-    <DebugInfoItem label="Host" value={window.location.host} />
+    <DebugInfoItem
+      label="Host"
+      value={"host: " +
+        window.location.host +
+        " protocol: " +
+        window.location.protocol}
+    />
     <DebugInfoItem label="Agent" value={navigator?.userAgent} />
     <DebugInfoItem label="Path" value={window.location.pathname} />
     <DebugInfoItem
@@ -116,17 +125,27 @@
       width="w-full"
       icon="play"
       on:click={() => {
-        appStore.runAction(AppEvent.MANUAL_RUN_DBO);
+        appStore.runAction(Action.MANUAL_RUN_DBO);
       }}
       label="Run manual dbo update"
     />
     <Button
       width="w-full"
-      on:click={() => {
-        isShowDebugOverlay = false;
-      }}
-      label="Close"
+      icon="trash"
+      type={ButtonVariant.DANGER}
+      style={ButtonStyle.OUTLINED}
+      on:click={clearCache}
+      label="Clear cache and logout"
     />
+    {#if !isShowAsPage}
+      <Button
+        width="w-full"
+        on:click={() => {
+          isShowDebugOverlay = false;
+        }}
+        label="Close"
+      />
+    {/if}
   </div>
 {:else}
   <button
@@ -146,10 +165,12 @@
     >
       <Icon icon="minus-circled" size={Size.lg} />
     </button>
-    <div class="flex flex-col gap-2 overflow-y-auto">
+    <div class="flex flex-col items-start gap-2 overflow-y-auto">
       {#if $logger.items && $logger.items.length > 0}
         {#each $logger.items as log}
-          <div>{log.type.toUpperCase()} -- {log.message}</div>
+          <div class="text-left">
+            {log.type.toString().toUpperCase()} -- {log.message}
+          </div>
           <Divider colorStrength={ColorStrength.Strong} />
         {/each}
       {:else}

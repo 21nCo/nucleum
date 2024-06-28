@@ -14,6 +14,7 @@
   import GoalActions from "../home/GoalActions.svelte";
   import SubGoalList from "../subGoals/SubGoalList.svelte";
   import GoalInsightsCard from "./GoalInsightsCard.svelte";
+  import GoalAnalytics from "../../analytics/goalAnalytics/GoalAnalytics.svelte";
   $: goalTags = $tagStore.tags.filter((x) => $currentGoal.tags?.includes(x.id));
   let labelProps: Partial<InputLabel> = { orientation: Orientation.Vertical };
 </script>
@@ -66,7 +67,10 @@
       />
     {:else}
       <SubGoalList />
-      <GoalInsightsCard />
+      <div class="flex justify-center items-center min-h-32 w-full">
+        <GoalAnalytics />
+      </div>
+      <!-- <GoalInsightsCard /> -->
     {/if}
   </div>
   <footer class="flex justify-center text-fgs3 text-b4 min-w-fit pt-32 pb-10">

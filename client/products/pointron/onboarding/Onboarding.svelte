@@ -54,7 +54,14 @@
     portrait: [...stepsJson]
   };
 
-  function handleStartTutorial(e: any) {
+  /**
+   * Handle the start tutorial button click
+   *
+   * TEMP - initializeTimeZoneForSignup here - as it is failing in BaseLayer on signup for embed iOS and macOS signup case
+   * @param e
+   */
+  async function handleStartTutorial(e: any) {
+    await userPreferences.initializeTimeZoneForSignup();
     onFinish();
   }
 

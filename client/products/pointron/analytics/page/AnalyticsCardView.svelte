@@ -119,8 +119,10 @@
               label={$view.isPortrait ? "" : "Remove"}
               {parentBgIndex}
               type={ButtonVariant.DANGER}
-              style={ButtonStyle.OUTLINED}
-              size={$view.isPortrait ? Size.md : Size.xs}
+              style={$view.isPortrait
+                ? ButtonStyle.DEFAULT
+                : ButtonStyle.OUTLINED}
+              size={$view.isPortrait ? Size.lg : Size.xs}
               on:click={onRemoveClick}
             />
           </span>

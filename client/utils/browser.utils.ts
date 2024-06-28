@@ -1,5 +1,5 @@
 import { Direction } from "$lib/client/types/direction.enum";
-import { OS } from "$lib/client/types/os.enum";
+import { OperatingSystem } from "../types/context.type";
 import type { IPopoverRenderParams } from "../types/popover.type";
 
 function documentDimensions() {
@@ -92,8 +92,12 @@ async function _renderPopover(params: IPopoverRenderParams) {
   const { documentWidth, documentHeight } = documentDimensions();
   popRef.style.position = "fixed";
   popRef.style.zIndex = "100";
+
   if (triggerRect.top < popRect.height) {
     if (placement === Direction.TopLeft) placement = Direction.BottomLeft;
+    else if (placement === Direction.TopRight)
+      placement = Direction.BottomRight;
+    else if (placement === Direction.Up) placement = Direction.Down;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
     if (placement === Direction.Down) placement = Direction.Up;
@@ -105,6 +109,11 @@ async function _renderPopover(params: IPopoverRenderParams) {
     if (placement === Direction.Right) placement = Direction.Left;
     if (placement === Direction.Down) placement = Direction.BottomRight;
     if (placement === Direction.Up) placement = Direction.TopRight;
+  }
+  if (triggerRect.left < popRect.width) {
+    if (placement === Direction.Left) placement = Direction.Right;
+    if (placement === Direction.Down) placement = Direction.BottomLeft;
+    if (placement === Direction.Up) placement = Direction.TopLeft;
   }
 
   if (placement === Direction.BottomLeft || placement === Direction.TopLeft) {
@@ -140,6 +149,15 @@ async function _renderPopover(params: IPopoverRenderParams) {
   } else if (placement === Direction.Up || placement === Direction.Down) {
     popRef.style.left = `${triggerRect.left}px`;
   }
+  popRect = popRef.getBoundingClientRect();
+  if (popRect.width > documentWidth) {
+    popRef.style.width = `${documentWidth - 12}px`;
+  }
+  console.log({ triggerRect, popRect, placement, documentWidth });
+  if (popRect.left < 0 || popRect.right > documentWidth) {
+    popRef.style.left = "6px";
+    popRef.style.right = "6px";
+  }
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
   popRef.style.opacity = "1";
 }
@@ -159,24 +177,41 @@ export function isTextElement(target: EventTarget | null) {
   );
 }
 
+/**
+ *
+ *
+ * This is the value for userAgent - when opening using SafariViewController within an iOS app:
+ * UserAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) version/17.5 Mobile/15E148 Safari/604.1
+ *
+ * From MacOS app:
+ * UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) version/14.1.2 Safari/605.1.15
+ *
+ *
+ *
+ * Notes on  navigator.userAgentData:
+ * Supported in Chromium 90 and above
+ * Not supported in Safari as of 2024-06-21
+ *
+ * @returns
+ */
 export function detectSystemOS() {
-  let os: OS;
+  let os: OperatingSystem;
   const userAgent = navigator.userAgent.toLowerCase();
   const platform = userAgent ?? navigator.platform.toLowerCase();
   if (platform.includes("win")) {
-    os = OS.WINDOWS;
-  } else if (platform.includes("mac")) {
-    os = OS.MAC;
+    os = OperatingSystem.WINDOWS;
   } else if (
     platform.includes("iphone") ||
     platform.includes("ipad") ||
     platform.includes("iOS")
   ) {
-    os = OS.IOS;
+    os = OperatingSystem.IOS;
+  } else if (platform.includes("mac")) {
+    os = OperatingSystem.MACOS;
   } else if (platform.includes("android")) {
-    os = OS.ANDROID;
+    os = OperatingSystem.ANDROID;
   } else {
-    os = OS.OTHER;
+    os = OperatingSystem.UNDETERMINED;
   }
   return os;
 }
@@ -198,6 +233,13 @@ export function getGeoLocation() {
   });
 }
 
+export function detectTouchDevice() {
+  return window.matchMedia("(hover: none)").matches;
+}
+
 export function resolveHoverState(event: MouseEvent | FocusEvent) {
-  return event.type === "mouseover" || event.type === "focus";
+  const isTouchDevice = detectTouchDevice();
+  return (
+    !isTouchDevice && (event.type === "mouseover" || event.type === "focus")
+  );
 }

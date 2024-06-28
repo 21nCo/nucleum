@@ -34,6 +34,7 @@
 
 {#if preset.focusDuration}
   <HoverableElement
+    type="button"
     bind:isHovering
     class={cn(
       "relative flex items-center gap-1 justify-between px-2 2k:px-3 py-4 rounded-md border border-brs2",

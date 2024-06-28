@@ -1,34 +1,40 @@
 <script lang="ts">
+  import { appStore } from "$lib/client/stores/app.store";
+  import context from "$lib/client/stores/context.store";
   import { LinkVariant } from "$lib/client/types/button.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  /**
+   * href can be a literal url like "https://blank.com" or an action from actionMap
+   */
   export let href: string | undefined = undefined;
   export let label: string;
   export let variant: LinkVariant = LinkVariant.DOTTED;
-  // export let feedback: string = "arrow";
-  export let isSameTab: boolean = false;
-  let isHovering: boolean = false;
-  if (!href?.includes("http")) isSameTab = true;
+  function onClick() {
+    if (href && href.includes("http")) appStore.openLink(href);
+    else if (href) appStore.runAction(href);
+    dispatch("click");
+  }
 </script>
 
-{#if href}
+{#if href && !$context.isEmbed && href?.includes("http")}
   <a
-    class="relative hover:text-aps1 {variant === LinkVariant.DOTTED
-      ? 'underline-dotted hover:underline-dotted-hover'
-      : ''}"
+    class={cn("relative hover:text-aps1 whitespace-nowrap min-w-fit", {
+      "underline-dotted hover:underline-dotted-hover":
+        variant === LinkVariant.DOTTED
+    })}
     {href}
-    target={isSameTab ? "_self" : "_blank"}
-    on:mouseenter={() => (isHovering = true)}
-    on:mouseleave={() => (isHovering = false)}
+    target="_blank"
     >{label}
-    <!-- {#if isHovering && feedback == "arrow"}
-  <div class="absolute -right-5 top-1 text-aps1 -rotate-45 text-b2">→</div>
-{/if} -->
   </a>
 {:else}
   <button
-    on:click
-    class="hover:text-aps1 {variant === LinkVariant.DOTTED
-      ? 'underline-dotted hover:underline-dotted-hover'
-      : ''}"
+    on:click={onClick}
+    class={cn("hover:text-aps1 whitespace-nowrap min-w-fit", {
+      "underline-dotted hover:underline-dotted-hover":
+        variant === LinkVariant.DOTTED
+    })}
   >
     {label}
   </button>

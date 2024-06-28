@@ -1,16 +1,8 @@
-import { get, writable, type Updater } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { goto } from "$app/navigation";
 
-import {
-  AppSkin,
-  Theme,
-  type ColorSchemeSLValues
-} from "$lib/client/types/appearance.type";
-import {
-  LaunchContext,
-  type AppStore,
-  EmbedContext
-} from "$lib/client/types/appStore.type";
+import { AppSkin, Theme } from "$lib/client/types/appearance.type";
+import type { AppStore } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
 import {
@@ -24,12 +16,7 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Item } from "$lib/client/types/item.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import {
-  PersistanceActionType,
-  StoreDataType,
-  type ICacheableStore,
-  type CacheableStoreContract
-} from "../types/data.type";
+import type { CacheableStoreContract } from "../types/data.type";
 import {
   ActionType,
   ResourceAccessMode,
@@ -45,7 +32,6 @@ import {
   persistLocally,
   retrieveLocally
 } from "$lib/client/utils/storage.utils";
-import { deepCopy, objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
 import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 
@@ -59,6 +45,7 @@ import { confirmationNotification } from "$lib/client/stores/notification.store"
 
 import { defaultAppData } from "$local/local";
 import { KeyValueStore } from "./kv.store";
+import { Embed, OperatingSystem } from "../types/context.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -89,9 +76,9 @@ export const excludedPathsForRedirectionCheck = [
   "error",
   "welcome",
   "play",
-  "r",
   "fw",
-  "ext-login"
+  "ext-login",
+  "oauth"
 ];
 
 let persistance = new Persistence();
@@ -178,61 +165,37 @@ export const appConstants = {
   colorSchemes,
   tempColorSchemes
 };
-const seedDboVersion = {
-  version: 0,
-  id: Item.dboVersion,
-  dataType: StoreDataType.KVO
-};
-const locallyPersistedDboVersion = retrieveLocally(Item.dboVersion);
 
-export const dboVersion = initDboVersionStore();
-
-function initDboVersionStore() {
-  const { subscribe, set, update } = writable<dbVersionStore>(
-    locallyPersistedDboVersion ?? seedDboVersion
-  );
-  dataManager.retrieveCache(seedDboVersion.id).then((x) => {
-    if (x) set(x as dbVersionStore);
-  });
-  const setVersion = (version: number) => {
-    update((n: dbVersionStore) => {
-      n.version = version;
-      persistLocally(Item.dboVersion, n);
-      dataManager.cache(n);
-      return n;
-    });
-  };
-  return {
-    subscribe,
-    set,
-    loader: (data: any) => {
-      const n = { ...seedDboVersion, ...data };
-      set(n);
-      persistLocally(Item.dboVersion, n);
-      dataManager.cache(n);
-    },
-    setVersion,
-    update,
-    runDboUpdate: async (fromVersion: number | undefined = undefined) => {
-      const version = get(dboVersion).version;
-      const response = await new Persistence().updateDbo(
-        fromVersion ?? version
-      );
-      if (response.version) {
-        setVersion(response.version);
+class DboVersionStore extends KeyValueStore<{ version: number }> {
+  constructor() {
+    super(
+      Item.dboVersion,
+      { version: 0 },
+      {
+        priorityRefreshOnAppAppear: true,
+        isSynchronousCache: true
       }
-    }
+    );
+  }
+  setVersion = (version: number) => {
+    this.setNewValue({ version });
   };
+  async runDboUpdate(fromVersion: number | undefined = undefined) {
+    const version = get(this.store).version;
+    const response = await new Persistence().updateDbo(fromVersion ?? version);
+    if (response?.version) {
+      this.setVersion(response.version);
+    }
+  }
 }
+// export const dboVersion = initDboVersionStore();
+export const dboVersion = new DboVersionStore();
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 
 export const seedUserPreferences: UserGlobalPreferences = {
-  id: Item.globalPreferences,
-  dataType: StoreDataType.KVO,
-  priorityRefreshOnAppAppear: true,
   nickName: "",
   dayStartHour: 0,
   dayStartMinute: 0,
@@ -277,10 +240,6 @@ export const seedUserPreferences: UserGlobalPreferences = {
     grid: []
   }
 };
-const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
-type dbVersionStore = ICacheableStore & {
-  version: number;
-};
 
 class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
   constructor() {
@@ -298,22 +257,15 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       data.mediaGridTestitems = seedUserPreferences.mediaGridTestitems;
     if (data.isAnonymousAnalyticsEnabled === undefined)
       data.isAnonymousAnalyticsEnabled = true;
-    if (!data.dataType) data.dataType = StoreDataType.KVO;
     const val = {
-      ...data,
-      id: this.item,
-      dataType: this.dataType,
-      priorityRefreshOnAppAppear: this.priorityRefreshOnAppAppear
+      ...data
     };
     this.setNewValue(val);
   }
   setAppearance(x: UserAppearanceSettings) {
-    this.update((n: UserGlobalPreferences) => {
-      const appearance = { ...n.appearance, ...x };
-      n.appearance = appearance;
-      this.persist({ appearance });
-      return n;
-    });
+    const n = get(this.store);
+    const appearance = { ...n.appearance, ...x };
+    this.modify({ appearance });
   }
   /**
    * Date().getTimezoneOffset() returns the offset in minutes and calculates offfset by measuring current user's timezone as 0 and relative measure of UTC from that.
@@ -329,11 +281,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
     return { offset, label };
   }
   _setTimezone(offset: number, label?: string) {
-    this.update((n: UserGlobalPreferences) => {
-      n.timeZoneOffset = offset;
-      this.persist({ timeZoneOffset: offset, timeZoneLabel: label });
-      return n;
-    });
+    this.modify({ timeZoneOffset: offset, timeZoneLabel: label });
     return { offset, label };
   }
   /**
@@ -342,13 +290,13 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
    * @param label
    * @returns
    */
-  setTimeZone(offset?: number, label?: string) {
+  async setTimeZone(offset?: number, label?: string) {
     if (offset === undefined) {
       const val = this.resolveTimezoneFallback();
       offset = val.offset;
       label = val.label;
     }
-    persistance.create(
+    await persistance.create(
       { offset, date: new Date().toISOString(), label: label ?? "" },
       Item.tz
     );
@@ -360,7 +308,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
    * Note: Any manual logs or imports prior to 1970 should not be allowed as it might cause unexpected errors since aggregate table views and many calculations rely on tz table and timezone offset.
    * @returns
    */
-  initializeTimeZoneForSignup() {
+  async initializeTimeZoneForSignup() {
     let offset = 0;
     let label: string | undefined;
     const timeZone = detectTimeZone();
@@ -369,7 +317,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       offset = val.offset;
       label = val.label;
     }
-    persistance.create(
+    await persistance.create(
       {
         offset,
         date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
@@ -415,169 +363,11 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       //@ts-ignore
       uiStates.desktop[property] = value;
     }
-    this.update((n: UserGlobalPreferences) => {
-      n.uiStates = uiStates;
-      this.persist({ uiStates });
-      return n;
-    });
+    this.modify({ uiStates });
   }
 }
 
-// export const userPreferences = initUserPreferences();
 export const userPreferences = new UserPreferencesStore();
-
-/**
- * @deprecated - using UserGlobalPreferences class based store instead
- * @returns
- */
-function initUserPreferences() {
-  let previousValue: string;
-  const {
-    subscribe,
-    set: setRaw,
-    update
-  } = writable<UserGlobalPreferences>(
-    locallyPersistedPreferences ?? seedUserPreferences
-  );
-  dataManager.retrieveCache(Item.globalPreferences).then((x) => {
-    if (x) {
-      setRaw(x as UserGlobalPreferences);
-      previousValue = JSON.stringify(x);
-    }
-  });
-  const persist = (n: Partial<UserGlobalPreferences>) => {
-    // console.log("persisting global preferences", { n });
-    cache(get(userPreferences));
-    persistLocally(Item.globalPreferences, get(userPreferences));
-    // persistance.update({
-    //   ...n,
-    //   id: userPreferencesId
-    // });
-    dataManager.performMutation(
-      Item.globalPreferences,
-      {
-        ...n,
-        id: Item.globalPreferences
-      },
-      { action: PersistanceActionType.MERGE }
-    );
-  };
-  const cache = async (n: UserGlobalPreferences) => {
-    dataManager.cache(n);
-  };
-  const set = (x: UserGlobalPreferences) => {
-    setRaw(x);
-    previousValue = JSON.stringify(x);
-  };
-  //TODO - resolveUiState - for local User preferences - may be a super class - common methods for preferences store
-  const resolveUiState = (property: string) => {
-    const uiStates = get(userPreferences).uiStates;
-    let value = undefined;
-    if (get(view).isPortrait) {
-      value = uiStates?.portrait[property];
-    } else {
-      value = uiStates?.desktop[property];
-    }
-    if (value === undefined) {
-      value = uiStates?.all[property];
-    }
-    return value;
-  };
-  const setUIState = (
-    updater: (this: void, updater: Updater<UserGlobalPreferences>) => void,
-    { property, value, isGlobal }: UIStateProps
-  ) => {
-    const uiStates = get(userPreferences).uiStates;
-    if (!uiStates) return;
-    if (isGlobal) {
-      uiStates.all[property] = value;
-    } else if (get(view).isPortrait) {
-      uiStates.portrait[property] = value;
-    } else {
-      uiStates.desktop[property] = value;
-    }
-    updater((n: UserGlobalPreferences) => {
-      n.uiStates = uiStates;
-      return n;
-    });
-  };
-  return {
-    subscribe,
-    update,
-    loader: (data: UserGlobalPreferences) => {
-      if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
-      if (!data.avatarPicker)
-        data.avatarPicker = seedUserPreferences.avatarPicker;
-      if (!data.annotations) data.annotations = seedUserPreferences.annotations;
-      if (data.isAnonymousAnalyticsEnabled === undefined)
-        data.isAnonymousAnalyticsEnabled = true;
-      if (!data.dataType) data.dataType = StoreDataType.KVO;
-      const val = { ...data, id: Item.globalPreferences };
-      set(val);
-      cache(val);
-    },
-    loadSeedData: () => {
-      set(seedUserPreferences);
-      cache(seedUserPreferences);
-      persist(seedUserPreferences);
-    },
-    set: (newValue: UserGlobalPreferences) => {
-      let changedProperties: any = {};
-      if (previousValue) {
-        let differences = shallowDiff(newValue, JSON.parse(previousValue));
-        differences.forEach((key: string) => {
-          changedProperties[key] = newValue[key as keyof UserGlobalPreferences];
-        });
-      }
-      // console.log({
-      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
-      //   newValue,
-      //   changedProperties,
-      // });
-      set(newValue);
-      if (!objIsEmpty(changedProperties)) persist(changedProperties);
-    },
-    setUiStates: (uiStates: any) => {
-      set({
-        ...get(userPreferences),
-        uiStates
-      });
-      persist({ uiStates });
-    },
-    setAppearance: (x: UserAppearanceSettings) => {
-      update((n: UserGlobalPreferences) => {
-        const appearance = { ...n.appearance, ...x };
-        n.appearance = appearance;
-        persist({ appearance });
-        return n;
-      });
-    },
-    setTimeZone: (offset?: number, label?: string) => {
-      if (!offset) {
-        offset = -new Date().getTimezoneOffset() * 60;
-        label = detectTimeZone()?.label ?? "UTC";
-      }
-      update((n: UserGlobalPreferences) => {
-        n.timeZoneOffset = offset;
-        persist({ timeZoneOffset: offset, timeZoneLabel: label });
-        persistance.create(
-          { offset, date: new Date().toISOString(), label: label ?? "" },
-          Item.tz
-        );
-        return n;
-      });
-    },
-    resolveUiState,
-    setUiState: (props: UIStateProps) => setUIState(update, props),
-    onBoardingStatusCheck() {
-      if (resolveUiState(UIState.isOnboardingComplete)) return true;
-      else {
-        appStore.gotoPath("/onboarding");
-        return false;
-      }
-    }
-  };
-}
 
 const cachedAppData = retrieveLocally(Item.appData);
 
@@ -586,8 +376,6 @@ export const appStore = initAppStore({
   env: "dev",
   isDebugMode,
   isExperimentalMode,
-  launchContext: LaunchContext.DEFAULT,
-  embedContext: EmbedContext.NONE,
   appData: cachedAppData ?? defaultAppData,
   currentPath: "",
   isMenuHidden: false,
@@ -638,7 +426,13 @@ function initAppStore(seed: AppStore) {
     }
     return false;
   };
-  const gotoPath = async (path: string, params: any = null) => {
+  const gotoPath = async (
+    path: string,
+    props?: {
+      queryParams?: any;
+      params?: any;
+    }
+  ) => {
     // console.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
@@ -650,11 +444,19 @@ function initAppStore(seed: AppStore) {
       };
       return n;
     });
+    if (props?.queryParams) {
+      const queryString = new URLSearchParams(props.queryParams).toString();
+      path += "?" + queryString;
+    }
     // if (!navigator.onLine) {
     //   path = "/offline";
     // }
-    if (params) goto(path, params);
+    if (props?.params) goto(path, props.params);
     else goto(path);
+  };
+  const gotoErrorPage = (err: any) => {
+    //TODO - log error, show error code on error page
+    gotoPath("/error");
   };
   const gotoResource = async (item: Item, id: string, params: any = null) => {
     const path = `/${item}/${id}`;
@@ -669,47 +471,59 @@ function initAppStore(seed: AppStore) {
     if (params) goto(path, params);
     else goto(path);
   };
-  const resolveComponent = (action: string) => {
-    let component = get(appStore).actions.find(
-      (x) => x.action.toLowerCase() == action.toLowerCase()
+  const resolveAction = (slug: string) => {
+    const actions = get(appStore).actions;
+    let action = actions.find(
+      (x) => x.action?.toLowerCase() == slug.toLowerCase()
     );
-    if (component) return component;
+    if (action) return action;
     return null;
   };
-  const runAction = async (
-    action: string,
-    componentParams: any = undefined
+  const runAction = (
+    slug: string,
+    params: { componentParams?: any; isReturnIfComponent?: boolean } = {
+      componentParams: undefined,
+      isReturnIfComponent: false
+    }
   ) => {
-    let component = resolveComponent(action);
-    if (!component) {
+    let action = resolveAction(slug);
+    if (!action) {
       gotoPath("404");
       return;
     }
-    if (
-      component.type === ActionType.MODAL ||
-      component.type === ActionType.META_MODAL
-    ) {
+    if (action.type === ActionType.LINK) {
+      const url = get(appStore).appData.urls[action.action];
+      if (!url) return;
+      if (url) return openLink(url);
+    } else if (action.type === ActionType.FUNCTION) {
+      if (!action.fn) return;
+      return action.fn(params?.componentParams);
+    } else if (action.type === ActionType.CONFIRMATION && action.confirmation) {
+      confirmationNotification.notify(action.confirmation);
+    } else if (params.isReturnIfComponent) {
+      return action;
+    } else if (action.type === ActionType.MODAL) {
       modalEvent.notify({
-        path: component.action,
+        path: action.action,
         isShow: true,
-        componentParams,
-        ...component.modalParams
+        componentParams: params?.componentParams,
+        ...action.modalParams
       });
-    } else if (
-      component.type === ActionType.CONFIRMATION &&
-      component.confirmation
-    ) {
-      confirmationNotification.notify(component.confirmation);
-    } else if (component.fn) return await component.fn(componentParams);
-    else resolveNavigationAction(action);
+    } else if (action.component) {
+      console.log("running action", { action });
+      gotoPath("/" + (action.path ?? action.action));
+      return;
+    }
   };
   const openLink = (url: string) => {
+    console.log("opening link", url);
+    const ctx = get(context);
     if (!url) return;
     if (!url.includes("http")) {
       gotoPath(url);
       return;
     }
-    if (get(appStore).launchContext == LaunchContext.EMBED) {
+    if (ctx.isEmbed) {
       postToParent({
         link: url
       });
@@ -720,23 +534,6 @@ function initAppStore(seed: AppStore) {
       }
     }
   };
-  const runNavigationAction = (action: IAction) => {
-    if (action.type === ActionType.LINK && action.link) {
-      const url = get(appStore).appData.urls[action.link];
-      if (url) openLink(url);
-    } else if (action.component) {
-      gotoPath("/" + (action.path ?? action.action));
-      return;
-    }
-  };
-  const resolveNavigationAction = (action: string) => {
-    let component = resolveComponent(action);
-    if (!component) {
-      gotoPath("404");
-      return;
-    }
-    runNavigationAction(component);
-  };
 
   const initiateOAuth2Flow = (provider: IdentityProvider) => {
     const ctx = get(context);
@@ -745,26 +542,36 @@ function initAppStore(seed: AppStore) {
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
-    const app = import.meta.env.VITE_APP ?? window.location.hostname;
+    const dev = import.meta.env.DEV;
+    const host =
+      ctx.isEmbed || dev ? import.meta.env.VITE_HOST : window.location.hostname;
+    const redirect = ctx.isEmbed
+      ? import.meta.env.VITE_OAUTH_REDIRECT ?? "https://" + host
+      : window.location.origin;
+    // const origin = window.location.origin;
+    const state =
+      ctx.isEmbed && ctx.os === OperatingSystem.MACOS
+        ? "localredirect." + host
+        : host;
     let url =
       config.authorise_url +
       "?client_id=" +
       config.client_id +
       "&scope=" +
       config.scope +
-      "&response_type=code&state=" +
-      app;
+      "&response_type=" +
+      (config.response_type ?? "code") +
+      "&state=" +
+      state;
     let redirectUri = "";
     if (config.response_mode === "form_post") {
-      redirectUri =
-        import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
-      // redirectUri = "https://dev.pointron.io/r/apple";
       url += "&response_mode=form_post";
-    } else if (!ctx.isEmbed) {
-      redirectUri = window.location.origin + "/r/" + config.oauth_slug;
+    }
+    if (config.isRedirectToClient) {
+      redirectUri = redirect + "/oauth/" + config.oauth_slug;
     } else {
       redirectUri =
-        "https://" + import.meta.env.VITE_APP + "/r/" + config.oauth_slug;
+        import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
     }
     if (config.code_challenge_method) {
       //TODO generate code challenge
@@ -775,7 +582,7 @@ function initAppStore(seed: AppStore) {
     if (!redirectUri) return;
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
-    if (ctx.isEmbed) {
+    if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
       openLink(url);
     } else {
       goto(url);
@@ -792,7 +599,7 @@ function initAppStore(seed: AppStore) {
     let latestVersion = get(appStore).appData?.version;
     try {
       if (!latestVersion) {
-        const app = import.meta.env.VITE_APP ?? window.location.hostname;
+        const app = window.location.hostname;
         if (!app) return;
         latestVersion = await new Persistence().getLatestAppVersion(app);
       }
@@ -986,6 +793,11 @@ function initAppStore(seed: AppStore) {
       settingsAsModal: IAction[],
       settingsAsPages: IAction[]
     ) => {
+      console.log("init actions", {
+        actions,
+        settingsAsModal,
+        settingsAsPages
+      });
       const isInPortraitMode = get(view).isPortrait;
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
@@ -1003,13 +815,12 @@ function initAppStore(seed: AppStore) {
       });
     },
     gotoPath,
+    gotoErrorPage,
     gotoResource,
-    resolveComponent,
+    resolveAction,
     resolveComponentFromPath,
     openLink,
     runAction,
-    resolveNavigationAction,
-    runNavigationAction,
     initiateOAuth2Flow,
     checkForUpdates,
     toggleSearchParam,

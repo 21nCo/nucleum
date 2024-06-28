@@ -2,17 +2,17 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import CpThumbnail from "../settings/CPThumbnail.svelte";
+  import SettingThumbnail from "./SettingThumbnail.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-  import { ActionType, type IAction } from "$lib/client/types/action.type";
+  import type { IAction } from "$lib/client/types/action.type";
   import { onMount } from "svelte";
   import type { AppStore } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { isValidArray, sortArrayByOrder } from "$lib/client/utils/obj.utils";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
-  import { AppEvent } from "$lib/client/types/event.enum";
   import SettingsFooter from "./SettingsFooter.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { Action } from "$lib/client/types/action.enum";
   let selected: string = "";
   let parentBgIndex: number = 2;
   // resolveAction("theme");
@@ -27,18 +27,13 @@
       }
     });
   });
-  function resolveAction(slug: string) {
-    console.log(slug);
+  async function runAction(slug: string) {
     if (!slug) return;
-    const result = appStore.resolveComponent(slug);
+    const result = await appStore.runAction(slug, {
+      isReturnIfComponent: true
+    });
     if (!result) return;
-    if (result.type === ActionType.FUNCTION) {
-      result.fn?.();
-    } else if (result?.type === ActionType.LINK) {
-      appStore.runNavigationAction(result);
-    } else {
-      pageAction = result;
-    }
+    pageAction = result;
   }
 </script>
 
@@ -51,7 +46,7 @@
       context="modal"
       parentBackgroundIndex={2}
       on:click={() => {
-        resolveAction(AppEvent.ACCOUNT);
+        runAction(Action.ACCOUNT);
       }}
     />
     {#if config}
@@ -72,7 +67,7 @@
             <div class="flex flex-col w-full">
               {#if section.children}
                 {#each section.children as item}
-                  <CpThumbnail
+                  <SettingThumbnail
                     parentBackgroundIndex={2}
                     orientation={Orientation.Horizontal}
                     action={item}
@@ -80,7 +75,7 @@
                     width="w-40"
                     on:click={() => {
                       selected = item;
-                      resolveAction(item);
+                      runAction(item);
                     }}
                   />
                 {/each}

@@ -125,7 +125,6 @@ export class SurrealDatabaseUsingRest {
       }
       if (response?.ok) {
         let result = await response.json();
-        //console.log({ result });
         if (result.length > 0) {
           return result.slice(1).map((item: any) => {
             return { result: item.result, status: item.status };
@@ -133,6 +132,7 @@ export class SurrealDatabaseUsingRest {
         }
       } else return null;
     } catch (error) {
+      //TODO - error handling
       console.log(error);
       return null;
     }

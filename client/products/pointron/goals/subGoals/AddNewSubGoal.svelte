@@ -3,8 +3,8 @@
   import { onMount } from "svelte";
   import SubGoalListItem from "./SubGoalListItem.svelte";
   import { appEvents } from "$lib/client/stores/notification.store";
-  import type { AppEventType } from "$lib/client/types/event.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
   import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -16,9 +16,9 @@
   const formId = generateUID();
 
   onMount(() => {
-    const sub = appEvents.subscribe((x: AppEventType) => {
+    const sub = appEvents.subscribe((x: IEvent) => {
       if (
-        x.event === AppEvent.WINDOW_CLICKED &&
+        x.event === GlobalEvent.WINDOW_CLICKED &&
         x.value &&
         x.value instanceof PointerEvent
       ) {

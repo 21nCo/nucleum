@@ -96,7 +96,6 @@ export const icons = [
   "google",
   "youtube",
   "apple",
-  "apple-dark",
   "video-camera",
   "help",
   "help-mini",

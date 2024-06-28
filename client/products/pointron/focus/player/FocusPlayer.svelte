@@ -11,7 +11,7 @@
   import FocusPlayerTimeText from "./FocusPlayerTimeText.svelte";
   import InlineLoadingAnimation from "$lib/client/elements/feedback/animations/InlineLoadingAnimation.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   let playerContainerRef: any;
@@ -24,7 +24,7 @@
     $sessionStore.timeRemainingToTakeBreak < 0;
   function enableFullScreenPlayer() {
     if (isPipOn) return;
-    appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
+    appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
   }
   function clickHandler(event: any) {
     //if ($windowObject.isInPortraitMode) return;
@@ -36,7 +36,7 @@
     if (player && $sessionStore.isSessionRunning)
       playerContainer?.append(player);
     isPipOn = false;
-    if ($appStore.isPipOn) appStore.togglePip(PointronEventEnum.FOCUS_PLAYER);
+    if ($appStore.isPipOn) appStore.togglePip(PointronAction.FOCUS_PLAYER);
     if ("documentPictureInPicture" in window)
       (window.documentPictureInPicture as any).window.close();
   }
@@ -126,16 +126,17 @@
   bind:this={playerContainerRef}
 >
   <CustomColorPropagator
+    type="button"
     color={$sessionStore.currentLog.color}
     id="focusplayer"
     class={cn(
-      "flex h-full text-bgs1 border-t border-bgs3 border-opacity-50 justify-between items-center px-4 py-2",
+      "flex h-full border-t border-bgs3 border-opacity-50 justify-between items-center px-4 py-2",
       {
         "w-full": $view.isPortrait || isPipOn,
         "w-[26rem] rounded-md": !($view.isPortrait || isPipOn),
-        "bg-ars1": isBreakReminderMode,
-        "bg-ccs1": isFocusing && !isBreakReminderMode,
-        "bg-ass1": !isFocusing
+        "bg-ars1 text-abg": isBreakReminderMode,
+        "bg-ccs1 text-cbg": isFocusing && !isBreakReminderMode,
+        "bg-ass1 text-abg": !isFocusing
       }
     )}
     on:click={clickHandler}

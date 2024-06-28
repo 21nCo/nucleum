@@ -1,8 +1,7 @@
 import type { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { TimeScale } from "./time.type";
 import type { IAvatar } from "./avatar.type";
-import type { ICacheableStore } from "./data.type";
-export type UserGlobalPreferences = ICacheableStore & {
+export type UserGlobalPreferences = {
   nickName: string;
   // theme: AppSkin;
   // colorScheme: ColorScheme;
@@ -17,7 +16,6 @@ export type UserGlobalPreferences = ICacheableStore & {
   timeZoneOffset: number;
   timeZoneLabel: string;
   timeScales?: TimeScale[];
-  id: string;
   recentCommands?: string[];
   shortcuts?: KeyboardShortcut[];
   uiStates: {

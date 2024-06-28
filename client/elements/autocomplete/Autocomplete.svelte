@@ -186,7 +186,7 @@
           <!-- <svelte:component this={iconComponent || Search} /> -->
           <Icon {icon} size={Size.sm} />
         {:else if !hideSearchIcon}
-          <Icon size={Size.sm} icon="search-mini" />
+          <Icon size={Size.sm} icon="search" />
         {/if}
       </div>
     {/if}

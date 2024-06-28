@@ -5,7 +5,7 @@
   export let item: string;
   export let isActive: boolean = false;
   export let isShowLabel: boolean = false;
-  let component = appStore.resolveComponent(item);
+  let component = appStore.resolveAction(item);
 </script>
 
 <div class="flex items-center gap-1">

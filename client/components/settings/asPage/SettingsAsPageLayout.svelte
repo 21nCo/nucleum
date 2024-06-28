@@ -3,10 +3,10 @@
   import type { AppStore } from "$lib/client/types/appStore.type";
   import { onMount } from "svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import CpThumbnailList from "./CPThumbnailList.svelte";
+  import CpThumbnailList from "./SettingsList.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import ProfileCpSection from "./account/ProfileCPSection.svelte";
+  import ProfileCpSection from "../account/ProfileCPSection.svelte";
   import { page } from "$app/stores";
   import { isValidArray, sortArrayByOrder } from "$lib/client/utils/obj.utils";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
@@ -14,7 +14,7 @@
   import view from "$lib/client/stores/view.store";
   import appearance from "$lib/client/stores/appearance.store";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
-  import SettingsFooter from "./SettingsFooter.svelte";
+  import SettingsFooter from "../SettingsFooter.svelte";
 
   $: isCpHome = $page?.url.pathname === "/cp" || $page?.url.pathname === "/cp/";
   let cpConfiguration: any;

@@ -1,28 +1,19 @@
 <script lang="ts">
-  import { FocusPersistence } from "$lib/client/products/pointron/focus/focus.persistence";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
-  import {
-    generateMarkdownText,
-    isValidMarkdown,
-    truncateString
-  } from "$lib/client/utils/text.utils";
   import { formatSeconds, formatTime } from "$lib/client/utils/time.utils";
-  import { createEventDispatcher } from "svelte";
   import type { LogThumbnail } from "./log.type";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  const dispatch = createEventDispatcher();
+  import { cn } from "$lib/client/utils/ui.utils";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   export let log: LogThumbnail;
   export let context: "journal" | "logs" = "logs";
   export let isLast: boolean = false;
@@ -31,7 +22,7 @@
   let isHovering: boolean = false;
   let height = 166;
   let total = log.totalFocus + log.totalBreak;
-  let minHeight = 100;
+  let minHeight = 110;
 
   if (isEnableVariableHeight) {
     // let baseHeight = 110;
@@ -64,7 +55,9 @@
   }
 
   async function handleDelete(event: MouseEvent) {
-    appStore.runAction(PointronEventEnum.DELETE_SESSION, { id: log.id });
+    appStore.runAction(PointronAction.DELETE_SESSION, {
+      componentParams: { id: log.id }
+    });
     event.stopPropagation();
   }
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
@@ -73,27 +66,34 @@
 </script>
 
 <!-- TODO - Svelte 5 snippets - time label -->
-<button
+<HoverableElement
+  bind:isHovering
   id="log-item"
-  class="relative flex w-full items-center rounded-md {isLast
-    ? 'mb-10'
-    : ''} border border-brs3 p-4"
-  style:--height={height + "px"}
+  class={cn(
+    "relative flex w-full gap-2 items-center rounded-md border border-brs3 p-4",
+    {
+      "mb-10": isLast
+    }
+  )}
+  style="min-height: {height}px;"
   on:click
-  on:mouseover={toggleHoveringState}
-  on:mouseleave={toggleHoveringState}
-  on:focus={toggleHoveringState}
-  on:blur={toggleHoveringState}
 >
   <div
-    class="flex h-full flex-col justify-between items-start gap-1 rounded-l-md {variant ===
-    'v1'
-      ? $view.isPortrait
-        ? 'text-b3 w-[31%]'
-        : 'text-b2 w-[28%]'
-      : 'pr-8 w-1/4'}"
+    class={cn(
+      "flex h-full flex-col justify-between items-start gap-1 rounded-l-md text-b2",
+      {
+        "w-[31%]": variant === "v1" && $view.isPortrait,
+        "w-[28%]": variant === "v1" && !$view.isPortrait,
+        "pr-8 w-1/4": variant === "v2"
+      }
+    )}
   >
-    <div class={variant === "v2" ? "text-b3 text-fgs2" : "text-fgs3"}>
+    <div
+      class={cn({
+        "text-b3 text-fgs2": variant === "v2",
+        "mo:text-b2 text-b3 text-fgs3": variant === "v1"
+      })}
+    >
       {formatTime($userPreferences, new Date(log.start))}
     </div>
     <div class="flex h-full gap-2">
@@ -106,16 +106,16 @@
         <div class="flex h-full text-start items-center gap-2">
           <div class="flex flex-col gap w-ful text-fgs2">
             {#if isEnableVariableHeight && height < 140}
-              <div class="min-w-fit text-fgs1 text-b5">
+              <div class="min-w-fit text-fgs1 text-b4">
                 {formatSeconds(total)}
               </div>
             {:else}
-              <div class="min-w-fit text-aps1 text-b4">
+              <div class="min-w-fit text-aps1 text-b3">
                 <!-- {$windowObject.isInPortraitMode ? "F:" : "Focus:"} -->
                 F:
                 {formatSeconds(log.totalFocus)}
               </div>
-              <div class="min-w-fit text-ass1 text-b4">
+              <div class="min-w-fit text-ass1 text-b3">
                 <!-- {$windowObject.isInPortraitMode ? "B:" : "Break:"} -->
                 B:
                 {formatSeconds(log.totalBreak)}
@@ -125,26 +125,37 @@
         </div>
       {/if}
     </div>
-    <div class={variant === "v2" ? "text-b3 text-fgs2" : "text-fgs3"}>
+    <div
+      class={cn({
+        "text-b3 text-fgs2": variant === "v2",
+        "mo:text-b2 text-b3 text-fgs3": variant === "v1"
+      })}
+    >
       {formatTime($userPreferences, new Date(log.end))}
     </div>
   </div>
-  <div class="flex flex-col h-full flex-grow gap-1">
+  <div
+    class={cn("flex flex-col h-full gap-1", {
+      "w-[69%]": variant === "v1" && $view.isPortrait,
+      "w-[72%]": variant === "v1" && !$view.isPortrait
+    })}
+  >
     <div class="flex-grow flex flex-col items-start gap-2 overflow-y-auto">
       {#if variant === "v1"}
         <!-- <div class="text-start text-b4 text-fgs2 font-medium">GOALS</div> -->
         <Text content="Goals" style={TextStyle.SECTION_HEADING} />
       {/if}
-      <div class="flex flex-col">
+      <div class="flex flex-col w-full">
         {#if log.goals && log.goals.length > 0}
           {#each log.goals as goal}
             <CustomColorPropagator
               color={goal.color ?? goal.parent?.color}
-              class="flex gap-2 text-base items-center"
+              class="flex w-full gap-2 text-base items-center"
             >
               <div class="w-2 h-2 rounded-sm bg-ccs1" />
-              <div class="text-left mo:text-b3 text-b2 text-ccs1">
-                {truncateString(goal.label, $view.isPortrait ? 20 : 25)}
+              <div class="text-left mo:text-b2 text-ccs1 truncate w-4/5">
+                <!-- {truncateString(goal.label, $view.isPortrait ? 20 : 25)} -->
+                {goal.label}
               </div>
             </CustomColorPropagator>
           {/each}
@@ -184,26 +195,11 @@
       </div>
     {/if}
   </div>
-  <div class="rounded-r-md h-full flex flex-col pr-2 justify-center">
+  <div
+    class="absolute right-0 mr-4 rounded-r-md h-full flex flex-col pr-2 justify-center"
+  >
     {#if context == "logs" || (isHovering && !$view.isPortrait)}
       <Icon icon="chevright" />
     {/if}
   </div>
-  <!-- {#if isHovering && !$view.isPortrait}
-    <div class="absolute top-1 right-0 flex gap-2 px-4">
-      <Button
-        icon="trash"
-        size={Size.sm}
-        tooltip="Delete session"
-        on:click={handleDelete}
-      />
-      <Button icon="copy" size={Size.sm} tooltip="Copy notes" />
-    </div>
-  {/if} -->
-</button>
-
-<style>
-  #log-item {
-    min-height: var(--height);
-  }
-</style>
+</HoverableElement>

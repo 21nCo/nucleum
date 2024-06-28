@@ -22,4 +22,4 @@
   </div> -->
   <NodeView {id} />
 </div>
-<!-- <ModalCloseButton path={MemotronEvent.JOURNAL_MODAL_VIEWER} /> -->
+<!-- <ModalCloseButton path={MemotronAction.JOURNAL_MODAL_VIEWER} /> -->

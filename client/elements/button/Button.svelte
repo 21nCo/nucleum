@@ -65,7 +65,7 @@
     "flex flex-row justify-center items-center min-w-fit rounded-full",
     width,
     {
-      "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled,
+      "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,
       "gap-2 text-b2 dp:text-base": size === Size.md,
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
@@ -115,7 +115,7 @@
   on:mouseleave={toggleHoveringState}
   on:focus={toggleHoveringState}
   on:blur={toggleHoveringState}
-  disabled={isDisabled}
+  disabled={isDisabled || isLoading}
 >
   {#if isLoading}
     <InlineLoadingAnimation
@@ -127,7 +127,7 @@
     {#if icon}
       <Icon
         {icon}
-        {size}
+        size={size === Size.xs ? Size.sm : size}
         class={cn({
           "stroke-aps1":
             style === ButtonStyle.OUTLINED && type === ButtonVariant.PRIMARY,
@@ -146,7 +146,7 @@
       />
     {/if}
     {#if label}
-      <div class="min-w-fit">
+      <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
     {:else}

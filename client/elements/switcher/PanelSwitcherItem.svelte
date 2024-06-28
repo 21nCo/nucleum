@@ -6,9 +6,6 @@
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
   } from "$lib/client/types/switcher.enum";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { textColorClass } from "$lib/client/utils/theme.utils";
-  import appearance from "$lib/client/stores/appearance.store";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
@@ -68,6 +65,7 @@
         {editModeOptions}
         {size}
         {isActive}
+        {isDisabled}
         bind:triggerItemEdit
         on:remove
         on:change
@@ -98,6 +96,7 @@
       {editModeOptions}
       {size}
       {isActive}
+      {isDisabled}
       bind:triggerItemEdit
       on:remove
       on:change
@@ -149,6 +148,7 @@
         {editModeOptions}
         {size}
         {isActive}
+        {isDisabled}
         bind:triggerItemEdit
         on:remove
         on:change

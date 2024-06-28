@@ -7,7 +7,7 @@
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -98,10 +98,11 @@
   >
     <Panel
       title="Goals"
+      panelSize={Size.sm}
       floatingButton={{
         label: "Create new goal",
         callback: async () =>
-          appStore.runAction(PointronEventEnum.CREATE_EDIT_GOAL),
+          appStore.runAction(PointronAction.CREATE_EDIT_GOAL),
         icon: "plus",
         variant: ButtonVariant.PRIMARY
       }}
@@ -132,7 +133,7 @@
           {/if}
           <div class="h-full w-full">
             {#if isValidArrayWithData($goalStore.filteredGoals)}
-              <div class="w-full grow">
+              <div class="w-full grow portrait:text-base text-b2">
                 <TreeMap
                   items={$goalStore.filteredGoals.map((x) => x.id)}
                   contentCallback={goalStore.get}

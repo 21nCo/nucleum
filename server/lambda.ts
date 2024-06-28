@@ -1,7 +1,7 @@
 import {
   APIGatewayProxyEvent,
   APIGatewayProxyEventV2,
-  APIGatewayProxyResultV2,
+  APIGatewayProxyResultV2
 } from "aws-lambda";
 import { authorize } from "./account";
 import { parse } from "querystring";
@@ -9,7 +9,7 @@ import { parse } from "querystring";
 const accessControlHeaders = {
   "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
   "Access-Control-Allow-Headers": "Content-Type Authorization",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
 };
 
 export async function lambdaUsingNode(
@@ -30,21 +30,27 @@ export async function lambdaUsingNode(
           statusCode: 401,
           headers: {
             "Content-Type": "text/plain",
-            ...accessControlHeaders,
+            ...accessControlHeaders
           },
-          body: "Unauthorized",
+          body: "Unauthorized"
         };
       }
     }
     let body = {};
     let httpMethod = event.httpMethod ?? event.requestContext.httpMethod;
-    console.log({ contentType: event.headers["content-type"] });
-    if (httpMethod != "GET") {
-      if (event.headers["content-type"] === "multipart/form-data") {
+    const contentType =
+      event.headers["Content-Type"] ?? event.headers["content-type"];
+    console.log({ contentType, httpMethod });
+    if (httpMethod === "GET") {
+      body = { ...event.queryStringParameters };
+      console.log("GET request", {
+        body,
+        queryStringParameters: event.queryStringParameters
+      });
+    } else if (httpMethod === "POST") {
+      if (contentType === "multipart/form-data") {
         // Parse form data - might need to use a library like `busboy` or `formidable` here
-      } else if (
-        event.headers["content-type"] === "application/x-www-form-urlencoded"
-      ) {
+      } else if (contentType === "application/x-www-form-urlencoded") {
         console.log("parsing form data", { body: event.body });
         body = parse(event.body ?? "");
       } else {
@@ -73,9 +79,9 @@ export async function lambdaUsingNode(
     headers: {
       "Content-Type": "application/json",
       ...accessControlHeaders,
-      ...responseHeaders,
+      ...responseHeaders
     },
-    body: responseBody,
+    body: responseBody
   };
 }
 
@@ -97,8 +103,8 @@ export async function lamdbaUsingBun(
         status: 401,
         headers: {
           "Content-Type": "text/plain",
-          ...accessControlHeaders,
-        },
+          ...accessControlHeaders
+        }
       });
     }
     const body = await request.json();
@@ -119,7 +125,7 @@ export async function lamdbaUsingBun(
     status: statusCode,
     headers: {
       "Content-Type": "application/json",
-      ...accessControlHeaders,
-    },
+      ...accessControlHeaders
+    }
   });
 }

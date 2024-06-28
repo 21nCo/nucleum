@@ -117,16 +117,15 @@
 >
   {#if (item.goalId && (!$sessionStore.isSessionRunning || isInEditMode)) || (item.goalId && item.tasks)}
     <div class="relative flex items-center gap-2 w-full">
-      <div class="flex flex-col w-full pb-2 border-2 border-bgs2 rounded-md">
+      <div
+        class="flex flex-col gap-2 w-full pb-2 border-2 border-bgs2 rounded-md"
+      >
         <CustomColorPropagator
           color={item.color}
-          class={cn(
-            "text-left text-fgs1 py-4 px-4 font-medium truncate w-4/5",
-            {
-              "text-ccs1": item.color,
-              "text-fgs2": item.color
-            }
-          )}
+          class={cn("text-left px-3 pt-3 font-medium truncate w-4/5", {
+            "text-ccs1": item.color,
+            "text-fgs2": !item.color
+          })}
         >
           <div>
             <BreadcrumbMini
@@ -143,17 +142,17 @@
             on:touchend={() => (isDragEnabled = false)}>&nbsp&nbsp⇳</span
           > -->
         </CustomColorPropagator>
-        <div class="px-4">
+        <div class="px-2">
           {#if item.tasks && item.tasks.length > 0}
             {#each item.tasks as task, index (task.taskId)}
               <Task {task} {isInEditMode} context={contxt} />
               {#if index < item.tasks.length - 1}
-                <div class="border-b border-bgs2" />
+                <div class="mx-1 border-b border-bgs2" />
               {/if}
             {/each}
           {/if}
           {#if (contxt === "current" && !$sessionStore.isSessionRunning) || isInEditMode}
-            <div class="border-b border-bgs2" />
+            <div class="mx-1 border-b border-bgs2" />
             <AddTask
               goalId={item.goalId}
               placeholder={"add task"}
@@ -179,7 +178,7 @@
   {:else if $sessionStore.isSessionRunning && item.goalId}
     <CustomColorPropagator
       class={cn(
-        "flex justify-between items-center border-2 border-bgs2 w-full py-4 px-4 rounded-md",
+        "flex justify-between items-center border-2 border-bgs2 w-full p-3 rounded-md",
         {
           "bg-ccs1 border-ccs1": isInprogress,
           "text-ccs1": !isInprogress

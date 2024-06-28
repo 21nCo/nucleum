@@ -78,4 +78,23 @@ export class CacheManager implements CacheSource {
   async retrieveCache(storeId: string) {
     return (await this.indxDb.getItem(storeId)) as ICacheableStore;
   }
+
+  async clearCache() {
+    try {
+      await this.dexie.transaction("rw", this.dexie.tables, async () => {
+        await Promise.all(this.dexie.tables.map((table) => table.clear()));
+      });
+      console.log("Dexie database cleared successfully");
+      this.indxDb
+        .clear()
+        .then(() => {
+          console.log("LocalForage data cleared successfully.");
+        })
+        .catch((error) => {
+          console.error("Failed to clear LocalForage:", error);
+        });
+    } catch (error) {
+      console.error("Failed to clear database:", error);
+    }
+  }
 }

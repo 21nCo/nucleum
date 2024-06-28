@@ -8,13 +8,13 @@
   import { ChipVariant } from "$lib/client/types/chipVariant.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { appEvents } from "$lib/client/stores/notification.store";
-  import type { AppEventType } from "$lib/client/types/event.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import Autocomplete from "./Autocomplete.svelte";
   import Button from "../button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import appearance from "$lib/client/stores/appearance.store";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
@@ -196,9 +196,9 @@
     else if (size == Size.xs) defaultInputClasses += " text-b3";
   });
 
-  const sub = appEvents.subscribe((x: AppEventType) => {
+  const sub = appEvents.subscribe((x: IEvent) => {
     if (
-      x.event === AppEvent.WINDOW_CLICKED &&
+      x.event === GlobalEvent.WINDOW_CLICKED &&
       x.value &&
       x.value instanceof PointerEvent
     ) {
@@ -274,17 +274,19 @@
                 on:click={handleResultItemClickViaCustomEvent}
               />
             {/each}
+
+            <span class="w-full flex p-2 justify-center mb-1">
+              <Button
+                label="edit tags"
+                size={Size.xs}
+                parentBgIndex={2}
+                on:click={() => {
+                  appStore.runAction(PointronAction.TAGS);
+                }}
+              />
+            </span>
           </div>
         {/if}
-      </span>
-
-      <span>
-        <Button
-          icon="settings"
-          on:click={() => {
-            appStore.runAction(PointronEventEnum.TAGS);
-          }}
-        />
       </span>
     </span>
   </div>

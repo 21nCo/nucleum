@@ -6,7 +6,7 @@
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let id: string;
   let label: string = "";
   let modalRef: any;
@@ -31,7 +31,7 @@
   />
   <ModalFooter
     on:close={() => {
-      modalEvent.hideSpecific(PointronEventEnum.EDIT_TAG);
+      modalEvent.hideSpecific(PointronAction.EDIT_TAG);
     }}
     primaryAction={{
       label: "Update",

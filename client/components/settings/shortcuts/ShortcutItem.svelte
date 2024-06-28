@@ -13,7 +13,7 @@
   let key: string;
   let modifiers: string[] = [];
   let inputRef: HTMLInputElement;
-  const action = appStore.resolveComponent(shortcut.action);
+  const action = appStore.resolveAction(shortcut.action);
   const systemShortcuts = [
     {
       key: "p",

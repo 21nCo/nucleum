@@ -12,11 +12,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { fly, slide } from "svelte/transition";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import type { ModalEvent, ModalParams } from "$lib/client/types/popup.type";
-  import { LaunchContext } from "$lib/client/types/appStore.type";
-  import { AppEvent } from "$lib/client/types/event.enum";
-  import type { AppEventType } from "$lib/client/types/event.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import type { IEvent } from "$lib/client/types/event.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
@@ -27,15 +26,14 @@
   import { logger } from "$lib/client/stores/log.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { liveQuery } from "dexie";
-  import { AlertType } from "$lib/client/types/notification.type";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { page } from "$app/stores";
-  import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import SplitView from "../SplitView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import ColorLayer from "./themeLayer/ColorLayer.svelte";
+  import { Action } from "$lib/client/types/action.enum";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -52,13 +50,16 @@
     );
   }
   onMount(() => {
-    const appEventSub = appEvents.subscribe((x: AppEventType) => {
-      if (x.event == AppEvent.SHOW_APPEARANCE_PREVIEW) {
+    const appEventSub = appEvents.subscribe((x: IEvent) => {
+      if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
-      } else if (x.event === AppEvent.USER_LOGIN) {
+      } else if (x.event === GlobalEvent.USER_LOGIN) {
         modals = [];
       }
-      if (x.event === AppEvent.USER_SIGNUP || x.event === AppEvent.USER_LOGIN) {
+      if (
+        x.event === GlobalEvent.USER_SIGNUP ||
+        x.event === GlobalEvent.USER_LOGIN
+      ) {
         mutationQueue = refreshMutationQueueLiveQuery();
       }
     });
@@ -79,7 +80,8 @@
           modal: JSON.stringify(x)
         });
       } else if (
-        $appStore.launchContext == LaunchContext.EMBED &&
+        $context.isEmbed &&
+        $context.embed === Embed.HANDSET &&
         x.isShowAsSheet
       ) {
         postToParent({
@@ -106,7 +108,7 @@
   function resolvePop(resourceId: string) {
     if (resourceId && resourceId.split(":").length > 1) {
       const slug = resourceId.split(":")[0];
-      const action = appStore.resolveComponent(slug);
+      const action = appStore.resolveAction(slug);
       if (!action) return;
       pop = {
         path: slug,
@@ -211,7 +213,7 @@
 {#if $confirmationNotification}
   <Modal show={true} id="confirmation" isDismissable={true} size={Size.xs}>
     <ModalLayout
-      path={AppEvent.CONFIRMATION}
+      path={Action.CONFIRMATION}
       params={{
         title: $confirmationNotification.title,
         layout: {

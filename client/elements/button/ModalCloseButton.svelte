@@ -1,7 +1,7 @@
 <script lang="ts">
   import modalEvent from "$lib/client/components/modal/modal.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import { Direction } from "$lib/client/types/direction.enum";
-  import { closeResource } from "$lib/client/utils/utils";
   import Button from "./Button.svelte";
   export let path: string;
   export let position: Direction = Direction.TopRight;
@@ -21,7 +21,7 @@
     tooltip="close"
     on:click={() => {
       console.log("ModalCloseButton", { path });
-      closeResource();
+      appStore.closeResource();
       modalEvent.hideSpecific(path, "ModalCloseButton.svelte");
     }}
   />

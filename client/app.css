@@ -8,6 +8,17 @@
   @apply grow overflow-auto;
 }
 
+.overflow-auto {
+  @apply overflow-auto-raw no-scrollbar;
+}
+.overflow-y-auto {
+  @apply overflow-y-auto-raw no-scrollbar;
+}
+.overflow-x-auto {
+  @apply overflow-x-auto-raw no-scrollbar;
+}
+
+
 :root {
   overflow: hidden;
 }
@@ -39,6 +50,7 @@ body {
     -ms-overflow-style: none; /* Internet Explorer 10+ */
   }
   .no-scrollbar::-webkit-scrollbar {
+    width: 0em;
     display: none !important; /* Safari and Chrome */
   }
 
@@ -107,6 +119,34 @@ body {
 
   path.arc-background, .cds--cc--gauge path.arc-background, .arc-background {
     fill: rgba(var(--colors-aps2), 1) !important;
+  }
+
+  .overflow-auto-raw {
+    overflow: auto;
+  }
+
+  .overflow-y-auto-raw {
+    overflow-y: auto;
+  }
+  .overflow-x-auto-raw {
+    overflow-x: auto;
+  }
+
+  /* Logo colors 
+  Notes:
+  Could have directly included in the <SubatomLogo> component but, dark: tailwind utility is not working in that case.
+  */
+  .fill-logo-dark {
+    fill: #393939;
+  }
+  .fill-logo-light {
+    fill: #ffffff;
+  }
+  .stroke-logo-dark {
+    stroke: #393939;
+  }
+  .stroke-logo-light {
+    stroke: #ffffff;
   }
 
 }

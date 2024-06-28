@@ -65,7 +65,7 @@
 </script>
 
 <HoverableElement
-  class={cn("flex items-center", {
+  class={cn("flex items-center cursor-pointer", {
     "w-12 flex-col gap-1 text-b4 rounded-lg":
       isShowLabel && layoutContext === LayoutContext.PORTRAIT,
     "text-b2 gap-2 rounded-lg p-3 h-10":

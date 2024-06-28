@@ -6,12 +6,7 @@
   import { onMount } from "svelte";
   import { newGoalStore } from "$lib/client/products/pointron/goals/goal.store";
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
-  import {
-    pointronEvents,
-    tagStore
-  } from "$lib/client/products/pointron/pointron.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
-  import type { PointronEvent } from "$lib/client/types/pointron/pointronEvent.type";
+  import { tagStore } from "$lib/client/products/pointron/pointron.store";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -21,11 +16,6 @@
   }
   onMount(async () => {
     usedColors = getUsedColors();
-    pointronEvents.subscribe(async (x: PointronEvent) => {
-      if (x.event === PointronEventEnum.GOALS_UPDATED) {
-        usedColors = getUsedColors();
-      }
-    });
   });
   let usedColors: number[];
   let tagOptions: AutocompleteListItemType[] = $tagStore.tags;

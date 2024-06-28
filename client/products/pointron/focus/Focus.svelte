@@ -1,6 +1,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "$lib/client/types/switcher.enum";
   import { onMount } from "svelte";
   import QuickStart from "./quickstart/QuickStart.svelte";
   import Advanced from "./advanced/Advanced.svelte";
@@ -8,7 +11,7 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Zen from "./zen/Zen.svelte";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import AdvancedPortrait from "./advanced/AdvancedPortrait.svelte";
@@ -68,7 +71,7 @@
   async function onManualLogClicked() {
     console.log("onManualLogClicked");
     pointLogStore.reset();
-    appStore.runAction(PointronEventEnum.MANUAL_FOCUS_ENTRY_POP);
+    appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   async function onStartSessionClicked() {
     await sessionStore.startSession();
@@ -94,7 +97,8 @@
               size={Size.lg}
               items={["Quick Focus", "Advanced"]}
               value={mode === 0 ? "Quick Focus" : "Advanced"}
-              style={PanelSwitcherStyle.DOT}
+              style={PanelSwitcherStyle.BAR}
+              barStyle={BarStyle.DOT}
               isDisableEnabled={$sessionStore.isSessionRunning}
               on:switch={(e) => {
                 mode = e.detail === "Quick Focus" ? 0 : 1;
@@ -109,6 +113,7 @@
             <div class="flex-grow w-full">
               <QuickStart />
             </div>
+            <FloatingButton params={addManualLogButton} />
             <!-- <ManualFocusLog /> -->
           {:else}
             <AdvancedPortrait />
@@ -117,9 +122,9 @@
         </div>
       {/if}
     </div>
-    {#if mode === 0}
+    <!-- {#if mode === 0}
       <FloatingButton params={addManualLogButton} />
-    {/if}
+    {/if} -->
   </div>
 {:else}
   <div class="flex w-full h-full">

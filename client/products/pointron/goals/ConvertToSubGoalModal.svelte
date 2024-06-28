@@ -1,15 +1,15 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { PointronEventEnum } from "$lib/client/types/pointron/pointronEvent.enum";
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import { GoalPersistence } from "$lib/client/products/pointron/goals/goal.persistence";
   import type { Goal } from "$lib/client/types/pointron/goal.type";
   import { onMount } from "svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
-  import { pointronEvents } from "$lib/client/products/pointron/pointron.store";
   import { Size } from "$lib/client/types/size.enum";
   import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 
   export let id: string; // id of the goal to be converted to subgoal
 
@@ -27,7 +27,6 @@
     if (!selectedGoalId) return;
     const response = await goalPersistance.convertToSubGoal(id, selectedGoalId);
     currentGoal.propagateChangesTemp();
-    pointronEvents.notify(PointronEventEnum.SUCCESSFUL_CONVERSION_TO_SUBGOAL);
     onClose();
   }
 
