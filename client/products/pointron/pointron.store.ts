@@ -189,37 +189,28 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     if (!objIsEmpty(changedProperties)) await this.persist(changedProperties);
   }
   resetHorizonChartConfiguration() {
-    this.update((n: PointronPreferences) => {
-      n.horizonCharts = defaultHorizonChartConfiguration;
-      return n;
-    });
-    this.persist({ horizonCharts: defaultHorizonChartConfiguration });
+    this.modify({ horizonCharts: defaultHorizonChartConfiguration });
   }
   async updatePreset(preset: SessionComposition) {
-    let m = get(pointronPreferences);
+    let m = this.get();
     let n = m.presets;
     let currentPresetIndex = n.findIndex((p) => p.id == preset.id);
     let presetsToRight = n.slice(currentPresetIndex + 1);
     n = n.slice(0, currentPresetIndex);
     n = [...n, preset];
     n = n.concat(presetsToRight);
-    m.presets = n;
-    this.setNewValue(m);
-    return this.persist({ presets: n });
+    return this.modify({ presets: n });
   }
   async removePreset(presetId: string) {
-    let m = get(pointronPreferences);
+    let m = this.get();
     let n = m.presets;
     n = n.filter((x: SessionComposition) => x.id != presetId);
-    m.presets = n;
-    this.setNewValue(m);
-    return this.persist({ presets: n });
+    return this.modify({ presets: n });
   }
   async addPreset(preset: SessionComposition) {
-    let m = get(pointronPreferences);
+    let m = this.get();
     m.presets.push(preset);
-    this.setNewValue(m);
-    return this.persist({ presets: m.presets });
+    return this.modify({ presets: m.presets });
   }
 }
 

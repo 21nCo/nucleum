@@ -46,6 +46,8 @@
   import { extractProduct } from "$lib/shared/utils/utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
   import MetadataLayer from "./MetadataLayer.svelte";
+  import { appMenuStore } from "../leftPanel/appMenu.store";
+  import { defaultAppMenu } from "$local/local";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -149,6 +151,10 @@
     initializeServiceWorker();
     checkForEnvironmentChange();
     refreshTimeZone();
+    setAppMenuDefaults();
+  }
+  function setAppMenuDefaults() {
+    appMenuStore.setDefaults($appStore.product, defaultAppMenu);
   }
   function initializeServiceWorker() {
     if (!$context.isEmbed) {

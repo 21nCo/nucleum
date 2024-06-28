@@ -1,6 +1,6 @@
 <script lang="ts">
   import { CaptureType } from "$lib/client/types/memotron/capture.type";
-  import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
+  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
@@ -57,7 +57,7 @@
       label="edit types"
       size={Size.xs}
       on:click={() => {
-        appStore.runAction(MemotronEvent.DIRECTORY);
+        appStore.runAction(MemotronAction.LIBRARY);
       }}
     />
   {/if}

@@ -53,7 +53,14 @@
           : 'text-base'}"
     >
       {#if item.icon && typeof item.icon === "string"}
-        <Icon icon={item.icon} isAccentBgContext={isActive} {size} />
+        <Icon
+          icon={item.icon}
+          class={cn({
+            "fill-fgs1": isActive,
+            "stroke-fgs1": !isActive
+          })}
+          {size}
+        />
       {:else if item.icon && typeof item.icon === "object"}
         <AvatarView avatar={item.icon} {size} />
       {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
+  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
@@ -54,7 +54,7 @@
     params={{
       label: "Create new type",
       callback: async () => {
-        appStore.runAction(MemotronEvent.CREATE_TYPE);
+        appStore.runAction(MemotronAction.CREATE_TYPE);
       }
     }}
   />

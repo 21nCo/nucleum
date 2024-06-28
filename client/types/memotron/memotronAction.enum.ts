@@ -1,4 +1,4 @@
-export enum MemotronEvent {
+export enum MemotronAction {
   CAPTURE = "capture",
   JOURNAL_MODAL_VIEWER = "journal-modal-viewer",
   SERENDIPITY = "serendipity",
@@ -6,5 +6,5 @@ export enum MemotronEvent {
   HISTORY = "history",
   CREATE_CURATION = "create-curation",
   CREATE_TYPE = "create-type",
-  DIRECTORY = "directory"
+  LIBRARY = "library"
 }

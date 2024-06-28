@@ -23,7 +23,7 @@
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import TypeSelector from "../capture/TypeSelector.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
+  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
   import { CurationPersistence } from "$lib/client/products/memotron/curation/curation.persistence";
   import account from "$lib/client/stores/account.store";
   let title: string;
@@ -40,7 +40,7 @@
   function onTypeSelect(e: CustomEvent) {
     console.log("type selected", e.detail, associatedType);
     if (associatedType === "add") {
-      appStore.runAction(MemotronEvent.CREATE_TYPE);
+      appStore.runAction(MemotronAction.CREATE_TYPE);
     }
   }
 </script>

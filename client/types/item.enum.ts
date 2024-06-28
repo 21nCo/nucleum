@@ -9,6 +9,7 @@ export enum Item {
   dboVersion = "dboVersion",
   tz = "tz",
   kv = "kv",
+  appMenu = "appMenu",
 
   //Pointron
   pointronPreferences = "pointronPreferences",

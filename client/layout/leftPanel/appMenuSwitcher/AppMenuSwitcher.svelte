@@ -3,30 +3,31 @@
   import { onMount } from "svelte";
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import type { IAction } from "$lib/client/types/action.type";
-  //TODO - remove dependency on local
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import type { UserLocalPreferences } from "$lib/client/types/memotron/memotronPreferences.type";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { appMenuStore } from "../appMenu.store";
+  import type { IAppMenuStore } from "$lib/client/types/appMenu.type";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
   let pages: IAction[] = [];
   let selected: number;
   onMount(() => {
-    pointronPreferences.subscribe((x: UserLocalPreferences) => {
+    appMenuStore.subscribe((x: IAppMenuStore) => {
       pages = [];
       let items = [];
-      console.log("appMenu", x?.appMenu);
-      if (!x?.appMenu) return;
+      console.log("appMenu", x?.menu);
+      if (!x?.menu) return;
+      const app = $appStore.product;
+      const contextualMenu = x.menu[app];
       if (layoutContext === LayoutContext.PORTRAIT) {
-        items = x.appMenu.slice(
+        items = contextualMenu.slice(
           0,
           $appStore?.appData?.isShowCaptureOnMobile ? 3 : 4
         );
         items.push("cp");
       } else {
-        items = x.appMenu.filter((item) => item !== "cp");
+        items = contextualMenu.filter((item) => item !== "cp");
       }
       items.forEach((action: string) => {
         const currentPage = appStore.resolveAction(action);

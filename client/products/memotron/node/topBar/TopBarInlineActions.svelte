@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { MemotronEvent } from "$lib/client/types/memotron/memotronEvent.enum";
+  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -39,7 +39,7 @@
           value: "share",
           icon: "share",
           callback: () => {
-            appStore.runAction(MemotronEvent.PUBLISH, {
+            appStore.runAction(MemotronAction.PUBLISH, {
               componentParams: { id: $node.id }
             });
           }
@@ -87,7 +87,7 @@
     icon="square-3-stack-3d"
     isStayActive={isClonesShown}
     on:click={() => {
-      // runAction(MemotronEvent.HISTORY, { id });
+      // runAction(MemotronAction.HISTORY, { id });
       dispatch("clones", { id: $node.id });
     }}
   />
@@ -97,7 +97,7 @@
     tooltip="Publish"
     icon="share"
     on:click={() => {
-      appStore.runAction(MemotronEvent.PUBLISH, { id });
+      appStore.runAction(MemotronAction.PUBLISH, { id });
     }}
   /> -->
   <Button
@@ -105,7 +105,7 @@
     tooltip="Serendipity"
     icon="light-bulb"
     on:click={() => {
-      appStore.runAction(MemotronEvent.SERENDIPITY, {
+      appStore.runAction(MemotronAction.SERENDIPITY, {
         componentParams: { id: $node.id }
       });
     }}

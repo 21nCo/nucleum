@@ -1,4 +1,4 @@
-import { get, writable, type Updater } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { goto } from "$app/navigation";
 
 import { AppSkin, Theme } from "$lib/client/types/appearance.type";
@@ -16,12 +16,7 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Item } from "$lib/client/types/item.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import {
-  PersistanceActionType,
-  StoreDataType,
-  type ICacheableStore,
-  type CacheableStoreContract
-} from "../types/data.type";
+import type { CacheableStoreContract } from "../types/data.type";
 import {
   ActionType,
   ResourceAccessMode,
@@ -37,7 +32,6 @@ import {
   persistLocally,
   retrieveLocally
 } from "$lib/client/utils/storage.utils";
-import { deepCopy, objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
 import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 
@@ -171,61 +165,37 @@ export const appConstants = {
   colorSchemes,
   tempColorSchemes
 };
-const seedDboVersion = {
-  version: 0,
-  id: Item.dboVersion,
-  dataType: StoreDataType.KVO
-};
-const locallyPersistedDboVersion = retrieveLocally(Item.dboVersion);
 
-export const dboVersion = initDboVersionStore();
-
-function initDboVersionStore() {
-  const { subscribe, set, update } = writable<dbVersionStore>(
-    locallyPersistedDboVersion ?? seedDboVersion
-  );
-  dataManager.retrieveCache(seedDboVersion.id).then((x) => {
-    if (x) set(x as dbVersionStore);
-  });
-  const setVersion = (version: number) => {
-    update((n: dbVersionStore) => {
-      n.version = version;
-      persistLocally(Item.dboVersion, n);
-      dataManager.cache(n);
-      return n;
-    });
-  };
-  return {
-    subscribe,
-    set,
-    loader: (data: any) => {
-      const n = { ...seedDboVersion, ...data };
-      set(n);
-      persistLocally(Item.dboVersion, n);
-      dataManager.cache(n);
-    },
-    setVersion,
-    update,
-    runDboUpdate: async (fromVersion: number | undefined = undefined) => {
-      const version = get(dboVersion).version;
-      const response = await new Persistence().updateDbo(
-        fromVersion ?? version
-      );
-      if (response?.version) {
-        setVersion(response.version);
+class DboVersionStore extends KeyValueStore<{ version: number }> {
+  constructor() {
+    super(
+      Item.dboVersion,
+      { version: 0 },
+      {
+        priorityRefreshOnAppAppear: true,
+        isSynchronousCache: true
       }
-    }
+    );
+  }
+  setVersion = (version: number) => {
+    this.setNewValue({ version });
   };
+  async runDboUpdate(fromVersion: number | undefined = undefined) {
+    const version = get(this.store).version;
+    const response = await new Persistence().updateDbo(fromVersion ?? version);
+    if (response?.version) {
+      this.setVersion(response.version);
+    }
+  }
 }
+// export const dboVersion = initDboVersionStore();
+export const dboVersion = new DboVersionStore();
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 
 export const seedUserPreferences: UserGlobalPreferences = {
-  id: Item.globalPreferences,
-  dataType: StoreDataType.KVO,
-  priorityRefreshOnAppAppear: true,
   nickName: "",
   dayStartHour: 0,
   dayStartMinute: 0,
@@ -270,10 +240,6 @@ export const seedUserPreferences: UserGlobalPreferences = {
     grid: []
   }
 };
-const locallyPersistedPreferences = retrieveLocally(Item.globalPreferences);
-type dbVersionStore = ICacheableStore & {
-  version: number;
-};
 
 class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
   constructor() {
@@ -291,22 +257,15 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       data.mediaGridTestitems = seedUserPreferences.mediaGridTestitems;
     if (data.isAnonymousAnalyticsEnabled === undefined)
       data.isAnonymousAnalyticsEnabled = true;
-    if (!data.dataType) data.dataType = StoreDataType.KVO;
     const val = {
-      ...data,
-      id: this.item,
-      dataType: this.dataType,
-      priorityRefreshOnAppAppear: this.priorityRefreshOnAppAppear
+      ...data
     };
     this.setNewValue(val);
   }
   setAppearance(x: UserAppearanceSettings) {
-    this.update((n: UserGlobalPreferences) => {
-      const appearance = { ...n.appearance, ...x };
-      n.appearance = appearance;
-      this.persist({ appearance });
-      return n;
-    });
+    const n = get(this.store);
+    const appearance = { ...n.appearance, ...x };
+    this.modify({ appearance });
   }
   /**
    * Date().getTimezoneOffset() returns the offset in minutes and calculates offfset by measuring current user's timezone as 0 and relative measure of UTC from that.
@@ -322,11 +281,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
     return { offset, label };
   }
   _setTimezone(offset: number, label?: string) {
-    this.update((n: UserGlobalPreferences) => {
-      n.timeZoneOffset = offset;
-      this.persist({ timeZoneOffset: offset, timeZoneLabel: label });
-      return n;
-    });
+    this.modify({ timeZoneOffset: offset, timeZoneLabel: label });
     return { offset, label };
   }
   /**
@@ -408,169 +363,11 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
       //@ts-ignore
       uiStates.desktop[property] = value;
     }
-    this.update((n: UserGlobalPreferences) => {
-      n.uiStates = uiStates;
-      this.persist({ uiStates });
-      return n;
-    });
+    this.modify({ uiStates });
   }
 }
 
-// export const userPreferences = initUserPreferences();
 export const userPreferences = new UserPreferencesStore();
-
-/**
- * @deprecated - using UserGlobalPreferences class based store instead
- * @returns
- */
-function initUserPreferences() {
-  let previousValue: string;
-  const {
-    subscribe,
-    set: setRaw,
-    update
-  } = writable<UserGlobalPreferences>(
-    locallyPersistedPreferences ?? seedUserPreferences
-  );
-  dataManager.retrieveCache(Item.globalPreferences).then((x) => {
-    if (x) {
-      setRaw(x as UserGlobalPreferences);
-      previousValue = JSON.stringify(x);
-    }
-  });
-  const persist = (n: Partial<UserGlobalPreferences>) => {
-    // console.log("persisting global preferences", { n });
-    cache(get(userPreferences));
-    persistLocally(Item.globalPreferences, get(userPreferences));
-    // persistance.update({
-    //   ...n,
-    //   id: userPreferencesId
-    // });
-    dataManager.performMutation(
-      Item.globalPreferences,
-      {
-        ...n,
-        id: Item.globalPreferences
-      },
-      { action: PersistanceActionType.MERGE }
-    );
-  };
-  const cache = async (n: UserGlobalPreferences) => {
-    dataManager.cache(n);
-  };
-  const set = (x: UserGlobalPreferences) => {
-    setRaw(x);
-    previousValue = JSON.stringify(x);
-  };
-  //TODO - resolveUiState - for local User preferences - may be a super class - common methods for preferences store
-  const resolveUiState = (property: string) => {
-    const uiStates = get(userPreferences).uiStates;
-    let value = undefined;
-    if (get(view).isPortrait) {
-      value = uiStates?.portrait[property];
-    } else {
-      value = uiStates?.desktop[property];
-    }
-    if (value === undefined) {
-      value = uiStates?.all[property];
-    }
-    return value;
-  };
-  const setUIState = (
-    updater: (this: void, updater: Updater<UserGlobalPreferences>) => void,
-    { property, value, isGlobal }: UIStateProps
-  ) => {
-    const uiStates = get(userPreferences).uiStates;
-    if (!uiStates) return;
-    if (isGlobal) {
-      uiStates.all[property] = value;
-    } else if (get(view).isPortrait) {
-      uiStates.portrait[property] = value;
-    } else {
-      uiStates.desktop[property] = value;
-    }
-    updater((n: UserGlobalPreferences) => {
-      n.uiStates = uiStates;
-      return n;
-    });
-  };
-  return {
-    subscribe,
-    update,
-    loader: (data: UserGlobalPreferences) => {
-      if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
-      if (!data.avatarPicker)
-        data.avatarPicker = seedUserPreferences.avatarPicker;
-      if (!data.annotations) data.annotations = seedUserPreferences.annotations;
-      if (data.isAnonymousAnalyticsEnabled === undefined)
-        data.isAnonymousAnalyticsEnabled = true;
-      if (!data.dataType) data.dataType = StoreDataType.KVO;
-      const val = { ...data, id: Item.globalPreferences };
-      set(val);
-      cache(val);
-    },
-    loadSeedData: () => {
-      set(seedUserPreferences);
-      cache(seedUserPreferences);
-      persist(seedUserPreferences);
-    },
-    set: (newValue: UserGlobalPreferences) => {
-      let changedProperties: any = {};
-      if (previousValue) {
-        let differences = shallowDiff(newValue, JSON.parse(previousValue));
-        differences.forEach((key: string) => {
-          changedProperties[key] = newValue[key as keyof UserGlobalPreferences];
-        });
-      }
-      // console.log({
-      //   previousValue: previousValue ? JSON.parse(previousValue) : null,
-      //   newValue,
-      //   changedProperties,
-      // });
-      set(newValue);
-      if (!objIsEmpty(changedProperties)) persist(changedProperties);
-    },
-    setUiStates: (uiStates: any) => {
-      set({
-        ...get(userPreferences),
-        uiStates
-      });
-      persist({ uiStates });
-    },
-    setAppearance: (x: UserAppearanceSettings) => {
-      update((n: UserGlobalPreferences) => {
-        const appearance = { ...n.appearance, ...x };
-        n.appearance = appearance;
-        persist({ appearance });
-        return n;
-      });
-    },
-    setTimeZone: (offset?: number, label?: string) => {
-      if (!offset) {
-        offset = -new Date().getTimezoneOffset() * 60;
-        label = detectTimeZone()?.label ?? "UTC";
-      }
-      update((n: UserGlobalPreferences) => {
-        n.timeZoneOffset = offset;
-        persist({ timeZoneOffset: offset, timeZoneLabel: label });
-        persistance.create(
-          { offset, date: new Date().toISOString(), label: label ?? "" },
-          Item.tz
-        );
-        return n;
-      });
-    },
-    resolveUiState,
-    setUiState: (props: UIStateProps) => setUIState(update, props),
-    onBoardingStatusCheck() {
-      if (resolveUiState(UIState.isOnboardingComplete)) return true;
-      else {
-        appStore.gotoPath("/onboarding");
-        return false;
-      }
-    }
-  };
-}
 
 const cachedAppData = retrieveLocally(Item.appData);
 
