@@ -1,4 +1,4 @@
-import { get, writable } from "svelte/store";
+import {  writable } from "svelte/store";
 import { Item } from "../types/item.enum";
 import {
   AppSkin,
