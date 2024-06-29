@@ -1,0 +1,55 @@
+<script lang="ts">
+  import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  let defaultKeyMap: KeyboardShortcut[] = [
+    {
+      key: "s",
+      modifiers: ["ctrl"],
+      action: "save"
+    },
+    {
+      key: "m",
+      modifiers: ["ctrl"],
+      action: "collapse"
+    }
+  ];
+  const shortcutListener = (event: KeyboardEvent) => {
+    let modifiers = [];
+    if (event.metaKey || event.ctrlKey) {
+      modifiers.push("ctrl");
+    }
+    if (event.altKey) {
+      modifiers.push("alt");
+    }
+    if (event.shiftKey) {
+      modifiers.push("shift");
+    }
+    const isShortcutFound = runShortcut(event.key, modifiers);
+    event.stopPropagation();
+    if (isShortcutFound) event.preventDefault();
+  };
+
+  function runShortcut(key: string, modifiers: string[]) {
+    if (!defaultKeyMap) return;
+    let keyMap = defaultKeyMap;
+    let userKeyMap = [];
+    if (userKeyMap) {
+      keyMap = defaultKeyMap.filter(
+        (x: KeyboardShortcut) =>
+          !userKeyMap?.some((y: KeyboardShortcut) => y.action === x.action)
+      );
+      keyMap = [...keyMap, ...userKeyMap];
+    }
+    const shortcut = keyMap.find((s: any) => {
+      if (s.key !== key) return false;
+      if (s.modifiers.length !== modifiers.length) return false;
+      return s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()));
+    });
+    if (!shortcut) return;
+    dispatch(shortcut.action);
+    return true;
+  }
+</script>
+
+<svelte:window on:keydown={shortcutListener} />

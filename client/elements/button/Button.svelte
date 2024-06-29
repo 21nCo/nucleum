@@ -8,7 +8,7 @@
     resolveHoverState
   } from "$lib/client/utils/browser.utils";
   import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   export let parentBgIndex: number = 1;
@@ -22,7 +22,7 @@
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
-  export let toolTipPlacement: Direction = Direction.Down;
+  export let toolTipPlacement: Position = Position.Bottom;
   export let isLoading: boolean = false;
   /**
    * Applicable when {@link ButtonStyle.PLAIN} style is choosen

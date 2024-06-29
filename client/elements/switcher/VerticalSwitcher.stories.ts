@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/svelte";
 import VerticalSwitcher from "./VerticalSwitcher.svelte";
 import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
 import { Size } from "$lib/client/types/size.enum";
-import { Direction } from "$lib/client/types/direction.enum";
+import { Position } from "$lib/client/types/direction.enum";
 
 const meta = {
   component: VerticalSwitcher,
@@ -63,7 +63,7 @@ export const Default: Story = {
     style: VerticalSwitcherStyle.BAR,
     itemProps: {
       size: Size.md,
-      activeStatusPlacement: Direction.Right
+      activeStatusPlacement: Position.Right
     }
   }
 };
@@ -75,7 +75,7 @@ export const Left: Story = {
     style: VerticalSwitcherStyle.BAR,
     itemProps: {
       size: Size.md,
-      activeStatusPlacement: Direction.Left
+      activeStatusPlacement: Position.Left
     }
   }
 };
@@ -87,7 +87,7 @@ export const Right: Story = {
     style: VerticalSwitcherStyle.BAR,
     itemProps: {
       size: Size.md,
-      activeStatusPlacement: Direction.Right
+      activeStatusPlacement: Position.Right
     }
   }
 };
@@ -111,7 +111,7 @@ export const LeftWithoutLabels: Story = {
     style: VerticalSwitcherStyle.BAR,
     itemProps: {
       size: Size.md,
-      activeStatusPlacement: Direction.Left,
+      activeStatusPlacement: Position.Left,
       isHideLabel: true
     }
   }
@@ -121,7 +121,7 @@ export const RightWithoutLabels: Story = {
     ...LeftWithoutLabels.args,
     itemProps: {
       size: Size.md,
-      activeStatusPlacement: Direction.Right,
+      activeStatusPlacement: Position.Right,
       isHideLabel: true
     }
   }

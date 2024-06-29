@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
     VerticalSwitcherStyle,
@@ -13,7 +13,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   export let item: SwitchItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
-  export let activeStatusPlacement: Direction = Direction.Left;
+  export let activeStatusPlacement: Position = Position.Left;
   export let isHideLabel: boolean = false;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
@@ -29,39 +29,39 @@
   });
   $: if (
     style === VerticalSwitcherStyle.GRADIENT &&
-    activeStatusPlacement === Direction.Left
+    activeStatusPlacement === Position.Left
   ) {
     activeClasses =
       "border-l-2 border-l-bgs2 bg-gradient-to-l from-transparent to-bgs2";
     inactiveClasses = "border-l-2 border-l-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.GRADIENT &&
-    activeStatusPlacement === Direction.Right
+    activeStatusPlacement === Position.Right
   ) {
     activeClasses =
       "border-r-2 border-r-bgs2 bg-gradient-to-r from-transparent to-bgs2";
     inactiveClasses = "border-r-2 border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR &&
-    activeStatusPlacement === Direction.Left
+    activeStatusPlacement === Position.Left
   ) {
     activeClasses = "border-rounded-md";
     inactiveClasses = "border-l-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR &&
-    activeStatusPlacement === Direction.Right
+    activeStatusPlacement === Position.Right
   ) {
     activeClasses = "border-rounded-md";
     inactiveClasses = "border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
-    activeStatusPlacement === Direction.Right
+    activeStatusPlacement === Position.Right
   ) {
     activeClasses = "border-r-4 border-rounded-md";
     inactiveClasses = "border-r-4 border-r-bgs1 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
-    activeStatusPlacement === Direction.Left
+    activeStatusPlacement === Position.Left
   ) {
     activeClasses = "border-l-4 border-rounded-md";
     inactiveClasses = "border-l-4 border-l-bgs1 text-fgs3";
@@ -87,7 +87,7 @@
 
 <div
   class={style === VerticalSwitcherStyle.BAR_V2
-    ? activeStatusPlacement === Direction.Left
+    ? activeStatusPlacement === Position.Left
       ? "border-l-2 border-l-bgs3"
       : "border-r-2 border-r-bgs3"
     : ""}
@@ -100,17 +100,17 @@
       "border-l-4":
         style === VerticalSwitcherStyle.BAR &&
         !isHideBar &&
-        activeStatusPlacement === Direction.Left,
+        activeStatusPlacement === Position.Left,
       "border-r-4":
         style === VerticalSwitcherStyle.BAR &&
         !isHideBar &&
-        activeStatusPlacement === Direction.Right
+        activeStatusPlacement === Position.Right
     })}
     on:click
     bind:this={parentRef}
     on:pointerenter={() => {
       if (isHideLabel && item.label)
-        renderPopoverv2(parentRef, toolTipRef, Direction.Left);
+        renderPopoverv2(parentRef, toolTipRef, Position.Left);
     }}
     on:pointerleave={() => {
       hideToolTip();

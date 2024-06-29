@@ -4,7 +4,7 @@
   import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import Icon from "../../Icon.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import Tooltip from "../Tooltip.svelte";
   export let info: FormLabelInfoTooltip;
   let isHovered: boolean = false;
@@ -25,7 +25,7 @@
   on:mouseenter={() => {
     if (isClicked) return;
     isHovered = true;
-    renderPopoverv2(buttonRef, toolTipRef, Direction.Right);
+    renderPopoverv2(buttonRef, toolTipRef, Position.Right);
   }}
   on:mouseleave={() => {
     if (isClicked) return;
@@ -36,7 +36,7 @@
     isClicked = !isClicked;
     if (isClicked) {
       hideToolTip();
-      renderPopoverv2(buttonRef, toolTipRef, Direction.Right);
+      renderPopoverv2(buttonRef, toolTipRef, Position.Right);
     } else {
       hideToolTip();
     }

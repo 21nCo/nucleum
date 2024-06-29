@@ -7,7 +7,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -86,7 +86,7 @@
         <Button
           icon="adjustments-vertical"
           tooltip="Advanced filters"
-          toolTipPlacement={Direction.Right}
+          toolTipPlacement={Position.Right}
           size={Size.sm}
         />
       </div>

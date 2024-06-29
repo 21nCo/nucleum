@@ -3,7 +3,7 @@
   import { Item } from "$lib/client/types/item.enum";
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import GoalSearchThumbnail from "../../../goals/thumbnails/GoalSearchThumbnail.svelte";
@@ -55,7 +55,7 @@
           on:click={reset}
           icon="cross"
           tooltip="Clear"
-          toolTipPlacement={Direction.Left}
+          toolTipPlacement={Position.Left}
         />
       </div>
     {/if}

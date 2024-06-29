@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
-  import { Direction, Orientation } from "$lib/client/types/direction.enum";
+  import { Position, Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
@@ -69,7 +69,7 @@
     resolveToolTip();
     setTimeout(() => {
       if (tooltip && toolTipRef) {
-        renderPopoverv2(tileRef, toolTipRef, Direction.Right);
+        renderPopoverv2(tileRef, toolTipRef, Position.Right);
       }
     }, 100);
   }}

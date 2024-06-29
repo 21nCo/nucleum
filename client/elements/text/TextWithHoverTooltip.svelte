@@ -6,7 +6,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import Tooltip from "./Tooltip.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   export let text: string = "";
   export let tooltip: string | undefined = undefined;
   export let delay: number = 1500;
@@ -40,7 +40,7 @@
       toolTipRef.style.display = "none";
   }
   function showToolTip() {
-    renderPopoverv2(textRef, toolTipRef, Direction.Down);
+    renderPopoverv2(textRef, toolTipRef, Position.Bottom);
   }
 </script>
 

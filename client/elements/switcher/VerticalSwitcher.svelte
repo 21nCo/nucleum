@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Direction, Orientation } from "$lib/client/types/direction.enum";
+  import { Position, Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
     VerticalSwitcherStyle,
@@ -14,17 +14,17 @@
   export let isHideBar: boolean = false;
   export let itemProps: {
     size?: Size;
-    activeStatusPlacement?: Direction;
+    activeStatusPlacement?: Position;
     isHideLabel?: boolean;
   } = {
     size: Size.md,
-    activeStatusPlacement: Direction.Right
+    activeStatusPlacement: Position.Right
   };
 </script>
 
 <aside
   class="flex flex-col h-full justify-center {itemProps.activeStatusPlacement ===
-  Direction.Left
+  Position.Left
     ? 'items-start'
     : 'items-end'}"
 >

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import {
     renderPopoverAtCaretPosition,
@@ -13,7 +13,7 @@
    * @deprecated
    * Use options instead.
    */
-  export let placement: Direction = Direction.Down;
+  export let placement: Position = Position.Bottom;
   export let triggerClass: string = "";
   export let isPreventDefault: boolean = false;
   export let isPreventDefaultStyling: boolean = false;
@@ -23,7 +23,7 @@
     id: generateUID(),
     isPreventDefaultStyling: false,
     parentBgIndex: 0,
-    placement: Direction.Down,
+    placement: Position.Bottom,
     isSpanToTriggerWidth: false,
     offsetInPx: 2
   };
@@ -50,14 +50,14 @@
     if (options.isPlaceAtCaret) {
       return renderPopoverAtCaretPosition({
         popRef: popOverRef,
-        placement: options.placement ?? placement ?? Direction.Down,
+        placement: options.placement ?? placement ?? Position.Bottom,
         offsetInPx: options.offsetInPx ?? 2
       });
     } else {
       renderPopoverv2(
         triggerRef,
         popOverRef,
-        options.placement ?? placement ?? Direction.Down,
+        options.placement ?? placement ?? Position.Bottom,
         options.isSpanToTriggerWidth ?? false,
         options.offsetInPx ?? 2
       );

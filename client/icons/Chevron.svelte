@@ -1,27 +1,27 @@
 <script lang="ts">
-  import { Direction } from "../types/direction.enum";
-  export let direction: Direction = Direction.Left;
+  import { Position } from "../types/direction.enum";
+  export let direction: Position = Position.Left;
 </script>
 
-{#if direction === Direction.Left}
+{#if direction === Position.Left}
   <path
     stroke-linecap="round"
     stroke-linejoin="round"
     d="M15.75 19.5L8.25 12l7.5-7.5"
   />
-{:else if direction === Direction.Right}
+{:else if direction === Position.Right}
   <path
     stroke-linecap="round"
     stroke-linejoin="round"
     d="M8.25 4.5l7.5 7.5-7.5 7.5"
   />
-{:else if direction === Direction.Up}
+{:else if direction === Position.Top}
   <path
     stroke-linecap="round"
     stroke-linejoin="round"
     d="M4.5 15.75l7.5-7.5 7.5 7.5"
   />
-{:else if direction === Direction.Down}
+{:else if direction === Position.Bottom}
   <path
     stroke-linecap="round"
     stroke-linejoin="round"

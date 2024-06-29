@@ -2,6 +2,7 @@
   import cssText from "data-text:~style.css";
   import { createEventDispatcher } from "svelte";
   import HightlightColorItem from "./HightlightColorItem.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
   const dispatch = createEventDispatcher();
   export let colors: string[];
   export let selectedColor: string | null = null;
@@ -15,19 +16,22 @@
 </script>
 
 <div
-  style="width: 200px; height: 40px; background-color: #ffffff; border-radius: 4px; padding: 1p 4px; display: inline-flex; gap: 6px; justify-content: center; align-items: center;"
+  class="shadow-md border border-brs2 flex justify-center items-center rounded-md px-4 py-2 gap-3 bg-bgs1"
 >
-  {#each colors as color}
-    <HightlightColorItem
-      {color}
-      isActive={color === selectedColor}
-      on:click={() => {
-        // console.log(color);
-        dispatch("color", color);
-      }}
-    />
-  {/each}
+  <span class="flex gap-2 items-center">
+    {#each colors as color}
+      <HightlightColorItem
+        {color}
+        isActive={color === selectedColor}
+        on:click={() => {
+          // console.log(color);
+          dispatch("color", color);
+        }}
+      />
+    {/each}
+  </span>
+  <Button icon="document-text" />
   {#if isExistingClip}
-    <span>delete</span>
+    <Button icon="trash" />
   {/if}
 </div>

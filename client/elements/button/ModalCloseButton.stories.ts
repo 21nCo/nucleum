@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
 import ModalCloseButton from "./ModalCloseButton.svelte";
-import { Direction } from "$lib/client/types/direction.enum";
+import { Position } from "$lib/client/types/direction.enum";
 const meta = {
   component: ModalCloseButton,
   argTypes: {
     path: { control: "text" },
-    position: Direction
+    position: Position
   },
   args: {
     path: "sample-path"
@@ -18,28 +18,28 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    position: Direction.BottomLeft
+    position: Position.BottomLeft
   }
 };
 export const BottomLeft: Story = {
   args: {
-    position: Direction.BottomLeft
+    position: Position.BottomLeft
   }
 };
 export const TopLeft: Story = {
   args: {
-    position: Direction.TopLeft
+    position: Position.TopLeft
   }
 };
 
 export const TopRight: Story = {
   args: {
-    position: Direction.TopRight
+    position: Position.TopRight
   }
 };
 
 export const BottomRight: Story = {
   args: {
-    position: Direction.BottomRight
+    position: Position.BottomRight
   }
 };

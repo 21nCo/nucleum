@@ -149,14 +149,7 @@
     //     let link = tabs[0].url;
     // });
   }
-  export async function refreshPageClips(url: string | undefined = undefined) {
-    let clips: Clip<TextHighlightContent>[] = [];
-    const result = await new ClipperPersistence().fetchPage(url);
-    if (!result) return;
-    page = result.page;
-    if (result?.page?.clips && result.page.clips.length > 0) {
-      clips = result.page.clips;
-    }
+  export async function refreshPageClips(clips: Clip<TextHighlightContent>[]) {
     for (const record of clips) {
       const selection = {
         anchorNode: elementFromQuery(record.metadata.anchorNode),
@@ -188,17 +181,8 @@
       message,
       sender
     });
-    if (
-      message.event === ExtensionEvent.TAB_CHANGE ||
-      message.event === ExtensionEvent.TAB_UPDATE
-    ) {
-      refreshPageClips(message.tab.url);
-      return;
-    } else if (message.event === ExtensionEvent.CLICK_SIDEBAR) {
+    if (message.event === ExtensionEvent.CLICK_SIDEBAR) {
       if (message.clip.id) scrollToHighlight(message.clip.id);
-    } else if (message.event === ExtensionEvent.READ_PAGE_CONTENT) {
-      const data = extractFullTabData();
-      sendResponse(data);
     } else if (
       message.event === ClipperExtensionEvent.RESOLVE_TEXT_HIGHLIGHTS_ORDER
     ) {

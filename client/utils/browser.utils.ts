@@ -1,4 +1,4 @@
-import { Direction } from "$lib/client/types/direction.enum";
+import { Position } from "$lib/client/types/direction.enum";
 import { OperatingSystem } from "../types/context.type";
 import type { IPopoverRenderParams } from "../types/popover.type";
 
@@ -66,7 +66,7 @@ export function renderPopoverAtCaretPosition(
 export function renderPopoverv2(
   parentRef: HTMLElement,
   popRef: HTMLElement,
-  location: Direction = Direction.Down,
+  location: Position = Position.Bottom,
   isSpanToTriggerWidth = false,
   offsetInPx = 2
 ) {
@@ -94,59 +94,59 @@ async function _renderPopover(params: IPopoverRenderParams) {
   popRef.style.zIndex = "100";
 
   if (triggerRect.top < popRect.height) {
-    if (placement === Direction.TopLeft) placement = Direction.BottomLeft;
-    else if (placement === Direction.TopRight)
-      placement = Direction.BottomRight;
-    else if (placement === Direction.Up) placement = Direction.Down;
+    if (placement === Position.TopLeft) placement = Position.BottomLeft;
+    else if (placement === Position.TopRight)
+      placement = Position.BottomRight;
+    else if (placement === Position.Top) placement = Position.Bottom;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
-    if (placement === Direction.Down) placement = Direction.Up;
-    else if (placement === Direction.BottomLeft) placement = Direction.TopLeft;
-    else if (placement === Direction.BottomRight)
-      placement = Direction.TopRight;
+    if (placement === Position.Bottom) placement = Position.Top;
+    else if (placement === Position.BottomLeft) placement = Position.TopLeft;
+    else if (placement === Position.BottomRight)
+      placement = Position.TopRight;
   }
   if (documentWidth - triggerRect.right < popRect.width) {
-    if (placement === Direction.Right) placement = Direction.Left;
-    if (placement === Direction.Down) placement = Direction.BottomRight;
-    if (placement === Direction.Up) placement = Direction.TopRight;
+    if (placement === Position.Right) placement = Position.Left;
+    if (placement === Position.Bottom) placement = Position.BottomRight;
+    if (placement === Position.Top) placement = Position.TopRight;
   }
   if (triggerRect.left < popRect.width) {
-    if (placement === Direction.Left) placement = Direction.Right;
-    if (placement === Direction.Down) placement = Direction.BottomLeft;
-    if (placement === Direction.Up) placement = Direction.TopLeft;
+    if (placement === Position.Left) placement = Position.Right;
+    if (placement === Position.Bottom) placement = Position.BottomLeft;
+    if (placement === Position.Top) placement = Position.TopLeft;
   }
 
-  if (placement === Direction.BottomLeft || placement === Direction.TopLeft) {
+  if (placement === Position.BottomLeft || placement === Position.TopLeft) {
     popRef.style.left = `${triggerRect.left}px`;
     popRef.style.right = "";
   } else if (
-    placement === Direction.BottomRight ||
-    placement === Direction.TopRight
+    placement === Position.BottomRight ||
+    placement === Position.TopRight
   ) {
     popRef.style.right = `${documentWidth - triggerRect.right}px`;
     popRef.style.left = "";
   }
   if (
-    placement === Direction.TopLeft ||
-    placement === Direction.TopRight ||
-    placement === Direction.Up
+    placement === Position.TopLeft ||
+    placement === Position.TopRight ||
+    placement === Position.Top
   ) {
     popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
     popRef.style.top = "";
   } else if (
-    placement === Direction.BottomLeft ||
-    placement === Direction.BottomRight ||
-    placement === Direction.Down
+    placement === Position.BottomLeft ||
+    placement === Position.BottomRight ||
+    placement === Position.Bottom
   ) {
     popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
     popRef.style.bottom = "";
   }
 
-  if (placement === Direction.Right) {
+  if (placement === Position.Right) {
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
-  } else if (placement === Direction.Left) {
+  } else if (placement === Position.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
-  } else if (placement === Direction.Up || placement === Direction.Down) {
+  } else if (placement === Position.Top || placement === Position.Bottom) {
     popRef.style.left = `${triggerRect.left}px`;
   }
   popRect = popRef.getBoundingClientRect();

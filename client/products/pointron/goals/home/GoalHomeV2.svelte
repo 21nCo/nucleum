@@ -9,7 +9,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import { GoalTab } from "$lib/client/types/goalTabs.enum";
   import { Size } from "$lib/client/types/size.enum";

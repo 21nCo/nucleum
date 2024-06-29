@@ -3,7 +3,7 @@
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import view from "$lib/client/stores/view.store";
-  import { Direction, Orientation } from "$lib/client/types/direction.enum";
+  import { Position, Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
     AnalyticsCardGrouping,
@@ -13,7 +13,7 @@
   export let parentBgIndex: number = 1;
 </script>
 
-<Popover options={{ placement: Direction.BottomRight }}>
+<Popover options={{ placement: Position.BottomRight }}>
   <Button
     icon="funnel"
     label={$view.isPortrait ? "" : "Options"}

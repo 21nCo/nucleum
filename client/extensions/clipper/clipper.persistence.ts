@@ -10,8 +10,6 @@ import { interceptSurrealResponse, resolveCurrentTabData, sendMessageToContentSc
  * TODO- Delegate all calls to tidy lib SurrealDatabase once token handshake is complete.
  */
 export class ClipperPersistence {
-  username: string;
-  password: string;
   url: string;
   apiUrl: string;
   namespace: string = "user";
@@ -19,8 +17,6 @@ export class ClipperPersistence {
   db = new Surreal();
   token: string | null;
   constructor() {
-    this.username = process.env.PLASMO_PUBLIC_TEMP_DB_USERNAME;
-    this.password = process.env.PLASMO_PUBLIC_TEMP_DB_PASSWORD;
     this.url = process.env.PLASMO_PUBLIC_DB_URL;
     this.apiUrl = process.env.PLASMO_PUBLIC_API_URL;
     this.connect();
@@ -90,70 +86,6 @@ export class ClipperPersistence {
       let result = await response.json();
       return interceptSurrealResponse(result);
     } else return null;
-  }
-
-  /**
-   * @deprecated - use {@link fetchPage} instead
-   */
-  async fetchPageHighlights(url: string) {
-    try {
-      const query = "SELECT * FROM `textHighlight` WHERE href = $url;";
-      const params = { url: url };
-      // const result = await this.db.query(query, params);
-      const result = await this.queryUsingHttp(query, params);
-      if (result.length > 0) {
-        console.log({ result });
-        return result;
-      } else {
-        console.log("No records found with the specified URL.");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching records:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * @deprecated - use saveClip instead
-   * @param href 
-   * @param color 
-   * @param data 
-   * @returns 
-   */
-  async saveTextHighlight(href, color, data: any) {
-    try {
-      let result = await this.db.query(
-        "SELECT highlightIndex FROM textHighlight ORDER BY highlightIndex DESC LIMIT 1;"
-      );
-
-      const query =
-        "SELECT * FROM textHighlight WHERE highlightedText = $selectedText;";
-
-      const highlightIndex =
-        result[0].length !== 0 ? result[0][0].highlightIndex + 1 : 0;
-
-      const params = { href, data };
-      const checkDuplicate = await this.db.query(query, params);
-      console.log(checkDuplicate[0]);
-      if (!checkDuplicate[0] || checkDuplicate[0].length === 0) {
-        await this.db.create("textHighlight", {
-          highlightedText: data.text,
-          container: data.container,
-          anchorNode: data.anchorNode,
-          anchorOffset: data.anchorOffset,
-          focusNode: data.focusNode,
-          focusOffset: data.focusOffset,
-          color,
-          href,
-          createdAt: Date.now(),
-          highlightIndex: highlightIndex,
-        });
-        return highlightIndex;
-      }
-    } catch (e) {
-      console.error("ERROR", e);
-    }
   }
 
   /**
@@ -229,6 +161,17 @@ export class ClipperPersistence {
         chrome.storage.local.set({ node: { id: result.parent } });
         chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.parent });
       }
+      return result;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+
+  async saveToolbarState(toolbarState: any) {
+    try {
+      const query = "return UPDATE kv:clipperToolbarState SET state = $toolbarState;";
+      const result = await this.queryUsingHttp(query, { toolbarState });
+      console.log("save toolbar state", { result });
       return result;
     } catch (e) {
       console.error("ERROR", e);

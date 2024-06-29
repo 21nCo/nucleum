@@ -1,4 +1,4 @@
-import type { Direction } from "./direction.enum";
+import type { Position } from "./direction.enum";
 
 export type IPopoverOptions = {
   element?: "div" | "button";
@@ -6,7 +6,7 @@ export type IPopoverOptions = {
   id?: string;
   isPreventDefaultStyling?: boolean;
   parentBgIndex?: number;
-  placement?: Direction;
+  placement?: Position;
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
   isPlaceAtCaret?: boolean;
@@ -15,7 +15,7 @@ export type IPopoverOptions = {
 export type IPopoverRenderParams = {
   triggerRect: DOMRect;
   popRef: HTMLElement;
-  placement: Direction;
+  placement: Position;
   isSpanToTriggerWidth: boolean;
   offsetInPx: number;
 };

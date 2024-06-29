@@ -3,7 +3,7 @@
   import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import {
     LinkType,
     NodeType,
@@ -111,7 +111,7 @@
     <VerticalSwitcher
       items={verticalSwitcherItems}
       itemProps={{
-        activeStatusPlacement: Direction.Left,
+        activeStatusPlacement: Position.Left,
         isHideLabel: true
       }}
       isHideBar={isRightPanelCollapsed}

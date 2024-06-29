@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import type { IContextMenuItem } from "$lib/client/types/select.type";
   import Button from "../button/Button.svelte";
   import Popover from "../popover/Popover.svelte";
@@ -10,7 +10,7 @@
 
 <Popover
   bind:this={contextMenuPopoverRef}
-  options={{ placement: Direction.BottomRight }}
+  options={{ placement: Position.BottomRight }}
 >
   <Button icon="ellipsis-vertical" tooltip="More actions" />
   <slot name="popover" slot="popover">

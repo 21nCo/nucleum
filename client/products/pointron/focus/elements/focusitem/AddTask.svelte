@@ -3,7 +3,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Check from "$lib/client/icons/Check.svelte";
-  import { Direction } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   export let goalId: string | undefined = undefined;
@@ -48,7 +48,7 @@
           on:click={reset}
           icon="cross"
           tooltip="Clear"
-          toolTipPlacement={Direction.Left}
+          toolTipPlacement={Position.Left}
         />
       </div>
     {/if}

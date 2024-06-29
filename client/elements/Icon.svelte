@@ -6,7 +6,7 @@
   import Stack from "../icons/Stack.svelte";
   import { ChatIconVariant, IconVariant } from "../types/icon.type";
   import ChevronDouble from "../icons/ChevronDouble.svelte";
-  import { Direction, Orientation } from "../types/direction.enum";
+  import { Position, Orientation } from "../types/direction.enum";
   import { Size } from "../types/size.enum";
   import Command from "../icons/Command.svelte";
   import Chevron from "../icons/Chevron.svelte";
@@ -307,49 +307,49 @@
       {:else if icon === "academic-cap"}
         <AcademicCap {variant} />
       {:else if icon === "chevleft"}
-        <Chevron direction={Direction.Left} />
+        <Chevron direction={Position.Left} />
       {:else if icon === "chevright"}
-        <Chevron direction={Direction.Right} />
+        <Chevron direction={Position.Right} />
       {:else if icon === "chevdown"}
-        <Chevron direction={Direction.Down} />
+        <Chevron direction={Position.Bottom} />
       {:else if icon === "chevup"}
-        <Chevron direction={Direction.Up} />
+        <Chevron direction={Position.Top} />
       {:else if icon === "download"}
         <Download {variant} />
       {:else if icon === "arrow-left"}
-        <Arrow direction={Direction.Left} />
+        <Arrow direction={Position.Left} />
       {:else if icon === "arrow-right"}
-        <Arrow direction={Direction.Right} />
+        <Arrow direction={Position.Right} />
       {:else if icon === "arrow-up"}
-        <Arrow direction={Direction.Up} />
+        <Arrow direction={Position.Top} />
       {:else if icon === "arrow-down"}
-        <Arrow direction={Direction.Down} />
+        <Arrow direction={Position.Bottom} />
       {:else if icon === "arrow-down-right"}
-        <Arrow direction={Direction.BottomRight} />
+        <Arrow direction={Position.BottomRight} />
       {:else if icon === "arrow-down-left"}
-        <Arrow direction={Direction.BottomLeft} />
+        <Arrow direction={Position.BottomLeft} />
       {:else if icon === "arrow-up-right"}
-        <Arrow direction={Direction.TopRight} {variant} />
+        <Arrow direction={Position.TopRight} {variant} />
       {:else if icon === "arrow-down-right-mini"}
-        <Arrow direction={Direction.BottomRight} variant={IconVariant.Mini} />
+        <Arrow direction={Position.BottomRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
-        <Arrow direction={Direction.Right} isCircled={true} {variant} />
+        <Arrow direction={Position.Right} isCircled={true} {variant} />
       {:else if icon === "arrow-right-circled-mini"}
         <Arrow
-          direction={Direction.Right}
+          direction={Position.Right}
           isCircled={true}
           variant={IconVariant.Mini}
         />
       {:else if icon === "arrow-right-mini"}
-        <Arrow direction={Direction.Right} variant={IconVariant.Mini} />
+        <Arrow direction={Position.Right} variant={IconVariant.Mini} />
       {:else if icon === "full-screen"}
         <ArrowsPointingOut {variant} />
       {:else if icon === "collapse"}
         <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}
-        <ChevronDouble direction={Direction.Left} />
+        <ChevronDouble direction={Position.Left} />
       {:else if icon === "chevdoubleright"}
-        <ChevronDouble direction={Direction.Right} />
+        <ChevronDouble direction={Position.Right} />
       {:else if icon === "search" && size != Size.xs}
         <Search {variant} />
       {:else if icon === "search" && size === Size.xs}
