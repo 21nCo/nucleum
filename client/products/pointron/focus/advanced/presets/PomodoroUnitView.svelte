@@ -13,6 +13,7 @@
   export let composition: SessionComposition;
   export let isShowRemove: boolean = false;
   let error: string | null = null;
+  export let variant: "v1" | "v2" = "v2";
   // let rounds = composition.numberOfFocusRounds ?? 2;
   // let focus = composition.focusDuration ?? 28;
   // let brek = composition.breakDuration ?? 2;
@@ -38,7 +39,7 @@
 </script>
 
 <div
-  class="relative flex flex-col gap-6 2k:gap-8 p-3 dp:p-4 2k:p-6 rounded-md border-2 border-bgs2"
+  class="relative flex flex-col w-full gap-6 2k:gap-8 p-3 dp:p-4 2k:p-6 rounded-md border-2 border-bgs2"
 >
   {#if isShowRemove}
     <!-- <div class="self-end">
@@ -55,28 +56,48 @@
       />
     </div>
   {/if}
-  <div class="flex flex-col gap-1">
-    <FormControlLabel props={{ label: "Focus rounds & duration" }} />
-    <div class="flex w-full gap-2 items-center">
-      <div class="w-1/3">
-        <TextInput
-          bind:value={composition.numberOfFocusRounds}
-          placeholder="rounds"
-          type="number"
-          numberInputParams={{ min: 1, max: 10, step: 1 }}
-          on:change
-        />
-      </div>
-      <div class="self-end flex gap-3 items-center">
-        <div>x</div>
-        <DurationInput bind:value={composition.focusDuration} on:change />
+  {#if variant === "v1"}
+    <div class="flex flex-col gap-1">
+      <FormControlLabel props={{ label: "Focus rounds & duration" }} />
+      <div class="flex w-full gap-2 items-center">
+        <div class="w-1/3">
+          <TextInput
+            bind:value={composition.numberOfFocusRounds}
+            placeholder="rounds"
+            type="number"
+            numberInputParams={{ min: 1, max: 10, step: 1 }}
+            on:change
+          />
+        </div>
+        <div class="self-end flex gap-3 items-center">
+          <div>x</div>
+          <DurationInput bind:value={composition.focusDuration} on:change />
+        </div>
       </div>
     </div>
-  </div>
+  {:else}
+    <TextInput
+      bind:value={composition.numberOfFocusRounds}
+      placeholder="rounds"
+      type="number"
+      numberInputParams={{ min: 1, max: 10, step: 1 }}
+      label={{
+        label: "Number of focus rounds",
+        orientation: Orientation.Vertical
+      }}
+      on:change
+    />
+    <DurationInput
+      bind:value={composition.focusDuration}
+      on:change
+      label={{ label: "Focus duration", orientation: Orientation.Vertical }}
+    />
+  {/if}
+
   <DurationInput
     bind:value={composition.breakDuration}
     on:change
     label={{ label: "Break duration", orientation: Orientation.Vertical }}
   />
-  <InlineErrorMessage bind:error />
+  <!-- <InlineErrorMessage bind:error /> -->
 </div>
