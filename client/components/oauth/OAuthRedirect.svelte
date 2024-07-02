@@ -7,7 +7,7 @@
   import { handleOAuthRedirection } from "$lib/client/components/oauth/oauth.utils";
   import { onMount } from "svelte";
   import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
+  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
   import { logger } from "$lib/client/stores/log.store";
 
   let debugMessage = "debug";
@@ -50,25 +50,22 @@
     refreshToken?: string;
     userInfo?: any;
   }) {
-    try {
-      await fetch("https://bla.ink/log", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          os: $context.os,
-          isEmbed: $context.isEmbed,
-          userAgent: navigator.userAgent
-        })
-      });
-    } catch (err) {
-      console.log(err);
-    }
-    if ($context.os == OperatingSystem.IOS) {
-      handleiOSEmbedRedirection(data.token, data.isSignup);
-    } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {
+    logger.log({
+      ctx: "handleOAuthCompletion",
+      os: $context.os,
+      isEmbed: $context.isEmbed,
+      embed: $context.embed,
+      userAgent: navigator.userAgent
+    });
+    if (
+      ($context.os == OperatingSystem.MACOS ||
+        ($context.os == OperatingSystem.IOS &&
+          $context.embed === Embed.TABLET)) &&
+      $context.isEmbed
+    ) {
       handleMacOSEmbedRedirection(data.token, data.isSignup);
+    } else if ($context.os == OperatingSystem.IOS) {
+      handleiOSEmbedRedirection(data.token, data.isSignup);
     } else if (data.userInfo) {
       debugMessage = "signing in with oauth";
       await account.signIn(
@@ -84,18 +81,25 @@
   async function handleiOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
       debugMessage = "ios - embed redirection";
+      logger.log({
+        ctx: "handleiOSEmbedRedirection"
+      });
       if (isSignup) {
         goto($appStore.product + "://oauthsignup" + "?token=" + token);
       } else {
         goto($appStore.product + "://oauthsignin" + "?token=" + token);
       }
     } catch (err) {
+      logger.logError({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }
   async function handleMacOSEmbedRedirection(token: string, isSignup: boolean) {
     try {
       debugMessage = "macos - embed redirection";
+      logger.log({
+        ctx: "handleMacOSEmbedRedirection"
+      });
       await goto(
         (import.meta.env.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
@@ -106,6 +110,7 @@
       );
     } catch (err) {
       debugMessage = "macos - embed redirection error" + err;
+      logger.logError({ err, ctx: "handleMacOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }
