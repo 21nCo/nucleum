@@ -50,6 +50,21 @@
     refreshToken?: string;
     userInfo?: any;
   }) {
+    try {
+      await fetch("https://bla.ink/log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          os: $context.os,
+          isEmbed: $context.isEmbed,
+          userAgent: navigator.userAgent
+        })
+      });
+    } catch (err) {
+      console.log(err);
+    }
     if ($context.os == OperatingSystem.IOS) {
       handleiOSEmbedRedirection(data.token, data.isSignup);
     } else if ($context.os == OperatingSystem.MACOS && $context.isEmbed) {

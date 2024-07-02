@@ -203,7 +203,7 @@ export function detectSystemOS() {
   } else if (
     platform.includes("iphone") ||
     platform.includes("ipad") ||
-    platform.includes("iOS")
+    platform.includes("ios")
   ) {
     os = OperatingSystem.IOS;
   } else if (platform.includes("mac")) {
