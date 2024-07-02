@@ -698,15 +698,15 @@ export class DataManager {
     startDate: Date,
     endDate: Date
   ) {
-    let prevEnd: any = data.splice(0, 1)[0];
-    let nextStart: any = data.splice(data.length - 1, 1)[0];
-    const df = {
-      dailyData: data,
-      prevEnd,
-      nextStart
-    };
     let apiResponse = await this.provider.fetchDailyJournal(startDate, endDate);
-    if (!apiResponse || !isValidArrayWithData(apiResponse)) return df;
+    if (!apiResponse || !isValidArrayWithData(apiResponse))
+      { let prevEnd: any = data.splice(0, 1)[0];
+        let nextStart: any = data.splice(data.length - 1, 1)[0];
+        return {
+          dailyData: data,
+          prevEnd,
+          nextStart
+        };}
     const modified = data.map((x) => {
       let apiItem = apiResponse.find(
         (item: any) => item.date.split("T")[0] === x.date
@@ -718,8 +718,8 @@ export class DataManager {
       }
       return { ...x, target: apiItem?.target ?? this.defaultTarget };
     });
-    prevEnd = modified.splice(0, 1)[0];
-    nextStart = modified.splice(modified.length - 1, 1)[0];
+    let prevEnd: any = modified.splice(0, 1)[0];
+    let nextStart: any = modified.splice(modified.length - 1, 1)[0];
     return {
       dailyData: modified,
       prevEnd,
