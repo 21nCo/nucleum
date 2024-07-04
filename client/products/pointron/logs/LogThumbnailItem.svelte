@@ -70,7 +70,7 @@
   bind:isHovering
   id="log-item"
   class={cn(
-    "relative flex w-full gap-2 items-center rounded-md border border-brs3 p-4",
+    "relative flex w-full gap-2 items-center rounded-md border border-brs3 p-4 cursor-pointer",
     {
       "mb-10": isLast
     }

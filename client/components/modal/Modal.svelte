@@ -158,11 +158,21 @@
   dialog.overlay::backdrop {
     backdrop-filter: blur(5px);
   }
-  dialog.overlay-light::backdrop {
+
+  /* Backdrop similar shade as bg */
+  /* dialog.overlay-light::backdrop {
     background-color: rgba(0, 0, 0, 0.05);
   }
   dialog.overlay-dark::backdrop {
     background-color: rgba(251, 251, 251, 0.05);
+  } */
+
+  /* Backdrop - opposite shade of bg */
+  dialog.overlay-light::backdrop {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  dialog.overlay-dark::backdrop {
+    background-color: rgba(251, 251, 251, 0.3);
   }
   dialog.bg-none::backdrop {
     background-color: transparent;

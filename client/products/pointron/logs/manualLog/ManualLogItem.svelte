@@ -51,10 +51,10 @@
   function onTimeChange(event: any) {
     let start: Date;
     let end: Date;
-    if (!performValidationChecks()) return;
     start = attachTimeToDate(item.startDate, item.startTime);
     end = attachTimeToDate(item.endDate, item.endTime);
     item.duration = (end.getTime() - start.getTime()) / 1000;
+    performValidationChecks();
   }
   function refreshStartTime() {
     const startTime = new Date(new Date().getTime() - item.duration * 1000);
@@ -69,11 +69,7 @@
       error = "Please select a valid date. Year should be greater than 1971.";
       return;
     }
-    if (
-      (item.startDate.getTime() === item.endDate.getTime() &&
-        item.startTime > item.endTime) ||
-      item.startDate.getTime() > item.endDate.getTime()
-    ) {
+    if (item.startDate.getTime() > item.endDate.getTime()) {
       error = "Start time should be less than end time.";
       return;
     }

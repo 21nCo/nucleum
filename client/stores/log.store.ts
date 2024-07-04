@@ -12,7 +12,18 @@ const seedLogStore: LogStore = {
 };
 
 export const logger = initLogStore();
-const propagate = (log: any) => {
+const propagate = async (log: any) => {
+  // try {
+  //   await fetch("https://bla.ink/log", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify(log)
+  //   });
+  // } catch (err) {
+  //   console.log(err);
+  // }
   // console.log(log);
   //BELOW -  causing circular dependency issue
   // const app = get(appStore);

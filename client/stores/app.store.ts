@@ -551,7 +551,9 @@ function initAppStore(seed: AppStore) {
       : window.location.origin;
     // const origin = window.location.origin;
     const state =
-      ctx.isEmbed && ctx.os === OperatingSystem.MACOS
+      (ctx.os === OperatingSystem.MACOS ||
+        (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&
+      ctx.isEmbed
         ? "localredirect." + host
         : host;
     let url =
