@@ -16,7 +16,7 @@
   import {
     collectionLayoutOptions,
     combinationLayoutOptions,
-    curations
+    curationStore
   } from "./curation.store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
@@ -24,8 +24,6 @@
   import TypeSelector from "../capture/TypeSelector.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
-  import { CurationPersistence } from "$lib/client/products/memotron/curation/curation.persistence";
-  import account from "$lib/client/stores/account.store";
   let title: string;
   let errMsg: string;
   let isCreationInProgress: boolean = false;
@@ -131,25 +129,7 @@
         type="primary"
         on:click={async () => {
           isCreationInProgress = true;
-          // await new CurationPersistance().create({
-          //   label: title,
-          //   type: selectedType,
-          //   defaultView: selectedView
-          // });
-          // dataManager.performMutationForIFR(Item.curation,PersistanceActionType.CREATE, {
-          //   label: title,
-          //   type: selectedType,
-          //   defaultView: selectedView
-          // })
-          // curations.create({
-          //   label: title,
-          //   type: selectedType,
-          //   defaultLayout: selectedView,
-          //   isStarred,
-          //   associatedType,
-          //   isSearchQuery
-          // });
-          new CurationPersistence($account.userInfo?.id ?? "").create({
+          curationStore.create({
             label: title,
             type: selectedType,
             defaultLayout: selectedView,

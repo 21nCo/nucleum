@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { NodePersistence } from "$lib/client/products/memotron/node/node.persistence";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
@@ -10,7 +9,7 @@
     type INodeThumbnail
   } from "$lib/client/types/memotron/node.type";
   import NodeItems from "$lib/client/products/memotron/common/NodeItems.svelte";
-  import account from "$lib/client/stores/account.store";
+  import { nodeStore } from "../../node/node.store";
   export let context: "journal" | "journal-modal-viewer" = "journal";
   export let parentBgIndex: number = 0;
   export let nodes: INodeThumbnail[] = [];
@@ -21,9 +20,7 @@
   async function refresh() {
     isLoadingState = true;
     nodes = [];
-    const result = await new NodePersistence(
-      $account.userInfo?.id ?? ""
-    ).fetchTimeline($selectedTimePeriod);
+    const result = await nodeStore.fetchTimeline($selectedTimePeriod);
     if (isValidArrayWithData(result)) {
       nodes = result.sort(
         (a: INodeThumbnail, b: INodeThumbnail) =>

@@ -4,7 +4,7 @@ import { TimeScale, type TimePeriod } from "$lib/client/types/time.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { generateParamsForCharts } from "$lib/client/products/pointron/analytics/analytics.utils";
 
-const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+const surrealDb = new SurrealDatabase();
 
 export class AnalyticsPersistence {
   //TODO - remove this defunct function

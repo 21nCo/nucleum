@@ -5,15 +5,12 @@ import {
   PersistanceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
-import { CurationType } from "$lib/client/types/memotron/curation.type";
 import {
   NodeType,
   type LinkThumbnail,
   type INodeCapture,
   LinkType,
-  type INodeProperty,
   type INodeItemCaptured,
-  headingNodeTypes
 } from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,
@@ -22,12 +19,11 @@ import {
 } from "$lib/client/types/memotron/capture.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import {
-  activeResourceFilter,
   debouncer,
   generateUID,
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
-import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import {  isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
 import {
   persistLocally,
@@ -37,9 +33,9 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { NodePersistence } from "$lib/client/products/memotron/node/node.persistence";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
+import { nodeStore } from "../node/node.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -200,7 +196,7 @@ async function save(setter: any) {
     resources: [root, ...remainingResources]
   };
   console.log({ nodeToBeSaved: nodeCapture });
-  let result = await new NodePersistence(currentUserId).createNode(nodeCapture);
+  let result = await nodeStore.createNode(nodeCapture);
   if (result) {
     setter({ ...generateSeedStore() });
     toasts.trigger({

@@ -1,97 +1,76 @@
 import {
   PropertyType,
-  type ActiveTypeStore,
+  type IActiveTypeStore,
   type TypeCreationForm
 } from "$lib/client/types/memotron/type.type";
 import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import {
-  StoreDataType,
-  type ICacheableStore,
   PersistanceActionType
 } from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
-import { get, writable } from "svelte/store";
-type TypeStore = ICacheableStore;
+import { get } from "svelte/store";
+import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
+import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
-const seedTypeStore: TypeStore = {
-  id: Item.type,
-  refreshQuery: "return fn::memotron::type::fetch();",
-  dataType: StoreDataType.IFR,
-  priorityRefreshOnAppAppear: true,
-  dependencies: [],
-  mutatingResources: [Item.type]
-};
-/**
- *
- * Store for handling mutations on type resource.
- * Fetching will be directly done accessing dexie store.
- */
-export const types = initTypeStore();
+const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-function initTypeStore() {
-  const { subscribe, set, update } = writable<TypeStore>(seedTypeStore);
-  return {
-    subscribe,
-    set,
-    update,
-    refresh: () => {
-      return dataManager.refreshForIFR(Item.type);
-    },
-    create: async (form: TypeCreationForm) => {
-      console.log("creating type", { form });
-      const type = {
-        label: form.label,
-        avatar: form.avatar,
-        id: prefixTable(generateUID(), Item.type),
+
+class TypeStore extends ResourceStore {
+  db: ISurrealDatabase
+  constructor() {
+    super(Item.type, currentUserId, {
+      priorityRefreshOnAppAppear: true,
+      refreshQuery: "return fn::memotron::type::fetch();",
+    });
+    this.db = new SurrealDatabase();
+  }
+  async create(form: TypeCreationForm) {
+    console.log("creating type", { form });
+    const type = {
+      label: form.label,
+      avatar: form.avatar,
+      id: prefixTable(generateUID(), Item.type),
+      createdAt: new Date().toISOString(),
+      modifiedAt: new Date().toISOString(),
+      createdBy: get(account)?.userInfo?.id ?? "",
+      modifiedBy: get(account)?.userInfo?.id ?? "",
+      isArchived: false
+    };
+    const properties = form.properties.map((prop) => {
+      return {
+        ...prop,
         createdAt: new Date().toISOString(),
-        modifiedAt: new Date().toISOString(),
-        createdBy: get(account)?.userInfo?.id ?? "",
-        modifiedBy: get(account)?.userInfo?.id ?? "",
-        isArchived: false
+        modifiedAt: new Date().toISOString()
       };
-      const properties = form.properties.map((prop) => {
-        return {
-          ...prop,
-          createdAt: new Date().toISOString(),
-          modifiedAt: new Date().toISOString()
-        };
-      });
-      const dm = get(dataManager);
-      dm.cacheSource.dexie.type.add(type);
-      //TODO - add properties to properties dexie??
-      //TODO - add $mutatedAt to definition
-      return dataManager.performMutation(
-        Item.type,
-        { type, properties },
-        {
-          action: PersistanceActionType.CUSTOM_QUERY,
-          query: "return fn::memotron::type::create($type, $properties);",
-          isMutatingSelfOnly: true
-        }
-      );
-    },
-    modify: () => {
-      //delegated from active type individual stores or type edit form
-    },
-    delete: (id: string) => {
-      return dataManager.performMutationForIFR(
-        Item.type,
-        { id },
-        { action: PersistanceActionType.DELETE }
-      );
-    }
-  };
+    });
+    const dm = get(dataManager);
+    dm.cacheSource.dexie.type.add(type);
+    //TODO - add properties to properties dexie??
+    //TODO - add $mutatedAt to definition
+    return dataManager.performMutation(
+      Item.type,
+      { type, properties },
+      {
+        action: PersistanceActionType.CUSTOM_QUERY,
+        query: "return fn::memotron::type::create($type, $properties);",
+        isMutatingSelfOnly: true
+      }
+    );
+  }
 }
 
-export type ActiveTypeStoreType = ReturnType<typeof initActiveTypeStore>;
+const typeStore = new TypeStore();
+
+export type IActiveTypeStoreType = InstanceType<typeof ActiveTypeStore>;
 
 /**
  * Type stores map for holding the state of active i.e. currently open types in the UI
  */
-const activeTypeStores = new Map<string, ActiveTypeStoreType>();
+const activeTypeStores = new Map<string, IActiveTypeStoreType>();
 
 /**
  * Resolves the active type store for the given id. If the store does not exist, it will be initialized.
@@ -101,24 +80,19 @@ const activeTypeStores = new Map<string, ActiveTypeStoreType>();
  */
 export function resolveActiveTypeStore(id: string, context: string = "") {
   if (!activeTypeStores.has(id)) {
-    activeTypeStores.set(id, initActiveTypeStore());
+    activeTypeStores.set(id, new ActiveTypeStore(id));
   }
   let val = activeTypeStores.get(id);
   return val!;
 }
 
-/**
- * Initializes the active type store. This store will hold the state of the active type in the UI.
- * @returns The active type store
- */
-function initActiveTypeStore() {
-  const { subscribe, set, update } = writable<ActiveTypeStore>();
-  return {
-    subscribe,
-    set,
-    update
-  };
+
+class ActiveTypeStore extends ActiveResourceStore<IActiveTypeStore, TypeStore> {
+  constructor(id: string) {
+    super(id, typeStore, currentUserId);
+  }
 }
+
 
 export const autoPropertiesGroupLabel = "Automatic";
 export const metaPropertyOptions = [

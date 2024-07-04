@@ -1,105 +1,78 @@
-import { NodePersistence } from "$lib/client/products/memotron/node/node.persistence";
+
 import account from "$lib/client/stores/account.store";
-import { dataManager } from "$lib/client/persistence/dataManager";
-import {
-  PersistanceActionType,
-  StoreDataType,
-  type ICacheableStore
-} from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
 import {
   LinkType,
   type IActiveNode,
-  type INode,
   type INodeCapture,
   type INodeProperty,
-  type INodeStore,
-  type NodeType
 } from "$lib/client/types/memotron/node.type";
-import { prefixTable } from "$lib/client/utils/text.utils";
-import { debouncer, generateUID } from "$lib/client/utils/utils";
-import { get, writable, type Updater } from "svelte/store";
-import { ActiveResourceStore } from "$lib/client/stores/resource.store";
+import { debouncer } from "$lib/client/utils/utils";
+import { get } from "svelte/store";
+import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
+import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { interceptSurrealResponse } from "$lib/client/utils/utils";
+import { formatDate } from "$lib/client/utils/time.utils";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import type { IMutationQueueParams } from "../../../types/data.type";
 
 export const hierarchyFactorLimit = 5;
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-const seedNodeStore: INodeStore = {
-  id: Item.node,
-  dataType: StoreDataType.IFR,
-  priorityRefreshOnAppAppear: true,
-  dependencies: [],
-  mutatingResources: [Item.node]
-};
-/**
- *
- * @deprecated - Use ResourcePersistance instead
- * Store for handling mutations on nodes.
- * Fetching will be directly done accessing dexie store's node resource.
- */
-export const nodes = initNodeStore();
 
-async function createNode(node: Partial<INodeCapture>) {
-  const data: INodeCapture = {
-    id: prefixTable(generateUID(), Item.node),
-    ...node,
-    createdBy: currentUserId,
-    modifiedBy: currentUserId,
-    createdAt: new Date().toISOString(),
-    modifiedAt: new Date().toISOString(),
-    isArchived: false
-  };
-  return dataManager.performMutationForIFR(
-    Item.node,
-    { node: data, links: data.links ?? [] },
-    {
-      action: PersistanceActionType.CUSTOM_CREATE,
-      query: "return fn::memotron::node::save($node, $links, $mutatedAt);"
-    }
-  );
+class NodeStore extends ResourceStore {
+  db: ISurrealDatabase
+  constructor() {
+    super(Item.node, currentUserId, {
+      priorityRefreshOnAppAppear: true
+    });
+    this.db = new SurrealDatabase();
+  }
+  async createNode(
+    capture: INodeCapture,
+    mutatationQueueParams?: IMutationQueueParams
+  ) {
+    return super.create(
+      capture,
+      "return fn::memotron::node::createMany($resources, $mutatedAt);",
+      mutatationQueueParams
+    );
+  }
+  async fetchTimeline(date: Date) {
+    const query = `fn::memotron::timeline($date)`;
+    const response = await this.db.query(query, {
+      date: formatDate(date, "iso")
+    });
+    return interceptSurrealResponse(response, "fetch timeline");
+  }
+  async fetch(nodeId: string) {
+    const query = `fn::memotron::node::fetch($nodeId)`;
+    const response = await this.db.executeReadFn(query, { nodeId });
+    return interceptSurrealResponse(response, "fetch node");
+  }
+
+  async link(from: string, to: string, linkType: LinkType) {
+    let response = await this.db.query(
+      "return fn::memotron::link($from, $to, $linkType);",
+      {
+        from,
+        to,
+        linkType
+      }
+    );
+    return interceptSurrealResponse(response, "link");
+  }
 }
 
-async function modifyNode(id: string, node: Partial<INode>) {
-  const data: Partial<INode> = {
-    id,
-    ...node,
-    modifiedBy: currentUserId
-  };
-  return dataManager.performMutationForIFR(Item.node, data, {
-    action: PersistanceActionType.MERGE
-  });
-}
+export const nodeStore = new NodeStore();
 
-async function deleteNode(id: string) {
-  return dataManager.performMutationForIFR(
-    Item.node,
-    { id, modifiedBy: currentUserId },
-    { action: PersistanceActionType.DELETE }
-  );
-}
-
-function initNodeStore() {
-  const { subscribe, set, update } = writable<INodeStore>(seedNodeStore);
-  return {
-    subscribe,
-    set,
-    update,
-    create: (node: Partial<INodeCapture>) => createNode(node),
-    modify: (id: string, node: Partial<INode>) => modifyNode(id, node),
-    //TODO - bulk modify
-    bulkModify: (nodes: string[], changes: Partial<INode>) => {},
-    delete: (id: string) => deleteNode(id)
-  };
-}
-
-// export type IActiveNodeStore = ReturnType<typeof initActiveNodeStore>;
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 /**
  * Node store map for individual nodes that are open in the UI.
  */
 const activeNodeStores = new Map<string, IActiveNodeStore>();
-const nodePersistance = new NodePersistence(currentUserId);
+
 /**
  * Resolves the active node store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the node
@@ -116,85 +89,9 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
   return val!;
 }
 
-async function fetchNode(
-  id: string,
-  setter: (this: void, value: IActiveNode) => void
-) {
-  const result = await nodePersistance.fetch(id);
-  if (result) {
-    setter(result);
-  }
-}
-
-async function updateProperties(
-  id: string,
-  updater: (this: void, updater: Updater<IActiveNode>) => void,
-  properties: INodeProperty[]
-) {
-  updater((prev) => ({ ...prev, properties }));
-  return nodePersistance.modify(id, { properties });
-}
-
-/**
- * @deprecated - Use ActiveNodeStore class instead
- * Initializes the active node store. This store will hold the state of the active node in the UI.
- * @returns The active node store
- */
-function initActiveNodeStore(node: string) {
-  const id = node;
-  const { subscribe, set, update } = writable<IActiveNode>();
-  const updatePropagator = (val: Partial<INode>) =>
-    nodePersistance.modify(id, val);
-  const debouncedPersist = debouncer(updatePropagator, 2000);
-  return {
-    subscribe,
-    set,
-    //TODO - mutations to title, properties, etc (nodular markdown changes will be handled by the markdown store granularly) - considerations: History, snapshotting etc
-    update,
-    fetch: () => fetchNode(id, set),
-    updateProperties: async (properties: INodeProperty[]) =>
-      updateProperties(id, update, properties),
-    propagateTitleChange: async (label: string) => {
-      return debouncedPersist({ label });
-    },
-    delete: async () => {
-      update((prev) => ({
-        ...prev,
-        trashInformation: {
-          deletedBy: currentUserId,
-          deletedAt: new Date().toISOString()
-        }
-      }));
-      return nodePersistance.delete(id);
-    },
-    archive: async () => {
-      update((prev) => ({
-        ...prev,
-        isArchived: true,
-        modifiedBy: currentUserId,
-        modifiedAt: new Date().toISOString()
-      }));
-      return nodePersistance.modify(id, { isArchived: true });
-    },
-    unarchive: async () => {
-      update((prev) => ({
-        ...prev,
-        isArchived: false,
-        modifiedBy: currentUserId,
-        modifiedAt: new Date().toISOString()
-      }));
-      return nodePersistance.modify(id, { isArchived: false });
-    },
-    restore: async () => {
-      update((prev) => ({ ...prev, trashInformation: undefined }));
-      return nodePersistance.modify(id, { trashInformation: undefined });
-    }
-  };
-}
-
-class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
+class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   constructor(node: string) {
-    super(node, nodePersistance, currentUserId);
+    super(node, nodeStore, currentUserId);
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
@@ -202,7 +99,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
   ) =>
-    nodePersistance.modify(id, changedProps, {
+    this.resourceStore.modify(id, changedProps, {
       mutationId,
       isUseQueueFirstApproach: true
     });
@@ -213,9 +110,16 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
     let val = this.debouncers.get(id);
     return val!;
   }
-  fetch = () => fetchNode(this.id, this.set);
-  updateProperties = async (properties: INodeProperty[]) =>
-    updateProperties(this.id, this.update, properties);
+  fetch = async () => {
+    const result = await this.resourceStore.fetch(this.id);
+    if(result) {
+      this.set(result);
+    }
+  }
+  updateProperties = async (properties: INodeProperty[]) => {
+    this.update((prev) => ({ ...prev, properties }));
+    return this.resourceStore.modify(this.id, { properties });
+  }
   updateBlock = (id: string, changedProps: any) => {
     const mutationId =
       `${id}-` +
@@ -228,7 +132,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
     debouncer(id, mutationId, changedProps);
   };
   createBlock = async (id: string, contentType: any) => {
-    return nodePersistance.createNode(
+    return this.resourceStore.createNode(
       {
         resources: [
           {
@@ -246,12 +150,12 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode> {
     );
   };
   deleteBlock = async (id: string) => {
-    return nodePersistance.delete(id, {
+    return this.resourceStore.delete(id, {
       isUseQueueFirstApproach: true,
       mutationId: `${id}-delete`
     });
   };
   mention = async (location: string, id: string) => {
-    return nodePersistance.link(location, id, LinkType.MENTION);
+    return this.resourceStore.link(location, id, LinkType.MENTION);
   };
 }

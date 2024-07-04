@@ -11,13 +11,13 @@ import { PersistanceActionType } from "../types/data.type";
 import type { DbRecord } from "../types/dbrecord.type";
 import type { ISurrealDatabase } from "../types/db.type";
 
-const isUseSurrealSDK = import.meta.env.VITE_IS_USE_SURREAL_SDK ?? true;
+const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
 
 export class SurrealDatabaseUsingRest {
   token: string | null;
   db: string | undefined;
   constructor(private instance: string = "") {
-    this.token = resolveToken();
+    // this.token = resolveToken();
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
       this.db = decodedToken?.db ?? "";
@@ -25,7 +25,7 @@ export class SurrealDatabaseUsingRest {
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
-    this.token = localStorage.getItem("surreal-token") ?? this.token;
+    this.token = localStorage.getItem("stoken") ?? this.token;
     await fetch(instance, { method: "POST" });
   }
   /**
@@ -100,9 +100,10 @@ export class SurrealDatabaseUsingRest {
     try {
       // const isValid = await performLoginStatusCheck();
       // if (!isValid) return null;
-      const token = resolveToken();
+      const token = await resolveToken();
       if (!token) return null;
       this.token = token;
+      console.log("query", { query, params, token });
       let decodedToken: any = jwt_decode(this.token!);
       this.db = decodedToken?.db ?? "";
       query = replaceParams(query, params);
@@ -144,7 +145,7 @@ export class SurrealDatabaseUsingSdk {
   db: string | undefined;
   surreal: Surreal;
   constructor(private instance: string = "") {
-    this.token = resolveToken();
+    // this.token = resolveToken();
     this.surreal = new Surreal();
     if (this.token) {
       let decodedToken: any = jwt_decode(this.token);
@@ -159,13 +160,13 @@ export class SurrealDatabaseUsingSdk {
   }
   async connect() {
     try {
-      this.token = resolveToken();
+      // this.token = resolveToken();
       if (!this.token) throw new Error("User not logged in");
       let decodedToken: any = jwt_decode(this.token);
       this.db = decodedToken?.db ?? "";
       this.surreal.strategy = "http";
       await this.surreal.connect(`${this.instance}/rpc`, {
-        namespace: import.meta.env.VITE_SURREAL_USER_NS ?? "TIDIGIT",
+        namespace: import.meta.env?.VITE_SURREAL_USER_NS ?? "user",
         database: this.db ?? ""
       });
       return await this.surreal.authenticate(this.token ?? "");
@@ -293,9 +294,10 @@ export class SurrealDatabase implements ISurrealDatabase {
   db: string | undefined;
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
   constructor(private instance: string = "") {
-    const instanceDefault = import.meta.env.VITE_SURREAL_URL;
+    const instanceDefault = import.meta.env?.VITE_SURREAL_URL ?? process.env.PLASMO_PUBLIC_DB_URL;
+    console.log("instanceDefault", instanceDefault);
     this.instance = instanceDefault ?? instance;
-    this.token = resolveToken();
+    // this.token = resolveToken();
     if (isUseSurrealSDK == "true")
       this.surreal = new SurrealDatabaseUsingSdk(this.instance);
     else this.surreal = new SurrealDatabaseUsingRest(this.instance);

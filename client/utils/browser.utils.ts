@@ -243,3 +243,44 @@ export function resolveHoverState(event: MouseEvent | FocusEvent) {
     !isTouchDevice && (event.type === "mouseover" || event.type === "focus")
   );
 }
+
+/**
+ * A sveltekit goto() equivalent
+ * 
+ * Note: using this instead of sveltekit's goto() because extension projects do not have access to sveltekit's goto() function
+ * @param path 
+ * @param queryParams 
+ */
+export function goto(path: string, queryParams: Record<string, string> = {}) {
+  const url = new URL(path, window.location.origin);
+  for (const key in queryParams) {
+    url.searchParams.set(key, queryParams[key]);
+  }
+  window.location.href = url.toString();
+}
+
+/**
+ * TODO - test the reliability of this function
+ * @returns true if the current environment is an extension environment
+ */
+export function isExtensionEnvironment() {
+  console.log({protocol: window.location.protocol, typeofchrome: typeof chrome, typeofbrowser: typeof browser, typeofplasmo: typeof __plasmo})
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+    return true;
+  }
+  
+  if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.id) {
+    return true;
+  }
+  
+  if (typeof __plasmo !== 'undefined') {
+    return true;
+  }
+
+  if (window.location.protocol === 'chrome-extension:' || 
+      window.location.protocol === 'moz-extension:') {
+    return true;
+  }
+
+  return false;
+}

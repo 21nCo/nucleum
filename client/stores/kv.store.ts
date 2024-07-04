@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import {
   PersistanceActionType,
   StoreDataType,
-  type CacheableStoreContract,
+  type ICacheableSvelteStore,
   type ICacheableStore
 } from "../types/data.type";
 import { dataManager } from "../persistence/dataManager";
@@ -11,7 +11,7 @@ import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
 
 export class KeyValueStore<T>
-  implements ICacheableStore, CacheableStoreContract
+  implements ICacheableSvelteStore
 {
   id: Item;
   dataType: StoreDataType = StoreDataType.KVO;

@@ -12,7 +12,7 @@ export type IType = TypeBase & {
   properties: IProperty[];
 };
 
-export type ActiveTypeStore = IType;
+export type IActiveTypeStore = IType;
 
 export type TypeCreationForm = {
   label: string;

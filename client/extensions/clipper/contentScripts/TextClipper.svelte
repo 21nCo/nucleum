@@ -236,25 +236,6 @@
     selectedClipId = e.id;
     handleTextSelection();
   }
-  onMount(() => {
-    window.addEventListener(
-      "message",
-      function (event) {
-        if (event.source != window) return;
-        if (event.data.type && event.data.type == "signin") {
-          console.log("Token data is: " + event.data.token);
-          localStorage.setItem("stoken", event.data.token.token);
-          chrome.storage.sync.set(
-            { token: event.data.token.token },
-            function () {
-              console.log("Token is stored to be used later.");
-            }
-          );
-        }
-      },
-      false
-    );
-  });
 
   function onmouseup(e: MouseEvent) {
     // console.log("onmouseup", e);

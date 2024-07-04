@@ -3,7 +3,7 @@ import { seedUserPreferences } from "$lib/client/stores/app.store";
 import { seedLocalPreferences } from "./pointron.store";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 
-const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+const surrealDb = new SurrealDatabase();
 export class PointronPersistence {
   async syncSeedDataToCloud() {
     const kvalues: any[] = [

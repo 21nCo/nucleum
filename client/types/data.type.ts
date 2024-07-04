@@ -5,11 +5,15 @@ import type { ISurrealDatabase } from "./db.type";
 /**
  * The operations which can be performed on a cacheable store
  */
-export interface CacheableStoreContract extends Writable<any> {
-  loader?: (data: any) => void;
-  search?: (query: string) => Promise<any>;
-  resolveRefreshQuery?: () => string;
-  propagateDependencyChanges?: (params: any) => void;
+export interface ICacheableSvelteStore extends ICacheableStore, Writable<any> {
+    /**
+   * The state of the store when it is refreshing
+   */
+    isRefreshing?: boolean;
+    /**
+     * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
+     */
+    isPageRefreshing?: boolean;
 }
 
 /**
@@ -21,13 +25,13 @@ export interface ICacheableStore {
    */
   id: string;
   /**
-   * The query to be used to refresh the store
-   */
-  refreshQuery?: string;
-  /**
    * The type of data the store holds
-   */
-  dataType: StoreDataType;
+  */
+ dataType: StoreDataType;
+ /**
+  * The query to be used to refresh the store
+  */
+ refreshQuery?: string;
   /**
    * The resources on which the store depends on
    */
@@ -44,18 +48,15 @@ export interface ICacheableStore {
    * Setting this true will refresh the store when the app appears before even performing stale check
    */
   priorityRefreshOnAppAppear?: boolean;
-  /**
-   * The state of the store when it is refreshing
-   */
-  isRefreshing?: boolean;
-  /**
-   * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
-   */
-  isPageRefreshing?: boolean;
+
   /**
    * When this is turned on, local storage is used to cache the store.
    */
   isSynchronousCache?: boolean;
+  loader?: (data: any) => void;
+  search?: (query: string) => Promise<any>;
+  resolveRefreshQuery?: () => string;
+  propagateDependencyChanges?: (params: any) => void;
 }
 
 /**
@@ -104,7 +105,7 @@ export enum CacheStrategy {
 export interface DataManager {
   cacheSource: CacheSource;
   db: ISurrealDatabase;
-  cacheableStoresTable: CacheableStoreContract[];
+  cacheableStoresTable: ICacheableStore[];
 }
 
 /**

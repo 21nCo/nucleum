@@ -243,7 +243,7 @@ function initPointronConstants(seed: PointronConstants) {
 export const oasisOidcConfig = {
   authority: "https://auth.oasislabs.com",
   // Replace with your app's frontend client ID.
-  client_id: import.meta.env.VITE_OASIS_CLIENT_ID,
+  client_id: import.meta.env?.VITE_OASIS_CLIENT_ID,
   redirect_uri: `${window.location.origin}/play`,
   response_type: "code",
   scope: "openid profile email parcel.public",

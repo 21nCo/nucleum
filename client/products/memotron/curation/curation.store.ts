@@ -3,120 +3,82 @@ import {
   CombinationViewType,
   CurationType,
   type IActiveCollection,
-  type ICollection,
   type ICollectionView,
   type ICurationCreationForm,
-  type ICurationStore
 } from "$lib/client/types/memotron/curation.type";
 import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import {
-  StoreDataType,
-  type ICacheableStore,
-  PersistanceActionType
-} from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
 import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { prefixTable } from "$lib/client/utils/text.utils";
-import { debouncer, generateUID } from "$lib/client/utils/utils";
-import { get, writable, type Updater } from "svelte/store";
+import { debouncer, generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
+import { get } from "svelte/store";
 import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
-import { ActiveResourceStore } from "$lib/client/stores/resource.store";
-import { CurationPersistence } from "./curation.persistence";
+import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
 import { Persistence } from "$lib/client/persistence/persistence";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import type { ISurrealDatabase } from "$lib/client/types/db.type";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-const seedCurationsStore: ICurationStore = {
-  id: Item.curation,
-  refreshQuery: "return fn::memotron::curation::fetchAll($since);",
-  dataType: StoreDataType.IFR,
-  priorityRefreshOnAppAppear: true,
-  dependencies: [],
-  mutatingResources: [Item.curation]
-};
-/**
- * @deprecated - Use ResourcePersistance instead
- * TODO - refreshQuery flow for refreshing IFR stores.
- * Experimental - Will be removed if the need for IFR store is not substantial.
- * Ideation: https://www.notion.so/blanklabs/Caching-IFR-searchable-resources-ideation-5859a07de2774c2690124a907bf8a3ac?pvs=4#9911afedc2824aedb8d1bed1312e735d
- *
- * Store for handling mutations.
- * Fetching will be directly done accessing dexie store.
- */
-export const curations = initCurationStore();
+class CurationStore extends ResourceStore {
+  db: ISurrealDatabase
+  constructor() {
+    super(Item.curation, currentUserId, {
+      priorityRefreshOnAppAppear: true,
+      refreshQuery: "return fn::memotron::curation::fetchAll($since);",
+    });
+    this.db = new SurrealDatabase();
+  }
+  create(resource: ICurationCreationForm) {
+    return super.create(
+      {
+        id: prefixTable(
+          generateUID(),
+          resource.type === CurationType.COLLECTION
+            ? Item.collection
+            : Item.combination
+        ),
+        ...resource
+      },
+      "return fn::memotron::curation::create($curation, $mutatedAt);"
+    );
+  }
+  async fetch(id: string, viewId?: string) {
+    const query = `fn::memotron::curation::fetch($id, $viewId)`;
+    const response = await this.db.executeReadFn(
+      query,
+      viewId ? { id, viewId } : { id }
+    );
+    return interceptSurrealResponse(response, "fetch curation");
+  }
 
-/**
- * @deprecated
- * Creates a new curation - propagates the mutation to the server and updates the local cache.
- * @param curation
- * @returns The created curation
- */
-async function createCuration(curation: ICurationCreationForm) {
-  const data = {
-    id: prefixTable(
-      generateUID(),
-      curation.type === CurationType.COLLECTION
-        ? Item.collection
-        : Item.combination
-    ),
-    ...curation,
-    createdAt: new Date().toISOString(),
-    modifiedAt: new Date().toISOString(),
-    createdBy: currentUserId,
-    modifiedBy: currentUserId,
-    isStarred: curation.isStarred ?? false,
-    isArchived: false
-  };
-  const dm = get(dataManager);
-  dm.cacheSource.dexie.curation.add(data);
-  return dataManager.performMutation(
-    Item.curation,
-    { curation: data },
-    {
-      action: PersistanceActionType.CUSTOM_QUERY,
-      query: "return fn::memotron::curation::create($curation, $mutatedAt);",
-      isMutatingSelfOnly: true
-    }
-  );
+  async createView(view: ICollectionView, collectionId: string) {
+    const query = `fn::memotron::collection::createView($view, $collectionId)`;
+    const response = await this.db.query(query, {
+      view,
+      collectionId
+    });
+    return interceptSurrealResponse(response, "create view");
+  }
+  async fetchViewData(viewId: string, collectionId: string) {
+    const query = `fn::memotron::collection::fetchData($viewId, $collectionId)`;
+    const response = await this.db.query(query, {
+      viewId,
+      collectionId
+    });
+    return interceptSurrealResponse(response, "fetch view data");
+  }
 }
 
-function initCurationStore() {
-  const { subscribe, set, update } =
-    writable<ICurationStore>(seedCurationsStore);
-  return {
-    subscribe,
-    set,
-    update,
-    refresh: () => {
-      return dataManager.refreshForIFR(Item.curation);
-    },
-    create: createCuration,
-    modify: (id: string, val: Partial<ICollection>) => {
-      //delegated from active curation individual stores
-    },
-    delete: (id: string) => {
-      return dataManager.performMutationForIFR(
-        Item.curation,
-        { id },
-        {
-          action: PersistanceActionType.DELETE
-        }
-      );
-    }
-  };
-}
+export const curationStore = new CurationStore();
 
-// export type IActiveCollectionStore = ReturnType<
-//   typeof generateActiveCollectionStore
-//   >;
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 /**
  * Curation stores map for holding the state of active i.e. currently open curations in the UI
  */
 const activeCurationStores = new Map<string, IActiveCollectionStore>();
-const curationPersistance = new CurationPersistence(currentUserId);
 
 /**
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
@@ -126,7 +88,6 @@ const curationPersistance = new CurationPersistence(currentUserId);
  */
 export function resolveActiveCollectionStore(id: string, context: string = "") {
   if (!activeCurationStores.has(id)) {
-    // activeCurationStores.set(id, generateActiveCollectionStore(id));
     activeCurationStores.set(id, new ActiveCollectionStore(id));
   }
   let val = activeCurationStores.get(id);
@@ -145,224 +106,167 @@ export function determineCurationType(id: string) {
   return type;
 }
 
-async function initializeCollection(
-  id: string,
-  setter: any,
-  updater: any,
-  viewId?: string
-) {
-  const dm = get(dataManager);
-  let type = determineCurationType(id);
-  const response = await curationPersistance.fetch(id, viewId);
-  // console.log("curation fetch response", { response });
-  if (type === CurationType.COLLECTION && response.curation) {
-    updater((store: IActiveCollection) => {
-      if (!isValidArrayWithData(response.curation.views)) return store;
-      store = response.curation;
-      if (viewId && store.views.some((x) => x.id === viewId))
-        store.views.find((x) => x.id === viewId)!.data = response.data;
-      else store.views[0].data = response.data;
-      return store;
-    });
-  } else if (type === CurationType.NODELINKS && response.node) {
-    if (response.directlinks) {
-      updater((store: IActiveCollection) => {
-        if (!("views" in store)) return store;
-        store.views = [
-          {
-            id: "backlinks",
-            data: response.directlinks,
-            layout: CollectionLayout.BOARD,
-            label: "Backlinks",
-            createdAt: new Date().toISOString(),
-            modifiedAt: new Date().toISOString(),
-            createdBy: currentUserId,
-            modifiedBy: currentUserId,
-            tabBy: "none",
-            groupBy: "none",
-            subGroupBy: "none",
-            arrangement: NodeThumbnailVariant.LIST
-          }
-        ];
+
+class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, CurationStore> {
+
+  debouncedPersistView = debouncer((view: ICollectionView) => {
+    new Persistence().update(view);
+  }, 2000);
+
+
+  constructor(collectionId: string) {
+    super(collectionId, curationStore, currentUserId);
+  }
+
+  async init(viewId?: string) {
+    const dm = get(dataManager);
+    let type = determineCurationType(this.id);
+    const response = await this.resourceStore.fetch(this.id, viewId);
+    // console.log("curation fetch response", { response });
+    if (type === CurationType.COLLECTION && response.curation) {
+      this.update((store: IActiveCollection) => {
+        if (!isValidArrayWithData(response.curation.views)) return store;
+        store = response.curation;
+        if (viewId && store.views.some((x) => x.id === viewId))
+          store.views.find((x) => x.id === viewId)!.data = response.data;
+        else store.views[0].data = response.data;
         return store;
       });
-    }
-  } else {
-    if (type === CurationType.NODELINKS) {
-      id = id.replace(Item.nodelinks + ":", "");
-      const record = await dm.cacheSource.dexie.node.get(id);
-      //TODO - handle the case of record not present locally
-      setter({
-        id,
-        type,
-        label: record?.label ?? "Links",
-        createdAt: record?.createdAt ?? new Date().toISOString(),
-        modifiedAt: record?.modifiedAt ?? new Date().toISOString(),
-        views: [],
-        isRefreshing: true
-      });
-    } else {
-      const record = await dm.cacheSource.dexie.curation.get(id);
-      if (record) {
-        setter({
-          ...record,
-          type,
-          isRefreshing: true,
-          views: []
+    } else if (type === CurationType.NODELINKS && response.node) {
+      if (response.directlinks) {
+        this.update((store: IActiveCollection) => {
+          if (!("views" in store)) return store;
+          store.views = [
+            {
+              id: "backlinks",
+              data: response.directlinks,
+              layout: CollectionLayout.BOARD,
+              label: "Backlinks",
+              createdAt: new Date().toISOString(),
+              modifiedAt: new Date().toISOString(),
+              createdBy: currentUserId,
+              modifiedBy: currentUserId,
+              tabBy: "none",
+              groupBy: "none",
+              subGroupBy: "none",
+              arrangement: NodeThumbnailVariant.LIST
+            }
+          ];
+          return store;
         });
       }
+    } else {
+      if (type === CurationType.NODELINKS) {
+        // id = this.id.replace(Item.nodelinks + ":", "");
+        // const record = await dm.cacheSource.dexie.node.get(this.id);
+        // //TODO - handle the case of record not present locally
+        // this.set({
+        //   id: this.id,
+        //   type,
+        //   label: record?.label ?? "Links",
+        //   createdAt: record?.createdAt ?? new Date().toISOString(),
+        //   modifiedAt: record?.modifiedAt ?? new Date().toISOString(),
+        //   views: [],
+        //   isRefreshing: true
+        // });
+      } else {
+        const record = await dm.cacheSource.dexie.curation.get(this.id);
+        if (record) {
+          this.set({
+            ...record,
+            type,
+            isRefreshing: true,
+            views: []
+          });
+        }
+      }
     }
+    this.update((store: IActiveCollection) => {
+      store.isRefreshing = false;
+      return store;
+    });
   }
-  updater((store: IActiveCollection) => {
-    store.isRefreshing = false;
-    return store;
-  });
-}
 
-async function createView(
-  updater: (this: void, updater: Updater<IActiveCollection>) => void,
-  collectionId: string,
-  viewToDuplicate?: string
-) {
-  let newView: ICollectionView;
-  let viewToBeDuplicated: ICollectionView | undefined;
-  let partial: Omit<
-    ICollectionView,
-    "id" | "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
-  >;
-  if (viewToDuplicate) {
-    updater((val: IActiveCollection) => {
-      viewToBeDuplicated = val.views.find((v) => v.id === viewToDuplicate);
+  createView(viewToDuplicate?: string) {
+    let newView: ICollectionView;
+    let viewToBeDuplicated: ICollectionView | undefined;
+    let partial: Omit<
+      ICollectionView,
+      "id" | "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
+    >;
+    if (viewToDuplicate) {
+      this.update((val: IActiveCollection) => {
+        viewToBeDuplicated = val.views.find((v) => v.id === viewToDuplicate);
+        return val;
+      });
+      partial = viewToBeDuplicated as ICollectionView;
+    } else {
+      partial = {
+        label: "New view",
+        layout: CollectionLayout.BOARD,
+        tabBy: "none",
+        groupBy: "none",
+        subGroupBy: "none",
+        arrangement: NodeThumbnailVariant.LIST
+      };
+    }
+    newView = {
+      ...partial,
+      id: prefixTable(generateUID(), Item.view),
+      createdAt: new Date().toISOString(),
+      modifiedAt: new Date().toISOString(),
+      createdBy: currentUserId,
+      modifiedBy: currentUserId
+    };
+    this.update((val: IActiveCollection) => {
+      val.views.push(newView);
       return val;
     });
-    partial = viewToBeDuplicated as ICollectionView;
-  } else {
-    partial = {
-      label: "New view",
-      layout: CollectionLayout.BOARD,
-      tabBy: "none",
-      groupBy: "none",
-      subGroupBy: "none",
-      arrangement: NodeThumbnailVariant.LIST
-    };
-  }
-  newView = {
-    ...partial,
-    id: prefixTable(generateUID(), Item.view),
-    createdAt: new Date().toISOString(),
-    modifiedAt: new Date().toISOString(),
-    createdBy: currentUserId,
-    modifiedBy: currentUserId
-  };
-  updater((val: IActiveCollection) => {
-    val.views.push(newView);
-    return val;
-  });
-  curationPersistance.createView(newView, collectionId);
-  return newView.id;
-}
-
-async function deleteView(
-  updater: (this: void, updater: Updater<IActiveCollection>) => void,
-  id: string
-) {
-  updater((val: IActiveCollection) => {
-    const viewToBeDeleted = val.views.find((v) => v.id == id);
-    if (!viewToBeDeleted) return val;
-    viewToBeDeleted.trashInformation = {
-      deletedAt: new Date().toISOString(),
-      deletedBy: currentUserId
-    };
-    return val;
-  });
-  await new Persistence().delete(id, Item.view, currentUserId);
-}
-
-const debouncedPersistView = debouncer((view: ICollectionView) => {
-  new Persistence().update(view);
-}, 2000);
-
-async function updateView(
-  updater: (this: void, updater: Updater<IActiveCollection>) => void,
-  view: ICollectionView
-) {
-  updater((val: IActiveCollection) => {
-    let viewToBeUpdated = val.views.find((v) => v.id == view.id);
-    if (!viewToBeUpdated) return val;
-    viewToBeUpdated = { ...view };
-    return val;
-  });
-  delete view.data;
-  debouncedPersistView(view);
-}
-
-async function refreshViewData(
-  updater: (this: void, updater: Updater<IActiveCollection>) => void,
-  viewId: string,
-  collectionId: string
-) {
-  updater((val: IActiveCollection) => {
-    val.isRefreshing = true;
-    return val;
-  });
-  const response = await curationPersistance.fetchViewData(
-    viewId,
-    collectionId
-  );
-  if (!response || !isValidArrayWithData(response)) return;
-  updater((val: IActiveCollection) => {
-    val.views.find((v) => v.id === viewId)!.data = [...response];
-    val.isRefreshing = false;
-    return val;
-  });
-  return true;
-}
-
-/**
- * @deprecated - Use ActiveCollectionStore instead
- * Initializes the active curation store. This store will hold the state of the active curation in the UI.
- * @returns The active curation store
- */
-function generateActiveCollectionStore(collectionId: string) {
-  const id = collectionId;
-  const { subscribe, set, update } = writable<IActiveCollection>();
-  const updatePropagator = (val: Partial<ICollection>) =>
-    curationPersistance.modify(id, val);
-  const debouncedPersist = debouncer(updatePropagator, 2000);
-  return {
-    subscribe,
-    set,
-    update,
-    init: (id: string, viewId?: string) =>
-      initializeCollection(id, set, update, viewId),
-    propagateTitleChange: async (label: string) => {
-      return debouncedPersist({ label });
-    },
-    createView: (viewToDuplicate?: string) =>
-      createView(update, id, viewToDuplicate),
-    deleteView: (id: string) => deleteView(update, id),
-    updateView: (view: ICollectionView) => updateView(update, view),
-    refreshViewData: (viewId: string) => refreshViewData(update, viewId, id)
-  };
-}
-
-class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection> {
-  constructor(collectionId: string) {
-    super(collectionId, curationPersistance, currentUserId);
+    this.resourceStore.createView(newView, this.id);
+    return newView.id;
   }
 
-  init = (viewId?: string) =>
-    initializeCollection(this.id, this.set, this.update, viewId);
+  async deleteView(id: string) {
+    this.update((val: IActiveCollection) => {
+      const viewToBeDeleted = val.views.find((v) => v.id == id);
+      if (!viewToBeDeleted) return val;
+      viewToBeDeleted.trashInformation = {
+        deletedAt: new Date().toISOString(),
+        deletedBy: currentUserId
+      };
+      return val;
+    });
+    return new Persistence().delete(id, Item.view, currentUserId);
+  }
 
-  createView = (viewToDuplicate?: string) =>
-    createView(this.update, this.id, viewToDuplicate);
+  updateView(view: ICollectionView) {
+    this.update((val: IActiveCollection) => {
+      let viewToBeUpdated = val.views.find((v) => v.id == view.id);
+      if (!viewToBeUpdated) return val;
+      viewToBeUpdated = { ...view };
+      return val;
+    });
+    delete view.data;
+    this.debouncedPersistView(view);
+  }
 
-  deleteView = (id: string) => deleteView(this.update, id);
-
-  updateView = (view: ICollectionView) => updateView(this.update, view);
-
-  refreshViewData = (viewId: string) =>
-    refreshViewData(this.update, viewId, this.id);
+  async refreshViewData (viewId: string) {
+    this.update((val: IActiveCollection) => {
+      val.isRefreshing = true;
+      return val;
+    });
+    const response = await this.resourceStore.fetchViewData(
+      viewId,
+      this.id
+    );
+    if (!response || !isValidArrayWithData(response)) return;
+    this.update((val: IActiveCollection) => {
+      val.views.find((v) => v.id === viewId)!.data = [...response];
+      val.isRefreshing = false;
+      return val;
+    });
+    return true;
+  }
 }
 
 export const collectionLayoutOptions = [

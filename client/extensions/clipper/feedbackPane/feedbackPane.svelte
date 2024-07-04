@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import Linkbox from "$lib/client/products/memotron/common/linkbox/Linkbox.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
@@ -69,6 +70,7 @@
       <!-- Link box -->
       <span class="px-2"> sample link box </span>
     </div>
+    <Linkbox />
   </div>
   <!-- <div>
     isHovering: {isHovering}

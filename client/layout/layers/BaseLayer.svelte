@@ -104,7 +104,7 @@
     if (
       !$context.isSheet &&
       $context.isEmbed &&
-      $context.protocol.includes(import.meta.env.VITE_CUSTOM_PROTOCOL)
+      $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
     ) {
       await parseEmbedToken();
     }
@@ -227,23 +227,25 @@
   function setLaunchContext() {
     try {
       const appDetails = extractProduct(
-        import.meta.env.VITE_HOST ?? window.location.host
+        import.meta.env?.VITE_HOST ??
+          process.env.PLASMO_PUBLIC_HOST ??
+          window.location.host
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
       localStorage.setItem("product", appDetails?.product ?? "tidigit");
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||
-        import.meta.env.VITE_DEBUG_MODE === "true";
+        import.meta.env?.VITE_DEBUG_MODE === "true";
       if (isDebugMode) {
         $appStore.isDebugMode = true;
       }
-      const isDebugEmbedMode = import.meta.env.VITE_IS_DEBUG_EMBED === "true";
+      const isDebugEmbedMode = import.meta.env?.VITE_IS_DEBUG_EMBED === "true";
       let browserAgent = navigator?.userAgent;
       if (isDebugEmbedMode || browserAgent.includes("embed")) {
         $context.isEmbed = true;
       }
       const isDebugHandheldMode =
-        import.meta.env.VITE_IS_DEBUG_HANDSET === "true";
+        import.meta.env?.VITE_IS_DEBUG_HANDSET === "true";
       if (browserAgent.includes("handset") || isDebugHandheldMode) {
         $context.embed = Embed.HANDSET;
       } else if (browserAgent.includes("tablet")) {

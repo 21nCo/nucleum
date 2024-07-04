@@ -22,8 +22,8 @@ const account = initAccount({
 });
 
 function initAccount(seed: UserAccount) {
-  if (localStorage.getItem("surreal-token")) {
-    seed.token = localStorage.getItem("surreal-token");
+  if (localStorage.getItem("stoken")) {
+    seed.token = localStorage.getItem("stoken");
     seed.isLoggedIn = true;
   }
   if (localStorage.getItem("userInfo")) {
@@ -38,7 +38,7 @@ function initAccount(seed: UserAccount) {
   });
   const { subscribe, set, update } = writable<UserAccount>(seed);
   const checkIfSessionExpired = async () => {
-    const token = localStorage.getItem("surreal-token");
+    const token = localStorage.getItem("stoken");
     if (!token) {
       account.expire();
       return true;
@@ -105,7 +105,7 @@ function initAccount(seed: UserAccount) {
     } = { isIgnoreRefresh: false, isFromSignup: false }
   ) => {
     console.log("signing in", { data });
-    localStorage.setItem("surreal-token", data.token);
+    localStorage.setItem("stoken", data.token);
     localStorage.setItem("refresh-token", data.refreshToken ?? "");
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     // isOnboardingComplete.check();
@@ -136,7 +136,7 @@ function initAccount(seed: UserAccount) {
     }
   };
   const expire = () => {
-    localStorage.removeItem("surreal-token");
+    localStorage.removeItem("stoken");
     update(() => {
       const n = { token: null, isLoggedIn: false };
       return n;
@@ -144,7 +144,7 @@ function initAccount(seed: UserAccount) {
     appEvents.publish(GlobalEvent.USER_LOGIN, false);
   };
   const performLoginStatusCheck = async () => {
-    const token = localStorage.getItem("surreal-token");
+    const token = localStorage.getItem("stoken");
     if (!token) {
       appStore.gotoPath("/signup");
       return false;
@@ -180,12 +180,12 @@ function initAccount(seed: UserAccount) {
     set,
     signOut: () => {
       expire();
-      signout();
+      signout("signOut account.store");
     },
     signIn: signin,
     expire,
     embedOAuthSignin: async (token: string, isSignup: boolean) => {
-      localStorage.setItem("surreal-token", token);
+      localStorage.setItem("stoken", token);
       let response = await new Persistence().getUserInfo(token);
       if (response?.userInfo) {
         await signin(

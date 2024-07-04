@@ -82,7 +82,7 @@
     try {
       debugMessage = "macos - embed redirection";
       await goto(
-        (import.meta.env.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
+        (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
           "?token=" +
           token +

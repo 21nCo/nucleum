@@ -34,6 +34,8 @@
   /**
    * To Transcribe the audio, shows necessary feedback on transcription start, end and also on error.
    * Auto Refreshes the page the dispplay the content once transcription is completed
+   *
+   * TODO - move to store, lambda url - env
    */
   async function onTranscribe() {
     isDisabled = true;
@@ -58,7 +60,7 @@
       isError = true;
       setTimeout(() => (isError = false), 3000);
       isDisabled = false;
-      const db = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+      const db = new SurrealDatabase(import.meta.env?.VITE_SURREAL_URL);
       await db.merge(nodeId, {
         body: { initTranscription: false },
         contentType: "AUDIO"

@@ -1,14 +1,15 @@
 import { resolveToken, signout } from "./account.utils";
+import { isExtensionEnvironment } from "./browser.utils";
 import { detectTimeZone } from "./time.utils";
 
 export function resolveRegionalApiUrl() {
   const tzOffset = -new Date().getTimezoneOffset() * 60;
   if (tzOffset < -10800) {
-    return import.meta.env.VITE_API_US_URL;
+    return import.meta.env?.VITE_API_US_URL  ?? process.env.PLASMO_PUBLIC_API_US_URL;
   } else if (tzOffset > -10800 && tzOffset < 10800) {
-    return import.meta.env.VITE_API_EU_URL;
+    return import.meta.env?.VITE_API_EU_URL ?? process.env.PLASMO_PUBLIC_API_EU_URL;
   } else {
-    return import.meta.env.VITE_API_AS_URL;
+    return import.meta.env?.VITE_API_AS_URL ?? process.env.PLASMO_PUBLIC_API_AS_URL;
   }
 }
 
@@ -20,7 +21,7 @@ export async function performApiCall(
   let token = resolveToken();
   try {
     const response = await fetch(
-      (resolveRegionalApiUrl() ?? import.meta.env.VITE_API_URL) +
+      (resolveRegionalApiUrl() ?? import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL) +
         "/" +
         endpoint,
       {
@@ -40,7 +41,7 @@ export async function performApiCall(
         "Response:",
         errorText
       );
-      if (response.status === 401) {
+      if (response.status === 401 && !isExtensionEnvironment()) {
         signout();
       }
       throw new Error(`API call failed with status: ${response.status}`);
@@ -63,7 +64,7 @@ export async function performApiCall(
     return {
       userAgent: navigator.userAgent,
       origin: window.location.origin,
-      host: import.meta.env.VITE_HOST ?? window.location.host,
+      host: import.meta.env?.VITE_HOST ?? process.env.PLASMO_PUBLIC_HOST ?? window.location.host,
       href: window.location.href,
       timezone: detectTimeZone(),
       geo: null,

@@ -3,7 +3,7 @@ import type { PointGoalDbType } from "$lib/client/types/pointron/goal.type";
 import { Item } from "$lib/client/types/item.enum";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 
-const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+const surrealDb = new SurrealDatabase();
 
 const tableName = Item[Item.PointGoal];
 

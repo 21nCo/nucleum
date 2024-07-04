@@ -4,12 +4,11 @@ import {
   CacheStrategy,
   StoreDataType,
   type ICacheableStore,
-  type CacheableStoreContract,
   type DataManager,
   type ResourceDependency,
   DependencySyncType,
   PersistanceActionType,
-  type IMutationParams
+  type IMutationParams,
 } from "../types/data.type";
 import {
   surrealUnixTimestamp,
@@ -56,9 +55,9 @@ function init() {
      */
     refreshForIFR: async (item: Item) => {
       const dm = get(dataManager);
-      const store = dm.cacheableStoresTable.find((x) => get(x).id === item);
+      const store = dm.cacheableStoresTable.find((x) => x.id === item);
       if (!store) return;
-      const query = await resolveRefreshQueryForIFR(get(store));
+      const query = await resolveRefreshQueryForIFR(store);
       if (!query) return;
       const response = await db.query(query);
       const result = interceptSurrealResponse(response);
@@ -106,7 +105,7 @@ function init() {
     },
     search: async (storeId: string, query: string) => {
       const dm = get(dataManager);
-      const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
+      const store = dm.cacheableStoresTable.find((x) => x.id === storeId);
       if (store) {
         return store?.search?.(query);
       }
@@ -116,7 +115,7 @@ function init() {
       isShowRefreshingState: boolean = false
     ) => {
       const dm = get(dataManager);
-      const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
+      const store = dm.cacheableStoresTable.find((x) => x.id === storeId);
       if (store) {
         return refreshStores([store], isShowRefreshingState);
       }
@@ -124,7 +123,7 @@ function init() {
     refreshPage: async (storeIdentifiers: string[]) => {
       const dm = get(dataManager);
       const stores = dm.cacheableStoresTable.filter((x) =>
-        storeIdentifiers.includes(get(x).id)
+        storeIdentifiers.includes(x.id)
       );
       if (isValidArrayWithData(stores)) {
         refreshStores(stores, false, true);
@@ -152,7 +151,7 @@ function init() {
       return await cacheSource.retrieveCache(storeId);
     },
     initialize: async (
-      stores: CacheableStoreContract[],
+      stores: ICacheableStore[],
       isLiteMode: boolean = false
     ) => {
       update((x) => {
@@ -203,7 +202,7 @@ export const dataManager = init();
 async function refreshOnAppear() {
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
-    (x) => (get(x) as ICacheableStore).priorityRefreshOnAppAppear
+    (x) => (x as ICacheableStore).priorityRefreshOnAppAppear
   );
   if (!isValidArrayWithData(storesThatNeedRefresh)) return;
   return refreshStores(storesThatNeedRefresh);
@@ -307,12 +306,10 @@ async function performMutation(
       //   storeId,
       //   stores: dm.cacheableStoresTable.map((x) => get(x).id)
       // });
-      const store = dm.cacheableStoresTable.find((x) => get(x).id === storeId);
+      const store = dm.cacheableStoresTable.find((x) => x.id === storeId);
       if (!store) return { resources: [], isKVStore: false };
-      const storeData = get(store);
-      // console.log({ storeData });
-      const isKVStore = storeData.dataType === StoreDataType.KVO;
-      const mutatingResources = storeData.mutatingResources;
+      const isKVStore = store.dataType === StoreDataType.KVO;
+      const mutatingResources = store.mutatingResources;
       if (mutatingResources) return { resources: mutatingResources, isKVStore };
       return {
         resources: [storeId],
@@ -328,14 +325,13 @@ async function performMutation(
    * @returns the deffered stores.
    */
   function propagateToEagerStores(mutatingResources: string[], data: any) {
-    let defferedStores: CacheableStoreContract[] = [];
+    let defferedStores: ICacheableStore[] = [];
     if (!mutatingResources) return defferedStores;
     mutatingResources.forEach((resource: string) => {
       const dependantStores = resolveDependantStores(resource);
       dependantStores.forEach((x) => {
-        const y = get(x);
-        if (!y.dependencies) return;
-        const syncType = y.dependencies.find(
+        if (!x.dependencies) return;
+        const syncType = x.dependencies.find(
           (k: ResourceDependency) => k.resource === resource
         )?.syncType;
         if (syncType === DependencySyncType.EAGER) {
@@ -358,7 +354,7 @@ async function performMutation(
    * @param response
    */
   function propagateToDefferedStores(
-    defferedStores: CacheableStoreContract[],
+    defferedStores: ICacheableStore[],
     response: any
   ) {
     setRefreshingState(defferedStores, true);
@@ -425,8 +421,7 @@ async function fetchServerMutationMap() {
  */
 function resolveDependantStores(resource: string) {
   const dm = get(dataManager);
-  return dm.cacheableStoresTable.filter((x) => {
-    let store = get(x);
+  return dm.cacheableStoresTable.filter((store) => {
     if (!store) return false;
     if (!store.dependencies) {
       return (
@@ -473,7 +468,7 @@ async function refreshStaleData() {
     clientMutationMap: any,
     serverMutationMap: any
   ) {
-    let storesThatNeedRefresh: CacheableStoreContract[] = [];
+    let storesThatNeedRefresh: ICacheableStore[] = [];
     allResources.forEach((resource) => {
       const clientVersion = clientMutationMap[resource];
       const serverVersion = serverMutationMap[resource];
@@ -493,7 +488,7 @@ async function refreshStaleData() {
  * @param storesThatNeedRefresh the stores that need to be refreshed.
  */
 async function refreshStores(
-  storesThatNeedRefresh: CacheableStoreContract[],
+  storesThatNeedRefresh: ICacheableStore[],
   isShowRefreshingState: boolean = true,
   isPageRefresh: boolean = false
 ) {
@@ -511,12 +506,12 @@ async function refreshStores(
     response = response.map((x: any) => checkSurrealResponse(x));
     for (let i = 0; i < storesThatNeedRefresh.length; i++) {
       const store = storesThatNeedRefresh[i];
-      const storeData = get(store);
+
       const data = response[i];
       if (store.loader && data) {
         store.loader(data);
-      } else if (storeData.dataType === StoreDataType.IFR && data) {
-        mergeIFRRecords(storeData.id, data);
+      } else if (store.dataType === StoreDataType.IFR && data) {
+        mergeIFRRecords(store.id, data);
       }
     }
   } catch (error) {
@@ -534,11 +529,12 @@ async function refreshStores(
  * @param val value to set the refreshing state to. true if refreshing, false otherwise.
  */
 async function setPageRefreshingState(
-  stores: CacheableStoreContract[],
+  stores: (ICacheableStore & { update? : any})[],
   val: boolean
 ) {
   stores.forEach((store) => {
-    store.update((x) => {
+    if (!store.update) return;
+    store.update?.((x) => {
       x.isPageRefreshing = val;
       return x;
     });
@@ -550,11 +546,12 @@ async function setPageRefreshingState(
  * @param val value to set the refreshing state to. true if refreshing, false otherwise.
  */
 async function setRefreshingState(
-  stores: CacheableStoreContract[],
+  stores: (ICacheableStore & { update? : any})[],
   val: boolean
 ) {
   stores.forEach((store) => {
-    store.update((x) => {
+    if (!store.update) return;
+    store.update?.((x) => {
       x.isRefreshing = val;
       return x;
     });
@@ -566,14 +563,13 @@ async function setRefreshingState(
  * @param stores the stores that need to be refreshed.
  * @returns the refresh query.
  */
-async function resolveStoresRefreshQuery(stores: CacheableStoreContract[]) {
+async function resolveStoresRefreshQuery(stores: ICacheableStore[]) {
   const queries = await Promise.all(
-    stores.map(async (x) => {
-      const store = get(x) as ICacheableStore;
+    stores.map(async (store) => {
       if (store?.dataType === StoreDataType.IFR)
         return resolveRefreshQueryForIFR(store);
       else if (store?.refreshQuery) return store.refreshQuery;
-      else if (x.resolveRefreshQuery) return x.resolveRefreshQuery();
+      else if (store.resolveRefreshQuery) return store.resolveRefreshQuery();
       else return resolveRefreshQuery(store.id, store.dataType);
     })
   );

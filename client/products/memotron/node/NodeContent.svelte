@@ -19,7 +19,6 @@
   export let mdId: string;
   let previousRootStructure: string[] = [];
   let refreshId = Date.now();
-  // const nodePersistance = new NodePersistance($account.userInfo?.id ?? "");
   function retireveNode() {
     node.fetch();
     refreshId = Date.now();

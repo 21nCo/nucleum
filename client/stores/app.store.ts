@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { goto } from "$app/navigation";
+// import { goto } from "$app/navigation";
 
 import { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { AppStore } from "$lib/client/types/appStore.type";
@@ -16,7 +16,7 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Item } from "$lib/client/types/item.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import type { CacheableStoreContract } from "../types/data.type";
+import type { ICacheableStore } from "../types/data.type";
 import {
   ActionType,
   ResourceAccessMode,
@@ -46,6 +46,7 @@ import { confirmationNotification } from "$lib/client/stores/notification.store"
 import { defaultAppData } from "$local/local";
 import { KeyValueStore } from "./kv.store";
 import { Embed, OperatingSystem } from "../types/context.type";
+import { goto } from "../utils/browser.utils";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -61,7 +62,7 @@ export const leftThresholdCrossedStore = writable("");
 export const isTouchDevice = writable(false);
 
 export const appStoreShuffleEmojis = writable(shuffleEmojis);
-export const intercomId = import.meta.env.VITE_INTERCOM_ID ?? "esh1m4xq";
+export const intercomId = import.meta.env?.VITE_INTERCOM_ID ?? "esh1m4xq";
 export const selectedTimePeriod = writable<Date>(new Date());
 export const plainCSSHMColorIndex5 = writable<string | undefined>("");
 /**
@@ -154,9 +155,9 @@ const selectableColors = [
 ];
 
 const isDebugMode =
-  import.meta.env.DEV && import.meta.env.VITE_ISDEBUG === "true";
+  import.meta.env?.DEV && import.meta.env?.VITE_ISDEBUG === "true";
 const isExperimentalMode =
-  import.meta.env.DEV && import.meta.env.VITE_ISEXPERIMENTAL === "true";
+  import.meta.env?.DEV && import.meta.env?.VITE_ISEXPERIMENTAL === "true";
 
 let themes = [AppSkin.Clean, AppSkin.Glassy];
 if (isDebugMode) themes = themes.concat([AppSkin.Vibrant, AppSkin.Futuristic]);
@@ -542,11 +543,11 @@ function initAppStore(seed: AppStore) {
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
-    const dev = import.meta.env.DEV;
+    const dev = import.meta.env?.DEV;
     const host =
-      ctx.isEmbed || dev ? import.meta.env.VITE_HOST : window.location.hostname;
+      ctx.isEmbed || dev ? import.meta.env?.VITE_HOST : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? import.meta.env.VITE_OAUTH_REDIRECT ?? "https://" + host
+      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
     const state =
@@ -571,7 +572,7 @@ function initAppStore(seed: AppStore) {
       redirectUri = redirect + "/oauth/" + config.oauth_slug;
     } else {
       redirectUri =
-        import.meta.env.VITE_API_URL + "/oauth/" + config.oauth_slug;
+        import.meta.env?.VITE_API_URL + "/oauth/" + config.oauth_slug;
     }
     if (config.code_challenge_method) {
       //TODO generate code challenge
@@ -844,7 +845,7 @@ function initEditModeStore() {
     }
   };
 }
-export const cacheableStores: CacheableStoreContract[] = [
+export const cacheableStores: ICacheableStore[] = [
   userPreferences,
   dboVersion
 ];

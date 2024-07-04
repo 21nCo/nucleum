@@ -133,27 +133,6 @@ export function generateSessionId(timestamp: number) {
   return String(Math.floor(timestamp));
 }
 
-/**
- * @deprecated - Use performApiCall
- * @param endpoint
- * @param method
- * @param body
- * @returns
- */
-export function performBlankApiCall(
-  endpoint: string,
-  method: string,
-  body: string = ""
-) {
-  return fetch(import.meta.env.VITE_BLANK_API_URL + "/" + endpoint, {
-    method: method,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: body
-  });
-}
-
 export function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
 }

@@ -6,7 +6,7 @@ import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { retrieveLocally } from "$lib/client/utils/storage.utils";
 import { cloudProvider } from "$lib/client/persistence/persistence";
 
-const surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+const surrealDb = new SurrealDatabase();
 export class FocusPersistence {
   async resetSession() {
     let response;

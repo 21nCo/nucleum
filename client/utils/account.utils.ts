@@ -1,19 +1,33 @@
-import { goto } from "$app/navigation";
+// import { goto } from "$app/navigation";
 import { Item } from "$lib/client/types/item.enum";
 import { retrieveLocally } from "$lib/client/utils/storage.utils";
+import { goto } from "./browser.utils";
 import { postToParent } from "./embed.utils";
 
-export function resolveToken() {
+export async function resolveToken(): Promise<string> {
   let token: string | null = null;
   const space = retrieveLocally(Item.spaceInContext);
   if (space?.id) {
     token = localStorage?.getItem(`token-${space.id}`);
-  } else token = localStorage?.getItem("surreal-token");
+  } else token = localStorage?.getItem("stoken");
+  if (!token) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get("stoken", function (data) {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          // console.log("Token retrieved is: " + data.stoken);
+          resolve(data.stoken);
+        }
+      });
+    });
+  }
   return token;
 }
 
 export function signout(ctx: string = "") {
-  localStorage.removeItem("surreal-token");
+  console.log("Signing out", { ctx });
+  localStorage.removeItem("stoken");
   localStorage.removeItem("userInfo");
   localStorage.removeItem("isOnboardingComplete");
   postToParent({

@@ -28,7 +28,7 @@
     if (!$account.isLoggedIn) return;
     const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
-      const token = localStorage.getItem("surreal-token");
+      const token = localStorage.getItem("stoken");
       const userInfo = localStorage.getItem("userInfo");
       postTokenToExtension({ token, userInfo });
       appStore.runAction("ext-login");

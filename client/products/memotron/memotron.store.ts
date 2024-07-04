@@ -34,7 +34,6 @@ export async function resolveNodeParentHierarchy(id: string) {
 }
 
 export async function searchForLinking(query: string) {
-  // return new NodePersistance().searchForLinking(searchQuery);
   const dexie = get(dataManager).cacheSource.dexie;
   // const nodesPromise = dexie.node
   //   .where("title")

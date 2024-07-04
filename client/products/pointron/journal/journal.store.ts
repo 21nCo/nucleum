@@ -5,7 +5,7 @@ import { get, writable } from "svelte/store";
 import type { FocusHeatMapStore } from "./journal.types";
 import {
   StoreDataType,
-  type CacheableStoreContract
+  type ICacheableSvelteStore
 } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { getprevDateRange } from "$lib/client/components/calendarHeatmap/calendarHeatMap.utils";
@@ -15,7 +15,7 @@ export type FocusHeatmapStoreContract = ReturnType<
   typeof initFocusHeatmapStore
 > &
   CalendarHeatMapDataProvider &
-  CacheableStoreContract;
+  ICacheableSvelteStore;
 
 const last12MonthDateRange = getprevDateRange();
 

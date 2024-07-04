@@ -13,7 +13,6 @@ export class ClipperPersistence {
   url: string;
   apiUrl: string;
   namespace: string = "user";
-  database: string = "428bavow4oj5a56mfuvw";
   db = new Surreal();
   token: string | null;
   constructor() {
@@ -24,12 +23,12 @@ export class ClipperPersistence {
 
   getToken = (): Promise<string> => {
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.get("token", function (data) {
+      chrome.storage.sync.get("stoken", function (data) {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
-          // console.log("Token retrieved is: " + data.token);
-          resolve(data.token);
+          // console.log("Token retrieved is: " + data.stoken);
+          resolve(data.stoken);
         }
       });
     });

@@ -41,7 +41,7 @@ export const localStore = <T extends JsonValue>(key: string, initial: T) => {
 };
 
 export class Persistence {
-  surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+  surrealDb = new SurrealDatabase();
   refreshToken = async () => {
     try {
       const token = localStorage.getItem("refresh-token");
@@ -120,7 +120,7 @@ export class Persistence {
   };
   fetchAppData = async () => {
     try {
-      const app = import.meta.env.VITE_HOST ?? window.location.hostname;
+      const app = import.meta.env?.VITE_HOST ?? process.env.PLASMO_PUBLIC_HOST ?? window.location.hostname;
       // console.log({ app });
       if (!app) return;
       let response = await performApiCall("utils/n/retrieveAppData", "POST", {
