@@ -97,14 +97,14 @@ export class ResourceStore implements ICacheableStore {
     this.mutatingResources = [resourceType];
     this.currentUserId = currentUserId;
     this.priorityRefreshOnAppAppear =
-      params.priorityRefreshOnAppAppear || false;
-    this.refreshQuery = params.refreshQuery;
+      params?.priorityRefreshOnAppAppear || false;
+    this.refreshQuery = params?.refreshQuery;
   }
   refresh() {
     return dataManager.refreshForIFR(this.id);
   }
   resolveRefreshQuery() {
-    return this.refreshQuery;
+    return this.refreshQuery ?? "";
   };
   create(
     resource: Partial<DbRecord>,

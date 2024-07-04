@@ -9,6 +9,7 @@ import { dataManager } from "../persistence/dataManager";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
+import { debouncer } from "../utils/utils";
 
 export class KeyValueStore<T>
   implements ICacheableSvelteStore
@@ -23,6 +24,7 @@ export class KeyValueStore<T>
   subscribe = this.store.subscribe;
   update = this.store.update;
   private setRaw = this.store.set;
+  private debouncedPersist = debouncer(this.persist, 3000);
   constructor(
     item: Item,
     seed: T,
@@ -78,23 +80,29 @@ export class KeyValueStore<T>
    * Caches the data locally
    * @param n - store to be cached
    */
-  protected async cache(n: ICacheableStore) {
+  private async cache(n: ICacheableStore) {
     if (this.isSynchronousCache) {
       persistLocally(this.id, n);
       return;
     }
     dataManager.cache(n);
   }
+    /**
+   * Sets the new value of the store and caches it, but doesn't persist it
+   * @param x - new value of the store
+   */
+  private setNewValue(x: T) {
+    const newValue = { ...x, ...this.resolveStoreConstants() };
+    this.setRaw(newValue);
+    this.previousValue = JSON.stringify(newValue);
+    this.cache(newValue as ICacheableStore);
+  }
   /**
    * Persists the data to the server - uses MERGE action
+   * Doesn't cache or update the store itself. Use modify for that
    * @param n
    */
-  protected async persist(n: Partial<T>) {
-    // await persistance.update({
-    //   ...n,
-    //   id: this.item,
-    //   modifiedAt: new Date().toISOString()
-    // });
+  private async persist(n: Partial<T>) {
     return dataManager.performMutation(
       this.id,
       {
@@ -103,16 +111,6 @@ export class KeyValueStore<T>
       },
       { action: PersistanceActionType.MERGE }
     );
-  }
-  /**
-   * Sets the new value of the store and caches it, but doesn't persist it
-   * @param x - new value of the store
-   */
-  protected setNewValue(x: T) {
-    const newValue = { ...x, ...this.resolveStoreConstants() };
-    this.setRaw(newValue);
-    this.previousValue = JSON.stringify(newValue);
-    this.cache(newValue as ICacheableStore);
   }
   /**
    * This function gets triggered from dataManager when the data is fetched from the server.
@@ -153,14 +151,15 @@ export class KeyValueStore<T>
     if (!objIsEmpty(changedProperties)) this.persist(changedProperties);
   }
   /**
-   * Modifies the store and persists the changes
+   * Modifies the store, caches and persists the changes
    * @param n
    * @returns
    */
-  async modify(n: Partial<T>) {
+  protected async modify(n: Partial<T>, params: { isPersist?: boolean, isDebouncedPersist?: boolean } = {isPersist: true}) {
     const val = get(this.store);
     this.setNewValue({ ...val, ...n });
-    return this.persist(n);
+    if(params?.isDebouncedPersist) return this.debouncedPersist(n);
+    else if (!params || params.isPersist) return this.persist(n);
   }
   /**
    * Gets the current value of the store

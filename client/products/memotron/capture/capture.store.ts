@@ -1,8 +1,7 @@
-import { get, writable } from "svelte/store";
+import { get } from "svelte/store";
 import { Item } from "$lib/client/types/item.enum";
 import type { IProperty } from "$lib/client/types/memotron/type.type";
 import {
-  PersistanceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import {
@@ -14,21 +13,16 @@ import {
 } from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,
-  type CaptureStore,
+  type ICaptureStore,
   type FileDetails
 } from "$lib/client/types/memotron/capture.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import {
-  debouncer,
   generateUID,
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
 import {  isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
-import {
-  persistLocally,
-  retrieveLocally
-} from "$lib/client/utils/storage.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
@@ -36,10 +30,11 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
+import { KeyValueStore } from "$lib/client/stores/kv.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-function generateSeedStore(): CaptureStore {
+function generateSeedStore(): ICaptureStore {
   const blockId = prefixTable(generateUID(), Item.node);
   return {
     id: Item.capture,
@@ -65,9 +60,7 @@ function generateSeedStore(): CaptureStore {
     }
   };
 }
-const locallyPersistedCapture = retrieveLocally(Item.capture);
 
-export const captureStore = initCaptureStore();
 
 /**
  * Filters properties that are marked for capture
@@ -85,42 +78,94 @@ function resolvePropertiesForCapture(properties: IProperty[]) {
     });
 }
 
-/**
- * Sets the type on type select event.
- * @param updater store updater function
- * @param val
- * @returns
- */
-async function onTypeSelect(updater: any, val: CaptureType | string) {
-  if (!val.startsWith("type:")) return;
-  const type = await get(dataManager).cacheSource.dexie.type.get(val);
-  if (!type) return;
-  updater((store: CaptureStore) => {
-    store.type = type;
-    store.properties = resolvePropertiesForCapture(store.type.properties);
-    return store;
-  });
-  const db = new SurrealDatabase();
-  db.executeReadFn("return fn::memotron::type::fetch($id)", {
-    id: type.id
-  }).then((res) => {
-    const result = interceptSurrealResponse(res);
-    if (!isValidArrayWithData(result)) return;
-    updater((store: CaptureStore) => {
-      store.type = result[0];
+class CaptureStore extends KeyValueStore<ICaptureStore> {
+  constructor() {
+    super(
+      Item.capture,
+      { ...generateSeedStore() },
+      {
+        priorityRefreshOnAppAppear: true,
+        isSynchronousCache: true
+      }
+    );
+  }
+  set(val: ICaptureStore) {
+    this.modify(val, {isDebouncedPersist: true});
+  }
+  reset() {
+    const seedStore = generateSeedStore();
+    this.modify({ ...seedStore, refreshId: new Date().getTime() });
+  }
+  loader(data: any) {
+    if (!data) return;
+    const val = {
+      ...data,
+      id: Item.capture,
+      refreshId: new Date().getTime()
+    };
+    this.modify(val, {isPersist: false});
+  }
+  //TODO - delegate type fetch operation to typeStore and remove SurrealDatabase dependency
+  async onTypeSelect(val: CaptureType | string) {
+    if (!val.startsWith("type:")) return;
+    const type = await get(dataManager).cacheSource.dexie.type.get(val);
+    if (!type) return;
+    this.update((store: ICaptureStore) => {
+      store.type = type;
       store.properties = resolvePropertiesForCapture(store.type.properties);
       return store;
     });
-  });
-}
+    const db = new SurrealDatabase();
+    db.executeReadFn("return fn::memotron::type::fetch($id)", {
+      id: type.id
+    }).then((res) => {
+      const result = interceptSurrealResponse(res);
+      if (!isValidArrayWithData(result)) return;
+      this.update((store: ICaptureStore) => {
+        store.type = result[0];
+        store.properties = resolvePropertiesForCapture(store.type.properties);
+        return store;
+      });
+    });
+  }
+  addMentionLink(from: string, to: string) {
+    this.update((val) => {
+      val.links = val.links ?? [];
+      val.links.push({ from, to, linkType: LinkType.MENTION });
+      return val;
+    });
+  }
+  removeMentionLink(from: string, to: string) {
+    this.update((val) => {
+      val.links = val.links?.filter(
+        (link) => link.from !== from || link.to !== to
+      );
+      return val;
+    });
+  }
+  directLink(item: LinkThumbnail) {
+    this.update((val) => {
+      val.directLinks = val.directLinks ?? [];
+      val.directLinks.push({ ...item, linkType: LinkType.DIRECT });
+      return val;
+    });
+  }
+  removeDLink(id: string) {
+    this.update((val) => {
+      val.directLinks = val.directLinks?.filter((link) => link.id !== id);
+      return val;
+    });
+  }
+  setFile(fileDetails: FileDetails | null) {
+    this.update((val) => {
+      if (fileDetails) val.fileDetails = fileDetails;
+      else val.fileDetails = undefined;
+      return val;
+    });
+  }
 
-/**
- * Saves the capture as node upon save click or tap event.
- * @param setter
- * @returns
- */
-async function save(setter: any) {
-  const val = get(captureStore);
+  async save() {
+    const val = this.get();
   //TODO - extract nodes from markdown blocks and save
   const metadata = await resolveNodeCaptureMetadata();
   console.log("capture store", { val, metadata });
@@ -198,7 +243,7 @@ async function save(setter: any) {
   console.log({ nodeToBeSaved: nodeCapture });
   let result = await nodeStore.createNode(nodeCapture);
   if (result) {
-    setter({ ...generateSeedStore() });
+    this.modify({ ...generateSeedStore() }, {isPersist: false});
     toasts.trigger({
       id: generateUID(),
       type: AlertType.SUCCESS,
@@ -214,91 +259,7 @@ async function save(setter: any) {
     });
     return null;
   }
+  }
 }
 
-function initCaptureStore() {
-  const { subscribe, set, update } = writable<CaptureStore>(
-    locallyPersistedCapture ?? { ...generateSeedStore() }
-  );
-  dataManager.retrieveCache(Item.capture).then((x) => {
-    if (x) {
-      set(x as CaptureStore);
-    }
-  });
-  const persist = (val: CaptureStore) => {
-    cache(val);
-    dataManager.performMutation(
-      Item.capture,
-      { ...val },
-      { action: PersistanceActionType.MERGE }
-    );
-  };
-  const cache = (val: CaptureStore) => {
-    dataManager.cache(val);
-    persistLocally(Item.capture, val);
-  };
-  const debouncedPersist = debouncer(persist, 3000);
-  return {
-    subscribe,
-    set: (val: CaptureStore) => {
-      set(val);
-      debouncedPersist(val);
-    },
-    update,
-    reset: () => {
-      const seedStore = generateSeedStore();
-      set({ ...seedStore, refreshId: new Date().getTime() });
-      persist({ ...seedStore, refreshId: new Date().getTime() });
-      console.log("reset capture store", get(captureStore));
-    },
-    loader: (data: any) => {
-      console.log("loading capture store", get(captureStore), { data });
-      if (!data) return;
-      const val = {
-        ...data,
-        id: Item.capture,
-        refreshId: new Date().getTime()
-      };
-      set(val);
-      cache(val);
-    },
-    onTypeSelect: (val: CaptureType | string) => onTypeSelect(update, val),
-    save: () => save(set),
-    addMentionLink: (from: string, to: string) => {
-      update((val) => {
-        val.links = val.links ?? [];
-        val.links.push({ from, to, linkType: LinkType.MENTION });
-        return val;
-      });
-    },
-    removeMentionLink: (from: string, to: string) => {
-      update((val) => {
-        val.links = val.links?.filter(
-          (link) => link.from !== from || link.to !== to
-        );
-        return val;
-      });
-    },
-    directLink: (item: LinkThumbnail) => {
-      update((val) => {
-        val.directLinks = val.directLinks ?? [];
-        val.directLinks.push({ ...item, linkType: LinkType.DIRECT });
-        return val;
-      });
-    },
-    removeDLink: (id: string) => {
-      update((val) => {
-        val.directLinks = val.directLinks?.filter((link) => link.id !== id);
-        return val;
-      });
-    },
-    setFile: (fileDetails: FileDetails | null) => {
-      update((val) => {
-        if (fileDetails) val.fileDetails = fileDetails;
-        else val.fileDetails = undefined;
-        console.log({ fileDetails });
-        return val;
-      });
-    }
-  };
-}
+export const captureStore = new CaptureStore();

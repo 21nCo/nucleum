@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, onDestroy } from "svelte";
   import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
 
@@ -276,11 +277,22 @@
       account.signOut();
     }
   }
+  function handleCustomNavigation(event: any) {
+    if(event.detail) goto(event.detail);
+  }
   function addWindowEventListeners() {
+    window.addEventListener('custom:navigation', handleCustomNavigation);
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
   }
+  function removeWindowEventListeners() {
+    window.removeEventListener('custom:navigation', handleCustomNavigation);
+    window.onpopstate = null;
+  }
+  onDestroy(() => {
+    removeWindowEventListeners();
+  });
 </script>
 
 {#if $appStore?.appData?.isAnalyticsEnabled}

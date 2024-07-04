@@ -1,6 +1,4 @@
 import { get, writable } from "svelte/store";
-// import { goto } from "$app/navigation";
-
 import { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { AppStore } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
@@ -179,7 +177,7 @@ class DboVersionStore extends KeyValueStore<{ version: number }> {
     );
   }
   setVersion = (version: number) => {
-    this.setNewValue({ version });
+    this.modify({ version }, {isPersist: false});
   };
   async runDboUpdate(fromVersion: number | undefined = undefined) {
     const version = get(this.store).version;
@@ -261,7 +259,7 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
     const val = {
       ...data
     };
-    this.setNewValue(val);
+    this.modify(val, {isPersist: false});
   }
   setAppearance(x: UserAppearanceSettings) {
     const n = get(this.store);

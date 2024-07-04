@@ -164,7 +164,7 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
     if (!data.presets) data.presets = seedPresets;
     //m.horizonCharts = defaultHorizonChartConfiguration;
     if (!data.dataType) data.dataType = StoreDataType.KVO;
-    this.setNewValue(data);
+    this.modify(data, {isPersist: false});
   }
   async set(newValue: PointronPreferences) {
     let changedProperties: any = {};
@@ -173,6 +173,7 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
       differences.forEach((key: string) => {
         changedProperties[key] = newValue[key as keyof PointronPreferences];
       });
+      //TODO - create separate method for updating horizons with targets instead of duplicating custom set method (set() is present in KeyValueStore class)
       if (differences.some((x) => x === "horizonsWithTarget")) {
         let horizonTargets = newValue.horizonTargets?.filter((x) =>
           newValue.horizonsWithTarget?.some((y) => y === x.scale)
@@ -180,13 +181,7 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
         changedProperties.horizonTargets = horizonTargets;
       }
     }
-    // console.log({
-    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
-    //   newValue,
-    //   changedProperties
-    // });
-    this.setNewValue(newValue);
-    if (!objIsEmpty(changedProperties)) await this.persist(changedProperties);
+    this.modify(newValue, {isPersist: !objIsEmpty(changedProperties)});
   }
   resetHorizonChartConfiguration() {
     this.modify({ horizonCharts: defaultHorizonChartConfiguration });

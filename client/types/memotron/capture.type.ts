@@ -17,7 +17,7 @@ export enum CaptureType {
   UPLOAD = "UPLOAD"
 }
 
-export type CaptureStore = ICacheableStore & {
+export type ICaptureStore = ICacheableStore & {
   label: string | null;
   /**
    * @deprecated

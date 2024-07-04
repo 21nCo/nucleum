@@ -6,7 +6,7 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { types } from "../type/type.store";
+  import { typeStore } from "../type/type.store";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { liveQuery } from "dexie";
@@ -42,7 +42,7 @@
               confirmAction: {
                 label: "Delete",
                 variant: ButtonVariant.DANGER,
-                callback: async () => types.delete(type.id)
+                callback: async () => typeStore.delete(type.id)
               }
             });
           }}

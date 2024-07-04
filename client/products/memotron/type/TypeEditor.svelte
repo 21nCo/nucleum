@@ -9,7 +9,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import Memocon from "../common/Memocon.svelte";
   import PropertiesEditor from "./PropertiesEditor.svelte";
-  import { types } from "./type.store";
+  import { typeStore } from "./type.store";
   let avatar: any;
   let label: string;
   let errMsg: string;
@@ -45,7 +45,7 @@
         type="primary"
         on:click={async () => {
           isCreationInProgress = true;
-          types.create({
+          await typeStore.create({
             label,
             avatar,
             properties

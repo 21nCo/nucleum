@@ -63,7 +63,7 @@ class TypeStore extends ResourceStore {
   }
 }
 
-const typeStore = new TypeStore();
+export const typeStore = new TypeStore();
 
 export type IActiveTypeStoreType = InstanceType<typeof ActiveTypeStore>;
 

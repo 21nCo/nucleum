@@ -251,12 +251,8 @@ export function resolveHoverState(event: MouseEvent | FocusEvent) {
  * @param path 
  * @param queryParams 
  */
-export function goto(path: string, queryParams: Record<string, string> = {}) {
-  const url = new URL(path, window.location.origin);
-  for (const key in queryParams) {
-    url.searchParams.set(key, queryParams[key]);
-  }
-  window.location.href = url.toString();
+export function goto(path: string) {
+    window.dispatchEvent(new CustomEvent('custom:navigation', {detail: path}));
 }
 
 /**

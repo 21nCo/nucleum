@@ -10,7 +10,7 @@
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
-  import { metaPropertyOptions, propertyOptions } from "../../type/type.store";
+  import { metaPropertyOptions } from "../../type/type.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import ViewTabSwitcher from "./ViewTabSwitcher.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";

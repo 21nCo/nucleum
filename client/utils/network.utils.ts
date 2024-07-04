@@ -18,7 +18,7 @@ export async function performApiCall(
   method: string,
   body: any = {}
 ) {
-  let token = resolveToken();
+  let token = await resolveToken();
   try {
     const response = await fetch(
       (resolveRegionalApiUrl() ?? import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL) +

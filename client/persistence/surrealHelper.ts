@@ -14,14 +14,14 @@ import type { ISurrealDatabase } from "../types/db.type";
 const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
 
 export class SurrealDatabaseUsingRest {
-  token: string | null;
+  token: string | null = null;
   db: string | undefined;
   constructor(private instance: string = "") {
     // this.token = resolveToken();
-    if (this.token) {
-      let decodedToken: any = jwt_decode(this.token);
-      this.db = decodedToken?.db ?? "";
-    }
+    // if (this.token) {
+    //   let decodedToken: any = jwt_decode(this.token);
+    //   this.db = decodedToken?.db ?? "";
+    // }
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
@@ -141,17 +141,17 @@ export class SurrealDatabaseUsingRest {
 }
 
 export class SurrealDatabaseUsingSdk {
-  token: string | null;
+  token: string | null = null;
   db: string | undefined;
   surreal: Surreal;
   constructor(private instance: string = "") {
     // this.token = resolveToken();
     this.surreal = new Surreal();
-    if (this.token) {
-      let decodedToken: any = jwt_decode(this.token);
-      this.db = decodedToken?.db ?? "";
-      this.connect();
-    }
+    // if (this.token) {
+    //   let decodedToken: any = jwt_decode(this.token);
+    //   this.db = decodedToken?.db ?? "";
+    //   this.connect();
+    // }
   }
   async close() {
     //todo urgent - maintaining persistant connection vs closing connection
@@ -290,21 +290,20 @@ export class SurrealDatabaseUsingSdk {
 }
 
 export class SurrealDatabase implements ISurrealDatabase {
-  token: string | null;
+  token: string | null = null;
   db: string | undefined;
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
   constructor(private instance: string = "") {
     const instanceDefault = import.meta.env?.VITE_SURREAL_URL ?? process.env.PLASMO_PUBLIC_DB_URL;
-    console.log("instanceDefault", instanceDefault);
     this.instance = instanceDefault ?? instance;
     // this.token = resolveToken();
     if (isUseSurrealSDK == "true")
       this.surreal = new SurrealDatabaseUsingSdk(this.instance);
     else this.surreal = new SurrealDatabaseUsingRest(this.instance);
-    if (this.token) {
-      let decodedToken: any = jwt_decode(this.token);
-      this.db = decodedToken?.db ?? "";
-    }
+    // if (this.token) {
+    //   let decodedToken: any = jwt_decode(this.token);
+    //   this.db = decodedToken?.db ?? "";
+    // }
   }
   //todo - add strong types
   create(recordId: string, data: any) {
