@@ -191,7 +191,6 @@ class GoalStore extends ResourceFIRStore<IGoal> {
     return true;
   }
   loader(data: any) {
-    console.log("goalStore loader", data);
     if (data) super.loader({ items: data });
   }
   resolveGoal(id: string) {
