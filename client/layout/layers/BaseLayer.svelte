@@ -278,16 +278,16 @@
     }
   }
   function handleCustomNavigation(event: any) {
-    if(event.detail) goto(event.detail);
+    if (event.detail) goto(event.detail);
   }
   function addWindowEventListeners() {
-    window.addEventListener('custom:navigation', handleCustomNavigation);
+    window.addEventListener("custom:navigation", handleCustomNavigation);
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
   }
   function removeWindowEventListeners() {
-    window.removeEventListener('custom:navigation', handleCustomNavigation);
+    window.removeEventListener("custom:navigation", handleCustomNavigation);
     window.onpopstate = null;
   }
   onDestroy(() => {

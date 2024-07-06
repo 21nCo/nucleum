@@ -1,4 +1,4 @@
-import type { UserGlobalPreferences } from "./preferences.type";
+import type { IUserGlobalPreferences } from "./preferences.type";
 import type { SessionStore } from "./session.type";
 
 export type JsonValue =
@@ -6,7 +6,7 @@ export type JsonValue =
   | number
   | boolean
   | null
-  | UserGlobalPreferences
+  | IUserGlobalPreferences
   | SessionStore
   | JsonValue[]
   | { [key: string]: JsonValue };

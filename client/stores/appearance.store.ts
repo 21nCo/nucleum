@@ -1,4 +1,4 @@
-import {  writable } from "svelte/store";
+import { writable } from "svelte/store";
 import { Item } from "../types/item.enum";
 import {
   AppSkin,
@@ -19,7 +19,7 @@ const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
 const seedAppearance: AppearanceStore = {
   id: Item.appearance,
-  dataType: StoreDataType.NON_PERSISTING,
+  dataType: StoreDataType.NA,
   skin: AppSkin.Clean,
   theme: Theme.LIGHT,
   isSyncWithSystem: true,
@@ -85,7 +85,7 @@ function initAppearanceStore() {
         (cs) => cs.id == a.darkColorSchemeId
       ) as ColorScheme;
     }
-    console.log("switching theme", { x: theme, modified });
+    // console.log("switching theme", { x: theme, modified });
     return modified;
   };
 

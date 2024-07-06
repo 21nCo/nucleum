@@ -3,15 +3,15 @@
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import { InputStyle } from "$lib/client/types/input.type";
-  import { DataManager } from "./calendarHeatMap.utils";
+  import { CalendarHeatmapDataManager } from "./calendarHeatMap.utils";
   import type {
-    CalendarHeatMapDataProvider,
+    ICalendarHeatMapDataProvider,
     CalendarHeatmapOptions
   } from "./calendarHeatmap.types";
 
-  export let provider: CalendarHeatMapDataProvider;
+  export let provider: ICalendarHeatMapDataProvider;
   export let options: CalendarHeatmapOptions = {};
-  let dataManager = new DataManager(provider, options);
+  let dataManager = new CalendarHeatmapDataManager(provider, options);
   let logstartdate = "2000-01-01"; //fetch log start date and put here
   let logstartYear = new Date(logstartdate).getFullYear();
   let currentYear = new Date().getFullYear();

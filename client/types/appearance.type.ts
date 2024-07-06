@@ -1,4 +1,4 @@
-import type { ICacheableStore } from "./data.type";
+import type { IStore } from "./data.type";
 
 export enum AppSkin {
   Clean = "clean",
@@ -73,7 +73,7 @@ export enum Theme {
   DARK = "dark"
 }
 
-export type AppearanceStore = ICacheableStore & {
+export type AppearanceStore = IStore & {
   skin: AppSkin;
   theme: Theme;
   colorScheme: ColorScheme;

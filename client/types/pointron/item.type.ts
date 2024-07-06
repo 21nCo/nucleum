@@ -1,14 +1,14 @@
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
-import type { UserGlobalPreferences } from "$lib/client/types/preferences.type";
+import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
 import type { PointGoalDbType } from "./goal.type";
 import type {
-  FocusItemsStore,
+  IFocusItemsStore,
   PointLogDbType,
   PointSessionDbType,
-  SessionStore
+  ISessionStore
 } from "./session.type";
 import type { PointTagDbType } from "./tag.type";
-import type { PointronPreferences } from "./pointronPreferences.type";
+import type { IPointronPreferences } from "./pointronPreferences.type";
 
 export type DbRecordType = DbRecordBase &
   (
@@ -16,8 +16,8 @@ export type DbRecordType = DbRecordBase &
     | PointSessionDbType
     | PointLogDbType
     | PointTagDbType
-    | SessionStore
-    | PointronPreferences
-    | UserGlobalPreferences
-    | FocusItemsStore
+    | ISessionStore
+    | IPointronPreferences
+    | IUserGlobalPreferences
+    | IFocusItemsStore
   );

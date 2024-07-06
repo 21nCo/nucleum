@@ -39,7 +39,7 @@
     logsPaneStore.reset();
   });
   async function refresh() {
-    logsPaneStore.refresh(date);
+    logsPaneStore.refreshForDate(date);
   }
 </script>
 

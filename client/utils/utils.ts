@@ -265,6 +265,9 @@ export function debouncer(func: any, timeout: number) {
 export const activeResourceFilter = (x: any) =>
   !x.isArchived && !x.trashInformation;
 
+export const archivedResourceFilter = (x: any) =>
+  x.isArchived && !x.trashInformation;
+
 export const nonTrashFilter = (x: any) => !x.trashInformation;
 
 export const textTruncateMapper = (x: string, length: number = 15) =>

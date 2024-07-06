@@ -1,6 +1,6 @@
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type { IStore } from "$lib/client/types/data.type";
 
-export type SpaceStore = ICacheableStore & {
+export type SpaceStore = IStore & {
   spaces: Space[];
 };
 

@@ -23,7 +23,6 @@
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { quickFocusItemsStoreId } from "$lib/client/products/pointron/goals/goal.store";
   import { Item } from "$lib/client/types/item.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
@@ -77,7 +76,7 @@
     await sessionStore.startSession();
   }
   async function refresh() {
-    await dataManager.refreshPage([quickFocusItemsStoreId, Item.PointTag]);
+    await dataManager.refreshPage([Item.quickFocusItems, Item.PointTag]);
   }
 </script>
 

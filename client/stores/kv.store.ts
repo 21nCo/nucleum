@@ -1,54 +1,47 @@
-import { get, writable } from "svelte/store";
 import {
   PersistanceActionType,
   StoreDataType,
-  type ICacheableSvelteStore,
-  type ICacheableStore
+  type IObservableStore,
+  type IStore,
+  type IObservableStoreSubject
 } from "../types/data.type";
 import { dataManager } from "../persistence/dataManager";
 import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
 import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
 import { debouncer } from "../utils/utils";
+import { ObservableStore } from "./client.store";
 
-export class KeyValueStore<T>
-  implements ICacheableSvelteStore
+export class KeyValueStore<T extends IObservableStoreSubject>
+  extends ObservableStore<T>
+  implements IObservableStore<T>
 {
   id: Item;
-  dataType: StoreDataType = StoreDataType.KVO;
-  priorityRefreshOnAppAppear: boolean = false;
   isSynchronousCache: boolean = false;
+  isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
   protected seed: T;
-  protected store = writable<T & ICacheableStore>();
-  subscribe = this.store.subscribe;
-  update = this.store.update;
-  private setRaw = this.store.set;
-  private debouncedPersist = debouncer(this.persist, 3000);
+  private _debouncedPersist = debouncer(this._persist, 3000);
   constructor(
     item: Item,
     seed: T,
-    params: Omit<ICacheableStore, "id" | "dataType">
+    params?: Omit<IStore, "id" | "dataType" | "get">
   ) {
+    super(item, StoreDataType.KVO, params);
     this.id = item;
     this.seed = seed;
-    this.priorityRefreshOnAppAppear =
-      params.priorityRefreshOnAppAppear || false;
-    this.isSynchronousCache = params.isSynchronousCache || false;
-    if (params.isSynchronousCache) {
+    this.isSynchronousCache = params?.isSynchronousCache || false;
+    this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
+    if (params?.isSynchronousCache) {
       const localCacheValue = retrieveLocally(this.id);
       if (localCacheValue) {
-        const cachedValue = {
-          ...localCacheValue,
-          ...this.resolveStoreConstants()
-        };
-        this.setRaw(cachedValue);
-        this.previousValue = JSON.stringify(cachedValue);
+        this._set(localCacheValue);
+        this.previousValue = JSON.stringify(localCacheValue);
       } else {
         const seed = {
           ...deepCopy(this.seed)
         };
-        this.setNewValue(seed);
+        this._setNewValue(seed);
       }
     } else {
       dataManager.retrieveCache(this.id).then((x) => {
@@ -56,53 +49,39 @@ export class KeyValueStore<T>
           const seed = {
             ...deepCopy(this.seed)
           };
-          this.setNewValue(seed);
+          this._setNewValue(seed);
         }
-        const cachedValue = {
-          ...x,
-          ...this.resolveStoreConstants()
-        };
-        this.setRaw(cachedValue);
-        this.previousValue = JSON.stringify(cachedValue);
+        this._set(x);
+        this.previousValue = JSON.stringify(x);
       });
     }
   }
-
-  private resolveStoreConstants() {
-    return {
-      id: this.id,
-      dataType: this.dataType,
-      priorityRefreshOnAppAppear: this.priorityRefreshOnAppAppear,
-      isSynchronousCache: this.isSynchronousCache
-    };
-  }
   /**
    * Caches the data locally
-   * @param n - store to be cached
    */
-  private async cache(n: ICacheableStore) {
+  protected async cache() {
     if (this.isSynchronousCache) {
-      persistLocally(this.id, n);
+      persistLocally(this.id, this.get());
       return;
     }
-    dataManager.cache(n);
+    dataManager.cache(this);
   }
-    /**
+  /**
    * Sets the new value of the store and caches it, but doesn't persist it
    * @param x - new value of the store
    */
-  private setNewValue(x: T) {
-    const newValue = { ...x, ...this.resolveStoreConstants() };
-    this.setRaw(newValue);
+  private _setNewValue(x: T) {
+    const newValue = { ...x };
+    this._set(newValue);
     this.previousValue = JSON.stringify(newValue);
-    this.cache(newValue as ICacheableStore);
+    this.cache();
   }
   /**
    * Persists the data to the server - uses MERGE action
    * Doesn't cache or update the store itself. Use modify for that
    * @param n
    */
-  private async persist(n: Partial<T>) {
+  private async _persist(n: Partial<T>) {
     return dataManager.performMutation(
       this.id,
       {
@@ -117,7 +96,7 @@ export class KeyValueStore<T>
    * @param data
    */
   loader(data: T) {
-    this.setNewValue({ ...data });
+    this._setNewValue({ ...data });
   }
   /**
    * Loads the seed data initialized in the constructor and persists it
@@ -127,8 +106,8 @@ export class KeyValueStore<T>
     const seed = {
       ...deepCopy(this.seed)
     };
-    this.setNewValue(seed);
-    return this.persist(seed);
+    this._setNewValue(seed);
+    return this._persist(seed);
   }
   /**
    * Svelte store method which gets triggered on direct update of values using $ (dollar) syntax
@@ -147,25 +126,24 @@ export class KeyValueStore<T>
       newValue,
       changedProperties
     });
-    this.setNewValue(newValue);
-    if (!objIsEmpty(changedProperties)) this.persist(changedProperties);
+    this._setNewValue(newValue);
+    if (!objIsEmpty(changedProperties) && !this.isPreventAutoPersist)
+      this._persist(changedProperties);
   }
   /**
-   * Modifies the store, caches and persists the changes
+   * Modifies the store, caches and persists the changes. Persist will be debounced if isDebouncedPersist is true and will be avoided if isPersist is false
    * @param n
    * @returns
    */
-  protected async modify(n: Partial<T>, params: { isPersist?: boolean, isDebouncedPersist?: boolean } = {isPersist: true}) {
-    const val = get(this.store);
-    this.setNewValue({ ...val, ...n });
-    if(params?.isDebouncedPersist) return this.debouncedPersist(n);
-    else if (!params || params.isPersist) return this.persist(n);
-  }
-  /**
-   * Gets the current value of the store
-   * @returns
-   */
-  get() {
-    return get(this.store);
+  protected async modify(
+    n: Partial<T>,
+    params: { isPersist?: boolean; isDebouncedPersist?: boolean } = {
+      isPersist: true
+    }
+  ) {
+    const val = this.get();
+    this._setNewValue({ ...val, ...n });
+    if (params?.isDebouncedPersist) return this._debouncedPersist(n);
+    else if (params?.isPersist) return this._persist(n);
   }
 }

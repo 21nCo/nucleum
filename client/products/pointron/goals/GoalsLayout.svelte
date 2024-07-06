@@ -22,6 +22,7 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { tagStore } from "../pointron.store";
+  import { archivedResourceFilter } from "$lib/client/utils/utils";
 
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
@@ -34,7 +35,7 @@
     selectedTagId &&
     selectedTagId != TagId.ALL &&
     selectedTagId != TagId.FAVORITES
-      ? $tagStore.tags.find((x) => x.id === selectedTagId)?.label
+      ? $tagStore.items.find((x) => x.id === selectedTagId)?.label
       : "";
 
   let isArchivedGoalsVisible: boolean = false;
@@ -132,16 +133,16 @@
             <RefreshingOverlayFeedback />
           {/if}
           <div class="h-full w-full">
-            {#if isValidArrayWithData($goalStore.filteredGoals)}
+            {#if isValidArrayWithData($goalStore.filtered)}
               <div class="w-full grow portrait:text-base text-b2">
                 <TreeMap
-                  items={$goalStore.filteredGoals.map((x) => x.id)}
-                  contentCallback={goalStore.get}
-                  childrenCallback={goalStore.children}
+                  items={$goalStore.filtered?.map((x) => x.id)}
+                  contentCallback={goalStore.resolveGoal.bind(goalStore)}
+                  childrenCallback={goalStore.resolveChildren.bind(goalStore)}
                   on:click={onGoalClick}
                 />
               </div>
-              {#if $goalStore.archivedGoals.length > 0 && !isGoalsLoading && !searchInput && selectedTagId === TagId.ALL}
+              {#if $goalStore.items.filter(archivedResourceFilter).length > 0 && !isGoalsLoading && !searchInput && selectedTagId === TagId.ALL}
                 <div
                   class="acrchived-goals flex flex-col items-center mt-[6rem]"
                 >
@@ -159,7 +160,9 @@
                       icon={isArchivedGoalsVisible ? "chevdown" : "chevup"}
                     />
                     <h3 class="text-fgs3 uppercase text-b2">
-                      Archived goals ( {$goalStore.archivedGoals.length} )
+                      Archived goals ( {$goalStore.items.filter(
+                        archivedResourceFilter
+                      ).length} )
                     </h3>
                     <!-- <div
                       class={`inverted-triangle-path w-2.5 h-2 bg-fgs3 ${
@@ -169,9 +172,13 @@
                   </div>
                   {#if isArchivedGoalsVisible}
                     <TreeMap
-                      items={$goalStore.archivedGoals.map((x) => x.id)}
-                      contentCallback={goalStore.get}
-                      childrenCallback={goalStore.children}
+                      items={$goalStore.items
+                        .filter(archivedResourceFilter)
+                        .map((x) => x.id)}
+                      contentCallback={goalStore.resolveGoal.bind(goalStore)}
+                      childrenCallback={goalStore.resolveChildren.bind(
+                        goalStore
+                      )}
                       on:click={onGoalClick}
                     />
                     <div class="pb-32"></div>

@@ -5,8 +5,8 @@
 </script>
 
 <div class="flex gap-2 flex-wrap">
-  {#if $tagStore && $tagStore.tags.length > 0}
-    {#each $tagStore.tags as tag (tag.id)}
+  {#if $tagStore && $tagStore.items.length > 0}
+    {#each $tagStore.items as tag (tag.id)}
       <TagItem {...tag} />
     {/each}
   {/if}

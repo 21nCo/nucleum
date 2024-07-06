@@ -103,7 +103,7 @@ export class SurrealDatabaseUsingRest {
       const token = await resolveToken();
       if (!token) return null;
       this.token = token;
-      console.log("query", { query, params, token });
+      // console.log("query", { query, params, token });
       let decodedToken: any = jwt_decode(this.token!);
       this.db = decodedToken?.db ?? "";
       query = replaceParams(query, params);
@@ -294,7 +294,8 @@ export class SurrealDatabase implements ISurrealDatabase {
   db: string | undefined;
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
   constructor(private instance: string = "") {
-    const instanceDefault = import.meta.env?.VITE_SURREAL_URL ?? process.env.PLASMO_PUBLIC_DB_URL;
+    const instanceDefault =
+      import.meta.env?.VITE_SURREAL_URL ?? process.env.PLASMO_PUBLIC_DB_URL;
     this.instance = instanceDefault ?? instance;
     // this.token = resolveToken();
     if (isUseSurrealSDK == "true")

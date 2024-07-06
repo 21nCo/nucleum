@@ -12,10 +12,10 @@
   let modalRef: any;
   async function onAdd() {
     if (!label || !id) return;
-    return tagStore.updateTag({ label, id });
+    return tagStore.modify({ label, id });
   }
   onMount(() => {
-    label = $tagStore.tags.find((tag) => tag.id === id)?.label || "";
+    label = $tagStore.items.find((tag) => tag.id === id)?.label || "";
   });
 </script>
 

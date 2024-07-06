@@ -8,7 +8,7 @@ import {
   type IntervalBlock,
   BlockType
 } from "$lib/client/types/pointron/session.type";
-import type { Tag } from "$lib/client/types/pointron/tag.type";
+import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { sessionStore } from "./focus/session.store";
 
 // export function aggregateFocusFromSessions(sessions: PointSessionDbType[]) {
@@ -238,7 +238,7 @@ export function roundOffToNdigitsAfterDecimal(number: number, n: number) {
   return Math.round(number * Math.pow(10, n)) / Math.pow(10, n);
 }
 
-export function addHashToTagLabel(tag: Tag) {
+export function addHashToTagLabel(tag: ITag) {
   return {
     ...tag,
     label: `#${tag.label}`

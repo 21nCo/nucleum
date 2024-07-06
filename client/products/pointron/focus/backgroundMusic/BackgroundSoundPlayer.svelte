@@ -23,8 +23,8 @@
     });
     const sessionStoreSub = sessionStore.subscribe((x) => {
       if (
-        !x.isSessionRunning ||
-        (x.isSessionRunning && x.currentBlock.type != BlockType.FOCUS)
+        !x?.isSessionRunning ||
+        (x?.isSessionRunning && x?.currentBlock.type != BlockType.FOCUS)
       ) {
         stopAudio();
       } else if ($backgroundSoundStore?.systemSound != "none" && src) {

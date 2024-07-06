@@ -1,14 +1,17 @@
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IStore
+} from "$lib/client/types/data.type";
 import type { TimePeriod } from "$lib/client/types/time.type";
 import type { ITrashInformation } from "../resource.type";
 
-export type Goal = {
+export type IGoal = {
   id: string;
   label: string;
   subGoalCount: number;
   parent?: GoalParent;
-  subGoals: Goal[];
+  subGoals: IGoal[];
   archivedSubGoalCount: number;
   description?: string;
   tags?: string[];
@@ -26,7 +29,7 @@ export type Goal = {
 
 type GoalParent = {
   color?: number;
-  hierarchy: Pick<Goal, "id" | "label">[];
+  hierarchy: Pick<IGoal, "id" | "label">[];
 };
 
 export type PointGoalDbType = DbRecordBase & {
@@ -46,23 +49,19 @@ export type GoalAnalyticsType = {
 };
 
 export type QuickFocusItem = Pick<
-  Goal,
+  IGoal,
   "id" | "label" | "color" | "parent" | "tags" | "isFavorite"
 > & {
   focus?: number;
 };
 
-export interface GoalStore extends ICacheableStore {
-  goals: Goal[];
-  filteredGoals: Goal[];
-  archivedGoals: Goal[];
+export interface GoalStore extends IStore {
+  goals: IGoal[];
+  filteredGoals: IGoal[];
+  archivedGoals: IGoal[];
 }
 
-export interface QuickFocusItemStore extends ICacheableStore {
+export interface IQuickFocusItemStore extends IObservableStoreSubject {
   items: QuickFocusItem[];
   filteredItems: QuickFocusItem[];
-}
-
-export interface NewGoalStore extends ICacheableStore {
-  goal: Goal;
 }

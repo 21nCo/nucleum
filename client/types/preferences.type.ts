@@ -1,7 +1,8 @@
 import type { AppSkin, Theme } from "$lib/client/types/appearance.type";
 import type { TimeScale } from "./time.type";
 import type { IAvatar } from "./avatar.type";
-export type UserGlobalPreferences = {
+import type { IObservableStoreSubject } from "./data.type";
+export type IUserGlobalPreferences = IObservableStoreSubject & {
   nickName: string;
   // theme: AppSkin;
   // colorScheme: ColorScheme;

@@ -1,4 +1,4 @@
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
 
 import { Item } from "$lib/client/types/item.enum";
@@ -13,18 +13,13 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { ChartType } from "$lib/client/types/analytics.type";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
 import { objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
-import { prefixTable } from "$lib/client/utils/text.utils";
 import { Layout } from "$lib/client/types/layout.type";
-import type { Tag, TagStore } from "$lib/client/types/pointron/tag.type";
-import { dataManager } from "$lib/client/persistence/dataManager";
-import {
-  StoreDataType,
-  PersistanceActionType
-} from "$lib/client/types/data.type";
-import { logger } from "$lib/client/stores/log.store";
-import type { PointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
+import type { ITag } from "$lib/client/types/pointron/tag.type";
+import { StoreDataType } from "$lib/client/types/data.type";
+import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { defaultAppMenu } from "$local/local";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { ResourceFIRStore } from "$lib/client/stores/resource.store";
 
 export const swipeLabel = writable("");
 
@@ -120,7 +115,7 @@ const storeConfig = {
   dataType: StoreDataType.KVO,
   priorityRefreshOnAppAppear: true
 };
-export const seedLocalPreferences: PointronPreferences = {
+export const seedLocalPreferences: IPointronPreferences = {
   ...storeConfig,
   isEnableAgeCounter: false,
   extendDuration: 5,
@@ -152,26 +147,25 @@ export const seedLocalPreferences: PointronPreferences = {
     }
   }
 };
-class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
+class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
     super(Item.pointronPreferences, seedLocalPreferences, {
       priorityRefreshOnAppAppear: true
     });
   }
-  loader(data: PointronPreferences) {
+  loader(data: IPointronPreferences) {
     data.appMenu = defaultAppMenu;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
     if (!data.presets) data.presets = seedPresets;
     //m.horizonCharts = defaultHorizonChartConfiguration;
-    if (!data.dataType) data.dataType = StoreDataType.KVO;
-    this.modify(data, {isPersist: false});
+    this.modify(data, { isPersist: false });
   }
-  async set(newValue: PointronPreferences) {
+  async set(newValue: IPointronPreferences) {
     let changedProperties: any = {};
     if (this.previousValue) {
       let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
       differences.forEach((key: string) => {
-        changedProperties[key] = newValue[key as keyof PointronPreferences];
+        changedProperties[key] = newValue[key as keyof IPointronPreferences];
       });
       //TODO - create separate method for updating horizons with targets instead of duplicating custom set method (set() is present in KeyValueStore class)
       if (differences.some((x) => x === "horizonsWithTarget")) {
@@ -181,7 +175,7 @@ class PointronPreferencesStore extends KeyValueStore<PointronPreferences> {
         changedProperties.horizonTargets = horizonTargets;
       }
     }
-    this.modify(newValue, {isPersist: !objIsEmpty(changedProperties)});
+    this.modify(newValue, { isPersist: !objIsEmpty(changedProperties) });
   }
   resetHorizonChartConfiguration() {
     this.modify({ horizonCharts: defaultHorizonChartConfiguration });
@@ -307,84 +301,27 @@ export const seedTasks = [
   { label: "third task", estimate: 35, workedFor: 45, checked: false }
 ];
 
-const seedTagStore = {
-  tags: [],
-  dataType: StoreDataType.FIR,
-  id: Item.PointTag,
-  mutatingResources: [Item.PointTag]
-};
-export const tagStore = initTagStore();
-
-function initTagStore() {
-  const { subscribe, set, update } = writable<TagStore>(seedTagStore);
-  dataManager.retrieveCache(Item.PointTag).then((x) => {
-    if (x) {
-      const n = { ...seedTagStore, tags: x.tags };
-      set(n);
-    }
-  });
-  const cache = async (n: TagStore) => {
-    dataManager.cache(n);
-  };
-  const mutation = async (
-    action: PersistanceActionType,
-    record: string | Tag
-  ) => {
-    const data = typeof record === "string" ? { id: record } : record;
-    return dataManager.performMutation(Item.PointTag, data, { action });
-  };
-  return {
-    subscribe,
-    set,
-    update,
-    loader: async (data: Tag[]) => {
-      logger.log({ context: "tagStore loader", data });
-      update((x: TagStore) => {
-        x.tags = data;
-        cache(x);
-        return x;
-      });
-    },
-    refresh: async () => {
-      logger.log("Refreshing tagStore");
-      await dataManager.refresh(Item.PointTag);
-    },
-    create: async (label: string) => {
-      const newTag = { label, id: prefixTable(generateUID(), Item.PointTag) };
-      mutation(PersistanceActionType.CREATE, newTag);
-      update((x: TagStore) => {
-        x.tags.push(newTag);
-        cache(x);
-        return x;
-      });
-      toasts.success("Tag created successfully");
-    },
-    updateTag: async (tag: Tag) => {
-      mutation(PersistanceActionType.UPDATE, tag);
-      update((x: TagStore) => {
-        x.tags = x.tags.filter((t) => t.id != tag.id);
-        x.tags.push(tag);
-        cache(x);
-        return x;
-      });
-      toasts.success("Tag updated successfully");
-    },
-    delete: async (id: string) => {
-      mutation(PersistanceActionType.DELETE, id);
-      update((x: TagStore) => {
-        x.tags = x.tags.filter((t) => t.id != id);
-        cache(x);
-        return x;
-      });
-      toasts.success("Tag deleted successfully");
-    },
-    retrieve: () => {
-      subscribe((x: TagStore) => {
-        return x;
-      });
-    }
-  };
+class TagStore extends ResourceFIRStore<ITag> {
+  constructor() {
+    super(Item.PointTag);
+  }
+  loader(data: any) {
+    if (data) super.loader({ items: data });
+  }
+  async modify(item: ITag) {
+    super.modify(item);
+    toasts.success("Tag updated successfully");
+  }
+  async create(data: Omit<ITag, "id">, id?: string) {
+    super.create(data, id);
+    toasts.success("Tag created successfully");
+  }
+  async delete(id: string) {
+    super.delete(id);
+    toasts.success("Tag deleted successfully");
+  }
 }
+export const tagStore = new TagStore();
 
 export const backgroundSoundStore = initBackgroundSoundStore();
 

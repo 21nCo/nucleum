@@ -3,7 +3,7 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import { GoalPersistence } from "$lib/client/products/pointron/goals/goal.persistence";
-  import type { Goal } from "$lib/client/types/pointron/goal.type";
+  import type { IGoal } from "$lib/client/types/pointron/goal.type";
   import { onMount } from "svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
   import { Size } from "$lib/client/types/size.enum";

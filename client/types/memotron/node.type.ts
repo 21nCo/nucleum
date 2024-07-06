@@ -3,7 +3,7 @@ import type { PropertyValue as IPropertyValue, IType } from "./type.type";
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { IAvatar } from "../avatar.type";
 import type { IMarkdown } from "./md.type";
-import type { ICacheableStore } from "../data.type";
+import type { IStore } from "../data.type";
 import type { ILink } from "./capture.type";
 
 export type INode = INodeBase &
@@ -300,7 +300,7 @@ export enum NodeThumbnailVariant {
   TIMELINE = "TIMELINE"
 }
 
-export interface INodeStore extends ICacheableStore {}
+export interface INodeStore extends IStore {}
 
 export type INodeHierarchyV1 = {
   id: string;

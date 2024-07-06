@@ -28,7 +28,7 @@
     selectedTagId &&
     selectedTagId != TagId.ALL &&
     selectedTagId != TagId.FAVORITES
-      ? $tagStore.tags.find((x) => x.id === selectedTagId)?.label
+      ? $tagStore.items.find((x) => x.id === selectedTagId)?.label
       : "";
   async function refresh() {
     isLoadingState = true;

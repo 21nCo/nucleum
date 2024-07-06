@@ -21,10 +21,13 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
     if (!current.menu) {
       this.loadSeed(context, data);
     } else if (!current.menu[context]) {
-      this.modify({
-        ...current,
-        menu: { ...current.menu, [context]: data }
-      }, {isPersist: false});
+      this.modify(
+        {
+          ...current,
+          menu: { ...current.menu, [context]: data }
+        },
+        { isPersist: false }
+      );
     }
   }
 }

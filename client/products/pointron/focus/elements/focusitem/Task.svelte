@@ -5,7 +5,7 @@
   } from "$lib/client/products/pointron/focus/session.store";
   import type {
     FocusItem,
-    SessionStore
+    ISessionStore
   } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
@@ -45,7 +45,7 @@
     workedTime = +task.worked;
     estimateInMinutes = task.estimated;
     if (context === "history") return;
-    const sub = sessionStore.subscribe((x: SessionStore) => {
+    const sub = sessionStore.subscribe((x: ISessionStore) => {
       if (x.currentLog?.taskId === task.taskId) {
         isInprogress = true;
         if (x.state == SessionState.FOCUS_RUNNING) {

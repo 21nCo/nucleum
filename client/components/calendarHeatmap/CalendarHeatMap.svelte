@@ -10,10 +10,10 @@
   import {
     TileScale,
     CalendarHmVariant,
-    type CalendarHeatMapDataProvider,
+    type ICalendarHeatMapDataProvider,
     type CalendarHeatmapOptions
   } from "./calendarHeatmap.types";
-  import { DataManager } from "$lib/client/components/calendarHeatmap/calendarHeatMap.utils";
+  import { CalendarHeatmapDataManager } from "$lib/client/components/calendarHeatmap/calendarHeatMap.utils";
   import { onMount } from "svelte";
   import Footer from "./Footer.svelte";
   import HeaderV1 from "./HeaderV1.svelte";
@@ -31,10 +31,10 @@
   export let variant: CalendarHmVariant = CalendarHmVariant.PLAIN;
   export let orientation: Orientation;
   export let touchDevice: boolean;
-  export let provider: CalendarHeatMapDataProvider;
+  export let provider: ICalendarHeatMapDataProvider;
   export let options: CalendarHeatmapOptions = {};
   // export let context: string;
-  let dataManager = new DataManager(provider, options);
+  let heatmapDataManager = new CalendarHeatmapDataManager(provider, options);
   let data: any;
   let isLoading = false;
   const currentYear = new Date().getFullYear();
@@ -62,35 +62,37 @@
       tileScale === TileScale.DAYS &&
       variant != CalendarHmVariant.SCALE_SWITCH
     ) {
-      await dataManager.fetchLast12MonthsDailyData();
+      await heatmapDataManager.fetchLast12MonthsDailyData();
     } else if (
       tileScale === TileScale.DAYS &&
       variant === CalendarHmVariant.SCALE_SWITCH
     )
-      await dataManager.fetchDailyDataForTheYear(new Date().getFullYear());
+      await heatmapDataManager.fetchDailyDataForTheYear(
+        new Date().getFullYear()
+      );
     else if (tileScale == TileScale.MONTHS) {
       const startYear = currentYear - 21;
-      dataManager.fetchMonthlyAggData(startYear, endYear);
+      heatmapDataManager.fetchMonthlyAggData(startYear, endYear);
     } else if (tileScale == TileScale.YEARS) {
       const startYear = currentYear - 47;
-      dataManager.fetchYearlyAggData(startYear, endYear);
+      heatmapDataManager.fetchYearlyAggData(startYear, endYear);
     }
     refreshSelectedTile();
     isLoading = false;
   }
   async function prev() {
     if (tileScale == TileScale.DAYS)
-      await dataManager.paginateDailyData("prev");
+      await heatmapDataManager.paginateDailyData("prev");
     else if (tileScale == TileScale.MONTHS)
-      dataManager.paginateMonthlyAggData("prev");
-    else dataManager.paginateYearlyAggData("prev");
+      heatmapDataManager.paginateMonthlyAggData("prev");
+    else heatmapDataManager.paginateYearlyAggData("prev");
   }
   async function next() {
     if (tileScale == TileScale.DAYS)
-      await dataManager.paginateDailyData("next");
+      await heatmapDataManager.paginateDailyData("next");
     else if (tileScale == TileScale.MONTHS)
-      dataManager.paginateMonthlyAggData("next");
-    else dataManager.paginateYearlyAggData("next");
+      heatmapDataManager.paginateMonthlyAggData("next");
+    else heatmapDataManager.paginateYearlyAggData("next");
   }
   onMount(async () => {
     await refreshData();

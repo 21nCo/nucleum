@@ -2,14 +2,11 @@ import { get } from "svelte/store";
 import { Item } from "$lib/client/types/item.enum";
 import type { IProperty } from "$lib/client/types/memotron/type.type";
 import {
-  StoreDataType
-} from "$lib/client/types/data.type";
-import {
   NodeType,
   type LinkThumbnail,
   type INodeCapture,
   LinkType,
-  type INodeItemCaptured,
+  type INodeItemCaptured
 } from "$lib/client/types/memotron/node.type";
 import {
   CaptureType,
@@ -17,11 +14,8 @@ import {
   type FileDetails
 } from "$lib/client/types/memotron/capture.type";
 import { AlertType } from "$lib/client/types/notification.type";
-import {
-  generateUID,
-  interceptSurrealResponse
-} from "$lib/client/utils/utils";
-import {  isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
+import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { dataManager } from "$lib/client/persistence/dataManager";
@@ -37,8 +31,6 @@ export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 function generateSeedStore(): ICaptureStore {
   const blockId = prefixTable(generateUID(), Item.node);
   return {
-    id: Item.capture,
-    dataType: StoreDataType.KVO,
     captureType: CaptureType.MARKDOWN,
     refreshId: new Date().getTime(),
     type: null,
@@ -60,7 +52,6 @@ function generateSeedStore(): ICaptureStore {
     }
   };
 }
-
 
 /**
  * Filters properties that are marked for capture
@@ -90,7 +81,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     );
   }
   set(val: ICaptureStore) {
-    this.modify(val, {isDebouncedPersist: true});
+    this.modify(val, { isDebouncedPersist: true });
   }
   reset() {
     const seedStore = generateSeedStore();
@@ -103,7 +94,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       id: Item.capture,
       refreshId: new Date().getTime()
     };
-    this.modify(val, {isPersist: false});
+    this.modify(val, { isPersist: false });
   }
   //TODO - delegate type fetch operation to typeStore and remove SurrealDatabase dependency
   async onTypeSelect(val: CaptureType | string) {
@@ -166,99 +157,99 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
 
   async save() {
     const val = this.get();
-  //TODO - extract nodes from markdown blocks and save
-  const metadata = await resolveNodeCaptureMetadata();
-  console.log("capture store", { val, metadata });
-  const id = prefixTable(generateUID(), Item.node);
-  let root: INodeItemCaptured = {
-    id,
-    label: val.label ?? "",
-    properties: val.properties,
-    type: val.type?.id,
-    body: "",
-    contentType:
-      val.captureType === CaptureType.AUDIO
-        ? NodeType.AUDIO
-        : val.captureType === CaptureType.CAMERA
-          ? NodeType.IMAGE
-          : val.captureType === CaptureType.MARKDOWN
-            ? NodeType.NODULAR_MARKDOWN
-            : val.captureType.includes("type:")
+    //TODO - extract nodes from markdown blocks and save
+    const metadata = await resolveNodeCaptureMetadata();
+    console.log("capture store", { val, metadata });
+    const id = prefixTable(generateUID(), Item.node);
+    let root: INodeItemCaptured = {
+      id,
+      label: val.label ?? "",
+      properties: val.properties,
+      type: val.type?.id,
+      body: "",
+      contentType:
+        val.captureType === CaptureType.AUDIO
+          ? NodeType.AUDIO
+          : val.captureType === CaptureType.CAMERA
+            ? NodeType.IMAGE
+            : val.captureType === CaptureType.MARKDOWN
               ? NodeType.NODULAR_MARKDOWN
-              : NodeType.SIMPLE_TEXT,
-    metadata,
-    links: [
-      ...(val.directLinks?.map((link) => {
-        return { from: id, to: link.id, linkType: link.linkType };
-      }) ?? []),
-      ...(val.links ?? [])
-    ]
-  };
-  let remainingResources: INodeItemCaptured[] = [];
-  if (val.fileDetails) {
-    const contentType = val.fileDetails.type;
-    // const blob = new Blob(val.fileDetails.data, {
-    //   type: contentType,
-    // });
-    const result = await account.uploadFile(
-      contentType,
-      val.fileDetails.name,
-      val.fileDetails.data
-    );
-    console.log("save file:", { result });
-    if (result) {
+              : val.captureType.includes("type:")
+                ? NodeType.NODULAR_MARKDOWN
+                : NodeType.SIMPLE_TEXT,
+      metadata,
+      links: [
+        ...(val.directLinks?.map((link) => {
+          return { from: id, to: link.id, linkType: link.linkType };
+        }) ?? []),
+        ...(val.links ?? [])
+      ]
+    };
+    let remainingResources: INodeItemCaptured[] = [];
+    if (val.fileDetails) {
+      const contentType = val.fileDetails.type;
+      // const blob = new Blob(val.fileDetails.data, {
+      //   type: contentType,
+      // });
+      const result = await account.uploadFile(
+        contentType,
+        val.fileDetails.name,
+        val.fileDetails.data
+      );
+      console.log("save file:", { result });
+      if (result) {
+        root = {
+          ...root,
+          body: {
+            ...val.fileDetails,
+            ...result,
+            url: result.uploadURL.split("?")[0]
+          }
+        };
+      }
+    } else if ("blocks" in val.body) {
       root = {
         ...root,
-        body: {
-          ...val.fileDetails,
-          ...result,
-          url: result.uploadURL.split("?")[0]
-        }
+        children: val.rootStructure
       };
+      remainingResources = val.childrenWithStructure.map((block) => {
+        const correspondingContent = val.body.blocks.find(
+          (b) => b.id === block.id
+        );
+        //TODO - links for each block
+        return {
+          id: block.id,
+          contentType: correspondingContent.contentType,
+          body: correspondingContent.body,
+          metadata: root.metadata,
+          creationContext: root.id,
+          children: block.children,
+          links: []
+        };
+      });
     }
-  } else if ("blocks" in val.body) {
-    root = {
-      ...root,
-      children: val.rootStructure
+    let nodeCapture: INodeCapture = {
+      resources: [root, ...remainingResources]
     };
-    remainingResources = val.childrenWithStructure.map((block) => {
-      const correspondingContent = val.body.blocks.find(
-        (b) => b.id === block.id
-      );
-      //TODO - links for each block
-      return {
-        id: block.id,
-        contentType: correspondingContent.contentType,
-        body: correspondingContent.body,
-        metadata: root.metadata,
-        creationContext: root.id,
-        children: block.children,
-        links: []
-      };
-    });
-  }
-  let nodeCapture: INodeCapture = {
-    resources: [root, ...remainingResources]
-  };
-  console.log({ nodeToBeSaved: nodeCapture });
-  let result = await nodeStore.createNode(nodeCapture);
-  if (result) {
-    this.modify({ ...generateSeedStore() }, {isPersist: false});
-    toasts.trigger({
-      id: generateUID(),
-      type: AlertType.SUCCESS,
-      title: "Saved",
-      message: "Node saved successfully"
-    });
-    return result;
-  } else {
-    toasts.trigger({
-      id: generateUID(),
-      type: AlertType.ERROR,
-      message: "Error saving"
-    });
-    return null;
-  }
+    console.log({ nodeToBeSaved: nodeCapture });
+    let result = await nodeStore.createNode(nodeCapture);
+    if (result) {
+      this.modify({ ...generateSeedStore() }, { isPersist: false });
+      toasts.trigger({
+        id: generateUID(),
+        type: AlertType.SUCCESS,
+        title: "Saved",
+        message: "Node saved successfully"
+      });
+      return result;
+    } else {
+      toasts.trigger({
+        id: generateUID(),
+        type: AlertType.ERROR,
+        message: "Error saving"
+      });
+      return null;
+    }
   }
 }
 

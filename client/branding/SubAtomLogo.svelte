@@ -7,7 +7,7 @@
     if (!subatom) {
       subatom = localStorage.getItem("product") ?? "tidigit";
     }
-    console.log({ subatom });
+    // console.log({ subatom });
   }
   $: height = size === Size.md ? 61 : size === Size.sm ? 40 : 61;
 </script>

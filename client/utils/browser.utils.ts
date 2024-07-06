@@ -95,15 +95,13 @@ async function _renderPopover(params: IPopoverRenderParams) {
 
   if (triggerRect.top < popRect.height) {
     if (placement === Position.TopLeft) placement = Position.BottomLeft;
-    else if (placement === Position.TopRight)
-      placement = Position.BottomRight;
+    else if (placement === Position.TopRight) placement = Position.BottomRight;
     else if (placement === Position.Top) placement = Position.Bottom;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
     if (placement === Position.Bottom) placement = Position.Top;
     else if (placement === Position.BottomLeft) placement = Position.TopLeft;
-    else if (placement === Position.BottomRight)
-      placement = Position.TopRight;
+    else if (placement === Position.BottomRight) placement = Position.TopRight;
   }
   if (documentWidth - triggerRect.right < popRect.width) {
     if (placement === Position.Right) placement = Position.Left;
@@ -153,7 +151,7 @@ async function _renderPopover(params: IPopoverRenderParams) {
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  console.log({ triggerRect, popRect, placement, documentWidth });
+  // console.log({ triggerRect, popRect, placement, documentWidth });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";
@@ -246,13 +244,13 @@ export function resolveHoverState(event: MouseEvent | FocusEvent) {
 
 /**
  * A sveltekit goto() equivalent
- * 
+ *
  * Note: using this instead of sveltekit's goto() because extension projects do not have access to sveltekit's goto() function
- * @param path 
- * @param queryParams 
+ * @param path
+ * @param queryParams
  */
 export function goto(path: string) {
-    window.dispatchEvent(new CustomEvent('custom:navigation', {detail: path}));
+  window.dispatchEvent(new CustomEvent("custom:navigation", { detail: path }));
 }
 
 /**
@@ -260,21 +258,28 @@ export function goto(path: string) {
  * @returns true if the current environment is an extension environment
  */
 export function isExtensionEnvironment() {
-  console.log({protocol: window.location.protocol, typeofchrome: typeof chrome, typeofbrowser: typeof browser, typeofplasmo: typeof __plasmo})
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-    return true;
-  }
-  
-  if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.id) {
-    return true;
-  }
-  
-  if (typeof __plasmo !== 'undefined') {
+  console.log({
+    protocol: window.location.protocol,
+    typeofchrome: typeof chrome,
+    typeofbrowser: typeof browser,
+    typeofplasmo: typeof __plasmo
+  });
+  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id) {
     return true;
   }
 
-  if (window.location.protocol === 'chrome-extension:' || 
-      window.location.protocol === 'moz-extension:') {
+  if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id) {
+    return true;
+  }
+
+  if (typeof __plasmo !== "undefined") {
+    return true;
+  }
+
+  if (
+    window.location.protocol === "chrome-extension:" ||
+    window.location.protocol === "moz-extension:"
+  ) {
     return true;
   }
 

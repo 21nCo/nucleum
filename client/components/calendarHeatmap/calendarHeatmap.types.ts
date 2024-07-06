@@ -49,14 +49,14 @@ export type YearlyData = {
   color?: string;
 };
 
-export type CalendarHeatMapDataProvider = {
+export interface ICalendarHeatMapDataProvider {
   fetchDailyJournal: (start: Date, end: Date) => Promise<HeatmapDataItem[]>;
   fetchJournal: (
     scale: TimeScale.MONTHS | TimeScale.YEARS,
     start: number,
     end: number
   ) => Promise<HeatmapDataItem[]>;
-};
+}
 
 export type HeatmapDataItem = {
   date: Date;

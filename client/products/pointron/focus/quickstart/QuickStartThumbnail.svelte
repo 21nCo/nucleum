@@ -6,7 +6,7 @@
     focusItemsStore,
     sessionStore
   } from "$lib/client/products/pointron/focus/session.store";
-  import type { Goal } from "$lib/client/types/pointron/goal.type";
+  import type { IGoal } from "$lib/client/types/pointron/goal.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -24,7 +24,7 @@
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let goal: Pick<Goal, "id" | "label" | "color" | "parent"> & {
+  export let goal: Pick<IGoal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
   export let layout: Layout;

@@ -29,7 +29,6 @@
     date = newDate;
     dispatch("change", { date });
   }
-  $: console.log({ date });
 </script>
 
 {#if variant == "wide" || variant == "wide-center"}

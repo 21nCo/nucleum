@@ -34,7 +34,7 @@
     // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
-    console.log("overlayClicked", event, id);
+    // console.log("overlayClicked", event, id);
     if (
       (((event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
@@ -62,7 +62,6 @@
   //   // top = $windowObject.documentHeight / 2 - height / 2;
   // }
   function close() {
-    console.log("close from modal.svelte");
     show = false;
     modalEvent.hideSpecific(id, "Modal.svelte");
     confirmationNotification.reset();

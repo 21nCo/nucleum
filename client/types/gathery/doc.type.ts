@@ -1,7 +1,7 @@
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type { IStore } from "$lib/client/types/data.type";
 import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
 
-export type DocStore = ICacheableStore & {
+export type DocStore = IStore & {
   docs: INodeThumbnail[];
 };
 

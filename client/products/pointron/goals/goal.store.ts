@@ -5,12 +5,10 @@ import {
 } from "$lib/client/utils/utils";
 import { get, writable } from "svelte/store";
 import type {
-  Goal,
-  GoalStore,
-  NewGoalStore,
+  IGoal,
   PointGoalDbType,
   QuickFocusItem,
-  QuickFocusItemStore
+  IQuickFocusItemStore
 } from "$lib/client/types/pointron/goal.type";
 import { GoalPersistence } from "./goal.persistence";
 import { prefixTable } from "$lib/client/utils/text.utils";
@@ -26,7 +24,6 @@ import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
 import { appStore, isInEditMode } from "$lib/client/stores/app.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import view from "$lib/client/stores/view.store";
-import { AlertType } from "$lib/client/types/notification.type";
 import {
   DependencySyncType,
   PersistanceActionType,
@@ -36,8 +33,11 @@ import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
 import { logger } from "$lib/client/stores/log.store";
 import { Persistence } from "$lib/client/persistence/persistence";
+import { ResourceFIRStore } from "$lib/client/stores/resource.store";
+import { ObservableStore } from "$lib/client/stores/client.store";
+import { AlertType } from "$lib/client/types/notification.type";
 
-const seedGoal: Goal = {
+export const seedGoal: IGoal = {
   id: generateUID(),
   label: "",
   color: undefined,
@@ -67,12 +67,68 @@ const seedGoal: Goal = {
 
 export const goalEditErrorMessage = writable("");
 
+function filterGoals(
+  allItems: (IGoal | QuickFocusItem)[],
+  filters: { tag?: TagId | string; searchText?: string }
+) {
+  let filteredGoals = allItems.filter(nonTrashFilter);
+  if (filters.tag) {
+    if (filters.tag === TagId.ALL) {
+      filteredGoals = allItems;
+    } else if (filters.tag === TagId.FAVORITES) {
+      filteredGoals = allItems.filter((x) => x.isFavorite);
+    } else {
+      filteredGoals = allItems.filter((x) =>
+        x.tags?.includes(filters.tag as string)
+      );
+    }
+  }
+  if (filters.searchText) {
+    filteredGoals = filteredGoals.filter((x) =>
+      x.label
+        .toLowerCase()
+        .includes((filters.searchText as string).toLowerCase())
+    );
+  }
+  return filteredGoals;
+}
+
+const defaultFilter = (items: IGoal[]) => {
+  return filter(items, {
+    tag: TagId.ALL,
+    searchText: "",
+    isArchived: false
+  });
+};
+const filter = (
+  items: IGoal[],
+  filters: {
+    tag?: TagId | string;
+    searchText?: string;
+    isArchived?: boolean;
+  }
+) => {
+  let filteredGoals = filterGoals(items, filters);
+  let filtered = (filteredGoals as IGoal[])
+    .filter(nonTrashFilter)
+    .filter(
+      (x) =>
+        ((filters.isArchived && x.isArchived) || !x.isArchived) &&
+        ((filters.tag === TagId.ALL &&
+          !filters.searchText &&
+          x.parent?.hierarchy?.length === 0) ||
+          filters.tag !== TagId.ALL ||
+          filters.searchText)
+    );
+  return filtered;
+};
+
 /**
  * here we are assuming that the there can only be one level(direct level) of nesting in goals(as `subGoals` property), since as of the time writing this function there is only one level of nesting in goals, possible in the app, through the add sub goal feature, for a specific goal
  * @param goal
  */
 function flattenSubGoalsAsGoals(
-  goal: Partial<Goal> & Pick<Goal, "id" | "label" | "subGoals">
+  goal: Partial<IGoal> & Pick<IGoal, "id" | "label" | "subGoals">
 ) {
   let goalForDB: PointGoalDbType = {
     id: prefixTable(goal.id, Item.PointGoal),
@@ -117,257 +173,116 @@ function flattenSubGoalsAsGoals(
   return [goalForDB, ...flattenedSubGoals];
 }
 
-function isGoalNameValid(label: string) {
-  if (!label) {
-    goalEditErrorMessage.set("Please enter a valid goal name");
-    //labelRef?.focus();
-    return false;
-  }
-  return true;
-}
-
-const newGoalStoreId = "newGoalStore";
-
-export const newGoalStore = initNewGoalStore();
-
-function initNewGoalStore() {
-  const { subscribe, update, set } = writable<NewGoalStore>();
-  const reset = () => {
-    set({
-      id: newGoalStoreId,
-      goal: { ...deepCopy(seedGoal), id: generateUID() },
-      mutatingResources: [Item.PointGoal],
-      dataType: StoreDataType.NON_PERSISTING
+class GoalStore extends ResourceFIRStore<IGoal> {
+  constructor() {
+    super(Item.PointGoal, defaultFilter, {
+      refreshQuery: "fn::pointron::goal::fetchAll();"
     });
-  };
-  reset();
-  return {
-    subscribe,
-    set,
-    update,
-    reset,
-    save: async () => {
-      let n = get(newGoalStore);
-      if (!isGoalNameValid(n.goal.label)) return;
-      await dataManager.performMutation(
-        newGoalStoreId,
-        flattenSubGoalsAsGoals(n.goal),
-        { action: PersistanceActionType.CREATE }
-      );
-      reset();
-      setTimeout(() => {
-        if (n.goal.isPinnedForQuickStart) appStore.gotoPath("/focus");
-        else {
-          // appStore.gotoPath(Item.goal);
-        }
-      }, 1000);
-      toasts.trigger({
-        title: "Goal: " + n.goal.label,
-        message: "Created successfully",
-        type: AlertType.SUCCESS,
-        id: generateUID(),
-        actionText: "View",
-        callback: () => {
-          appStore.gotoResource(
-            Item.goal,
-            prefixTable(n.goal.id, Item.PointGoal)
-          );
-        }
-      });
-    }
-  };
-}
-
-function filterGoals(
-  allItems: (Goal | QuickFocusItem)[],
-  filters: { tag?: TagId | string; searchText?: string }
-) {
-  let filteredGoals = allItems.filter(nonTrashFilter);
-  if (filters.tag) {
-    if (filters.tag === TagId.ALL) {
-      filteredGoals = allItems;
-    } else if (filters.tag === TagId.FAVORITES) {
-      filteredGoals = allItems.filter((x) => x.isFavorite);
-    } else {
-      filteredGoals = allItems.filter((x) =>
-        x.tags?.includes(filters.tag as string)
-      );
-    }
   }
-  if (filters.searchText) {
-    filteredGoals = filteredGoals.filter((x) =>
-      x.label
-        .toLowerCase()
-        .includes((filters.searchText as string).toLowerCase())
-    );
-  }
-  return filteredGoals;
-}
-
-export const goalStore = initGoalsStore();
-function initGoalsStore() {
-  const { subscribe, set, update } = writable<GoalStore>({
-    goals: [],
-    filteredGoals: [],
-    archivedGoals: [],
-    id: Item.PointGoal,
-    dataType: StoreDataType.FIR,
-    dependencies: [
-      { resource: Item.PointGoal, syncType: DependencySyncType.EAGER }
-    ],
-    refreshQuery: "fn::pointron::goal::fetchAll();"
-  });
-  dataManager.retrieveCache(Item.PointGoal).then((goalStoreCache) => {
-    update((store) => ({
-      ...store,
-      isRefreshing: false,
-      goals: (goalStoreCache as GoalStore)?.goals ?? [],
-      archivedGoals:
-        (goalStoreCache as GoalStore)?.goals.filter(
-          (x) => x.isArchived && !x.trashInformation
-        ) ?? []
-    }));
-    filter({ tag: TagId.ALL, searchText: "", isArchived: false });
-  });
-  const cache = async (n: GoalStore) => {
-    dataManager.cache(n);
-  };
-  const filter = (filters: {
+  filter(filters: {
     tag?: TagId | string;
     searchText?: string;
     isArchived?: boolean;
-  }) => {
-    update((store) => {
-      let filteredGoals = filterGoals(store.goals, filters);
-      store.filteredGoals = (filteredGoals as Goal[])
-        .filter(nonTrashFilter)
-        .filter(
-          (x) =>
-            ((filters.isArchived && x.isArchived) || !x.isArchived) &&
-            ((filters.tag === TagId.ALL &&
-              !filters.searchText &&
-              x.parent?.hierarchy?.length === 0) ||
-              filters.tag !== TagId.ALL ||
-              filters.searchText)
-        );
+  }) {
+    this.update((store) => {
+      store.filtered = filter(store.items, filters);
       return store;
     });
-  };
-  return {
-    subscribe,
-    set,
-    loader: (data: any) => {
-      logger.log("goalStore loader", data);
-      if (!data || !isValidArray(data)) return;
-      update((store) => {
-        store.goals = data;
-        store.archivedGoals = data.filter(
-          (x: any) => x.isArchived && !x.trashInformation
-        );
-        filter({ tag: TagId.ALL, searchText: "", isArchived: false });
-        cache(store);
-        return store;
-      });
-    },
-    filter: filter,
-    search: async (query: string) => {
-      const goals = get(goalStore).goals;
-      if (!query) return;
-      return goals
-        .filter(activeResourceFilter)
-        .filter((x) => x.label.toLowerCase().includes(query.toLowerCase()));
-    },
-    get: (id: string) => {
-      const goals = get(goalStore).goals;
-      const goal = goals.find((x) => x.id === id);
-      return {
-        label: goal?.label ?? "",
-        id: goal?.id,
-        color: goal?.color ?? goal?.parent?.color,
-        childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0
-      };
-    },
-    children: (id: string) => {
-      const goals = get(goalStore).goals;
-      const goal = goals.find((x) => x.id === id);
-      console.log("children", { goal });
-      return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
-    },
-    resolveSubGoalsIfNotPresent: async (goalId: string) => {
-      const goals = get(goalStore).goals;
-      const goalInContext = goals.find((x) => x.id === goalId);
-      console.log({ goalInContext });
-      if (!goalInContext) return;
-      if (!isValidArrayWithData(goalInContext?.subGoals)) {
-        const subGoals = goals.filter(
-          (x) => goalInContext?.id === x.parent?.hierarchy.pop()?.id
-        );
-        console.log({ subGoals });
-      }
-    },
-    refresh: async (
-      filters: {
-        tag?: TagId | string;
-        searchText?: string;
-        isArchived?: boolean;
-      },
-      isShowRefreshingState: boolean = false
-    ) => {
-      logger.log("refreshing goalStore");
-      await dataManager.refresh(Item.PointGoal, isShowRefreshingState);
-      filter(filters);
-    },
-    update,
-    propagateDependencyChanges: (data: any) => {
-      logger.log("propagateDependencyChanges to goalStore", data);
-      if (data?.id?.includes(Item.PointGoal)) {
-        update((store) => {
-          let newGoal = data as PointGoalDbType;
-          let goalTransformed: Goal = {
-            ...newGoal,
-            id: newGoal.id!,
-            color: newGoal.color ?? 0,
-            subGoalCount: 0,
-            subGoals: [],
-            archivedSubGoalCount: 0,
-            parent: { hierarchy: [], color: 0 }
-          };
-          store.goals = [...store.goals, goalTransformed];
-          filter({ tag: TagId.ALL, searchText: "", isArchived: false });
-          cache(store);
-          return store;
-        });
-      }
+    return true;
+  }
+  loader(data: any) {
+    console.log("goalStore loader", data);
+    if (data) super.loader({ items: data });
+  }
+  resolveGoal(id: string) {
+    const goals = this.get().items;
+    const goal = goals.find((x) => x.id === id);
+    return {
+      label: goal?.label ?? "",
+      id: goal?.id,
+      color: goal?.color ?? goal?.parent?.color,
+      childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0
+    };
+  }
+  resolveChildren(id: string) {
+    const goals = this.get().items;
+    const goal = goals.find((x) => x.id === id);
+    return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
+  }
+  async resolveSubGoalsIfNotPresent(goalId: string) {
+    const goals = this.get().items;
+    const goalInContext = goals.find((x) => x.id === goalId);
+    console.log({ goalInContext });
+    if (!goalInContext) return;
+    if (!isValidArrayWithData(goalInContext?.subGoals)) {
+      const subGoals = goals.filter(
+        (x) => goalInContext?.id === x.parent?.hierarchy.pop()?.id
+      );
+      console.log({ subGoals });
     }
-  };
-}
-export const quickFocusItemsStoreId = "quickFocusItems";
+  }
+  async refresh(
+    filters: {
+      tag?: TagId | string;
+      searchText?: string;
+      isArchived?: boolean;
+    },
+    isShowRefreshingState: boolean = false
+  ) {
+    logger.log("refreshing goalStore");
+    await dataManager.refresh(Item.PointGoal, isShowRefreshingState);
+    return this.filter(filters);
+  }
+  async save(goal: IGoal) {
+    if (!isGoalNameValid(goal.label)) return;
+    await dataManager.performMutation(this.id, flattenSubGoalsAsGoals(goal), {
+      action: PersistanceActionType.CREATE
+    });
+    setTimeout(() => {
+      if (goal.isPinnedForQuickStart) appStore.gotoPath("/focus");
+      else {
+        // appStore.gotoPath(Item.goal);
+      }
+    }, 1000);
+    toasts.trigger({
+      title: "Goal: " + goal.label,
+      message: "Created successfully",
+      type: AlertType.SUCCESS,
+      id: generateUID(),
+      actionText: "View",
+      callback: () => {
+        appStore.gotoResource(Item.goal, prefixTable(goal.id, Item.PointGoal));
+      }
+    });
 
-export const quickFocusItemStore = initQuickFocusItemStore();
-function initQuickFocusItemStore() {
-  const { subscribe, set, update } = writable<QuickFocusItemStore>({
-    items: [],
-    filteredItems: [],
-    id: quickFocusItemsStoreId,
-    dataType: StoreDataType.FIR,
-    refreshQuery: "fn::pointron::goal::fetchQuickFocusItems::v2();",
-    dependencies: [
-      { resource: Item.PointGoal, syncType: DependencySyncType.EAGER },
-      { resource: Item.PointLog, syncType: DependencySyncType.DEFERRED }
-    ]
-  });
-  dataManager.retrieveCache(quickFocusItemsStoreId).then((x) => {
-    update((store) => ({
-      ...store,
-      items: (x as QuickFocusItemStore)?.items ?? [],
-      filteredItems: (x as QuickFocusItemStore)?.items ?? []
-    }));
-  });
-  const cache = async (n: QuickFocusItemStore) => {
-    dataManager.cache(n);
-  };
-  const filter = (filters: { tag?: TagId | string; searchText?: string }) => {
-    update((store) => {
+    function isGoalNameValid(label: string) {
+      if (!label) {
+        goalEditErrorMessage.set("Please enter a valid goal name");
+        //labelRef?.focus();
+        return false;
+      }
+      return true;
+    }
+  }
+}
+
+export const goalStore = new GoalStore();
+
+class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
+  constructor() {
+    super(Item.quickFocusItems, StoreDataType.NA, {
+      refreshQuery: "fn::pointron::goal::fetchQuickFocusItems::v2();",
+      dependencies: [
+        { resource: Item.PointGoal, syncType: DependencySyncType.EAGER },
+        { resource: Item.PointLog, syncType: DependencySyncType.DEFERRED }
+      ]
+    });
+    if (!this.get()) {
+      this.set({ items: [], filteredItems: [] });
+    }
+  }
+  filter(filters: { tag?: TagId | string; searchText?: string }) {
+    this.update((store) => {
       let filteredItems = filterGoals(store.items, filters);
       filteredItems = filteredItems.map((x) => {
         x.color = x.color ?? x.parent?.color;
@@ -381,53 +296,49 @@ function initQuickFocusItemStore() {
       store.filteredItems = filteredItems;
       return store;
     });
-  };
-  return {
-    subscribe,
-    set,
-    loader: (data: any) => {
-      logger.log("quickFocusItemStore loader", data);
-      if (!data || !isValidArray(data)) return;
-      update((store) => {
-        store.items = data;
-        filter({ tag: TagId.ALL, searchText: "" });
-        cache(store);
+  }
+  loader(data: any) {
+    logger.log("quickFocusItemStore loader", data);
+    if (!data || !isValidArray(data)) return;
+    this.update((store) => {
+      store.items = data;
+      return store;
+    });
+    this.filter({ tag: TagId.ALL, searchText: "" });
+    this.cache();
+  }
+  async refresh(filters: { tag?: TagId | string; searchText?: string }) {
+    logger.log("refreshing quickFocusItemStore");
+    super.refresh();
+    this.filter(filters);
+  }
+  propagateDependencyChanges(data: any) {
+    logger.log("propagateDependencyChanges to quickFocusItems store", data);
+    if (data?.id?.includes(Item.PointGoal) && data?.isPinnedForQuickStart) {
+      this.update((store) => {
+        let newGoal = data as PointGoalDbType;
+        let goalTransformed: QuickFocusItem = {
+          ...newGoal,
+          id: newGoal.id!,
+          color: newGoal.color ?? 0,
+          parent: { hierarchy: [], color: 0 }
+        };
+        store.items.push(goalTransformed as QuickFocusItem);
         return store;
       });
-    },
-    update,
-    filter: filter,
-    refresh: async (filters: { tag?: TagId | string; searchText?: string }) => {
-      logger.log("refreshing quickFocusItemStore");
-      await dataManager.refresh(quickFocusItemsStoreId);
-      filter(filters);
-    },
-    propagateDependencyChanges: (data: any) => {
-      logger.log("propagateDependencyChanges to quickFocusItems store", data);
-      if (data?.id?.includes(Item.PointGoal) && data?.isPinnedForQuickStart) {
-        update((store) => {
-          let newGoal = data as PointGoalDbType;
-          let goalTransformed: QuickFocusItem = {
-            ...newGoal,
-            id: newGoal.id!,
-            color: newGoal.color ?? 0,
-            parent: { hierarchy: [], color: 0 }
-          };
-          store.items.push(goalTransformed as QuickFocusItem);
-          filter({ tag: TagId.ALL, searchText: "" });
-          cache(store);
-          return store;
-        });
-      }
+      this.filter({ tag: TagId.ALL, searchText: "" });
+      this.cache();
     }
-  };
+  }
 }
+
+export const quickFocusItemStore = new QuickFocusItemStore();
 
 export const currentGoal = initCurrentGoalStore(seedGoal);
 
-function initCurrentGoalStore(initialValue: Goal) {
+function initCurrentGoalStore(initialValue: IGoal) {
   let previousValue: string;
-  let originalValue: Goal | undefined = undefined;
+  let originalValue: IGoal | undefined = undefined;
   const { subscribe, set: setRaw, update } = writable(initialValue);
   function isGoalNameValid(label: string) {
     if (!label) {
@@ -437,11 +348,11 @@ function initCurrentGoalStore(initialValue: Goal) {
     }
     return true;
   }
-  const set = (x: Goal) => {
+  const set = (x: IGoal) => {
     setRaw(x);
     previousValue = JSON.stringify(x);
   };
-  const persist = async (n: Partial<Goal>) => {
+  const persist = async (n: Partial<IGoal>) => {
     return new Persistence().update({ ...n, id: get(currentGoal).id });
   };
   const fetchGoal = async (id: string) => {
@@ -455,7 +366,7 @@ function initCurrentGoalStore(initialValue: Goal) {
   };
   return {
     subscribe,
-    set: async (newValue: Goal) => {
+    set: async (newValue: IGoal) => {
       console.log("currentGoal", { previousValue, newValue });
       let changedProperties: any = {};
       const propertiesToDelayUpdate = ["description", "label", "tags", "color"];
@@ -475,7 +386,7 @@ function initCurrentGoalStore(initialValue: Goal) {
           newValue.pendingChanges = false;
         }
         changesToSaveImmediately.forEach((key: string) => {
-          changedProperties[key] = newValue[key as keyof Goal];
+          changedProperties[key] = newValue[key as keyof IGoal];
         });
       }
       // console.log("currentGoal", {
@@ -503,7 +414,7 @@ function initCurrentGoalStore(initialValue: Goal) {
     },
     propagateChangesTemp,
     load: async (id: string) => {
-      let goal = get(goalStore).goals.find((x) => x.id === id);
+      let goal = goalStore.get().items.find((x) => x.id === id);
       if (!goal) {
         goal = await fetchGoal(id);
       }

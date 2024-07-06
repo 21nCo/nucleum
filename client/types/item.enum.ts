@@ -30,6 +30,7 @@ export enum Item {
   targetsPane = "targetsPane",
   focusHeatmap = "focusHeatmap",
   pointAnalyticsConfig = "pointAnalyticsConfig",
+  quickFocusItems = "quickFocusItems",
 
   //Memotron
   node = "node",

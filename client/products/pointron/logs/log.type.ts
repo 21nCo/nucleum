@@ -4,7 +4,7 @@ import type {
   FocusTask,
   IntervalBlock
 } from "$lib/client/types/pointron/session.type";
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
@@ -49,7 +49,7 @@ export type PointLogDbType = DbRecordBase & {
   targets?: { scale: TimeScale; target: number }[];
 };
 
-export interface PointLogStore extends ICacheableStore {
+export interface IPointLogStore extends IObservableStoreSubject {
   manualLogs: IManualSessionLogForm[];
   manualLogError?: string;
 }
@@ -65,7 +65,7 @@ export type IManualSessionLogForm = {
   notes: IMarkdown;
 };
 
-export interface LogsPaneStore extends ICacheableStore {
+export interface ILogsPaneStore extends IObservableStoreSubject {
   logs: LogThumbnail[];
   summary: DaySummary;
   date: Date;

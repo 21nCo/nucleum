@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
 
-  import type { UserGlobalPreferences } from "$lib/client/types/preferences.type";
+  import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
   import { removeDuplicatesById } from "$lib/client/utils/obj.utils";
   import view from "$lib/client/stores/view.store";
   import {

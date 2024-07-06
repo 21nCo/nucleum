@@ -9,7 +9,7 @@ import {
 import { heatMapColorRange } from "$lib/client/utils/theme.utils";
 import appearance from "../../stores/appearance.store";
 import type {
-  CalendarHeatMapDataProvider,
+  ICalendarHeatMapDataProvider,
   CalendarHeatmapOptions,
   DailyData,
   MonthlyData,
@@ -266,12 +266,12 @@ function convertToOriginalForm(data: any) {
   return originalData;
 }
 
-export class DataManager {
+export class CalendarHeatmapDataManager {
   defaultTarget = 9999999999;
-  provider: CalendarHeatMapDataProvider;
+  provider: ICalendarHeatMapDataProvider;
   options: CalendarHeatmapOptions;
   constructor(
-    provider: CalendarHeatMapDataProvider,
+    provider: ICalendarHeatMapDataProvider,
     options: CalendarHeatmapOptions
   ) {
     this.provider = provider;
@@ -318,9 +318,6 @@ export class DataManager {
       return { ...x, clusterIndex: 0 };
     });
     const nonZeroValues = inputData.filter((x) => x.value > 0);
-    console.log({
-      nonZeroValues
-    });
     if (!isValidArrayWithData(nonZeroValues)) {
       return inputData;
     } else if (
@@ -699,14 +696,15 @@ export class DataManager {
     endDate: Date
   ) {
     let apiResponse = await this.provider.fetchDailyJournal(startDate, endDate);
-    if (!apiResponse || !isValidArrayWithData(apiResponse))
-      { let prevEnd: any = data.splice(0, 1)[0];
-        let nextStart: any = data.splice(data.length - 1, 1)[0];
-        return {
-          dailyData: data,
-          prevEnd,
-          nextStart
-        };}
+    if (!apiResponse || !isValidArrayWithData(apiResponse)) {
+      let prevEnd: any = data.splice(0, 1)[0];
+      let nextStart: any = data.splice(data.length - 1, 1)[0];
+      return {
+        dailyData: data,
+        prevEnd,
+        nextStart
+      };
+    }
     const modified = data.map((x) => {
       let apiItem = apiResponse.find(
         (item: any) => item.date.split("T")[0] === x.date

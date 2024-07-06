@@ -5,33 +5,42 @@ import type { ISurrealDatabase } from "./db.type";
 /**
  * The operations which can be performed on a cacheable store
  */
-export interface ICacheableSvelteStore extends ICacheableStore, Writable<any> {
-    /**
+export interface IObservableStore<T extends IObservableStoreSubject>
+  extends IStore,
+    Writable<T> {}
+
+export interface IObservableStoreSubject {
+  /**
    * The state of the store when it is refreshing
    */
-    isRefreshing?: boolean;
-    /**
-     * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
-     */
-    isPageRefreshing?: boolean;
+  isRefreshing?: boolean;
+  /**
+   * The state of the store the page which this particular store is part of is refreshing - will be set when dataManager.refreshPage is triggered
+   */
+  isPageRefreshing?: boolean;
 }
 
 /**
- * The store which can be cached and retrieved
+ * Extensible interface for the store
  */
-export interface ICacheableStore {
+export interface IStore {
   /**
    * The unique identifier of the store which is used to cache and retrieve the store. see dataManager
    */
   id: string;
   /**
    * The type of data the store holds
-  */
- dataType: StoreDataType;
- /**
-  * The query to be used to refresh the store
-  */
- refreshQuery?: string;
+   */
+  dataType: StoreDataType;
+  /**
+   * The data in the store
+   * @returns the data in the store
+   */
+  get: () => any;
+  /**
+   * The query to be used to refresh the store
+   */
+  refreshQuery?: string;
   /**
    * The resources on which the store depends on
    */
@@ -53,9 +62,14 @@ export interface ICacheableStore {
    * When this is turned on, local storage is used to cache the store.
    */
   isSynchronousCache?: boolean;
+  /**
+   * Prevents the store from being persisted to remote database when the store is updated using $ syntax and therefore set method
+   */
+  isPreventAutoPersist?: boolean;
   loader?: (data: any) => void;
   search?: (query: string) => Promise<any>;
   resolveRefreshQuery?: () => string;
+  refresh?: (params?: any) => Promise<any>;
   propagateDependencyChanges?: (params: any) => void;
 }
 
@@ -76,13 +90,13 @@ export enum StoreDataType {
    */
   FCR = "FCR",
   /**
-   * Key Value Object
+   * Key Value Object - cached and persisted to remote database
    */
   KVO = "KVO",
   /**
-   * Non persisting data
+   * Not Applicable - Non persisting Client store for UI state management
    */
-  NON_PERSISTING = "NON_PERSISTING"
+  NA = "NA"
 }
 
 /**
@@ -105,7 +119,7 @@ export enum CacheStrategy {
 export interface DataManager {
   cacheSource: CacheSource;
   db: ISurrealDatabase;
-  cacheableStoresTable: ICacheableStore[];
+  cacheableStoresTable: IStore[];
 }
 
 /**
@@ -114,7 +128,7 @@ export interface DataManager {
 export interface CacheSource {
   dexie: LocalDexie;
   initialize: () => void;
-  cacheStore: (store: ICacheableStore, strategy: CacheStrategy) => void;
+  cacheStore: (id: string, data: any, strategy: CacheStrategy) => void;
   retrieveCache: (storeId: string) => Promise<any>;
   fetchClientMutationMap: () => Promise<any>;
   updateClientMutationMap: (clientMutationMap: Record<string, number>) => void;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Goal } from "$lib/client/types/pointron/goal.type";
+  import type { IGoal } from "$lib/client/types/pointron/goal.type";
   import { GeneralVariants } from "$lib/client/types/generalVariants.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
 

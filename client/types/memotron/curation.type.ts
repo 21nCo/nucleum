@@ -1,4 +1,4 @@
-import type { ICacheableStore } from "../data.type";
+import type { IStore } from "../data.type";
 import type { IMemotronItemBase } from "./common.type";
 import type { INodeThumbnail, NodeThumbnailVariant } from "./node.type";
 import type { IType } from "./type.type";
@@ -105,4 +105,4 @@ export type CurationLocalRecord = ICurationBase & {
   type: CurationType;
 };
 
-export interface ICurationStore extends ICacheableStore {}
+export interface ICurationStore extends IStore {}

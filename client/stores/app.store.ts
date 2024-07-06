@@ -7,14 +7,14 @@ import {
   UIState,
   type UIStateProps,
   type UserAppearanceSettings,
-  type UserGlobalPreferences
+  type IUserGlobalPreferences
 } from "$lib/client/types/preferences.type";
 import blankJson from "$lib/client/data/blank.json";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Item } from "$lib/client/types/item.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import type { ICacheableStore } from "../types/data.type";
+import type { IStore } from "../types/data.type";
 import {
   ActionType,
   ResourceAccessMode,
@@ -177,10 +177,10 @@ class DboVersionStore extends KeyValueStore<{ version: number }> {
     );
   }
   setVersion = (version: number) => {
-    this.modify({ version }, {isPersist: false});
+    this.modify({ version }, { isPersist: false });
   };
   async runDboUpdate(fromVersion: number | undefined = undefined) {
-    const version = get(this.store).version;
+    const version = get(this.subject).version;
     const response = await new Persistence().updateDbo(fromVersion ?? version);
     if (response?.version) {
       this.setVersion(response.version);
@@ -194,7 +194,7 @@ export const dboVersion = new DboVersionStore();
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
 
-export const seedUserPreferences: UserGlobalPreferences = {
+export const seedUserPreferences: IUserGlobalPreferences = {
   nickName: "",
   dayStartHour: 0,
   dayStartMinute: 0,
@@ -240,14 +240,14 @@ export const seedUserPreferences: UserGlobalPreferences = {
   }
 };
 
-class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
+class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
     super(Item.globalPreferences, seedUserPreferences, {
       priorityRefreshOnAppAppear: true,
       isSynchronousCache: true
     });
   }
-  loader(data: UserGlobalPreferences) {
+  loader(data: IUserGlobalPreferences) {
     if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
     if (!data.avatarPicker)
       data.avatarPicker = seedUserPreferences.avatarPicker;
@@ -259,10 +259,10 @@ class UserPreferencesStore extends KeyValueStore<UserGlobalPreferences> {
     const val = {
       ...data
     };
-    this.modify(val, {isPersist: false});
+    this.modify(val, { isPersist: false });
   }
   setAppearance(x: UserAppearanceSettings) {
-    const n = get(this.store);
+    const n = get(this.subject);
     const appearance = { ...n.appearance, ...x };
     this.modify({ appearance });
   }
@@ -543,7 +543,9 @@ function initAppStore(seed: AppStore) {
     if (!config) return;
     const dev = import.meta.env?.DEV;
     const host =
-      ctx.isEmbed || dev ? import.meta.env?.VITE_HOST : window.location.hostname;
+      ctx.isEmbed || dev
+        ? import.meta.env?.VITE_HOST
+        : window.location.hostname;
     const redirect = ctx.isEmbed
       ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
@@ -794,11 +796,6 @@ function initAppStore(seed: AppStore) {
       settingsAsModal: IAction[],
       settingsAsPages: IAction[]
     ) => {
-      console.log("init actions", {
-        actions,
-        settingsAsModal,
-        settingsAsPages
-      });
       const isInPortraitMode = get(view).isPortrait;
       update((n: AppStore) => {
         if (!n.actions) n.actions = [];
@@ -845,7 +842,4 @@ function initEditModeStore() {
     }
   };
 }
-export const cacheableStores: ICacheableStore[] = [
-  userPreferences,
-  dboVersion
-];
+export const cacheableStores: IStore[] = [userPreferences, dboVersion];

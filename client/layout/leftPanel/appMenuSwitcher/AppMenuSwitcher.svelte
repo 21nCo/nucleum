@@ -16,7 +16,6 @@
     appMenuStore.subscribe((x: IAppMenuStore) => {
       pages = [];
       let items = [];
-      console.log("appMenu", x?.menu);
       if (!x?.menu) return;
       const app = $appStore.product;
       const contextualMenu = x.menu[app];

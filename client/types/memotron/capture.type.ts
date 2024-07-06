@@ -1,5 +1,5 @@
 import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
 import type {
   LinkThumbnail,
@@ -17,7 +17,7 @@ export enum CaptureType {
   UPLOAD = "UPLOAD"
 }
 
-export type ICaptureStore = ICacheableStore & {
+export type ICaptureStore = IObservableStoreSubject & {
   label: string | null;
   /**
    * @deprecated

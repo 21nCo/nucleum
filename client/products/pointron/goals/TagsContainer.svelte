@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tagStore } from "$lib/client/products/pointron/pointron.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import type { Tag } from "$lib/client/types/pointron/tag.type";
+  import type { ITag } from "$lib/client/types/pointron/tag.type";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import TagItem from "$lib/client/elements/TagItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -12,7 +12,7 @@
   const dispatch = createEventDispatcher();
   export let selectedTagId: TagId | string;
   export let isShowAddTag: boolean = false;
-  let tagList: Tag[] = [];
+  let tagList: ITag[] = [];
   function handleTagClick(e: any) {
     // console.log(e.detail);
     selectedTagId = e.detail.id;
@@ -32,13 +32,13 @@
     ];
   }
 
-  async function mapTagList(allTagsWithHash: Tag[]) {
+  async function mapTagList(allTagsWithHash: ITag[]) {
     const defaultTagList = getDefaultTags();
     tagList = [...defaultTagList, ...allTagsWithHash];
   }
 
   $: {
-    mapTagList($tagStore.tags);
+    mapTagList($tagStore.items);
   }
 </script>
 

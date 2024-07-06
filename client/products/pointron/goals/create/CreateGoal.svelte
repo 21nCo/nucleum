@@ -1,21 +1,19 @@
 <script lang="ts">
-  import {
-    goalEditErrorMessage,
-    newGoalStore
-  } from "$lib/client/products/pointron/goals/goal.store";
+  import { goalEditErrorMessage } from "$lib/client/products/pointron/goals/goal.store";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import NewGoalForm from "./NewGoalForm.svelte";
   import { page } from "$app/stores";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { newGoal } from "./store";
   export let isPinToQuickFocus: boolean = false;
-  newGoalStore.reset();
+  newGoal.reset();
   let isPinToQuickFocusParam = $page.url.searchParams.get("isPinToQuickFocus");
   if (isPinToQuickFocusParam) {
     isPinToQuickFocus = isPinToQuickFocusParam === "true";
   }
-  $newGoalStore.goal.isPinnedForQuickStart = isPinToQuickFocus;
+  $newGoal.isPinnedForQuickStart = isPinToQuickFocus;
   function close() {
     modalEvent.hideSpecific(PointronAction.CREATE_EDIT_GOAL);
   }
@@ -32,14 +30,14 @@
       primaryAction={{
         label: "Save",
         callback: async () => {
-          await newGoalStore.save();
+          await newGoal.save();
           if (!$goalEditErrorMessage) close();
         }
       }}
       secondaryAction={{
         label: "Discard",
         callback: async () => {
-          newGoalStore.reset();
+          newGoal.reset();
           close();
         }
       }}

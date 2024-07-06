@@ -1,5 +1,8 @@
 import type { LocalDbRecord } from "$local/local";
-import type { TimeZoneRecord, UserGlobalPreferences } from "./preferences.type";
+import type {
+  TimeZoneRecord,
+  IUserGlobalPreferences
+} from "./preferences.type";
 
 export interface DbRecordBase {
   id?: string;
@@ -11,5 +14,5 @@ export interface DbRecordWithLabel extends DbRecordBase {
   label: string;
 }
 
-export type GlobalDbRecord = TimeZoneRecord | UserGlobalPreferences;
+export type GlobalDbRecord = TimeZoneRecord | IUserGlobalPreferences;
 export type DbRecord = DbRecordBase & (GlobalDbRecord | LocalDbRecord);

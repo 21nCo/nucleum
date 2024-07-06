@@ -1,10 +1,10 @@
 import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
 import type { SessionState } from "./sessionState.enum";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { SessionType } from "$lib/client/products/pointron/logs/log.type";
 
-export type SessionStore = ICacheableStore & {
+export type ISessionStore = IObservableStoreSubject & {
   currentSessionId: string | undefined;
   type: SessionType;
   state: SessionState;
@@ -24,7 +24,6 @@ export type SessionStore = ICacheableStore & {
   currentBlock: CurrentBlock;
   currentIdle: number;
   isSessionRunning: boolean;
-  id: string;
   preventSliderReverseEventTemp?: boolean;
   widgetSnapshot?: any;
   timeRemainingToTakeBreak?: number;
@@ -103,6 +102,6 @@ export enum IntervalBarContext {
   DEFAULT = "DEFAULT"
 }
 
-export interface FocusItemsStore extends ICacheableStore {
+export interface IFocusItemsStore extends IObservableStoreSubject {
   items: FocusItem[];
 }

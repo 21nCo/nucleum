@@ -1,7 +1,7 @@
-import type { ICacheableStore } from "$lib/client/types/data.type";
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { TimePeriod } from "$lib/client/types/time.type";
 
-export type AnalyticsConfigStore = ICacheableStore & {
+export type IAnalyticsConfigStore = IObservableStoreSubject & {
   pages: AnalyticsPage[];
   isIncludeBreakInAnalytics: boolean;
 };

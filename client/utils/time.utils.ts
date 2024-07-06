@@ -6,7 +6,7 @@ import {
 } from "$lib/client/types/time.type";
 import moment from "moment-timezone";
 import type { UserDate } from "$lib/client/types/userDate.type";
-import type { UserGlobalPreferences } from "$lib/client/types/preferences.type";
+import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
 
 const months = [
   "Jan",
@@ -25,7 +25,7 @@ const months = [
 
 const locale = navigator.language || navigator.languages[0];
 export function formatTime(
-  userPreferences: UserGlobalPreferences,
+  userPreferences: IUserGlobalPreferences,
   date: Date,
   format: string | undefined = undefined
 ) {
@@ -514,7 +514,7 @@ export function attachTimeToDate(date: Date, time: string) {
 }
 
 export function formatDatetime(
-  userPreferences: UserGlobalPreferences,
+  userPreferences: IUserGlobalPreferences,
   date: Date
 ) {
   const formattedDate = formatDate(date);

@@ -8,7 +8,7 @@
   let modalRef: any;
   async function onAdd() {
     if (!label) return;
-    await tagStore.create(label);
+    await tagStore.create({ label });
   }
 </script>
 

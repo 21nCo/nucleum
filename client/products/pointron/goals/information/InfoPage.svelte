@@ -15,7 +15,9 @@
   import SubGoalList from "../subGoals/SubGoalList.svelte";
   import GoalInsightsCard from "./GoalInsightsCard.svelte";
   import GoalAnalytics from "../../analytics/goalAnalytics/GoalAnalytics.svelte";
-  $: goalTags = $tagStore.tags.filter((x) => $currentGoal.tags?.includes(x.id));
+  $: goalTags = $tagStore.items.filter((x) =>
+    $currentGoal.tags?.includes(x.id)
+  );
   let labelProps: Partial<InputLabel> = { orientation: Orientation.Vertical };
 </script>
 
@@ -39,7 +41,7 @@
         placeholder={$currentGoal.tags?.length
           ? "type to add"
           : "start typing to add tags"}
-        options={$tagStore.tags}
+        options={$tagStore.items}
       />
     {:else}
       <div class="text-b2 text-fgs3 flex gap-4 justify-between">

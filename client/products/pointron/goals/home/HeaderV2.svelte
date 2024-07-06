@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
-  import type { Goal } from "$lib/client/types/pointron/goal.type";
+  import type { IGoal } from "$lib/client/types/pointron/goal.type";
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { isInEditMode } from "$lib/client/stores/app.store";
@@ -14,7 +14,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   let parentBreadcrumbs: BreadcrumbItem[] = [];
   $: refresh($currentGoal);
-  function refresh(goal: Goal) {
+  function refresh(goal: IGoal) {
     parentBreadcrumbs = [];
     let parentHierarchy = [];
     parentHierarchy =
