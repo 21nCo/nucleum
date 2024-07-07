@@ -10,6 +10,7 @@ export type IPopoverOptions = {
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
   isPlaceAtCaret?: boolean;
+  isUseAbsolutePositioning?: boolean;
 };
 
 export type IPopoverRenderParams = {
