@@ -2,6 +2,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import Linkbox from "$lib/client/products/memotron/common/linkbox/Linkbox.svelte";
+  import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
@@ -26,7 +27,7 @@
     }
     closeActionTimestamp = Date.now();
     closeTimer = setTimeout(() => {
-      isShown = false;
+      // isShown = false;
     }, 5000);
   }
   setInterval(() => {
@@ -66,11 +67,8 @@
         {/if}
       </span>
     </div>
-    <div class="h-8 w-full border-2 border-brs2 text-bgs4 rounded-md">
-      <!-- Link box -->
-      <span class="px-2"> sample link box </span>
-    </div>
-    <Linkbox />
+    <!-- <Linkbox /> -->
+    <LinkBoxOnClipper />
   </div>
   <!-- <div>
     isHovering: {isHovering}

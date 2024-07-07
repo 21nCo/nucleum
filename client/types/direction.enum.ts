@@ -6,7 +6,9 @@ export enum Position {
   BottomLeft = "bottom-left",
   BottomRight = "bottom-right",
   TopLeft = "top-left",
-  TopRight = "top-right"
+  TopRight = "top-right",
+  BottomCenter = "bottom-center",
+  TopCenter = "top-center",
 }
 
 export enum Orientation {
