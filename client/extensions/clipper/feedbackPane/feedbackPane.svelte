@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import Linkbox from "$lib/client/products/memotron/common/linkbox/Linkbox.svelte";
+  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -27,7 +27,7 @@
     }
     closeActionTimestamp = Date.now();
     closeTimer = setTimeout(() => {
-      // isShown = false;
+      isShown = false;
     }, 5000);
   }
   setInterval(() => {
@@ -40,7 +40,7 @@
   bind:isHovering
   on:hover={onHover}
   class={cn(
-    "fixed w-80 flex flex-col p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
+    "fixed w-80 flex flex-col gap-3 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
       "right-16 top-1/2 transform -translate-y-1/2 space-y-1.5":
         toolbarPosition === Position.Right,
@@ -48,10 +48,18 @@
     }
   )}
 >
-  <div class="flex flex-col gap-2">
-    <div class="flex w-full justify-between">
-      <span class="text-fgs2"> Link this page </span>
-      <span>
+  <div class="flex flex-col gap-1">
+    <div class="flex w-full justify-between items-center">
+      <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
+      <FormControlLabel
+        props={{
+          label: "Link this page",
+          tooltip: {
+            body: "Link this web page to a node or add it to a collection by searching and clicking"
+          }
+        }}
+      />
+      <span class="h-6 w-6 flex justify-center items-center">
         {#if isHovering}
           <Button
             icon="cross-circled"
@@ -61,14 +69,15 @@
           />
         {:else}
           <!-- TODO closing animation circle -->
-          <span class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1">
+          <span
+            class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"
+          >
             {countdown}
           </span>
         {/if}
       </span>
     </div>
-    <!-- <Linkbox /> -->
-    <LinkBoxOnClipper />
+    <LinkBoxOnClipper {toolbarPosition} />
   </div>
   <!-- <div>
     isHovering: {isHovering}

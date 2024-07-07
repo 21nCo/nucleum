@@ -4,7 +4,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import type { DailyData, MonthlyData } from "./calendarHeatmap.types";
   import { CalendarHeatMapLayout } from "./calendarHeatmap.store";
 
@@ -69,7 +69,11 @@
     resolveToolTip();
     setTimeout(() => {
       if (tooltip && toolTipRef) {
-        renderPopoverv2(tileRef, toolTipRef, Position.Right);
+        renderPopover({
+          triggerRef: tileRef,
+          popRef: toolTipRef,
+          placement: Position.Right
+        });
       }
     }, 100);
   }}

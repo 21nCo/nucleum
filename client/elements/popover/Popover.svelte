@@ -4,11 +4,7 @@
     IPopoverOptions,
     IPopoverRenderParams
   } from "$lib/client/types/popover.type";
-  import {
-    renderPopoverAtCaretPosition,
-    renderPopoverUsingAbsolutePositioning,
-    renderPopoverv2
-  } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
@@ -53,29 +49,12 @@
   }
   export function show() {
     const config: IPopoverRenderParams = {
+      ...options,
+      triggerRef: triggerRef,
       popRef: popOverRef,
-      placement: options.placement ?? placement ?? Position.BottomCenter,
-      offsetInPx: options.offsetInPx ?? 2,
-      isSpanToTriggerWidth: options.isSpanToTriggerWidth ?? false,
-      triggerRect: triggerRef.getBoundingClientRect()
+      placement: options.placement ?? placement ?? Position.BottomCenter
     };
-    if (options.isUseAbsolutePositioning) {
-      return renderPopoverUsingAbsolutePositioning({
-        ...config
-      });
-    } else if (options.isPlaceAtCaret) {
-      return renderPopoverAtCaretPosition({
-        ...config
-      });
-    } else {
-      renderPopoverv2(
-        triggerRef,
-        popOverRef,
-        config.placement,
-        options.isSpanToTriggerWidth ?? false,
-        options.offsetInPx ?? 2
-      );
-    }
+    renderPopover(config);
   }
   export function hide() {
     // console.log("hiding", { id: options.id });

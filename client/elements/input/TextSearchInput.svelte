@@ -9,6 +9,7 @@
   } from "$lib/client/types/input.type";
   import Icon from "../Icon.svelte";
   import { Position } from "$lib/client/types/direction.enum";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let id: string = "";
   export let placeholder: string | undefined = undefined;
@@ -23,7 +24,7 @@
   export let searchResultComponent: any = undefined;
   let isFocused: boolean = false;
   let inputClasses: string =
-    "text-input w-full bg-transparent focus:outline-none focus:border-none";
+    "text-input w-full bg-transparent focus:outline-none focus:border-none placeholder:font-light placeholder:text-fgs3 placeholder:text-b2";
   let inputRef: any;
   let popoverRef: any;
   let searchResultsPopover: any;
@@ -80,7 +81,7 @@
   class="w-full flex gap-2"
 >
   {#if icon}
-    <Icon {icon} />
+    <Icon {icon} class="stroke-fgs3" size={Size.sm} />
   {/if}
   <input
     {id}
@@ -115,11 +116,3 @@
     />
   </slot>
 </InputBaseElement>
-
-<style>
-  input::placeholder {
-    font-weight: lighter;
-    /* font-style: italic; */
-    color: rgba(var(--colors-fgs2), 0.5);
-  }
-</style>

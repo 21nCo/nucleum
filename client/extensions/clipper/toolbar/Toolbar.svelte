@@ -14,8 +14,13 @@
   export let position: Position.Right | Position.Left | Position.Bottom =
     Position.Right;
   let isAutoHighlighterExpanded = false;
-  let buttonParams = {
-    toolTipPlacement: Position.Left
+  $: buttonParams = {
+    tooltipOptions: {
+      placement:
+        position === Position.Bottom ? Position.TopCenter : Position.Left,
+      isUseAbsolutePositioning: true,
+      offsetInPx: 8
+    }
   };
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (
@@ -129,6 +134,26 @@
         : Orientation.Horizontal}
     />
   </div>
+  <Button
+    icon="home"
+    tooltip="Open Side bar"
+    {...buttonParams}
+    on:click={() => {
+      //Open sidebar
+    }}
+  />
+  <Button
+    icon={position === Position.Right ? "arrow-down-left" : "arrow-up-right"}
+    tooltip={position === Position.Right ? "Move to bottom" : "Move to right"}
+    {...buttonParams}
+    on:click={() => {
+      if (position === Position.Right) {
+        position = Position.Bottom;
+      } else if (position === Position.Bottom) {
+        position = Position.Right;
+      }
+    }}
+  />
   <Button
     icon="cross-circled"
     tooltip="Collapse"
