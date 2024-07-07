@@ -1,18 +1,16 @@
 <script lang="ts">
-  import {
-    renderPopoverv2,
-    resolveHoverState
-  } from "$lib/client/utils/browser.utils";
+  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import Tooltip from "./Tooltip.svelte";
   import { Position } from "$lib/client/types/direction.enum";
+  import HoverableElement from "../HoverableElement.svelte";
   export let text: string = "";
   export let tooltip: string | undefined = undefined;
   export let delay: number = 1500;
   export let id: string = "";
   export let truncateLength: number | undefined = undefined;
-  let textRef: HTMLSpanElement;
+  let textRef: any;
   let toolTipRef: any;
   let timer: any;
   let classList: string = "";
@@ -21,8 +19,7 @@
    */
   export let isHovering: boolean = false;
   export { classList as class };
-  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
-    isHovering = resolveHoverState(event);
+  const onHover = (event: any) => {
     clearTimeout(timer);
     if (!isHovering) {
       hideToolTip();
@@ -40,18 +37,16 @@
       toolTipRef.style.display = "none";
   }
   function showToolTip() {
-    renderPopoverv2(textRef, toolTipRef, Position.Bottom);
+    renderPopoverv2(textRef, toolTipRef, Position.BottomCenter);
   }
 </script>
 
-<span
+<HoverableElement
   {id}
   bind:this={textRef}
   class={cn(classList, "relative")}
-  on:mouseover={toggleHoveringState}
-  on:mouseleave={toggleHoveringState}
-  on:focus={toggleHoveringState}
-  on:blur={toggleHoveringState}
+  bind:isHovering
+  on:hover={onHover}
 >
   {truncateLength != undefined
     ? text.slice(0, truncateLength) +
@@ -60,4 +55,4 @@
   <span bind:this={toolTipRef} class="tooltip">
     <Tooltip tooltip={tooltip ?? text} />
   </span>
-</span>
+</HoverableElement>

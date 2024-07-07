@@ -66,7 +66,7 @@ export function renderPopoverAtCaretPosition(
 export function renderPopoverv2(
   parentRef: HTMLElement,
   popRef: HTMLElement,
-  location: Position = Position.Bottom,
+  location: Position = Position.BottomCenter,
   isSpanToTriggerWidth = false,
   offsetInPx = 2
 ) {
@@ -96,22 +96,27 @@ async function _renderPopover(params: IPopoverRenderParams) {
   if (triggerRect.top < popRect.height) {
     if (placement === Position.TopLeft) placement = Position.BottomLeft;
     else if (placement === Position.TopRight) placement = Position.BottomRight;
-    else if (placement === Position.Top) placement = Position.Bottom;
+    else if (placement === Position.TopCenter) placement = Position.BottomCenter;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
-    if (placement === Position.Bottom) placement = Position.Top;
+    if (placement === Position.BottomCenter) placement = Position.TopCenter;
     else if (placement === Position.BottomLeft) placement = Position.TopLeft;
     else if (placement === Position.BottomRight) placement = Position.TopRight;
   }
-  if (documentWidth - triggerRect.right < popRect.width) {
-    if (placement === Position.Right) placement = Position.Left;
-    if (placement === Position.Bottom) placement = Position.BottomRight;
-    if (placement === Position.Top) placement = Position.TopRight;
+  if (triggerRect.top < popRect.height && documentHeight - triggerRect.bottom < popRect.height) {
+    placement = Position.Left;
   }
-  if (triggerRect.left < popRect.width) {
-    if (placement === Position.Left) placement = Position.Right;
-    if (placement === Position.Bottom) placement = Position.BottomLeft;
-    if (placement === Position.Top) placement = Position.TopLeft;
+  if (!isSpanToTriggerWidth) {
+    if (documentWidth - triggerRect.right < popRect.width) {
+      if (placement === Position.Right) placement = Position.Left;
+      if (placement === Position.BottomCenter) placement = Position.BottomRight;
+      if (placement === Position.TopCenter) placement = Position.TopRight;
+    }
+    if (triggerRect.left < popRect.width) {
+      if (placement === Position.Left) placement = Position.Right;
+      if (placement === Position.BottomCenter) placement = Position.BottomLeft;
+      if (placement === Position.TopCenter) placement = Position.TopLeft;
+    }
   }
 
   if (placement === Position.BottomLeft || placement === Position.TopLeft) {
@@ -127,14 +132,14 @@ async function _renderPopover(params: IPopoverRenderParams) {
   if (
     placement === Position.TopLeft ||
     placement === Position.TopRight ||
-    placement === Position.Top
+    placement === Position.TopCenter
   ) {
     popRef.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
     popRef.style.top = "";
   } else if (
     placement === Position.BottomLeft ||
     placement === Position.BottomRight ||
-    placement === Position.Bottom
+    placement === Position.BottomCenter
   ) {
     popRef.style.top = `${triggerRect.bottom + offsetInPx}px`;
     popRef.style.bottom = "";
@@ -144,18 +149,47 @@ async function _renderPopover(params: IPopoverRenderParams) {
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
   } else if (placement === Position.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
-  } else if (placement === Position.Top || placement === Position.Bottom) {
-    popRef.style.left = `${triggerRect.left}px`;
+  } else if (placement === Position.TopCenter || placement === Position.BottomCenter) {
+    popRef.style.left = `${triggerRect.left - ((popRect.width / 2) - (triggerRect.width / 2))}px`;
   }
   popRect = popRef.getBoundingClientRect();
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  // console.log({ triggerRect, popRect, placement, documentWidth });
+  // console.log({ triggerRect, popRect, placement, documentWidth, documentHeight });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";
   }
+  if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
+  popRef.style.opacity = "1";
+}
+
+
+export function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
+
+  let { triggerRect, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
+    params;
+    popRef.style.display = "block";
+  popRef.style.opacity = "0";
+  popRef.style.position = "absolute";
+  switch (placement) { 
+    case Position.TopCenter:
+      popRef.style.bottom = `${offsetInPx}px`;
+      popRef.style.top = "";
+      break;
+    case Position.BottomCenter:
+      popRef.style.top = `${triggerRect.height + offsetInPx}px`;
+      popRef.style.bottom = "";
+      break;
+    case Position.Left:
+      // TODO
+      break;
+    case Position.Right:
+      // TODO
+      break;
+  }
+  console.log("absolute positioning",{ triggerRect, placement });
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
   popRef.style.opacity = "1";
 }
