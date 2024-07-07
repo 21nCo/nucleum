@@ -18,8 +18,8 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
-  import { curationStore } from "./curation.store";
-  curationStore.refresh();
+  import { collectionStore } from "./collection/collection.store";
+  collectionStore.refresh();
   let searchQuery: string = "";
   // let curations: CurationThumbnail[] = [];
   let curations = liveQuery(() =>

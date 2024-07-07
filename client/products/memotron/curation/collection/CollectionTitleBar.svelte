@@ -3,7 +3,7 @@
   import { CurationType } from "$lib/client/types/memotron/curation.type";
   import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { createEventDispatcher } from "svelte";
-  import type { IActiveCollectionStore } from "../curation.store";
+  import type { IActiveCollectionStore } from "./collection.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { isInEditMode } from "$lib/client/stores/app.store";

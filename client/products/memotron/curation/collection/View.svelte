@@ -4,7 +4,7 @@
   import {
     CollectionLayout,
     type ICollectionView
-  } from "$lib/client/types/memotron/curation.type";
+  } from "$lib/client/types/memotron/collection.type";
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";

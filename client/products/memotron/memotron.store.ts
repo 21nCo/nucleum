@@ -60,8 +60,7 @@ export async function searchForLinking(query: string) {
   //   .anyOfIgnoreCase(query)
   //   .and((collection) => collection.type === CurationType.COLLECTION)
   //   .toArray();
-  const collectionsPromise = dexie.curation
-    .where({ type: CurationType.COLLECTION })
+  const collectionsPromise = dexie.collection
     .filter(activeResourceFilter)
     .filter((collection) =>
       collection.label.toLowerCase().includes(query.toLowerCase())

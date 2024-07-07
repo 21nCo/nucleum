@@ -1,10 +1,6 @@
 import {
-  CollectionLayout,
   CombinationViewType,
   CurationType,
-  type IActiveCollection,
-  type ICollectionView,
-  type ICurationCreationForm,
 } from "$lib/client/types/memotron/curation.type";
 import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
@@ -18,13 +14,14 @@ import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.
 import { Persistence } from "$lib/client/persistence/persistence";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { CollectionLayout, type IActiveCollection, type ICollectionView, type ICurationCreationForm } from "$lib/client/types/memotron/collection.type";
 
 const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-class CurationStore extends ResourceStore {
+class CollectionStore extends ResourceStore {
   db: ISurrealDatabase
   constructor() {
-    super(Item.curation, currentUserId, {
+    super(Item.collection, currentUserId, {
       priorityRefreshOnAppAppear: true,
       refreshQuery: "return fn::memotron::curation::fetchAll($since);",
     });
@@ -35,9 +32,7 @@ class CurationStore extends ResourceStore {
       {
         id: prefixTable(
           generateUID(),
-          resource.type === CurationType.COLLECTION
-            ? Item.collection
-            : Item.combination
+          Item.collection
         ),
         ...resource
       },
@@ -71,14 +66,14 @@ class CurationStore extends ResourceStore {
   }
 }
 
-export const curationStore = new CurationStore();
+export const collectionStore = new CollectionStore();
 
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 /**
  * Curation stores map for holding the state of active i.e. currently open curations in the UI
  */
-const activeCurationStores = new Map<string, IActiveCollectionStore>();
+const activeCollectionStoreMap = new Map<string, IActiveCollectionStore>();
 
 /**
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
@@ -87,10 +82,10 @@ const activeCurationStores = new Map<string, IActiveCollectionStore>();
  * @returns The active curation store
  */
 export function resolveActiveCollectionStore(id: string, context: string = "") {
-  if (!activeCurationStores.has(id)) {
-    activeCurationStores.set(id, new ActiveCollectionStore(id));
+  if (!activeCollectionStoreMap.has(id)) {
+    activeCollectionStoreMap.set(id, new ActiveCollectionStore(id));
   }
-  let val = activeCurationStores.get(id);
+  let val = activeCollectionStoreMap.get(id);
   return val!;
 }
 
@@ -107,7 +102,7 @@ export function determineCurationType(id: string) {
 }
 
 
-class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, CurationStore> {
+class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, CollectionStore> {
 
   debouncedPersistView = debouncer((view: ICollectionView) => {
     new Persistence().update(view);
@@ -115,7 +110,7 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Curat
 
 
   constructor(collectionId: string) {
-    super(collectionId, curationStore, currentUserId);
+    super(collectionId, collectionStore, currentUserId);
   }
 
   async init(viewId?: string) {
@@ -250,7 +245,7 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Curat
     this.debouncedPersistView(view);
   }
 
-  async refreshViewData (viewId: string) {
+  async refreshViewData(viewId: string) {
     this.update((val: IActiveCollection) => {
       val.isRefreshing = true;
       return val;

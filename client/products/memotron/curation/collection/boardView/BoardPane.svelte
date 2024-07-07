@@ -3,7 +3,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
+  import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import type { ISelectValue } from "$lib/client/types/select.type";

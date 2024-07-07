@@ -7,9 +7,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { store, toolbarState } from "../contentScripts/store";
   const dispatch = createEventDispatcher();
   export let colors: string[] = [];
-  export let page: any;
   export let activeColor: string | null = null;
   export let position: Position.Right | Position.Left | Position.Bottom =
     Position.Right;
@@ -27,7 +27,7 @@
       message.event === ClipperExtensionEvent.PAGE_SAVING_STATUS &&
       message.node
     ) {
-      page = { id: message.node };
+      $store.id = message.node;
     }
   });
   function toggleAutoHighligher() {
@@ -39,7 +39,6 @@
   }
 </script>
 
-<!-- TODO - tooltip rendering incorrectly -->
 <div
   class={cn(
     "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
@@ -51,7 +50,7 @@
     }
   )}
 >
-  {#if page?.id}
+  {#if $store?.id}
     <button
       class="flex border border-transparent outline-dotted outline-fgs2 hover:outline-aps1 rounded-full"
     >
@@ -147,11 +146,13 @@
     tooltip={position === Position.Right ? "Move to bottom" : "Move to right"}
     {...buttonParams}
     on:click={() => {
+      let val;
       if (position === Position.Right) {
-        position = Position.Bottom;
+        val = Position.Bottom;
       } else if (position === Position.Bottom) {
-        position = Position.Right;
+        val = Position.Right;
       }
+      toolbarState.changePosition(val);
     }}
   />
   <Button
