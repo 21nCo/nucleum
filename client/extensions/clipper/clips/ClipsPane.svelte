@@ -14,7 +14,7 @@
   import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
   import TextClip from "./TextClip.svelte";
   import VideoTimestampClip from "./VideoTimestampClip.svelte";
-  import "~style.css";
+  // import "~style.css";
   let timestampData = [];
   let textData = [];
   let clips: Clip[] = [];

@@ -1,8 +1,12 @@
 <script lang="ts">
   import { Position } from "$lib/client/types/direction.enum";
-  import type { IPopoverOptions } from "$lib/client/types/popover.type";
+  import type {
+    IPopoverOptions,
+    IPopoverRenderParams
+  } from "$lib/client/types/popover.type";
   import {
     renderPopoverAtCaretPosition,
+    renderPopoverUsingAbsolutePositioning,
     renderPopoverv2
   } from "$lib/client/utils/browser.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
@@ -13,7 +17,7 @@
    * @deprecated
    * Use options instead.
    */
-  export let placement: Position = Position.Bottom;
+  export let placement: Position = Position.BottomCenter;
   export let triggerClass: string = "";
   export let isPreventDefault: boolean = false;
   export let isPreventDefaultStyling: boolean = false;
@@ -23,9 +27,10 @@
     id: generateUID(),
     isPreventDefaultStyling: false,
     parentBgIndex: 0,
-    placement: Position.Bottom,
+    placement: Position.BottomCenter,
     isSpanToTriggerWidth: false,
-    offsetInPx: 2
+    offsetInPx: 2,
+    isUseAbsolutePositioning: false
   };
   export let options: IPopoverOptions = defaultOptions;
   if (!options.id) options.id = defaultOptions.id;
@@ -47,17 +52,26 @@
     } else hide();
   }
   export function show() {
-    if (options.isPlaceAtCaret) {
+    const config: IPopoverRenderParams = {
+      popRef: popOverRef,
+      placement: options.placement ?? placement ?? Position.BottomCenter,
+      offsetInPx: options.offsetInPx ?? 2,
+      isSpanToTriggerWidth: options.isSpanToTriggerWidth ?? false,
+      triggerRect: triggerRef.getBoundingClientRect()
+    };
+    if (options.isUseAbsolutePositioning) {
+      return renderPopoverUsingAbsolutePositioning({
+        ...config
+      });
+    } else if (options.isPlaceAtCaret) {
       return renderPopoverAtCaretPosition({
-        popRef: popOverRef,
-        placement: options.placement ?? placement ?? Position.Bottom,
-        offsetInPx: options.offsetInPx ?? 2
+        ...config
       });
     } else {
       renderPopoverv2(
         triggerRef,
         popOverRef,
-        options.placement ?? placement ?? Position.Bottom,
+        config.placement,
         options.isSpanToTriggerWidth ?? false,
         options.offsetInPx ?? 2
       );

@@ -7,6 +7,8 @@
     type InputLabel,
     type PopoverInputOptions
   } from "$lib/client/types/input.type";
+  import Icon from "../Icon.svelte";
+  import { Position } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let id: string = "";
   export let placeholder: string | undefined = undefined;
@@ -39,9 +41,9 @@
   }
   function resolveStyles() {
     let styles: string[] = [];
-    if (icon) {
-      styles.push("pl-8");
-    }
+    // if (icon) {
+    //   styles.push("pl-8");
+    // }
     return styles;
   }
   onMount(() => {
@@ -69,13 +71,17 @@
     class: "flex flex-col justify-between gap-1 items-start",
     isSpanToTriggerWidth: true,
     isPreventDefault: true,
+    placement: Position.BottomCenter,
     ...popoverOptions
   }}
   {label}
   {style}
   {isFocused}
-  class="w-full"
+  class="w-full flex gap-2"
 >
+  {#if icon}
+    <Icon {icon} />
+  {/if}
   <input
     {id}
     class={inputClasses}

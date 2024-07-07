@@ -1,5 +1,4 @@
 <script lang="ts">
-  import cssText from "data-text:~style.css";
   import { createEventDispatcher } from "svelte";
   import HightlightColorItem from "./HightlightColorItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -7,11 +6,6 @@
   export let colors: string[];
   export let selectedColor: string | null = null;
   export let isExistingClip: boolean = false;
-  export const getStyle = () => {
-    const style = document.createElement("style");
-    style.textContent = cssText;
-    return style;
-  };
   // $: console.log({ colors, selectedColor, isExistingClip });
 </script>
 
