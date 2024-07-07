@@ -41,7 +41,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
         const seed = {
           ...deepCopy(this.seed)
         };
-        this._setNewValue(seed);
+        this._setAndCache(seed);
       }
     } else {
       dataManager.retrieveCache(this.id).then((x) => {
@@ -49,7 +49,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
           const seed = {
             ...deepCopy(this.seed)
           };
-          this._setNewValue(seed);
+          this._setAndCache(seed);
         }
         this._set(x);
         this.previousValue = JSON.stringify(x);
@@ -70,7 +70,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * Sets the new value of the store and caches it, but doesn't persist it
    * @param x - new value of the store
    */
-  private _setNewValue(x: T) {
+  private _setAndCache(x: T) {
     const newValue = { ...x };
     this._set(newValue);
     this.previousValue = JSON.stringify(newValue);
@@ -96,7 +96,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * @param data
    */
   loader(data: T) {
-    this._setNewValue({ ...data });
+    this._setAndCache({ ...data });
   }
   /**
    * Loads the seed data initialized in the constructor and persists it
@@ -106,7 +106,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     const seed = {
       ...deepCopy(this.seed)
     };
-    this._setNewValue(seed);
+    this._setAndCache(seed);
     return this._persist(seed);
   }
   /**
@@ -121,12 +121,12 @@ export class KeyValueStore<T extends IObservableStoreSubject>
         changedProperties[key] = newValue[key as keyof T];
       });
     }
-    console.log({
-      previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
-      newValue,
-      changedProperties
-    });
-    this._setNewValue(newValue);
+    // console.log({
+    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
+    //   newValue,
+    //   changedProperties
+    // });
+    this._setAndCache(newValue);
     if (!objIsEmpty(changedProperties) && !this.isPreventAutoPersist)
       this._persist(changedProperties);
   }
@@ -137,12 +137,20 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    */
   protected async modify(
     n: Partial<T>,
-    params: { isPersist?: boolean; isDebouncedPersist?: boolean } = {
+    params: {
+      isPersist?: boolean;
+      isDebouncedPersist?: boolean;
+      isPreventCachingDefault?: boolean;
+    } = {
       isPersist: true
     }
   ) {
     const val = this.get();
-    this._setNewValue({ ...val, ...n });
+    if (params.isPreventCachingDefault) {
+      this._set({ ...val, ...n });
+      return;
+    }
+    this._setAndCache({ ...val, ...n });
     if (params?.isDebouncedPersist) return this._debouncedPersist(n);
     else if (params?.isPersist) return this._persist(n);
   }
