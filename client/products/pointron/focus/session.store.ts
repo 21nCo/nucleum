@@ -368,7 +368,18 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       }
       const { blocks, isContinueSession } = this.refreshProgressOnBars(n);
       n.blocks = blocks;
-      sessionStore.set(n);
+      // sessionStore.set(n);
+      this.modify(
+        {
+          totalElapsed: n.totalElapsed,
+          timeElapsed: n.timeElapsed,
+          timeRemainingToTakeBreak: n.timeRemainingToTakeBreak,
+          sessionProgress: n.sessionProgress,
+          plannedDuration: n.plannedDuration,
+          blocks: n.blocks
+        },
+        { isPreventCachingDefault: true }
+      );
       if (isContinueSession) this._continueSession(n);
     }, 1000);
     if (options.isPersist) await this.__persist(n);
