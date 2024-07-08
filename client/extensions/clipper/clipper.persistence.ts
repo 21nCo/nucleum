@@ -103,7 +103,7 @@ export class ClipperPersistence {
       const params = { url: tabData.url, data: tabData };
       const result = await this.queryUsingHttp(query, params);
       console.log("save web page", { result });
-      if (result && result.id) {
+      if (result?.id) {
         chrome.storage.local.set({ node: { id: result.id } });
         if (isFromSidepanel) {
           sendMessageToContentScript({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.id });
@@ -112,6 +112,23 @@ export class ClipperPersistence {
         }
       }
       return result;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+
+  link(from: string, to: string) {
+    try {
+      const query = "return fn::memotron::link($from, $to)";
+      return this.queryUsingHttp(query, { from, to });
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+  unlink(from: string, to: string) {
+    try {
+      const query = "return fn::memotron::unlink($from, $to)";
+      return this.queryUsingHttp(query, { from, to });
     } catch (e) {
       console.error("ERROR", e);
     }

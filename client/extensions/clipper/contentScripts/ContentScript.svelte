@@ -2,9 +2,7 @@
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import { extractFullTabData } from "$lib/client/utils/extension.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";
   import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/feedbackPane.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
   import ClipperShortcuts from "$lib/client/extensions/clipper/ClipperShortcuts.svelte";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
@@ -14,27 +12,21 @@
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import MultimediaClipper from "$lib/client/extensions/clipper/contentScripts/MultimediaClipper.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
-  import { store, toolbarState } from "./store";
+  import { webpage, toolbarState } from "./store";
+  import { ClipperExtensionEvent } from "$lib/client/types/memotron/clip.type";
 
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
   let isShowFeedbackPane = false;
   let feedback = "";
-  let toolbarPosition: Position.Right | Position.Left | Position.Bottom =
-    Position.Right;
-  $: toolbarPosition = $toolbarState.position ?? Position.Right;
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
-  }
-  async function refreshPage(url: string | undefined = undefined) {
-    await store.refresh(url);
   }
   async function onsaveWebpageClick() {
     feedback = "Saving page...";
     isShowFeedbackPane = true;
     const data = extractFullTabData();
-    await new ClipperPersistence().saveWebpage(data);
-    await refreshPage();
+    await webpage.savePage(data);
     feedback = "Page saved!";
   }
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -46,11 +38,16 @@
       message.event === ExtensionEvent.TAB_CHANGE ||
       message.event === ExtensionEvent.TAB_UPDATE
     ) {
-      refreshPage(message.tab.url);
+      webpage.onContextChange(message.tab);
       return;
     } else if (message.event === ExtensionEvent.READ_PAGE_CONTENT) {
       const data = extractFullTabData();
       sendResponse(data);
+    } else if (
+      message.event === ClipperExtensionEvent.PAGE_SAVING_STATUS &&
+      message.node
+    ) {
+      webpage.propagatePageStatusFromSidebar({ id: message.node });
     }
   });
 
@@ -72,7 +69,7 @@
       },
       false
     );
-    dataManager.initialize([nodeStore, collectionStore, toolbarState, store]);
+    dataManager.initialize([nodeStore, collectionStore, toolbarState, webpage]);
     dataManager.refreshOnAppear();
   });
 </script>
@@ -83,7 +80,6 @@
   {:else}
     <Toolbar
       {colors}
-      bind:position={toolbarPosition}
       on:color={onActivateColor}
       on:save={onsaveWebpageClick}
       on:saved={() => {
@@ -96,11 +92,7 @@
     />
     {#if isShowFeedbackPane}
       <div out:fade>
-        <FeedbackPane
-          bind:toolbarPosition
-          bind:feedback
-          bind:isShown={isShowFeedbackPane}
-        />
+        <FeedbackPane bind:feedback bind:isShown={isShowFeedbackPane} />
       </div>
     {/if}
     <TextClipper bind:this={textClipperRef} {colors} />

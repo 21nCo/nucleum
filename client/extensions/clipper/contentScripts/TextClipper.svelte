@@ -18,7 +18,7 @@
     type TabData
   } from "$lib/client/types/extension.type";
   import { extractFullTabData } from "$lib/client/utils/extension.utils";
-  import { store } from "./store";
+  import { webpage } from "./store";
   export let colors: string[];
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
@@ -27,7 +27,7 @@
   let selectedClip: { color: string; id: string } | null = null;
   let selectedClipId: string = "";
   onMount(() => {
-    store.subscribe((value) => {
+    webpage.subscribe((value) => {
       if (value.id && value.clips) {
         console.log("refreshing page clips", value);
         refreshPageClips();
@@ -142,7 +142,8 @@
       selection,
       color
     );
-    if (!$store.id && result.parent) $store.id = result.parent;
+    //TODO - move clip save part to store and thus assignment of id to store
+    if (!$webpage.id && result.parent) $webpage.id = result.parent;
     selectedClipId = result.id;
     highlight(
       selectedText,
@@ -163,7 +164,7 @@
   }
   export async function refreshPageClips() {
     const clips: IClip<TextHighlightContent>[] =
-      $store.clips as IClip<TextHighlightContent>[];
+      $webpage.clips as IClip<TextHighlightContent>[];
     for (const record of clips) {
       const selection = {
         anchorNode: elementFromQuery(record.metadata.anchorNode),

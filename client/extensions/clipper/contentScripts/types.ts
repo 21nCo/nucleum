@@ -1,8 +1,11 @@
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IClip } from "$lib/client/types/memotron/clip.type";
-export interface IContentScriptStore extends IObservableStoreSubject {
+import type { INodeProperty } from "$lib/client/types/memotron/node.type";
+export interface IWebpage extends IObservableStoreSubject {
   url: string;
   id?: string;
   clips?: IClip[]
-  links?: any
+  links?: string[]
+  properties?: INodeProperty[]
+  relationships?: { node: string, relation: string }[]
 }

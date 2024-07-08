@@ -1,10 +1,11 @@
 <script lang="ts">
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
+  import { toolbarState } from "$lib/client/extensions/clipper/contentScripts/store";
   import { Position } from "$lib/client/types/direction.enum";
+  import { createEventDispatcher } from "svelte";
   import { searchForLinking } from "../../memotron.store";
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
-  export let toolbarPosition: Position.Right | Position.Left | Position.Bottom =
-    Position.Right;
+  const dispatch = createEventDispatcher();
   let link: string;
   function onsearch(searchQuery: string) {
     return searchForLinking(searchQuery);
@@ -19,13 +20,12 @@
     offsetInPx: 6,
     isUseAbsolutePositioning: true,
     placement:
-      toolbarPosition === Position.Bottom
+      $toolbarState.position === Position.Bottom
         ? Position.TopCenter
         : Position.BottomCenter
   }}
   on:select={(e) => {
-    console.log("select", e.detail);
-
+    dispatch("link", e.detail);
     link = "";
   }}
   searchCallback={onsearch}
