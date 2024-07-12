@@ -116,9 +116,9 @@
 </div>
 
 <style>
-  .glass {
+  /* .glass {
     background-image: url(back.png);
-  }
+  } */
 
   .glassylavendar {
     background: linear-gradient(

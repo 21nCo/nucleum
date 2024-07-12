@@ -5,7 +5,8 @@ import type { INodeBase, NodeType } from "$lib/client/types/memotron/node.type";
  */
 export type IClip<T = ClipContent> = INodeBase &
   T & {
-    parent: string;
+  parent: string;
+  links?: string[]
   };
 
 export type ClipContent =

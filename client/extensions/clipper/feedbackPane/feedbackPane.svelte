@@ -10,6 +10,7 @@
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   export let isShown: boolean = false;
   export let feedback: string = "";
+  let autoCloseDuration = 5;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;
@@ -28,12 +29,16 @@
     closeActionTimestamp = Date.now();
     closeTimer = setTimeout(() => {
       isShown = false;
-    }, 5000);
+    }, autoCloseDuration * 1000);
   }
   setInterval(() => {
     now = Date.now();
   }, 1000);
-  $: countdown = 4 - Math.floor((now - closeActionTimestamp) / 1000);
+  $: countdown =
+    autoCloseDuration - Math.floor((now - closeActionTimestamp) / 1000);
+  function onLinkClick(e: CustomEvent) {
+    console.log("link click", e.detail);
+  }
 </script>
 
 <HoverableElement
@@ -84,7 +89,7 @@
       }}
     />
   </div>
-  <LinkItems links={$webpage.links} />
+  <LinkItems links={$webpage.links} on:click={onLinkClick} />
   <!-- <div>
     isHovering: {isHovering}
   </div> -->

@@ -264,6 +264,7 @@
     console.log("onclick", e);
     handleTextSelection();
   }
+  $: console.log({ selectedClip });
 </script>
 
 {#if isShowInlineToolbar}
@@ -274,7 +275,7 @@
       on:color={onInlineColorSelection}
       {colors}
       selectedColor={selectedClip?.color ?? ""}
-      isExistingClip={selectedClip !== null}
+      id={selectedClip?.id}
     />
   </div>
 {/if}

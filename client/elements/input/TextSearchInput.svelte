@@ -91,6 +91,8 @@
     on:keydown
     on:keyup|stopPropagation={onKeyup}
     on:blur
+    on:click|stopPropagation
+    on:mouseup|stopPropagation
     on:blur={() => {
       isFocused = false;
       dispatch("blur");

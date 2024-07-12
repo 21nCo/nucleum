@@ -2,7 +2,7 @@
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import { extractFullTabData } from "$lib/client/utils/extension.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/feedbackPane.svelte";
+  import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/FeedbackPane.svelte";
   import ClipperShortcuts from "$lib/client/extensions/clipper/ClipperShortcuts.svelte";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
@@ -14,6 +14,7 @@
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage, toolbarState } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/types/memotron/clip.type";
+  import ExtensionBaseLayer from "$lib/client/layout/layers/ExtensionBaseLayer.svelte";
 
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
@@ -74,7 +75,7 @@
   });
 </script>
 
-<div class="cs_tidigit_light_blue dark:cs_tidigit_dark_blue relative flex">
+<ExtensionBaseLayer>
   {#if !$toolbarState?.isOpen}
     <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
   {:else}
@@ -104,4 +105,4 @@
       toolbarState.toggle();
     }}
   />
-</div>
+</ExtensionBaseLayer>

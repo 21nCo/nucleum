@@ -80,6 +80,17 @@ class WebpageStore extends ObservableStore<IWebpage> {
   }
   async linkClip(from: string, to: string) {
     const response = await this.persistence.link(from, to);
+    if (response) {
+      this.update((n) => {
+        n.clips = n.clips.map((c) => {
+          if (c.id === from) {
+            c.links = [...c.links ?? [], to];
+          }
+          return c;
+        });
+        return n;
+      })
+    }
     return response;
   }
   /**
@@ -101,10 +112,7 @@ class ClipperToolbarState extends KeyValueStore<{ isOpen: boolean, position: Pos
     super(Item.clipperToolbarState, { isOpen: true, position: Position.Right }, {
       priorityRefreshOnAppAppear: true
     });
-    if (this.get()?.isOpen === undefined) {
-      this.modify({ isOpen: true })
-    }
-  }
+  } 
   toggle(isOpen?: boolean) {
     if (isOpen === undefined) {
       isOpen = !this.get().isOpen;

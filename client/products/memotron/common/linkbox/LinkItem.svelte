@@ -16,8 +16,9 @@
   });
 </script>
 
-<div
+<button
   class="text-b2 whitespace-nowrap border border-brs2 rounded-full px-2 py-1"
+  on:click
 >
   {item?.label ?? ""}
-</div>
+</button>

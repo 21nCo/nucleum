@@ -16,7 +16,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   extends ObservableStore<T>
   implements IObservableStore<T>
 {
-  id: Item;
+  declare id: Item;
   isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
