@@ -4,13 +4,14 @@
   import Icon from "../Icon.svelte";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import {
-    renderPopoverv2,
+    renderPopover,
     resolveHoverState
   } from "$lib/client/utils/browser.utils";
   import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import Tooltip from "../text/Tooltip.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
+  import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   /** button type description to be rendered in stories and code editor tooltips*/
@@ -22,7 +23,16 @@
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
-  export let toolTipPlacement: Position = Position.Bottom;
+  export let tooltipOptions: IPopoverRenderBaseParams = {
+    placement: Position.BottomCenter,
+    offsetInPx: 2,
+    isSpanToTriggerWidth: false,
+    isUseAbsolutePositioning: false
+  };
+  /**
+   * @deprecated - Use tooltipOptions instead
+   */
+  export let toolTipPlacement: Position = Position.BottomCenter;
   export let isLoading: boolean = false;
   /**
    * Applicable when {@link ButtonStyle.PLAIN} style is choosen
@@ -44,7 +54,13 @@
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
     if (resolveHoverState(event)) {
       isHovering = true;
-      if (tooltip) renderPopoverv2(buttonRef, toolTipRef, toolTipPlacement);
+      if (tooltip) {
+        renderPopover({
+          ...tooltipOptions,
+          triggerRef: buttonRef,
+          popRef: toolTipRef
+        });
+      }
     } else {
       isHovering = false;
       hideToolTip();
@@ -62,7 +78,7 @@
 <button
   {id}
   class={cn(
-    "flex flex-row justify-center items-center min-w-fit rounded-full",
+    "relative flex flex-row justify-center items-center min-w-fit rounded-full",
     width,
     {
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,

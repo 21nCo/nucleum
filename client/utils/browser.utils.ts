@@ -1,6 +1,7 @@
 import { Position } from "$lib/client/types/direction.enum";
 import { OperatingSystem } from "../types/context.type";
 import type { IPopoverRenderParams } from "../types/popover.type";
+import { deepCopy } from "./obj.utils";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -11,36 +12,32 @@ function documentDimensions() {
   };
 }
 
-/**
- * @deprecated Use renderPopoverv2 instead
- * @param parentRef
- * @param popRef
- */
-export function renderPopover(parentRef: HTMLElement, popRef: HTMLElement) {
-  const triggerRect = parentRef.getBoundingClientRect();
-  let popRect = popRef.getBoundingClientRect();
-  const { documentWidth } = documentDimensions();
-  popRef.style.position = "fixed";
-  if (documentWidth - triggerRect.right < 300) {
-    // console.log("1", {
-    //   left: triggerRect.left,
-    //   measure: documentWidth - triggerRect.right,
-    // });
-    // popRef.style.right = `${triggerRect.left}px`;
-    // //popRef.style.left = "auto";
-    popRef.style.top = `${triggerRect.bottom + 5}px`;
-    popRef.style.right = `${documentWidth - triggerRect.right}px`;
-  } else if (triggerRect.left < 300) {
-    popRef.style.left = `${triggerRect.right}px`;
-    popRef.style.right = "auto";
+
+export function renderPopover(params: IPopoverRenderParams) {
+  params = {
+    ...params,
+    placement: params.placement ?? Position.BottomCenter,
+    offsetInPx: params.offsetInPx ?? 2,
+    isSpanToTriggerWidth: params.isSpanToTriggerWidth ?? false,
+    isUseAbsolutePositioning: params.isUseAbsolutePositioning ?? false,
+    isPlaceAtCaret: params.isPlaceAtCaret ?? false
+  };
+  // console.log("renderPopover ",{params: deepCopy(params)});
+  if (params.isUseAbsolutePositioning) {
+    return renderPopoverUsingAbsolutePositioning({
+      ...params
+    });
+  } else if (params.isPlaceAtCaret) {
+    return _renderPopoverAtCaretPosition(params);
   } else {
-    popRef.style.left = `${triggerRect.right + 2}px`;
-    popRef.style.right = "auto";
+    renderPopoverUsingFixedPositioning(
+      params.triggerRef,
+      params.popRef,
+      params.placement,
+      params.isSpanToTriggerWidth ?? false,
+      params.offsetInPx ?? 2
+    );
   }
-  popRef.style.maxWidth = "300px";
-  popRef.style.display = popRef.style.display === "none" ? "block" : "none";
-  // popRect = popRef.getBoundingClientRect();
-  // console.log({ popRef, popRect });
 }
 
 /**
@@ -48,7 +45,7 @@ export function renderPopover(parentRef: HTMLElement, popRef: HTMLElement) {
  * @param params
  * @returns
  */
-export function renderPopoverAtCaretPosition(
+function _renderPopoverAtCaretPosition(
   params: Omit<IPopoverRenderParams, "triggerRect" | "isSpanToTriggerWidth">
 ) {
   const selection = window.getSelection();
@@ -56,23 +53,22 @@ export function renderPopoverAtCaretPosition(
   const range = selection?.getRangeAt(0);
   const rect = range?.getBoundingClientRect();
   if (!rect) return;
-  return _renderPopover({
+  return _renderPopoverUsingFixedPositioning(rect,{
     ...params,
-    triggerRect: rect,
     isSpanToTriggerWidth: false
   });
 }
 
-export function renderPopoverv2(
-  parentRef: HTMLElement,
+function renderPopoverUsingFixedPositioning(
+  triggerRef: HTMLElement,
   popRef: HTMLElement,
   location: Position = Position.BottomCenter,
   isSpanToTriggerWidth = false,
   offsetInPx = 2
 ) {
-  const triggerRect = parentRef.getBoundingClientRect();
-  _renderPopover({
-    triggerRect,
+  const triggerRect = triggerRef.getBoundingClientRect();
+  _renderPopoverUsingFixedPositioning(triggerRect,{
+    triggerRef,
     popRef,
     placement: location,
     isSpanToTriggerWidth,
@@ -83,8 +79,8 @@ export function renderPopoverv2(
  * Renders a popover at the specified location and auto adjusts if the popover is going out of the screen.
  * @param params
  */
-async function _renderPopover(params: IPopoverRenderParams) {
-  let { triggerRect, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
+async function _renderPopoverUsingFixedPositioning(triggerRect: DOMRect, params: IPopoverRenderParams) {
+  let { popRef, placement, isSpanToTriggerWidth, offsetInPx } =
     params;
   popRef.style.display = "block";
   popRef.style.opacity = "0";
@@ -156,7 +152,7 @@ async function _renderPopover(params: IPopoverRenderParams) {
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  // console.log({ triggerRect, popRect, placement, documentWidth, documentHeight });
+  console.log({ triggerRect, popRect, placement, documentWidth, documentHeight });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";
@@ -166,30 +162,32 @@ async function _renderPopover(params: IPopoverRenderParams) {
 }
 
 
-export function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
-
-  let { triggerRect, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
+function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
+  let { triggerRef, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
     params;
-    popRef.style.display = "block";
+  const triggerRect = triggerRef.getBoundingClientRect();
+  popRef.style.display = "block";
   popRef.style.opacity = "0";
   popRef.style.position = "absolute";
+  popRef.style.top = "";
+  popRef.style.bottom = "";
+  popRef.style.left = "";
+  popRef.style.right = "";
   switch (placement) { 
     case Position.TopCenter:
-      popRef.style.bottom = `${offsetInPx}px`;
-      popRef.style.top = "";
+      popRef.style.bottom = `${triggerRect.height + offsetInPx}px`;
       break;
     case Position.BottomCenter:
       popRef.style.top = `${triggerRect.height + offsetInPx}px`;
-      popRef.style.bottom = "";
       break;
     case Position.Left:
-      // TODO
+      popRef.style.right = `${triggerRect.width + offsetInPx}px`;
       break;
     case Position.Right:
-      // TODO
+      popRef.style.left = `${triggerRect.width + offsetInPx}px`;
       break;
   }
-  console.log("absolute positioning",{ triggerRect, placement });
+  // console.log("absolute positioning",{ triggerRect, popRect, placement });
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
   popRef.style.opacity = "1";
 }

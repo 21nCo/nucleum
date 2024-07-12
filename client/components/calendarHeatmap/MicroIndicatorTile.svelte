@@ -2,7 +2,7 @@
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import {
     TileAppearance,
     type DailyData,
@@ -87,7 +87,11 @@
     resolveToolTip();
     setTimeout(() => {
       if (tooltip && toolTipRef) {
-        renderPopoverv2(tileRef, toolTipRef, Position.Right);
+        renderPopover({
+          triggerRef: tileRef,
+          popRef: toolTipRef,
+          placement: Position.Right
+        });
       }
     }, 100);
   }}

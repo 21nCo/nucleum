@@ -41,5 +41,8 @@ export enum Item {
   combination = "combination",
   nodelinks = "nodelinks",
   capture = "capture",
-  view = "view"
+  view = "view",
+
+  //Memotron clipper
+  clipperToolbarState = "clipperToolbarState",
 }

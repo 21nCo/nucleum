@@ -33,9 +33,9 @@ export class ClipperPersistence {
       });
     });
   };
-  
 
-  connect() { 
+
+  connect() {
 
     // this.db.connect(this.url, {
     //   namespace: this.namespace,
@@ -63,9 +63,9 @@ export class ClipperPersistence {
   /**
    * Temporary
    * TODO - Use tidy library Surreal helper and Surreal database
-   * @param query 
-   * @param params 
-   * @returns 
+   * @param query
+   * @param params
+   * @returns
    */
   async queryUsingHttp(query: string, params: any) {
     await this.refreshToken();
@@ -90,7 +90,7 @@ export class ClipperPersistence {
   /**
    * Can be triggered from either content script or side bar.
    * If triggered from content script, tab data will be present in the message.
-   * @returns 
+   * @returns
    */
   async saveWebpage(tabData?: TabData) {
     try {
@@ -100,10 +100,10 @@ export class ClipperPersistence {
         isFromSidepanel = true;
         tabData = await resolveCurrentTabData(true);
       }
-      const params = {url: tabData.url, data: tabData};
+      const params = { url: tabData.url, data: tabData };
       const result = await this.queryUsingHttp(query, params);
       console.log("save web page", { result });
-      if (result && result.id) { 
+      if (result?.id) {
         chrome.storage.local.set({ node: { id: result.id } });
         if (isFromSidepanel) {
           sendMessageToContentScript({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.id });
@@ -112,6 +112,23 @@ export class ClipperPersistence {
         }
       }
       return result;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+
+  link(from: string, to: string) {
+    try {
+      const query = "return fn::memotron::link($from, $to)";
+      return this.queryUsingHttp(query, { from, to });
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+  unlink(from: string, to: string) {
+    try {
+      const query = "return fn::memotron::unlink($from, $to)";
+      return this.queryUsingHttp(query, { from, to });
     } catch (e) {
       console.error("ERROR", e);
     }
@@ -128,7 +145,7 @@ export class ClipperPersistence {
       console.log("fetch page ", { result });
       if (result && result.page) {
         chrome.storage.local.set({ node: { id: result.page.id } });
-        chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.page.id});
+        chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.page.id });
       }
       return result;
     } catch (e) {
@@ -139,9 +156,9 @@ export class ClipperPersistence {
 
   /**
    * Delegated from content scripts. tabData is passed from content script to save the web page if the web page is not saved already.
-   * @param content 
-   * @param tabData 
-   * @returns 
+   * @param content
+   * @param tabData
+   * @returns
    */
   async saveClip(content: TextHighlightContent | VideoTimestampContent, tabData?: TabData) {
     try {
@@ -156,7 +173,7 @@ export class ClipperPersistence {
       const params = { id, content, tabData };
       const result = await this.queryUsingHttp(query, params);
       console.log("save clip", { result });
-      if (result && result.parent) { 
+      if (result && result.parent) {
         chrome.storage.local.set({ node: { id: result.parent } });
         chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.parent });
       }
@@ -166,6 +183,9 @@ export class ClipperPersistence {
     }
   }
 
+  /**
+  @deprecated - use toolbarState store instead
+  */
   async saveToolbarState(toolbarState: any) {
     try {
       const query = "return UPDATE kv:clipperToolbarState SET state = $toolbarState;";
@@ -186,42 +206,42 @@ export class ClipperPersistence {
    */
   async fetchYoutubeClips(videoId) {
     try {
-        const query = "SELECT timestamp FROM youtubeClips WHERE videoId = $videoId;";
-        const params = { videoId: videoId };
-        const result = await this.db.query(query, params);
-        if (result[0].length > 0) {
-            return result[0];
-        } else {
-            console.log("No records found with the specified URL.");
-            return null;
-        }
+      const query = "SELECT timestamp FROM youtubeClips WHERE videoId = $videoId;";
+      const params = { videoId: videoId };
+      const result = await this.db.query(query, params);
+      if (result[0].length > 0) {
+        return result[0];
+      } else {
+        console.log("No records found with the specified URL.");
+        return null;
+      }
     } catch (error) {
-        console.error("Error fetching records:", error);
-        throw error;
+      console.error("Error fetching records:", error);
+      throw error;
     }
   }
   /**
    * @deprecated - use saveClip instead
-   * @param url 
-   * @param videoId 
-   * @param timestamp 
+   * @param url
+   * @param videoId
+   * @param timestamp
    */
   async saveYoutubeClip(url, videoId, timestamp) {
     try {
-        await this.db.create("youtubeClips", {
-            videoId: videoId,
-          timestamp: timestamp,
-            savedClips: url
-        });
+      await this.db.create("youtubeClips", {
+        videoId: videoId,
+        timestamp: timestamp,
+        savedClips: url
+      });
     } catch (e) {
-        console.error("ERROR", e);
+      console.error("ERROR", e);
     }
   }
 
   saveMultimedia(element, color) {
     const multimediaSrc = element.src;
     fetch(multimediaSrc).then(response => response.blob()).then(blob => {
-        // uploadFileToServer(blob, multimediaSrc, color);
+      // uploadFileToServer(blob, multimediaSrc, color);
     });
   }
 
@@ -233,39 +253,39 @@ export class ClipperPersistence {
     return;
     try {
       if (logSwitch) {
-          await this.db.create('History', {
-              userId: userId,
-              Domain: domain,
-              URL: url,
-              StartTime: currentTime,
-              EndTime: null,
-              DeviceInfo: deviceInfo,
-          });
+        await this.db.create('History', {
+          userId: userId,
+          Domain: domain,
+          URL: url,
+          StartTime: currentTime,
+          EndTime: null,
+          DeviceInfo: deviceInfo,
+        });
       } else {
-          // Update the last record with endTime.
-          const lastRecord = await this.db.query(
-              'SELECT id, StartTime FROM type::table($tb) ORDER BY StartTime DESC LIMIT 1;',
-              { tb: 'History' }
-          );
-          const lastRecordId = lastRecord[0][0].id;
-          console.log(lastRecordId);
-          await this.db.query(
-              'UPDATE History SET EndTime = $currentTime WHERE id = $lastRecordId;', { 
-                  currentTime: currentTime,
-                  lastRecordId: lastRecordId
-              }
-          );
-          await this.db.create('History', {
-              userId: userId,
-              Domain: domain,
-              URL: url,
-              StartTime: currentTime,
-              EndTime: null,
-              DeviceInfo: deviceInfo,
-          });
+        // Update the last record with endTime.
+        const lastRecord = await this.db.query(
+          'SELECT id, StartTime FROM type::table($tb) ORDER BY StartTime DESC LIMIT 1;',
+          { tb: 'History' }
+        );
+        const lastRecordId = lastRecord[0][0].id;
+        console.log(lastRecordId);
+        await this.db.query(
+          'UPDATE History SET EndTime = $currentTime WHERE id = $lastRecordId;', {
+          currentTime: currentTime,
+          lastRecordId: lastRecordId
+        }
+        );
+        await this.db.create('History', {
+          userId: userId,
+          Domain: domain,
+          URL: url,
+          StartTime: currentTime,
+          EndTime: null,
+          DeviceInfo: deviceInfo,
+        });
       }
-  } catch (e) {
+    } catch (e) {
       console.error('ERROR', e);
-  }
+    }
   }
 }

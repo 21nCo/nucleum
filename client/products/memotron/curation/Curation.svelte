@@ -3,7 +3,7 @@
     determineCurationType,
     resolveActiveCollectionStore,
     type IActiveCollectionStore
-  } from "./curation.store";
+  } from "./collection/collection.store";
   import { CurationType } from "$lib/client/types/memotron/curation.type";
   import Collection from "./collection/Collection.svelte";
   import { onMount } from "svelte";

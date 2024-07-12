@@ -1,6 +1,6 @@
 <script lang="ts">
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
+  import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import type {
     ISelectItem,

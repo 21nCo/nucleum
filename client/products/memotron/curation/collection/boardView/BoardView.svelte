@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ICollectionView } from "$lib/client/types/memotron/curation.type";
+  import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import type { ISelectValue } from "$lib/client/types/select.type";

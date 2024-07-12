@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import type { FormLabelInfoTooltip } from "$lib/client/types/text.type";
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import Icon from "../../Icon.svelte";
   import { Position } from "$lib/client/types/direction.enum";
@@ -18,6 +18,13 @@
     if (toolTipRef && toolTipRef?.style?.display != "none")
       toolTipRef.style.display = "none";
   }
+  function showToolTip() {
+    renderPopover({
+      triggerRef: buttonRef,
+      popRef: toolTipRef,
+      placement: Position.Right
+    });
+  }
 </script>
 
 <button
@@ -25,7 +32,7 @@
   on:mouseenter={() => {
     if (isClicked) return;
     isHovered = true;
-    renderPopoverv2(buttonRef, toolTipRef, Position.Right);
+    showToolTip();
   }}
   on:mouseleave={() => {
     if (isClicked) return;
@@ -36,7 +43,7 @@
     isClicked = !isClicked;
     if (isClicked) {
       hideToolTip();
-      renderPopoverv2(buttonRef, toolTipRef, Position.Right);
+      showToolTip();
     } else {
       hideToolTip();
     }

@@ -9,7 +9,7 @@
   import { HapticFeedback } from "$lib/client/types/haptic.enum";
   import { hapticFeedback } from "$lib/client/utils/embed.utils";
   import Tooltip from "$lib/client/elements/text/Tooltip.svelte";
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import { Position } from "$lib/client/types/direction.enum";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
@@ -54,7 +54,11 @@
       if (toolTipTimeout) clearTimeout(toolTipTimeout);
       if (toolTipRef && layoutContext === LayoutContext.THIN)
         toolTipTimeout = setTimeout(() => {
-          renderPopoverv2(buttonRef, toolTipRef, Position.Right);
+          renderPopover({
+            triggerRef: buttonRef,
+            popRef: toolTipRef,
+            placement: Position.Right
+          });
         }, 1000);
     } else {
       isHovering = false;

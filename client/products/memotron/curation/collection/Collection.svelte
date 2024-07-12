@@ -3,7 +3,7 @@
     CurationType,
     type ICollectionView
   } from "$lib/client/types/memotron/curation.type";
-  import type { IActiveCollectionStore } from "../curation.store";
+  import type { IActiveCollectionStore } from "./collection.store";
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
   import View from "./View.svelte";

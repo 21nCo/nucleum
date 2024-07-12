@@ -1,12 +1,15 @@
 <script lang="ts">
-  import { highlight } from "~contents/highlightV4";
+  import { highlight } from "$lib/client/extensions/clipper/contentScripts/highlightV4";
   import InlineTextToolbar from "$lib/client/extensions/clipper/InlineTextToolbar.svelte";
-  import { elementFromQuery, getQuery } from "~contents/getQuery";
+  import {
+    elementFromQuery,
+    getQuery
+  } from "$lib/client/extensions/clipper/contentScripts/getQuery";
   import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";
   import { onMount } from "svelte";
   import {
     ClipperExtensionEvent,
-    type Clip,
+    type IClip,
     type TextHighlightContent
   } from "$lib/client/types/memotron/clip.type";
   import { NodeType } from "$lib/client/types/memotron/node.type";
@@ -15,13 +18,22 @@
     type TabData
   } from "$lib/client/types/extension.type";
   import { extractFullTabData } from "$lib/client/utils/extension.utils";
+  import { webpage } from "./store";
   export let colors: string[];
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
   let activeColor: string | null = null;
-  export let page: any;
+  // export let page: any;
   let selectedClip: { color: string; id: string } | null = null;
   let selectedClipId: string = "";
+  onMount(() => {
+    webpage.subscribe((value) => {
+      if (value.id && value.clips) {
+        console.log("refreshing page clips", value);
+        refreshPageClips();
+      }
+    });
+  });
   async function handleTextSelection() {
     const selection = window.getSelection();
     let rect: DOMRect;
@@ -130,7 +142,8 @@
       selection,
       color
     );
-    if (!page && result.parent) page = { id: result.parent };
+    //TODO - move clip save part to store and thus assignment of id to store
+    if (!$webpage.id && result.parent) $webpage.id = result.parent;
     selectedClipId = result.id;
     highlight(
       selectedText,
@@ -149,7 +162,9 @@
     //     let link = tabs[0].url;
     // });
   }
-  export async function refreshPageClips(clips: Clip<TextHighlightContent>[]) {
+  export async function refreshPageClips() {
+    const clips: IClip<TextHighlightContent>[] =
+      $webpage.clips as IClip<TextHighlightContent>[];
     for (const record of clips) {
       const selection = {
         anchorNode: elementFromQuery(record.metadata.anchorNode),

@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import Tooltip from "./Tooltip.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
   import HoverableElement from "../HoverableElement.svelte";
   export let text: string = "";
   export let tooltip: string | undefined = undefined;
@@ -37,7 +36,10 @@
       toolTipRef.style.display = "none";
   }
   function showToolTip() {
-    renderPopoverv2(textRef, toolTipRef, Position.BottomCenter);
+    renderPopover({
+      triggerRef: textRef,
+      popRef: toolTipRef
+    });
   }
 </script>
 

@@ -17,7 +17,7 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
+  import { renderPopover } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
@@ -77,11 +77,11 @@
     event.stopPropagation();
   }
   function onEstimateClicked(event: MouseEvent) {
-    renderPopoverv2(
-      estimateButtonRef,
-      estimatePopupRef,
-      $view.isPortrait ? Position.BottomRight : Position.Left
-    );
+    renderPopover({
+      triggerRef: estimateButtonRef,
+      popRef: estimatePopupRef,
+      placement: $view.isPortrait ? Position.BottomRight : Position.Left
+    });
   }
   function hideEstimatePopup() {
     estimatePopupRef.style.display = "none";

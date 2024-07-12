@@ -14,7 +14,7 @@ interface TestDexieRecord {
 }
 
 export class AppDexie extends Dexie {
-  protected dbVersion: number = 10;
+  protected dbVersion: number = 11;
   test!: Table<TestDexieRecord>;
   mutationQueuev2!: Table<MutationQueue>;
   constructor(scope: string) {
