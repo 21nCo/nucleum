@@ -3,6 +3,7 @@ import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { Surreal } from "surrealdb.js";
 import type { TabData } from "$lib/client/types/extension.type";
 import { interceptSurrealResponse, resolveCurrentTabData, sendMessageToContentScript } from "$lib/client/utils/extension.utils";
+import { kindleSyncState, type Book, type BookNode, type HighlightNode } from "./contentScripts/KindleHighlights.types";
 
 
 
@@ -244,7 +245,60 @@ export class ClipperPersistence {
       // uploadFileToServer(blob, multimediaSrc, color);
     });
   }
+  async saveAllBooks(books:BookNode[]){
+    try{
+      const query = "INSERT INTO node $books";
+      const params = { books };
+      const response = await this.queryUsingHttp(query, params);
+      return response
+    }
+    catch(e){
+      console.error("Error saving books:", e);
+    }
+  }
 
+  async deleteAllBooksAndHiglights(){
+    try{
+      const query = `DELETE node WHERE contentType='KINDLE_NOTES&HIGHLIGHTS_BOOK' OR contentType='KINDLE_NOTE&HIGHLIGHT'`;
+      const params = {};
+      const response = await this.queryUsingHttp(query, params);
+      await this.updateKindleSyncState(kindleSyncState.Sync)
+      return interceptSurrealResponse(response)
+    }
+    catch(e){
+      console.error("Error saving books:", e);
+    }
+  }
+  async saveHighlightsAndNotes(nodes:HighlightNode[]){
+    try{
+      const query = `INSERT INTO node $nodes`;
+      const params = {nodes};
+      const response = await this.queryUsingHttp(query, params);
+      return interceptSurrealResponse(response)
+    }
+    catch(e){
+      console.error("Error saving books:", e);
+    }
+  }
+
+  async updateKindleSyncState(state: any) {
+    try {
+      const query = "UPDATE kv:clipperToolbarState SET kindleSyncState=$state ;";
+      const result = await this.queryUsingHttp(query, { state });
+      return result[0].kindleSyncState;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+  async getKindleSyncState() {
+    try {
+      const query = "SELECT kindleSyncState FROM kv:clipperToolbarState;";
+      const result = await this.queryUsingHttp(query, {});
+      return result[0].kindleSyncState;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
   /**
    * TODO - Complete history logging - only once the user setting is implemented.
    */
