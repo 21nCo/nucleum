@@ -28,7 +28,7 @@
         id={provider.oauth_slug === "apple"
           ? "appleid-disabled-signin"
           : provider.oauth_slug + "-signin"}
-        width="w-full"
+        isExpandToFullWidth={true}
         icon={provider.oauth_slug}
         isLoading={progress === provider.oauth_slug}
         label={"Continue with " + properCase(provider.oauth_slug)}

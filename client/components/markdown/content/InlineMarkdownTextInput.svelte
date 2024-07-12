@@ -90,7 +90,6 @@
     setTimeout(() => {
       renderMentions(true);
     }, 10);
-    console.log("onMount", { content, innerHTML });
   });
 
   function renderMentionPlaceholders() {

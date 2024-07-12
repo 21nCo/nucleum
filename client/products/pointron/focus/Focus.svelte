@@ -28,6 +28,7 @@
   import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
   import { pointLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
+  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
   let addManualLogButton: IButtonParams = {
@@ -59,7 +60,10 @@
         } else {
           mode = 1;
         }
-      } else {
+      } else if (
+        !$sessionStore.isSessionRunning &&
+        $sessionStore.state != SessionState.FINISHED
+      ) {
         sessionStore.loadEmptyState();
       }
     }, 1000);
@@ -69,7 +73,6 @@
     }
   });
   async function onManualLogClicked() {
-    console.log("onManualLogClicked");
     pointLogStore.reset();
     appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }

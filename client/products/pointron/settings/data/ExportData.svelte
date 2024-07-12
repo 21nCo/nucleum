@@ -12,4 +12,6 @@
   }
 </script>
 
-<Button label="Export everything (json format)" on:click={exportData} />
+<span>
+  <Button label="Export (Pointron json)" on:click={exportData} />
+</span>

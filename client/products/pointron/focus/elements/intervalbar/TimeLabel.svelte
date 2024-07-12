@@ -109,8 +109,20 @@
       </button>
     {:else}
       <div class={timeClassList}>
-        {#if $sessionStore.type === SessionType.COUNTUP}
+        {#if $sessionStore.type === SessionType.COUNTUP && $sessionStore.state != SessionState.FINISHED}
           {$currentTime ? formatTime($userPreferences, $currentTime) : ""}
+        {:else if $sessionStore.type === SessionType.COUNTUP && $sessionStore.state === SessionState.FINISHED}
+          {#if $sessionStore.end}
+            {formatTime($userPreferences, $sessionStore.end)}
+          {:else if $sessionStore.start}
+            {formatTime(
+              $userPreferences,
+              new Date(
+                $sessionStore.start.getTime() +
+                  ($sessionStore.totalElapsed + $sessionStore.totalIdle) * 1000
+              )
+            )}
+          {/if}
           <!-- {:else if $sessionStore.composition?.type === SessionCompositionType.END_TIME_FIXED}
           {$sessionStore.end} -->
           <!-- {:else if $sessionStore.composition?.type === SessionCompositionType.TARGET_FOCUS && $sessionStore.end}

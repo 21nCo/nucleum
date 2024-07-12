@@ -24,6 +24,7 @@ function initModalStore(seed: ModalEvent) {
       });
     },
     hide: async () => {
+      logger.log({ method: "modalEvent.hide" });
       const modal = get(modalEvent);
       if (modal.isDismissable === false) return false;
       update((n: ModalEvent) => {

@@ -101,7 +101,7 @@
       value={storageUsage ? `${(storageUsage / 1000000).toFixed(2)} MB` : "NA"}
     />
     <Button
-      width="w-full"
+      isExpandToFullWidth={true}
       type={ButtonVariant.PRIMARY}
       on:click={() => {
         isShowLogs = true;
@@ -111,7 +111,7 @@
       label="Show logs"
     />
     <Button
-      width="w-full"
+      isExpandToFullWidth={true}
       isLoading={isDboUpdateInProgress}
       on:click={async () => {
         isDboUpdateInProgress = true;
@@ -122,7 +122,7 @@
       label="Rerun dbo update"
     />
     <Button
-      width="w-full"
+      isExpandToFullWidth={true}
       icon="play"
       on:click={() => {
         appStore.runAction(Action.MANUAL_RUN_DBO);
@@ -130,7 +130,7 @@
       label="Run manual dbo update"
     />
     <Button
-      width="w-full"
+      isExpandToFullWidth={true}
       icon="trash"
       type={ButtonVariant.DANGER}
       style={ButtonStyle.OUTLINED}
@@ -139,7 +139,7 @@
     />
     {#if !isShowAsPage}
       <Button
-        width="w-full"
+        isExpandToFullWidth={true}
         on:click={() => {
           isShowDebugOverlay = false;
         }}

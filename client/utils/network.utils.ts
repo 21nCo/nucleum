@@ -1,3 +1,4 @@
+import { GlobalEvent } from "../types/event.enum";
 import { resolveToken, signout } from "./account.utils";
 import { isExtensionEnvironment } from "./browser.utils";
 import { detectTimeZone } from "./time.utils";
@@ -24,7 +25,7 @@ export async function performApiCall(
   method: "POST" | "GET" | "PUT" | "DELETE",
   body: any = {}
 ) {
-  console.log("Performing API call:", { endpoint, method, body });
+  // console.log("Performing API call:", { endpoint, method, body });
   return performHttpNetworkOperation({
     url:
       (resolveRegionalApiUrl() ??
@@ -91,7 +92,12 @@ export async function performHttpNetworkOperation(params: {
     if (error instanceof TypeError) {
       console.error("Network error:", error.message);
       //TEMP - 401 from /sql endpoint is erroring instead of response.status === 401
-      signout();
+      // signout();
+      window.dispatchEvent(
+        new CustomEvent(GlobalEvent.CUSTOM_ALERT, {
+          detail: { error: "networkerror", message: error.message }
+        })
+      );
       throw new Error("Network error. Please check your internet connection.");
     } else if (error instanceof Error) {
       console.error("API call failed:", error.message);

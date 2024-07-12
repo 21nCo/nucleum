@@ -207,6 +207,7 @@ class SessionStore extends KeyValueStore<ISessionStore> {
    * @returns brand new session store with seed values
    */
   reset() {
+    logger.log("session store reset");
     this.shallowReset();
     modalEvent.hideSpecific(PointronEvent.SESSION_FINISHED);
     modalEvent.hideSpecific(PointronEvent.BREAK_REMINDER);
@@ -705,6 +706,7 @@ class SessionStore extends KeyValueStore<ISessionStore> {
 
   async close(isPersist: boolean = true) {
     //TODO - resetSession - via - dataManager.performMutation
+    logger.log({ context: "session store close" });
     let result = undefined;
     if (isPersist) result = await focusPersistance.resetSession();
     if (result?.todayFocus)
@@ -741,15 +743,15 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     } else if (savedSessionStore.state === SessionState.FINISHED) {
       this.shallowReset();
       appStore.runAction(PointronEvent.SESSION_FINISHED);
-      this.modify(savedSessionStore, { isPersist: false });
     } else {
       focusItemsStore.reset();
       savedSessionStore = this.reset();
-      this.modify(savedSessionStore, { isPersist: false });
     }
+    this.modify(savedSessionStore, { isPersist: false });
     this.propagateMessageToParent(savedSessionStore);
   }
   loadEmptyState() {
+    logger.log({ context: "session store loadEmptyState" });
     this.modify(this.reset(), { isPersist: false });
     this.propagateMessageToParent(this.get());
   }

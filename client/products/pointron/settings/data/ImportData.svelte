@@ -9,6 +9,7 @@
   import { isEmptyArray, isValidArray } from "$lib/client/utils/obj.utils";
   import { generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   const dispatch = createEventDispatcher();
   let fileInput: HTMLInputElement;
   let isProcessingImport: boolean = false;
@@ -83,32 +84,43 @@
   }
 </script>
 
-<div
-  class="flex w-full items-center justify-between gap-4 p-4 px-6 bg-bgs2 rounded-md"
->
-  <div class="flex items-center gap-2">
-    <input
-      type="file"
-      id="fileInput"
-      bind:this={fileInput}
-      on:change={importData}
-      accept=".json"
-      class="hidden"
-    />
-    <label for="fileInput" class="bg-bgs3 rounded-md py-2 px-3 cursor-pointer">
-      Choose File
-    </label>
-    {#if fileName}
-      {fileName}
-      <Icon icon="cross" on:click={resetFile} />
-    {/if}
-  </div>
+<div class="flex flex-col w-full gap-4 p-4 px-6 bg-bgs2 rounded-md">
+  <div class="flex w-full justify-between">
+    <div class="flex items-center gap-2">
+      <input
+        type="file"
+        id="fileInput"
+        bind:this={fileInput}
+        on:change={importData}
+        accept=".json"
+        class="hidden"
+      />
+      <label
+        for="fileInput"
+        class="bg-bgs3 rounded-md py-2 px-3 cursor-pointer"
+      >
+        Choose File
+      </label>
+      {#if fileName}
+        {fileName}
+        <Icon icon="cross" on:click={resetFile} />
+      {/if}
+    </div>
 
-  <Button
-    size={Size.sm}
-    on:click={processImport}
-    type={ButtonVariant.PRIMARY}
-    label={isProcessingImport ? "Uploading..." : "Import"}
-    isLoading={isProcessingImport}
-  />
+    <Button
+      size={Size.sm}
+      on:click={processImport}
+      type={ButtonVariant.PRIMARY}
+      label={isProcessingImport ? "Uploading..." : "Import"}
+      isLoading={isProcessingImport}
+    />
+  </div>
+  <div class="self-start text-b3">
+    <b>Note:</b> Only Pointron exported <i>.json</i> is currently accepted
+  </div>
 </div>
+{#if isProcessingImport}
+  <InlineInfoBanner
+    content="**Import in progress.** Kindly **do not close this tab** until the import is complete. Import might take a few seconds or upto a minute depending on the amount of data."
+  />
+{/if}

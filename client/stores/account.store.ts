@@ -13,6 +13,7 @@ import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { wait } from "../utils/time.utils";
 import { signout } from "../utils/account.utils";
+import { logger } from "./log.store";
 
 export const isRefreshingToken = writable(false);
 
@@ -136,6 +137,7 @@ function initAccount(seed: UserAccount) {
     }
   };
   const expire = () => {
+    logger.log({ context: "account.store - Expiring account" });
     localStorage.removeItem("stoken");
     update(() => {
       const n = { token: null, isLoggedIn: false };
@@ -146,6 +148,7 @@ function initAccount(seed: UserAccount) {
   const performLoginStatusCheck = async () => {
     const token = localStorage.getItem("stoken");
     if (!token) {
+      console.log("Token not found. Redirecting to signup");
       appStore.gotoPath("/signup");
       return false;
     }

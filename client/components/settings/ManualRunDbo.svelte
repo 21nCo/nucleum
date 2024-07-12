@@ -12,7 +12,7 @@
   label={{ label: "Set last run changeId" }}
 />
 <Button
-  width="w-full"
+  isExpandToFullWidth={true}
   isLoading={isDboUpdateInProgress}
   on:click={async () => {
     isDboUpdateInProgress = true;

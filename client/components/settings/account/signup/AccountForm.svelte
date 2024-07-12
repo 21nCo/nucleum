@@ -169,7 +169,7 @@
       </div>
       <InlineErrorMessage bind:error />
       <Button
-        width="w-full"
+        isExpandToFullWidth={true}
         type="primary"
         label={isSignup
           ? actionInProgress

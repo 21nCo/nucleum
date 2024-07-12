@@ -222,7 +222,6 @@
                   {#if currentStep === 0}
                     <Button
                       on:click={handleStepButtonClick("+")}
-                      width="w-[12.5rem]"
                       type="primary"
                     >
                       Get Started
@@ -231,16 +230,11 @@
                     <div class="flex flex-col w-fit items-center gap-4">
                       <Button
                         on:click={handleStepButtonClick("+")}
-                        width="w-[12.5rem]"
                         type="primary"
                       >
                         Next
                       </Button>
-                      <Button
-                        on:click={onSkip}
-                        width="w-[12.5rem]"
-                        style={ButtonStyle.PLAIN}
-                      >
+                      <Button on:click={onSkip} style={ButtonStyle.PLAIN}>
                         Skip
                       </Button>
                       <!-- <Button
