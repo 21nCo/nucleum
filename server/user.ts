@@ -157,10 +157,10 @@ async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
       nickName: oAuthUserData.name
         ? oAuthUserData.name
         : oAuthUserData.firstName && oAuthUserData.lastName
-        ? oAuthUserData.firstName + " " + oAuthUserData.lastName
-        : oAuthUserData.given_name
-        ? oAuthUserData.given_name
-        : "",
+          ? oAuthUserData.firstName + " " + oAuthUserData.lastName
+          : oAuthUserData.given_name
+            ? oAuthUserData.given_name
+            : "",
       profilePictureUrl: oAuthUserData.picture,
       sub: oAuthUserData.sub,
       context: { ...context, oauthData: oAuthUserData },
@@ -294,7 +294,7 @@ export async function deleteUserAccount(body: any, agent: Agent) {
   const { id, context } = body;
   if (!agent.id) return { error: "userId is required" };
   await log(agent.id, { ...context, activity: "deleteAccount" });
-  const query = `DELETE user WHERE id = "${id}";`;
+  const query = `DELETE user WHERE id = "user:${agent.id}";`;
   const response = await performAdminQuery(query);
   const dbRemovalQuery = `USE NAMESPACE ${process.env.USER_NS}; REMOVE DATABASE ${agent.id};`;
   await performAdminQuery(dbRemovalQuery);

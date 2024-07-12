@@ -8,11 +8,18 @@
   import { Position } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
   import { Size } from "$lib/client/types/size.enum";
+  import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   export let isInFullScreen: boolean = false;
-  let toolTipPlacement = Position.Top;
-  const buttonProps: { size: Size.lg; toolTipPlacement: Position } = {
+  const buttonProps: {
+    size: Size.lg;
+    tooltipOptions: IPopoverRenderBaseParams;
+  } = {
     size: Size.lg,
-    toolTipPlacement
+    tooltipOptions: {
+      placement: Position.TopCenter,
+      offsetInPx: 4,
+      isUseAbsolutePositioning: true
+    }
   };
   function onFullScreenToggle() {
     if (!isInFullScreen) {

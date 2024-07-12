@@ -19,7 +19,8 @@
   let isHovered: boolean = false;
   let testingInMobileBrowser: boolean = false;
   let isInThinMode = refreshSidebarCollapseState();
-  $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
+  // $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
+  let isRounded = false;
   onMount(() => {
     if ($view.landscapiness < 1.25) {
       isInThinMode = true;
@@ -83,9 +84,12 @@
     </div>
   {:else}
     <div
-      class="flex justify-center items-center h-full border-r border-r-brs2 {isInThinMode
-        ? 'w-16 min-w-[4rem]'
-        : 'w-56 min-w-[14rem]'} {isRounded ? 'ml-2' : ''}"
+      class={cn("flex justify-center items-center h-full", {
+        "w-16 min-w-[4rem]": isInThinMode,
+        "w-56 min-w-[14rem]": !isInThinMode,
+        "ml-2": isRounded,
+        "border-r border-r-brs2": !isRounded
+      })}
       on:mouseenter={() => (isHovered = true)}
       on:mouseleave={() => (isHovered = false)}
     >
@@ -93,8 +97,8 @@
         class={cn(
           "flex flex-col pt-4 gap-4 items-center justify-between overflow-auto w-full bg-bgs2",
           {
-            "rounded-lg": isRounded,
-            "border-r border-bgs2": !isRounded
+            "rounded-lg border-none": isRounded,
+            "border-r border-brs2": !isRounded
           }
         )}
         style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}

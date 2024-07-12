@@ -22,91 +22,14 @@ const themes = [
   }
 ];
 
-const lightThemes = [
-  {
-    name: "cs_tidigit_light_blue",
+const mappedColorSchemes = colorSchemes.map((cs) => {
+  return {
+    name: cs.tailwindSelector,
     extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_light_blue"
-      ).colors
+      colors: cs.colors
     }
-  },
-  {
-    name: "cs_tidigit_light_red",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_light_red"
-      ).colors
-    }
-  },
-  {
-    name: "cs_solarized_light",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_solarized_light"
-      ).colors
-    }
-  },
-  {
-    name: "cs_tidigit_light",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_light"
-      ).colors
-    }
-  },
-  {
-    name: "cs_tidigit_light_iris",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_light_iris"
-      ).colors
-    }
-  }
-];
-
-const darkThemes = [
-  {
-    name: "cs_tidigit_dark_blue",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_dark_blue"
-      ).colors
-    }
-  },
-  {
-    name: "cs_tidigit_dark_red",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_dark_red"
-      ).colors
-    }
-  },
-  {
-    name: "cs_solarized_dark",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_solarized_dark"
-      ).colors
-    }
-  },
-  {
-    name: "cs_tidigit_dark",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_dark"
-      ).colors
-    }
-  },
-  {
-    name: "cs_tidigit_dark_iris",
-    extend: {
-      colors: colorSchemes.find(
-        (cs) => cs.tailwindSelector === "cs_tidigit_dark_iris"
-      ).colors
-    }
-  }
-];
+  };
+});
 
 module.exports = {
   content: ["./src/**/*.{html,js,svelte,ts}", "./lib/**/*.{html,js,svelte,ts}"],
@@ -209,11 +132,16 @@ module.exports = {
         "cs_tidigit_light_blue",
         "cs_tidigit_light_iris",
         "cs_tidigit_light_red",
+        "cs_tidigit_light_apple",
+        "cs_tidigit_light_oxide",
         "cs_tidigit_dark",
         "cs_tidigit_dark_blue",
         "cs_tidigit_dark_red",
         "cs_tidigit_dark_bw",
         "cs_tidigit_dark_iris",
+        "cs_tidigit_dark_green",
+        "cs_tidigit_dark_apple",
+        "cs_tidigit_dark_oxide",
         "cs_solarized_light",
         "cs_solarized_dark",
         "border-brs1",
@@ -236,7 +164,7 @@ module.exports = {
             sans: ["Roboto", "sans-serif"],
             serif: ["Merriweather", "serif"]
           },
-          colors: lightThemes[0].colors,
+          colors: mappedColorSchemes[0].colors,
           rotate: {
             270: "270deg"
           }
@@ -244,8 +172,9 @@ module.exports = {
       },
       themes: [
         ...themes,
-        ...lightThemes,
-        ...darkThemes,
+        ...mappedColorSchemes,
+        // ...lightThemes,
+        // ...darkThemes,
         ...colorSchemesBranding
       ]
     })

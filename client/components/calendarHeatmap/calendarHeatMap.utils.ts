@@ -1,13 +1,9 @@
 import { TileAppearance } from "./calendarHeatmap.types";
-import { plainCSSHMColorIndex5 } from "../../stores/app.store";
 import { get } from "svelte/store";
 import {
-  deepCopy,
   isArrayWithSameValue,
   isValidArrayWithData
 } from "$lib/client/utils/obj.utils";
-import { heatMapColorRange } from "$lib/client/utils/theme.utils";
-import appearance from "../../stores/appearance.store";
 import type {
   ICalendarHeatMapDataProvider,
   CalendarHeatmapOptions,
@@ -163,7 +159,7 @@ function generateYearlyDataInRange(
   }
   return yearlyData;
 }
-function resolveStrealDisplay(prev: any, curr: any, next: any, target: number) {
+function resolveStreakDisplay(prev: any, curr: any, next: any, target: number) {
   if (
     (prev == null || prev.value < target) &&
     next !== null &&
@@ -278,39 +274,15 @@ export class CalendarHeatmapDataManager {
     this.options = options;
   }
 
-  resolveTileColorAndStreakDisplay(prev: any, tileItem: any, next: any) {
-    const target: number = tileItem.target;
-    const colors = heatMapColorRange(get(appearance), "aps1", 6);
-    plainCSSHMColorIndex5.set(colors[5]);
-    let noOfColors = colors.length; //exluding the base color
-    let variantRange = target / (noOfColors - 2);
-    if (tileItem.value > target) {
-      return [resolveStrealDisplay(prev, tileItem, next, target), colors[6]];
-    } else if (tileItem.value == target) {
-      return [resolveStrealDisplay(prev, tileItem, next, target), colors[5]];
-    } else if (tileItem.value >= target - variantRange) {
-      return [Number(TileAppearance.DEFAULT), colors[4]];
-    } else if (tileItem.value >= target - 2 * variantRange) {
-      return [Number(TileAppearance.DEFAULT), colors[3]];
-    } else if (tileItem.value >= target - 3 * variantRange) {
-      return [Number(TileAppearance.DEFAULT), colors[2]];
-    } else if (tileItem.value > 0) {
-      return [Number(TileAppearance.DEFAULT), colors[1]];
-    } else {
-      return [Number(TileAppearance.DEFAULT), colors[0]];
-    }
-  }
-
   resolveTileColorAndStreakDisplay2(prev: any, current: any, next: any) {
-    const colors = heatMapColorRange(get(appearance), "aps1", 6);
-    plainCSSHMColorIndex5.set(colors[5]);
-    let color = colors[current.clusterIndex];
     let display = Number(TileAppearance.DEFAULT);
     if (current.value >= current.target) {
-      color = colors[5];
-      display = resolveStrealDisplay(prev, current, next, 0);
+      display = resolveStreakDisplay(prev, current, next, 0);
     }
-    return [display, color];
+    return [
+      display,
+      current.value >= current.target ? 5 : current.clusterIndex
+    ];
   }
 
   assignClusterIndex(inputData: any[]) {

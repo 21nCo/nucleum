@@ -11,6 +11,7 @@ import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
 import { debouncer } from "../utils/utils";
 import { ObservableStore } from "./client.store";
+import { logger } from "./log.store";
 
 export class KeyValueStore<T extends IObservableStoreSubject>
   extends ObservableStore<T>
@@ -96,6 +97,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * @param data
    */
   loader(data: T) {
+    logger.log({ context: "kv.store loader", id: this.id, data });
     this._setAndCache({ ...data });
   }
   /**

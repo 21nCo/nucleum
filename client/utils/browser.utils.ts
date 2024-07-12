@@ -1,5 +1,6 @@
 import { Position } from "$lib/client/types/direction.enum";
 import { OperatingSystem } from "../types/context.type";
+import { GlobalEvent } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "./obj.utils";
 
@@ -11,7 +12,6 @@ function documentDimensions() {
     documentHeight
   };
 }
-
 
 export function renderPopover(params: IPopoverRenderParams) {
   params = {
@@ -53,7 +53,7 @@ function _renderPopoverAtCaretPosition(
   const range = selection?.getRangeAt(0);
   const rect = range?.getBoundingClientRect();
   if (!rect) return;
-  return _renderPopoverUsingFixedPositioning(rect,{
+  return _renderPopoverUsingFixedPositioning(rect, {
     ...params,
     isSpanToTriggerWidth: false
   });
@@ -67,7 +67,7 @@ function renderPopoverUsingFixedPositioning(
   offsetInPx = 2
 ) {
   const triggerRect = triggerRef.getBoundingClientRect();
-  _renderPopoverUsingFixedPositioning(triggerRect,{
+  _renderPopoverUsingFixedPositioning(triggerRect, {
     triggerRef,
     popRef,
     placement: location,
@@ -79,9 +79,11 @@ function renderPopoverUsingFixedPositioning(
  * Renders a popover at the specified location and auto adjusts if the popover is going out of the screen.
  * @param params
  */
-async function _renderPopoverUsingFixedPositioning(triggerRect: DOMRect, params: IPopoverRenderParams) {
-  let { popRef, placement, isSpanToTriggerWidth, offsetInPx } =
-    params;
+async function _renderPopoverUsingFixedPositioning(
+  triggerRect: DOMRect,
+  params: IPopoverRenderParams
+) {
+  let { popRef, placement, isSpanToTriggerWidth, offsetInPx } = params;
   popRef.style.display = "block";
   popRef.style.opacity = "0";
   let popRect = popRef.getBoundingClientRect();
@@ -92,14 +94,18 @@ async function _renderPopoverUsingFixedPositioning(triggerRect: DOMRect, params:
   if (triggerRect.top < popRect.height) {
     if (placement === Position.TopLeft) placement = Position.BottomLeft;
     else if (placement === Position.TopRight) placement = Position.BottomRight;
-    else if (placement === Position.TopCenter) placement = Position.BottomCenter;
+    else if (placement === Position.TopCenter)
+      placement = Position.BottomCenter;
   }
   if (documentHeight - triggerRect.bottom < popRect.height) {
     if (placement === Position.BottomCenter) placement = Position.TopCenter;
     else if (placement === Position.BottomLeft) placement = Position.TopLeft;
     else if (placement === Position.BottomRight) placement = Position.TopRight;
   }
-  if (triggerRect.top < popRect.height && documentHeight - triggerRect.bottom < popRect.height) {
+  if (
+    triggerRect.top < popRect.height &&
+    documentHeight - triggerRect.bottom < popRect.height
+  ) {
     placement = Position.Left;
   }
   if (!isSpanToTriggerWidth) {
@@ -145,14 +151,23 @@ async function _renderPopoverUsingFixedPositioning(triggerRect: DOMRect, params:
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
   } else if (placement === Position.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
-  } else if (placement === Position.TopCenter || placement === Position.BottomCenter) {
-    popRef.style.left = `${triggerRect.left - ((popRect.width / 2) - (triggerRect.width / 2))}px`;
+  } else if (
+    placement === Position.TopCenter ||
+    placement === Position.BottomCenter
+  ) {
+    popRef.style.left = `${triggerRect.left - (popRect.width / 2 - triggerRect.width / 2)}px`;
   }
   popRect = popRef.getBoundingClientRect();
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  console.log({ triggerRect, popRect, placement, documentWidth, documentHeight });
+  console.log({
+    triggerRect,
+    popRect,
+    placement,
+    documentWidth,
+    documentHeight
+  });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";
@@ -160,7 +175,6 @@ async function _renderPopoverUsingFixedPositioning(triggerRect: DOMRect, params:
   if (isSpanToTriggerWidth) popRef.style.width = `${triggerRect.width}px`;
   popRef.style.opacity = "1";
 }
-
 
 function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
   let { triggerRef, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
@@ -173,7 +187,7 @@ function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
   popRef.style.bottom = "";
   popRef.style.left = "";
   popRef.style.right = "";
-  switch (placement) { 
+  switch (placement) {
     case Position.TopCenter:
       popRef.style.bottom = `${triggerRect.height + offsetInPx}px`;
       break;
@@ -282,7 +296,9 @@ export function resolveHoverState(event: MouseEvent | FocusEvent) {
  * @param queryParams
  */
 export function goto(path: string) {
-  window.dispatchEvent(new CustomEvent("custom:navigation", { detail: path }));
+  window.dispatchEvent(
+    new CustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { detail: path })
+  );
 }
 
 /**

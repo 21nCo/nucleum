@@ -21,7 +21,9 @@ export enum GlobalEvent {
    */
   WINDOW_RESIZED = "WINDOW_RESIZED",
   USER_LOGIN = "USER_LOGIN",
-  USER_SIGNUP = "USER_SIGNUP"
+  USER_SIGNUP = "USER_SIGNUP",
+  CUSTOM_NAVIGATION = "custom:navigation",
+  CUSTOM_ALERT = "custom:alert"
 }
 
 export enum PlayActionState {

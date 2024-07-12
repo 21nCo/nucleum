@@ -57,7 +57,6 @@
       on:click={onAddNewClicked}
       style={ButtonStyle.OUTLINED}
       size={Size.sm}
-      width={isExpandedVariant ? "w-full max-w-md" : "w-28"}
       label="Add new preset"
       icon="plus"
     />

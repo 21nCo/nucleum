@@ -34,7 +34,6 @@ import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 
 import { Persistence } from "../persistence/persistence";
-import { dataManager } from "$lib/client/persistence/dataManager";
 
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
@@ -62,7 +61,7 @@ export const isTouchDevice = writable(false);
 export const appStoreShuffleEmojis = writable(shuffleEmojis);
 export const intercomId = import.meta.env?.VITE_INTERCOM_ID ?? "esh1m4xq";
 export const selectedTimePeriod = writable<Date>(new Date());
-export const plainCSSHMColorIndex5 = writable<string | undefined>("");
+
 /**
  * Paths that are excluded to redirection checks like login
  */
@@ -429,7 +428,6 @@ function initAppStore(seed: AppStore) {
     path: string,
     props?: {
       queryParams?: any;
-      params?: any;
     }
   ) => {
     // console.log({ method: "gotoPath", path });
@@ -450,8 +448,7 @@ function initAppStore(seed: AppStore) {
     // if (!navigator.onLine) {
     //   path = "/offline";
     // }
-    if (props?.params) goto(path, props.params);
-    else goto(path);
+    goto(path);
   };
   const gotoErrorPage = (err: any) => {
     //TODO - log error, show error code on error page
@@ -467,8 +464,7 @@ function initAppStore(seed: AppStore) {
       };
       return n;
     });
-    if (params) goto(path, params);
-    else goto(path);
+    goto(path);
   };
   const resolveAction = (slug: string) => {
     const actions = get(appStore).actions;

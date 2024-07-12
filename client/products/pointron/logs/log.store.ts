@@ -39,6 +39,7 @@ import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/types/memotron/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
+import { deepCopy } from "$lib/client/utils/obj.utils";
 
 class PointLogStore extends ObservableStore<IPointLogStore> {
   constructor() {
@@ -288,12 +289,12 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
     });
     return { focus, break: breakTime };
   }
-  reset() {
-    this.update((n) => {
-      n.date = new Date();
-      return n;
-    });
-  }
+  // reset() {
+  //   this.update((n) => {
+  //     n.date = new Date();
+  //     return n;
+  //   });
+  // }
   loader(data: any) {
     const n = this.get();
     let logs = [];
@@ -310,12 +311,20 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
   }
   resolveRefreshQuery() {
     const n = this.get();
+    if (n.isPageRefreshing && !isSameDay(n.date, new Date())) {
+      this.update((n) => {
+        n.date = new Date();
+        n.logs = [];
+        n.isRefreshing = true;
+        return n;
+      });
+    }
     return replaceParams("return fn::pointron::logs::fetch::v3($date);", {
       date: n.date.toISOString()
     });
   }
   refreshForDate(date: Date) {
-    const n = get(logsPaneStore);
+    const n = this.get();
     if ((isSameDay(date, n.date) && n.logs.length > 0) || n.isPageRefreshing)
       return n;
     n.date = new Date(date);

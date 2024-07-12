@@ -23,7 +23,6 @@
       label="Join us on discord"
       {size}
       icon="link"
-      width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
         appStore.openLink($appStore.appData?.urls?.discord);
       }}
@@ -32,7 +31,6 @@
       label="Read more about Blank"
       {size}
       icon="link"
-      width={$view.isPortrait ? "w-full" : "w-max"}
       on:click={() => {
         appStore.openLink($appStore.appData?.urls?.blank);
       }}

@@ -32,11 +32,7 @@
     });
     return () => {
       sub();
-      logsPaneStore.reset();
     };
-  });
-  onDestroy(() => {
-    logsPaneStore.reset();
   });
   async function refresh() {
     logsPaneStore.refreshForDate(date);

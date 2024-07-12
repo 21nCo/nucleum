@@ -6,14 +6,16 @@
 </script>
 
 <BottomFloat>
-  <Button
-    {...params}
-    parentBgIndex={params.parentBgIndex}
-    type={params.variant}
-    style={params.style}
-    width="w-[13rem]"
-    on:click={async () => {
-      if (params.callback) await params?.callback();
-    }}
-  />
+  <span class="w-[12rem]">
+    <Button
+      {...params}
+      parentBgIndex={params.parentBgIndex}
+      type={params.variant}
+      style={params.style}
+      isExpandToFullWidth={true}
+      on:click={async () => {
+        if (params.callback) await params?.callback();
+      }}
+    />
+  </span>
 </BottomFloat>

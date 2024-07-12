@@ -18,7 +18,7 @@
   export let type: "primary" | "secondary" | "danger" | ButtonVariant =
     ButtonVariant.SECONDARY;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let width: string = "min-w-fit max-w-fit";
+  export let isExpandToFullWidth: boolean = false;
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
@@ -78,9 +78,10 @@
 <button
   {id}
   class={cn(
-    "relative flex flex-row justify-center items-center min-w-fit rounded-full",
-    width,
+    "relative flex flex-row justify-center items-center rounded-full",
     {
+      "min-w-32": style != ButtonStyle.PLAIN,
+      "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,
       "gap-2 text-b2 dp:text-base": size === Size.md,
@@ -109,11 +110,12 @@
       }
     ],
     style === ButtonStyle.OUTLINED && [
-      bg(parentBgIndex - 1),
       {
         border: true,
-        "border-aps1 text-aps1": type === ButtonVariant.PRIMARY,
-        "border-brs3 text-fgs2 hover:text-fgs1 hover:border-fgs3":
+        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+          type === ButtonVariant.PRIMARY,
+        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY,
+        "border-brs2 text-fgs2 hover:text-fgs1 hover:border-brs3":
           type === ButtonVariant.SECONDARY,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }

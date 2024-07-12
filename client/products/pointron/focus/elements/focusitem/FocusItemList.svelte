@@ -56,7 +56,8 @@
   onDestroy(unSubscribeDND);
   function refresh() {
     items = [];
-    items = transformFocusItems($focusItemsStore.items);
+    if ($focusItemsStore.items)
+      items = transformFocusItems($focusItemsStore.items);
   }
   function onBlur() {
     isFocusingAddGoal = false;

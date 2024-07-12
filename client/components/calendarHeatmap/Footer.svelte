@@ -1,14 +1,19 @@
 <script>
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
-  import { CalendarHeatMapstoreColors } from "./calendarHeatmap.store";
-
-  let colors = $CalendarHeatMapstoreColors;
+  import { TileAppearance } from "./calendarHeatmap.types";
 </script>
 
 <div class="flex gap-2 justify-end mr-5 text-sm">
   {"Less"}
-  {#each colors as color}
-    <MicroIndicatorTile data={{}} --tileBgColor={color} />
+  {#each Array.from({ length: 5 }, (_, i) => 0 + i) as _, index}
+    <MicroIndicatorTile
+      data={{
+        date: "",
+        value: 0,
+        display: TileAppearance.DEFAULT,
+        color: index
+      }}
+    />
     <!-- stop propogation for emiited event from MicroIndicatorTile only for footer -->
   {/each}
   {"More"}

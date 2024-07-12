@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { plainCSSHMColorIndex5 } from "$lib/client/stores/app.store";
   import MacroIndicatorTIle from "./MacroIndicatorTIle.svelte";
-  import { TileAppearance } from "./calendarHeatmap.types";
   export let data: any;
   let [QD, QDData] = data;
   $: {
@@ -16,19 +14,6 @@
       --width="4px"
       --height="0.5px"
       --direction="row"
-      --tileBgColor={yearData.color}
-      tileValue={yearData.display == TileAppearance.FTile ||
-      yearData.display == TileAppearance.LTile
-        ? "🔥"
-        : ""}
-      --topThreadColor={yearData.display == TileAppearance.LTile ||
-      yearData.display == TileAppearance.MTile
-        ? $plainCSSHMColorIndex5
-        : ""}
-      --bottomThreadColor={yearData.display == TileAppearance.FTile ||
-      yearData.display == TileAppearance.MTile
-        ? $plainCSSHMColorIndex5
-        : ""}
     />
   {/each}
 </div>

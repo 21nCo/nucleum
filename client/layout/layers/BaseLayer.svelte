@@ -24,7 +24,7 @@
     userPreferences,
     dboVersion
   } from "$lib/client/stores/app.store";
-  import { appEvents } from "$lib/client/stores/notification.store";
+  import { appEvents, toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
 
   import DebugLayer from "./debug/DebugLayer.svelte";
@@ -49,6 +49,7 @@
   import MetadataLayer from "./MetadataLayer.svelte";
   import { appMenuStore } from "../leftPanel/appMenu.store";
   import { defaultAppMenu } from "$local/local";
+  import { AlertType } from "$lib/client/types/notification.type";
 
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -185,12 +186,12 @@
         appStore.gotoErrorPage(e);
       }
     }
+    initActions(isLiteMode);
     if ($account.isLoggedIn)
       await dataManager.initialize(
         [...cacheableStores, ...localCacheableStores],
         isLiteMode
       );
-    initActions(isLiteMode);
     if (isLiteMode) return;
     if (
       !excludedPathsForRedirectionCheck.includes(
@@ -280,14 +281,33 @@
   function handleCustomNavigation(event: any) {
     if (event.detail) goto(event.detail);
   }
+  function handleCustomAlert(event: any) {
+    if (event.detail) console.log("custom alert:", event.detail);
+    if (event.detail?.error === "networkerror") {
+      toasts.trigger({
+        title: "Network Error",
+        message: event.detail.message ?? "Something went wrong.",
+        type: AlertType.ERROR,
+        id: "networkerror"
+      });
+    }
+  }
   function addWindowEventListeners() {
-    window.addEventListener("custom:navigation", handleCustomNavigation);
+    window.addEventListener(
+      GlobalEvent.CUSTOM_NAVIGATION,
+      handleCustomNavigation
+    );
+    window.addEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
   }
   function removeWindowEventListeners() {
-    window.removeEventListener("custom:navigation", handleCustomNavigation);
+    window.removeEventListener(
+      GlobalEvent.CUSTOM_NAVIGATION,
+      handleCustomNavigation
+    );
+    window.removeEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
     window.onpopstate = null;
   }
   onDestroy(() => {
