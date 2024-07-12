@@ -162,5 +162,37 @@
     "label": "dracula",
     "tailwindSelector": "cs_dracula",
     "theme": "clean"
+  },
+  {
+    "colors": {
+      "ags1": "hsl(151 45% 53%)",
+      "ags2": "hsl(151 45% 85%)",
+      "aps1": "hsl(152 62% 57%)",
+      "aps2": "hsl(152 40% 90%)",
+      "aps3": "hsl(152 40% 98%)",
+      "ars1": "hsl(0 89% 71%)",
+      "ars2": "hsl(0 89% 90%)",
+      "ass1": "hsl(0 28% 55%)",
+      "ass2": "hsl(0 28% 80%)",
+      "bgs1": "hsl(152 0% 100%)",
+      "bgs2": "hsl(152 4% 97%)",
+      "bgs3": "hsl(152 4% 93%)",
+      "bgs4": "hsl(152 4% 90%)",
+      "bgs5": "hsl(0 4% 87%)",
+      "brs1": "hsl(0 4% 97%)",
+      "brs2": "hsl(0 4% 95%)",
+      "brs3": "hsl(0 4% 90%)",
+      "fgs1": "hsl(0 0% 20%)",
+      "fgs2": "hsl(0 0% 33%)",
+      "fgs3": "hsl(0 0% 50%)",
+      "fgs4": "hsl(0 0% 65%)"
+    },
+    "id": "colorscheme:clean_tidyoxide_light",
+    "isDark": false,
+    "isActiveFgFg": true,
+    "isNeverFgFg": false,
+    "label": "oxide (exp.)",
+    "tailwindSelector": "cs_tidigit_light_oxide",
+    "theme": "clean"
   }
 ]

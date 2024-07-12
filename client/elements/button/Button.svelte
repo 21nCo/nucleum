@@ -93,11 +93,12 @@
       }
     ],
     style === ButtonStyle.OUTLINED && [
-      bg(parentBgIndex - 1),
       {
         border: true,
-        "border-aps1 text-aps1": type === ButtonVariant.PRIMARY,
-        "border-brs3 text-fgs2 hover:text-fgs1 hover:border-fgs3":
+        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+          type === ButtonVariant.PRIMARY,
+        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY,
+        "border-brs2 text-fgs2 hover:text-fgs1 hover:border-brs3":
           type === ButtonVariant.SECONDARY,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }
@@ -146,7 +147,7 @@
       />
     {/if}
     {#if label}
-      <div class="min-w-fit whitespace-nowrap">
+      <div class="min-w-[4rem] whitespace-nowrap">
         {label}
       </div>
     {:else}

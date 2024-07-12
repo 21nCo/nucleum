@@ -2,7 +2,6 @@
   import { page } from "$app/stores";
   import { LayoutContext } from "$lib/client/types/layout.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import view from "$lib/client/stores/view.store";
   import type { IAction } from "$lib/client/types/action.type";
@@ -28,6 +27,7 @@
   let isHovering: boolean = false;
   let pad: number;
   let rive: any;
+  let isOutlineStyle: boolean = false;
   onMount(() => {
     if (toolTipRef) hideToolTip();
   });
@@ -65,18 +65,25 @@
 </script>
 
 <HoverableElement
-  class={cn("flex items-center cursor-pointer", {
-    "w-12 flex-col gap-1 text-b4 rounded-lg":
-      isShowLabel && layoutContext === LayoutContext.PORTRAIT,
-    "text-b2 gap-2 rounded-lg p-3 h-10":
-      isShowLabel && layoutContext != LayoutContext.PORTRAIT,
-    "p-4 rounded-full": !isShowLabel,
-    [abg()]:
-      (layoutContext === LayoutContext.DEFAULT ||
-        layoutContext === LayoutContext.MINIMIZED) &&
-      isActive,
-    "text-aps1": isActive && layoutContext === LayoutContext.PORTRAIT
-  })}
+  class={cn(
+    "flex items-center cursor-pointer",
+    (layoutContext === LayoutContext.DEFAULT ||
+      layoutContext === LayoutContext.MINIMIZED) && {
+      "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+        isActive && isOutlineStyle,
+      [abg()]: isActive && !isOutlineStyle,
+      "border border-transparent": !isActive && isOutlineStyle
+    },
+    layoutContext === LayoutContext.PORTRAIT && {
+      "w-12 flex-col gap-1 text-b4 rounded-lg": isShowLabel,
+      "text-aps1": isActive
+    },
+    {
+      "text-b2 gap-2 rounded-lg p-3 h-10":
+        isShowLabel && layoutContext != LayoutContext.PORTRAIT,
+      "p-4 rounded-full": !isShowLabel
+    }
+  )}
   on:click={onClick}
   bind:isHovering
   on:hover={toggleHoveringState}
@@ -90,16 +97,17 @@
         layoutContext === LayoutContext.PORTRAIT
           ? Size.lg
           : Size.md}
-        class={cn({
-          "fill-aps1":
-            isActive &&
-            (layoutContext === LayoutContext.PORTRAIT ||
-              layoutContext === LayoutContext.THIN),
-          "fill-abg":
-            isActive &&
-            (layoutContext === LayoutContext.DEFAULT ||
-              layoutContext === LayoutContext.MINIMIZED)
-        })}
+        class={cn(
+          (layoutContext === LayoutContext.DEFAULT ||
+            layoutContext === LayoutContext.MINIMIZED) && {
+            "fill-aps1": isActive && isOutlineStyle,
+            "fill-abg": isActive && !isOutlineStyle
+          },
+          (layoutContext === LayoutContext.PORTRAIT ||
+            layoutContext === LayoutContext.THIN) && {
+            "fill-aps1": isActive
+          }
+        )}
       />
     </div>
   {:else if item.icon == "initials"}

@@ -2,7 +2,10 @@ import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb.js";
 import type { MergeRecord, QueryParams } from "../types/persistance.type";
 import { resolveToken } from "$lib/client/utils/account.utils";
-import { performApiCall } from "$lib/client/utils/network.utils";
+import {
+  performApiCall,
+  performHttpNetworkOperation
+} from "$lib/client/utils/network.utils";
 import {
   replaceParams,
   resolveMutationQuery
@@ -109,7 +112,8 @@ export class SurrealDatabaseUsingRest {
       query = replaceParams(query, params);
       let response;
       if (isReadOperation) {
-        response = await fetch(this.instance + "/sql", {
+        response = await performHttpNetworkOperation({
+          url: this.instance + "/sql",
           method: "POST",
           headers: {
             "Content-Type": "text/plain",

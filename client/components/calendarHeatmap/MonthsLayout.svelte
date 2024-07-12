@@ -1,7 +1,5 @@
 <script lang="ts">
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
-  import { plainCSSHMColorIndex5 } from "$lib/client/stores/app.store";
-  import { TileAppearance } from "./calendarHeatmap.types";
   // export let view: "V1" | "V2";
   // export const days = 30;
   export let data: any;
@@ -29,39 +27,10 @@
       data={monthData[0]}
       classList="firstDay"
       --height="3px"
-      --tileBgColor={monthData[0].color}
       --startDay={firstDay}
-      tileValue={monthData[0].display == TileAppearance.FTile ||
-      monthData[0].display == TileAppearance.LTile
-        ? "🔥"
-        : ""}
-      --topThreadColor={monthData[0].display == TileAppearance.LTile ||
-      monthData[0].display == TileAppearance.MTile
-        ? $plainCSSHMColorIndex5
-        : ""}
-      --bottomThreadColor={monthData[0].display == TileAppearance.FTile ||
-      monthData[0].display == TileAppearance.MTile
-        ? $plainCSSHMColorIndex5
-        : ""}
     />
     {#each monthData.slice(1) as daydata, index (index)}
-      <MicroIndicatorTile
-        data={daydata}
-        --height="3px"
-        --tileBgColor={daydata.color}
-        tileValue={daydata.display == TileAppearance.FTile ||
-        daydata.display == TileAppearance.LTile
-          ? "🔥"
-          : ""}
-        --topThreadColor={daydata.display == TileAppearance.LTile ||
-        daydata.display == TileAppearance.MTile
-          ? $plainCSSHMColorIndex5
-          : ""}
-        --bottomThreadColor={daydata.display == TileAppearance.FTile ||
-        daydata.display == TileAppearance.MTile
-          ? $plainCSSHMColorIndex5
-          : ""}
-      />
+      <MicroIndicatorTile data={daydata} --height="3px" />
     {/each}
   </div>
 </div>

@@ -216,9 +216,7 @@ function initAccount(seed: UserAccount) {
     },
     confirmDelete: async () => {
       let acc = get(account);
-      await performApiCall("account/n/deleteAccount", "POST", {
-        id: acc.userId
-      });
+      await performApiCall("account/n/deleteAccount", "POST", {});
       console.log("deleting account", { acc });
       account.signOut();
       appStore.gotoPath("/signup?msg=deleted");

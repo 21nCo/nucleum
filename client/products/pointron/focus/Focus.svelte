@@ -34,7 +34,7 @@
     label: "Add manual log",
     callback: onManualLogClicked,
     icon: "clock",
-    variant: $view.isPortrait ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY,
+    variant: ButtonVariant.PRIMARY,
     parentBgIndex: $view.isPortrait ? 1 : 3,
     style: $view.isPortrait ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED
   };
@@ -42,7 +42,8 @@
     label: "Start session",
     callback: onStartSessionClicked,
     icon: "play",
-    variant: ButtonVariant.PRIMARY
+    variant: ButtonVariant.PRIMARY,
+    style: ButtonStyle.DEFAULT
   };
   /**
    * Refresh the page data

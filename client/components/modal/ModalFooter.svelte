@@ -29,6 +29,7 @@
     <Button
       type={primaryAction.variant ?? "primary"}
       icon={primaryAction.icon}
+      style={primaryAction.style}
       isLoading={isActionInProgress}
       on:click={async () => {
         isActionInProgress = true;

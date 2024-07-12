@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { plainCSSHMColorIndex5 } from "$lib/client/stores/app.store";
   import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
-  import { TileAppearance } from "./calendarHeatmap.types";
   export let data: any;
   let [year, yearData] = data;
 </script>
@@ -10,22 +8,7 @@
   {year}
   <div id={year} class="year">
     {#each yearData as monthData, index (index)}
-      <MicroIndicatorTile
-        data={monthData}
-        --tileBgColor={monthData.color}
-        tileValue={monthData.display == TileAppearance.FTile ||
-        monthData.display == TileAppearance.LTile
-          ? "🔥"
-          : ""}
-        --topThreadColor={monthData.display == TileAppearance.LTile ||
-        monthData.display == TileAppearance.MTile
-          ? $plainCSSHMColorIndex5
-          : ""}
-        --bottomThreadColor={monthData.display == TileAppearance.FTile ||
-        monthData.display == TileAppearance.MTile
-          ? $plainCSSHMColorIndex5
-          : ""}
-      />
+      <MicroIndicatorTile data={monthData} />
     {/each}
   </div>
 </div>

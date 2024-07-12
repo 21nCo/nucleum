@@ -8,7 +8,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { goalStore } from "./goal.store";
@@ -105,7 +105,8 @@
         callback: async () =>
           appStore.runAction(PointronAction.CREATE_EDIT_GOAL),
         icon: "plus",
-        variant: ButtonVariant.PRIMARY
+        variant: ButtonVariant.PRIMARY,
+        style: ButtonStyle.DEFAULT
       }}
     >
       <slot name="nonpadded" slot="nonpadded">

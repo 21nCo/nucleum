@@ -1,16 +1,25 @@
 <script lang="ts">
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { renderPopoverv2 } from "$lib/client/utils/browser.utils";
-  import type { DailyData, MonthlyData } from "./calendarHeatmap.types";
+  import {
+    TileAppearance,
+    type DailyData,
+    type MonthlyData
+  } from "./calendarHeatmap.types";
   import { CalendarHeatMapLayout } from "./calendarHeatmap.store";
+  import { heatMapColorRange } from "$lib/client/utils/theme.utils";
+  import appearance from "$lib/client/stores/appearance.store";
 
-  export let data: DailyData | MonthlyData | {};
+  export let data: DailyData | MonthlyData;
   export let classList: string = "";
   export let tileValue: string = "";
+  tileValue =
+    data.display == TileAppearance.FTile || data.display == TileAppearance.LTile
+      ? "🔥"
+      : tileValue;
+  $: colors = heatMapColorRange($appearance, "aps1", 6);
   let tileRef: HTMLSpanElement;
   let toolTipRef: HTMLDivElement;
   let isHovering: boolean = false;
@@ -62,6 +71,15 @@
 </script>
 
 <span
+  style:--tileBgColor={colors[data.color]}
+  style:--topThreadColor={data.display == TileAppearance.LTile ||
+  data.display == TileAppearance.MTile
+    ? colors[5]
+    : ""}
+  style:--bottomThreadColor={data.display === TileAppearance.FTile ||
+  data.display === TileAppearance.MTile
+    ? colors[5]
+    : ""}
   bind:this={tileRef}
   class="relative {classList}"
   on:pointerenter={() => {

@@ -9,10 +9,9 @@
   import context from "$lib/client/stores/context.store";
   import { Size } from "$lib/client/types/size.enum";
   export let isInFullScreen: boolean = false;
-  let toolTipPlacement = Position.Top;
   const buttonProps: { size: Size.lg; toolTipPlacement: Position } = {
     size: Size.lg,
-    toolTipPlacement
+    toolTipPlacement: Position.TopCenter
   };
   function onFullScreenToggle() {
     if (!isInFullScreen) {

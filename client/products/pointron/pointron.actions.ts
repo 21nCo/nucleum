@@ -23,7 +23,7 @@ import AnalyticsSettings from "$lib/client/products/pointron/settings/AnalyticsS
 import Think from "$lib/client/products/pointron/focus/Think.svelte";
 import BackgroundMusic from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundMusic.svelte";
 import { Size } from "$lib/client/types/size.enum";
-import { ButtonVariant } from "$lib/client/types/button.type";
+import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
 import { get } from "svelte/store";
 import { Item } from "$lib/client/types/item.enum";
 import modalEvent from "$lib/client/components/modal/modal.store";
@@ -164,6 +164,7 @@ export const pointronActions: IAction[] = [
         size: Size.xl,
         primaryAction: {
           label: "Save entries",
+          style: ButtonStyle.DEFAULT,
           callback: () => pointLogStore.saveManualLogs()
         },
         secondaryAction: {
