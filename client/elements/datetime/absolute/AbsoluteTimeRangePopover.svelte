@@ -167,7 +167,7 @@
     console.log("RangePicked", { start: startString, end: endString });
     if (startString && endString)
       dispatch("rangePicked", { start: startString, end: endString });
-    isPickerOpen = false;
+    // isPickerOpen = false;
     startString = "";
     endString = "";
   }
@@ -342,6 +342,7 @@
   }
 </script>
 
+<svelte:window on:click={handleOutsideClickModal} />
 {#if isPickerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
@@ -349,6 +350,7 @@
       "flex flex-col gap-4 w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2",
       bg(parentBgIndex)
     )}
+    on:click|stopPropagation
   >
     <div class="flex items-center w-full justify-between text-b2">
       <div class="flex gap-1">
@@ -551,14 +553,15 @@
                     <div class="flex w-full h-8 justify-center items-center">
                       {#if i > 0}
                         {#if (i === startDay && mapMonth === startMonth && mapYear === startYear && startSelected) || (i === endDay && mapMonth === endMonth && mapYear === endYear && endSelected)}
-                          <div
+                          <button
                             class={cn(
                               "rounded-md w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center",
                               abg()
                             )}
+                            on:click={() => selectDate(mapYear, mapMonth, i)}
                           >
                             {i}
-                          </div>
+                          </button>
                         {:else if startDay && startMonth && startYear && laterDate(startDay, startMonth, startYear, i, mapMonth, mapYear) && endDay && endMonth && endYear && laterDate(i, mapMonth, mapYear, endDay, endMonth, endYear) && endSelected == true}
                           <button
                             class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-abg text-b2 text-bgs1 bg-aps2"
@@ -612,7 +615,9 @@
                         {#if (i === startMonth && mapYear === startYear && startSelected) || (i === endMonth && mapYear === endYear && endSelected)}
                           <button
                             class="rounded w-full h-full focus:ring-1focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
-                            >{dayjs(mapYear + "-" + i).format("MMM")}</button
+                            on:click={() => {
+                              selectDate(mapYear, i, 1);
+                            }}>{dayjs(mapYear + "-" + i).format("MMM")}</button
                           >
                         {:else if startMonth && startYear && laterDate(1, startMonth, startYear, 1, i, mapYear) && endMonth && endYear && laterDate(1, i, mapYear, 1, endMonth, endYear) && endSelected == true}
                           <button
@@ -665,6 +670,9 @@
                         {#if (i + selectedDecade === startYear && startSelected) || (selectedDecade + i == endYear && endSelected)}
                           <button
                             class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
+                            on:click={() => {
+                              selectDate(selectedDecade + i, 1, 1);
+                            }}
                           >
                             {selectedDecade + i}
                           </button>
