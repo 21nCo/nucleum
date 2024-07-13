@@ -8,6 +8,8 @@
   import { onMount } from "svelte";
   import { toolbarState, webpage } from "../contentScripts/store";
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
+  import InlineFeedbackText from "../InlineFeedbackText.svelte";
+  import { AlertType } from "$lib/client/types/notification.type";
   export let isShown: boolean = false;
   export let feedback: string = "";
   let autoCloseDuration = 5;
@@ -83,15 +85,30 @@
       </span>
     </div>
     <LinkBoxOnClipper
-      on:link={(e) => {
-        console.log("link", e.detail.item);
-        if (e.detail.item.id) webpage.linkPage(e.detail.item.id);
+      on:link={async (e) => {
+        feedback = "Linking...";
+        let result;
+        if (e.detail) result = await webpage.linkPage(e.detail);
+        feedback = result?.message
+          ? result
+          : { message: "Linking failed", type: AlertType.ERROR };
       }}
     />
   </div>
-  <LinkItems links={$webpage.links} on:click={onLinkClick} />
+  <LinkItems
+    links={$webpage.links}
+    on:click={onLinkClick}
+    on:unlink={async (e) => {
+      feedback = "Removing link...";
+      let result;
+      if (e.detail) result = await webpage.removeLinkForPage(e.detail);
+      feedback = result?.message
+        ? result
+        : { message: "Unlinking failed", type: AlertType.ERROR };
+    }}
+  />
   <!-- <div>
     isHovering: {isHovering}
   </div> -->
-  <div class="flex w-full justify-center text-fgs2 text-b2 h-4">{feedback}</div>
+  <InlineFeedbackText bind:feedback />
 </HoverableElement>

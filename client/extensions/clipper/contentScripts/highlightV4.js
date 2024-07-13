@@ -183,3 +183,18 @@ function _recursiveWrapper(
 
   return [startFound, charsHighlighted];
 }
+
+
+export function removeHighlight(id) {
+  const existingHighlight = document.querySelector(`[data-highlight-id="${id}"]`);
+  if (existingHighlight) {
+    existingHighlight.remove();
+  }
+}
+
+function removeAllHighlights() {
+  const existingHighlights = document.querySelectorAll('[data-highlight-id]');
+  existingHighlights.forEach((highlight) => {
+    highlight.remove();
+  });
+}

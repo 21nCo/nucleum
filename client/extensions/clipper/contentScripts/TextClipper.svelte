@@ -175,7 +175,6 @@
       const container = elementFromQuery(record.metadata.container);
 
       let textColor = "white";
-
       if (selection.anchorNode && selection.focusNode && container) {
         highlight(
           record.body.text,
@@ -253,7 +252,13 @@
   }
 
   function onmouseup(e: MouseEvent) {
-    // console.log("onmouseup", e);
+    //console.log("onmouseup", e);
+    if (
+      e.target instanceof HTMLElement &&
+      e.target.nodeName === "PLASMO-CSUI"
+    ) {
+      return;
+    }
     handleTextSelection();
   }
   function onscroll(e: Event) {

@@ -1,10 +1,14 @@
+import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
 import { StoreDataType, type IObservableStoreSubject } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
 import { Item } from "$lib/client/types/item.enum";
+import { AlertType } from "$lib/client/types/notification.type";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
+import { activeResourceFilter } from "$lib/client/utils/utils";
 import { ClipperPersistence } from "../clipper.persistence";
+import { removeHighlight } from "./highlightV4";
 import type { IWebpage } from "./types";
 
 class WebpageStore extends ObservableStore<IWebpage> {
@@ -21,7 +25,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     if (page) {
       this.update((n) => {
         n.id = page.id;
-        n.clips = page.clips?.length > 0 ? page.clips : [];
+        n.clips = page.clips?.length > 0 ? page.clips.filter(activeResourceFilter) : [];
         n.links = page.links;
         return n;
       })
@@ -42,7 +46,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
   * @returns
   */
   onContextChange(tab: chrome.tabs.Tab) {
-    console.log("onContextChange", tab);
+    // console.log("onContextChange", tab);
     const url = tab.url;
     if (url === this.get().url) return;
     this.set({ url, clips: [] })
@@ -59,39 +63,67 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return response;
   }
   async linkPage(to: string) {
+    const isAlreadyLinked = this.get().links?.some((l) => l === to);
+    if (isAlreadyLinked) return { message: "Already linked", type: AlertType.ERROR };
     const response = await this.persistence.link(this.get().id, to);
-    if (response) {
-      this.update((n) => {
-        n.links = [...n.links ?? [], to];
-        return n;
-      })
-    }
-    return response;
+    if(!response) return { message: "Linking failed", type: AlertType.ERROR };
+    this.update((n) => {
+      n.links = [...n.links ?? [], to];
+      return n;
+    })
+    return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForPage(to: string) { 
     const response = await this.persistence.unlink(this.get().id, to);
-    if (response) {
-      this.update((n) => {
-        n.links = n.links?.filter((l) => l !== to);
-        return n;
-      })
-    }
-    return response;
+    if(!response) return { message: "Unlinking failed", type: AlertType.ERROR };
+    this.update((n) => {
+      n.links = n.links?.filter((l) => l !== to);
+      return n;
+    })
+    return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
   async linkClip(from: string, to: string) {
+    const clip = this.get().clips.find((c) => c.id === from);
+    if (!clip) return;
+    const isAlreadyLinked = clip.links?.some((l) => l === to);
+    if (isAlreadyLinked) return { message: "Already linked", type: AlertType.ERROR };
     const response = await this.persistence.link(from, to);
-    if (response) {
-      this.update((n) => {
-        n.clips = n.clips.map((c) => {
-          if (c.id === from) {
-            c.links = [...c.links ?? [], to];
-          }
-          return c;
-        });
-        return n;
-      })
-    }
-    return response;
+    if(!response) return { message: "Linking failed", type: AlertType.ERROR };
+    this.update((n) => {
+      n.clips = n.clips.map((c) => {
+        if (c.id === from) {
+          c.links = [...c.links ?? [], to];
+        }
+        return c;
+      });
+      return n;
+    })
+    return { message: "Linked!", type: AlertType.SUCCESS };
+  }
+  async removeLinkForClip(from: string, to: string) {
+    const response = await this.persistence.unlink(from, to);
+    if(!response) return { message: "Unlinking failed", type: AlertType.ERROR };
+    this.update((n) => {
+      n.clips = n.clips.map((c) => {
+        if (c.id === from) {
+          c.links = c.links?.filter((l) => l !== to);
+        }
+        return c;
+      });
+      return n;
+    })
+    return { message: "Unlinked!", type: AlertType.SUCCESS };
+  }
+  async removeClip(id: string) {
+    const response = await nodeStore.delete(id);
+    console.log({ response });
+    if(!response) return { message: "Clip removal failed", type: AlertType.ERROR };
+    this.update((n) => {
+      n.clips = n.clips.filter((c) => c.id !== id);
+      return n;
+    })
+    removeHighlight(id);
+    return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
   /**
   * If the save page happened from side bar - the toolbar and other content on web page should reflect the change. This method is called to update the store with the new page data when content script receive the message from side bar.

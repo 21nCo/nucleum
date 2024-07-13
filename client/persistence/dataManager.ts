@@ -546,7 +546,7 @@ async function setRefreshingState(
   stores.forEach((store) => {
     if (!store.update) return;
     store.update?.((x) => {
-      x.isRefreshing = val;
+      if(x) x.isRefreshing = val;
       return x;
     });
   });

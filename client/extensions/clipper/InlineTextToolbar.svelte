@@ -2,24 +2,29 @@
   import { createEventDispatcher } from "svelte";
   import HightlightColorItem from "./HightlightColorItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   import { webpage } from "./contentScripts/store";
+  import { abg, cn } from "$lib/client/utils/ui.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import InlineFeedbackText from "./InlineFeedbackText.svelte";
+  import { AlertType } from "$lib/client/types/notification.type";
   const dispatch = createEventDispatcher();
   export let id: string | null = null;
   export let colors: string[];
   export let selectedColor: string | null = null;
   let isLinkboxOpened = false;
   let clip: any;
-  $: if (id) clip = $webpage.clips.find((clip) => clip.id === id);
-  // $: console.log({ colors, selectedColor, isExistingClip });
+  let feedback: { message: string; type: AlertType } | string = "";
+  $: if (id) refreshClip(id);
+  function refreshClip(id: string) {
+    clip = $webpage.clips.find((clip) => clip.id === id);
+  }
 </script>
 
 <div
-  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3"
+  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-80"
 >
   <div class="flex justify-center items-center gap-3">
     <span class="flex gap-2 items-center">
@@ -36,25 +41,85 @@
     </span>
     {#if id}
       <Divider />
-      <Button
+      <!-- <Button
         icon={isLinkboxOpened ? "link-arrow-down" : "link-arrow-left"}
         type={isLinkboxOpened ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY}
         label="link"
         size={Size.xs}
+      /> -->
+      <button
+        class={cn(
+          "flex gap-1 items-center justify-center px-2 py-0.5 rounded-md text-b3",
+          abg(isLinkboxOpened),
+          {
+            "bg-bgs2 border border-transparent hover:border-brs2":
+              !isLinkboxOpened
+          }
+        )}
         on:click={() => {
           isLinkboxOpened = !isLinkboxOpened;
         }}
-      />
+      >
+        <Icon
+          icon={isLinkboxOpened ? "link-arrow-down" : "link-arrow-left"}
+          isAccentBgContext={isLinkboxOpened}
+        />
+        <span> Link </span>
+        {#if clip?.links?.length > 0}
+          <span
+            class={cn(
+              "flex items-center justify-center text-fgs2 text-b4 rounded-full h-4 w-4",
+              {
+                "bg-bgs3": !isLinkboxOpened,
+                "bg-aps2": isLinkboxOpened
+              }
+            )}
+          >
+            {clip.links.length}
+          </span>
+        {/if}
+      </button>
       <Button icon="document-text" tooltip="Add notes" />
-      <Button icon="trash" tooltip="Delete clip" />
+      <Button
+        icon="trash"
+        tooltip="Delete clip"
+        on:click={async () => {
+          let result = await webpage.removeClip(id);
+          feedback = result?.message
+            ? result
+            : { message: "Clip removal failed", type: AlertType.ERROR };
+        }}
+      />
     {/if}
   </div>
   {#if isLinkboxOpened}
     <LinkBoxOnClipper
-      on:link={(e) => {
-        if (e.detail.item.id) webpage.linkClip(id, e.detail.item.id);
+      on:link={async (e) => {
+        feedback = "Linking...";
+        let result;
+        if (e.detail) result = await webpage.linkClip(id, e.detail);
+        feedback = result?.message
+          ? result
+          : { message: "Linking failed", type: AlertType.ERROR };
+        refreshClip(id);
       }}
     />
-    <LinkItems links={clip?.links} on:click />
+    <LinkItems
+      links={clip?.links}
+      isWrapItems={true}
+      on:click
+      on:unlink={async (e) => {
+        feedback = "Removing link...";
+        let result;
+        if (e.detail) result = await webpage.removeLinkForClip(id, e.detail);
+        feedback = result?.message
+          ? result
+          : { message: "Unlinking failed", type: AlertType.ERROR };
+        refreshClip(id);
+      }}
+    />
+  {/if}
+  {#if feedback}
+    <InlineFeedbackText bind:feedback />
   {/if}
 </div>

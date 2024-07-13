@@ -183,6 +183,7 @@ function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
   popRef.style.display = "block";
   popRef.style.opacity = "0";
   popRef.style.position = "absolute";
+  popRef.style.zIndex = "100";
   popRef.style.top = "";
   popRef.style.bottom = "";
   popRef.style.left = "";
@@ -306,21 +307,22 @@ export function goto(path: string) {
  * @returns true if the current environment is an extension environment
  */
 export function isExtensionEnvironment() {
-  console.log({
-    protocol: window.location.protocol,
-    typeofchrome: typeof chrome,
-    typeofbrowser: typeof browser,
-    typeofplasmo: typeof __plasmo
-  });
-  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id) {
+  // console.log({
+  //   protocol: window.location.protocol,
+  //   typeofchrome: typeof chrome,
+  //   typeofbrowser: typeof (window as any).browser,
+  //   typeofplasmo: typeof (window as any).__plasmo
+  // });
+  if (typeof chrome !== "undefined" && chrome?.runtime?.id) {
+    // console.log("chrome", chrome.runtime.id);
     return true;
   }
 
-  if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id) {
+  if (typeof (window as any).browser !== "undefined" && (window as any).browser.runtime?.id) {
     return true;
   }
 
-  if (typeof __plasmo !== "undefined") {
+  if (typeof (window as any).__plasmo !== "undefined") {
     return true;
   }
 
