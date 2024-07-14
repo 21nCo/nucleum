@@ -104,6 +104,22 @@ export class Persistence {
       logger.logError(err);
     }
   };
+  async runAccountAction(action: string, params: any) {
+    try {
+      const response = await performApiCall("account/n/action", "POST", {
+        action,
+        ...params
+      });
+      console.log({ response });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return isValidArrayWithData(data);
+    } catch (err) {
+      logger.logError(err);
+    }
+  }
   getLatestAppVersion = async (app: string) => {
     try {
       let response = await performApiCall("utils/n/retrieveAppData", "POST", {
@@ -120,7 +136,10 @@ export class Persistence {
   };
   fetchAppData = async () => {
     try {
-      const app = import.meta.env?.VITE_HOST ?? process.env.PLASMO_PUBLIC_HOST ?? window.location.hostname;
+      const app =
+        import.meta.env?.VITE_HOST ??
+        process.env.PLASMO_PUBLIC_HOST ??
+        window.location.hostname;
       // console.log({ app });
       if (!app) return;
       let response = await performApiCall("utils/n/retrieveAppData", "POST", {

@@ -17,7 +17,7 @@
 
 <div
   class={cn("flex justify-between w-full rounded-md gap-4 p-4 text-b2", {
-    "bg-aps3": type === InfoTextType.INFO,
+    "bg-bgs2": type === InfoTextType.INFO,
     "bg-ars2": type === InfoTextType.ERROR,
     "bg-ass3": type !== InfoTextType.INFO && type !== InfoTextType.ERROR
   })}
@@ -27,7 +27,7 @@
       icon={type === InfoTextType.ERROR ? "help" : type}
       class={cn({
         "stroke-ars1": type === InfoTextType.ERROR,
-        "stroke-aps1": type === InfoTextType.INFO
+        "stroke-fgs1": type === InfoTextType.INFO
       })}
     />
     {#if content}

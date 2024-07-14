@@ -546,7 +546,8 @@ function initAppStore(seed: AppStore) {
       ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
-    const state =
+    const guestPartForState = localStorage.getItem("guest") ?? "";
+    const domainPartForState =
       (ctx.os === OperatingSystem.MACOS ||
         (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&
       ctx.isEmbed
@@ -561,7 +562,9 @@ function initAppStore(seed: AppStore) {
       "&response_type=" +
       (config.response_type ?? "code") +
       "&state=" +
-      state;
+      guestPartForState +
+      ":" +
+      domainPartForState;
     let redirectUri = "";
     if (config.response_mode === "form_post") {
       url += "&response_mode=form_post";

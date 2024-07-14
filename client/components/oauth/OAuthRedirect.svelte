@@ -22,9 +22,7 @@
     let token = $page.url.searchParams.get("token");
     if (token) {
       debugMessage = "token present";
-      const isSignup =
-        $page.url?.searchParams?.get("signup") === "true" ?? "false";
-      handleOAuthCompletion({ token, isSignup });
+      handleOAuthCompletion({ token });
     } else if (!codeQueryParam) {
       appStore.gotoPath("/signup?msg=invalidoauth");
       return;
@@ -46,7 +44,6 @@
 
   async function handleOAuthCompletion(data: {
     token: string;
-    isSignup: boolean;
     refreshToken?: string;
     userInfo?: any;
   }) {
@@ -63,38 +60,31 @@
           $context.embed === Embed.TABLET)) &&
       $context.isEmbed
     ) {
-      handleMacOSEmbedRedirection(data.token, data.isSignup);
+      handleMacOSEmbedRedirection(data.token);
     } else if ($context.os == OperatingSystem.IOS) {
-      handleiOSEmbedRedirection(data.token, data.isSignup);
+      handleiOSEmbedRedirection(data.token);
     } else if (data.userInfo) {
       debugMessage = "signing in with oauth";
-      await account.signIn(
-        { ...data, userInfo: data.userInfo },
-        { isFromSignup: data.isSignup }
-      );
+      await account.signIn({ ...data, userInfo: data.userInfo });
     } else if (data.token) {
       debugMessage = "signing in using embed token";
-      await account.embedOAuthSignin(data.token, data.isSignup);
+      await account.embedOAuthSignin(data.token);
     }
   }
 
-  async function handleiOSEmbedRedirection(token: string, isSignup: boolean) {
+  async function handleiOSEmbedRedirection(token: string) {
     try {
       debugMessage = "ios - embed redirection";
       logger.log({
         ctx: "handleiOSEmbedRedirection"
       });
-      if (isSignup) {
-        goto($appStore.product + "://oauthsignup" + "?token=" + token);
-      } else {
-        goto($appStore.product + "://oauthsignin" + "?token=" + token);
-      }
+      goto($appStore.product + "://oauthsignin" + "?token=" + token);
     } catch (err) {
       logger.logError({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }
-  async function handleMacOSEmbedRedirection(token: string, isSignup: boolean) {
+  async function handleMacOSEmbedRedirection(token: string) {
     try {
       debugMessage = "macos - embed redirection";
       logger.log({
@@ -104,9 +94,7 @@
         (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
           "://localhost/index.html" +
           "?token=" +
-          token +
-          "&signup=" +
-          isSignup
+          token
       );
     } catch (err) {
       debugMessage = "macos - embed redirection error" + err;
