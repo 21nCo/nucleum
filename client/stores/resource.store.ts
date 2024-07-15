@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import type { DbRecord } from "../types/dbrecord.type";
-import { activeResourceFilter, debouncer } from "../utils/utils";
+import { activeResourceFilter, debouncer, generateUID } from "../utils/utils";
 import {
   PersistanceActionType,
   StoreDataType,
@@ -11,9 +11,9 @@ import {
 } from "../types/data.type";
 import type { Item } from "../types/item.enum";
 import { prefixTable } from "../utils/text.utils";
-import { generateUID } from "../utils/utils";
 import { dataManager } from "../persistence/dataManager";
 import { ObservableStore } from "./client.store";
+import { resolveCurrentUserId } from "../utils/account.utils";
 
 export class ActiveResourceStore<T, U extends ResourceStore> {
   id: string;
@@ -24,10 +24,12 @@ export class ActiveResourceStore<T, U extends ResourceStore> {
   subscribe = this.store.subscribe;
   set = this.store.set;
   update = this.store.update;
-  constructor(id: string, resourceStore: U, currentUserId: string) {
+  constructor(id: string, resourceStore: U) {
     this.id = id;
     this.resourceStore = resourceStore;
-    this.currentUserId = currentUserId;
+    resolveCurrentUserId().then((x) => {
+      this.currentUserId = x;
+    });
     const updatePropagator = (val: Partial<DbRecord>) =>
       this.resourceStore.modify(this.id, val);
     this.debouncedPersistBlock = debouncer(updatePropagator, 2000);
@@ -92,12 +94,13 @@ export class ResourceStore implements IStore {
   mutatingResources: string[];
   constructor(
     resourceType: Item,
-    currentUserId: string,
     params?: Pick<IStore, "priorityRefreshOnAppAppear" | "refreshQuery">
   ) {
     this.id = resourceType;
+    resolveCurrentUserId().then((x) => {
+      this.currentUserId = x;
+    });
     this.mutatingResources = [resourceType];
-    this.currentUserId = currentUserId;
     this.priorityRefreshOnAppAppear =
       params?.priorityRefreshOnAppAppear || false;
     this.refreshQuery = params?.refreshQuery;
@@ -149,6 +152,8 @@ export class ResourceStore implements IStore {
     resource: Partial<DbRecord>,
     mutatationQueueParams?: IMutationQueueParams
   ) {
+    if (!this.currentUserId || typeof this.currentUserId != "string"
+    ) { this.currentUserId = await resolveCurrentUserId(); }
     const data: Partial<DbRecord> = {
       id,
       ...resource,

@@ -2,7 +2,6 @@ import {
   CombinationViewType,
   CurationType,
 } from "$lib/client/types/memotron/curation.type";
-import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { Item } from "$lib/client/types/item.enum";
 import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
@@ -16,12 +15,11 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { CollectionLayout, type IActiveCollection, type ICollectionView, type ICurationCreationForm } from "$lib/client/types/memotron/collection.type";
 
-const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 class CollectionStore extends ResourceStore {
   db: ISurrealDatabase
   constructor() {
-    super(Item.collection, currentUserId, {
+    super(Item.collection, {
       priorityRefreshOnAppAppear: true,
       refreshQuery: "return fn::memotron::curation::fetchAll($since);",
     });
@@ -110,7 +108,7 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Colle
 
 
   constructor(collectionId: string) {
-    super(collectionId, collectionStore, currentUserId);
+    super(collectionId, collectionStore);
   }
 
   async init(viewId?: string) {
@@ -139,8 +137,8 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Colle
               label: "Backlinks",
               createdAt: new Date().toISOString(),
               modifiedAt: new Date().toISOString(),
-              createdBy: currentUserId,
-              modifiedBy: currentUserId,
+              createdBy: this.currentUserId,
+              modifiedBy: this.currentUserId,
               tabBy: "none",
               groupBy: "none",
               subGroupBy: "none",
@@ -210,8 +208,8 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Colle
       id: prefixTable(generateUID(), Item.view),
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
-      createdBy: currentUserId,
-      modifiedBy: currentUserId
+      createdBy: this.currentUserId,
+      modifiedBy: this.currentUserId
     };
     this.update((val: IActiveCollection) => {
       val.views.push(newView);
@@ -227,11 +225,11 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Colle
       if (!viewToBeDeleted) return val;
       viewToBeDeleted.trashInformation = {
         deletedAt: new Date().toISOString(),
-        deletedBy: currentUserId
+        deletedBy: this.currentUserId
       };
       return val;
     });
-    return new Persistence().delete(id, Item.view, currentUserId);
+    return new Persistence().delete(id, Item.view, this.currentUserId);
   }
 
   updateView(view: ICollectionView) {

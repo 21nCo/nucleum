@@ -24,6 +24,23 @@ export async function resolveToken(): Promise<string | null> {
   return token;
 }
 
+export function resolveCurrentUserId() {
+  const userInfo = localStorage.getItem("userInfo");
+  if (userInfo) return JSON.parse(userInfo)?.id;
+  else if (isExtensionEnvironment()) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get("userInfo", function (data) {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          const id = JSON.parse(data.userInfo)?.id;
+          resolve(id);
+        }
+      });
+    });
+  }
+}
+
 export function signout(ctx: string = "") {
   console.log("Signing out", { ctx });
   localStorage.removeItem("stoken");

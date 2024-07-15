@@ -1,18 +1,23 @@
 import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { appEvents } from "$lib/client/stores/notification.store";
 import { StoreDataType, type IObservableStoreSubject } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
+import type { TabData } from "$lib/client/types/extension.type";
 import { Item } from "$lib/client/types/item.enum";
+import { ClipperExtensionEvent, type TextHighlightContent, type VideoTimestampContent } from "$lib/client/types/memotron/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
+import { objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
-import { activeResourceFilter } from "$lib/client/utils/utils";
+import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { ClipperPersistence } from "../clipper.persistence";
 import { removeHighlight } from "./highlightV4";
 import type { IWebpage } from "./types";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   private persistence = new ClipperPersistence()
+  previousValue: string = "";
   constructor() {
     super("clipperContentScriptStore", StoreDataType.NA, {
       priorityRefreshOnAppAppear: true
@@ -27,8 +32,10 @@ class WebpageStore extends ObservableStore<IWebpage> {
         n.id = page.id;
         n.clips = page.clips?.length > 0 ? page.clips.filter(activeResourceFilter) : [];
         n.links = page.links;
+        n.notes = page.notes;
         return n;
       })
+      appEvents.publish(ClipperExtensionEvent.CLIPS_CHANGED);
     }
   }
   resolveRefreshQuery() {
@@ -52,12 +59,34 @@ class WebpageStore extends ObservableStore<IWebpage> {
     this.set({ url, clips: [] })
     // this.refresh();
   }
+
+  /**
+   * TODO - save web page via NodeStore - to update nodes local cache
+   * @param data 
+   * @returns 
+   */
   async savePage(data: any) {
     const response = await this.persistence.saveWebpage(data);
     //TODO - add this to local node cache?
     if (!response?.id) return;
     this.update((n) => {
       n.id = response.id;
+      return n;
+    })
+    return response;
+  }
+  /**
+   * TODO - save clip via NodeStore - to update nodes local cache
+   * @param data 
+   * @param tabData 
+   * @returns 
+   */
+  async saveClip(data: TextHighlightContent | VideoTimestampContent, tabData?: TabData) { 
+    const response = await this.persistence.saveClip(data, tabData);
+    if (!response?.parent) return;
+    this.update((n) => {
+      n.clips = [...n.clips ?? [], response];
+      if(n.id) n.id = response.parent;
       return n;
     })
     return response;
@@ -98,6 +127,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       });
       return n;
     })
+    appEvents.publish(ClipperExtensionEvent.CLIPS_CHANGED);
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForClip(from: string, to: string) {
@@ -112,6 +142,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       });
       return n;
     })
+    appEvents.publish(ClipperExtensionEvent.CLIPS_CHANGED);
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
   async removeClip(id: string) {
@@ -130,10 +161,38 @@ class WebpageStore extends ObservableStore<IWebpage> {
   * @param data ``
   */
   propagatePageStatusFromSidebar(data: any) {
+    if(this.get().id === data.id) return;
     this.update((n) => {
       n.id = data.id;
       return n;
     })
+  }
+  private _persistNotes = async (id: string, notes: string) => {
+    return await nodeStore.modify(id, { notes });
+  }
+  private _debouncedPersistNotes = debouncer(this._persistNotes, 2000);
+  set(newValue: IWebpage) { 
+    let changedProperties: any = {};
+    if (this.previousValue) {
+      let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
+      differences.forEach((key: string) => {
+        changedProperties[key] = newValue[key as keyof IWebpage];
+      });
+    }
+    // console.log({
+    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
+    //   newValue,
+    //   changedProperties
+    // });
+    this._set(newValue);
+    this.previousValue = JSON.stringify(newValue);
+    if (!objIsEmpty(changedProperties) && changedProperties.notes)
+    {
+      this._debouncedPersistNotes(newValue.id, newValue.notes);
+    }
+  }
+  persistClipNotes(id: string, notes: string) {
+    return this._debouncedPersistNotes(id, notes);
   }
 }
 export const webpage = new WebpageStore();

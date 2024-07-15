@@ -30,7 +30,7 @@
   {item?.label ? truncateString(item?.label, 24) : ""}
   {#if isHovering}
     <button
-      class="absolute right-0 rounded-full bg-gradient-to-l from-bgs2 via-bgs2 to-transparent pr-2 pl-10 flex h-full items-center"
+      class="absolute top-0 right-0 rounded-full bg-gradient-to-l from-bgs2 via-bgs2 to-transparent pr-2 pl-10 flex h-full items-center"
       on:click={(e) => {
         dispatch("remove");
         e.stopPropagation();

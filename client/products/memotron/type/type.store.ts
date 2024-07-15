@@ -3,7 +3,6 @@ import {
   type IActiveTypeStore,
   type TypeCreationForm
 } from "$lib/client/types/memotron/type.type";
-import account from "$lib/client/stores/account.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   PersistanceActionType
@@ -16,13 +15,11 @@ import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
-const currentUserId: string = get(account)?.userInfo?.id ?? "";
-
 
 class TypeStore extends ResourceStore {
   db: ISurrealDatabase
   constructor() {
-    super(Item.type, currentUserId, {
+    super(Item.type, {
       priorityRefreshOnAppAppear: true,
       refreshQuery: "return fn::memotron::type::fetch();",
     });
@@ -36,8 +33,8 @@ class TypeStore extends ResourceStore {
       id: prefixTable(generateUID(), Item.type),
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
-      createdBy: get(account)?.userInfo?.id ?? "",
-      modifiedBy: get(account)?.userInfo?.id ?? "",
+      createdBy: this.currentUserId,
+      modifiedBy: this.currentUserId,
       isArchived: false
     };
     const properties = form.properties.map((prop) => {
@@ -89,7 +86,7 @@ export function resolveActiveTypeStore(id: string, context: string = "") {
 
 class ActiveTypeStore extends ActiveResourceStore<IActiveTypeStore, TypeStore> {
   constructor(id: string) {
-    super(id, typeStore, currentUserId);
+    super(id, typeStore);
   }
 }
 

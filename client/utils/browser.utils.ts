@@ -161,13 +161,13 @@ async function _renderPopoverUsingFixedPositioning(
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  console.log({
-    triggerRect,
-    popRect,
-    placement,
-    documentWidth,
-    documentHeight
-  });
+  // console.log({
+  //   triggerRect,
+  //   popRect,
+  //   placement,
+  //   documentWidth,
+  //   documentHeight
+  // });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";
