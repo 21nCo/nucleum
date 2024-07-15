@@ -5,22 +5,18 @@ import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as cloudfront_origins from "aws-cdk-lib/aws-cloudfront-origins";
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { App, CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
 import * as iam from "aws-cdk-lib/aws-iam";
-import { Construct } from "constructs";
-import { CommonStack } from "../commonStack";
 import type { ClientStackProps } from "../types/clientStackProps.type";
-import { resolveDomainName } from "../deployutils";
+import { resolveDomainName } from "../../deploy.utils";
+import { resolveAcmCertificate, resolveCommonResources } from "../cdk.utils";
 
-export class ClientConstruct extends Construct {
-  constructor(parent: Stack, name: string, props: ClientStackProps) {
-    super(parent, name);
+export class ClientStack extends Stack {
+  constructor(parent: App, name: string, props: ClientStackProps) {
+    super(parent, name, props);
     const siteDomain = resolveDomainName(props);
-    const { zone, certificate } = new CommonStack(this, "CommonStack", props, {
-      domain: props.domain,
-      subdomain: props.subdomain,
-      isUseParentZone: props.isUseParentZone
-    });
+    const { zone } = resolveCommonResources(this, props);
+    const certificate = resolveAcmCertificate(this, zone, siteDomain);
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(
       this,
       "cloudfront-OAI",

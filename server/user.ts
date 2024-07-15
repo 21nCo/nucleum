@@ -1,8 +1,7 @@
 import { fetchOAuthUserData, parseOAuthUserDataForApple } from "./oauthUtil";
 import { log } from "./logger";
 import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
-import { Agent, CONTEXT } from "./types/account.type";
-import { initializeDatabaseAndDefinitions } from "./account";
+import { Agent } from "./types/account.type";
 import { generateRefreshToken, generateUserToken } from "./token";
 import { retrieveAppData } from "./utils";
 import { OAuthUserData } from "./types/oauth.type";
@@ -90,7 +89,7 @@ export async function signup(data: any, isOAuth = false) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signup" });
-    await initializeDatabaseAndDefinitions(userId, CONTEXT.USER, context.host);
+    // await initializeDatabaseAndDefinitions(userId, CONTEXT.USER, context.host);
     return await generateToken(userId, userInfo, { isTrusted, isSignup: true });
   } else if (isOAuth && response?.[1].result.userCount === 1) {
     console.log("user already exists for OAuth, logging in");
@@ -154,13 +153,7 @@ async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
   return signup(
     {
       email: oAuthUserData.email,
-      nickName: oAuthUserData.name
-        ? oAuthUserData.name
-        : oAuthUserData.firstName && oAuthUserData.lastName
-          ? oAuthUserData.firstName + " " + oAuthUserData.lastName
-          : oAuthUserData.given_name
-            ? oAuthUserData.given_name
-            : "",
+      nickName: getNickName(),
       profilePictureUrl: oAuthUserData.picture,
       sub: oAuthUserData.sub,
       context: { ...context, oauthData: oAuthUserData },
@@ -168,6 +161,15 @@ async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
     },
     true
   );
+  function getNickName() {
+    if (oAuthUserData.name) {
+      return oAuthUserData.name;
+    }
+    if (oAuthUserData.firstName && oAuthUserData.lastName) {
+      return oAuthUserData.firstName + " " + oAuthUserData.lastName;
+    }
+    return oAuthUserData.given_name || "";
+  }
 }
 
 /**
@@ -215,26 +217,67 @@ export async function oauth(body: any) {
 export async function oauthRedirect(
   body: any,
   provider: string,
-  apiUrl: string
+  endpoint: string
 ) {
   console.log("oauthRedirect", { body, provider });
+  const result = await _processOAuthRedirect(body, provider, endpoint);
+  let domain = "";
+  const domainPart = body.state.split(":")[1];
+  if (domainPart) {
+    if (domainPart.includes("localredirect.")) {
+      domain = "blanklabs://localhost/index.html";
+    } else {
+      domain = "https://" + domainPart + "/oauth";
+    }
+  }
+  console.log({ result, domainPart, domain, body });
+  let redirectUrl = (domain ?? "http://bla.ink") + "/error?error=oautherror";
+  if (result?.token && domain) {
+    redirectUrl =
+      domain +
+      "?token=" +
+      result.token +
+      "&provider=" +
+      provider +
+      "&signup=" +
+      result.isSignup;
+  }
+  return {
+    statusCode: 302,
+    headers: {
+      Location: redirectUrl
+    },
+    body: ""
+  };
+}
+
+async function _processOAuthRedirect(
+  body: any,
+  provider: string,
+  apiUrl: string
+) {
   try {
     let app = "";
-    if (body.state?.includes("localredirect.")) {
-      app = body.state?.split("localredirect.")[1];
+    if (!body.state) return;
+    const guestPart = body.state.split(":")[0];
+    const domainPart = body.state.split(":")[1];
+    if (domainPart.includes("localredirect.")) {
+      app = domainPart.split("localredirect.")[1];
     } else {
-      app = body.state;
+      app = domainPart;
     }
     const context = {
       href: "https://" + apiUrl + "/oauth/" + provider,
-      host: body.state
+      state: body.state,
+      host: domainPart,
+      guest: "guest:" + guestPart
     };
     if (provider === "apple" && (body.id_token || body.user)) {
       if (body.user && typeof body.user === "string")
         body.user = JSON.parse(body.user);
       const oAuthUserData = parseOAuthUserDataForApple(body);
       console.log("parsed OAuth user data - Apple", { oAuthUserData });
-      if (!oAuthUserData || !oAuthUserData.email)
+      if (!oAuthUserData?.email)
         return {
           provider,
           status: "error",
