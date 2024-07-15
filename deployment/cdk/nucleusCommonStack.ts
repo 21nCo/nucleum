@@ -2,8 +2,8 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as gateway from "aws-cdk-lib/aws-apigateway";
-import { CustomNestedStackProps } from "./types/customNestedStackProps.type";
-import { Environment } from "./types/env.type";
+import { CustomNestedStackProps } from "./cdk/types/customNestedStackProps.type";
+import { IEnvironment } from "./cdk/types/env.type";
 
 export class NucleusCommonStack extends cdk.NestedStack {
   /**
@@ -15,7 +15,7 @@ export class NucleusCommonStack extends cdk.NestedStack {
     scope: Construct,
     id: string,
     props: CustomNestedStackProps,
-    env: Environment
+    env: IEnvironment
   ) {
     super(scope, id, props);
     //TODO - removal policy - production

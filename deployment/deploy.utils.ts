@@ -1,16 +1,5 @@
-import { Stack } from "aws-cdk-lib";
-import { Environment } from "./types/env.type";
-import { Region } from "./types/region.type";
+import { Region } from "./cdk/types/region.type";
 import regions from "./regions.json";
-
-export function generateFunctioName(
-  prefix: string,
-  env: Environment,
-  x: Stack
-) {
-  if (env.subdomain) return `${prefix}_${env.subdomain}_${x.region}`;
-  return `${prefix}_${x.region}`;
-}
 
 export function resolveDomainName(env: { domain: string; subdomain?: string }) {
   if (env.subdomain) return `${env.subdomain}.${env.domain}`;
@@ -37,4 +26,17 @@ export function resolveProviderRegionCode(
     default:
       return undefined;
   }
+}
+
+export function pick<T extends object, K extends keyof T>(
+  obj: T,
+  keys: K[]
+): Pick<T, K> {
+  const result = {} as Pick<T, K>;
+  keys.forEach((key) => {
+    if (key in obj) {
+      result[key] = obj[key];
+    }
+  });
+  return result;
 }

@@ -18,7 +18,10 @@ async function createSpace(body: any, agent: Agent) {
   const query = `return fn::admin::space::create("${name}", "user:${agent.id}")`;
   const response = await performAdminQuery(query);
   const id = response[0].result[0].id.split("space:")[1];
-  await initializeDatabaseAndDefinitions(id, CONTEXT.SPACE, context.host);
+  await initializeDatabaseAndDefinitions(id, {
+    scope: CONTEXT.SPACE,
+    host: context.host
+  });
   const token = await generateSpaceToken(id, agent.id, MemberRole.ADMIN);
   return { token, id };
 }
@@ -34,7 +37,7 @@ async function switchSpace(body: any, agent: Agent) {
   }
   return {
     error:
-      "User is not an admin of this space. Currently, only admins can switch spaces.",
+      "User is not an admin of this space. Currently, only admins can switch spaces."
   };
 }
 

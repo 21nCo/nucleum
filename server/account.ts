@@ -3,6 +3,28 @@ import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
 import { validateToken } from "./token";
 import { type Agent, CONTEXT } from "./types/account.type";
 
+export async function performAccountAction(body: any) {
+  const { id, region, action, context } = body;
+  if (action === "guest") {
+    const timestamp = new Date().toISOString();
+    const query = `create guest set id = "${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
+      context
+    )}; create activity set userId = "guest:${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
+      { ...context, action: "guest-visit" }
+    )};`;
+    const response = await performAdminQuery(query);
+    if (response) return { id };
+    else return { error: "Guest creation failed" };
+  } else if (action === "bootstrap") {
+    //TODO - use region to bootstrap the database in the specified region
+    return await initializeDatabaseAndDefinitions(id, {
+      scope: CONTEXT.USER,
+      host: context.host,
+      region
+    });
+  }
+}
+
 export async function fetchDbDefinitionsQuery(
   host: string,
   lastRunChangeId: number
@@ -121,16 +143,15 @@ export function authorize(token: string | undefined) {
  */
 export async function initializeDatabaseAndDefinitions(
   id: string,
-  scope: CONTEXT,
-  host: string
+  params: { scope: CONTEXT; host: string; region?: string }
 ) {
   console.log("initializing database ", { id });
   const ns =
-    scope === CONTEXT.USER
+    params.scope === CONTEXT.USER
       ? process.env.USER_NS ?? "USER"
       : process.env.SPACE_NS ?? "SPACE";
   let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TIDY_TOKEN_KEY} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
-  let definitionsResult = await fetchDbDefinitionsQuery(host, 0);
+  let definitionsResult = await fetchDbDefinitionsQuery(params.host, 0);
   if (definitionsResult) query += definitionsResult.query;
   console.log("db init query", { query });
   const dbCreationResponse = await performAdminQuery(query);
