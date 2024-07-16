@@ -5,6 +5,10 @@ export type IEnvironment = ILamdbaEnvironmentVariables & {
   region: string;
   tidyregion: string;
   isUseParentZone?: boolean;
+  /**
+   * Email address to use for Let's Encrypt certificate generation and similar services
+   */
+  email: string;
 };
 
 export type ILamdbaEnvironmentVariables = {

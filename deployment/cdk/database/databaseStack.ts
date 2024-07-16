@@ -1,4 +1,4 @@
-import { CfnOutput, CfnResource, NestedStack } from "aws-cdk-lib";
+import { CfnOutput, NestedStack } from "aws-cdk-lib";
 import { CfnInstance, CfnStaticIp } from "aws-cdk-lib/aws-lightsail";
 import { ARecord, RecordTarget, IHostedZone } from "aws-cdk-lib/aws-route53";
 import {
@@ -6,7 +6,13 @@ import {
   AwsCustomResourcePolicy,
   PhysicalResourceId
 } from "aws-cdk-lib/custom-resources";
-import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import {
+  Effect,
+  ManagedPolicy,
+  PolicyStatement,
+  Role,
+  ServicePrincipal
+} from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
 import { CustomNestedStackProps } from "../types/customNestedStackProps.type";
@@ -22,7 +28,9 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
   regionDomain: string;
   subdomain: string = "db";
   instanceName: string;
+  diskName: string;
   staticIpName: string;
+  availabilityZone: string;
   constructor(scope: Construct, id: string, props: CustomNestedStackProps) {
     super(scope, id, props);
     console.log(
@@ -39,55 +47,61 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
       environment.domain;
     this.certificate = resolveAcmCertificate(this, zone, this.regionDomain);
     this.staticIpName = this.regionDomain + "-static-ip";
-    const existingDiskName = this.env.region + "-db-disk";
-    // 1. Create Lightsail instance
-
-    const keypairName = this.env.region + "-keypair";
-    // Create a key pair
-    // const keyPair = new AwsCustomResource(this, "LightsailKeyPair", {
-    //   onCreate: {
-    //     service: "Lightsail",
-    //     action: "createKeyPair",
-    //     parameters: {
-    //       keyPairName: keypairName
-    //     },
-    //     physicalResourceId: PhysicalResourceId.of(keypairName)
-    //   },
-    //   onDelete: {
-    //     service: "Lightsail",
-    //     action: "deleteKeyPair",
-    //     parameters: {
-    //       keyPairName: keypairName
-    //     }
-    //   },
-    //   policy: AwsCustomResourcePolicy.fromStatements([
-    //     new PolicyStatement({
-    //       actions: ["lightsail:CreateKeyPair", "lightsail:DeleteKeyPair"],
-    //       resources: ["*"]
-    //     })
-    //   ])
-    // });
-    // const keyPairCheck = new AwsCustomResource(this, "KeyPairCheck", {
-    //   onCreate: {
-    //     service: "Lightsail",
-    //     action: "getKeyPair",
-    //     parameters: {
-    //       keyPairName: keypairName
-    //     },
-    //     physicalResourceId: PhysicalResourceId.of(`${keypairName}-check`)
-    //   },
-    //   policy: AwsCustomResourcePolicy.fromStatements([
-    //     new PolicyStatement({
-    //       actions: ["lightsail:GetKeyPair"],
-    //       resources: ["*"]
-    //     })
-    //   ])
-    // });
-
-    // // keyPairCheck.node.addDependency(keyPair);
-    this.instanceName = `${this.regionDomain}-${Date.now()}`;
+    this.diskName = this.env.region + "-db-disk";
+    this.availabilityZone = this.env.region + "a";
+    this.instanceName = `${this.regionDomain}-instance`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
 
+    const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
+      .replace(/DOMAIN_NAME/g, this.regionDomain)
+      .replace(/CERTIFICATE_ARN/g, this.certificate.certificateArn)
+      .replace(/CERTIFICATE_REGION/g, this.env.region)
+      .replace(/DB_PASS/g, this.env.DB_PASS)
+      .replace(/CERT_EMAIL/g, this.env.email);
+
+    const lightsailAssumableRole = new Role(this, "LightsailAssumableRole", {
+      assumedBy: new ServicePrincipal("lightsail.amazonaws.com"),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore")
+      ]
+    });
+
+    // Add permissions to access ACM certificate
+    lightsailAssumableRole.addToPolicy(
+      new PolicyStatement({
+        actions: ["acm:GetCertificate"],
+        resources: [this.certificate.certificateArn],
+        effect: Effect.ALLOW
+      })
+    );
+
+    // Prepare the user data with proper shebang and logging
+    const userDataWithLogging = `#!/bin/bash
+exec > >(tee /var/log/user-data.log) 2>&1
+echo "Starting user data script execution at $(date)"
+
+# Wait for the disk to be attached
+echo "Waiting for disk to be attached..."
+while [ ! -e /dev/xvdf ]; do
+  echo "Disk not found, retrying in 5 seconds..."
+  sleep 5
+done
+echo "Disk /dev/xvdf is now available."
+
+# Assume the IAM role
+echo "Assuming IAM role..."
+ROLE_ARN="${lightsailAssumableRole.roleArn}"
+CREDENTIALS=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name LightsailSession)
+export AWS_ACCESS_KEY_ID=$(echo $CREDENTIALS | jq -r '.Credentials.AccessKeyId')
+export AWS_SECRET_ACCESS_KEY=$(echo $CREDENTIALS | jq -r '.Credentials.SecretAccessKey')
+export AWS_SESSION_TOKEN=$(echo $CREDENTIALS | jq -r '.Credentials.SessionToken')
+echo "IAM role assumed successfully."
+
+# Original user data script
+${userDataScript}
+
+echo "User data script execution completed at $(date)"
+`;
     /**
      *
      * aws lightsail get-blueprints
@@ -95,113 +109,90 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
      */
     const instance = new CfnInstance(this, "LightsailInstance", {
       instanceName: this.instanceName,
-      availabilityZone: this.env.region + "a",
+      availabilityZone: this.availabilityZone,
       blueprintId: "amazon_linux_2023",
-      bundleId: this.env.region === "ap-south-1" ? "small_3_1" : "small_3_0"
-      // keyPairName: keypairName
+      bundleId: this.env.region === "ap-south-1" ? "small_3_1" : "small_3_0",
+      userData: userDataWithLogging,
+      hardware: {
+        disks: [
+          {
+            diskName: this.diskName,
+            path: "/dev/xvdf"
+          }
+        ]
+      }
     });
 
-    // instance.node.addDependency(keyPair);
+    lightsailAssumableRole.assumeRolePolicy?.addStatements(
+      new PolicyStatement({
+        actions: ["sts:AssumeRole"],
+        effect: Effect.ALLOW,
+        principals: [new ServicePrincipal("lightsail.amazonaws.com")]
+      })
+    );
 
-    // Custom resource for disk attachment
-    const diskAttachment = new AwsCustomResource(this, "DiskAttachment", {
-      onCreate: {
-        service: "Lightsail",
-        action: "attachDisk",
-        parameters: {
-          diskName: existingDiskName,
-          instanceName: this.instanceName,
-          diskPath: "/dev/xvdf"
+    // Configure instance ports (disable SSH, IPv6, and allow only HTTP/HTTPS)
+    const configureInstancePorts = new AwsCustomResource(
+      this,
+      "ConfigureInstancePorts",
+      {
+        onCreate: {
+          service: "Lightsail",
+          action: "putInstancePublicPorts",
+          parameters: {
+            instanceName: this.instanceName,
+            portInfos: [
+              {
+                fromPort: 80,
+                toPort: 80,
+                protocol: "tcp",
+                cidrs: ["0.0.0.0/0"],
+                cidrListAliases: [],
+                ipv6Cidrs: []
+              },
+              {
+                fromPort: 443,
+                toPort: 443,
+                protocol: "tcp",
+                cidrs: ["0.0.0.0/0"],
+                cidrListAliases: [],
+                ipv6Cidrs: []
+              }
+            ]
+          },
+          physicalResourceId: PhysicalResourceId.of(
+            `${this.instanceName}-configure-ports`
+          )
         },
-        physicalResourceId: PhysicalResourceId.of(
-          `${existingDiskName}-${this.instanceName}`
-        )
-      },
-      onDelete: {
-        service: "Lightsail",
-        action: "detachDisk",
-        parameters: {
-          diskName: existingDiskName
-        },
-        ignoreErrorCodesMatching: "InvalidInputException"
-      },
-      policy: AwsCustomResourcePolicy.fromStatements([
-        new PolicyStatement({
-          actions: [
-            "lightsail:AttachDisk",
-            "lightsail:DetachDisk",
-            "lightsail:GetDisk"
-          ],
-          resources: ["*"]
-        })
-      ])
+        policy: AwsCustomResourcePolicy.fromStatements([
+          new PolicyStatement({
+            actions: ["lightsail:PutInstancePublicPorts"],
+            resources: ["*"]
+          })
+        ])
+      }
+    );
+
+    // Ensure the custom resource runs after the instance is created
+    configureInstancePorts.node.addDependency(instance);
+
+    new CfnOutput(this, "NetworkingStatus", {
+      value:
+        "SSH (22) disabled, IPv6 disabled, HTTP (80) and HTTPS (443) enabled",
+      description: "Instance Networking Configuration"
     });
 
-    // Add dependency
-    diskAttachment.node.addDependency(instance);
-
-    // 3. Create and attach static IP
     const staticIp = new CfnStaticIp(this, "LightsailStaticIp", {
       staticIpName: this.staticIpName,
       attachedTo: instance.ref
     });
 
-    // // Custom resource for static IP attachment
-    // new AwsCustomResource(this, "StaticIpAttachment", {
-    //   onCreate: {
-    //     service: "Lightsail",
-    //     action: "attachStaticIp",
-    //     parameters: {
-    //       staticIpName: staticIp.staticIpName,
-    //       instanceName: instance.instanceName
-    //     },
-    //     physicalResourceId: PhysicalResourceId.of(
-    //       `${staticIp.staticIpName}-${instance.instanceName}`
-    //     )
-    //   },
-    //   onDelete: {
-    //     service: "Lightsail",
-    //     action: "detachStaticIp",
-    //     parameters: {
-    //       staticIpName: staticIp.staticIpName
-    //     }
-    //   },
-    //   policy: AwsCustomResourcePolicy.fromStatements([
-    //     new PolicyStatement({
-    //       actions: ["lightsail:AttachStaticIp", "lightsail:DetachStaticIp"],
-    //       resources: ["*"]
-    //     })
-    //   ])
-    // });
-
-    // Get the actual IP address
-    // const getStaticIp = new AwsCustomResource(this, "GetStaticIp", {
-    //   onCreate: {
-    //     service: "Lightsail",
-    //     action: "getStaticIp",
-    //     parameters: {
-    //       staticIpName: this.staticIpName
-    //     },
-    //     physicalResourceId: PhysicalResourceId.of(`${this.staticIpName}-ip`)
-    //   },
-    //   policy: AwsCustomResourcePolicy.fromStatements([
-    //     new PolicyStatement({
-    //       actions: ["lightsail:GetStaticIp"],
-    //       resources: ["*"]
-    //     })
-    //   ])
-    // });
-
-    // const staticIpAddress = getStaticIp.getResponseField("staticIp.ipAddress");
-
-    // Create A record
     new ARecord(this, "DNSRecord", {
       zone: zone,
       recordName: this.regionDomain,
       target: RecordTarget.fromIpAddresses(staticIp.attrIpAddress)
     });
 
-    // 4. Enable HTTPS and port 443 using custom resource
     new AwsCustomResource(this, "OpenPorts", {
       onCreate: {
         service: "Lightsail",
@@ -241,17 +232,13 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
       ])
     });
 
-    // 5. User data script for instance setup
-    const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
-      .replace(/DOMAIN_NAME/g, this.regionDomain)
-      .replace(/CERTIFICATE_ARN/g, this.certificate.certificateArn)
-      .replace(/DB_PASS/g, this.env.DB_PASS);
-    const encodedUserData = Buffer.from(userDataScript).toString("base64");
+    // const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
+    //   .replace(/DOMAIN_NAME/g, this.regionDomain)
+    //   .replace(/CERTIFICATE_ARN/g, this.certificate.certificateArn)
+    //   .replace(/DB_PASS/g, this.env.DB_PASS);
+    // const encodedUserData = Buffer.from(userDataScript).toString("base64");
+    // instance.addPropertyOverride("UserData", encodedUserData);
 
-    // Update the instance to include user data
-    instance.addPropertyOverride("UserData", encodedUserData);
-
-    // Output the public IP address and certificate ARN
     new CfnOutput(this, "InstancePublicIp", {
       value: staticIp.ref,
       description: "Public IP address of the Lightsail instance"

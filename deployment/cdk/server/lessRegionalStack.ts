@@ -113,6 +113,7 @@ export class ServerlessRegionalStack extends NestedStack {
       this.api,
       this.region
     ).healthCheck;
+    // - the below is causing domain name already exists in another stack error
     // this.addRoute53ARecord();
     this.addMultiRegionRoute53Config();
   }

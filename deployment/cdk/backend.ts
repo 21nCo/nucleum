@@ -21,7 +21,6 @@ export class BackendRegionalStack extends Stack {
       bunRuntimeLayer,
       environment
     };
-
     new ServerlessRegionalStack(
       this,
       `lessStack-${environment.region}`,
@@ -31,14 +30,6 @@ export class BackendRegionalStack extends Stack {
       this,
       `databaseStack-${environment.region}`,
       nestedStackProps
-    );
-
-    // Output some information for debugging
-    console.log(
-      `Created DatabaseLightsailRegionalStack for region: ${environment.region}`
-    );
-    console.log(
-      `Created ServerlessRegionalStack for region: ${environment.region}`
     );
   }
 }
