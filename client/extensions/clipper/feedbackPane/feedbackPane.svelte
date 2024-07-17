@@ -10,9 +10,10 @@
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   import InlineFeedbackText from "../InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
+  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   export let isShown: boolean = false;
   export let feedback: string = "";
-  let autoCloseDuration = 5;
+  let autoCloseDuration = 3;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;
@@ -22,6 +23,9 @@
   }
   onMount(() => {
     restartCloseTimer();
+    return () => {
+      clearTimeout(closeTimer);
+    };
   });
   function restartCloseTimer() {
     clearTimeout(closeTimer);
@@ -37,7 +41,7 @@
     now = Date.now();
   }, 1000);
   $: countdown =
-    autoCloseDuration - Math.floor((now - closeActionTimestamp) / 1000);
+    autoCloseDuration - 1 - Math.floor((now - closeActionTimestamp) / 1000);
   function onLinkClick(e: CustomEvent) {
     console.log("link click", e.detail);
   }
@@ -47,7 +51,7 @@
   bind:isHovering
   on:hover={onHover}
   class={cn(
-    "fixed w-80 flex flex-col gap-3 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
+    "fixed w-80 flex flex-col gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
       "right-16 top-1/2 transform -translate-y-1/2 space-y-1.5":
         $toolbarState.position === Position.Right,
@@ -55,7 +59,7 @@
     }
   )}
 >
-  <div class="flex flex-col gap-1">
+  <div class="flex flex-col gap-2">
     <div class="flex w-full justify-between items-center">
       <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
       <FormControlLabel
@@ -74,7 +78,7 @@
               isShown = false;
             }}
           />
-        {:else}
+        {:else if isShown}
           <!-- TODO closing animation circle -->
           <span
             class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"
@@ -94,21 +98,25 @@
           : { message: "Linking failed", type: AlertType.ERROR };
       }}
     />
+    <LinkItems
+      links={$webpage.links}
+      on:click={onLinkClick}
+      on:unlink={async (e) => {
+        feedback = "Removing link...";
+        let result;
+        if (e.detail) result = await webpage.removeLinkForPage(e.detail);
+        feedback = result?.message
+          ? result
+          : { message: "Unlinking failed", type: AlertType.ERROR };
+      }}
+    />
   </div>
-  <LinkItems
-    links={$webpage.links}
-    on:click={onLinkClick}
-    on:unlink={async (e) => {
-      feedback = "Removing link...";
-      let result;
-      if (e.detail) result = await webpage.removeLinkForPage(e.detail);
-      feedback = result?.message
-        ? result
-        : { message: "Unlinking failed", type: AlertType.ERROR };
-    }}
-  />
-  <!-- <div>
-    isHovering: {isHovering}
-  </div> -->
+  <div class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1">
+    <!-- Fix placeholder color issue -->
+    <InlineMarkdownTextInput
+      placeholder="Add notes"
+      bind:content={$webpage.notes}
+    />
+  </div>
   <InlineFeedbackText bind:feedback />
 </HoverableElement>

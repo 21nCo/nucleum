@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import HightlightColorItem from "./HightlightColorItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
@@ -10,17 +10,32 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineFeedbackText from "./InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
+  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   const dispatch = createEventDispatcher();
   export let id: string | null = null;
   export let colors: string[];
   export let selectedColor: string | null = null;
+  export let feedback: { message: string; type: AlertType } | string = "";
   let isLinkboxOpened = false;
+  let isNotesOpened = false;
   let clip: any;
-  let feedback: { message: string; type: AlertType } | string = "";
+  let notes: string = "";
   $: if (id) refreshClip(id);
   function refreshClip(id: string) {
     clip = $webpage.clips.find((clip) => clip.id === id);
+    notes = clip?.notes ?? "";
   }
+  async function onNotesChange(e: CustomEvent) {
+    feedback = "Saving...";
+    const response = await webpage.persistClipNotes(id, notes);
+    //TODO - TEMP - show feedback from result - getting result from debounded function
+    setTimeout(() => {
+      feedback = "Notes saved!";
+    }, 1000);
+  }
+  onMount(() => {
+    feedback = "";
+  });
 </script>
 
 <div
@@ -79,7 +94,13 @@
           </span>
         {/if}
       </button>
-      <Button icon="document-text" tooltip="Add notes" />
+      <Button
+        icon="document-text"
+        tooltip="Add notes"
+        on:click={() => {
+          isNotesOpened = !isNotesOpened;
+        }}
+      />
       <Button
         icon="trash"
         tooltip="Delete clip"
@@ -117,6 +138,15 @@
           : { message: "Unlinking failed", type: AlertType.ERROR };
         refreshClip(id);
       }}
+    />
+  {/if}
+  {#if isNotesOpened}
+    <!--TODO: Fix on:input event not accounting the last character -->
+    <InlineMarkdownTextInput
+      placeholder="Add notes"
+      bind:content={notes}
+      on:change={onNotesChange}
+      on:input={onNotesChange}
     />
   {/if}
   {#if feedback}

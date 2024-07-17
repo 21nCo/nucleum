@@ -61,7 +61,10 @@
           console.log("Token data is: " + JSON.stringify(event.data.token));
           localStorage.setItem("stoken", event.data.token.token);
           chrome.storage.sync.set(
-            { stoken: event.data.token.token },
+            {
+              stoken: event.data.token.token,
+              userInfo: event.data.token.userInfo
+            },
             function () {
               console.log("Token is stored to be used later.");
             }
@@ -85,14 +88,14 @@
       on:save={onsaveWebpageClick}
       on:saved={() => {
         feedback = "Page saved!";
-        isShowFeedbackPane = true;
+        isShowFeedbackPane = !isShowFeedbackPane;
       }}
       on:snip
       on:summarize
       on:collapse={() => toolbarState.toggle(false)}
     />
     {#if isShowFeedbackPane}
-      <div out:fade>
+      <div out:fade={{ duration: 150 }}>
         <FeedbackPane bind:feedback bind:isShown={isShowFeedbackPane} />
       </div>
     {/if}

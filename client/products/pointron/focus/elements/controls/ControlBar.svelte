@@ -3,11 +3,12 @@
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import ControlItem from "./ControlItem.svelte";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { Size } from "$lib/client/types/size.enum";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import { appStore } from "$lib/client/stores/app.store";
-  export let size: Size = Size.md;
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let isFocusPlayerContext: boolean = false;
+  let controlItemProps = { isFocusPlayerContext };
   async function controlClickHandler(event: any) {
     let control = event.detail.control;
     if (control === Control.START) {
@@ -33,124 +34,106 @@
 </script>
 
 <div
-  class="flex flex-row items-center {size === Size.lg || size === Size.xl
-    ? 'gap-12'
-    : size === Size.md
-      ? 'gap-10'
-      : 'gap-4'} "
+  class={cn("flex flex-row items-center", {
+    "gap-4": isFocusPlayerContext,
+    "gap-8 mo:gap-6": !isFocusPlayerContext
+  })}
 >
-  <div
-    class="flex items-center {size === Size.lg || size === Size.xl
-      ? 'gap-8'
-      : size === Size.md
-        ? 'gap-6'
-        : 'gap-4'}"
-  >
-    <!-- {#if size != Size.sm}
-      <ControlItem
-        control={Control.ABANDON}
-        {color}
-        on:click={controlClickHandler}
-        {size}
-      />
-    {/if} -->
-    {#if $sessionStore.state === SessionState.NOT_STARTED}
-      <ControlItem
-        control={Control.START}
-        isProminent={true}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.type === SessionType.PREDEFINED_INTERVALS}
-      <ControlItem
-        control={Control.ABANDON}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.state === SessionState.FOCUS_RUNNING}
-      <ControlItem
-        control={Control.BREAK}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.state === SessionState.FOCUS_COMPLETED}
-      <ControlItem
-        control={Control.SKIPBREAK}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.BREAK}
-        isProminent={true}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.state === SessionState.BREAK_RUNNING}
-      <ControlItem
-        control={Control.RESUME}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.state === SessionState.BREAK_COMPLETED}
-      <ControlItem
-        control={Control.RESUME}
-        isProminent={true}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.state === SessionState.TIME_IS_UP}
-      <ControlItem
-        control={Control.EXTEND}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        isProminent={true}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {:else if $sessionStore.state === SessionState.TIME_IS_RUNNING_OUT}
-      <ControlItem
-        control={Control.EXTEND}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.BREAK}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-      <ControlItem
-        control={Control.FINISH}
-        on:click={controlClickHandler}
-        contextSize={size}
-      />
-    {/if}
-  </div>
+  {#if $sessionStore.state === SessionState.NOT_STARTED}
+    <ControlItem
+      control={Control.START}
+      isProminent={true}
+      on:click={controlClickHandler}
+    />
+  {:else if $sessionStore.type === SessionType.PREDEFINED_INTERVALS}
+    <ControlItem
+      control={Control.ABANDON}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {:else if $sessionStore.state === SessionState.FOCUS_RUNNING}
+    <ControlItem
+      control={Control.BREAK}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {:else if $sessionStore.state === SessionState.FOCUS_COMPLETED}
+    <ControlItem
+      control={Control.SKIPBREAK}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.BREAK}
+      isProminent={true}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {:else if $sessionStore.state === SessionState.BREAK_RUNNING}
+    <ControlItem
+      control={Control.RESUME}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {:else if $sessionStore.state === SessionState.BREAK_COMPLETED}
+    <ControlItem
+      control={Control.RESUME}
+      isProminent={true}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {:else if $sessionStore.state === SessionState.TIME_IS_UP}
+    <ControlItem
+      control={Control.EXTEND}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      isProminent={true}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {:else if $sessionStore.state === SessionState.TIME_IS_RUNNING_OUT}
+    <ControlItem
+      control={Control.EXTEND}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.BREAK}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+    <ControlItem
+      control={Control.FINISH}
+      on:click={controlClickHandler}
+      {...controlItemProps}
+    />
+  {/if}
 </div>

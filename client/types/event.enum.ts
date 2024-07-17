@@ -1,6 +1,7 @@
+import type { ClipperExtensionEvent } from "./memotron/clip.type";
 import type { PointronEvent } from "./pointron/pointronEvent.enum";
 
-export type Event = GlobalEvent | PointronEvent;
+export type Event = GlobalEvent | PointronEvent | ClipperExtensionEvent;
 
 export enum GlobalEvent {
   NONE = "NONE",

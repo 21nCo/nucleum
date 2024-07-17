@@ -16,6 +16,7 @@
     getClientRects,
     getPagesFromRange,
     isHTMLElement,
+    surrealPDF,
     viewportToScaled
   } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { debouncer, generateUID } from "$lib/client/utils/utils";
@@ -30,10 +31,12 @@
   import ToolBar from "./ToolBar.svelte";
   import { FindState } from "pdfjs-dist/web/pdf_viewer.mjs";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { IconVariant } from "$lib/client/types/icon.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { captureStore } from "../capture/capture.store";
 
   export let url: string = "/Liu_Deep_Supervised_Hashing_CVPR_2016_paper.pdf";
+  export let isReplaceable: boolean = false;
+  let annots: any[];
   /**
    * varibales for drawing shapes adding shapes or click annotations
    */
@@ -116,7 +119,7 @@
     boundingRect,
     rects
   }: any): ScaledPosition {
-    const viewport = pdfViewer.getPageView(pageNumber - 1).viewport;
+    const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
 
     return {
       boundingRect: viewportToScaled(boundingRect, viewport),
@@ -164,16 +167,16 @@
     const selectedText = selection.toString();
     // console.log("Selected text range:", range);
     const rect = range.getBoundingClientRect();
-    const top = rect.bottom + scrollTop - 40;
-    const left = rect.right - 80;
-    // console.log("rects[0]", rects[pages[0].number - 1]);
+    const top = rect.bottom; //+ scrollTop - 200;
+    // const left = rect.right - 80;
+    const left = rect.left;
+
     const boundingRect = getBoundingRect(rects[pages[0].number - 1]); //TODO-add boundingRect to each page for now adding for start page alone
     const viewportPosition: any = {
       boundingRect,
       rects,
       pageNumber: pages[0].number
     };
-    // console.log("viewportPosition", viewportPosition);
     annotation = viewportPositionToScaled(viewportPosition);
     annotation.selectedText = selectedText;
     removeAllRanges = () => {
@@ -181,8 +184,7 @@
     };
     falseAll();
     annotClickedComment = "";
-    popupStyle = `position: absolute; top: ${top}px; left: ${left}px;z-index: 1000;`;
-    // console.log("popupStyle ", popupStyle);
+    popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 2000;`;
     if (annotationMode !== AnnotationType.NONE) {
       if (
         annotationMode === AnnotationType.COMMENT ||
@@ -202,22 +204,26 @@
    * @param event
    * @param editorValues
    */
-  function annotate(event: any, editorValues: any = {}) {
+  async function annotate(event: any, editorValues: any = {}) {
     // console.log("annotating as", event.detail, comment);
     annotation.annotType = event.detail;
     if (event.detail === "COMMENT" || event.detail === "TASK") {
       annotation.comment = editorValues.comment;
       if (event.detail.DueDate) annotation.DueDate = editorValues.DueDate;
     }
-    annotation.id = "annot" + generateUID();
+    if (isReplaceable) annotation.id = "annot" + generateUID();
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
-    // console.log("annotation", annotation);
-    $userPreferences.annotations = [
-      annotation,
-      ...$userPreferences.annotations
-    ];
-    // console.log("textHiglights", $userPreferences.annotations);
+    if (isReplaceable && $captureStore.fileDetails)
+      $captureStore.fileDetails.pdfAnnotations = [
+        annotation,
+        ...($captureStore?.fileDetails?.pdfAnnotations || [])
+      ];
+    else
+      console.log(
+        "pdf clip save response",
+        await surrealPDF.saveClip(url, annotation)
+      );
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -242,12 +248,13 @@
     if (annotCickedType == "COMMENT" || annotCickedType == "TASK")
       annotClickedComment = element?.dataset?.comment || "";
     let rect = element?.getBoundingClientRect();
-    let top = (rect?.top || 0) - 40;
+    let top = rect?.top || 0;
     let left = rect?.left;
-    top += Number(scrollTop);
+    // top += Number(scrollTop);
+    commentEditorVisible = false;
     inlineToolBarVisible = false;
     InlineEditorVisible = false;
-    popupStyle = `position: absolute; top: ${top}px; left: ${left}px;z-index: 1000;`;
+    popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 1000;`;
     InlineEditorVisible = true;
   }
 
@@ -256,18 +263,21 @@
    * Removing existing highlight layer and creating a new one if exsits instead of changing innerhtml is, to fix functionality issues such as click events not working on annoatations.
    * @param pageNumber
    */
-  function findOrCreateHighlightLayer(page: number) {
+  async function findOrCreateHighlightLayer(page: number) {
     const { textLayer } = pdfViewer.getPageView(page - 1) || {};
-    // console.log("textLayer ", page, textLayer);
     if (!textLayer) {
       return "LayerCannotBeCreated";
     }
-    mainRects = $userPreferences.annotations.filter(
+    if (isReplaceable && $captureStore.fileDetails)
+      annots = $captureStore.fileDetails.pdfAnnotations!;
+    else annots = await surrealPDF.fetchAllClips(url);
+
+    mainRects = annots?.filter(
       (highlight) =>
         (highlight.rects && highlight.rects[page - 1] != undefined) ||
         (highlight.rect && highlight.pageNumber == page)
     );
-
+    if (!mainRects) return;
     let highlightsContainer = textLayer.div.querySelector(
       ".Pdf-Highlighter-Container"
     );
@@ -279,7 +289,7 @@
       "-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;";
     textLayer.div.appendChild(highlightsContainer);
 
-    mainRects.forEach((highlight: any) => {
+    mainRects?.forEach((highlight: any) => {
       let modifiedRects;
       let modifiedRect;
       if (highlight.rects)
@@ -403,14 +413,19 @@
       width: width
     };
   }
-
   /**
    * To handle the deletion of the annotation, the function is invoked when the user deletes a specific annotation.
    */
-  function handleAnnotDelete() {
-    $userPreferences.annotations = $userPreferences.annotations.filter(
-      (highlight) => highlight.id !== annotClickedId
-    );
+  async function handleAnnotDelete(e?: any, id?: string) {
+    let deleteAnnot;
+    if (id) deleteAnnot = id;
+    else deleteAnnot = annotClickedId;
+    if (isReplaceable && $captureStore.fileDetails)
+      $captureStore.fileDetails.pdfAnnotations =
+        $captureStore?.fileDetails?.pdfAnnotations?.filter(
+          (highlight) => highlight.id !== deleteAnnot
+        );
+    else await surrealPDF.deleteClip(deleteAnnot);
     annotClickedComment = "";
     renderHighlightLayers();
   }
@@ -419,17 +434,17 @@
    * To handle the color change of the annotation, the function is invoked when the user changes the color of the annotation.
    * @param color
    */
-  function handleColorChange(color: string) {
-    // console.log("handleColorChange called", color);
-    $userPreferences.annotations = $userPreferences.annotations.map(
-      (highlight) => {
-        if (highlight.id === annotClickedId && highlight.color !== color) {
-          highlight.color = color;
-          // console.log("color changed", highlight.color);
-        }
-        return highlight;
-      }
-    );
+  async function handleColorChange(color: string) {
+    if (isReplaceable && $captureStore.fileDetails)
+      $captureStore.fileDetails.pdfAnnotations =
+        $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
+          if (highlight.id === annotClickedId) {
+            highlight.color = color;
+            // console.log("color changed", highlight.color);
+          }
+          return highlight;
+        });
+    else await surrealPDF.updateClip(annotClickedId, { color: color });
     selectedColor = color;
     renderHighlightLayers();
   }
@@ -438,17 +453,17 @@
    * To handle the update of the comment, the function is invoked when the user updates the comment in the comment editor.
    * @param comment
    */
-  function handleUpdateComment(comment: string) {
-    // console.log("handleUpdateComment called", comment);
-    $userPreferences.annotations = $userPreferences.annotations.map(
-      (highlight) => {
-        if (highlight.id === annotClickedId) {
-          highlight.comment = comment;
-          // console.log("comment changed", highlight.comment);
-        }
-        return highlight;
-      }
-    );
+  async function handleUpdateComment(comment: string) {
+    if (isReplaceable && $captureStore.fileDetails)
+      $captureStore.fileDetails.pdfAnnotations =
+        $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
+          if (highlight.id === annotClickedId) {
+            highlight.comment = comment;
+            // console.log("comment changed", highlight.comment);
+          }
+          return highlight;
+        });
+    else await surrealPDF.updateClip(annotClickedId, { comment: comment });
     annotClickedComment = "";
     renderHighlightLayers();
   }
@@ -601,10 +616,8 @@
    * To get the current page number and the scroll top value whenever a scroll event happens
    */
   function handleScroll(event: any) {
-    // console.log("ScrollHappened");
     pageNumber = pdfViewer.currentPageNumber;
     scrollTop = event?.target?.scrollTop || scrollTop;
-    // console.log("scrollTOp", scrollTop);
   }
   /**
    * To get the coordinates of the mousedown or mouseup relative to the pdf viewer container used for drawing shapes
@@ -613,11 +626,6 @@
     if (!containerBoundingRect && container) {
       containerBoundingRect = container.getBoundingClientRect();
     }
-    // console.log(
-    //   containerBoundingRect?.top,
-    //   container.scrollTop,
-    //   window.scrollY
-    // );
     return {
       x: pageX - (containerBoundingRect?.left || 0) + container.scrollLeft,
       y: Math.abs(
@@ -750,7 +758,7 @@
 
     let width = highlightedRect.width;
     let height = highlightedRect.height;
-    const viewport = pdfViewer.getPageView(pageNumber - 1).viewport;
+    const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
     let convertedRect: any = viewportToScaled(highlightedRect, viewport);
     console.log("convertedRect", convertedRect);
     convertedRect.pageRectTop = pageRect.top / scale;
@@ -770,10 +778,12 @@
     pageNumber: number,
     pageRectTop: number
   ) {
+    annotCickedType = "";
     annotation.rect = boundingRect;
     annotation.pageNumber = pageNumber;
     // console.log("handleMouseUp annotation", i, annotation);
-    popupStyle = `position: absolute; top: ${boundingRect.y1 + scrollTop + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
+    // popupStyle = `position: absolute; top: ${boundingRect.y1 + scrollTop + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
+    popupStyle = `position: fixed; top: ${boundingRect.y1 + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
     if (
       annotationMode === AnnotationType.COMMENT ||
       annotationMode === AnnotationType.TASK
@@ -796,7 +806,10 @@
    * keydown for escape key to close the inline toolbar
    * mousedown for on spot annotations(Task and Comment)
    */
-  onMount(() => {
+  onMount(async () => {
+    if (isReplaceable && $captureStore?.fileDetails?.pdfAnnotations)
+      annots = $captureStore?.fileDetails?.pdfAnnotations;
+    else annots = await surrealPDF.fetchAllClips(url);
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("selectionchange", debouncedSelectionHandler);
     document.addEventListener("keydown", handleKeyDown);
@@ -818,10 +831,10 @@
   });
 </script>
 
-<div class="relative h-screen bg-yellow-300">
+<div class="relative h-9/10 w-full border border-yellow-800">
   <div class="flex bg-bgs2 h-8">
     <div
-      class="flex justify-between search-bar bg-bgs3 px-1 py-0.5 ml-2/10 w-3/10"
+      class="flex justify-between search-bar bg-bgs3 px-1 py-0.5 ml-2/10 w-5/10"
     >
       <div class="w-6/10">
         <div class="inline-flex rounded h-8/10 w-8/10 bg-bgs2">
@@ -854,10 +867,10 @@
         embedAnnotationsandDownload(url, $userPreferences.annotations)}
       class="material-symbols-rounded ml-auto">{@html "&#Xf090"}</button
     >
-    <button
+    <!-- <button
       on:click={deleleAllAnnotations}
       class="material-symbols-rounded mx-2">{@html "&#Xe16c"}</button
-    >
+    > -->
   </div>
   <PdfViewer bind:pdfViewer bind:pdfDocument bind:scale {url}
     >{#if shapeVisible}
@@ -910,11 +923,13 @@
     {/if}
   </PdfViewer>
   <TracesPanel
+    {annots}
+    {handleAnnotDelete}
     on:traceclicked={(event) =>
       scrollToAnnot(event.detail.id, event.detail.pageNumber)}
   />
   <ToolBar
-    style="position:absolute;bottom:2rem;left:30%;"
+    style="position:absolute;bottom:2rem;left:22%;"
     bind:annotationMode
     bind:selectedColor
     {pageNumber}
@@ -922,7 +937,3 @@
     on:pageRerender={(event) => handleRenderOptions(event.detail)}
   />
 </div>
-<!-- <div class="h-full bg-black">abc</div> -->
-<!-- 
-    url="http://127.0.0.1:5500/compressed.tracemonkey-pldi-09.pdf"
-/> -->

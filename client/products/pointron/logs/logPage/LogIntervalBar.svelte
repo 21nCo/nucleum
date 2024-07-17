@@ -4,11 +4,19 @@
   import { isEmptyArray } from "$lib/client/utils/obj.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
-
+  import type { IntervalBlock } from "$lib/client/types/pointron/session.type";
+  import MoreBarsInfo from "../../focus/elements/intervalbar/MoreBarsInfo.svelte";
+  import { isValidDataString } from "$lib/client/utils/text.utils";
   export let log: any;
   let blocks = log.blocks;
+  $: visibleLimit = $view.isPortrait ? 6 : 12;
+  let overFlowBlocks: IntervalBlock[] = [];
   if (isEmptyArray(log.blocks)) {
     blocks = [{ duration: log.elapsed, type: 1, progress: 1 }];
+  }
+  if (blocks.length > visibleLimit) {
+    blocks = blocks.slice(0, visibleLimit);
+    overFlowBlocks = log.blocks.slice(visibleLimit);
   }
 </script>
 
@@ -26,8 +34,14 @@
         <IntervalBarItem progress={bar?.progress} type={bar?.type} />
       </div>
     {/each}
+    {#if overFlowBlocks.length > 0}
+      <MoreBarsInfo length={overFlowBlocks.length} />
+    {/if}
   </div>
   <div class="text-fgs2 min-w-fit {$view.isPortrait && 'text-b3'}">
-    {formatTime($userPreferences, new Date(log.end))}
+    {formatTime(
+      $userPreferences,
+      new Date(isValidDataString(log.plannedEnd) ? log.plannedEnd : log.end)
+    )}
   </div>
 </div>

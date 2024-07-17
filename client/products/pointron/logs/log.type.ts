@@ -30,6 +30,7 @@ export type PointSessionDbType = DbRecordBase &
     extended: number;
     start: number | string;
     end: number | string;
+    plannedEnd: number | string;
     id: string;
     tasks?: FocusTask[] | FocusItem[];
     manualEntryId?: string;

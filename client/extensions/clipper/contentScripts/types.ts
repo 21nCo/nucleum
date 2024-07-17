@@ -7,5 +7,6 @@ export interface IWebpage extends IObservableStoreSubject {
   clips?: IClip[]
   links?: string[]
   properties?: INodeProperty[]
+  notes?: string
   relationships?: { node: string, relation: string }[]
 }

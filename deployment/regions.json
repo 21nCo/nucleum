@@ -21,7 +21,7 @@
     "code": "insouth",
     "location": "hyderabad",
     "label": "Asia Pacific",
-    "aws": "ap-south-2",
+    "aws": "ap-south-1",
     "gcp": "asia-south1",
     "azure": "southindia",
     "isAvailable": true

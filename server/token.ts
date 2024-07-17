@@ -2,31 +2,27 @@ import { MemberRole } from "./types/account.type";
 
 const jwt = require("jsonwebtoken");
 
-export async function generateRefreshToken(database, expiration = 600 * 60) {
-  //TODO - refresh token full implementation
-  return generateUserToken(database, expiration * 2);
-}
-
-export async function generateUserToken(database, expiration = 600 * 60) {
+export async function generateUserToken(props: {
+  id: string;
+  region: string;
+  expiration?: number;
+}) {
   const payload = {
-    id: database,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + expiration,
-    audience: process.env.TIDY_SUBATOM,
-    issuer: process.env.TIDY_SUBATOM,
+    id: props.id,
+    db: props.id,
     ns: process.env.USER_NS,
-    db: database,
-    tk: process.env.TIDY_TOKEN_KEY,
+    tk: process.env.TOKEN_NAME,
+    region: props.region ?? "global",
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + (props.expiration ?? 600 * 60),
+    audience: process.env.TIDY_SUBATOM,
+    issuer: process.env.TIDY_SUBATOM
   };
 
   const header = {
     algorithm: "RS384",
-    keyid: process.env.TIDY_TOKEN_KEY,
+    keyid: process.env.TOKEN_NAME
   };
-  // console.log(
-  //   "key that's being used",
-  //   process.env.TOKEN_PRIVATE_KEY.replace(/\\n/g, "\n")
-  // );
   let token = jwt.sign(
     payload,
     process.env.TOKEN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
@@ -34,34 +30,36 @@ export async function generateUserToken(database, expiration = 600 * 60) {
       algorithm: header.algorithm,
       audience: payload.audience,
       issuer: payload.issuer,
-      keyid: header.keyid,
+      keyid: header.keyid
     }
   );
   return token;
 }
 
-export async function generateSpaceToken(
-  database: string,
-  principal: string,
-  role: MemberRole
-) {
+export async function generateSpaceToken(props: {
+  database: string;
+  principal: string;
+  role: MemberRole;
+  region?: string;
+}) {
   const expiration = 60 * 60 * 24 * 30;
   const payload = {
-    id: principal,
+    id: props.principal,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + expiration,
     audience: process.env.TIDY_SUBATOM,
     issuer: process.env.TIDY_SUBATOM,
     ns: process.env.SPACE_NS,
-    db: database,
-    tk: process.env.TIDY_TOKEN_KEY,
+    db: props.database,
+    tk: process.env.TOKEN_NAME,
     context: "SPACE",
-    role,
+    role: props.role,
+    region: props.region ?? "global"
   };
 
   const header = {
     algorithm: "RS384",
-    keyid: process.env.TIDY_TOKEN_KEY,
+    keyid: process.env.TOKEN_NAME
   };
   let token = jwt.sign(
     payload,
@@ -70,7 +68,7 @@ export async function generateSpaceToken(
       algorithm: header.algorithm,
       audience: payload.audience,
       issuer: payload.issuer,
-      keyid: header.keyid,
+      keyid: header.keyid
     }
   );
   return token;
@@ -85,7 +83,7 @@ export async function validateToken(token) {
         algorithms: ["RS384"],
         audience: process.env.TIDY_SUBATOM,
         issuer: process.env.TIDY_SUBATOM,
-        keyid: process.env.TIDY_TOKEN_KEY,
+        keyid: process.env.TOKEN_NAME
       }
     );
     console.log({ decoded });

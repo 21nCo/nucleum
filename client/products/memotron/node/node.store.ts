@@ -1,5 +1,4 @@
 
-import account from "$lib/client/stores/account.store";
 import { Item } from "$lib/client/types/item.enum";
 import {
   LinkType,
@@ -7,23 +6,20 @@ import {
   type INodeCapture,
   type INodeProperty,
 } from "$lib/client/types/memotron/node.type";
-import { debouncer } from "$lib/client/utils/utils";
-import { get } from "svelte/store";
 import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
+import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IMutationQueueParams } from "../../../types/data.type";
 
 export const hierarchyFactorLimit = 5;
-const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 
 class NodeStore extends ResourceStore {
   db: ISurrealDatabase
   constructor() {
-    super(Item.node, currentUserId, {
+    super(Item.node, {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
@@ -91,7 +87,7 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   constructor(node: string) {
-    super(node, nodeStore, currentUserId);
+    super(node, nodeStore);
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (

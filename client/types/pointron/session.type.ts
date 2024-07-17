@@ -99,6 +99,7 @@ export type FocusItem = {
 
 export enum IntervalBarContext {
   ZEN_ON_DESKTOP = "ZEN_ON_DESKTOP",
+  THIN_ON_DESKTOP = "THIN_ON_DESKTOP",
   DEFAULT = "DEFAULT"
 }
 

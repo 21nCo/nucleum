@@ -1,11 +1,16 @@
 import { fetchOAuthUserData, parseOAuthUserDataForApple } from "./oauthUtil";
 import { log } from "./logger";
-import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
+import {
+  performQueryOnMasterDb,
+  performQueryOnRegionalDb,
+  performAgentProxyQuery
+} from "./surrealHelpers";
 import { Agent, CONTEXT } from "./types/account.type";
-import { initializeDatabaseAndDefinitions } from "./account";
-import { generateRefreshToken, generateUserToken } from "./token";
-import { retrieveAppData } from "./utils";
+import { generateUserToken } from "./token";
+import { retrieveAppConfig } from "./utils";
 import { OAuthUserData } from "./types/oauth.type";
+import { authorize, initializeDatabaseAndDefinitions } from "./account";
+import { accessControlHeaders } from "./lambda";
 
 function frameNonSensitiveUserInfo(userInfo: {
   id: any;
@@ -13,14 +18,17 @@ function frameNonSensitiveUserInfo(userInfo: {
   nickName: any;
   profilePictureUrl: any;
   joinDate: any;
+  region: string;
 }) {
-  const { id, emailParts, nickName, profilePictureUrl, joinDate } = userInfo;
+  const { id, emailParts, nickName, profilePictureUrl, joinDate, region } =
+    userInfo;
   return {
     id,
     emailParts,
     nickName,
     profilePictureUrl,
-    joinDate
+    joinDate,
+    region
   };
 }
 
@@ -34,14 +42,16 @@ export async function generateToken(
 ) {
   const nonSensitiveUserInfo = frameNonSensitiveUserInfo(userInfo);
   const tokenExpiration = params.isTrusted ? 60 * 60 * 24 * 30 : 60 * 60 * 24;
-  const refreshToken = await generateRefreshToken(userId, tokenExpiration);
   const isUseThirdPartyAuthMethod = process.env.USE_THIRDPARTY_AUTH_METHOD;
   if (isUseThirdPartyAuthMethod == "true") {
-    const token = await generateUserToken(userId, tokenExpiration);
+    const token = await generateUserToken({
+      id: userId,
+      region: userInfo.region,
+      expiration: tokenExpiration
+    });
     return {
       userInfo: nonSensitiveUserInfo,
       token,
-      refreshToken,
       isSignup: params.isSignup ?? false
     };
   } else {
@@ -54,7 +64,6 @@ export async function generateToken(
     return {
       userInfo: nonSensitiveUserInfo,
       token,
-      refreshToken,
       isSignup: params.isSignup ?? false
     };
   }
@@ -80,7 +89,7 @@ export async function signup(data: any, isOAuth = false) {
       context
     )}) ELSE (RETURN {userCount: count($user), user: $user}) END`;
   }
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   console.log("signup resp:", {
     response,
     responseone: JSON.stringify(response[1])
@@ -90,7 +99,7 @@ export async function signup(data: any, isOAuth = false) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signup" });
-    await initializeDatabaseAndDefinitions(userId, CONTEXT.USER, context.host);
+    // await initializeDatabaseAndDefinitions(userId, CONTEXT.USER, context.host);
     return await generateToken(userId, userInfo, { isTrusted, isSignup: true });
   } else if (isOAuth && response?.[1].result.userCount === 1) {
     console.log("user already exists for OAuth, logging in");
@@ -119,7 +128,7 @@ export async function signin(body: any) {
   const { email, pass, isTrusted, context } = body;
   if (!email || !pass) return { error: "email and pass are required" };
   const query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5("${email}"); IF count($user) == 1 AND crypto::argon2::compare($user[0].pass,"${pass}") THEN (SELECT * FROM $user) ELSE IF count($user) == 1 THEN (RETURN -1) ELSE (RETURN count($user)) END`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   if (response?.[1]?.result?.[0]) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
@@ -139,7 +148,7 @@ export async function signin(body: any) {
 export async function refreshToken(agent: Agent) {
   const { id } = agent;
   const query = `LET $user = SELECT * FROM user WHERE meta::id(id) is "${id}"; IF count($user) == 1 THEN (SELECT * FROM $user) ELSE (RETURN count($user)) END`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   if (response?.[1]?.result?.[0]) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
@@ -154,13 +163,7 @@ async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
   return signup(
     {
       email: oAuthUserData.email,
-      nickName: oAuthUserData.name
-        ? oAuthUserData.name
-        : oAuthUserData.firstName && oAuthUserData.lastName
-          ? oAuthUserData.firstName + " " + oAuthUserData.lastName
-          : oAuthUserData.given_name
-            ? oAuthUserData.given_name
-            : "",
+      nickName: getNickName(),
       profilePictureUrl: oAuthUserData.picture,
       sub: oAuthUserData.sub,
       context: { ...context, oauthData: oAuthUserData },
@@ -168,6 +171,15 @@ async function signinOauthUser(oAuthUserData: OAuthUserData, context: any) {
     },
     true
   );
+  function getNickName() {
+    if (oAuthUserData.name) {
+      return oAuthUserData.name;
+    }
+    if (oAuthUserData.firstName && oAuthUserData.lastName) {
+      return oAuthUserData.firstName + " " + oAuthUserData.lastName;
+    }
+    return oAuthUserData.given_name || "";
+  }
 }
 
 /**
@@ -182,7 +194,7 @@ export async function oauth(body: any) {
     if (!code || !app || !slug)
       return { error: "code, app and slug are required" };
     let config;
-    let appDataJson = await retrieveAppData({ app });
+    let appDataJson = await retrieveAppConfig(app);
     console.log({ appDataJson });
     config = appDataJson?.oAuthConfig?.find((c) => c.oauth_slug === slug);
     if (!config) {
@@ -215,26 +227,67 @@ export async function oauth(body: any) {
 export async function oauthRedirect(
   body: any,
   provider: string,
-  apiUrl: string
+  endpoint: string
 ) {
   console.log("oauthRedirect", { body, provider });
+  const result = await _processOAuthRedirect(body, provider, endpoint);
+  let domain = "";
+  const domainPart = body.state.split(":")[1];
+  if (domainPart) {
+    if (domainPart.includes("localredirect.")) {
+      domain = "blanklabs://localhost/index.html";
+    } else {
+      domain = "https://" + domainPart + "/oauth";
+    }
+  }
+  console.log({ result, domainPart, domain, body });
+  let redirectUrl = (domain ?? "http://bla.ink") + "/error?error=oautherror";
+  if (result?.token && domain) {
+    redirectUrl =
+      domain +
+      "?token=" +
+      result.token +
+      "&provider=" +
+      provider +
+      "&signup=" +
+      result.isSignup;
+  }
+  return {
+    statusCode: 302,
+    headers: {
+      Location: redirectUrl
+    },
+    body: ""
+  };
+}
+
+async function _processOAuthRedirect(
+  body: any,
+  provider: string,
+  apiUrl: string
+) {
   try {
     let app = "";
-    if (body.state?.includes("localredirect.")) {
-      app = body.state?.split("localredirect.")[1];
+    if (!body.state) return;
+    const guestPart = body.state.split(":")[0];
+    const domainPart = body.state.split(":")[1];
+    if (domainPart.includes("localredirect.")) {
+      app = domainPart.split("localredirect.")[1];
     } else {
-      app = body.state;
+      app = domainPart;
     }
     const context = {
       href: "https://" + apiUrl + "/oauth/" + provider,
-      host: body.state
+      state: body.state,
+      host: domainPart,
+      guest: "guest:" + guestPart
     };
     if (provider === "apple" && (body.id_token || body.user)) {
       if (body.user && typeof body.user === "string")
         body.user = JSON.parse(body.user);
       const oAuthUserData = parseOAuthUserDataForApple(body);
       console.log("parsed OAuth user data - Apple", { oAuthUserData });
-      if (!oAuthUserData || !oAuthUserData.email)
+      if (!oAuthUserData?.email)
         return {
           provider,
           status: "error",
@@ -273,35 +326,59 @@ export function getEmailParts(email: string) {
   };
 }
 
-/**
- * Deprecated - Use fetchDbDefinitionsQuery instead
- * @param userId
- * @param isIncludeTables
- * @returns
- */
-export async function runDefinitionScripts(userId, isIncludeTables = false) {
-  console.log("Running db object definitions script", { userId });
-  if (!userId) return { error: "userId is required" };
-  const app = process.env.TIDY_SUBATOM ?? "";
-  const query = `return fn::admin::dbObjectDefinitions("${app.toLowerCase()}", ${isIncludeTables})`;
-  const response = await performAdminQuery(query);
-  const queryAray = response[0].result;
-  const definitions = queryAray.join(";");
-  return await performScopeQuery(definitions, userId);
-}
-
 export async function deleteUserAccount(body: any, agent: Agent) {
-  const { id, context } = body;
+  const { context } = body;
   if (!agent.id) return { error: "userId is required" };
   await log(agent.id, { ...context, activity: "deleteAccount" });
   const query = `DELETE user WHERE id = "user:${agent.id}";`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   const dbRemovalQuery = `USE NAMESPACE ${process.env.USER_NS}; REMOVE DATABASE ${agent.id};`;
-  await performAdminQuery(dbRemovalQuery);
+  await performQueryOnRegionalDb(dbRemovalQuery, {
+    region: agent.region,
+    db: agent.id
+  });
   return response;
 }
 
 export async function performQueryOnBehalfOfUser(query: string, agent: Agent) {
   //TODO - check if the agent has permissions to perform the query if the context is space
-  return performScopeQuery(query, agent);
+  return performAgentProxyQuery(query, agent);
+}
+
+export async function performUserAccountAction(authHeader: any, body: any) {
+  const { id, region, action, context } = body;
+  if (action === "guest") {
+    const timestamp = new Date().toISOString();
+    const query = `create guest set id = "${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
+      context
+    )}; create activity set userId = "guest:${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
+      { ...context, action: "guest-visit" }
+    )};`;
+    const response = await performQueryOnMasterDb(query);
+    if (response) return { id };
+    else return { error: "Guest creation failed" };
+  } else if (action === "bootstrap") {
+    let token = authHeader?.split(" ")[1];
+    let agent = await authorize(token);
+    if (!agent)
+      return {
+        statusCode: 401,
+        headers: {
+          "Content-Type": "text/plain",
+          ...accessControlHeaders
+        },
+        body: "Unauthorized"
+      };
+    const id = agent.id;
+    const query = `update user:${id} set region = "${region}";`;
+    const response = await performQueryOnMasterDb(query);
+    console.log("bootstrap response", { response });
+    if (!response) return { error: "Bootstrapping failed" };
+    await initializeDatabaseAndDefinitions(id, {
+      scope: CONTEXT.USER,
+      host: context.host,
+      region
+    });
+    return await generateToken(id, response[0].result[0], { isTrusted: true });
+  }
 }

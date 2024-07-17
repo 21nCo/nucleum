@@ -6,9 +6,9 @@ import {
   NodeType,
   type TextContent
 } from "$lib/client/types/memotron/node.type";
-import { isValidArrayWithData } from "./obj.utils";
-import { Display } from "../types/view.type";
-import { Size } from "../types/size.enum";
+import { isValidArrayWithData } from "../../client/utils/obj.utils";
+import { Display } from "../../client/types/view.type";
+import { Size } from "../../client/types/size.enum";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -113,6 +113,10 @@ export function isValidString(str: string | undefined | null) {
     str != "none";
   if (isValid) return str;
   return undefined;
+}
+
+export function isValidDataString(str: string) {
+  return isValidString(str) && !isNaN(new Date(str).getTime());
 }
 
 export function truncateString(str: string, length: number) {

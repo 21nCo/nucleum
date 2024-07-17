@@ -70,13 +70,6 @@
     await initializeData($context.isSheet);
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
-    const darkModeMediaQuery = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    );
-    appearance.setSystemTheme(darkModeMediaQuery.matches);
-    darkModeMediaQuery.addEventListener("change", (e) => {
-      appearance.setSystemTheme(e.matches);
-    });
 
     return () => {
       appEventSub();

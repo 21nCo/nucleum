@@ -31,11 +31,6 @@
   //   console.log({ event, focus, brek, rounds, preset: composition });
   //   dispatch("change", { preset: presetToBeSaved });
   // }
-  $: if (
-    composition?.numberOfFocusRounds &&
-    composition.numberOfFocusRounds > 20
-  )
-    error = "Max allowed rounds is 20";
 </script>
 
 <div
@@ -65,7 +60,7 @@
             bind:value={composition.numberOfFocusRounds}
             placeholder="rounds"
             type="number"
-            numberInputParams={{ min: 1, max: 10, step: 1 }}
+            numberInputParams={{ min: 1, max: 100, step: 1 }}
             on:change
           />
         </div>
@@ -80,7 +75,7 @@
       bind:value={composition.numberOfFocusRounds}
       placeholder="rounds"
       type="number"
-      numberInputParams={{ min: 1, max: 10, step: 1 }}
+      numberInputParams={{ min: 1, max: 100, step: 1 }}
       label={{
         label: "Number of focus rounds",
         orientation: Orientation.Vertical

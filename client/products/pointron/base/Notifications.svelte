@@ -5,6 +5,8 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import type { IEvent } from "$lib/client/types/event.type";
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+  import { postNotificationToParent } from "$lib/client/utils/embed.utils";
+  import { logger } from "$lib/client/stores/log.store";
 
   let src: string | null = null;
   let body: string = "";
@@ -49,8 +51,12 @@
           //   body,
           //   icon: "",
           // });
-          console.log("playing sound", { event, src });
+          logger.log({ context: "playing sound", event, src });
           audio?.play();
+          postNotificationToParent({
+            message: "",
+            sound: src ? src.split("/sounds/")[1] : ""
+          });
           setTimeout(() => {
             src = null;
             appEvents.reset();

@@ -109,9 +109,9 @@
             "w-full h-full min-h-screen min-w-screen": size === Size.full,
             "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
             "w-[18rem] tp:w-[20rem] h-[20rem] min-h-[15rem]": size === Size.xs,
-            "w-[60vw] 2k:w-[60rem] tp:h-[55rem] 2k:h-[60rem]":
+            "w-[60vw] 2k:w-[60rem] h-[50rem] tp:h-[55rem] 2k:h-[60rem]":
               orientation === Orientation.Vertical && size === Size.xl,
-            "w-[35rem] 2k:w-[40rem] h-[50rem] 2k:h-[55rem]":
+            "w-[35rem] 2k:w-[40rem] h-[45rem] 2k:h-[55rem]":
               orientation === Orientation.Vertical && size === Size.lg,
             "w-[30rem] 2k:w-[35rem] h-[35rem] 2k:h-[50rem]":
               orientation === Orientation.Vertical && size === Size.md,

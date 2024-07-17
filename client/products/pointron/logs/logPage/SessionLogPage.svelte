@@ -3,7 +3,10 @@
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidMarkdown } from "$lib/client/utils/text.utils";
+  import {
+    isValidDataString,
+    isValidMarkdown
+  } from "$lib/client/utils/text.utils";
   import { onMount } from "svelte";
   import LogIntervalBar from "./LogIntervalBar.svelte";
   import LogTotals from "./LogTotals.svelte";
@@ -17,7 +20,14 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { xlink_attr } from "svelte/internal";
+  import {
+    formatTime,
+    isSameDateTime,
+    isSameDay
+  } from "$lib/client/utils/time.utils";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   const focusPersistance = new FocusPersistence();
   export let id: string;
   export let log: any = undefined;
@@ -33,7 +43,21 @@
     console.log("session log response", response);
     if (response && response.id) {
       log = response;
-      if (log.tasks) focusItems = transformFocusItems(log.tasks);
+      if (!log.tasks) return;
+      log.tasks = log.tasks.map((item: any) => {
+        const logsForTask = log.logs.filter(
+          (x: any) =>
+            (x.taskId === item.taskId && x.goalId === item.goalId) ||
+            (x.goalId === item.goalId && !x.taskId)
+        );
+        console.log({ logsForTask, item });
+        item.worked = logsForTask.reduce(
+          (acc: number, curr: any) => acc + curr.totalFocus,
+          0
+        );
+        return item;
+      });
+      focusItems = transformFocusItems(log.tasks);
       console.log("focusItems", { focusItems, goals: log.goals });
       focusItems = focusItems.map((item) => {
         const goal = log.goals.find((x: any) => x.id === item.goalId);
@@ -49,6 +73,14 @@
 {#if log}
   <div class="flex flex-col gap-4 px-2 flex-grow w-full items-center">
     <LogIntervalBar {log} />
+    {#if isValidDataString(log?.plannedEnd) && !isSameDateTime(new Date(log.end), new Date(log.plannedEnd))}
+      <InlineInfoBanner>
+        This Session was planned to end at <b>
+          {formatTime($userPreferences, new Date(log.plannedEnd))}</b
+        >
+        but aborted at <b>{formatTime($userPreferences, new Date(log.end))}.</b>
+      </InlineInfoBanner>
+    {/if}
     <div class="flex flex-col gap-6 w-full flex-grow items-center">
       <div>
         <PanelSwitcher
