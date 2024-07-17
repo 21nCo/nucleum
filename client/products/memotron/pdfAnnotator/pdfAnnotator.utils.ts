@@ -1,3 +1,5 @@
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { NodeType } from "$lib/client/types/memotron/node.type";
 import type {
   Coords,
   LTWH,
@@ -6,7 +8,70 @@ import type {
   Scaled,
   WIDTH_HEIGHT
 } from "$lib/client/types/memotron/pdfAnnotator.type";
+import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { PDFDocument, rgb } from "pdf-lib";
+
+
+class PdfSurrealHandler{
+  surrealDb = new SurrealDatabase(import.meta.env.VITE_SURREAL_URL);
+  async saveClip(url:string,content:any){
+    content={body:{...content}}
+    content.contentType=NodeType.PDF_CLIP;
+    let response = await this.surrealDb.query(
+    "return fn::memotron::pdfAnnotator::saveClip($url,$content);",
+    {
+      url,content
+    }
+  );
+    return interceptSurrealResponse(response);
+  }
+  async saveAllClips(clips:any[]){
+    try{
+      const query = "INSERT INTO node $clips";
+      const params = { clips };
+      const response = await this.surrealDb.query(query, params);
+      return response
+    }
+    catch(e){
+      console.error("Error saving clips:", e);
+    }
+  }
+  async fetchAllClips(url:string){
+    let response = await this.surrealDb.query(
+    "return fn::memotron::pdfAnnotator::getAllClips($url);",
+    {
+      url
+    }
+  );
+    let rawAnnots= interceptSurrealResponse(response);
+    let annots=rawAnnots[0]?.clips?.map((annot:any)=> {return {...annot.body,id:'annot'+annot.id.split(':')[1]}})
+    return annots
+}
+
+async deleteClip(id:string){
+  let nodeId='node:'+id.split('annot')[1];
+  let response = await this.surrealDb.query(
+    "return DELETE $nodeId;",{
+      nodeId
+    })
+    return interceptSurrealResponse(response);
+}
+async updateClip(id:string,content:any){
+  let nodeId='node:'+id.split('annot')[1];
+  let contentToUpdate:any={body:{...content},modifiedAt:new Date().toISOString()}
+  console.log({nodeId,contentToUpdate})
+  let response = await this.surrealDb.query(
+  "return UPDATE $nodeId MERGE $contentToUpdate;",
+  {
+    nodeId,contentToUpdate
+  }
+);
+  return interceptSurrealResponse(response);
+}
+}
+
+export const surrealPDF = new PdfSurrealHandler();
+
 export const asElement = (x: any): HTMLElement => x;
 
 export const getDocument = (elm: any): Document =>
