@@ -28,7 +28,15 @@
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowSave: boolean = false;
-  let isTargetFocus: boolean = false;
+  let isTargetFocus: boolean =
+    composition.type === SessionCompositionType.TARGET_FOCUS;
+  $: if (isTargetFocus) {
+    composition.type = SessionCompositionType.TARGET_FOCUS;
+  } else {
+    if (composition.type == SessionCompositionType.TARGET_FOCUS) {
+      composition.type = SessionCompositionType.TOTAL_DURATION;
+    }
+  }
   let selectedType: string =
     composition.type === SessionCompositionType.POMODORO
       ? "Pomodoro"
@@ -55,6 +63,7 @@
     breakReminder: 0,
     breakType: BreakCompositionType.PREDEFINED
   };
+
   let totals = getTotalsFromComposition({ composition });
   // $: console.log({ composition });
 
@@ -159,27 +168,27 @@
           />
         </div>
       </div>
-      <!-- {:else if composition.type === SessionCompositionType.TARGET_FOCUS}
-      <DurationInput
-        bind:value={composition.focusDuration}
-        label="Target focus"
-        info={{
-          body: "The target duration that you want to focus for"
-        }}
-        labelOrientation={Orientation.Horizontal}
-        on:change
-      /> -->
     {:else}
       <div class="flex flex-col gap-6 h-96 overflow-y-auto">
         {#if composition.type != SessionCompositionType.COUNTUP}
-          <DurationInput
-            bind:value={composition.totalDuration}
-            label={{
-              label: "Total duration",
-              orientation: Orientation.Vertical
-            }}
-            on:change
-          />
+          {#if composition.type !== SessionCompositionType.TARGET_FOCUS}
+            <DurationInput
+              bind:value={composition.totalDuration}
+              label={{
+                label: "Total duration",
+                orientation: Orientation.Vertical
+              }}
+              on:change
+            />
+          {:else if composition.type === SessionCompositionType.TARGET_FOCUS}
+            <DurationInput
+              bind:value={composition.focusDuration}
+              label={{
+                label: "Focus duration",
+                orientation: Orientation.Vertical
+              }}
+              on:change
+            />{/if}
           <SwitchInput
             bind:checked={isTargetFocus}
             label={{
@@ -194,8 +203,7 @@
         <ComposeBreak
           {composition}
           isDisablePredefined={composition.type ===
-            SessionCompositionType.COUNTUP ||
-            composition.type === SessionCompositionType.TARGET_FOCUS}
+            SessionCompositionType.COUNTUP}
           on:change
         />
         <ScrollViewBottomSpacer />
