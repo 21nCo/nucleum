@@ -4,7 +4,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

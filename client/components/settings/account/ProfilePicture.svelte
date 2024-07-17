@@ -1,6 +1,6 @@
 <script lang="ts">
   import account from "$lib/client/stores/account.store";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import { logger } from "$lib/client/stores/log.store";
   let initials: string | undefined = undefined;

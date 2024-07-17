@@ -11,7 +11,7 @@ import type {
   IQuickFocusItemStore
 } from "$lib/client/types/pointron/goal.type";
 import { GoalPersistence } from "./goal.persistence";
-import { prefixTable } from "$lib/client/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import { Item } from "$lib/client/types/item.enum";
 import {
   deepCopy,

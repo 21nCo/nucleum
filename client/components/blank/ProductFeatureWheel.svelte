@@ -6,7 +6,7 @@
     type FeatureWheelContemporary
   } from "$lib/client/types/featureWheel.type";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import FeatureWheel from "../featureWheel/FeatureWheel.svelte";
   import { memotronWheel } from "./memotronWheel";
   import { onMount } from "svelte";

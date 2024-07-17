@@ -13,7 +13,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import type { INodeProperty } from "$lib/client/types/memotron/node.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { enumToString } from "$lib/client/utils/text.utils";
+  import { enumToString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import MetaPropertyItem from "./MetaPropertyItem.svelte";
   import SingleSelectProperty from "./SingleSelectProperty.svelte";

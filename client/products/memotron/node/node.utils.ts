@@ -1,5 +1,5 @@
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
-import { truncateString } from "$lib/client/utils/text.utils";
+import { truncateString } from "$lib/shared/utils/text.utils";
 import {
   NodeType,
   type NodeMetadataCapturedAtClient
@@ -28,22 +28,19 @@ export function contentPreview(body: IMarkdown | ClipContent) {
     typeof body.text === "string"
   ) {
     return truncateString(body.text, 100);
-  }
-  else if (
+  } else if (
     typeof body === "object" &&
     "comment" in body &&
     typeof body.comment === "string"
   ) {
     return truncateString(body.comment, 100);
-  } 
-  else if (
+  } else if (
     typeof body === "object" &&
     "selectedText" in body &&
     typeof body.selectedText === "string"
   ) {
     return truncateString(body.selectedText, 100);
-  } 
-  else if (typeof body === "string") {
+  } else if (typeof body === "string") {
     return truncateString(body, 100);
   }
   return "";

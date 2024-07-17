@@ -2,7 +2,7 @@
   import { backgroundSoundStore } from "$lib/client/products/pointron/pointron.store";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   let audioRef: HTMLAudioElement;
   let src: string | undefined = undefined;

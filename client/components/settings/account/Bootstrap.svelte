@@ -3,7 +3,7 @@
   import account from "$lib/client/stores/account.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import RegionSetting from "./RegionSetting.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";

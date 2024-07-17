@@ -24,7 +24,7 @@ import {
 import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
-import { prefixTable } from "$lib/client/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
@@ -546,7 +546,7 @@ async function setRefreshingState(
   stores.forEach((store) => {
     if (!store.update) return;
     store.update?.((x) => {
-      if(x) x.isRefreshing = val;
+      if (x) x.isRefreshing = val;
       return x;
     });
   });

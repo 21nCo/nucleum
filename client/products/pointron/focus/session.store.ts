@@ -36,7 +36,7 @@ import {
 import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { AlertType } from "$lib/client/types/notification.type";
-import { isValidString } from "$lib/client/utils/text.utils";
+import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   DependencySyncType,
   PersistanceActionType

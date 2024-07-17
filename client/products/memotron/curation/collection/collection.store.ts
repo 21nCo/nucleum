@@ -1,37 +1,45 @@
 import {
   CombinationViewType,
-  CurationType,
+  CurationType
 } from "$lib/client/types/memotron/curation.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { Item } from "$lib/client/types/item.enum";
 import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-import { prefixTable } from "$lib/client/utils/text.utils";
-import { debouncer, generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
+import {
+  debouncer,
+  generateUID,
+  interceptSurrealResponse
+} from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
-import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "$lib/client/stores/resource.store";
 import { Persistence } from "$lib/client/persistence/persistence";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { CollectionLayout, type IActiveCollection, type ICollectionView, type ICurationCreationForm } from "$lib/client/types/memotron/collection.type";
-
+import {
+  CollectionLayout,
+  type IActiveCollection,
+  type ICollectionView,
+  type ICurationCreationForm
+} from "$lib/client/types/memotron/collection.type";
 
 class CollectionStore extends ResourceStore {
-  db: ISurrealDatabase
+  db: ISurrealDatabase;
   constructor() {
     super(Item.collection, {
       priorityRefreshOnAppAppear: true,
-      refreshQuery: "return fn::memotron::curation::fetchAll($since);",
+      refreshQuery: "return fn::memotron::curation::fetchAll($since);"
     });
     this.db = new SurrealDatabase();
   }
   create(resource: ICurationCreationForm) {
     return super.create(
       {
-        id: prefixTable(
-          generateUID(),
-          Item.collection
-        ),
+        id: prefixTable(generateUID(), Item.collection),
         ...resource
       },
       "return fn::memotron::curation::create($curation, $mutatedAt);"
@@ -99,13 +107,13 @@ export function determineCurationType(id: string) {
   return type;
 }
 
-
-class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, CollectionStore> {
-
+class ActiveCollectionStore extends ActiveResourceStore<
+  IActiveCollection,
+  CollectionStore
+> {
   debouncedPersistView = debouncer((view: ICollectionView) => {
     new Persistence().update(view);
   }, 2000);
-
 
   constructor(collectionId: string) {
     super(collectionId, collectionStore);
@@ -248,10 +256,7 @@ class ActiveCollectionStore extends ActiveResourceStore<IActiveCollection, Colle
       val.isRefreshing = true;
       return val;
     });
-    const response = await this.resourceStore.fetchViewData(
-      viewId,
-      this.id
-    );
+    const response = await this.resourceStore.fetchViewData(viewId, this.id);
     if (!response || !isValidArrayWithData(response)) return;
     this.update((val: IActiveCollection) => {
       val.views.find((v) => v.id === viewId)!.data = [...response];

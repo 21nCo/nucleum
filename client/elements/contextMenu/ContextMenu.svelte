@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { IContextMenuItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   import Divider from "../Divider.svelte";

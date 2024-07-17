@@ -7,7 +7,7 @@
     type SwitchItem
   } from "$lib/client/types/switcher.enum";
   import { renderPopover } from "$lib/client/utils/browser.utils";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import Tooltip from "../text/Tooltip.svelte";
   import { cn } from "$lib/client/utils/ui.utils";

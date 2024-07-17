@@ -19,7 +19,7 @@ import {
 import {
   generateMarkdownText,
   prefixTable
-} from "$lib/client/utils/text.utils";
+} from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
 import {

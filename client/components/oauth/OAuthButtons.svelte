@@ -3,7 +3,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   let progress = "";
 </script>
 
