@@ -25,9 +25,19 @@ import { prefixTable } from "$lib/client/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { surrealPDF } from "../pdfAnnotator/pdfAnnotator.utils";
+import { contentType } from "$lib/client/extensions/clipper/contentScripts/KindleHighlights.types";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
+function getContentTypeFromFileDetails(fileDetails: FileDetails) {
+  const contentType = fileDetails.type;
+  if (contentType.includes("image")) return NodeType.IMAGE;
+  else if (contentType.includes("audio")) return NodeType.AUDIO;
+  else if (contentType.includes("video")) return NodeType.VIDEO;
+  else if (contentType.includes("pdf")) return NodeType.PDF;
+  else return NodeType.FILE;
+}
 function generateSeedStore(): ICaptureStore {
   const blockId = prefixTable(generateUID(), Item.node);
   return {
@@ -157,6 +167,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
 
   async save() {
     const val = this.get();
+    let { pdfAnnotations, ...fileDetails } = val?.fileDetails!;
     //TODO - extract nodes from markdown blocks and save
     const metadata = await resolveNodeCaptureMetadata();
     console.log("capture store", { val, metadata });
@@ -168,15 +179,17 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       type: val.type?.id,
       body: "",
       contentType:
-        val.captureType === CaptureType.AUDIO
-          ? NodeType.AUDIO
-          : val.captureType === CaptureType.CAMERA
-            ? NodeType.IMAGE
-            : val.captureType === CaptureType.MARKDOWN
-              ? NodeType.NODULAR_MARKDOWN
-              : val.captureType.includes("type:")
+        val.captureType === CaptureType.UPLOAD
+          ? getContentTypeFromFileDetails(val?.fileDetails!)
+          : val.captureType === CaptureType.AUDIO
+            ? NodeType.AUDIO
+            : val.captureType === CaptureType.CAMERA
+              ? NodeType.IMAGE
+              : val.captureType === CaptureType.MARKDOWN
                 ? NodeType.NODULAR_MARKDOWN
-                : NodeType.SIMPLE_TEXT,
+                : val.captureType.includes("type:")
+                  ? NodeType.NODULAR_MARKDOWN
+                  : NodeType.SIMPLE_TEXT,
       metadata,
       links: [
         ...(val.directLinks?.map((link) => {
@@ -201,7 +214,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         root = {
           ...root,
           body: {
-            ...val.fileDetails,
+            ...fileDetails,
             ...result,
             url: result.uploadURL.split("?")[0]
           }
@@ -228,12 +241,24 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         };
       });
     }
+    if (root.contentType == NodeType.PDF)
+      root = { ...root, url: root.body.url };
     let nodeCapture: INodeCapture = {
       resources: [root, ...remainingResources]
     };
-    console.log({ nodeToBeSaved: nodeCapture });
-    let result = await nodeStore.createNode(nodeCapture);
+    let result: any = await nodeStore.createNode(nodeCapture);
     if (result) {
+      if (
+        nodeCapture.resources[0].contentType == NodeType.PDF &&
+        pdfAnnotations?.length != 0
+      ) {
+        const parentId=nodeCapture.resources[0].id
+        pdfAnnotations=pdfAnnotations?.map((annot)=>{
+          const { id, ...remainingItems } = annot;
+          return {body:{...remainingItems},contentType:NodeType.PDF_CLIP,parent:parentId}
+        })
+        await surrealPDF.saveAllClips(pdfAnnotations!);
+      }
       this.modify({ ...generateSeedStore() }, { isPersist: false });
       toasts.trigger({
         id: generateUID(),
