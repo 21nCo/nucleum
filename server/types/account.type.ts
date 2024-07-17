@@ -3,7 +3,6 @@ export type DatabaseQueryParams = {
   dbType: CONTEXT;
   db?: string;
   instance?: string;
-  isMasterDb?: boolean;
 };
 
 export enum CONTEXT {
@@ -16,6 +15,7 @@ export type Agent = {
   id: string;
   context: string;
   db: string;
+  region: string;
   scope?: string;
   role?: string;
   ns?: string;

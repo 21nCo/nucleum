@@ -10,7 +10,7 @@ import {
   type IObservableStore
 } from "../types/data.type";
 import type { Item } from "../types/item.enum";
-import { prefixTable } from "../utils/text.utils";
+import { prefixTable } from "../../shared/utils/text.utils";
 import { dataManager } from "../persistence/dataManager";
 import { ObservableStore } from "./client.store";
 import { resolveCurrentUserId } from "../utils/account.utils";
@@ -152,8 +152,9 @@ export class ResourceStore implements IStore {
     resource: Partial<DbRecord>,
     mutatationQueueParams?: IMutationQueueParams
   ) {
-    if (!this.currentUserId || typeof this.currentUserId != "string"
-    ) { this.currentUserId = await resolveCurrentUserId(); }
+    if (!this.currentUserId || typeof this.currentUserId != "string") {
+      this.currentUserId = await resolveCurrentUserId();
+    }
     const data: Partial<DbRecord> = {
       id,
       ...resource,

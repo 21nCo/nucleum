@@ -81,23 +81,6 @@ export class UtilsLambdaFunctions extends NestedStack {
       defaults.mockIntegrationOptions
     );
 
-    let retrieveAppDataNodeFunction = new Function(this, "retrieveAppData", {
-      functionName: generateFunctionName("retrieveAppData", props.environment),
-      handler: "retrieveAppData.handler",
-      ...nodeRuntimeFunctionProps
-    });
-    const retrieveAppDataNodeResource =
-      utilsNodeResource.addResource("retrieveAppData");
-    retrieveAppDataNodeResource.addMethod(
-      "POST",
-      new LambdaIntegration(retrieveAppDataNodeFunction)
-    );
-    retrieveAppDataNodeResource.addMethod(
-      "OPTIONS",
-      new MockIntegration(defaults.mockIntegration),
-      defaults.mockIntegrationOptions
-    );
-
     const saveSubscriptionNodeFunction = new Function(
       this,
       "saveSubscription",

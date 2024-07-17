@@ -1,10 +1,16 @@
 import { fetchOAuthUserData, parseOAuthUserDataForApple } from "./oauthUtil";
 import { log } from "./logger";
-import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
-import { Agent } from "./types/account.type";
-import { generateRefreshToken, generateUserToken } from "./token";
-import { retrieveAppData } from "./utils";
+import {
+  performQueryOnMasterDb,
+  performQueryOnRegionalDb,
+  performAgentProxyQuery
+} from "./surrealHelpers";
+import { Agent, CONTEXT } from "./types/account.type";
+import { generateUserToken } from "./token";
+import { retrieveAppConfig } from "./utils";
 import { OAuthUserData } from "./types/oauth.type";
+import { authorize, initializeDatabaseAndDefinitions } from "./account";
+import { accessControlHeaders } from "./lambda";
 
 function frameNonSensitiveUserInfo(userInfo: {
   id: any;
@@ -12,14 +18,17 @@ function frameNonSensitiveUserInfo(userInfo: {
   nickName: any;
   profilePictureUrl: any;
   joinDate: any;
+  region: string;
 }) {
-  const { id, emailParts, nickName, profilePictureUrl, joinDate } = userInfo;
+  const { id, emailParts, nickName, profilePictureUrl, joinDate, region } =
+    userInfo;
   return {
     id,
     emailParts,
     nickName,
     profilePictureUrl,
-    joinDate
+    joinDate,
+    region
   };
 }
 
@@ -33,14 +42,16 @@ export async function generateToken(
 ) {
   const nonSensitiveUserInfo = frameNonSensitiveUserInfo(userInfo);
   const tokenExpiration = params.isTrusted ? 60 * 60 * 24 * 30 : 60 * 60 * 24;
-  const refreshToken = await generateRefreshToken(userId, tokenExpiration);
   const isUseThirdPartyAuthMethod = process.env.USE_THIRDPARTY_AUTH_METHOD;
   if (isUseThirdPartyAuthMethod == "true") {
-    const token = await generateUserToken(userId, tokenExpiration);
+    const token = await generateUserToken({
+      id: userId,
+      region: userInfo.region,
+      expiration: tokenExpiration
+    });
     return {
       userInfo: nonSensitiveUserInfo,
       token,
-      refreshToken,
       isSignup: params.isSignup ?? false
     };
   } else {
@@ -53,7 +64,6 @@ export async function generateToken(
     return {
       userInfo: nonSensitiveUserInfo,
       token,
-      refreshToken,
       isSignup: params.isSignup ?? false
     };
   }
@@ -79,7 +89,7 @@ export async function signup(data: any, isOAuth = false) {
       context
     )}) ELSE (RETURN {userCount: count($user), user: $user}) END`;
   }
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   console.log("signup resp:", {
     response,
     responseone: JSON.stringify(response[1])
@@ -118,7 +128,7 @@ export async function signin(body: any) {
   const { email, pass, isTrusted, context } = body;
   if (!email || !pass) return { error: "email and pass are required" };
   const query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5("${email}"); IF count($user) == 1 AND crypto::argon2::compare($user[0].pass,"${pass}") THEN (SELECT * FROM $user) ELSE IF count($user) == 1 THEN (RETURN -1) ELSE (RETURN count($user)) END`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   if (response?.[1]?.result?.[0]) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
@@ -138,7 +148,7 @@ export async function signin(body: any) {
 export async function refreshToken(agent: Agent) {
   const { id } = agent;
   const query = `LET $user = SELECT * FROM user WHERE meta::id(id) is "${id}"; IF count($user) == 1 THEN (SELECT * FROM $user) ELSE (RETURN count($user)) END`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   if (response?.[1]?.result?.[0]) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
@@ -184,7 +194,7 @@ export async function oauth(body: any) {
     if (!code || !app || !slug)
       return { error: "code, app and slug are required" };
     let config;
-    let appDataJson = await retrieveAppData({ app });
+    let appDataJson = await retrieveAppConfig(app);
     console.log({ appDataJson });
     config = appDataJson?.oAuthConfig?.find((c) => c.oauth_slug === slug);
     if (!config) {
@@ -316,35 +326,59 @@ export function getEmailParts(email: string) {
   };
 }
 
-/**
- * Deprecated - Use fetchDbDefinitionsQuery instead
- * @param userId
- * @param isIncludeTables
- * @returns
- */
-export async function runDefinitionScripts(userId, isIncludeTables = false) {
-  console.log("Running db object definitions script", { userId });
-  if (!userId) return { error: "userId is required" };
-  const app = process.env.TIDY_SUBATOM ?? "";
-  const query = `return fn::admin::dbObjectDefinitions("${app.toLowerCase()}", ${isIncludeTables})`;
-  const response = await performAdminQuery(query);
-  const queryAray = response[0].result;
-  const definitions = queryAray.join(";");
-  return await performScopeQuery(definitions, userId);
-}
-
 export async function deleteUserAccount(body: any, agent: Agent) {
-  const { id, context } = body;
+  const { context } = body;
   if (!agent.id) return { error: "userId is required" };
   await log(agent.id, { ...context, activity: "deleteAccount" });
   const query = `DELETE user WHERE id = "user:${agent.id}";`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   const dbRemovalQuery = `USE NAMESPACE ${process.env.USER_NS}; REMOVE DATABASE ${agent.id};`;
-  await performAdminQuery(dbRemovalQuery);
+  await performQueryOnRegionalDb(dbRemovalQuery, {
+    region: agent.region,
+    db: agent.id
+  });
   return response;
 }
 
 export async function performQueryOnBehalfOfUser(query: string, agent: Agent) {
   //TODO - check if the agent has permissions to perform the query if the context is space
-  return performScopeQuery(query, agent);
+  return performAgentProxyQuery(query, agent);
+}
+
+export async function performUserAccountAction(authHeader: any, body: any) {
+  const { id, region, action, context } = body;
+  if (action === "guest") {
+    const timestamp = new Date().toISOString();
+    const query = `create guest set id = "${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
+      context
+    )}; create activity set userId = "guest:${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
+      { ...context, action: "guest-visit" }
+    )};`;
+    const response = await performQueryOnMasterDb(query);
+    if (response) return { id };
+    else return { error: "Guest creation failed" };
+  } else if (action === "bootstrap") {
+    let token = authHeader?.split(" ")[1];
+    let agent = await authorize(token);
+    if (!agent)
+      return {
+        statusCode: 401,
+        headers: {
+          "Content-Type": "text/plain",
+          ...accessControlHeaders
+        },
+        body: "Unauthorized"
+      };
+    const id = agent.id;
+    const query = `update user:${id} set region = "${region}";`;
+    const response = await performQueryOnMasterDb(query);
+    console.log("bootstrap response", { response });
+    if (!response) return { error: "Bootstrapping failed" };
+    await initializeDatabaseAndDefinitions(id, {
+      scope: CONTEXT.USER,
+      host: context.host,
+      region
+    });
+    return await generateToken(id, response[0].result[0], { isTrusted: true });
+  }
 }

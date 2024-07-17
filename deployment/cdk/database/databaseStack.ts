@@ -25,8 +25,7 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
   env: IEnvironment;
   zone: IHostedZone;
   certificate: ICertificate;
-  regionDomain: string;
-  subdomain: string = "db";
+  domainName: string;
   instanceName: string;
   diskName: string;
   staticIpName: string;
@@ -39,21 +38,19 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
     const { zone, environment } = props;
     this.env = environment;
     this.zone = zone;
-    this.regionDomain =
-      props.environment.tidyregion +
-      "." +
-      this.subdomain +
-      "." +
-      environment.domain;
-    this.certificate = resolveAcmCertificate(this, zone, this.regionDomain);
-    this.staticIpName = this.regionDomain + "-static-ip";
-    this.diskName = this.env.region + "-db-disk";
+    this.domainName = props.isMasterDb
+      ? "db." + environment.domain
+      : props.environment.tidyregion + ".db." + environment.domain;
+    this.certificate = resolveAcmCertificate(this, zone, this.domainName);
+    this.staticIpName = this.domainName + "-static-ip";
+    this.diskName =
+      this.env.region + (props.isMasterDb ? "-master-db-disk" : "-db-disk");
     this.availabilityZone = this.env.region + "a";
-    this.instanceName = `${this.regionDomain}-instance`;
+    this.instanceName = `${this.domainName}-instance`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
 
     const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
-      .replace(/DOMAIN_NAME/g, this.regionDomain)
+      .replace(/DOMAIN_NAME/g, this.domainName)
       .replace(/CERTIFICATE_ARN/g, this.certificate.certificateArn)
       .replace(/CERTIFICATE_REGION/g, this.env.region)
       .replace(/DB_PASS/g, this.env.DB_PASS)
@@ -189,7 +186,7 @@ echo "User data script execution completed at $(date)"
 
     new ARecord(this, "DNSRecord", {
       zone: zone,
-      recordName: this.regionDomain,
+      recordName: this.domainName,
       target: RecordTarget.fromIpAddresses(staticIp.attrIpAddress)
     });
 

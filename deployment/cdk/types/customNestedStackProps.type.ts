@@ -8,6 +8,10 @@ export interface CustomNestedStackProps extends cdk.NestedStackProps {
   zone: route53.IHostedZone;
   bunRuntimeLayer: lambda.ILayerVersion;
   environment: IEnvironment;
+  /**
+   * Relevant for Db Stacks only
+   */
+  isMasterDb?: boolean;
 }
 
 export interface CustomLambdaNestedStackProps extends CustomNestedStackProps {

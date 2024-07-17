@@ -6,7 +6,7 @@ import {
 import { authorize } from "./account";
 import { parse } from "querystring";
 
-const accessControlHeaders = {
+export const accessControlHeaders = {
   "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
   "Access-Control-Allow-Headers": "Content-Type Authorization",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS"

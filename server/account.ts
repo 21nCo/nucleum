@@ -1,29 +1,11 @@
 import { extractProduct } from "$lib/shared/utils/utils";
-import { performAdminQuery, performScopeQuery } from "./surrealHelpers";
+import {
+  performQueryOnMasterDb,
+  performQueryOnRegionalDb,
+  performAgentProxyQuery
+} from "./surrealHelpers";
 import { validateToken } from "./token";
 import { type Agent, CONTEXT } from "./types/account.type";
-
-export async function performAccountAction(body: any) {
-  const { id, region, action, context } = body;
-  if (action === "guest") {
-    const timestamp = new Date().toISOString();
-    const query = `create guest set id = "${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
-      context
-    )}; create activity set userId = "guest:${id}", timestamp = "${timestamp}", context = ${JSON.stringify(
-      { ...context, action: "guest-visit" }
-    )};`;
-    const response = await performAdminQuery(query);
-    if (response) return { id };
-    else return { error: "Guest creation failed" };
-  } else if (action === "bootstrap") {
-    //TODO - use region to bootstrap the database in the specified region
-    return await initializeDatabaseAndDefinitions(id, {
-      scope: CONTEXT.USER,
-      host: context.host,
-      region
-    });
-  }
-}
 
 export async function fetchDbDefinitionsQuery(
   host: string,
@@ -32,7 +14,7 @@ export async function fetchDbDefinitionsQuery(
   const extracredApp = extractProduct(host);
   const app = extracredApp.product ?? process.env.TIDY_SUBATOM;
   const query = `return fn::admin::dbo::fetchAll("${app.toLowerCase()}", ${lastRunChangeId})`;
-  const response = await performAdminQuery(query);
+  const response = await performQueryOnMasterDb(query);
   const dbObjects: any[] = response[0].result;
   console.log("response for dbobject()", { response, dbObjects });
   if (!dbObjects || dbObjects.length === 0) return false;
@@ -67,7 +49,7 @@ export async function updateDbChangeRunStatus(
   lastRunVersionId: number
 ) {
   const query = `update kv:dboVersion set version = ${lastRunVersionId}, modifiedAt = "${new Date().toISOString()}";`;
-  const response = await performScopeQuery(query, agent);
+  const response = await performAgentProxyQuery(query, agent);
   if (response[0].result) return true;
   else return false;
 }
@@ -90,7 +72,10 @@ export async function updateDbDefinitions(
   let definitionsResult = await fetchDbDefinitionsQuery(host, fromVersion);
   if (definitionsResult === false) return { message: "no new changes" };
   console.log("definitionsResult", { definitionsResult });
-  let dbRunResponse = await performScopeQuery(definitionsResult.query, agent);
+  let dbRunResponse = await performAgentProxyQuery(
+    definitionsResult.query,
+    agent
+  );
   console.log({ dbRunResponse });
   const dbChangeUpdateStatus = await updateDbChangeRunStatus(
     agent,
@@ -150,16 +135,19 @@ export async function initializeDatabaseAndDefinitions(
     params.scope === CONTEXT.USER
       ? process.env.USER_NS ?? "USER"
       : process.env.SPACE_NS ?? "SPACE";
-  let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TIDY_TOKEN_KEY} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
+  let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TOKEN_NAME} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
   let definitionsResult = await fetchDbDefinitionsQuery(params.host, 0);
   if (definitionsResult) query += definitionsResult.query;
   console.log("db init query", { query });
-  const dbCreationResponse = await performAdminQuery(query);
+  const dbCreationResponse = await performQueryOnRegionalDb(query, {
+    region: params.region,
+    db: id,
+    context: params.scope
+  });
   if (definitionsResult)
     await updateDbChangeRunStatus(
-      { id, db: id, context: CONTEXT.USER },
+      { id, db: id, context: CONTEXT.USER, region: params.region },
       definitionsResult.highestChangeId
     );
-  // await runDefinitionScripts(userId, true); TODO - check the necessity of this old run definitions
   return dbCreationResponse;
 }
