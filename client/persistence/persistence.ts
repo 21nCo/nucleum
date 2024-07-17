@@ -9,7 +9,10 @@ import type {
   DbRecordWithLabel
 } from "../types/dbrecord.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { performApiCall } from "$lib/client/utils/network.utils";
+import {
+  performApiCall,
+  performStaticDataOperation
+} from "$lib/client/utils/network.utils";
 import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { logger } from "$lib/client/stores/log.store";
 import {
@@ -104,28 +107,20 @@ export class Persistence {
       logger.logError(err);
     }
   };
-  getLatestAppVersion = async (app: string) => {
+  getLatestAppVersion = async () => {
     try {
-      let response = await performApiCall("utils/n/retrieveAppData", "POST", {
-        app
-      });
-      if (response?.ok) {
-        let jsonValue = await response.json();
-        if (!jsonValue) return;
-        return jsonValue.version;
-      }
+      let appData = await this.fetchAppData();
+      if (!appData) return;
+      return appData.version;
     } catch (err) {
       logger.logError(err);
     }
   };
   fetchAppData = async () => {
     try {
-      const app = import.meta.env?.VITE_HOST ?? process.env.PLASMO_PUBLIC_HOST ?? window.location.hostname;
-      // console.log({ app });
-      if (!app) return;
-      let response = await performApiCall("utils/n/retrieveAppData", "POST", {
-        app
-      });
+      const product = localStorage.getItem("product");
+      if (!product) return;
+      let response = await performStaticDataOperation(`${product}.json`);
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;

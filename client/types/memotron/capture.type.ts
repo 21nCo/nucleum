@@ -48,6 +48,7 @@ export type FileDetails = {
   duration?: number;
   transcription?: string;
   initTranscription?: boolean;
+  pdfAnnotations?:any[];
 };
 
 export type ILink = {

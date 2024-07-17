@@ -20,6 +20,13 @@
     const userPreferencesSub = userPreferences.subscribe(() => {
       refreshSizing();
     });
+    const darkModeMediaQuery = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    );
+    appearance.setSystemTheme(darkModeMediaQuery.matches);
+    darkModeMediaQuery.addEventListener("change", (e) => {
+      appearance.setSystemTheme(e.matches);
+    });
     return () => {
       appearanceSub();
       userPreferencesSub();

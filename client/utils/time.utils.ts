@@ -116,17 +116,16 @@ export function timePeriodLabel(period: TimePeriod) {
     } else if (value.param > 0) {
       return `Next ${value} ${scale.toLowerCase()}`;
     }
+  } else if (value.type === TimePeriodType.ABSOLUTE) {
+    let start = value.param.start.toString();
+    let end = value.param.end.toString();
+    if (/[a-zA-Z]/.test(start)) {
+      start = new Date(value.param.start).toISOString().split("T")[0];
+      end = new Date(value.param.end).toISOString().split("T")[0];
+    }
+    if (start === end) return start;
+    return `${start} to ${end}`;
   }
-else if(value.type===TimePeriodType.ABSOLUTE){
-  let start=value.param.start.toString();
-  let end=value.param.end.toString();
-  if(/[a-zA-Z]/.test(start)){
-  start=new Date(value.param.start).toISOString().split('T')[0]
-  end=new Date(value.param.end).toISOString().split('T')[0]}
-  if(start===end)
-    return start
-  return `${start} to ${end}`
-}
 }
 
 export function determinePreviousTimePeriod(period: TimePeriod) {
@@ -265,18 +264,18 @@ export function determineTimePeriodv2(period: TimePeriod) {
     "start" in period.value.param &&
     "end" in period.value.param
   ) {
-    begin = (period.value.param.start);
-    end = (period.value.param.end);
+    begin = period.value.param.start;
+    end = period.value.param.end;
     begin = new Date(period.value.param.start);
     end = new Date(period.value.param.end);
-    if(period.scale===TimeScale.YEARS){
-      end.setMonth(11)
+    if (period.scale === TimeScale.YEARS) {
+      end.setMonth(11);
     }
-    if(period.scale===TimeScale.MONTHS||period.scale===TimeScale.YEARS){
-      const month=(end.getMonth()+1)%12
-      const year=month==0?end.getFullYear()+1:end.getFullYear()
-      const endDate=new Date(Date.UTC(year,month,0)).getDate();
-      end.setDate(endDate)
+    if (period.scale === TimeScale.MONTHS || period.scale === TimeScale.YEARS) {
+      const month = (end.getMonth() + 1) % 12;
+      const year = month == 0 ? end.getFullYear() + 1 : end.getFullYear();
+      const endDate = new Date(Date.UTC(year, month, 0)).getDate();
+      end.setDate(endDate);
     }
     return { begin, end, title: "" };
   }
@@ -514,6 +513,17 @@ export function isSameDay(date1: Date, date2: Date) {
     date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
     date1.getDate() === date2.getDate()
+  );
+}
+
+export function isSameDateTime(date1: Date, date2: Date) {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate() &&
+    date1.getHours() === date2.getHours() &&
+    date1.getMinutes() === date2.getMinutes() &&
+    date1.getSeconds() === date2.getSeconds()
   );
 }
 

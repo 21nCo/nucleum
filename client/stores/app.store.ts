@@ -598,9 +598,7 @@ function initAppStore(seed: AppStore) {
     let latestVersion = get(appStore).appData?.version;
     try {
       if (!latestVersion) {
-        const app = window.location.hostname;
-        if (!app) return;
-        latestVersion = await new Persistence().getLatestAppVersion(app);
+        latestVersion = await new Persistence().getLatestAppVersion();
       }
       if (!latestVersion) return;
       const appVersionOnClient = localStorage.getItem("appVersion");

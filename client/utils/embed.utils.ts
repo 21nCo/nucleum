@@ -37,6 +37,16 @@ export function postToParent(message: any) {
   }
 }
 
+export function postNotificationToParent(message: {
+  message: string;
+  sound: string;
+}) {
+  logger.log({ context: "postNotificationToParent", message });
+  postToParent({
+    notification: JSON.stringify(message)
+  });
+}
+
 export function hapticFeedback(haptic: HapticFeedback) {
   postToParent({
     haptic

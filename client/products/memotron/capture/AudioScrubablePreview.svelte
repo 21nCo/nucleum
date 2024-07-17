@@ -70,7 +70,7 @@
     }
     isDisabled = false;
     const result = (await response.json()).result;
-    if (isReplaceable) {
+    if (isReplaceable || $captureStore?.fileDetails?.data) {
       $captureStore.fileDetails.transcription = result;
       $captureStore.fileDetails.initTranscription = false;
       label = "Re-Transcribe";
@@ -120,7 +120,7 @@
   });
 </script>
 
-<div class="relative my-4 text-justify border border-bgs4">
+<div class="relative w-full my-4 text-justify border border-bgs4">
   <div
     id="audioCapturePreview"
     class="relative {body?.transcription !== undefined ||

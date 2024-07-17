@@ -91,6 +91,9 @@ export class ClipperPersistence {
   /**
    * Can be triggered from either content script or side bar.
    * If triggered from content script, tab data will be present in the message.
+   * 
+   * TODO - save web page node via NodeStore - to update nodes local cache
+   * 
    * @returns
    */
   async saveWebpage(tabData?: TabData) {
@@ -157,6 +160,9 @@ export class ClipperPersistence {
 
   /**
    * Delegated from content scripts. tabData is passed from content script to save the web page if the web page is not saved already.
+   * 
+   * TODO - save clip via NodeStore - to update nodes local cache
+   * 
    * @param content
    * @param tabData
    * @returns
@@ -174,7 +180,7 @@ export class ClipperPersistence {
       const params = { id, content, tabData };
       const result = await this.queryUsingHttp(query, params);
       console.log("save clip", { result });
-      if (result && result.parent) {
+      if (result?.parent) {
         chrome.storage.local.set({ node: { id: result.parent } });
         chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.parent });
       }
@@ -303,8 +309,8 @@ export class ClipperPersistence {
    * TODO - Complete history logging - only once the user setting is implemented.
    */
   async saveLog(userId, url, currentTime, logSwitch, deviceInfo) {
-    const domain = new URL(url).hostname;
     return;
+    const domain = new URL(url).hostname;
     try {
       if (logSwitch) {
         await this.db.create('History', {

@@ -25,6 +25,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { SessionType } from "../../../logs/log.type";
   export let task: FocusItem & Required<Pick<FocusItem, "taskId">>;
   export let isInEditMode: boolean = false;
   export let context: "current" | "history" = "current";
@@ -95,7 +96,14 @@
     event.stopPropagation();
   }
   async function clickHandler() {
-    if (isInEditMode || context === "history") return;
+    if (
+      isInEditMode ||
+      context === "history" ||
+      ($sessionStore.isSessionRunning &&
+        $sessionStore.type === SessionType.PREDEFINED_INTERVALS &&
+        $sessionStore.state === SessionState.BREAK_RUNNING)
+    )
+      return;
     if ($sessionStore.isSessionRunning) {
       if (isInprogress) {
         sessionStore.stopCurrentTaskOrGoal();

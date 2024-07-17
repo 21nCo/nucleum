@@ -5,7 +5,6 @@
     elementFromQuery,
     getQuery
   } from "$lib/client/extensions/clipper/contentScripts/getQuery";
-  import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";
   import { onMount } from "svelte";
   import {
     ClipperExtensionEvent,
@@ -19,6 +18,8 @@
   } from "$lib/client/types/extension.type";
   import { extractFullTabData } from "$lib/client/utils/extension.utils";
   import { webpage } from "./store";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { AlertType } from "$lib/client/types/notification.type";
   export let colors: string[];
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
@@ -26,10 +27,11 @@
   // export let page: any;
   let selectedClip: { color: string; id: string } | null = null;
   let selectedClipId: string = "";
+  let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
   onMount(() => {
-    webpage.subscribe((value) => {
-      if (value.id && value.clips) {
-        console.log("refreshing page clips", value);
+    appEvents.subscribe((x) => {
+      if (x.event === ClipperExtensionEvent.CLIPS_CHANGED) {
+        console.log("refreshing page clips");
         refreshPageClips();
       }
     });
@@ -106,7 +108,7 @@
       if (!nodeData?.node?.id) {
         tabData = extractFullTabData();
       }
-      return new ClipperPersistence().saveClip(
+      return webpage.saveClip(
         {
           contentType: NodeType.TEXT_CLIP,
           body: {
@@ -142,8 +144,14 @@
       selection,
       color
     );
-    //TODO - move clip save part to store and thus assignment of id to store
-    if (!$webpage.id && result.parent) $webpage.id = result.parent;
+    if (!result?.id) {
+      inlineToolbarFeedback = {
+        message: "Clip not saved! Please try again.",
+        type: AlertType.ERROR
+      };
+      return;
+    }
+    inlineToolbarFeedback = { message: "Clip saved!", type: AlertType.SUCCESS };
     selectedClipId = result.id;
     highlight(
       selectedText,
@@ -234,6 +242,7 @@
     const selection = window.getSelection();
     if (selection?.toString().length > 0) {
       console.log("Selected text: ", selection.toString());
+      inlineToolbarFeedback = "saving...";
       await highlightSelectedText(selection, color);
       selectedClip = {
         color,
@@ -279,6 +288,7 @@
     <InlineTextToolbar
       on:color={onInlineColorSelection}
       {colors}
+      bind:feedback={inlineToolbarFeedback}
       selectedColor={selectedClip?.color ?? ""}
       id={selectedClip?.id}
     />
