@@ -6,9 +6,14 @@
   import { properCase } from "$lib/client/utils/text.utils";
   import { onMount } from "svelte";
   import RegionSetting from "./RegionSetting.svelte";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   let region: string = "useast";
+  let isBootstrapInProgress: boolean = false;
+  let isAlreadyBootstrapped: boolean = false;
   onMount(() => {
-    if ($account.userInfo?.isBootstrapped) appStore.gotoPath("/");
+    if ($account.userInfo?.isBootstrapped) {
+      isAlreadyBootstrapped = true;
+    }
   });
 </script>
 
@@ -26,13 +31,23 @@
         </b> One last step before you can start using the app.
       </div>
     </div>
+    {#if isAlreadyBootstrapped}
+      <InlineInfoBanner
+        content="Account setup already completed. You cannot change your region once set at the moment. Please contact us if you need to change your region."
+      />
+    {/if}
     <RegionSetting bind:region />
     <div class="flex w-full justify-center">
       <Button
         label="Complete setup"
+        isLoading={isBootstrapInProgress}
         type={ButtonVariant.PRIMARY}
-        on:click={() => {
-          account.bootstrap(region);
+        on:click={async () => {
+          isBootstrapInProgress = true;
+          const result = await account.bootstrap(region);
+          //TODO - show error message on failure
+          if (!result) return;
+          isBootstrapInProgress = false;
           appStore.gotoPath("/onboarding");
         }}
       />

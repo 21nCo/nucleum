@@ -156,13 +156,19 @@ class AccountStore extends ObservableStore<
     }
     return this.persistence.runAccountAction("guest", { id });
   }
-  bootstrap(region: string) {
+  async bootstrap(region: string) {
     const id = this.get()?.userInfo?.id?.split("user:")[1];
     if (!id) return;
-    return this.persistence.runAccountAction("bootstrap", {
+    const response = await this.persistence.runAccountAction("bootstrap", {
       id,
       region
     });
+    if (!response || response.error) return;
+    this.update((n) => {
+      if (n.userInfo) n.userInfo.isBootstrapped = true;
+      return n;
+    });
+    return true;
   }
   async performLoginStatusCheck() {
     const token = localStorage.getItem("stoken");

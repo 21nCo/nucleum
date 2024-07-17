@@ -213,7 +213,7 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     modalEvent.hideSpecific(PointronEvent.BREAK_REMINDER);
     let newSession: ISessionStore = deepCopy(seedSessionStore);
     newSession.composition.breakReminder =
-      get(pointronPreferences).breakReminder;
+      get(pointronPreferences)?.breakReminder;
     return newSession;
   }
   private async _startSession(n: ISessionStore) {
@@ -264,8 +264,8 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     ) {
       breakReminderSetting =
         n.composition.breakType === BreakCompositionType.REMINDER
-          ? n.composition.breakReminder ??
-            get(pointronPreferences).breakReminder
+          ? n.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder
           : undefined;
       if (!breakReminderSetting) return;
       timeRemainingToTakeBreak = breakReminderSetting - n.timeElapsed;
@@ -984,7 +984,7 @@ class SessionStore extends KeyValueStore<ISessionStore> {
         focusDuration: 0,
         breakDuration: 0,
         numberOfBreaks: 0,
-        breakReminder: get(pointronPreferences).breakReminder ?? 0,
+        breakReminder: get(pointronPreferences)?.breakReminder ?? 0,
         id: "slider",
         breakType: BreakCompositionType.REMINDER
       };

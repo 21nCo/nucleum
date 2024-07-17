@@ -115,7 +115,7 @@ export class Persistence {
         return;
       }
       const data = await response.json();
-      return isValidArrayWithData(data);
+      return data;
     } catch (err) {
       logger.logError(err);
     }
