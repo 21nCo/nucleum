@@ -84,7 +84,10 @@
         placeholder="Give preset a name or leave it blank"
       />
       <ComposeTotalsText {composition} />
-      <ComposeDuration bind:composition />
+      <ComposeDuration
+        bind:composition
+        on:change={() => (composition = composition)}
+      />
     </div>
     <ModalFooter
       primaryAction={{

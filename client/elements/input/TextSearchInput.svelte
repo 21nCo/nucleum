@@ -73,6 +73,7 @@
     isSpanToTriggerWidth: true,
     isPreventDefault: true,
     placement: Position.BottomCenter,
+    isUseAbsolutePositioning: true,
     ...popoverOptions
   }}
   {label}
