@@ -115,6 +115,10 @@ export function isValidString(str: string | undefined | null) {
   return undefined;
 }
 
+export function isValidDataString(str: string) {
+  return isValidString(str) && !isNaN(new Date(str).getTime());
+}
+
 export function truncateString(str: string, length: number) {
   if (str.length > length) return str.slice(0, length) + "...";
   return str;

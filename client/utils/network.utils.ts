@@ -55,6 +55,10 @@ export async function performApiCall(
   }
 }
 
+export async function performStaticDataOperation(path: string) {
+  return fetch(import.meta.env?.VITE_STATIC_URL + "/" + path);
+}
+
 export async function performHttpNetworkOperation(params: {
   url: string;
   method: "POST" | "GET" | "PUT" | "DELETE";

@@ -7,6 +7,6 @@
   bind:md={$sessionStore.notes}
   parentBgIndex={2}
   on:change={(e) => {
-    sessionStore.persist(true);
+    sessionStore.saveNotes();
   }}
 />

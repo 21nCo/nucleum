@@ -24,7 +24,7 @@ export async function resolveToken(): Promise<string | null> {
   return token;
 }
 
-export function resolveCurrentUserId() {
+export async function resolveCurrentUserId() {
   const userInfo = localStorage.getItem("userInfo");
   if (userInfo) return JSON.parse(userInfo)?.id;
   else if (isExtensionEnvironment()) {

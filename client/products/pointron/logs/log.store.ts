@@ -190,10 +190,17 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
       end: new Date(
         (focusStore.start?.getTime() ?? 0) + focusStore.totalElapsed * 1000
       ).toISOString(),
+
       id: prefixTable(
         focusStore.currentSessionId ?? generateSessionId(new Date().getTime()),
         Item.PointSession
       ),
+      plannedEnd:
+        focusStore.end?.toISOString() ?? focusStore.type != SessionType.COUNTUP
+          ? new Date(
+              new Date().getTime() + focusStore.plannedDuration * 1000
+            ).toISOString()
+          : "",
       type: focusStore.type,
       blocks: focusStore.blocks,
       logs: focusStore.logs,

@@ -22,7 +22,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
   protected seed: T;
-  private _debouncedPersist = debouncer(this._persist, 3000);
+  private _debouncedPersist = debouncer(this.persist, 3000);
   constructor(
     item: Item,
     seed: T,
@@ -82,7 +82,8 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * Doesn't cache or update the store itself. Use modify for that
    * @param n
    */
-  private async _persist(n: Partial<T>) {
+  protected async persist(n: Partial<T> | undefined = undefined) {
+    if (!n) n = this.get();
     return dataManager.performMutation(
       this.id,
       {
@@ -109,7 +110,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
       ...deepCopy(this.seed)
     };
     this._setAndCache(seed);
-    return this._persist(seed);
+    return this.persist(seed);
   }
   /**
    * Svelte store method which gets triggered on direct update of values using $ (dollar) syntax
@@ -130,10 +131,12 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     // });
     this._setAndCache(newValue);
     if (!objIsEmpty(changedProperties) && !this.isPreventAutoPersist)
-      this._persist(changedProperties);
+      this.persist(changedProperties);
   }
   /**
    * Modifies the store, caches and persists the changes. Persist will be debounced if isDebouncedPersist is true and will be avoided if isPersist is false
+   *
+   * both caching and persisting are avoided if isPreventCachingDefault is true
    * @param n
    * @returns
    */
@@ -154,6 +157,6 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     }
     this._setAndCache({ ...val, ...n });
     if (params?.isDebouncedPersist) return this._debouncedPersist(n);
-    else if (params?.isPersist) return this._persist(n);
+    else if (params?.isPersist) return this.persist(n);
   }
 }

@@ -37,7 +37,10 @@ import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { AlertType } from "$lib/client/types/notification.type";
 import { isValidString } from "$lib/client/utils/text.utils";
-import { DependencySyncType } from "$lib/client/types/data.type";
+import {
+  DependencySyncType,
+  PersistanceActionType
+} from "$lib/client/types/data.type";
 import { logger } from "$lib/client/stores/log.store";
 import appearance from "$lib/client/stores/appearance.store";
 import { SessionType } from "$lib/client/products/pointron/logs/log.type";
@@ -48,6 +51,7 @@ import context from "$lib/client/stores/context.store";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { dataManager } from "$lib/client/persistence/dataManager";
 const focusPersistance = new FocusPersistence();
 
 export const todayFocusStore = initTodayFocus();
@@ -174,24 +178,6 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       logger.logError(error);
     }
   }
-  /**
-   * TODO - using KeyValueStore instead?
-   * @param n
-   * @returns
-   */
-  async __persist(n: ISessionStore | undefined = undefined) {
-    if (!n) n = this.get();
-    n.widgetSnapshot = this.propagateMessageToParent(n);
-    //TODO - test if using modify which reasigns the store value is impacting any existing logic
-    // let response = await dataManager.performMutation(
-    //   Item.pointSessionSnapshot,
-    //   n,
-    //   { action: PersistanceActionType.MERGE }
-    // );
-    // dataManager.cache(n);
-    let response = await this.modify(n);
-    return response;
-  }
   private clearTimers() {
     clearInterval(this.timer);
     clearInterval(this.idleTimer);
@@ -216,19 +202,20 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       get(pointronPreferences).breakReminder;
     return newSession;
   }
-  private async _startSession(n: ISessionStore) {
+  /**
+   * Starts the session and updates the store with the new session id and start time. Persists the entire store.
+   */
+  private async _startSession() {
     if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
     const sessionId = generateSessionId(new Date().getTime());
-    n.currentSessionId = sessionId;
-    n = this.updateBlocks(n, BlockType.FOCUS);
+    this.updateBlocks(BlockType.FOCUS);
     this.isIntervalTimeLimitNotified = false;
-    n.start = new Date();
-    n = await this._resumeTimer(n, { isPersist: false });
-    await this.__persist(n);
+    const n = this.get();
+    this.modify({ ...n, currentSessionId: sessionId, start: new Date() });
+    await this._resumeTimer();
     sessionChangeEvent.set({ id: sessionId });
-    return n;
   }
   refreshNotifications(n: ISessionStore) {
     scheduledNotifications.set([]);
@@ -340,109 +327,120 @@ class SessionStore extends KeyValueStore<ISessionStore> {
    * @returns updated session store
    */
   private async _resumeTimer(
-    n: ISessionStore,
-    options: { isPersist?: boolean; isResetTimer?: boolean } = {
-      isPersist: true,
+    options: { isResetTimer?: boolean } = {
       isResetTimer: true
     }
   ) {
-    if (options.isResetTimer) n.timeElapsed = 0;
+    let session = this.get();
+    if (options.isResetTimer) session.timeElapsed = 0;
     this.clearTimers();
     this.timer = setInterval(() => {
+      session = this.get();
       const currentTime = new Date().getTime();
-      n.totalElapsed = (currentTime - n.start!.getTime()) / 1000 - n.totalIdle;
-      n.timeElapsed = (currentTime - n.currentBlock.start) / 1000;
-      n.timeRemainingToTakeBreak = this.refreshNotifications(n);
-      n.sessionProgress = this.refreshSessionProgress(n) ?? 0;
+      session.totalElapsed =
+        (currentTime - session.start!.getTime()) / 1000 - session.totalIdle;
+      session.timeElapsed = (currentTime - session.currentBlock.start) / 1000;
+      session.timeRemainingToTakeBreak = this.refreshNotifications(session);
+      session.sessionProgress = this.refreshSessionProgress(session) ?? 0;
       if (
-        n.type === SessionType.COUNTDOWN &&
-        n.composition?.type == SessionCompositionType.TARGET_FOCUS &&
-        n.currentBlock.type === BlockType.BREAK
+        session.type === SessionType.COUNTDOWN &&
+        session.composition?.type == SessionCompositionType.TARGET_FOCUS &&
+        session.currentBlock.type === BlockType.BREAK
       ) {
-        let breakBlock = n.blocks[n.currentBlock.index];
+        let breakBlock = session.blocks[session.currentBlock.index];
         if (breakBlock) {
-          breakBlock.duration = (currentTime - n.currentBlock.start) / 1000;
-          n.plannedDuration = getTotalsFromComposition({
-            bars: n.blocks
+          breakBlock.duration =
+            (currentTime - session.currentBlock.start) / 1000;
+          session.plannedDuration = getTotalsFromComposition({
+            bars: session.blocks
           })?.duration;
         }
       }
-      const { blocks, isContinueSession } = this.refreshProgressOnBars(n);
-      n.blocks = blocks;
-      // sessionStore.set(n);
+      const { blocks, isContinueSession } = this.refreshProgressOnBars(session);
+      session.blocks = blocks;
       this.modify(
         {
-          totalElapsed: n.totalElapsed,
-          timeElapsed: n.timeElapsed,
-          timeRemainingToTakeBreak: n.timeRemainingToTakeBreak,
-          sessionProgress: n.sessionProgress,
-          plannedDuration: n.plannedDuration,
-          blocks: n.blocks
+          totalElapsed: session.totalElapsed,
+          timeElapsed: session.timeElapsed,
+          timeRemainingToTakeBreak: session.timeRemainingToTakeBreak,
+          sessionProgress: session.sessionProgress,
+          plannedDuration: session.plannedDuration,
+          blocks: session.blocks
         },
         { isPreventCachingDefault: true }
       );
-      if (isContinueSession) this._continueSession(n);
+      if (isContinueSession) this._continueSession();
     }, 1000);
-    if (options.isPersist) await this.__persist(n);
-    return n;
   }
   /**
    * Calculates blocks and total duration of the session based on composition seelction.
    * @param n sessionStore
    * @returns blocks - updated sessionStore
    */
-  composeSession(n: ISessionStore) {
+  private _composeSession(isPreventPersist: boolean = false) {
+    const session = this.get();
+    const composition = session.composition;
     let blocks: IntervalBlock[] = [];
-    if (
-      n.composition &&
-      n.composition.type === SessionCompositionType.COUNTUP
-    ) {
+    let sessionType = session.type;
+    let plannedDuration = session.plannedDuration;
+    if (composition && composition.type === SessionCompositionType.COUNTUP) {
       countup();
     } else if (
-      n.composition &&
-      n.composition.type != SessionCompositionType.SLIDER
+      composition &&
+      composition.type != SessionCompositionType.SLIDER
     ) {
       if (
-        (n.composition?.numberOfFocusRounds &&
-          n.composition.numberOfFocusRounds > 20) ||
-        (n.composition?.numberOfBreaks && n.composition.numberOfBreaks > 20)
+        (composition?.numberOfFocusRounds &&
+          composition.numberOfFocusRounds > 100) ||
+        (composition?.numberOfBreaks && composition.numberOfBreaks > 100)
       ) {
         toasts.trigger({
           message:
-            "Too many rounds selected: " + n.composition.numberOfFocusRounds,
+            "Too many rounds selected: " + composition.numberOfFocusRounds,
           type: AlertType.ERROR,
           id: generateUID(),
           callback: () => {
-            n.composition.numberOfFocusRounds = 1;
-            n.composition.numberOfBreaks = 1;
+            composition.numberOfFocusRounds = 1;
+            composition.numberOfBreaks = 1;
           }
         });
-        return n;
+        return;
       }
-      blocks = generateBarsFromComposition(n.composition);
-      if (blocks.length > 1) n.type = SessionType.PREDEFINED_INTERVALS;
-      else if (blocks.length === 1) n.type = SessionType.COUNTDOWN;
-      n.plannedDuration = getTotalsFromComposition({
+      blocks = generateBarsFromComposition(composition);
+      if (blocks.length > 1) sessionType = SessionType.PREDEFINED_INTERVALS;
+      else if (blocks.length === 1) sessionType = SessionType.COUNTDOWN;
+      plannedDuration = getTotalsFromComposition({
         bars: blocks
       })?.duration;
-    } else if (n.type === SessionType.COUNTDOWN && n.plannedDuration) {
+    } else if (
+      session.type === SessionType.COUNTDOWN &&
+      session.plannedDuration
+    ) {
       blocks = [
         {
-          duration: n.plannedDuration,
+          duration: session.plannedDuration,
           progress: 0,
           type: BlockType.FOCUS
         }
       ];
-    } else if (n.type === SessionType.COUNTUP) {
+    } else if (session.type === SessionType.COUNTUP) {
       countup();
     }
     if (!isValidArrayWithData(blocks)) {
       countup();
     }
-    n.currentBlock.duration = blocks[0].duration ?? 0;
-    n.blocks = blocks;
-    return n;
-
+    this.modify(
+      {
+        blocks,
+        type: sessionType,
+        plannedDuration,
+        currentBlock: {
+          ...session.currentBlock,
+          duration: blocks[0].duration ?? 0
+        }
+      },
+      { isPersist: !isPreventPersist }
+    );
     function countup() {
       blocks = [
         {
@@ -451,7 +449,7 @@ class SessionStore extends KeyValueStore<ISessionStore> {
           type: BlockType.FOCUS
         }
       ];
-      n.type = SessionType.COUNTUP;
+      sessionType = SessionType.COUNTUP;
     }
   }
   /**
@@ -460,66 +458,76 @@ class SessionStore extends KeyValueStore<ISessionStore> {
    * @param type currentBlock type whether focus or break
    * @returns updated sessionStore
    */
-  updateBlocks(n: ISessionStore, type: BlockType) {
-    n.currentBlock.start = new Date().getTime();
-    n.currentBlock.type = type;
-    n.currentBlock.duration = n.blocks[n.currentBlock.index]?.duration ?? 0;
-    if (n.type === SessionType.PREDEFINED_INTERVALS) {
-      let previousBlock = n.blocks[n.currentBlock.index - 1];
+  updateBlocks(type: BlockType) {
+    let session = this.get();
+    session.currentBlock.start = new Date().getTime();
+    session.currentBlock.type = type;
+    session.currentBlock.duration =
+      session.blocks[session.currentBlock.index]?.duration ?? 0;
+    if (session.type === SessionType.PREDEFINED_INTERVALS) {
+      let previousBlock = session.blocks[session.currentBlock.index - 1];
       if (previousBlock) {
         previousBlock.end = new Date().getTime();
-        n.blocks[n.currentBlock.index - 1] = previousBlock;
+        session.blocks[session.currentBlock.index - 1] = previousBlock;
       }
     } else {
-      let currentBlock = n.blocks?.pop();
-      let previousBlock = n.blocks?.pop();
+      let currentBlock = session.blocks?.pop();
+      let previousBlock = session.blocks?.pop();
       if (previousBlock && currentBlock) {
         previousBlock.end = new Date().getTime();
-        n.blocks = [...(n.blocks ?? []), previousBlock, currentBlock];
+        session.blocks = [
+          ...(session.blocks ?? []),
+          previousBlock,
+          currentBlock
+        ];
       } else if (currentBlock) {
         currentBlock.end = new Date().getTime();
-        n.blocks = [...(n.blocks ?? []), currentBlock];
+        session.blocks = [...(session.blocks ?? []), currentBlock];
       }
     }
-    if (!n.blocks[n.currentBlock.index]?.start) {
-      n.blocks[n.currentBlock.index] = {
-        ...n.blocks[n.currentBlock.index],
-        start: n.currentBlock.start
+    if (!session.blocks[session.currentBlock.index]?.start) {
+      session.blocks[session.currentBlock.index] = {
+        ...session.blocks[session.currentBlock.index],
+        start: session.currentBlock.start
       };
     }
-    n.isSessionRunning = true;
+    session.isSessionRunning = true;
     if (type == BlockType.FOCUS) {
-      n.state = SessionState.FOCUS_RUNNING;
+      session.state = SessionState.FOCUS_RUNNING;
     } else if (type == BlockType.BREAK) {
-      n.state = SessionState.BREAK_RUNNING;
+      session.state = SessionState.BREAK_RUNNING;
     }
-    if (n.currentLog.start != 0) {
-      let lastLogBlock = n.currentLog.blocks?.pop();
+    if (session.currentLog.start != 0) {
+      let lastLogBlock = session.currentLog.blocks?.pop();
       if (lastLogBlock) {
         lastLogBlock.end = new Date().getTime();
-        n.currentLog.blocks = [...(n.currentLog.blocks ?? []), lastLogBlock];
+        session.currentLog.blocks = [
+          ...(session.currentLog.blocks ?? []),
+          lastLogBlock
+        ];
       }
-      n.currentLog.blocks = [
-        ...(n.currentLog.blocks ?? []),
+      session.currentLog.blocks = [
+        ...(session.currentLog.blocks ?? []),
         {
           start: new Date().getTime(),
           type
         }
       ];
     }
-    return n;
+    this.modify(session, { isPersist: false });
   }
-  private async _continueSession(n: ISessionStore) {
-    if (n.state == SessionState.FOCUS_RUNNING) {
+  private async _continueSession() {
+    let session = this.get();
+    if (session.state == SessionState.FOCUS_RUNNING) {
       appEvents.publish(PointronEvent.INTERVAL_ENDED);
-      n = this.updateBlocks(n, BlockType.BREAK);
+      this.updateBlocks(BlockType.BREAK);
     } else {
       appEvents.publish(PointronEvent.BREAK_ENDED);
-      n = this.updateBlocks(n, BlockType.FOCUS);
+      this.updateBlocks(BlockType.FOCUS);
       this.isIntervalTimeLimitNotified = false;
     }
-    n = await this._resumeTimer(n);
-    return n;
+    await this._resumeTimer();
+    await this.persist();
   }
   resolveEndTime(n: ISessionStore) {
     if (!n.start) return;
@@ -622,14 +630,15 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     }
     return { blocks: newBars, isContinueSession };
   }
-  private async _resumeSession(n: ISessionStore) {
-    if (n.state === SessionState.FOCUS_RUNNING) return n;
-    if (n.state === SessionState.BREAK_COMPLETED) {
-      n = this.clearIdle(n);
+  private async _resumeSession() {
+    let session = this.get();
+    if (session.state === SessionState.FOCUS_RUNNING) return;
+    if (session.state === SessionState.BREAK_COMPLETED) {
+      session = this.clearIdle(session);
     }
-    if (n.type == SessionType.COUNTUP) {
-      n.blocks = [
-        ...n.blocks,
+    if (session.type == SessionType.COUNTUP) {
+      session.blocks = [
+        ...session.blocks,
         {
           start: new Date().getTime(),
           duration: 0,
@@ -637,71 +646,85 @@ class SessionStore extends KeyValueStore<ISessionStore> {
           type: BlockType.FOCUS
         }
       ];
-      n.currentBlock.index += 1;
-    } else if (n.state === SessionState.BREAK_RUNNING) {
-      let oldBars = n.blocks;
-      n.blocks = [];
-      n.blocks = oldBars.slice(0, n.currentBlock.index);
-      n.blocks = [
-        ...n.blocks,
+      session.currentBlock.index += 1;
+    } else if (session.state === SessionState.BREAK_RUNNING) {
+      let oldBars = session.blocks;
+      session.blocks = [];
+      session.blocks = oldBars.slice(0, session.currentBlock.index);
+      session.blocks = [
+        ...session.blocks,
         {
-          start: oldBars[n.currentBlock.index].start,
-          duration: n.timeElapsed,
+          start: oldBars[session.currentBlock.index].start,
+          duration: session.timeElapsed,
           progress: 1,
           type: BlockType.BREAK
         }
       ];
-      if (n.type === SessionType.COUNTDOWN) {
-        n.blocks = [
-          ...n.blocks,
+      if (session.type === SessionType.COUNTDOWN) {
+        session.blocks = [
+          ...session.blocks,
           {
             start: new Date().getTime(),
-            duration: n.currentBlock.duration - n.timeElapsed,
+            duration: session.currentBlock.duration - session.timeElapsed,
             progress: 0,
             type: BlockType.FOCUS
           }
         ];
       }
-      n.blocks = n.blocks.concat(oldBars.slice(n.currentBlock.index + 1));
-      n.currentBlock.index += 1;
-    } else if (n.state === SessionState.FOCUS_COMPLETED) {
+      session.blocks = session.blocks.concat(
+        oldBars.slice(session.currentBlock.index + 1)
+      );
+      session.currentBlock.index += 1;
+    } else if (session.state === SessionState.FOCUS_COMPLETED) {
       //todo - check for accuracy
-      let oldBars = n.blocks;
-      n.blocks = [];
-      n.blocks = oldBars.slice(0, n.currentBlock.index);
-      n.blocks = n.blocks.concat(oldBars.slice(n.currentBlock.index + 1));
+      let oldBars = session.blocks;
+      session.blocks = [];
+      session.blocks = oldBars.slice(0, session.currentBlock.index);
+      session.blocks = session.blocks.concat(
+        oldBars.slice(session.currentBlock.index + 1)
+      );
     }
-    n = this.updateBlocks(n, BlockType.FOCUS);
+    this.updateBlocks(BlockType.FOCUS);
+    this.modify(session);
     this.isIntervalTimeLimitNotified = false;
-    n = await this._resumeTimer(n);
-    return n;
+    await this._resumeTimer();
   }
   private async _stopCurrentTaskOrGoal(
-    n: ISessionStore,
-    isSessionFinish: boolean = false
+    props: { isSessionFinish?: boolean; isPersist?: boolean } = {
+      isSessionFinish: false,
+      isPersist: false
+    }
   ) {
-    if (n.isQuickStartOn) n.isQuickStartOn = false;
+    console.log("stopping current task or goal");
+    let session = this.get();
+    if (session.isQuickStartOn) session.isQuickStartOn = false;
     let end = new Date().getTime();
-    let lastBlock = n.currentLog?.blocks?.pop();
+    let lastBlock = session.currentLog?.blocks?.pop();
     if (lastBlock) {
       lastBlock.end = end;
-      n.currentLog.blocks = [...(n.currentLog?.blocks ?? []), lastBlock];
+      session.currentLog.blocks = [
+        ...(session.currentLog?.blocks ?? []),
+        lastBlock
+      ];
     }
-    if ((n.currentLog.taskId || n.currentLog.goalId) && n.blocks) {
-      let duration = calculateTotalFocusAndBreak(n.currentLog.blocks);
-      if (!isSessionFinish)
+    if (
+      (session.currentLog.taskId || session.currentLog.goalId) &&
+      session.blocks
+    ) {
+      let duration = calculateTotalFocusAndBreak(session.currentLog.blocks);
+      if (!props.isSessionFinish)
         await focusItemsStore.updateWorkedTime(
-          isValidString(n.currentLog.taskId)
-            ? n.currentLog.taskId!
-            : n.currentLog.goalId ?? "",
+          isValidString(session.currentLog.taskId)
+            ? session.currentLog.taskId!
+            : session.currentLog.goalId ?? "",
           duration.focus
         );
-      n.currentLog.totalFocus = duration.focus;
-      n.currentLog.totalBreak = duration.brek;
+      session.currentLog.totalFocus = duration.focus;
+      session.currentLog.totalBreak = duration.brek;
     }
-    n.logs = [...n.logs, { ...n.currentLog, end }];
-    n.currentLog = { start: 0, taskId: "", goalId: "" };
-    return n;
+    session.logs = [...session.logs, { ...session.currentLog, end }];
+    session.currentLog = { start: 0, taskId: "", goalId: "" };
+    this.modify(session, { isPersist: props.isPersist });
   }
 
   async close(isPersist: boolean = true) {
@@ -736,18 +759,19 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     ) {
       modalEvent.hideSpecific(PointronEvent.SESSION_FINISHED);
       appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
-      savedSessionStore = await this._resumeTimer(savedSessionStore, {
-        isPersist: false,
+      this.modify(savedSessionStore, { isPersist: false });
+      await this._resumeTimer({
         isResetTimer: false
       });
     } else if (savedSessionStore.state === SessionState.FINISHED) {
       this.shallowReset();
       appStore.runAction(PointronEvent.SESSION_FINISHED);
+      this.modify(savedSessionStore, { isPersist: false });
     } else {
       focusItemsStore.reset();
       savedSessionStore = this.reset();
+      this.modify(savedSessionStore, { isPersist: false });
     }
-    this.modify(savedSessionStore, { isPersist: false });
     this.propagateMessageToParent(savedSessionStore);
   }
   loadEmptyState() {
@@ -761,7 +785,8 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     try {
       const now = new Date().getTime();
       if (!n.currentLog.end) n.currentLog.end = now;
-      if (n.currentLog.start != 0) await this._stopCurrentTaskOrGoal(n, true);
+      if (n.currentLog.start != 0)
+        await this._stopCurrentTaskOrGoal({ isSessionFinish: true });
       let lastBlock = n.blocks?.pop();
       if (lastBlock) {
         lastBlock.end = now;
@@ -806,19 +831,19 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       ]
     };
     let n = this.get();
-    if (n.currentLog.start != 0) await this._stopCurrentTaskOrGoal(n);
-    n.currentLog = newLog;
+    if (n.currentLog.start != 0) await this._stopCurrentTaskOrGoal();
+    this.modify(
+      { currentLog: newLog },
+      { isPersist: n.state != SessionState.BREAK_RUNNING }
+    );
     if (n.state === SessionState.BREAK_RUNNING) {
-      n = await this._resumeSession(n);
-    } else {
-      this.__persist(n);
+      await this._resumeSession();
     }
-    this.modify(n, { isPersist: false });
   }
   async startGoal(id: string, goalName: string, color: number | undefined) {
-    let n = this.get();
-    if (n.currentLog.start != 0) await this._stopCurrentTaskOrGoal(n);
-    n.currentLog = {
+    let session = this.get();
+    if (session.currentLog.start != 0) await this._stopCurrentTaskOrGoal();
+    const currentLog = {
       goalId: id,
       taskName: goalName,
       taskId: "",
@@ -831,23 +856,19 @@ class SessionStore extends KeyValueStore<ISessionStore> {
         }
       ]
     };
-    if (n.state === SessionState.BREAK_RUNNING) {
-      n = await this._resumeSession(n);
-    } else {
-      this.__persist(n);
+    this.modify(
+      { currentLog },
+      { isPersist: session.state != SessionState.BREAK_RUNNING }
+    );
+    if (session.state === SessionState.BREAK_RUNNING) {
+      await this._resumeSession();
     }
-    this.modify(n, { isPersist: false });
   }
   async stopCurrentTaskOrGoal() {
-    let n = this.get();
-    const newValue = await this._stopCurrentTaskOrGoal(n);
-    this.modify(newValue, { isPersist: false });
-    return this.__persist(newValue);
+    await this._stopCurrentTaskOrGoal({ isPersist: true });
   }
   async resumeTimer(isResetTimer: boolean = true) {
-    let n = this.get();
-    n = await this._resumeTimer(n, { isResetTimer });
-    this.modify(n, { isPersist: false });
+    await this._resumeTimer({ isResetTimer });
   }
   async startBreak() {
     let n = this.get();
@@ -916,15 +937,12 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       n.blocks = n.blocks.concat(remainingBars);
       n.currentBlock.index += 1;
     }
-    n = this.updateBlocks(n, BlockType.BREAK);
-    n = await this._resumeTimer(n);
-    this.modify(n, { isPersist: false });
+    this.updateBlocks(BlockType.BREAK);
+    await this._resumeTimer();
     return true;
   }
   async resumeSession() {
-    let n = this.get();
-    n = await this._resumeSession(n);
-    this.modify(n, { isPersist: false });
+    await this._resumeSession();
   }
   clearIntervals() {
     this.clearTimers();
@@ -945,20 +963,18 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       };
       n.blocks = [...n.blocks, lastBar];
     }
-    if (n.state === SessionState.TIME_IS_UP) {
-      await this._resumeTimer(n, { isResetTimer: false });
-    }
     this.modify(n, { isPersist: false });
+    if (n.state === SessionState.TIME_IS_UP) {
+      await this._resumeTimer({ isResetTimer: false });
+    }
   }
   async startSession() {
-    let n = this.get();
-    n = this.composeSession(n);
-    n = await this._startSession(n);
+    this._composeSession(true);
+    await this._startSession();
     //todo - if auto open enabled
     //appEvents.publish(PointronEventEnum.SHOW_ZEN_FOCUS, true);
     appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
     // appStore.showMiniPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
-    this.modify(n, { isPersist: false });
   }
   async quickStart(goal: {
     id: string;
@@ -969,16 +985,13 @@ class SessionStore extends KeyValueStore<ISessionStore> {
     let n = this.reset();
     focusItemsStore.reset();
     try {
-      n.type = SessionType.COUNTUP;
-      n.currentLog = {
+      let currentLog = {
         goalId: goal.id,
         taskName: goal.label,
         color: goal.color,
         start: new Date().getTime()
       };
-      n.isQuickStartOn = true;
-      n.plannedDuration = 0;
-      n.composition = {
+      let composition = {
         type: SessionCompositionType.SLIDER,
         totalDuration: 0,
         focusDuration: 0,
@@ -988,7 +1001,19 @@ class SessionStore extends KeyValueStore<ISessionStore> {
         id: "slider",
         breakType: BreakCompositionType.REMINDER
       };
-      n = this.composeSession(n);
+      this.modify(
+        {
+          ...n,
+          composition,
+          type: SessionType.COUNTUP,
+          end: undefined,
+          plannedDuration: 0,
+          isQuickStartOn: true,
+          currentLog
+        },
+        { isPersist: false }
+      );
+      this._composeSession(true);
       await focusItemsStore.addGoal({
         goalId: goal.id,
         label: goal.label,
@@ -999,37 +1024,24 @@ class SessionStore extends KeyValueStore<ISessionStore> {
         checked: false,
         order: 0
       });
-      n = await this._startSession(n);
+      await this._startSession();
       //appStore.showFullScreenPlayer(PointronEventEnum.FULL_SCREEN_FOCUS);
       appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
     } catch (err) {
       logger.logError(err);
     }
-    this.modify(n, { isPersist: false });
-  }
-  async continueSession() {
-    let n = this.get();
-    n = await this._continueSession(n);
-    this.modify(n, { isPersist: false });
   }
   async onPresetSelection(preset: SessionComposition) {
-    let n = this.get();
-    n.composition = preset;
-    n = this.composeSession(n);
-    this.modify(n, { isPersist: false });
-    return this.__persist(n);
+    this.modify({ composition: preset }, { isPersist: false });
+    this._composeSession();
   }
   async onComposeComplete() {
     let n = this.get();
     if (!n.composition) return;
-    n = this.composeSession(n);
-    n.preventSliderReverseEventTemp = true;
-    this.modify(n, { isPersist: false });
-    return this.__persist(n);
+    this._composeSession();
   }
   async resetComposition() {
-    let n = this.get();
-    n.composition = {
+    let composition = {
       id: generateUID(),
       type: SessionCompositionType.TOTAL_DURATION,
       focusDuration: 0,
@@ -1039,9 +1051,8 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       breakReminder: 60 * 60,
       breakType: BreakCompositionType.REMINDER
     };
-    n = this.composeSession(n);
-    this.modify(n, { isPersist: false });
-    return this.__persist(n);
+    this.modify({ composition }, { isPersist: false });
+    this._composeSession();
   }
   async saveCurrentCompositionAsPreset() {
     let n = this.get();
@@ -1068,13 +1079,11 @@ class SessionStore extends KeyValueStore<ISessionStore> {
       totalDuration: duration,
       focusDuration: duration
     };
-    n = this.composeSession(n);
-    this.modify(n, { isPersist: false });
-    // return debouncedPersist(n);
+    //TODO - debounced persist
+    this._composeSession(true);
   }
   async saveNotes() {
-    let n = this.get();
-    this.__persist(n);
+    this.persist({ notes: this.get().notes });
   }
 }
 
