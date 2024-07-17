@@ -11,7 +11,7 @@
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (
-        x.event === GlobalEvent.USER_SIGNUP ||
+        x.event === GlobalEvent.BOOTSTRAP ||
         x.event === GlobalEvent.USER_LOGIN
       ) {
         mutationQueue = refreshMutationQueueLiveQuery();

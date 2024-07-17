@@ -107,6 +107,22 @@ export class Persistence {
       logger.logError(err);
     }
   };
+  async runAccountAction(action: string, params: any) {
+    try {
+      const response = await performApiCall("account/n/action", "POST", {
+        action,
+        ...params
+      });
+      console.log({ response });
+      if (!response?.ok) {
+        return;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      logger.logError(err);
+    }
+  }
   getLatestAppVersion = async () => {
     try {
       let appData = await this.fetchAppData();

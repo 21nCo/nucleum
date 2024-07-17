@@ -18,6 +18,7 @@ import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatu
 import DebugPage from "../layout/layers/debug/DebugPage.svelte";
 import modalEvent from "../components/modal/modal.store";
 import { Action } from "../types/action.enum";
+import Bootstrap from "../components/settings/account/Bootstrap.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -308,5 +309,12 @@ export const globalActions: IAction[] = [
     label: "Troubleshoot",
     type: ActionType.PAGE,
     component: DebugPage
+  },
+  {
+    action: "bootstrap",
+    type: ActionType.PAGE,
+    isMenuHidden: true,
+    isMeta: true,
+    component: Bootstrap
   }
 ];
