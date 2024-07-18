@@ -24,7 +24,7 @@ export async function lambdaUsingNode(
   try {
     if (isAuthorize) {
       let token = event.headers.Authorization?.split(" ")[1];
-      agent = await authorize(token);
+      agent = await authorize({ token, host: event?.headers?.host });
       if (!agent) {
         return {
           statusCode: 401,
@@ -96,7 +96,7 @@ export async function lamdbaUsingBun(
   try {
     if (isAuthorize) {
       let token = request?.headers?.get("authorization")?.split(" ")[1];
-      agent = await authorize(token);
+      agent = await authorize({ token, host: request?.headers?.get("host") });
     }
     if (!agent && isAuthorize) {
       return new Response("Unauthorized", {

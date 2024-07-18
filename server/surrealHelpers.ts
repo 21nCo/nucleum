@@ -77,7 +77,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
   headers.append(
     "DB",
     params.dbType === CONTEXT.ADMIN
-      ? process.env.ADMIN_DB ?? "ADMIN"
+      ? process.env.ADMIN_DB_NAME ?? "ADMIN"
       : params.db ?? ""
   );
   const body = params.query;

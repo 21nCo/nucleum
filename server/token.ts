@@ -6,6 +6,7 @@ export async function generateUserToken(props: {
   id: string;
   region: string;
   expiration?: number;
+  host?: string;
 }) {
   const payload = {
     id: props.id,
@@ -15,8 +16,8 @@ export async function generateUserToken(props: {
     region: props.region ?? "global",
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + (props.expiration ?? 600 * 60),
-    audience: process.env.TIDY_SUBATOM,
-    issuer: process.env.TIDY_SUBATOM
+    audience: props.host ?? "blank",
+    issuer: process.env.DOMAIN
   };
 
   const header = {
@@ -41,14 +42,15 @@ export async function generateSpaceToken(props: {
   principal: string;
   role: MemberRole;
   region?: string;
+  host?: string;
 }) {
   const expiration = 60 * 60 * 24 * 30;
   const payload = {
     id: props.principal,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + expiration,
-    audience: process.env.TIDY_SUBATOM,
-    issuer: process.env.TIDY_SUBATOM,
+    audience: props.host ?? "blank",
+    issuer: process.env.DOMAIN,
     ns: process.env.SPACE_NS,
     db: props.database,
     tk: process.env.TOKEN_NAME,
@@ -74,15 +76,14 @@ export async function generateSpaceToken(props: {
   return token;
 }
 
-export async function validateToken(token) {
+export async function validateToken(props: { token: string; host?: string }) {
   try {
     const decoded = jwt.verify(
-      token,
+      props.token,
       process.env.TOKEN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       {
         algorithms: ["RS384"],
-        audience: process.env.TIDY_SUBATOM,
-        issuer: process.env.TIDY_SUBATOM,
+        issuer: process.env.DOMAIN,
         keyid: process.env.TOKEN_NAME
       }
     );
