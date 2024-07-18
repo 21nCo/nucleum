@@ -18,7 +18,7 @@
   import type { IEvent } from "$lib/client/types/event.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";

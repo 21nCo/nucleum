@@ -33,7 +33,7 @@ import {
   customColor,
   retrieveCurrentColors
 } from "$lib/client/utils/theme.utils";
-import { deepCopy, isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { AlertType } from "$lib/client/types/notification.type";
 import { isValidString } from "$lib/client/utils/text.utils";
@@ -153,8 +153,8 @@ class SessionStore extends KeyValueStore<ISessionStore> {
           isFocusing && n.currentLog.color
             ? customColor(appearanceConfig, n.currentLog.color)
             : isFocusing
-              ? colors.aps1
-              : colors.ass1,
+            ? colors.aps1
+            : colors.ass1,
         start:
           n.currentBlock.type == BlockType.FOCUS
             ? n.start?.toISOString()

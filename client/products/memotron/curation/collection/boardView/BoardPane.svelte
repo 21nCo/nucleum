@@ -9,7 +9,7 @@
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeItems from "../../../common/NodeItems.svelte";
   import { resolvePropertyOptions } from "../../curation.utils";

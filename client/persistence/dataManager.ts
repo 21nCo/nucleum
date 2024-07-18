@@ -21,7 +21,7 @@ import {
   generateUID,
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
-import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
 import { prefixTable } from "$lib/client/utils/text.utils";
@@ -250,8 +250,9 @@ async function performMutation(
     return;
   }
   const defferedStores = propagateToEagerStores(resources, data);
-  const refreshQueryForDeferredStores =
-    await resolveStoresRefreshQuery(defferedStores);
+  const refreshQueryForDeferredStores = await resolveStoresRefreshQuery(
+    defferedStores
+  );
 
   let dbFullQuery: string = `${mutationQuery};`;
   if (refreshQueryForDeferredStores) {
@@ -546,7 +547,7 @@ async function setRefreshingState(
   stores.forEach((store) => {
     if (!store.update) return;
     store.update?.((x) => {
-      if(x) x.isRefreshing = val;
+      if (x) x.isRefreshing = val;
       return x;
     });
   });

@@ -10,7 +10,7 @@
   import SpokeLabel from "./SpokeLabel.svelte";
   import SpokeProgressMarker from "./SpokeProgressMarker.svelte";
   import SpokeContemporaries from "./contemporaries/SpokeContemporaries.svelte";
-  import { deepCopy } from "$lib/client/utils/obj.utils";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
   import GroupLabel from "./GroupLabel.svelte";
   export let wheel: FeatureWheel;
   export let mode: FeatureWheelMode = FeatureWheelMode.CONTEMPORARY;

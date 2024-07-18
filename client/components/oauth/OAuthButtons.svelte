@@ -2,7 +2,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { properCase } from "$lib/client/utils/text.utils";
   let progress = "";
 </script>

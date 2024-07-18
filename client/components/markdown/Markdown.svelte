@@ -11,7 +11,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { generateUID } from "$lib/client/utils/utils";
-  import { isValidAndUniqueArray } from "$lib/client/utils/obj.utils";
+  import { isValidAndUniqueArray } from "$lib/shared/utils/obj.utils";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   export let md: IMarkdown;
   export let params: IMarkdownParams | undefined = undefined;

@@ -6,7 +6,11 @@ import {
   type IObservableStoreSubject
 } from "../types/data.type";
 import { dataManager } from "../persistence/dataManager";
-import { deepCopy, objIsEmpty, shallowDiff } from "../utils/obj.utils";
+import {
+  deepCopy,
+  objIsEmpty,
+  shallowDiff
+} from "../../shared/utils/obj.utils";
 import { persistLocally, retrieveLocally } from "../utils/storage.utils";
 import type { Item } from "../types/item.enum";
 import { debouncer } from "../utils/utils";

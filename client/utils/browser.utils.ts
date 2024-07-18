@@ -2,7 +2,7 @@ import { Position } from "$lib/client/types/direction.enum";
 import { OperatingSystem } from "../types/context.type";
 import { GlobalEvent } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
-import { deepCopy } from "./obj.utils";
+import { deepCopy } from "../../shared/utils/obj.utils";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -155,7 +155,9 @@ async function _renderPopoverUsingFixedPositioning(
     placement === Position.TopCenter ||
     placement === Position.BottomCenter
   ) {
-    popRef.style.left = `${triggerRect.left - (popRect.width / 2 - triggerRect.width / 2)}px`;
+    popRef.style.left = `${
+      triggerRect.left - (popRect.width / 2 - triggerRect.width / 2)
+    }px`;
   }
   popRect = popRef.getBoundingClientRect();
   if (popRect.width > documentWidth) {
@@ -318,7 +320,10 @@ export function isExtensionEnvironment() {
     return true;
   }
 
-  if (typeof (window as any).browser !== "undefined" && (window as any).browser.runtime?.id) {
+  if (
+    typeof (window as any).browser !== "undefined" &&
+    (window as any).browser.runtime?.id
+  ) {
     return true;
   }
 

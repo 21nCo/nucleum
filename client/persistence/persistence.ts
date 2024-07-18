@@ -13,7 +13,7 @@ import {
   performApiCall,
   performStaticDataOperation
 } from "$lib/client/utils/network.utils";
-import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { logger } from "$lib/client/stores/log.store";
 import {
   persistLocally,
@@ -219,8 +219,8 @@ export class Persistence {
           itemType
             ? `${Item[itemType]}:${item.id}`
             : typeof item.id === "string"
-              ? item.id
-              : "",
+            ? item.id
+            : "",
           item
         );
     }

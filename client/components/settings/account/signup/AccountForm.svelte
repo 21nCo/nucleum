@@ -13,7 +13,7 @@
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import OAuthButtons from "../../../oauth/OAuthButtons.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import account from "$lib/client/stores/account.store";
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";

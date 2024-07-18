@@ -13,7 +13,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   export let id: string;
   let refreshId = new Date().getTime();
   let config = $analyticsConfigStore.pages.find((x) => x.id === id);

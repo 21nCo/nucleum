@@ -53,7 +53,7 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
       .replace(/DOMAIN_NAME/g, this.domainName)
       .replace(/CERTIFICATE_ARN/g, this.certificate.certificateArn)
       .replace(/CERTIFICATE_REGION/g, this.env.region)
-      .replace(/DB_PASS/g, this.env.DB_PASS)
+      .replace(/DB_PASS/g, this.env.lambdaEnv.DB_PASS)
       .replace(/CERT_EMAIL/g, this.env.email);
 
     const lightsailAssumableRole = new Role(this, "LightsailAssumableRole", {

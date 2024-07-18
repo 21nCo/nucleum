@@ -2,7 +2,7 @@
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import DirectLinks from "../foreLinks/DirectLinks.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";

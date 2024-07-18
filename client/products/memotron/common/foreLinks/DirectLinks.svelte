@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { LinkThumbnail } from "$lib/client/types/memotron/node.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import DLinkItem from "./DirectLinkItem.svelte";
   export let links: LinkThumbnail[] = [];
   export let context: "capture" | "nodethumbnail" | "nodepage" = "capture";

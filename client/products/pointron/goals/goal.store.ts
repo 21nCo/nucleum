@@ -19,7 +19,7 @@ import {
   isValidArrayWithData,
   objIsEmpty,
   shallowDiff
-} from "$lib/client/utils/obj.utils";
+} from "$lib/shared/utils/obj.utils";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
 import { appStore, isInEditMode } from "$lib/client/stores/app.store";
 import { toasts } from "$lib/client/stores/notification.store";

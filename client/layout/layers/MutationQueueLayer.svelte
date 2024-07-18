@@ -4,7 +4,7 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import type { IEvent } from "$lib/client/types/event.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { liveQuery } from "dexie";
   import { onMount } from "svelte";
   let mutationQueue = refreshMutationQueueLiveQuery();

@@ -3,7 +3,7 @@
   import { Theme, type ColorScheme } from "$lib/client/types/appearance.type";
   import { appConstants } from "$lib/client/stores/app.store";
   import appearance from "$lib/client/stores/appearance.store";
-  import { sortArrayByOrder } from "$lib/client/utils/obj.utils";
+  import { sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import ColorSchemeSelectorItem from "./ColorSchemeSelectorItem.svelte";
   import FormControlLabelWrapper from "$lib/client/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";

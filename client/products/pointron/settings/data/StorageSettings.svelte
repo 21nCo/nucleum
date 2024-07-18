@@ -2,7 +2,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
 
   import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
-  import { removeDuplicatesById } from "$lib/client/utils/obj.utils";
+  import { removeDuplicatesById } from "$lib/shared/utils/obj.utils";
   import view from "$lib/client/stores/view.store";
   import {
     toasts,

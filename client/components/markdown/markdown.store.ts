@@ -15,7 +15,7 @@ import {
   deepCopy,
   isEmptyArray,
   isValidArrayWithData
-} from "$lib/client/utils/obj.utils";
+} from "$lib/shared/utils/obj.utils";
 import {
   generateMarkdownText,
   prefixTable

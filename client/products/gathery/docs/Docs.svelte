@@ -9,7 +9,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { docStore } from "$local/client/products/gathery/docs.store";
   import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
   export let searchInput = "";

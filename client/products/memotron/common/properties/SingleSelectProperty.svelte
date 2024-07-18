@@ -7,7 +7,7 @@
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import { createEventDispatcher } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InputBaseElement from "$lib/client/elements/InputBaseElement.svelte";

@@ -3,7 +3,7 @@
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
   import type { IProperty } from "$lib/client/types/memotron/type.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import NodeItems from "../../../common/NodeItems.svelte";
   import { resolvePropertyOptions } from "../../curation.utils";
   import BoardPane from "./BoardPane.svelte";

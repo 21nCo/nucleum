@@ -8,7 +8,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import TextInput from "../input/TextInput.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import DropDownItemView from "./DropDownItemView.svelte";

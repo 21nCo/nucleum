@@ -4,7 +4,7 @@
   import Guage from "../charts/Guage.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { TimeScale } from "$lib/client/types/time.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "$lib/client/stores/app.store";

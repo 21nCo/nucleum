@@ -2,7 +2,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 
   import {
     NodeThumbnailVariant,

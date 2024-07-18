@@ -5,7 +5,7 @@
   import type { IAction } from "$lib/client/types/action.type";
   import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import ResultItem from "./ResultItem.svelte";
   const dispatch = createEventDispatcher();

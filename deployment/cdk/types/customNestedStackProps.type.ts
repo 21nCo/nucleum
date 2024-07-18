@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import * as route53 from "aws-cdk-lib/aws-route53";
-import { IEnvironment, ILamdbaEnvironmentVariables } from "./env.type";
+import { IEnvironment, ILambdaEnvironmentVariables } from "./env.type";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as gateway from "aws-cdk-lib/aws-apigateway";
 
@@ -16,5 +16,5 @@ export interface CustomNestedStackProps extends cdk.NestedStackProps {
 
 export interface CustomLambdaNestedStackProps extends CustomNestedStackProps {
   api: gateway.RestApi;
-  lambdaEnvVars: ILamdbaEnvironmentVariables;
+  lambdaEnvVars: ILambdaEnvironmentVariables;
 }

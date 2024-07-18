@@ -12,7 +12,7 @@ import { generateUID } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { ChartType } from "$lib/client/types/analytics.type";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
+import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { Layout } from "$lib/client/types/layout.type";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { StoreDataType } from "$lib/client/types/data.type";

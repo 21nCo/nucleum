@@ -14,7 +14,7 @@
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import {
     enumToString,
     prefix,

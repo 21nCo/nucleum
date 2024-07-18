@@ -6,7 +6,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { Item } from "$lib/client/types/item.enum";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { determineTruncateLength } from "$lib/client/utils/text.utils";

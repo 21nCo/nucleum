@@ -22,6 +22,7 @@ export function resolveAcmCertificate(
 ) {
   return new acm.Certificate(scope, `${domain}-certificate`, {
     domainName: domain,
+    subjectAlternativeNames: [`*.${domain}`],
     validation: acm.CertificateValidation.fromDns(zone)
   });
 }

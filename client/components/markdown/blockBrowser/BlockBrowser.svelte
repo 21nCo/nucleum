@@ -8,7 +8,7 @@
   import {
     compareObjects,
     isValidArrayWithData
-  } from "$lib/client/utils/obj.utils";
+  } from "$lib/shared/utils/obj.utils";
   import { properCase } from "$lib/client/utils/text.utils";
   import BlockItem from "./BlockItem.svelte";
   import { createEventDispatcher } from "svelte";

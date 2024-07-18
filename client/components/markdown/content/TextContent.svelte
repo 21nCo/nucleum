@@ -21,7 +21,7 @@
   import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
   import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
   import { searchForLinking } from "$lib/client/products/memotron/memotron.store";
-  import { deepCopy } from "$lib/client/utils/obj.utils";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
 
   const dispatch = createEventDispatcher();
   export let mdStore: MdStoreType;

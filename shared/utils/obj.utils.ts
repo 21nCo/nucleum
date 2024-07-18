@@ -4,7 +4,9 @@ export function deepDiff(obj1: any, obj2: any, path: string = ""): string[] {
   if (!(obj1 instanceof Object) || !(obj2 instanceof Object)) return [path];
 
   const differences: string[] = [];
-  const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+  const keys = Array.from(
+    new Set([...Object.keys(obj1), ...Object.keys(obj2)])
+  );
 
   for (let key of keys) {
     const newPath = path ? `${path}.${key}` : key;
@@ -16,6 +18,7 @@ export function deepDiff(obj1: any, obj2: any, path: string = ""): string[] {
 
   return differences;
 }
+
 export function shallowDiff(obj1: any, obj2: any) {
   let diffKeys = [];
 
@@ -61,14 +64,29 @@ export function changedPropertiesOnly(obj1: any, obj2: any) {
   return diff;
 }
 
-export function sortPropertiesByOrder(obj: any) {
+// export function sortPropertiesByOrder(obj: any) {
+//   const entries = Object.entries(obj);
+//   //@ts-ignore
+//   const sortedEntries = entries
+//     .filter(([, value]) => value.visibility !== false)
+//     .sort(([, a], [, b]) => a.order - b.order);
+//   const sortedObj = Object.fromEntries(sortedEntries);
+//   return sortedObj;
+// }
+
+interface SortableProperty {
+  visibility?: boolean;
+  order: number;
+}
+
+export function sortPropertiesByOrder<
+  T extends Record<string, SortableProperty>
+>(obj: T): Partial<T> {
   const entries = Object.entries(obj);
-  //@ts-ignore
   const sortedEntries = entries
     .filter(([, value]) => value.visibility !== false)
     .sort(([, a], [, b]) => a.order - b.order);
-  const sortedObj = Object.fromEntries(sortedEntries);
-  return sortedObj;
+  return Object.fromEntries(sortedEntries) as Partial<T>;
 }
 
 export function sortArrayByOrder(arr: any[]) {
@@ -132,4 +150,17 @@ export function deepCopy(obj: any) {
 
 export function compareObjects(obj1: any, obj2: any) {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
+}
+
+export function pick<T extends object, K extends keyof T>(
+  obj: T,
+  keys: K[]
+): Pick<T, K> {
+  const result = {} as Pick<T, K>;
+  keys.forEach((key) => {
+    if (key in obj) {
+      result[key] = obj[key];
+    }
+  });
+  return result;
 }

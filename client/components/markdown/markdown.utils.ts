@@ -9,7 +9,7 @@ import type {
   ListContent,
   INode
 } from "$lib/client/types/memotron/node.type";
-import { deepCopy } from "$lib/client/utils/obj.utils";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.

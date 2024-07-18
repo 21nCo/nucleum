@@ -10,7 +10,7 @@ import {
 import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
 import { Item } from "$lib/client/types/item.enum";
-import { deepCopy } from "$lib/client/utils/obj.utils";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
   generateAnalyticsSeedPages,

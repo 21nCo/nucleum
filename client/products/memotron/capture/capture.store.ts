@@ -15,7 +15,7 @@ import {
 } from "$lib/client/types/memotron/capture.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
-import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { dataManager } from "$lib/client/persistence/dataManager";
@@ -182,14 +182,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         val.captureType === CaptureType.UPLOAD
           ? getContentTypeFromFileDetails(val?.fileDetails!)
           : val.captureType === CaptureType.AUDIO
-            ? NodeType.AUDIO
-            : val.captureType === CaptureType.CAMERA
-              ? NodeType.IMAGE
-              : val.captureType === CaptureType.MARKDOWN
-                ? NodeType.NODULAR_MARKDOWN
-                : val.captureType.includes("type:")
-                  ? NodeType.NODULAR_MARKDOWN
-                  : NodeType.SIMPLE_TEXT,
+          ? NodeType.AUDIO
+          : val.captureType === CaptureType.CAMERA
+          ? NodeType.IMAGE
+          : val.captureType === CaptureType.MARKDOWN
+          ? NodeType.NODULAR_MARKDOWN
+          : val.captureType.includes("type:")
+          ? NodeType.NODULAR_MARKDOWN
+          : NodeType.SIMPLE_TEXT,
       metadata,
       links: [
         ...(val.directLinks?.map((link) => {
@@ -252,11 +252,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         nodeCapture.resources[0].contentType == NodeType.PDF &&
         pdfAnnotations?.length != 0
       ) {
-        const parentId=nodeCapture.resources[0].id
-        pdfAnnotations=pdfAnnotations?.map((annot)=>{
+        const parentId = nodeCapture.resources[0].id;
+        pdfAnnotations = pdfAnnotations?.map((annot) => {
           const { id, ...remainingItems } = annot;
-          return {body:{...remainingItems},contentType:NodeType.PDF_CLIP,parent:parentId}
-        })
+          return {
+            body: { ...remainingItems },
+            contentType: NodeType.PDF_CLIP,
+            parent: parentId
+          };
+        });
         await surrealPDF.saveAllClips(pdfAnnotations!);
       }
       this.modify({ ...generateSeedStore() }, { isPersist: false });

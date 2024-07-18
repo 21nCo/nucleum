@@ -8,7 +8,7 @@
   import { ChipVariant } from "$lib/client/types/chipVariant.enum";
   import { Orientation } from "$lib/client/types/direction.enum";
   import type { InputLabel } from "$lib/client/types/input.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
   import GoalColorPickerWithPreview from "../GoalColorPickerWithPreview.svelte";
   import GoalActions from "../home/GoalActions.svelte";

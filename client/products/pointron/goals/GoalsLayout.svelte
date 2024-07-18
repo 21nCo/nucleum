@@ -12,7 +12,7 @@
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { goalStore } from "./goal.store";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";

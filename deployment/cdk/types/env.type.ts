@@ -1,4 +1,4 @@
-export type IEnvironment = ILamdbaEnvironmentVariables & {
+export type IEnvironment = {
   domain: string;
   subdomain?: string;
   allRegionList: string[];
@@ -9,9 +9,10 @@ export type IEnvironment = ILamdbaEnvironmentVariables & {
    * Email address to use for Let's Encrypt certificate generation and similar services
    */
   email: string;
+  lambdaEnv: ILambdaEnvironmentVariables;
 };
 
-export type ILamdbaEnvironmentVariables = {
+export type ILambdaEnvironmentVariables = {
   DOMAIN: string;
   DB_USER: string;
   DB_PASS: string;

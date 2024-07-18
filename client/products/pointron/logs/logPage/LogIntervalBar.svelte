@@ -1,7 +1,7 @@
 <script lang="ts">
   import { userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { isEmptyArray } from "$lib/client/utils/obj.utils";
+  import { isEmptyArray } from "$lib/shared/utils/obj.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
   import type { IntervalBlock } from "$lib/client/types/pointron/session.type";

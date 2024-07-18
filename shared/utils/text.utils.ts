@@ -6,7 +6,7 @@ import {
   NodeType,
   type TextContent
 } from "$lib/client/types/memotron/node.type";
-import { isValidArrayWithData } from "../../client/utils/obj.utils";
+import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
 

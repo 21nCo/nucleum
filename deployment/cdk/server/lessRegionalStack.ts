@@ -1,12 +1,12 @@
-import { CfnOutput, NestedStack, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, NestedStack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { IEnvironment, ILamdbaEnvironmentVariables } from "../types/env.type";
+import { IEnvironment } from "../types/env.type";
 import {
   CustomLambdaNestedStackProps,
   CustomNestedStackProps
 } from "../types/customNestedStackProps.type";
 import { AccountLambdaFunctions } from "./accountLambdaFunctions";
-import { ApiGateway, ApiGatewayDomain } from "aws-cdk-lib/aws-route53-targets";
+import { ApiGateway } from "aws-cdk-lib/aws-route53-targets";
 import * as path from "path";
 import { Route53HealthCheck } from "../route53HealthCheck";
 import { generateFunctionName, resolveAcmCertificate } from "../cdk.utils";
@@ -14,10 +14,7 @@ import { UtilsLambdaFunctions } from "./utilsLambdaFunctions";
 import { SpacesLambdaFunctions } from "./spacesLambdaFunctions";
 import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
-  BasePathMapping,
-  DomainName,
   EndpointType,
-  IDomainName,
   LambdaIntegration,
   LambdaRestApi
 } from "aws-cdk-lib/aws-apigateway";
@@ -27,47 +24,41 @@ import {
   ARecord,
   CfnHealthCheck,
   CfnRecordSet,
+  CnameRecord,
   IHostedZone,
   RecordTarget
 } from "aws-cdk-lib/aws-route53";
-import { pick } from "./../../deploy.utils";
 
 export class ServerlessRegionalStack extends NestedStack {
   certificate: ICertificate;
-  regionDomain: string;
+  /**
+   * Main domain which resolves to regional API Gateway using Latency based routing
+   */
+  domainName: string;
+  /**
+   * Subdomain which resolves to regional API Gateway using Regional routing
+   */
+  regionDomainName: string;
   api: LambdaRestApi;
   healthCheck: CfnHealthCheck;
   env: IEnvironment;
   zone: IHostedZone;
-  subdomain: string = "api";
   constructor(scope: Construct, id: string, props: CustomNestedStackProps) {
     super(scope, id, props);
     this.env = props.environment;
     this.zone = props.zone;
-    const lambdaEnvKeys = Object.keys(
-      {} as ILamdbaEnvironmentVariables
-    ) as Array<keyof ILamdbaEnvironmentVariables>;
-    let lambdaEnvVars = pick(props.environment, lambdaEnvKeys);
-    lambdaEnvVars = {
-      ...lambdaEnvVars,
+    let lambdaEnvVars = {
+      ...this.env.lambdaEnv,
       USE_THIRDPARTY_AUTH_METHOD: "true",
       URL_EXPIRATION_TIME: "300"
     };
     console.log("initializing ServerlessRegionalStack - ", {
       region: this.region,
-      tidyregion: props.environment.tidyregion
+      tidyregion: this.env.tidyregion
     });
-    this.regionDomain =
-      props.environment.tidyregion +
-      "." +
-      this.subdomain +
-      "." +
-      props.environment.domain;
-    this.certificate = resolveAcmCertificate(
-      this,
-      props.zone,
-      this.regionDomain
-    );
+    this.domainName = "api." + this.env.domain;
+    this.regionDomainName = this.env.tidyregion + "-" + this.domainName;
+    this.certificate = resolveAcmCertificate(this, props.zone, this.env.domain);
     const fileBuckets = this.resolveFilesBucket();
     this.generateApi();
     const lambaProps: CustomLambdaNestedStackProps = {
@@ -80,6 +71,14 @@ export class ServerlessRegionalStack extends NestedStack {
     new SpacesLambdaFunctions(this, "SpacesStack", lambaProps);
   }
 
+  /**
+   * Generates the regional API Gateway and adds the route53 record for the main domainName to route traffic to regional API Gateway using Regional routing.
+   *
+   * Note: adding `this.regionDomainName` and its corresponding certificate instead of `this.domainName` while configuring the domainName property in the LambdaRestApi causes CERT_COMMON_NAME_INVALID error. This is because latency based routing is being added to the main domainName but the certificate is instead generated for the regionDomainName.
+   *
+   * Separate CName records are added for each region to route traffic directly to regional API Gateway via regionalDomainName if required. To make this work, the main domainName certificate was kept a wildcard certificate like *.domain.com so that regional domains like insouth-api.domain.com can be added as CName records while api.domain.com still works as a latency based routing.
+   *
+   */
   generateApi() {
     let pingFunction = new Function(this, "gatewayping", {
       handler: "ping.handler",
@@ -94,7 +93,7 @@ export class ServerlessRegionalStack extends NestedStack {
       proxy: false,
       handler: pingFunction,
       domainName: {
-        domainName: this.regionDomain,
+        domainName: this.domainName,
         certificate: this.certificate,
         endpointType: EndpointType.REGIONAL
       },
@@ -113,96 +112,35 @@ export class ServerlessRegionalStack extends NestedStack {
       this.api,
       this.region
     ).healthCheck;
-    // - the below is causing domain name already exists in another stack error
-    // this.addRoute53ARecord();
     this.addMultiRegionRoute53Config();
+    this.addRoute53CnameRecordForRegionalDomain();
   }
 
-  // addRoute53ARecord() {
-  //   console.log("adding route53 A record", {
-  //     region: this.region,
-  //     regionDomain: this.regionDomain
-  //   });
-  //   const domain = new DomainName(this, `Domain${this.regionDomain}`, {
-  //     domainName: this.regionDomain,
-  //     certificate: this.certificate,
-  //     endpointType: EndpointType.REGIONAL
-  //   });
-  //   new BasePathMapping(this, `Mapping${this.regionDomain}`, {
-  //     domainName: domain,
-  //     restApi: this.api
-  //   });
-  //   const aRecord = new ARecord(this, "apidevDNS", {
-  //     zone: this.zone,
-  //     recordName: this.regionDomain,
-  //     target: RecordTarget.fromAlias(new ApiGateway(this.api))
-  //   });
-
-  //   new CfnOutput(this, "ApiStandaloneUrl", {
-  //     value: aRecord.domainName
-  //   });
-  // }
-  addRoute53ARecord(createNewResources: boolean = true) {
-    console.log("Adding Route53 A record", {
+  addRoute53CnameRecordForRegionalDomain() {
+    console.log("Adding Route53 CNAME record - for regional domain", {
       region: this.region,
-      regionDomain: this.regionDomain,
-      createNewResources
+      regionDomain: this.regionDomainName
     });
+    const apiDomainName = this.api.domainName?.domainName;
 
-    let domain: IDomainName;
-    const stack = Stack.of(this);
-
-    // Check if the domain name already exists
-    const existingDomain = stack.node.tryFindChild(
-      `Domain${this.regionDomain}`
-    ) as DomainName;
-    // const existingDomains = ApiGateway.fromAccount().getDomainNames();
-    // const existingDomain = existingDomains.find(
-    //   (d) => d.domainName === this.regionDomain
-    // );
-
-    if (existingDomain) {
-      console.log("Using existing domain name");
-      domain = existingDomain;
-    } else if (createNewResources) {
-      console.log("Creating new domain name");
-      const domainLogicalId = `Domain${this.regionDomain.replace(/\./g, "")}`;
-      const mappingLogicalId = `Mapping${this.regionDomain.replace(/\./g, "")}`;
-
-      domain = new DomainName(this, domainLogicalId, {
-        domainName: this.regionDomain,
-        certificate: this.certificate,
-        endpointType: EndpointType.REGIONAL
-      });
-
-      console.log("Creating base path mapping");
-      new BasePathMapping(this, mappingLogicalId, {
-        domainName: domain,
-        restApi: this.api
-      });
-    } else {
-      throw new Error(
-        `Domain ${this.regionDomain} does not exist and createNewResources is false`
-      );
+    if (!apiDomainName) {
+      throw new Error("API Gateway domain name is not set");
     }
-
-    console.log("Creating or updating A record");
-    const aRecord = new ARecord(this, "apidevDNS", {
+    new CnameRecord(this, "ApiDomainCnameRecord", {
       zone: this.zone,
-      recordName: this.regionDomain,
-      target: RecordTarget.fromAlias(new ApiGatewayDomain(domain))
+      recordName: this.regionDomainName,
+      domainName: apiDomainName,
+      ttl: Duration.minutes(5)
     });
-
-    new CfnOutput(this, "ApiStandaloneUrl", {
-      value: aRecord.domainName
-    });
-
-    console.log("Route53 A record setup complete");
   }
 
+  /**
+   * Adds a latency based route53 record for main domainName to route traffic to regional API Gateway using Latency based routing.
+   *
+   */
   addMultiRegionRoute53Config() {
     new CfnRecordSet(this, "apiRouteRecordSet", {
-      name: this.subdomain + "." + this.regionDomain,
+      name: this.domainName,
       type: "A",
       setIdentifier: this.region,
       healthCheckId: this.healthCheck.ref,
@@ -227,7 +165,7 @@ export class ServerlessRegionalStack extends NestedStack {
         Bucket.fromBucketArn(
           this,
           `userFilesBucket-${region}`,
-          `arn:aws:s3:::` + `${this.env.FILE_BUCKET_PREFIX}.${region}`
+          `arn:aws:s3:::` + `${this.env.lambdaEnv.FILE_BUCKET_PREFIX}.${region}`
         )
       );
     });
@@ -236,7 +174,7 @@ export class ServerlessRegionalStack extends NestedStack {
         Bucket.fromBucketArn(
           this,
           `userFilesTempBucket-${region}`,
-          `arn:aws:s3:::` + `${this.env.TEMP_BUCKET_PREFIX}.${region}`
+          `arn:aws:s3:::` + `${this.env.lambdaEnv.TEMP_BUCKET_PREFIX}.${region}`
         )
       );
     });

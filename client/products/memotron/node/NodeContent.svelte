@@ -12,7 +12,7 @@
     deepCopy,
     isValidArrayWithData,
     shallowDiff
-  } from "$lib/client/utils/obj.utils";
+  } from "$lib/shared/utils/obj.utils";
   import AudioScrubablePreview from "../capture/AudioScrubablePreview.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import PdfAnnotator from "../pdfAnnotator/pdfAnnotator.svelte";

@@ -7,7 +7,7 @@
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { isValidString } from "$lib/client/utils/text.utils";
   import {
     AnalyticsCardGrouping,
