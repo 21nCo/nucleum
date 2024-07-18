@@ -9,7 +9,7 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { Item } from "$lib/client/types/item.enum";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { determineTruncateLength } from "$lib/client/utils/text.utils";
+  import { determineTruncateLength } from "$lib/shared/utils/text.utils";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   let parentBreadcrumbs: BreadcrumbItem[] = [];

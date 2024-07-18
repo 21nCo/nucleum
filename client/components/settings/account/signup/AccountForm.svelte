@@ -9,7 +9,7 @@
     postMessageToParent,
     postTokenToExtension
   } from "$lib/client/utils/embed.utils";
-  import { isValidEmail } from "$lib/client/utils/text.utils";
+  import { isValidEmail } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import OAuthButtons from "../../../oauth/OAuthButtons.svelte";

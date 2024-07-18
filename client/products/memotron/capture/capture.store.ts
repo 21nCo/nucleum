@@ -21,7 +21,7 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { prefixTable } from "$lib/client/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/stores/kv.store";

@@ -9,7 +9,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import { newGoal } from "./store";
   function getUsedColors() {
     return [];

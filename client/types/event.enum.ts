@@ -23,6 +23,10 @@ export enum GlobalEvent {
   WINDOW_RESIZED = "WINDOW_RESIZED",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
+  /**
+   * Bootstraps the user account - on singup - with seed data and necessary base data
+   */
+  BOOTSTRAP = "BOOTSTRAP",
   CUSTOM_NAVIGATION = "custom:navigation",
   CUSTOM_ALERT = "custom:alert"
 }

@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { truncateString } from "$lib/client/utils/text.utils";
+  import { truncateString } from "$lib/shared/utils/text.utils";
   const dispatch = createEventDispatcher();
   export let id: string;
   let item: any;

@@ -15,7 +15,7 @@
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import AvatarView from "../avatarPicker/AvatarView.svelte";
   const dispatch = createEventDispatcher();
   /**

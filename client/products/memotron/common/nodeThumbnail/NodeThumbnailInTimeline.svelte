@@ -11,7 +11,7 @@
     isValidArrayWithData,
     objIsEmpty
   } from "$lib/shared/utils/obj.utils";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { formatDate, formatTime } from "$lib/client/utils/time.utils";
   import DLinks from "../foreLinks/DirectLinks.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";

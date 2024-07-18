@@ -6,7 +6,7 @@
   import {
     isValidDataString,
     isValidMarkdown
-  } from "$lib/client/utils/text.utils";
+  } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import LogIntervalBar from "./LogIntervalBar.svelte";
   import LogTotals from "./LogTotals.svelte";

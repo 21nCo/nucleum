@@ -4,19 +4,23 @@ import { isExtensionEnvironment } from "./browser.utils";
 import { detectTimeZone } from "./time.utils";
 
 export function resolveRegionalApiUrl() {
-  const tzOffset = -new Date().getTimezoneOffset() * 60;
-  if (tzOffset < -10800) {
-    return (
-      import.meta.env?.VITE_API_US_URL ?? process.env.PLASMO_PUBLIC_API_US_URL
-    );
-  } else if (tzOffset > -10800 && tzOffset < 10800) {
-    return (
-      import.meta.env?.VITE_API_EU_URL ?? process.env.PLASMO_PUBLIC_API_EU_URL
-    );
-  } else {
-    return (
-      import.meta.env?.VITE_API_AS_URL ?? process.env.PLASMO_PUBLIC_API_AS_URL
-    );
+  try {
+    const tzOffset = -new Date().getTimezoneOffset() * 60;
+    if (tzOffset < -10800) {
+      return (
+        import.meta.env?.VITE_API_US_URL ?? process.env.PLASMO_PUBLIC_API_US_URL
+      );
+    } else if (tzOffset > -10800 && tzOffset < 10800) {
+      return (
+        import.meta.env?.VITE_API_EU_URL ?? process.env.PLASMO_PUBLIC_API_EU_URL
+      );
+    } else {
+      return (
+        import.meta.env?.VITE_API_AS_URL ?? process.env.PLASMO_PUBLIC_API_AS_URL
+      );
+    }
+  } catch (e) {
+    console.warn("Error in resolveRegionalApiUrl", e);
   }
 }
 
@@ -28,9 +32,7 @@ export async function performApiCall(
   // console.log("Performing API call:", { endpoint, method, body });
   return performHttpNetworkOperation({
     url:
-      (resolveRegionalApiUrl() ??
-        import.meta.env?.VITE_API_URL ??
-        process.env.PLASMO_PUBLIC_API_URL) +
+      (import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL) +
       "/" +
       endpoint,
     method,

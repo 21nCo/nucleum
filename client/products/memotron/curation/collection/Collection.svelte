@@ -35,7 +35,7 @@
   } from "$lib/client/types/select.type";
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   /**
    * @deprecated - use collection directly

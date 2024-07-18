@@ -2,7 +2,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   export let content: string;
   export let style: TextStyle;

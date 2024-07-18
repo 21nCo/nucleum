@@ -3,7 +3,7 @@
   import CopyableText from "$lib/client/elements/text/CopyableText.svelte";
   import { spaceInContext } from "$lib/client/products/gathery/space.store";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { stripTablePrefix } from "$lib/client/utils/text.utils";
+  import { stripTablePrefix } from "$lib/shared/utils/text.utils";
   export let id: string;
   let docSlug = stripTablePrefix(id);
   let selected = "Access from web";

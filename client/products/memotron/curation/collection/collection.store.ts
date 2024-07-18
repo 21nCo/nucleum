@@ -4,7 +4,7 @@ import {
 } from "$lib/client/types/memotron/curation.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { Item } from "$lib/client/types/item.enum";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
 import { prefixTable } from "$lib/client/utils/text.utils";
 import {
   debouncer,

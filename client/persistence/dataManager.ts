@@ -24,7 +24,7 @@ import {
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
-import { prefixTable } from "$lib/client/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 

@@ -2,7 +2,7 @@
   import Button from "../elements/button/Button.svelte";
   import TextInput from "../elements/input/TextInput.svelte";
   import { Size } from "../types/size.enum";
-  import { isValidEmail } from "$lib/client/utils/text.utils";
+  import { isValidEmail } from "$lib/shared/utils/text.utils";
   import { performApiCall } from "$lib/client/utils/network.utils";
   let email = "";
   let message = "";

@@ -4,24 +4,24 @@ import {
   type TypeCreationForm
 } from "$lib/client/types/memotron/type.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import {
-  PersistanceActionType
-} from "$lib/client/types/data.type";
+import { PersistanceActionType } from "$lib/client/types/data.type";
 import { Item } from "$lib/client/types/item.enum";
-import { prefixTable } from "$lib/client/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
-import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "$lib/client/stores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
-
 class TypeStore extends ResourceStore {
-  db: ISurrealDatabase
+  db: ISurrealDatabase;
   constructor() {
     super(Item.type, {
       priorityRefreshOnAppAppear: true,
-      refreshQuery: "return fn::memotron::type::fetch();",
+      refreshQuery: "return fn::memotron::type::fetch();"
     });
     this.db = new SurrealDatabase();
   }
@@ -83,13 +83,11 @@ export function resolveActiveTypeStore(id: string, context: string = "") {
   return val!;
 }
 
-
 class ActiveTypeStore extends ActiveResourceStore<IActiveTypeStore, TypeStore> {
   constructor(id: string) {
     super(id, typeStore);
   }
 }
-
 
 export const autoPropertiesGroupLabel = "Automatic";
 export const metaPropertyOptions = [

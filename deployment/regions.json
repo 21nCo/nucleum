@@ -2,7 +2,7 @@
   {
     "code": "useast",
     "location": "virginia",
-    "label": "United States",
+    "label": "Americas",
     "aws": "us-east-1",
     "gcp": "us-east4",
     "azure": "useast",
@@ -27,12 +27,21 @@
     "isAvailable": true
   },
   {
-    "code": "uswest",
-    "location": "california",
-    "label": "US West",
-    "aws": "us-west-2",
-    "gcp": "uswest2",
-    "azure": "westus",
+    "code": "afsouth",
+    "location": "southafrica",
+    "label": "Africa",
+    "aws": "af-south-1",
+    "gcp": "africa-south1",
+    "azure": "southaftricanorth",
+    "isAvailable": false
+  },
+  {
+    "code": "saeast",
+    "location": "saopaulo",
+    "label": "South America",
+    "aws": "sa-east-1",
+    "gcp": "southamerica-east1",
+    "azure": "brazilsouth",
     "isAvailable": false
   },
   {
@@ -45,12 +54,12 @@
     "isAvailable": false
   },
   {
-    "code": "afsouth",
-    "location": "southafrica",
-    "label": "Africa",
-    "aws": "af-south-1",
-    "gcp": "africa-south1",
-    "azure": "southaftricanorth",
+    "code": "uswest",
+    "location": "california",
+    "label": "US West",
+    "aws": "us-west-2",
+    "gcp": "uswest2",
+    "azure": "westus",
     "isAvailable": false
   },
   {

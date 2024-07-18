@@ -4,7 +4,7 @@
   import { textTruncateMapper } from "$lib/client/utils/utils";
   import view from "$lib/client/stores/view.store";
   import { Display } from "$lib/client/types/view.type";
-  import { determineTruncateLength } from "$lib/client/utils/text.utils";
+  import { determineTruncateLength } from "$lib/shared/utils/text.utils";
   export let items: BreadcrumbItem[] = [];
   $: slice = resolveSlice($view.display);
   $: truncateLength = determineTruncateLength($view.display);

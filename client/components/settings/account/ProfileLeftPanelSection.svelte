@@ -1,6 +1,6 @@
 <script lang="ts">
   import account from "$lib/client/stores/account.store";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
 </script>
 

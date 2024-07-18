@@ -20,7 +20,7 @@
     prefix,
     prefixTable,
     properCase
-  } from "$lib/client/utils/text.utils";
+  } from "$lib/shared/utils/text.utils";
   import { generateUID } from "$lib/client/utils/utils";
   import {
     autoPropertiesGroupLabel,

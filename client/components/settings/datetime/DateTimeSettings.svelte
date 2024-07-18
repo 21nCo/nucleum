@@ -9,7 +9,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TimeScale } from "$lib/client/types/time.type";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { getTimeZonesWithOffsets } from "$lib/client/utils/time.utils";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";

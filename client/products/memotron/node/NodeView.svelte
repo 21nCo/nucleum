@@ -5,7 +5,7 @@
   import { resolveActiveNodeStore, type IActiveNodeStore } from "./node.store";
   import Curation from "../curation/Curation.svelte";
   import { Item } from "$lib/client/types/item.enum";
-  import { prefixTable } from "$lib/client/utils/text.utils";
+  import { prefixTable } from "$lib/shared/utils/text.utils";
   import NodeRightPanel from "./rightPanel/NodeRightPanel.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
