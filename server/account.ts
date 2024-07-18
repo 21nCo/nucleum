@@ -12,7 +12,7 @@ export async function fetchDbDefinitionsQuery(
   lastRunChangeId: number
 ) {
   const extracredApp = extractProduct(host);
-  const app = extracredApp.product ?? process.env.TIDY_SUBATOM;
+  const app = extracredApp.product ?? process.env.DOMAIN;
   const query = `return fn::admin::dbo::fetchAll("${app.toLowerCase()}", ${lastRunChangeId})`;
   const response = await performQueryOnMasterDb(query);
   const dbObjects: any[] = response[0].result;
@@ -107,12 +107,12 @@ export async function updateDb(body: any, agent: Agent) {
   return updateDbDefinitions(agent, host, fromVersion ?? 1);
 }
 
-export function authorize(token: string | undefined) {
+export function authorize(props: { token: string; host?: string }) {
   try {
     //TODO - additional security checks
     const key = process.env.TOKEN_PRIVATE_KEY;
-    if (!token || !key) return false;
-    const decoded = validateToken(token);
+    if (!props.token || !key) return false;
+    const decoded = validateToken(props);
     return decoded;
   } catch (err) {
     console.log(err);

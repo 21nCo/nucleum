@@ -24,8 +24,6 @@ export type ILambdaEnvironmentVariables = {
   TOKEN_PRIVATE_KEY: string;
   TOKEN_PUBLIC_KEY: string;
 
-  TIDY_SUBATOM?: string;
-
   OAUTH_GOOGLE_SECRET: string;
   OAUTH_APPLE_SECRET: string;
 

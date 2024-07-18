@@ -35,9 +35,10 @@ function frameNonSensitiveUserInfo(userInfo: {
 export async function generateToken(
   userId,
   userInfo,
-  params: { isTrusted?: boolean; isSignup?: boolean } = {
+  params: { isTrusted?: boolean; isSignup?: boolean; host?: string } = {
     isTrusted: false,
-    isSignup: false
+    isSignup: false,
+    host: "blank"
   }
 ) {
   const nonSensitiveUserInfo = frameNonSensitiveUserInfo(userInfo);
@@ -47,7 +48,8 @@ export async function generateToken(
     const token = await generateUserToken({
       id: userId,
       region: userInfo.region,
-      expiration: tokenExpiration
+      expiration: tokenExpiration,
+      host: params.host
     });
     return {
       userInfo: nonSensitiveUserInfo,
@@ -100,13 +102,20 @@ export async function signup(data: any, isOAuth = false) {
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signup" });
     // await initializeDatabaseAndDefinitions(userId, CONTEXT.USER, context.host);
-    return await generateToken(userId, userInfo, { isTrusted, isSignup: true });
+    return await generateToken(userId, userInfo, {
+      isTrusted,
+      isSignup: true,
+      host: context.host
+    });
   } else if (isOAuth && response?.[1].result.userCount === 1) {
     console.log("user already exists for OAuth, logging in");
     const userInfo = response[1].result.user[0];
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signinoauth" });
-    return await generateToken(userId, userInfo, { isTrusted });
+    return await generateToken(userId, userInfo, {
+      isTrusted,
+      host: context.host
+    });
   } else {
     console.log("Non OAuth user already exists, returning non outh user count");
     await log("none", {
@@ -134,7 +143,10 @@ export async function signin(body: any) {
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signin" });
     //await updateDbDefinitions(userId, userInfo.lastRunChangeId);
-    return await generateToken(userId, userInfo, { isTrusted });
+    return await generateToken(userId, userInfo, {
+      isTrusted,
+      host: context.host
+    });
   } else {
     return response?.[1].result;
   }
@@ -145,7 +157,8 @@ export async function signin(body: any) {
  * @param body email and pass
  * @returns
  */
-export async function refreshToken(agent: Agent) {
+export async function refreshToken(body: any, agent: Agent) {
+  const { context } = body;
   const { id } = agent;
   const query = `LET $user = SELECT * FROM user WHERE meta::id(id) is "${id}"; IF count($user) == 1 THEN (SELECT * FROM $user) ELSE (RETURN count($user)) END`;
   const response = await performQueryOnMasterDb(query);
@@ -153,7 +166,10 @@ export async function refreshToken(agent: Agent) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { id, activity: "refreshToken" });
-    return await generateToken(userId, userInfo, { isTrusted: true });
+    return await generateToken(userId, userInfo, {
+      isTrusted: true,
+      host: context?.host
+    });
   } else {
     return response?.[1].result;
   }
@@ -359,7 +375,7 @@ export async function performUserAccountAction(authHeader: any, body: any) {
     else return { error: "Guest creation failed" };
   } else if (action === "bootstrap") {
     let token = authHeader?.split(" ")[1];
-    let agent = await authorize(token);
+    let agent = await authorize({ token, host: context.host });
     if (!agent)
       return {
         statusCode: 401,
