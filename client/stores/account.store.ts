@@ -68,6 +68,7 @@ class AccountStore extends ObservableStore<
     },
     params: {
       isIgnoreRefresh?: boolean;
+      redirectTo?: string;
     } = { isIgnoreRefresh: false }
   ) {
     console.log("signing in", { data });
@@ -96,7 +97,7 @@ class AccountStore extends ObservableStore<
     } else if (!data.userInfo.isBootstrapped) {
       appStore.gotoPath("/bootstrap");
     } else {
-      appStore.gotoPath("/");
+      appStore.gotoPath(params.redirectTo ?? "/");
     }
   }
 
@@ -163,11 +164,17 @@ class AccountStore extends ObservableStore<
       id,
       region
     });
-    if (!response || response.error) return;
-    this.update((n) => {
-      if (n.userInfo) n.userInfo.isBootstrapped = true;
-      return n;
-    });
+    if (!response || response.error || !response.userInfo) return;
+    this.signIn(
+      {
+        userInfo: response.userInfo,
+        token: response.token
+      },
+      {
+        isIgnoreRefresh: true,
+        redirectTo: "/onboarding"
+      }
+    );
     return true;
   }
   async performLoginStatusCheck() {

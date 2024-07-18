@@ -16,6 +16,7 @@ export type UserInformation = {
   emailParts?: EmailParts;
   licenseType?: LicenseType;
   isBootstrapped?: boolean;
+  region?: string;
 };
 
 export type EmailParts = {

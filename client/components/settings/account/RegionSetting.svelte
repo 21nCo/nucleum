@@ -5,11 +5,17 @@
   import { Size } from "$lib/client/types/size.enum";
   import regions from "$lib/deployment/regions.json";
   export let region: string = "";
-  let activeRegions = regions
-    .filter((x) => x.isAvailable)
-    .map((x) => {
-      return { label: x.label, value: x.code };
-    });
+  export let isDisabled: boolean = false;
+  let activeRegions: any[] = [];
+  $: resolveRegions(isDisabled);
+
+  function resolveRegions(isDisabled: boolean) {
+    activeRegions = regions
+      .filter((x) => x.isAvailable)
+      .map((x) => {
+        return { label: x.label, value: x.code, isDisabled };
+      });
+  }
 </script>
 
 <div class="flex flex-col items-center gap-8">

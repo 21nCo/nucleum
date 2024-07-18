@@ -60,7 +60,7 @@
       isError = true;
       setTimeout(() => (isError = false), 3000);
       isDisabled = false;
-      const db = new SurrealDatabase(import.meta.env?.VITE_SURREAL_URL);
+      const db = new SurrealDatabase();
       await db.merge(nodeId, {
         body: { initTranscription: false },
         contentType: "AUDIO"
