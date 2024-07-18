@@ -19,16 +19,25 @@ function frameNonSensitiveUserInfo(userInfo: {
   profilePictureUrl: any;
   joinDate: any;
   region: string;
+  isBootstrapped: boolean;
 }) {
-  const { id, emailParts, nickName, profilePictureUrl, joinDate, region } =
-    userInfo;
+  const {
+    id,
+    emailParts,
+    nickName,
+    profilePictureUrl,
+    joinDate,
+    region,
+    isBootstrapped
+  } = userInfo;
   return {
     id,
     emailParts,
     nickName,
     profilePictureUrl,
     joinDate,
-    region
+    region,
+    isBootstrapped
   };
 }
 
@@ -386,15 +395,16 @@ export async function performUserAccountAction(authHeader: any, body: any) {
         body: "Unauthorized"
       };
     const id = agent.id;
-    const query = `update user:${id} set region = "${region}";`;
-    const response = await performQueryOnMasterDb(query);
-    console.log("bootstrap response", { response });
-    if (!response) return { error: "Bootstrapping failed" };
-    await initializeDatabaseAndDefinitions(id, {
+    const bootstrapResponse = await initializeDatabaseAndDefinitions(id, {
       scope: CONTEXT.USER,
       host: context.host,
       region
     });
+    console.log("bootstrap response", { bootstrapResponse });
+    const query = `update user:${id} set region = "${region}", isBootstrapped = true;`;
+    const response = await performQueryOnMasterDb(query);
+    console.log("bootstrap response", { response });
+    if (!response) return { error: "Bootstrapping failed" };
     return await generateToken(id, response[0].result[0], { isTrusted: true });
   }
 }
