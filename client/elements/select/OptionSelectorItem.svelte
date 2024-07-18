@@ -38,7 +38,8 @@
         "border border-aps1 bg-bgs2": isActive,
         "outline-transparent border-brs3":
           !isActive && style === OptionSelectorStyle.OUTLINE,
-        "border-transparent": !isActive && style === OptionSelectorStyle.TRAIN
+        "border-transparent": !isActive && style === OptionSelectorStyle.TRAIN,
+        "opacity-80 cursor-not-allowed": item.isDisabled
       }
     )}
     on:click

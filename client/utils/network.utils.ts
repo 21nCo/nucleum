@@ -58,7 +58,9 @@ export async function performApiCall(
 }
 
 export async function performStaticDataOperation(path: string) {
-  return fetch(import.meta.env?.VITE_STATIC_URL + "/" + path);
+  return fetch(
+    import.meta.env?.VITE_STATIC_URL + "/" + path + "?v=" + Date.now()
+  );
 }
 
 export async function performHttpNetworkOperation(params: {
