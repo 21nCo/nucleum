@@ -28,8 +28,9 @@
   let types: ISelectItem[] = [];
 
   function refreshTypes() {
-    $dataManager.cacheSource.dexie.type
+    $dataManager.cacheSource.dexie.collection
       .filter(activeResourceFilter)
+      .filter((x) => x.isCaptureShortcutEnabled === true)
       .toArray()
       .then((data) => {
         types = data.map((type) => ({
@@ -54,7 +55,7 @@
   {/key}
   {#if isCapturePage}
     <Button
-      label="edit types"
+      label="edit shortcuts"
       size={Size.xs}
       on:click={() => {
         appStore.runAction(MemotronAction.LIBRARY);

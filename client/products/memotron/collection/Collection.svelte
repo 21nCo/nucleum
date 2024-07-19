@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    CurationType,
-    type ICollectionView
-  } from "$lib/client/types/memotron/curation.type";
+  import { CurationType } from "$lib/client/types/memotron/curation.type";
   import type { IActiveCollectionStore } from "./collection.store";
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
@@ -10,7 +7,6 @@
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
-  import { metaPropertyOptions } from "../../type/type.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import ViewTabSwitcher from "./ViewTabSwitcher.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
@@ -25,7 +21,7 @@
     NodeThumbnailVariant,
     type INodeThumbnail
   } from "$lib/client/types/memotron/node.type";
-  import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
@@ -36,7 +32,10 @@
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
+
+  import { metaPropertyOptions } from "./properties/property.store";
+  import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
+  import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   /**
    * @deprecated - use collection directly
    */

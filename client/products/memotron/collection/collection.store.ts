@@ -7,6 +7,7 @@ import { Item } from "$lib/client/types/item.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { prefixTable } from "$lib/shared/utils/text.utils";
 import {
+  activeResourceFilter,
   debouncer,
   generateUID,
   interceptSurrealResponse
@@ -24,29 +25,67 @@ import {
   CollectionLayout,
   type IActiveCollection,
   type ICollectionView,
-  type ICurationCreationForm
+  CollectionType,
+  type ICollection
 } from "$lib/client/types/memotron/collection.type";
+import {
+  propertyEditorStore,
+  propertyStore
+} from "./properties/property.store";
 
 class CollectionStore extends ResourceStore {
   db: ISurrealDatabase;
   constructor() {
     super(Item.collection, {
-      priorityRefreshOnAppAppear: true,
-      refreshQuery: "return fn::memotron::curation::fetchAll($since);"
+      priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
   }
-  create(resource: ICurationCreationForm) {
-    return super.create(
+  async create(
+    form: Partial<ICollection> & { defaultLayout: CollectionLayout }
+  ) {
+    const id = prefixTable(generateUID(), Item.collection);
+    const properties = propertyEditorStore.get();
+    const resource: Partial<ICollection> = {
+      ...form,
+      id,
+      views: [],
+      properties: []
+    };
+    if (form.type === CollectionType.TYPED && properties?.length > 0) {
+      await propertyStore.create(properties, {
+        queueParams: {
+          isUseQueueFirstApproach: true,
+          mutationId: `${id}-createProperties`
+        }
+      });
+      resource.properties = properties.map((p) => p.id);
+    }
+    const viewId = prefixTable(generateUID(), Item.view);
+    await viewStore.create(
       {
-        id: prefixTable(generateUID(), Item.collection),
-        ...resource
+        id: viewId,
+        layout: form.defaultLayout,
+        label: "Default"
       },
-      "return fn::memotron::curation::create($curation, $mutatedAt);"
+      {
+        queueParams: {
+          isUseQueueFirstApproach: true,
+          mutationId: `${id}-${viewId}-create`
+        }
+      }
     );
+    resource.views = [viewId];
+    return super.create(resource, {
+      queueParams: {
+        isUseQueueFirstApproach: true,
+        mutationId: `${id}-create`
+      }
+    });
   }
+
   async fetch(id: string, viewId?: string) {
-    const query = `fn::memotron::curation::fetch($id, $viewId)`;
+    const query = `fn::memotron::collection::fetch($id, $viewId)`;
     const response = await this.db.executeReadFn(
       query,
       viewId ? { id, viewId } : { id }
@@ -69,6 +108,17 @@ class CollectionStore extends ResourceStore {
       collectionId
     });
     return interceptSurrealResponse(response, "fetch view data");
+  }
+  search(query: string) {
+    if (!query) return [] as any;
+    const dexie = get(dataManager).cacheSource.dexie;
+    const collectionsPromise = dexie.collection
+      .filter(activeResourceFilter)
+      .filter((collection) =>
+        collection.label?.toLowerCase()?.includes(query.toLowerCase())
+      )
+      .toArray();
+    return collectionsPromise;
   }
 }
 
@@ -266,6 +316,18 @@ class ActiveCollectionStore extends ActiveResourceStore<
     return true;
   }
 }
+
+class CollectionViewStore extends ResourceStore {
+  db: ISurrealDatabase;
+  constructor() {
+    super(Item.view, {
+      priorityRefreshOnAppAppear: true
+    });
+    this.db = new SurrealDatabase();
+  }
+}
+
+export const viewStore = new CollectionViewStore();
 
 export const collectionLayoutOptions = [
   {

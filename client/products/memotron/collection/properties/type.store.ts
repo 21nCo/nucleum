@@ -1,5 +1,4 @@
 import {
-  PropertyType,
   type IActiveTypeStore,
   type TypeCreationForm
 } from "$lib/client/types/memotron/type.type";
@@ -88,62 +87,3 @@ class ActiveTypeStore extends ActiveResourceStore<IActiveTypeStore, TypeStore> {
     super(id, typeStore);
   }
 }
-
-export const autoPropertiesGroupLabel = "Automatic";
-export const metaPropertyOptions = [
-  {
-    label: "Created time",
-    icon: "clock",
-    value: PropertyType.CREATED_TIME,
-    groupId: autoPropertiesGroupLabel
-  },
-  {
-    label: "Modified time",
-    icon: "clock",
-    value: PropertyType.MODIFIED_TIME,
-    groupId: autoPropertiesGroupLabel
-  },
-  {
-    label: "Location",
-    icon: "map",
-    value: PropertyType.LOCATION,
-    groupId: autoPropertiesGroupLabel
-  }
-];
-export const propertyOptions = [
-  {
-    label: "Text",
-    icon: "bars",
-    value: PropertyType.TEXT
-  },
-  {
-    label: "Rating",
-    icon: "star",
-    value: PropertyType.RATING
-  },
-  {
-    label: "Single select",
-    icon: "chevdown",
-    value: PropertyType.SINGLE_SELECT
-  },
-  {
-    label: "Multi select",
-    icon: "bars",
-    value: PropertyType.MULTI_SELECT
-  },
-  {
-    label: "Date",
-    icon: "calendar",
-    value: PropertyType.DATE
-  },
-  {
-    label: "Checkbox",
-    icon: "bolt",
-    value: PropertyType.CHECKBOX
-  },
-  {
-    label: "Attachement(s)",
-    icon: "upload",
-    value: PropertyType.FILE
-  }
-];

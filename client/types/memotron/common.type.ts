@@ -1,9 +1,11 @@
+import type { ITrashInformation } from "../resource.type";
+
 export interface IMemotronItemBase {
   id: string;
   label: string;
   isStarred?: boolean;
   isArchived?: boolean;
-  trashInformation?: TrashInformation;
+  trashInformation?: ITrashInformation;
   createdAt: string;
   modifiedAt: string;
   createdBy: string;
@@ -16,4 +18,13 @@ export interface IMemotronItemBase {
 export interface TrashInformation {
   deletedAt: string;
   deletedBy: string;
+}
+
+export enum MemotronResourceType {
+  NODE = "NODE",
+  COLLECTION = "COLLECTION",
+  TYPED_COLLECTION = "TYPED_COLLECTION",
+  QUERY_COLLECTION = "QUERY_COLLECTION",
+  COMBINATION = "COMBINATION",
+  TASK = "TASK"
 }

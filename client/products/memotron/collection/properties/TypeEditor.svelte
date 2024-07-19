@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -7,9 +7,9 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import Memocon from "../common/Memocon.svelte";
   import PropertiesEditor from "./PropertiesEditor.svelte";
   import { typeStore } from "./type.store";
+  import Memocon from "$lib/client/products/memotron/common/Memocon.svelte";
   let avatar: any;
   let label: string;
   let errMsg: string;

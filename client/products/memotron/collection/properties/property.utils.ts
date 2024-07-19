@@ -1,8 +1,6 @@
-import {
-  PropertyType,
-  type IProperty
-} from "$lib/client/types/memotron/type.type";
 import type { INodeProperty } from "$lib/client/types/memotron/node.type";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { type IProperty, PropertyType } from "./property.type";
 
 export function resolvePropertyDefaultValue(property: IProperty) {
   let fallback;
@@ -48,4 +46,20 @@ export function lookupAddressFromLatLong(lat: number, long: number) {
   return fetch(
     `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${googleApiKey}`
   ).then((response) => response.json());
+}
+
+/**
+ * Filters properties that are marked for capture
+ * @param properties
+ * @returns
+ */
+export function resolvePropertiesForCapture(properties: IProperty[]) {
+  if (!isValidArrayWithData(properties)) return [];
+  return properties
+    .filter((item: IProperty) => {
+      return item.isShowOnCapture;
+    })
+    .map((y) => {
+      return { id: y.id, value: resolvePropertyDefaultValue(y) };
+    });
 }

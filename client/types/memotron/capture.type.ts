@@ -1,6 +1,9 @@
+import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+import type { ICollection } from "./collection.type";
+import { MemotronResourceType } from "./common.type";
 import type {
   LinkThumbnail,
   MediaBody,
@@ -25,13 +28,12 @@ export type ICaptureStore = IObservableStoreSubject & {
    */
   avatar?: IAvatar;
   captureType: CaptureType | string;
-  type?: any;
   body: IMarkdown | MediaBody;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
   fileDetails?: FileDetails;
-  directLinks: LinkThumbnail[];
   links?: ILink[];
+  propertyConfig?: IProperty[];
   properties?: INodeProperty[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
@@ -48,11 +50,12 @@ export type FileDetails = {
   duration?: number;
   transcription?: string;
   initTranscription?: boolean;
-  pdfAnnotations?:any[];
+  pdfAnnotations?: any[];
 };
 
 export type ILink = {
   from: string;
   to: string;
   linkType: LinkType;
+  toType: MemotronResourceType;
 };

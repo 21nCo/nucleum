@@ -5,15 +5,16 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
-  import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { cn } from "$lib/client/utils/ui.utils";
-  import NodeItems from "../../../common/NodeItems.svelte";
-  import { resolvePropertyOptions } from "../../curation.utils";
+
   import SubGroup from "./SubGroup.svelte";
+  import { resolvePropertyOptions } from "../../curation/curation.utils";
+  import NodeItems from "../../common/NodeItems.svelte";
   export let view: ICollectionView;
   export let group: any;
   export let data: any;

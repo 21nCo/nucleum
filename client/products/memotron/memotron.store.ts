@@ -63,7 +63,7 @@ export async function searchForLinking(query: string) {
   const collectionsPromise = dexie.collection
     .filter(activeResourceFilter)
     .filter((collection) =>
-      collection.label.toLowerCase().includes(query.toLowerCase())
+      collection.label?.toLowerCase().includes(query.toLowerCase())
     )
     .toArray();
   // return nodesPromise;

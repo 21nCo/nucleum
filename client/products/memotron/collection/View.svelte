@@ -6,7 +6,7 @@
     type ICollectionView
   } from "$lib/client/types/memotron/collection.type";
   import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
-  import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardView from "./boardView/BoardView.svelte";
   export let view: ICollectionView;

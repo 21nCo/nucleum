@@ -1,9 +1,6 @@
 <script lang="ts">
-  import {
-    PropertyType,
-    type IProperty
-  } from "$lib/client/types/memotron/type.type";
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
+  import { type IProperty, PropertyType } from "../property.type";
   import EndText from "./EndText.svelte";
   import RatingPropertyConfig from "./RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "./selectProperty/SelectPropertyConfig.svelte";

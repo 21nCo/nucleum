@@ -6,17 +6,18 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { TextInputStyle } from "$lib/client/types/textinput.enum";
   import Linkbox from "../common/linkbox/Linkbox.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Item } from "$lib/client/types/item.enum";
-  import Memocon from "../common/Memocon.svelte";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
-  import PropertiesListView from "../common/properties/PropertiesListView.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
+  import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
+  import NodeAvatar from "../node/nodeAvatar/NodeAvatar.svelte";
+  import { LinkType } from "$lib/client/types/memotron/node.type";
+  import { MemotronResourceType } from "$lib/client/types/memotron/common.type";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -29,6 +30,15 @@
   function refresh() {
     dataManager.refresh(Item.capture);
   }
+  $: types = $captureStore.links
+    ?.filter(
+      (x) =>
+        x.toType === MemotronResourceType.TYPED_COLLECTION &&
+        x.linkType === LinkType.DIRECT &&
+        x.from === "root"
+    )
+    ?.map((x) => x.to);
+  $: console.log({ types, links: $captureStore.links });
 </script>
 
 {#if isSaving}
@@ -51,11 +61,8 @@
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
         <header class="flex justify-between w-full dp:px-14">
           <div class="flex gap-4 grow">
-            {#if $captureStore.type?.avatar}
-              <!-- TODO - AvatarPicker component - increasing loading time -->
-              <!-- <Memocon bind:avatar={$captureStore.type.avatar} /> -->
-              <AvatarView avatar={$captureStore.type.avatar} size={Size.md} />
-            {/if}
+            <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
+            <NodeAvatar {types} />
             <div class="text-h4 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
@@ -95,11 +102,17 @@
           </div>
         </header>
         <main class="flex flex-col gap-6 w-full flex-grow">
-          <PropertiesListView
-            bind:properties={$captureStore.properties}
-            type={$captureStore.type}
-            bind:isCollapsed={isPropertiesCollapsed}
-          />
+          {#key types?.length}
+            {#if types && types.length > 0}
+              <!-- TODO - send only selected type if properties are to be shown upon link click -->
+              <PropertiesListView
+                context="capture"
+                bind:properties={$captureStore.properties}
+                {types}
+                bind:isCollapsed={isPropertiesCollapsed}
+              />
+            {/if}
+          {/key}
           <div
             class={cn("w-full", {
               "h-48": isEmptyState,

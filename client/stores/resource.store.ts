@@ -14,13 +14,14 @@ import { prefixTable } from "../../shared/utils/text.utils";
 import { dataManager } from "../persistence/dataManager";
 import { ObservableStore } from "./client.store";
 import { resolveCurrentUserId } from "../utils/account.utils";
+import type { ITrashInformation } from "../types/resource.type";
 
 export class ActiveResourceStore<T, U extends ResourceStore> {
   id: string;
   protected store = writable<T>();
   protected debouncedPersistBlock: any;
   protected resourceStore: U;
-  protected currentUserId: string;
+  protected currentUserId?: string;
   subscribe = this.store.subscribe;
   set = this.store.set;
   update = this.store.update;
@@ -56,7 +57,7 @@ export class ActiveResourceStore<T, U extends ResourceStore> {
         deletedAt: new Date().toISOString()
       }
     }));
-    return this.resourceStore.delete(this.id);
+    return this.resourceStore.trash(this.id);
   }
   archive() {
     this.update((prev: T) => ({
@@ -90,7 +91,7 @@ export class ResourceStore implements IStore {
   dataType: StoreDataType = StoreDataType.IFR;
   priorityRefreshOnAppAppear: boolean = false;
   refreshQuery?: string;
-  currentUserId: string;
+  currentUserId?: string;
   mutatingResources: string[];
   constructor(
     resourceType: Item,
@@ -111,40 +112,58 @@ export class ResourceStore implements IStore {
   resolveRefreshQuery() {
     return this.refreshQuery ?? "";
   }
+  /**
+   * Creates a resource or a list of resources. If the input param is a list, it will be inserted into the database.
+   * @param input resource(s) to be created
+   * @param params additional params like custom query, queue params etc.
+   * @returns
+   */
   create(
-    resource: Partial<DbRecord>,
-    customQuery?: string,
-    mutatationQueueParams?: IMutationQueueParams
+    input: Partial<DbRecord> | Partial<DbRecord>[],
+    params?: {
+      customQuery?: string;
+      queueParams?: IMutationQueueParams;
+      customQueryAdditionalParams?: { [key: string]: any };
+    }
   ) {
     let data;
+    let action = PersistanceActionType.CREATE;
     let commonProps = {
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
       createdBy: this.currentUserId,
       modifiedBy: this.currentUserId
     };
-    if (customQuery && "resources" in resource) {
-      data = {
-        ...resource,
-        resources: resource.resources?.map((r) => ({
-          ...r,
-          id: r.id ?? prefixTable(generateUID(), this.id),
-          ...commonProps
-        }))
-      };
+    if (Array.isArray(input)) {
+      input = input?.map((r) => ({
+        ...r,
+        id: r.id ?? prefixTable(generateUID(), this.id),
+        ...commonProps
+      }));
+      if (params?.customQuery) {
+        data = { resources: input, ...params?.customQueryAdditionalParams };
+        action = PersistanceActionType.CUSTOM_CREATE;
+      } else {
+        data = [...input];
+        action = PersistanceActionType.INSERT;
+      }
     } else {
-      data = {
-        ...resource,
-        id: resource.id ?? prefixTable(generateUID(), this.id),
+      input = {
+        ...input,
+        id: input.id ?? prefixTable(generateUID(), this.id),
         ...commonProps
       };
+      if (params?.customQuery) {
+        data = { resource: input };
+        action = PersistanceActionType.CUSTOM_CREATE;
+      } else {
+        data = input;
+      }
     }
     return dataManager.performMutationForIFR(this.id, data, {
-      action: customQuery
-        ? PersistanceActionType.CUSTOM_CREATE
-        : PersistanceActionType.CREATE,
-      query: customQuery,
-      queueParams: mutatationQueueParams
+      action,
+      query: params?.customQuery,
+      queueParams: params?.queueParams
     });
   }
   async modify(
@@ -165,12 +184,20 @@ export class ResourceStore implements IStore {
       queueParams: mutatationQueueParams
     });
   }
-  async delete(id: string, mutatationQueueParams?: IMutationQueueParams) {
+  async trash(id: string, mutatationQueueParams?: IMutationQueueParams) {
     return dataManager.performMutationForIFR(
       this.id,
-      { id, modifiedBy: this.currentUserId },
       {
-        action: PersistanceActionType.DELETE,
+        id,
+        trashInformation: {
+          deletedAt: new Date().toISOString(),
+          deletedBy: this.currentUserId
+        },
+        modifiedBy: this.currentUserId,
+        modifiedAt: new Date().toISOString()
+      },
+      {
+        action: PersistanceActionType.MERGE,
         queueParams: mutatationQueueParams
       }
     );
@@ -182,7 +209,9 @@ export class ResourceStore implements IStore {
  * Extensible FIR resource store.
  */
 export class ResourceFIRStore<
-    T extends { id: string },
+    T extends { id: string } & {
+      trashInformation?: ITrashInformation;
+    },
     S extends IObservableStoreSubject & {
       items: T[];
       filtered?: T[];
@@ -196,6 +225,7 @@ export class ResourceFIRStore<
 {
   id: Item;
   defaultFilter?: (items: T[]) => T[] | undefined;
+  currentUserId?: string;
   constructor(
     item: Item,
     defaultFilter?: (items: T[]) => T[],
@@ -205,6 +235,9 @@ export class ResourceFIRStore<
     this.id = item;
     this.mutatingResources = [item];
     this.defaultFilter = defaultFilter;
+    resolveCurrentUserId().then((x) => {
+      this.currentUserId = x;
+    });
     dataManager.retrieveCache(this.id).then((x: S | null) => {
       if (!x) {
         const initialState = this.createInitialState();
@@ -269,7 +302,7 @@ export class ResourceFIRStore<
     this.cache();
   }
   async modify(item: T) {
-    this._mutation(PersistanceActionType.UPDATE, item);
+    this._mutation(PersistanceActionType.REPLACE, item);
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != item.id);
       x.items.push(item);
@@ -279,6 +312,25 @@ export class ResourceFIRStore<
   }
   async delete(id: string) {
     this._mutation(PersistanceActionType.DELETE, id);
+    this.update((x: S) => {
+      x.items = x.items.filter((t) => t.id != id);
+      return x;
+    });
+    this.cache();
+  }
+  async trash(id: string) {
+    let item = this.get().items.find((x) => x.id == id);
+    if (!item) return;
+    item = {
+      ...item,
+      trashInformation: {
+        deletedAt: new Date().toISOString(),
+        deletedBy: this.currentUserId
+      },
+      modifiedBy: this.currentUserId,
+      modifiedAt: new Date().toISOString()
+    };
+    this._mutation(PersistanceActionType.MERGE, { ...item, id });
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != id);
       return x;

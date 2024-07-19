@@ -5,6 +5,7 @@ export interface MutationQueue {
   timestamp: number;
   query: string;
   params: any;
+  retryCount: number;
 }
 
 interface TestDexieRecord {
@@ -14,13 +15,13 @@ interface TestDexieRecord {
 }
 
 export class AppDexie extends Dexie {
-  protected dbVersion: number = 11;
+  protected dbVersion: number = 17;
   test!: Table<TestDexieRecord>;
   mutationQueuev2!: Table<MutationQueue>;
   constructor(scope: string) {
     super(scope);
     this.version(this.dbVersion).stores({
-      mutationQueuev2: "id, timestamp",
+      mutationQueuev2: "id, timestamp, retryCount",
       test: "id"
     });
   }

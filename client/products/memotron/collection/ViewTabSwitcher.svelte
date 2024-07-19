@@ -1,13 +1,14 @@
 <script lang="ts">
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
-  import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type {
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { resolvePropertyOptions } from "../curation.utils";
+  import { resolvePropertyOptions } from "../curation/curation.utils";
+
   export let view: ICollectionView;
   export let properties: IProperty[] | null = null;
   export let value: ISelectValue | undefined = undefined;

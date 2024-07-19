@@ -1,13 +1,12 @@
+import type { IAvatar } from "../avatar.type";
 import type { IMemotronItemBase } from "./common.type";
-import type { INodeThumbnail, NodeThumbnailVariant } from "./node.type";
-
+import type { NodeThumbnailVariant } from "./node.type";
 
 export enum CollectionType {
   TYPED = "TYPED",
   UNTYPED = "UNTYPED",
   QUERY = "QUERY"
 }
-
 
 export enum CollectionLayout {
   BOARD = "BOARD",
@@ -21,17 +20,25 @@ export type IActiveCollection = {
   isRefreshing: boolean;
 } & ICollection;
 
-
 export interface ICollection extends IMemotronItemBase {
-  views: ICollectionView[];
-  query?: string;
+  views: string[];
+  type: CollectionType;
   cover?: string;
+  description?: string;
+  isStarred?: boolean;
+  isCaptureShortcutEnabled?: boolean;
+  /**
+   * Type collection to extend - string identifier ex: collection:sometypecollection
+   */
+  typeToExtend?: string;
+  avatar?: IAvatar;
+  query?: string;
+  properties?: string[];
 }
-
 
 export interface ICollectionView extends IMemotronItemBase {
   layout: CollectionLayout;
-  data?: INodeThumbnail[];
+  // data?: INodeThumbnail[];
   arrangement?: NodeThumbnailVariant;
   /**
    * Property id to show as tabs.
@@ -55,21 +62,3 @@ export interface ICollectionView extends IMemotronItemBase {
    */
   tabs?: any[];
 }
-
-export interface ICurationCreationForm {
-  label: string;
-  type: CollectionType;
-  defaultLayout: CollectionLayout;
-  query?: string;
-  cover?: string;
-  description?: string;
-  isStarred?: boolean;
-  /**
-   * Associated type of the collection - string identifier ex: type:sometype
-   */
-  associatedType?: string;
-  isSearchQuery?: boolean;
-}
-
-
-export type CollectionLocalRecord = ICollection

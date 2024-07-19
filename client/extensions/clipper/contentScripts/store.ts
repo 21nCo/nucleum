@@ -163,7 +163,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
   async removeClip(id: string) {
-    const response = await nodeStore.delete(id);
+    const response = await nodeStore.trash(id);
     console.log({ response });
     if (!response)
       return { message: "Clip removal failed", type: AlertType.ERROR };

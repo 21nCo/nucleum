@@ -69,7 +69,7 @@ export class SurrealDatabaseUsingRest {
   }
   async update(recordId: string, data: DbRecord) {
     return this.query(
-      resolveMutationQuery(PersistanceActionType.UPDATE, recordId),
+      resolveMutationQuery(PersistanceActionType.REPLACE, recordId),
       {
         data
       }
@@ -82,7 +82,7 @@ export class SurrealDatabaseUsingRest {
   }
   async delete(recordId: string, userId?: string) {
     return await this.query(
-      resolveMutationQuery(PersistanceActionType.DELETE, recordId, userId)
+      resolveMutationQuery(PersistanceActionType.DELETE, recordId, { userId })
     );
   }
   async executeReadFn(

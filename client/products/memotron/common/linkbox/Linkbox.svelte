@@ -10,6 +10,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
   import { searchForLinking } from "../../memotron.store";
+  import LinkItems from "./LinkItems.svelte";
   let link: string;
   function onsearch(searchQuery: string) {
     return searchForLinking(searchQuery);
@@ -18,12 +19,12 @@
 
 <section class="flex flex-col gap-2 w-full">
   <div class="h-8">
-    {#if isValidArrayWithData($captureStore.directLinks)}
-      <DirectLinks
-        links={$captureStore.directLinks}
-        on:remove={(e) => {
-          console.log("remove", e);
-          captureStore.removeDLink(e.detail.id);
+    {#if isValidArrayWithData($captureStore.links)}
+      <LinkItems
+        links={$captureStore.links?.map((x) => x.to)}
+        on:unlink={(e) => {
+          console.log("unlink", e);
+          captureStore.removeDLink(e.detail);
         }}
       />
     {/if}

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import {
-    PropertyType,
-    type IProperty
-  } from "$lib/client/types/memotron/type.type";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
+  import {
+    type IProperty,
+    PropertyType
+  } from "../../collection/properties/property.type";
   import { resolveActiveNodeStore } from "../../node/node.store";
   import { lookupAddressFromLatLong } from "./property.utils";
   export let config: IProperty;

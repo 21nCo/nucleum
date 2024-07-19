@@ -1,10 +1,11 @@
 import type { IMemotronItemBase } from "$lib/client/types/memotron/common.type";
-import type { PropertyValue as IPropertyValue, IType } from "./type.type";
+import type { IType } from "./type.type";
 import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type { IAvatar } from "../avatar.type";
 import type { IMarkdown } from "./md.type";
 import type { IStore } from "../data.type";
 import type { ILink } from "./capture.type";
+import type { IPropertyValue } from "$lib/client/products/memotron/collection/properties/property.type";
 
 export type INode = INodeBase &
   NodeContent & {
@@ -19,7 +20,6 @@ export type INodeItemCaptured = Omit<
   "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
 > &
   NodeContent & {
-    type?: string;
     children?: string[];
     /**
      * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
@@ -29,9 +29,6 @@ export type INodeItemCaptured = Omit<
     metadata?: NodeMetadataCapturedAtClient;
     links?: ILink[];
   };
-export type INodeCapture = {
-  resources: INodeItemCaptured[];
-};
 
 export type NodeDbType = INode & DbRecordBase;
 

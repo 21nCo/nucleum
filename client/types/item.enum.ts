@@ -44,5 +44,5 @@ export enum Item {
   view = "view",
 
   //Memotron clipper
-  clipperToolbarState = "clipperToolbarState",
+  clipperToolbarState = "clipperToolbarState"
 }

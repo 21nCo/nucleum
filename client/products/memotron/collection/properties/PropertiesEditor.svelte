@@ -1,12 +1,7 @@
 <script lang="ts">
-  import {
-    PropertyType,
-    type IProperty
-  } from "$lib/client/types/memotron/type.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import { DropDownStyle } from "$lib/client/types/dropdownItem.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Item } from "$lib/client/types/item.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -15,19 +10,16 @@
     type TableColumn
   } from "$lib/client/types/table.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import {
-    enumToString,
-    prefix,
-    prefixTable,
-    properCase
-  } from "$lib/shared/utils/text.utils";
+  import { enumToString, prefixTable } from "$lib/shared/utils/text.utils";
   import { generateUID } from "$lib/client/utils/utils";
+
+  import { type IProperty, PropertyType } from "./property.type";
   import {
     autoPropertiesGroupLabel,
     metaPropertyOptions,
+    propertyEditorStore,
     propertyOptions
-  } from "./type.store";
-  export let properties: IProperty[] = [];
+  } from "./property.store";
 
   let columns: TableColumn[] = [
     {
@@ -112,32 +104,35 @@
 </script>
 
 <div class="flex flex-col gap-4 w-full text-b2">
-  {#if isValidArrayWithData(properties)}
+  {#if isValidArrayWithData($propertyEditorStore)}
     <Table2
       actions={[
         { action: "remove", index: 0 },
         { action: "rearrange", index: 1 }
       ]}
       {columns}
-      bind:data={properties}
+      bind:data={$propertyEditorStore}
     />
   {/if}
-  <Button
-    label="Add property"
-    style={ButtonStyle.OUTLINED}
-    icon="plus"
-    on:click={() => {
-      properties = [
-        ...properties,
-        {
-          id: prefixTable(generateUID(), Item.property),
-          label: "",
-          isShowOnNodePage: false,
-          isShowOnCapture: false,
-          type: PropertyType.TEXT,
-          order: properties.length
-        }
-      ];
-    }}
-  />
+  <div>
+    <Button
+      label="Add property"
+      style={ButtonStyle.OUTLINED}
+      size={Size.sm}
+      icon="plus"
+      on:click={() => {
+        $propertyEditorStore = [
+          ...$propertyEditorStore,
+          {
+            id: prefixTable(generateUID(), Item.property),
+            label: "",
+            isShowOnNodePage: false,
+            isShowOnCapture: false,
+            type: PropertyType.TEXT,
+            order: $propertyEditorStore.length
+          }
+        ];
+      }}
+    />
+  </div>
 </div>

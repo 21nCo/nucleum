@@ -1,12 +1,12 @@
 <script lang="ts">
+  import { CurationType } from "$lib/client/types/memotron/curation.type";
+  import { onMount } from "svelte";
   import {
     determineCurationType,
-    resolveActiveCollectionStore,
-    type IActiveCollectionStore
-  } from "./collection/collection.store";
-  import { CurationType } from "$lib/client/types/memotron/curation.type";
-  import Collection from "./collection/Collection.svelte";
-  import { onMount } from "svelte";
+    type IActiveCollectionStore,
+    resolveActiveCollectionStore
+  } from "../collection/collection.store";
+  import Collection from "../collection/Collection.svelte";
   export let id: string;
   let collection: IActiveCollectionStore;
   let combination: any;

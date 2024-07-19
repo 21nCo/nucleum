@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IProperty } from "$lib/client/types/memotron/type.type";
+  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import AvatarPicker from "$lib/client/elements/avatarPicker/AvatarPicker.svelte";
