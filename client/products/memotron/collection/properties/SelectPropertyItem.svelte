@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { PropertyConfigOption } from "$lib/client/types/memotron/type.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import type { PropertyConfigOption } from "./property.type";
   export let item: PropertyConfigOption;
   export let isSelectedContext: boolean = false;
 </script>

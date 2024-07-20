@@ -6,7 +6,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import view from "$lib/client/stores/view.store";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -18,7 +18,7 @@
   let refreshId = new Date().getTime();
   let selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
-    await dataManager.refresh(Item.pointAnalyticsConfig);
+    await dataManager.refresh(Resource.pointAnalyticsConfig);
     refreshId = new Date().getTime();
     if (!selectedPageId) {
       selectedPageId = $analyticsConfigStore.pages[0]?.id;

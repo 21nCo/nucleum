@@ -11,13 +11,13 @@
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "../node/nodeAvatar/NodeAvatar.svelte";
-  import { LinkType } from "$lib/client/types/memotron/node.type";
-  import { MemotronResourceType } from "$lib/client/types/memotron/common.type";
+  import { LinkType } from "$lib/client/products/memotron/node/node.type";
+  import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -28,7 +28,7 @@
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
   function refresh() {
-    dataManager.refresh(Item.capture);
+    dataManager.refresh(Resource.capture);
   }
   $: types = $captureStore.links
     ?.filter(

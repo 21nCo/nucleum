@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { PropertyConfig } from "$lib/client/types/memotron/type.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { generateUID } from "$lib/client/utils/utils";
+  import type { PropertyConfig } from "../../property.type";
   import SelectOptionListView from "./SelectOptionListView.svelte";
   export let config: PropertyConfig;
   let isGrouping = false;

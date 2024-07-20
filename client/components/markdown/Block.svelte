@@ -2,12 +2,12 @@
   import type {
     IBlock,
     IMarkdownStore
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
-  import { NodeType } from "$lib/client/types/memotron/node.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";

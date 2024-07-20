@@ -1,6 +1,9 @@
 import { writable } from "svelte/store";
-import type { DbRecord } from "../types/dbrecord.type";
-import { activeResourceFilter, debouncer, generateUID } from "../utils/utils";
+import {
+  activeResourceFilter,
+  debouncer,
+  generateUID
+} from "../../utils/utils";
 import {
   PersistanceActionType,
   StoreDataType,
@@ -8,15 +11,22 @@ import {
   type IMutationQueueParams,
   type IObservableStoreSubject,
   type IObservableStore
-} from "../types/data.type";
-import type { Item } from "../types/item.enum";
-import { prefixTable } from "../../shared/utils/text.utils";
-import { dataManager } from "../persistence/dataManager";
-import { ObservableStore } from "./client.store";
-import { resolveCurrentUserId } from "../utils/account.utils";
-import type { ITrashInformation } from "../types/resource.type";
+} from "../../types/data.type";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { prefixTable } from "../../../shared/utils/text.utils";
+import { dataManager } from "../../persistence/dataManager";
+import { ObservableStore } from "../../stores/client.store";
+import { resolveCurrentUserId } from "../../utils/account.utils";
+import type {
+  IResourceBase,
+  IResource,
+  ITrashInformation
+} from "./resource.type";
 
-export class ActiveResourceStore<T, U extends ResourceStore> {
+export class ActiveResourceStore<
+  T extends IResource,
+  U extends ResourceStore<T>
+> {
   id: string;
   protected store = writable<T>();
   protected debouncedPersistBlock: any;
@@ -31,7 +41,7 @@ export class ActiveResourceStore<T, U extends ResourceStore> {
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
-    const updatePropagator = (val: Partial<DbRecord>) =>
+    const updatePropagator = (val: Partial<T>) =>
       this.resourceStore.modify(this.id, val);
     this.debouncedPersistBlock = debouncer(updatePropagator, 2000);
   }
@@ -66,7 +76,9 @@ export class ActiveResourceStore<T, U extends ResourceStore> {
       modifiedBy: this.currentUserId,
       modifiedAt: new Date().toISOString()
     }));
-    return this.resourceStore.modify(this.id, { isArchived: true });
+    return this.resourceStore.modify(this.id, {
+      isArchived: true
+    } as Partial<T>);
   }
   unarchive() {
     this.update((prev: T) => ({
@@ -75,26 +87,30 @@ export class ActiveResourceStore<T, U extends ResourceStore> {
       modifiedBy: this.currentUserId,
       modifiedAt: new Date().toISOString()
     }));
-    return this.resourceStore.modify(this.id, { isArchived: false });
+    return this.resourceStore.modify(this.id, {
+      isArchived: false
+    } as Partial<T>);
   }
   restore() {
-    this.update((prev: T) => ({ ...prev, trashInformation: undefined }));
-    return this.resourceStore.modify(this.id, { trashInformation: undefined });
+    this.update((prev: T) => ({ ...prev, trashInformation: undefined }) as T);
+    return this.resourceStore.modify(this.id, {
+      trashInformation: undefined
+    } as Partial<T>);
   }
 }
 
 /**
- * For IFR Resources - delegated from active resource stores.
+ * For IFR Resources
  */
-export class ResourceStore implements IStore {
-  id: Item;
+export class ResourceStore<T extends IResourceBase> implements IStore {
+  id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
   priorityRefreshOnAppAppear: boolean = false;
   refreshQuery?: string;
   currentUserId?: string;
   mutatingResources: string[];
   constructor(
-    resourceType: Item,
+    resourceType: Resource,
     params?: Pick<IStore, "priorityRefreshOnAppAppear" | "refreshQuery">
   ) {
     this.id = resourceType;
@@ -119,7 +135,7 @@ export class ResourceStore implements IStore {
    * @returns
    */
   create(
-    input: Partial<DbRecord> | Partial<DbRecord>[],
+    input: Partial<T> | Partial<T>[],
     params?: {
       customQuery?: string;
       queueParams?: IMutationQueueParams;
@@ -168,13 +184,13 @@ export class ResourceStore implements IStore {
   }
   async modify(
     id: string,
-    resource: Partial<DbRecord>,
+    resource: Partial<T>,
     mutatationQueueParams?: IMutationQueueParams
   ) {
     if (!this.currentUserId || typeof this.currentUserId != "string") {
       this.currentUserId = await resolveCurrentUserId();
     }
-    const data: Partial<DbRecord> = {
+    const data: Partial<T> = {
       id,
       ...resource,
       modifiedBy: this.currentUserId
@@ -223,11 +239,11 @@ export class ResourceFIRStore<
   extends ObservableStore<S>
   implements IObservableStore<S>
 {
-  id: Item;
+  id: Resource;
   defaultFilter?: (items: T[]) => T[] | undefined;
   currentUserId?: string;
   constructor(
-    item: Item,
+    item: Resource,
     defaultFilter?: (items: T[]) => T[],
     params?: Pick<IStore, "priorityRefreshOnAppAppear" | "refreshQuery">
   ) {

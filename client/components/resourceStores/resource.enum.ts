@@ -1,4 +1,4 @@
-export enum Item {
+export enum Resource {
   ALL = "ALL",
   globalPreferences = "globalPreferences",
   TailwindTheme = "TailwindTheme",
@@ -10,6 +10,7 @@ export enum Item {
   tz = "tz",
   kv = "kv",
   appMenu = "appMenu",
+  accessLog = "accessLog",
 
   //Pointron
   pointronPreferences = "pointronPreferences",

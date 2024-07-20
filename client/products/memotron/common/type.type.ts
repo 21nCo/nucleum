@@ -1,6 +1,6 @@
 import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IMemotronItemBase } from "./common.type";
+import type { IMemotronItemBase } from "../../products/memotron/memotron.type";
 
 type TypeBase = IMemotronItemBase & {
   avatar: IAvatar;

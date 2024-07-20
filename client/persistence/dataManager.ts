@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Item } from "../types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   CacheStrategy,
   StoreDataType,
@@ -30,7 +30,7 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
-const allResources = Object.values(Item);
+const allResources = Object.values(Resource);
 
 function init() {
   const cacheSource = new CacheManager();
@@ -53,7 +53,7 @@ function init() {
      * @param item
      * @returns
      */
-    refreshForIFR: async (item: Item) => {
+    refreshForIFR: async (item: Resource) => {
       const dm = get(dataManager);
       const store = dm.cacheableStoresTable.find((x) => x.id === item);
       if (!store) return;
@@ -65,7 +65,11 @@ function init() {
         mergeIFRRecords(item, result);
       }
     },
-    performMutationForIFR: (item: Item, data: any, params: IMutationParams) => {
+    performMutationForIFR: (
+      item: Resource,
+      data: any,
+      params: IMutationParams
+    ) => {
       logger.log({
         context: "performing mutation for IFR",
         item,
@@ -612,7 +616,7 @@ async function resolveRefreshQueryForIFR(storeData: IStore) {
   return query;
 }
 
-async function mergeIFRRecords(item: Item, records: any[]) {
+async function mergeIFRRecords(item: Resource, records: any[]) {
   let dm = get(dataManager);
   const dexie = dm.cacheSource.dexie;
   // @ts-ignore

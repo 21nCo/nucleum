@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -57,4 +57,4 @@
       />
     </div>
   </footer>
-</div>
+</div> -->

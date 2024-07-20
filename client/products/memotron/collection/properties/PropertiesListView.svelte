@@ -3,8 +3,8 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import PropertyItem from "./PropertyItem.svelte";
-  import type { INodeProperty } from "$lib/client/types/memotron/node.type";
-  import type { ICollection } from "$lib/client/types/memotron/collection.type";
+  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
+  import type { ICollection } from "$lib/client/products/memotron/collection/collection.type";
   import type { IProperty } from "./property.type";
   import { get } from "svelte/store";
   import { dataManager } from "$lib/client/persistence/dataManager";

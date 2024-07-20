@@ -1,7 +1,7 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { ResourceStore } from "$lib/client/stores/resource.store";
+import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   type IProperty,
   PropertyType
@@ -9,10 +9,10 @@ import {
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 
-class PropertyStore extends ResourceStore {
+class PropertyStore extends ResourceStore<IProperty> {
   db: ISurrealDatabase;
   constructor() {
-    super(Item.property, {
+    super(Resource.property, {
       priorityRefreshOnAppAppear: true,
       refreshQuery: "return fn::memotron::property::fetchAll($since);"
     });

@@ -9,14 +9,14 @@ import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadi
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
 import TypeEditor from "$lib/client/products/memotron/collection/properties/TypeEditor.svelte";
 import Library from "$lib/client/products/memotron/library/Library.svelte";
-import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
 import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
+import { MemotronAction } from "./memotronAction.enum";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -108,7 +108,7 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: Item.node,
+    action: Resource.node,
     component: NodeView,
     label: "Node",
     type: ActionType.MODAL,
@@ -122,7 +122,7 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: Item.curation,
+    action: Resource.curation,
     component: Curation,
     label: "Curations",
     icon: "curation",
@@ -137,17 +137,17 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: Item.nodelinks,
+    action: Resource.nodelinks,
     type: ActionType.MODAL,
     component: Curation
   },
   {
-    action: Item.collection,
+    action: Resource.collection,
     type: ActionType.MODAL,
     component: Curation
   },
   {
-    action: Item.combination,
+    action: Resource.combination,
     type: ActionType.MODAL,
     component: Curation
   },

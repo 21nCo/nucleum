@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";

@@ -1,4 +1,4 @@
-import type { INodeProperty } from "$lib/client/types/memotron/node.type";
+import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { type IProperty, PropertyType } from "./property.type";
 

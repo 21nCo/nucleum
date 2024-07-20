@@ -18,13 +18,13 @@
     CollectionLayout,
     CollectionType,
     type ICollection
-  } from "$lib/client/types/memotron/collection.type";
+  } from "$lib/client/products/memotron/collection/collection.type";
   import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import Memocon from "../common/Memocon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import { propertyEditorStore } from "./properties/property.store";
   import { onMount } from "svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -146,7 +146,7 @@
       {#if isTypeExtension}
         <SearchSingleSelect
           bind:selected={typeToExtend}
-          searchStoreId={Item.collection}
+          searchStoreId={Resource.collection}
           label={{ label: "Type to extend" }}
         />
       {/if}

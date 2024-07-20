@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { INodeProperty } from "$lib/client/types/memotron/node.type";
+  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import { mapPropertyValues } from "../collection/properties/property.utils";
   import type { IActiveNodeStore } from "./node.store";

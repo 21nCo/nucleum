@@ -11,7 +11,7 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import AddNewSubGoal from "./AddNewSubGoal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 
   let isArchivedGoalsVisible: boolean = false;
 
@@ -30,7 +30,7 @@
       <div class="flex flex-col w-full">
         {#each $currentGoal.subGoals.filter((item) => !item.isArchived && item) as item}
           <SubGoalListItem
-            on:click={() => appStore.gotoResource(Item.goal, item.id)}
+            on:click={() => appStore.gotoResource(Resource.goal, item.id)}
             >{item.label}
           </SubGoalListItem>
         {/each}
@@ -44,7 +44,7 @@
           />
           {#each archivedSubgoals as item}
             <SubGoalListItem
-              on:click={() => appStore.gotoResource(Item.goal, item.id)}
+              on:click={() => appStore.gotoResource(Resource.goal, item.id)}
               >{item.label}
             </SubGoalListItem>
           {/each}
@@ -79,7 +79,7 @@
     <div class="flex flex-col w-full">
       {#each $currentGoal.subGoals.filter((item) => item.isArchived && item) as item}
         <SubGoalListItem
-          on:click={() => appStore.gotoResource(Item.goal, item.id)}
+          on:click={() => appStore.gotoResource(Resource.goal, item.id)}
           >{item.label}
         </SubGoalListItem>
       {/each}

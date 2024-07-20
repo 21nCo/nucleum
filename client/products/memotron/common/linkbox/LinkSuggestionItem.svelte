@@ -1,7 +1,7 @@
 <script lang="ts">
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import type { IAvatar } from "$lib/client/types/avatar.type";
-  import { CurationType } from "$lib/client/types/memotron/curation.type";
+  import { CurationType } from "$lib/client/products/memotron/curation/curation.type";
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import {
@@ -11,7 +11,7 @@
   import {
     NodeType,
     headingNodeTypes
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";

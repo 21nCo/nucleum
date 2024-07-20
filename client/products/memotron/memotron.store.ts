@@ -1,9 +1,13 @@
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { CurationType } from "$lib/client/types/memotron/curation.type";
-import { headingNodeTypes } from "$lib/client/types/memotron/node.type";
+import { headingNodeTypes } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 
+/**
+ * @deprecated
+ * @param typeId
+ * @returns
+ */
 export function resolveAssociatedType(typeId: string) {
   if (!typeId) return null;
   const tb = get(dataManager).cacheSource.dexie.type;
@@ -76,5 +80,5 @@ export async function resolveResource(id: string) {
   const dexie = get(dataManager).cacheSource.dexie;
   const node = await dexie.node.get(id);
   if (node) return node;
-  return dexie.curation.get(id);
+  return dexie.collection.get(id);
 }

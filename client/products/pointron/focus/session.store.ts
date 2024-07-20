@@ -1,4 +1,4 @@
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   type ISessionStore,
   type IntervalBlock,
@@ -45,12 +45,12 @@ import { logger } from "$lib/client/stores/log.store";
 import appearance from "$lib/client/stores/appearance.store";
 import { SessionType } from "$lib/client/products/pointron/logs/log.type";
 import { pointLogStore } from "$lib/client/products/pointron/logs/log.store";
-import { NodeType } from "$lib/client/types/memotron/node.type";
+import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { FocusPersistence } from "./focus.persistence";
 import context from "$lib/client/stores/context.store";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 const focusPersistance = new FocusPersistence();
 
@@ -133,7 +133,7 @@ class SessionStore extends KeyValueStore<ISessionStore> {
   isIntervalTimeLimitNotified: boolean = false;
   constructor() {
     super(
-      Item.pointSessionSnapshot,
+      Resource.pointSessionSnapshot,
       { ...seedSessionStore },
       {
         priorityRefreshOnAppAppear: true,
@@ -153,8 +153,8 @@ class SessionStore extends KeyValueStore<ISessionStore> {
           isFocusing && n.currentLog.color
             ? customColor(appearanceConfig, n.currentLog.color)
             : isFocusing
-            ? colors.aps1
-            : colors.ass1,
+              ? colors.aps1
+              : colors.ass1,
         start:
           n.currentBlock.type == BlockType.FOCUS
             ? n.start?.toISOString()
@@ -1100,12 +1100,12 @@ const seedFocusItemsStore: IFocusItemsStore = {
 class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   constructor() {
     super(
-      Item.pointSessionFocusItems,
+      Resource.pointSessionFocusItems,
       { ...seedFocusItemsStore },
       {
         priorityRefreshOnAppAppear: true,
         dependencies: [
-          { resource: Item.PointGoal, syncType: DependencySyncType.EAGER }
+          { resource: Resource.PointGoal, syncType: DependencySyncType.EAGER }
         ]
       }
     );

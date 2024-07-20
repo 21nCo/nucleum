@@ -1,6 +1,6 @@
 import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { appEvents } from "$lib/client/stores/notification.store";
 import {
   StoreDataType,
@@ -8,12 +8,12 @@ import {
 } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
 import type { TabData } from "$lib/client/types/extension.type";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   ClipperExtensionEvent,
   type TextHighlightContent,
   type VideoTimestampContent
-} from "$lib/client/types/memotron/clip.type";
+} from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
@@ -222,7 +222,7 @@ class ClipperToolbarState extends KeyValueStore<
 > {
   constructor() {
     super(
-      Item.clipperToolbarState,
+      Resource.clipperToolbarState,
       { isOpen: true, position: Position.Right },
       {
         priorityRefreshOnAppAppear: true

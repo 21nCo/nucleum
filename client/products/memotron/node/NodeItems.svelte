@@ -2,14 +2,12 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
-  import {
-    type INodeThumbnail,
-    NodeThumbnailVariant
-  } from "$lib/client/types/memotron/node.type";
+  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { type INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnail from "./nodeThumbnail/NodeThumbnail.svelte";
   export let nodes: INodeThumbnail[] = [];
-  export let arrangement: NodeThumbnailVariant = NodeThumbnailVariant.LIST;
+  export let arrangement: Arrangement = Arrangement.LIST;
   export let parentBgIndex = 1;
 </script>
 
@@ -17,15 +15,14 @@
   <div
     class={cn("flex h-full w-full gap-4", {
       "flex-col justify-start":
-        arrangement === NodeThumbnailVariant.LIST ||
-        arrangement === NodeThumbnailVariant.TIMELINE,
-      "flex-row flex-wrap content-start":
-        arrangement === NodeThumbnailVariant.GRID
+        arrangement === Arrangement.LIST ||
+        arrangement === Arrangement.TIMELINE,
+      "flex-row flex-wrap content-start": arrangement === Arrangement.GRID
     })}
   >
     {#each nodes as item}
       <NodeThumbnail
-        node={item}
+        {item}
         {parentBgIndex}
         variant={arrangement}
         on:click={(e) =>

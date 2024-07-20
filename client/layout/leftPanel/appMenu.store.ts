@@ -1,11 +1,11 @@
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import type { IAppMenuStore } from "$lib/client/types/appMenu.type";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 
 class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {
     super(
-      Item.appMenu,
+      Resource.appMenu,
       { menu: {} },
       {
         priorityRefreshOnAppAppear: true,

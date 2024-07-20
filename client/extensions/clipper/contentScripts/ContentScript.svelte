@@ -13,7 +13,7 @@
   import MultimediaClipper from "$lib/client/extensions/clipper/contentScripts/MultimediaClipper.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage, toolbarState } from "./store";
-  import { ClipperExtensionEvent } from "$lib/client/types/memotron/clip.type";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/layout/layers/ExtensionBaseLayer.svelte";
 
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];

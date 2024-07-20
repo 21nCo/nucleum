@@ -11,8 +11,8 @@ import {
   resolveMutationQuery
 } from "$lib/client/utils/surreal.utils";
 import { PersistanceActionType } from "../types/data.type";
-import type { DbRecord } from "../types/dbrecord.type";
 import type { ISurrealDatabase } from "../types/db.type";
+import type { IResourceBase } from "../components/resourceStores/resource.type";
 
 const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -37,7 +37,7 @@ export class SurrealDatabaseUsingRest {
    * @param data data to be created
    * @returns Id of the created record or null if failed
    */
-  async create(recordId: string, data: DbRecord) {
+  async create(recordId: string, data: IResourceBase) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.CREATE, recordId),
       {
@@ -45,7 +45,7 @@ export class SurrealDatabaseUsingRest {
       }
     );
   }
-  async insert(tableName: string, data: DbRecord[]) {
+  async insert(tableName: string, data: IResourceBase[]) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.INSERT, tableName),
       {
@@ -67,7 +67,7 @@ export class SurrealDatabaseUsingRest {
       }
     );
   }
-  async update(recordId: string, data: DbRecord) {
+  async update(recordId: string, data: IResourceBase) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.REPLACE, recordId),
       {

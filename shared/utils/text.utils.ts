@@ -1,11 +1,14 @@
-import type { Item } from "$lib/client/types/item.enum";
+import type { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
-import type { IBlock, IMarkdown } from "$lib/client/types/memotron/md.type";
+import type {
+  IBlock,
+  IMarkdown
+} from "$lib/client/components/markdown/md.type";
 import {
   ListType,
   NodeType,
   type TextContent
-} from "$lib/client/types/memotron/node.type";
+} from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
@@ -19,7 +22,7 @@ export function properCase(str: string) {
   // });
 }
 
-export function prefixTable(id: string | number, itemType: Item) {
+export function prefixTable(id: string | number, itemType: Resource) {
   return `${itemType}:${id}`;
 }
 

@@ -1,34 +1,33 @@
+import { dataManager } from "$lib/client/persistence/dataManager";
+import { ObservableStore } from "$lib/client/stores/client.store";
+import { logger } from "$lib/client/stores/log.store";
 import {
-  PersistanceActionType,
-  StoreDataType,
   type IObservableStore,
+  type IObservableStoreSubject,
   type IStore,
-  type IObservableStoreSubject
-} from "../types/data.type";
-import { dataManager } from "../persistence/dataManager";
+  PersistanceActionType,
+  StoreDataType
+} from "$lib/client/types/data.type";
+import type { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
-  deepCopy,
-  objIsEmpty,
-  shallowDiff
-} from "../../shared/utils/obj.utils";
-import { persistLocally, retrieveLocally } from "../utils/storage.utils";
-import type { Item } from "../types/item.enum";
-import { debouncer } from "../utils/utils";
-import { ObservableStore } from "./client.store";
-import { logger } from "./log.store";
+  persistLocally,
+  retrieveLocally
+} from "$lib/client/utils/storage.utils";
+import { debouncer } from "$lib/client/utils/utils";
+import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 
 export class KeyValueStore<T extends IObservableStoreSubject>
   extends ObservableStore<T>
   implements IObservableStore<T>
 {
-  declare id: Item;
+  declare id: Resource;
   isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
   protected seed: T;
   private _debouncedPersist = debouncer(this.persist, 3000);
   constructor(
-    item: Item,
+    item: Resource,
     seed: T,
     params?: Omit<IStore, "id" | "dataType" | "get">
   ) {

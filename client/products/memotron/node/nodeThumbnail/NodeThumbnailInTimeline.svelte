@@ -5,7 +5,7 @@
   import {
     NodeType,
     type INodeThumbnail
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import {
     isValidArrayWithData,
@@ -13,7 +13,7 @@
   } from "$lib/shared/utils/obj.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import { formatDate, formatTime } from "$lib/client/utils/time.utils";
-  import DLinks from "../foreLinks/DirectLinks.svelte";
+  import DLinks from "../../common/foreLinks/DirectLinks.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   // export let id: string;
   export let node: INodeThumbnail | undefined;

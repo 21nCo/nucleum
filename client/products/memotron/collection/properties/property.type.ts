@@ -1,9 +1,10 @@
+import type {
+  IResource,
+  IResourseShareable
+} from "$lib/client/components/resourceStores/resource.type";
 import type { AvatarWithCode, IconAvatar } from "$lib/client/types/avatar.type";
 
-export type IPropertyLocalRecord = IProperty;
-
-export type IProperty = {
-  id: string;
+export interface IProperty extends IResource, IResourseShareable {
   label: string;
   type: PropertyType;
   default?: boolean | string | number | string[];
@@ -11,7 +12,7 @@ export type IProperty = {
   order: number;
   isShowOnNodePage?: boolean;
   isShowOnCapture?: boolean;
-};
+}
 
 export type PropertyConfig = {
   options?: PropertyConfigOption[];

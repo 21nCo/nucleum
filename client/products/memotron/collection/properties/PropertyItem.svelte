@@ -6,7 +6,7 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
-  import type { INodeProperty } from "$lib/client/types/memotron/node.type";
+  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";

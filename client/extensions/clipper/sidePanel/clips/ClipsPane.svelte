@@ -7,10 +7,10 @@
   import {
     ClipperExtensionEvent,
     type Clip
-  } from "$lib/client/types/memotron/clip.type";
+  } from "$lib/client/products/memotron/common/clip.type";
   import EmptyStatusInbox from "$lib/client/illustrations/EmptyStatusInbox.svelte";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { NodeType } from "$lib/client/types/memotron/node.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
   import TextClip from "./TextClip.svelte";
   import VideoTimestampClip from "./VideoTimestampClip.svelte";

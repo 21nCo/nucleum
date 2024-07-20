@@ -1,8 +1,8 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-  import type { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
+  import type { NodeThumbnailVariant } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
-  import NodeItems from "$lib/client/products/memotron/common/NodeItems.svelte";
+  import NodeItems from "$lib/client/products/memotron/node/NodeItems.svelte";
 
   export let subGroup: any;
   export let data: any;

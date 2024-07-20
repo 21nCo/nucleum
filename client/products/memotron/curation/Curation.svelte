@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { CurationType } from "$lib/client/types/memotron/curation.type";
+  import { CurationType } from "$lib/client/products/memotron/curation/curation.type";
   import { onMount } from "svelte";
   import {
-    determineCurationType,
     type IActiveCollectionStore,
     resolveActiveCollectionStore
   } from "../collection/collection.store";
@@ -10,11 +9,11 @@
   export let id: string;
   let collection: IActiveCollectionStore;
   let combination: any;
-  let type: CurationType;
+  let type: CurationType = CurationType.COLLECTION;
   onMount(async () => {
     console.log("curation onMount", { id });
     if (!id) return;
-    type = determineCurationType(id);
+    // type = determineCurationType(id);
     if (type === CurationType.COLLECTION)
       collection = resolveActiveCollectionStore(id);
     console.log({ type, collection });

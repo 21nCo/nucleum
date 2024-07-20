@@ -1,6 +1,6 @@
-import type { IAvatar } from "../avatar.type";
-import type { IMemotronItemBase } from "./common.type";
-import type { NodeThumbnailVariant } from "./node.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
+import type { Arrangement } from "$lib/client/types/direction.enum";
+import type { IMemotronItemBase } from "../memotron.type";
 
 export enum CollectionType {
   TYPED = "TYPED",
@@ -39,7 +39,7 @@ export interface ICollection extends IMemotronItemBase {
 export interface ICollectionView extends IMemotronItemBase {
   layout: CollectionLayout;
   // data?: INodeThumbnail[];
-  arrangement?: NodeThumbnailVariant;
+  arrangement?: Arrangement;
   /**
    * Property id to show as tabs.
    * "none" for no tabs.

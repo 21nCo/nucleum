@@ -1,15 +1,13 @@
-import type { IMemotronItemBase } from "$lib/client/types/memotron/common.type";
-import type { IType } from "./type.type";
-import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
-import type { IAvatar } from "../avatar.type";
-import type { IMarkdown } from "./md.type";
-import type { IStore } from "../data.type";
-import type { ILink } from "./capture.type";
+import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
+import type { IAvatar } from "../../../types/avatar.type";
+import type { IMarkdown } from "../../../components/markdown/md.type";
+import type { IStore } from "../../../types/data.type";
 import type { IPropertyValue } from "$lib/client/products/memotron/collection/properties/property.type";
+import type { ILink } from "../capture/capture.type";
 
 export type INode = INodeBase &
   NodeContent & {
-    metadata: NodeMetadata;
+    metadata: INodeMetadata;
     children?: INode[] | string[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
@@ -26,11 +24,9 @@ export type INodeItemCaptured = Omit<
      * This helps in determining what to show as items on a timeline etc.
      */
     creationContext?: string;
-    metadata?: NodeMetadataCapturedAtClient;
+    metadata?: INodeMetadata;
     links?: ILink[];
   };
-
-export type NodeDbType = INode & DbRecordBase;
 
 export type INodeThumbnail = INodeBase &
   NodeContent & {
@@ -43,14 +39,9 @@ export type INodeBase = Omit<IMemotronItemBase, "label"> & {
   generatedLabel?: string;
   avatar?: IAvatar;
   properties?: INodeProperty[];
-  /**
-   * Type of the node - type:sometype
-   */
-  type?: IType;
 };
 
 export type IActiveNode = INode & {
-  type: IType;
   md: IMarkdown;
 };
 
@@ -273,18 +264,9 @@ export enum LinkType {
   UNMENTION_APPEARANCE = "UNMENTION_APPEARANCE"
 }
 
-export type NodeMetadataCapturedAtClient = {
+export type INodeMetadata = {
   location?: any;
 };
-
-export type NodeMetadata = NodeMetadataCapturedAtClient & {
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
-};
-
-export type NodeLocalRecord = INode;
 
 export type INodeProperty = {
   id: string;

@@ -10,8 +10,8 @@
     ClipperExtensionEvent,
     type IClip,
     type TextHighlightContent
-  } from "$lib/client/types/memotron/clip.type";
-  import { NodeType } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/common/clip.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import {
     ExtensionEvent,
     type TabData

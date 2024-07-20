@@ -1,4 +1,3 @@
-import type { DbRecordBase } from "../dbrecord.type";
 import type {
   NodeContent,
   ListChild,
@@ -6,7 +5,8 @@ import type {
   TextContent,
   NodeType,
   ListType
-} from "./node.type";
+} from "../../products/memotron/node/node.type";
+import type { IResourceBase } from "../resourceStores/resource.type";
 
 export type IMarkdownStore = IMarkdown & {
   blockToFocus?: string;
@@ -14,7 +14,7 @@ export type IMarkdownStore = IMarkdown & {
   params?: IMarkdownParams;
 };
 export type IMarkdown = { blocks: IBlock[] };
-export type DbBlock = DbRecordBase & IBlock;
+export type DbBlock = IResourceBase & IBlock;
 
 export type IBlock<T = NodeContent> = T & {
   id: string;

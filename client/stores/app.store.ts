@@ -11,10 +11,10 @@ import {
 } from "$lib/client/types/preferences.type";
 import blankJson from "$lib/client/data/blank.json";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import type { IStore } from "../types/data.type";
+import type { IObservableStoreSubject, IStore } from "../types/data.type";
 import {
   ActionType,
   ResourceAccessMode,
@@ -41,9 +41,10 @@ import context from "$lib/client/stores/context.store";
 import { confirmationNotification } from "$lib/client/stores/notification.store";
 
 import { defaultAppData } from "$local/local";
-import { KeyValueStore } from "./kv.store";
 import { Embed, OperatingSystem } from "../types/context.type";
 import { goto } from "../utils/browser.utils";
+import { accessLogStore } from "../components/accessLogging/accesslog.store";
+import { KeyValueStore } from "../components/resourceStores/kv.store";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -164,10 +165,12 @@ export const appConstants = {
   tempColorSchemes
 };
 
-class DboVersionStore extends KeyValueStore<{ version: number }> {
+class DboVersionStore extends KeyValueStore<
+  { version: number } & IObservableStoreSubject
+> {
   constructor() {
     super(
-      Item.dboVersion,
+      Resource.dboVersion,
       { version: 0 },
       {
         priorityRefreshOnAppAppear: true,
@@ -241,7 +244,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
 
 class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
-    super(Item.globalPreferences, seedUserPreferences, {
+    super(Resource.globalPreferences, seedUserPreferences, {
       priorityRefreshOnAppAppear: true,
       isSynchronousCache: true
     });
@@ -296,7 +299,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     }
     await persistance.create(
       { offset, date: new Date().toISOString(), label: label ?? "" },
-      Item.tz
+      Resource.tz
     );
     return this._setTimezone(offset, label);
   }
@@ -321,7 +324,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
         date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
         label: label ?? ""
       },
-      Item.tz
+      Resource.tz
     );
     return this._setTimezone(offset, label);
   }
@@ -367,7 +370,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
 
 export const userPreferences = new UserPreferencesStore();
 
-const cachedAppData = retrieveLocally(Item.appData);
+const cachedAppData = retrieveLocally(Resource.appData);
 
 export const appStore = initAppStore({
   product: "tidy",
@@ -454,7 +457,11 @@ function initAppStore(seed: AppStore) {
     //TODO - log error, show error code on error page
     gotoPath("/error");
   };
-  const gotoResource = async (item: Item, id: string, params: any = null) => {
+  const gotoResource = async (
+    item: Resource,
+    id: string,
+    params: any = null
+  ) => {
     const path = `/${item}/${id}`;
     update((n: AppStore) => {
       n = {
@@ -650,6 +657,12 @@ function initAppStore(seed: AppStore) {
   ) => {
     //TODO - shortcuts from user settings
     if (!id) return;
+    accessLogStore.create({
+      resource: id.split(":")[0],
+      action: "view",
+      resourceId: id,
+      timestamp: new Date().toISOString()
+    });
     toggleSearchParam("view");
     if (event.shiftKey) {
       toggleSearchParam(ResourceAccessMode.FOCUS, id);
@@ -694,7 +707,7 @@ function initAppStore(seed: AppStore) {
     loadAppData(appData: any) {
       update((n: AppStore) => {
         n.appData = appData;
-        persistLocally(Item.appData, appData);
+        persistLocally(Resource.appData, appData);
         return n;
       });
     },

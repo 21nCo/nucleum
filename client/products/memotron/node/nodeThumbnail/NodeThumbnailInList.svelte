@@ -4,7 +4,7 @@
   import {
     NodeType,
     type INodeThumbnail
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { contentPreview } from "$lib/client/products/memotron/node/node.utils";
   import { properCase } from "$lib/shared/utils/text.utils";

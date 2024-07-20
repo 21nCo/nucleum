@@ -3,7 +3,7 @@
   import Table2 from "$lib/client/elements/table/Table2.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
     TableCellType,
@@ -124,7 +124,7 @@
         $propertyEditorStore = [
           ...$propertyEditorStore,
           {
-            id: prefixTable(generateUID(), Item.property),
+            id: prefixTable(generateUID(), Resource.property),
             label: "",
             isShowOnNodePage: false,
             isShowOnCapture: false,

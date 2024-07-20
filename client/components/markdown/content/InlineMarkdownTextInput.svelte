@@ -3,7 +3,7 @@
   import {
     type SpanContent,
     SpanType
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import TextWithSpans from "./TextWithSpans.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import {

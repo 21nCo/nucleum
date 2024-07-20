@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { CurationType } from "$lib/client/types/memotron/curation.type";
+  import { CurationType } from "$lib/client/products/memotron/curation/curation.type";
   import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { createEventDispatcher } from "svelte";
   import type { IActiveCollectionStore } from "./collection.store";

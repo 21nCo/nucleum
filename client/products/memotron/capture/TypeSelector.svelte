@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { CaptureType } from "$lib/client/types/memotron/capture.type";
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+  import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";

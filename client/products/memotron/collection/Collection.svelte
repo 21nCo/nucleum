@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CurationType } from "$lib/client/types/memotron/curation.type";
+  import { CurationType } from "$lib/client/products/memotron/curation/curation.type";
   import type { IActiveCollectionStore } from "./collection.store";
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
@@ -20,7 +20,7 @@
   import {
     NodeThumbnailVariant,
     type INodeThumbnail
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
@@ -34,7 +34,7 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
-  import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
+  import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   /**
    * @deprecated - use collection directly

@@ -147,7 +147,7 @@ module.exports = {
         "border-brs1",
         "border-brs2",
         "border-brs3",
-        "border-a1s1",
+        "border-aps1",
         "styledscroll",
         /^theme_/,
         /^cs_.*$/,

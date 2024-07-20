@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { ICollectionView } from "$lib/client/types/memotron/collection.type";
-  import type { INodeThumbnail } from "$lib/client/types/memotron/node.type";
+  import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
+  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardPane from "./BoardPane.svelte";
   import { resolvePropertyOptions } from "../../curation/curation.utils";
-  import NodeItems from "../../common/NodeItems.svelte";
+  import NodeItems from "../../node/NodeItems.svelte";
   export let view: ICollectionView;
   export let data: INodeThumbnail[] = [];
   export let properties: IProperty[] | null = null;

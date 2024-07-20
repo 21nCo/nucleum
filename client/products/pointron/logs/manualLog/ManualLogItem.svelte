@@ -1,6 +1,6 @@
 <script lang="ts">
   import { swipeLabel } from "$lib/client/products/pointron/pointron.store";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { attachTimeToDate, formatTime } from "$lib/client/utils/time.utils";
@@ -117,7 +117,7 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
-      searchStoreId={Item.PointGoal}
+      searchStoreId={Resource.PointGoal}
       style={InputStyle.BORDERED}
       placeholder="Start typing to select goal"
     />

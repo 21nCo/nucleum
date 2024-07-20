@@ -1,4 +1,4 @@
-import type { Item } from "./item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
 
@@ -35,7 +35,7 @@ export type IAction = {
   confirmation?: ConfirmationNotification;
   loadingComponent?: any;
   searchActionParams?: {
-    searchItemType: Item;
+    searchItemType: Resource;
     itemLabel: string;
     callback: (id: string, label?: string) => void;
   };

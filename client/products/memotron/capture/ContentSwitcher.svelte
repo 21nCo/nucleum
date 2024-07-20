@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { CaptureType } from "$lib/client/types/memotron/capture.type";
+  import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
   import VerticalSwitcherItem from "$lib/client/elements/switcher/VerticalSwitcherItem.svelte";
   import {
     VerticalSwitcherStyle,

@@ -1,10 +1,10 @@
-import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import { truncateString } from "$lib/shared/utils/text.utils";
 import {
   NodeType,
-  type NodeMetadataCapturedAtClient
-} from "$lib/client/types/memotron/node.type";
-import type { ClipContent } from "$lib/client/types/memotron/clip.type";
+  type INodeMetadata
+} from "$lib/client/products/memotron/node/node.type";
+import type { ClipContent } from "$lib/client/products/memotron/common/clip.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 
 export function contentPreview(body: IMarkdown | ClipContent) {
@@ -47,7 +47,7 @@ export function contentPreview(body: IMarkdown | ClipContent) {
 }
 
 export async function resolveNodeCaptureMetadata() {
-  let metadata: NodeMetadataCapturedAtClient = {};
+  let metadata: INodeMetadata = {};
   let geoLocation: GeolocationPosition | undefined;
   try {
     geoLocation = await getGeoLocation();

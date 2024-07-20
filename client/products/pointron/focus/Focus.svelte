@@ -23,7 +23,7 @@
   } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
   import { pointLogStore } from "../logs/log.store";
@@ -80,7 +80,10 @@
     await sessionStore.startSession();
   }
   async function refresh() {
-    await dataManager.refreshPage([Item.quickFocusItems, Item.PointTag]);
+    await dataManager.refreshPage([
+      Resource.quickFocusItems,
+      Resource.PointTag
+    ]);
   }
 </script>
 

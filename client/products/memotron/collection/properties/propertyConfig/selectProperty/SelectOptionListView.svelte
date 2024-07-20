@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PropertyConfigOption } from "$lib/client/types/memotron/type.type";
+  import type { PropertyConfigOption } from "../../property.type";
   import SelectOptionItemView from "./SelectOptionItemView.svelte";
   export let options: PropertyConfigOption[];
   export let focusedOptionId: string | null = null;

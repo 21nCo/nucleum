@@ -1,14 +1,15 @@
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   type INodeItemCaptured,
   LinkType,
   type IActiveNode,
-  type INodeProperty
-} from "$lib/client/types/memotron/node.type";
+  type INodeProperty,
+  type INode
+} from "$lib/client/products/memotron/node/node.type";
 import {
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/stores/resource.store";
+} from "$lib/client/components/resourceStores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
@@ -17,10 +18,10 @@ import type { IMutationQueueParams } from "../../../types/data.type";
 
 export const hierarchyFactorLimit = 5;
 
-class NodeStore extends ResourceStore {
+class NodeStore extends ResourceStore<INode> {
   db: ISurrealDatabase;
   constructor() {
-    super(Item.node, {
+    super(Resource.node, {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
@@ -130,16 +131,14 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   };
   createBlock = async (id: string, contentType: any) => {
     return this.resourceStore.createNode(
-      {
-        resources: [
-          {
-            id,
-            body: "",
-            contentType,
-            creationContext: this.id
-          }
-        ]
-      },
+      [
+        {
+          id,
+          body: "",
+          contentType,
+          creationContext: this.id
+        }
+      ],
       {
         isUseQueueFirstApproach: true,
         mutationId: `${id}-create`

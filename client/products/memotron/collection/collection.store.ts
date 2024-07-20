@@ -1,9 +1,5 @@
-import {
-  CombinationViewType,
-  CurationType
-} from "$lib/client/types/memotron/curation.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { prefixTable } from "$lib/shared/utils/text.utils";
 import {
@@ -13,11 +9,11 @@ import {
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
-import { NodeThumbnailVariant } from "$lib/client/types/memotron/node.type";
+import { NodeThumbnailVariant } from "$lib/client/products/memotron/node/node.type";
 import {
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/stores/resource.store";
+} from "$lib/client/components/resourceStores/resource.store";
 import { Persistence } from "$lib/client/persistence/persistence";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
@@ -27,16 +23,18 @@ import {
   type ICollectionView,
   CollectionType,
   type ICollection
-} from "$lib/client/types/memotron/collection.type";
+} from "$lib/client/products/memotron/collection/collection.type";
 import {
   propertyEditorStore,
   propertyStore
 } from "./properties/property.store";
+import { Arrangement } from "$lib/client/types/direction.enum";
+import { CombinationViewType } from "../curation/curation.type";
 
-class CollectionStore extends ResourceStore {
+class CollectionStore extends ResourceStore<ICollection> {
   db: ISurrealDatabase;
   constructor() {
-    super(Item.collection, {
+    super(Resource.collection, {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
@@ -44,7 +42,7 @@ class CollectionStore extends ResourceStore {
   async create(
     form: Partial<ICollection> & { defaultLayout: CollectionLayout }
   ) {
-    const id = prefixTable(generateUID(), Item.collection);
+    const id = prefixTable(generateUID(), Resource.collection);
     const properties = propertyEditorStore.get();
     const resource: Partial<ICollection> = {
       ...form,
@@ -61,7 +59,7 @@ class CollectionStore extends ResourceStore {
       });
       resource.properties = properties.map((p) => p.id);
     }
-    const viewId = prefixTable(generateUID(), Item.view);
+    const viewId = prefixTable(generateUID(), Resource.view);
     await viewStore.create(
       {
         id: viewId,
@@ -145,17 +143,17 @@ export function resolveActiveCollectionStore(id: string, context: string = "") {
   return val!;
 }
 
-export function determineCurationType(id: string) {
-  let type;
-  if (id.startsWith(Item.nodelinks)) {
-    type = CurationType.NODELINKS;
-  } else if (id.startsWith(Item.collection)) {
-    type = CurationType.COLLECTION;
-  } else {
-    type = CurationType.COMBINATION;
-  }
-  return type;
-}
+// export function determineCurationType(id: string) {
+//   let type;
+//   if (id.startsWith(Resource.nodelinks)) {
+//     type = CurationType.NODELINKS;
+//   } else if (id.startsWith(Resource.collection)) {
+//     type = CurationType.COLLECTION;
+//   } else {
+//     type = CurationType.COMBINATION;
+//   }
+//   return type;
+// }
 
 class ActiveCollectionStore extends ActiveResourceStore<
   IActiveCollection,
@@ -171,7 +169,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
 
   async init(viewId?: string) {
     const dm = get(dataManager);
-    let type = determineCurationType(this.id);
+    // let type = determineCurationType(this.id);
     const response = await this.resourceStore.fetch(this.id, viewId);
     // console.log("curation fetch response", { response });
     if (type === CurationType.COLLECTION && response.curation) {
@@ -221,7 +219,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
         //   isRefreshing: true
         // });
       } else {
-        const record = await dm.cacheSource.dexie.curation.get(this.id);
+        const record = await dm.cacheSource.dexie.collection.get(this.id);
         if (record) {
           this.set({
             ...record,
@@ -258,12 +256,12 @@ class ActiveCollectionStore extends ActiveResourceStore<
         tabBy: "none",
         groupBy: "none",
         subGroupBy: "none",
-        arrangement: NodeThumbnailVariant.LIST
+        arrangement: Arrangement.LIST
       };
     }
     newView = {
       ...partial,
-      id: prefixTable(generateUID(), Item.view),
+      id: prefixTable(generateUID(), Resource.view),
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
       createdBy: this.currentUserId,
@@ -287,7 +285,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
       };
       return val;
     });
-    return new Persistence().delete(id, Item.view, this.currentUserId);
+    return new Persistence().delete(id, Resource.view, this.currentUserId);
   }
 
   updateView(view: ICollectionView) {
@@ -317,10 +315,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
   }
 }
 
-class CollectionViewStore extends ResourceStore {
+class CollectionViewStore extends ResourceStore<ICollectionView> {
   db: ISurrealDatabase;
   constructor() {
-    super(Item.view, {
+    super(Resource.view, {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();

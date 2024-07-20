@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import type { IAccessLog } from "../components/accessLogging/accessLog.type";
 
 export interface MutationQueue {
   id: string;
@@ -15,14 +16,16 @@ interface TestDexieRecord {
 }
 
 export class AppDexie extends Dexie {
-  protected dbVersion: number = 17;
+  protected dbVersion: number = 18;
   test!: Table<TestDexieRecord>;
   mutationQueuev2!: Table<MutationQueue>;
+  accessLog!: Table<IAccessLog>;
   constructor(scope: string) {
     super(scope);
     this.version(this.dbVersion).stores({
       mutationQueuev2: "id, timestamp, retryCount",
-      test: "id"
+      test: "id",
+      accessLog: "id, action, resource, resourceId, timestamp"
     });
   }
 }

@@ -7,7 +7,7 @@
     type LTWH,
     type LTWHP,
     type ScaledPosition
-  } from "$lib/client/types/memotron/pdfAnnotator.type";
+  } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import {
     asElement,
     embedAnnotationsandDownload,

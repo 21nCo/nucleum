@@ -1,8 +1,11 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import { InlineType } from "$lib/client/types/memotron/md.type";
-  import { NodeType, ListType } from "$lib/client/types/memotron/node.type";
+  import { InlineType } from "$lib/client/components/markdown/md.type";
+  import {
+    NodeType,
+    ListType
+  } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import {

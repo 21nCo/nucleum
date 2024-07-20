@@ -1,17 +1,17 @@
 import type { Table } from "dexie";
-import type { NodeLocalRecord } from "$lib/client/types/memotron/node.type";
+import type { INode } from "$lib/client/products/memotron/node/node.type";
 import { AppDexie } from "$lib/client/persistence/dexie";
-import type { IPropertyLocalRecord } from "./collection/properties/property.type";
 import type {
   ICollection,
   ICollectionView
-} from "$lib/client/types/memotron/collection.type";
+} from "$lib/client/products/memotron/collection/collection.type";
+import type { IProperty } from "./collection/properties/property.type";
 
 export class MemotronDexie extends AppDexie {
-  node!: Table<NodeLocalRecord>;
+  node!: Table<INode>;
   collection!: Table<ICollection>;
   view!: Table<ICollectionView>;
-  property!: Table<IPropertyLocalRecord>;
+  property!: Table<IProperty>;
 
   constructor(scope: string) {
     super(scope);

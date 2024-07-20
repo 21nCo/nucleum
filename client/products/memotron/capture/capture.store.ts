@@ -1,15 +1,15 @@
 import { get } from "svelte/store";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   NodeType,
   LinkType,
   type INodeItemCaptured
-} from "$lib/client/types/memotron/node.type";
+} from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
   type ICaptureStore,
   type FileDetails
-} from "$lib/client/types/memotron/capture.type";
+} from "$lib/client/products/memotron/capture/capture.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { generateUID } from "$lib/client/utils/utils";
 import { dataManager } from "$lib/client/persistence/dataManager";
@@ -18,15 +18,15 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { prefixTable } from "$lib/shared/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { logger } from "$lib/client/stores/log.store";
-import { MemotronResourceType } from "$lib/client/types/memotron/common.type";
-import { determineResourceType } from "../memotron.utils";
+import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
+import { resolveResourceType } from "../memotron.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
-  const blockId = prefixTable(generateUID(), Item.node);
+  const blockId = prefixTable(generateUID(), Resource.node);
   return {
     captureType: CaptureType.MARKDOWN,
     refreshId: new Date().getTime(),
@@ -52,7 +52,7 @@ function generateSeedStore(): ICaptureStore {
 class CaptureStore extends KeyValueStore<ICaptureStore> {
   constructor() {
     super(
-      Item.capture,
+      Resource.capture,
       { ...generateSeedStore() },
       {
         priorityRefreshOnAppAppear: true,
@@ -71,14 +71,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!data) return;
     const val = {
       ...data,
-      id: Item.capture,
+      id: Resource.capture,
       refreshId: new Date().getTime()
     };
     this.modify(val, { isPersist: false });
   }
   async onTypeSelect(val: CaptureType | string) {
     logger.log({ context: "onTypeSelect", val });
-    if (!val.startsWith(Item.collection)) return;
+    if (!val.startsWith(Resource.collection)) return;
     const dexie = get(dataManager).cacheSource.dexie;
     const type = await dexie.collection.get(val);
     if (!type) return;
@@ -98,7 +98,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   addMentionLink(from: string, to: string) {
     this.update((val) => {
       val.links = val.links ?? [];
-      val.links.push({ from, to, linkType: LinkType.MENTION });
+      val.links.push({
+        from,
+        to,
+        linkType: LinkType.MENTION,
+        toType: undefined
+      });
       return val;
     });
   }
@@ -111,7 +116,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
   }
   directLink(item: any) {
-    const toType = determineResourceType(item);
+    const toType = resolveResourceType(item);
     console.log("directLink", { item, toType });
     this.update((val) => {
       val.links = [
@@ -145,7 +150,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     //TODO - extract nodes from markdown blocks and save
     const metadata = await resolveNodeCaptureMetadata();
     console.log("capture store", { val, metadata });
-    const id = prefixTable(generateUID(), Item.node);
+    const id = prefixTable(generateUID(), Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { PropertyConfigOption } from "$lib/client/types/memotron/type.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ColorPicker from "$lib/client/elements/colorPicker/ColorPicker.svelte";
@@ -11,6 +10,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import type { PropertyConfigOption } from "../../property.type";
   const dispatch = createEventDispatcher();
   export let option: PropertyConfigOption;
   export let isFocusing: boolean = false;

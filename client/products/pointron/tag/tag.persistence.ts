@@ -1,5 +1,5 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { get } from "svelte/store";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { cloudProvider } from "$lib/client/persistence/persistence";
@@ -9,7 +9,7 @@ export class TagPersistence {
   search(query: string) {
     switch (get(cloudProvider)) {
       case Cloud.local:
-        let tags = retrieveLocally(Item.PointTag);
+        let tags = retrieveLocally(Resource.PointTag);
         tags = tags.filter((tag: ITag) => tag.label.includes(query));
         return tags;
     }
@@ -19,7 +19,7 @@ export class TagPersistence {
     let tags: ITag[] = [];
     switch (get(cloudProvider)) {
       case Cloud.local:
-        let savedTags: ITag[] = retrieveLocally(Item.PointTag);
+        let savedTags: ITag[] = retrieveLocally(Resource.PointTag);
         if (!savedTags) return;
         tagIds.forEach((id) => {
           const tag = savedTags.find((tag: ITag) => tag.id == id);

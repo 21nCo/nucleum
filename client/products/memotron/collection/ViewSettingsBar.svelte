@@ -7,7 +7,7 @@
   import {
     CollectionLayout,
     type ICollectionView
-  } from "$lib/client/types/memotron/collection.type";
+  } from "$lib/client/products/memotron/collection/collection.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { collectionLayoutOptions } from "./collection.store";

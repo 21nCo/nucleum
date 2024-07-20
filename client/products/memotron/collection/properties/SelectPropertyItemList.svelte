@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { PropertyConfigOption } from "$lib/client/types/memotron/type.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import type { PropertyConfigOption } from "./property.type";
   import SelectPropertyItem from "./SelectPropertyItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

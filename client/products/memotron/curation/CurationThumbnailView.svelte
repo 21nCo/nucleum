@@ -2,7 +2,7 @@
   import {
     CurationType,
     type CurationThumbnail
-  } from "$lib/client/types/memotron/curation.type";
+  } from "$lib/client/products/memotron/curation/curation.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";

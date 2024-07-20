@@ -1,5 +1,5 @@
 import type { IStore } from "../data.type";
-import type { IMemotronItemBase } from "./common.type";
+import type { IMemotronItemBase } from "./memotron.type";
 
 export interface ICurationBase extends IMemotronItemBase {
   description?: string;
@@ -15,7 +15,6 @@ export type CombinationChild = CurationThumbnail | CombinationNodeThumbnail;
 export type CombinationNodeThumbnail = IMemotronItemBase & {
   children?: CombinationChild[];
 };
-
 
 export interface ICombination extends ICurationBase {
   layout: CombinationViewType;

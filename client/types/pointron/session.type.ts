@@ -1,6 +1,6 @@
 import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
 import type { SessionState } from "./sessionState.enum";
-import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { SessionType } from "$lib/client/products/pointron/logs/log.type";
 

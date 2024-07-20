@@ -1,6 +1,6 @@
 <script lang="ts">
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
-  import { CaptureType } from "$lib/client/types/memotron/capture.type";
+  import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";

@@ -1,15 +1,11 @@
-import type { ITrashInformation } from "../resource.type";
+import type {
+  IResource,
+  IResourseShareable
+} from "$lib/client/components/resourceStores/resource.type";
 
-export interface IMemotronItemBase {
-  id: string;
+export interface IMemotronItemBase extends IResource, IResourseShareable {
   label: string;
   isStarred?: boolean;
-  isArchived?: boolean;
-  trashInformation?: ITrashInformation;
-  createdAt: string;
-  modifiedAt: string;
-  createdBy: string;
-  modifiedBy: string;
 }
 
 /**

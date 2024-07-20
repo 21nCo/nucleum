@@ -1,25 +1,25 @@
 import { get, writable } from "svelte/store";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { Item } from "../../types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { StoreDataType } from "../../types/data.type";
 import type { Space, SpaceStore } from "../../types/space.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
 import { retrieveLocally } from "../../utils/storage.utils";
 
-const cachedSpaceInContext = retrieveLocally(Item.spaceInContext);
+const cachedSpaceInContext = retrieveLocally(Resource.spaceInContext);
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);
 
 const seedSpaceStore = {
-  id: Item.space,
+  id: Resource.space,
   dataType: StoreDataType.FIR,
-  mutatingResources: [Item.space],
+  mutatingResources: [Resource.space],
   refreshOnAppAppear: true,
   spaces: []
 };
 export const spaceStore = initSpaceStore();
 function initSpaceStore() {
   const { subscribe, set, update } = writable<SpaceStore>();
-  dataManager.retrieveCache(Item.space).then((m) => {
+  dataManager.retrieveCache(Resource.space).then((m) => {
     if (!m) {
       set(seedSpaceStore);
     } else {
@@ -37,7 +37,7 @@ function initSpaceStore() {
       localStorage.setItem("token-" + data.id, data.token);
     }
     spaceInContext.set(space);
-    localStorage.setItem(Item.spaceInContext, JSON.stringify(space));
+    localStorage.setItem(Resource.spaceInContext, JSON.stringify(space));
     //modalEvent.hideSpecific(GatheryEvent.SPACE_BROWSER);
     return true;
   };

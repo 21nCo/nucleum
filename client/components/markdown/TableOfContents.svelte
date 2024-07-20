@@ -2,7 +2,7 @@
   import type {
     IBlock,
     IMarkdownStore
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import { onMount } from "svelte";
   import { getMdStore } from "./markdown.store";
   import Text from "$lib/client/elements/text/Text.svelte";

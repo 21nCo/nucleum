@@ -5,7 +5,7 @@ import {
 } from "$lib/client/utils/time.utils";
 import { currentTime, userPreferences } from "$lib/client/stores/app.store";
 import { get, writable } from "svelte/store";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   PersistanceActionType,
   StoreDataType
@@ -22,9 +22,9 @@ import {
   type LogThumbnail,
   type ILogsPaneStore,
   type IManualSessionLogForm,
-  type PointLogDbType,
+  type IPointLog,
   type IPointLogStore,
-  type PointSessionDbType
+  type IPointSession
 } from "./log.type";
 import type {
   IFocusItemsStore,
@@ -36,15 +36,15 @@ import {
   sessionTotals
 } from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
-import { NodeType } from "$lib/client/types/memotron/node.type";
+import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 
 class PointLogStore extends ObservableStore<IPointLogStore> {
   constructor() {
-    super(Item.PointLog, StoreDataType.NA, {
-      mutatingResources: [Item.PointSession, Item.PointLog]
+    super(Resource.PointLog, StoreDataType.NA, {
+      mutatingResources: [Resource.PointSession, Resource.PointLog]
     });
   }
   reset() {
@@ -98,18 +98,18 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
     let n = this.get();
     logger.log({ context: "saving manual logs", n });
     //TODO: Add validation and set error message in store
-    let sessionEntries: PointSessionDbType[] = [];
-    let logEntries: PointLogDbType[] = [];
+    let sessionEntries: IPointSession[] = [];
+    let logEntries: IPointLog[] = [];
     n.manualLogs.forEach((entry) => {
       const duration = entry.duration;
       let start = attachTimeToDate(entry.startDate, entry.startTime);
       let end = attachTimeToDate(entry.endDate, entry.endTime);
       const id = generateSessionId(start.getTime());
-      const log: PointLogDbType = {
+      const log: IPointLog = {
         start: start.toISOString(),
         end: end.toISOString(),
-        id: prefixTable(id, Item.PointLog),
-        sessionId: prefixTable(id, Item.PointSession),
+        id: prefixTable(id, Resource.PointLog),
+        sessionId: prefixTable(id, Resource.PointSession),
         totalFocus: duration,
         totalBreak: 0,
         goalId: entry.goalId,
@@ -117,11 +117,11 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
         tzOffset: get(userPreferences).timeZoneOffset,
         targets: get(pointronPreferences).horizonTargets
       };
-      const session: PointSessionDbType = {
+      const session: IPointSession = {
         start: start.toISOString(),
         end: end.toISOString(),
         elapsed: duration,
-        id: prefixTable(id, Item.PointSession),
+        id: prefixTable(id, Resource.PointSession),
         manualEntryId: entry.id,
         logs: [{ ...log, start: start.getTime(), end: end.getTime() }],
         blocks: [],
@@ -149,7 +149,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
     //   logEntries
     // );
     await dataManager.performMutation(
-      Item.PointLog,
+      Resource.PointLog,
       { sessionEntries, logEntries },
       {
         action: PersistanceActionType.CUSTOM_QUERY,
@@ -164,7 +164,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
   }
   async deleteLog(id: string) {
     return dataManager.performMutation(
-      Item.PointLog,
+      Resource.PointLog,
       { id },
       {
         action: PersistanceActionType.CUSTOM_QUERY,
@@ -183,7 +183,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
     focusItemStore: IFocusItemsStore,
     isClose: boolean
   ) {
-    const m: PointSessionDbType = {
+    const m: IPointSession = {
       elapsed: focusStore.totalElapsed,
       extended: focusStore.totalExtended,
       start: focusStore.start?.toISOString() ?? "",
@@ -193,7 +193,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
 
       id: prefixTable(
         focusStore.currentSessionId ?? generateSessionId(new Date().getTime()),
-        Item.PointSession
+        Resource.PointSession
       ),
       plannedEnd:
         focusStore.end?.toISOString() ?? focusStore.type != SessionType.COUNTUP
@@ -231,7 +231,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
         blocks: []
       });
     }
-    const logs: PointLogDbType[] = focusStore.logs.map((l: FocusLog) => {
+    const logs: IPointLog[] = focusStore.logs.map((l: FocusLog) => {
       let taskName = focusItemStore.items.find(
         (x) => x.taskId == l.taskId
       )?.label;
@@ -240,7 +240,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
       }
       return {
         ...l,
-        id: prefixTable(l.start, Item.PointLog),
+        id: prefixTable(l.start, Resource.PointLog),
         start: new Date(l.start).toISOString(),
         end: new Date(l.end!).toISOString(),
         sessionId: m.id,
@@ -250,13 +250,13 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
       };
     });
     dataManager.performMutation(
-      Item.PointLog,
+      Resource.PointLog,
       {
         sessionData: m,
         logs,
         snapshot: {
           ...focusStore,
-          id: prefixTable(Item.pointSessionSnapshot, Item.kv)
+          id: prefixTable(Resource.pointSessionSnapshot, Resource.kv)
         },
         isClose
       },
@@ -279,7 +279,7 @@ const seedLogsPaneStore: ILogsPaneStore = {
 
 class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
   constructor() {
-    super(Item.logsPane);
+    super(Resource.logsPane);
     this.set(seedLogsPaneStore);
   }
   /**
@@ -336,7 +336,7 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
       return n;
     n.date = new Date(date);
     this.set(n);
-    return dataManager.refresh(Item.logsPane, true);
+    return dataManager.refresh(Resource.logsPane, true);
   }
 }
 
