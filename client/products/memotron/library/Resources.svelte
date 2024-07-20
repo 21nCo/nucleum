@@ -1,5 +1,4 @@
 <script lang="ts">
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ResourceAccessMode } from "$lib/client/types/action.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
@@ -63,5 +62,4 @@
       {/if}
     {/each}
   </div>
-  <ScrollViewBottomSpacer />
 </div>

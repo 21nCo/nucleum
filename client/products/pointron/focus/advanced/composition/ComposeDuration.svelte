@@ -191,6 +191,7 @@
             />{/if}
           <SwitchInput
             bind:checked={isTargetFocus}
+            isExpanded={true}
             label={{
               label: "Adjust end time until target is reached",
               tooltip: {

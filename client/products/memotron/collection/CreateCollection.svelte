@@ -129,6 +129,7 @@
           }
         }}
         bind:checked={isCaptureShortcutEnabled}
+        isExpanded={true}
       />
       <SwitchInput
         label={{
@@ -141,6 +142,7 @@
             action: "/kb/advanced-filter-query"
           }
         }}
+        isExpanded={true}
         bind:checked={isTypeExtension}
       />
       {#if isTypeExtension}

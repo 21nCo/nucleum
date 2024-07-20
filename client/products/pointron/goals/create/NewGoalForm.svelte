@@ -49,12 +49,12 @@
   />
   <SwitchInput
     label={{ label: "Pin goal to quick focus" }}
-    width="w-full"
+    isExpanded={true}
     bind:checked={$newGoal.isPinnedForQuickStart}
   />
   <SwitchInput
     label={{ label: "Mark as favorite" }}
-    width="w-full"
+    isExpanded={true}
     bind:checked={$newGoal.isFavorite}
   />
 </div>

@@ -39,7 +39,6 @@
       bind:checked={isGrouping}
       label={{ label: "Grouping" }}
       size={Size.sm}
-      isExpanded={false}
     />
   </span>
   <div class="flex flex-col gap-3 flex-grow p-3">
