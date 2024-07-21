@@ -7,10 +7,15 @@
   import CollectionThumbnail from "../collection/thumbnail/CollectionThumbnail.svelte";
   import { resolveResourceType } from "../memotron.utils";
   import NodeThumbnail from "../node/nodeThumbnail/NodeThumbnail.svelte";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   export let data: any[] = [];
-  export let selectedResource: string = "nodes";
-  let arrangement: Arrangement = Arrangement.GRID;
+  export let resource: Resource = Resource.node;
+  export let arrangement: Arrangement = Arrangement.LIST;
+  export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;
   let parentBgIndex = 1;
+  function onClick(e: MouseEvent, item: any) {
+    appStore.resourceClickHandler(e, item.id, defaultAccessMode);
+  }
 </script>
 
 <div class="flex flex-col w-full h-full">
@@ -21,21 +26,19 @@
     )}
   >
     {#each data as item}
-      {#if selectedResource === "everything"}
+      {#if resource === "everything"}
         {#if resolveResourceType(item) === MemotronResourceType.NODE}
           <NodeThumbnail
             {item}
             {parentBgIndex}
             variant={arrangement}
-            on:click={(e) =>
-              appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+            on:click={(e) => onClick(e, item)}
           />
         {:else if item.id.startsWith("collection:")}
           <CollectionThumbnail
             {item}
             {arrangement}
-            on:click={(e) =>
-              appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+            on:click={(e) => onClick(e, item)}
           />
         {:else}
           <div
@@ -44,20 +47,18 @@
             {item.label}
           </div>
         {/if}
-      {:else if selectedResource === "nodes"}
+      {:else if resource === Resource.node}
         <NodeThumbnail
           {item}
           {parentBgIndex}
           variant={arrangement}
-          on:click={(e) =>
-            appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          on:click={(e) => onClick(e, item)}
         />
-      {:else if selectedResource === "collections"}
+      {:else if resource === Resource.collection}
         <CollectionThumbnail
           {item}
           {arrangement}
-          on:click={(e) =>
-            appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          on:click={(e) => onClick(e, item)}
         />
       {/if}
     {/each}

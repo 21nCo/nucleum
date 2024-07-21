@@ -32,7 +32,7 @@
         classList += " text-fgs3";
         break;
       case TextStyle.SECTION_HEADING:
-        classList += " text-fgs3 font-medium text-b2 max-w-3xl bg-none";
+        classList += " text-fgs3 font-light text-b2 max-w-3xl bg-none";
         break;
       case TextStyle.SECTION_HEADING_SMALL:
         classList += " text-fgs3 font-light text-b3 max-w-3xl bg-none";

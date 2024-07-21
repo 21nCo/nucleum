@@ -41,7 +41,7 @@
             />
           {/if}
           <span
-            class={cn({
+            class={cn("min-w-fit whitespace-nowrap", {
               "text-ars1": isRedAccent(item)
             })}>{item.label ?? properCase(item.value.toString())}</span
           >

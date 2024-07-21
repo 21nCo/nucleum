@@ -1,5 +1,4 @@
 <script lang="ts">
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import {
     headingNodeTypes,
@@ -8,88 +7,133 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { get } from "svelte/store";
   import { activeResourceFilter } from "$lib/client/utils/utils";
-  import Resources from "./Resources.svelte";
+  import Resources from "../common/Resources.svelte";
   import { onMount } from "svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
   import Divider from "$lib/client/elements/Divider.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Arrangement, Orientation } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
+  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ResourceSwitcher from "$lib/client/elements/switcher/resourceSwitcher/ResourceSwitcher.svelte";
+  import type { IResourceSwitchItem } from "$lib/client/types/select.type";
+  import { appMenuStore } from "$lib/client/layout/leftPanel/appMenu.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
+  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+  import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
   export let isModal: boolean = false;
   let searchQuery: string = "";
-  let selectedResource: string = "everything";
-  let selectedTabFilter: string = "all";
+  let selectedResource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
   let isStickied: boolean = false;
   let isSearchFocused: boolean = false;
+  let isStarFilterSelected: boolean = false;
   let data: any[] = [];
-  const resources = [
+  let availableResources: Resource[] = [
+    Resource.node,
+    Resource.collection,
+    Resource.file,
+    Resource.task
+  ];
+  const commonResourceProps = {
+    isHidePinAction: true
+  };
+  const resources: IResourceSwitchItem[] = [
     {
-      value: "everything",
+      ...commonResourceProps,
+      value: Resource.everything,
       icon: "tag"
     },
     {
-      value: "nodes",
+      ...commonResourceProps,
+      label: "Nodes",
+      value: Resource.node,
       icon: "node"
     },
     {
-      value: "collections",
-      icon: "curation"
+      ...commonResourceProps,
+      label: "Collections",
+      value: Resource.collection,
+      icon: "curation",
+      isPinned: true
+    },
+    {
+      ...commonResourceProps,
+      label: "Combinations",
+      value: Resource.combination,
+      icon: "rectangle-group"
+    },
+    {
+      ...commonResourceProps,
+      label: "Files",
+      value: Resource.file,
+      icon: "folder"
+    },
+    {
+      ...commonResourceProps,
+      label: "Tasks",
+      value: Resource.task,
+      icon: "rocket"
     }
-    // {
-    //   label: "Combinations",
-    //   value: "combinations",
-    //   icon: "curation"
-    // },
-    // {
-    //   value: "files",
-    //   icon: "folder"
-    // },
-    // {
-    //   label: "Tasks",
-    //   value: "tasks",
-    //   icon: "folder"
-    // },
     // {
     //   value: "clips",
     //   icon: "paper-clip"
     // }
   ];
-  const tabs = [
+  $: isCurrentResourcePinned = $appMenuStore[$appStore.product]?.user?.includes(
+    resourceAction(selectedResource, ResourceActionType.BROWSER)
+  );
+  $: contextMenu = [
     {
-      label: "All",
-      value: "all"
+      group: "all",
+      items: [
+        {
+          label: isCurrentResourcePinned
+            ? "Unpin from App menu"
+            : "Pin to App menu",
+          value: "pin",
+          icon: isCurrentResourcePinned ? "unpin" : "pin",
+          callback: () => {
+            if (!isCurrentResourcePinned)
+              appMenuStore.addUserMenuItem(
+                resourceAction(selectedResource, ResourceActionType.BROWSER)
+              );
+            else
+              appMenuStore.removeUserMenuItem(
+                resourceAction(selectedResource, ResourceActionType.BROWSER)
+              );
+          }
+        },
+        {
+          label: "Create new",
+          value: "create",
+          icon: "plus",
+          callback: () => {
+            // appStore.runAction(selectedResource);
+          }
+        }
+      ]
     },
     {
-      label: "Starred",
-      value: "starred"
-    },
-    {
-      label: "Recently opened",
-      value: "recent"
+      group: "more",
+      items: []
     }
   ];
   onMount(async () => {
-    await refreshDefaultData();
+    await refresh();
   });
   function onKeydown(event: any) {
     console.log({ event });
-    if (searchQuery) {
-      refreshDataUsingSearchQuery();
-    } else {
-      refreshDefaultData();
-    }
+    refresh();
   }
   function levenshteinDistance(a: string, b: string): number {
     const matrix = [];
@@ -118,83 +162,99 @@
 
     return matrix[b.length][a.length];
   }
-
-  async function refreshDataUsingSearchQuery() {
-    const dexie = get(dataManager).cacheSource.dexie;
-    if (selectedResource === "everything") {
-      data = await dexie.node
-        .where("contentType")
-        .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes])
-        .and((node) => activeResourceFilter(node))
-        .reverse()
-        .sortBy("modifiedAt");
-      data = data.concat(await dexie.collection.reverse().sortBy("modifiedAt"));
-    } else if (selectedResource === "nodes") {
-      data = await dexie.node
-        .where("contentType")
-        .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes])
-        .and((node) => activeResourceFilter(node))
-        .reverse()
-        .sortBy("modifiedAt");
-    } else if (selectedResource === "collections") {
-      data = await dexie.collection
-        .filter((collection) => {
-          if (!collection.label) return false;
-          const labelValue = collection.label.toLowerCase();
-          const searchValue = searchQuery.toLowerCase();
-          if (labelValue.includes(searchValue)) return true;
-          const levenshteinDistanceValue = levenshteinDistance(
-            labelValue,
-            searchValue
-          );
-          console.log({ labelValue, searchValue, levenshteinDistanceValue });
-          return levenshteinDistanceValue <= 2;
-        })
-        .toArray();
-    }
-  }
-
-  async function refreshDataByTabFilter() {
-    const dexie = get(dataManager).cacheSource.dexie;
-  }
-
   async function refreshNodes() {
     const dexie = get(dataManager).cacheSource.dexie;
     let query = dexie.node
       .where("contentType")
-      .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes]);
+      .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes])
+      .and((node) => activeResourceFilter(node));
 
-    if (selectedTabFilter === "starred") {
-      query = query.and((node) => node.isStarred === true);
+    if (isStarFilterSelected) {
+      query = query.and((item) => item.isStarred === true);
     }
+    return query.toArray();
   }
 
-  async function refreshDefaultData() {
+  async function refreshCollections() {
     const dexie = get(dataManager).cacheSource.dexie;
-    if (selectedResource === "everything") {
-      data = await dexie.node
-        .where("contentType")
-        .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes])
-        .and((node) => activeResourceFilter(node))
-        .reverse()
-        .sortBy("modifiedAt");
-      data = data.concat(await dexie.collection.reverse().sortBy("modifiedAt"));
-    } else if (selectedResource === "nodes") {
-      data = await dexie.node
-        .where("contentType")
-        .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes])
-        .and((node) => activeResourceFilter(node))
-        .reverse()
-        .sortBy("modifiedAt");
-    } else if (selectedResource === "collections") {
-      data = await dexie.collection.reverse().sortBy("modifiedAt");
+    let query = dexie.collection
+      .where("id")
+      .notEqual("")
+      .and((node) => activeResourceFilter(node));
+
+    if (isStarFilterSelected) {
+      query = query.and((item) => item.isStarred === true);
     }
+
+    if (isValidString(searchQuery)) {
+      query = query.filter((collection) => {
+        if (!collection.label) return false;
+        const labelValue = collection.label.toLowerCase();
+        const searchValue = searchQuery.toLowerCase();
+        if (labelValue.includes(searchValue)) return true;
+        const levenshteinDistanceValue = levenshteinDistance(
+          labelValue,
+          searchValue
+        );
+        console.log({ labelValue, searchValue, levenshteinDistanceValue });
+        return levenshteinDistanceValue <= 2;
+      });
+    }
+    return query.toArray();
+  }
+
+  async function refresh() {
+    data = [];
+    if (selectedResource === "everything") {
+      const nodes = await refreshNodes();
+      const collections = await refreshCollections();
+      data = [...nodes, ...(collections ?? [])];
+    } else if (selectedResource === Resource.node) {
+      data = await refreshNodes();
+    } else if (selectedResource === Resource.collection) {
+      data = (await refreshCollections()) ?? [];
+    }
+    //TODO - use sort from library state settings
+    //.reverse().sortBy("interactedAt");
   }
   function onScroll() {
     var elementTarget = document.querySelector(".resource-switcher");
     var positionFromTop = elementTarget?.getBoundingClientRect().top;
-    console.log({ elementTarget, positionFromTop });
+    // console.log({ elementTarget, positionFromTop });
     isStickied = positionFromTop ? positionFromTop <= 0 : false;
+  }
+  function resolveFooterMessage(data: any[]) {
+    if (!data || !data.length) return;
+    let prefix = "Showing " + data.length + " ";
+    const label = resolveResourceLabel();
+    if (isStarFilterSelected) return prefix + `⭐️ staaarrrrrrrrrred ` + label;
+    else if (searchQuery)
+      return prefix + label + ` containing "${searchQuery}"`;
+    else return "Showing all " + data.length + " " + label;
+  }
+  function resolveResourceLabel(isPlural: boolean = false) {
+    let label = "items";
+    if (selectedResource === "everything") label = "item";
+    else label = selectedResource;
+    return label + (data.length > 1 || isPlural ? "s" : "");
+  }
+  function resolveEmptyStateMessage() {
+    const label = resolveResourceLabel(true);
+    if (isStarFilterSelected)
+      return {
+        mainText: `No starred ${label} found.`,
+        subText: `Please star some ${label} to see them here.`
+      };
+    else if (searchQuery)
+      return {
+        mainText: `No ${label} found.`,
+        subText: `Please try a different search.`
+      };
+    else
+      return {
+        mainText: `Looks like you don't have any ${label} yet.`,
+        subText: `Please create one.`
+      };
   }
 </script>
 
@@ -203,14 +263,6 @@
   on:scroll={onScroll}
 >
   <div class="flex flex-col bg-bgs1 sticky top-0 z-20 shadow--sm">
-    <!-- <div class="flex w-full justify-end px-4">
-      <PanelSwitcher
-        items={["All", "Starred", "Recently opened"]}
-        style={PanelSwitcherStyle.BAR}
-        size={Size.sm}
-        isInversePlacement={true}
-      />
-    </div> -->
     <div class="flex w-full justify-between px-5 py-3 pt-6">
       <input
         class="text-h2 w-full bg-transparent focus:outline-none focus:border-none"
@@ -230,6 +282,8 @@
             label={{ label: "Starred", orientation: Orientation.Horizontal }}
             size={Size.sm}
             style={InputStyle.BORDERED}
+            bind:checked={isStarFilterSelected}
+            on:change={refresh}
           />
           <Button
             icon="funnel"
@@ -254,50 +308,69 @@
     />
   </div>
   <div
-    class="flex w-full justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-6 top-0 z-10"
+    class="flex w-full justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
   >
-    <OptionSelector
-      options={resources}
-      bind:selected={selectedResource}
-      on:select={refreshDefaultData}
-    />
-    <!-- <PanelSwitcher
-      items={tabs}
-      style={PanelSwitcherStyle.BAR}
-      barStyle={BarStyle.DOT}
-      size={Size.sm}
-      isInversePlacement={true}
-      bind:value={selectedTabFilter}
-      on:switch={refreshDefaultData}
-    /> -->
-    <span>
-      <SwitchInput
-        label={{ label: "Starred", orientation: Orientation.Horizontal }}
+    <span class="flex w-10/12 overflow-auto">
+      <ResourceSwitcher
+        options={resources}
+        bind:selected={selectedResource}
+        on:select={refresh}
         size={Size.sm}
       />
     </span>
+    <span>
+      <!-- <SwitchInput
+        label={{ label: "Starred", orientation: Orientation.Horizontal }}
+        size={Size.sm}
+        bind:checked={isStarFilterSelected}
+        on:change={refresh}
+      /> -->
+      <span class="flex gap-2 items-center">
+        {#if availableResources.includes(selectedResource)}
+          <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
+          <!-- <Toggle
+          icon={resolveIfPinned() ? "unpin" : "pin"}
+          bind:on={isFiltersVisible}
+          size={Size.sm}
+        /> -->
+          <Button
+            icon="plus"
+            size={Size.sm}
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.DEFAULT}
+            label={selectedResource}
+            isPreventMinWidth={true}
+            on:click={() =>
+              appStore.runAction(
+                resourceAction(selectedResource, ResourceActionType.CREATE)
+              )}
+          />
+          <ContextMenuAction {contextMenu} />
+        {/if}
+      </span>
+    </span>
   </div>
   <main class="flex flex-col gap-8 w-full grow px-5">
-    <div class="flex flex-col grow">
-      <Resources {data} {selectedResource} />
-    </div>
-    <div class="flex w-full justify-center text-b2 text-fgs3">
-      Showing &nbsp;
-      <b>
-        {data.length}
-      </b>
-      &nbsp;
-      {#if searchQuery}
-        results containing &nbsp; <b>
-          "{searchQuery}"
-        </b>
-      {:else if selectedTabFilter === "starred"}
-        ⭐️ staaarrrrrrrrrred results!
-      {:else}
-        results
-      {/if}
-    </div>
-    <ScrollViewBottomSpacer />
+    {#if data.length > 0}
+      <div class="flex flex-col grow">
+        <Resources
+          {data}
+          resource={selectedResource}
+          arrangement={Arrangement.GRID}
+        />
+      </div>
+      <div class="flex w-full justify-center text-b2 text-fgs3">
+        {resolveFooterMessage(data) ?? ""}
+      </div>
+      <ScrollViewBottomSpacer />
+    {:else if availableResources.includes(selectedResource)}
+      <EmptyStatusView {...resolveEmptyStateMessage()} />
+    {:else}
+      <EmptyStatusView
+        mainText="Coming soon..."
+        subText="We are super thrilled to work with you on this feature. Stay tuned."
+      />
+    {/if}
   </main>
 </div>
 

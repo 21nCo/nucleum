@@ -6,6 +6,8 @@
   import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import Switch from "./Switch.svelte";
   import InputBaseElement from "../InputBaseElement.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let label: InputLabel;
   export let style: InputStyle = InputStyle.PLAIN;
   export let checked: boolean = false;
@@ -28,12 +30,12 @@
       "border border-brs3 rounded-full py-1": style === InputStyle.BORDERED
     })}
     on:click={() => {
-      console.log("clicked");
       checked = !checked;
+      dispatch("change", checked);
     }}
   >
-    <Switch bind:on={checked} {size} />
-    <FormControlLabel props={label} />
+    <Switch bind:on={checked} {size} on:change />
+    <FormControlLabel props={label} isCursorPointer={true} />
   </button>
 {:else}
   <InputBaseElement {style} {label}>

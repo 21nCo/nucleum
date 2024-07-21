@@ -13,6 +13,12 @@ export interface IResource extends IResourceBase {
    */
   modifiedAt: string;
   /**
+   * The last time user interacted with the resource
+   *
+   * This is almost same as modifiedAt but it is used to track the last time user interacted with the resource. For example, if user has opened a resource, interactedAt will be reset.
+   */
+  interactedAt: string;
+  /**
    * Whether the resource is archived or not
    */
   isArchived?: boolean;
@@ -32,4 +38,14 @@ export interface IResourseShareable {
 export interface ITrashInformation {
   deletedAt: string;
   deletedBy: string;
+}
+
+export enum ResourceActionType {
+  BROWSER = "browser",
+  OPEN = "open",
+  CREATE = "create",
+  EDIT = "edit",
+  DELETE = "delete",
+  ARCHIVE = "archive",
+  RESTORE = "restore"
 }

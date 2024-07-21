@@ -14,11 +14,9 @@
 
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
-  import appearance from "$lib/client/stores/appearance.store";
   import {
     appLoadingState,
     appStore,
-    cacheableStores,
     currentTime,
     excludedPathsForRedirectionCheck,
     userPreferences,
@@ -50,6 +48,7 @@
   import { appMenuStore } from "../leftPanel/appMenu.store";
   import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
+  import { cacheableStores } from "$lib/client/stores/globalStoresMap";
 
   let timer: any;
   pingParent();
@@ -121,40 +120,42 @@
   };
   async function appEventHandler(e: IEvent) {
     if (e.event === GlobalEvent.USER_LOGIN) {
-      if (e.value)
-        dataManager.initialize([...cacheableStores, ...localCacheableStores]);
+      if (e.value) dataManager.refreshApp();
     } else if (e.event === GlobalEvent.BOOTSTRAP) {
       //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
       await userPreferences.loadSeedData();
       await refreshTimeZone(true);
-      await dataManager.initialize([
-        ...cacheableStores,
-        ...localCacheableStores
-      ]);
+      await dataManager.refreshApp();
     }
   }
   /**
    * Sets up the app for the first time when the app is loaded.
    *
-   * Note: Later operations rely on earlier onces. So the order of operations is important.
+   * Note: The order of operations is important as later operations rely on earlier ones.
    */
   function bootup() {
     setLaunchContext();
+    dataManager.loadStores([...cacheableStores, ...localCacheableStores]);
     addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
     checkForEnvironmentChange();
     refreshTimeZone();
-    setAppMenuDefaults();
-  }
-  function setAppMenuDefaults() {
-    appMenuStore.setDefaults($appStore.product, defaultAppMenu);
-  }
-  function initializeServiceWorker() {
-    if (!$context.isEmbed) {
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/worker.js");
+    appMenuStore.setDefaults(defaultAppMenu);
+
+    function runCurrentTime() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        tick();
+        $currentTime = new Date();
+      }, 1000);
+    }
+    function initializeServiceWorker() {
+      if (!$context.isEmbed) {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("/worker.js");
+        }
       }
     }
   }
@@ -164,16 +165,19 @@
       await account.embedOAuthSignin(token);
     }
   }
+  /**
+   * Initializes the app with necessary data.
+   *
+   * Note: The order of operations is important as later operations rely on earlier ones.
+   * @param isLiteMode
+   */
   async function initializeData(isLiteMode: boolean = false) {
     if (!isLiteMode) {
-      await refreshAppData();
+      await refreshAppStaticData();
     }
     initActions(isLiteMode);
-    if ($account.isLoggedIn) {
-      await dataManager.initialize(
-        [...cacheableStores, ...localCacheableStores],
-        isLiteMode
-      );
+    if ($account.isLoggedIn && !isLiteMode) {
+      await dataManager.refreshApp();
     } else {
       await account.logGuest();
     }
@@ -191,9 +195,8 @@
       }
     }
 
-    async function refreshAppData() {
+    async function refreshAppStaticData() {
       //todo - check if the saved timezone is different from current user timezone
-      //TODO - use cached app data if present
       try {
         const appData = await new Persistence().fetchAppData();
         if (!appData) {
@@ -219,13 +222,6 @@
           getSettingsAsPages()
         );
     }
-  }
-  function runCurrentTime() {
-    clearInterval(timer);
-    timer = setInterval(() => {
-      tick();
-      $currentTime = new Date();
-    }, 1000);
   }
   /**
    * Sets the launch context of the app. This includes the product, debug mode, embed mode, touch device, protocol, and OS.

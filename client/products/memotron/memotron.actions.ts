@@ -17,6 +17,10 @@ import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
 import { MemotronAction } from "./memotronAction.enum";
+import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
+import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
+import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -32,7 +36,7 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.CREATE_COLLECTION,
+    action: resourceAction(Resource.collection, ResourceActionType.CREATE),
     component: CreateCollection,
     label: "Create a new collection",
     type: ActionType.MODAL,
@@ -122,29 +126,44 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: Resource.curation,
-    component: Curation,
-    label: "Curations",
+    action: resourceAction(Resource.collection, ResourceActionType.BROWSER),
+    component: CollectionBrowser,
+    label: "Collections",
     icon: "curation",
     type: ActionType.PAGE,
-    loadingComponent: NodeLoadingPulse,
+    loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: resourceAction(Resource.node, ResourceActionType.BROWSER),
+    component: NodeBrowser,
+    label: "Nodes",
+    icon: "node",
+    type: ActionType.PAGE,
+    loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: Resource.nodelinks,
+    type: ActionType.MODAL,
+    component: Curation,
     modalParams: {
       layout: {
-        size: Size.full,
+        size: Size.xl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }
     }
   },
   {
-    action: Resource.nodelinks,
-    type: ActionType.MODAL,
-    component: Curation
-  },
-  {
     action: Resource.collection,
     type: ActionType.MODAL,
-    component: Curation
+    component: Curation,
+    modalParams: {
+      layout: {
+        size: Size.xl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      }
+    }
   },
   {
     action: Resource.combination,

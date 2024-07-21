@@ -29,6 +29,8 @@
   import { onMount } from "svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+  import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
   let title: string;
   let errMsg: string;
   let isCreationInProgress: boolean = false;
@@ -155,7 +157,7 @@
       <div class="flex flex-col gap-2">
         <FormControlLabel props={{ label: "Avatar" }} />
         <!-- TODO - avatar causing loading performance issues -->
-        <!-- <Memocon bind:avatar /> -->
+        <Memocon bind:avatar />
       </div>
       <div class="flex flex-col items-start w-full gap-2">
         <FormControlLabel props={{ label: "Properties" }} />
@@ -214,13 +216,17 @@
             avatar
           });
           isCreationInProgress = false;
-          modalEvent.hideSpecific(MemotronAction.CREATE_COLLECTION);
+          modalEvent.hideSpecific(
+            resourceAction(Resource.collection, ResourceActionType.CREATE)
+          );
         }
       }}
       secondaryAction={{
         label: "Discard",
         callback: async () => {
-          modalEvent.hideSpecific(MemotronAction.CREATE_COLLECTION);
+          modalEvent.hideSpecific(
+            resourceAction(Resource.collection, ResourceActionType.CREATE)
+          );
         }
       }}
     />

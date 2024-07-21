@@ -83,7 +83,7 @@ class CollectionStore extends ResourceStore<ICollection> {
   }
 
   async fetch(id: string, viewId?: string) {
-    const query = `fn::memotron::collection::fetch($id, $viewId)`;
+    const query = `fn::memotron::curation::fetch($id, $viewId)`;
     const response = await this.db.executeReadFn(
       query,
       viewId ? { id, viewId } : { id }
@@ -92,7 +92,7 @@ class CollectionStore extends ResourceStore<ICollection> {
   }
 
   async createView(view: ICollectionView, collectionId: string) {
-    const query = `fn::memotron::collection::createView($view, $collectionId)`;
+    const query = `fn::memotron::curation::createView($view, $collectionId)`;
     const response = await this.db.query(query, {
       view,
       collectionId
@@ -100,7 +100,7 @@ class CollectionStore extends ResourceStore<ICollection> {
     return interceptSurrealResponse(response, "create view");
   }
   async fetchViewData(viewId: string, collectionId: string) {
-    const query = `fn::memotron::collection::fetchData($viewId, $collectionId)`;
+    const query = `fn::memotron::curation::fetchData($viewId, $collectionId)`;
     const response = await this.db.query(query, {
       viewId,
       collectionId
@@ -172,7 +172,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
     // let type = determineCurationType(this.id);
     const response = await this.resourceStore.fetch(this.id, viewId);
     // console.log("curation fetch response", { response });
-    if (type === CurationType.COLLECTION && response.curation) {
+    if (response.curation) {
       this.update((store: IActiveCollection) => {
         if (!isValidArrayWithData(response.curation.views)) return store;
         store = response.curation;
@@ -181,53 +181,14 @@ class ActiveCollectionStore extends ActiveResourceStore<
         else store.views[0].data = response.data;
         return store;
       });
-    } else if (type === CurationType.NODELINKS && response.node) {
-      if (response.directlinks) {
-        this.update((store: IActiveCollection) => {
-          if (!("views" in store)) return store;
-          store.views = [
-            {
-              id: "backlinks",
-              data: response.directlinks,
-              layout: CollectionLayout.BOARD,
-              label: "Backlinks",
-              createdAt: new Date().toISOString(),
-              modifiedAt: new Date().toISOString(),
-              createdBy: this.currentUserId,
-              modifiedBy: this.currentUserId,
-              tabBy: "none",
-              groupBy: "none",
-              subGroupBy: "none",
-              arrangement: NodeThumbnailVariant.LIST
-            }
-          ];
-          return store;
-        });
-      }
     } else {
-      if (type === CurationType.NODELINKS) {
-        // id = this.id.replace(Item.nodelinks + ":", "");
-        // const record = await dm.cacheSource.dexie.node.get(this.id);
-        // //TODO - handle the case of record not present locally
-        // this.set({
-        //   id: this.id,
-        //   type,
-        //   label: record?.label ?? "Links",
-        //   createdAt: record?.createdAt ?? new Date().toISOString(),
-        //   modifiedAt: record?.modifiedAt ?? new Date().toISOString(),
-        //   views: [],
-        //   isRefreshing: true
-        // });
-      } else {
-        const record = await dm.cacheSource.dexie.collection.get(this.id);
-        if (record) {
-          this.set({
-            ...record,
-            type,
-            isRefreshing: true,
-            views: []
-          });
-        }
+      const record = await dm.cacheSource.dexie.collection.get(this.id);
+      if (record) {
+        this.set({
+          ...record,
+          isRefreshing: true,
+          views: []
+        });
       }
     }
     this.update((store: IActiveCollection) => {

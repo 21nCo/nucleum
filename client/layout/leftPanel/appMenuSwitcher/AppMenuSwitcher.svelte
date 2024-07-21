@@ -12,35 +12,40 @@
   export let isHovered: boolean = false;
   let pages: IAction[] = [];
   let selected: number;
+  refresh(appMenuStore.get());
   onMount(() => {
     appMenuStore.subscribe((x: IAppMenuStore) => {
-      pages = [];
-      let items = [];
-      if (!x?.menu) return;
-      const app = $appStore.product;
-      const contextualMenu = x.menu[app];
-      if (layoutContext === LayoutContext.PORTRAIT) {
-        items = contextualMenu.slice(
-          0,
-          $appStore?.appData?.isShowCaptureOnMobile ? 3 : 4
-        );
-        items.push("cp");
-      } else {
-        items = contextualMenu.filter((item) => item !== "cp");
-      }
-      items.forEach((action: string) => {
-        const currentPage = appStore.resolveAction(action);
-        if (currentPage) {
-          pages.push(currentPage);
-        }
-      });
-      let currentPath = window?.location?.pathname?.replace("/", "");
-      let currentPage = pages.find((item) =>
-        currentPath.includes(item.path ?? item.action)
-      );
-      selected = currentPage ? pages.indexOf(currentPage) : 0;
+      refresh(x);
     });
   });
+
+  function refresh(x: IAppMenuStore) {
+    pages = [];
+    let items = [];
+    const app = $appStore.product;
+    const contextualMenu = [...x[app].default, ...x[app].user];
+    console.log({ contextualMenu });
+    if (layoutContext === LayoutContext.PORTRAIT) {
+      items = contextualMenu.slice(
+        0,
+        $appStore?.appData?.isShowCaptureOnMobile ? 3 : 4
+      );
+      items.push("cp");
+    } else {
+      items = contextualMenu.filter((item) => item !== "cp");
+    }
+    items.forEach((action: string) => {
+      const currentPage = appStore.resolveAction(action);
+      if (currentPage) {
+        pages.push(currentPage);
+      }
+    });
+    let currentPath = window?.location?.pathname?.replace("/", "");
+    let currentPage = pages.find((item) =>
+      currentPath.includes(item.path ?? item.action)
+    );
+    selected = currentPage ? pages.indexOf(currentPage) : 0;
+  }
 </script>
 
 <div

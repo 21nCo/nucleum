@@ -14,6 +14,6 @@
     "border-brs1": colorStrength === ColorStrength.Subtle,
     "border-brs2": colorStrength === ColorStrength.Normal,
     "border-brs3": colorStrength === ColorStrength.Strong,
-    "border-fgs3": colorStrength === ColorStrength.ExtraStrong
+    "border-fgs3 border-opacity-80": colorStrength === ColorStrength.ExtraStrong
   })}
 />

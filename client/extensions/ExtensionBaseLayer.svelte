@@ -1,7 +1,7 @@
 <script>
   import appearance from "$lib/client/stores/appearance.store";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ThemeLayer from "./themeLayer/ThemeLayer.svelte";
+  import ThemeLayer from "../layout/layers/themeLayer/ThemeLayer.svelte";
 </script>
 
 <div

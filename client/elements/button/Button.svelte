@@ -23,6 +23,7 @@
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
+  export let isPreventMinWidth: boolean = false;
   export let tooltipOptions: IPopoverRenderBaseParams = {
     placement: Position.BottomCenter,
     offsetInPx: 2,
@@ -80,7 +81,7 @@
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
     {
-      "min-w-32": style != ButtonStyle.PLAIN,
+      "min-w-32": style != ButtonStyle.PLAIN && !isPreventMinWidth,
       "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,

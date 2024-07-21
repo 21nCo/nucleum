@@ -7,14 +7,14 @@
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { collectionStore } from "$lib/client/products/memotron/curation/collection/collection.store";
+  import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import { fade } from "svelte/transition";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import MultimediaClipper from "$lib/client/extensions/clipper/contentScripts/MultimediaClipper.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage, toolbarState } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import ExtensionBaseLayer from "$lib/client/layout/layers/ExtensionBaseLayer.svelte";
+  import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
 
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
@@ -73,7 +73,7 @@
       },
       false
     );
-    dataManager.initialize([nodeStore, collectionStore, toolbarState, webpage]);
+    dataManager.refreshApp([nodeStore, collectionStore, toolbarState, webpage]);
     dataManager.refreshOnAppear();
   });
 </script>

@@ -1,5 +1,9 @@
 export enum Resource {
   ALL = "ALL",
+  /**
+   * Meta resource for everything
+   */
+  everything = "everything",
   globalPreferences = "globalPreferences",
   TailwindTheme = "TailwindTheme",
   appData = "appData",
@@ -32,6 +36,7 @@ export enum Resource {
   focusHeatmap = "focusHeatmap",
   pointAnalyticsConfig = "pointAnalyticsConfig",
   quickFocusItems = "quickFocusItems",
+  task = "task",
 
   //Memotron
   node = "node",
@@ -43,6 +48,7 @@ export enum Resource {
   nodelinks = "nodelinks",
   capture = "capture",
   view = "view",
+  file = "file",
 
   //Memotron clipper
   clipperToolbarState = "clipperToolbarState"

@@ -154,13 +154,17 @@ function init() {
       const cacheSource = get(dataManager).cacheSource;
       return await cacheSource.retrieveCache(storeId);
     },
-    initialize: async (stores: IStore[], isLiteMode: boolean = false) => {
+    loadStores: async (stores: IStore[]) => {
       update((x) => {
         x.cacheSource = new CacheManager();
         x.cacheableStoresTable = stores;
         return x;
       });
-      if (isLiteMode) return;
+    },
+    /**
+     * Refreshes and updates the store with the new data.
+     */
+    refreshApp: async () => {
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
       let seedMutationMap: any = {};
@@ -168,7 +172,7 @@ function init() {
         seedMutationMap[item] = 1;
       });
       const result = await cacheSource.mergeClientMutationMap(seedMutationMap);
-      logger.log({ context: "dataManager.initialize", result });
+      logger.log({ context: "dataManager.refreshApp", result });
       let serverSeed: any = {};
       allResources.forEach((item) => {
         serverSeed[item] = +(new Date().getTime() / 1000).toFixed();
@@ -304,6 +308,7 @@ async function performMutation(
       if (params.action === PersistanceActionType.INSERT) {
         id = storeId;
       }
+      console.log({ id, storeId, isKVStore });
       return resolveMutationQuery(params.action, id, {
         userId: data.modifiedBy ? data.modifiedBy : "",
         isPreventMutationMapEntry: params.queueParams?.isUseQueueFirstApproach
@@ -322,10 +327,10 @@ async function performMutation(
       dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
       return { resources: [storeId], isKVStore: false };
     } else {
-      // console.log({
-      //   storeId,
-      //   stores: dm.cacheableStoresTable.map((x) => get(x).id)
-      // });
+      console.log({
+        storeId,
+        stores: dm.cacheableStoresTable
+      });
       const store = dm.cacheableStoresTable.find((x) => x.id === storeId);
       if (!store) return { resources: [], isKVStore: false };
       const isKVStore = store.dataType === StoreDataType.KVO;

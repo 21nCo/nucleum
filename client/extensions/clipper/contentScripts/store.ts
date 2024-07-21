@@ -58,7 +58,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
   /**
   * when a tab is changed, this method is called to update the store with the new tab data.
 
-  TODO - whether to refresh or not - when a tab is changed, the content script is reinjected, and therefore the store is refreshed from dataManager.initialize.
+  TODO - whether to refresh or not - when a tab is changed, the content script is reinjected, and therefore the store is refreshed from dataManager refreshApp.
   * @param tab
   * @returns
   */

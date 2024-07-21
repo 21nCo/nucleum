@@ -852,4 +852,3 @@ function initEditModeStore() {
     }
   };
 }
-export const cacheableStores: IStore[] = [userPreferences, dboVersion];

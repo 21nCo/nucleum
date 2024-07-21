@@ -17,12 +17,11 @@ export class MemotronDexie extends AppDexie {
     super(scope);
     this.version(this.dbVersion)
       .stores({
-        node: "id, title, children, contentType, createdAt, modifiedAt",
-        type: "id, label, createdAt, modifiedAt",
+        node: "id, title, children, contentType, createdAt, modifiedAt, interactedAt",
         collection:
-          "id, type, label, type, isStarred, isCaptureShortcutEnabled, createdAt, modifiedAt",
-        property: "id, label, createdAt, modifiedAt",
-        view: "id, label, createdAt, modifiedAt"
+          "id, type, label, isStarred, isCaptureShortcutEnabled, createdAt, modifiedAt, interactedAt",
+        property: "id, label, createdAt, modifiedAt, interactedAt",
+        view: "id, label, createdAt, modifiedAt, interactedAt"
       })
       .upgrade((tx) => {
         //Handle version upgrades here - in case of change of table schema on db

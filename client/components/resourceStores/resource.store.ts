@@ -74,7 +74,8 @@ export class ActiveResourceStore<
       ...prev,
       isArchived: true,
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString(),
+      interactedAt: new Date().toISOString()
     }));
     return this.resourceStore.modify(this.id, {
       isArchived: true
@@ -85,7 +86,8 @@ export class ActiveResourceStore<
       ...prev,
       isArchived: false,
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString(),
+      interactedAt: new Date().toISOString()
     }));
     return this.resourceStore.modify(this.id, {
       isArchived: false
@@ -147,6 +149,7 @@ export class ResourceStore<T extends IResourceBase> implements IStore {
     let commonProps = {
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
+      interactedAt: new Date().toISOString(),
       createdBy: this.currentUserId,
       modifiedBy: this.currentUserId
     };
@@ -210,7 +213,8 @@ export class ResourceStore<T extends IResourceBase> implements IStore {
           deletedBy: this.currentUserId
         },
         modifiedBy: this.currentUserId,
-        modifiedAt: new Date().toISOString()
+        modifiedAt: new Date().toISOString(),
+        interactedAt: new Date().toISOString()
       },
       {
         action: PersistanceActionType.MERGE,
@@ -344,7 +348,8 @@ export class ResourceFIRStore<
         deletedBy: this.currentUserId
       },
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString(),
+      interactedAt: new Date().toISOString()
     };
     this._mutation(PersistanceActionType.MERGE, { ...item, id });
     this.update((x: S) => {

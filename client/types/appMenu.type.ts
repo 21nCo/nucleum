@@ -1,7 +1,9 @@
 import type { IObservableStoreSubject } from "./data.type";
 
-export interface IAppMenuStore extends IObservableStoreSubject {
-  menu: {
-    [key: string]: string[];
-  };
-}
+export type IAppMenuStore = IObservableStoreSubject & {
+  [key: string]: Menu;
+};
+type Menu = {
+  default: string[];
+  user: string[];
+};

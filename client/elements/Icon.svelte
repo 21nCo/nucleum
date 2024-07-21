@@ -103,6 +103,7 @@
   import { cn } from "../utils/ui.utils";
   import Gift from "../icons/Gift.svelte";
   import LinkArrow2 from "../icons/LinkArrow2.svelte";
+  import Pin from "../icons/Pin.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -299,6 +300,8 @@
         <Minus {variant} isCircled={true} />
       {:else if icon === "unpin"}
         <Unpin />
+      {:else if icon === "pin"}
+        <Pin />
       {:else if icon === "cross-circled"}
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
