@@ -8,10 +8,17 @@ export enum Position {
   TopLeft = "top-left",
   TopRight = "top-right",
   BottomCenter = "bottom-center",
-  TopCenter = "top-center",
+  TopCenter = "top-center"
 }
 
 export enum Orientation {
   Horizontal = "horizontal",
   Vertical = "vertical"
+}
+
+export enum Arrangement {
+  LIST = "LIST",
+  GRID = "GRID",
+  TIMELINE = "TIMELINE",
+  MASONRY = "MASONRY"
 }

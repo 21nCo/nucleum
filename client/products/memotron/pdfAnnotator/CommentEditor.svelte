@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AnnotationType } from "$lib/client/types/memotron/pdfAnnotator.type";
+  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import { createEventDispatcher } from "svelte";
   export let annotationMode: AnnotationType;

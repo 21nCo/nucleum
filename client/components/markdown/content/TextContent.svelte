@@ -3,7 +3,7 @@
   import type {
     IMarkdownStore,
     IBlock
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
 
@@ -14,7 +14,7 @@
     type StructuralNodeType,
     type TextContent,
     type TextNodeType
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";

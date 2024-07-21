@@ -1,5 +1,5 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { NodeType } from "$lib/client/types/memotron/node.type";
+import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import type {
   Coords,
   LTWH,
@@ -7,7 +7,7 @@ import type {
   Page,
   Scaled,
   WIDTH_HEIGHT
-} from "$lib/client/types/memotron/pdfAnnotator.type";
+} from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { PDFDocument, rgb } from "pdf-lib";
 

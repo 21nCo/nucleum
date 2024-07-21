@@ -1,10 +1,12 @@
-import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
 import type {
   IObservableStoreSubject,
   IStore
 } from "$lib/client/types/data.type";
 import type { TimePeriod } from "$lib/client/types/time.type";
-import type { ITrashInformation } from "../resource.type";
+import type {
+  IResourceBase,
+  ITrashInformation
+} from "../../components/resourceStores/resource.type";
 
 export type IGoal = {
   id: string;
@@ -32,7 +34,7 @@ type GoalParent = {
   hierarchy: Pick<IGoal, "id" | "label">[];
 };
 
-export type PointGoalDbType = DbRecordBase & {
+export type IPointGoal = IResourceBase & {
   label: string;
   parent: string[];
   description?: string;

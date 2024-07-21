@@ -2,7 +2,7 @@
   import type {
     IMarkdown,
     IMarkdownParams
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "./Block.svelte";
   import { getMdStore, mdContentChangeEvent } from "./markdown.store";

@@ -7,7 +7,7 @@
   import view from "$lib/client/stores/view.store";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { determineTruncateLength } from "$lib/shared/utils/text.utils";
   import { Size } from "$lib/client/types/size.enum";
@@ -20,7 +20,7 @@
     parentHierarchy =
       goal.parent?.hierarchy?.map((item, index) => ({
         label: item.label,
-        path: `/${Item.goal}/${item.id}`
+        path: `/${Resource.goal}/${item.id}`
       })) ?? [];
 
     parentBreadcrumbs = isValidArrayWithData(parentHierarchy)
@@ -28,7 +28,7 @@
           ...parentHierarchy,
           {
             label: $currentGoal.label,
-            path: `/${Item.goal}/${$currentGoal.id}`
+            path: `/${Resource.goal}/${$currentGoal.id}`
           }
         ]
       : [];

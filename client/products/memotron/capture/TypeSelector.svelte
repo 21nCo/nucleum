@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { CaptureType } from "$lib/client/types/memotron/capture.type";
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+  import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
@@ -28,8 +28,9 @@
   let types: ISelectItem[] = [];
 
   function refreshTypes() {
-    $dataManager.cacheSource.dexie.type
+    $dataManager.cacheSource.dexie.collection
       .filter(activeResourceFilter)
+      .filter((x) => x.isCaptureShortcutEnabled === true)
       .toArray()
       .then((data) => {
         types = data.map((type) => ({
@@ -54,7 +55,7 @@
   {/key}
   {#if isCapturePage}
     <Button
-      label="edit types"
+      label="edit shortcuts"
       size={Size.xs}
       on:click={() => {
         appStore.runAction(MemotronAction.LIBRARY);

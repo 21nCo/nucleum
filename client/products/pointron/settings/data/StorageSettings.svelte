@@ -38,7 +38,7 @@
   import { download, generateUID } from "$lib/client/utils/utils";
   import { AlertType } from "$lib/client/types/notification.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import type { PointSessionDbType } from "../../logs/log.type";
+  import type { IPointSession } from "../../logs/log.type";
 
   let clearMessage: string | undefined = undefined;
   let fileInput: HTMLInputElement;
@@ -146,7 +146,7 @@
       typeof item.tags === "object"
     );
   }
-  function isValidSessionType(item: any): item is PointSessionDbType {
+  function isValidSessionType(item: any): item is IPointSession {
     return (
       item && typeof item.elapsed === "number" && typeof item.start === "number"
     );

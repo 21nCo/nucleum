@@ -3,7 +3,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import NodeThumbnail from "$lib/client/products/memotron/common/nodeThumbnail/NodeThumbnail.svelte";
+  import NodeThumbnail from "$lib/client/products/memotron/node/nodeThumbnail/NodeThumbnail.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -58,7 +58,7 @@
       {#if isValidArrayWithData($docStore.docs)}
         {#each $docStore.docs as doc}
           <NodeThumbnail
-            node={doc}
+            item={doc}
             on:click={() => {
               appStore.toggleSearchParam("doc", doc.id);
               appStore.runAction(GatheryEvent.OPEN_DOC, doc);

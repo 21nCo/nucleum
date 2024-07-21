@@ -6,7 +6,7 @@
   import view from "$lib/client/stores/view.store";
   import { Persistence } from "$lib/client/persistence/persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -61,9 +61,9 @@
   }
 
   async function handleDeleteGoal() {
-    await new Persistence().delete($currentGoal.id, Item.PointGoal);
+    await new Persistence().delete($currentGoal.id, Resource.PointGoal);
     // check if success then redirect to the parent goal or /goals(if the parent does not exists)
-    if (!parent || parent.length === 0) appStore.gotoPath(Item.goal);
+    if (!parent || parent.length === 0) appStore.gotoPath(Resource.goal);
     else appStore.gotoPath(`/goal`);
     currentGoal.propagateChangesTemp();
   }

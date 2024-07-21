@@ -5,9 +5,9 @@ import type {
   IntervalBlock
 } from "$lib/client/types/pointron/session.type";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-import type { DbRecordBase } from "$lib/client/types/dbrecord.type";
-import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
+import type { IResourceBase } from "$lib/client/components/resourceStores/resource.type";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",
@@ -24,7 +24,7 @@ export type SessionBase = {
   extended: number;
 };
 
-export type PointSessionDbType = DbRecordBase &
+export type IPointSession = IResourceBase &
   SessionBase & {
     elapsed: number;
     extended: number;
@@ -37,7 +37,7 @@ export type PointSessionDbType = DbRecordBase &
     notes: IMarkdown;
   };
 
-export type PointLogDbType = DbRecordBase & {
+export type IPointLog = IResourceBase & {
   start: string;
   end: string;
   sessionId: string;

@@ -3,12 +3,12 @@ import type {
   IMarkdownStore,
   ListBlockWithChildren,
   IMarkdown
-} from "$lib/client/types/memotron/md.type";
+} from "$lib/client/components/markdown/md.type";
 import type {
   ListChild,
   ListContent,
   INode
-} from "$lib/client/types/memotron/node.type";
+} from "$lib/client/products/memotron/node/node.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 
 /**

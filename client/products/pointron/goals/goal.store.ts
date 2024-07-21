@@ -6,13 +6,13 @@ import {
 import { get, writable } from "svelte/store";
 import type {
   IGoal,
-  PointGoalDbType,
+  IPointGoal,
   QuickFocusItem,
   IQuickFocusItemStore
 } from "$lib/client/types/pointron/goal.type";
 import { GoalPersistence } from "./goal.persistence";
 import { prefixTable } from "$lib/shared/utils/text.utils";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   deepCopy,
   isValidArray,
@@ -33,7 +33,7 @@ import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
 import { logger } from "$lib/client/stores/log.store";
 import { Persistence } from "$lib/client/persistence/persistence";
-import { ResourceFIRStore } from "$lib/client/stores/resource.store";
+import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { AlertType } from "$lib/client/types/notification.type";
 
@@ -130,8 +130,8 @@ const filter = (
 function flattenSubGoalsAsGoals(
   goal: Partial<IGoal> & Pick<IGoal, "id" | "label" | "subGoals">
 ) {
-  let goalForDB: PointGoalDbType = {
-    id: prefixTable(goal.id, Item.PointGoal),
+  let goalForDB: IPointGoal = {
+    id: prefixTable(goal.id, Resource.PointGoal),
     label: goal.label,
     description: goal.description,
     tags: goal.tags,
@@ -146,7 +146,7 @@ function flattenSubGoalsAsGoals(
     createdAt: new Date().toISOString(),
     modifiedAt: new Date().toISOString()
   };
-  let flattenedSubGoals: PointGoalDbType[] = [];
+  let flattenedSubGoals: IPointGoal[] = [];
   if (goal.subGoals.length === 0) {
     return goalForDB;
   }
@@ -154,13 +154,13 @@ function flattenSubGoalsAsGoals(
     goal?.parent && goal.id
       ? [
           ...goal.parent.hierarchy.map(({ id }: { id: string }) => {
-            return prefixTable(id, Item.PointGoal);
+            return prefixTable(id, Resource.PointGoal);
           }),
-          prefixTable(goal.id, Item.PointGoal)
+          prefixTable(goal.id, Resource.PointGoal)
         ]
-      : [prefixTable(goal.id, Item.PointGoal)];
+      : [prefixTable(goal.id, Resource.PointGoal)];
   goal.subGoals.forEach((subGoal) => {
-    let subGoalAsGoal: PointGoalDbType = {
+    let subGoalAsGoal: IPointGoal = {
       id: subGoal.id,
       label: subGoal.label,
       parent: parentForSubGoals,
@@ -175,7 +175,7 @@ function flattenSubGoalsAsGoals(
 
 class GoalStore extends ResourceFIRStore<IGoal> {
   constructor() {
-    super(Item.PointGoal, defaultFilter, {
+    super(Resource.PointGoal, defaultFilter, {
       refreshQuery: "fn::pointron::goal::fetchAll();"
     });
   }
@@ -229,7 +229,7 @@ class GoalStore extends ResourceFIRStore<IGoal> {
     isShowRefreshingState: boolean = false
   ) {
     logger.log("refreshing goalStore");
-    await dataManager.refresh(Item.PointGoal, isShowRefreshingState);
+    await dataManager.refresh(Resource.PointGoal, isShowRefreshingState);
     return this.filter(filters);
   }
   async save(goal: IGoal) {
@@ -250,7 +250,10 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       id: generateUID(),
       actionText: "View",
       callback: () => {
-        appStore.gotoResource(Item.goal, prefixTable(goal.id, Item.PointGoal));
+        appStore.gotoResource(
+          Resource.goal,
+          prefixTable(goal.id, Resource.PointGoal)
+        );
       }
     });
 
@@ -269,11 +272,11 @@ export const goalStore = new GoalStore();
 
 class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
   constructor() {
-    super(Item.quickFocusItems, StoreDataType.NA, {
+    super(Resource.quickFocusItems, StoreDataType.NA, {
       refreshQuery: "fn::pointron::goal::fetchQuickFocusItems::v2();",
       dependencies: [
-        { resource: Item.PointGoal, syncType: DependencySyncType.EAGER },
-        { resource: Item.PointLog, syncType: DependencySyncType.DEFERRED }
+        { resource: Resource.PointGoal, syncType: DependencySyncType.EAGER },
+        { resource: Resource.PointLog, syncType: DependencySyncType.DEFERRED }
       ]
     });
     if (!this.get()) {
@@ -313,9 +316,9 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
   }
   propagateDependencyChanges(data: any) {
     logger.log("propagateDependencyChanges to quickFocusItems store", data);
-    if (data?.id?.includes(Item.PointGoal) && data?.isPinnedForQuickStart) {
+    if (data?.id?.includes(Resource.PointGoal) && data?.isPinnedForQuickStart) {
       this.update((store) => {
-        let newGoal = data as PointGoalDbType;
+        let newGoal = data as IPointGoal;
         let goalTransformed: QuickFocusItem = {
           ...newGoal,
           id: newGoal.id!,
@@ -474,7 +477,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
         ...parent.subGoals,
         {
           ...seedGoal,
-          id: prefixTable(id, Item.PointGoal),
+          id: prefixTable(id, Resource.PointGoal),
           label: label
         }
       ];

@@ -4,7 +4,7 @@
     NodeType,
     headingNodeTypes,
     type INodeStructure
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { hierarchyFactorLimit, type IActiveNodeStore } from "./node.store";
 

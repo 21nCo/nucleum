@@ -1,0 +1,49 @@
+export enum Resource {
+  ALL = "ALL",
+  globalPreferences = "globalPreferences",
+  TailwindTheme = "TailwindTheme",
+  appData = "appData",
+  space = "space",
+  spaceInContext = "spaceInContext",
+  appearance = "appearance",
+  dboVersion = "dboVersion",
+  tz = "tz",
+  kv = "kv",
+  appMenu = "appMenu",
+  accessLog = "accessLog",
+
+  //Pointron
+  pointronPreferences = "pointronPreferences",
+  SessionStore = "SessionStore",
+  SessionStoreV2 = "SessionStoreV2",
+  pointSessionSnapshot = "pointSessionSnapshot",
+  pointSessionFocusItems = "pointSessionFocusItems",
+  Routine = "Routine",
+  CurrentTask = "CurrentTask",
+  PointSession = "PointSession",
+  PointTask = "PointTask",
+  PointTag = "PointTag",
+  PointLog = "PointLog",
+  PointTimer = "PointTimer",
+  PointGoal = "PointGoal",
+  goal = "goal",
+  logsPane = "logsPane",
+  targetsPane = "targetsPane",
+  focusHeatmap = "focusHeatmap",
+  pointAnalyticsConfig = "pointAnalyticsConfig",
+  quickFocusItems = "quickFocusItems",
+
+  //Memotron
+  node = "node",
+  curation = "curation",
+  type = "type",
+  property = "property",
+  collection = "collection",
+  combination = "combination",
+  nodelinks = "nodelinks",
+  capture = "capture",
+  view = "view",
+
+  //Memotron clipper
+  clipperToolbarState = "clipperToolbarState"
+}

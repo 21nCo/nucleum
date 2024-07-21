@@ -8,7 +8,7 @@
     LinkType,
     NodeType,
     RightPanelType
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { properCase } from "$lib/shared/utils/text.utils";

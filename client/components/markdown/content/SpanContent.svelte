@@ -2,7 +2,7 @@
   import {
     SpanType,
     type SpanContent
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import TextWithSpans from "./TextWithSpans.svelte";
   export let span: SpanContent;
   let style: string = "";

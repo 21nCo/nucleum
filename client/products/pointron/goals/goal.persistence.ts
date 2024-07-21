@@ -1,14 +1,14 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import type { PointGoalDbType } from "$lib/client/types/pointron/goal.type";
-import { Item } from "$lib/client/types/item.enum";
+import type { IPointGoal } from "$lib/client/types/pointron/goal.type";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 
 const surrealDb = new SurrealDatabase();
 
-const tableName = Item[Item.PointGoal];
+const tableName = Resource[Resource.PointGoal];
 
 export class GoalPersistence {
-  async create(goals: PointGoalDbType[]) {
+  async create(goals: IPointGoal[]) {
     let response = await surrealDb.insert(tableName, goals);
     return response && response.length > 0;
   }

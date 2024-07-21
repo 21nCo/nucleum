@@ -31,17 +31,18 @@ function mutationMapEntry(recordId: string) {
 export function resolveMutationQuery(
   type: PersistanceActionType,
   record: string,
-  userId?: string
+  params?: { userId?: string; isPreventMutationMapEntry?: boolean }
 ) {
   let modifiedQuery: string = "";
   switch (type) {
+    //TODO - use REMOVE or DELETE for removing the record permanently as trash is separated out and this surreal fn is not used for that
     case PersistanceActionType.DELETE:
-      modifiedQuery = `return fn::global::resource::delete(${record}, ${userId});`;
+      modifiedQuery = `return fn::global::resource::delete(${record}, ${params?.userId});`;
       break;
     case PersistanceActionType.INSERT:
       modifiedQuery = `INSERT INTO ${record} $data RETURN id;`;
       break;
-    case PersistanceActionType.UPDATE:
+    case PersistanceActionType.REPLACE:
       modifiedQuery = `UPDATE ${record} CONTENT $data;`;
       break;
     case PersistanceActionType.CREATE:
@@ -51,6 +52,7 @@ export function resolveMutationQuery(
       modifiedQuery = `UPDATE ${record} MERGE $data;`;
       break;
   }
+  if (params?.isPreventMutationMapEntry) return modifiedQuery;
   return modifiedQuery + mutationMapEntry(record);
 }
 

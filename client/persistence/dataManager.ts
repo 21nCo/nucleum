@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Item } from "../types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   CacheStrategy,
   StoreDataType,
@@ -30,7 +30,7 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
-const allResources = Object.values(Item);
+const allResources = Object.values(Resource);
 
 function init() {
   const cacheSource = new CacheManager();
@@ -53,7 +53,7 @@ function init() {
      * @param item
      * @returns
      */
-    refreshForIFR: async (item: Item) => {
+    refreshForIFR: async (item: Resource) => {
       const dm = get(dataManager);
       const store = dm.cacheableStoresTable.find((x) => x.id === item);
       if (!store) return;
@@ -65,35 +65,38 @@ function init() {
         mergeIFRRecords(item, result);
       }
     },
-    performMutationForIFR: (item: Item, data: any, params: IMutationParams) => {
+    performMutationForIFR: (
+      item: Resource,
+      data: any,
+      params: IMutationParams
+    ) => {
+      logger.log({
+        context: "performing mutation for IFR",
+        item,
+        data,
+        params
+      });
       let localPersistancePromise;
       const dexie = get(dataManager).cacheSource.dexie;
-      data = {
-        id: prefixTable(generateUID(), item),
-        modifiedAt: new Date().toISOString(),
-        ...data
-      };
       // @ts-ignore
       const table: Table = dexie[item];
       if (params.action === PersistanceActionType.DELETE) {
-        // table.delete(data.id);
-        localPersistancePromise = table.update(data.id, {
-          trashInformation: {
-            deletedAt: new Date().toISOString(),
-            deletedBy: data.modifiedBy
-          },
-          modifiedBy: data.modifiedBy,
-          modifiedAt: new Date().toISOString()
-        });
+        table.delete(data.id);
       } else if (
         params.action === PersistanceActionType.CREATE ||
+        params.action === PersistanceActionType.INSERT ||
         params.action === PersistanceActionType.CUSTOM_CREATE
       ) {
-        if (!("resources" in data)) localPersistancePromise = table.add(data);
-        else table.bulkAdd(data.resources);
-        if (params.action === PersistanceActionType.CUSTOM_CREATE)
+        if (params.action === PersistanceActionType.CUSTOM_CREATE) {
           params.action = PersistanceActionType.CUSTOM_QUERY;
-      } else if (params.action === PersistanceActionType.UPDATE) {
+          if ("resources" in data) table.bulkAdd(data.resources);
+          else if ("resource" in data) table.add(data.resource);
+        } else if (params.action === PersistanceActionType.INSERT) {
+          localPersistancePromise = table.bulkAdd(data);
+        } else {
+          localPersistancePromise = table.add(data);
+        }
+      } else if (params.action === PersistanceActionType.REPLACE) {
         localPersistancePromise = table.put(data);
       } else if (params.action === PersistanceActionType.MERGE) {
         localPersistancePromise = table.update(data.id, data);
@@ -180,17 +183,35 @@ function init() {
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
       const mutationQueue = cacheSource.dexie.mutationQueuev2;
-      const mutations = await mutationQueue.toArray();
+      const mutations = await mutationQueue
+        .where("retryCount")
+        .between(0, 3)
+        .toArray();
+      // const mutations = (await mutationQueue.toArray()).filter(
+      //   (x) => x.retryCount < 3 || x.retryCount === undefined
+      // );
+      if (mutations.length < 1) {
+        // console.log("No mutations to sync");
+        return;
+      }
       let masterQuery = "";
-      if (mutations.length > 0) {
-        mutations.forEach((x) => {
-          masterQuery += replaceParams(x.query, x.params) + ";";
-        });
-        const response = await dm.db.query(masterQuery, {});
-        const result = interceptSurrealResponse(response);
-        if (result) {
-          await mutationQueue.clear();
-          return;
+      mutations.forEach((x) => {
+        masterQuery += replaceParams(x.query, x.params) + ";";
+      });
+      if (!masterQuery) {
+        console.log("No valid mutations to sync");
+        return;
+      }
+      let response = await dm.db.query(masterQuery, {});
+      response = response.map((x: any) => checkSurrealResponse(x));
+      console.log({ context: "syncPendingMutations", response });
+      for (let i = 0; i < response.length; i++) {
+        if (response[i]) {
+          await mutationQueue.delete(mutations[i].id);
+        } else {
+          await mutationQueue.update(mutations[i].id, {
+            retryCount: (mutations[i]?.retryCount ?? 0) + 1
+          });
         }
       }
     }
@@ -218,7 +239,8 @@ async function addToMutationQueue(id: string, query: string, params: any) {
     id,
     timestamp: new Date().getTime(),
     query,
-    params
+    params,
+    retryCount: 0
   });
 }
 
@@ -237,22 +259,20 @@ async function performMutation(
 ) {
   const dm = get(dataManager);
   const mutatedAt = surrealUnixTimestamp();
-  data = { ...data, mutatedAt };
   const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
   const mutationQuery = resolveMutationQuery2();
   const mutationParams =
     params.action === PersistanceActionType.CUSTOM_QUERY
-      ? { ...data }
-      : { data };
+      ? { ...data, mutatedAt }
+      : { data, mutatedAt };
   const mutationId = params.queueParams?.mutationId ?? generateUID();
   if (params.queueParams?.isUseQueueFirstApproach) {
     addToMutationQueue(mutationId, mutationQuery, mutationParams);
     return;
   }
   const defferedStores = propagateToEagerStores(resources, data);
-  const refreshQueryForDeferredStores = await resolveStoresRefreshQuery(
-    defferedStores
-  );
+  const refreshQueryForDeferredStores =
+    await resolveStoresRefreshQuery(defferedStores);
 
   let dbFullQuery: string = `${mutationQuery};`;
   if (refreshQueryForDeferredStores) {
@@ -281,11 +301,13 @@ async function performMutation(
         id = "kv:" + storeId;
         data.id = id;
       }
-      return resolveMutationQuery(
-        params.action,
-        id,
-        data.modifiedBy ? data.modifiedBy : ""
-      );
+      if (params.action === PersistanceActionType.INSERT) {
+        id = storeId;
+      }
+      return resolveMutationQuery(params.action, id, {
+        userId: data.modifiedBy ? data.modifiedBy : "",
+        isPreventMutationMapEntry: params.queueParams?.isUseQueueFirstApproach
+      });
     }
   }
 
@@ -594,7 +616,7 @@ async function resolveRefreshQueryForIFR(storeData: IStore) {
   return query;
 }
 
-async function mergeIFRRecords(item: Item, records: any[]) {
+async function mergeIFRRecords(item: Resource, records: any[]) {
   let dm = get(dataManager);
   const dexie = dm.cacheSource.dexie;
   // @ts-ignore

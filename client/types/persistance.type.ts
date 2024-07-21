@@ -1,12 +1,12 @@
-import type { DbRecord } from "./dbrecord.type";
+import type { IResource } from "../components/resourceStores/resource.type";
 
 export type QueryParams =
   | string
   | number
   | boolean
   | string[]
-  | DbRecord
-  | DbRecord[]
+  | IResource
+  | IResource[]
   | MergeRecord;
 
-export type MergeRecord = Partial<DbRecord> & Required<Pick<DbRecord, "id">>;
+export type MergeRecord = Partial<IResource> & Required<Pick<IResource, "id">>;

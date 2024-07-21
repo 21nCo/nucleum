@@ -3,14 +3,14 @@
     IBlock,
     IMarkdown,
     IMarkdownParams
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import {
     NodeType,
     headingNodeTypes,
     type INode,
     type INodeHierarchyV1,
     type INodeStructure
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { createEventDispatcher } from "svelte";
   import Markdown from "./Markdown.svelte";
   import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";

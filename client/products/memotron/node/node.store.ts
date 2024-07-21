@@ -1,12 +1,15 @@
-
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
+  type INodeItemCaptured,
   LinkType,
   type IActiveNode,
-  type INodeCapture,
   type INodeProperty,
-} from "$lib/client/types/memotron/node.type";
-import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
+  type INode
+} from "$lib/client/products/memotron/node/node.type";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "$lib/client/components/resourceStores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
@@ -15,24 +18,23 @@ import type { IMutationQueueParams } from "../../../types/data.type";
 
 export const hierarchyFactorLimit = 5;
 
-
-class NodeStore extends ResourceStore {
-  db: ISurrealDatabase
+class NodeStore extends ResourceStore<INode> {
+  db: ISurrealDatabase;
   constructor() {
-    super(Item.node, {
+    super(Resource.node, {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
   }
   async createNode(
-    capture: INodeCapture,
-    mutatationQueueParams?: IMutationQueueParams
+    capture: INodeItemCaptured[],
+    queueParams?: IMutationQueueParams
   ) {
-    return super.create(
-      capture,
-      "return fn::memotron::node::createMany($resources, $mutatedAt);",
-      mutatationQueueParams
-    );
+    return super.create(capture, {
+      customQuery:
+        "return fn::memotron::node::createMany($resources, $mutatedAt);",
+      queueParams
+    });
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
@@ -108,14 +110,14 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   }
   fetch = async () => {
     const result = await this.resourceStore.fetch(this.id);
-    if(result) {
+    if (result) {
       this.set(result);
     }
-  }
+  };
   updateProperties = async (properties: INodeProperty[]) => {
     this.update((prev) => ({ ...prev, properties }));
     return this.resourceStore.modify(this.id, { properties });
-  }
+  };
   updateBlock = (id: string, changedProps: any) => {
     const mutationId =
       `${id}-` +
@@ -129,16 +131,14 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   };
   createBlock = async (id: string, contentType: any) => {
     return this.resourceStore.createNode(
-      {
-        resources: [
-          {
-            id,
-            body: "",
-            contentType,
-            creationContext: this.id
-          }
-        ]
-      },
+      [
+        {
+          id,
+          body: "",
+          contentType,
+          creationContext: this.id
+        }
+      ],
       {
         isUseQueueFirstApproach: true,
         mutationId: `${id}-create`
@@ -146,7 +146,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     );
   };
   deleteBlock = async (id: string) => {
-    return this.resourceStore.delete(id, {
+    return this.resourceStore.trash(id, {
       isUseQueueFirstApproach: true,
       mutationId: `${id}-delete`
     });

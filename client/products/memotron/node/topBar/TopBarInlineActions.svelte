@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { Size } from "$lib/client/types/size.enum";

@@ -26,14 +26,13 @@
       $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
     );
   }
-  //TODO - Temp - disabling for Pointron release
-  // setInterval(() => {
-  //   if (isValidArrayWithData($mutationQueue) && $account.isLoggedIn) {
-  //     dataManager.syncPendingMutations();
-  //     console.log(
-  //       "Syncing mutations",
-  //       $mutationQueue.map((m) => m.id)
-  //     );
-  //   }
-  // }, 1500);
+  setInterval(() => {
+    if (isValidArrayWithData($mutationQueue) && $account.isLoggedIn) {
+      dataManager.syncPendingMutations();
+      // console.log(
+      //   "Syncing mutations",
+      //   $mutationQueue.map((m) => m.id)
+      // );
+    }
+  }, 1500);
 </script>

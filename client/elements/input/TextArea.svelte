@@ -2,10 +2,10 @@
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
-  import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import type { IResource } from "$lib/client/components/resourceStores/resource.type";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;
@@ -15,7 +15,7 @@
   export let rows: number = 5;
   export let resizable: boolean = true;
   let isShowSaveFeedback: boolean = false;
-  let searchResults: DbRecordWithLabel[] = [];
+  let searchResults: IResource[] = [];
   let selectedIndex: number = 0;
   let isFocused: boolean = false;
   export function focus() {

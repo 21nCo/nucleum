@@ -2,12 +2,7 @@ import { Cloud } from "$lib/client/types/cloud.enum";
 import { get, writable } from "svelte/store";
 import type { JsonValue } from "$lib/client/types/json.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { Item } from "$lib/client/types/item.enum";
-import type {
-  DbRecord,
-  DbRecordBase,
-  DbRecordWithLabel
-} from "../types/dbrecord.type";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import {
   performApiCall,
@@ -19,6 +14,10 @@ import {
   persistLocally,
   retrieveLocally
 } from "$lib/client/utils/storage.utils";
+import type {
+  IResource,
+  IResourceBase
+} from "../components/resourceStores/resource.type";
 
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -152,7 +151,7 @@ export class Persistence {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  create(item: DbRecord, itemType: Item) {
+  create(item: IResource, itemType: Resource) {
     item = {
       ...item,
       createdAt: new Date().toISOString(),
@@ -169,11 +168,11 @@ export class Persistence {
         break;
       case Cloud.surreal:
         if (item.id) {
-          const id = Item[itemType] + `:${item.id}`;
+          const id = Resource[itemType] + `:${item.id}`;
           item.id = id;
           return this.surrealDb.create(id, item);
         } else {
-          return this.surrealDb.create(Item[itemType], item);
+          return this.surrealDb.create(Resource[itemType], item);
         }
     }
     return item.id;
@@ -184,7 +183,7 @@ export class Persistence {
    * @param itemType ItemType
    * @returns Id of the created Item
    */
-  createMultiple<T extends DbRecordBase>(items: T[], itemType: Item) {
+  createMultiple<T extends IResourceBase>(items: T[], itemType: Resource) {
     switch (get(cloudProvider)) {
       case Cloud.local:
         let allItems = retrieveLocally(itemType);
@@ -198,9 +197,9 @@ export class Persistence {
         //todo - replace with surreal query for bulk create
         items.forEach((item: T) => {
           if (item.id) {
-            this.surrealDb.create(Item[itemType] + `:${item.id}`, item);
+            this.surrealDb.create(Resource[itemType] + `:${item.id}`, item);
           } else {
-            this.surrealDb.create(Item[itemType], item);
+            this.surrealDb.create(Resource[itemType], item);
           }
         });
         break;
@@ -214,17 +213,17 @@ export class Persistence {
    * @returns complete modified item record
    */
   update(
-    item: Partial<DbRecord> & Required<Pick<DbRecord, "id">>,
-    itemType?: Item
+    item: Partial<IResource> & Required<Pick<IResource, "id">>,
+    itemType?: Resource
   ) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
         if (!itemType) break;
-        let items: DbRecordBase[] = retrieveLocally(itemType);
+        let items: IResourceBase[] = retrieveLocally(itemType);
         if (!items) {
           items = [];
         }
-        items = items.filter((x: DbRecordBase) => x.id != item.id);
+        items = items.filter((x: IResourceBase) => x.id != item.id);
         items.push(item);
         persistLocally(itemType, items);
         break;
@@ -233,10 +232,10 @@ export class Persistence {
         item.modifiedAt = new Date().toISOString();
         return this.surrealDb.merge(
           itemType
-            ? `${Item[itemType]}:${item.id}`
+            ? `${Resource[itemType]}:${item.id}`
             : typeof item.id === "string"
-            ? item.id
-            : "",
+              ? item.id
+              : "",
           item
         );
     }
@@ -247,11 +246,11 @@ export class Persistence {
    * @param itemType ItemType
    * @returns true if deleted successfully else false
    */
-  delete(itemId: string, itemType: Item, userId?: string) {
+  delete(itemId: string, itemType: Resource, userId?: string) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
         let items = retrieveLocally(itemType);
-        items = items.filter((x: DbRecordBase) => x.id != itemId);
+        items = items.filter((x: IResourceBase) => x.id != itemId);
         persistLocally(itemType, items);
         break;
       }
@@ -259,7 +258,7 @@ export class Persistence {
         return this.surrealDb.delete(itemId, userId);
     }
   }
-  retrieve(itemId: string, itemType: Item | undefined = undefined) {
+  retrieve(itemId: string, itemType: Resource | undefined = undefined) {
     switch (get(cloudProvider)) {
       case Cloud.local: {
         if (!itemType) break;
@@ -267,14 +266,14 @@ export class Persistence {
         if (!items) {
           items = [];
         }
-        let item = items.find((x: DbRecordBase) => x.id == itemId);
+        let item = items.find((x: IResourceBase) => x.id == itemId);
         return item;
       }
       case Cloud.surreal:
         return this.surrealDb.select(itemId);
     }
   }
-  retrieveAll(itemType: Item) {
+  retrieveAll(itemType: Resource) {
     try {
       switch (get(cloudProvider)) {
         case Cloud.local: {
@@ -282,7 +281,7 @@ export class Persistence {
           return items;
         }
         case Cloud.surreal:
-          return this.surrealDb.select(Item[itemType]);
+          return this.surrealDb.select(Resource[itemType]);
       }
       return [];
     } catch (error) {
@@ -291,9 +290,9 @@ export class Persistence {
   }
   async searchByLabel(
     searchString: string,
-    itemType: Item
-  ): Promise<DbRecordWithLabel[]> {
-    let results: DbRecordWithLabel[] = [];
+    itemType: Resource
+  ): Promise<IResource[]> {
+    let results: IResource[] = [];
     switch (get(cloudProvider)) {
       case Cloud.local:
       // switch (itemType) {
@@ -332,9 +331,9 @@ export class Persistence {
       // }
       // break;
       case Cloud.surreal:
-        if (itemType != Item.ALL) {
+        if (itemType != Resource.ALL) {
           const response = await this.surrealDb.executeReadFn(
-            `select * from ${Item[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
+            `select * from ${Resource[itemType]} where string::lowercase(label) CONTAINS $searchString and (isArchived is false or isArchived is none);`,
             {
               searchString: searchString.toLowerCase()
             }
