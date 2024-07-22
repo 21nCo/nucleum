@@ -40,12 +40,33 @@ export interface ITrashInformation {
   deletedBy: string;
 }
 
+export enum ResourceAccessMode {
+  INLINE = "inline",
+  SPLIT = "split",
+  /**
+   * Split in focus mode
+   */
+  FSPLIT = "fsplit",
+  POP = "pop",
+  FOCUS = "focus",
+  TOPBARFOCUS = "tbf"
+}
+
 export enum ResourceActionType {
-  BROWSER = "browser",
+  BROWSE = "browse",
   OPEN = "open",
   CREATE = "create",
   EDIT = "edit",
   DELETE = "delete",
   ARCHIVE = "archive",
   RESTORE = "restore"
+}
+
+export enum ResourceAccessPoint {
+  BROWSER = "browser",
+  LIBRARY = "library",
+  JOURNAL = "journal",
+  TOP_BAR = "topbar",
+  SELF = "self",
+  OTHER = "other"
 }

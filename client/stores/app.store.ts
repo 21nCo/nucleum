@@ -15,11 +15,7 @@ import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
 import type { IObservableStoreSubject, IStore } from "../types/data.type";
-import {
-  ActionType,
-  ResourceAccessMode,
-  type IAction
-} from "../types/action.type";
+import { ActionType, type IAction } from "../types/action.type";
 import type {
   IdentityProvider,
   OAuthProviderConfig
@@ -45,6 +41,10 @@ import { Embed, OperatingSystem } from "../types/context.type";
 import { goto } from "../utils/browser.utils";
 import { accessLogStore } from "../components/accessLogging/accesslog.store";
 import { KeyValueStore } from "../components/resourceStores/kv.store";
+import {
+  ResourceActionType,
+  ResourceAccessMode
+} from "../components/resourceStores/resource.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -659,7 +659,7 @@ function initAppStore(seed: AppStore) {
     if (!id) return;
     accessLogStore.create({
       resource: id.split(":")[0],
-      action: "view",
+      action: ResourceActionType.OPEN,
       resourceId: id,
       timestamp: new Date().toISOString()
     });
@@ -845,8 +845,9 @@ function initEditModeStore() {
   return {
     subscribe,
     set,
-    toggle: () => {
+    toggle: (val?: boolean) => {
       update((n: boolean) => {
+        if (val !== undefined) return val;
         return !n;
       });
     }

@@ -20,9 +20,9 @@
   type="button"
   bind:isHovering
   class={cn(
-    "relative flex justify-center items-center min-w-fit whitespace-nowrap border hover:bg-bgs2 hover:text-fgs1",
+    "relative flex justify-center items-center whitespace-nowrap border hover:bg-bgs2 hover:text-fgs1",
     {
-      "w-56 h-20":
+      "min-w-56 h-20":
         iconOrientation === Orientation.Horizontal && size === Size.lg,
       "min-w-48 h-14":
         iconOrientation === Orientation.Horizontal && size === Size.md,

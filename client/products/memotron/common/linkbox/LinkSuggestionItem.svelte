@@ -34,11 +34,12 @@
   }
 </script>
 
-<div
+<button
   class={cn("flex w-full justify-between items-center", {
     "h-12": parentHierarchy.length > 0,
     "h-8": parentHierarchy.length == 0
   })}
+  on:click
 >
   <span class="flex flex-col h-full mo:w-4/5 w-3/4">
     {#if parentHierarchy.length > 0}
@@ -67,4 +68,4 @@
   <span class="text-b3 text-fgs3"
     >{item.type === CurationType.COLLECTION ? "Collection" : "Node"}</span
   >
-</div>
+</button>

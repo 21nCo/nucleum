@@ -16,19 +16,25 @@
 
 <div
   class={cn("flex flex-col", {
-    "w-32 text-b3": size === Size.sm,
-    "w-40 py-2 text-b2": size === Size.md,
-    "w-48 text-base": size === Size.lg
+    "w-36 py-1 text-b3": size === Size.sm,
+    "w-48 py-2 text-b2": size === Size.md,
+    "w-56 py-3 text-base": size === Size.lg
   })}
 >
   {#each menu as group, index}
     <div class="flex flex-col">
       {#each group.items as item}
         <button
-          class="flex p-1.5 px-4 items-center gap-2 hover:bg-bgs2"
-          on:click={() => {
+          class={cn("flex px-4 items-center gap-2 hover:bg-bgs2", {
+            "p-1": size === Size.sm,
+            "p-1.5": size === Size.md,
+            "px-2 py-1.5": size === Size.lg
+          })}
+          on:click={(e) => {
             if (item.callback) item.callback();
             dispatch("select", item.value);
+            dispatch("action", item.value);
+            e.stopPropagation();
           }}
         >
           {#if item.icon && typeof item.icon === "string"}

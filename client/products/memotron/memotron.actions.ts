@@ -21,6 +21,7 @@ import { ResourceActionType } from "$lib/client/components/resourceStores/resour
 import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
+import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -31,6 +32,19 @@ export const memotronActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.full,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
+    action: MemotronAction.SEARCH,
+    component: ResourceSearchModal,
+    label: "Search resources",
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        orientation: Orientation.Horizontal,
+        size: Size.lg,
         ignoreSafeArea: true
       }
     }
@@ -126,7 +140,7 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.collection, ResourceActionType.BROWSER),
+    action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: CollectionBrowser,
     label: "Collections",
     icon: "curation",
@@ -134,7 +148,7 @@ export const memotronActions: IAction[] = [
     loadingComponent: NodeLoadingPulse
   },
   {
-    action: resourceAction(Resource.node, ResourceActionType.BROWSER),
+    action: resourceAction(Resource.node, ResourceActionType.BROWSE),
     component: NodeBrowser,
     label: "Nodes",
     icon: "node",

@@ -11,74 +11,16 @@
   import { Size } from "$lib/client/types/size.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
+  import { resolveCollectionContextMenu } from "./collection.store";
+  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let collection: IActiveCollectionStore;
   $: bilinksRenderedAlongWithNode = $page.url.searchParams.get("blr");
   let contextMenu = [];
-  $: contextMenu = [
-    {
-      group: "all",
-      items: [
-        {
-          value: "edit",
-          icon: "pencil",
-          callback: () => {
-            isInEditMode.toggle();
-          }
-        },
-        {
-          label: "Change type",
-          value: "change-type",
-          icon: "cube",
-          callback: () => {}
-        },
-        {
-          value: "export",
-          icon: "share",
-          callback: () => {}
-        },
-        {
-          value: "share",
-          icon: "share",
-          callback: () => {}
-        },
-        {
-          value: "history",
-          icon: "history",
-          callback: () => {}
-        },
-        {
-          label: "Copy link",
-          value: "link",
-          icon: "copy",
-          callback: () => {}
-        }
-      ]
-    },
-    {
-      group: "more",
-      items: [
-        {
-          value: $collection.isArchived ? "unarchive" : "archive",
-          icon: "archive",
-          callback: () => {
-            $collection.isArchived
-              ? collection.unarchive()
-              : collection.archive();
-          }
-        },
-        {
-          value: $collection.trashInformation ? "restore" : "delete",
-          icon: "trash",
-          callback: () => {
-            $collection.trashInformation
-              ? collection.restore()
-              : collection.delete();
-          }
-        }
-      ]
-    }
-  ];
+  $: contextMenu = resolveCollectionContextMenu(
+    $collection,
+    ResourceAccessPoint.SELF
+  );
   let buttonProps = {
     style: ButtonStyle.DEFAULT
   };

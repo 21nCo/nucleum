@@ -1,6 +1,5 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -8,12 +7,29 @@
   import { resolveResourceType } from "../memotron.utils";
   import NodeThumbnail from "../node/nodeThumbnail/NodeThumbnail.svelte";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Size } from "$lib/client/types/size.enum";
+  import {
+    ResourceAccessPoint,
+    ResourceAccessMode
+  } from "$lib/client/components/resourceStores/resource.type";
+  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
   export let data: any[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let size: Size.sm | Size.md = Size.md;
+  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   let parentBgIndex = 1;
   function onClick(e: MouseEvent, item: any) {
+    if ($selectedResources.length > 0) {
+      const isSelected = $selectedResources.includes(item.id);
+      if (isSelected) {
+        $selectedResources = $selectedResources.filter((x) => x != item.id);
+        return;
+      }
+      $selectedResources = [...$selectedResources, item.id];
+      return;
+    }
     appStore.resourceClickHandler(e, item.id, defaultAccessMode);
   }
 </script>
@@ -22,11 +38,11 @@
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
   <div
     class={cn(
-      "h-full w-full gap-4 grid grid-cols-[repeat(auto-fit,minmax(290px,1fr))] content-start"
+      "h-full w-full gap-4 grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] content-start"
     )}
   >
-    {#each data as item}
-      {#if resource === "everything"}
+    {#each data as item (item)}
+      {#if resource === Resource.everything || resource === Resource.archived}
         {#if resolveResourceType(item) === MemotronResourceType.NODE}
           <NodeThumbnail
             {item}
@@ -37,6 +53,8 @@
         {:else if item.id.startsWith("collection:")}
           <CollectionThumbnail
             {item}
+            {size}
+            {context}
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />
@@ -57,6 +75,8 @@
       {:else if resource === Resource.collection}
         <CollectionThumbnail
           {item}
+          {size}
+          {context}
           {arrangement}
           on:click={(e) => onClick(e, item)}
         />

@@ -11,6 +11,7 @@ import {
 import { get } from "svelte/store";
 import { NodeThumbnailVariant } from "$lib/client/products/memotron/node/node.type";
 import {
+  activeResources,
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
@@ -30,6 +31,8 @@ import {
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
 import { CombinationViewType } from "../curation/curation.type";
+import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceActions } from "../common/resource.actions";
 
 class CollectionStore extends ResourceStore<ICollection> {
   db: ISurrealDatabase;
@@ -136,10 +139,10 @@ const activeCollectionStoreMap = new Map<string, IActiveCollectionStore>();
  * @returns The active curation store
  */
 export function resolveActiveCollectionStore(id: string, context: string = "") {
-  if (!activeCollectionStoreMap.has(id)) {
-    activeCollectionStoreMap.set(id, new ActiveCollectionStore(id));
+  if (!activeResources.has(id)) {
+    activeResources.set(id, new ActiveCollectionStore(id));
   }
-  let val = activeCollectionStoreMap.get(id);
+  let val = activeResources.get(id);
   return val!;
 }
 
@@ -168,6 +171,9 @@ class ActiveCollectionStore extends ActiveResourceStore<
   }
 
   async init(viewId?: string) {
+    this.resourceStore.modify(this.id, {
+      interactedAt: new Date().toISOString()
+    });
     const dm = get(dataManager);
     // let type = determineCurationType(this.id);
     const response = await this.resourceStore.fetch(this.id, viewId);
@@ -307,3 +313,42 @@ export const combinationLayoutOptions = [
   { value: CombinationViewType.WHITEBOARD, icon: "whiteboard" },
   { value: CombinationViewType.INFIGRID, icon: "infigrid" }
 ];
+
+export function resolveCollectionContextMenu(
+  collection: ICollection,
+  context: ResourceAccessPoint
+) {
+  const resourceActions = new ResourceActions(collection, collectionStore);
+  if (context != ResourceAccessPoint.SELF) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(context),
+          resourceActions.pinToTopBar(),
+          resourceActions.select(),
+          resourceActions.copyLink()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
+  return [
+    {
+      group: "all",
+      items: [
+        resourceActions.star(),
+        resourceActions.edit(context),
+        resourceActions.copyLink()
+      ]
+    },
+    {
+      group: "more",
+      items: [resourceActions.archive(), resourceActions.trash()]
+    }
+  ];
+}

@@ -17,11 +17,11 @@ import { prefixTable } from "../../../shared/utils/text.utils";
 import { dataManager } from "../../persistence/dataManager";
 import { ObservableStore } from "../../stores/client.store";
 import { resolveCurrentUserId } from "../../utils/account.utils";
-import type {
-  IResourceBase,
-  IResource,
-  ITrashInformation
-} from "./resource.type";
+import type { IResource, ITrashInformation } from "./resource.type";
+
+export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
+
+export const selectedResources = writable<string[]>([]);
 
 export class ActiveResourceStore<
   T extends IResource,
@@ -60,51 +60,23 @@ export class ActiveResourceStore<
     return this.debouncedPersistBlock({ label });
   }
   delete() {
-    this.update((prev: T) => ({
-      ...prev,
-      trashInformation: {
-        deletedBy: this.currentUserId,
-        deletedAt: new Date().toISOString()
-      }
-    }));
-    return this.resourceStore.trash(this.id);
+    return this.resourceStore.delete(this.id);
   }
   archive() {
-    this.update((prev: T) => ({
-      ...prev,
-      isArchived: true,
-      modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
-    }));
-    return this.resourceStore.modify(this.id, {
-      isArchived: true
-    } as Partial<T>);
+    return this.resourceStore.archive(this.id);
   }
   unarchive() {
-    this.update((prev: T) => ({
-      ...prev,
-      isArchived: false,
-      modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
-    }));
-    return this.resourceStore.modify(this.id, {
-      isArchived: false
-    } as Partial<T>);
+    return this.resourceStore.unarchive(this.id);
   }
   restore() {
-    this.update((prev: T) => ({ ...prev, trashInformation: undefined }) as T);
-    return this.resourceStore.modify(this.id, {
-      trashInformation: undefined
-    } as Partial<T>);
+    return this.resourceStore.restore(this.id);
   }
 }
 
 /**
  * For IFR Resources
  */
-export class ResourceStore<T extends IResourceBase> implements IStore {
+export class ResourceStore<T extends IResource> implements IStore {
   id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
   priorityRefreshOnAppAppear: boolean = false;
@@ -196,31 +168,101 @@ export class ResourceStore<T extends IResourceBase> implements IStore {
     const data: Partial<T> = {
       id,
       ...resource,
-      modifiedBy: this.currentUserId
+      modifiedBy: this.currentUserId,
+      modifiedAt: new Date().toISOString(),
+      interactedAt: new Date().toISOString()
     };
     return dataManager.performMutationForIFR(this.id, data, {
       action: PersistanceActionType.MERGE,
       queueParams: mutatationQueueParams
     });
   }
-  async trash(id: string, mutatationQueueParams?: IMutationQueueParams) {
+  async trash(id: string) {
+    return this.modify(id, {
+      trashInformation: {
+        deletedBy: this.currentUserId,
+        deletedAt: new Date().toISOString()
+      }
+    } as Partial<T>);
+  }
+  async bulkModify(ids: string[], data: Partial<T>) {
     return dataManager.performMutationForIFR(
       this.id,
       {
-        id,
+        ids,
+        data: {
+          ...data,
+          modifiedBy: this.currentUserId,
+          modifiedAt: new Date().toISOString(),
+          interactedAt: new Date().toISOString()
+        }
+      } as any,
+      {
+        action: PersistanceActionType.BULK_MERGE
+      }
+    );
+  }
+  async bulkTrash(ids: string[]) {
+    return this.bulkModify(ids, {
+      trashInformation: {
+        deletedBy: this.currentUserId,
+        deletedAt: new Date().toISOString()
+      }
+    } as Partial<T>);
+  }
+  delete(id: string) {
+    const activeResource = activeResources.get(id);
+    if (activeResource) {
+      activeResource.update((prev: T) => ({
+        ...prev,
         trashInformation: {
-          deletedAt: new Date().toISOString(),
-          deletedBy: this.currentUserId
-        },
+          deletedBy: this.currentUserId,
+          deletedAt: new Date().toISOString()
+        }
+      }));
+    }
+    return this.trash(id);
+  }
+  archive(id: string) {
+    const activeResource = activeResources.get(id);
+    if (activeResource) {
+      activeResource.update((prev: T) => ({
+        ...prev,
+        isArchived: true,
         modifiedBy: this.currentUserId,
         modifiedAt: new Date().toISOString(),
         interactedAt: new Date().toISOString()
-      },
-      {
-        action: PersistanceActionType.MERGE,
-        queueParams: mutatationQueueParams
-      }
-    );
+      }));
+    }
+    return this.modify(id, {
+      isArchived: true
+    } as Partial<T>);
+  }
+  unarchive(id: string) {
+    const activeResource = activeResources.get(id);
+    if (activeResource) {
+      activeResource.update((prev: T) => ({
+        ...prev,
+        isArchived: false,
+        modifiedBy: this.currentUserId,
+        modifiedAt: new Date().toISOString(),
+        interactedAt: new Date().toISOString()
+      }));
+    }
+    return this.modify(id, {
+      isArchived: false
+    } as Partial<T>);
+  }
+  restore(id: string) {
+    const activeResource = activeResources.get(id);
+    if (activeResource) {
+      activeResource.update(
+        (prev: T) => ({ ...prev, trashInformation: undefined }) as T
+      );
+    }
+    return this.modify(id, {
+      trashInformation: undefined
+    } as Partial<T>);
   }
   get() {}
 }

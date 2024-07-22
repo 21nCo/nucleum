@@ -29,7 +29,7 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import SplitView from "../SplitView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import ColorLayer from "./themeLayer/ColorLayer.svelte";

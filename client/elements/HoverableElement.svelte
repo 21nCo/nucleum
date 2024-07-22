@@ -32,6 +32,7 @@
   on:touchend
   on:touchmove
   on:touchstart
+  on:contextmenu
 >
   <slot />
 </svelte:element>

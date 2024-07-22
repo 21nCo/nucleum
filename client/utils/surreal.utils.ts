@@ -51,6 +51,9 @@ export function resolveMutationQuery(
     case PersistanceActionType.MERGE:
       modifiedQuery = `UPDATE ${record} MERGE $data;`;
       break;
+    case PersistanceActionType.BULK_MERGE:
+      modifiedQuery = `UPDATE ${record} MERGE $data where id in $ids;`;
+      break;
   }
   if (params?.isPreventMutationMapEntry) return modifiedQuery;
   return modifiedQuery + mutationMapEntry(record);

@@ -77,6 +77,7 @@ function init() {
         params
       });
       let localPersistancePromise;
+      let bulkUpdatePromise: any[] = [];
       const dexie = get(dataManager).cacheSource.dexie;
       // @ts-ignore
       const table: Table = dexie[item];
@@ -100,9 +101,17 @@ function init() {
         localPersistancePromise = table.put(data);
       } else if (params.action === PersistanceActionType.MERGE) {
         localPersistancePromise = table.update(data.id, data);
+      } else if (params.action === PersistanceActionType.BULK_MERGE) {
+        // localPersistancePromise = table.bulkUpdate(data.id, data);
+        if (data.ids && data.ids.length > 0) {
+          data.ids.forEach((id: string) => {
+            bulkUpdatePromise.push(table.update(id, data));
+          });
+        }
       }
       return Promise.all([
         localPersistancePromise,
+        ...bulkUpdatePromise,
         performMutation(item, data, params)
       ]);
     },
@@ -266,7 +275,8 @@ async function performMutation(
   const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
   const mutationQuery = resolveMutationQuery2();
   const mutationParams =
-    params.action === PersistanceActionType.CUSTOM_QUERY
+    params.action === PersistanceActionType.CUSTOM_QUERY ||
+    params.action === PersistanceActionType.BULK_MERGE
       ? { ...data, mutatedAt }
       : { data, mutatedAt };
   const mutationId = params.queueParams?.mutationId ?? generateUID();
@@ -305,7 +315,10 @@ async function performMutation(
         id = "kv:" + storeId;
         data.id = id;
       }
-      if (params.action === PersistanceActionType.INSERT) {
+      if (
+        params.action === PersistanceActionType.INSERT ||
+        params.action === PersistanceActionType.BULK_MERGE
+      ) {
         id = storeId;
       }
       console.log({ id, storeId, isKVStore });

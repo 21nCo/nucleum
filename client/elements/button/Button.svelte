@@ -26,7 +26,7 @@
   export let isPreventMinWidth: boolean = false;
   export let tooltipOptions: IPopoverRenderBaseParams = {
     placement: Position.BottomCenter,
-    offsetInPx: 2,
+    offsetInPx: 4,
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
   };

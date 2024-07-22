@@ -86,14 +86,3 @@ export enum ContentType {
   TOGGLE,
   SPACE_DOC
 }
-
-export enum ResourceAccessMode {
-  INLINE = "inline",
-  SPLIT = "split",
-  /**
-   * Split in focus mode
-   */
-  FSPLIT = "fsplit",
-  POP = "pop",
-  FOCUS = "focus"
-}

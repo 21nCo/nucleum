@@ -34,8 +34,7 @@ export type INodeThumbnail = INodeBase &
     children?: INodeThumbnail[];
   };
 
-export type INodeBase = Omit<IMemotronItemBase, "label"> & {
-  label?: string;
+export type INodeBase = IMemotronItemBase & {
   generatedLabel?: string;
   avatar?: IAvatar;
   properties?: INodeProperty[];

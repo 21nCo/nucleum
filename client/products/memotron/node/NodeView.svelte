@@ -8,7 +8,7 @@
   import { prefixTable } from "$lib/shared/utils/text.utils";
   import NodeRightPanel from "./rightPanel/NodeRightPanel.svelte";
   import { generateUID } from "$lib/client/utils/utils";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import { appStore } from "$lib/client/stores/app.store";
   export let id: string;
   export let isFromSplitView: boolean = false;

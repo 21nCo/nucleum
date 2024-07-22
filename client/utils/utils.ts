@@ -1,7 +1,7 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/client/types/userDate.type";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
-import { ActionType, ResourceAccessMode } from "$lib/client/types/action.type";
+import { ActionType } from "$lib/client/types/action.type";
 import { isValidArrayWithData } from "../../shared/utils/obj.utils";
 
 export function onInterval(
@@ -38,8 +38,8 @@ export function getUserDate(timestamp: number, dayStart: string = "00:00") {
     hours > startHours
       ? true
       : hours === startHours
-      ? minutes >= startMinutes
-      : false;
+        ? minutes >= startMinutes
+        : false;
   let userDate = {
     day: date.getDate(),
     month: date.getMonth(),

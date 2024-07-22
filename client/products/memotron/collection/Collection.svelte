@@ -30,7 +30,7 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
@@ -210,7 +210,7 @@
         <CollectionTitleBar on:back {collection} />
       </div>
       <header
-        class={cn("sticky top-0 flex flex-col gap-6 bg-bgs1 w-full", {
+        class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
           "pt-4": isStickied
         })}
       >

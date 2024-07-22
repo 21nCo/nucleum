@@ -176,7 +176,8 @@ export enum PersistanceActionType {
    */
   DELETE = "DELETE",
   CUSTOM_QUERY = "CUSTOM_QUERY",
-  CUSTOM_CREATE = "CUSTOM_CREATE"
+  CUSTOM_CREATE = "CUSTOM_CREATE",
+  BULK_MERGE = "BULK_MERGE"
 }
 
 export interface IMutationParams {

@@ -19,7 +19,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   setDefaults(data: string[]) {
     const current = this.get();
     const context = get(appStore).product;
-    console.log({
+    logger.log({
       context: "setting app menu defaults",
       current,
       ctx: context,
@@ -36,7 +36,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   addUserMenuItem(item: string) {
     const current = this.get();
     const context = get(appStore).product;
-    console.log({ context: "adding user app menu item", current });
+    logger.log({ context: "adding user app menu item", current });
     if (current[context]?.user?.includes(item)) return;
     this.modify({
       ...current,
@@ -49,7 +49,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   removeUserMenuItem(item: string) {
     const current = this.get();
     const context = get(appStore).product;
-    console.log({ context: "removing user app menu item", current });
+    logger.log({ context: "removing user app menu item", current });
     if (!current[context]?.user?.includes(item)) return;
     this.modify({
       ...current,

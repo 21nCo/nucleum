@@ -156,6 +156,7 @@
         isChecked={task.checked}
         on:click={onCheckClicked}
         isAccentBgActive={isInprogress}
+        size={Size.sm}
       />
       {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
         <TextInput

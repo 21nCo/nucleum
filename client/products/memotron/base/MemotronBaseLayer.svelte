@@ -13,7 +13,14 @@
   import view from "$lib/client/stores/view.store";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import MemotronNotifications from "./MemotronNotifications.svelte";
+  import PinnedTopBar from "$lib/client/layout/topNav/PinnedTopBar.svelte";
+  import { page } from "$app/stores";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
+  $: topBarResourceId = $page.url.searchParams.get(
+    ResourceAccessMode.TOPBARFOCUS
+  );
   onMount(async () => {
     if ($account.isLoggedIn) await initializeData();
     $appLoadingState.isLocalLoaded = true;
@@ -45,15 +52,30 @@
 </script>
 
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-  <MemotronLeftNav />
-  <div class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}">
-    <AppSplitView>
-      <slot name="main" slot="main">
-        <slot />
-      </slot>
-    </AppSplitView>
+  <div class="flex flex-col w-full h-full">
+    <PinnedTopBar />
+    <div class="flex w-full flex-grow">
+      {#if !topBarResourceId}
+        <MemotronLeftNav />
+      {/if}
+      <div
+        class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
+      >
+        <AppSplitView>
+          <slot name="main" slot="main">
+            {#if topBarResourceId}
+              {#key topBarResourceId}
+                <ResourceResolver id={topBarResourceId} />
+              {/key}
+            {:else}
+              <slot />
+            {/if}
+          </slot>
+        </AppSplitView>
+      </div>
+      <!-- <RightPanel /> -->
+    </div>
   </div>
-  <!-- <RightPanel /> -->
 {/if}
 <MemotronNotifications />
 <svelte:document on:visibilitychange={handleVisibilityChange} />

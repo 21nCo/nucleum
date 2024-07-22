@@ -1,33 +1,55 @@
 <script lang="ts">
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { Arrangement, Position } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { liveQuery } from "dexie";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { appStore } from "$lib/client/stores/app.store";
   import { collectionStore } from "../collection/collection.store";
-  import Curation from "../curation/Curation.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import Resources from "./Resources.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
   import { page } from "$app/stores";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
   import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType,
+    ResourceAccessMode
+  } from "$lib/client/components/resourceStores/resource.type";
+  import { uiState } from "$lib/client/stores/uiState.store";
+  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
+  import BulkEditBar from "./BulkEditBar.svelte";
   export let resource: Resource;
   collectionStore.refresh();
   let searchQuery: string = "";
+  let isRefineShown = false;
   let id: string | null = null;
+  let arrangement: Arrangement = uiState.getResourceState(
+    resource,
+    ResourceAccessPoint.BROWSER,
+    "arrangement"
+  );
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
+  $: floatingButton =
+    $selectedResources.length > 0
+      ? undefined
+      : {
+          label: "Create " + resource,
+          callback: async () =>
+            appStore.runAction(
+              resourceAction(resource, ResourceActionType.CREATE)
+            ),
+          icon: "plus",
+          variant: ButtonVariant.PRIMARY
+        };
   let starred = liveQuery(() =>
     //@ts-ignore
     $dataManager.cacheSource.dexie[resource]
@@ -46,21 +68,28 @@
       .and((item: any) => activeResourceFilter(item))
       .toArray()
   );
-
-  function refreshStarredData() {}
+  function onSelectAll() {
+    $selectedResources = $data.map((x) => x.id);
+  }
+  async function onBulkAction(action: string) {
+    if (action === "archive") {
+      await collectionStore.bulkModify($selectedResources, {
+        isArchived: true
+      });
+    } else if (action === "delete") {
+      await collectionStore.bulkTrash($selectedResources);
+    } else if (action === "star") {
+      await collectionStore.bulkModify($selectedResources, {
+        isStarred: true
+      });
+    }
+    $selectedResources = [];
+  }
 </script>
 
-<Panel
-  floatingButton={{
-    label: "Create " + resource,
-    callback: async () =>
-      appStore.runAction(resourceAction(resource, ResourceActionType.CREATE)),
-    icon: "plus",
-    variant: ButtonVariant.PRIMARY
-  }}
->
+<Panel {floatingButton}>
   <slot name="nonpadded" slot="nonpadded">
-    <div class="flex flex-col gap-4 h-full">
+    <div class="relative flex flex-col gap-4 h-full">
       <header class="flex gap-1 items-center py-4 px-5 border-b border-brs2">
         <TextInput
           bind:value={searchQuery}
@@ -82,30 +111,88 @@
         {/if}
         <Button
           icon="adjustments-vertical"
-          tooltip="Refine search"
+          tooltip="Settings & refine"
           toolTipPlacement={Position.Right}
           size={Size.md}
+          on:click={() => (isRefineShown = !isRefineShown)}
         />
       </header>
       <main class="flex flex-col gap-8 mx-5 overflow-auto">
+        {#if isRefineShown}
+          <div class="flex gap-4 items-center">
+            <Button
+              icon="funnel"
+              style={ButtonStyle.OUTLINED}
+              size={Size.sm}
+              label="Filters"
+              isPreventMinWidth={true}
+            />
+            <Button
+              icon="bars-center-left"
+              style={ButtonStyle.OUTLINED}
+              size={Size.sm}
+              label="Sort"
+              isPreventMinWidth={true}
+            />
+            <Button
+              icon={arrangement === Arrangement.LIST
+                ? "list"
+                : "rectangle-group"}
+              style={ButtonStyle.OUTLINED}
+              size={Size.sm}
+              isPreventMinWidth={true}
+              label={arrangement === Arrangement.LIST ? "List" : "Grid"}
+              on:click={() => {
+                const newArrangement =
+                  arrangement === Arrangement.LIST
+                    ? Arrangement.GRID
+                    : Arrangement.LIST;
+                uiState.setResourceState(
+                  resource,
+                  ResourceAccessPoint.BROWSER,
+                  "arrangement",
+                  newArrangement
+                );
+                arrangement = newArrangement;
+              }}
+            />
+          </div>
+        {/if}
         <div class="flex flex-col gap-4">
           <Text style={TextStyle.SECTION_HEADING} content="Starred" />
           <Resources
             data={$starred}
+            context={ResourceAccessPoint.BROWSER}
             {resource}
-            defaultAccessMode={ResourceAccessMode.INLINE}
+            {arrangement}
+            size={Size.sm}
+            defaultAccessMode={ResourceAccessMode.POP}
           />
         </div>
         <div class="flex flex-col gap-4">
           <Text style={TextStyle.SECTION_HEADING} content="All" />
           <Resources
             data={$data}
+            context={ResourceAccessPoint.BROWSER}
             {resource}
+            {arrangement}
+            size={Size.sm}
             defaultAccessMode={ResourceAccessMode.INLINE}
           />
         </div>
         <ScrollViewBottomSpacer />
       </main>
+      {#if $selectedResources.length > 0}
+        <div class="absolute bottom-0 right-0 flex w-full justify-center mb-4">
+          <BulkEditBar
+            size={Size.sm}
+            on:selectAll={onSelectAll}
+            on:archive={() => onBulkAction("archive")}
+            on:delete={() => onBulkAction("delete")}
+            on:star={() => onBulkAction("star")}
+          />
+        </div>
+      {/if}
     </div>
   </slot>
   <slot slot="right" name="right">

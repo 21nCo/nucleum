@@ -7,6 +7,7 @@ import {
   type INode
 } from "$lib/client/products/memotron/node/node.type";
 import {
+  activeResources,
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
@@ -15,6 +16,10 @@ import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IMutationQueueParams } from "../../../types/data.type";
+import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceActions } from "../common/resource.actions";
+import { MemotronAction } from "../memotronAction.enum";
+import { appStore } from "$lib/client/stores/app.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -78,12 +83,12 @@ const activeNodeStores = new Map<string, IActiveNodeStore>();
  * @returns The active node store
  */
 export function resolveActiveNodeStore(id: string, context: string = "") {
-  if (!activeNodeStores.has(id)) {
+  if (!activeResources.has(id)) {
     //console.log("init node store from: " + context + " id: " + id);
     // activeNodeStores.set(id, initActiveNodeStore(id));
-    activeNodeStores.set(id, new ActiveNodeStore(id));
+    activeResources.set(id, new ActiveNodeStore(id));
   }
-  let val = activeNodeStores.get(id);
+  let val = activeResources.get(id);
   return val!;
 }
 
@@ -154,4 +159,61 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   mention = async (location: string, id: string) => {
     return this.resourceStore.link(location, id, LinkType.MENTION);
   };
+}
+
+export function resolveNodeContextMenu(
+  node: INode,
+  context: ResourceAccessPoint
+) {
+  const resourceActions = new ResourceActions(node, nodeStore);
+  if (context != ResourceAccessPoint.SELF) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(context),
+          resourceActions.select(),
+          resourceActions.copyLink()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
+  return [
+    {
+      group: "all",
+      items: [
+        resourceActions.star(),
+        resourceActions.edit(context),
+        resourceActions.copyLink(),
+        {
+          value: "export",
+          icon: "share",
+          callback: () => {}
+        },
+        {
+          value: "share",
+          icon: "share",
+          callback: () => {
+            appStore.runAction(MemotronAction.PUBLISH, {
+              componentParams: { id: node.id }
+            });
+          }
+        },
+        {
+          value: "history",
+          icon: "history",
+          callback: () => {}
+        }
+      ]
+    },
+    {
+      group: "more",
+      items: [resourceActions.archive(), resourceActions.trash()]
+    }
+  ];
 }

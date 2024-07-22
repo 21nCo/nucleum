@@ -98,7 +98,10 @@
         }}
       >
         <div class="flex gap-2">
-          <Check isChecked={selected.some((x) => x == item.value)} />
+          <Check
+            isChecked={selected.some((x) => x == item.value)}
+            size={Size.sm}
+          />
           {#if item.icon}
             <Icon icon={item.icon} size={Size.sm} />
           {/if}

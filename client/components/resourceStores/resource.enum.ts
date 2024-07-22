@@ -4,6 +4,7 @@ export enum Resource {
    * Meta resource for everything
    */
   everything = "everything",
+  archived = "archived",
   globalPreferences = "globalPreferences",
   TailwindTheme = "TailwindTheme",
   appData = "appData",
@@ -15,6 +16,7 @@ export enum Resource {
   kv = "kv",
   appMenu = "appMenu",
   accessLog = "accessLog",
+  uiState = "uiState",
 
   //Pointron
   pointronPreferences = "pointronPreferences",

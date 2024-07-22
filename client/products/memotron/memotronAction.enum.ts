@@ -6,5 +6,6 @@ export enum MemotronAction {
   HISTORY = "history",
   EDIT_COLLECTION_PROPERTIES = "edit-collection-properties",
   CREATE_TYPE = "create-type",
-  LIBRARY = "library"
+  LIBRARY = "library",
+  SEARCH = "search"
 }
