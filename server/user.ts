@@ -401,10 +401,31 @@ export async function performUserAccountAction(authHeader: any, body: any) {
       region
     });
     console.log("bootstrap response", { bootstrapResponse });
-    const query = `update user:${id} set region = "${region}", isBootstrapped = true;`;
+    const query = `update user:${id} set region = "${region}", isBootstrapped = true; select context.guest.* as guest from user:${id};`;
     const response = await performQueryOnMasterDb(query);
-    console.log("bootstrap response", { response });
+    console.log("bootstrap response", { response: JSON.stringify(response) });
     if (!response) return { error: "Bootstrapping failed" };
-    return await generateToken(id, response[0].result[0], { isTrusted: true });
+    const userInfo = response[0].result[0];
+    const tzInfo = response[1]?.result?.[0]?.guest?.context?.timezone;
+    console.log("tzInfo", tzInfo);
+    if (tzInfo) {
+      try {
+        const tzQuery = `create tz set date = "${new Date(
+          Date.UTC(1970, 0, 1)
+        ).toISOString()}", offset = ${tzInfo.offset}, label = "${
+          tzInfo.label
+        }";`;
+        const tzResponse = await performAgentProxyQuery(tzQuery, {
+          db: id,
+          context: CONTEXT.USER,
+          id: id,
+          region: region
+        });
+        console.log("tzResponse", tzResponse);
+      } catch (e) {
+        console.error("Error setting timezone", e);
+      }
+    }
+    return await generateToken(id, userInfo, { isTrusted: true });
   }
 }
