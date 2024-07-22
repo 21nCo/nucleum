@@ -1,5 +1,5 @@
 <script>
-  import PropertiesEditor from "$lib/client/products/memotron/curation/collection/properties/PropertiesEditor.svelte";
+  // import PropertiesEditor from "$lib/client/products/memotron/curation/collection/properties/PropertiesEditor.svelte";
   import RiveAnimatedIcon from "$lib/client/icons/RiveAnimatedIcon.svelte";
   import CaretPlay from "./CaretPlay.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
