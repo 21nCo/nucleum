@@ -20,6 +20,7 @@ import {
   type IObservableStoreSubject
 } from "$lib/client/types/data.type";
 import { generateUID } from "../utils/utils";
+import { dataManager } from "../persistence/dataManager";
 
 export const isRefreshingToken = writable(false);
 
@@ -104,6 +105,7 @@ class AccountStore extends ObservableStore<
   signOut() {
     this.expire();
     signout("signOut account.store");
+    this.clearAllCache();
   }
   async embedOAuthSignin(token: string) {
     localStorage.setItem("stoken", token);
@@ -266,6 +268,15 @@ class AccountStore extends ObservableStore<
     } else {
       return true;
     }
+  }
+  clearAllCache() {
+    const env = localStorage.getItem("env");
+    const appData = localStorage.getItem("appData");
+    localStorage.clear();
+    sessionStorage.clear();
+    get(dataManager)?.cacheSource?.clearCache();
+    if (env) localStorage.setItem("env", env);
+    if (appData) localStorage.setItem("appData", appData);
   }
 }
 

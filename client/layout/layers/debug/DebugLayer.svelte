@@ -35,9 +35,7 @@
     }
   }
   function clearCache() {
-    localStorage.clear();
-    sessionStorage.clear();
-    $dataManager.cacheSource.clearCache();
+    account.clearAllCache();
     account.signOut();
   }
 </script>

@@ -13,8 +13,7 @@ class PropertyStore extends ResourceStore<IProperty> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.property, {
-      priorityRefreshOnAppAppear: true,
-      refreshQuery: "return fn::memotron::property::fetchAll($since);"
+      priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
   }

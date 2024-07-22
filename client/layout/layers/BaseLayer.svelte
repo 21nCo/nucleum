@@ -275,6 +275,7 @@
     const envCachedOnMachine = localStorage.getItem("env");
     if ($appStore.env !== envCachedOnMachine) {
       localStorage.setItem("env", $appStore.env);
+      console.log("environment changed");
       account.signOut();
     }
   }

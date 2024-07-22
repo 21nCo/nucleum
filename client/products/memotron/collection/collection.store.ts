@@ -9,7 +9,6 @@ import {
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
-import { NodeThumbnailVariant } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
   ActiveResourceStore,
@@ -23,7 +22,8 @@ import {
   type IActiveCollection,
   type ICollectionView,
   CollectionType,
-  type ICollection
+  type ICollection,
+  type ICollectionViewWithData
 } from "$lib/client/products/memotron/collection/collection.type";
 import {
   propertyEditorStore,
@@ -103,8 +103,8 @@ class CollectionStore extends ResourceStore<ICollection> {
     return interceptSurrealResponse(response, "create view");
   }
   async fetchViewData(viewId: string, collectionId: string) {
-    const query = `fn::memotron::curation::fetchData($viewId, $collectionId)`;
-    const response = await this.db.query(query, {
+    const query = `fn::memotron::collection::fetchData($viewId, $collectionId)`;
+    const response = await this.db.executeReadFn(query, {
       viewId,
       collectionId
     });
@@ -175,32 +175,24 @@ class ActiveCollectionStore extends ActiveResourceStore<
       interactedAt: new Date().toISOString()
     });
     const dm = get(dataManager);
-    // let type = determineCurationType(this.id);
-    const response = await this.resourceStore.fetch(this.id, viewId);
-    // console.log("curation fetch response", { response });
-    if (response.curation) {
-      this.update((store: IActiveCollection) => {
-        if (!isValidArrayWithData(response.curation.views)) return store;
-        store = response.curation;
-        if (viewId && store.views.some((x) => x.id === viewId))
-          store.views.find((x) => x.id === viewId)!.data = response.data;
-        else store.views[0].data = response.data;
-        return store;
-      });
-    } else {
-      const record = await dm.cacheSource.dexie.collection.get(this.id);
-      if (record) {
-        this.set({
-          ...record,
-          isRefreshing: true,
-          views: []
-        });
-      }
+    const record = await dm.cacheSource.dexie.collection.get(this.id);
+    const views = record?.views ?? [];
+    let viewsWithData: ICollectionView[] = [];
+    if (views.length > 0) {
+      viewsWithData = await dm.cacheSource.dexie.view
+        .where("id")
+        .anyOfIgnoreCase(views)
+        .toArray();
     }
-    this.update((store: IActiveCollection) => {
-      store.isRefreshing = false;
-      return store;
-    });
+    if (record) {
+      this.set({
+        ...record,
+        isRefreshing: false,
+        viewsWithData: viewsWithData.map((x) => {
+          return { ...x, data: [] };
+        })
+      });
+    }
   }
 
   createView(viewToDuplicate?: string) {
@@ -271,10 +263,11 @@ class ActiveCollectionStore extends ActiveResourceStore<
       val.isRefreshing = true;
       return val;
     });
+    //TODO - move the fetch view data to view store
     const response = await this.resourceStore.fetchViewData(viewId, this.id);
     if (!response || !isValidArrayWithData(response)) return;
     this.update((val: IActiveCollection) => {
-      val.views.find((v) => v.id === viewId)!.data = [...response];
+      val.viewsWithData.find((v) => v.id === viewId)!.data = [...response];
       val.isRefreshing = false;
       return val;
     });
@@ -289,6 +282,11 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
+  }
+  async fetchViewData(id: string) {
+    const query = `fn::memotron::view::fetch($id)`;
+    const response = await this.db.executeReadFn(query, { id });
+    return interceptSurrealResponse(response, "fetch view");
   }
 }
 

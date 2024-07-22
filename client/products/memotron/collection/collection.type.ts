@@ -1,6 +1,7 @@
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { Arrangement } from "$lib/client/types/direction.enum";
 import type { IMemotronItemBase } from "../memotron.type";
+import type { INodeThumbnail } from "../node/node.type";
 
 export enum CollectionType {
   TYPED = "TYPED",
@@ -18,6 +19,7 @@ export enum CollectionLayout {
 export type IActiveCollection = {
   type: CollectionType;
   isRefreshing: boolean;
+  viewsWithData: ICollectionViewWithData[];
 } & ICollection;
 
 export interface ICollection extends IMemotronItemBase {
@@ -36,9 +38,11 @@ export interface ICollection extends IMemotronItemBase {
   properties?: string[];
 }
 
+export type ICollectionViewWithData = ICollectionView & {
+  data: INodeThumbnail[];
+};
 export interface ICollectionView extends IMemotronItemBase {
   layout: CollectionLayout;
-  // data?: INodeThumbnail[];
   arrangement?: Arrangement;
   /**
    * Property id to show as tabs.

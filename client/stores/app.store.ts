@@ -664,6 +664,7 @@ function initAppStore(seed: AppStore) {
       timestamp: new Date().toISOString()
     });
     toggleSearchParam("view");
+    // console.log("resourceClickHandler", { id, defaultTo, event });
     if (event.shiftKey) {
       toggleSearchParam(ResourceAccessMode.FOCUS, id);
     } else if (event.altKey) {

@@ -12,7 +12,6 @@
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  console.log({ item });
 </script>
 
 <ResourceThumbnailBase bind:item {context}>

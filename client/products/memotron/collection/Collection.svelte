@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { CurationType } from "$lib/client/products/memotron/curation/curation.type";
-  import type { IActiveCollectionStore } from "./collection.store";
+  import {
+    resolveActiveCollectionStore,
+    type IActiveCollectionStore
+  } from "./collection.store";
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
   import View from "./View.svelte";
@@ -34,14 +36,15 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
-  import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
+  import type { ICollectionViewWithData } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
-  /**
-   * @deprecated - use collection directly
-   */
+  import { Arrangement } from "$lib/client/types/direction.enum";
+  import view from "$lib/client/stores/view.store";
   export let id: string = "";
-  export let collection: IActiveCollectionStore;
-  let activeView: ICollectionView | null = null;
+  let collection: IActiveCollectionStore = resolveActiveCollectionStore(
+    id
+  ) as IActiveCollectionStore;
+  let activeView: ICollectionViewWithData | null = null;
   let filteredViewData: INodeThumbnail[] = [];
   let selectedViewId: string;
   let selectedTab: ISelectValue | undefined = undefined;
@@ -95,10 +98,10 @@
     // console.log("onArrangementChange", e.detail);
     if (!activeView) return;
     const currentArrangement = activeView?.arrangement;
-    if (currentArrangement === NodeThumbnailVariant.GRID) {
-      activeView.arrangement = NodeThumbnailVariant.LIST;
+    if (currentArrangement === Arrangement.GRID) {
+      activeView.arrangement = Arrangement.LIST;
     } else {
-      activeView.arrangement = NodeThumbnailVariant.GRID;
+      activeView.arrangement = Arrangement.GRID;
     }
     collection.updateView(activeView);
   }
@@ -108,14 +111,15 @@
     isStickied = positionFromTop ? positionFromTop <= 0 : false;
   }
   async function onViewSwitch() {
-    const view = setActiveView();
+    const view = loadActiveView();
     if (!view) return;
     appStore.toggleSearchParam("view", view.id);
-    await collection.refreshViewData(view.id);
+    await refresh();
   }
-  function setActiveView() {
+  function loadActiveView() {
     if (!selectedViewId) return;
-    const view = $collection.views.find((x) => x.id === selectedViewId) ?? null;
+    const view =
+      $collection.viewsWithData.find((x) => x.id === selectedViewId) ?? null;
     if (!view) return;
     activeView = view;
     return view;
@@ -127,12 +131,11 @@
     collection.updateView(activeView);
   }
   function refreshViewsOnSwitcher() {
-    viewsForSwitcher =
-      $collection && "views" in $collection
-        ? $collection.views.filter(activeResourceFilter).map((x) => {
-            return { label: x.label ?? "Default", value: x.id };
-          })
-        : [];
+    viewsForSwitcher = $collection?.viewsWithData
+      ? $collection.viewsWithData.filter(activeResourceFilter).map((x) => {
+          return { label: x.label ?? "Default", value: x.id };
+        })
+      : [];
   }
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -152,22 +155,25 @@
       selectedViewId = viewQueryParam;
     }
     await collection.init(selectedViewId);
-    setActiveView();
+    loadActiveView();
     if (!activeView) {
-      activeView =
-        $collection && "views" in $collection
-          ? $collection.views.filter(activeResourceFilter)?.[0]
-          : null;
+      activeView = $collection?.viewsWithData
+        ? $collection.viewsWithData.filter(activeResourceFilter)?.[0]
+        : null;
       selectedViewId = activeView?.id ?? "";
     }
-    properties = resolvePropertyList($collection?.associatedType);
+    properties = resolvePropertyList($collection);
     refreshViewsOnSwitcher();
-    refreshFilters();
+    await refresh();
     isRefreshing = false;
   });
-  function refreshFilters() {
+  async function refresh() {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
+    if (!activeView.data || activeView.data.length === 0) {
+      await collection.refreshViewData(activeView.id);
+      loadActiveView();
+    }
     if (!tabBy || (tabBy && selectedTab === "all")) {
       filteredViewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {
@@ -181,14 +187,15 @@
       filteredViewData = activeView.data ?? [];
     }
   }
-  function onTabSwitch(e: CustomEvent) {
+  async function onTabSwitch(e: CustomEvent) {
     console.log("onTabSwitch", selectedTab);
-    refreshFilters();
+    await refresh();
   }
   function onCoverChange(e: CustomEvent) {
     console.log("onCoverChange", e.detail);
     collection.modify({ cover: e.detail });
   }
+  $: console.log({ activeView });
 </script>
 
 {#if isRefreshing}
@@ -198,13 +205,11 @@
     class="relative flex flex-col w-full h-full overflow-auto"
     on:scroll={onScroll}
   >
-    {#if $collection.type != CurationType.NODELINKS}
-      <Cover
-        bind:src={$collection.cover}
-        {isRoundedExperimental}
-        on:change={onCoverChange}
-      />
-    {/if}
+    <Cover
+      bind:src={$collection.cover}
+      {isRoundedExperimental}
+      on:change={onCoverChange}
+    />
     <div class={cn("flex flex-col gap-6 pt-4 grow w-full")}>
       <div class="px-4">
         <CollectionTitleBar on:back {collection} />
@@ -241,10 +246,10 @@
               {...viewRightButtonOptions}
             />
             <Button
-              icon={activeView?.arrangement === NodeThumbnailVariant.GRID
+              icon={activeView?.arrangement === Arrangement.GRID
                 ? "widget"
                 : "list"}
-              label={activeView?.arrangement === NodeThumbnailVariant.GRID
+              label={activeView?.arrangement === Arrangement.GRID
                 ? "Grid"
                 : "List"}
               {...viewRightButtonOptions}
@@ -265,7 +270,7 @@
               <ViewTabSwitcher
                 view={activeView}
                 bind:value={selectedTab}
-                properties={$collection?.associatedType?.properties}
+                properties={$collection?.properties}
                 on:select={onTabSwitch}
               />
             {/if}
@@ -286,7 +291,7 @@
             view={activeView}
             data={filteredViewData}
             isBoardOverflow={isStickied}
-            properties={$collection?.associatedType?.properties}
+            properties={$collection?.properties}
           />
         {:else}
           content

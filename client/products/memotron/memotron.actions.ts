@@ -22,6 +22,7 @@ import { resourceAction } from "$lib/client/components/resourceStores/resource.u
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
+import Collection from "./collection/Collection.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -170,7 +171,7 @@ export const memotronActions: IAction[] = [
   {
     action: Resource.collection,
     type: ActionType.MODAL,
-    component: Curation,
+    component: Collection,
     modalParams: {
       layout: {
         size: Size.xl,

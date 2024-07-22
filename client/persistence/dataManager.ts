@@ -321,7 +321,7 @@ async function performMutation(
       ) {
         id = storeId;
       }
-      console.log({ id, storeId, isKVStore });
+      logger.log({ id, storeId, isKVStore });
       return resolveMutationQuery(params.action, id, {
         userId: data.modifiedBy ? data.modifiedBy : "",
         isPreventMutationMapEntry: params.queueParams?.isUseQueueFirstApproach
@@ -340,7 +340,7 @@ async function performMutation(
       dm.cacheSource.mergeClientMutationMap({ [storeId]: mutatedAt });
       return { resources: [storeId], isKVStore: false };
     } else {
-      console.log({
+      logger.log({
         storeId,
         stores: dm.cacheableStoresTable
       });
