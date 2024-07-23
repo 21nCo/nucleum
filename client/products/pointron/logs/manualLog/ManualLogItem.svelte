@@ -27,6 +27,8 @@
   let inputRef: any;
   let selectedQuickAddItem: number = 0;
   let error: string = "";
+  let defaultTime = Date.now()
+  console.log((defaultTime) === (item.endDate.getTime()))
   if (item.goalId !== "") selectedGoal = { label: $swipeLabel };
   onMount(() => {
     setTimeout(() => {
@@ -62,9 +64,15 @@
     const endTime = new Date(item.startDate.getTime() + item.duration * 1000);
     item.endTime = formatTime($userPreferences, endTime, "24")!;
   }
+  function refreshStartTime() {
+    const startTime = new Date(item.endDate.getTime() - item.duration * 1000);
+    item.startTime = formatTime($userPreferences, startTime, "24")!;
+  }
   function ondurationchange(event: any) {
     selectedQuickAddItem = 0;
-    refreshEndTime();
+    if(item.startDate.getTime() === defaultTime && item.endDate.getTime() !== defaultTime) refreshStartTime()
+    else if(item.startDate.getTime() !== defaultTime && item.endDate.getTime() === defaultTime) refreshEndTime()
+    else refreshEndTime()
   }
   function performValidationChecks() {
     if (item.startDate.getFullYear() < 1971) {
