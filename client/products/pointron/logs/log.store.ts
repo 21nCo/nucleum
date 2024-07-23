@@ -40,6 +40,7 @@ import { NodeType } from "$lib/client/types/memotron/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { deepCopy } from "$lib/client/utils/obj.utils";
+export const valid = writable(false)
 
 class PointLogStore extends ObservableStore<IPointLogStore> {
   constructor() {
@@ -62,6 +63,7 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
       id: generateUID(),
       goalId: goalId ?? "",
       duration: 0,
+      valid : false,
       notes: {
         blocks: [
           {

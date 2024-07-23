@@ -20,6 +20,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import FocusNotes from "../../focus/notes/FocusNotes.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import {valid} from "$lib/client/products/pointron/logs/log.store"
   export let item: IManualSessionLogForm;
   let label: string = "";
   let selectedGoal: any = undefined;
@@ -30,6 +31,7 @@
   onMount(() => {
     setTimeout(() => {
       if (inputRef) inputRef.focus();
+      valid.set(performValidationChecks())
     }, 100);
   });
   function onGoalSelect(event: any) {
@@ -39,7 +41,7 @@
   }
   function onQuickDurationSelected(event: any) {
     item.duration = event?.detail * 60;
-    refreshStartTime();
+    refreshEndTime();
   }
   function onGoalClicked() {
     selectedGoal = undefined;
@@ -54,28 +56,28 @@
     start = attachTimeToDate(item.startDate, item.startTime);
     end = attachTimeToDate(item.endDate, item.endTime);
     item.duration = (end.getTime() - start.getTime()) / 1000;
-    performValidationChecks();
+    valid.set(performValidationChecks())
   }
-  function refreshStartTime() {
-    const startTime = new Date(new Date().getTime() - item.duration * 1000);
-    item.startTime = formatTime($userPreferences, startTime, "24")!;
+  function refreshEndTime() {
+    const endTime = new Date(item.startDate.getTime() + item.duration * 1000);
+    item.endTime = formatTime($userPreferences, endTime, "24")!;
   }
   function ondurationchange(event: any) {
     selectedQuickAddItem = 0;
-    refreshStartTime();
+    refreshEndTime();
   }
   function performValidationChecks() {
     if (item.startDate.getFullYear() < 1971) {
       error = "Please select a valid date. Year should be greater than 1971.";
-      return;
+      return false;
     }
     if (item.startDate.getTime() > item.endDate.getTime()) {
       error = "Start time should be less than end time.";
-      return;
+      return false;
     }
     if (item.duration <= 0) {
       error = "Duration should be greater than 0.";
-      return;
+      return false;
     }
     error = "";
     return true;
