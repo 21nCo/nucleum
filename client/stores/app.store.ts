@@ -546,7 +546,7 @@ function initAppStore(seed: AppStore) {
     if (!config) return;
     const dev = import.meta.env?.DEV;
     const host =
-      ctx.isEmbed || dev
+      ctx.isEmbed || dev || window.location.hostname === "localhost"
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
