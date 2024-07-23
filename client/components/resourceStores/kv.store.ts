@@ -49,14 +49,21 @@ export class KeyValueStore<T extends IObservableStoreSubject>
       }
     } else {
       dataManager.retrieveCache(this.id).then((x) => {
+        logger.log({
+          context: "fetching from cache",
+          id: this.id,
+          x,
+          seed: this.seed
+        });
         if (!x) {
           const seed = {
             ...deepCopy(this.seed)
           };
           this._setAndCache(seed);
+        } else {
+          this._set(x);
+          this.previousValue = JSON.stringify(x);
         }
-        this._set(x);
-        this.previousValue = JSON.stringify(x);
       });
     }
   }
