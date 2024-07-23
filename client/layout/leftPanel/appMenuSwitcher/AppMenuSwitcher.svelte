@@ -24,7 +24,7 @@
     let items = [];
     const app = $appStore.product;
     const contextualMenu = [...x[app].default, ...x[app].user];
-    console.log({ contextualMenu });
+    // console.log({ contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
       items = contextualMenu.slice(
         0,

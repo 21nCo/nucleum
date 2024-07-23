@@ -18,9 +18,12 @@ export enum CollectionLayout {
 
 export type IActiveCollection = {
   type: CollectionType;
-  isRefreshing: boolean;
-  viewsWithData: ICollectionViewWithData[];
-} & ICollection;
+  refreshError?: string;
+  isViewDataLoading: boolean;
+  isViewDataRefreshing: boolean;
+  isPageLoading: boolean;
+  views: ICollectionViewWithData[];
+} & Omit<ICollection, "views">;
 
 export interface ICollection extends IMemotronItemBase {
   views: string[];

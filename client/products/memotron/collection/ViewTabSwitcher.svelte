@@ -1,16 +1,23 @@
 <script lang="ts">
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
-  import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type {
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { liveQuery } from "dexie";
   import { resolvePropertyOptions } from "../curation/curation.utils";
+  import { dataManager } from "$lib/client/persistence/dataManager";
 
   export let view: ICollectionView;
-  export let properties: IProperty[] | null = null;
+  export let propertyIds: string[] = [];
+  let properties = liveQuery(() =>
+    $dataManager.cacheSource.dexie.property
+      .where("id")
+      .anyOfIgnoreCase(propertyIds)
+      .toArray()
+  );
   export let value: ISelectValue | undefined = undefined;
   let tabs: ISelectItem[] = [];
   $: tabs = resolveTabs(view.tabBy);
@@ -22,15 +29,15 @@
         label: "All",
         value: "all"
       },
-      ...resolvePropertyOptions(tabBy, properties)
+      ...resolvePropertyOptions(tabBy, $properties)
     ];
   }
   function resolveLabel(tabBy: string) {
-    if (!view.tabBy || !properties) return "";
-    const property = properties.find((p) => p.id === tabBy);
+    if (!view.tabBy || !$properties) return "";
+    const property = $properties.find((p) => p.id === tabBy);
     return property?.label ?? "";
   }
-  $: console.log("tabs", { tabs, properties, view });
+  $: console.log("tabs", { tabs, properties: $properties, view });
 </script>
 
 {#if label && tabs}

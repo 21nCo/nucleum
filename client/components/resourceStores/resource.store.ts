@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import {
   activeResourceFilter,
   debouncer,
@@ -28,13 +28,13 @@ export class ActiveResourceStore<
   U extends ResourceStore<T>
 > {
   id: string;
-  protected store = writable<T>();
+  protected subject = writable<T>();
   protected debouncedPersistBlock: any;
   protected resourceStore: U;
   protected currentUserId?: string;
-  subscribe = this.store.subscribe;
-  set = this.store.set;
-  update = this.store.update;
+  subscribe = this.subject.subscribe;
+  set = this.subject.set;
+  update = this.subject.update;
   constructor(id: string, resourceStore: U) {
     this.id = id;
     this.resourceStore = resourceStore;
@@ -45,9 +45,9 @@ export class ActiveResourceStore<
       this.resourceStore.modify(this.id, val);
     this.debouncedPersistBlock = debouncer(updatePropagator, 2000);
   }
-  modify(val: Partial<T>) {
+  modify(val: Partial<T>, params?: IMutationQueueParams) {
     this.update((prev: T) => ({ ...prev, ...val }));
-    return this.resourceStore.modify(this.id, val);
+    return this.resourceStore.modify(this.id, val, params);
   }
   debouncedModify(val: Partial<T>) {
     this.update((prev: T) => ({ ...prev, ...val }));
@@ -70,6 +70,9 @@ export class ActiveResourceStore<
   }
   restore() {
     return this.resourceStore.restore(this.id);
+  }
+  get() {
+    return get(this.subject);
   }
 }
 
