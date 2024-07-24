@@ -158,7 +158,11 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       body: "",
       contentType: getContentTypeFromFileDetails(val?.fileDetails!),
       metadata,
-      links: [...(val.links ? val.links.filter((x) => x.from === "root") : [])]
+      links: [
+        ...(val.links ? val.links.filter((x) => x.from === "root") : [])
+      ].map((x) => {
+        return { ...x, from: id };
+      })
     };
     let remainingResources: INodeItemCaptured[] = [];
     if (val.fileDetails) {

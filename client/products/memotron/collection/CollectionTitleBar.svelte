@@ -13,6 +13,7 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "./collection.store";
   import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
   const dispatch = createEventDispatcher();
   export let collection: IActiveCollectionStore;
   $: bilinksRenderedAlongWithNode = $page.url.searchParams.get("blr");
@@ -32,39 +33,29 @@
 </script>
 
 <div class="w-full flex justify-between items-center sticky top-0">
-  {#if $collection.type === CurationType.NODELINKS}
-    {#if bilinksRenderedAlongWithNode}
-      <span class="text-h4">Links</span>
+  <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
+  <!-- TODO - back button to previous resource - if launched from a mention or links -->
+  <span class="font-bold text-h1 whitespace-nowrap min-w-fit">
+    {#if $isInEditMode}
+      <TextInput
+        size={Size.xl}
+        bind:value={$collection.label}
+        style={InputStyle.PLAIN}
+        placeholder="Node title"
+        width="w-full"
+        on:input={onLabelChange}
+      />
     {:else}
-      <div class="flex flex-col items-start gap-1">
-        <button
-          class="text-base text-aps1"
-          on:click={() => {
-            dispatch("back");
-          }}>{$collection.label}</button
-        >
-        <span>Links</span>
+      {$collection.label}
+    {/if}
+  </span>
+
+  <span class="flex gap-4">
+    {#if $collection.isViewDataRefreshing}
+      <div>
+        <Icon icon="sync" size={Size.sm} />
       </div>
     {/if}
-  {:else}
-    <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
-    <!-- TODO - back button to previous resource - if launched from a mention or links -->
-    <span class="font-bold text-h1 whitespace-nowrap min-w-fit">
-      {#if $isInEditMode}
-        <TextInput
-          size={Size.xl}
-          bind:value={$collection.label}
-          style={InputStyle.PLAIN}
-          placeholder="Node title"
-          width="w-full"
-          on:input={onLabelChange}
-        />
-      {:else}
-        {$collection.label}
-      {/if}
-    </span>
-  {/if}
-  <span class="flex gap-4">
     <EditModeToggle />
     <Button icon="search" tooltip="search" {...buttonProps} />
     <Button icon="bird" tooltip="bird view" {...buttonProps} />

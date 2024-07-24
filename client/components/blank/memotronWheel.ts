@@ -5,32 +5,27 @@ import type {
 
 export const memotronWheel: FeatureWheelGroup[] = [
   {
-    label: "Capture",
-    color: "#ae83d4",
+    label: "App",
+    color: "",
     spokes: [
-      { label: "Seamless capture", contemporaries: [], progress: 0.4 },
+      { label: "Openess", contemporaries: [], progress: 1, isProminent: true },
       {
-        label: "Adv. audio capture",
-        contemporaries: [],
-        progress: 0.4,
-        isNovel: true
-      },
-      { label: "Sketch capture", contemporaries: [], progress: 0 },
-      { label: "Type capture", contemporaries: [], progress: 0.8 },
-      {
-        label: "Outlining",
+        label: "Intuitiveness",
         contemporaries: [
           {
-            label: "Remnote",
-            value: 0.7
+            label: ["Notion", "Capacities", "Heptabase", "Tana", "Anytype"],
+            value: 0.5
           },
           {
-            label: "Dynalist",
-            value: 0.5
+            label: "Apple Notes",
+            value: 0.7
           }
         ],
-        progress: 0
-      }
+        progress: 0.4
+      },
+      { label: "Accessibility", contemporaries: [], progress: 0.5 },
+      { label: "Interoperability", contemporaries: [], progress: 0.1 },
+      { label: "Offlinability", contemporaries: [], progress: 0.5 }
     ]
   },
   {
@@ -58,23 +53,29 @@ export const memotronWheel: FeatureWheelGroup[] = [
         isProminent: true
       },
       {
-        label: "Pdf annotator",
+        label: "Pdf",
         contemporaries: [
           {
             label: "Remnote",
             value: 0.7
           }
         ],
+        progress: 0.8
+      },
+      {
+        label: "Audio",
+        contemporaries: [],
         progress: 0.7
       },
       {
-        label: "Adv. Markdown",
+        label: "Advanced Md",
         contemporaries: [
           {
             label: ["Notion", "Capacities"],
             value: 0.7
           }
         ],
+        isNovel: true,
         progress: 0.3
       },
       {
@@ -100,31 +101,49 @@ export const memotronWheel: FeatureWheelGroup[] = [
     ]
   },
   {
-    label: "Journal",
-    color: "#4287f5",
+    label: "Capture",
+    color: "#ae83d4",
     spokes: [
+      { label: "Seamless capture", contemporaries: [], progress: 0.4 },
       {
-        label: "Time machine",
+        label: "Type capture",
+        contemporaries: [],
+        isNovel: true,
+        progress: 0.8
+      },
+      { label: "Camera capture", contemporaries: [], progress: 0 },
+      {
+        label: "Outlining",
+        contemporaries: [
+          {
+            label: "Remnote",
+            value: 0.7
+          },
+          {
+            label: "Dynalist",
+            value: 0.5
+          }
+        ],
+        progress: 0
+      },
+      { label: "Sketch capture", contemporaries: [], progress: 0 },
+      {
+        label: "Adv. audio capture",
         contemporaries: [],
         progress: 0,
         isNovel: true
-      },
-      { label: "Rewind", contemporaries: [], progress: 0, isNovel: true }
+      }
     ]
   },
   {
     label: "Clipping",
     color: "#e66a97",
     spokes: [
-      { label: "Clip from web", contemporaries: [], progress: 0.5 },
+      { label: "Clip from web", contemporaries: [], progress: 0.7 },
+      { label: "Youtube clipping", contemporaries: [], progress: 0.7 },
       { label: "Clip from mobile", contemporaries: [], progress: 0.1 },
       {
-        label: "Clip from desktop",
-        contemporaries: [],
-        progress: 0
-      },
-      {
-        label: "Kindle highlights sync",
+        label: "Kindle highlights",
         contemporaries: [
           {
             label: ["Remnote"],
@@ -135,32 +154,16 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.5
           }
         ],
-        progress: 0
-      }
-    ]
-  },
-  {
-    label: "App",
-    color: "",
-    spokes: [
-      {
-        label: "Intuitiveness & Ease",
-        contemporaries: [
-          {
-            label: ["Notion", "Capacities", "Heptabase", "Tana", "Anytype"],
-            value: 0.5
-          },
-          {
-            label: "Apple Notes",
-            value: 0.7
-          }
-        ],
-        progress: 0.1
+        progress: 0.8
       },
-      { label: "Accessibility", contemporaries: [], progress: 0.5 },
-      { label: "Offlinability", contemporaries: [], progress: 0.5 },
-      { label: "Interoperability", contemporaries: [], progress: 0.1 },
-      { label: "Openess", contemporaries: [], progress: 1 }
+      {
+        label: "Clip from desktop",
+        contemporaries: [],
+        progress: 0
+      },
+      { label: "Audible highlights", contemporaries: [], progress: 0 },
+      { label: "Scribd highlights", contemporaries: [], progress: 0 },
+      { label: "Spotify highlights", contemporaries: [], progress: 0 }
     ]
   },
   {
@@ -170,17 +173,17 @@ export const memotronWheel: FeatureWheelGroup[] = [
       {
         label: "Nodularity",
         contemporaries: [],
-        progress: 0.2,
+        progress: 0.8,
         isNovel: true
       },
       {
         label: "Forelinking",
         contemporaries: [],
-        progress: 0.6,
+        progress: 0.7,
         isNovel: true
       },
       {
-        label: "Types",
+        label: "Typed",
         contemporaries: [
           {
             label: ["Capacities", "Heptabase", "Tana", "Anytype"],
@@ -194,12 +197,7 @@ export const memotronWheel: FeatureWheelGroup[] = [
         progress: 0.5
       },
       {
-        label: "Adv. filter query",
-        contemporaries: [],
-        progress: 0
-      },
-      {
-        label: "Backlining",
+        label: "Backlinking",
         contemporaries: [
           {
             label: [
@@ -215,17 +213,28 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.8
           }
         ],
+        progress: 0.7
+      },
+      {
+        label: "Query",
+        contemporaries: [],
+        progress: 0
+      },
+      {
+        label: "Flash cards",
+        contemporaries: [],
         progress: 0
       }
     ]
   },
   {
-    label: "Curation views",
+    label: "Views",
     color: "#c9409a",
     spokes: [
-      { label: "Bird view", contemporaries: [], isNovel: true, progress: 0.1 },
+      { label: "Board", contemporaries: [], progress: 0.6 },
+      { label: "Bird", contemporaries: [], isNovel: true, progress: 0.1 },
       {
-        label: "Sub tree",
+        label: "Combination",
         contemporaries: [
           {
             label: "Clickup docs",
@@ -236,52 +245,55 @@ export const memotronWheel: FeatureWheelGroup[] = [
             value: 0.6
           }
         ],
-        progress: 0.2
+        progress: 0.15
       },
       {
-        label: "Adv. arrangements",
-        contemporaries: [
-          {
-            label: "Notion",
-            value: 0.7
-          },
-          {
-            label: ["Heptabase", "Capacities"],
-            value: 0.5
-          }
-        ],
-        progress: 0
-      },
-      {
-        label: "Power table",
+        label: "Table",
         contemporaries: [
           {
             label: "Notion",
             value: 0.7
           }
         ],
-        progress: 0.1
+        progress: 0.15
       },
-      // { label: "Graph traversal", contemporaries: [], progress: 0 },
       {
-        label: "Time & Space views",
+        label: "Calendar",
         contemporaries: [],
         isNovel: true,
         progress: 0.3
+      },
+      {
+        label: "Space",
+        contemporaries: [],
+        isNovel: true,
+        progress: 0
       }
     ]
   },
   {
-    label: "Cutting edge",
+    label: "TACO",
     color: "#32a852",
     spokes: [
+      { label: "NL Search", contemporaries: [], isNovel: true, progress: 0 },
+      {
+        label: "Forelink suggestions",
+        contemporaries: [],
+        isNovel: true,
+        progress: 0
+      },
       {
         label: "Voice interaction",
         contemporaries: [],
         isNovel: true,
         progress: 0
       },
-      { label: "NL Search", contemporaries: [], isNovel: true, progress: 0 },
+      {
+        label: "Auto summarizer",
+        contemporaries: [],
+        isNovel: true,
+        progress: 0
+      },
       {
         label: "Serendipity",
         contemporaries: [
@@ -293,10 +305,23 @@ export const memotronWheel: FeatureWheelGroup[] = [
         progress: 0
       },
       {
-        label: "Auto summarizer",
+        label: "Text editing AI",
         contemporaries: [],
-        isNovel: true,
         progress: 0
+      }
+    ]
+  },
+  {
+    label: "Journal",
+    color: "#4287f5",
+    spokes: [
+      { label: "Calendar", contemporaries: [], progress: 0.4, isNovel: true },
+      { label: "Rewind", contemporaries: [], progress: 0, isNovel: true },
+      {
+        label: "Time machine",
+        contemporaries: [],
+        progress: 0,
+        isNovel: true
       }
     ]
   }

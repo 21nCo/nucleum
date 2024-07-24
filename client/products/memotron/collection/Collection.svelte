@@ -19,10 +19,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import {
-    NodeThumbnailVariant,
-    type INodeThumbnail
-  } from "$lib/client/products/memotron/node/node.type";
+  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
@@ -39,7 +36,7 @@
   import type { ICollectionViewWithData } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import view from "$lib/client/stores/view.store";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -57,89 +54,12 @@
   };
   let properties: DropdownItem[];
   let viewsForSwitcher: ISelectItem[];
-  let isRefreshing = true;
+  let isReady = false;
   let isNotInlineAccess: boolean = false;
   $: console.log({ activeView });
-  function resolvePropertyList(type: any) {
-    //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
-    const noneOption = {
-      label: "None",
-      value: "none",
-      icon: "none"
-    };
-    return type
-      ? [
-          noneOption,
-          ...(type?.properties
-            ? type.properties.map((x: IProperty) => {
-                return { label: x.label, value: x.id };
-              })
-            : []),
-          ...metaPropertyOptions
-        ]
-      : [noneOption, ...metaPropertyOptions];
-  }
-  const sampleViews = ["Everything", "This year", "Favorites", "USA"];
-  function onViewRemove(e: CustomEvent) {
-    if (e.detail) collection.deleteView(e.detail);
-    refreshViewsOnSwitcher();
-  }
-  async function onViewAdd(e: CustomEvent) {
-    const id = await collection.createView();
-    selectedViewId = id;
-    refreshViewsOnSwitcher();
-    onViewSwitch();
-    triggerItemEdit = id;
-  }
-  function onViewSettingsChange() {
-    if (activeView) collection.updateView(activeView);
-  }
-  function onArrangementChange(e: MouseEvent) {
-    // console.log("onArrangementChange", e.detail);
-    if (!activeView) return;
-    const currentArrangement = activeView?.arrangement;
-    if (currentArrangement === Arrangement.GRID) {
-      activeView.arrangement = Arrangement.LIST;
-    } else {
-      activeView.arrangement = Arrangement.GRID;
-    }
-    collection.updateView(activeView);
-  }
-  function onScroll() {
-    var elementTarget = document.querySelector(".sticky");
-    var positionFromTop = elementTarget?.getBoundingClientRect().top;
-    isStickied = positionFromTop ? positionFromTop <= 0 : false;
-  }
-  async function onViewSwitch() {
-    const view = loadActiveView();
-    if (!view) return;
-    appStore.toggleSearchParam("view", view.id);
-    await refresh();
-  }
-  function loadActiveView() {
-    if (!selectedViewId) return;
-    const view =
-      $collection.viewsWithData.find((x) => x.id === selectedViewId) ?? null;
-    if (!view) return;
-    activeView = view;
-    return view;
-  }
-  function onViewLabelChange(e: CustomEvent) {
-    console.log("onViewLabelChange", e.detail, activeView);
-    if (!activeView) return;
-    activeView.label = e.detail.label;
-    collection.updateView(activeView);
-  }
-  function refreshViewsOnSwitcher() {
-    viewsForSwitcher = $collection?.viewsWithData
-      ? $collection.viewsWithData.filter(activeResourceFilter).map((x) => {
-          return { label: x.label ?? "Default", value: x.id };
-        })
-      : [];
-  }
+
   onMount(async () => {
     // console.log("onMount - collection", { id });
-    // collection = resolveActiveCollectionStore(id);
     const viewQueryParam = new URLSearchParams(location.search).get("view");
     const focusParam = new URLSearchParams(location.search).get(
       ResourceAccessMode.FOCUS
@@ -154,26 +74,124 @@
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
     }
-    await collection.init(selectedViewId);
+    await collection.init();
     loadActiveView();
     if (!activeView) {
-      activeView = $collection?.viewsWithData
-        ? $collection.viewsWithData.filter(activeResourceFilter)?.[0]
+      activeView = $collection?.views
+        ? $collection.views.filter(activeResourceFilter)?.[0]
         : null;
       selectedViewId = activeView?.id ?? "";
     }
-    properties = resolvePropertyList($collection);
+    properties = await resolvePropertyList();
     refreshViewsOnSwitcher();
-    await refresh();
-    isRefreshing = false;
+    isReady = true;
+    await refresh({ isNewView: true });
   });
-  async function refresh() {
+
+  async function resolvePropertyList() {
+    //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
+    const noneOption = {
+      label: "None",
+      value: "none",
+      icon: "none"
+    };
+    const properties = await $dataManager.cacheSource.dexie.property
+      .where("id")
+      .anyOfIgnoreCase($collection?.properties ?? [])
+      .toArray();
+    return properties
+      ? [
+          noneOption,
+          ...(properties
+            ? properties.map((x: IProperty) => {
+                return { label: x.label, value: x.id };
+              })
+            : []),
+          ...metaPropertyOptions
+        ]
+      : [noneOption, ...metaPropertyOptions];
+  }
+  const sampleViews = ["Everything", "This year", "Favorites", "USA"];
+
+  function onViewRemove(e: CustomEvent) {
+    if (e.detail) collection.deleteView(e.detail);
+    refreshViewsOnSwitcher();
+  }
+
+  async function onViewAdd(e: CustomEvent) {
+    const id = await collection.createView();
+    if (!id) return;
+    selectedViewId = id;
+    refreshViewsOnSwitcher();
+    onViewSwitch();
+    triggerItemEdit = id;
+  }
+
+  function onViewSettingsChange() {
+    if (activeView) collection.updateView(activeView.id, activeView);
+  }
+
+  function onArrangementChange(e: MouseEvent) {
+    // console.log("onArrangementChange", e.detail);
+    if (!activeView) return;
+    const currentArrangement = activeView?.arrangement;
+    if (currentArrangement === Arrangement.GRID) {
+      activeView.arrangement = Arrangement.LIST;
+    } else {
+      activeView.arrangement = Arrangement.GRID;
+    }
+    collection.updateView(activeView.id, {
+      arrangement: activeView.arrangement
+    });
+  }
+
+  function onScroll() {
+    var elementTarget = document.querySelector(".sticky");
+    var positionFromTop = elementTarget?.getBoundingClientRect().top;
+    isStickied = positionFromTop ? positionFromTop <= 0 : false;
+  }
+
+  async function onViewSwitch() {
+    const view = loadActiveView();
+    if (!view) return;
+    appStore.toggleSearchParam("view", view.id);
+    await refresh({ isNewView: true });
+  }
+
+  function onViewLabelChange(e: CustomEvent) {
+    console.log("onViewLabelChange", e.detail, activeView);
+    if (!activeView) return;
+    activeView.label = e.detail.label;
+    collection.updateView(activeView.id, { label: activeView.label });
+  }
+
+  function refreshViewsOnSwitcher() {
+    viewsForSwitcher = $collection?.views
+      ? $collection.views.filter(activeResourceFilter).map((x) => {
+          return { label: x.label ?? "Default", value: x.id };
+        })
+      : [];
+  }
+
+  function loadActiveView() {
+    if (!selectedViewId) return;
+    const view = $collection.views.find((x) => x.id === selectedViewId) ?? null;
+    if (!view) return;
+    activeView = view;
+    return view;
+  }
+
+  async function refresh(
+    props: { isNewView?: boolean } = {
+      isNewView: false
+    }
+  ) {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
-    if (!activeView.data || activeView.data.length === 0) {
-      await collection.refreshViewData(activeView.id);
-      loadActiveView();
-    }
+    if (props.isNewView) await collection.loadViewData(activeView.id);
+    else await collection.refreshViewData(activeView.id);
+    loadActiveView();
+    if (!activeView) return;
     if (!tabBy || (tabBy && selectedTab === "all")) {
       filteredViewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {
@@ -195,11 +213,13 @@
     console.log("onCoverChange", e.detail);
     collection.modify({ cover: e.detail });
   }
-  $: console.log({ activeView });
+  $: console.log({ activeView, collection: $collection, properties });
 </script>
 
-{#if isRefreshing}
-  <PageLoadingPulse />
+{#if !$collection || $collection.isPageLoading || !isReady}
+  <div class="w-full h-full p-4">
+    <PageLoadingPulse />
+  </div>
 {:else if $collection}
   <div
     class="relative flex flex-col w-full h-full overflow-auto"
@@ -270,7 +290,7 @@
               <ViewTabSwitcher
                 view={activeView}
                 bind:value={selectedTab}
-                properties={$collection?.properties}
+                propertyIds={$collection?.properties}
                 on:select={onTabSwitch}
               />
             {/if}
@@ -284,9 +304,9 @@
         )}
       >
         <ResourceStatusBanner resource={collection} />
-        {#if $collection.isRefreshing}
+        {#if $collection.isViewDataLoading}
           <PageLoadingPulse />
-        {:else if !$collection.isRefreshing && activeView}
+        {:else if !$collection.isViewDataLoading && activeView}
           <View
             view={activeView}
             data={filteredViewData}
