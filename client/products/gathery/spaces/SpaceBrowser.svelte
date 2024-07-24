@@ -11,7 +11,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   spaceStore.refresh();
   let selected = $spaceInContext?.label ?? undefined;
 </script>

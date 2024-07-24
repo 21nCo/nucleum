@@ -18,7 +18,7 @@
   import type { IEvent } from "$lib/client/types/event.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -29,7 +29,7 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import SplitView from "../SplitView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import ColorLayer from "./themeLayer/ColorLayer.svelte";

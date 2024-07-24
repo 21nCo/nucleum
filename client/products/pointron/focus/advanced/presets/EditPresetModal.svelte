@@ -12,7 +12,7 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { deepCopy } from "$lib/client/utils/obj.utils";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { onMount } from "svelte";
   import ComposeTotalsText from "../composition/ComposeTotalsText.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
@@ -84,7 +84,10 @@
         placeholder="Give preset a name or leave it blank"
       />
       <ComposeTotalsText {composition} />
-      <ComposeDuration bind:composition />
+      <ComposeDuration
+        bind:composition
+        on:change={() => (composition = composition)}
+      />
     </div>
     <ModalFooter
       primaryAction={{

@@ -10,6 +10,7 @@
       label: "Include break in analytics",
       orientation: Orientation.Horizontal
     }}
+    isExpanded={true}
     bind:checked={$pointronPreferences.isIncludeBreakInAnalytics}
   />
 </div>

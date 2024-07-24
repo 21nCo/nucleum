@@ -10,15 +10,15 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import LogsPane from "../logs/LogsPane.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import { CalendarHmVariant } from "$lib/client/components/calendarHeatmap/calendarHeatmap.types";
   import { focusHeatmapStore } from "./journal.store";
   import TodayButton from "$lib/client/elements/button/TodayButton.svelte";
   function refresh() {
     dataManager.refreshPage([
-      Item.logsPane,
-      Item.focusHeatmap,
-      Item.targetsPane
+      Resource.logsPane,
+      Resource.focusHeatmap,
+      Resource.targetsPane
     ]);
   }
   refresh();

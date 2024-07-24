@@ -75,12 +75,9 @@
       </div>
     </div>
     {#if !isInline}
-      <!-- <div class="flex w-full justify-center pt-2">
-        <ControlBar size={Size.md} />
-      </div> -->
       <div class="flex flex-col gap-12">
         <div class="flex w-full justify-center">
-          <ControlBar size={Size.md} />
+          <ControlBar />
         </div>
         <div class="flex justify-center">
           <div class="w-5/6">
@@ -125,7 +122,7 @@
         </div>
         <div class="flex flex-col gap-20">
           <div class="flex w-full justify-center">
-            <ControlBar size={Size.xl} />
+            <ControlBar />
           </div>
           <div class="flex justify-center">
             <div class="w-3/4 xl:w-1/2">

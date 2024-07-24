@@ -9,16 +9,16 @@ import {
 } from "./analytics.types";
 import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { Item } from "$lib/client/types/item.enum";
-import { deepCopy } from "$lib/client/utils/obj.utils";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
   generateAnalyticsSeedPages,
   generateParamsForCards
 } from "./analytics.utils";
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 
-const analyticsConfigStoreId = Item.pointAnalyticsConfig;
+const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
 const seedPage: AnalyticsPage = {
   id: generateUID(),
@@ -72,7 +72,7 @@ const seedAnalyticsConfig: IAnalyticsConfigStore = {
 
 class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   constructor() {
-    super(Item.pointAnalyticsConfig, { ...seedAnalyticsConfig });
+    super(Resource.pointAnalyticsConfig, { ...seedAnalyticsConfig });
   }
   set(config: IAnalyticsConfigStore) {
     this.modify(config, { isDebouncedPersist: true });

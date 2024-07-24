@@ -7,7 +7,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import appearance from "$lib/client/stores/appearance.store";
   import { AppSkin } from "$lib/client/types/appearance.type";
-  import { prefix } from "$lib/client/utils/text.utils";
+  import { prefix } from "$lib/shared/utils/text.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let selectedTagId: TagId | string;

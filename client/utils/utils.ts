@@ -1,8 +1,8 @@
 import { onDestroy } from "svelte";
 import type { UserDate } from "$lib/client/types/userDate.type";
 import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
-import { ActionType, ResourceAccessMode } from "$lib/client/types/action.type";
-import { isValidArrayWithData } from "./obj.utils";
+import { ActionType } from "$lib/client/types/action.type";
+import { isValidArrayWithData } from "../../shared/utils/obj.utils";
 
 export function onInterval(
   callback: () => void,

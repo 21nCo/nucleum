@@ -1,5 +1,5 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { get } from "svelte/store";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
@@ -22,7 +22,7 @@ export class FocusPersistence {
   async retrieveLogs(date: Date, goalId: string | undefined = undefined) {
     switch (get(cloudProvider) as Cloud) {
       case Cloud.local:
-        return retrieveLocally(Item.pointSessionSnapshot);
+        return retrieveLocally(Resource.pointSessionSnapshot);
       case Cloud.surreal: {
         let response = await surrealDb.executeReadFn(
           "return fn::pointron::logs::fetch::v3($date);",
@@ -40,7 +40,7 @@ export class FocusPersistence {
   async fetchSession(id: string) {
     switch (get(cloudProvider) as Cloud) {
       case Cloud.local:
-        return retrieveLocally(Item.pointSessionSnapshot);
+        return retrieveLocally(Resource.pointSessionSnapshot);
       case Cloud.surreal: {
         let response = await surrealDb.executeReadFn(
           "return fn::pointron::log::fetch($id);",

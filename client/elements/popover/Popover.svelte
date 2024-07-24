@@ -1,8 +1,9 @@
 <script lang="ts">
   import { Position } from "$lib/client/types/direction.enum";
-  import type {
-    IPopoverOptions,
-    IPopoverRenderParams
+  import {
+    type IPopoverOptions,
+    type IPopoverRenderParams,
+    PopoverTriggerMethod
   } from "$lib/client/types/popover.type";
   import { renderPopover } from "$lib/client/utils/browser.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
@@ -15,7 +16,11 @@
    */
   export let placement: Position = Position.BottomCenter;
   export let triggerClass: string = "";
+  /**
+   * @deprecated - use triggerMethod instead
+   */
   export let isPreventDefault: boolean = false;
+  export let triggerMethod: PopoverTriggerMethod = PopoverTriggerMethod.CLICK;
   export let isPreventDefaultStyling: boolean = false;
   const defaultOptions: IPopoverOptions = {
     element: "div",
@@ -82,10 +87,18 @@
   id={containerId}
   bind:this={triggerRef}
   on:click={(e) => {
-    if (!isPreventDefault) {
+    if (triggerMethod === PopoverTriggerMethod.CLICK && !isPreventDefault) {
       toggle();
     }
     if (isPopoverVisible) e.stopPropagation();
+  }}
+  on:contextmenu={(e) => {
+    // console.log("contextmenu", e);
+    if (triggerMethod === PopoverTriggerMethod.RIGHT_CLICK) {
+      toggle();
+    }
+    e.stopPropagation();
+    e.preventDefault();
   }}
   class={triggerClass}
 >

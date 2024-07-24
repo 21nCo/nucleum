@@ -3,7 +3,7 @@ import {
   TimeScale,
   type TimePeriod
 } from "$lib/client/types/time.type";
-import { deepCopy } from "$lib/client/utils/obj.utils";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 import {
   determinePreviousTimePeriod,
   determineTimePeriod,

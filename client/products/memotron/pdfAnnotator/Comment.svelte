@@ -2,7 +2,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
-  import { AnnotationType } from "$lib/client/types/memotron/pdfAnnotator.type";
+  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import { page } from "$app/stores";
 
   export let rects: any;

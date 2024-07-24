@@ -9,7 +9,7 @@
   import type { IAction } from "$lib/client/types/action.type";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
   let pageAction: IAction | null = null;
   $: config = $appStore?.appData?.help;

@@ -1,8 +1,8 @@
-import {
-  PropertyType,
-  type IProperty
-} from "$lib/client/types/memotron/type.type";
 import type { ISelectItem } from "$lib/client/types/select.type";
+import {
+  type IProperty,
+  PropertyType
+} from "../collection/properties/property.type";
 
 export function resolvePropertyOptions(
   id: string,

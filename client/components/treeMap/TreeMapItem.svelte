@@ -6,7 +6,7 @@
   import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { determineTruncateLength } from "$lib/client/utils/text.utils";
+  import { determineTruncateLength } from "$lib/shared/utils/text.utils";
   import { Size } from "$lib/client/types/size.enum";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";

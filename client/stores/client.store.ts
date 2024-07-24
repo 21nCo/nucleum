@@ -6,13 +6,13 @@ import {
   type IStore,
   type ResourceDependency
 } from "../types/data.type";
-import type { Item } from "../types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { dataManager } from "../persistence/dataManager";
 
 export class ObservableStore<T extends IObservableStoreSubject>
   implements IObservableStore<T>
 {
-  id: Item | string;
+  id: Resource | string;
   dataType: StoreDataType;
   priorityRefreshOnAppAppear?: boolean | undefined;
   refreshQuery?: string;
@@ -23,7 +23,7 @@ export class ObservableStore<T extends IObservableStoreSubject>
   update = this.subject.update;
   protected _set = this.subject.set;
   constructor(
-    item: Item | string,
+    item: Resource | string,
     dataType: StoreDataType = StoreDataType.NA,
     params?: Pick<
       IStore,

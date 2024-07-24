@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { Item } from "../types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   AppSkin,
   Theme,
@@ -18,7 +18,7 @@ import { userPreferences } from "./app.store";
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
 const seedAppearance: AppearanceStore = {
-  id: Item.appearance,
+  id: Resource.appearance,
   dataType: StoreDataType.NA,
   skin: AppSkin.Clean,
   theme: Theme.LIGHT,
@@ -33,7 +33,9 @@ const seedAppearance: AppearanceStore = {
     colorSchemes.find((cs) => cs.id == defaultLightColorSchemeId) ??
     colorSchemes[0]
 };
-const cachedAppearance = retrieveLocally(Item.appearance) as AppearanceStore;
+const cachedAppearance = retrieveLocally(
+  Resource.appearance
+) as AppearanceStore;
 if (cachedAppearance) cachedAppearance.typeface = seedAppearance.typeface;
 export const appearance = initAppearanceStore();
 
@@ -43,7 +45,7 @@ function initAppearanceStore() {
   );
 
   const cache = (store: AppearanceStore) => {
-    persistLocally(Item.appearance, store);
+    persistLocally(Resource.appearance, store);
   };
 
   const persist = (store: AppearanceStore) => {

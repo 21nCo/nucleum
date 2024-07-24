@@ -1,42 +1,45 @@
-
-import account from "$lib/client/stores/account.store";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
+  type INodeItemCaptured,
   LinkType,
   type IActiveNode,
-  type INodeCapture,
   type INodeProperty,
-} from "$lib/client/types/memotron/node.type";
-import { debouncer } from "$lib/client/utils/utils";
-import { get } from "svelte/store";
-import { ActiveResourceStore, ResourceStore } from "$lib/client/stores/resource.store";
+  type INode
+} from "$lib/client/products/memotron/node/node.type";
+import {
+  activeResources,
+  ActiveResourceStore,
+  ResourceStore
+} from "$lib/client/components/resourceStores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
+import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IMutationQueueParams } from "../../../types/data.type";
+import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceActions } from "../common/resource.actions";
+import { MemotronAction } from "../memotronAction.enum";
+import { appStore } from "$lib/client/stores/app.store";
 
 export const hierarchyFactorLimit = 5;
-const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
-
-class NodeStore extends ResourceStore {
-  db: ISurrealDatabase
+class NodeStore extends ResourceStore<INode> {
+  db: ISurrealDatabase;
   constructor() {
-    super(Item.node, currentUserId, {
+    super(Resource.node, {
       priorityRefreshOnAppAppear: true
     });
     this.db = new SurrealDatabase();
   }
   async createNode(
-    capture: INodeCapture,
-    mutatationQueueParams?: IMutationQueueParams
+    capture: INodeItemCaptured[],
+    queueParams?: IMutationQueueParams
   ) {
-    return super.create(
-      capture,
-      "return fn::memotron::node::createMany($resources, $mutatedAt);",
-      mutatationQueueParams
-    );
+    return super.create(capture, {
+      customQuery:
+        "return fn::memotron::node::createMany($resources, $mutatedAt);",
+      queueParams
+    });
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
@@ -80,18 +83,18 @@ const activeNodeStores = new Map<string, IActiveNodeStore>();
  * @returns The active node store
  */
 export function resolveActiveNodeStore(id: string, context: string = "") {
-  if (!activeNodeStores.has(id)) {
+  if (!activeResources.has(id)) {
     //console.log("init node store from: " + context + " id: " + id);
     // activeNodeStores.set(id, initActiveNodeStore(id));
-    activeNodeStores.set(id, new ActiveNodeStore(id));
+    activeResources.set(id, new ActiveNodeStore(id));
   }
-  let val = activeNodeStores.get(id);
+  let val = activeResources.get(id);
   return val!;
 }
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   constructor(node: string) {
-    super(node, nodeStore, currentUserId);
+    super(node, nodeStore);
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
@@ -112,14 +115,14 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   }
   fetch = async () => {
     const result = await this.resourceStore.fetch(this.id);
-    if(result) {
+    if (result) {
       this.set(result);
     }
-  }
+  };
   updateProperties = async (properties: INodeProperty[]) => {
     this.update((prev) => ({ ...prev, properties }));
     return this.resourceStore.modify(this.id, { properties });
-  }
+  };
   updateBlock = (id: string, changedProps: any) => {
     const mutationId =
       `${id}-` +
@@ -133,16 +136,14 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   };
   createBlock = async (id: string, contentType: any) => {
     return this.resourceStore.createNode(
-      {
-        resources: [
-          {
-            id,
-            body: "",
-            contentType,
-            creationContext: this.id
-          }
-        ]
-      },
+      [
+        {
+          id,
+          body: "",
+          contentType,
+          creationContext: this.id
+        }
+      ],
       {
         isUseQueueFirstApproach: true,
         mutationId: `${id}-create`
@@ -150,7 +151,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     );
   };
   deleteBlock = async (id: string) => {
-    return this.resourceStore.delete(id, {
+    return this.resourceStore.trash(id, {
       isUseQueueFirstApproach: true,
       mutationId: `${id}-delete`
     });
@@ -158,4 +159,61 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   mention = async (location: string, id: string) => {
     return this.resourceStore.link(location, id, LinkType.MENTION);
   };
+}
+
+export function resolveNodeContextMenu(
+  node: INode,
+  context: ResourceAccessPoint
+) {
+  const resourceActions = new ResourceActions(node, nodeStore);
+  if (context != ResourceAccessPoint.SELF) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(context),
+          resourceActions.select(),
+          resourceActions.copyLink()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  }
+  return [
+    {
+      group: "all",
+      items: [
+        resourceActions.star(),
+        resourceActions.edit(context),
+        resourceActions.copyLink(),
+        {
+          value: "export",
+          icon: "share",
+          callback: () => {}
+        },
+        {
+          value: "share",
+          icon: "share",
+          callback: () => {
+            appStore.runAction(MemotronAction.PUBLISH, {
+              componentParams: { id: node.id }
+            });
+          }
+        },
+        {
+          value: "history",
+          icon: "history",
+          callback: () => {}
+        }
+      ]
+    },
+    {
+      group: "more",
+      items: [resourceActions.archive(), resourceActions.trash()]
+    }
+  ];
 }

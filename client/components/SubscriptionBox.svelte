@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "../elements/button/Button.svelte";
   import TextInput from "../elements/input/TextInput.svelte";
-  import { isValidEmail } from "$lib/client/utils/text.utils";
+  import { isValidEmail } from "$lib/shared/utils/text.utils";
 
   export let product: any;
   let emailEntered = "";

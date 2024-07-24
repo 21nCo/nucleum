@@ -4,7 +4,7 @@
   import { TimeScale } from "$lib/client/types/time.type";
   import { onMount } from "svelte";
   import GoalAggFocusView from "./GoalAggFocusView.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import GoalAnalyticsChart from "./GoalAnalyticsChart.svelte";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";

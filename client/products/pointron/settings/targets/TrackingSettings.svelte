@@ -5,7 +5,7 @@
   import { TimeScale } from "$lib/client/types/time.type";
   import TargetInput from "./TargetInput.svelte";
   import { onMount } from "svelte";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   let timescaleOptions = $userPreferences.timeScales

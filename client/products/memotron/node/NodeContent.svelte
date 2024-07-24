@@ -4,7 +4,7 @@
     NodeType,
     headingNodeTypes,
     type INodeStructure
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { hierarchyFactorLimit, type IActiveNodeStore } from "./node.store";
 
@@ -12,9 +12,10 @@
     deepCopy,
     isValidArrayWithData,
     shallowDiff
-  } from "$lib/client/utils/obj.utils";
+  } from "$lib/shared/utils/obj.utils";
   import AudioScrubablePreview from "../capture/AudioScrubablePreview.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
+  import PdfAnnotator from "../pdfAnnotator/pdfAnnotator.svelte";
   export let node: IActiveNodeStore;
   export let mdId: string;
   let previousRootStructure: string[] = [];
@@ -97,6 +98,15 @@
         body={$node?.body}
         nodeId={$node.id}
       />
+    {:else if $node?.contentType === NodeType.VIDEO && $node && "url" in $node.body}
+      <video controls>
+        <source src={$node.body.url} />
+        <track kind="captions" />
+      </video>
+    {:else if $node?.contentType === NodeType.IMAGE && $node && "url" in $node.body}
+      <img alt="..." class="object-contain" src={$node.body.url} />
+    {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
+      <PdfAnnotator url={$node.body.url} />
     {:else if $node?.contentType === NodeType.WEBPAGE && $node.children && $node.children.length > 0}
       <div class="flex flex-col items-start gap-4">
         <Text content="Clips" style={TextStyle.SECTION_HEADING} />

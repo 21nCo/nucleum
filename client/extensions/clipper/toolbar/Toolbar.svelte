@@ -11,6 +11,9 @@
   export let colors: string[] = [];
   export let activeColor: string | null = null;
   let isAutoHighlighterExpanded = false;
+  if ($toolbarState.position === undefined) {
+    toolbarState.changePosition(Position.Right);
+  }
   $: buttonParams = {
     tooltipOptions: {
       placement:

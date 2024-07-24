@@ -2,7 +2,7 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { properCase, truncateString } from "$lib/client/utils/text.utils";
+  import { properCase, truncateString } from "$lib/shared/utils/text.utils";
   import { fade, scale } from "svelte/transition";
   import Icon from "../Icon.svelte";
   import { easeBackOut, easeBounceIn, easeCircleIn } from "d3";
@@ -38,7 +38,8 @@
         "border border-aps1 bg-bgs2": isActive,
         "outline-transparent border-brs3":
           !isActive && style === OptionSelectorStyle.OUTLINE,
-        "border-transparent": !isActive && style === OptionSelectorStyle.TRAIN
+        "border-transparent": !isActive && style === OptionSelectorStyle.TRAIN,
+        "opacity-80 cursor-not-allowed": item.isDisabled
       }
     )}
     on:click

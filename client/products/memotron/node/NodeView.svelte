@@ -4,11 +4,11 @@
   import NodeMainPanel from "./NodeMainPanel.svelte";
   import { resolveActiveNodeStore, type IActiveNodeStore } from "./node.store";
   import Curation from "../curation/Curation.svelte";
-  import { Item } from "$lib/client/types/item.enum";
-  import { prefixTable } from "$lib/client/utils/text.utils";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { prefixTable } from "$lib/shared/utils/text.utils";
   import NodeRightPanel from "./rightPanel/NodeRightPanel.svelte";
   import { generateUID } from "$lib/client/utils/utils";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import { appStore } from "$lib/client/stores/app.store";
   export let id: string;
   export let isFromSplitView: boolean = false;
@@ -30,7 +30,7 @@
       appStore.isFSplit()
         ? ResourceAccessMode.FSPLIT
         : ResourceAccessMode.SPLIT,
-      prefixTable(id, Item.nodelinks)
+      prefixTable(id, Resource.nodelinks)
     );
     setTimeout(() => {
       appStore.toggleSearchParam("blr", true);
@@ -48,7 +48,7 @@
   {#if $node && !isLoading}
     {#if isShowBacklinks}
       <Curation
-        id={prefixTable(id, Item.nodelinks)}
+        id={prefixTable(id, Resource.nodelinks)}
         on:back={() => {
           isShowBacklinks = false;
         }}

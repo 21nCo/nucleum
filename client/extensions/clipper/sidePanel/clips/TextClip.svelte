@@ -2,7 +2,7 @@
   import type {
     Clip,
     TextHighlightContent
-  } from "$lib/client/types/memotron/clip.type";
+  } from "$lib/client/products/memotron/common/clip.type";
   export let clip: Clip<TextHighlightContent>;
   export let id: string = "";
 </script>

@@ -4,6 +4,7 @@
 //   const fetch = await import("node-fetch");
 //   return fetch.default(url, options);
 
+import { isValidString } from "$lib/shared/utils/text.utils";
 import { Agent, DatabaseQueryParams, CONTEXT } from "./types/account.type";
 
 // }
@@ -22,25 +23,44 @@ export async function performQuery(body: any) {
   console.log({ body, response });
   return await response.json();
 }
-export async function performMasterQuery(query: any) {
+export async function performQueryOnMasterDb(query: any) {
   return performRootQuery({
     query,
     dbType: CONTEXT.ADMIN,
-    instance: process.env.MASTER_DB_INSTANCE,
-    isMasterDb: true
+    instance: "db." + process.env.DOMAIN
   });
 }
-export async function performAdminQuery(query: any) {
-  return performRootQuery({ query, dbType: CONTEXT.ADMIN });
-}
 
-export async function performScopeQuery(query: any, agent: Agent) {
-  let dbType = CONTEXT.USER;
-  if (agent.context) dbType = agent.context as CONTEXT;
+export async function performQueryOnRegionalDb(
+  query: string,
+  props: { region: string; db: string; context?: CONTEXT }
+) {
+  const instance =
+    isValidString(props.region) && props.region != "global"
+      ? props.region + ".db." + process.env.DOMAIN
+      : "db." + process.env.DOMAIN;
   return performRootQuery({
     query,
-    dbType,
-    db: agent.db
+    instance,
+    dbType: props.context ?? CONTEXT.USER,
+    db: props.db
+  });
+}
+
+/**
+ * Performs a query on the regional database of the agent delegated by the agent to perform on behalf of the agent.
+ *
+ * Note: This is used in conjunction with read queries from client directly to database. Write queries are delegated via backend to database.
+ *
+ * @param query
+ * @param agent
+ * @returns
+ */
+export async function performAgentProxyQuery(query: any, agent: Agent) {
+  return performQueryOnRegionalDb(query, {
+    context: agent.context ? (agent.context as CONTEXT) : CONTEXT.USER,
+    db: agent.db,
+    region: agent.region
   });
 }
 
@@ -50,26 +70,14 @@ async function performRootQuery(params: DatabaseQueryParams) {
   headers.append("Content-Type", "text/plain");
   headers.append(
     "Authorization",
-    "Basic " +
-      btoa(
-        process.env.DB_USER +
-          ":" +
-          (params.isMasterDb ? process.env.MASTER_DB_PASS : process.env.DB_PASS)
-      )
+    "Basic " + btoa(process.env.DB_USER + ":" + process.env.DB_PASS)
   );
   headers.append("Accept", "application/json");
-  headers.append(
-    "NS",
-    params.dbType === CONTEXT.ADMIN
-      ? process.env.ADMIN_NS ?? "ADMIN"
-      : params.dbType === CONTEXT.USER
-      ? process.env.USER_NS ?? "USER"
-      : process.env.SPACE_NS ?? "SPACE"
-  );
+  headers.append("NS", resolveNamespace(params.dbType));
   headers.append(
     "DB",
     params.dbType === CONTEXT.ADMIN
-      ? process.env.ADMIN_DB ?? "ADMIN"
+      ? process.env.ADMIN_DB_NAME ?? "ADMIN"
       : params.db ?? ""
   );
   const body = params.query;
@@ -80,7 +88,7 @@ async function performRootQuery(params: DatabaseQueryParams) {
         ? Object.fromEntries(headers.entries())
         : headers
   });
-  let endPoint = (params.instance ?? process.env.DB_INSTANCE) + "/sql";
+  let endPoint = "https://" + params.instance + "/sql";
   // console.log({ endPoint });
   const response = await fetch(endPoint, {
     method: "POST",
@@ -93,55 +101,17 @@ async function performRootQuery(params: DatabaseQueryParams) {
   const json = await response.json();
   // console.log({ json });
   return json;
-}
 
-// const db = new Surreal();
-// export async function signupSystemUser(userId, passhash) {
-//   try {
-//     await db.connect(`${process.env.DB_INSTANCE}/rpc`, {
-//       namespace: process.env.USER_NS,
-//       auth: {
-//         username: process.env.DB_USER,
-//         password: process.env.DB_PASS,
-//       },
-//     });
-//     const creationQuery = `USE NS ${process.env.USER_NS} DB ${userId}; DEFINE USER ${userId} on database password "${passhash}" ROLES EDITOR;`;
-//     console.log({ creationQuery });
-//     const response = await db.query(creationQuery);
-//     console.log("signup using sdk", { response });
-//     const token = await signinSystemUser(userId, passhash);
-//     console.log({ token });
-//     return token;
-//   } catch (e) {
-//     console.error("ERROR", e);
-//   } finally {
-//     await db.close();
-//   }
-// }
-// async function signupScopedUser(data, userId) {
-//   // const token = await db.signup({
-//   //   namespace: process.env.USER_NS,
-//   //   database: userId,
-//   //   scope: "database",
-//   //   email,
-//   //   password: pass,
-//   // });
-// }
-// export async function signinSystemUser(userId, password) {
-//   try {
-//     await db.connect(`${process.env.DB_INSTANCE}/rpc`, {
-//       namespace: process.env.USER_NS,
-//     });
-//     const token = await db.signin({
-//       namespace: process.env.USER_NS,
-//       database: userId,
-//       username: userId,
-//       password,
-//     });
-//     return token;
-//   } catch (e) {
-//     console.error("ERROR", e);
-//   } finally {
-//     await db.close();
-//   }
-// }
+  function resolveNamespace(dbType: CONTEXT) {
+    switch (dbType) {
+      case CONTEXT.ADMIN:
+        return process.env.ADMIN_NS ?? "ADMIN";
+      case CONTEXT.USER:
+        return process.env.USER_NS ?? "USER";
+      case CONTEXT.SPACE:
+        return process.env.SPACE_NS ?? "SPACE";
+      default:
+        return process.env.USER_NS ?? "USER";
+    }
+  }
+}

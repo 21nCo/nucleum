@@ -161,11 +161,23 @@ export type ResourceDependency = {
 export enum PersistanceActionType {
   CREATE = "CREATE",
   INSERT = "INSERT",
-  UPDATE = "UPDATE",
+  /**
+   * Replaces the existing record with the new data
+   */
+  REPLACE = "REPLACE",
+  /**
+   * Merges the existing record properties with the provided properties
+   */
   MERGE = "MERGE",
+  /**
+   * Deletes the record.
+   *
+   * Note: Use this to completely delete the record. To move to trash, use MERGE with trashInformation property.
+   */
   DELETE = "DELETE",
   CUSTOM_QUERY = "CUSTOM_QUERY",
-  CUSTOM_CREATE = "CUSTOM_CREATE"
+  CUSTOM_CREATE = "CUSTOM_CREATE",
+  BULK_MERGE = "BULK_MERGE"
 }
 
 export interface IMutationParams {

@@ -13,6 +13,7 @@
     "border-r h-full": orientation === Orientation.Vertical,
     "border-brs1": colorStrength === ColorStrength.Subtle,
     "border-brs2": colorStrength === ColorStrength.Normal,
-    "border-brs3": colorStrength === ColorStrength.Strong
+    "border-brs3": colorStrength === ColorStrength.Strong,
+    "border-fgs3 border-opacity-80": colorStrength === ColorStrength.ExtraStrong
   })}
 />

@@ -6,7 +6,7 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { AlertType } from "$lib/client/types/notification.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { isEmptyArray, isValidArray } from "$lib/client/utils/obj.utils";
+  import { isEmptyArray, isValidArray } from "$lib/shared/utils/obj.utils";
   import { generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";

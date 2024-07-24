@@ -1,7 +1,7 @@
 <script lang="ts">
   import PanelSwitcher from "../switcher/PanelSwitcher.svelte";
   import { ColorStrength } from "../../types/appearance.type";
-  import { deepCopy } from "$lib/client/utils/obj.utils";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
   import Divider from "../Divider.svelte";
   import Button from "../button/Button.svelte";
   import Icon from "../Icon.svelte";

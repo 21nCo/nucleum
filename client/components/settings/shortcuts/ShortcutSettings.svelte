@@ -5,7 +5,7 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ShortcutItem from "./ShortcutItem.svelte";
   let defaultKeyMap = $appStore?.appData?.shortcuts;
   let userKeyMap = $userPreferences?.shortcuts;

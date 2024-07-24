@@ -1,6 +1,6 @@
 <script lang="ts">
   import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Position } from "$lib/client/types/direction.enum";
@@ -42,7 +42,7 @@
     bind:value={label}
     bind:this={inputRef}
     searchResultComponent={GoalSearchThumbnail}
-    searchStoreId={Item.PointGoal}
+    searchStoreId={Resource.PointGoal}
     style={InputStyle.PLAIN}
     popoverOptions={{ offsetInPx: 16 }}
     placeholder="+ start typing a goal name..."

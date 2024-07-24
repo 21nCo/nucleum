@@ -26,6 +26,10 @@
   export let isEnableAnimationForTitle: boolean = false;
   export let title: string = "";
   export let barStyle: BarStyle = BarStyle.EXACT;
+  /**
+   * Shows the bars or train upside down
+   */
+  export let isInversePlacement: boolean = false;
   export let triggerItemEdit: string | null = null;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
@@ -93,7 +97,8 @@
               barStyle != BarStyle.UNDER &&
               barStyle != BarStyle.DOT) ||
               style === PanelSwitcherStyle.SNAKE) &&
-            !isExpandToFullWidth,
+            !isExpandToFullWidth &&
+            !isInversePlacement,
           "items-center justify-around gap-6": style === PanelSwitcherStyle.DOT,
           "border-brs3": style === PanelSwitcherStyle.TRAIN,
           "rounded-full border-2":
@@ -121,6 +126,7 @@
           {style}
           {isInEditMode}
           {barStyle}
+          {isInversePlacement}
           bind:triggerItemEdit
           isActive={value === item.value}
           isDisabled={isDisableEnabled && value !== item.value}

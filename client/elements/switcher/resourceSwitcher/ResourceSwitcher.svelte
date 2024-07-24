@@ -1,0 +1,41 @@
+<script lang="ts">
+  import { createEventDispatcher } from "svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import type {
+    IResourceSwitchItem,
+    ISelectValue
+  } from "$lib/client/types/select.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import ResourceSwitcherItem from "./ResourceSwitcherItem.svelte";
+  const dispatch = createEventDispatcher();
+  export let options: IResourceSwitchItem[];
+  export let selected: ISelectValue | undefined = undefined;
+  export let parentBackgroundIndex: number = 1;
+  export let size: Size.lg | Size.md | Size.sm = Size.md;
+  export let iconOrientation: Orientation = Orientation.Horizontal;
+  let classList: string = "flex w-full";
+  if (selected === undefined) selected = options[0]?.value;
+</script>
+
+<div
+  class={cn(classList, {
+    "gap-5": size === Size.lg,
+    "gap-3": size === Size.md,
+    "gap-2": size === Size.sm
+  })}
+>
+  {#each options as item, index}
+    <ResourceSwitcherItem
+      {item}
+      {size}
+      {iconOrientation}
+      isActive={selected === item.value}
+      on:click={() => {
+        if (item.isDisabled) return;
+        selected = item.value;
+        dispatch("select", item.value);
+      }}
+    />
+  {/each}
+</div>

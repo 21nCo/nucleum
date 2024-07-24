@@ -3,7 +3,7 @@
   import ClipsPane from "$lib/client/extensions/clipper/sidePanel/clips/ClipsPane.svelte";
   import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { ClipperExtensionEvent } from "$lib/client/types/memotron/clip.type";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { onMount } from "svelte";
   let mode: "clips" | "capture" = "clips";
   let title = "";

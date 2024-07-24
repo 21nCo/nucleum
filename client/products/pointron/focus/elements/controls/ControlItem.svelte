@@ -3,16 +3,14 @@
   import { Control } from "$lib/client/types/pointron/control.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { resolveIfActiveFgFg } from "$lib/client/utils/theme.utils";
   import ControlIcon from "./ControlIcon.svelte";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import appearance from "$lib/client/stores/appearance.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { BlockType } from "$lib/client/types/pointron/session.type";
+  import { sessionStore } from "../../session.store";
   export let control: Control;
   export let isProminent: boolean = false;
-  export let contextSize: Size = Size.md;
-  export let width: number = 68;
+  export let isFocusPlayerContext: boolean = false;
+  let iconProps = { isFocusPlayerContext };
   $: extendDuration = $pointronPreferences.extendDuration;
   let timer: any;
   const dispatch = createEventDispatcher();
@@ -20,7 +18,6 @@
     dispatch("click", { control });
   }
   onMount(() => {
-    width = contextSize === Size.md ? 68 : 48;
     //todo - later - causing flickering of the screen
     // if (isProminent) {
     //   ringStyles = "w-14 h-14 opacity-80";
@@ -50,58 +47,52 @@
     class={cn(
       "relative rounded-full flex items-center justify-center",
       {
-        "w-20 h-20": contextSize === Size.lg || contextSize === Size.xl,
-        "w-16 h-16": contextSize === Size.md,
-        "w-12 h-12 border": contextSize === Size.sm
+        "w-12 h-12 border": isFocusPlayerContext,
+        "w-20 h-20 mo:w-16 mo:h-16": !isFocusPlayerContext,
+        "border-cbg":
+          isFocusPlayerContext &&
+          $sessionStore.currentBlock.type == BlockType.FOCUS,
+        "border-abg":
+          isFocusPlayerContext &&
+          $sessionStore.currentBlock.type != BlockType.FOCUS
       },
-      contextSize === Size.sm
-        ? {
-            "border-fgs1": resolveIfActiveFgFg(
-              $sessionStore.currentLog.color,
-              $appearance
-            ),
-            "border-bgs1": !resolveIfActiveFgFg(
-              $sessionStore.currentLog.color,
-              $appearance
-            )
-          }
-        : {
-            "bg-ass1": control === Control.BREAK,
-            "bg-bgs4": control === Control.ABANDON,
-            "bg-ags1": control === Control.RESUME,
-            "bg-aps1":
-              control === Control.START ||
-              control === Control.SKIPBREAK ||
-              control === Control.FINISH
-          }
+      !isFocusPlayerContext && {
+        "bg-ass1": control === Control.BREAK,
+        "bg-fgs4": control === Control.ABANDON,
+        "bg-ags1": control === Control.RESUME,
+        "bg-aps1":
+          control === Control.START ||
+          control === Control.SKIPBREAK ||
+          control === Control.FINISH
+      }
     )}
   >
     {#if control === Control.START || control === Control.RESUME || control === Control.SKIPBREAK}
       <!-- <Start {width} /> -->
       <ControlIcon
-        icon={contextSize === Size.sm ? "play-circled-mini" : "play-circled"}
-        {contextSize}
+        icon={isFocusPlayerContext ? "play-circled-mini" : "play-circled"}
+        {...iconProps}
       />
     {:else if control === Control.BREAK}
       <ControlIcon
-        icon={contextSize != Size.sm ? "clock" : "clock-mini"}
-        {contextSize}
+        icon={!isFocusPlayerContext ? "clock" : "clock-mini"}
+        {...iconProps}
       />
       <!-- <Break {width} /> -->
     {:else if control === Control.EXTEND}
-      <Extend {width} minutes={extendDuration} />
+      <Extend minutes={extendDuration} />
     {:else if control === Control.FINISH}
       <!-- <Finish {width} /> -->
       <ControlIcon
-        icon={contextSize != Size.sm
+        icon={!isFocusPlayerContext
           ? "arrow-right-circled"
           : "arrow-right-circled-mini"}
-        {contextSize}
+        {...iconProps}
       />
     {:else if control === Control.ABANDON}
       <ControlIcon
-        icon={contextSize != Size.sm ? "cross" : "cross-mini"}
-        {contextSize}
+        icon={!isFocusPlayerContext ? "cross" : "cross-mini"}
+        {...iconProps}
       />
     {/if}
     {#if isProminent}
@@ -111,7 +102,7 @@
       /> -->
     {/if}
   </div>
-  {#if contextSize != Size.sm}
+  {#if !isFocusPlayerContext}
     <div
       class="absolute top-full left-0 text-fgs2 self-center flex w-full justify-center mo:text-b3"
     >

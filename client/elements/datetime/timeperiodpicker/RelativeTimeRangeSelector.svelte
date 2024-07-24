@@ -77,10 +77,6 @@
           },
           {
             type: TimePeriodType.RELATIVE,
-            param: -1
-          },
-          {
-            type: TimePeriodType.RELATIVE,
             param: -3
           },
           {
@@ -95,10 +91,6 @@
       default:
         return [
           { type: TimePeriodType.RELATIVE, param: 0 },
-          {
-            type: TimePeriodType.RELATIVE,
-            param: 0
-          },
           {
             type: TimePeriodType.RELATIVE,
             param: -1

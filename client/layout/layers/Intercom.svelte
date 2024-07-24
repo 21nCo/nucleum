@@ -2,7 +2,7 @@
   import { intercomId } from "$lib/client/stores/app.store";
   import account from "$lib/client/stores/account.store";
   import view from "$lib/client/stores/view.store";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   localStorage.setItem("intercomId", intercomId);
   $: if (!$view.isPortrait && $account.userInfo) {
     (<any>window).intercomSettings = {

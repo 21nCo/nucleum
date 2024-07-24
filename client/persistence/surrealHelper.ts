@@ -11,8 +11,8 @@ import {
   resolveMutationQuery
 } from "$lib/client/utils/surreal.utils";
 import { PersistanceActionType } from "../types/data.type";
-import type { DbRecord } from "../types/dbrecord.type";
 import type { ISurrealDatabase } from "../types/db.type";
+import type { IResourceBase } from "../components/resourceStores/resource.type";
 
 const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -37,7 +37,7 @@ export class SurrealDatabaseUsingRest {
    * @param data data to be created
    * @returns Id of the created record or null if failed
    */
-  async create(recordId: string, data: DbRecord) {
+  async create(recordId: string, data: IResourceBase) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.CREATE, recordId),
       {
@@ -45,7 +45,7 @@ export class SurrealDatabaseUsingRest {
       }
     );
   }
-  async insert(tableName: string, data: DbRecord[]) {
+  async insert(tableName: string, data: IResourceBase[]) {
     return this.query(
       resolveMutationQuery(PersistanceActionType.INSERT, tableName),
       {
@@ -67,9 +67,9 @@ export class SurrealDatabaseUsingRest {
       }
     );
   }
-  async update(recordId: string, data: DbRecord) {
+  async update(recordId: string, data: IResourceBase) {
     return this.query(
-      resolveMutationQuery(PersistanceActionType.UPDATE, recordId),
+      resolveMutationQuery(PersistanceActionType.REPLACE, recordId),
       {
         data
       }
@@ -82,7 +82,7 @@ export class SurrealDatabaseUsingRest {
   }
   async delete(recordId: string, userId?: string) {
     return await this.query(
-      resolveMutationQuery(PersistanceActionType.DELETE, recordId, userId)
+      resolveMutationQuery(PersistanceActionType.DELETE, recordId, { userId })
     );
   }
   async executeReadFn(
@@ -109,11 +109,15 @@ export class SurrealDatabaseUsingRest {
       // console.log("query", { query, params, token });
       let decodedToken: any = jwt_decode(this.token!);
       this.db = decodedToken?.db ?? "";
+      const instance =
+        decodedToken?.region && decodedToken?.region != "global"
+          ? decodedToken?.region + "." + this.instance
+          : this.instance;
       query = replaceParams(query, params);
       let response;
       if (isReadOperation) {
         response = await performHttpNetworkOperation({
-          url: this.instance + "/sql",
+          url: "https://" + instance + "/sql",
           method: "POST",
           headers: {
             "Content-Type": "text/plain",
@@ -299,7 +303,7 @@ export class SurrealDatabase implements ISurrealDatabase {
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
   constructor(private instance: string = "") {
     const instanceDefault =
-      import.meta.env?.VITE_SURREAL_URL ?? process.env.PLASMO_PUBLIC_DB_URL;
+      import.meta.env?.VITE_DB ?? process.env.PLASMO_PUBLIC_DB_URL;
     this.instance = instanceDefault ?? instance;
     // this.token = resolveToken();
     if (isUseSurrealSDK == "true")

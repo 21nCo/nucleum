@@ -20,3 +20,9 @@ export type IPopoverRenderBaseParams = {
   isUseAbsolutePositioning?: boolean;
   isPlaceAtCaret?: boolean;
 };
+
+export enum PopoverTriggerMethod {
+  CLICK = "click",
+  RIGHT_CLICK = "right-click",
+  NONE = "none"
+}

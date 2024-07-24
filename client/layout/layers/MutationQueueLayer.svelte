@@ -4,14 +4,14 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import type { IEvent } from "$lib/client/types/event.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { liveQuery } from "dexie";
   import { onMount } from "svelte";
   let mutationQueue = refreshMutationQueueLiveQuery();
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (
-        x.event === GlobalEvent.USER_SIGNUP ||
+        x.event === GlobalEvent.BOOTSTRAP ||
         x.event === GlobalEvent.USER_LOGIN
       ) {
         mutationQueue = refreshMutationQueueLiveQuery();
@@ -26,14 +26,13 @@
       $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
     );
   }
-  //TODO - Temp - disabling for Pointron release
-  // setInterval(() => {
-  //   if (isValidArrayWithData($mutationQueue) && $account.isLoggedIn) {
-  //     dataManager.syncPendingMutations();
-  //     console.log(
-  //       "Syncing mutations",
-  //       $mutationQueue.map((m) => m.id)
-  //     );
-  //   }
-  // }, 1500);
+  setInterval(() => {
+    if (isValidArrayWithData($mutationQueue) && $account.isLoggedIn) {
+      dataManager.syncPendingMutations();
+      // console.log(
+      //   "Syncing mutations",
+      //   $mutationQueue.map((m) => m.id)
+      // );
+    }
+  }, 1500);
 </script>

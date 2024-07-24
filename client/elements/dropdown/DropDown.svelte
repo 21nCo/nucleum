@@ -8,14 +8,14 @@
   import { Size } from "$lib/client/types/size.enum";
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
   import TextInput from "../input/TextInput.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import DropDownItemView from "./DropDownItemView.svelte";
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import AvatarView from "../avatarPicker/AvatarView.svelte";
   const dispatch = createEventDispatcher();
   /**

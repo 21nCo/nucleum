@@ -3,7 +3,7 @@ import { goalStore, seedGoal } from "../goal.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import { generateUID } from "$lib/client/utils/utils";
-import { deepCopy } from "$lib/client/utils/obj.utils";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 
 class NewGoalStore extends ObservableStore<IGoal & IObservableStoreSubject> {
   constructor() {

@@ -128,13 +128,18 @@
           <!-- {:else if $sessionStore.composition?.type === SessionCompositionType.TARGET_FOCUS && $sessionStore.end}
           {formatTime($sessionStore.end)} -->
         {:else if $sessionStore.start}
-          {formatTime(
-            $userPreferences,
-            new Date(
-              $sessionStore.start.getTime() +
-                ($sessionStore.plannedDuration + $sessionStore.totalIdle) * 1000
-            )
-          )}
+          {#if $sessionStore.end}
+            {formatTime($userPreferences, $sessionStore.end)}
+          {:else}
+            {formatTime(
+              $userPreferences,
+              new Date(
+                $sessionStore.start.getTime() +
+                  ($sessionStore.plannedDuration + $sessionStore.totalIdle) *
+                    1000
+              )
+            )}
+          {/if}
         {/if}
       </div>
     {/if}

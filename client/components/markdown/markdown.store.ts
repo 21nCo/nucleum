@@ -9,17 +9,17 @@ import {
   type StructuralContent,
   type NodeContent,
   type StructuralNodeType
-} from "$lib/client/types/memotron/node.type";
+} from "$lib/client/products/memotron/node/node.type";
 
 import {
   deepCopy,
   isEmptyArray,
   isValidArrayWithData
-} from "$lib/client/utils/obj.utils";
+} from "$lib/shared/utils/obj.utils";
 import {
   generateMarkdownText,
   prefixTable
-} from "$lib/client/utils/text.utils";
+} from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
 import {
@@ -33,8 +33,8 @@ import type {
   IMarkdown,
   IListOperation,
   IBlockOperationContext
-} from "$lib/client/types/memotron/md.type";
-import { Item } from "$lib/client/types/item.enum";
+} from "$lib/client/components/markdown/md.type";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 
 export const emptyBlock: IBlock = {
   contentType: NodeType.SIMPLE_TEXT,
@@ -85,7 +85,7 @@ function insertBlock(
 ) {
   const { id, blockType, listType } = params;
   let newBlock: Partial<IBlock<NodeContent>> = {
-    id: prefixTable(generateUID(), Item.node),
+    id: prefixTable(generateUID(), Resource.node),
     body: ""
   };
   if (
@@ -139,7 +139,7 @@ function insertStructualBlock(
       (b) => b.id === contextBlockId
     );
     const newBlock: IBlock<StructuralContent> = {
-      id: prefixTable(generateUID(), Item.node),
+      id: prefixTable(generateUID(), Resource.node),
       contentType: blockType
     };
     store.blocks = [

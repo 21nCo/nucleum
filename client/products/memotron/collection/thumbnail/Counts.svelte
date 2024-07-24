@@ -1,0 +1,13 @@
+<script lang="ts">
+  import CountBadge from "./CountBadge.svelte";
+  import { CollectionType } from "$lib/client/products/memotron/collection/collection.type";
+  import type { ICollection } from "../collection.type";
+  export let item: ICollection;
+</script>
+
+<div class="flex gap-2">
+  <CountBadge count={10} label="nodes" />
+  {#if item.type === CollectionType.TYPED}
+    <CountBadge count={item.properties?.length} label="properties" />
+  {/if}
+</div>

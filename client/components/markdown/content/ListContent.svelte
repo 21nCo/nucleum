@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { IBlock } from "$lib/client/types/memotron/md.type";
+  import type { IBlock } from "$lib/client/components/markdown/md.type";
   import {
     ListType,
     NodeType,
     type ListContent
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import type { MdStoreType } from "../markdown.store";
   import BlockContent from "./BlockContent.svelte";
   import TextContent from "./TextContent.svelte";

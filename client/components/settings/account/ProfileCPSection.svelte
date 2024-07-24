@@ -6,7 +6,7 @@
   import {
     frameEmailFromParts,
     isValidString
-  } from "$lib/client/utils/text.utils";
+  } from "$lib/shared/utils/text.utils";
   import { formatDate } from "$lib/client/utils/time.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import ProfilePicture from "./ProfilePicture.svelte";

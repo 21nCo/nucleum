@@ -1,3 +1,4 @@
+import { resolveProviderRegionCode } from "$lib/deployment/deploy.utils";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -10,7 +11,11 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 export async function generateSignedUrlV2(body: any, user: any) {
   try {
     console.log({ body, user });
-    const region = user?.region ?? "us-east-1";
+    let region = "us-east-1";
+    if (user?.region) {
+      region = resolveProviderRegionCode(user.region, "aws");
+      console.log("resolved region:", { region });
+    }
     const s3Client = new S3Client({ region });
     const bucketName =
       (body.isTemp

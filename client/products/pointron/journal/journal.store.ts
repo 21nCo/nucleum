@@ -1,5 +1,5 @@
 import type { ICalendarHeatMapDataProvider } from "$lib/client/components/calendarHeatmap/calendarHeatmap.types";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "$lib/client/types/time.type";
 import { get } from "svelte/store";
 import type { IFocusHeatMapStore } from "./journal.types";
@@ -22,7 +22,7 @@ class FocusHeatmapStore
   implements ICalendarHeatMapDataProvider
 {
   constructor() {
-    super(Item.focusHeatmap);
+    super(Resource.focusHeatmap);
     this.set(seedFocusHeatmapStore);
   }
   loader(data: any) {

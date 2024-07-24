@@ -21,6 +21,7 @@
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
     undefined;
   export let triggerItemEdit: string | null = null;
+  export let isInversePlacement: boolean = false;
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");
@@ -54,7 +55,9 @@
         "text-h4": size === Size.lg,
         "text-fgs3": !isActive,
         "text-ccs1": isActive && !isInEditMode,
-        "py-2 border-b-2": barStyle === BarStyle.EXACT,
+        "py-2": barStyle === BarStyle.EXACT,
+        "border-b-2": barStyle === BarStyle.EXACT && !isInversePlacement,
+        "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,
         "border-ccs1": isActive && barStyle === BarStyle.EXACT,
         "border-transparent": !isActive && barStyle === BarStyle.EXACT
       })}

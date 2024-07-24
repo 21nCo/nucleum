@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -17,13 +17,12 @@
   import CurationThumbnailView from "./CurationThumbnailView.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/types/action.type";
-  import { collectionStore } from "./collection/collection.store";
+  import { collectionStore } from "../collection/collection.store";
   collectionStore.refresh();
   let searchQuery: string = "";
   // let curations: CurationThumbnail[] = [];
   let curations = liveQuery(() =>
-    $dataManager.cacheSource.dexie.curation
+    $dataManager.cacheSource.dexie.collection
       .filter(activeResourceFilter)
       .toArray()
   );
@@ -52,15 +51,15 @@
 
 <Panel
   floatingButton={{
-    label: "Create curation",
-    callback: async () => appStore.runAction(MemotronAction.CREATE_CURATION),
+    label: "Create collection",
+    callback: async () => appStore.runAction(MemotronAction.CREATE_COLLECTION),
     icon: "plus",
     variant: ButtonVariant.PRIMARY
   }}
 >
   <slot name="nonpadded" slot="nonpadded">
     <div class="px-4 py-2">
-      <Text style={TextStyle.PAGE_HEADING_SUBTLE} content={"Curations"} />
+      <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Collections" />
     </div>
     <div class="flex flex-col gap-4 h-full">
       <div class="flex gap-1 items-center py-2 mx-4 border-b border-brs2">
@@ -69,7 +68,7 @@
           bind:value={searchQuery}
           size={Size.lg}
           style={TextInputStyle.PLAIN}
-          placeholder="Search curations"
+          placeholder="Search collections"
         />
         {#if searchQuery}
           <Button

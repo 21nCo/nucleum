@@ -2,7 +2,7 @@ import { Position } from "$lib/client/types/direction.enum";
 import { OperatingSystem } from "../types/context.type";
 import { GlobalEvent } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
-import { deepCopy } from "./obj.utils";
+import { deepCopy } from "../../shared/utils/obj.utils";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -155,19 +155,21 @@ async function _renderPopoverUsingFixedPositioning(
     placement === Position.TopCenter ||
     placement === Position.BottomCenter
   ) {
-    popRef.style.left = `${triggerRect.left - (popRect.width / 2 - triggerRect.width / 2)}px`;
+    popRef.style.left = `${
+      triggerRect.left - (popRect.width / 2 - triggerRect.width / 2)
+    }px`;
   }
   popRect = popRef.getBoundingClientRect();
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  console.log({
-    triggerRect,
-    popRect,
-    placement,
-    documentWidth,
-    documentHeight
-  });
+  // console.log({
+  //   triggerRect,
+  //   popRect,
+  //   placement,
+  //   documentWidth,
+  //   documentHeight
+  // });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";
@@ -183,6 +185,7 @@ function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
   popRef.style.display = "block";
   popRef.style.opacity = "0";
   popRef.style.position = "absolute";
+  popRef.style.zIndex = "100";
   popRef.style.top = "";
   popRef.style.bottom = "";
   popRef.style.left = "";
@@ -306,21 +309,25 @@ export function goto(path: string) {
  * @returns true if the current environment is an extension environment
  */
 export function isExtensionEnvironment() {
-  console.log({
-    protocol: window.location.protocol,
-    typeofchrome: typeof chrome,
-    typeofbrowser: typeof browser,
-    typeofplasmo: typeof __plasmo
-  });
-  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id) {
+  // console.log({
+  //   protocol: window.location.protocol,
+  //   typeofchrome: typeof chrome,
+  //   typeofbrowser: typeof (window as any).browser,
+  //   typeofplasmo: typeof (window as any).__plasmo
+  // });
+  if (typeof chrome !== "undefined" && chrome?.runtime?.id) {
+    // console.log("chrome", chrome.runtime.id);
     return true;
   }
 
-  if (typeof browser !== "undefined" && browser.runtime && browser.runtime.id) {
+  if (
+    typeof (window as any).browser !== "undefined" &&
+    (window as any).browser.runtime?.id
+  ) {
     return true;
   }
 
-  if (typeof __plasmo !== "undefined") {
+  if (typeof (window as any).__plasmo !== "undefined") {
     return true;
   }
 

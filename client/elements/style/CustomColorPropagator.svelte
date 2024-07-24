@@ -45,6 +45,9 @@
   :global(.text-cbg) {
     color: var(--fgwhencustombg, var(--fgwhenaccentbg));
   }
+  :global(.border-cbg) {
+    border-color: var(--fgwhencustombg, var(--fgwhenaccentbg));
+  }
   :global(.bg-ccs1) {
     background-color: var(--customcolor, rgba(var(--colors-aps1), 1));
     color: var(--fgwhencustombg, var(--fgwhenaccentbg));
