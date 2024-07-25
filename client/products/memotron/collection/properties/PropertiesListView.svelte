@@ -8,7 +8,10 @@
   import type { IProperty } from "./property.type";
   import { get } from "svelte/store";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { resolvePropertiesForCapture } from "./property.utils";
+  import {
+    resolvePropertiesForCapture,
+    resolvePropertiesForNodePage
+  } from "./property.utils";
   import { onMount } from "svelte";
   export let types: string[] | undefined = undefined;
   export let properties: INodeProperty[] = [];
@@ -46,6 +49,8 @@
       .toArray();
     if (context === "capture")
       properties = resolvePropertiesForCapture(propertyConfig);
+    else if (context === "nodepage")
+      properties = resolvePropertiesForNodePage(propertyConfig);
     return propertyConfig;
 
     async function resolveTypeProperties(type: ICollection) {

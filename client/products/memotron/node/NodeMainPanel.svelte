@@ -1,16 +1,14 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { isInEditMode, userPreferences } from "$lib/client/stores/app.store";
+  import { isInEditMode } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import NodeContent from "./NodeContent.svelte";
   import NodePropertiesOnMainPanel from "./NodePropertiesOnMainPanel.svelte";
   import type { IActiveNodeStore } from "./node.store";
   export let node: IActiveNodeStore;
   export let mdId: string;
+  $: console.log({ node: $node });
 </script>
 
 <div class="flex flex-col gap-6 h-full grow">
@@ -29,7 +27,8 @@
     </div>
   {/if}
   <ResourceStatusBanner resource={node} />
-  {#if $node.type && $node.properties && $node.properties.length > 0}
+  {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
+    <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
     <div class="px-2">
       <NodePropertiesOnMainPanel {node} />
     </div>

@@ -2,7 +2,10 @@ import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.t
 import type { IAvatar } from "../../../types/avatar.type";
 import type { IMarkdown } from "../../../components/markdown/md.type";
 import type { IStore } from "../../../types/data.type";
-import type { IPropertyValue } from "$lib/client/products/memotron/collection/properties/property.type";
+import type {
+  IProperty,
+  IPropertyValue
+} from "$lib/client/products/memotron/collection/properties/property.type";
 import type { ILink } from "../capture/capture.type";
 
 export type INode = INodeBase &
@@ -42,6 +45,11 @@ export type INodeBase = IMemotronItemBase & {
 
 export type IActiveNode = INode & {
   md: IMarkdown;
+  parent?: string[];
+  focusedBlock?: string;
+  collections?: string[];
+  types?: string[];
+  propertyConfig?: IProperty[];
 };
 
 export type NodeContent =

@@ -12,7 +12,11 @@ import {
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
+import {
+  interceptSurrealResponse,
+  debouncer,
+  activeResourceFilter
+} from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IMutationQueueParams } from "../../../types/data.type";
@@ -20,6 +24,10 @@ import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resou
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
+import { get, writable } from "svelte/store";
+import { dataManager } from "$lib/client/persistence/dataManager";
+import { CollectionType } from "../collection/collection.type";
+import type { IProperty } from "../collection/properties/property.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -93,8 +101,10 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 }
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
+  eventStore: any;
   constructor(node: string) {
     super(node, nodeStore);
+    this.eventStore = resolveActiveNodeEventStore(node);
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
@@ -114,9 +124,39 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     return val!;
   }
   fetch = async () => {
-    const result = await this.resourceStore.fetch(this.id);
-    if (result) {
-      this.set(result);
+    const node = await this.resourceStore.fetch(this.id);
+    if (node) {
+      this.set(node);
+    }
+    const { types, propertyConfig } = await resolveTypesAndProperties();
+    this.update((n) => {
+      n.types = types;
+      n.propertyConfig = propertyConfig;
+      return n;
+    });
+    async function resolveTypesAndProperties() {
+      let types: string[] = [];
+      let propertyConfig: IProperty[] = [];
+      if (!node.collections) return { types, propertyConfig };
+      const dexie = get(dataManager).cacheSource.dexie;
+      const typeCollectionLinks = await dexie.collection
+        .where("id")
+        .anyOfIgnoreCase(node.collections)
+        .and((collection) => collection.type === CollectionType.TYPED)
+        .toArray();
+      if (!typeCollectionLinks || typeCollectionLinks.length == 0)
+        return { types, propertyConfig };
+      types = typeCollectionLinks.map((type) => type.id);
+      let allProperties: string[] = [];
+      typeCollectionLinks.map((type) => {
+        allProperties = [...allProperties, ...(type.properties ?? [])];
+      });
+      propertyConfig = await dexie.property
+        .where("id")
+        .anyOfIgnoreCase(allProperties)
+        .filter(activeResourceFilter)
+        .toArray();
+      return { types, propertyConfig };
     }
   };
   updateProperties = async (properties: INodeProperty[]) => {
@@ -158,6 +198,57 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   };
   mention = async (location: string, id: string) => {
     return this.resourceStore.link(location, id, LinkType.MENTION);
+  };
+  /**
+   * Sets the focused block and parent for the focused block.
+   *
+   * This is triggered in both the cases of focusing from markdown and breadcrumbs.
+   *
+   * @param id
+   * @param parent
+   */
+  onFocus(id: string, parent: string[]) {
+    this.update((n) => {
+      n.focusedBlock = id;
+      n.parent = [...parent, id];
+      return n;
+    });
+  }
+  unFocus() {
+    this.update((n) => {
+      n.focusedBlock = undefined;
+      n.parent = [];
+      return n;
+    });
+  }
+}
+
+const activeNodeEventStores = new Map<string, any>();
+
+export function resolveActiveNodeEventStore(id: string) {
+  if (!activeNodeEventStores.has(id)) {
+    activeNodeEventStores.set(id, initActiveNodeEventStore(id));
+  }
+  let val = activeNodeEventStores.get(id);
+  return val!;
+}
+
+/**
+ * Node event store is used as a sub store in active node store to communicate between remote node UI components like in the case of click events from breadcrumbs to relay it to the markdown component.
+ * @param id
+ * @returns
+ */
+function initActiveNodeEventStore(id: string) {
+  const { subscribe, set, update } = writable<
+    { event: MouseEvent; id: string } | undefined
+  >();
+  return {
+    subscribe,
+    set,
+    update,
+    reset: () => {
+      set(undefined);
+    }
   };
 }
 

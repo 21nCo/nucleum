@@ -28,9 +28,10 @@ export function resolvePropertyDefaultValue(property: IProperty) {
 }
 
 export function mapPropertyValues(
-  properties: IProperty[],
+  properties: IProperty[] | undefined,
   nodeProperties: INodeProperty[] | undefined
 ) {
+  if (!properties) return [];
   return properties.map((property) => {
     const nodeProperty = nodeProperties?.find((v) => v.id === property.id);
     return {
@@ -58,6 +59,22 @@ export function resolvePropertiesForCapture(properties: IProperty[]) {
   return properties
     .filter((item: IProperty) => {
       return item.isShowOnCapture;
+    })
+    .map((y) => {
+      return { id: y.id, value: resolvePropertyDefaultValue(y) };
+    });
+}
+
+/**
+ * Filters properties that are marked for capture
+ * @param properties
+ * @returns
+ */
+export function resolvePropertiesForNodePage(properties: IProperty[]) {
+  if (!isValidArrayWithData(properties)) return [];
+  return properties
+    .filter((item: IProperty) => {
+      return item.isShowOnNodePage;
     })
     .map((y) => {
       return { id: y.id, value: resolvePropertyDefaultValue(y) };

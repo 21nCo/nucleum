@@ -15,7 +15,6 @@
   export let nodePageVariant: "v1" | "v2" = "v2";
   let mdId = generateUID();
   let isRenderSplitView = false;
-  $: console.log({ id });
   // $: isRenderSplitView =
   //   !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
   let isShowBacklinks = false;

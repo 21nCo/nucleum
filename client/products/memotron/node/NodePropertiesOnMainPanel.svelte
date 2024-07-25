@@ -1,21 +1,19 @@
 <script lang="ts">
-  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import { mapPropertyValues } from "../collection/properties/property.utils";
   import type { IActiveNodeStore } from "./node.store";
 
   export let node: IActiveNodeStore;
 
-  let propertiesOnMainPanel = $node?.type?.properties?.filter(
+  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
     (x) => x.isShowOnNodePage
   );
-  let nodeProperties: INodeProperty[] = mapPropertyValues(
+  $: nodeProperties = mapPropertyValues(
     propertiesOnMainPanel,
     $node.properties
   );
 
   async function propagateChanges(e: CustomEvent) {
-    console.log({ e, nodeProperties });
     const remainingProperties = $node.properties?.filter(
       (x) => !nodeProperties.some((y) => y.id === x.id)
     );
@@ -29,7 +27,7 @@
 {#if propertiesOnMainPanel && nodeProperties && propertiesOnMainPanel.length > 0 && nodeProperties.length > 0}
   <PropertiesListView
     bind:properties={nodeProperties}
-    type={$node.type}
+    types={$node.types}
     on:change={propagateChanges}
     context="nodepage"
   />
