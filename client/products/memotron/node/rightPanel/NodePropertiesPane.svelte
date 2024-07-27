@@ -5,7 +5,7 @@
   import { mapPropertyValues } from "../../collection/properties/property.utils";
   import type { IActiveNodeStore } from "../node.store";
   export let node: IActiveNodeStore;
-
+  export let isMediaNode: boolean = false;
   $: nodeProperties = mapPropertyValues(
     $node?.propertyConfig,
     $node.properties
@@ -27,7 +27,7 @@
     <PropertiesListView
       bind:properties={nodeProperties}
       types={$node.types}
-      context="rightpanel"
+      context={isMediaNode ? "medianode" : "rightpanel"}
       isReadMode={!$isInEditMode}
       nodeId={$node.id}
       on:change={propagateChanges}

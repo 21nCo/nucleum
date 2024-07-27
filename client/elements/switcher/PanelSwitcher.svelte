@@ -18,7 +18,7 @@
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
   export let isDisableEnabled: boolean = false;
-  export let parentBackgroundIndex: number = 1;
+  export let parentBgIndex: number = 1;
   export let isInEditMode: boolean = false;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let style: PanelSwitcherStyle = PanelSwitcherStyle.DEFAULT;
@@ -90,7 +90,9 @@
       bind:this={child}
       class={cn(
         "flex min-w-fit items-center",
-        bg(style === PanelSwitcherStyle.TRAIN ? parentBackgroundIndex : 0),
+        bg(
+          style === PanelSwitcherStyle.TRAIN ? parentBgIndex : parentBgIndex - 1
+        ),
         {
           "border-b border-brs3":
             ((style === PanelSwitcherStyle.BAR &&
@@ -127,6 +129,7 @@
           {isInEditMode}
           {barStyle}
           {isInversePlacement}
+          {parentBgIndex}
           bind:triggerItemEdit
           isActive={value === item.value}
           isDisabled={isDisableEnabled && value !== item.value}

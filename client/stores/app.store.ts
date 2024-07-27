@@ -725,7 +725,7 @@ function initAppStore(seed: AppStore) {
     const accessMode = determineClickAccessMode(event);
     if (accessMode) toggleSearchParam(accessMode, id);
     else toggleSearchParam(defaultTo, id);
-    // console.log("resourceClickHandler", { id, defaultTo, event });
+    // console.log("resourceClickHandler", { id, defaultTo, accessMode, event });
   };
   const resourceClickHandlerWithReplace = (
     event: MouseEvent,
@@ -745,6 +745,23 @@ function initAppStore(seed: AppStore) {
     toggleSearchParam(ResourceAccessMode.FOCUS);
     toggleSearchParam(ResourceAccessMode.POP);
     toggleSearchParam(ResourceAccessMode.FSPLIT);
+  };
+
+  const toggleFocusAccessMode = (
+    currentMode: ResourceAccessMode,
+    resourceId: string
+  ) => {
+    toggleSearchParam(currentMode);
+    setTimeout(() => {
+      if (
+        currentMode === ResourceAccessMode.POP ||
+        currentMode === ResourceAccessMode.SPLIT
+      ) {
+        toggleSearchParam(ResourceAccessMode.FOCUS, resourceId);
+      } else {
+        toggleSearchParam(ResourceAccessMode.POP, resourceId);
+      }
+    }, 500);
   };
 
   return {
@@ -892,6 +909,7 @@ function initAppStore(seed: AppStore) {
     checkForUpdates,
     toggleSearchParam,
     resourceClickHandler,
+    toggleFocusAccessMode,
     resourceClickHandlerWithReplace,
     determineCurrentResourceAccessMode,
     determineClickAccessMode,

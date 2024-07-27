@@ -1,0 +1,58 @@
+<script lang="ts">
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import { type IActiveNodeStore } from "../node.store";
+  import AudioScrubablePreview from "../../capture/AudioScrubablePreview.svelte";
+  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let node: IActiveNodeStore;
+  export let accessMode: ResourceAccessMode;
+  let refreshId = Date.now();
+  let img: HTMLImageElement;
+  let isPortrait = true;
+
+  $: if (img) {
+    isPortrait = img.naturalHeight > img.naturalWidth;
+  }
+  function retireveNode() {
+    node.fetch();
+    refreshId = Date.now();
+  }
+</script>
+
+{#key refreshId}
+  <div
+    class={cn("relative flex w-full justify-center", {
+      "h-full": accessMode === ResourceAccessMode.FOCUS,
+      grow: accessMode === ResourceAccessMode.POP
+    })}
+  >
+    {#if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
+      <!-- <audio controls src={$node.body?.url} /> -->
+      <AudioScrubablePreview
+        on:refresh={retireveNode}
+        body={$node?.body}
+        nodeId={$node.id}
+      />
+    {:else if $node?.contentType === NodeType.VIDEO && $node && "url" in $node.body}
+      <video controls>
+        <source src={$node.body.url} />
+        <track kind="captions" />
+      </video>
+    {:else if $node?.contentType === NodeType.IMAGE && $node && "url" in $node.body}
+      <!-- <div
+        class="absolute inset-0 bg-cover bg-center filter blur-lg scale-110"
+        style="background-image: url('{$node.body.url}');"
+      ></div>
+      <div class="absolute inset-0 bg-black opacity-30"></div> -->
+      <img
+        bind:this={img}
+        alt="..."
+        class={cn("absolute inset-0 w-full h-full object-contain", {
+          // "object-contain": isPortrait,
+          // "object-cover": !isPortrait
+        })}
+        src={$node.body.url}
+      />
+    {/if}
+  </div>
+{/key}

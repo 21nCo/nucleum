@@ -9,7 +9,7 @@ const meta = {
   argTypes: {
     activeColor: { control: { type: "range", min: -1, max: 255, step: 1 } },
     isDisableEnabled: { control: "boolean" },
-    parentBackgroundIndex: {
+    parentBgIndex: {
       control: { type: "number", min: 0, max: 3, step: 1 }
     }
   },
@@ -18,7 +18,7 @@ const meta = {
     selected: "Item 2",
     activeColor: undefined,
     isDisableEnabled: false,
-    parentBackgroundIndex: 2,
+    parentBgIndex: 2,
     size: Size.md
   }
 } satisfies Meta<PanelSwitcher>;

@@ -12,12 +12,13 @@
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-  import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
-  import NodeAvatar from "../node/nodeAvatar/NodeAvatar.svelte";
+  import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import { LinkType } from "$lib/client/products/memotron/node/node.type";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
+  import { resolveTypes } from "../memotron.store";
+  import type { IAvatar } from "$lib/client/types/avatar.type";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -27,6 +28,7 @@
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
+  let avatars: IAvatar[] = [];
   function refresh() {
     dataManager.refresh(Resource.capture);
   }
@@ -39,6 +41,9 @@
     )
     ?.map((x) => x.to);
   $: console.log({ types, links: $captureStore.links });
+  async function resolveAvatars(types: string[]) {
+    avatars = (await resolveTypes(types)).avatars;
+  }
 </script>
 
 {#if isSaving}
@@ -62,7 +67,7 @@
         <header class="flex justify-between w-full dp:px-14">
           <div class="flex gap--4 grow">
             <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
-            <NodeAvatar {types} />
+            <NodeAvatar {avatars} />
             <div class="text-h4 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}

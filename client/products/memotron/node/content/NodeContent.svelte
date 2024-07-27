@@ -6,16 +6,15 @@
     type INodeStructure
   } from "$lib/client/products/memotron/node/node.type";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { hierarchyFactorLimit, type IActiveNodeStore } from "./node.store";
+  import { hierarchyFactorLimit, type IActiveNodeStore } from "../node.store";
 
   import {
     deepCopy,
     isValidArrayWithData,
     shallowDiff
   } from "$lib/shared/utils/obj.utils";
-  import AudioScrubablePreview from "../capture/AudioScrubablePreview.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import PdfAnnotator from "../pdfAnnotator/pdfAnnotator.svelte";
+  import PdfAnnotator from "../../pdfAnnotator/pdfAnnotator.svelte";
   import { onMount } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
   export let node: IActiveNodeStore;
@@ -115,7 +114,7 @@
 </script>
 
 {#key refreshId}
-  <div class="flex flex-col h-full flex-grow pt-2">
+  <div class="flex flex-col h-full grow pt-2">
     {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
       <NodularMarkdown
         node={$node}
@@ -131,20 +130,6 @@
         on:unmention={onUnMention}
         on:focus={onFocus}
       />
-    {:else if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
-      <!-- <audio controls src={$node.body?.url} /> -->
-      <AudioScrubablePreview
-        on:refresh={retireveNode}
-        body={$node?.body}
-        nodeId={$node.id}
-      />
-    {:else if $node?.contentType === NodeType.VIDEO && $node && "url" in $node.body}
-      <video controls>
-        <source src={$node.body.url} />
-        <track kind="captions" />
-      </video>
-    {:else if $node?.contentType === NodeType.IMAGE && $node && "url" in $node.body}
-      <img alt="..." class="object-contain" src={$node.body.url} />
     {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
       <PdfAnnotator url={$node.body.url} />
     {:else if $node?.contentType === NodeType.WEBPAGE && $node.children && $node.children.length > 0}

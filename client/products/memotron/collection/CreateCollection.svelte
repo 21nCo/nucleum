@@ -53,7 +53,7 @@
       case CollectionType.TYPED:
         return {
           content:
-            "Typed collections are used to store structured data. You can define the properties of the data you want to store and customize avatar, content templates etc.",
+            "Use typed collections to store **structured data**. You can define the properties of the data you want to store and customize avatar, content templates etc.",
           action: {
             label: "Learn more",
             action: "/kb/typed-collections"
@@ -62,7 +62,7 @@
       case CollectionType.QUERY:
         return {
           content:
-            "Query collections are used to store data based on a searchquery. You can define the filters to filter the data you want to store. New items will be automatically added based on the filter criteria.",
+            "Use query collections to store data based on a **filter/search query**. You can define the filters to filter the data you want to store. New items will be automatically added based on the filter criteria.",
           action: {
             label: "Learn more",
             action: "/kb/query-collections"
@@ -70,7 +70,7 @@
         };
       default:
         return {
-          content: "Simple collections are used to store unstructured data.",
+          content: "Use simple collections to store any **unstructured data.**",
           action: {
             label: "Learn more",
             action: "/kb/simple-collections"
@@ -104,7 +104,7 @@
           icon: "cube"
         },
         {
-          label: "Search query",
+          label: "Filter query",
           value: CollectionType.QUERY,
           icon: "at-symbol"
         }

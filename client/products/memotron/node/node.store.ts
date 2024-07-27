@@ -28,6 +28,8 @@ import { get, writable } from "svelte/store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { CollectionType } from "../collection/collection.type";
 import type { IProperty } from "../collection/properties/property.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
+import { resolveTypes } from "../memotron.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -128,36 +130,15 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (node) {
       this.set(node);
     }
-    const { types, propertyConfig } = await resolveTypesAndProperties();
+    const { types, propertyConfig, avatars } = await resolveTypes(
+      node.collections
+    );
     this.update((n) => {
       n.types = types;
       n.propertyConfig = propertyConfig;
+      n.avatars = avatars;
       return n;
     });
-    async function resolveTypesAndProperties() {
-      let types: string[] = [];
-      let propertyConfig: IProperty[] = [];
-      if (!node.collections) return { types, propertyConfig };
-      const dexie = get(dataManager).cacheSource.dexie;
-      const typeCollectionLinks = await dexie.collection
-        .where("id")
-        .anyOfIgnoreCase(node.collections)
-        .and((collection) => collection.type === CollectionType.TYPED)
-        .toArray();
-      if (!typeCollectionLinks || typeCollectionLinks.length == 0)
-        return { types, propertyConfig };
-      types = typeCollectionLinks.map((type) => type.id);
-      let allProperties: string[] = [];
-      typeCollectionLinks.map((type) => {
-        allProperties = [...allProperties, ...(type.properties ?? [])];
-      });
-      propertyConfig = await dexie.property
-        .where("id")
-        .anyOfIgnoreCase(allProperties)
-        .filter(activeResourceFilter)
-        .toArray();
-      return { types, propertyConfig };
-    }
   };
   updateProperties = async (properties: INodeProperty[]) => {
     this.update((prev) => ({ ...prev, properties }));
@@ -254,7 +235,8 @@ function initActiveNodeEventStore(id: string) {
 
 export function resolveNodeContextMenu(
   node: INode,
-  context: ResourceAccessPoint
+  context: ResourceAccessPoint,
+  isMediaNode: boolean = false
 ) {
   const resourceActions = new ResourceActions(node, nodeStore);
   if (context != ResourceAccessPoint.SELF) {
@@ -266,6 +248,31 @@ export function resolveNodeContextMenu(
           resourceActions.edit(context),
           resourceActions.select(),
           resourceActions.copyLink()
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.archive(), resourceActions.trash()]
+      }
+    ];
+  } else if (isMediaNode) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.star(),
+          resourceActions.edit(context),
+          resourceActions.copyLink(),
+          {
+            value: "download",
+            icon: "download",
+            callback: () => {}
+          },
+          {
+            value: "share",
+            icon: "share",
+            callback: () => {}
+          }
         ]
       },
       {

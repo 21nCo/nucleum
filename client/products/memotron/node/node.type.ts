@@ -7,6 +7,7 @@ import type {
   IPropertyValue
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import type { ILink } from "../capture/capture.type";
+import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
 
 export type INode = INodeBase &
   NodeContent & {
@@ -46,9 +47,11 @@ export type INodeBase = IMemotronItemBase & {
 export type IActiveNode = INode & {
   md: IMarkdown;
   parent?: string[];
+  accessMode: ResourceAccessMode;
   focusedBlock?: string;
   collections?: string[];
   types?: string[];
+  avatars?: IAvatar[];
   propertyConfig?: IProperty[];
 };
 

@@ -683,13 +683,13 @@
 </script>
 
 <div
-  class="relative flex flex-col max-w-[800px] max-h-[800px] w-full h-full min-h-[600px]"
+  class="relative flex flex-col max-w--[800px] max-h--[800px] w-full h-full min-h-[600px]"
 >
   <div class="p-2 flex">
     <PanelSwitcher
-      size={Size.xs}
+      size={Size.sm}
       style={PanelSwitcherStyle.TRAIN}
-      items={["Bird", "Funnel"]}
+      items={["Bird", "Classic", "Heatmap", "Funnel"]}
       value={"Bird"}
       on:switch={(e) => {
         console.log(e.detail);
@@ -829,6 +829,7 @@
       <PanelSwitcher
         style={PanelSwitcherStyle.TRAIN}
         items={Object.values(Modes)}
+        size={Size.sm}
         value={mode}
         on:switch={async (e) => {
           mode = e.detail;

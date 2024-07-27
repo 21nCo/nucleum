@@ -27,6 +27,7 @@
   import { uiState } from "$lib/client/stores/uiState.store";
   import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
   import BulkEditBar from "./BulkEditBar.svelte";
+  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   export let resource: Resource;
   collectionStore.refresh();
   let searchQuery: string = "";
@@ -166,7 +167,7 @@
             {resource}
             {arrangement}
             size={Size.sm}
-            defaultAccessMode={ResourceAccessMode.POP}
+            defaultAccessMode={ResourceAccessMode.INLINE}
           />
         </div>
         <div class="flex flex-col gap-4">
@@ -183,7 +184,7 @@
         <ScrollViewBottomSpacer />
       </main>
       {#if $selectedResources.length > 0}
-        <div class="absolute bottom-0 right-0 flex w-full justify-center mb-4">
+        <BottomFloat>
           <BulkEditBar
             size={Size.sm}
             on:selectAll={onSelectAll}
@@ -191,7 +192,7 @@
             on:delete={() => onBulkAction("delete")}
             on:star={() => onBulkAction("star")}
           />
-        </div>
+        </BottomFloat>
       {/if}
     </div>
   </slot>

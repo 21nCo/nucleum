@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import NodeView from "$lib/client/products/memotron/node/NodeView.svelte";
+  import Node from "$lib/client/products/memotron/node/Node.svelte";
   import { onMount } from "svelte";
   export let id: string = "";
   onMount(() => {
@@ -14,5 +14,5 @@
 </script>
 
 <div class="bg-bgs1 w-full h-full">
-  <NodeView {id} />
+  <Node {id} />
 </div>

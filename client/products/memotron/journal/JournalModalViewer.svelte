@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { onMount } from "svelte";
-  import NodeView from "../node/NodeView.svelte";
+  import Node from "../node/Node.svelte";
   import Timeline from "./timeline/Timeline.svelte";
   let id = "";
   // $: id = $page.url.searchParams.get("node") ?? "";
@@ -20,6 +20,6 @@
   <!-- <div class="bg-bgs2 p-4 2k:p-6 w-[24rem] min-w-[24rem] 2k:min-w-[32rem]">
     <Timeline parentBgIndex={2} context="journal-modal-viewer" />
   </div> -->
-  <NodeView {id} />
+  <Node {id} />
 </div>
 <!-- <ModalCloseButton path={MemotronAction.JOURNAL_MODAL_VIEWER} /> -->

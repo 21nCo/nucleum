@@ -1,10 +1,9 @@
 <script lang="ts">
-  import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
-  import { mapPropertyValues } from "../collection/properties/property.utils";
-  import type { IActiveNodeStore } from "./node.store";
-
+  import PropertiesListView from "../../collection/properties/PropertiesListView.svelte";
+  import { mapPropertyValues } from "../../collection/properties/property.utils";
+  import type { IActiveNodeStore } from "../node.store";
   export let node: IActiveNodeStore;
-
+  export let isMediaNode: boolean = false;
   $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
     (x) => x.isShowOnNodePage
   );
@@ -29,6 +28,6 @@
     bind:properties={nodeProperties}
     types={$node.types}
     on:change={propagateChanges}
-    context="nodepage"
+    context={isMediaNode ? "medianode" : "nodepage"}
   />
 {/if}

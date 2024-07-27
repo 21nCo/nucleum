@@ -2,7 +2,7 @@ import { ActionType, type IAction } from "$lib/client/types/action.type";
 import { Orientation } from "$lib/client/types/direction.enum";
 import { Size } from "$lib/client/types/size.enum";
 import Capture from "$lib/client/products/memotron/capture/Capture.svelte";
-import NodeView from "$lib/client/products/memotron/node/NodeView.svelte";
+import Node from "$lib/client/products/memotron/node/Node.svelte";
 import Journal from "$lib/client/products/memotron/journal/Journal.svelte";
 import JournalModalViewer from "$lib/client/products/memotron/journal/JournalModalViewer.svelte";
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
@@ -128,7 +128,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: Resource.node,
-    component: NodeView,
+    component: Node,
     label: "Node",
     type: ActionType.MODAL,
     loadingComponent: NodeLoadingPulse,

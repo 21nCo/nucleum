@@ -5,7 +5,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import CollectionThumbnail from "../collection/thumbnail/CollectionThumbnail.svelte";
   import { resolveResourceType } from "../memotron.utils";
-  import NodeThumbnail from "../node/nodeThumbnail/NodeThumbnail.svelte";
+  import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {

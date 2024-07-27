@@ -10,6 +10,9 @@ import { MemotronResourceType } from "./memotron.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
+import type { IProperty } from "./collection/properties/property.type";
+import { CollectionType } from "./collection/collection.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
 
 /**
  * @deprecated
@@ -245,4 +248,32 @@ export class SearchStore {
     }
     return data;
   }
+}
+
+export async function resolveTypes(collections: string[]) {
+  let types: string[] = [];
+  let propertyConfig: IProperty[] = [];
+  let avatars: IAvatar[] = [];
+  if (!collections) return { types, propertyConfig, avatars };
+  const dexie = get(dataManager).cacheSource.dexie;
+  const typeCollectionLinks = await dexie.collection
+    .where("id")
+    .anyOfIgnoreCase(collections)
+    .and((collection) => collection.type === CollectionType.TYPED)
+    .toArray();
+  if (!typeCollectionLinks || typeCollectionLinks.length == 0)
+    return { types, propertyConfig, avatars };
+  types = typeCollectionLinks.map((type) => type.id);
+  let allProperties: string[] = [];
+  typeCollectionLinks.map((type) => {
+    allProperties = [...allProperties, ...(type.properties ?? [])];
+  });
+  avatars =
+    typeCollectionLinks.map((type) => type.avatar).filter((x) => x) ?? [];
+  propertyConfig = await dexie.property
+    .where("id")
+    .anyOfIgnoreCase(allProperties)
+    .filter(activeResourceFilter)
+    .toArray();
+  return { types, propertyConfig, avatars };
 }
