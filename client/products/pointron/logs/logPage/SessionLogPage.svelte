@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { FocusPersistence } from "$lib/client/products/pointron/focus/focus.persistence";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -12,7 +11,7 @@
   import LogTotals from "./LogTotals.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { transformFocusItems } from "$lib/client/products/pointron/focus/session.utils";
+  import { transformFocusItemsV1 } from "$lib/client/products/pointron/focus/session.utils";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -21,14 +20,9 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
-  import { xlink_attr } from "svelte/internal";
-  import {
-    formatTime,
-    isSameDateTime,
-    isSameDay
-  } from "$lib/client/utils/time.utils";
+  import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  const focusPersistance = new FocusPersistence();
+  import { pointSessionStore } from "../../focus/session.store";
   export let id: string;
   export let log: any = undefined;
   let selectedTab: "Summary" | "Notes" = "Summary";
@@ -39,11 +33,30 @@
   });
   async function refresh() {
     isLoadingState = true;
-    const response = await focusPersistance.fetchSession(id);
+    const response = await pointSessionStore.fetch(id);
     console.log("session log response", response);
     if (response && response.id) {
       log = response;
-      if (!log.tasks) return;
+      if (
+        log.tasks &&
+        log.tasks.length > 0 &&
+        log.logs &&
+        log.logs.length > 0
+      ) {
+        calculateWorkedTimeV1();
+        focusItems = transformFocusItemsV1(log.tasks);
+        console.log("focusItems", { focusItems, goals: log.goals });
+        focusItems = focusItems.map((item) => {
+          const goal = log.goals.find((x: any) => x.id === item.goalId);
+          item.label = goal.label ?? item.label;
+          item.color = goal.color ?? goal.parent.color ?? item.color;
+          return item;
+        });
+      }
+    }
+    isLoadingState = false;
+
+    function calculateWorkedTimeV1() {
       log.tasks = log.tasks.map((item: any) => {
         const logsForTask = log.logs.filter(
           (x: any) =>
@@ -57,16 +70,7 @@
         );
         return item;
       });
-      focusItems = transformFocusItems(log.tasks);
-      console.log("focusItems", { focusItems, goals: log.goals });
-      focusItems = focusItems.map((item) => {
-        const goal = log.goals.find((x: any) => x.id === item.goalId);
-        item.label = goal.label ?? item.label;
-        item.color = goal.color ?? goal.parent.color ?? item.color;
-        return item;
-      });
     }
-    isLoadingState = false;
   }
 </script>
 

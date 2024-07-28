@@ -14,7 +14,7 @@ export class ObservableStore<T extends IObservableStoreSubject>
 {
   id: Resource | string;
   dataType: StoreDataType;
-  priorityRefreshOnAppAppear?: boolean | undefined;
+  refreshOnAppear?: boolean | undefined;
   refreshQuery?: string;
   dependencies?: ResourceDependency[] | undefined;
   mutatingResources?: string[] | undefined;
@@ -27,16 +27,12 @@ export class ObservableStore<T extends IObservableStoreSubject>
     dataType: StoreDataType = StoreDataType.NA,
     params?: Pick<
       IStore,
-      | "priorityRefreshOnAppAppear"
-      | "refreshQuery"
-      | "dependencies"
-      | "mutatingResources"
+      "refreshOnAppear" | "refreshQuery" | "dependencies" | "mutatingResources"
     >
   ) {
     this.id = item;
     this.dataType = dataType;
-    this.priorityRefreshOnAppAppear =
-      params?.priorityRefreshOnAppAppear || false;
+    this.refreshOnAppear = params?.refreshOnAppear || false;
     this.refreshQuery = params?.refreshQuery;
     this.dependencies = params?.dependencies;
     this.mutatingResources = params?.mutatingResources;

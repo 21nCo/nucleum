@@ -2,7 +2,7 @@
   import { onMount, afterUpdate, createEventDispatcher } from "svelte";
   import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/pointron.utils";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import type { ISessionStore } from "$lib/client/types/pointron/session.type";
+  import type { IActiveSessionStore } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import Popover from "$lib/client/components/modal/Modal.svelte";
   import { TimeUnit } from "$lib/client/types/time.type";
@@ -545,7 +545,7 @@
     window.addEventListener("resize", resizeHandler);
     window.addEventListener("mouseup", handleGlobalMouseUp); //to stop dragging if the mouse is released outside the slider, otherwise the slider will keep on moving
 
-    sessionStore.subscribe((x: ISessionStore) => {
+    sessionStore.subscribe((x: IActiveSessionStore) => {
       isSessionRunning =
         x.state !== SessionState.NOT_STARTED &&
         x.state !== SessionState.FINISHED;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { BlockType } from "$lib/client/types/pointron/session.type";
+  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { sessionStore } from "../../session.store";
@@ -15,11 +15,9 @@
   size={iconSize}
   class={cn({
     "fill-cbg":
-      isFocusPlayerContext &&
-      $sessionStore.currentBlock.type == BlockType.FOCUS,
+      isFocusPlayerContext && $sessionStore.state == SessionState.FOCUS_RUNNING,
     "fill-abg":
-      isFocusPlayerContext &&
-      $sessionStore.currentBlock.type != BlockType.FOCUS,
+      isFocusPlayerContext && $sessionStore.state != SessionState.FOCUS_RUNNING,
     "stroke-abg": !isFocusPlayerContext
   })}
 />

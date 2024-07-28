@@ -4,7 +4,7 @@ import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { SessionType } from "$lib/client/products/pointron/logs/log.type";
 
-export type ISessionStore = IObservableStoreSubject & {
+export type IActiveSessionStore = IObservableStoreSubject & {
   currentSessionId: string | undefined;
   type: SessionType;
   state: SessionState;
@@ -18,16 +18,20 @@ export type ISessionStore = IObservableStoreSubject & {
   totalExtended: number;
   totalIdle: number;
   sessionProgress: number;
-  blocks: IntervalBlock[];
-  logs: FocusLog[];
-  currentLog: FocusLog;
-  currentBlock: CurrentBlock;
+  intervals: ISessionInterval[];
+  currentBlockId: string;
+  currentTask?: ICurrentTask;
   currentIdle: number;
   isSessionRunning: boolean;
   preventSliderReverseEventTemp?: boolean;
   widgetSnapshot?: any;
   timeRemainingToTakeBreak?: number;
   notes: IMarkdown;
+};
+
+export type ICurrentTask = {
+  start: number;
+  id: string;
 };
 
 export type FocusLog = {
@@ -38,7 +42,7 @@ export type FocusLog = {
   taskId?: string;
   taskName?: string;
   color?: number;
-  blocks?: IntervalBlock[];
+  blocks?: ISessionInterval[];
   sessionId?: string;
   totalFocus?: number;
   totalBreak?: number;
@@ -71,30 +75,36 @@ export type CurrentBlock = {
   index: number;
 };
 
-export type IntervalBlock = {
-  duration?: number;
-  progress?: number;
+export type ISessionInterval = {
+  id: string;
+  type: BlockType;
+  duration: number;
+  start: number;
+  progress: number;
   color?: string;
-  type?: BlockType;
-  start?: number;
-  end?: number;
 };
 
 export enum BlockType {
   BREAK,
-  FOCUS
+  FOCUS,
+  NONE
 }
 
-export type FocusItem = {
-  taskId?: string;
-  goalId?: string;
+type IFocusItem = {
+  id: string;
+  blocks?: {
+    start: number;
+    end: number;
+  }[];
+  estimated?: number;
+  checked?: boolean;
+};
+
+export type IFocusGoal = IFocusItem & {
+  tasks?: string[];
+};
+export type IFocusTask = IFocusItem & {
   label: string;
-  color?: number;
-  worked: number;
-  estimated: number;
-  checked: boolean;
-  order: number;
-  hierarchy?: string[];
 };
 
 export enum IntervalBarContext {
@@ -104,5 +114,6 @@ export enum IntervalBarContext {
 }
 
 export interface IFocusItemsStore extends IObservableStoreSubject {
-  items: FocusItem[];
+  goals: IFocusGoal[];
+  tasks: IFocusTask[];
 }

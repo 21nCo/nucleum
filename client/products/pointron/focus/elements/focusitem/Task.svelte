@@ -4,11 +4,10 @@
     sessionStore
   } from "$lib/client/products/pointron/focus/session.store";
   import type {
-    FocusItem,
-    ISessionStore
+    IFocusTask,
+    IActiveSessionStore
   } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -24,9 +23,9 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { SessionType } from "../../../logs/log.type";
-  export let task: FocusItem & Required<Pick<FocusItem, "taskId">>;
+  import { resolveTaskFocus } from "../../session.utils";
+  export let task: IFocusTask;
   export let isInEditMode: boolean = false;
   export let context: "current" | "history" = "current";
   let workedTime: number = 0;
@@ -40,19 +39,32 @@
   $: isPortraitDragEnabled = $view.isPortrait && isInEditMode ? true : false;
   $: isDragEnabled = $view.isPortrait ? false : true;
   let scrollToTask: any = null;
+  $: workedTime = resolveTaskFocus(
+    $sessionStore.intervals,
+    task.blocks,
+    isInprogress && $sessionStore.currentTask
+      ? $sessionStore.currentTask.start
+      : undefined
+  );
+  // $: console.log({
+  //   workedTime,
+  //   task,
+  //   isInprogress,
+  //   currentTask: $sessionStore.currentTask
+  // });
   onMount(() => {
     estimatePopupRef.style.display = "none";
     label = task.label;
-    workedTime = +task.worked;
-    estimateInMinutes = task.estimated;
+    // workedTime = +task.worked;
+    // estimateInMinutes = task.estimated;
     if (context === "history") return;
-    const sub = sessionStore.subscribe((x: ISessionStore) => {
-      if (x.currentLog?.taskId === task.taskId) {
+    const sub = sessionStore.subscribe((x: IActiveSessionStore) => {
+      if (x.currentTask?.id === task.id) {
         isInprogress = true;
-        if (x.state == SessionState.FOCUS_RUNNING) {
-          let duration = calculateTotalFocusAndBreak(x.currentLog.blocks, true);
-          workedTime = (+task.worked ?? 0) + duration.focus ?? task.worked;
-        }
+        // if (x.state == SessionState.FOCUS_RUNNING) {
+        //   let duration = calculateTotalFocusAndBreak(x.currentLog.blocks, true);
+        //   workedTime = (+task.worked ?? 0) + duration.focus ?? task.worked;
+        // }
       } else {
         isInprogress = false;
       }
@@ -65,15 +77,17 @@
 
   async function save() {
     task.label = label;
-    await focusItemsStore.updateTask(task, true);
+    await focusItemsStore.updateTaskLabel(task.id, label);
   }
-  function onCheckClicked(event: MouseEvent) {
+  async function onCheckClicked(event: MouseEvent) {
     if (context === "history") return;
     task.checked = !task.checked;
-    focusItemsStore.updateTaskStatus(task.taskId, task.checked);
+    focusItemsStore.updateTask(task.id, {
+      checked: task.checked
+    });
     if (isInprogress) {
       isInprogress = false;
-      sessionStore.stopCurrentTaskOrGoal();
+      await sessionStore.stopCurrentTaskOrGoal();
     }
     event.stopPropagation();
   }
@@ -106,15 +120,10 @@
       return;
     if ($sessionStore.isSessionRunning) {
       if (isInprogress) {
-        sessionStore.stopCurrentTaskOrGoal();
+        await sessionStore.stopCurrentTaskOrGoal();
       } else {
         if (task.checked) task.checked = false;
-        await sessionStore.startTask(
-          task.taskId,
-          task.label,
-          task.color,
-          task.goalId
-        );
+        await sessionStore.startTask(task.id);
       }
     } else {
       labelInputElement.focus();
@@ -124,7 +133,7 @@
     event.stopPropagation();
   }
   async function onDeleteClicked() {
-    await focusItemsStore.deleteTask(task.taskId);
+    await focusItemsStore.removeTask(task.id);
   }
 </script>
 
@@ -133,20 +142,17 @@
   isDraggable={isDragEnabled &&
     ((context === "current" && !$sessionStore.isSessionRunning) ||
       isInEditMode)}
-  id={task.goalId ?? "soloTaskItem"}
+  id={task.id}
   classList="flex gap-2 items-center w-full"
 >
-  <CustomColorPropagator
+  <button
     class={cn(
-      "w-full flex gap-2 items-center justify-between px-4 rounded-md ",
+      "w-full flex gap-2 items-center justify-between px-4 h-12 rounded-md ",
       {
-        "h-12": task.goalId,
-        "h-14 border-2 border-brs1": !task.goalId,
         "bg-ccs1 border-ccs1": isInprogress
       }
     )}
     on:click={clickHandler}
-    color={task.color}
   >
     <div
       class="flex gap-2 flex-grow justify-start items-center truncate {task.checked &&
@@ -189,7 +195,7 @@
           })}
         />
         <div
-          class={task.estimated == 0 || isInprogress
+          class={task.estimated == 0 || !task.estimated || isInprogress
             ? ""
             : workedTime >= task.estimated
               ? "text-ars1"
@@ -231,13 +237,9 @@
         </div>
       </button>
     </div>
-  </CustomColorPropagator>
+  </button>
   {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
-    <Button
-      icon={task.goalId ? "cross" : "trash"}
-      on:click={onDeleteClicked}
-      tooltip="Remove"
-    />
+    <Button icon="cross" on:click={onDeleteClicked} tooltip="Remove" />
   {/if}
   <span
     class="text-xl text-gray-300 {isPortraitDragEnabled ? '' : 'hidden'}"

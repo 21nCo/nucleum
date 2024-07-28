@@ -18,7 +18,7 @@ class UiStateStore extends KeyValueStore<UIState> {
       Resource.uiState,
       {},
       {
-        priorityRefreshOnAppAppear: true,
+        refreshOnAppear: true,
         isSynchronousCache: true
       }
     );

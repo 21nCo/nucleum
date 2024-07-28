@@ -39,7 +39,7 @@ class CollectionStore extends ResourceStore<ICollection> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.collection, {
-      priorityRefreshOnAppAppear: true
+      refreshOnAppear: true
     });
     this.db = new SurrealDatabase();
   }
@@ -331,7 +331,7 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.view, {
-      priorityRefreshOnAppAppear: true
+      refreshOnAppear: true
     });
     this.db = new SurrealDatabase();
   }

@@ -7,12 +7,13 @@ import { currentTime, userPreferences } from "$lib/client/stores/app.store";
 import { get, writable } from "svelte/store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
+  CacheStrategy,
   PersistanceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/stores/log.store";
-import { prefixTable } from "$lib/shared/utils/text.utils";
+import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
 import { pointronPreferences } from "../pointron.store";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { appEvents, toasts } from "$lib/client/stores/notification.store";
@@ -26,22 +27,25 @@ import {
   type IPointLogStore,
   type IPointSession
 } from "./log.type";
-import type {
-  IFocusItemsStore,
-  FocusLog,
-  ISessionStore
-} from "$lib/client/types/pointron/session.type";
-import {
-  calculateTotalFocusAndBreak,
-  sessionTotals
-} from "$lib/client/products/pointron/pointron.utils";
+import { sessionTotals } from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import { deepCopy } from "$lib/shared/utils/obj.utils";
+import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
+import { pointSessionStore } from "../focus/session.store";
 
-class PointLogStore extends ObservableStore<IPointLogStore> {
+class PointLogStore extends ResourceStore<IPointLog> {
+  constructor() {
+    super(Resource.PointLog, {
+      cacheStrategy: CacheStrategy.NO_CACHE
+    });
+  }
+}
+
+export const pointLogStore = new PointLogStore();
+
+class ManualLogStore extends ObservableStore<IPointLogStore> {
   constructor() {
     super(Resource.PointLog, StoreDataType.NA, {
       mutatingResources: [Resource.PointSession, Resource.PointLog]
@@ -144,19 +148,31 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
       sessionEntries.push(session);
       logEntries.push(log);
     });
+    pointLogStore.create(logEntries, {
+      queueParams: {
+        isUseQueueFirstApproach: true,
+        mutationId: `${this.id}-saveManualLogs`
+      }
+    });
+    pointSessionStore.create(sessionEntries, {
+      queueParams: {
+        isUseQueueFirstApproach: true,
+        mutationId: `${this.id}-saveManualLogs`
+      }
+    });
     // const response = await focusPersistance.saveManualLogs(
     //   sessionEntries,
     //   logEntries
     // );
-    await dataManager.performMutation(
-      Resource.PointLog,
-      { sessionEntries, logEntries },
-      {
-        action: PersistanceActionType.CUSTOM_QUERY,
-        query:
-          "fn::pointron::focus::saveManualLogs($sessionEntries, $logEntries);"
-      }
-    );
+    // await dataManager.performMutation(
+    //   Resource.PointLog,
+    //   { sessionEntries, logEntries },
+    //   {
+    //     action: PersistanceActionType.CUSTOM_QUERY,
+    //     query:
+    //       "fn::pointron::focus::saveManualLogs($sessionEntries, $logEntries);"
+    //   }
+    // );
     this.reset();
     toasts.success("Manual log added successfully");
     appEvents.publish(PointronEvent.REFRESH_QUICK_FOCUS, true);
@@ -167,109 +183,14 @@ class PointLogStore extends ObservableStore<IPointLogStore> {
       Resource.PointLog,
       { id },
       {
-        action: PersistanceActionType.CUSTOM_QUERY,
+        action: PersistanceActionType.DELETE,
         query: "return fn::pointron::log::delete($id);"
-      }
-    );
-  }
-  /**
-   * Saves focus logs to the database. This function is called when user finishes a focus session delegated from focus store.
-   * @param focusStore
-   * @param focusItemStore
-   * @param isClose
-   */
-  finishFocus(
-    focusStore: ISessionStore,
-    focusItemStore: IFocusItemsStore,
-    isClose: boolean
-  ) {
-    const m: IPointSession = {
-      elapsed: focusStore.totalElapsed,
-      extended: focusStore.totalExtended,
-      start: focusStore.start?.toISOString() ?? "",
-      end: new Date(
-        (focusStore.start?.getTime() ?? 0) + focusStore.totalElapsed * 1000
-      ).toISOString(),
-
-      id: prefixTable(
-        focusStore.currentSessionId ?? generateSessionId(new Date().getTime()),
-        Resource.PointSession
-      ),
-      plannedEnd:
-        focusStore.end?.toISOString() ?? focusStore.type != SessionType.COUNTUP
-          ? new Date(
-              new Date().getTime() + focusStore.plannedDuration * 1000
-            ).toISOString()
-          : "",
-      type: focusStore.type,
-      blocks: focusStore.blocks,
-      logs: focusStore.logs,
-      tasks: focusItemStore.items,
-      notes: focusStore.notes
-    };
-    const totalFocusFromLogs = focusStore.logs.reduce(
-      (a, b) => a + (b.totalFocus ?? 0),
-      0
-    );
-    const totalBreakFromLogs = focusStore.logs.reduce(
-      (a, b) => a + (b.totalBreak ?? 0),
-      0
-    );
-    const sessionTotals = calculateTotalFocusAndBreak(focusStore.blocks);
-    if (
-      sessionTotals.focus - totalFocusFromLogs >= 1 ||
-      sessionTotals.brek - totalBreakFromLogs >= 1
-    ) {
-      focusStore.logs.push({
-        start: focusStore.start?.getTime() ?? 0,
-        end: focusStore.end?.getTime() ?? new Date().getTime(),
-        taskId: "",
-        goalId: "PointGoal:NonGoal",
-        taskName: "",
-        totalFocus: sessionTotals.focus - totalFocusFromLogs,
-        totalBreak: sessionTotals.brek - totalBreakFromLogs,
-        blocks: []
-      });
-    }
-    const logs: IPointLog[] = focusStore.logs.map((l: FocusLog) => {
-      let taskName = focusItemStore.items.find(
-        (x) => x.taskId == l.taskId
-      )?.label;
-      if (!l.goalId) {
-        l.goalId = "PointGoal:NonGoal";
-      }
-      return {
-        ...l,
-        id: prefixTable(l.start, Resource.PointLog),
-        start: new Date(l.start).toISOString(),
-        end: new Date(l.end!).toISOString(),
-        sessionId: m.id,
-        taskName,
-        tzOffset: get(userPreferences).timeZoneOffset,
-        targets: get(pointronPreferences).horizonTargets
-      };
-    });
-    dataManager.performMutation(
-      Resource.PointLog,
-      {
-        sessionData: m,
-        logs,
-        snapshot: {
-          ...focusStore,
-          id: prefixTable(Resource.pointSessionSnapshot, Resource.kv)
-        },
-        isClose
-      },
-      {
-        action: PersistanceActionType.CUSTOM_QUERY,
-        query:
-          "fn::pointron::focus::finish::v4($sessionData, $logs, $snapshot, $isClose);"
       }
     );
   }
 }
 
-export const pointLogStore = new PointLogStore();
+export const manualLogStore = new ManualLogStore();
 
 const seedLogsPaneStore: ILogsPaneStore = {
   logs: [],

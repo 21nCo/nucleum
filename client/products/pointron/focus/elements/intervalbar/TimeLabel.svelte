@@ -77,7 +77,7 @@
     <div class={timeClassList}>
       {#if $sessionStore.state == SessionState.NOT_STARTED && $currentTime}
         {formatTime($userPreferences, $currentTime)}
-      {:else if $sessionStore.blocks.length > 0 && $sessionStore.start}
+      {:else if $sessionStore.intervals.length > 0 && $sessionStore.start}
         {formatTime($userPreferences, $sessionStore.start)}
       {/if}
     </div>

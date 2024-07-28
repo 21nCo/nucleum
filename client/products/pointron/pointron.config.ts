@@ -1,6 +1,7 @@
 import { analyticsConfigStore } from "$lib/client/products/pointron/analytics/analytics.store";
 import {
   focusItemsStore,
+  pointSessionStore,
   sessionStore
 } from "$lib/client/products/pointron/focus/session.store";
 import {
@@ -11,6 +12,7 @@ import { focusHeatmapStore } from "$lib/client/products/pointron/journal/journal
 
 import {
   logsPaneStore,
+  manualLogStore,
   pointLogStore
 } from "$lib/client/products/pointron/logs/log.store";
 import {
@@ -28,6 +30,8 @@ export const pointronCacheableStores: IStore[] = [
   goalStore,
   tagStore,
   quickFocusItemStore,
+  manualLogStore,
+  focusHeatmapStore,
   pointLogStore,
-  focusHeatmapStore
+  pointSessionStore
 ];

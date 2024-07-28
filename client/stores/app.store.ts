@@ -173,7 +173,7 @@ class DboVersionStore extends KeyValueStore<
       Resource.dboVersion,
       { version: 0 },
       {
-        priorityRefreshOnAppAppear: true,
+        refreshOnAppear: true,
         isSynchronousCache: true
       }
     );
@@ -245,7 +245,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
 class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
     super(Resource.globalPreferences, seedUserPreferences, {
-      priorityRefreshOnAppAppear: true,
+      refreshOnAppear: true,
       isSynchronousCache: true
     });
   }

@@ -10,7 +10,8 @@ import {
   type IStore,
   type IMutationQueueParams,
   type IObservableStoreSubject,
-  type IObservableStore
+  type IObservableStore,
+  CacheStrategy
 } from "../../types/data.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { prefixTable } from "../../../shared/utils/text.utils";
@@ -82,22 +83,23 @@ export class ActiveResourceStore<
 export class ResourceStore<T extends IResource> implements IStore {
   id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
-  priorityRefreshOnAppAppear: boolean = false;
+  refreshOnAppear: boolean = false;
   refreshQuery?: string;
   currentUserId?: string;
   mutatingResources: string[];
+  cacheStrategy?: CacheStrategy;
   constructor(
     resourceType: Resource,
-    params?: Pick<IStore, "priorityRefreshOnAppAppear" | "refreshQuery">
+    params?: Pick<IStore, "refreshOnAppear" | "refreshQuery" | "cacheStrategy">
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
     this.mutatingResources = [resourceType];
-    this.priorityRefreshOnAppAppear =
-      params?.priorityRefreshOnAppAppear || false;
+    this.refreshOnAppear = params?.refreshOnAppear || false;
     this.refreshQuery = params?.refreshQuery;
+    this.cacheStrategy = params?.cacheStrategy ?? CacheStrategy.MERGE_RECORDS;
   }
   refresh() {
     return dataManager.refreshForIFR(this.id);
@@ -136,7 +138,6 @@ export class ResourceStore<T extends IResource> implements IStore {
       }));
       if (params?.customQuery) {
         data = { resources: input, ...params?.customQueryAdditionalParams };
-        action = PersistanceActionType.CUSTOM_CREATE;
       } else {
         data = [...input];
         action = PersistanceActionType.INSERT;
@@ -149,7 +150,6 @@ export class ResourceStore<T extends IResource> implements IStore {
       };
       if (params?.customQuery) {
         data = { resource: input };
-        action = PersistanceActionType.CUSTOM_CREATE;
       } else {
         data = input;
       }
@@ -157,7 +157,8 @@ export class ResourceStore<T extends IResource> implements IStore {
     return dataManager.performMutationForIFR(this.id, data, {
       action,
       query: params?.customQuery,
-      queueParams: params?.queueParams
+      queueParams: params?.queueParams,
+      cacheStrategy: this.cacheStrategy
     });
   }
   async modify(
@@ -177,7 +178,8 @@ export class ResourceStore<T extends IResource> implements IStore {
     };
     return dataManager.performMutationForIFR(this.id, data, {
       action: PersistanceActionType.MERGE,
-      queueParams: mutatationQueueParams
+      queueParams: mutatationQueueParams,
+      cacheStrategy: this.cacheStrategy
     });
   }
   async trash(id: string) {
@@ -201,7 +203,8 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       } as any,
       {
-        action: PersistanceActionType.BULK_MERGE
+        action: PersistanceActionType.BULK_MERGE,
+        cacheStrategy: this.cacheStrategy
       }
     );
   }
@@ -294,7 +297,7 @@ export class ResourceFIRStore<
   constructor(
     item: Resource,
     defaultFilter?: (items: T[]) => T[],
-    params?: Pick<IStore, "priorityRefreshOnAppAppear" | "refreshQuery">
+    params?: Pick<IStore, "refreshOnAppear" | "refreshQuery">
   ) {
     super(item, StoreDataType.FIR, params);
     this.id = item;

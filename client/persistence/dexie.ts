@@ -7,6 +7,7 @@ export interface MutationQueue {
   query: string;
   params: any;
   retryCount: number;
+  mutatingResources: string[];
 }
 
 interface TestDexieRecord {
@@ -16,7 +17,7 @@ interface TestDexieRecord {
 }
 
 export class AppDexie extends Dexie {
-  protected dbVersion: number = 18;
+  protected dbVersion: number = 19;
   test!: Table<TestDexieRecord>;
   mutationQueuev2!: Table<MutationQueue>;
   accessLog!: Table<IAccessLog>;

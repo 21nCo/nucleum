@@ -5,8 +5,8 @@
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import ControlIcon from "./ControlIcon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { BlockType } from "$lib/client/types/pointron/session.type";
   import { sessionStore } from "../../session.store";
+  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   export let control: Control;
   export let isProminent: boolean = false;
   export let isFocusPlayerContext: boolean = false;
@@ -51,10 +51,10 @@
         "w-20 h-20 mo:w-16 mo:h-16": !isFocusPlayerContext,
         "border-cbg":
           isFocusPlayerContext &&
-          $sessionStore.currentBlock.type == BlockType.FOCUS,
+          $sessionStore.state == SessionState.FOCUS_RUNNING,
         "border-abg":
           isFocusPlayerContext &&
-          $sessionStore.currentBlock.type != BlockType.FOCUS
+          $sessionStore.state != SessionState.FOCUS_RUNNING
       },
       !isFocusPlayerContext && {
         "bg-ass1": control === Control.BREAK,

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { backgroundSoundStore } from "$lib/client/products/pointron/pointron.store";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { BlockType } from "$lib/client/types/pointron/session.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
+  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   let audioRef: HTMLAudioElement;
   let src: string | undefined = undefined;
   onMount(() => {
@@ -24,7 +24,7 @@
     const sessionStoreSub = sessionStore.subscribe((x) => {
       if (
         !x?.isSessionRunning ||
-        (x?.isSessionRunning && x?.currentBlock.type != BlockType.FOCUS)
+        (x?.isSessionRunning && x?.state != SessionState.FOCUS_RUNNING)
       ) {
         stopAudio();
       } else if ($backgroundSoundStore?.systemSound != "none" && src) {

@@ -11,7 +11,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
       Resource.appMenu,
       {},
       {
-        priorityRefreshOnAppAppear: true,
+        refreshOnAppear: true,
         isSynchronousCache: true
       }
     );
