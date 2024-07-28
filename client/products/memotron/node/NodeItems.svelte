@@ -5,7 +5,7 @@
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { type INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import NodeThumbnail from "./nodeThumbnail/NodeThumbnail.svelte";
+  import NodeThumbnail from "./thumbnail/NodeThumbnail.svelte";
   export let nodes: INodeThumbnail[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
   export let parentBgIndex = 1;

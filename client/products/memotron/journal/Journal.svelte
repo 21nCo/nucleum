@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CalendarHeatMap from "$lib/client/components/calendarHeatmap/CalendarHeatMap.svelte";
-  import { CalendarHmVariant } from "$lib/client/components/calendarHeatmap/calendarHeatmap.types";
+  import CalendarHeatMap from "$lib/client/components/calendar/calendarHeatmap/CalendarHeatMap.svelte";
+  import { CalendarHmVariant } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import Timeline from "./timeline/Timeline.svelte";

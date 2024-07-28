@@ -14,22 +14,22 @@
   import { createEventDispatcher } from "svelte";
   import Markdown from "./Markdown.svelte";
   import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";
-
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
   const dispatch = createEventDispatcher();
 
   /**
-   * Markdown in node form i.e. blocks of the markdown stored as node: records and nested under each node
+   * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node
    */
   export let node: INode | undefined = undefined;
 
   /**
-   * Markdown in block form i.e. blocks of the markdown stored as a single record.
+   * Markdown as a linear array of blocks i.e. blocks of the markdown stored as a single record on server.
    *
-   * This is used to back propagate block content changes to the parent component even in the case of Nodular Markdown.
+   * This is used to
+   * 1. Capture a markdown
+   * 2. Back propagate block content changes to the parent component in the case of Nodular Markdown.
    *
-   * See {@link propagateChanges} and {@link onBlockChanges} for more details on propagation.
+   * See {@link propagateChanges} and {@link onBlockContentChange} for more details on propagation.
    */
   export let md: IMarkdown;
 
@@ -343,8 +343,12 @@
     if (!focusedBlock) md = updatedMd;
     else md = mergeFocusedMd(updatedMd);
   }
-  function onBlockChanges(event: any) {
-    // console.log("onBlockChanges", { event });
+  /**
+   * This function is called when the content of a block changes. It propagates the changes to the parent component for persistence.
+   * @param event
+   */
+  function onBlockContentChange(event: any) {
+    console.log("onBlockChanges", { event });
     const detail = event.detail;
     propagateChanges(detail.md);
     dispatch("change", { md, block: detail });
@@ -378,27 +382,54 @@
       anchorBlockIndex
     };
   }
-  function onBlockFocus(event: any) {
-    propagateChanges(event.detail.md);
-    focusedBlock = event.detail.id;
-    if (!focusedBlock) return;
+  function extractParent(id: string): string[] {
+    const parent = childrenWithStructure.find((x) => x.children?.includes(id));
+    if (parent) return [...extractParent(parent.id), parent.id];
+    else return node?.id ? [node?.id] : [];
+  }
+
+  export function focus(blockToFocus: string) {
+    if (!blockToFocus) return;
+    if (blockToFocus === focusedBlock) return;
+    if (blockToFocus === node?.id) {
+      unFocus();
+      return { status: 0, parent: [] };
+    }
+    if (childrenWithStructure.findIndex((x) => x.id === blockToFocus) == -1)
+      return { status: -1 };
+    focusedBlock = blockToFocus;
     const { id, anchorBlockIndex, focusBlockIndex } =
       resolveAnchorBlock(focusedBlock);
     anchorBlock = id;
     const blocks = md.blocks.slice(focusBlockIndex, anchorBlockIndex);
     _md = { blocks };
     refreshId = new Date().getTime();
+    console.log("focus", {
+      blockToFocus,
+      anchorBlock,
+      focusBlockIndex,
+      childrenWithStructure,
+      rootStructure
+    });
+    const parent = extractParent(blockToFocus);
+    return { status: 1, parent };
   }
-  function unFocus() {
+  function onBlockFocus(event: any) {
+    propagateChanges(event.detail.md);
+    if (!event.detail.id) return;
+    focus(event.detail.id);
+    const parent = extractParent(event.detail.id);
+    dispatch("focus", { id: event.detail.id, parent });
+    console.log("onBlockFocus", { event, parent, md });
+  }
+  export function unFocus() {
     focusedBlock = undefined;
     _md = { blocks: md.blocks };
     refreshId = new Date().getTime();
   }
+  $: console.log({ focusedBlock, node, md });
 </script>
 
-{#if focusedBlock}
-  <BackButton on:click={unFocus} />
-{/if}
 {#key refreshId}
   <Markdown
     bind:md={_md}
@@ -409,7 +440,7 @@
       canUseSlashShortcut: true,
       ...params
     }}
-    on:change={onBlockChanges}
+    on:change={onBlockContentChange}
     on:insert={onBlockInsertV2}
     on:convert={onBlockConvert}
     on:focus={onBlockFocus}

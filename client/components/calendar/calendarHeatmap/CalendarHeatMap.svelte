@@ -13,7 +13,7 @@
     type ICalendarHeatMapDataProvider,
     type CalendarHeatmapOptions
   } from "./calendarHeatmap.types";
-  import { CalendarHeatmapDataManager } from "$lib/client/components/calendarHeatmap/calendarHeatMap.utils";
+  import { CalendarHeatmapDataManager } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatMap.utils";
   import { onMount } from "svelte";
   import Footer from "./Footer.svelte";
   import HeaderV1 from "./HeaderV1.svelte";

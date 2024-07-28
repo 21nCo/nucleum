@@ -19,6 +19,7 @@ import DebugPage from "../layout/layers/debug/DebugPage.svelte";
 import modalEvent from "../components/modal/modal.store";
 import { Action } from "../types/action.enum";
 import Bootstrap from "../components/settings/account/Bootstrap.svelte";
+import Calendar from "../components/calendar/Calendar.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -316,5 +317,12 @@ export const globalActions: IAction[] = [
     isMenuHidden: true,
     isMeta: true,
     component: Bootstrap
+  },
+  {
+    action: "calendar",
+    label: "Calendar",
+    icon: "calendar-days",
+    type: ActionType.PAGE,
+    component: Calendar
   }
 ];

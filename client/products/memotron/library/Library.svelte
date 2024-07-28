@@ -1,5 +1,6 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
+  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import Resources from "../common/Resources.svelte";
   import { onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -339,14 +340,14 @@
     </main>
   </div>
   {#if $selectedResources.length > 0}
-    <div class="absolute bottom-0 right-0 flex w-full justify-center mb-4">
+    <BottomFloat>
       <BulkEditBar
         on:selectAll={onSelectAll}
         on:archive={() => onBulkAction("archive")}
         on:delete={() => onBulkAction("delete")}
         on:star={() => onBulkAction("star")}
       />
-    </div>
+    </BottomFloat>
   {/if}
 </div>
 

@@ -244,7 +244,13 @@
     size={Size.full}
   >
     <ModalLayout path={zen} params={{ layout: { size: Size.full } }}>
-      <SplitView id={zen} componentParams={{ isModal: true }} />
+      <SplitView
+        id={zen}
+        componentParams={{
+          isModal: true,
+          accessMode: ResourceAccessMode.FOCUS
+        }}
+      />
     </ModalLayout>
   </Modal>
 {/if}
@@ -261,7 +267,13 @@
       orientation={pop.params?.layout?.orientation ?? Orientation.Horizontal}
     >
       <ModalLayout path={pop.path} params={{ ...pop?.params }}>
-        <SplitView id={pop.resource} componentParams={{ isModal: true }} />
+        <SplitView
+          id={pop.resource}
+          componentParams={{
+            isModal: true,
+            accessMode: ResourceAccessMode.POP
+          }}
+        />
       </ModalLayout>
     </Modal>
   {/key}

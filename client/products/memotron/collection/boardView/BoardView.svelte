@@ -33,7 +33,7 @@
       );
     });
   }
-  $: console.log({ groups, properties: $properties, view });
+  // $: console.log({ groups, properties: $properties, view });
 </script>
 
 {#if isValidArrayWithData(groups)}

@@ -62,11 +62,29 @@ export enum ResourceActionType {
   RESTORE = "restore"
 }
 
+/**
+ * Where the resource is being accessed from. This is used to determine the context and thus context menu to be shown or thumbnail sizing etc.
+ */
 export enum ResourceAccessPoint {
+  /**
+   * The resource is being accessed from the resource browser page.
+   */
   BROWSER = "browser",
+  /**
+   * The resource is being accessed from the library.
+   */
   LIBRARY = "library",
+  /**
+   * The resource is being accessed from the journal.
+   */
   JOURNAL = "journal",
+  /**
+   * The resource is being accessed from the top bar by pinning it.
+   */
   TOP_BAR = "topbar",
+  /**
+   * The resource is being accessed from the resource page.
+   */
   SELF = "self",
   OTHER = "other"
 }

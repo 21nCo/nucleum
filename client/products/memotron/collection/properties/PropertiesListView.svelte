@@ -8,24 +8,29 @@
   import type { IProperty } from "./property.type";
   import { get } from "svelte/store";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { resolvePropertiesForCapture } from "./property.utils";
+  import {
+    resolvePropertiesForCapture,
+    resolvePropertiesForNodePage
+  } from "./property.utils";
   import { onMount } from "svelte";
   export let types: string[] | undefined = undefined;
   export let properties: INodeProperty[] = [];
   export let nodeId: string | undefined = undefined;
-  export let context: "capture" | "nodepage" | "rightpanel" = "capture";
+  export let context: "capture" | "nodepage" | "medianode" | "rightpanel" =
+    "capture";
   export let isReadMode: boolean = false;
   export let isCollapsed: boolean = false;
-  let isPropertiesPaneContext: boolean = context === "rightpanel";
+  let isPropertiesPaneContext: boolean =
+    context === "rightpanel" || context === "medianode";
   let isCollapserHovered: boolean = false;
   let propertyConfig: IProperty[] = [];
   onMount(async () => {
     if (types) await resolvePropertyConfig(types);
   });
-  $: console.log({ types, propertyConfig });
+  // $: console.log({ types, propertyConfig });
 
   async function resolvePropertyConfig(types: string[]) {
-    console.log("resolvePropertyConfig", { types });
+    // console.log("resolvePropertyConfig", { types });
     const dexie = get(dataManager).cacheSource.dexie;
     const typeWithDetails = await dexie.collection
       .where("id")
@@ -34,7 +39,7 @@
     let totalPropertyList: string[] = [];
     await typeWithDetails.forEach(async (type) => {
       const props = await resolveTypeProperties(type);
-      console.log("props", { props });
+      // console.log("props", { props });
       if (totalPropertyList)
         totalPropertyList = [...totalPropertyList, ...props];
     });
@@ -46,6 +51,8 @@
       .toArray();
     if (context === "capture")
       properties = resolvePropertiesForCapture(propertyConfig);
+    else if (context === "nodepage")
+      properties = resolvePropertiesForNodePage(propertyConfig);
     return propertyConfig;
 
     async function resolveTypeProperties(type: ICollection) {
@@ -114,7 +121,9 @@
           class={cn("flex w-full flex-wrap gap-8", {
             "px-4 pb-4": !isPropertiesPaneContext,
             "flex-col":
-              $view.isPortrait || isPropertiesPaneContext || isReadMode
+              $view.isPortrait ||
+              (isPropertiesPaneContext && context === "rightpanel") ||
+              (isReadMode && context === "nodepage")
           })}
         >
           {#each properties as property, index (property.id)}

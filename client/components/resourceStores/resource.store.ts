@@ -30,7 +30,7 @@ export class ActiveResourceStore<
 > {
   id: string;
   protected subject = writable<T>();
-  protected debouncedPersistBlock: any;
+  protected debouncedPersist: any;
   protected resourceStore: U;
   protected currentUserId?: string;
   subscribe = this.subject.subscribe;
@@ -44,24 +44,23 @@ export class ActiveResourceStore<
     });
     const updatePropagator = (val: Partial<T>) =>
       this.resourceStore.modify(this.id, val);
-    this.debouncedPersistBlock = debouncer(updatePropagator, 2000);
+    this.debouncedPersist = debouncer(updatePropagator, 2000);
   }
   modify(val: Partial<T>, params?: IMutationQueueParams) {
-    this.update((prev: T) => ({ ...prev, ...val }));
     return this.resourceStore.modify(this.id, val, params);
   }
   debouncedModify(val: Partial<T>) {
     this.update((prev: T) => ({ ...prev, ...val }));
-    return this.debouncedPersistBlock(val);
+    return this.debouncedPersist(val);
   }
   /**
    * @deprecated - use {@link debouncedModify} instead
    */
   propagateTitleChange(label: string) {
-    return this.debouncedPersistBlock({ label });
+    return this.debouncedPersist({ label });
   }
   delete() {
-    return this.resourceStore.delete(this.id);
+    return this.resourceStore.trash(this.id);
   }
   archive() {
     return this.resourceStore.archive(this.id);
@@ -161,20 +160,38 @@ export class ResourceStore<T extends IResource> implements IStore {
       cacheStrategy: this.cacheStrategy
     });
   }
+  /**
+   * Modifies the resource with given id - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.
+   * @param id id of the resource to be updated
+   * @param properties properties to be updated
+   * @param mutatationQueueParams params to be passed to the mutation queue
+   * @returns
+   */
   async modify(
     id: string,
-    resource: Partial<T>,
+    properties: Partial<T>,
     mutatationQueueParams?: IMutationQueueParams
   ) {
     if (!this.currentUserId || typeof this.currentUserId != "string") {
       this.currentUserId = await resolveCurrentUserId();
     }
-    const data: Partial<T> = {
-      id,
-      ...resource,
+    const modificationProps = {
       modifiedBy: this.currentUserId,
       modifiedAt: new Date().toISOString(),
       interactedAt: new Date().toISOString()
+    };
+    const activeResource = activeResources.get(id);
+    if (activeResource) {
+      activeResource.update((prev: T) => ({
+        ...prev,
+        ...properties,
+        ...modificationProps
+      }));
+    }
+    const data: Partial<T> = {
+      id,
+      ...properties,
+      ...modificationProps
     };
     return dataManager.performMutationForIFR(this.id, data, {
       action: PersistanceActionType.MERGE,
@@ -216,56 +233,17 @@ export class ResourceStore<T extends IResource> implements IStore {
       }
     } as Partial<T>);
   }
-  delete(id: string) {
-    const activeResource = activeResources.get(id);
-    if (activeResource) {
-      activeResource.update((prev: T) => ({
-        ...prev,
-        trashInformation: {
-          deletedBy: this.currentUserId,
-          deletedAt: new Date().toISOString()
-        }
-      }));
-    }
-    return this.trash(id);
-  }
   archive(id: string) {
-    const activeResource = activeResources.get(id);
-    if (activeResource) {
-      activeResource.update((prev: T) => ({
-        ...prev,
-        isArchived: true,
-        modifiedBy: this.currentUserId,
-        modifiedAt: new Date().toISOString(),
-        interactedAt: new Date().toISOString()
-      }));
-    }
     return this.modify(id, {
       isArchived: true
     } as Partial<T>);
   }
   unarchive(id: string) {
-    const activeResource = activeResources.get(id);
-    if (activeResource) {
-      activeResource.update((prev: T) => ({
-        ...prev,
-        isArchived: false,
-        modifiedBy: this.currentUserId,
-        modifiedAt: new Date().toISOString(),
-        interactedAt: new Date().toISOString()
-      }));
-    }
     return this.modify(id, {
       isArchived: false
     } as Partial<T>);
   }
   restore(id: string) {
-    const activeResource = activeResources.get(id);
-    if (activeResource) {
-      activeResource.update(
-        (prev: T) => ({ ...prev, trashInformation: undefined }) as T
-      );
-    }
     return this.modify(id, {
       trashInformation: undefined
     } as Partial<T>);

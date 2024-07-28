@@ -14,7 +14,7 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import type { IObservableStoreSubject, IStore } from "../types/data.type";
+import type { IObservableStoreSubject } from "../types/data.type";
 import { ActionType, type IAction } from "../types/action.type";
 import type {
   IdentityProvider,
@@ -650,32 +650,90 @@ function initAppStore(seed: AppStore) {
       new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
     );
   };
+  const determineCurrentResourceAccessMode1 = (id: string) => {
+    if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.POP
+      ) === id
+    )
+      return ResourceAccessMode.POP;
+    else if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.FOCUS
+      ) === id
+    )
+      return ResourceAccessMode.FOCUS;
+    else if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.SPLIT
+      ) === id
+    )
+      return ResourceAccessMode.SPLIT;
+    else if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.FSPLIT
+      ) === id
+    )
+      return ResourceAccessMode.FSPLIT;
+    else return ResourceAccessMode.INLINE;
+  };
+
+  const determineCurrentResourceAccessMode = (
+    id: string
+  ): ResourceAccessMode => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const mode = (Object.values(ResourceAccessMode) as string[]).find(
+      (m) => m !== ResourceAccessMode.INLINE && searchParams.get(m) === id
+    );
+
+    return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
+  };
+
+  const determineClickAccessMode = (event: MouseEvent) => {
+    //TODO - shortcuts from user settings
+    if (event.shiftKey) return ResourceAccessMode.FOCUS;
+    else if (event.altKey) {
+      const isFromFocusOrPop = isFSplit();
+      if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
+      else return ResourceAccessMode.SPLIT;
+    } else if (event.metaKey) {
+      // TODO - open in new tab?
+    }
+  };
   const resourceClickHandler = (
     event: MouseEvent,
     id: string,
     defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
-    //TODO - shortcuts from user settings
     if (!id) return;
-    accessLogStore.create({
-      resource: id.split(":")[0],
-      action: ResourceActionType.OPEN,
-      resourceId: id,
-      timestamp: new Date().toISOString()
-    });
+    accessLogStore.create(
+      {
+        resource: id.split(":")[0],
+        action: ResourceActionType.OPEN,
+        resourceId: id,
+        timestamp: new Date().toISOString()
+      },
+      {
+        queueParams: {
+          isUseQueueFirstApproach: true,
+          mutationId: `${id}-accessLog-create`
+        }
+      }
+    );
     toggleSearchParam("view");
-    // console.log("resourceClickHandler", { id, defaultTo, event });
-    if (event.shiftKey) {
-      toggleSearchParam(ResourceAccessMode.FOCUS, id);
-    } else if (event.altKey) {
-      const isFromFocusOrPop = isFSplit();
-      if (isFromFocusOrPop) toggleSearchParam(ResourceAccessMode.FSPLIT, id);
-      else toggleSearchParam(ResourceAccessMode.SPLIT, id);
-    } else if (event.metaKey) {
-      // TODO - open in new tab
-    } else {
-      toggleSearchParam(defaultTo, id);
-    }
+    const accessMode = determineClickAccessMode(event);
+    if (accessMode) toggleSearchParam(accessMode, id);
+    else toggleSearchParam(defaultTo, id);
+    // console.log("resourceClickHandler", { id, defaultTo, accessMode, event });
+  };
+  const resourceClickHandlerWithReplace = (
+    event: MouseEvent,
+    id: string,
+    replaceId: string
+  ) => {
+    const currentAccessMode = determineCurrentResourceAccessMode(replaceId);
+    resourceClickHandler(event, id, currentAccessMode);
   };
   const closeResource = (isCloseAllModal: boolean = false) => {
     if (isCloseAllModal) {
@@ -687,6 +745,23 @@ function initAppStore(seed: AppStore) {
     toggleSearchParam(ResourceAccessMode.FOCUS);
     toggleSearchParam(ResourceAccessMode.POP);
     toggleSearchParam(ResourceAccessMode.FSPLIT);
+  };
+
+  const toggleFocusAccessMode = (
+    currentMode: ResourceAccessMode,
+    resourceId: string
+  ) => {
+    toggleSearchParam(currentMode);
+    setTimeout(() => {
+      if (
+        currentMode === ResourceAccessMode.POP ||
+        currentMode === ResourceAccessMode.SPLIT
+      ) {
+        toggleSearchParam(ResourceAccessMode.FOCUS, resourceId);
+      } else {
+        toggleSearchParam(ResourceAccessMode.POP, resourceId);
+      }
+    }, 500);
   };
 
   return {
@@ -834,6 +909,10 @@ function initAppStore(seed: AppStore) {
     checkForUpdates,
     toggleSearchParam,
     resourceClickHandler,
+    toggleFocusAccessMode,
+    resourceClickHandlerWithReplace,
+    determineCurrentResourceAccessMode,
+    determineClickAccessMode,
     isFSplit,
     closeResource
   };

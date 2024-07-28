@@ -5,7 +5,12 @@
   import view from "$lib/client/stores/view.store";
   import { Display } from "$lib/client/types/view.type";
   import { determineTruncateLength } from "$lib/shared/utils/text.utils";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { createEventDispatcher } from "svelte";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  const dispatch = createEventDispatcher();
   export let items: BreadcrumbItem[] = [];
+  export let isPreventDefault: boolean = false;
   $: slice = resolveSlice($view.display);
   $: truncateLength = determineTruncateLength($view.display);
   let _items: BreadcrumbItem[] = [];
@@ -41,6 +46,18 @@
       return 2;
     }
   }
+  function onClick(e: MouseEvent, item: BreadcrumbItem) {
+    if (isPreventDefault) {
+      dispatch("click", { event: e, item });
+      return;
+    }
+    if (item.path) appStore.gotoPath(item.path);
+    else if (item.resourceId)
+      appStore.gotoResource(
+        item.resourceId.split(":")[0] as Resource,
+        item.resourceId
+      );
+  }
 </script>
 
 {#if _items?.length > 0}
@@ -50,6 +67,9 @@
         {truncateLength}
         {...item}
         isLast={index === _items.length - 1}
+        on:click={(e) => {
+          onClick(e, item);
+        }}
       />
     {/each}
   </div>

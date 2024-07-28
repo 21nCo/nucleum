@@ -22,6 +22,7 @@
     undefined;
   export let triggerItemEdit: string | null = null;
   export let isInversePlacement: boolean = false;
+  export let parentBgIndex: number = 1;
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");

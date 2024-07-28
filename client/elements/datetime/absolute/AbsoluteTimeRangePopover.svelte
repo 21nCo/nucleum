@@ -164,7 +164,7 @@
    *
    */
   function handleOutsideClickModal() {
-    console.log("RangePicked", { start: startString, end: endString });
+    // console.log("RangePicked", { start: startString, end: endString });
     if (startString && endString)
       dispatch("rangePicked", { start: startString, end: endString });
     // isPickerOpen = false;

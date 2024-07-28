@@ -120,72 +120,74 @@
   });
 </script>
 
-<div class="relative w-full my-4 text-justify border border-bgs4">
-  <div
-    id="audioCapturePreview"
-    class="relative {body?.transcription !== undefined ||
-    $captureStore?.fileDetails?.transcription !== undefined
-      ? 'bg-bgs2'
-      : ''}"
-  >
-    <div class="absolute z-10 top-7/10 left-1 text-sm text-fgs2 opacity-90">
-      {formatSeconds(previewCountDown, TimeFormat.CLOCK)}
+<div class="flex flex-col items-center justify-center w-full h-full">
+  <div class="relative w-full my-4 text-justify border border-bgs4">
+    <div
+      id="audioCapturePreview"
+      class="relative {body?.transcription !== undefined ||
+      $captureStore?.fileDetails?.transcription !== undefined
+        ? 'bg-bgs2'
+        : ''}"
+    >
+      <div class="absolute z-10 top-7/10 left-1 text-sm text-fgs2 opacity-90">
+        {formatSeconds(previewCountDown, TimeFormat.CLOCK)}
+      </div>
+      <div class="absolute z-10 top-7/10 right-1 text-sm text-fgs2 opacity-90">
+        {formatSeconds(previewTotalDuration, TimeFormat.CLOCK)}
+      </div>
     </div>
-    <div class="absolute z-10 top-7/10 right-1 text-sm text-fgs2 opacity-90">
-      {formatSeconds(previewTotalDuration, TimeFormat.CLOCK)}
-    </div>
+    <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
+      Transcription Error.
+    </p>
+    {#if body?.initTranscription == true || isDisabled}
+      <p class="p-2">Transcribing...</p>
+    {:else if body?.transcription !== undefined}
+      <p class="p-2">{body.transcription}</p>
+    {:else if $captureStore?.fileDetails?.transcription !== undefined}
+      <p class="p-2">{$captureStore.fileDetails.transcription}</p>
+    {/if}
   </div>
-  <p class="p-2 text-center text-rose-700" class:hidden={!isError}>
-    Transcription Error.
-  </p>
-  {#if body?.initTranscription == true || isDisabled}
-    <p class="p-2">Transcribing...</p>
-  {:else if body?.transcription !== undefined}
-    <p class="p-2">{body.transcription}</p>
-  {:else if $captureStore?.fileDetails?.transcription !== undefined}
-    <p class="p-2">{$captureStore.fileDetails.transcription}</p>
-  {/if}
-</div>
-<div class="flex w-full justify-center gap-3">
-  {#if recordingState === PlayActionState.STOPPED}
-    <Button
-      on:click={() => {
-        recordingState = PlayActionState.PREVIEWING;
-        wavesurferPreview.play();
-      }}
-      type={ButtonVariant.PRIMARY}
-      icon="play"
-      label="Play"
-    />
-  {:else if recordingState === PlayActionState.PREVIEWING}
-    {#if previewingState === PlayActionState.RESUMEPREVIEWING}
+  <div class="flex w-full justify-center gap-3">
+    {#if recordingState === PlayActionState.STOPPED}
       <Button
         on:click={() => {
-          wavesurferPreview.pause();
-          previewingState = PlayActionState.PAUSEPREVIEWING;
-        }}
-        type={ButtonVariant.PRIMARY}
-        icon="pause"
-        label="Pause"
-      />
-    {:else}
-      <Button
-        on:click={() => {
+          recordingState = PlayActionState.PREVIEWING;
           wavesurferPreview.play();
-          previewingState = PlayActionState.RESUMEPREVIEWING;
         }}
         type={ButtonVariant.PRIMARY}
         icon="play"
-        label="Resume"
+        label="Play"
+      />
+    {:else if recordingState === PlayActionState.PREVIEWING}
+      {#if previewingState === PlayActionState.RESUMEPREVIEWING}
+        <Button
+          on:click={() => {
+            wavesurferPreview.pause();
+            previewingState = PlayActionState.PAUSEPREVIEWING;
+          }}
+          type={ButtonVariant.PRIMARY}
+          icon="pause"
+          label="Pause"
+        />
+      {:else}
+        <Button
+          on:click={() => {
+            wavesurferPreview.play();
+            previewingState = PlayActionState.RESUMEPREVIEWING;
+          }}
+          type={ButtonVariant.PRIMARY}
+          icon="play"
+          label="Resume"
+        />
+      {/if}
+    {/if}
+    {#if isReplaceable}
+      <Button
+        on:click={() => dispatch("startRecording")}
+        icon="arrow-path"
+        label="Replace"
       />
     {/if}
-  {/if}
-  {#if isReplaceable}
-    <Button
-      on:click={() => dispatch("startRecording")}
-      icon="arrow-path"
-      label="Replace"
-    />
-  {/if}
-  <Button on:click={onTranscribe} {isDisabled} icon="document-text" {label} />
+    <Button on:click={onTranscribe} {isDisabled} icon="document-text" {label} />
+  </div>
 </div>

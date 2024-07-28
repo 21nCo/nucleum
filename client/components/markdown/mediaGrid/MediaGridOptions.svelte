@@ -45,7 +45,7 @@
     </div>
     <div class="h-auto bg-bgs1 flex items-center gap-4 px-4 pt-2">
       <PanelSwitcher
-        parentBackgroundIndex={2}
+        parentBgIndex={2}
         items={["AUTO", "COLUMNS"]}
         value={config.type}
         style={PanelSwitcherStyle.TRAIN}
