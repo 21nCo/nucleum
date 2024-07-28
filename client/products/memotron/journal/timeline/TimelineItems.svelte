@@ -8,7 +8,7 @@
     NodeThumbnailVariant,
     type INodeThumbnail
   } from "$lib/client/products/memotron/node/node.type";
-  import NodeItems from "$lib/client/products/memotron/node/NodeItems.svelte";
+  import NodeItems from "$lib/client/products/memotron/collection/NodeItems.svelte";
   import { nodeStore } from "../../node/node.store";
   export let context: "journal" | "journal-modal-viewer" = "journal";
   export let parentBgIndex: number = 0;

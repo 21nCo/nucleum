@@ -27,6 +27,7 @@
   style:--customcolorshadetwo={customColorShades[1]}
   style:--customcolorshadethree={customColorShades[2]}
   style:--customcolorshadefour={customColorShades[3]}
+  style:--customcolorshadefive={customColorShades[4]}
   style:--fgwhencustombg={isActiveFgFg
     ? currentColors.fgs1
     : currentColors.bgs1}
@@ -60,6 +61,9 @@
   }
   :global(.bg-ccs4) {
     background-color: var(--customcolorshadefour, rgba(var(--colors-aps4), 1));
+  }
+  :global(.bg-ccs5) {
+    background-color: var(--customcolorshadefive, rgba(var(--colors-aps4), 1));
   }
   :global(.border-ccs1) {
     border-color: var(--customcolor, rgba(var(--colors-aps1), 1));

@@ -4,21 +4,27 @@
   import ResourceThumbnailTitle from "./ResourceThumbnailTitle.svelte";
   export let item: any;
   export let size: Size.sm | Size.md = Size.md;
+  export let isApplyCustomColor: boolean = false;
 </script>
 
 <button
-  class={cn(
-    "relative flex flex-col w-full border border-brs3 rounded-md hover:border-aps2",
-    {
-      "h-44": size === Size.sm,
-      "h-[15.2rem] w--[17.5rem]": size === Size.md
-    }
-  )}
+  class={cn("relative flex flex-col w-full border rounded-md", {
+    "h-44": size === Size.sm,
+    "h-[15.2rem] w--[17.5rem]": size === Size.md,
+    "border-ccs4 hover:border-ccs1": isApplyCustomColor,
+    "border-brs3 hover:border-aps2": !isApplyCustomColor
+  })}
   on:click
 >
   <slot />
   <div
-    class="flex flex-col gap-2 w-full bg-bgs2 rounded-b-md border-t border-brs3 items-start p-3"
+    class={cn(
+      "flex flex-col gap-2 w-full rounded-b-md border-t items-start p-3 truncate",
+      {
+        "bg-ccs4 border-ccs2": isApplyCustomColor,
+        "bg-bgs2 border-brs3": !isApplyCustomColor
+      }
+    )}
   >
     <ResourceThumbnailTitle {item} />
     <slot name="bottom" />

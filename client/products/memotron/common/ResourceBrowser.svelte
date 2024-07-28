@@ -28,11 +28,15 @@
   import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
   import BulkEditBar from "./BulkEditBar.svelte";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
+  import { SearchStore } from "../memotron.store";
+  import { onMount } from "svelte";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   export let resource: Resource;
   collectionStore.refresh();
   let searchQuery: string = "";
   let isRefineShown = false;
   let id: string | null = null;
+  let searchStore = new SearchStore(resource);
   let arrangement: Arrangement = uiState.getResourceState(
     resource,
     ResourceAccessPoint.BROWSER,
@@ -61,16 +65,25 @@
       .toArray()
   );
 
-  let data = liveQuery(() =>
-    //@ts-ignore
-    $dataManager.cacheSource.dexie[resource]
-      .where("id")
-      .notEqual("")
-      .and((item: any) => activeResourceFilter(item))
-      .toArray()
-  );
+  let data: any[] = [];
+  // let data = liveQuery(() =>
+  //   searchStore.refresh({
+  //     searchQuery
+  //   })
+  // );
+  // let data = liveQuery(() =>
+  //   //@ts-ignore
+  //   $dataManager.cacheSource.dexie[resource]
+  //     .where("id")
+  //     .notEqual("")
+  //     .and((item: any) => activeResourceFilter(item))
+  //     .toArray()
+  // );
+  onMount(async () => {
+    await refresh();
+  });
   function onSelectAll() {
-    $selectedResources = $data.map((x) => x.id);
+    $selectedResources = data.map((x) => x.id);
   }
   async function onBulkAction(action: string) {
     if (action === "archive") {
@@ -86,6 +99,11 @@
     }
     $selectedResources = [];
   }
+  async function refresh() {
+    data = await searchStore.refresh({
+      searchQuery
+    });
+  }
 </script>
 
 <Panel {floatingButton}>
@@ -96,6 +114,7 @@
           bind:value={searchQuery}
           size={Size.lg}
           style={InputStyle.PLAIN}
+          on:keydown={refresh}
           placeholder={"Search " + resource + "s"}
         />
         {#if searchQuery}
@@ -105,6 +124,7 @@
             size={Size.sm}
             on:click={() => {
               searchQuery = "";
+              refresh();
             }}
           />
           <!-- {:else}
@@ -159,21 +179,26 @@
             />
           </div>
         {/if}
+        {#if !isValidString(searchQuery)}
+          <div class="flex flex-col gap-4">
+            <Text style={TextStyle.SECTION_HEADING} content="Starred" />
+            <Resources
+              data={$starred}
+              context={ResourceAccessPoint.BROWSER}
+              {resource}
+              {arrangement}
+              size={Size.sm}
+              defaultAccessMode={ResourceAccessMode.INLINE}
+            />
+          </div>
+        {/if}
         <div class="flex flex-col gap-4">
-          <Text style={TextStyle.SECTION_HEADING} content="Starred" />
-          <Resources
-            data={$starred}
-            context={ResourceAccessPoint.BROWSER}
-            {resource}
-            {arrangement}
-            size={Size.sm}
-            defaultAccessMode={ResourceAccessMode.INLINE}
+          <Text
+            style={TextStyle.SECTION_HEADING}
+            content={isValidString(searchQuery) ? "Search results" : "All"}
           />
-        </div>
-        <div class="flex flex-col gap-4">
-          <Text style={TextStyle.SECTION_HEADING} content="All" />
           <Resources
-            data={$data}
+            {data}
             context={ResourceAccessPoint.BROWSER}
             {resource}
             {arrangement}
@@ -199,7 +224,7 @@
   <slot slot="right" name="right">
     {#key id}
       {#if id}
-        <ResourceResolver {id} />
+        <ResourceResolver {id} accessMode={ResourceAccessMode.INLINE} />
       {/if}
     {/key}
   </slot>

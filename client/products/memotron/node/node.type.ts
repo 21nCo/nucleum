@@ -223,6 +223,16 @@ export const headingNodeTypes = [
   NodeType.HEADING4,
   NodeType.HEADING5
 ];
+
+export const rootNodeTypeList = [
+  NodeType.NODULAR_MARKDOWN,
+  NodeType.NON_NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO
+];
+
 export const TextNodeTypeList = [
   NodeType.SIMPLE_TEXT,
   NodeType.QUOTE,

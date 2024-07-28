@@ -1,18 +1,18 @@
 import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
-  NodeType
+  rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { resolveResourceTypeFromId } from "./memotron.utils";
 import { MemotronResourceType } from "./memotron.type";
-import { ObservableStore } from "$lib/client/stores/client.store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import type { IProperty } from "./collection/properties/property.type";
 import { CollectionType } from "./collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
+import { MemotronDexie } from "./memotron.dexie";
 
 /**
  * @deprecated
@@ -104,8 +104,9 @@ export class SearchStore {
   resource: Resource = Resource.everything;
   searchQuery: string = "";
   isStarFilterSelected: boolean = false;
-  dexie: any;
-  constructor() {
+  dexie: MemotronDexie;
+  constructor(resource: Resource = Resource.everything) {
+    this.resource = resource;
     this.dexie = get(dataManager).cacheSource.dexie;
   }
   levenshteinDistance(a: string, b: string): number {
@@ -139,7 +140,7 @@ export class SearchStore {
   async refreshNodes() {
     let query = this.dexie.node
       .where("contentType")
-      .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes]);
+      .anyOfIgnoreCase(rootNodeTypeList);
 
     if (this.resource === Resource.archived) {
       query = query.and((item) => item.isArchived === true);
@@ -149,6 +150,11 @@ export class SearchStore {
 
     if (this.isStarFilterSelected) {
       query = query.and((item) => item.isStarred === true);
+    }
+    if (this.searchQuery) {
+      query = query.and((item) =>
+        item.label?.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
     }
     return query.toArray();
   }
@@ -194,7 +200,8 @@ export class SearchStore {
       params.isStarFilterSelected != undefined
         ? params.isStarFilterSelected
         : this.isStarFilterSelected;
-    let data: any[] = [];
+    // let data: any[] = [];
+    let data: any;
     if (
       this.resource === Resource.everything ||
       this.resource === Resource.archived

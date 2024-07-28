@@ -44,14 +44,18 @@
 <div
   class={cn("flex flex-col w-full justify-center items-center", {
     "mb-6 absolute z-10 bottom-0": accessMode === ResourceAccessMode.FOCUS,
-    relative: accessMode === ResourceAccessMode.POP
+    relative:
+      accessMode === ResourceAccessMode.POP ||
+      accessMode === ResourceAccessMode.INLINE
   })}
   transition:fade={{ duration: 300 }}
 >
   <HoverableElement
     bind:isHovering
     class={cn("flex flex-col gap-3 justify-center items-center", {
-      "w-full": accessMode === ResourceAccessMode.POP,
+      "w-full":
+        accessMode === ResourceAccessMode.POP ||
+        accessMode === ResourceAccessMode.INLINE,
       "mo:w-full tp:w-4/5 dp:w-3/5 2k:w-[50rem] rounded-md":
         accessMode === ResourceAccessMode.FOCUS
     })}
@@ -60,7 +64,8 @@
       <div
         class={cn("bg-bgs2 rounded-md p-4 border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
-            accessMode === ResourceAccessMode.POP,
+            accessMode === ResourceAccessMode.POP ||
+            accessMode === ResourceAccessMode.INLINE,
           "w-full": accessMode === ResourceAccessMode.FOCUS
         })}
       >

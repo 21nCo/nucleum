@@ -7,6 +7,7 @@
   import Check from "$lib/client/icons/Check.svelte";
   import CheckCircle from "$lib/client/icons/CheckCircle.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { resolveCollectionContextMenu } from "../../collection/collection.store";
   import { MemotronResourceType } from "../../memotron.type";
   import { resolveResourceType } from "../../memotron.utils";
@@ -14,6 +15,7 @@
   let isHovering = false;
   export let item: any;
   export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let isApplyCustomColor: boolean = false;
   $: contextMenu = resolveContextMenu(item, context);
   $: isSelected = $selectedResources.includes(item.id);
   function resolveContextMenu(item: any, context: ResourceAccessPoint) {
@@ -61,7 +63,13 @@
     {/if}
     {#if isHovering}
       <button
-        class="absolute top-0 right-0 flex gap-2 bg-bgs2 border border-brs3 rounded-md m-3 p-1"
+        class={cn(
+          "absolute top-0 right-0 flex gap-2 border rounded-md m-3 p-1",
+          {
+            "bg-ccs4 border-ccs2": isApplyCustomColor,
+            "bg-bgs2 border-brs3": !isApplyCustomColor
+          }
+        )}
         on:click|stopPropagation
       >
         <ContextMenuAction {contextMenu} size={Size.lg} on:action={onAction} />

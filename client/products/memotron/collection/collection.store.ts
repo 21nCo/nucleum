@@ -356,7 +356,7 @@ export const collectionLayoutOptions = [
     value: CollectionLayout.TABLE,
     icon: "table-cells"
   },
-  { value: CollectionLayout.HEATMAP, icon: "calendar-days" },
+  { value: CollectionLayout.CALENDAR, icon: "calendar-days" },
   { value: CollectionLayout.GEOMAP, icon: "map" }
 ];
 

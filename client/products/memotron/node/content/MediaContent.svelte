@@ -17,13 +17,16 @@
     node.fetch();
     refreshId = Date.now();
   }
+  $: console.log({ accessMode });
 </script>
 
 {#key refreshId}
   <div
     class={cn("relative flex w-full justify-center", {
       "h-full": accessMode === ResourceAccessMode.FOCUS,
-      grow: accessMode === ResourceAccessMode.POP
+      grow:
+        accessMode === ResourceAccessMode.POP ||
+        accessMode === ResourceAccessMode.INLINE
     })}
   >
     {#if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}

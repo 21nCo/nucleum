@@ -23,7 +23,7 @@
 {#if $node}
   <main class="relative flex flex-col w-full h-full">
     <MediaContent {node} {accessMode} />
-    {#if accessMode === ResourceAccessMode.POP || isShowFloatingBar}
+    {#if accessMode === ResourceAccessMode.POP || isShowFloatingBar || accessMode === ResourceAccessMode.INLINE}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
         {node}
