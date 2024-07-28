@@ -12,6 +12,7 @@ import {
 import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
+import { generateUID } from "./utils";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -23,6 +24,10 @@ export function properCase(str: string) {
 }
 
 export function prefixTable(id: string | number, itemType: Resource) {
+  return `${itemType}:${id}`;
+}
+export function generateResourceId(itemType: Resource) {
+  const id = generateUID();
   return `${itemType}:${id}`;
 }
 

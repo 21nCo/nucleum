@@ -24,6 +24,8 @@ export enum Resource {
   SessionStoreV2 = "SessionStoreV2",
   pointSessionSnapshot = "pointSessionSnapshot",
   pointSessionFocusItems = "pointSessionFocusItems",
+  pointSessionSnapshotv2 = "pointSessionSnapshotv2",
+  pointSessionFocusItemsv2 = "pointSessionFocusItemsv2",
   Routine = "Routine",
   CurrentTask = "CurrentTask",
   PointSession = "PointSession",

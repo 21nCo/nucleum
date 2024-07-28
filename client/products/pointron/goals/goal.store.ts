@@ -200,7 +200,8 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       label: goal?.label ?? "",
       id: goal?.id,
       color: goal?.color ?? goal?.parent?.color,
-      childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0
+      childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0,
+      parent: goal?.parent
     };
   }
   resolveChildren(id: string) {

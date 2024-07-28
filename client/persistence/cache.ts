@@ -64,19 +64,11 @@ export class CacheManager implements CacheSource {
     return this.indxDb.setItem<Record<string, number>>("mutationMap", map);
   }
 
-  cacheStore(
-    id: string,
-    data: any,
-    strategy: CacheStrategy | undefined = undefined
-  ) {
-    if (!strategy || strategy === CacheStrategy.WHOLE) {
-      this.indxDb.setItem(id, data);
-    } else {
-      //TODO - merge using id
-    }
+  cacheKvStore(id: string, data: any) {
+    this.indxDb.setItem(id, data);
   }
 
-  async retrieveCache(storeId: string) {
+  async retrieveKvCache(storeId: string) {
     return (await this.indxDb.getItem(storeId)) as IStore;
   }
 

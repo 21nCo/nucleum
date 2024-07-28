@@ -37,7 +37,7 @@ class NodeStore extends ResourceStore<INode> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.node, {
-      priorityRefreshOnAppAppear: true
+      refreshOnAppear: true
     });
     this.db = new SurrealDatabase();
   }

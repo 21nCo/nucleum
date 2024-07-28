@@ -110,13 +110,12 @@ export const defaultHorizonChartConfiguration: HorizonChart[] = [
 
 // const userLocalPreferencesId = "Preferences:" + appName.toLowerCase();
 const userLocalPreferencesId = Resource.pointronPreferences;
-const storeConfig = {
-  id: userLocalPreferencesId,
-  dataType: StoreDataType.KVO,
-  priorityRefreshOnAppAppear: true
-};
+// const storeConfig = {
+//   id: userLocalPreferencesId,
+//   dataType: StoreDataType.KVO,
+//   priorityRefreshOnAppAppear: true
+// };
 export const seedLocalPreferences: IPointronPreferences = {
-  ...storeConfig,
   isEnableAgeCounter: false,
   extendDuration: 5,
   presets: seedPresets,
@@ -150,7 +149,7 @@ export const seedLocalPreferences: IPointronPreferences = {
 class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
     super(Resource.pointronPreferences, seedLocalPreferences, {
-      priorityRefreshOnAppAppear: true
+      refreshOnAppear: true
     });
   }
   loader(data: IPointronPreferences) {

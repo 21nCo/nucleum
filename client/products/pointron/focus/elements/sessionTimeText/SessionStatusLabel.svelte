@@ -16,9 +16,9 @@
   $: labelClasses =
     `text-center ${size === Size.md ? "font-medium p-3 text-h3" : "text-b2"} ` +
     (!isDefaultColor
-      ? $sessionStore.currentBlock.type === BlockType.FOCUS
+      ? $sessionStore.state === SessionState.FOCUS_RUNNING
         ? "text-aps1"
-        : $sessionStore.currentBlock.type === BlockType.BREAK
+        : $sessionStore.state === SessionState.BREAK_RUNNING
           ? "text-ass1"
           : "text-accent3"
       : "");

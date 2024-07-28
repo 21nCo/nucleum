@@ -1,6 +1,9 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import {
+    focusItemsStore,
+    sessionStore
+  } from "$lib/client/products/pointron/focus/session.store";
   import { BlockType } from "$lib/client/types/pointron/session.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -15,6 +18,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import context from "$lib/client/stores/context.store";
+  import { goalStore } from "../../goals/goal.store";
   let playerContainerRef: any;
   let player: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
@@ -23,6 +27,8 @@
   $: isBreakReminderMode =
     $sessionStore.timeRemainingToTakeBreak != undefined &&
     $sessionStore.timeRemainingToTakeBreak < 0;
+  $: currentGoal = sessionStore.resolveCurrentGoal($sessionStore.currentTask);
+
   function enableFullScreenPlayer() {
     if (isPipOn) return;
     appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
@@ -31,7 +37,6 @@
     //if ($windowObject.isInPortraitMode) return;
     enableFullScreenPlayer();
   }
-  $: isFocusing = $sessionStore.currentBlock.type == BlockType.FOCUS;
 
   function closePip() {
     if (player && $sessionStore.isSessionRunning)
@@ -128,7 +133,7 @@
 >
   <CustomColorPropagator
     type="button"
-    color={$sessionStore.currentLog.color}
+    color={currentGoal?.color}
     id="focusplayer"
     class={cn(
       "flex h-full border-t border-bgs3 border-opacity-50 justify-between items-center px-4 py-2",
@@ -136,8 +141,10 @@
         "w-full": $view.isPortrait || isPipOn,
         "w-[26rem] rounded-md": !($view.isPortrait || isPipOn),
         "bg-ars1 text-abg": isBreakReminderMode,
-        "bg-ccs1 text-cbg": isFocusing && !isBreakReminderMode,
-        "bg-ass1 text-abg": !isFocusing
+        "bg-ccs1 text-cbg":
+          $sessionStore.state === SessionState.FOCUS_RUNNING &&
+          !isBreakReminderMode,
+        "bg-ass1 text-abg": $sessionStore.state != SessionState.FOCUS_RUNNING
       }
     )}
     on:click={clickHandler}
@@ -167,8 +174,12 @@
               icon="pip"
               on:click={pipHandler}
               class={cn({
-                "stroke-cbg": isFocusing && !isBreakReminderMode,
-                "stroke-abg": isBreakReminderMode || !isFocusing
+                "stroke-cbg":
+                  $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                  !isBreakReminderMode,
+                "stroke-abg":
+                  isBreakReminderMode ||
+                  $sessionStore.state != SessionState.FOCUS_RUNNING
               })}
             />
           {/if}
@@ -176,8 +187,12 @@
             icon="chevup"
             on:click={clickHandler}
             class={cn({
-              "stroke-cbg": isFocusing && !isBreakReminderMode,
-              "stroke-abg": isBreakReminderMode || !isFocusing
+              "stroke-cbg":
+                $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                !isBreakReminderMode,
+              "stroke-abg":
+                isBreakReminderMode ||
+                $sessionStore.state != SessionState.FOCUS_RUNNING
             })}
           />
         {/if}

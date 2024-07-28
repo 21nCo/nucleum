@@ -1,13 +1,13 @@
 import type {
-  FocusItem,
+  IFocusGoal,
   FocusLog,
-  FocusTask,
-  IntervalBlock
+  ISessionInterval,
+  IFocusTask
 } from "$lib/client/types/pointron/session.type";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
-import type { IResourceBase } from "$lib/client/components/resourceStores/resource.type";
+import type { IResource } from "$lib/client/components/resourceStores/resource.type";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",
@@ -19,12 +19,12 @@ export enum SessionType {
 export type SessionBase = {
   type: SessionType;
   logs: FocusLog[];
-  blocks: IntervalBlock[];
+  blocks: ISessionInterval[];
   elapsed: number;
   extended: number;
 };
 
-export type IPointSession = IResourceBase &
+export type IPointSession = IResource &
   SessionBase & {
     elapsed: number;
     extended: number;
@@ -32,12 +32,15 @@ export type IPointSession = IResourceBase &
     end: number | string;
     plannedEnd: number | string;
     id: string;
-    tasks?: FocusTask[] | FocusItem[];
+    focusItems?: {
+      goals: IFocusGoal[];
+      tasks: IFocusTask[];
+    };
     manualEntryId?: string;
     notes: IMarkdown;
   };
 
-export type IPointLog = IResourceBase & {
+export type IPointLog = IResource & {
   start: string;
   end: string;
   sessionId: string;

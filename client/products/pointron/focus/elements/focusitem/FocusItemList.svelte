@@ -11,32 +11,18 @@
   import { handleFocusItemsDND } from "$lib/client/utils/dragDrop";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
   import { DND } from "$lib/client/utils/DragDropTouch";
-  import { transformFocusItems } from "$lib/client/products/pointron/focus/session.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   export let isInEditMode: boolean = false;
-  let items: any[] = [];
   let goalEntry: string = "";
   let isFocusingAddGoal: boolean = false;
   let DragDropTouch: any;
   let ref: any;
   onMount(() => {
-    refresh();
     DND(DragDropTouch || (DragDropTouch = {}), ref);
-    const eventSub = appEvents.subscribe((x: IEvent) => {
-      if (x.event === PointronEvent.REFRESH_FOCUSITEMS) {
-        refresh();
-      }
-    });
-    return () => {
-      eventSub();
-    };
   });
   const unSubscribeDND = dragAndDropStore.subscribe(async (x: any) => {
     if (
@@ -45,20 +31,15 @@
       $dragAndDropStore.dragStatus == DragStatus.DROPPED
     ) {
       console.log("This subscribe is for goals & soloTasks so entering");
-      let modifiedItems = handleFocusItemsDND(x, items);
+      let modifiedItems = handleFocusItemsDND(x, $focusItemsStore.goals);
       if (modifiedItems) {
         await focusItemsStore.updateOrderValueForFI(modifiedItems);
-        items = modifiedItems;
+        $focusItemsStore.goals = modifiedItems;
         dragAndDropStore.reset();
       }
     }
   });
   onDestroy(unSubscribeDND);
-  function refresh() {
-    items = [];
-    if ($focusItemsStore.items)
-      items = transformFocusItems($focusItemsStore.items);
-  }
   function onBlur() {
     isFocusingAddGoal = false;
     //TODO - this is Workaround - to fix the bug of iOS keyboard displacing the web app in WebView
@@ -75,7 +56,7 @@
   })}
   bind:this={ref}
 >
-  {#if items.length === 0 && !isInEditMode && $sessionStore.isSessionRunning}
+  {#if $focusItemsStore.goals.length === 0 && !isInEditMode && $sessionStore.isSessionRunning}
     <div class="h-full">
       <EmptyStatusView
         size={Size.sm}
@@ -84,13 +65,13 @@
       />
     </div>
   {:else}
-    {#each items as item, index (item)}
+    {#each $focusItemsStore.goals as item, index (item)}
       <FocusItem
         {isInEditMode}
         {item}
         isFocusAddTask={$lastActiveGoalIdForEditing
-          ? $lastActiveGoalIdForEditing === item.goalId
-          : index === items.length - 1}
+          ? $lastActiveGoalIdForEditing === item.id
+          : index === $focusItemsStore.goals.length - 1}
       />
     {/each}
   {/if}
@@ -104,9 +85,6 @@
       >
         <AddGoal bind:label={goalEntry} on:blur={onBlur} on:focus={onfocus} />
       </div>
-      <!-- <div class="flex items-center w-full border border-bgs2 rounded-md">
-        <AddTask placeholder={"add solo task instead"} on:blur={onBlur} />
-      </div> -->
     </div>
   {/if}
 </div>

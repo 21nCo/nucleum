@@ -39,7 +39,7 @@ import GoalHomeV2 from "$lib/client/products/pointron/goals/home/GoalHomeV2.svel
 import FocusItemsModal from "$lib/client/products/pointron/focus/advanced/FocusItemsModal.svelte";
 import BreakReminderModal from "$lib/client/products/pointron/focus/elements/BreakReminderModal.svelte";
 import PredefinedIntervalNotifierOverlay from "$lib/client/products/pointron/focus/elements/PredefinedIntervalNotifierOverlay.svelte";
-import { pointLogStore } from "$lib/client/products/pointron/logs/log.store";
+import { manualLogStore } from "$lib/client/products/pointron/logs/log.store";
 import ControlPanelLogsPane from "$lib/client/products/pointron/logs/ControlPanelLogsPane.svelte";
 import SessionLogPage from "$lib/client/products/pointron/logs/logPage/SessionLogPage.svelte";
 import ManualLogPane from "$lib/client/products/pointron/logs/manualLog/ManualLogPane.svelte";
@@ -165,13 +165,13 @@ export const pointronActions: IAction[] = [
         primaryAction: {
           label: "Save entries",
           style: ButtonStyle.DEFAULT,
-          callback: () => pointLogStore.saveManualLogs()
+          callback: () => manualLogStore.saveManualLogs()
         },
         secondaryAction: {
           label: "Discard",
           callback: () => {
             setTimeout(() => {
-              pointLogStore.reset();
+              manualLogStore.reset();
             }, 100);
             return Promise.resolve(true);
           }
@@ -550,7 +550,7 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const response = await pointLogStore.deleteLog(params.id);
+            const response = await manualLogStore.deleteLog(params.id);
             if (response) {
               toasts.success("Session log deleted successfully");
               appEvents.publish(PointronEvent.REFRESH_LOGS);
