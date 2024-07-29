@@ -288,6 +288,14 @@
           </div>
         {/if}
       </span>
+      <Button
+        icon="pencil-square"
+        tooltip="Edit tags"
+        parentBgIndex={2}
+        on:click={() => {
+          appStore.runAction(PointronAction.TAGS);
+        }}
+      />
     </span>
   </div>
 </div>

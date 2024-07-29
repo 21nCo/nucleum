@@ -801,10 +801,16 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    loadAppData(appData: any) {
+    loadAppData(data: any) {
       update((n: AppStore) => {
-        n.appData = appData;
-        persistLocally(Resource.appData, appData);
+        const env = n.env;
+        if (data.env && data.env[env]) {
+          n.appData = { ...data, ...data.env[env] };
+        } else {
+          n.appData = data;
+        }
+        // console.log({ appData: n.appData, data, env });
+        persistLocally(Resource.appData, data);
         return n;
       });
     },

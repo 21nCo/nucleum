@@ -16,7 +16,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
       }
     );
   }
-  setDefaults(data: string[]) {
+  setDefaults(data: string[], isPersist: boolean = false) {
     const current = this.get();
     const context = get(appStore).product;
     logger.log({
@@ -25,13 +25,19 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
       ctx: context,
       data
     });
-    this.modify({
-      ...current,
-      [context]: {
-        default: data,
-        user: current[context]?.user ?? []
+    this.modify(
+      {
+        ...current,
+        [context]: {
+          default: data,
+          user: current[context]?.user ?? []
+        }
+      },
+      {
+        isPersist
       }
-    });
+    );
+    this.seed = this.get();
   }
   addUserMenuItem(item: string) {
     const current = this.get();

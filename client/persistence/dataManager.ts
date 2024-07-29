@@ -24,9 +24,9 @@ import {
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
-import { prefixTable } from "$lib/shared/utils/text.utils";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { KeyValueStore } from "../components/resourceStores/kv.store";
 
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
@@ -174,6 +174,23 @@ function init() {
         x.cacheableStoresTable = stores;
         return x;
       });
+    },
+    /**
+     * This method will be called on signup and database is bootstrapped.
+     * This will persist all kv seed data on cloud.
+     */
+    bootstrap: async () => {
+      const dm = get(dataManager);
+      let data = dm.cacheableStoresTable
+        .filter((x) => x.dataType === StoreDataType.KVO)
+        .map((x) => {
+          const k = x as KeyValueStore<any>;
+          return { id: k.id, ...k.seed };
+        });
+      data = [...data, { id: "mutationMap" }];
+      const query = `INSERT INTO kv $data;`;
+      const response = await dm.db.query(query, { data });
+      return response;
     },
     /**
      * Refreshes and updates the store with the new data.
@@ -591,8 +608,8 @@ async function refreshStores(
     response = response.map((x: any) => checkSurrealResponse(x));
     for (let i = 0; i < storesThatNeedRefresh.length; i++) {
       const store = storesThatNeedRefresh[i];
-
       const data = response[i];
+      // console.log({ data, store: store.id, loader: store.loader });
       if (store.loader && data) {
         store.loader(data);
       } else if (store.dataType === StoreDataType.IFR && data) {

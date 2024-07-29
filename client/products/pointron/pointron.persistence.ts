@@ -1,18 +1,8 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { seedUserPreferences } from "$lib/client/stores/app.store";
-import { seedLocalPreferences } from "./pointron.store";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 
 const surrealDb = new SurrealDatabase();
 export class PointronPersistence {
-  async syncSeedDataToCloud() {
-    const kvalues: any[] = [
-      seedLocalPreferences,
-      seedUserPreferences,
-      { id: "mutationMap" }
-    ];
-    await surrealDb.query(`insert into kv $kvalues`, { kvalues });
-  }
   async importData(data: any, fileName: string, fileSize: number) {
     const mainImport = await this.import(
       {

@@ -25,7 +25,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
-  protected seed: T;
+  seed: T;
   private _debouncedPersist = debouncer(this.persist, 3000);
   constructor(
     item: Resource,
@@ -112,7 +112,8 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * @param data
    */
   loader(data: T) {
-    console.log({ context: "kv.store loader", id: this.id, data });
+    // console.log({ context: "kv.store loader", id: this.id, data });
+    if (!data.id) return;
     this._setAndCache({ ...data });
   }
   /**

@@ -11,7 +11,11 @@ class NewGoalStore extends ObservableStore<IGoal & IObservableStoreSubject> {
     this.reset();
   }
   reset() {
-    this.set({ ...deepCopy(seedGoal), id: generateUID() });
+    this.set({
+      ...deepCopy(seedGoal),
+      id: generateUID(),
+      color: Math.floor(Math.random() * 360) + 1
+    });
   }
   async save() {
     await goalStore.save(this.get());

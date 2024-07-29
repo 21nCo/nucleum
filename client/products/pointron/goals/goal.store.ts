@@ -176,7 +176,8 @@ function flattenSubGoalsAsGoals(
 class GoalStore extends ResourceFIRStore<IGoal> {
   constructor() {
     super(Resource.PointGoal, defaultFilter, {
-      refreshQuery: "fn::pointron::goal::fetchAll();"
+      refreshQuery: "fn::pointron::goal::fetchAll();",
+      refreshOnAppear: true
     });
   }
   filter(filters: {
@@ -238,12 +239,6 @@ class GoalStore extends ResourceFIRStore<IGoal> {
     await dataManager.performMutation(this.id, flattenSubGoalsAsGoals(goal), {
       action: PersistanceActionType.CREATE
     });
-    setTimeout(() => {
-      if (goal.isPinnedForQuickStart) appStore.gotoPath("/focus");
-      else {
-        // appStore.gotoPath(Item.goal);
-      }
-    }, 1000);
     toasts.trigger({
       title: "Goal: " + goal.label,
       message: "Created successfully",

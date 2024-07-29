@@ -14,12 +14,9 @@
   import BackgroundSoundPlayer from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundSoundPlayer.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import context from "$lib/client/stores/context.store";
-  import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import LocalLeftNav from "./LocalLeftNav.svelte";
   import view from "$lib/client/stores/view.store";
   import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
-  const localPersistance = new PointronPersistence();
   let isLiteMode = $context.isEmbed && $context.isSheet;
   onMount(async () => {
     if ($account.isLoggedIn) await initializeData();
@@ -27,10 +24,6 @@
       if (isLiteMode) return;
       if (e.event === GlobalEvent.USER_LOGIN) {
         if (!e.value) sessionStore.loadEmptyState();
-      } else if (e.event === GlobalEvent.USER_SIGNUP) {
-        sessionStore.loadEmptyState();
-        pointronPreferences.loadSeedData();
-        localPersistance.syncSeedDataToCloud();
       }
     });
     $appLoadingState.isLocalLoaded = true;

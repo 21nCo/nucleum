@@ -303,7 +303,12 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       title: "Edit Tags",
-      isShowAsSheet: false
+      isShowAsSheet: false,
+      layout: {
+        secondaryAction: {
+          label: "Done"
+        }
+      }
     }
   },
   {

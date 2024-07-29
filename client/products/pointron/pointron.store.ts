@@ -153,6 +153,7 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     });
   }
   loader(data: IPointronPreferences) {
+    if (!data.id) return;
     data.appMenu = defaultAppMenu;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
     if (!data.presets) data.presets = seedPresets;

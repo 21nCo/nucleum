@@ -1,6 +1,5 @@
 <script lang="ts">
   import ChipsAutocomplete from "$lib/client/elements/autocomplete/ChipsAutocomplete.svelte";
-  import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
   import { ChipVariant } from "$lib/client/types/chipVariant.enum";
   import GoalColorPickerWithPreview from "../GoalColorPickerWithPreview.svelte";
   import { onMount } from "svelte";
@@ -18,7 +17,6 @@
     usedColors = getUsedColors();
   });
   let usedColors: number[];
-  let tagOptions: AutocompleteListItemType[] = $tagStore.items;
 </script>
 
 <div class="flex flex-col w-full gap-6 pb-20">
@@ -41,7 +39,7 @@
     placeholder={$newGoal.tags?.length
       ? "type to select"
       : "start typing to select tags"}
-    options={tagOptions}
+    options={$tagStore.items}
   />
   <GoalColorPickerWithPreview
     bind:hue={$newGoal.color}

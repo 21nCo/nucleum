@@ -9,7 +9,7 @@ import {
   confirmationNotification,
   appEvents
 } from "$lib/client/stores/notification.store";
-import { appStore } from "./app.store";
+import { appStore, userPreferences } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { wait } from "../utils/time.utils";
 import { signout } from "../utils/account.utils";
@@ -177,6 +177,9 @@ class AccountStore extends ObservableStore<
         redirectTo: "/onboarding"
       }
     );
+    appEvents.publish(GlobalEvent.BOOTSTRAP, true);
+    await dataManager.bootstrap();
+    await userPreferences.initializeTimeZoneForSignup();
     return true;
   }
   async performLoginStatusCheck() {

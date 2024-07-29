@@ -80,10 +80,7 @@
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
    * @param isSignup - If the user is signing up
    */
-  function refreshTimeZone(isSignup?: boolean) {
-    if (isSignup) {
-      return userPreferences.initializeTimeZoneForSignup();
-    }
+  function refreshTimeZone() {
     const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
@@ -122,11 +119,6 @@
   async function appEventHandler(e: IEvent) {
     if (e.event === GlobalEvent.USER_LOGIN) {
       if (e.value) dataManager.refreshApp();
-    } else if (e.event === GlobalEvent.BOOTSTRAP) {
-      //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
-      await userPreferences.loadSeedData();
-      await refreshTimeZone(true);
-      await dataManager.refreshApp();
     }
   }
   /**
@@ -142,7 +134,6 @@
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
     checkForEnvironmentChange();
-    refreshTimeZone();
     appMenuStore.setDefaults(defaultAppMenu);
 
     function runCurrentTime() {
@@ -179,6 +170,8 @@
     initActions(isLiteMode);
     if ($account.isLoggedIn && !isLiteMode) {
       await dataManager.refreshApp();
+      refreshTimeZone();
+      appMenuStore.setDefaults(defaultAppMenu, true);
     } else {
       await account.logGuest();
     }

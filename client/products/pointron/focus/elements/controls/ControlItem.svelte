@@ -17,6 +17,9 @@
   function clickHandler() {
     dispatch("click", { control });
   }
+  $: isBreakReminderMode =
+    $sessionStore.timeRemainingToTakeBreak != undefined &&
+    $sessionStore.timeRemainingToTakeBreak < 0;
   onMount(() => {
     //todo - later - causing flickering of the screen
     // if (isProminent) {
@@ -51,10 +54,12 @@
         "w-20 h-20 mo:w-16 mo:h-16": !isFocusPlayerContext,
         "border-cbg":
           isFocusPlayerContext &&
-          $sessionStore.state == SessionState.FOCUS_RUNNING,
+          $sessionStore.state == SessionState.FOCUS_RUNNING &&
+          !isBreakReminderMode,
         "border-abg":
-          isFocusPlayerContext &&
-          $sessionStore.state != SessionState.FOCUS_RUNNING
+          (isFocusPlayerContext &&
+            $sessionStore.state != SessionState.FOCUS_RUNNING) ||
+          isBreakReminderMode
       },
       !isFocusPlayerContext && {
         "bg-ass1": control === Control.BREAK,

@@ -217,7 +217,10 @@
           {formatSeconds(
             contxt === "history" && item.worked
               ? item.worked
-              : resolveTaskFocus(intervals, item.blocks)
+              : resolveTaskFocus(
+                  contxt == "current" ? $sessionStore.intervals : intervals,
+                  item.blocks
+                )
           )}
         </div>
       {/if}
