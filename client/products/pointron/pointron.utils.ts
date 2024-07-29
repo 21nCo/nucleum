@@ -12,16 +12,6 @@ import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { sessionStore } from "./focus/session.store";
 import { generateUID } from "$lib/client/utils/utils";
 
-// export function aggregateFocusFromSessions(sessions: PointSessionDbType[]) {
-//   let focus = 0;
-//   sessions.forEach((session) => {
-//     if (session.blocks === undefined && session.focus) focus += session.focus;
-//     else if (session.blocks)
-//       focus += calculateTotalFocusAndBreakOld(session.blocks).totalFocusTime;
-//   });
-//   return focus;
-// }
-
 export function getTotalsFromComposition(
   params: {
     composition?: SessionComposition | undefined;
@@ -188,79 +178,15 @@ function generateIntervals(composition: SessionComposition) {
   return bars;
 }
 
-export function sessionTotals(sessionLog: any) {
-  let totalFocus = 0;
-  let totalBreak = 0;
-  if (!sessionLog.blocks || sessionLog.blocks.length == 0) {
-    totalFocus = sessionLog.elapsed;
-  } else {
-    const result = calculateTotalFocusAndBreak(sessionLog.blocks);
-    totalFocus = result.focus;
-    totalBreak = result.brek;
-  }
-  return { totalFocus, totalBreak };
-}
-
-export function calculateTotalFocusAndBreak(
-  blocks: { start: number; end?: number; type: BlockType }[]
-) {
-  let focus = 0;
-  let brek = 0;
-  if (!blocks || blocks.length < 0) return { focus: 0, brek: 0 };
-  blocks.forEach((element, index) => {
-    if (!element) return;
-    if (element.type === BlockType.FOCUS) {
-      if (!element.start) return;
-      const end = element.end ?? blocks[index + 1]?.start;
-      if (!end) {
-        const duration = new Date().getTime() - element.start;
-        focus += duration;
-      } else {
-        const duration = end - element.start;
-        focus += duration;
-      }
-    }
-    if (element.type === BlockType.BREAK) {
-      if (!element.start) return;
-      const end = element.end ?? blocks[index + 1]?.start;
-      if (!end) {
-        const duration = new Date().getTime() - element.start;
-        brek += duration;
-      } else {
-        const duration = end - element.start;
-        brek += duration;
-      }
-    }
-  });
-  return {
-    focus: focus / 1000,
-    brek: brek / 1000
-  };
-}
-
-export function calculateTotalFocusAndBreakOld(blocks: any) {
-  let totalFocusTime = 0;
-  let totalBreakTime = 0;
-  for (let i = 0; i < blocks.length - 1; i++) {
-    if (blocks[i].type === BlockType.FOCUS) {
-      const startTime = blocks[i].start;
-      const nextStartTime = blocks[i + 1].start;
-      if (!startTime || !nextStartTime) continue;
-      const duration = nextStartTime - startTime;
-      totalFocusTime += duration;
-    }
-    if (blocks[i].type === BlockType.BREAK) {
-      const startTime = blocks[i].start;
-      const nextStartTime = blocks[i + 1].start;
-      if (!startTime || !nextStartTime) continue;
-      const duration = nextStartTime - startTime;
-      totalBreakTime += duration;
-    }
-  }
-  return {
-    totalFocusTime: totalFocusTime / 1000,
-    totalBreakTime: totalBreakTime / 1000
-  };
+export function resolveSessionTime(intervals: ISessionInterval[]) {
+  intervals = intervals.filter((x) => x.progress > 0);
+  let focus = intervals
+    .filter((x) => x.type === BlockType.FOCUS)
+    .reduce((acc, curr) => acc + curr.duration * curr.progress, 0);
+  let brek = intervals
+    .filter((x) => x.type === BlockType.BREAK)
+    .reduce((acc, curr) => acc + curr.duration * curr.progress, 0);
+  return { focus, brek };
 }
 
 export function roundOffToNdigitsAfterDecimal(number: number, n: number) {

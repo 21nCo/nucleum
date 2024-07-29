@@ -27,7 +27,7 @@ import {
   type IPointLogStore,
   type IPointSession
 } from "./log.type";
-import { sessionTotals } from "$lib/client/products/pointron/pointron.utils";
+import { resolveSessionTime } from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
@@ -228,8 +228,8 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
     let logs = [];
     if (data && data.length > 0) {
       logs = data.map((x: any) => {
-        const { totalFocus, totalBreak } = sessionTotals(x);
-        return { ...x, totalFocus, totalBreak };
+        const { focus, brek } = resolveSessionTime(x.blocks);
+        return { ...x, totalFocus: focus, totalBreak: brek };
       });
     } else {
       logs = [];
@@ -247,7 +247,7 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
         return n;
       });
     }
-    return replaceParams("return fn::pointron::logs::fetch::v3($date);", {
+    return replaceParams("return fn::pointron::logs::fetch::v4($date);", {
       date: n.date.toISOString()
     });
   }

@@ -82,6 +82,8 @@ export type LogThumbnail = {
   totalFocus: number;
   totalBreak: number;
   goals: any;
+  tasks: any;
+  focusItems: any;
 };
 
 export type DaySummary = {

@@ -375,7 +375,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           timeRemainingToTakeBreak,
           sessionProgress,
           plannedDuration,
-          intervals
+          intervals,
+          end
         },
         { isPreventCachingDefault: true }
       );
@@ -740,32 +741,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           : undefined
       }
     );
-    // let lastBlock = session.currentLog?.blocks?.pop();
-    // if (lastBlock) {
-    //   lastBlock.end = end;
-    //   session.currentLog.blocks = [
-    //     ...(session.currentLog?.blocks ?? []),
-    //     lastBlock
-    //   ];
-    // }
-    // if (
-    //   (session.currentLog.taskId || session.currentLog.goalId) &&
-    //   session.blocks
-    // ) {
-    //   let duration = calculateTotalFocusAndBreak(session.currentLog.blocks);
-    //   if (!props.isSessionFinish)
-    //     await focusItemsStore.updateWorkedTime(
-    //       isValidString(session.currentLog.taskId)
-    //         ? session.currentLog.taskId!
-    //         : session.currentLog.goalId ?? "",
-    //       duration.focus
-    //     );
-    //   session.currentLog.totalFocus = duration.focus;
-    //   session.currentLog.totalBreak = duration.brek;
-    // }
-    // session.logs = [...session.logs, { ...session.currentLog, end }];
-    // session.currentLog = { start: 0, taskId: "", goalId: "" };
-    // this.modify(session, { isPersist: props.isPersist });
   }
 
   async close() {
@@ -1382,7 +1357,7 @@ class PointSessionStore extends ResourceStore<IPointSession> {
     //   id
     // );
     let response = await this.db.executeReadFn(
-      "return fn::pointron::log::fetch($id);",
+      "return array::first(select * from PointSession where id is $id);",
       {
         id
       }
@@ -1483,12 +1458,12 @@ class PointSessionStore extends ResourceStore<IPointSession> {
     // );
 
     function resolvePlannedEndTime(session: IActiveSessionStore) {
-      if (session.end) return session.end.toISOString();
-      else if (session.type == SessionType.COUNTUP) {
+      if (session.type == SessionType.COUNTUP) {
         return "";
-      } else {
+      } else if (session.end) return session.end.toISOString();
+      else if (session.start) {
         return new Date(
-          new Date().getTime() - session.plannedDuration * 1000
+          session.start.getTime() + session.plannedDuration * 1000
         ).toISOString();
       }
     }

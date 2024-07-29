@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { sessionTotals } from "$lib/client/products/pointron/pointron.utils";
+  import { resolveSessionTime } from "$lib/client/products/pointron/pointron.utils";
   import LogTotalCard from "./LogTotalCard.svelte";
   export let log: any;
-  const { totalFocus, totalBreak } = sessionTotals(log);
-  let total = totalFocus + totalBreak;
+  $: totals = resolveSessionTime(log.blocks);
 </script>
 
 <div class="flex flex-wrap gap-2 justify-between w-full">
-  <LogTotalCard value={totalFocus} type="focus" />
-  <LogTotalCard value={totalBreak} type="break" />
-  <LogTotalCard value={total} type="total" />
+  <LogTotalCard value={totals.focus + totals.brek} type="total" />
+  <LogTotalCard value={totals.focus} type="focus" />
+  <LogTotalCard value={totals.brek} type="break" />
 </div>

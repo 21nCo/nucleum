@@ -13,7 +13,6 @@
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import DraggableElement from "$lib/client/elements/DraggableElement.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
@@ -23,13 +22,19 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionType } from "../../../logs/log.type";
-  import type { IFocusGoal } from "$lib/client/types/pointron/session.type";
+  import type {
+    IFocusGoal,
+    IFocusTask,
+    ISessionInterval
+  } from "$lib/client/types/pointron/session.type";
   import { goalStore } from "../../../goals/goal.store";
   import { resolveTaskFocus } from "../../session.utils";
   export let item: IFocusGoal;
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
   export let contxt: "current" | "history" = "current";
+  export let intervals: ISessionInterval[] = [];
+  export let tasksList: IFocusTask[] = [];
   let isInprogress: boolean = false;
   let addTaskInputRef: any;
   // let workedTime: number = 0;
@@ -37,9 +42,8 @@
   $: isPortraitDragEnabled = $view.isPortrait && isInEditMode ? true : false;
   $: isDragEnabled = $view.isPortrait ? false : true;
   $: isInprogress = $sessionStore.currentTask?.id === item.id;
-  $: console.log({ isInprogress, item, goal });
-  $: tasks =
-    $focusItemsStore.tasks?.filter((x) => item.tasks?.includes(x.id)) ?? [];
+  // $: console.log({ isInprogress, item, goal });
+  $: tasks = tasksList?.filter((x) => item.tasks?.includes(x.id)) ?? [];
   $: goal = goalStore.resolveGoal(item.id);
   //TODO - test parentHierarchy
   $: parentHierarchy = goal?.parent?.hierarchy?.map((x: any) => x.label);
@@ -102,6 +106,7 @@
   async function onDeleteClicked() {
     await focusItemsStore.removeGoal(item.id);
   }
+  $: console.log({ item, intervals, isInprogress, tasks });
 </script>
 
 <DraggableElement
@@ -112,7 +117,7 @@
   id="goalItem"
   classList="flex flex-col gap-4 w-full"
 >
-  {#if (item.id && (!$sessionStore.isSessionRunning || isInEditMode)) || (item.id && tasks.length > 0)}
+  {#if (item.id && (!$sessionStore.isSessionRunning || isInEditMode) && contxt === "current") || (item.id && tasks.length > 0)}
     <CustomColorPropagator
       color={goal.color}
       class="relative flex items-center gap-2 w-full"
@@ -144,7 +149,7 @@
         <div class="px-2">
           {#if tasks && tasks.length > 0}
             {#each tasks as task, index (task)}
-              <Task {task} {isInEditMode} context={contxt} />
+              <Task {task} {intervals} {isInEditMode} context={contxt} />
               {#if index < tasks.length - 1}
                 <div class="mx-1 border-b border-bgs2" />
               {/if}
@@ -174,7 +179,7 @@
         </div>
       {/if}
     </CustomColorPropagator>
-  {:else if $sessionStore.isSessionRunning && item.id}
+  {:else if item.id}
     <CustomColorPropagator
       class={cn(
         "flex justify-between items-center border-2 border-bgs2 w-full p-3 rounded-md",
@@ -210,7 +215,9 @@
       {:else}
         <div class="text-fgs3 text-b3">
           {formatSeconds(
-            resolveTaskFocus($sessionStore.intervals, item.blocks)
+            contxt === "history" && item.worked
+              ? item.worked
+              : resolveTaskFocus(intervals, item.blocks)
           )}
         </div>
       {/if}

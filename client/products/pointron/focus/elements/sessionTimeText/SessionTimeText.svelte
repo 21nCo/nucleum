@@ -12,20 +12,10 @@
   } from "$lib/client/types/pointron/session.type";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
+  import { resolveSessionTime } from "../../../pointron.utils";
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
   $: splits = resolveSessionTime($sessionStore.intervals);
-
-  function resolveSessionTime(intervals: ISessionInterval[]) {
-    intervals = intervals.filter((x) => x.progress > 0);
-    let focus = intervals
-      .filter((x) => x.type === BlockType.FOCUS)
-      .reduce((acc, curr) => acc + curr.duration * curr.progress, 0);
-    let brek = intervals
-      .filter((x) => x.type === BlockType.BREAK)
-      .reduce((acc, curr) => acc + curr.duration * curr.progress, 0);
-    return { focus, brek };
-  }
   // $: console.log({
   //   splits,
   //   timeElapsed: $sessionStore.timeElapsed,

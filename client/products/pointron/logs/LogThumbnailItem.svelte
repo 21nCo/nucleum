@@ -14,6 +14,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { goalStore } from "../goals/goal.store";
   export let log: LogThumbnail;
   export let context: "journal" | "logs" = "logs";
   export let isLast: boolean = false;
@@ -23,6 +24,7 @@
   let height = 166;
   let total = log.totalFocus + log.totalBreak;
   let minHeight = 110;
+  $: goals = resolveGoals(log);
 
   if (isEnableVariableHeight) {
     // let baseHeight = 110;
@@ -52,6 +54,21 @@
     } else {
       height = minHeight + 100;
     }
+  }
+
+  function resolveGoals(log: LogThumbnail) {
+    if (log.tasks && log.tasks.length > 0) {
+      const goalIds = log.tasks.map((x: any) => x.goalId);
+      return $goalStore.items.filter((x) => goalIds.includes(x.id));
+    } else if (
+      log.focusItems &&
+      log.focusItems.goals &&
+      log.focusItems.goals.length > 0
+    ) {
+      const goalIds = log.focusItems.goals.map((x: any) => x.id);
+      return $goalStore.items.filter((x) => goalIds.includes(x.id));
+    }
+    return [];
   }
 
   async function handleDelete(event: MouseEvent) {
@@ -146,8 +163,8 @@
         <Text content="Goals" style={TextStyle.SECTION_HEADING} />
       {/if}
       <div class="flex flex-col w-full">
-        {#if log.goals && log.goals.length > 0}
-          {#each log.goals as goal}
+        {#if goals && goals.length > 0}
+          {#each goals as goal}
             <CustomColorPropagator
               color={goal.color ?? goal.parent?.color}
               class="flex w-full gap-2 text-base items-center"

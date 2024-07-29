@@ -3,7 +3,6 @@ import {
   type ISessionInterval
 } from "$lib/client/types/pointron/session.type";
 import { deepCopy, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
-import { calculateTotalFocusAndBreak } from "../pointron.utils";
 
 export function transformFocusItemsV1(rawItems: any[]) {
   let items: any[] = [];
@@ -45,12 +44,6 @@ export function resolveTaskFocus(
   focusItemBlocks?: { start: number; end: number }[],
   currentStartTime?: number
 ) {
-  // console.log({
-  //   context: "resolveTaskFocus",
-  //   sessionBlocks,
-  //   focusItemBlocks,
-  //   currentStartTime
-  // });
   let focusFromPreviousBlocks = 0;
   let currentBlockFocus = 0;
   if (focusItemBlocks) {
@@ -59,7 +52,6 @@ export function resolveTaskFocus(
       focusFromPreviousBlocks += calculateTotalFocusAndBreak(intervals).focus;
     });
   }
-  // console.log({ focusFromPreviousBlocks });
   if (!currentStartTime) return focusFromPreviousBlocks;
   const intervalsForCurrentBlock = resolveIntervals(
     sessionBlocks,
@@ -69,7 +61,6 @@ export function resolveTaskFocus(
   currentBlockFocus = calculateTotalFocusAndBreak(
     intervalsForCurrentBlock
   ).focus;
-  // console.log({ currentBlockFocus });
   return focusFromPreviousBlocks + currentBlockFocus;
 
   function resolveIntervals(
@@ -136,5 +127,42 @@ export function resolveTaskFocus(
     if (intervalMidwayRight) result.push(intervalMidwayRight);
     if (intervalOverflow) result.push(intervalOverflow);
     return result;
+  }
+
+  function calculateTotalFocusAndBreak(
+    blocks: { start: number; end?: number; type: BlockType }[]
+  ) {
+    let focus = 0;
+    let brek = 0;
+    if (!blocks || blocks.length < 0) return { focus: 0, brek: 0 };
+    blocks.forEach((element, index) => {
+      if (!element) return;
+      if (element.type === BlockType.FOCUS) {
+        if (!element.start) return;
+        const end = element.end ?? blocks[index + 1]?.start;
+        if (!end) {
+          const duration = new Date().getTime() - element.start;
+          focus += duration;
+        } else {
+          const duration = end - element.start;
+          focus += duration;
+        }
+      }
+      if (element.type === BlockType.BREAK) {
+        if (!element.start) return;
+        const end = element.end ?? blocks[index + 1]?.start;
+        if (!end) {
+          const duration = new Date().getTime() - element.start;
+          brek += duration;
+        } else {
+          const duration = end - element.start;
+          brek += duration;
+        }
+      }
+    });
+    return {
+      focus: focus / 1000,
+      brek: brek / 1000
+    };
   }
 }

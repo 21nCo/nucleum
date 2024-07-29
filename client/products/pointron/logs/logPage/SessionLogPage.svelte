@@ -23,11 +23,13 @@
   import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { pointSessionStore } from "../../focus/session.store";
+  import type { IFocusTask } from "$lib/client/types/pointron/session.type";
   export let id: string;
   export let log: any = undefined;
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
   let focusItems: any[] = [];
+  let tasksList: IFocusTask[] = [];
   onMount(async () => {
     await refresh();
   });
@@ -44,18 +46,52 @@
         log.logs.length > 0
       ) {
         calculateWorkedTimeV1();
-        focusItems = transformFocusItemsV1(log.tasks);
-        console.log("focusItems", { focusItems, goals: log.goals });
-        focusItems = focusItems.map((item) => {
-          const goal = log.goals.find((x: any) => x.id === item.goalId);
-          item.label = goal.label ?? item.label;
-          item.color = goal.color ?? goal.parent.color ?? item.color;
-          return item;
-        });
+        tasksList = log.tasks
+          .filter((x) => x.taskId)
+          .map((x) => {
+            return {
+              id: x.taskId,
+              label: x.label,
+              worked: x.worked,
+              estimated: x.estimate,
+              checked: x.checked
+            };
+          });
+        // focusItems = transformFocusItemsV1(log.tasks);
+        // console.log("focusItems", { focusItems, goals: log.goals });
+        // focusItems = focusItems.map((item) => {
+        //   // const goal = log.goals.find((x: any) => x.id === item.goalId);
+        //   // item.label = goal.label ?? item.label;
+        //   // item.color = goal.color ?? goal.parent.color ?? item.color;
+        //   return item;
+        // });
+        focusItems = log.tasks
+          .filter((x) => !x.taskId)
+          .map((x) => {
+            return {
+              id: x.goalId,
+              tasks: log.tasks
+                .filter((y) => y.goalId === x.goalId && y.taskId)
+                .map((y) => y.taskId),
+              worked: x.worked,
+              estimated: x.estimate
+            };
+          });
+        console.log({ focusItems, tasksList });
+      } else if (
+        log.focusItems &&
+        log.focusItems.goals &&
+        log.focusItems.tasks
+      ) {
+        tasksList = log.focusItems.tasks;
+        focusItems = log.focusItems.goals;
       }
     }
     isLoadingState = false;
 
+    /**
+     * Calculates the worked time - using the v1 schema of PointSession
+     */
     function calculateWorkedTimeV1() {
       log.tasks = log.tasks.map((item: any) => {
         const logsForTask = log.logs.filter(
@@ -63,7 +99,6 @@
             (x.taskId === item.taskId && x.goalId === item.goalId) ||
             (x.goalId === item.goalId && !x.taskId)
         );
-        console.log({ logsForTask, item });
         item.worked = logsForTask.reduce(
           (acc: number, curr: any) => acc + curr.totalFocus,
           0
@@ -79,10 +114,13 @@
     <LogIntervalBar {log} />
     {#if isValidDataString(log?.plannedEnd) && !isSameDateTime(new Date(log.end), new Date(log.plannedEnd))}
       <InlineInfoBanner>
-        This Session was planned to end at <b>
-          {formatTime($userPreferences, new Date(log.plannedEnd))}</b
-        >
-        but aborted at <b>{formatTime($userPreferences, new Date(log.end))}.</b>
+        <span>
+          This Session was planned to end at <b>
+            {formatTime($userPreferences, new Date(log.plannedEnd))}</b
+          >
+          but was aborted at
+          <b>{formatTime($userPreferences, new Date(log.end))}.</b>
+        </span>
       </InlineInfoBanner>
     {/if}
     <div class="flex flex-col gap-6 w-full flex-grow items-center">
@@ -118,7 +156,12 @@
             <div class="flex flex-col gap-2 h-full w-full pb-40">
               {#if focusItems.length}
                 {#each focusItems as item, index (item)}
-                  <FocusItem {item} contxt="history" />
+                  <FocusItem
+                    {item}
+                    {tasksList}
+                    intervals={log.blocks}
+                    contxt="history"
+                  />
                 {/each}
               {:else}
                 <EmptyStatusView

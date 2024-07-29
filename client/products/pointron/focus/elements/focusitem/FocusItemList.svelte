@@ -69,6 +69,7 @@
       <FocusItem
         {isInEditMode}
         {item}
+        tasksList={$focusItemsStore.tasks}
         isFocusAddTask={$lastActiveGoalIdForEditing
           ? $lastActiveGoalIdForEditing === item.id
           : index === $focusItemsStore.goals.length - 1}

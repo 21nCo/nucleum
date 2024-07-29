@@ -5,7 +5,8 @@
   } from "$lib/client/products/pointron/focus/session.store";
   import type {
     IFocusTask,
-    IActiveSessionStore
+    IActiveSessionStore,
+    ISessionInterval
   } from "$lib/client/types/pointron/session.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -27,6 +28,7 @@
   import { resolveTaskFocus } from "../../session.utils";
   export let task: IFocusTask;
   export let isInEditMode: boolean = false;
+  export let intervals: ISessionInterval[] = [];
   export let context: "current" | "history" = "current";
   let workedTime: number = 0;
   let estimateInMinutes: number = 0;
@@ -39,13 +41,16 @@
   $: isPortraitDragEnabled = $view.isPortrait && isInEditMode ? true : false;
   $: isDragEnabled = $view.isPortrait ? false : true;
   let scrollToTask: any = null;
-  $: workedTime = resolveTaskFocus(
-    $sessionStore.intervals,
-    task.blocks,
-    isInprogress && $sessionStore.currentTask
-      ? $sessionStore.currentTask.start
-      : undefined
-  );
+  $: workedTime =
+    context === "history" && task.worked
+      ? task.worked
+      : resolveTaskFocus(
+          context === "history" ? intervals : $sessionStore.intervals,
+          task.blocks,
+          isInprogress && $sessionStore.currentTask
+            ? $sessionStore.currentTask.start
+            : undefined
+        );
   // $: console.log({
   //   workedTime,
   //   task,
@@ -61,10 +66,6 @@
     const sub = sessionStore.subscribe((x: IActiveSessionStore) => {
       if (x.currentTask?.id === task.id) {
         isInprogress = true;
-        // if (x.state == SessionState.FOCUS_RUNNING) {
-        //   let duration = calculateTotalFocusAndBreak(x.currentLog.blocks, true);
-        //   workedTime = (+task.worked ?? 0) + duration.focus ?? task.worked;
-        // }
       } else {
         isInprogress = false;
       }
