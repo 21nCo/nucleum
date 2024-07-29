@@ -49,6 +49,7 @@
   import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
+  import AppLoadingView from "../paint/AppLoadingView.svelte";
 
   let timer: any;
   pingParent();
@@ -321,6 +322,9 @@
 {/if}
 <div class="flex h-screen w-screen">
   <ThemeLayer>
+    {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
+      <AppLoadingView />
+    {/if}
     <slot />
   </ThemeLayer>
 </div>

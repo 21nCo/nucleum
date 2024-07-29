@@ -18,6 +18,7 @@
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import LocalLeftNav from "./LocalLeftNav.svelte";
   import view from "$lib/client/stores/view.store";
+  import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
   const localPersistance = new PointronPersistence();
   let isLiteMode = $context.isEmbed && $context.isSheet;
   onMount(async () => {
@@ -65,13 +66,17 @@
   }
 </script>
 
-{#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-  <LocalLeftNav />
-  <div class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}">
-    <slot />
-  </div>
-  <!-- <RightPanel /> -->
-{/if}
-<Notifications />
-<BackgroundSoundPlayer />
+<BaseLayer>
+  {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
+    <LocalLeftNav />
+    <div
+      class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
+    >
+      <slot />
+    </div>
+    <!-- <RightPanel /> -->
+  {/if}
+  <Notifications />
+  <BackgroundSoundPlayer />
+</BaseLayer>
 <svelte:document on:visibilitychange={handleVisibilityChange} />
