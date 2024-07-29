@@ -41,7 +41,12 @@
       <ResourceThumbnailTitle {item} />
     </button>
   {:else if variant === Arrangement.GRID}
-    <ResourceGridThumbnail {item} on:click {isApplyCustomColor}>
+    <ResourceGridThumbnail
+      {item}
+      on:click
+      {isApplyCustomColor}
+      size={context === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
+    >
       <div class="relative grow w-full p-4">
         <!-- Preview content -->
         {#if item.contentType === NodeType.IMAGE}

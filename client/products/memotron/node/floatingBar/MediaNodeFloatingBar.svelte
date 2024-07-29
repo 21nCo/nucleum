@@ -15,7 +15,6 @@
   import { resolveNodeContextMenu, type IActiveNodeStore } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
   import { NodeType } from "../node.type";
-  import { fade } from "svelte/transition";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -41,6 +40,7 @@
   );
 </script>
 
+<!-- Using transition here caused modal freeze issue -->
 <div
   class={cn("flex flex-col w-full justify-center items-center", {
     "mb-6 absolute z-10 bottom-0": accessMode === ResourceAccessMode.FOCUS,
@@ -48,7 +48,6 @@
       accessMode === ResourceAccessMode.POP ||
       accessMode === ResourceAccessMode.INLINE
   })}
-  transition:fade={{ duration: 300 }}
 >
   <HoverableElement
     bind:isHovering
@@ -164,14 +163,16 @@
               }}
             />
           {/if}
-          <Button
-            {...buttonCommonProps}
-            icon="cross-circled"
-            tooltip="Close"
-            on:click={() => {
-              appStore.closeResource();
-            }}
-          />
+          {#if accessMode != ResourceAccessMode.INLINE}
+            <Button
+              {...buttonCommonProps}
+              icon="cross-circled"
+              tooltip="Close"
+              on:click={() => {
+                appStore.closeResource({ inlineRestoreId: $node.id });
+              }}
+            />
+          {/if}
         </span>
       </div>
       <div class="w-full">

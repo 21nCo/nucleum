@@ -112,14 +112,15 @@
         appStore.toggleFocusAccessMode(accessMode, $node.id);
       }}
     />
-
-    <Button
-      {...buttonCommonProps}
-      icon="cross-circled"
-      tooltip="Close"
-      on:click={() => {
-        appStore.closeResource();
-      }}
-    />
+    {#if accessMode != ResourceAccessMode.INLINE}
+      <Button
+        {...buttonCommonProps}
+        icon="cross-circled"
+        tooltip="Close"
+        on:click={() => {
+          appStore.closeResource({ inlineRestoreId: $node.id });
+        }}
+      />
+    {/if}
   </span>
 </div>

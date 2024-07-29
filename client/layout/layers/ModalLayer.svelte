@@ -38,7 +38,7 @@
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
-  let zen: string | undefined;
+  let fullscreen: string | undefined;
   let pop: { path: string; resource: string; params: ModalParams } | undefined;
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
@@ -64,7 +64,6 @@
       }
     });
     const pageSub = page.subscribe((value) => {
-      zen = value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
       const popParam =
         value.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
       if (popParam) {
@@ -72,6 +71,9 @@
       } else {
         pop = undefined;
       }
+      fullscreen =
+        value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
+      console.log({ pop, fullscreen });
     });
     const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
       if (!x.isShow) {
@@ -233,32 +235,33 @@
     </ModalLayout>
   </Modal>
 {/if}
-
-{#if zen}
-  <Modal
-    show={true}
-    id={zen}
-    isDismissable={true}
-    isShowOverlay={true}
-    isUseDialog={false}
-    size={Size.full}
-  >
-    <ModalLayout path={zen} params={{ layout: { size: Size.full } }}>
-      <SplitView
-        id={zen}
-        componentParams={{
-          isModal: true,
-          accessMode: ResourceAccessMode.FOCUS
-        }}
-      />
-    </ModalLayout>
-  </Modal>
-{/if}
-{#if pop}
-  {#key pop.resource}
+{#key fullscreen}
+  {#if fullscreen}
     <Modal
-      show={true}
-      id={pop.path}
+      show={fullscreen != undefined}
+      id={fullscreen + "-focus"}
+      isDismissable={true}
+      isShowOverlay={true}
+      isUseDialog={false}
+      size={Size.full}
+    >
+      <ModalLayout path={fullscreen} params={{ layout: { size: Size.full } }}>
+        <SplitView
+          id={fullscreen}
+          componentParams={{
+            isModal: true,
+            accessMode: ResourceAccessMode.FOCUS
+          }}
+        />
+      </ModalLayout>
+    </Modal>
+  {/if}
+{/key}
+{#key pop?.resource}
+  {#if pop}
+    <Modal
+      show={pop != undefined}
+      id={pop.path + "-pop"}
       isDismissable={pop.params?.isDismissable ?? true}
       isShowOverlay={pop.params?.isShowOverlay ?? true}
       isUseDialog={pop.params?.layout?.size != Size.full &&
@@ -276,5 +279,5 @@
         />
       </ModalLayout>
     </Modal>
-  {/key}
-{/if}
+  {/if}
+{/key}

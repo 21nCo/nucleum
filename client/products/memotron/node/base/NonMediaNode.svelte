@@ -34,8 +34,8 @@
   let isShowFloatingBar = true;
   let isWidened = false;
   function onScroll(e: any) {
-    console.log("onScroll", e);
-    const st = event.target.scrollTop;
+    // console.log("onScroll", e);
+    const st = event?.target?.scrollTop;
     if (st > lastScrollTop) {
       scrollDirection = "down";
       isShowFloatingBar = false;

@@ -33,7 +33,6 @@ import { CombinationViewType } from "../curation/curation.type";
 import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/stores/log.store";
-import context from "$lib/client/stores/context.store";
 
 class CollectionStore extends ResourceStore<ICollection> {
   db: ISurrealDatabase;
@@ -159,25 +158,26 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * Initialized the collection with local cached data
    */
   async init() {
-    this.resourceStore.modify(this.id, {
-      interactedAt: new Date().toISOString()
-    });
-    this.update((val: IActiveCollection) => {
-      if (val) val.isPageLoading = true;
-      else val = { isPageLoading: true };
-      return val;
-    });
-    const dm = get(dataManager);
-    const record = await dm.cacheSource.dexie.collection.get(this.id);
-    const views = record?.views ?? [];
-    let viewsWithData: ICollectionView[] = [];
-    if (views.length > 0) {
-      viewsWithData = await dm.cacheSource.dexie.view
-        .where("id")
-        .anyOfIgnoreCase(views)
-        .toArray();
-    }
-    if (record) {
+    try {
+      this.resourceStore.modify(this.id, {
+        interactedAt: new Date().toISOString()
+      });
+      this.update((val: IActiveCollection) => {
+        if (val) val.isPageLoading = true;
+        else val = { isPageLoading: true };
+        return val;
+      });
+      const dm = get(dataManager);
+      const record = await dm.cacheSource.dexie.collection.get(this.id);
+      const views = record?.views ?? [];
+      let viewsWithData: ICollectionView[] = [];
+      if (views.length > 0) {
+        viewsWithData = await dm.cacheSource.dexie.view
+          .where("id")
+          .anyOfIgnoreCase(views.filter((x) => x))
+          .toArray();
+      }
+      if (!record) return;
       this.set({
         ...record,
         isViewDataRefreshing: false,
@@ -186,6 +186,11 @@ class ActiveCollectionStore extends ActiveResourceStore<
         views: viewsWithData.map((x) => {
           return { ...x, data: [] };
         })
+      });
+    } catch (e) {
+      console.error("error in init collection store", {
+        id: this.id,
+        error: e
       });
     }
   }

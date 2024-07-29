@@ -9,5 +9,5 @@
 
 <ComponentResolver
   path={id.split(":")[0]}
-  params={{ id, isFromSplitView, ...componentParams, accessMode }}
+  params={{ id, isFromSplitView, accessMode, ...componentParams }}
 />

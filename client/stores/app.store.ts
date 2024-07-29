@@ -735,33 +735,54 @@ function initAppStore(seed: AppStore) {
     const currentAccessMode = determineCurrentResourceAccessMode(replaceId);
     resourceClickHandler(event, id, currentAccessMode);
   };
-  const closeResource = (isCloseAllModal: boolean = false) => {
-    if (isCloseAllModal) {
+  const closeResource = (props?: {
+    isRestrictToModals?: boolean;
+    inlineRestoreId?: string;
+  }) => {
+    const url = new URL(window.location.href);
+    if (props?.isRestrictToModals) {
       toggleSearchParam(ResourceAccessMode.FSPLIT);
       debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
       return;
     }
-    toggleSearchParam(ResourceAccessMode.SPLIT);
-    toggleSearchParam(ResourceAccessMode.FOCUS);
-    toggleSearchParam(ResourceAccessMode.POP);
-    toggleSearchParam(ResourceAccessMode.FSPLIT);
+    const prevMode = url.searchParams.get("prev");
+    if (prevMode === ResourceAccessMode.INLINE && props?.inlineRestoreId)
+      url.searchParams.set(prevMode, props?.inlineRestoreId);
+    removeSearchParam("prev");
+    removeSearchParam(ResourceAccessMode.SPLIT);
+    removeSearchParam(ResourceAccessMode.FOCUS);
+    removeSearchParam(ResourceAccessMode.POP);
+    removeSearchParam(ResourceAccessMode.FSPLIT);
+    appStore.gotoPath(url.href);
+
+    function removeSearchParam(param: string) {
+      if (!url.searchParams.get(param)) return;
+      url.searchParams.delete(param);
+    }
   };
 
   const toggleFocusAccessMode = (
     currentMode: ResourceAccessMode,
     resourceId: string
   ) => {
-    toggleSearchParam(currentMode);
-    setTimeout(() => {
-      if (
-        currentMode === ResourceAccessMode.POP ||
-        currentMode === ResourceAccessMode.SPLIT
-      ) {
-        toggleSearchParam(ResourceAccessMode.FOCUS, resourceId);
-      } else {
-        toggleSearchParam(ResourceAccessMode.POP, resourceId);
-      }
-    }, 500);
+    const url = new URL(window.location.href);
+    removeSearchParam(currentMode);
+    if (currentMode === ResourceAccessMode.FOCUS) {
+      const prevMode = url.searchParams.get("prev");
+      console.log({ currentMode, prevMode });
+      if (prevMode) url.searchParams.set(prevMode, resourceId);
+      else url.searchParams.set(ResourceAccessMode.POP, resourceId);
+      removeSearchParam("prev");
+    } else {
+      url.searchParams.set(ResourceAccessMode.FOCUS, resourceId);
+      url.searchParams.set("prev", currentMode);
+    }
+    appStore.gotoPath(url.href);
+
+    function removeSearchParam(param: string) {
+      if (!url.searchParams.get(param)) return;
+      url.searchParams.delete(param);
+    }
   };
 
   return {
