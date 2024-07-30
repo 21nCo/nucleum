@@ -57,9 +57,9 @@
           $sessionStore.state == SessionState.FOCUS_RUNNING &&
           !isBreakReminderMode,
         "border-abg":
-          (isFocusPlayerContext &&
-            $sessionStore.state != SessionState.FOCUS_RUNNING) ||
-          isBreakReminderMode
+          isFocusPlayerContext &&
+          ($sessionStore.state != SessionState.FOCUS_RUNNING ||
+            isBreakReminderMode)
       },
       !isFocusPlayerContext && {
         "bg-ass1": control === Control.BREAK,

@@ -29,8 +29,8 @@
    */
   let focusTrap: HTMLDivElement;
   export let id = generateUID();
-  $: if (show) {
-    dialog?.showModal();
+  $: if (show && dialog && !dialog.open) {
+    dialog.showModal();
     // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {

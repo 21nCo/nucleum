@@ -7,7 +7,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   onMount(() => {
     setTimeout(() => {
-      modalEvent.hideSpecific(PointronAction.PREDEFINED_INTERVAL_NOTIFIER);
+      modalEvent.hideSpecific(
+        PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY
+      );
     }, 4000);
   });
 </script>

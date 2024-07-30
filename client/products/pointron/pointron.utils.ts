@@ -58,26 +58,34 @@ export function generateIntervalsFromComposition(
     });
   }
   if (bars.length > 0) {
-    bars.forEach((bar, index) => {
-      if (index == 0) {
-        intervals = [
-          {
-            ...bar,
-            start: new Date().getTime()
-          }
-        ];
-        return;
-      }
-      const previousBar = intervals[index - 1];
+    intervals = refreshPredefinedIntervalsStartTime(bars, new Date());
+  }
+  return intervals;
+}
+
+export function refreshPredefinedIntervalsStartTime(
+  intervals: ISessionInterval[],
+  start: Date
+) {
+  intervals.forEach((interval, index) => {
+    if (index == 0) {
       intervals = [
-        ...intervals,
         {
-          ...bar,
-          start: previousBar.start + previousBar.duration * 1000
+          ...interval,
+          start: start.getTime()
         }
       ];
-    });
-  }
+      return;
+    }
+    const previousBar = intervals[index - 1];
+    intervals = [
+      ...intervals,
+      {
+        ...interval,
+        start: previousBar.start + previousBar.duration * 1000
+      }
+    ];
+  });
   return intervals;
 }
 

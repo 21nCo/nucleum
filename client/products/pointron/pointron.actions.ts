@@ -211,7 +211,7 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: PointronAction.PREDEFINED_INTERVAL_NOTIFIER,
+    action: PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY,
     component: PredefinedIntervalNotifierOverlay,
     type: ActionType.MODAL,
     isMeta: true,

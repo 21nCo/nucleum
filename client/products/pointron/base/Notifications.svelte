@@ -7,6 +7,7 @@
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   import { postNotificationToParent } from "$lib/client/utils/embed.utils";
   import { logger } from "$lib/client/stores/log.store";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 
   let src: string | null = null;
   let body: string = "";
@@ -18,12 +19,16 @@
       switch (event.event) {
         case PointronEvent.BREAK_ENDED:
           src = $pointronPreferences.breakEndSound ?? "/sounds/ping.wav";
-          appStore.runAction(PointronEvent.PREDEFINED_INTERVAL_NOTIFIER);
+          appStore.runAction(
+            PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY
+          );
           body = "Break ended";
           break;
         case PointronEvent.INTERVAL_ENDED:
           src = $pointronPreferences.focusEndSound ?? "/sounds/ping.wav";
-          appStore.runAction(PointronEvent.PREDEFINED_INTERVAL_NOTIFIER);
+          appStore.runAction(
+            PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY
+          );
           body = "Interval ended";
           break;
         case PointronEvent.BREAK_REMINDER:

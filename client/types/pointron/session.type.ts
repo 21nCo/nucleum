@@ -17,7 +17,6 @@ export type IActiveSessionStore = IObservableStoreSubject & {
   totalElapsed: number;
   totalExtended: number;
   totalIdle: number;
-  sessionProgress: number;
   intervals: ISessionInterval[];
   currentBlockId: string;
   currentTask?: ICurrentTask;

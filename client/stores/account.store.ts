@@ -21,6 +21,7 @@ import {
 } from "$lib/client/types/data.type";
 import { generateUID } from "../utils/utils";
 import { dataManager } from "../persistence/dataManager";
+import posthog from "posthog-js";
 
 export const isRefreshingToken = writable(false);
 
@@ -178,6 +179,7 @@ class AccountStore extends ObservableStore<
       }
     );
     appEvents.publish(GlobalEvent.BOOTSTRAP, true);
+    this.setAnalyticsUserIdentity();
     await dataManager.bootstrap();
     await userPreferences.initializeTimeZoneForSignup();
     return true;
@@ -280,6 +282,14 @@ class AccountStore extends ObservableStore<
     get(dataManager)?.cacheSource?.clearCache();
     if (env) localStorage.setItem("env", env);
     if (appData) localStorage.setItem("appData", appData);
+  }
+
+  setAnalyticsUserIdentity() {
+    const account = this.get();
+    if (!account.userInfo) return;
+    posthog.identify(account.userInfo.id, {
+      region: account.userInfo.region
+    });
   }
 }
 

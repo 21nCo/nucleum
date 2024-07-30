@@ -14,7 +14,8 @@ import {
 } from "$lib/client/utils/utils";
 import {
   generateIntervalsFromComposition,
-  getTotalsFromComposition
+  getTotalsFromComposition,
+  refreshPredefinedIntervalsStartTime
 } from "$lib/client/products/pointron/pointron.utils";
 import { get, writable } from "svelte/store";
 import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
@@ -54,6 +55,7 @@ import { ResourceStore } from "$lib/client/components/resourceStores/resource.st
 import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { postToParent } from "$lib/client/utils/embed.utils";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -85,7 +87,6 @@ const seedSessionStore: IActiveSessionStore = {
   timeElapsed: 0,
   totalElapsed: 0,
   totalIdle: 0,
-  sessionProgress: 0,
   totalExtended: 0,
   plannedDuration: 0,
   notes: {
@@ -100,6 +101,7 @@ const seedSessionStore: IActiveSessionStore = {
   intervals: [
     {
       id: generateUID(),
+      start: new Date().getTime(),
       duration: 0.0001,
       progress: 1,
       type: BlockType.FOCUS
@@ -194,12 +196,57 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       get(pointronPreferences)?.breakReminder;
     return newSession;
   }
-  refreshNotifications(n: IActiveSessionStore) {
+  private refreshNotifications(session: IActiveSessionStore) {
     scheduledNotifications.set([]);
     let sessionTimeRemaining: number | undefined = undefined;
-    if (n.type != SessionType.COUNTUP) {
-      sessionTimeRemaining = n.plannedDuration - n.totalElapsed;
-      if (sessionTimeRemaining < 0) this.clearTimers();
+    if (session.type != SessionType.COUNTUP) {
+      sessionTimeRemaining = session.plannedDuration - session.totalElapsed;
+      scheduleSessionFinishNotification();
+    }
+    let timeRemainingToTakeBreak: number | undefined = undefined;
+
+    if (
+      session.type != SessionType.PREDEFINED_INTERVALS &&
+      session.state === SessionState.FOCUS_RUNNING
+    ) {
+      this.isIntervalTimeLimitNotified = scheduleBreakReminderNotification();
+      postNotificationsToEmbed();
+      return timeRemainingToTakeBreak;
+    }
+    if (session.type === SessionType.PREDEFINED_INTERVALS) {
+      const currentBlockIndex = session.intervals.findIndex(
+        (x) => x.id == session.currentBlockId
+      );
+      const currentBlock = session.intervals[currentBlockIndex];
+      if (!currentBlock?.duration) return;
+
+      const timeRemainingForNextInterval =
+        currentBlock.duration - session.timeElapsed;
+      if (!timeRemainingForNextInterval) return;
+      const title = currentBlock.type === BlockType.FOCUS ? "Focus" : "Break";
+      const next = currentBlock.type === BlockType.FOCUS ? "break" : "focus";
+      scheduledNotifications.push({
+        inSeconds: timeRemainingForNextInterval,
+        message: `${title} ended. Starting ${next}.`,
+        timestamp: new Date().getTime() + timeRemainingForNextInterval * 1000,
+        title: title + " ended.",
+        sound: "ping.wav",
+        id: "breakReminder"
+      });
+      postNotificationsToEmbed();
+    }
+
+    function postNotificationsToEmbed() {
+      const notifications = get(scheduledNotifications);
+      postToParent({
+        notifications
+      });
+    }
+    /**
+     * Schedules the session finish notification.
+     */
+    function scheduleSessionFinishNotification() {
+      // if (sessionTimeRemaining < 0) this.clearTimers();
       // if (n.type == SessionType.COUNTDOWN && sessionTimeRemaining < 0) {
       //   n.state = SessionState.TIME_IS_UP;
       //   appEvents.publish(PointronEventEnum.SESSION_TIME_IS_UP);
@@ -211,6 +258,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       // ) {
       //   n.state = SessionState.TIME_IS_RUNNING_OUT;
       // }
+      if (!sessionTimeRemaining) return;
       scheduledNotifications.push({
         inSeconds: sessionTimeRemaining,
         message: "Session time is up. Please extend or finish the session",
@@ -220,61 +268,34 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         id: "timeIsUp"
       });
     }
-    let breakReminderSetting = undefined;
-    let timeRemainingToTakeBreak: number | undefined = undefined;
-    const currentBlockIndex = n.intervals.findIndex(
-      (x) => x.id == n.currentBlockId
-    );
-    if (
-      n.type != SessionType.PREDEFINED_INTERVALS &&
-      n.state === SessionState.FOCUS_RUNNING
-    ) {
-      breakReminderSetting =
-        n.composition.breakType === BreakCompositionType.REMINDER
-          ? n.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder
-          : undefined;
-      if (!breakReminderSetting) return;
-      timeRemainingToTakeBreak = breakReminderSetting - n.timeElapsed;
-      if (timeRemainingToTakeBreak < 0 && !this.isIntervalTimeLimitNotified) {
-        appEvents.publish(PointronEvent.BREAK_REMINDER);
-        this.isIntervalTimeLimitNotified = true;
-      }
-    } else if (
-      n.type === SessionType.PREDEFINED_INTERVALS &&
-      n.state === SessionState.FOCUS_RUNNING
-    ) {
-      let currentBlock = n.intervals[currentBlockIndex];
-      if (currentBlock?.duration) {
-        timeRemainingToTakeBreak = currentBlock.duration - n.timeElapsed;
-        if (timeRemainingToTakeBreak < 0 && !this.isIntervalTimeLimitNotified) {
-          appEvents.publish(PointronEvent.PREDEFINED_INTERVAL_NOTIFIER);
-          this.isIntervalTimeLimitNotified = true;
-        }
-      }
-    } else if (
-      n.type === SessionType.PREDEFINED_INTERVALS &&
-      n.state === SessionState.BREAK_RUNNING
-    ) {
-      let currentBlock = n.intervals[currentBlockIndex];
-      if (currentBlock?.duration) {
-        let timeRemainingToRefocus = currentBlock.duration - n.timeElapsed;
-        if (timeRemainingToRefocus < 0) {
-          appEvents.publish(PointronEvent.PREDEFINED_INTERVAL_NOTIFIER);
-        }
-      }
-    }
+
     /**
+     * Schedules the break reminder notification based on current composition or fallback to the user preferences.
+     * @returns time remaining to take break in seconds
+     *
      * TODO - remind if no break taken - for multiples of the reminder...
      */
-    if (
-      (n.type === SessionType.COUNTUP && timeRemainingToTakeBreak) ||
-      (n.type != SessionType.COUNTUP &&
-        sessionTimeRemaining &&
-        timeRemainingToTakeBreak &&
-        sessionTimeRemaining > timeRemainingToTakeBreak)
-    ) {
-      if (!breakReminderSetting) return;
+    function scheduleBreakReminderNotification(isNotified: boolean = false) {
+      let breakReminderSetting =
+        session.composition.breakType === BreakCompositionType.REMINDER
+          ? session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder
+          : undefined;
+      if (!breakReminderSetting) return isNotified;
+      timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
+      if (timeRemainingToTakeBreak < 0 && !isNotified) {
+        appEvents.publish(PointronEvent.BREAK_REMINDER);
+        isNotified = true;
+      }
+      if (
+        !breakReminderSetting ||
+        isNotified ||
+        !timeRemainingToTakeBreak ||
+        (session.type != SessionType.COUNTUP &&
+          sessionTimeRemaining &&
+          sessionTimeRemaining < timeRemainingToTakeBreak)
+      )
+        return isNotified;
       scheduledNotifications.push({
         inSeconds: timeRemainingToTakeBreak,
         message:
@@ -286,7 +307,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         sound: "ping.wav",
         id: "breakReminder"
       });
-      return timeRemainingToTakeBreak;
+      return isNotified;
       // scheduledNotifications.push({
       //   inSeconds: timeRemainingToTakeBreak * 2,
       //   message:
@@ -330,14 +351,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       );
       const timeElapsed = (currentTime - currentBlock?.start!) / 1000;
       const timeRemainingToTakeBreak = this.refreshNotifications(session);
-      const sessionProgress = this.refreshSessionProgress(session) ?? 0;
-      // console.log({
-      //   totalElapsed,
-      //   timeElapsed,
-      //   currentBlock,
-      //   sessionProgress,
-      //   session
-      // });
       let plannedDuration = session.plannedDuration;
       let end = session.end;
       if (
@@ -373,7 +386,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           totalElapsed,
           timeElapsed,
           timeRemainingToTakeBreak,
-          sessionProgress,
           plannedDuration,
           intervals,
           end
@@ -383,19 +395,39 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       if (isContinueSession) this._continueSession();
     }, 1000);
   }
+  /**
+   * Restores the state of the session for predefined intervals case.
+   *
+   * 500 milliseconds is substracted to increase reliability in cases of the excution of this method delegated from {@link _continueSession} method.
+   *
+   * @param session
+   * @returns
+   */
   private _restorePredefinedSessionState(session: IActiveSessionStore) {
     let currentInterval: ISessionInterval | undefined = undefined;
+    const intervals = refreshPredefinedIntervalsStartTime(
+      session.intervals,
+      session.start!
+    );
     const now = new Date().getTime();
-    session.intervals.forEach((interval, index) => {
-      if (interval.start < now && session.intervals[index + 1]?.start > now) {
+    intervals.some((interval, index) => {
+      if (interval.start - 500 <= now && index === intervals.length - 1) {
+        console.log("interval is last");
         currentInterval = interval;
-        return;
+        return true;
+      }
+      if (interval.start - 500 <= now && intervals[index + 1]?.start > now) {
+        console.log({ interval, index, nextOne: intervals[index + 1] });
+        currentInterval = interval;
+        return true;
       }
     });
+    console.log({ currentInterval, now });
     if (!currentInterval) return;
     currentInterval = currentInterval as ISessionInterval;
     this.modify(
       {
+        intervals,
         currentBlockId: currentInterval.id,
         state:
           currentInterval.type === BlockType.FOCUS
@@ -405,28 +437,19 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       { isPersist: false }
     );
   }
+  /**
+   * Continues the next interval in case of pre defined intervals.
+   *
+   * Changing the currentBlockId and state of the session is taken care of in {@link _resumeTimer} method - via {@link _restorePredefinedSessionState} method.
+   */
   private async _continueSession() {
     let session = this.get();
-    const currentBlockIndex = session.intervals.findIndex(
-      (x) => x.id == session.currentBlockId
-    );
-    const nextBlockId = session.intervals[currentBlockIndex + 1]?.id;
-    let state;
     if (session.state == SessionState.FOCUS_RUNNING) {
       appEvents.publish(PointronEvent.INTERVAL_ENDED);
-      state = SessionState.BREAK_RUNNING;
     } else {
       appEvents.publish(PointronEvent.BREAK_ENDED);
-      state = SessionState.FOCUS_RUNNING;
       this.isIntervalTimeLimitNotified = false;
     }
-    this.modify(
-      {
-        state,
-        currentBlockId: nextBlockId
-      },
-      { isPersist: false }
-    );
     this._resumeTimer();
     await this.persist();
   }
@@ -525,48 +548,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       sessionType = SessionType.COUNTUP;
     }
   }
-  /**
-   * @deprecated
-   * updates start and end time of current and previous blocks.
-   * @param n sessionStore
-   * @param type currentBlock type whether focus or break
-   * @returns updated sessionStore
-   */
-  updateBlocks(type: BlockType) {
-    console.log("updateBlocks - session store");
-    let session = this.get();
-    const currentBlockIndex = session.intervals.findIndex(
-      (x) => x.id == session.currentBlockId
-    );
-    if (session.type === SessionType.PREDEFINED_INTERVALS) {
-      let previousBlock = session.intervals[currentBlockIndex - 1];
-      if (previousBlock) {
-        previousBlock.end = new Date().getTime();
-        session.intervals[currentBlockIndex - 1] = previousBlock;
-      }
-    } else {
-      let currentBlock = session.intervals?.pop();
-      let previousBlock = session.intervals?.pop();
-      if (previousBlock && currentBlock) {
-        previousBlock.end = new Date().getTime();
-        session.intervals = [
-          ...(session.intervals ?? []),
-          previousBlock,
-          currentBlock
-        ];
-      } else if (currentBlock) {
-        currentBlock.end = new Date().getTime();
-        session.intervals = [...(session.intervals ?? []), currentBlock];
-      }
-    }
-    session.isSessionRunning = true;
-    if (type == BlockType.FOCUS) {
-      session.state = SessionState.FOCUS_RUNNING;
-    } else if (type == BlockType.BREAK) {
-      session.state = SessionState.BREAK_RUNNING;
-    }
-    this.modify(session, { isPersist: false });
-  }
   resolveEndTime(n: {
     start: Date;
     composition: SessionComposition;
@@ -582,6 +563,11 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       return new Date(n.start.getTime() + n.plannedDuration * 1000);
     }
   }
+  /**
+   * @deprecated - not used anywhere
+   * @param n
+   * @returns
+   */
   refreshSessionProgress(n: IActiveSessionStore) {
     if (n.type == SessionType.COUNTUP) return 100;
     if (!n.start || !n.end) return;

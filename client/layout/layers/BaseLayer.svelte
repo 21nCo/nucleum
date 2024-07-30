@@ -172,6 +172,7 @@
       await dataManager.refreshApp();
       refreshTimeZone();
       appMenuStore.setDefaults(defaultAppMenu, true);
+      account.setAnalyticsUserIdentity();
     } else {
       await account.logGuest();
     }
