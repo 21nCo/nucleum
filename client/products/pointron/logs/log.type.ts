@@ -63,7 +63,6 @@ export type IManualSessionLogForm = {
   goalId: string;
   duration: number;
   notes: IMarkdown;
-  valid : boolean;
 };
 
 export interface ILogsPaneStore extends IObservableStoreSubject {

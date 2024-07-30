@@ -60,6 +60,7 @@
         ...secondaryAction,
         callback: () => {
           if (secondaryAction?.callback) secondaryAction.callback();
+          valid.set(true)
           return close("secondary");
         }
       }}
