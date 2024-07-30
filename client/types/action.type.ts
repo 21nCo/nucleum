@@ -1,4 +1,4 @@
-import type { Item } from "./item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
 
@@ -35,7 +35,7 @@ export type IAction = {
   confirmation?: ConfirmationNotification;
   loadingComponent?: any;
   searchActionParams?: {
-    searchItemType: Item;
+    searchItemType: Resource;
     itemLabel: string;
     callback: (id: string, label?: string) => void;
   };
@@ -85,15 +85,4 @@ export enum ContentType {
   BUTTON,
   TOGGLE,
   SPACE_DOC
-}
-
-export enum ResourceAccessMode {
-  INLINE = "inline",
-  SPLIT = "split",
-  /**
-   * Split in focus mode
-   */
-  FSPLIT = "fsplit",
-  POP = "pop",
-  FOCUS = "focus"
 }

@@ -15,6 +15,8 @@ export type UserInformation = {
   profilePictureUrl?: string;
   emailParts?: EmailParts;
   licenseType?: LicenseType;
+  isBootstrapped?: boolean;
+  region?: string;
 };
 
 export type EmailParts = {
@@ -30,5 +32,5 @@ export enum LicenseType {
   LIFETIME = "LIFETIME",
   YEARLY = "YEARLY",
   MONTHLY = "MONTHLY",
-  FREE = "FREE",
+  FREE = "FREE"
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
   import { TimeFormat } from "$lib/client/types/time.type";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import PreviousValueColumnCell from "../topN/PreviousValueColumnCell.svelte";

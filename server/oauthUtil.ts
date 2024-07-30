@@ -59,10 +59,10 @@ function resolveClientSecret(config) {
   if (slug === "github") {
     return process.env.VITE_GITHUB_SECRET;
   } else if (slug === "google") {
-    return process.env.VITE_GOOGLE_SECRET;
+    return process.env.OAUTH_GOOGLE_SECRET;
   } else if (slug === "apple") {
-    if (process.env.APPLE_OAUTH_SECRET)
-      return generateClientSecret(config, process.env.APPLE_OAUTH_SECRET);
+    if (process.env.OAUTH_APPLE_SECRET)
+      return generateClientSecret(config, process.env.OAUTH_APPLE_SECRET);
   }
 }
 

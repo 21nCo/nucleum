@@ -6,7 +6,7 @@
   } from "$lib/client/types/tableCell.type";
   import TableCell from "./TableCell.svelte";
   import RowWrapper from "./RowWrapper.svelte";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   export let columns: TableColumnItem[] = [];
   export let data: TableRowItem[] = [];
   export let width: string = "";

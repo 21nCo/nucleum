@@ -23,9 +23,10 @@
   export let icon: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
+  export let isPreventMinWidth: boolean = false;
   export let tooltipOptions: IPopoverRenderBaseParams = {
     placement: Position.BottomCenter,
-    offsetInPx: 2,
+    offsetInPx: 4,
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
   };
@@ -80,7 +81,7 @@
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
     {
-      "min-w-32": style != ButtonStyle.PLAIN,
+      "min-w-32": style != ButtonStyle.PLAIN && !isPreventMinWidth,
       "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,
@@ -114,8 +115,7 @@
         border: true,
         "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           type === ButtonVariant.PRIMARY,
-        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY,
-        "border-brs2 text-fgs2 hover:text-fgs1 hover:border-brs3":
+        "border-brs3 text-fgs2 hover:text-fgs1 hover:bg-bgs2":
           type === ButtonVariant.SECONDARY,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }

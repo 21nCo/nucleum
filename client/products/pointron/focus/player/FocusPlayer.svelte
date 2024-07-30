@@ -14,6 +14,7 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import context from "$lib/client/stores/context.store";
   let playerContainerRef: any;
   let player: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
@@ -159,16 +160,18 @@
       </div>
 
       <div class="flex gap-4">
-        <ControlBar size={Size.sm} />
+        <ControlBar isFocusPlayerContext={true} />
         {#if !$view.isPortrait && !isPipOn}
-          <Icon
-            icon="pip"
-            on:click={pipHandler}
-            class={cn({
-              "stroke-cbg": isFocusing && !isBreakReminderMode,
-              "stroke-abg": isBreakReminderMode || !isFocusing
-            })}
-          />
+          {#if !$context.isEmbed}
+            <Icon
+              icon="pip"
+              on:click={pipHandler}
+              class={cn({
+                "stroke-cbg": isFocusing && !isBreakReminderMode,
+                "stroke-abg": isBreakReminderMode || !isFocusing
+              })}
+            />
+          {/if}
           <Icon
             icon="chevup"
             on:click={clickHandler}

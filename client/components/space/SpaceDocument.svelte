@@ -3,10 +3,10 @@
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import Markdown from "$lib/client/components/markdown/Markdown.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import type { INode } from "$lib/client/types/memotron/node.type";
+  import type { INode } from "$lib/client/products/memotron/node/node.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { performApiCall } from "$lib/client/utils/network.utils";
-  import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
   export let params: { spaceId: string; documentId: string };
   export let mdId = generateUID();
   let document: INode;

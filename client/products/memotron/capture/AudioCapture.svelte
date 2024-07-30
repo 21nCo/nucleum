@@ -7,7 +7,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { Persistence } from "$lib/client/persistence/persistence";
   import { generateUID } from "$lib/client/utils/utils";
-  import type { FileDetails } from "$lib/client/types/memotron/capture.type";
+  import type { FileDetails } from "$lib/client/products/memotron/capture/capture.type";
   import WaveSurfer from "wavesurfer.js";
   import RecordPlugin from "wavesurfer.js/dist/plugins/record";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";

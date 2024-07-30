@@ -6,8 +6,8 @@
     createClipPointer
   } from "$lib/client/extensions/clipper/utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { NodeType } from "$lib/client/types/memotron/node.type";
-  import { ClipperExtensionEvent } from "$lib/client/types/memotron/clip.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 
   async function refreshVideoTimestamps(url: string) {
     const result = await new ClipperPersistence().fetchPage(url);

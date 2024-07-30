@@ -1,21 +1,32 @@
 <script lang="ts">
   import { Position } from "$lib/client/types/direction.enum";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import type { IContextMenuItem } from "$lib/client/types/select.type";
+  import { Size } from "$lib/client/types/size.enum";
   import Button from "../button/Button.svelte";
   import Popover from "../popover/Popover.svelte";
   import ContextMenu from "./ContextMenu.svelte";
   export let contextMenu: { group: string; items: IContextMenuItem[] }[] = [];
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let tooltip: string | undefined = undefined;
   let contextMenuPopoverRef: any;
 </script>
 
 <Popover
   bind:this={contextMenuPopoverRef}
+  triggerMethod={$$slots.default
+    ? PopoverTriggerMethod.RIGHT_CLICK
+    : PopoverTriggerMethod.CLICK}
   options={{ placement: Position.BottomRight }}
 >
-  <Button icon="ellipsis-vertical" tooltip="More actions" />
+  <slot>
+    <Button icon="ellipsis-vertical" {tooltip} />
+  </slot>
   <slot name="popover" slot="popover">
     <ContextMenu
+      {size}
       menu={contextMenu}
+      on:action
       on:select={() => {
         contextMenuPopoverRef.hide();
       }}

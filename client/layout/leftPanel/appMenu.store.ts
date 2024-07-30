@@ -1,34 +1,63 @@
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import type { IAppMenuStore } from "$lib/client/types/appMenu.type";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { appStore } from "$lib/client/stores/app.store";
+import { get } from "svelte/store";
+import { logger } from "$lib/client/stores/log.store";
 
 class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {
     super(
-      Item.appMenu,
-      { menu: {} },
+      Resource.appMenu,
+      {},
       {
         priorityRefreshOnAppAppear: true,
         isSynchronousCache: true
       }
     );
   }
-  loadSeed(context: string, data: string[]) {
-    this.modify({ menu: { [context]: data } });
-  }
-  setDefaults(context: string, data: string[]) {
+  setDefaults(data: string[]) {
     const current = this.get();
-    if (!current.menu) {
-      this.loadSeed(context, data);
-    } else if (!current.menu[context]) {
-      this.modify(
-        {
-          ...current,
-          menu: { ...current.menu, [context]: data }
-        },
-        { isPersist: false }
-      );
-    }
+    const context = get(appStore).product;
+    logger.log({
+      context: "setting app menu defaults",
+      current,
+      ctx: context,
+      data
+    });
+    this.modify({
+      ...current,
+      [context]: {
+        default: data,
+        user: current[context]?.user ?? []
+      }
+    });
+  }
+  addUserMenuItem(item: string) {
+    const current = this.get();
+    const context = get(appStore).product;
+    logger.log({ context: "adding user app menu item", current });
+    if (current[context]?.user?.includes(item)) return;
+    this.modify({
+      ...current,
+      [context]: {
+        ...current[context],
+        user: [...(current[context]?.user ?? []), item]
+      }
+    });
+  }
+  removeUserMenuItem(item: string) {
+    const current = this.get();
+    const context = get(appStore).product;
+    logger.log({ context: "removing user app menu item", current });
+    if (!current[context]?.user?.includes(item)) return;
+    this.modify({
+      ...current,
+      [context]: {
+        ...current[context],
+        user: current[context]?.user?.filter((x) => x != item)
+      }
+    });
   }
 }
 

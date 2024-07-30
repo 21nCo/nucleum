@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import type { InlineType } from "$lib/client/types/memotron/md.type";
-  import type { NodeType } from "$lib/client/types/memotron/node.type";
+  import type { InlineType } from "$lib/client/components/markdown/md.type";
+  import type { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
   export let block: {

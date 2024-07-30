@@ -8,11 +8,13 @@
   export let isDisabled = false;
 </script>
 
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <label
   for={id}
   class="flex items-center {isDisabled
     ? 'cursor-not-allowed opacity-40'
     : 'cursor-pointer'}"
+  on:click|stopPropagation
 >
   <div class="relative">
     <input
@@ -22,6 +24,7 @@
       class="sr-only"
       disabled={isDisabled}
       on:change
+      on:click|stopPropagation
     />
     <div
       class={"block bg-bgs4 rounded-full" +

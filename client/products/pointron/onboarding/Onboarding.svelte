@@ -23,7 +23,7 @@
     {
       title: "Pointron",
       description:
-        "In a world that is constantly distracting, maintaining time awareness is vital for both productivity and personal well-being. Pointron simplifies this for you",
+        "In a world that constantly distracts, being time-aware is vital for productivity and personal well being. Pointron simplifies this for you.",
       img: ""
     },
     {

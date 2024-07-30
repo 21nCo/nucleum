@@ -102,6 +102,8 @@
   import AltText from "../icons/AltText.svelte";
   import { cn } from "../utils/ui.utils";
   import Gift from "../icons/Gift.svelte";
+  import LinkArrow2 from "../icons/LinkArrow2.svelte";
+  import Pin from "../icons/Pin.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -131,6 +133,7 @@
     "grab",
     "capture2.0-mini"
   ];
+  const strokeOnlyIcons = ["link-arrow-left", "link-arrow-down"];
   $: _classList = resolveClasses(
     classListParam,
     isAccentBgContext,
@@ -153,6 +156,13 @@
     if (icon && solidOnlyIcons.includes(icon) && classes.includes("stroke-")) {
       const color = classes.split("stroke-")[1];
       classes = `fill-${color}`;
+    } else if (
+      icon &&
+      strokeOnlyIcons.includes(icon) &&
+      classes.includes("fill-")
+    ) {
+      const color = classes.split("fill-")[1];
+      classes = `stroke-${color}`;
     }
     if (classes.includes("stroke-")) {
       classes = classes + " fill-none";
@@ -290,6 +300,8 @@
         <Minus {variant} isCircled={true} />
       {:else if icon === "unpin"}
         <Unpin />
+      {:else if icon === "pin"}
+        <Pin />
       {:else if icon === "cross-circled"}
         <Cross {variant} isCircled={true} />
       {:else if icon === "cross"}
@@ -465,6 +477,10 @@
         <AltText />
       {:else if icon === "gift"}
         <Gift />
+      {:else if icon === "link-arrow-left"}
+        <LinkArrow2 />
+      {:else if icon === "link-arrow-down"}
+        <LinkArrow2 direction={Position.Bottom} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

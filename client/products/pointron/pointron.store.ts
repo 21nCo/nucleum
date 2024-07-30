@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
 
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
 import {
   SessionCompositionType,
@@ -12,14 +12,14 @@ import { generateUID } from "$lib/client/utils/utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { ChartType } from "$lib/client/types/analytics.type";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { objIsEmpty, shallowDiff } from "$lib/client/utils/obj.utils";
+import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { Layout } from "$lib/client/types/layout.type";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { StoreDataType } from "$lib/client/types/data.type";
 import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { defaultAppMenu } from "$local/local";
-import { KeyValueStore } from "$lib/client/stores/kv.store";
-import { ResourceFIRStore } from "$lib/client/stores/resource.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
 
 export const swipeLabel = writable("");
 
@@ -109,7 +109,7 @@ export const defaultHorizonChartConfiguration: HorizonChart[] = [
 ];
 
 // const userLocalPreferencesId = "Preferences:" + appName.toLowerCase();
-const userLocalPreferencesId = Item.pointronPreferences;
+const userLocalPreferencesId = Resource.pointronPreferences;
 const storeConfig = {
   id: userLocalPreferencesId,
   dataType: StoreDataType.KVO,
@@ -149,7 +149,7 @@ export const seedLocalPreferences: IPointronPreferences = {
 };
 class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
-    super(Item.pointronPreferences, seedLocalPreferences, {
+    super(Resource.pointronPreferences, seedLocalPreferences, {
       priorityRefreshOnAppAppear: true
     });
   }
@@ -303,7 +303,7 @@ export const seedTasks = [
 
 class TagStore extends ResourceFIRStore<ITag> {
   constructor() {
-    super(Item.PointTag);
+    super(Resource.PointTag);
   }
   loader(data: any) {
     if (data) super.loader({ items: data });

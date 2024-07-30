@@ -196,7 +196,7 @@
 <!-- <div class="flex w-8/10"> -->
 
 <div
-  class="absolute w-9/12 h-full border border-orange-500"
+  class="absolute w-9/12 h-full border border-black"
   style={styles}
   bind:this={component_container}
 >
@@ -260,11 +260,7 @@
         </span>
       </div> -->
       <div class="spdfinner">
-        <div
-          id="viewerContainer"
-          style="background-color: bisque;"
-          bind:this={container}
-        >
+        <div id="viewerContainer" bind:this={container}>
           <div id="viewer" class="pdfViewer" />
           <!-- <slot /> -->
           <slot />

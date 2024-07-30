@@ -15,8 +15,8 @@
   $: label = timePeriodLabel(period);
 </script>
 
-<InputBaseElement {popoverOptions} class="flex justify-between" bind:isActive>
-  <span class="min-w-fit">
+<InputBaseElement {popoverOptions} class="flex justify-around" bind:isActive>
+  <span class="text-wrap">
     {label}
   </span>
   <Icon icon={isActive ? "chevup" : "chevdown"} />

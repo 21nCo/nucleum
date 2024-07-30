@@ -14,11 +14,9 @@
 
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
-  import appearance from "$lib/client/stores/appearance.store";
   import {
     appLoadingState,
     appStore,
-    cacheableStores,
     currentTime,
     excludedPathsForRedirectionCheck,
     userPreferences,
@@ -50,7 +48,33 @@
   import { appMenuStore } from "../leftPanel/appMenu.store";
   import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
+  import { cacheableStores } from "$lib/client/stores/globalStoresMap";
 
+  let timer: any;
+  pingParent();
+  bootup();
+  onMount(async () => {
+    view.update(window.innerWidth, window.innerHeight);
+    if ((<any>window).Intercom)
+      (<any>window).Intercom("update", {
+        hide_default_launcher: true
+      });
+    if (
+      !$context.isSheet &&
+      $context.isEmbed &&
+      $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
+    ) {
+      await parseEmbedToken();
+    }
+    await initializeData($context.isSheet);
+    const appEventSub = appEvents.subscribe(appEventHandler);
+    $appLoadingState.isBaseLoaded = true;
+
+    return () => {
+      appEventSub();
+      clearInterval(timer);
+    };
+  });
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
    * @param isSignup - If the user is signing up
@@ -94,104 +118,69 @@
     }
     // postMessageToParent(event.data);
   };
-  let timer: any;
-  pingParent();
-  bootup();
-  onMount(async () => {
-    view.update(window.innerWidth, window.innerHeight);
-    if ((<any>window).Intercom)
-      (<any>window).Intercom("update", {
-        hide_default_launcher: true
-      });
-    if (
-      !$context.isSheet &&
-      $context.isEmbed &&
-      $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
-    ) {
-      await parseEmbedToken();
-    }
-    await initializeData($context.isSheet);
-    const appEventSub = appEvents.subscribe(appEventHandler);
-    $appLoadingState.isBaseLoaded = true;
-    const darkModeMediaQuery = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    );
-    appearance.setSystemTheme(darkModeMediaQuery.matches);
-    darkModeMediaQuery.addEventListener("change", (e) => {
-      appearance.setSystemTheme(e.matches);
-    });
-
-    return () => {
-      appEventSub();
-      clearInterval(timer);
-    };
-  });
   async function appEventHandler(e: IEvent) {
     if (e.event === GlobalEvent.USER_LOGIN) {
-      if (e.value)
-        dataManager.initialize([...cacheableStores, ...localCacheableStores]);
-    } else if (e.event === GlobalEvent.USER_SIGNUP) {
+      if (e.value) dataManager.refreshApp();
+    } else if (e.event === GlobalEvent.BOOTSTRAP) {
       //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
       await userPreferences.loadSeedData();
       await refreshTimeZone(true);
-      await dataManager.initialize([
-        ...cacheableStores,
-        ...localCacheableStores
-      ]);
+      await dataManager.refreshApp();
     }
   }
   /**
    * Sets up the app for the first time when the app is loaded.
    *
-   * Note: Later operations rely on earlier onces. So the order of operations is important.
+   * Note: The order of operations is important as later operations rely on earlier ones.
    */
   function bootup() {
     setLaunchContext();
+    dataManager.loadStores([...cacheableStores, ...localCacheableStores]);
     addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
     checkForEnvironmentChange();
     refreshTimeZone();
-    setAppMenuDefaults();
-  }
-  function setAppMenuDefaults() {
-    appMenuStore.setDefaults($appStore.product, defaultAppMenu);
-  }
-  function initializeServiceWorker() {
-    if (!$context.isEmbed) {
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/worker.js");
+    appMenuStore.setDefaults(defaultAppMenu);
+
+    function runCurrentTime() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        tick();
+        $currentTime = new Date();
+      }, 1000);
+    }
+    function initializeServiceWorker() {
+      if (!$context.isEmbed) {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("/worker.js");
+        }
       }
     }
   }
   async function parseEmbedToken() {
     const token = $page.url?.searchParams?.get("token");
-    const isSignup = $page.url?.searchParams?.get("signup");
     if (token) {
-      await account.embedOAuthSignin(token, isSignup === "true" ?? false);
+      await account.embedOAuthSignin(token);
     }
   }
+  /**
+   * Initializes the app with necessary data.
+   *
+   * Note: The order of operations is important as later operations rely on earlier ones.
+   * @param isLiteMode
+   */
   async function initializeData(isLiteMode: boolean = false) {
     if (!isLiteMode) {
-      //todo - check if the saved timezone is different from current user timezone
-      try {
-        const appData = await new Persistence().fetchAppData();
-        if (!appData) {
-          appStore.gotoErrorPage("App data not found");
-        }
-        appStore.loadAppData(appData);
-      } catch (e) {
-        logger.logError(e);
-        appStore.gotoErrorPage(e);
-      }
+      await refreshAppStaticData();
     }
     initActions(isLiteMode);
-    if ($account.isLoggedIn)
-      await dataManager.initialize(
-        [...cacheableStores, ...localCacheableStores],
-        isLiteMode
-      );
+    if ($account.isLoggedIn && !isLiteMode) {
+      await dataManager.refreshApp();
+    } else {
+      await account.logGuest();
+    }
     if (isLiteMode) return;
     if (
       !excludedPathsForRedirectionCheck.includes(
@@ -205,23 +194,34 @@
         else await account.ping();
       }
     }
-  }
 
-  function initActions(isSheet?: boolean) {
-    const modifiedGlobalActions = globalActions.filter(
-      (x) => !localActions.some((y) => y.action === x.action)
-    );
-    let actions = [...modifiedGlobalActions, ...localActions];
-    if (isSheet) appStore.initActionsForSheet(actions);
-    else
-      appStore.initActions(actions, getSettingsAsModal(), getSettingsAsPages());
-  }
-  function runCurrentTime() {
-    clearInterval(timer);
-    timer = setInterval(() => {
-      tick();
-      $currentTime = new Date();
-    }, 1000);
+    async function refreshAppStaticData() {
+      //todo - check if the saved timezone is different from current user timezone
+      try {
+        const appData = await new Persistence().fetchAppData();
+        if (!appData) {
+          appStore.gotoErrorPage("App data not found");
+        }
+        appStore.loadAppData(appData);
+      } catch (e) {
+        logger.logError(e);
+        appStore.gotoErrorPage(e);
+      }
+    }
+
+    function initActions(isSheet?: boolean) {
+      const modifiedGlobalActions = globalActions.filter(
+        (x) => !localActions.some((y) => y.action === x.action)
+      );
+      let actions = [...modifiedGlobalActions, ...localActions];
+      if (isSheet) appStore.initActionsForSheet(actions);
+      else
+        appStore.initActions(
+          actions,
+          getSettingsAsModal(),
+          getSettingsAsPages()
+        );
+    }
   }
   /**
    * Sets the launch context of the app. This includes the product, debug mode, embed mode, touch device, protocol, and OS.
@@ -275,6 +275,7 @@
     const envCachedOnMachine = localStorage.getItem("env");
     if ($appStore.env !== envCachedOnMachine) {
       localStorage.setItem("env", $appStore.env);
+      console.log("environment changed");
       account.signOut();
     }
   }

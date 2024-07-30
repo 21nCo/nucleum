@@ -1,43 +1,39 @@
 import { get } from "svelte/store";
-import { Item } from "$lib/client/types/item.enum";
-import type { IProperty } from "$lib/client/types/memotron/type.type";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   NodeType,
-  type LinkThumbnail,
-  type INodeCapture,
   LinkType,
   type INodeItemCaptured
-} from "$lib/client/types/memotron/node.type";
+} from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
   type ICaptureStore,
   type FileDetails
-} from "$lib/client/types/memotron/capture.type";
+} from "$lib/client/products/memotron/capture/capture.type";
 import { AlertType } from "$lib/client/types/notification.type";
-import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
-import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
-import { resolvePropertyDefaultValue } from "../common/properties/property.utils";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { generateUID } from "$lib/client/utils/utils";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { prefixTable } from "$lib/client/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
-import { KeyValueStore } from "$lib/client/stores/kv.store";
+import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { logger } from "$lib/client/stores/log.store";
+import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
+import { resolveResourceType } from "../memotron.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
-  const blockId = prefixTable(generateUID(), Item.node);
+  const blockId = prefixTable(generateUID(), Resource.node);
   return {
     captureType: CaptureType.MARKDOWN,
     refreshId: new Date().getTime(),
-    type: null,
     label: "",
     properties: [],
     fileDetails: undefined,
-    directLinks: [],
+    links: [],
     avatar: undefined,
     childrenWithStructure: [],
     rootStructure: [],
@@ -53,26 +49,10 @@ function generateSeedStore(): ICaptureStore {
   };
 }
 
-/**
- * Filters properties that are marked for capture
- * @param properties
- * @returns
- */
-function resolvePropertiesForCapture(properties: IProperty[]) {
-  if (!isValidArrayWithData(properties)) return [];
-  return properties
-    .filter((item: IProperty) => {
-      return item.isShowOnCapture;
-    })
-    .map((y) => {
-      return { id: y.id, value: resolvePropertyDefaultValue(y) };
-    });
-}
-
 class CaptureStore extends KeyValueStore<ICaptureStore> {
   constructor() {
     super(
-      Item.capture,
+      Resource.capture,
       { ...generateSeedStore() },
       {
         priorityRefreshOnAppAppear: true,
@@ -91,38 +71,39 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     if (!data) return;
     const val = {
       ...data,
-      id: Item.capture,
+      id: Resource.capture,
       refreshId: new Date().getTime()
     };
     this.modify(val, { isPersist: false });
   }
-  //TODO - delegate type fetch operation to typeStore and remove SurrealDatabase dependency
   async onTypeSelect(val: CaptureType | string) {
-    if (!val.startsWith("type:")) return;
-    const type = await get(dataManager).cacheSource.dexie.type.get(val);
+    logger.log({ context: "onTypeSelect", val });
+    if (!val.startsWith(Resource.collection)) return;
+    const dexie = get(dataManager).cacheSource.dexie;
+    const type = await dexie.collection.get(val);
     if (!type) return;
     this.update((store: ICaptureStore) => {
-      store.type = type;
-      store.properties = resolvePropertiesForCapture(store.type.properties);
+      store.links = [
+        ...(store.links ?? []),
+        {
+          from: "root",
+          to: type.id,
+          linkType: LinkType.DIRECT,
+          toType: MemotronResourceType.TYPED_COLLECTION
+        }
+      ];
       return store;
-    });
-    const db = new SurrealDatabase();
-    db.executeReadFn("return fn::memotron::type::fetch($id)", {
-      id: type.id
-    }).then((res) => {
-      const result = interceptSurrealResponse(res);
-      if (!isValidArrayWithData(result)) return;
-      this.update((store: ICaptureStore) => {
-        store.type = result[0];
-        store.properties = resolvePropertiesForCapture(store.type.properties);
-        return store;
-      });
     });
   }
   addMentionLink(from: string, to: string) {
     this.update((val) => {
       val.links = val.links ?? [];
-      val.links.push({ from, to, linkType: LinkType.MENTION });
+      val.links.push({
+        from,
+        to,
+        linkType: LinkType.MENTION,
+        toType: undefined
+      });
       return val;
     });
   }
@@ -134,16 +115,25 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return val;
     });
   }
-  directLink(item: LinkThumbnail) {
+  directLink(item: any) {
+    const toType = resolveResourceType(item);
+    console.log("directLink", { item, toType });
     this.update((val) => {
-      val.directLinks = val.directLinks ?? [];
-      val.directLinks.push({ ...item, linkType: LinkType.DIRECT });
+      val.links = [
+        ...(val.links ?? []),
+        {
+          from: "root",
+          to: item.id,
+          linkType: LinkType.DIRECT,
+          toType
+        }
+      ];
       return val;
     });
   }
   removeDLink(id: string) {
     this.update((val) => {
-      val.directLinks = val.directLinks?.filter((link) => link.id !== id);
+      val.links = val.links?.filter((link) => link.to !== id);
       return val;
     });
   }
@@ -160,30 +150,19 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     //TODO - extract nodes from markdown blocks and save
     const metadata = await resolveNodeCaptureMetadata();
     console.log("capture store", { val, metadata });
-    const id = prefixTable(generateUID(), Item.node);
+    const id = prefixTable(generateUID(), Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",
       properties: val.properties,
-      type: val.type?.id,
       body: "",
-      contentType:
-        val.captureType === CaptureType.AUDIO
-          ? NodeType.AUDIO
-          : val.captureType === CaptureType.CAMERA
-            ? NodeType.IMAGE
-            : val.captureType === CaptureType.MARKDOWN
-              ? NodeType.NODULAR_MARKDOWN
-              : val.captureType.includes("type:")
-                ? NodeType.NODULAR_MARKDOWN
-                : NodeType.SIMPLE_TEXT,
+      contentType: getContentTypeFromFileDetails(val?.fileDetails!),
       metadata,
       links: [
-        ...(val.directLinks?.map((link) => {
-          return { from: id, to: link.id, linkType: link.linkType };
-        }) ?? []),
-        ...(val.links ?? [])
-      ]
+        ...(val.links ? val.links.filter((x) => x.from === "root") : [])
+      ].map((x) => {
+        return { ...x, from: id };
+      })
     };
     let remainingResources: INodeItemCaptured[] = [];
     if (val.fileDetails) {
@@ -198,6 +177,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       );
       console.log("save file:", { result });
       if (result) {
+        delete val.fileDetails.pdfAnnotations;
         root = {
           ...root,
           body: {
@@ -228,27 +208,68 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         };
       });
     }
-    let nodeCapture: INodeCapture = {
-      resources: [root, ...remainingResources]
-    };
-    console.log({ nodeToBeSaved: nodeCapture });
-    let result = await nodeStore.createNode(nodeCapture);
-    if (result) {
-      this.modify({ ...generateSeedStore() }, { isPersist: false });
-      toasts.trigger({
-        id: generateUID(),
-        type: AlertType.SUCCESS,
-        title: "Saved",
-        message: "Node saved successfully"
-      });
-      return result;
-    } else {
+    if (root.contentType == NodeType.PDF)
+      root = { ...root, url: root.body.url };
+
+    let result: any = await nodeStore.createNode([root, ...remainingResources]);
+
+    if (!result) {
       toasts.trigger({
         id: generateUID(),
         type: AlertType.ERROR,
         message: "Error saving"
       });
       return null;
+    }
+    if (
+      root.contentType == NodeType.PDF &&
+      val.fileDetails?.pdfAnnotations?.length != 0
+    ) {
+      let pdfAnnotations = val.fileDetails?.pdfAnnotations;
+      const parentId = root.id;
+      pdfAnnotations = pdfAnnotations?.map((annot) => {
+        const { id, ...remainingItems } = annot;
+        return {
+          body: { ...remainingItems },
+          contentType: NodeType.PDF_CLIP,
+          parent: parentId
+        };
+      });
+      //TODO - test nodeStore.create method
+      // await surrealPDF.saveAllClips(pdfAnnotations!);
+      nodeStore.create(pdfAnnotations);
+    }
+    this.modify({ ...generateSeedStore() }, { isPersist: false });
+    toasts.trigger({
+      id: generateUID(),
+      type: AlertType.SUCCESS,
+      title: "Saved",
+      message: "Node saved successfully"
+    });
+    return result;
+
+    function getContentTypeFromFileDetails(fileDetails: FileDetails) {
+      if (val.captureType === CaptureType.UPLOAD) {
+        const contentType = fileDetails.type;
+        if (contentType.includes("image")) return NodeType.IMAGE;
+        else if (contentType.includes("audio")) return NodeType.AUDIO;
+        else if (contentType.includes("video")) return NodeType.VIDEO;
+        else if (contentType.includes("pdf")) return NodeType.PDF;
+        else return NodeType.FILE;
+      } else if (val.captureType.includes("collection:")) {
+        //TODO - based on content template
+        return NodeType.NODULAR_MARKDOWN;
+      }
+      switch (val.captureType) {
+        case CaptureType.MARKDOWN:
+          return NodeType.NODULAR_MARKDOWN;
+        case CaptureType.AUDIO:
+          return NodeType.AUDIO;
+        case CaptureType.CAMERA:
+          return NodeType.IMAGE;
+        default:
+          return NodeType.SIMPLE_TEXT;
+      }
     }
   }
 }

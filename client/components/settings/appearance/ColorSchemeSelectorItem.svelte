@@ -1,7 +1,7 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
   import { AppSkin, type ColorScheme } from "$lib/client/types/appearance.type";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   export let colorScheme: ColorScheme;
   export let isActive: boolean;

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { INodeProperty } from "$lib/client/types/memotron/node.type";
-  import PropertiesListView from "../common/properties/PropertiesListView.svelte";
-  import { mapPropertyValues } from "../common/properties/property.utils";
+  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
+  import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
+  import { mapPropertyValues } from "../collection/properties/property.utils";
   import type { IActiveNodeStore } from "./node.store";
 
   export let node: IActiveNodeStore;
@@ -31,5 +31,6 @@
     bind:properties={nodeProperties}
     type={$node.type}
     on:change={propagateChanges}
+    context="nodepage"
   />
 {/if}

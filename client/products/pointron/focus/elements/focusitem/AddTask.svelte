@@ -27,7 +27,7 @@
 
 <div class="flex items-center gap-2 w-full px-4 {goalId ? 'h-12' : 'h-14'}">
   <div class="flex justify-center items-center">
-    <Check isChecked={false} />
+    <Check isChecked={false} size={Size.sm} />
   </div>
   <TextInput
     on:enter={save}

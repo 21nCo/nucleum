@@ -1,10 +1,22 @@
-import { ClipperExtensionEvent, type TextHighlightContent, type VideoTimestampContent } from "$lib/client/types/memotron/clip.type";
+import {
+  ClipperExtensionEvent,
+  type TextHighlightContent,
+  type VideoTimestampContent
+} from "$lib/client/products/memotron/common/clip.type";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { Surreal } from "surrealdb.js";
 import type { TabData } from "$lib/client/types/extension.type";
-import { interceptSurrealResponse, resolveCurrentTabData, sendMessageToContentScript } from "$lib/client/utils/extension.utils";
-
-
+import {
+  interceptSurrealResponse,
+  resolveCurrentTabData,
+  sendMessageToContentScript
+} from "$lib/client/utils/extension.utils";
+import {
+  kindleSyncState,
+  type Book,
+  type BookNode,
+  type HighlightNode
+} from "./contentScripts/KindleHighlights.types";
 
 /**
  * TODO- Delegate all calls to tidy lib SurrealDatabase once token handshake is complete.
@@ -34,9 +46,7 @@ export class ClipperPersistence {
     });
   };
 
-
   connect() {
-
     // this.db.connect(this.url, {
     //   namespace: this.namespace,
     //   database: this.database,
@@ -47,7 +57,6 @@ export class ClipperPersistence {
     //     password: this.password,
     //   },
     // });
-
     // chrome.storage.sync.get("token", function (data) {
     //   console.log("Token retrieved is: " + data.token);
     //   this.db.authenticate(data.token);
@@ -90,6 +99,9 @@ export class ClipperPersistence {
   /**
    * Can be triggered from either content script or side bar.
    * If triggered from content script, tab data will be present in the message.
+   *
+   * TODO - save web page node via NodeStore - to update nodes local cache
+   *
    * @returns
    */
   async saveWebpage(tabData?: TabData) {
@@ -106,9 +118,15 @@ export class ClipperPersistence {
       if (result?.id) {
         chrome.storage.local.set({ node: { id: result.id } });
         if (isFromSidepanel) {
-          sendMessageToContentScript({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.id });
+          sendMessageToContentScript({
+            event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
+            node: result.id
+          });
         } else {
-          chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.id });
+          chrome.runtime.sendMessage({
+            event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
+            node: result.id
+          });
         }
       }
       return result;
@@ -145,7 +163,10 @@ export class ClipperPersistence {
       console.log("fetch page ", { result });
       if (result && result.page) {
         chrome.storage.local.set({ node: { id: result.page.id } });
-        chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.page.id });
+        chrome.runtime.sendMessage({
+          event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
+          node: result.page.id
+        });
       }
       return result;
     } catch (e) {
@@ -153,14 +174,19 @@ export class ClipperPersistence {
     }
   }
 
-
   /**
    * Delegated from content scripts. tabData is passed from content script to save the web page if the web page is not saved already.
+   *
+   * TODO - save clip via NodeStore - to update nodes local cache
+   *
    * @param content
    * @param tabData
    * @returns
    */
-  async saveClip(content: TextHighlightContent | VideoTimestampContent, tabData?: TabData) {
+  async saveClip(
+    content: TextHighlightContent | VideoTimestampContent,
+    tabData?: TabData
+  ) {
     try {
       let id = "";
       const nodeData = await chrome.storage.local.get("node");
@@ -169,13 +195,17 @@ export class ClipperPersistence {
       } else {
         id = tabData.url;
       }
-      const query = "return fn::memotron::clipper::saveClip($id, $content, $tabData)";
+      const query =
+        "return fn::memotron::clipper::saveClip($id, $content, $tabData)";
       const params = { id, content, tabData };
       const result = await this.queryUsingHttp(query, params);
       console.log("save clip", { result });
-      if (result && result.parent) {
+      if (result?.parent) {
         chrome.storage.local.set({ node: { id: result.parent } });
-        chrome.runtime.sendMessage({ event: ClipperExtensionEvent.PAGE_SAVING_STATUS, node: result.parent });
+        chrome.runtime.sendMessage({
+          event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
+          node: result.parent
+        });
       }
       return result;
     } catch (e) {
@@ -188,7 +218,8 @@ export class ClipperPersistence {
   */
   async saveToolbarState(toolbarState: any) {
     try {
-      const query = "return UPDATE kv:clipperToolbarState SET state = $toolbarState;";
+      const query =
+        "return UPDATE kv:clipperToolbarState SET state = $toolbarState;";
       const result = await this.queryUsingHttp(query, { toolbarState });
       console.log("save toolbar state", { result });
       return result;
@@ -206,7 +237,8 @@ export class ClipperPersistence {
    */
   async fetchYoutubeClips(videoId) {
     try {
-      const query = "SELECT timestamp FROM youtubeClips WHERE videoId = $videoId;";
+      const query =
+        "SELECT timestamp FROM youtubeClips WHERE videoId = $videoId;";
       const params = { videoId: videoId };
       const result = await this.db.query(query, params);
       if (result[0].length > 0) {
@@ -240,52 +272,106 @@ export class ClipperPersistence {
 
   saveMultimedia(element, color) {
     const multimediaSrc = element.src;
-    fetch(multimediaSrc).then(response => response.blob()).then(blob => {
-      // uploadFileToServer(blob, multimediaSrc, color);
-    });
+    fetch(multimediaSrc)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // uploadFileToServer(blob, multimediaSrc, color);
+      });
+  }
+  async saveAllBooks(books: BookNode[]) {
+    try {
+      const query = "INSERT INTO node $books";
+      const params = { books };
+      const response = await this.queryUsingHttp(query, params);
+      return response;
+    } catch (e) {
+      console.error("Error saving books:", e);
+    }
   }
 
+  async deleteAllBooksAndHiglights() {
+    try {
+      const query = `DELETE node WHERE contentType='KINDLE_NOTES&HIGHLIGHTS_BOOK' OR contentType='KINDLE_NOTE&HIGHLIGHT'`;
+      const params = {};
+      const response = await this.queryUsingHttp(query, params);
+      await this.updateKindleSyncState(kindleSyncState.Sync);
+      return interceptSurrealResponse(response);
+    } catch (e) {
+      console.error("Error saving books:", e);
+    }
+  }
+  async saveHighlightsAndNotes(nodes: HighlightNode[]) {
+    try {
+      const query = `INSERT INTO node $nodes`;
+      const params = { nodes };
+      const response = await this.queryUsingHttp(query, params);
+      return interceptSurrealResponse(response);
+    } catch (e) {
+      console.error("Error saving books:", e);
+    }
+  }
+
+  async updateKindleSyncState(state: any) {
+    try {
+      const query =
+        "UPDATE kv:clipperToolbarState SET kindleSyncState=$state ;";
+      const result = await this.queryUsingHttp(query, { state });
+      return result[0].kindleSyncState;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
+  async getKindleSyncState() {
+    try {
+      const query = "SELECT kindleSyncState FROM kv:clipperToolbarState;";
+      const result = await this.queryUsingHttp(query, {});
+      return result[0].kindleSyncState;
+    } catch (e) {
+      console.error("ERROR", e);
+    }
+  }
   /**
    * TODO - Complete history logging - only once the user setting is implemented.
    */
   async saveLog(userId, url, currentTime, logSwitch, deviceInfo) {
-    const domain = new URL(url).hostname;
     return;
+    const domain = new URL(url).hostname;
     try {
       if (logSwitch) {
-        await this.db.create('History', {
+        await this.db.create("History", {
           userId: userId,
           Domain: domain,
           URL: url,
           StartTime: currentTime,
           EndTime: null,
-          DeviceInfo: deviceInfo,
+          DeviceInfo: deviceInfo
         });
       } else {
         // Update the last record with endTime.
         const lastRecord = await this.db.query(
-          'SELECT id, StartTime FROM type::table($tb) ORDER BY StartTime DESC LIMIT 1;',
-          { tb: 'History' }
+          "SELECT id, StartTime FROM type::table($tb) ORDER BY StartTime DESC LIMIT 1;",
+          { tb: "History" }
         );
         const lastRecordId = lastRecord[0][0].id;
         console.log(lastRecordId);
         await this.db.query(
-          'UPDATE History SET EndTime = $currentTime WHERE id = $lastRecordId;', {
-          currentTime: currentTime,
-          lastRecordId: lastRecordId
-        }
+          "UPDATE History SET EndTime = $currentTime WHERE id = $lastRecordId;",
+          {
+            currentTime: currentTime,
+            lastRecordId: lastRecordId
+          }
         );
-        await this.db.create('History', {
+        await this.db.create("History", {
           userId: userId,
           Domain: domain,
           URL: url,
           StartTime: currentTime,
           EndTime: null,
-          DeviceInfo: deviceInfo,
+          DeviceInfo: deviceInfo
         });
       }
     } catch (e) {
-      console.error('ERROR', e);
+      console.error("ERROR", e);
     }
   }
 }

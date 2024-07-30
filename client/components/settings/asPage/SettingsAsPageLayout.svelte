@@ -8,7 +8,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import ProfileCpSection from "../account/ProfileCPSection.svelte";
   import { page } from "$app/stores";
-  import { isValidArray, sortArrayByOrder } from "$lib/client/utils/obj.utils";
+  import { isValidArray, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import view from "$lib/client/stores/view.store";

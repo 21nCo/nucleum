@@ -1,10 +1,10 @@
-import type { IMarkdown } from "$lib/client/types/memotron/md.type";
-import { truncateString } from "$lib/client/utils/text.utils";
+import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+import { truncateString } from "$lib/shared/utils/text.utils";
 import {
   NodeType,
-  type NodeMetadataCapturedAtClient
-} from "$lib/client/types/memotron/node.type";
-import type { ClipContent } from "$lib/client/types/memotron/clip.type";
+  type INodeMetadata
+} from "$lib/client/products/memotron/node/node.type";
+import type { ClipContent } from "$lib/client/products/memotron/common/clip.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 
 export function contentPreview(body: IMarkdown | ClipContent) {
@@ -28,6 +28,18 @@ export function contentPreview(body: IMarkdown | ClipContent) {
     typeof body.text === "string"
   ) {
     return truncateString(body.text, 100);
+  } else if (
+    typeof body === "object" &&
+    "comment" in body &&
+    typeof body.comment === "string"
+  ) {
+    return truncateString(body.comment, 100);
+  } else if (
+    typeof body === "object" &&
+    "selectedText" in body &&
+    typeof body.selectedText === "string"
+  ) {
+    return truncateString(body.selectedText, 100);
   } else if (typeof body === "string") {
     return truncateString(body, 100);
   }
@@ -35,7 +47,7 @@ export function contentPreview(body: IMarkdown | ClipContent) {
 }
 
 export async function resolveNodeCaptureMetadata() {
-  let metadata: NodeMetadataCapturedAtClient = {};
+  let metadata: INodeMetadata = {};
   let geoLocation: GeolocationPosition | undefined;
   try {
     geoLocation = await getGeoLocation();

@@ -16,20 +16,20 @@
 </script>
 
 <div
-  class={cn("flex justify-between w-full rounded-md gap-4 p-4 text-b2", {
+  class={cn("flex w-full rounded-md gap-4 p-4 text-b2", {
     "bg-aps3": type === InfoTextType.INFO,
     "bg-ars2": type === InfoTextType.ERROR,
     "bg-ass3": type !== InfoTextType.INFO && type !== InfoTextType.ERROR
   })}
 >
-  <span class="flex gap-2 items-center">
-    <Icon
-      icon={type === InfoTextType.ERROR ? "help" : type}
-      class={cn({
-        "stroke-ars1": type === InfoTextType.ERROR,
-        "stroke-aps1": type === InfoTextType.INFO
-      })}
-    />
+  <Icon
+    icon={type === InfoTextType.ERROR ? "help" : type}
+    class={cn({
+      "stroke-ars1": type === InfoTextType.ERROR,
+      "stroke-fgs1": type === InfoTextType.INFO
+    })}
+  />
+  <div class="flex flex-col items-start gap-2">
     {#if content}
       <div class="text-left">
         {@html renderMdAsHtml(content)}
@@ -37,23 +37,23 @@
     {:else}
       <slot />
     {/if}
-  </span>
-  {#if action}
-    <div class="text-b3">
-      {#if action.action}
-        <Link label={action.label ?? "Learn more"} href={action.action} />
-      {:else}
-        <Button
-          size={action.size ?? Size.xs}
-          label={action.label}
-          type={type === InfoTextType.ERROR
-            ? ButtonVariant.DANGER
-            : ButtonVariant.PRIMARY}
-          on:click={() => {
-            if (action.callback) action.callback();
-          }}
-        />
-      {/if}
-    </div>
-  {/if}
+    {#if action}
+      <div class="text-b3">
+        {#if action.action}
+          <Link label={action.label ?? "Learn more"} href={action.action} />
+        {:else}
+          <Button
+            size={action.size ?? Size.xs}
+            label={action.label}
+            type={type === InfoTextType.ERROR
+              ? ButtonVariant.DANGER
+              : ButtonVariant.PRIMARY}
+            on:click={() => {
+              if (action.callback) action.callback();
+            }}
+          />
+        {/if}
+      </div>
+    {/if}
+  </div>
 </div>

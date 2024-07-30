@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   export let value: number;

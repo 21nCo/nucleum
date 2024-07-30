@@ -73,6 +73,7 @@
     isSpanToTriggerWidth: true,
     isPreventDefault: true,
     placement: Position.BottomCenter,
+    isUseAbsolutePositioning: true,
     ...popoverOptions
   }}
   {label}
@@ -91,6 +92,8 @@
     on:keydown
     on:keyup|stopPropagation={onKeyup}
     on:blur
+    on:click|stopPropagation
+    on:mouseup|stopPropagation
     on:blur={() => {
       isFocused = false;
       dispatch("blur");

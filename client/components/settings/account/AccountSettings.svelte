@@ -5,7 +5,7 @@
   import {
     frameEmailFromParts,
     isValidString
-  } from "$lib/client/utils/text.utils";
+  } from "$lib/shared/utils/text.utils";
   import type { EmailParts } from "$lib/client/types/account.type";
   import { ButtonVariant } from "$lib/client/types/button.type";
   let nickName = "";

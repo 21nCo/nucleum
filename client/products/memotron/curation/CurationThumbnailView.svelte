@@ -2,10 +2,10 @@
   import {
     CurationType,
     type CurationThumbnail
-  } from "$lib/client/types/memotron/curation.type";
+  } from "$lib/client/products/memotron/curation/curation.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let curation: CurationThumbnail;

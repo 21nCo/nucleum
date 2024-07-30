@@ -3,7 +3,7 @@ import { get } from "svelte/store";
 import {
   isArrayWithSameValue,
   isValidArrayWithData
-} from "$lib/client/utils/obj.utils";
+} from "$lib/shared/utils/obj.utils";
 import type {
   ICalendarHeatMapDataProvider,
   CalendarHeatmapOptions,

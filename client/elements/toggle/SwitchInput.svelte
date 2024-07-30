@@ -1,44 +1,42 @@
 <script lang="ts">
   import { Orientation } from "$lib/client/types/direction.enum";
-  import type { FormLabelInfoTooltip } from "$lib/client/types/text.type";
   import { Size } from "$lib/client/types/size.enum";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
   import Switch from "./Switch.svelte";
   import InputBaseElement from "../InputBaseElement.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let label: InputLabel;
   export let style: InputStyle = InputStyle.PLAIN;
   export let checked: boolean = false;
-  /**
-   * @deprecated
-   */
-  export let width: string | undefined = undefined;
   export let size: Size = Size.md;
-  export let isExpanded: boolean = true;
-  export let info: FormLabelInfoTooltip | undefined = undefined;
+  export let isExpanded: boolean = false;
   if (!label.orientation) {
     label = {
       ...label,
       orientation: Orientation.Horizontal
     };
   }
+  $: console.log({ isExpanded, style });
 </script>
 
-{#if (label.orientation === Orientation.Horizontal || !label.orientation) && !isExpanded}
-  <div
-    class={cn(
-      "flex min-w-fit",
-      {
-        "gap-3": size === Size.sm,
-        "gap-4": size === Size.md
-      },
-      width ? width : ""
-    )}
+{#if !isExpanded && (label.orientation === Orientation.Horizontal || !label.orientation)}
+  <button
+    class={cn("flex justify-center items-center min-w-32", {
+      "gap-3": size === Size.sm,
+      "gap-4": size === Size.md,
+      "border border-brs3 rounded-full py-1": style === InputStyle.BORDERED
+    })}
+    on:click={() => {
+      checked = !checked;
+      dispatch("change", checked);
+    }}
   >
-    <FormControlLabel props={label} />
-    <Switch bind:on={checked} {size} />
-  </div>
+    <Switch bind:on={checked} {size} on:change />
+    <FormControlLabel props={label} isCursorPointer={true} />
+  </button>
 {:else}
   <InputBaseElement {style} {label}>
     <Switch bind:on={checked} {size} on:change />

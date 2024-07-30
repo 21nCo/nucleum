@@ -1,4 +1,4 @@
-import { sortArrayByOrder } from "$lib/client/utils/obj.utils";
+import { sortArrayByOrder } from "$lib/shared/utils/obj.utils";
 import type { FocusItem } from "$lib/client/types/pointron/session.type";
 
 export function transformFocusItems(rawItems: FocusItem[]) {

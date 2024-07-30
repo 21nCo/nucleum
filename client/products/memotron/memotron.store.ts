@@ -1,9 +1,21 @@
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { CurationType } from "$lib/client/types/memotron/curation.type";
-import { headingNodeTypes } from "$lib/client/types/memotron/node.type";
+import {
+  headingNodeTypes,
+  NodeType
+} from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
+import { resolveResourceTypeFromId } from "./memotron.utils";
+import { MemotronResourceType } from "./memotron.type";
+import { ObservableStore } from "$lib/client/stores/client.store";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { isValidString } from "$lib/shared/utils/text.utils";
 
+/**
+ * @deprecated
+ * @param typeId
+ * @returns
+ */
 export function resolveAssociatedType(typeId: string) {
   if (!typeId) return null;
   const tb = get(dataManager).cacheSource.dexie.type;
@@ -63,7 +75,7 @@ export async function searchForLinking(query: string) {
   const collectionsPromise = dexie.collection
     .filter(activeResourceFilter)
     .filter((collection) =>
-      collection.label.toLowerCase().includes(query.toLowerCase())
+      collection.label?.toLowerCase().includes(query.toLowerCase())
     )
     .toArray();
   // return nodesPromise;
@@ -73,8 +85,164 @@ export async function searchForLinking(query: string) {
 }
 
 export async function resolveResource(id: string) {
+  const resourceType = resolveResourceTypeFromId(id);
   const dexie = get(dataManager).cacheSource.dexie;
-  const node = await dexie.node.get(id);
-  if (node) return node;
-  return dexie.curation.get(id);
+  switch (resourceType) {
+    case MemotronResourceType.NODE:
+      return await dexie.node.get(id);
+    case MemotronResourceType.COLLECTION:
+      return await dexie.collection.get(id);
+    default:
+      return null;
+  }
+}
+
+export class SearchStore {
+  resource: Resource = Resource.everything;
+  searchQuery: string = "";
+  isStarFilterSelected: boolean = false;
+  dexie: any;
+  constructor() {
+    this.dexie = get(dataManager).cacheSource.dexie;
+  }
+  levenshteinDistance(a: string, b: string): number {
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+
+    return matrix[b.length][a.length];
+  }
+
+  async refreshNodes() {
+    let query = this.dexie.node
+      .where("contentType")
+      .anyOfIgnoreCase([NodeType.NODULAR_MARKDOWN, ...headingNodeTypes]);
+
+    if (this.resource === Resource.archived) {
+      query = query.and((item) => item.isArchived === true);
+    } else {
+      query = query.and((node) => activeResourceFilter(node));
+    }
+
+    if (this.isStarFilterSelected) {
+      query = query.and((item) => item.isStarred === true);
+    }
+    return query.toArray();
+  }
+
+  async refreshCollections() {
+    let query = this.dexie.collection.where("id").notEqual("");
+
+    if (this.resource === Resource.archived) {
+      query = query.and((item) => item.isArchived === true);
+    } else {
+      query = query.and((node) => activeResourceFilter(node));
+    }
+
+    if (this.isStarFilterSelected) {
+      query = query.and((item) => item.isStarred === true);
+    }
+
+    if (isValidString(this.searchQuery)) {
+      query = query.filter((collection) => {
+        if (!collection.label) return false;
+        const labelValue = collection.label.toLowerCase();
+        const searchValue = this.searchQuery.toLowerCase();
+        if (labelValue.includes(searchValue)) return true;
+        const levenshteinDistanceValue = this.levenshteinDistance(
+          labelValue,
+          searchValue
+        );
+        console.log({ labelValue, searchValue, levenshteinDistanceValue });
+        return levenshteinDistanceValue <= 2;
+      });
+    }
+    return query.toArray();
+  }
+
+  async refresh(params: {
+    resource?: Resource;
+    searchQuery?: string;
+    isStarFilterSelected?: boolean;
+  }) {
+    this.resource = params.resource ?? this.resource;
+    this.searchQuery = params.searchQuery ?? this.searchQuery;
+    this.isStarFilterSelected =
+      params.isStarFilterSelected != undefined
+        ? params.isStarFilterSelected
+        : this.isStarFilterSelected;
+    let data: any[] = [];
+    if (
+      this.resource === Resource.everything ||
+      this.resource === Resource.archived
+    ) {
+      const nodes = await this.refreshNodes();
+      const collections = await this.refreshCollections();
+      data = [...nodes, ...(collections ?? [])];
+    } else if (this.resource === Resource.node) {
+      data = await this.refreshNodes();
+    } else if (this.resource === Resource.collection) {
+      data = (await this.refreshCollections()) ?? [];
+    }
+    //TODO - use sort from library state settings
+    //.reverse().sortBy("interactedAt");
+    return data;
+  }
+
+  private recentNodes() {
+    return this.dexie.node
+      .where("id")
+      .notEqual("")
+      .and((item: any) => activeResourceFilter(item))
+      .toArray();
+  }
+  private recentCollections() {
+    return this.dexie.collection
+      .where("id")
+      .notEqual("")
+      .and((item: any) => activeResourceFilter(item))
+      .toArray();
+  }
+
+  async recents(resource: Resource) {
+    this.resource = resource ?? this.resource;
+    let data: any[] = [];
+    if (
+      this.resource === Resource.everything ||
+      this.resource === Resource.archived
+    ) {
+      const nodes = await this.recentNodes();
+      const collections = await this.recentCollections();
+      // console.log({ nodes, collections });
+      data = [...nodes, ...(collections ?? [])];
+      // data = [...nodes, ...(collections ?? [])].sort(
+      //   (a, b) => b.interactedAt - a.interactedAt
+      // );
+    } else if (this.resource === Resource.node) {
+      data = await this.recentNodes();
+    } else if (this.resource === Resource.collection) {
+      data = (await this.recentCollections()) ?? [];
+    }
+    return data;
+  }
 }

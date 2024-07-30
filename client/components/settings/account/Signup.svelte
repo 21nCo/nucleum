@@ -10,7 +10,7 @@
   import view from "$lib/client/stores/view.store";
   import { postTokenToExtension } from "$lib/client/utils/embed.utils";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import { properCase } from "$lib/client/utils/text.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   import { Action } from "$lib/client/types/action.enum";
   let isSignup = true;
   let message: string | undefined = undefined;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import type { IMarkdown } from "$lib/client/types/memotron/md.type";
+  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
   import { onMount, tick } from "svelte";
   import MarkdownView from "./Markdown.svelte";
   export let md: IMarkdown | undefined = undefined;

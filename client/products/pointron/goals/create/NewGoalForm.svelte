@@ -9,7 +9,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { isValidString } from "$lib/client/utils/text.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   import { newGoal } from "./store";
   function getUsedColors() {
     return [];
@@ -49,12 +49,12 @@
   />
   <SwitchInput
     label={{ label: "Pin goal to quick focus" }}
-    width="w-full"
+    isExpanded={true}
     bind:checked={$newGoal.isPinnedForQuickStart}
   />
   <SwitchInput
     label={{ label: "Mark as favorite" }}
-    width="w-full"
+    isExpanded={true}
     bind:checked={$newGoal.isFavorite}
   />
 </div>

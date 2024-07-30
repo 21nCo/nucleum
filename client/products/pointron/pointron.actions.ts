@@ -25,7 +25,7 @@ import BackgroundMusic from "$lib/client/products/pointron/focus/backgroundMusic
 import { Size } from "$lib/client/types/size.enum";
 import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
 import { get } from "svelte/store";
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import modalEvent from "$lib/client/components/modal/modal.store";
 import {
   toasts,
@@ -472,7 +472,7 @@ export const pointronActions: IAction[] = [
     label: "Pin a goal to quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchItemType: Item.PointGoal,
+      searchItemType: Resource.PointGoal,
       itemLabel: "goal",
       callback: (id: string, label?: string) => {
         console.log("search action selected id:", { id });

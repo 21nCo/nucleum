@@ -26,7 +26,7 @@ stages:
     - git submodule update --init --recursive
     - cd lib/deployment
     - npm install
-    - cd client
+    - cd cdk/client
     - rm -rf node_modules package-lock.json
     - npm install && npm run build
     - cdk deploy --all --require-approval never

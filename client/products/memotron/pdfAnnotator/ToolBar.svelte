@@ -1,7 +1,7 @@
 <script lang="ts">
   import ColorPalette from "$lib/client/elements/colorPicker/colorPalette.svelte";
   import { createEventDispatcher } from "svelte";
-  import { AnnotationType } from "$lib/client/types/memotron/pdfAnnotator.type";
+  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
   // export let options = ["NOTES", "HIGHLIGHT", "UNDERLINE", "STRIKETHROUGH"];
   export let selectedColor = "#FF0000";
   export let style = "";

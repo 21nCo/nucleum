@@ -2,7 +2,7 @@
   import type {
     Clip,
     VideoTimestampContent
-  } from "$lib/client/types/memotron/clip.type";
+  } from "$lib/client/products/memotron/common/clip.type";
 
   export let clip: Clip<VideoTimestampContent>;
 

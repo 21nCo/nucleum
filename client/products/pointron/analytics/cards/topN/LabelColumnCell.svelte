@@ -2,7 +2,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import view from "$lib/client/stores/view.store";
-  import { determineTruncateLength } from "$lib/client/utils/text.utils";
+  import { determineTruncateLength } from "$lib/shared/utils/text.utils";
   import type { TopNCardDataRecord } from "../../analytics.types";
   export let row: TopNCardDataRecord;
 </script>

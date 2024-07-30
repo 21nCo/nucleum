@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { DbRecordWithLabel } from "$lib/client/types/dbrecord.type";
   import { TimeUnit } from "$lib/client/types/time.type";
   import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -75,7 +74,7 @@
   }
   function onsearch(searchQuery: string) {
     console.log({ value: searchQuery });
-    let suggestions: DbRecordWithLabel[] = [];
+    let suggestions: { label: string; value: number; unit: TimeUnit }[] = [];
     if (searchQuery.length > 0) {
       suggestions = generateSuggestions(searchQuery);
     }

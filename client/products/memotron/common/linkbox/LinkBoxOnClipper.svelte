@@ -25,7 +25,7 @@
         : Position.BottomCenter
   }}
   on:select={(e) => {
-    dispatch("link", e.detail);
+    if (e.detail?.item?.id) dispatch("link", e.detail?.item?.id);
     link = "";
   }}
   searchCallback={onsearch}

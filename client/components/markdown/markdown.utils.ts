@@ -3,13 +3,13 @@ import type {
   IMarkdownStore,
   ListBlockWithChildren,
   IMarkdown
-} from "$lib/client/types/memotron/md.type";
+} from "$lib/client/components/markdown/md.type";
 import type {
   ListChild,
   ListContent,
   INode
-} from "$lib/client/types/memotron/node.type";
-import { deepCopy } from "$lib/client/utils/obj.utils";
+} from "$lib/client/products/memotron/node/node.type";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.

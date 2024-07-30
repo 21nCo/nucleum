@@ -18,3 +18,8 @@ export type IContextMenuItem = ISelectItem & {
 };
 
 export type ISelectValue = string | number | boolean;
+
+export type IResourceSwitchItem = ISelectItem & {
+  isHidePinAction?: boolean;
+  isPinned?: boolean;
+};

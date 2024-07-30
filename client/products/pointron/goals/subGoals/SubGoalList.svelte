@@ -4,14 +4,14 @@
   import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import AddNewSubGoal from "./AddNewSubGoal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 
   let isArchivedGoalsVisible: boolean = false;
 
@@ -30,7 +30,7 @@
       <div class="flex flex-col w-full">
         {#each $currentGoal.subGoals.filter((item) => !item.isArchived && item) as item}
           <SubGoalListItem
-            on:click={() => appStore.gotoResource(Item.goal, item.id)}
+            on:click={() => appStore.gotoResource(Resource.goal, item.id)}
             >{item.label}
           </SubGoalListItem>
         {/each}
@@ -44,7 +44,7 @@
           />
           {#each archivedSubgoals as item}
             <SubGoalListItem
-              on:click={() => appStore.gotoResource(Item.goal, item.id)}
+              on:click={() => appStore.gotoResource(Resource.goal, item.id)}
               >{item.label}
             </SubGoalListItem>
           {/each}
@@ -79,7 +79,7 @@
     <div class="flex flex-col w-full">
       {#each $currentGoal.subGoals.filter((item) => item.isArchived && item) as item}
         <SubGoalListItem
-          on:click={() => appStore.gotoResource(Item.goal, item.id)}
+          on:click={() => appStore.gotoResource(Resource.goal, item.id)}
           >{item.label}
         </SubGoalListItem>
       {/each}

@@ -12,11 +12,11 @@
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { goalStore } from "./goal.store";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Item } from "$lib/client/types/item.enum";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import TreeMap from "$lib/client/components/treeMap/TreeMap.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
@@ -49,7 +49,7 @@
   }
 
   function refresh() {
-    dataManager.refreshPage([Item.PointGoal, Item.PointTag]);
+    dataManager.refreshPage([Resource.PointGoal, Resource.PointTag]);
   }
   function filter() {
     goalStore.filter({

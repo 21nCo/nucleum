@@ -2,11 +2,11 @@
   import {
     BlockContext,
     type IBlock
-  } from "$lib/client/types/memotron/md.type";
+  } from "$lib/client/components/markdown/md.type";
   import {
     NodeType,
     TextNodeTypeList
-  } from "$lib/client/types/memotron/node.type";
+  } from "$lib/client/products/memotron/node/node.type";
   import type { MdStoreType } from "../markdown.store";
   import ListContent from "./ListContent.svelte";
   import TextContent from "./TextContent.svelte";

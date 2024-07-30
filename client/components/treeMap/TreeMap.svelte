@@ -1,7 +1,7 @@
 <script lang="ts">
   import Divider from "$lib/client/elements/Divider.svelte";
   import type { TreeMapContent } from "$lib/client/types/treeMap.type";
-  import { isValidArrayWithData } from "$lib/client/utils/obj.utils";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import TreeMapItem from "./TreeMapItem.svelte";
   export let items: string[] = [];
   export let contentCallback: (id: string) => TreeMapContent;

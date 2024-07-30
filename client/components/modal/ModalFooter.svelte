@@ -25,7 +25,7 @@
   }
 </script>
 
-<div class="popover-footer flex gap-2 justify-center p-4">
+<div class="popover-footer flex gap-2 justify-center p-2">
   {#if primaryAction}
     <Button
       type={primaryAction.variant ?? "primary"}

@@ -88,17 +88,17 @@ export function formatSecondsToTimeInDecimals(
 
 export function timePeriodLabel(period: TimePeriod) {
   const { scale, value } = period;
-  if (typeof value.param != "number") return;
   if (
     value.type === TimePeriodType.RELATIVE ||
     value.type === TimePeriodType.UPPER_RELATIVE
   ) {
+    if (typeof value.param != "number") return;
     if (value.param === 0) {
       if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
         return "Today";
       else if (value.type === TimePeriodType.UPPER_RELATIVE) {
-        if (scale === TimeScale.DAYS) return "This Month";
-        else if (scale === TimeScale.MONTHS) return "This Year";
+        if (scale === TimeScale.DAYS) return "Days of This Month";
+        else if (scale === TimeScale.MONTHS) return "Months of This Year";
       } else return `This ${scale.slice(0, scale.length - 1).toLowerCase()}`;
     } else if (value.param === 1) {
       if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
@@ -108,14 +108,23 @@ export function timePeriodLabel(period: TimePeriod) {
       if (scale === TimeScale.DAYS && value.type === TimePeriodType.RELATIVE)
         return "Yesterday";
       else if (value.type === TimePeriodType.UPPER_RELATIVE) {
-        if (scale === TimeScale.DAYS) return "Last Month";
-        else if (scale === TimeScale.MONTHS) return "Last Year";
+        if (scale === TimeScale.DAYS) return "Days of Last Month";
+        else if (scale === TimeScale.MONTHS) return "Months of Last Year";
       } else return `Last ${scale.toLowerCase().slice(0, scale.length - 1)}`;
     } else if (value.param < 0) {
       return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;
     } else if (value.param > 0) {
       return `Next ${value} ${scale.toLowerCase()}`;
     }
+  } else if (value.type === TimePeriodType.ABSOLUTE) {
+    let start = value.param.start.toString();
+    let end = value.param.end.toString();
+    if (/[a-zA-Z]/.test(start)) {
+      start = new Date(value.param.start).toISOString().split("T")[0];
+      end = new Date(value.param.end).toISOString().split("T")[0];
+    }
+    if (start === end) return start;
+    return `${start} to ${end}`;
   }
 }
 
@@ -252,11 +261,22 @@ export function determineTimePeriodv2(period: TimePeriod) {
   if (
     period.value.type === TimePeriodType.ABSOLUTE &&
     period.value instanceof Object &&
-    "start" in period.value &&
-    "end" in period.value
+    "start" in period.value.param &&
+    "end" in period.value.param
   ) {
     begin = period.value.param.start;
     end = period.value.param.end;
+    begin = new Date(period.value.param.start);
+    end = new Date(period.value.param.end);
+    if (period.scale === TimeScale.YEARS) {
+      end.setMonth(11);
+    }
+    if (period.scale === TimeScale.MONTHS || period.scale === TimeScale.YEARS) {
+      const month = (end.getMonth() + 1) % 12;
+      const year = month == 0 ? end.getFullYear() + 1 : end.getFullYear();
+      const endDate = new Date(Date.UTC(year, month, 0)).getDate();
+      end.setDate(endDate);
+    }
     return { begin, end, title: "" };
   }
   if (
@@ -493,6 +513,17 @@ export function isSameDay(date1: Date, date2: Date) {
     date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
     date1.getDate() === date2.getDate()
+  );
+}
+
+export function isSameDateTime(date1: Date, date2: Date) {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate() &&
+    date1.getHours() === date2.getHours() &&
+    date1.getMinutes() === date2.getMinutes() &&
+    date1.getSeconds() === date2.getSeconds()
   );
 }
 

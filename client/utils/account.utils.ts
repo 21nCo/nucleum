@@ -1,11 +1,11 @@
-import { Item } from "$lib/client/types/item.enum";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { retrieveLocally } from "$lib/client/utils/storage.utils";
 import { goto, isExtensionEnvironment } from "./browser.utils";
 import { postToParent } from "./embed.utils";
 
 export async function resolveToken(): Promise<string | null> {
   let token: string | null = null;
-  const space = retrieveLocally(Item.spaceInContext);
+  const space = retrieveLocally(Resource.spaceInContext);
   if (space?.id) {
     token = localStorage?.getItem(`token-${space.id}`);
   } else token = localStorage?.getItem("stoken");
@@ -22,6 +22,23 @@ export async function resolveToken(): Promise<string | null> {
     });
   }
   return token;
+}
+
+export async function resolveCurrentUserId() {
+  const userInfo = localStorage.getItem("userInfo");
+  if (userInfo) return JSON.parse(userInfo)?.id;
+  else if (isExtensionEnvironment()) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get("userInfo", function (data) {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          const id = JSON.parse(data.userInfo)?.id;
+          resolve(id);
+        }
+      });
+    });
+  }
 }
 
 export function signout(ctx: string = "") {

@@ -8,7 +8,7 @@
   import { onMount } from "svelte";
   import type { AppStore } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import { isValidArray, sortArrayByOrder } from "$lib/client/utils/obj.utils";
+  import { isValidArray, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
   import SettingsFooter from "./SettingsFooter.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";

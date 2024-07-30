@@ -1,9 +1,10 @@
 <script lang="ts">
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
-  import { CaptureType } from "$lib/client/types/memotron/capture.type";
+  import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
+  import FileCapture from "./FileCapture.svelte";
   export let isEmptyState: boolean = true;
   refreshEmptyState();
   let isShowTOC: boolean = false;
@@ -38,9 +39,7 @@
       Camera opens here if supported or browse files
     </div>
   {:else if $captureStore.captureType === CaptureType.UPLOAD}
-    <div class="w-full h-full flex items-center justify-center text-fgs4">
-      Browse files
-    </div>
+    <FileCapture on:change={onFileChanges} />
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">
       <NodularMarkdown

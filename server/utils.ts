@@ -1,13 +1,10 @@
 import { extractProduct } from "$lib/shared/utils/utils";
-import { performAdminQuery, performMasterQuery } from "./surrealHelpers";
+import { performQueryOnMasterDb } from "./surrealHelpers";
 
-export async function retrieveAppData(body: any) {
-  //   console.log({ body });
-  const product = extractProduct(body.app);
-  //   console.log({ product });
+export async function retrieveAppConfig(app: string) {
+  const product = extractProduct(app);
   const query = `select * from product:${product.product}`;
-  const queryResponseJson = await performMasterQuery(query);
-  //   console.log({ queryResponseJson });
+  const queryResponseJson = await performQueryOnMasterDb(query);
   const result = queryResponseJson[0].result[0];
   let appData = {
     ...result,
@@ -30,7 +27,7 @@ export async function saveSubscription(body: any) {
     const { email, app, context } = body;
     let createQuery = "";
     const product = extractProduct(app);
-    const userResponseJson = await performMasterQuery(
+    const userResponseJson = await performQueryOnMasterDb(
       `select value meta::id(id) from user where email = "${email}" or emailhash = crypto::md5("${email}"); 
       select value meta::id(id) from product where urls.landing = "${app}";`
     );
@@ -43,23 +40,9 @@ export async function saveSubscription(body: any) {
     } else {
       createQuery = `let $user = create user set createdAt = time::now(), email = "${email}"; relate product:${product.product}->subscribedBy->$user set context = "${context}", subscribedAt = time::now();`;
     }
-    let result = await performAdminQuery(createQuery);
+    let result = await performQueryOnMasterDb(createQuery);
     console.log({ result, one: result?.[0]?.result });
     return result?.[0]?.result?.[0]?.subscribedAt;
-  } catch (error) {
-    console.log({ error });
-    return { error: "An error occured", message: error };
-  }
-}
-
-export async function retrieveUrlForShortener(slug: string) {
-  console.log({ slug });
-  try {
-    const query = "select value url from slug:" + slug;
-    const queryResponseJson = await performMasterQuery(query);
-    console.log({ queryResponseJson });
-    const result = queryResponseJson[0].result[0];
-    return result;
   } catch (error) {
     console.log({ error });
     return { error: "An error occured", message: error };

@@ -22,6 +22,7 @@
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { SessionType } from "../../../logs/log.type";
   export let item: any;
   export let isFocusAddTask: boolean = false;
   export let isInEditMode: boolean = false;
@@ -93,7 +94,14 @@
   onDestroy(unSubscribeDND);
 
   async function clickHandler() {
-    if (contxt != "current") return;
+    if (
+      isInEditMode ||
+      contxt === "history" ||
+      ($sessionStore.isSessionRunning &&
+        $sessionStore.type === SessionType.PREDEFINED_INTERVALS &&
+        $sessionStore.state === SessionState.BREAK_RUNNING)
+    )
+      return;
     if ($sessionStore.isSessionRunning) {
       if (isInprogress) {
         await sessionStore.stopCurrentTaskOrGoal();

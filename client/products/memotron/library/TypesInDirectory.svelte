@@ -1,16 +1,16 @@
-<script lang="ts">
-  import { MemotronAction } from "$lib/client/types/memotron/memotronAction.enum";
+<!-- <script lang="ts">
+  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { typeStore } from "../type/type.store";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { liveQuery } from "dexie";
   import { appStore } from "$lib/client/stores/app.store";
+  import { typeStore } from "../collection/properties/type.store";
   let allTypes = liveQuery(() =>
     $dataManager.cacheSource.dexie.type.filter(activeResourceFilter).toArray()
   );
@@ -42,7 +42,7 @@
               confirmAction: {
                 label: "Delete",
                 variant: ButtonVariant.DANGER,
-                callback: async () => typeStore.delete(type.id)
+                callback: async () => typeStore.trash(type.id)
               }
             });
           }}
@@ -58,4 +58,4 @@
       }
     }}
   />
-</div>
+</div> -->
