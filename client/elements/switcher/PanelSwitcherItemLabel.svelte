@@ -9,17 +9,17 @@
   import TextInput from "../input/TextInput.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
+  import AddNewButton from "../button/AddNewButton.svelte";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;
   export let isDisabled: boolean = false;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
+  export let size = Size.md;
   export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
     undefined;
   export let isActive: boolean = false;
   export let triggerItemEdit: string | null = null;
   $: isAddNewItem = item.value === "$add";
-  let isHoveringOnAddNewItem = false;
   let labelEditPopoverRef: any;
   let inputRef: any;
   $: if (triggerItemEdit && triggerItemEdit === item.value) {
@@ -32,22 +32,7 @@
 </script>
 
 {#if isInEditMode && isAddNewItem}
-  <button
-    class="flex items-center hover:text-aps1 gap-1"
-    on:mouseenter={() => (isHoveringOnAddNewItem = true)}
-    on:mouseleave={() => (isHoveringOnAddNewItem = false)}
-  >
-    <Icon
-      icon="plus"
-      {size}
-      class={cn({
-        "stroke-aps1": isHoveringOnAddNewItem
-      })}
-    />
-    <span class="min-w-fit whitespace-nowrap">
-      {editModeOptions?.addText ?? "Add new"}
-    </span>
-  </button>
+  <AddNewButton {size} />
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
     <!-- TODO - rearrange - disabling until this feature is complete -->

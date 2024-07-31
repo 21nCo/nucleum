@@ -18,6 +18,7 @@ import {
 } from "./analytics.utils";
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 
+export const selectedPageId = writable<string | null>(null);
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
 const seedPage: AnalyticsPage = {

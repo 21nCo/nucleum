@@ -52,10 +52,25 @@ import { Persistence } from "$lib/client/persistence/persistence";
 import { appStore } from "$lib/client/stores/app.store";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
 export const pointronActions: IAction[] = [
+  {
+    action: PointronAction.ANALYTICSVIEWSPAGEEDITMOBILE,
+    component: AnalyticsViewsPageEditMobile,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Edit Pages",
+      layout: {
+        size: Size.lg,
+        primaryAction: {
+          label: "Done"
+        }
+      }
+    }
+  },
   {
     action: PointronAction.FULL_SCREEN_FOCUS,
     component: Zen,

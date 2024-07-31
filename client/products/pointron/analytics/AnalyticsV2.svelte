@@ -3,7 +3,7 @@
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
-  import { isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import view from "$lib/client/stores/view.store";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
@@ -11,43 +11,24 @@
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { onMount } from "svelte";
-  import { analyticsConfigStore } from "./analytics.store";
+  import { analyticsConfigStore, selectedPageId } from "./analytics.store";
   import AnalyticsPageView from "./page/AnalyticsPageView.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  let refreshId = new Date().getTime();
-  let selectedPageId = $analyticsConfigStore.pages[0]?.id;
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import {
+    onAddPageClicked,
+    onPageSwitch,
+    onPagelabelChange,
+    onRemovePageClicked
+  } from "./analytics.utils";
+  $selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
     await dataManager.refresh(Resource.pointAnalyticsConfig);
-    refreshId = new Date().getTime();
-    if (!selectedPageId) {
-      selectedPageId = $analyticsConfigStore.pages[0]?.id;
+    if (!$selectedPageId) {
+      $selectedPageId = $analyticsConfigStore.pages[0]?.id;
     }
   });
-  function onAddPageClicked() {
-    analyticsConfigStore.addPage();
-    refreshId = new Date().getTime();
-  }
-  function onRemovePageClicked(e: CustomEvent<string>) {
-    analyticsConfigStore.removePage(e.detail);
-    refreshId = new Date().getTime();
-  }
-  function onPageSwitch(e: CustomEvent<string>) {
-    console.log("select", e.detail);
-    selectedPageId =
-      $analyticsConfigStore.pages.find((page) => page.id === e.detail)?.id ??
-      selectedPageId;
-    refreshId = new Date().getTime();
-    console.log({
-      selectedPageId,
-      pages,
-      analyticsConfigStore: $analyticsConfigStore
-    });
-  }
-  function onPagelabelChange(e: CustomEvent<{ value: string; label: string }>) {
-    if (!e.detail.label || !e.detail.value) return;
-    analyticsConfigStore.editPageLabel(e.detail.value, e.detail.label);
-  }
   $: pages =
     $analyticsConfigStore.pages.length > 0
       ? $analyticsConfigStore.pages?.map((page) => {
@@ -67,29 +48,46 @@
             <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
             <EditModeToggle />
           </div>
-          <div class="w-full overflow-x-auto">
-            <OptionSelector
-              options={pages}
-              size={Size.sm}
-              isPreventWrap={true}
-              on:select={onPageSwitch}
-            />
+          <div class="flex w-full items-center">
+            <div class="overflow-x-auto">
+              <OptionSelector
+                options={pages}
+                size={Size.sm}
+                isPreventWrap={true}
+                on:select={onPageSwitch}
+              />
+            </div>
+            {#if $isInEditMode}
+              <Button
+                class="min-w-fit"
+                size={Size.xs}
+                icon="pencil"
+                on:click={() =>
+                  appStore.runAction(
+                    PointronAction.ANALYTICSVIEWSPAGEEDITMOBILE
+                  )}
+              >
+                edit</Button
+              >{/if}
           </div>
         </div>
       {:else}
-        <PanelSwitcher
-          title="Analytics"
-          items={pages}
-          style={PanelSwitcherStyle.SNAKE}
-          isExpandToFullWidth={true}
-          isEnableAnimationForTitle={false}
-          isInEditMode={$isInEditMode}
-          on:switch={onPageSwitch}
-          on:add={onAddPageClicked}
-          on:remove={onRemovePageClicked}
-          on:change={onPagelabelChange}
-        >
-          <div class="flex items-center gap-2" slot="right">
+        <div class="flex overflow-hidden w-full">
+          <div class="overflow-x-auto w-full">
+            <PanelSwitcher
+              title="Analytics"
+              items={pages}
+              style={PanelSwitcherStyle.SNAKE}
+              isExpandToFullWidth={true}
+              isEnableAnimationForTitle={false}
+              isInEditMode={$isInEditMode}
+              on:switch={onPageSwitch}
+              on:add={onAddPageClicked}
+              on:remove={onRemovePageClicked}
+              on:change={onPagelabelChange}
+            />
+          </div>
+          <div class="flex items-center gap-2 ml-auto">
             {#if $isInEditMode}
               <Button
                 icon="sync"
@@ -100,13 +98,13 @@
             {/if}
             <EditModeToggle />
           </div>
-        </PanelSwitcher>
+        </div>
       {/if}
     </div>
   </div>
-  {#key refreshId}
-    {#if selectedPageId}
-      <AnalyticsPageView id={selectedPageId} />
+  {#key $selectedPageId}
+    {#if $selectedPageId}
+      <AnalyticsPageView id={$selectedPageId} />
     {:else}
       <EmptyStatusView
         subText="Please click on a view to see Analytic cards or click on edit to manage views"

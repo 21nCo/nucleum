@@ -14,6 +14,8 @@
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
+  export let className: string = "";
+  export { className as class };
   /** button type description to be rendered in stories and code editor tooltips*/
   export let type: "primary" | "secondary" | "danger" | ButtonVariant =
     ButtonVariant.SECONDARY;
@@ -125,7 +127,8 @@
       {
         "underline-dotted hover:underline-dotted-primary": isUnderlined
       }
-    ]
+    ],
+    className
   )}
   on:click
   bind:this={buttonRef}
