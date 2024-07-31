@@ -213,13 +213,13 @@ class GoalStore extends ResourceFIRStore<IGoal> {
   async resolveSubGoalsIfNotPresent(goalId: string) {
     const goals = this.get().items;
     const goalInContext = goals.find((x) => x.id === goalId);
-    console.log({ goalInContext });
+    // console.log({ goalInContext });
     if (!goalInContext) return;
     if (!isValidArrayWithData(goalInContext?.subGoals)) {
       const subGoals = goals.filter(
         (x) => goalInContext?.id === x.parent?.hierarchy.pop()?.id
       );
-      console.log({ subGoals });
+      // console.log({ subGoals });
     }
   }
   async refresh(
@@ -365,7 +365,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
   return {
     subscribe,
     set: async (newValue: IGoal) => {
-      console.log("currentGoal", { previousValue, newValue });
+      // console.log("currentGoal", { previousValue, newValue });
       let changedProperties: any = {};
       const propertiesToDelayUpdate = ["description", "label", "tags", "color"];
       if (previousValue) {
@@ -377,7 +377,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
         let changesToSaveLater = differences.filter((x) =>
           propertiesToDelayUpdate.some((y) => y === x)
         );
-        console.log({ changesToSaveImmediately, changesToSaveLater });
+        // console.log({ changesToSaveImmediately, changesToSaveLater });
         if (isValidArrayWithData(changesToSaveLater)) {
           newValue.pendingChanges = true;
         } else {
@@ -416,7 +416,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
       if (!goal) {
         goal = await fetchGoal(id);
       }
-      console.log("currentGoal", { goal });
+      // console.log("currentGoal", { goal });
       if (!goal) return;
       if (!goal.analytics) goal.analytics = seedGoal.analytics;
       if (!goal.tags) goal.tags = [];

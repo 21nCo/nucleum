@@ -106,7 +106,7 @@
   async function onDeleteClicked() {
     await focusItemsStore.removeGoal(item.id);
   }
-  $: console.log({ item, intervals, isInprogress, tasks });
+  // $: console.log({ item, intervals, isInprogress, tasks });
 </script>
 
 <DraggableElement

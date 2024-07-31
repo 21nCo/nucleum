@@ -6,10 +6,6 @@
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import SessionStatusLabel from "./SessionStatusLabel.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
-  import {
-    BlockType,
-    type ISessionInterval
-  } from "$lib/client/types/pointron/session.type";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import { resolveSessionTime } from "../../../pointron.utils";
@@ -27,12 +23,13 @@
   <div class="flex flex-col gap-1">
     <SessionStatusLabel size={$view.isPortrait ? Size.sm : Size.md} />
     <div
-      class="flex justify-center {size === Size.sm
-        ? 'text-7xl font-medium'
-        : 'text-9xl font-semibold'} {$sessionStore.timeRemainingToTakeBreak !=
-        undefined && $sessionStore.timeRemainingToTakeBreak < 0
-        ? 'text-ars1'
-        : ''}"
+      class={cn("flex justify-center", {
+        "text-7xl font-medium": size === Size.sm,
+        "text-9xl font-semibold": size !== Size.sm,
+        "text-ars1":
+          $sessionStore.timeRemainingToTakeBreak != undefined &&
+          $sessionStore.timeRemainingToTakeBreak < 0
+      })}
     >
       {formatSeconds(
         $sessionStore.isSessionRunning

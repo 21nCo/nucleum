@@ -209,8 +209,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       session.type != SessionType.PREDEFINED_INTERVALS &&
       session.state === SessionState.FOCUS_RUNNING
     ) {
-      this.isIntervalTimeLimitNotified = scheduleBreakReminderNotification();
-      postNotificationsToEmbed();
+      this.isIntervalTimeLimitNotified = scheduleBreakReminderNotification(
+        this.isIntervalTimeLimitNotified
+      );
       return timeRemainingToTakeBreak;
     }
     if (session.type === SessionType.PREDEFINED_INTERVALS) {
@@ -232,14 +233,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         title: title + " ended.",
         sound: "ping.wav",
         id: "breakReminder"
-      });
-      postNotificationsToEmbed();
-    }
-
-    function postNotificationsToEmbed() {
-      const notifications = get(scheduledNotifications);
-      postToParent({
-        notifications
       });
     }
     /**
@@ -321,6 +314,13 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       // });
     }
   }
+  private _postNotificationsToEmbed() {
+    console.log("posting notifications to embed");
+    const notifications = get(scheduledNotifications);
+    postToParent({
+      notifications
+    });
+  }
   /**
    * Resume the session timer and sets everything related to timer including notifications, progress on interval bars, etc.
    * @param n current session store
@@ -341,6 +341,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     if (session.type === SessionType.PREDEFINED_INTERVALS) {
       this._restorePredefinedSessionState(session);
     }
+    let isFirstRun = true;
     this.timer = setInterval(() => {
       session = this.get();
       const currentTime = new Date().getTime();
@@ -351,6 +352,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       );
       const timeElapsed = (currentTime - currentBlock?.start!) / 1000;
       const timeRemainingToTakeBreak = this.refreshNotifications(session);
+      if (isFirstRun) this._postNotificationsToEmbed();
       let plannedDuration = session.plannedDuration;
       let end = session.end;
       if (
@@ -392,6 +394,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         },
         { isPreventCachingDefault: true }
       );
+      isFirstRun = false;
       if (isContinueSession) this._continueSession();
     }, 1000);
   }
@@ -410,13 +413,21 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       session.start!
     );
     const now = new Date().getTime();
+    const bufferTime = 500;
+
     intervals.some((interval, index) => {
-      if (interval.start - 500 <= now && index === intervals.length - 1) {
+      if (
+        interval.start - bufferTime <= now &&
+        index === intervals.length - 1
+      ) {
         console.log("interval is last");
         currentInterval = interval;
         return true;
       }
-      if (interval.start - 500 <= now && intervals[index + 1]?.start > now) {
+      if (
+        interval.start - bufferTime <= now &&
+        intervals[index + 1]?.start - bufferTime > now
+      ) {
         console.log({ interval, index, nextOne: intervals[index + 1] });
         currentInterval = interval;
         return true;
@@ -756,9 +767,18 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       savedSessionStore.currentSessionId &&
       savedSessionStore.isSessionRunning
     ) {
+      const currentValue = this.get();
       modalEvent.hideSpecific(PointronEvent.SESSION_FINISHED);
-      appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
-      this.modify(savedSessionStore, { isPersist: false });
+      const isRestored = appStore.restoreFullScreenPlayer();
+      if (!isRestored) appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
+      this.modify(
+        {
+          ...savedSessionStore,
+          timeElapsed: currentValue.timeElapsed,
+          totalElapsed: currentValue.totalElapsed
+        },
+        { isPersist: false }
+      );
       this._resumeTimer({
         isResetTimer: false
       });

@@ -19,14 +19,14 @@
     //   refresh();
     // });
     refresh();
-    console.log({
-      minorStops,
-      stopValueInMinutes: stopValueInSeconds,
-      partValueInMinutes: partValueInSeconds,
-      numberOfSpokes,
-      majorStops,
-      arr
-    });
+    // console.log({
+    //   minorStops,
+    //   stopValueInMinutes: stopValueInSeconds,
+    //   partValueInMinutes: partValueInSeconds,
+    //   numberOfSpokes,
+    //   majorStops,
+    //   arr
+    // });
   });
 
   function refresh() {

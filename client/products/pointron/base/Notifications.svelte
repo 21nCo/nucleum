@@ -8,6 +8,7 @@
   import { postNotificationToParent } from "$lib/client/utils/embed.utils";
   import { logger } from "$lib/client/stores/log.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import context from "$lib/client/stores/context.store";
 
   let src: string | null = null;
   let body: string = "";
@@ -50,23 +51,28 @@
           body = "Session finished";
           break;
       }
-      if (src) {
+      if (!src) return;
+      try {
         setTimeout(() => {
           // const notification = new Notification("Pointron session", {
           //   body,
           //   icon: "",
           // });
-          logger.log({ context: "playing sound", event, src });
-          audio?.play();
           postNotificationToParent({
             message: "",
             sound: src ? src.split("/sounds/")[1] : ""
           });
+          if (!$context.isEmbed) {
+            console.log({ context: "playing sound", event, src });
+            audio?.play();
+          }
           setTimeout(() => {
             src = null;
             appEvents.reset();
           }, 2000);
         }, 200);
+      } catch (e) {
+        console.error("Error in playing sound - Notifications", e);
       }
     });
     return () => {

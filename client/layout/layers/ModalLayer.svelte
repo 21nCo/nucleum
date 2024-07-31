@@ -44,11 +44,13 @@
   //TODO offline mode detection and showing changes pending sync
   let isShowSyncErrorMessage: boolean = false;
   let mutationQueue = refreshMutationQueueLiveQuery();
+  let isWindowVisible: boolean = true;
   function refreshMutationQueueLiveQuery() {
     return liveQuery(() =>
       $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
     );
   }
+
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -73,9 +75,31 @@
       }
       fullscreen =
         value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
-      console.log({ pop, fullscreen });
+      // console.log({ pop, fullscreen });
     });
-    const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
+    const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
+
+    () => {
+      appEventSub();
+      modalEventSub();
+      pageSub();
+    };
+
+    /**
+     *
+     *
+     * Modal events are ignored if the window is not visible. This is to avoid app crash when the app is running as an embed on macOS app and is in background.
+     *
+     */
+    function modalEventSubscriber(x: ModalEvent) {
+      if (!isWindowVisible) {
+        logger.log({
+          context: "ModalLayer",
+          message: "modal event ignored - window is not visible"
+        });
+        return;
+      }
+      logger.log({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
@@ -100,12 +124,7 @@
         modals = [...modals, x];
       }
       logger.log({ modals });
-    });
-    () => {
-      appEventSub();
-      modalEventSub();
-      pageSub();
-    };
+    }
   });
   function resolvePop(resourceId: string) {
     if (resourceId && resourceId.split(":").length > 1) {
@@ -121,6 +140,10 @@
       };
     }
   }
+
+  const visibilityChangeListener = () => {
+    isWindowVisible = !document.hidden;
+  };
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -281,3 +304,5 @@
     </Modal>
   {/if}
 {/key}
+
+<svelte:document on:visibilitychange={visibilityChangeListener} />

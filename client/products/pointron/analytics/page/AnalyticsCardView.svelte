@@ -68,7 +68,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col grow border border-brs2 rounded-md", {
+  class={cn("flex flex-col grow border border-brs2 rounded-md mo:bg-bgs1", {
     "w-full h-96 p-2": $view.isPortrait,
     "h-[32rem]": $view.isPortrait && $isInEditMode,
     "min-w-1/2 w-1/2 p-4 bg-bgs2": !$view.isPortrait,

@@ -56,7 +56,7 @@
       : [];
 </script>
 
-<div class="flex flex-col w-full h-full">
+<div class="flex flex-col w-full h-full mo:bg-bgs2">
   <div
     class="flex gap-8 w-full items-center justify-between px-4 portrait:py-2 pt-4 pb-2"
   >

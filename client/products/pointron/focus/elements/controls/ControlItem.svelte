@@ -51,7 +51,7 @@
       "relative rounded-full flex items-center justify-center",
       {
         "w-12 h-12 border": isFocusPlayerContext,
-        "w-20 h-20 mo:w-16 mo:h-16": !isFocusPlayerContext,
+        "w-20 h-20 mo:w-16 mo:h-16 hover:bg-opacity-80": !isFocusPlayerContext,
         "border-cbg":
           isFocusPlayerContext &&
           $sessionStore.state == SessionState.FOCUS_RUNNING &&

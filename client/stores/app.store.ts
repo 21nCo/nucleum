@@ -842,14 +842,17 @@ function initAppStore(seed: AppStore) {
       });
     },
     showFullScreenPlayer(path: string) {
+      console.log("showing full screen player", { path });
       update((n: AppStore) => {
         n.fullScreenComponentPath = path;
         runAction(path);
         n.player = undefined;
         return n;
       });
+      toggleSearchParam("fsp", path);
     },
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
+      console.log("hiding full screen player");
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
           n.player = resolveComponentFromPath(
@@ -857,9 +860,17 @@ function initAppStore(seed: AppStore) {
           )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
-        n.fullScreenComponentPath = undefined;
+        // n.fullScreenComponentPath = undefined;
         return n;
       });
+      toggleSearchParam("fsp");
+    },
+    restoreFullScreenPlayer() {
+      const fspParam = new URLSearchParams(window.location.search).get("fsp");
+      if (fspParam) {
+        appStore.showFullScreenPlayer(fspParam);
+        return true;
+      }
     },
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
