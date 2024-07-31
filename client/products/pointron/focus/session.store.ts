@@ -36,7 +36,11 @@ import {
 import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { AlertType } from "$lib/client/types/notification.type";
 import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
-import { CacheStrategy, DependencySyncType } from "$lib/client/types/data.type";
+import {
+  CacheStrategy,
+  DependencySyncType,
+  PersistanceActionType
+} from "$lib/client/types/data.type";
 import { logger } from "$lib/client/stores/log.store";
 import {
   type IPointLog,
@@ -56,6 +60,7 @@ import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { postToParent } from "$lib/client/utils/embed.utils";
+import { dataManager } from "$lib/client/persistence/dataManager";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -1370,6 +1375,17 @@ class PointSessionStore extends ResourceStore<IPointSession> {
     );
     return interceptSurrealResponse(response);
   };
+  async delete(id: string) {
+    return dataManager.performMutation(
+      Resource.PointLog,
+      { id },
+      {
+        action: PersistanceActionType.DELETE,
+        query:
+          "delete from PointSession where id is $id; delete from PointLog where sessionId is $id;"
+      }
+    );
+  }
   /**
    * Saves focus logs to the database. This function is called when user finishes a focus session delegated from active session store.
    * @param activeSession

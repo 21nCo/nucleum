@@ -112,13 +112,13 @@
 {#if log}
   <div class="flex flex-col gap-4 px-2 flex-grow w-full items-center">
     <LogIntervalBar {log} />
-    {#if isValidDataString(log?.plannedEnd) && !isSameDateTime(new Date(log.end), new Date(log.plannedEnd))}
+    {#if isValidDataString(log?.plannedEnd) && !isSameDateTime( new Date(log.end), new Date(log.plannedEnd), { isIgnoreSeconds: true } )}
       <InlineInfoBanner>
         <span>
           This Session was planned to end at <b>
             {formatTime($userPreferences, new Date(log.plannedEnd))}</b
           >
-          but was aborted at
+          but was finished early at
           <b>{formatTime($userPreferences, new Date(log.end))}.</b>
         </span>
       </InlineInfoBanner>

@@ -58,7 +58,7 @@
   }
   function refreshStartTime() {
     const startTime = new Date(new Date().getTime() - item.duration * 1000);
-    item.startTime = formatTime($userPreferences, startTime, "24")!;
+    item.startTime = formatTime($userPreferences, startTime, { format: "24" })!;
   }
   function ondurationchange(event: any) {
     selectedQuickAddItem = 0;

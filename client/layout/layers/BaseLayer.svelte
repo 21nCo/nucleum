@@ -37,7 +37,6 @@
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/stores/localActionMap";
   import { localCacheableStores } from "$local/stores/localStoresMap";
-  import MutationQueueLayer from "./MutationQueueLayer.svelte";
   import {
     detectSystemOS,
     detectTouchDevice
@@ -329,10 +328,9 @@
   <MetadataLayer />
   <ModalLayer />
   <Shortcuts />
-  <MutationQueueLayer />
+  <CacheLayer />
 {/if}
 <Intercom />
-<CacheLayer />
 <svelte:window
   on:resize={windowResizeListener}
   on:click={windowClickEventListener}
@@ -340,3 +338,6 @@
 />
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />
+<svelte:head>
+  <script src="localforage.js"></script>
+</svelte:head>

@@ -61,8 +61,12 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
     let newLog: IManualSessionLogForm = {
       startDate: new Date(), //.toISOString().split("T")[0],
       endDate: new Date(), //.toISOString().split("T")[0],
-      endTime: formatTime(userGlobalPreferences, get(currentTime), "24")!,
-      startTime: formatTime(userGlobalPreferences, get(currentTime), "24")!,
+      endTime: formatTime(userGlobalPreferences, get(currentTime), {
+        format: "24"
+      })!,
+      startTime: formatTime(userGlobalPreferences, get(currentTime), {
+        format: "24"
+      })!,
       id: generateUID(),
       goalId: goalId ?? "",
       duration: 0,
@@ -178,16 +182,6 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
     appEvents.publish(PointronEvent.REFRESH_QUICK_FOCUS, true);
     appEvents.publish(PointronEvent.REFRESH_LOGS, true);
   }
-  async deleteLog(id: string) {
-    return dataManager.performMutation(
-      Resource.PointLog,
-      { id },
-      {
-        action: PersistanceActionType.DELETE,
-        query: "return fn::pointron::log::delete($id);"
-      }
-    );
-  }
 }
 
 export const manualLogStore = new ManualLogStore();
@@ -247,9 +241,12 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
         return n;
       });
     }
-    return replaceParams("return fn::pointron::logs::fetch::v4($date);", {
-      date: n.date.toISOString()
-    });
+    return replaceParams(
+      "select * from PointSession where id != PointSession:session and time::group(fn::user::time::date::v4(start), 'day') is time::group($date, 'day');",
+      {
+        date: n.date.toISOString()
+      }
+    );
   }
   refreshForDate(date: Date) {
     const n = this.get();

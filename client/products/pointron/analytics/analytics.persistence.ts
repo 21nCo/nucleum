@@ -1,5 +1,4 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import type { HorizonChart } from "$lib/client/types/analytics.type";
 import { TimeScale, type TimePeriod } from "$lib/client/types/time.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { generateParamsForCharts } from "$lib/client/products/pointron/analytics/analytics.utils";
@@ -7,17 +6,6 @@ import { generateParamsForCharts } from "$lib/client/products/pointron/analytics
 const surrealDb = new SurrealDatabase();
 
 export class AnalyticsPersistence {
-  //TODO - remove this defunct function
-  async fetchAggFocusByCurrentTimeHorizon(scale: TimeScale) {
-    let response = await surrealDb.query(
-      "return fn::pointron::analytics::totalFocusByCurrentHorizon::v3($scale, $goalId)",
-      {
-        scale,
-        goalId: "PointGoal:none"
-      }
-    );
-    return interceptSurrealResponse(response);
-  }
   async fetchTargetsData() {
     const response = await surrealDb.query(
       "return fn::pointron::analytics::targets::v3();"
@@ -37,17 +25,6 @@ export class AnalyticsPersistence {
     return interceptSurrealResponse(response);
   }
 
-  async fetchAnalytics(charts: HorizonChart[], byTags: boolean = false) {
-    const params = generateParamsForCharts(charts.map((x) => x.period));
-    const response = await surrealDb.executeReadFn(
-      "return fn::pointron::analytics::fetch::v2($params, $byTags);",
-      {
-        params,
-        byTags
-      }
-    );
-    return interceptSurrealResponse(response);
-  }
   async fetchAggFocusGroupedByGoal(
     isAggregateSubgoals: boolean,
     timeScale: TimeScale,

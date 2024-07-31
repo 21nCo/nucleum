@@ -3,6 +3,7 @@
   import AddNewButton from "$lib/client/elements/button/AddNewButton.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
   import { debouncer } from "$lib/client/utils/utils";
   import { analyticsConfigStore } from "./analytics.store";
@@ -42,9 +43,10 @@
       >
         <Icon icon="grab" size={Size.md} />
       </button>
-      <div class="w-3/4 mr-2">
+      <div class="w-3/4 mr-2 px-4 py-2">
         <TextInput
           value={page.label}
+          style={InputStyle.PLAIN}
           on:input={(e) => {
             labelChangeEvent.detail.label = e.detail.value;
             labelChangeEvent.detail.value = page.value;

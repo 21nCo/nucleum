@@ -47,7 +47,10 @@ import LogsPane from "$lib/client/products/pointron/logs/LogsPane.svelte";
 import AnalyticsV2 from "$lib/client/products/pointron/analytics/AnalyticsV2.svelte";
 import { Orientation } from "$lib/client/types/direction.enum";
 import PresetSettings from "$lib/client/products/pointron/focus/advanced/presets/PresetSettings.svelte";
-import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+import {
+  pointSessionStore,
+  sessionStore
+} from "$lib/client/products/pointron/focus/session.store";
 import { Persistence } from "$lib/client/persistence/persistence";
 import { appStore } from "$lib/client/stores/app.store";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
@@ -570,7 +573,7 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const response = await manualLogStore.deleteLog(params.id);
+            const response = await pointSessionStore.delete(params.id);
             if (response) {
               toasts.success("Session log deleted successfully");
               appEvents.publish(PointronEvent.REFRESH_LOGS);
