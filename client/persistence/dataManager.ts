@@ -182,6 +182,7 @@ function init() {
      * This will persist all kv seed data on cloud.
      */
     bootstrap: async () => {
+      runDboUpdate();
       const dm = get(dataManager);
       let data = dm.cacheableStoresTable
         .filter((x) => x.dataType === StoreDataType.KVO)
