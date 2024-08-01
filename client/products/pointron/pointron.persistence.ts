@@ -61,7 +61,7 @@ export class PointronPersistence {
     return interceptSurrealResponse(response, query);
   }
   async fetchImportHistory() {
-    const query = `fn::pointron::importHistory();`;
+    const query = `select *, meta::id(id) as id from import where app is 'pointron';`;
     let response = await surrealDb.executeReadFn(query);
     return interceptSurrealResponse(response, query);
   }
