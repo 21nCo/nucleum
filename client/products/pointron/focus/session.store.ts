@@ -1461,24 +1461,6 @@ class PointSessionStore extends ResourceStore<IPointSession> {
       }
     });
 
-    // dataManager.performMutation(
-    //   Resource.PointLog,
-    //   {
-    //     sessionData: session,
-    //     logs,
-    //     snapshot: {
-    //       ...activeSession,
-    //       id: prefixTable(Resource.pointSessionSnapshotv2, Resource.kv)
-    //     },
-    //     isClose
-    //   },
-    //   {
-    //     action: PersistanceActionType.CUSTOM_QUERY,
-    //     query:
-    //       "fn::pointron::focus::finish::v4($sessionData, $logs, $snapshot, $isClose);"
-    //   }
-    // );
-
     function resolvePlannedEndTime(session: IActiveSessionStore) {
       if (session.type == SessionType.COUNTUP) {
         return "";

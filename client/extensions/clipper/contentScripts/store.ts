@@ -225,7 +225,13 @@ class ClipperToolbarState extends KeyValueStore<
       Resource.clipperToolbarState,
       { isOpen: true, position: Position.Right },
       {
-        refreshOnAppear: true
+        refreshOnAppear: true,
+        dboDependencies: [
+          "fn::memotron::clipper::fetchPage",
+          "fn::memotron::clipper::saveWebpage",
+          "fn::memotron::clipper::saveClip",
+          "fn::memotron::unlink"
+        ]
       }
     );
   }

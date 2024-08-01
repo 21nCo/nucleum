@@ -164,19 +164,6 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
         mutationId: `${this.id}-saveManualLogs`
       }
     });
-    // const response = await focusPersistance.saveManualLogs(
-    //   sessionEntries,
-    //   logEntries
-    // );
-    // await dataManager.performMutation(
-    //   Resource.PointLog,
-    //   { sessionEntries, logEntries },
-    //   {
-    //     action: PersistanceActionType.CUSTOM_QUERY,
-    //     query:
-    //       "fn::pointron::focus::saveManualLogs($sessionEntries, $logEntries);"
-    //   }
-    // );
     this.reset();
     toasts.success("Manual log added successfully");
     appEvents.publish(PointronEvent.REFRESH_QUICK_FOCUS, true);

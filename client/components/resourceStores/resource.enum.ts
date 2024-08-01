@@ -11,7 +11,6 @@ export enum Resource {
   space = "space",
   spaceInContext = "spaceInContext",
   appearance = "appearance",
-  dboVersion = "dboVersion",
   tz = "tz",
   kv = "kv",
   appMenu = "appMenu",

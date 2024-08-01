@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore, dboVersion } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
@@ -87,7 +87,6 @@
     />
     <DebugInfoItem label="Typeface" value={$appearance.typeface} />
     <DebugInfoItem label="Portrait mode" value={$view.isPortrait} />
-    <DebugInfoItem label="Dbo version" value={$dboVersion.version} />
     <DebugInfoItem
       label="Storage quota"
       value={storageQuota
@@ -113,7 +112,7 @@
       isLoading={isDboUpdateInProgress}
       on:click={async () => {
         isDboUpdateInProgress = true;
-        await dboVersion.runDboUpdate();
+        await dataManager.runDboUpdate();
         isDboUpdateInProgress = false;
       }}
       icon="sync"

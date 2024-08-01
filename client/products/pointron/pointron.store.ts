@@ -149,7 +149,14 @@ export const seedLocalPreferences: IPointronPreferences = {
 class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
     super(Resource.pointronPreferences, seedLocalPreferences, {
-      refreshOnAppear: true
+      refreshOnAppear: true,
+      dboDependencies: [
+        "fn::pointron::import",
+        "fn::pointron::export",
+        "fn::pointron::importChunk",
+        "fn::pointron::revertImport",
+        "fn::pointron::iOS::currentSessionWidget"
+      ]
     });
   }
   loader(data: IPointronPreferences) {

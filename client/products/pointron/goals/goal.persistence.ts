@@ -1,7 +1,6 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IPointGoal } from "$lib/client/types/pointron/goal.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
 
 const surrealDb = new SurrealDatabase();
 
@@ -30,39 +29,6 @@ export class GoalPersistence {
       }
     );
     return response && response.length > 0;
-  }
-  async fetchSubgoals(parentId: string) {
-    let response = await surrealDb.executeReadFn(
-      `return fn::pointron::goals::fetchSubGoals($parentId, false);`,
-      { parentId }
-    );
-    return interceptSurrealResponse(response);
-  }
-  async fetch(id: string) {
-    let response = await surrealDb.executeReadFn(
-      `return fn::pointron::goal::fetch($id)`,
-      { id }
-    );
-    return interceptSurrealResponse(response);
-  }
-  async fetchGoalsForQuickStart(
-    isFavoritesOnly: boolean = false,
-    tagId: string = "PointTag:none"
-  ) {
-    let response = await surrealDb.executeReadFn(
-      `return fn::pointron::goals::quickFocus::v2($isFavoritesOnly,$tagId);`,
-      {
-        isFavoritesOnly,
-        tagId
-      }
-    );
-    return interceptSurrealResponse(response);
-  }
-  async fetchAllGoalColors() {
-    let response = await surrealDb.query(
-      "select color, label from PointGoal where parent is none or array::len(parent) < 1;"
-    );
-    return interceptSurrealResponse(response);
   }
   async updateIsPinnedForQuickStart(goalId: string, isPinned: boolean) {
     let response = await surrealDb.query(

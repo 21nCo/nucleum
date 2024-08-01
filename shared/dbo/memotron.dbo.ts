@@ -14,7 +14,6 @@ export const memotronDboDefinitions = {
   "fn::memotron::clipper::fetchPage": clipperFetchPage(),
   "fn::memotron::collection::fetchData": collectionFecthData(),
   "fn::memotron::timeline": timeline(),
-  "fn::memotron::linkMany": linkMany(),
   "fn::memotron::link": link(),
   "fn::memotron::unlink": unlink()
 };

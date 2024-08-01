@@ -177,7 +177,11 @@ class GoalStore extends ResourceFIRStore<IGoal> {
   constructor() {
     super(Resource.PointGoal, defaultFilter, {
       refreshQuery: "fn::pointron::goal::fetchAll();",
-      refreshOnAppear: true
+      refreshOnAppear: true,
+      dboDependencies: [
+        "fn::pointron::goal::fetchAll",
+        "fn::pointron::goal::fetchQuickFocusItems::v2"
+      ]
     });
   }
   filter(filters: {

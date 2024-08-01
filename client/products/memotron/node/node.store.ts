@@ -12,11 +12,7 @@ import {
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import {
-  interceptSurrealResponse,
-  debouncer,
-  activeResourceFilter
-} from "$lib/client/utils/utils";
+import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IMutationQueueParams } from "../../../types/data.type";
@@ -24,11 +20,7 @@ import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resou
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
-import { get, writable } from "svelte/store";
-import { dataManager } from "$lib/client/persistence/dataManager";
-import { CollectionType } from "../collection/collection.type";
-import type { IProperty } from "../collection/properties/property.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
+import { writable } from "svelte/store";
 import { resolveTypes } from "../memotron.store";
 
 export const hierarchyFactorLimit = 5;
@@ -37,7 +29,16 @@ class NodeStore extends ResourceStore<INode> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.node, {
-      refreshOnAppear: true
+      refreshOnAppear: true,
+      dboDependencies: [
+        "fn::memotron::node::fetch",
+        "fn::memotron::node::createMany",
+        "fn::memotron::node::create",
+        "fn::memotron::timeline",
+        "fn::memotron::link",
+        "fn::memotron::pdfAnnotator::getAllClips",
+        "fn::memotron::pdfAnnotator::saveClip"
+      ]
     });
     this.db = new SurrealDatabase();
   }

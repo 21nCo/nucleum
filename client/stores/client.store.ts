@@ -14,10 +14,11 @@ export class ObservableStore<T extends IObservableStoreSubject>
 {
   id: Resource | string;
   dataType: StoreDataType;
-  refreshOnAppear?: boolean | undefined;
+  refreshOnAppear?: boolean;
   refreshQuery?: string;
-  dependencies?: ResourceDependency[] | undefined;
-  mutatingResources?: string[] | undefined;
+  dependencies?: ResourceDependency[];
+  mutatingResources?: string[];
+  dboDependencies?: string[];
   protected subject = writable<T>();
   subscribe = this.subject.subscribe;
   update = this.subject.update;
@@ -27,7 +28,11 @@ export class ObservableStore<T extends IObservableStoreSubject>
     dataType: StoreDataType = StoreDataType.NA,
     params?: Pick<
       IStore,
-      "refreshOnAppear" | "refreshQuery" | "dependencies" | "mutatingResources"
+      | "refreshOnAppear"
+      | "refreshQuery"
+      | "dependencies"
+      | "mutatingResources"
+      | "dboDependencies"
     >
   ) {
     this.id = item;
@@ -36,6 +41,7 @@ export class ObservableStore<T extends IObservableStoreSubject>
     this.refreshQuery = params?.refreshQuery;
     this.dependencies = params?.dependencies;
     this.mutatingResources = params?.mutatingResources;
+    this.dboDependencies = params?.dboDependencies;
     dataManager.retrieveCache(this.id).then((x: T | null) => {
       if (!x) {
         return;

@@ -84,15 +84,6 @@ class CollectionStore extends ResourceStore<ICollection> {
       }
     });
   }
-
-  async fetch(id: string, viewId?: string) {
-    const query = `fn::memotron::curation::fetch($id, $viewId)`;
-    const response = await this.db.executeReadFn(
-      query,
-      viewId ? { id, viewId } : { id }
-    );
-    return interceptSurrealResponse(response, "fetch curation");
-  }
   search(query: string) {
     if (!query) return [] as any;
     const dexie = get(dataManager).cacheSource.dexie;
@@ -336,7 +327,8 @@ class CollectionViewStore extends ResourceStore<ICollectionView> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.view, {
-      refreshOnAppear: true
+      refreshOnAppear: true,
+      dboDependencies: ["fn::memotron::collection::fetchData"]
     });
     this.db = new SurrealDatabase();
   }

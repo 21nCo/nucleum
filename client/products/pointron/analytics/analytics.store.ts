@@ -73,7 +73,17 @@ const seedAnalyticsConfig: IAnalyticsConfigStore = {
 
 class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   constructor() {
-    super(Resource.pointAnalyticsConfig, { ...seedAnalyticsConfig });
+    super(
+      Resource.pointAnalyticsConfig,
+      { ...seedAnalyticsConfig },
+      {
+        dboDependencies: [
+          "fn::pointron::analytics::page::fetch",
+          "fn::pointron::analytics::targets::v3",
+          "fn::pointron::analytics::goal::v3"
+        ]
+      }
+    );
   }
   set(config: IAnalyticsConfigStore) {
     this.modify(config, { isDebouncedPersist: true });

@@ -79,20 +79,6 @@ export class Persistence {
       logger.logError(err);
     }
   };
-  updateDbo = async (fromVersion: number | undefined = undefined) => {
-    try {
-      const response = await performApiCall("account/n/updateDb", "POST", {
-        fromVersion: fromVersion ?? 1
-      });
-      if (!response?.ok) {
-        return;
-      }
-      const data = await response.json();
-      return data;
-    } catch (err) {
-      logger.logError(err);
-    }
-  };
   ping = async () => {
     try {
       const response = await performApiCall("account/ping", "POST", {});

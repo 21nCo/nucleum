@@ -55,7 +55,7 @@
         addTaskInputRef &&
         $context.embed != Embed.HANDSET
       ) {
-        addTaskInputRef.focus();
+        addTaskInputRef?.focus();
       }
     }
   });

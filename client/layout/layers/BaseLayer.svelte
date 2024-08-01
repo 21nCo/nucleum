@@ -19,8 +19,7 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    userPreferences,
-    dboVersion
+    userPreferences
   } from "$lib/client/stores/app.store";
   import { appEvents, toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
@@ -99,7 +98,6 @@
     let isValid = await account.performLoginStatusCheck();
     if (!isValid) return;
     dataManager.refreshOnAppear();
-    appStore.checkForUpdates();
     account.ping();
   };
   const windowResizeListener = (event: Event) => {
@@ -172,6 +170,7 @@
       refreshTimeZone();
       appMenuStore.setDefaults(defaultAppMenu, true);
       account.setAnalyticsUserIdentity();
+      await account.ping();
     } else {
       await account.logGuest();
     }
@@ -181,12 +180,7 @@
         $appStore.currentPath.split("/")[1]
       )
     ) {
-      const isProceed = await account.performLoginStatusCheck();
-      if (isProceed) {
-        let result = await appStore.checkForUpdates();
-        if (!result) await dboVersion.runDboUpdate();
-        else await account.ping();
-      }
+      await account.performLoginStatusCheck();
     }
 
     async function refreshAppStaticData() {

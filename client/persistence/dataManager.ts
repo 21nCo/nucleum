@@ -27,6 +27,7 @@ import { logger } from "$lib/client/stores/log.store";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { KeyValueStore } from "../components/resourceStores/kv.store";
+import { performApiCall } from "../utils/network.utils";
 
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
@@ -64,6 +65,7 @@ function init() {
         mergeIFRRecords(item, result);
       }
     },
+    runDboUpdate,
     performMutationForIFR: (
       item: Resource,
       data: any,
@@ -273,7 +275,29 @@ function init() {
   };
 }
 export const dataManager = init();
+
+async function runDboUpdate() {
+  const dm = get(dataManager);
+  const dependencies = dm.cacheableStoresTable
+    .map((x) => x.dboDependencies)
+    .filter((x) => x)
+    .flat();
+  try {
+    const response = await performApiCall("account/n/updateDb", "POST", {
+      dbo: dependencies
+    });
+    if (!response?.ok) {
+      return;
+    }
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    logger.logError(err);
+  }
+}
+
 async function refreshOnAppear() {
+  runDboUpdate();
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
     (x) => (x as IStore).refreshOnAppear

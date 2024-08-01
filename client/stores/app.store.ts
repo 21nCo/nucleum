@@ -165,33 +165,6 @@ export const appConstants = {
   tempColorSchemes
 };
 
-class DboVersionStore extends KeyValueStore<
-  { version: number } & IObservableStoreSubject
-> {
-  constructor() {
-    super(
-      Resource.dboVersion,
-      { version: 0 },
-      {
-        refreshOnAppear: true,
-        isSynchronousCache: true
-      }
-    );
-  }
-  setVersion = (version: number) => {
-    this.modify({ version }, { isPersist: false });
-  };
-  async runDboUpdate(fromVersion: number | undefined = undefined) {
-    const version = get(this.subject).version;
-    const response = await new Persistence().updateDbo(fromVersion ?? version);
-    if (response?.version) {
-      this.setVersion(response.version);
-    }
-  }
-}
-// export const dboVersion = initDboVersionStore();
-export const dboVersion = new DboVersionStore();
-
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
@@ -246,7 +219,8 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
     super(Resource.globalPreferences, seedUserPreferences, {
       refreshOnAppear: true,
-      isSynchronousCache: true
+      isSynchronousCache: true,
+      dboDependencies: ["fn::global::resource::delete"]
     });
   }
   loader(data: IUserGlobalPreferences) {
@@ -604,29 +578,6 @@ function initAppStore(seed: AppStore) {
     window?.location?.reload();
   }
 
-  const checkForUpdates = async () => {
-    let latestVersion = get(appStore).appData?.version;
-    try {
-      if (!latestVersion) {
-        latestVersion = await new Persistence().getLatestAppVersion();
-      }
-      if (!latestVersion) return;
-      const appVersionOnClient = localStorage.getItem("appVersion");
-      if (!appVersionOnClient) {
-        localStorage.setItem("appVersion", latestVersion);
-        await dboVersion.runDboUpdate();
-        return true;
-      } else if (appVersionOnClient != latestVersion) {
-        localStorage.setItem("appVersion", latestVersion);
-        runClientUpdate();
-        return true;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return false;
-  };
-
   const toggleSearchParam = (
     param: string,
     value?: string | boolean | number
@@ -944,7 +895,6 @@ function initAppStore(seed: AppStore) {
     openLink,
     runAction,
     initiateOAuth2Flow,
-    checkForUpdates,
     toggleSearchParam,
     resourceClickHandler,
     toggleFocusAccessMode,

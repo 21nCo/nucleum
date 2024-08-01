@@ -14,7 +14,6 @@ export const pointronDboDefinitions = {
   "fn::pointron::import": pointronImport(),
   "fn::pointron::importChunk": pointronImportChunk(),
   "fn::pointron::revertImport": pointronRevertImport(),
-  "fn::pointron::goal::fetch": goalFetch(),
   "fn::pointron::goal::fetchAll": goalFetchAll(),
   "fn::pointron::goal::fetchQuickFocusItems::v2": goalFetchQuickFocusItemsV2(),
   "fn::pointron::journal::fetch": journalFetch(),
@@ -249,6 +248,10 @@ return array::first(select (select label,id from parent.*) as hierarchy, array::
   return [def];
 }
 
+/**
+ * @deprecated - using cache instead
+ * @returns
+ */
 function goalFetch() {
   const def = `DEFINE FUNCTION fn::pointron::goal::fetch($id: record){
     let $raw = select id, *, fn::pointron::goal::fetchParent(id) as parent from PointGoal where id == $id;

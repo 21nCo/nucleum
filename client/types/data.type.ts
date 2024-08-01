@@ -66,6 +66,10 @@ export interface IStore {
    * Prevents the store from being persisted to remote database when the store is updated using $ syntax and therefore set method
    */
   isPreventAutoPersist?: boolean;
+  /**
+   * Dbo function dependencies that need to be defined on database before the store can be used
+   */
+  dboDependencies?: string[];
   loader?: (data: any) => void;
   search?: (query: string) => Promise<any>;
   resolveRefreshQuery?: () => string;

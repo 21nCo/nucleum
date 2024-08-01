@@ -87,9 +87,13 @@ export class ResourceStore<T extends IResource> implements IStore {
   currentUserId?: string;
   mutatingResources: string[];
   cacheStrategy?: CacheStrategy;
+  dboDependencies?: string[];
   constructor(
     resourceType: Resource,
-    params?: Pick<IStore, "refreshOnAppear" | "refreshQuery" | "cacheStrategy">
+    params?: Pick<
+      IStore,
+      "refreshOnAppear" | "refreshQuery" | "cacheStrategy" | "dboDependencies"
+    >
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
@@ -99,6 +103,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     this.refreshOnAppear = params?.refreshOnAppear || false;
     this.refreshQuery = params?.refreshQuery;
     this.cacheStrategy = params?.cacheStrategy ?? CacheStrategy.MERGE_RECORDS;
+    this.dboDependencies = params?.dboDependencies;
   }
   refresh() {
     return dataManager.refreshForIFR(this.id);
@@ -275,7 +280,10 @@ export class ResourceFIRStore<
   constructor(
     item: Resource,
     defaultFilter?: (items: T[]) => T[],
-    params?: Pick<IStore, "refreshOnAppear" | "refreshQuery">
+    params?: Pick<
+      IStore,
+      "refreshOnAppear" | "refreshQuery" | "dboDependencies"
+    >
   ) {
     super(item, StoreDataType.FIR, params);
     this.id = item;
