@@ -49,15 +49,14 @@ function nodeParent() {
     } else {
         return $results;
     }
-};
-`;
+};`;
   return [def];
 }
 
 function pdfAnnotatorGetAllClips() {
   const def = `DEFINE FUNCTION fn::memotron::pdfAnnotator::getAllClips($url: string) {
       RETURN (SELECT clips, fn::memotron::fetchClips(id) AS clips FROM node WHERE url = $url);
-  }`;
+  };`;
   return [...fetchClips(), def];
 }
 
@@ -73,7 +72,7 @@ function pdfAnnotatorSaveClip() {
       LET $parentNode = (RETURN array::first((SELECT VALUE id FROM node WHERE url = $url)));
       LET $record = (CREATE node SET parent = $parentNode, contentType = $content.contentType, body = $content.body, createdAt = time::now(), modifiedAt = time::now());
       RETURN array::first($record);
-  }`;
+  };`;
   return [def];
 }
 

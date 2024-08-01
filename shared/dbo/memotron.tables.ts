@@ -1,8 +1,7 @@
 export const memotronTables = [...nodesByDay()];
 
 function node() {
-  const def = `
-    DEFINE TABLE node SCHEMAFULL;
+  const def = `DEFINE TABLE node SCHEMAFULL;
 DEFINE FIELD label on TABLE node TYPE option<string>;
 DEFINE FIELD body on TABLE node FLEXIBLE TYPE option<object | string>;
 DEFINE FIELD type on TABLE node TYPE option<record<type>>;
@@ -22,8 +21,7 @@ DEFINE FIELD modifiedAt on TABLE node VALUE time::now();
 DEFINE FIELD isArchived on TABLE node DEFAULT false;
 DEFINE FIELD isStarred on TABLE node DEFAULT false;
 DEFINE FIELD creationContext on TABLE node TYPE any;
-DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;
-    `;
+DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;`;
   return [def];
 }
 

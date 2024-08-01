@@ -79,8 +79,7 @@ function analyticsPageFetch() {
     LET $previous = SELECT value (IF previous is not NONE THEN fn::pointron::analytics::focusByGoal::v3(scale, previous, begin) ELSE [] END) as val FROM $params;
     LET $colors = fn::pointron::goals::colors();
 	RETURN { colors: $colors, cards: $cards, previous: $previous };
-};
-`;
+};`;
   return [...analyticsFocusByGoalV3(), ...goalColors(), def];
 }
 
@@ -172,7 +171,7 @@ function insertEmptyV2() {
     let $tzOffset = array::first((select value timeZoneOffset from kv:globalPreferences));
     let $targets = array::first(select value horizonTargets from kv:pointronPreferences);
     return insert into PointLog (select $targets as targets, $tzOffset as tzOffset, 0 as totalFocus, 0 as totalBreak, time::from::unix(time::unix() - val * 24 * 60 * 60) as start, time::unix() - val * 24 * 60 * 60 as id, 'PointGoal:Empty' as goalId, true as isEmptyLog from $offsets);
-}`;
+};`;
   return [def];
 }
 
@@ -286,7 +285,7 @@ function goalFetchQuickFocusItemsV2() {
   return select label, id, color, tags, isFavorite, fn::pointron::analytics::focusByCurrentHorizon::v3('DAYS',id).focus as focus, fn::pointron::goal::fetchParent(id) as parent from PointGoal 
   where isPinnedForQuickStart is true and 
   ((isArchived is false or isArchived is none) and trashInformation is none and fn::pointron::goal::isParentArchived(id) < 1);
-}`;
+};`;
   return [
     ...goalFetchParent(),
     ...goalIsParentArchived(),

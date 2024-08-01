@@ -1,3 +1,8 @@
+import { globalDbo } from "$lib/shared/dbo/dbo";
+import { memotronDboDefinitions } from "$lib/shared/dbo/memotron.dbo";
+import { memotronTables } from "$lib/shared/dbo/memotron.tables";
+import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
+import { pointronTables } from "$lib/shared/dbo/pointron.tables";
 import { extractProduct } from "$lib/shared/utils/utils";
 import {
   performQueryOnMasterDb,
@@ -7,6 +12,12 @@ import {
 import { validateToken } from "./token";
 import { type Agent, CONTEXT } from "./types/account.type";
 
+/**
+ * @deprecated use updateDbV2 instead
+ * @param host
+ * @param lastRunChangeId
+ * @returns
+ */
 export async function fetchDbDefinitionsQuery(
   host: string,
   lastRunChangeId: number
@@ -39,6 +50,7 @@ export async function fetchDbDefinitionsQuery(
 }
 
 /**
+ * @deprecated use updateDbV2 instead
  * Updates the lastRunChangeId in the globalPreferences of the agent's database
  * @param agent Agent details with scope and db
  * @param lastRunVersionId id of the last run change
@@ -55,7 +67,7 @@ export async function updateDbChangeRunStatus(
 }
 
 /**
- *
+ * @deprecated use updateDbV2 instead
  * Updates the db definitions on a agent's database.
  *
  * @param agent the agent details with scope and db details
@@ -95,6 +107,12 @@ export async function updateDbDefinitions(
   };
 }
 
+/**
+ * @deprecated use updateDbV2 instead
+ * @param body
+ * @param agent
+ * @returns
+ */
 export async function updateDb(body: any, agent: Agent) {
   const fromVersion = body.fromVersion;
   if (!fromVersion) return { error: "fromVersion is required" };
@@ -105,6 +123,29 @@ export async function updateDb(body: any, agent: Agent) {
     host
   });
   return updateDbDefinitions(agent, host, fromVersion ?? 1);
+}
+
+export async function updateDbV2(body: any, agent: Agent) {
+  const dependencies = body.dbo;
+  if (!dependencies) return { error: "dbo is required" };
+  const tables = [...pointronTables, ...memotronTables];
+  const functions = {
+    ...globalDbo,
+    ...pointronDboDefinitions,
+    ...memotronDboDefinitions
+  };
+  let updates: any[] = [];
+  dependencies.forEach((dependency) => {
+    const definition = functions[dependency];
+    if (!definition) return;
+    updates.push(...definition);
+  });
+  console.log("dbo updates", { tables, updates });
+  let updateQuery = tables.join("; ") + ";" + updates.join("; ");
+  updateQuery = updateQuery.replace(/\n/g, "");
+  updateQuery = updateQuery.replace(/\t/g, "");
+  console.log("updateQuery", updateQuery);
+  return performAgentProxyQuery(updateQuery, agent);
 }
 
 export function authorize(props: { token: string; host?: string }) {
@@ -126,7 +167,7 @@ export function authorize(props: { token: string; host?: string }) {
  * @param host
  * @returns
  */
-export async function initializeDatabaseAndDefinitions(
+export async function initializeDatabase(
   id: string,
   params: { scope: CONTEXT; host: string; region?: string }
 ) {
@@ -136,18 +177,11 @@ export async function initializeDatabaseAndDefinitions(
       ? process.env.USER_NS ?? "USER"
       : process.env.SPACE_NS ?? "SPACE";
   let query = `USE NAMESPACE ${ns}; DEFINE DATABASE ${id}; USE DATABASE ${id}; DEFINE TOKEN ${process.env.TOKEN_NAME} ON DB TYPE RS384 VALUE "${process.env.TOKEN_PUBLIC_KEY}";`;
-  let definitionsResult = await fetchDbDefinitionsQuery(params.host, 0);
-  if (definitionsResult) query += definitionsResult.query;
   console.log("db init query", { query });
   const dbCreationResponse = await performQueryOnRegionalDb(query, {
     region: params.region,
     db: id,
     context: params.scope
   });
-  if (definitionsResult)
-    await updateDbChangeRunStatus(
-      { id, db: id, context: CONTEXT.USER, region: params.region },
-      definitionsResult.highestChangeId
-    );
   return dbCreationResponse;
 }
