@@ -54,6 +54,8 @@
   function onTimeChange(event: any) {
     let start: Date;
     let end: Date;
+    if(item.startTime === '') item.startTime = new Date(defaultTime).toTimeString().substring(0,5)
+    if(item.endTime === '') item.endTime = new Date(defaultTime).toTimeString().substring(0,5)
     start = attachTimeToDate(item.startDate, item.startTime);
     end = attachTimeToDate(item.endDate, item.endTime);
     item.duration = (end.getTime() - start.getTime()) / 1000;
