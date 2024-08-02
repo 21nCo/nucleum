@@ -11,6 +11,7 @@
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
   import { searchForLinking } from "../../memotron.store";
   import LinkItems from "./LinkItems.svelte";
+  import { Position } from "$lib/client/types/direction.enum";
   let link: string;
   function onsearch(searchQuery: string) {
     return searchForLinking(searchQuery);
@@ -39,7 +40,8 @@
       style={InputStyle.PLAIN}
       searchResultComponent={LinkSuggestionItem}
       popoverOptions={{
-        offsetInPx: 12
+        offsetInPx: 12,
+        placement: Position.TopCenter
       }}
       on:select={(e) => {
         console.log("select", e.detail);

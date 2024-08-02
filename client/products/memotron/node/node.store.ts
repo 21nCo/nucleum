@@ -248,6 +248,7 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(context),
           resourceActions.select(),
+          resourceActions.pinToTopBar(),
           resourceActions.copyLink()
         ]
       },
@@ -263,6 +264,7 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(context),
+          resourceActions.pinToTopBar(),
           resourceActions.copyLink(),
           {
             value: "download",
@@ -288,6 +290,7 @@ export function resolveNodeContextMenu(
       items: [
         resourceActions.star(),
         resourceActions.edit(context),
+        resourceActions.pinToTopBar(),
         resourceActions.copyLink(),
         {
           value: "export",

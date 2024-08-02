@@ -5,9 +5,11 @@
   export let item: ICollection;
 </script>
 
-<div class="flex gap-2">
-  <CountBadge count={10} label="nodes" />
-  {#if item.type === CollectionType.TYPED}
-    <CountBadge count={item.properties?.length} label="properties" />
-  {/if}
-</div>
+{#if item.properties && item.properties?.length > 0}
+  <div class="flex gap-2">
+    <!-- <CountBadge count={10} label="nodes" /> -->
+    {#if item.type === CollectionType.TYPED && item.properties && item.properties?.length > 0}
+      <CountBadge count={item.properties?.length} label="properties" />
+    {/if}
+  </div>
+{/if}

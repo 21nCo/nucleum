@@ -1,17 +1,12 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
-  import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import {
-    renderPopover,
-    resolveHoverState
-  } from "$lib/client/utils/browser.utils";
   import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
   import { Position } from "$lib/client/types/direction.enum";
-  import Tooltip from "../text/Tooltip.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
+  import HoverableElement from "../HoverableElement.svelte";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -46,40 +41,16 @@
    */
   export let isStayActive: boolean = false;
   export let id: string = "";
-  // export let buttonBaseColor: string = "";
-  // export let buttonActiveColor: string = "";
-  // export let isActive: boolean = false;
-  let toolTipRef: any;
   let buttonRef: any;
   export let isHovering: boolean = false;
   $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
     style = ButtonStyle.PLAIN;
-  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
-    if (resolveHoverState(event)) {
-      isHovering = true;
-      if (tooltip) {
-        renderPopover({
-          ...tooltipOptions,
-          triggerRef: buttonRef,
-          popRef: toolTipRef
-        });
-      }
-    } else {
-      isHovering = false;
-      hideToolTip();
-    }
-  };
-  onMount(() => {
-    hideToolTip();
-  });
-  function hideToolTip() {
-    if (toolTipRef && toolTipRef?.style?.display != "none")
-      toolTipRef.style.display = "none";
-  }
 </script>
 
-<button
+<HoverableElement
   {id}
+  bind:isHovering
+  type="button"
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
     {
@@ -89,7 +60,12 @@
       "gap-4 text-base": size === Size.lg,
       "gap-2 text-b2 dp:text-base": size === Size.md,
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
-      "gap-1 text-b4 dp:text-b3": size === Size.xs
+      "gap-1 text-b4 dp:text-b3": size === Size.xs,
+      "p-1.5 rounded-md": !$$slots.default && !label,
+      [bg(parentBgIndex)]: isHovering && !$$slots.default && !label,
+      "text-fgs2 hover:text-aps1": style === ButtonStyle.PLAIN,
+      "underline-dotted hover:underline-dotted-primary":
+        style === ButtonStyle.PLAIN && isUnderlined
     },
     style != ButtonStyle.PLAIN &&
       (label || $$slots.default) && {
@@ -100,16 +76,14 @@
         "h-6 py-1 px-3": size === Size.xs
       },
     style === ButtonStyle.DEFAULT && [
-      (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER) &&
-        "text-abg",
-      type === ButtonVariant.SECONDARY && bg(parentBgIndex),
       {
-        "hover:opacity-90":
+        "hover:opacity-90 text-abg":
           type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
         "bg-aps1": type === ButtonVariant.PRIMARY,
         "bg-ars1": type === ButtonVariant.DANGER,
         "border border-transparent hover:border-brs3":
-          type === ButtonVariant.SECONDARY
+          type === ButtonVariant.SECONDARY,
+        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY
       }
     ],
     style === ButtonStyle.OUTLINED && [
@@ -122,21 +96,13 @@
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }
     ],
-    style === ButtonStyle.PLAIN && [
-      "text-fgs2 hover:text-aps1",
-      {
-        "underline-dotted hover:underline-dotted-primary": isUnderlined
-      }
-    ],
     className
   )}
   on:click
   bind:this={buttonRef}
-  on:mouseover={toggleHoveringState}
-  on:mouseleave={toggleHoveringState}
-  on:focus={toggleHoveringState}
-  on:blur={toggleHoveringState}
-  disabled={isDisabled || isLoading}
+  {tooltip}
+  {tooltipOptions}
+  isDisabled={isDisabled || isLoading}
 >
   {#if isLoading}
     <InlineLoadingAnimation
@@ -174,10 +140,4 @@
       <slot />
     {/if}
   {/if}
-
-  {#if tooltip}
-    <div bind:this={toolTipRef}>
-      <Tooltip {tooltip} />
-    </div>
-  {/if}
-</button>
+</HoverableElement>

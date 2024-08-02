@@ -116,7 +116,9 @@
               orientation === Orientation.Vertical && size === Size.lg,
             "w-[30rem] 2k:w-[35rem] h-[35rem] 2k:h-[50rem]":
               orientation === Orientation.Vertical && size === Size.md,
-            "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[64rem] vm:h-[80rem]":
+            "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-[80rem] vm:h-[90rem]":
+              orientation === Orientation.Horizontal && size === Size.xxl,
+            "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
               orientation === Orientation.Horizontal && size === Size.xl,
             "w-[50rem] 2k:w-[60rem] h-[45rem] 2k:h-[50rem]":
               orientation === Orientation.Horizontal && size === Size.lg,

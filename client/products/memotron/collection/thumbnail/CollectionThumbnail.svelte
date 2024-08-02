@@ -15,13 +15,13 @@
   export let item: ICollection;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
-  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
 </script>
 
-<ResourceThumbnailBase bind:item {context}>
+<ResourceThumbnailBase bind:item {accessPoint}>
   {#if arrangement === Arrangement.LIST}
     <button
-      class="flex gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
+      class="flex h-20 gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
       on:click
     >
       <div class="flex h-full w-14">

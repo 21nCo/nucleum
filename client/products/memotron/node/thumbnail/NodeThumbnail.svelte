@@ -19,18 +19,18 @@
   import ResourceThumbnailTitle from "../../common/thumbnail/ResourceThumbnailTitle.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   export let item: INodeThumbnail;
-  export let variant: Arrangement = Arrangement.LIST;
+  export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
-  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
 </script>
 
-<ResourceThumbnailBase {item} {context} {isApplyCustomColor}>
+<ResourceThumbnailBase {item} {accessPoint} {isApplyCustomColor}>
   <!-- {#if variant === Arrangement.LIST && collectionContext}
     <NodeThumbnailInList node={item} {parentBgIndex} on:click /> -->
-  {#if variant === Arrangement.LIST}
+  {#if arrangement === Arrangement.LIST}
     <button
       class={cn("flex w-full p-3 border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
@@ -40,12 +40,12 @@
     >
       <ResourceThumbnailTitle {item} />
     </button>
-  {:else if variant === Arrangement.GRID}
+  {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail
       {item}
       on:click
       {isApplyCustomColor}
-      size={context === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
+      size={accessPoint === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
     >
       <div class="relative grow w-full p-4">
         <!-- Preview content -->
@@ -69,7 +69,7 @@
       </span> -->
       </slot>
     </ResourceGridThumbnail>
-  {:else if variant === Arrangement.TIMELINE}
+  {:else if arrangement === Arrangement.TIMELINE}
     <NodeThumbnailInTimeline node={item} on:click {parentBgIndex} />
   {/if}
 </ResourceThumbnailBase>

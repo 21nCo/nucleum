@@ -2,16 +2,12 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    VerticalSwitcherStyle,
-    type SwitchItem
-  } from "$lib/client/types/switcher.enum";
-  import { renderPopover } from "$lib/client/utils/browser.utils";
+  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import { onMount } from "svelte";
-  import Tooltip from "../text/Tooltip.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let item: SwitchItem;
+  import type { ISelectItem } from "$lib/client/types/select.type";
+  import HoverableElement from "../HoverableElement.svelte";
+  export let item: ISelectItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let activeStatusPlacement: Position = Position.Left;
   export let isHideLabel: boolean = false;
@@ -22,11 +18,6 @@
   let activeClasses: string;
   let inactiveClasses: string;
   let sizeClasses: string;
-  let toolTipRef: any;
-  let parentRef: any;
-  onMount(() => {
-    hideToolTip();
-  });
   $: if (
     style === VerticalSwitcherStyle.GRADIENT &&
     activeStatusPlacement === Position.Left
@@ -79,21 +70,21 @@
   } else if (size === Size.lg) {
     sizeClasses = "text-base w-24 gap-2 px-4 py-6";
   }
-  function hideToolTip() {
-    if (toolTipRef && toolTipRef?.style?.display != "none")
-      toolTipRef.style.display = "none";
-  }
 </script>
 
 <div
-  class={style === VerticalSwitcherStyle.BAR_V2
-    ? activeStatusPlacement === Position.Left
-      ? "border-l-2 border-l-bgs3"
-      : "border-r-2 border-r-bgs3"
-    : ""}
+  class={cn({
+    "border-l-2 border-l-bgs3":
+      style === VerticalSwitcherStyle.BAR_V2 &&
+      activeStatusPlacement === Position.Left,
+    "border-r-2 border-r-bgs3":
+      style === VerticalSwitcherStyle.BAR_V2 &&
+      activeStatusPlacement === Position.Right
+  })}
 >
-  <button
-    class={cn("flex flex-col items-center", sizeClasses, {
+  <HoverableElement
+    type="button"
+    class={cn("relative flex flex-col items-center", sizeClasses, {
       [activeClasses]: isActive,
       [inactiveClasses]: !isActive,
       "border-ccs1": isActive,
@@ -106,26 +97,27 @@
         !isHideBar &&
         activeStatusPlacement === Position.Right
     })}
+    tooltip={isHideLabel
+      ? properCase(item.label ?? item.value?.toString())
+      : undefined}
+    tooltipOptions={{
+      placement: Position.Left
+    }}
     on:click
-    bind:this={parentRef}
-    on:pointerenter={() => {
-      if (isHideLabel && item.label)
-        renderPopover({
-          triggerRef: parentRef,
-          popRef: toolTipRef,
-          placement: Position.Left
-        });
-    }}
-    on:pointerleave={() => {
-      hideToolTip();
-    }}
   >
-    {#if item.icon}
+    {#if item.icon && typeof item.icon === "string"}
       <Icon
         icon={item.icon.toLowerCase()}
         {size}
         class={cn({
-          "fill-fgs1": isActive,
+          "fill-fgs1":
+            isActive &&
+            (style === VerticalSwitcherStyle.BAR ||
+              style === VerticalSwitcherStyle.GRADIENT),
+          "fill-aps1":
+            isActive &&
+            (style === VerticalSwitcherStyle.BG ||
+              style === VerticalSwitcherStyle.DOT),
           "stroke-fgs3": !isActive
         })}
       />
@@ -133,13 +125,13 @@
     <slot />
     {#if !isHideLabel}
       <span class="w-min {isActive ? 'font-medium' : ''}"
-        >{properCase(item.label)}</span
+        >{properCase(item?.label ?? item?.value?.toString())}</span
       >
     {/if}
-    {#if isHideLabel && item.label}
-      <div bind:this={toolTipRef}>
-        <Tooltip tooltip={properCase(item.label)} />
+    {#if style === VerticalSwitcherStyle.DOT && isActive}
+      <div class="absolute bottom-1 left-0 flex justify-center w-full">
+        <span class="h-1 w-1 bg-aps1 rounded-full" />
       </div>
     {/if}
-  </button>
+  </HoverableElement>
 </div>

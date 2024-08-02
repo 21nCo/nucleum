@@ -140,7 +140,11 @@ export class SearchStore {
   async refreshNodes() {
     let query = this.dexie.node
       .where("contentType")
-      .anyOfIgnoreCase(rootNodeTypeList);
+      .anyOfIgnoreCase(
+        this.searchQuery
+          ? [...rootNodeTypeList, ...headingNodeTypes]
+          : rootNodeTypeList
+      );
 
     if (this.resource === Resource.archived) {
       query = query.and((item) => item.isArchived === true);
@@ -152,8 +156,10 @@ export class SearchStore {
       query = query.and((item) => item.isStarred === true);
     }
     if (this.searchQuery) {
-      query = query.and((item) =>
-        item.label?.toLowerCase().includes(this.searchQuery.toLowerCase())
+      query = query.and(
+        (item) =>
+          item.label?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          item.body?.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     }
     return query.toArray();
@@ -221,8 +227,8 @@ export class SearchStore {
 
   private recentNodes() {
     return this.dexie.node
-      .where("id")
-      .notEqual("")
+      .where("contentType")
+      .anyOfIgnoreCase([...rootNodeTypeList, ...headingNodeTypes])
       .and((item: any) => activeResourceFilter(item))
       .toArray();
   }

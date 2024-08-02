@@ -12,5 +12,6 @@ export enum Action {
   CONFIRMATION = "CONFIRMATION",
   ROADMAP = "roadmap",
   PRIVACY_POLICY = "privacy",
-  TERMS_OF_SERVICE = "tos"
+  TERMS_OF_SERVICE = "tos",
+  GLOBAL_SEARCH = "global-search"
 }
