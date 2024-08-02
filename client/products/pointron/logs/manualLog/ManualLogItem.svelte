@@ -58,7 +58,8 @@
     if(item.endTime === '') item.endTime = new Date(defaultTime).toTimeString().substring(0,5)
     start = attachTimeToDate(item.startDate, item.startTime);
     end = attachTimeToDate(item.endDate, item.endTime);
-    item.duration = (end.getTime() - start.getTime()) / 1000;
+    if(item.startDate.getTime() !== defaultTime && item.endDate.getTime() === defaultTime) refreshEndTime()
+    else item.duration = (end.getTime() - start.getTime()) / 1000;
     valid.set(performValidationChecks())
   }
   function refreshEndTime() {
