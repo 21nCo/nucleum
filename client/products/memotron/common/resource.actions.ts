@@ -58,7 +58,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       callback: () => {
         this.resource.trashInformation
           ? this.store.restore(this.resource.id)
-          : this.store.delete(this.resource.id);
+          : this.store.trash(this.resource.id);
       }
     };
   }

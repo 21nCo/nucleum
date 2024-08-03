@@ -13,7 +13,7 @@ class PropertyStore extends ResourceStore<IProperty> {
   db: ISurrealDatabase;
   constructor() {
     super(Resource.property, {
-      priorityRefreshOnAppAppear: true
+      refreshOnAppear: true
     });
     this.db = new SurrealDatabase();
   }

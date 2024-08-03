@@ -21,6 +21,7 @@
     if (!result) return;
     pageAction = result;
   }
+  $: console.log({ config, appData: $appStore?.appData });
 </script>
 
 {#if config && config?.length > 0}

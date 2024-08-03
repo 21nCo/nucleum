@@ -19,7 +19,7 @@
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
   export let node: IActiveNodeStore;
   export let mdId: string;
-  export let nodePageVariant: "v1" | "v2" = "v1";
+  export let nodePageVariant: "v1" | "v2" = "v2";
   let selectedRightPanel = RightPanelType.OUTLINE;
   let isRightPanelCollapsed = true;
   let verticalSwitcherItems = [

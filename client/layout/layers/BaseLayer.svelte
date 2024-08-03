@@ -19,8 +19,7 @@
     appStore,
     currentTime,
     excludedPathsForRedirectionCheck,
-    userPreferences,
-    dboVersion
+    userPreferences
   } from "$lib/client/stores/app.store";
   import { appEvents, toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
@@ -37,7 +36,6 @@
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/stores/localActionMap";
   import { localCacheableStores } from "$local/stores/localStoresMap";
-  import MutationQueueLayer from "./MutationQueueLayer.svelte";
   import {
     detectSystemOS,
     detectTouchDevice
@@ -49,6 +47,7 @@
   import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
+  import AppLoadingView from "../paint/AppLoadingView.svelte";
 
   let timer: any;
   pingParent();
@@ -79,10 +78,7 @@
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
    * @param isSignup - If the user is signing up
    */
-  function refreshTimeZone(isSignup?: boolean) {
-    if (isSignup) {
-      return userPreferences.initializeTimeZoneForSignup();
-    }
+  function refreshTimeZone() {
     const timeZone = detectTimeZone();
     if (!timeZone || !$userPreferences) return;
     if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
@@ -91,7 +87,7 @@
   }
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
-    pingParent(true);
+    pingParent();
     refreshTimeZone();
     if (
       excludedPathsForRedirectionCheck.includes(
@@ -102,7 +98,6 @@
     let isValid = await account.performLoginStatusCheck();
     if (!isValid) return;
     dataManager.refreshOnAppear();
-    appStore.checkForUpdates();
     account.ping();
   };
   const windowResizeListener = (event: Event) => {
@@ -121,11 +116,6 @@
   async function appEventHandler(e: IEvent) {
     if (e.event === GlobalEvent.USER_LOGIN) {
       if (e.value) dataManager.refreshApp();
-    } else if (e.event === GlobalEvent.BOOTSTRAP) {
-      //TODO - load seed data - delegation via DataManager - for all kvo stores load and save seed data on cloud on signup
-      await userPreferences.loadSeedData();
-      await refreshTimeZone(true);
-      await dataManager.refreshApp();
     }
   }
   /**
@@ -141,7 +131,6 @@
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
     checkForEnvironmentChange();
-    refreshTimeZone();
     appMenuStore.setDefaults(defaultAppMenu);
 
     function runCurrentTime() {
@@ -178,6 +167,10 @@
     initActions(isLiteMode);
     if ($account.isLoggedIn && !isLiteMode) {
       await dataManager.refreshApp();
+      refreshTimeZone();
+      appMenuStore.setDefaults(defaultAppMenu, true);
+      account.setAnalyticsUserIdentity();
+      await account.ping();
     } else {
       await account.logGuest();
     }
@@ -187,12 +180,7 @@
         $appStore.currentPath.split("/")[1]
       )
     ) {
-      const isProceed = await account.performLoginStatusCheck();
-      if (isProceed) {
-        let result = await appStore.checkForUpdates();
-        if (!result) await dboVersion.runDboUpdate();
-        else await account.ping();
-      }
+      await account.performLoginStatusCheck();
     }
 
     async function refreshAppStaticData() {
@@ -200,7 +188,7 @@
       try {
         const appData = await new Persistence().fetchAppData();
         if (!appData) {
-          appStore.gotoErrorPage("App data not found");
+          throw new Error("App data not found");
         }
         appStore.loadAppData(appData);
       } catch (e) {
@@ -273,7 +261,7 @@
    */
   function checkForEnvironmentChange() {
     const envCachedOnMachine = localStorage.getItem("env");
-    if ($appStore.env !== envCachedOnMachine) {
+    if (envCachedOnMachine && $appStore.env !== envCachedOnMachine) {
       localStorage.setItem("env", $appStore.env);
       console.log("environment changed");
       account.signOut();
@@ -321,6 +309,9 @@
 {/if}
 <div class="flex h-screen w-screen">
   <ThemeLayer>
+    {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
+      <AppLoadingView />
+    {/if}
     <slot />
   </ThemeLayer>
 </div>
@@ -331,10 +322,9 @@
   <MetadataLayer />
   <ModalLayer />
   <Shortcuts />
-  <MutationQueueLayer />
+  <CacheLayer />
 {/if}
 <Intercom />
-<CacheLayer />
 <svelte:window
   on:resize={windowResizeListener}
   on:click={windowClickEventListener}

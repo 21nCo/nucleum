@@ -1,9 +1,6 @@
 <script lang="ts">
   import "../app.css";
-  import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
-  import { appLoadingState } from "$lib/client/stores/app.store";
   import appearance from "$lib/client/stores/appearance.store";
-  import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import LocalBaseLayer from "$local/layout/LocalBaseLayer.svelte";
 </script>
 
@@ -12,12 +9,7 @@
     ' ' +
     $appearance.colorScheme.tailwindSelector}"
 >
-  <BaseLayer>
-    {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
-      <AppLoadingView />
-    {/if}
-    <LocalBaseLayer>
-      <slot />
-    </LocalBaseLayer>
-  </BaseLayer>
+  <LocalBaseLayer>
+    <slot />
+  </LocalBaseLayer>
 </div>

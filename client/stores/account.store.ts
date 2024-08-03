@@ -9,7 +9,7 @@ import {
   confirmationNotification,
   appEvents
 } from "$lib/client/stores/notification.store";
-import { appStore } from "./app.store";
+import { appStore, userPreferences } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { wait } from "../utils/time.utils";
 import { signout } from "../utils/account.utils";
@@ -21,6 +21,7 @@ import {
 } from "$lib/client/types/data.type";
 import { generateUID } from "../utils/utils";
 import { dataManager } from "../persistence/dataManager";
+import posthog from "posthog-js";
 
 export const isRefreshingToken = writable(false);
 
@@ -42,10 +43,21 @@ class AccountStore extends ObservableStore<
       seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
     }
     this.set(seed);
+    this.postToEmbed(seed);
+  }
+
+  postToEmbed(data: any = null) {
+    if (!data) {
+      const token = localStorage.getItem("stoken");
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+      data = { token, userInfo };
+    }
+    if (!data) return;
     postToParent({
       account: JSON.stringify({
-        userId: seed.userInfo?.id.split("user:")[1],
-        token: seed.token,
+        userId: data.userInfo?.id?.split("user:")[1],
+        token: data.token,
+        refreshToken: data.refreshToken,
         isLoggedIn: true
       })
     });
@@ -76,14 +88,7 @@ class AccountStore extends ObservableStore<
     localStorage.setItem("stoken", data.token);
     localStorage.setItem("refresh-token", data.refreshToken ?? "");
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
-    postToParent({
-      account: JSON.stringify({
-        userId: data.userInfo.id.split("user:")[1],
-        token: data.token,
-        refreshToken: data.refreshToken,
-        isLoggedIn: true
-      })
-    });
+    this.postToEmbed(data);
     this.update(() => {
       return {
         token: data.token,
@@ -149,6 +154,7 @@ class AccountStore extends ObservableStore<
   }
 
   ping() {
+    this.postToEmbed();
     return this.persistence.ping();
   }
   logGuest() {
@@ -177,6 +183,10 @@ class AccountStore extends ObservableStore<
         redirectTo: "/onboarding"
       }
     );
+    appEvents.publish(GlobalEvent.BOOTSTRAP, true);
+    this.setAnalyticsUserIdentity();
+    await dataManager.bootstrap();
+    await userPreferences.initializeTimeZoneForSignup();
     return true;
   }
   async performLoginStatusCheck() {
@@ -272,11 +282,21 @@ class AccountStore extends ObservableStore<
   clearAllCache() {
     const env = localStorage.getItem("env");
     const appData = localStorage.getItem("appData");
+    const product = localStorage.getItem("product");
     localStorage.clear();
     sessionStorage.clear();
     get(dataManager)?.cacheSource?.clearCache();
     if (env) localStorage.setItem("env", env);
+    if (product) localStorage.setItem("product", product);
     if (appData) localStorage.setItem("appData", appData);
+  }
+
+  setAnalyticsUserIdentity() {
+    const account = this.get();
+    if (!account.userInfo) return;
+    posthog.identify(account.userInfo.id, {
+      region: account.userInfo.region
+    });
   }
 }
 

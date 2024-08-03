@@ -176,7 +176,12 @@ function flattenSubGoalsAsGoals(
 class GoalStore extends ResourceFIRStore<IGoal> {
   constructor() {
     super(Resource.PointGoal, defaultFilter, {
-      refreshQuery: "fn::pointron::goal::fetchAll();"
+      refreshQuery: "fn::pointron::goal::fetchAll();",
+      refreshOnAppear: true,
+      dboDependencies: [
+        "fn::pointron::goal::fetchAll",
+        "fn::pointron::goal::fetchQuickFocusItems::v2"
+      ]
     });
   }
   filter(filters: {
@@ -200,7 +205,8 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       label: goal?.label ?? "",
       id: goal?.id,
       color: goal?.color ?? goal?.parent?.color,
-      childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0
+      childrenCount: goal?.subGoals?.filter(activeResourceFilter).length ?? 0,
+      parent: goal?.parent
     };
   }
   resolveChildren(id: string) {
@@ -211,13 +217,13 @@ class GoalStore extends ResourceFIRStore<IGoal> {
   async resolveSubGoalsIfNotPresent(goalId: string) {
     const goals = this.get().items;
     const goalInContext = goals.find((x) => x.id === goalId);
-    console.log({ goalInContext });
+    // console.log({ goalInContext });
     if (!goalInContext) return;
     if (!isValidArrayWithData(goalInContext?.subGoals)) {
       const subGoals = goals.filter(
         (x) => goalInContext?.id === x.parent?.hierarchy.pop()?.id
       );
-      console.log({ subGoals });
+      // console.log({ subGoals });
     }
   }
   async refresh(
@@ -237,12 +243,6 @@ class GoalStore extends ResourceFIRStore<IGoal> {
     await dataManager.performMutation(this.id, flattenSubGoalsAsGoals(goal), {
       action: PersistanceActionType.CREATE
     });
-    setTimeout(() => {
-      if (goal.isPinnedForQuickStart) appStore.gotoPath("/focus");
-      else {
-        // appStore.gotoPath(Item.goal);
-      }
-    }, 1000);
     toasts.trigger({
       title: "Goal: " + goal.label,
       message: "Created successfully",
@@ -369,7 +369,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
   return {
     subscribe,
     set: async (newValue: IGoal) => {
-      console.log("currentGoal", { previousValue, newValue });
+      // console.log("currentGoal", { previousValue, newValue });
       let changedProperties: any = {};
       const propertiesToDelayUpdate = ["description", "label", "tags", "color"];
       if (previousValue) {
@@ -381,7 +381,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
         let changesToSaveLater = differences.filter((x) =>
           propertiesToDelayUpdate.some((y) => y === x)
         );
-        console.log({ changesToSaveImmediately, changesToSaveLater });
+        // console.log({ changesToSaveImmediately, changesToSaveLater });
         if (isValidArrayWithData(changesToSaveLater)) {
           newValue.pendingChanges = true;
         } else {
@@ -420,7 +420,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
       if (!goal) {
         goal = await fetchGoal(id);
       }
-      console.log("currentGoal", { goal });
+      // console.log("currentGoal", { goal });
       if (!goal) return;
       if (!goal.analytics) goal.analytics = seedGoal.analytics;
       if (!goal.tags) goal.tags = [];

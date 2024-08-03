@@ -99,7 +99,7 @@
   >
     <Panel
       title="Goals"
-      panelSize={Size.sm}
+      panelSize={Size.md}
       floatingButton={{
         label: "Create new goal",
         callback: async () =>
@@ -135,7 +135,7 @@
           {/if}
           <div class="h-full w-full">
             {#if isValidArrayWithData($goalStore.filtered)}
-              <div class="w-full grow portrait:text-base text-b2">
+              <div class="w-full grow">
                 <TreeMap
                   items={$goalStore.filtered?.map((x) => x.id)}
                   contentCallback={goalStore.resolveGoal.bind(goalStore)}

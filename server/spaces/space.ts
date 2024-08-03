@@ -1,4 +1,4 @@
-import { initializeDatabaseAndDefinitions } from "../account";
+import { initializeDatabase } from "../account";
 import { performQueryOnMasterDb } from "../surrealHelpers";
 import { generateSpaceToken } from "../token";
 import { Agent, CONTEXT, MemberRole, SpaceAction } from "../types/account.type";
@@ -18,7 +18,7 @@ async function createSpace(body: any, agent: Agent) {
   const query = `return fn::admin::space::create("${name}", "user:${agent.id}")`;
   const response = await performQueryOnMasterDb(query);
   const id = response[0].result[0].id.split("space:")[1];
-  await initializeDatabaseAndDefinitions(id, {
+  await initializeDatabase(id, {
     scope: CONTEXT.SPACE,
     host: context.host
   });

@@ -55,7 +55,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       Resource.capture,
       { ...generateSeedStore() },
       {
-        priorityRefreshOnAppAppear: true,
+        refreshOnAppear: true,
         isSynchronousCache: true
       }
     );

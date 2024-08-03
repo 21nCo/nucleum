@@ -29,8 +29,8 @@
    */
   let focusTrap: HTMLDivElement;
   export let id = generateUID();
-  $: if (show) {
-    dialog?.showModal();
+  $: if (show && dialog && !dialog.open) {
+    dialog.showModal();
     // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
@@ -65,7 +65,7 @@
     show = false;
     modalEvent.hideSpecific(id, "Modal.svelte");
     confirmationNotification.reset();
-    appStore.closeResource(true);
+    appStore.closeResource({ isRestrictToModals: true });
   }
 </script>
 
@@ -74,8 +74,9 @@
     class="pop-overlay fixed w-screen h-screen inset-0 {isShowOverlay
       ? 'bg-bgs1 bg-opacity-80'
       : 'bg-opacity-0'} z-50"
-    on:click={overlayClicked}
+    id="{id}-overlay"
     transition:fade={{ duration: 100 }}
+    on:click={overlayClicked}
   >
     {#if isOnRight}
       <div
@@ -115,7 +116,7 @@
               orientation === Orientation.Vertical && size === Size.lg,
             "w-[30rem] 2k:w-[35rem] h-[35rem] 2k:h-[50rem]":
               orientation === Orientation.Vertical && size === Size.md,
-            "w-[80%] 2k:w-[100rem] h-[90%] vm:h-[80rem]":
+            "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[64rem] vm:h-[80rem]":
               orientation === Orientation.Horizontal && size === Size.xl,
             "w-[50rem] 2k:w-[60rem] h-[45rem] 2k:h-[50rem]":
               orientation === Orientation.Horizontal && size === Size.lg,

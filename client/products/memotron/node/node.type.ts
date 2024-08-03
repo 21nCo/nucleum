@@ -2,8 +2,12 @@ import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.t
 import type { IAvatar } from "../../../types/avatar.type";
 import type { IMarkdown } from "../../../components/markdown/md.type";
 import type { IStore } from "../../../types/data.type";
-import type { IPropertyValue } from "$lib/client/products/memotron/collection/properties/property.type";
+import type {
+  IProperty,
+  IPropertyValue
+} from "$lib/client/products/memotron/collection/properties/property.type";
 import type { ILink } from "../capture/capture.type";
+import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
 
 export type INode = INodeBase &
   NodeContent & {
@@ -42,6 +46,13 @@ export type INodeBase = IMemotronItemBase & {
 
 export type IActiveNode = INode & {
   md: IMarkdown;
+  parent?: string[];
+  accessMode: ResourceAccessMode;
+  focusedBlock?: string;
+  collections?: string[];
+  types?: string[];
+  avatars?: IAvatar[];
+  propertyConfig?: IProperty[];
 };
 
 export type NodeContent =
@@ -212,6 +223,16 @@ export const headingNodeTypes = [
   NodeType.HEADING4,
   NodeType.HEADING5
 ];
+
+export const rootNodeTypeList = [
+  NodeType.NODULAR_MARKDOWN,
+  NodeType.NON_NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO
+];
+
 export const TextNodeTypeList = [
   NodeType.SIMPLE_TEXT,
   NodeType.QUOTE,

@@ -2,6 +2,7 @@ import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { logger } from "$lib/client/stores/log.store";
 import {
+  type IMutationQueueParams,
   type IObservableStore,
   type IObservableStoreSubject,
   type IStore,
@@ -24,7 +25,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
-  protected seed: T;
+  seed: T;
   private _debouncedPersist = debouncer(this.persist, 3000);
   constructor(
     item: Resource,
@@ -92,7 +93,10 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * Doesn't cache or update the store itself. Use modify for that
    * @param n
    */
-  protected async persist(n: Partial<T> | undefined = undefined) {
+  protected async persist(
+    n: Partial<T> | undefined = undefined,
+    queueParams?: IMutationQueueParams
+  ) {
     if (!n) n = this.get();
     return dataManager.performMutation(
       this.id,
@@ -100,7 +104,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
         ...n,
         id: this.id
       },
-      { action: PersistanceActionType.MERGE }
+      { action: PersistanceActionType.MERGE, queueParams }
     );
   }
   /**
@@ -108,7 +112,8 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    * @param data
    */
   loader(data: T) {
-    logger.log({ context: "kv.store loader", id: this.id, data });
+    // console.log({ context: "kv.store loader", id: this.id, data });
+    if (!data.id) return;
     this._setAndCache({ ...data });
   }
   /**
@@ -156,6 +161,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
       isPersist?: boolean;
       isDebouncedPersist?: boolean;
       isPreventCachingDefault?: boolean;
+      queueParams?: IMutationQueueParams;
     } = {
       isPersist: true
     }
@@ -167,6 +173,10 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     }
     this._setAndCache({ ...val, ...n });
     if (params?.isDebouncedPersist) return this._debouncedPersist(n);
-    else if (params?.isPersist) return this.persist(n);
+    else if (
+      params?.isPersist ||
+      (params?.isPersist != false && params?.queueParams)
+    )
+      return this.persist(n, params?.queueParams);
   }
 }

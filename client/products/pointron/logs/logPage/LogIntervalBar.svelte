@@ -4,13 +4,13 @@
   import { isEmptyArray } from "$lib/shared/utils/obj.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
-  import type { IntervalBlock } from "$lib/client/types/pointron/session.type";
+  import type { ISessionInterval } from "$lib/client/types/pointron/session.type";
   import MoreBarsInfo from "../../focus/elements/intervalbar/MoreBarsInfo.svelte";
   import { isValidDataString } from "$lib/shared/utils/text.utils";
   export let log: any;
   let blocks = log.blocks;
   $: visibleLimit = $view.isPortrait ? 6 : 12;
-  let overFlowBlocks: IntervalBlock[] = [];
+  let overFlowBlocks: ISessionInterval[] = [];
   if (isEmptyArray(log.blocks)) {
     blocks = [{ duration: log.elapsed, type: 1, progress: 1 }];
   }

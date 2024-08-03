@@ -17,6 +17,7 @@
   import { page } from "$app/stores";
   import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
+  import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   $: topBarResourceId = $page.url.searchParams.get(
     ResourceAccessMode.TOPBARFOCUS
@@ -51,31 +52,35 @@
   }
 </script>
 
-{#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-  <div class="flex flex-col w-full h-full">
-    <PinnedTopBar />
-    <div class="flex w-full flex-grow">
-      {#if !topBarResourceId}
-        <MemotronLeftNav />
-      {/if}
-      <div
-        class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
-      >
-        <AppSplitView>
-          <slot name="main" slot="main">
-            {#if topBarResourceId}
-              {#key topBarResourceId}
-                <ResourceResolver id={topBarResourceId} />
-              {/key}
-            {:else}
-              <slot />
-            {/if}
-          </slot>
-        </AppSplitView>
+<BaseLayer>
+  {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
+    <div class="flex flex-col w-full h-full">
+      <PinnedTopBar />
+      <div class="flex w-full flex-grow">
+        {#if !topBarResourceId}
+          <MemotronLeftNav />
+        {/if}
+        <div
+          class="flex flex-col h-full {$view.isPortrait
+            ? 'w-full'
+            : 'flex-grow'}"
+        >
+          <AppSplitView>
+            <slot name="main" slot="main">
+              {#if topBarResourceId}
+                {#key topBarResourceId}
+                  <ResourceResolver id={topBarResourceId} />
+                {/key}
+              {:else}
+                <slot />
+              {/if}
+            </slot>
+          </AppSplitView>
+        </div>
+        <!-- <RightPanel /> -->
       </div>
-      <!-- <RightPanel /> -->
     </div>
-  </div>
-{/if}
-<MemotronNotifications />
+  {/if}
+  <MemotronNotifications />
+</BaseLayer>
 <svelte:document on:visibilitychange={handleVisibilityChange} />

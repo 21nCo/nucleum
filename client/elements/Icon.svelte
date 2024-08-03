@@ -104,6 +104,9 @@
   import Gift from "../icons/Gift.svelte";
   import LinkArrow2 from "../icons/LinkArrow2.svelte";
   import Pin from "../icons/Pin.svelte";
+  import UnWiden from "../icons/UnWiden.svelte";
+  import Widen from "../icons/Widen.svelte";
+  import Split from "../icons/Split.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -356,6 +359,14 @@
         <Arrow direction={Position.Right} variant={IconVariant.Mini} />
       {:else if icon === "full-screen"}
         <ArrowsPointingOut {variant} />
+      {:else if icon === "collapse"}
+        <ArrowsPointingIn {variant} />
+      {:else if icon === "widen"}
+        <Widen />
+      {:else if icon === "unwiden"}
+        <UnWiden />
+      {:else if icon === "split"}
+        <Split />
       {:else if icon === "collapse"}
         <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}

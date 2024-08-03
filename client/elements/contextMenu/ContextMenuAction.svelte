@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Position } from "$lib/client/types/direction.enum";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import {
+    type IPopoverRenderBaseParams,
+    PopoverTriggerMethod
+  } from "$lib/client/types/popover.type";
   import type { IContextMenuItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "../button/Button.svelte";
@@ -9,6 +12,7 @@
   export let contextMenu: { group: string; items: IContextMenuItem[] }[] = [];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
+  export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
   let contextMenuPopoverRef: any;
 </script>
 
@@ -20,7 +24,7 @@
   options={{ placement: Position.BottomRight }}
 >
   <slot>
-    <Button icon="ellipsis-vertical" {tooltip} />
+    <Button icon="ellipsis-vertical" {tooltip} {tooltipOptions} />
   </slot>
   <slot name="popover" slot="popover">
     <ContextMenu

@@ -14,7 +14,7 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import type { IObservableStoreSubject, IStore } from "../types/data.type";
+import type { IObservableStoreSubject } from "../types/data.type";
 import { ActionType, type IAction } from "../types/action.type";
 import type {
   IdentityProvider,
@@ -165,33 +165,6 @@ export const appConstants = {
   tempColorSchemes
 };
 
-class DboVersionStore extends KeyValueStore<
-  { version: number } & IObservableStoreSubject
-> {
-  constructor() {
-    super(
-      Resource.dboVersion,
-      { version: 0 },
-      {
-        priorityRefreshOnAppAppear: true,
-        isSynchronousCache: true
-      }
-    );
-  }
-  setVersion = (version: number) => {
-    this.modify({ version }, { isPersist: false });
-  };
-  async runDboUpdate(fromVersion: number | undefined = undefined) {
-    const version = get(this.subject).version;
-    const response = await new Persistence().updateDbo(fromVersion ?? version);
-    if (response?.version) {
-      this.setVersion(response.version);
-    }
-  }
-}
-// export const dboVersion = initDboVersionStore();
-export const dboVersion = new DboVersionStore();
-
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:cleantidylightblue";
 const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
@@ -245,8 +218,9 @@ export const seedUserPreferences: IUserGlobalPreferences = {
 class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
     super(Resource.globalPreferences, seedUserPreferences, {
-      priorityRefreshOnAppAppear: true,
-      isSynchronousCache: true
+      refreshOnAppear: true,
+      isSynchronousCache: true,
+      dboDependencies: ["fn::global::resource::delete"]
     });
   }
   loader(data: IUserGlobalPreferences) {
@@ -455,6 +429,7 @@ function initAppStore(seed: AppStore) {
   };
   const gotoErrorPage = (err: any) => {
     //TODO - log error, show error code on error page
+    console.log("error-page", { err });
     gotoPath("/error");
   };
   const gotoResource = async (
@@ -604,29 +579,6 @@ function initAppStore(seed: AppStore) {
     window?.location?.reload();
   }
 
-  const checkForUpdates = async () => {
-    let latestVersion = get(appStore).appData?.version;
-    try {
-      if (!latestVersion) {
-        latestVersion = await new Persistence().getLatestAppVersion();
-      }
-      if (!latestVersion) return;
-      const appVersionOnClient = localStorage.getItem("appVersion");
-      if (!appVersionOnClient) {
-        localStorage.setItem("appVersion", latestVersion);
-        await dboVersion.runDboUpdate();
-        return true;
-      } else if (appVersionOnClient != latestVersion) {
-        localStorage.setItem("appVersion", latestVersion);
-        runClientUpdate();
-        return true;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return false;
-  };
-
   const toggleSearchParam = (
     param: string,
     value?: string | boolean | number
@@ -650,43 +602,139 @@ function initAppStore(seed: AppStore) {
       new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
     );
   };
+  const determineCurrentResourceAccessMode1 = (id: string) => {
+    if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.POP
+      ) === id
+    )
+      return ResourceAccessMode.POP;
+    else if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.FOCUS
+      ) === id
+    )
+      return ResourceAccessMode.FOCUS;
+    else if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.SPLIT
+      ) === id
+    )
+      return ResourceAccessMode.SPLIT;
+    else if (
+      new URLSearchParams(window.location.search).get(
+        ResourceAccessMode.FSPLIT
+      ) === id
+    )
+      return ResourceAccessMode.FSPLIT;
+    else return ResourceAccessMode.INLINE;
+  };
+
+  const determineCurrentResourceAccessMode = (
+    id: string
+  ): ResourceAccessMode => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const mode = (Object.values(ResourceAccessMode) as string[]).find(
+      (m) => m !== ResourceAccessMode.INLINE && searchParams.get(m) === id
+    );
+
+    return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
+  };
+
+  const determineClickAccessMode = (event: MouseEvent) => {
+    //TODO - shortcuts from user settings
+    if (event.shiftKey) return ResourceAccessMode.FOCUS;
+    else if (event.altKey) {
+      const isFromFocusOrPop = isFSplit();
+      if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
+      else return ResourceAccessMode.SPLIT;
+    } else if (event.metaKey) {
+      // TODO - open in new tab?
+    }
+  };
   const resourceClickHandler = (
     event: MouseEvent,
     id: string,
     defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
-    //TODO - shortcuts from user settings
     if (!id) return;
-    accessLogStore.create({
-      resource: id.split(":")[0],
-      action: ResourceActionType.OPEN,
-      resourceId: id,
-      timestamp: new Date().toISOString()
-    });
+    accessLogStore.create(
+      {
+        resource: id.split(":")[0],
+        action: ResourceActionType.OPEN,
+        resourceId: id,
+        timestamp: new Date().toISOString()
+      },
+      {
+        queueParams: {
+          isUseQueueFirstApproach: true,
+          mutationId: `${id}-accessLog-create`
+        }
+      }
+    );
     toggleSearchParam("view");
-    // console.log("resourceClickHandler", { id, defaultTo, event });
-    if (event.shiftKey) {
-      toggleSearchParam(ResourceAccessMode.FOCUS, id);
-    } else if (event.altKey) {
-      const isFromFocusOrPop = isFSplit();
-      if (isFromFocusOrPop) toggleSearchParam(ResourceAccessMode.FSPLIT, id);
-      else toggleSearchParam(ResourceAccessMode.SPLIT, id);
-    } else if (event.metaKey) {
-      // TODO - open in new tab
-    } else {
-      toggleSearchParam(defaultTo, id);
-    }
+    const accessMode = determineClickAccessMode(event);
+    if (accessMode) toggleSearchParam(accessMode, id);
+    else toggleSearchParam(defaultTo, id);
+    // console.log("resourceClickHandler", { id, defaultTo, accessMode, event });
   };
-  const closeResource = (isCloseAllModal: boolean = false) => {
-    if (isCloseAllModal) {
+  const resourceClickHandlerWithReplace = (
+    event: MouseEvent,
+    id: string,
+    replaceId: string
+  ) => {
+    const currentAccessMode = determineCurrentResourceAccessMode(replaceId);
+    resourceClickHandler(event, id, currentAccessMode);
+  };
+  const closeResource = (props?: {
+    isRestrictToModals?: boolean;
+    inlineRestoreId?: string;
+  }) => {
+    const url = new URL(window.location.href);
+    if (props?.isRestrictToModals) {
       toggleSearchParam(ResourceAccessMode.FSPLIT);
       debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
       return;
     }
-    toggleSearchParam(ResourceAccessMode.SPLIT);
-    toggleSearchParam(ResourceAccessMode.FOCUS);
-    toggleSearchParam(ResourceAccessMode.POP);
-    toggleSearchParam(ResourceAccessMode.FSPLIT);
+    const prevMode = url.searchParams.get("prev");
+    if (prevMode === ResourceAccessMode.INLINE && props?.inlineRestoreId)
+      url.searchParams.set(prevMode, props?.inlineRestoreId);
+    removeSearchParam("prev");
+    removeSearchParam(ResourceAccessMode.SPLIT);
+    removeSearchParam(ResourceAccessMode.FOCUS);
+    removeSearchParam(ResourceAccessMode.POP);
+    removeSearchParam(ResourceAccessMode.FSPLIT);
+    appStore.gotoPath(url.href);
+
+    function removeSearchParam(param: string) {
+      if (!url.searchParams.get(param)) return;
+      url.searchParams.delete(param);
+    }
+  };
+
+  const toggleFocusAccessMode = (
+    currentMode: ResourceAccessMode,
+    resourceId: string
+  ) => {
+    const url = new URL(window.location.href);
+    removeSearchParam(currentMode);
+    if (currentMode === ResourceAccessMode.FOCUS) {
+      const prevMode = url.searchParams.get("prev");
+      console.log({ currentMode, prevMode });
+      if (prevMode) url.searchParams.set(prevMode, resourceId);
+      else url.searchParams.set(ResourceAccessMode.POP, resourceId);
+      removeSearchParam("prev");
+    } else {
+      url.searchParams.set(ResourceAccessMode.FOCUS, resourceId);
+      url.searchParams.set("prev", currentMode);
+    }
+    appStore.gotoPath(url.href);
+
+    function removeSearchParam(param: string) {
+      if (!url.searchParams.get(param)) return;
+      url.searchParams.delete(param);
+    }
   };
 
   return {
@@ -705,10 +753,16 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    loadAppData(appData: any) {
+    loadAppData(data: any) {
       update((n: AppStore) => {
-        n.appData = appData;
-        persistLocally(Resource.appData, appData);
+        const env = n.env;
+        if (data.env && data.env[env]) {
+          n.appData = { ...data, ...data.env[env] };
+        } else {
+          n.appData = data;
+        }
+        // console.log({ appData: n.appData, data, env });
+        persistLocally(Resource.appData, data);
         return n;
       });
     },
@@ -740,12 +794,14 @@ function initAppStore(seed: AppStore) {
       });
     },
     showFullScreenPlayer(path: string) {
+      // console.log("showing full screen player", { path });
       update((n: AppStore) => {
         n.fullScreenComponentPath = path;
         runAction(path);
         n.player = undefined;
         return n;
       });
+      toggleSearchParam("fsp", path);
     },
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
@@ -755,9 +811,17 @@ function initAppStore(seed: AppStore) {
           )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
         modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
-        n.fullScreenComponentPath = undefined;
+        // n.fullScreenComponentPath = undefined;
         return n;
       });
+      toggleSearchParam("fsp");
+    },
+    restoreFullScreenPlayer() {
+      const fspParam = new URLSearchParams(window.location.search).get("fsp");
+      if (fspParam) {
+        appStore.showFullScreenPlayer(fspParam);
+        return true;
+      }
     },
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
@@ -831,9 +895,12 @@ function initAppStore(seed: AppStore) {
     openLink,
     runAction,
     initiateOAuth2Flow,
-    checkForUpdates,
     toggleSearchParam,
     resourceClickHandler,
+    toggleFocusAccessMode,
+    resourceClickHandlerWithReplace,
+    determineCurrentResourceAccessMode,
+    determineClickAccessMode,
     isFSplit,
     closeResource
   };

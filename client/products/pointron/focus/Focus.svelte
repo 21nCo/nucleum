@@ -26,7 +26,7 @@
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
-  import { pointLogStore } from "../logs/log.store";
+  import { manualLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   let mode: number = 0;
@@ -73,7 +73,7 @@
     }
   });
   async function onManualLogClicked() {
-    pointLogStore.reset();
+    manualLogStore.reset();
     appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   async function onStartSessionClicked() {
@@ -82,7 +82,9 @@
   async function refresh() {
     await dataManager.refreshPage([
       Resource.quickFocusItems,
-      Resource.PointTag
+      Resource.PointTag,
+      Resource.pointSessionFocusItemsv2,
+      Resource.pointSessionSnapshotv2
     ]);
   }
 </script>

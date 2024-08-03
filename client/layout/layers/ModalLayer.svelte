@@ -38,17 +38,19 @@
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
-  let zen: string | undefined;
+  let fullscreen: string | undefined;
   let pop: { path: string; resource: string; params: ModalParams } | undefined;
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let isShowSyncErrorMessage: boolean = false;
   let mutationQueue = refreshMutationQueueLiveQuery();
+  let isWindowVisible: boolean = true;
   function refreshMutationQueueLiveQuery() {
     return liveQuery(() =>
       $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
     );
   }
+
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -64,7 +66,6 @@
       }
     });
     const pageSub = page.subscribe((value) => {
-      zen = value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
       const popParam =
         value.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
       if (popParam) {
@@ -72,8 +73,33 @@
       } else {
         pop = undefined;
       }
+      fullscreen =
+        value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
+      // console.log({ pop, fullscreen });
     });
-    const modalEventSub = modalEvent.subscribe((x: ModalEvent) => {
+    const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
+
+    () => {
+      appEventSub();
+      modalEventSub();
+      pageSub();
+    };
+
+    /**
+     *
+     *
+     * Modal events are ignored if the window is not visible. This is to avoid app crash when the app is running as an embed on macOS app and is in background.
+     *
+     */
+    function modalEventSubscriber(x: ModalEvent) {
+      if (!isWindowVisible) {
+        logger.log({
+          context: "ModalLayer",
+          message: "modal event ignored - window is not visible"
+        });
+        return;
+      }
+      logger.log({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
@@ -98,12 +124,7 @@
         modals = [...modals, x];
       }
       logger.log({ modals });
-    });
-    () => {
-      appEventSub();
-      modalEventSub();
-      pageSub();
-    };
+    }
   });
   function resolvePop(resourceId: string) {
     if (resourceId && resourceId.split(":").length > 1) {
@@ -119,6 +140,10 @@
       };
     }
   }
+
+  const visibilityChangeListener = () => {
+    isWindowVisible = !document.hidden;
+  };
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -233,26 +258,33 @@
     </ModalLayout>
   </Modal>
 {/if}
-
-{#if zen}
-  <Modal
-    show={true}
-    id={zen}
-    isDismissable={true}
-    isShowOverlay={true}
-    isUseDialog={false}
-    size={Size.full}
-  >
-    <ModalLayout path={zen} params={{ layout: { size: Size.full } }}>
-      <SplitView id={zen} componentParams={{ isModal: true }} />
-    </ModalLayout>
-  </Modal>
-{/if}
-{#if pop}
-  {#key pop.resource}
+{#key fullscreen}
+  {#if fullscreen}
     <Modal
-      show={true}
-      id={pop.path}
+      show={fullscreen != undefined}
+      id={fullscreen + "-focus"}
+      isDismissable={true}
+      isShowOverlay={true}
+      isUseDialog={false}
+      size={Size.full}
+    >
+      <ModalLayout path={fullscreen} params={{ layout: { size: Size.full } }}>
+        <SplitView
+          id={fullscreen}
+          componentParams={{
+            isModal: true,
+            accessMode: ResourceAccessMode.FOCUS
+          }}
+        />
+      </ModalLayout>
+    </Modal>
+  {/if}
+{/key}
+{#key pop?.resource}
+  {#if pop}
+    <Modal
+      show={pop != undefined}
+      id={pop.path + "-pop"}
       isDismissable={pop.params?.isDismissable ?? true}
       isShowOverlay={pop.params?.isShowOverlay ?? true}
       isUseDialog={pop.params?.layout?.size != Size.full &&
@@ -261,8 +293,16 @@
       orientation={pop.params?.layout?.orientation ?? Orientation.Horizontal}
     >
       <ModalLayout path={pop.path} params={{ ...pop?.params }}>
-        <SplitView id={pop.resource} componentParams={{ isModal: true }} />
+        <SplitView
+          id={pop.resource}
+          componentParams={{
+            isModal: true,
+            accessMode: ResourceAccessMode.POP
+          }}
+        />
       </ModalLayout>
     </Modal>
-  {/key}
-{/if}
+  {/if}
+{/key}
+
+<svelte:document on:visibilitychange={visibilityChangeListener} />

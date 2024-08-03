@@ -27,21 +27,23 @@ const locale = navigator.language || navigator.languages[0];
 export function formatTime(
   userPreferences: IUserGlobalPreferences,
   date: Date,
-  format: string | undefined = undefined
+  params?: { format?: string; isIncludeSeconds?: boolean }
 ) {
   let userPreferredFormat = userPreferences.timeFormat;
-  format = format ?? userPreferredFormat ?? "meridian";
+  const format = params?.format ?? userPreferredFormat ?? "meridian";
   if (format === "24") {
     let hours = date?.getHours().toString().padStart(2, "0");
     let minutes = date?.getMinutes().toString().padStart(2, "0");
-    return `${hours}:${minutes}`;
+    if (!params?.isIncludeSeconds) return `${hours}:${minutes}`;
+    let seconds = date?.getSeconds().toString().padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
   } else if (format === "meridian") {
     let hours = date?.getHours();
     let minutes = date?.getMinutes().toString().padStart(2, "0");
-    let ampm = hours >= 12 ? "PM" : "AM";
+    let meridian = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
     hours = hours || 12;
-    return `${hours}:${minutes} ${ampm}`;
+    return `${hours}:${minutes} ${meridian}`;
   }
 }
 
@@ -516,14 +518,18 @@ export function isSameDay(date1: Date, date2: Date) {
   );
 }
 
-export function isSameDateTime(date1: Date, date2: Date) {
+export function isSameDateTime(
+  date1: Date,
+  date2: Date,
+  params?: { isIgnoreSeconds?: boolean }
+) {
   return (
     date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
     date1.getDate() === date2.getDate() &&
     date1.getHours() === date2.getHours() &&
     date1.getMinutes() === date2.getMinutes() &&
-    date1.getSeconds() === date2.getSeconds()
+    (params?.isIgnoreSeconds || date1.getSeconds() === date2.getSeconds())
   );
 }
 

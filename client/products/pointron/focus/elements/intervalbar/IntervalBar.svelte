@@ -4,20 +4,21 @@
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import {
     IntervalBarContext,
-    type IntervalBlock
+    type ISessionInterval
   } from "$lib/client/types/pointron/session.type";
   import TimeLabel from "./TimeLabel.svelte";
   import view from "$lib/client/stores/view.store";
   import MoreBarsInfo from "./MoreBarsInfo.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
   export let context: IntervalBarContext = IntervalBarContext.DEFAULT;
-  let preceedingHiddenBars: IntervalBlock[] = [];
-  let succeedingHiddenBars: IntervalBlock[] = [];
-  function resolveCountupBarDuration(bar: IntervalBlock) {
-    if ($sessionStore.blocks.length == 1 && bar.start) {
-      return (Date.now() - bar.start) / 1000;
-    } else if (bar.start && bar.end && bar.end > bar.start) {
-      return (bar.end - bar.start) / 1000;
+  let preceedingHiddenBars: ISessionInterval[] = [];
+  let succeedingHiddenBars: ISessionInterval[] = [];
+  function resolveCountupBarDuration(bar: ISessionInterval) {
+    const barIndex = $sessionStore.intervals.findIndex((x) => x.id == bar.id);
+    const endTime = $sessionStore.intervals[barIndex + 1]?.start;
+    if (bar.start && barIndex > -1 && endTime) {
+      return (endTime - bar.start) / 1000;
     } else if (bar.start) {
       return (Date.now() - bar.start) / 1000;
     } else {
@@ -26,9 +27,9 @@
   }
   $: visibleLimit =
     $view.isPortrait || context === IntervalBarContext.THIN_ON_DESKTOP ? 4 : 10;
-  $: isHideSomeBars = $sessionStore.blocks.length > visibleLimit;
-  $: visibleBars = resolveVisibleBars($sessionStore.blocks);
-  function resolveVisibleBars(blocks: IntervalBlock[]) {
+  $: isHideSomeBars = $sessionStore.intervals.length > visibleLimit;
+  $: visibleBars = resolveVisibleBars($sessionStore.intervals);
+  function resolveVisibleBars(blocks: ISessionInterval[]) {
     // console.log({
     //   context,
     //   visibleLimit,
@@ -81,7 +82,7 @@
       return blocks.slice(0, visibleLimit);
     } else if (
       barInProgressIndex >
-      $sessionStore.blocks.length - visibleLimit
+      $sessionStore.intervals.length - visibleLimit
     ) {
       preceedingHiddenBars = blocks.slice(0, barInProgressIndex - visibleLimit);
       succeedingHiddenBars = [];
@@ -89,7 +90,7 @@
     } else {
     }
   }
-  function resolveWidth(bar: IntervalBlock) {
+  function resolveWidth(bar: ISessionInterval) {
     if ($sessionStore.type === SessionType.COUNTUP) {
       return (
         ($sessionStore.totalElapsed
@@ -104,6 +105,7 @@
       80
     );
   }
+  // $: console.log({ visibleBars: deepCopy(visibleBars) });
 </script>
 
 <div class="flex w-full gap-4 pt-4 items-center h-12 min-h-[3rem]">

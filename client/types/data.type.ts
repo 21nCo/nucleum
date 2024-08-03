@@ -56,7 +56,7 @@ export interface IStore {
   /**
    * Setting this true will refresh the store when the app appears before even performing stale check
    */
-  priorityRefreshOnAppAppear?: boolean;
+  refreshOnAppear?: boolean;
 
   /**
    * When this is turned on, local storage is used to cache the store.
@@ -66,6 +66,10 @@ export interface IStore {
    * Prevents the store from being persisted to remote database when the store is updated using $ syntax and therefore set method
    */
   isPreventAutoPersist?: boolean;
+  /**
+   * Dbo function dependencies that need to be defined on database before the store can be used
+   */
+  dboDependencies?: string[];
   loader?: (data: any) => void;
   search?: (query: string) => Promise<any>;
   resolveRefreshQuery?: () => string;
@@ -104,13 +108,17 @@ export enum StoreDataType {
  */
 export enum CacheStrategy {
   /**
-   * The whole store is replaced
+   * The whole store is cached as key value pairs
    */
   WHOLE = "WHOLE",
   /**
-   * Only the records are replaced
+   * Only the records are merged - using dexie.
    */
-  MERGE_RECORDS = "MERGE_RECORDS"
+  MERGE_RECORDS = "MERGE_RECORDS",
+  /**
+   * Prevents local caching of the store when cacheStrategy is set to this value
+   */
+  NO_CACHE = "NO_CACHE"
 }
 
 /**
@@ -128,8 +136,8 @@ export interface DataManager {
 export interface CacheSource {
   dexie: LocalDexie;
   initialize: () => void;
-  cacheStore: (id: string, data: any, strategy: CacheStrategy) => void;
-  retrieveCache: (storeId: string) => Promise<any>;
+  cacheKvStore: (id: string, data: any) => void;
+  retrieveKvCache: (storeId: string) => Promise<any>;
   fetchClientMutationMap: () => Promise<any>;
   updateClientMutationMap: (clientMutationMap: Record<string, number>) => void;
   mergeClientMutationMap: (
@@ -175,8 +183,6 @@ export enum PersistanceActionType {
    * Note: Use this to completely delete the record. To move to trash, use MERGE with trashInformation property.
    */
   DELETE = "DELETE",
-  CUSTOM_QUERY = "CUSTOM_QUERY",
-  CUSTOM_CREATE = "CUSTOM_CREATE",
   BULK_MERGE = "BULK_MERGE"
 }
 
@@ -185,9 +191,13 @@ export interface IMutationParams {
   query?: string;
   isMutatingSelfOnly?: boolean;
   queueParams?: IMutationQueueParams;
+  cacheStrategy?: CacheStrategy;
 }
 
 export interface IMutationQueueParams {
+  /**
+   * If true, the mutation will be queued and will be persisted to the server at an interval usually 1-2 seconds - to combine multiple mutations into one.
+   */
   isUseQueueFirstApproach: boolean;
   mutationId: string;
 }

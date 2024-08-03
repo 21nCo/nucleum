@@ -10,11 +10,40 @@ import {
   determineTimePeriodv2
 } from "$lib/client/utils/time.utils";
 import { generateUID } from "$lib/client/utils/utils";
+import { get } from "svelte/store";
+import { analyticsConfigStore, selectedPageId } from "./analytics.store";
 import {
   AnalyticsCardGrouping,
   AnalyticsCardType,
   type AnalyticsCard
 } from "./analytics.types";
+
+
+export function onAddPageClicked() {
+  analyticsConfigStore.addPage();
+}
+export function onRemovePageClicked(e: CustomEvent<string>) {
+  const id=e.detail;
+    if(id==get(selectedPageId)){
+      const pages= get(analyticsConfigStore).pages;
+      const index = pages.findIndex(
+        (page) => page.id !== id
+      );
+    if (index !== -1) {
+      let event = new CustomEvent("pageSwitch", {
+        detail: pages[index]?.id
+      });
+      onPageSwitch(event)
+    } else selectedPageId.set(null);} 
+    analyticsConfigStore.removePage(e.detail);
+}
+export function onPageSwitch(e: CustomEvent<string>) {
+  selectedPageId.set(get(analyticsConfigStore).pages.find((page) => page.id === e.detail)?.id as string);  
+}
+export function onPagelabelChange(e: CustomEvent<{ value: string; label: string }>) {
+  if (!e.detail.label || !e.detail.value) return;
+  analyticsConfigStore.editPageLabel(e.detail.value, e.detail.label);
+}
 
 /**
  * @deprecated - Use generateParamsForCards instead

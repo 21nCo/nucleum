@@ -37,6 +37,7 @@
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
+  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -48,14 +49,20 @@
   let isRoundedExperimental = false;
   let isStickied = false;
   let triggerItemEdit = "";
-  let viewRightButtonOptions: { size: Size.xs; style: ButtonStyle } = {
+  let viewRightButtonOptions: {
+    size: Size.sm;
+    style: ButtonStyle;
+    isPreventMinWidth: boolean;
+  } = {
     style: ButtonStyle.OUTLINED,
-    size: Size.xs
+    size: Size.sm,
+    isPreventMinWidth: true
   };
   let properties: DropdownItem[];
   let viewsForSwitcher: ISelectItem[];
   let isReady = false;
   let isNotInlineAccess: boolean = false;
+  let selectedArrangement: Arrangement = Arrangement.LIST;
   $: console.log({ activeView });
 
   onMount(async () => {
@@ -111,7 +118,6 @@
         ]
       : [noneOption, ...metaPropertyOptions];
   }
-  const sampleViews = ["Everything", "This year", "Favorites", "USA"];
 
   function onViewRemove(e: CustomEvent) {
     if (e.detail) collection.deleteView(e.detail);
@@ -131,15 +137,10 @@
     if (activeView) collection.updateView(activeView.id, activeView);
   }
 
-  function onArrangementChange(e: MouseEvent) {
+  function onArrangementChange(e: CustomEvent) {
     // console.log("onArrangementChange", e.detail);
     if (!activeView) return;
-    const currentArrangement = activeView?.arrangement;
-    if (currentArrangement === Arrangement.GRID) {
-      activeView.arrangement = Arrangement.LIST;
-    } else {
-      activeView.arrangement = Arrangement.GRID;
-    }
+    activeView.arrangement = e.detail;
     collection.updateView(activeView.id, {
       arrangement: activeView.arrangement
     });
@@ -178,6 +179,7 @@
     const view = $collection.views.find((x) => x.id === selectedViewId) ?? null;
     if (!view) return;
     activeView = view;
+    selectedArrangement = view.arrangement ?? selectedArrangement;
     return view;
   }
 
@@ -265,7 +267,7 @@
               label="sort"
               {...viewRightButtonOptions}
             />
-            <Button
+            <!-- <Button
               icon={activeView?.arrangement === Arrangement.GRID
                 ? "widget"
                 : "list"}
@@ -274,6 +276,20 @@
                 : "List"}
               {...viewRightButtonOptions}
               on:click={onArrangementChange}
+            /> -->
+            <DropDown
+              items={[
+                { value: Arrangement.LIST, label: "List" },
+                { value: Arrangement.GRID, label: "Grid" },
+                {
+                  value: Arrangement.MASONRY,
+                  label: "Masonry"
+                }
+              ]}
+              bind:value={selectedArrangement}
+              on:select={onArrangementChange}
+              isDisableSearch={true}
+              size={Size.sm}
             />
           </span>
         </PanelSwitcher>

@@ -21,7 +21,7 @@
     tooltip="close"
     on:click={() => {
       console.log("ModalCloseButton", { path });
-      appStore.closeResource();
+      appStore.closeResource({ isRestrictToModals: true });
       modalEvent.hideSpecific(path, "ModalCloseButton.svelte");
     }}
   />

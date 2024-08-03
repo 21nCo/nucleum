@@ -14,13 +14,13 @@
 
   import SubGroup from "./SubGroup.svelte";
   import { resolvePropertyOptions } from "../../curation/curation.utils";
-  import NodeItems from "../../node/NodeItems.svelte";
+  import NodeItems from "../NodeItems.svelte";
   export let view: ICollectionView;
   export let group: any;
   export let data: any;
   export let properties: IProperty[] | null = null;
   export let isBoardOverflow = false;
-  let isRenderColors = true;
+  let isRenderColors = false;
   $: subGroups = resolveBoards(view.subGroupBy);
   function resolveBoards(id: string) {
     // if (view.subGroups) return view.subGroups;
@@ -41,14 +41,20 @@
       "board relative h-full min-w-[24rem] dp:w-[28rem] 2k:w-[30rem] flex flex-col gap-2 border border-brs3 px-4 mb-2 rounded-md",
       {
         "overflow-y-auto": isBoardOverflow,
-        "border-ccs2 bg-ccs3": isRenderColors,
+        "border-ccs3 bg-ccs5": isRenderColors,
         "border-brs3 bg-bgs1": !isRenderColors
       }
     )}
     style="height: calc(100vh - 95px);"
   >
     <div
-      class="board-title sticky top-0 flex items-center w-full justify-between py-4 bg-bgs1"
+      class={cn(
+        "board-title sticky top-0 flex items-center w-full justify-between py-4",
+        {
+          "bg-bgs1": !isRenderColors,
+          "bg-ccs5": isRenderColors
+        }
+      )}
     >
       <Text content={group.label} style={TextStyle.PANEL_HEADING_SMALL} />
       <Button icon="ellipsis-vertical" />
@@ -63,7 +69,11 @@
           />
         {/each}
       {:else if isValidArrayWithData(data)}
-        <NodeItems nodes={data} arrangement={view.arrangement} />
+        <NodeItems
+          nodes={data}
+          arrangement={view.arrangement}
+          isApplyCustomColor={isRenderColors}
+        />
       {:else}
         <EmptyStatusView size={Size.sm} subText="No items meet this criteria" />
       {/if}

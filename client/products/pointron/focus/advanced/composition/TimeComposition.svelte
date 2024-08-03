@@ -67,7 +67,7 @@
         <PanelSwitcher
           style={PanelSwitcherStyle.TRAIN}
           size={Size.sm}
-          {parentBackgroundIndex}
+          parentBgIndex={parentBackgroundIndex}
           items={["Presets", "Custom"]}
           value={selectedMode === 0 ? "Presets" : "Custom"}
           on:switch={onModeSwitch}

@@ -12,7 +12,7 @@ export enum CollectionType {
 export enum CollectionLayout {
   BOARD = "BOARD",
   TABLE = "TABLE",
-  HEATMAP = "HEATMAP",
+  CALENDAR = "CALENDAR",
   GEOMAP = "GEOMAP"
 }
 

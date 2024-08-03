@@ -12,7 +12,7 @@
   import { userPreferences } from "$lib/client/stores/app.store";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import { pointLogStore } from "../log.store";
+  import { manualLogStore } from "../log.store";
   import TimeInput from "$lib/client/elements/datetime/TimeInput.svelte";
   import { LastActionPerformed, type IManualSessionLogForm } from "../log.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
@@ -148,13 +148,17 @@
   }
   function updateEndTimeWRTDuration() {
     item.endDate = new Date(item.startDate.getTime() + item.duration * 1000);
-    item.endTime = formatTime($userPreferences, item.endDate, "24")!;
+    item.endTime = formatTime($userPreferences, item.endDate, {
+      format: "24"
+    })!;
     previousEndDate = item.endDate;
     previousEndTime = item.endTime;
   }
   function updateStartTimeWRTDuration() {
     item.startDate = new Date(item.endDate.getTime() - item.duration * 1000);
-    item.startTime = formatTime($userPreferences, item.startDate, "24")!;
+    item.startTime = formatTime($userPreferences, item.startDate, {
+      format: "24"
+    })!;
     previousStartDate = item.startDate;
     previousStartTime = item.startTime;
   }
@@ -195,7 +199,7 @@
 <div
   class="relative flex flex-col gap-6 border border-brs2 py-8 px-4 xl:px-4 xl:py-6 rounded-md w-full"
 >
-  {#if $pointLogStore.manualLogs.length > 1}
+  {#if $manualLogStore.manualLogs.length > 1}
     <div class="absolute bg-bgs1 right-1 -top-3">
       <Button
         icon="minus-circled"
@@ -203,7 +207,7 @@
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
         label="Remove"
-        on:click={() => pointLogStore.removeManualLog(item.id)}
+        on:click={() => manualLogStore.removeManualLog(item.id)}
       />
     </div>
   {/if}

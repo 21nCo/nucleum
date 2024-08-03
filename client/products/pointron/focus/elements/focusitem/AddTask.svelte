@@ -6,7 +6,7 @@
   import { Position } from "$lib/client/types/direction.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Size } from "$lib/client/types/size.enum";
-  export let goalId: string | undefined = undefined;
+  export let goalId: string;
   export let placeholder: string = "+ add a task";
   let label: string = "";
   let inputRef: any;
@@ -18,7 +18,6 @@
     const labelCopy = label;
     reset();
     if (goalId) await focusItemsStore.addTask(labelCopy, goalId);
-    else await focusItemsStore.addTask(labelCopy);
   }
   function reset() {
     label = "";

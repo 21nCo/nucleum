@@ -13,21 +13,22 @@
     let goal = event?.detail?.item;
     console.log("Goal: ", goal);
     if (!goal || !goal.id) return;
-    if ($focusItemsStore.items.some((x) => x.goalId === goal.id)) {
+    if ($focusItemsStore.goals.some((x) => x.id === goal.id)) {
       toasts.error("Goal already exists in focus list");
       return;
     }
     reset();
-    await focusItemsStore.addGoal({
-      goalId: goal.id,
-      label: goal.label,
-      color: goal.color ?? goal.parent?.color,
-      order: $focusItemsStore.items.length,
-      estimated: 0,
-      checked: false,
-      worked: 0,
-      hierarchy: goal.parent?.hierarchy?.map((x: any) => x.label)
-    });
+    // await focusItemsStore.addGoal({
+    //   goalId: goal.id,
+    //   label: goal.label,
+    //   color: goal.color ?? goal.parent?.color,
+    //   order: $focusItemsStore.items.length,
+    //   estimated: 0,
+    //   checked: false,
+    //   worked: 0,
+    //   hierarchy: goal.parent?.hierarchy?.map((x: any) => x.label)
+    // });
+    await focusItemsStore.addGoal(goal.id);
   }
   function reset() {
     inputRef.reset();

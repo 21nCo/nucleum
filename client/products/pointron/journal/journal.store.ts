@@ -1,12 +1,12 @@
-import type { ICalendarHeatMapDataProvider } from "$lib/client/components/calendarHeatmap/calendarHeatmap.types";
+import type { ICalendarHeatMapDataProvider } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatmap.types";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "$lib/client/types/time.type";
-import { get } from "svelte/store";
 import type { IFocusHeatMapStore } from "./journal.types";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
-import { getprevDateRange } from "$lib/client/components/calendarHeatmap/calendarHeatMap.utils";
+import { getprevDateRange } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatMap.utils";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "$lib/client/stores/client.store";
+import { StoreDataType } from "$lib/client/types/data.type";
 const last12MonthDateRange = getprevDateRange();
 
 const seedFocusHeatmapStore: IFocusHeatMapStore = {
@@ -22,7 +22,9 @@ class FocusHeatmapStore
   implements ICalendarHeatMapDataProvider
 {
   constructor() {
-    super(Resource.focusHeatmap);
+    super(Resource.focusHeatmap, StoreDataType.NA, {
+      dboDependencies: ["fn::pointron::journal::fetch"]
+    });
     this.set(seedFocusHeatmapStore);
   }
   loader(data: any) {

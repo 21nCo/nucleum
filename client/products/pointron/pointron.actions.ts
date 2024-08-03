@@ -39,7 +39,7 @@ import GoalHomeV2 from "$lib/client/products/pointron/goals/home/GoalHomeV2.svel
 import FocusItemsModal from "$lib/client/products/pointron/focus/advanced/FocusItemsModal.svelte";
 import BreakReminderModal from "$lib/client/products/pointron/focus/elements/BreakReminderModal.svelte";
 import PredefinedIntervalNotifierOverlay from "$lib/client/products/pointron/focus/elements/PredefinedIntervalNotifierOverlay.svelte";
-import { pointLogStore } from "$lib/client/products/pointron/logs/log.store";
+import { manualLogStore } from "$lib/client/products/pointron/logs/log.store";
 import ControlPanelLogsPane from "$lib/client/products/pointron/logs/ControlPanelLogsPane.svelte";
 import SessionLogPage from "$lib/client/products/pointron/logs/logPage/SessionLogPage.svelte";
 import ManualLogPane from "$lib/client/products/pointron/logs/manualLog/ManualLogPane.svelte";
@@ -47,15 +47,33 @@ import LogsPane from "$lib/client/products/pointron/logs/LogsPane.svelte";
 import AnalyticsV2 from "$lib/client/products/pointron/analytics/AnalyticsV2.svelte";
 import { Orientation } from "$lib/client/types/direction.enum";
 import PresetSettings from "$lib/client/products/pointron/focus/advanced/presets/PresetSettings.svelte";
-import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+import {
+  pointSessionStore,
+  sessionStore
+} from "$lib/client/products/pointron/focus/session.store";
 import { Persistence } from "$lib/client/persistence/persistence";
 import { appStore } from "$lib/client/stores/app.store";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
+import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
 export const pointronActions: IAction[] = [
+  {
+    action: PointronAction.ANALYTICSVIEWSPAGEEDITMOBILE,
+    component: AnalyticsViewsPageEditMobile,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Edit Pages",
+      layout: {
+        size: Size.lg,
+        primaryAction: {
+          label: "Done"
+        }
+      }
+    }
+  },
   {
     action: PointronAction.FULL_SCREEN_FOCUS,
     component: Zen,
@@ -165,13 +183,13 @@ export const pointronActions: IAction[] = [
         primaryAction: {
           label: "Save entries",
           style: ButtonStyle.DEFAULT,
-          callback: () => pointLogStore.saveManualLogs()
+          callback: () => manualLogStore.saveManualLogs()
         },
         secondaryAction: {
           label: "Discard",
           callback: () => {
             setTimeout(() => {
-              pointLogStore.reset();
+              manualLogStore.reset();
             }, 100);
             return Promise.resolve(true);
           }
@@ -211,7 +229,7 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: PointronAction.PREDEFINED_INTERVAL_NOTIFIER,
+    action: PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY,
     component: PredefinedIntervalNotifierOverlay,
     type: ActionType.MODAL,
     isMeta: true,
@@ -303,7 +321,12 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       title: "Edit Tags",
-      isShowAsSheet: false
+      isShowAsSheet: false,
+      layout: {
+        secondaryAction: {
+          label: "Done"
+        }
+      }
     }
   },
   {
@@ -550,7 +573,7 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const response = await pointLogStore.deleteLog(params.id);
+            const response = await pointSessionStore.delete(params.id);
             if (response) {
               toasts.success("Session log deleted successfully");
               appEvents.publish(PointronEvent.REFRESH_LOGS);

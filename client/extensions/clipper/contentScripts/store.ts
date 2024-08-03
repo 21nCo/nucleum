@@ -27,7 +27,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
   constructor() {
     super("clipperContentScriptStore", StoreDataType.NA, {
-      priorityRefreshOnAppAppear: true
+      refreshOnAppear: true
     });
     this.set({ url: "", clips: [] });
   }
@@ -225,7 +225,13 @@ class ClipperToolbarState extends KeyValueStore<
       Resource.clipperToolbarState,
       { isOpen: true, position: Position.Right },
       {
-        priorityRefreshOnAppAppear: true
+        refreshOnAppear: true,
+        dboDependencies: [
+          "fn::memotron::clipper::fetchPage",
+          "fn::memotron::clipper::saveWebpage",
+          "fn::memotron::clipper::saveClip",
+          "fn::memotron::unlink"
+        ]
       }
     );
   }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CalendarHeatMap from "$lib/client/components/calendarHeatmap/CalendarHeatMap.svelte";
+  import CalendarHeatMap from "$lib/client/components/calendar/calendarHeatmap/CalendarHeatMap.svelte";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import TimelineDate from "$lib/client/elements/datetime/TimelineDate.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -11,7 +11,7 @@
   import LogsPane from "../logs/LogsPane.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-  import { CalendarHmVariant } from "$lib/client/components/calendarHeatmap/calendarHeatmap.types";
+  import { CalendarHmVariant } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import { focusHeatmapStore } from "./journal.store";
   import TodayButton from "$lib/client/elements/button/TodayButton.svelte";
   function refresh() {

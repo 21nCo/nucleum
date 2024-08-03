@@ -5,8 +5,8 @@
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import ControlIcon from "./ControlIcon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { BlockType } from "$lib/client/types/pointron/session.type";
   import { sessionStore } from "../../session.store";
+  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   export let control: Control;
   export let isProminent: boolean = false;
   export let isFocusPlayerContext: boolean = false;
@@ -17,6 +17,9 @@
   function clickHandler() {
     dispatch("click", { control });
   }
+  $: isBreakReminderMode =
+    $sessionStore.timeRemainingToTakeBreak != undefined &&
+    $sessionStore.timeRemainingToTakeBreak < 0;
   onMount(() => {
     //todo - later - causing flickering of the screen
     // if (isProminent) {
@@ -48,13 +51,15 @@
       "relative rounded-full flex items-center justify-center",
       {
         "w-12 h-12 border": isFocusPlayerContext,
-        "w-20 h-20 mo:w-16 mo:h-16": !isFocusPlayerContext,
+        "w-20 h-20 mo:w-16 mo:h-16 hover:bg-opacity-80": !isFocusPlayerContext,
         "border-cbg":
           isFocusPlayerContext &&
-          $sessionStore.currentBlock.type == BlockType.FOCUS,
+          $sessionStore.state == SessionState.FOCUS_RUNNING &&
+          !isBreakReminderMode,
         "border-abg":
           isFocusPlayerContext &&
-          $sessionStore.currentBlock.type != BlockType.FOCUS
+          ($sessionStore.state != SessionState.FOCUS_RUNNING ||
+            isBreakReminderMode)
       },
       !isFocusPlayerContext && {
         "bg-ass1": control === Control.BREAK,

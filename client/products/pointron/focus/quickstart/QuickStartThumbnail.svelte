@@ -2,13 +2,8 @@
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import { swipeLabel } from "$lib/client/products/pointron/pointron.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import {
-    focusItemsStore,
-    sessionStore
-  } from "$lib/client/products/pointron/focus/session.store";
+  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import type { IGoal } from "$lib/client/types/pointron/goal.type";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { calculateTotalFocusAndBreak } from "$lib/client/products/pointron/pointron.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import {
     appStore,
@@ -20,10 +15,11 @@
   import { formatTime, formatSeconds } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import { GoalPersistence } from "$lib/client/products/pointron/goals/goal.persistence";
-  import { pointLogStore } from "../../logs/log.store";
+  import { manualLogStore } from "../../logs/log.store";
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { resolveTaskFocus } from "../session.utils";
   export let goal: Pick<IGoal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
@@ -31,7 +27,6 @@
   export let refresh: any;
   let isColorGoalTextExperimental = false;
   let todayFocusDuration: number | undefined = undefined;
-  let workedTime: number = 0;
   let parentLabels: string[] = [];
   let QSelement: any;
   let thresholdValue: number;
@@ -43,18 +38,31 @@
   let resetTouchEvent = true;
   let goalPersistance = new GoalPersistence();
   let rem: number;
+  let focusTime: number;
   function enableManualLog() {
     handleSwipeRightEndOnleftThresholdCrossed();
     resetTouchEvent = true;
-    pointLogStore.reset();
-    pointLogStore.addNewManualLog(goal.id);
+    manualLogStore.reset();
+    manualLogStore.addNewManualLog(goal.id);
     swipeLabel.set(goal.label);
     appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   $: isActive =
-    goal.id === $sessionStore.currentLog.goalId &&
+    goal.id === $sessionStore.currentTask?.id &&
     $sessionStore.isQuickStartOn &&
     $sessionStore.isSessionRunning;
+  $: if (isActive) {
+    focusTime = resolveTaskFocus(
+      $sessionStore.intervals,
+      undefined,
+      $sessionStore.currentTask?.start
+    );
+    // console.log({
+    //   focusTime,
+    //   blocks: $sessionStore.intervals,
+    //   sessionStore: $sessionStore
+    // });
+  }
 
   $: if (isActive || !isActive) {
     if (QSelement) {
@@ -83,16 +91,6 @@
     thresholdValue = distanceWindow / 1.8;
     if (goal.parent && goal.parent.hierarchy?.length > 0)
       parentLabels = goal.parent.hierarchy.map((x: any) => x.label) ?? [];
-    sessionStore.subscribe((x: any) => {
-      if (x.currentLog?.goalId === goal.id) {
-        if (x.state == SessionState.FOCUS_RUNNING) {
-          let item = $focusItemsStore.items.find((x) => x.goalId === goal.id);
-          if (!item) return;
-          let duration = calculateTotalFocusAndBreak(x.currentLog.blocks, true);
-          workedTime = (+item.worked ?? 0) + duration.focus ?? item.worked;
-        }
-      }
-    });
   });
   async function toggleSession() {
     if (isActive) {
@@ -100,11 +98,7 @@
     } else {
       if ($sessionStore.isSessionRunning)
         await sessionStore.finishSession(true);
-      await sessionStore.quickStart({
-        ...goal,
-        color,
-        hierarchy: parentLabels
-      });
+      await sessionStore.quickStart(goal.id);
     }
   }
   function vibrate(duration: number) {
@@ -261,7 +255,7 @@
         </div>
       </div>
 
-      {#if isActive}
+      {#if isActive && $sessionStore.currentTask}
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1 text-b4">
             <div>
@@ -271,7 +265,7 @@
             <div>Now</div>
           </div>
           <div class="text-h3 leading-none">
-            {formatSeconds(workedTime, TimeFormat.CLOCK)}
+            {formatSeconds(focusTime, TimeFormat.CLOCK)}
           </div>
         </div>
       {:else}
@@ -345,7 +339,7 @@
         </div>
       </div>
     </div>
-    {#if isActive}
+    {#if isActive && $sessionStore.currentTask}
       <div class="flex w-full justify-between text-h4">
         <!-- <div class="flex items-center gap-1 text-b5">
           <div>
@@ -353,7 +347,7 @@
           </div>
         </div> -->
         <div class="leading-none">
-          {formatSeconds(workedTime, TimeFormat.CLOCK)}
+          {formatSeconds(focusTime, TimeFormat.CLOCK)}
         </div>
       </div>
     {:else}

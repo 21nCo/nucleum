@@ -24,9 +24,10 @@ import {
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
-import { prefixTable } from "$lib/shared/utils/text.utils";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { KeyValueStore } from "../components/resourceStores/kv.store";
+import { performApiCall } from "../utils/network.utils";
 
 // const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
@@ -45,7 +46,6 @@ function init() {
     subscribe,
     set,
     update,
-    refreshStaleData,
     performMutation,
     refreshOnAppear,
     /**
@@ -65,6 +65,7 @@ function init() {
         mergeIFRRecords(item, result);
       }
     },
+    runDboUpdate,
     performMutationForIFR: (
       item: Resource,
       data: any,
@@ -78,6 +79,9 @@ function init() {
       });
       let localPersistancePromise;
       let bulkUpdatePromise: any[] = [];
+      if (params.cacheStrategy === CacheStrategy.NO_CACHE) {
+        return performMutation(item, data, params);
+      }
       const dexie = get(dataManager).cacheSource.dexie;
       // @ts-ignore
       const table: Table = dexie[item];
@@ -85,11 +89,9 @@ function init() {
         table.delete(data.id);
       } else if (
         params.action === PersistanceActionType.CREATE ||
-        params.action === PersistanceActionType.INSERT ||
-        params.action === PersistanceActionType.CUSTOM_CREATE
+        params.action === PersistanceActionType.INSERT
       ) {
-        if (params.action === PersistanceActionType.CUSTOM_CREATE) {
-          params.action = PersistanceActionType.CUSTOM_QUERY;
+        if (params.query) {
           if ("resources" in data) table.bulkAdd(data.resources);
           else if ("resource" in data) table.add(data.resource);
         } else if (params.action === PersistanceActionType.INSERT) {
@@ -129,7 +131,7 @@ function init() {
       const dm = get(dataManager);
       const store = dm.cacheableStoresTable.find((x) => x.id === storeId);
       if (store) {
-        return refreshStores([store], isShowRefreshingState);
+        return refreshStores([store], { isShowRefreshingState });
       }
     },
     refreshPage: async (storeIdentifiers: string[]) => {
@@ -138,7 +140,7 @@ function init() {
         storeIdentifiers.includes(x.id)
       );
       if (isValidArrayWithData(stores)) {
-        refreshStores(stores, false, true);
+        refreshStores(stores, { isPageRefresh: true });
       }
     },
     cache: (store: IStore) => {
@@ -157,11 +159,16 @@ function init() {
           strategy = CacheStrategy.MERGE_RECORDS;
         }
       }
-      cacheSource.cacheStore(store.id, store.get(), strategy);
+      if (
+        strategy === CacheStrategy.MERGE_RECORDS ||
+        strategy === CacheStrategy.NO_CACHE
+      )
+        return;
+      cacheSource.cacheKvStore(store.id, store.get());
     },
     retrieveCache: async (storeId: string) => {
       const cacheSource = get(dataManager).cacheSource;
-      return await cacheSource.retrieveCache(storeId);
+      return await cacheSource.retrieveKvCache(storeId);
     },
     loadStores: async (stores: IStore[]) => {
       update((x) => {
@@ -171,26 +178,49 @@ function init() {
       });
     },
     /**
+     * This method will be called on signup and database is bootstrapped.
+     * This will persist all kv seed data on cloud.
+     */
+    bootstrap: async () => {
+      runDboUpdate();
+      const dm = get(dataManager);
+      let data = dm.cacheableStoresTable
+        .filter((x) => x.dataType === StoreDataType.KVO)
+        .map((x) => {
+          const k = x as KeyValueStore<any>;
+          return { id: k.id, ...k.seed };
+        });
+      data = [...data, { id: "mutationMap" }];
+      const query = `INSERT INTO kv $data;`;
+      const response = await dm.db.query(query, { data });
+      return response;
+    },
+    /**
      * Refreshes and updates the store with the new data.
      */
     refreshApp: async () => {
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
-      let seedMutationMap: any = {};
-      allResources.forEach((item) => {
-        seedMutationMap[item] = 1;
-      });
-      const result = await cacheSource.mergeClientMutationMap(seedMutationMap);
-      logger.log({ context: "dataManager.refreshApp", result });
-      let serverSeed: any = {};
-      allResources.forEach((item) => {
-        serverSeed[item] = +(new Date().getTime() / 1000).toFixed();
-      });
-      await dm.db.query(`return fn::global::mergeMutationMap($map);`, {
-        map: serverSeed
-      });
-      await refreshStaleData();
+      //await setSeedMutationMap();
+      // await refreshStaleData();
       await refreshOnAppear();
+
+      async function setSeedMutationMap() {
+        let seedMutationMap: any = {};
+        allResources.forEach((item) => {
+          seedMutationMap[item] = 1;
+        });
+        const result =
+          await cacheSource.mergeClientMutationMap(seedMutationMap);
+        logger.log({ context: "dataManager.refreshApp", result });
+        let serverSeed: any = {};
+        allResources.forEach((item) => {
+          serverSeed[item] = +(new Date().getTime() / 1000).toFixed();
+        });
+        await dm.db.query(`return fn::global::mergeMutationMap($map);`, {
+          map: serverSeed
+        });
+      }
     },
     syncPendingMutations: async () => {
       const dm = get(dataManager);
@@ -208,8 +238,13 @@ function init() {
         return;
       }
       let masterQuery = "";
+      let mutatingResources: string[] = [];
       mutations.forEach((x) => {
         masterQuery += replaceParams(x.query, x.params) + ";";
+        mutatingResources = [
+          ...mutatingResources,
+          ...(x.mutatingResources ?? [])
+        ];
       });
       if (!masterQuery) {
         console.log("No valid mutations to sync");
@@ -217,24 +252,59 @@ function init() {
       }
       let response = await dm.db.query(masterQuery, {});
       response = response.map((x: any) => checkSurrealResponse(x));
-      console.log({ context: "syncPendingMutations", response });
+      console.log({
+        context: "syncPendingMutations",
+        mutations: mutations.map((x) => x.id),
+        response
+      });
       for (let i = 0; i < response.length; i++) {
-        if (response[i]) {
+        if (response[i] && mutations[i]) {
           await mutationQueue.delete(mutations[i].id);
-        } else {
+        } else if (mutations[i]) {
           await mutationQueue.update(mutations[i].id, {
             retryCount: (mutations[i]?.retryCount ?? 0) + 1
           });
         }
       }
+      let storesToRefresh: IStore[] = [];
+      const uniqueMutatingResources = [...new Set(mutatingResources)];
+      uniqueMutatingResources.forEach((resource) => {
+        storesToRefresh = [
+          ...storesToRefresh,
+          ...resolveDependantStores(resource, true)
+        ];
+      });
+      await refreshStores(storesToRefresh);
     }
   };
 }
 export const dataManager = init();
+
+async function runDboUpdate() {
+  const dm = get(dataManager);
+  const dependencies = dm.cacheableStoresTable
+    .map((x) => x.dboDependencies)
+    .filter((x) => x)
+    .flat();
+  try {
+    const response = await performApiCall("account/n/updateDb", "POST", {
+      dbo: dependencies
+    });
+    if (!response?.ok) {
+      return;
+    }
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    logger.logError(err);
+  }
+}
+
 async function refreshOnAppear() {
+  runDboUpdate();
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
-    (x) => (x as IStore).priorityRefreshOnAppAppear
+    (x) => (x as IStore).refreshOnAppear
   );
   if (!isValidArrayWithData(storesThatNeedRefresh)) return;
   return refreshStores(storesThatNeedRefresh);
@@ -246,13 +316,21 @@ async function refreshOnAppear() {
  * @param query db query to be added to the mutation queue
  * @param params db query params to be added to the mutation queue
  */
-async function addToMutationQueue(id: string, query: string, params: any) {
+async function addToMutationQueue(
+  id: string,
+  params: {
+    query: string;
+    params: any;
+    mutatingResources: string[];
+  }
+) {
   const cacheSource = get(dataManager).cacheSource;
   cacheSource.dexie.mutationQueuev2.put({
     id,
     timestamp: new Date().getTime(),
-    query,
-    params,
+    query: params.query,
+    params: params.params,
+    mutatingResources: params.mutatingResources,
     retryCount: 0
   });
 }
@@ -275,13 +353,16 @@ async function performMutation(
   const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
   const mutationQuery = resolveMutationQuery2();
   const mutationParams =
-    params.action === PersistanceActionType.CUSTOM_QUERY ||
-    params.action === PersistanceActionType.BULK_MERGE
+    params.query || params.action === PersistanceActionType.BULK_MERGE
       ? { ...data, mutatedAt }
       : { data, mutatedAt };
   const mutationId = params.queueParams?.mutationId ?? generateUID();
   if (params.queueParams?.isUseQueueFirstApproach) {
-    addToMutationQueue(mutationId, mutationQuery, mutationParams);
+    addToMutationQueue(mutationId, {
+      query: mutationQuery,
+      params: mutationParams,
+      mutatingResources: resources
+    });
     return;
   }
   const defferedStores = propagateToEagerStores(resources, data);
@@ -296,7 +377,11 @@ async function performMutation(
   const surrealDb = dm.db;
   let response = await surrealDb.query(dbFullQuery, mutationParams);
   if (!isValidArrayWithData(response)) {
-    addToMutationQueue(mutationId, mutationQuery, mutationParams);
+    addToMutationQueue(mutationId, {
+      query: mutationQuery,
+      params: mutationParams,
+      mutatingResources: resources
+    });
     return;
   }
   response = response.map((x: any) => checkSurrealResponse(x));
@@ -304,11 +389,14 @@ async function performMutation(
   propagateToDefferedStores(defferedStores, response);
   //TODO - if required - fetch serverMutationMap along with response of mutation and run refreshStaleData
   if (mutationResponse) return mutationResponse;
-  addToMutationQueue(mutationId, mutationQuery, mutationParams);
+  addToMutationQueue(mutationId, {
+    query: mutationQuery,
+    params: mutationParams,
+    mutatingResources: resources
+  });
 
   function resolveMutationQuery2() {
-    if (params.action === PersistanceActionType.CUSTOM_QUERY && params.query)
-      return params.query;
+    if (params.query) return params.query;
     else {
       let id = data?.id;
       if (isKVStore && !storeId.includes("kv:")) {
@@ -454,11 +542,14 @@ async function fetchServerMutationMap() {
  * @param resource the resource to resolve the dependant stores for.
  * @returns a list of dependant stores.
  */
-function resolveDependantStores(resource: string) {
+function resolveDependantStores(
+  resource: string,
+  isExcludeSelf: boolean = false
+) {
   const dm = get(dataManager);
   return dm.cacheableStoresTable.filter((store) => {
     if (!store) return false;
-    if (!store.dependencies) {
+    if (!store.dependencies && !isExcludeSelf) {
       return (
         ((store.dataType === StoreDataType.FIR ||
           store.dataType === StoreDataType.IFR) &&
@@ -466,14 +557,16 @@ function resolveDependantStores(resource: string) {
         (store.dataType === StoreDataType.KVO &&
           store.id?.split(":")[1] === resource)
       );
-    } else
+    } else if (store.dependencies)
       return store.dependencies.some(
         (y: ResourceDependency) => y.resource === resource
       );
+    else return false;
   });
 }
 
 /**
+ * @deprecated - using isRefreshOnAppear flag on stores instead
  * Performs a refresh of the data stores that are out of sync with the server comparing the client and server mutation maps.
  * @returns true if the refresh was successful, false otherwise.
  */
@@ -524,16 +617,18 @@ async function refreshStaleData() {
  */
 async function refreshStores(
   storesThatNeedRefresh: IStore[],
-  isShowRefreshingState: boolean = true,
-  isPageRefresh: boolean = false
+  params: { isShowRefreshingState?: boolean; isPageRefresh?: boolean } = {
+    isShowRefreshingState: true,
+    isPageRefresh: false
+  }
 ) {
   try {
     const dm = get(dataManager);
     const surrealDb = dm.db;
     if (!isValidArrayWithData(storesThatNeedRefresh)) return;
-    if (isShowRefreshingState)
+    if (params.isShowRefreshingState)
       await setRefreshingState(storesThatNeedRefresh, true);
-    if (isPageRefresh)
+    if (params.isPageRefresh)
       await setPageRefreshingState(storesThatNeedRefresh, true);
     const query = await resolveStoresRefreshQuery(storesThatNeedRefresh);
     let response = await surrealDb.executeReadFn(query, {});
@@ -541,8 +636,8 @@ async function refreshStores(
     response = response.map((x: any) => checkSurrealResponse(x));
     for (let i = 0; i < storesThatNeedRefresh.length; i++) {
       const store = storesThatNeedRefresh[i];
-
       const data = response[i];
+      // console.log({ data, store: store.id, loader: store.loader });
       if (store.loader && data) {
         store.loader(data);
       } else if (store.dataType === StoreDataType.IFR && data) {
@@ -553,7 +648,7 @@ async function refreshStores(
     logger.logError({ context: "Error refreshing stores", error });
   } finally {
     await setRefreshingState(storesThatNeedRefresh, false);
-    if (isPageRefresh)
+    if (params.isPageRefresh)
       await setPageRefreshingState(storesThatNeedRefresh, false);
     return true;
   }

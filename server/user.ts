@@ -9,7 +9,7 @@ import { Agent, CONTEXT } from "./types/account.type";
 import { generateUserToken } from "./token";
 import { retrieveAppConfig } from "./utils";
 import { OAuthUserData } from "./types/oauth.type";
-import { authorize, initializeDatabaseAndDefinitions } from "./account";
+import { authorize, initializeDatabase } from "./account";
 import { accessControlHeaders } from "./lambda";
 
 function frameNonSensitiveUserInfo(userInfo: {
@@ -110,7 +110,6 @@ export async function signup(data: any, isOAuth = false) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signup" });
-    // await initializeDatabaseAndDefinitions(userId, CONTEXT.USER, context.host);
     return await generateToken(userId, userInfo, {
       isTrusted,
       isSignup: true,
@@ -151,7 +150,6 @@ export async function signin(body: any) {
     const userInfo = response[1].result[0];
     const userId = userInfo.id.split("user:")[1];
     await log(userId, { ...context, activity: "signin" });
-    //await updateDbDefinitions(userId, userInfo.lastRunChangeId);
     return await generateToken(userId, userInfo, {
       isTrusted,
       host: context.host
@@ -395,7 +393,7 @@ export async function performUserAccountAction(authHeader: any, body: any) {
         body: "Unauthorized"
       };
     const id = agent.id;
-    const bootstrapResponse = await initializeDatabaseAndDefinitions(id, {
+    const bootstrapResponse = await initializeDatabase(id, {
       scope: CONTEXT.USER,
       host: context.host,
       region

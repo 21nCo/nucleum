@@ -5,7 +5,7 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardPane from "./BoardPane.svelte";
   import { resolvePropertyOptions } from "../../curation/curation.utils";
-  import NodeItems from "../../node/NodeItems.svelte";
+  import NodeItems from "../NodeItems.svelte";
   import { liveQuery } from "dexie";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import type { IProperty } from "../properties/property.type";
@@ -33,7 +33,7 @@
       );
     });
   }
-  $: console.log({ groups, properties: $properties, view });
+  // $: console.log({ groups, properties: $properties, view });
 </script>
 
 {#if isValidArrayWithData(groups)}

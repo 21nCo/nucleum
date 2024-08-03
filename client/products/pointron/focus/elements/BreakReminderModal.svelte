@@ -9,16 +9,17 @@
 <div
   class="flex flex-col w-full gap-12 p-4 items-center justify-center text-center"
 >
-  <div>
-    Its been <strong>{formatSeconds($sessionStore.timeElapsed)}</strong> since your
-    last break. To maintain optimal focus and well-being, consider taking a short
-    break now.
+  <div class="flex flex-col gap-2">
+    <div>
+      Its been <strong>{formatSeconds($sessionStore.timeElapsed)}</strong> since
+      your last break.
+    </div>
+    <div class="text-b2 text-fgs3">
+      To maintain optimal focus and well-being, consider taking a short break
+      now.
+    </div>
   </div>
   <div class="flex flex-col w-full items-center gap-4">
     <SessionTimeText size={Size.sm} parentBackgroundIndex={1} />
   </div>
-  <InlineInfoBanner
-    content="Feel free to continue working if you're in the flow, but remember that
-  regular breaks can boost your productivity and creativity in the long run."
-  />
 </div>

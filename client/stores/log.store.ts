@@ -39,6 +39,7 @@ function initLogStore() {
     set,
     update,
     log(message: string | object, type: "error" | "info" | "warn" = "info") {
+      if (!import.meta.env?.DEV) return;
       if (typeof message === "string") propagate({ message, type });
       else propagate({ ...message, type });
       update((n: LogStore) => {
