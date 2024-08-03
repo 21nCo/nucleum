@@ -275,7 +275,12 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.IMPORT_APP_DATA,
     component: ImportAppData,
-    type: ActionType.MODAL
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.lg
+      }
+    }
   },
   {
     action: PointronAction.LOGS,

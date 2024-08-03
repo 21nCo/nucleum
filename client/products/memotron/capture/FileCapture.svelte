@@ -7,6 +7,7 @@
   import { captureStore } from "./capture.store";
   import PdfAnnotator from "../pdfAnnotator/pdfAnnotator.svelte";
   import InlineLoadingAnimation from "$lib/client/elements/feedback/animations/InlineLoadingAnimation.svelte";
+  import { tempUploadToS3 } from "$lib/client/utils/storage.utils";
   let isUploading: boolean = false;
   let isDraggedIn = false;
   let fileCaptureContainer: HTMLDivElement;
@@ -49,22 +50,6 @@
     e.preventDefault();
     e.stopPropagation();
   }
-  /**
-   * Used to upload a file to s3 temp bucket
-   * @param input the file that needs to be uploaded to the S3 temp bucket
-   */
-  async function tempUpload(input: any) {
-    let itemLocalURL = new Blob([input], { type: input.type });
-    let customName = input.name.split(".")[0].trim();
-    const result = await account.uploadFile(
-      input.type,
-      customName,
-      itemLocalURL,
-      true
-    );
-    let url = result.uploadURL.split("?")[0];
-    return [url, customName, itemLocalURL];
-  }
   async function handleFileUpload(e: any) {
     isUploading = true;
     let dt = e?.dataTransfer;
@@ -74,7 +59,7 @@
     let blob;
     if (dt?.files[0]) file = dt.files[0];
     else if (e?.target?.files[0]) file = e.target.files[0];
-    [newURL, fileName, blob] = await tempUpload(file);
+    [newURL, fileName, blob] = await tempUploadToS3(file);
     let fileDetails = {
       name: fileName,
       data: blob,
