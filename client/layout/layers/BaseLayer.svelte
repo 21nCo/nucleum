@@ -87,7 +87,7 @@
   }
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
-    pingParent(true);
+    pingParent();
     refreshTimeZone();
     if (
       excludedPathsForRedirectionCheck.includes(
@@ -188,7 +188,7 @@
       try {
         const appData = await new Persistence().fetchAppData();
         if (!appData) {
-          appStore.gotoErrorPage("App data not found");
+          throw new Error("App data not found");
         }
         appStore.loadAppData(appData);
       } catch (e) {
@@ -261,7 +261,7 @@
    */
   function checkForEnvironmentChange() {
     const envCachedOnMachine = localStorage.getItem("env");
-    if ($appStore.env !== envCachedOnMachine) {
+    if (envCachedOnMachine && $appStore.env !== envCachedOnMachine) {
       localStorage.setItem("env", $appStore.env);
       console.log("environment changed");
       account.signOut();
@@ -332,6 +332,3 @@
 />
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />
-<svelte:head>
-  <script src="localforage.js"></script>
-</svelte:head>

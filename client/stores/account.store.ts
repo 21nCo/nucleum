@@ -43,10 +43,21 @@ class AccountStore extends ObservableStore<
       seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
     }
     this.set(seed);
+    this.postToEmbed(seed);
+  }
+
+  postToEmbed(data: any = null) {
+    if (!data) {
+      const token = localStorage.getItem("stoken");
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+      data = { token, userInfo };
+    }
+    if (!data) return;
     postToParent({
       account: JSON.stringify({
-        userId: seed.userInfo?.id.split("user:")[1],
-        token: seed.token,
+        userId: data.userInfo?.id?.split("user:")[1],
+        token: data.token,
+        refreshToken: data.refreshToken,
         isLoggedIn: true
       })
     });
@@ -77,14 +88,7 @@ class AccountStore extends ObservableStore<
     localStorage.setItem("stoken", data.token);
     localStorage.setItem("refresh-token", data.refreshToken ?? "");
     localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
-    postToParent({
-      account: JSON.stringify({
-        userId: data.userInfo.id.split("user:")[1],
-        token: data.token,
-        refreshToken: data.refreshToken,
-        isLoggedIn: true
-      })
-    });
+    this.postToEmbed(data);
     this.update(() => {
       return {
         token: data.token,
@@ -150,6 +154,7 @@ class AccountStore extends ObservableStore<
   }
 
   ping() {
+    this.postToEmbed();
     return this.persistence.ping();
   }
   logGuest() {
@@ -277,10 +282,12 @@ class AccountStore extends ObservableStore<
   clearAllCache() {
     const env = localStorage.getItem("env");
     const appData = localStorage.getItem("appData");
+    const product = localStorage.getItem("product");
     localStorage.clear();
     sessionStorage.clear();
     get(dataManager)?.cacheSource?.clearCache();
     if (env) localStorage.setItem("env", env);
+    if (product) localStorage.setItem("product", product);
     if (appData) localStorage.setItem("appData", appData);
   }
 
