@@ -21,10 +21,7 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
       "DependenciesLayer",
       {
         code: lambda.Code.fromAsset(
-          path.join(
-            __dirname,
-            "./../../../../src/layers/python/lambda-layer.zip"
-          )
+          path.join(__dirname, "./../../../../src/layers/py/lambda-layer.zip")
         ),
         compatibleRuntimes: [lambda.Runtime.PYTHON_3_10],
         description: "Dependencies for Pointron Lambda functions"
