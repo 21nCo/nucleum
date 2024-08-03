@@ -7,7 +7,7 @@
     type IButtonParams
   } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";
-  import {valid} from "$lib/client/products/pointron/logs/log.store"
+  import { isPrimaryActionDisabled } from "./modal.store";
   const dispatch = createEventDispatcher();
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
@@ -32,7 +32,7 @@
       icon={primaryAction.icon}
       style={primaryAction.style ?? ButtonStyle.DEFAULT}
       isLoading={isActionInProgress}
-      isDisabled={!$valid}
+      isDisabled={$isPrimaryActionDisabled}
       on:click={async () => {
         isActionInProgress = true;
         if (primaryAction?.callback) await primaryAction?.callback();
@@ -60,7 +60,6 @@
         ...secondaryAction,
         callback: () => {
           if (secondaryAction?.callback) secondaryAction.callback();
-          valid.set(true)
           return close("secondary");
         }
       }}

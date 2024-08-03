@@ -10,7 +10,7 @@ const defaultModal = {
   isShow: false
 };
 const modalEvent = initModalStore(defaultModal);
-
+export const isPrimaryActionDisabled = writable<boolean>(false);
 function initModalStore(seed: ModalEvent) {
   const { subscribe, set, update } = writable<ModalEvent>(seed);
   return {

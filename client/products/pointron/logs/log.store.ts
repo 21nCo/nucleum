@@ -39,7 +39,6 @@ import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
-export const valid = writable(true)
 
 class PointLogStore extends ObservableStore<IPointLogStore> {
   constructor() {

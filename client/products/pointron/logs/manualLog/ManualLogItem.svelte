@@ -3,7 +3,7 @@
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { attachTimeToDate, formatTime } from "$lib/client/utils/time.utils";
+  import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import DurationSuggestions from "./DurationSuggestions.svelte";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
@@ -14,83 +14,181 @@
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { pointLogStore } from "../log.store";
   import TimeInput from "$lib/client/elements/datetime/TimeInput.svelte";
-  import type { IManualSessionLogForm } from "../log.type";
+  import { LastActionPerformed, type IManualSessionLogForm } from "../log.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import FocusNotes from "../../focus/notes/FocusNotes.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import {valid} from "$lib/client/products/pointron/logs/log.store"
+  import { isPrimaryActionDisabled } from "$lib/client/components/modal/modal.store";
+
   export let item: IManualSessionLogForm;
+
+  let previousStartDate: Date = item.startDate;
+  let previousEndDate: Date = item.endDate;
+  let previousStartTime: string = item.startTime;
+  let previousEndTime: string = item.endTime;
+  let lastActionPerformed: LastActionPerformed | null = null;
   let label: string = "";
   let selectedGoal: any = undefined;
   let inputRef: any;
   let selectedQuickAddItem: number = 0;
   let error: string = "";
-  let defaultTime = Date.now()
+  let defaultTime = Date.now();
+
   if (item.goalId !== "") selectedGoal = { label: $swipeLabel };
+
   onMount(() => {
+    selectedQuickAddItem = 10;
+    onQuickDurationSelected({ detail: selectedQuickAddItem });
+    performValidationChecks();
     setTimeout(() => {
       if (inputRef) inputRef.focus();
-      valid.set(performValidationChecks())
     }, 100);
+    return () => {
+      $isPrimaryActionDisabled = false;
+    };
   });
   function onGoalSelect(event: any) {
     selectedGoal = event?.detail?.item;
     item.goalId = selectedGoal.id;
     label = "";
+    performValidationChecks();
   }
   function onQuickDurationSelected(event: any) {
     item.duration = event?.detail * 60;
-    refreshStartTime();
+    item.endDate = new Date(defaultTime);
+    item.endTime = formatTime($userPreferences, item.endDate, "24")!;
+    updateStartTimeWRTDuration();
+    performValidationChecks();
   }
   function onGoalClicked() {
     selectedGoal = undefined;
     setTimeout(() => {
       inputRef.focus();
     }, 100);
+    performValidationChecks();
     // inputRef.focus();
+  }
+  function setTimeToDate(
+    date: Date,
+    hours: number,
+    minutes: number,
+    seconds: number,
+    milliseconds: number
+  ) {
+    const newDate = new Date(date);
+    newDate.setHours(hours);
+    newDate.setMinutes(minutes);
+    newDate.setSeconds(seconds);
+    newDate.setMilliseconds(milliseconds);
+    return newDate;
+  }
+
+  function syncStartAndEndRespectively() {
+    item.startDate = setTimeToDate(
+      item.startDate,
+      Number(item.startTime.split(":")[0]),
+      Number(item.startTime.split(":")[1]),
+      0,
+      0
+    );
+    item.endDate = setTimeToDate(
+      item.endDate,
+      Number(item.endTime.split(":")[0]),
+      Number(item.endTime.split(":")[1]),
+      0,
+      0
+    );
+    previousEndDate = item.endDate;
+    previousStartDate = item.startDate;
+    previousEndTime = item.endTime;
+    previousStartTime = item.startTime;
   }
   function onTimeChange(event: any) {
     let start: Date;
     let end: Date;
-    if(item.startTime === '') item.startTime = new Date(defaultTime).toTimeString().substring(0,5)
-    if(item.endTime === '') item.endTime = new Date(defaultTime).toTimeString().substring(0,5)
-    start = attachTimeToDate(item.startDate, item.startTime);
-    end = attachTimeToDate(item.endDate, item.endTime);
-    if(item.startDate.getTime() !== defaultTime && item.endDate.getTime() === defaultTime) refreshEndTime()
-    else item.duration = (end.getTime() - start.getTime()) / 1000;
-    valid.set(performValidationChecks())
+    selectedQuickAddItem = 0;
+    if (item.startTime === "") {
+      item.startDate = previousStartDate;
+      item.startTime = previousStartTime;
+    }
+    if (item.endTime === "") {
+      item.endDate = previousEndDate;
+      item.endTime = previousEndTime;
+    }
+    if (
+      lastActionPerformed === LastActionPerformed.DURATION_CHANGED &&
+      (item.startDate !== previousStartDate ||
+        item.startTime !== previousStartTime)
+    ) {
+      syncStartAndEndRespectively();
+      updateEndTimeWRTDuration();
+      lastActionPerformed = LastActionPerformed.START_TIME_CHANGED;
+      return;
+    } else if (
+      item.startDate !== previousStartDate ||
+      item.startTime !== previousStartTime
+    ) {
+      lastActionPerformed = LastActionPerformed.START_TIME_CHANGED;
+    } else if (
+      item.endDate !== previousEndDate ||
+      item.endTime !== previousEndTime
+    ) {
+      lastActionPerformed = LastActionPerformed.END_TIME_CHANGED;
+    }
+    syncStartAndEndRespectively();
+    const duration = (item.endDate.getTime() - item.startDate.getTime()) / 1000;
+    if (duration <= 0) {
+      item.duration = 0;
+    } else
+      item.duration =
+        (item.endDate.getTime() - item.startDate.getTime()) / 1000;
+    performValidationChecks();
   }
-  function refreshEndTime() {
-    const endTime = new Date(item.startDate.getTime() + item.duration * 1000);
-    item.endTime = formatTime($userPreferences, endTime, "24")!;
+  function updateEndTimeWRTDuration() {
+    item.endDate = new Date(item.startDate.getTime() + item.duration * 1000);
+    item.endTime = formatTime($userPreferences, item.endDate, "24")!;
+    previousEndDate = item.endDate;
+    previousEndTime = item.endTime;
   }
-  function refreshStartTime() {
-    const startTime = new Date(item.endDate.getTime() - item.duration * 1000);
-    item.startTime = formatTime($userPreferences, startTime, "24")!;
+  function updateStartTimeWRTDuration() {
+    item.startDate = new Date(item.endDate.getTime() - item.duration * 1000);
+    item.startTime = formatTime($userPreferences, item.startDate, "24")!;
+    previousStartDate = item.startDate;
+    previousStartTime = item.startTime;
   }
   function ondurationchange(event: any) {
     selectedQuickAddItem = 0;
-    if(item.startDate.getTime() === defaultTime && item.endDate.getTime() !== defaultTime) refreshStartTime()
-    else if(item.startDate.getTime() !== defaultTime && item.endDate.getTime() === defaultTime) refreshEndTime()
-    else refreshStartTime()
+    if (lastActionPerformed === LastActionPerformed.START_TIME_CHANGED)
+      updateEndTimeWRTDuration();
+    else updateStartTimeWRTDuration();
+    lastActionPerformed = LastActionPerformed.DURATION_CHANGED;
+    performValidationChecks();
   }
   function performValidationChecks() {
     if (item.startDate.getFullYear() < 1971) {
       error = "Please select a valid date. Year should be greater than 1971.";
-      return false;
+      $isPrimaryActionDisabled = true;
+      return;
     }
-    if (item.startDate.getTime() > item.endDate.getTime()) {
+    if (item.startDate.getTime() >= item.endDate.getTime()) {
       error = "Start time should be less than end time.";
-      return false;
+      $isPrimaryActionDisabled = true;
+      return;
     }
     if (item.duration <= 0) {
       error = "Duration should be greater than 0.";
-      return false;
+      $isPrimaryActionDisabled = true;
+      return;
+    }
+    if (selectedGoal === undefined) {
+      error = "Please select a goal";
+      $isPrimaryActionDisabled = true;
+      return;
     }
     error = "";
-    return true;
+    $isPrimaryActionDisabled = false;
   }
 </script>
 
@@ -166,5 +264,5 @@
   <div class="p-2 bg-bgs2 rounded-md">
     <FocusNotes bind:md={item.notes} />
   </div>
-  <InlineErrorMessage bind:error />
+  <InlineErrorMessage isDissappear={false} bind:error />
 </div>
