@@ -1,10 +1,9 @@
 import * as cdk from "aws-cdk-lib";
-import { Duration,aws_s3 } from "aws-cdk-lib";
+import { Duration, aws_s3 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { CustomLambdaNestedStackProps } from "../types/customNestedStackProps.type";
-import { generateFunctionName, resolveAcmCertificate } from "../cdk.utils";
+import { generateFunctionName } from "../cdk.utils";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import { CnameRecord } from "aws-cdk-lib/aws-route53";
 import { defaults } from "../config";
 import * as path from "path";
 import { LambdaIntegration, MockIntegration } from "aws-cdk-lib/aws-apigateway";
@@ -20,7 +19,36 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
       runtime: lambda.Runtime.PYTHON_3_10,
       timeout: Duration.minutes(defaults.timeout),
       code: lambda.Code.fromAsset(
-        path.join(__dirname, "./../../../../src/endpoints/pointron/importJob")
+        path.join(__dirname, "./../../../../src/endpoints/pointron/importJob"),
+        {
+          bundling: {
+            image: lambda.Runtime.PYTHON_3_10.bundlingImage,
+            command: [
+              "bash",
+              "-c",
+              "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+            ],
+            local: {
+              tryBundle(outputDir: string) {
+                const command = `pip install -r ${path.join(
+                  __dirname,
+                  "./../../../../src/endpoints/pointron/importJob/requirements.txt"
+                )} -t ${outputDir} && cp -R ${path.join(
+                  __dirname,
+                  "./../../../../src/endpoints/pointron/importJob"
+                )}/* ${outputDir}`;
+                try {
+                  console.log(`Attempting local bundling: ${command}`);
+                  require("child_process").execSync(command);
+                  return true;
+                } catch (error) {
+                  console.error("Local bundling failed:", error);
+                  return false;
+                }
+              }
+            }
+          }
+        }
       ),
       environment: props.lambdaEnvVars
     };
@@ -31,7 +59,7 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
       ...pythonRuntimeFunctionProps
     });
 
-    fileBuckets.forEach((x) => x.grantRead(importFunction));
+    fileBuckets.forEach((x) => x.grantReadWrite(importFunction));
     const importEndpoint = pointronEndpoint.addResource("import");
     importEndpoint.addMethod("POST", new LambdaIntegration(importFunction));
     importEndpoint.addMethod(
@@ -39,9 +67,12 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
       new MockIntegration(defaults.mockIntegration),
       defaults.mockIntegrationOptions
     );
-    const pingFunction = new lambda.Function(this, "pingFunction", {
+    const pingFunction = new lambda.Function(this, "pythonPingFunction", {
       handler: "ping.lambdaHandler",
-      functionName: generateFunctionName("pingFunction", props.environment),
+      functionName: generateFunctionName(
+        "pythonPingFunction",
+        props.environment
+      ),
       ...pythonRuntimeFunctionProps
     });
     const pingResource = pointronEndpoint.addResource("ping");
