@@ -7,6 +7,7 @@
     type IButtonParams
   } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";
+  import { isPrimaryActionDisabled } from "./modal.store";
   const dispatch = createEventDispatcher();
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
@@ -31,6 +32,7 @@
       icon={primaryAction.icon}
       style={primaryAction.style ?? ButtonStyle.DEFAULT}
       isLoading={isActionInProgress}
+      isDisabled={$isPrimaryActionDisabled}
       on:click={async () => {
         isActionInProgress = true;
         if (primaryAction?.callback) await primaryAction?.callback();
