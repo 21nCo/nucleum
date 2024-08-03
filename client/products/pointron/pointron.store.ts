@@ -22,7 +22,7 @@ import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
 
 export const swipeLabel = writable("");
-
+export const lastImportTime = writable<number>(Date.now());
 const seedPresets: SessionComposition[] = [
   {
     id: generateUID(),
