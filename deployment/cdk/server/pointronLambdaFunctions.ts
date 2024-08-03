@@ -15,46 +15,34 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
     fileBuckets: aws_s3.IBucket[]
   ) {
     super(scope, id, props);
+
+    const dependenciesLayer = new lambda.LayerVersion(
+      this,
+      "DependenciesLayer",
+      {
+        code: lambda.Code.fromAsset(
+          path.join(
+            __dirname,
+            "./../../../../src/layers/python/lambda-layer.zip"
+          )
+        ),
+        compatibleRuntimes: [lambda.Runtime.PYTHON_3_10],
+        description: "Dependencies for Pointron Lambda functions"
+      }
+    );
+
     const pythonRuntimeFunctionProps = {
       runtime: lambda.Runtime.PYTHON_3_10,
       timeout: Duration.minutes(defaults.timeout),
       code: lambda.Code.fromAsset(
-        path.join(__dirname, "./../../../../src/endpoints/pointron/importJob"),
-        {
-          bundling: {
-            image: lambda.Runtime.PYTHON_3_10.bundlingImage,
-            command: [
-              "bash",
-              "-c",
-              "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
-            ],
-            local: {
-              tryBundle(outputDir: string) {
-                const command = `pip install -r ${path.join(
-                  __dirname,
-                  "./../../../../src/endpoints/pointron/importJob/requirements.txt"
-                )} -t ${outputDir} && cp -R ${path.join(
-                  __dirname,
-                  "./../../../../src/endpoints/pointron/importJob"
-                )}/* ${outputDir}`;
-                try {
-                  console.log(`Attempting local bundling: ${command}`);
-                  require("child_process").execSync(command);
-                  return true;
-                } catch (error) {
-                  console.error("Local bundling failed:", error);
-                  return false;
-                }
-              }
-            }
-          }
-        }
+        path.join(__dirname, "./../../../../src/endpoints/pointron/importJob")
       ),
       environment: props.lambdaEnvVars
     };
     const pointronEndpoint = props.api.root.addResource("pointron");
     const importFunction = new lambda.Function(this, "importFunction", {
       handler: "importJobs.lambdaHandler",
+      layers: [dependenciesLayer],
       functionName: generateFunctionName("importFunction", props.environment),
       ...pythonRuntimeFunctionProps
     });
