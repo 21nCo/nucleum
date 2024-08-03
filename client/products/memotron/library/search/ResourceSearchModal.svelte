@@ -80,11 +80,11 @@
       style={PanelSwitcherStyle.BAR}
       isExpandToFullWidth={true}
       size={Size.sm}
-      on:select={refresh}
+      on:switch={refresh}
     />
   </header>
   <main class="flex overflow-auto">
-    {#if data.length > 0}
+    {#if data.length > 0 || searchQuery}
       <div class="flex flex-col px-4 w-full">
         <SearchResults items={data} />
       </div>

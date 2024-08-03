@@ -15,14 +15,19 @@
   } from "$lib/shared/utils/obj.utils";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import PdfAnnotator from "../../pdfAnnotator/pdfAnnotator.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
+  import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore, userPreferences } from "$lib/client/stores/app.store";
   export let node: IActiveNodeStore;
   export let mdId: string;
   let previousRootStructure: string[] = [];
   let refreshId = Date.now();
   let markdownRef: any;
   onMount(() => {
+    refreshCounts();
     const focusEventSub = node.eventStore.subscribe((x) => {
       console.log("nodeFocusEvent", { x, id: $node.id });
       if (!x) return;
@@ -51,18 +56,51 @@
       focusEventSub();
     };
   });
+
+  let wordCount = 0;
+  let charCount = 0;
+  const targetDivId = "mdContent";
+
+  function refreshCounts() {
+    const targetDiv = document.getElementById(targetDivId);
+    if (targetDiv) {
+      const divContent = targetDiv.innerHTML;
+      const strippedContent = stripHtml(divContent);
+      wordCount = countWords(strippedContent);
+      charCount = strippedContent.length;
+    } else {
+      wordCount = 0;
+      charCount = 0;
+    }
+
+    function countWords(text: string): number {
+      return text
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length;
+    }
+
+    function stripHtml(html: string): string {
+      const tmp = document.createElement("DIV");
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || "";
+    }
+  }
+
   function retireveNode() {
     node.fetch();
     refreshId = Date.now();
   }
   function onMarkdownContentChange(e: CustomEvent) {
     console.log("Markdown content changed", { e });
+    refreshCounts();
     if (e.detail.block.id && "body" in e.detail.block) {
       node.updateBlock(e.detail.block.id, { body: e.detail.block.body });
     }
   }
   async function onMarkdownInsertChanges(e: CustomEvent) {
     console.log("Markdown insert changes", { e });
+    refreshCounts();
     const detail = e.detail;
     if (!detail?.id) return;
     const result = await node.createBlock(
@@ -114,7 +152,7 @@
 </script>
 
 {#key refreshId}
-  <div class="flex flex-col h-full grow pt-2">
+  <div class="flex flex-col h--full grow pt-2">
     {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
       <NodularMarkdown
         node={$node}
@@ -129,7 +167,28 @@
         on:mention={onMention}
         on:unmention={onUnMention}
         on:focus={onFocus}
+        on:ready={refreshCounts}
       />
+      <div class="flex w-full justify-center items-center mt--20 mt-4">
+        <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">
+          <Divider colorStrength={ColorStrength.Strong} />
+          <div class="flex w-full justify-between text-b3 text-fgs3">
+            <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
+            <div>
+              {wordCount} words
+            </div>
+            <div class="min-w-fit whitespace-nowrap">
+              Modified: {formatDatetime(
+                $userPreferences,
+                new Date($node.modifiedAt)
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <ScrollViewBottomSpacer />
+      <ScrollViewBottomSpacer />
+      <ScrollViewBottomSpacer />
     {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
       <PdfAnnotator url={$node.body.url} />
     {:else if $node?.contentType === NodeType.WEBPAGE && $node.children && $node.children.length > 0}

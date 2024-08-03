@@ -184,7 +184,7 @@
             <Text style={TextStyle.SECTION_HEADING} content="Starred" />
             <Resources
               data={$starred}
-              context={ResourceAccessPoint.BROWSER}
+              accessPoint={ResourceAccessPoint.BROWSER}
               {resource}
               {arrangement}
               size={Size.sm}
@@ -199,7 +199,7 @@
           />
           <Resources
             {data}
-            context={ResourceAccessPoint.BROWSER}
+            accessPoint={ResourceAccessPoint.BROWSER}
             {resource}
             {arrangement}
             size={Size.sm}

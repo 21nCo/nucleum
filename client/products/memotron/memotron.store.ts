@@ -1,9 +1,13 @@
 import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
+  LinkType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
-import { activeResourceFilter } from "$lib/client/utils/utils";
+import {
+  activeResourceFilter,
+  interceptSurrealResponse
+} from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { resolveResourceTypeFromId } from "./memotron.utils";
 import { MemotronResourceType } from "./memotron.type";
@@ -13,6 +17,9 @@ import type { IProperty } from "./collection/properties/property.type";
 import { CollectionType } from "./collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import { MemotronDexie } from "./memotron.dexie";
+import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { type IStore, StoreDataType } from "$lib/client/types/data.type";
 
 /**
  * @deprecated
@@ -140,7 +147,11 @@ export class SearchStore {
   async refreshNodes() {
     let query = this.dexie.node
       .where("contentType")
-      .anyOfIgnoreCase(rootNodeTypeList);
+      .anyOfIgnoreCase(
+        this.searchQuery
+          ? [...rootNodeTypeList, ...headingNodeTypes]
+          : rootNodeTypeList
+      );
 
     if (this.resource === Resource.archived) {
       query = query.and((item) => item.isArchived === true);
@@ -152,8 +163,12 @@ export class SearchStore {
       query = query.and((item) => item.isStarred === true);
     }
     if (this.searchQuery) {
-      query = query.and((item) =>
-        item.label?.toLowerCase().includes(this.searchQuery.toLowerCase())
+      query = query.and(
+        (item) =>
+          item.label?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          ("body" in item &&
+            typeof item.body === "string" &&
+            item.body?.toLowerCase().includes(this.searchQuery.toLowerCase()))
       );
     }
     return query.toArray();
@@ -221,8 +236,8 @@ export class SearchStore {
 
   private recentNodes() {
     return this.dexie.node
-      .where("id")
-      .notEqual("")
+      .where("contentType")
+      .anyOfIgnoreCase([...rootNodeTypeList, ...headingNodeTypes])
       .and((item: any) => activeResourceFilter(item))
       .toArray();
   }
@@ -284,3 +299,37 @@ export async function resolveTypes(collections: string[]) {
     .toArray();
   return { types, propertyConfig, avatars };
 }
+
+class Linker implements IStore {
+  id: string = "linker";
+  dataType: StoreDataType = StoreDataType.NA;
+  db: ISurrealDatabase;
+  dboDependencies: string[] = ["fn::memotron::link", "fn::memotron::unlink"];
+  constructor() {
+    this.db = new SurrealDatabase();
+  }
+  async link(from: string, to: string, linkType: LinkType = LinkType.DIRECT) {
+    let response = await this.db.query(
+      "return fn::memotron::link($from, $to, $linkType);",
+      {
+        from,
+        to,
+        linkType
+      }
+    );
+    return interceptSurrealResponse(response, "link");
+  }
+  async unlink(from: string, to: string) {
+    let response = await this.db.query(
+      "return fn::memotron::unlink($from, $to);",
+      {
+        from,
+        to
+      }
+    );
+    return interceptSurrealResponse(response, "unlink");
+  }
+  get() {}
+}
+
+export const linker = new Linker();

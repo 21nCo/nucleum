@@ -236,6 +236,23 @@ class AccountStore extends ObservableStore<
     } else return null;
   }
 
+  /**
+   * Used to upload a file to s3 temp bucket
+   * @param input the file that needs to be uploaded to the S3 temp bucket
+   */
+  async tempUploadToS3(input: any) {
+    let itemLocalURL = new Blob([input], { type: input.type });
+    let customName = input.name.split(".")[0].trim();
+    const result = await this.uploadFile(
+      input.type,
+      customName,
+      itemLocalURL,
+      true
+    );
+    let url = result.uploadURL.split("?")[0];
+    return [url, customName, itemLocalURL];
+  }
+
   async checkIfSessionExpired() {
     const token = localStorage.getItem("stoken");
     if (!token) {

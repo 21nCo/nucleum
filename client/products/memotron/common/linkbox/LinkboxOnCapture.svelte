@@ -11,6 +11,8 @@
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
   import { searchForLinking } from "../../memotron.store";
   import LinkItems from "./LinkItems.svelte";
+  import { Position } from "$lib/client/types/direction.enum";
+  import LinkSearch from "./LinkSearch.svelte";
   let link: string;
   function onsearch(searchQuery: string) {
     return searchForLinking(searchQuery);
@@ -34,20 +36,24 @@
     <div class="flex gap-1">
       <Icon icon="arrow-up-right" size={Size.sm} />
     </div>
-    <TextSearchInput
+    <!-- <TextSearchInput
       bind:value={link}
       style={InputStyle.PLAIN}
       searchResultComponent={LinkSuggestionItem}
       popoverOptions={{
-        offsetInPx: 12
+        offsetInPx: 12,
+        placement: Position.TopCenter
       }}
+      searchCallback={onsearch}
+      placeholder="Start typing to link to a node or add to a curation"
+    /> -->
+    <LinkSearch
+      context="capture"
       on:select={(e) => {
         console.log("select", e.detail);
         captureStore.directLink(e.detail.item);
         link = "";
       }}
-      searchCallback={onsearch}
-      placeholder="Start typing to link to a node or add to a curation"
     />
   </div>
 </section>

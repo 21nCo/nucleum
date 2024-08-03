@@ -18,7 +18,7 @@
   export let arrangement: Arrangement = Arrangement.LIST;
   export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;
   export let size: Size.sm | Size.md = Size.md;
-  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   let parentBgIndex = 1;
   function onClick(e: MouseEvent, item: any) {
     if ($selectedResources.length > 0) {
@@ -46,15 +46,16 @@
         {#if resolveResourceType(item) === MemotronResourceType.NODE}
           <NodeThumbnail
             {item}
+            {accessPoint}
             {parentBgIndex}
-            variant={arrangement}
+            {arrangement}
             on:click={(e) => onClick(e, item)}
           />
         {:else if item.id.startsWith("collection:")}
           <CollectionThumbnail
             {item}
             {size}
-            {context}
+            {accessPoint}
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />
@@ -68,15 +69,16 @@
       {:else if resource === Resource.node}
         <NodeThumbnail
           {item}
+          {accessPoint}
           {parentBgIndex}
-          variant={arrangement}
+          {arrangement}
           on:click={(e) => onClick(e, item)}
         />
       {:else if resource === Resource.collection}
         <CollectionThumbnail
           {item}
           {size}
-          {context}
+          {accessPoint}
           {arrangement}
           on:click={(e) => onClick(e, item)}
         />

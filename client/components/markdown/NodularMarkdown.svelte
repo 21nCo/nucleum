@@ -85,8 +85,13 @@
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
     reCalculateStructure(_md, true);
+    setTimeout(() => {
+      dispatch("ready");
+    }, 1000);
+    // dispatch("ready");
   } else {
     _md = md;
+    dispatch("ready");
   }
   /**
    * @deprecated - used with v1 resolution of {@link hierarchyV1}

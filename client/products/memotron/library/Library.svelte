@@ -320,7 +320,7 @@
         <div class="flex flex-col grow">
           <Resources
             {data}
-            context={ResourceAccessPoint.LIBRARY}
+            accessPoint={ResourceAccessPoint.LIBRARY}
             resource={selectedResource}
             arrangement={Arrangement.GRID}
           />

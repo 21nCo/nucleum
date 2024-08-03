@@ -29,12 +29,12 @@
   });
 </script>
 
-<div class="grow w-full overflow-auto">
+<div class="relative grow w-full overflow-auto">
   {#if item.cover}
     <img
       src={item.cover}
       alt="collection cover"
-      class={cn("h-full w-full object-cover", {
+      class={cn("absolute inset-0 h-full w-full object-cover", {
         "rounded-t-md": arrangement === Arrangement.GRID,
         "rounded-md": arrangement === Arrangement.LIST
       })}

@@ -7,7 +7,6 @@
   import { captureStore } from "./capture.store";
   import PdfAnnotator from "../pdfAnnotator/pdfAnnotator.svelte";
   import InlineLoadingAnimation from "$lib/client/elements/feedback/animations/InlineLoadingAnimation.svelte";
-  import { tempUploadToS3 } from "$lib/client/utils/storage.utils";
   let isUploading: boolean = false;
   let isDraggedIn = false;
   let fileCaptureContainer: HTMLDivElement;
@@ -59,7 +58,7 @@
     let blob;
     if (dt?.files[0]) file = dt.files[0];
     else if (e?.target?.files[0]) file = e.target.files[0];
-    [newURL, fileName, blob] = await tempUploadToS3(file);
+    [newURL, fileName, blob] = await account.tempUploadToS3(file);
     let fileDetails = {
       name: fileName,
       data: blob,

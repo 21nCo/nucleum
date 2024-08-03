@@ -14,13 +14,13 @@
   import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
   import { get } from "svelte/store";
   import account from "$lib/client/stores/account.store";
-  import { tempUploadToS3 } from "$lib/client/utils/storage.utils";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
   import { toasts } from "$lib/client/stores/notification.store";
   import { lastImportTime } from "../../pointron.store";
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
   import { isEmptyArray, isValidArray } from "$lib/shared/utils/obj.utils";
   import { PointronPersistence } from "../../pointron.persistence";
+  import { performApiCall } from "$lib/client/utils/network.utils";
 
   export let id: OtherApps | "POINTRON" = "POINTRON";
   let checked: boolean = false;
@@ -367,7 +367,7 @@
       } else {
         try {
           const userId = get(account)?.userInfo?.id.split(":")[1] ?? "";
-          const [url, customName, itemLocalURL] = await tempUploadToS3(
+          const [url, customName, itemLocalURL] = await account.tempUploadToS3(
             tempFileList[0].file
           );
           const timeZone = detectTimeZone();
@@ -382,14 +382,16 @@
           setTimeout(() => {
             $lastImportTime = Date.now();
           }, 5000);
-          let jsonBody = JSON.stringify(body);
-          response = await fetch("http://127.0.0.1:5000/upload", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: jsonBody
-          });
+          // let jsonBody = JSON.stringify(body);
+          response = await performApiCall("pointron/import", "POST", body);
+          console.log({ response });
+          // response = await fetch("http://127.0.0.1:5000/upload", {
+          //   method: "POST",
+          //   headers: {
+          //     "Content-Type": "application/json"
+          //   },
+          //   body: jsonBody
+          // });
         } catch (e: any) {
           toasts.error("Something went wrong during Import", e);
         }

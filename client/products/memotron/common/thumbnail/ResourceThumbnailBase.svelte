@@ -14,9 +14,9 @@
   import { resolveNodeContextMenu } from "../../node/node.store";
   let isHovering = false;
   export let item: any;
-  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let isApplyCustomColor: boolean = false;
-  $: contextMenu = resolveContextMenu(item, context);
+  $: contextMenu = resolveContextMenu(item, accessPoint);
   $: isSelected = $selectedResources.includes(item.id);
   function resolveContextMenu(item: any, context: ResourceAccessPoint) {
     const resourceType = resolveResourceType(item);
@@ -32,48 +32,46 @@
 </script>
 
 <!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
-<ContextMenuAction {contextMenu}>
-  <HoverableElement class="relative flex w-full h-full" bind:isHovering>
-    <slot />
-    {#if isSelected || $selectedResources.length > 0}
-      <button
-        class="absolute top-0 left-0 flex gap-2 bg-bgs2 border border-brs3 rounded-full m-3 p-0.5"
-        on:click|stopPropagation
-      >
-        {#if isSelected}
-          <Check
-            isChecked={true}
-            isRounded={true}
-            on:click={() => {
-              $selectedResources = $selectedResources.filter(
-                (x) => x != item.id
-              );
-            }}
-          />
-        {:else if $selectedResources.length > 0}
-          <Check
-            isChecked={false}
-            isRounded={true}
-            on:click={() => {
-              $selectedResources = [...$selectedResources, item.id];
-            }}
-          />
-        {/if}
-      </button>
-    {/if}
-    {#if isHovering}
-      <button
-        class={cn(
-          "absolute top-0 right-0 flex gap-2 border rounded-md m-3 p-1",
-          {
-            "bg-ccs4 border-ccs2": isApplyCustomColor,
-            "bg-bgs2 border-brs3": !isApplyCustomColor
-          }
-        )}
-        on:click|stopPropagation
-      >
-        <ContextMenuAction {contextMenu} size={Size.lg} on:action={onAction} />
-      </button>
-    {/if}
-  </HoverableElement>
-</ContextMenuAction>
+<!-- <ContextMenuAction {contextMenu}> -->
+<HoverableElement class="relative flex w-full" bind:isHovering>
+  <slot />
+  {#if isSelected || $selectedResources.length > 0}
+    <button
+      class="absolute top-0 left-0 flex gap-2 bg-bgs2 border border-brs3 rounded-full m-3 p-0.5"
+      on:click|stopPropagation
+    >
+      {#if isSelected}
+        <Check
+          isChecked={true}
+          isRounded={true}
+          on:click={() => {
+            $selectedResources = $selectedResources.filter((x) => x != item.id);
+          }}
+        />
+      {:else if $selectedResources.length > 0}
+        <Check
+          isChecked={false}
+          isRounded={true}
+          on:click={() => {
+            $selectedResources = [...$selectedResources, item.id];
+          }}
+        />
+      {/if}
+    </button>
+  {/if}
+  {#if isHovering}
+    <button
+      class={cn(
+        "absolute top-0 right-0 flex gap-2 border rounded-md m-3 p--1",
+        {
+          "bg-ccs4 border-ccs2": isApplyCustomColor,
+          "bg-bgs2 border-brs3": !isApplyCustomColor
+        }
+      )}
+      on:click|stopPropagation
+    >
+      <ContextMenuAction {contextMenu} size={Size.lg} on:action={onAction} />
+    </button>
+  {/if}
+</HoverableElement>
+<!-- </ContextMenuAction> -->

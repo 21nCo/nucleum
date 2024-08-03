@@ -135,6 +135,12 @@ export class ClipperPersistence {
     }
   }
 
+  /**
+   * @deprecated - use linker store instead
+   * @param from
+   * @param to
+   * @returns
+   */
   link(from: string, to: string) {
     try {
       const query = "return fn::memotron::link($from, $to)";
@@ -143,6 +149,12 @@ export class ClipperPersistence {
       console.error("ERROR", e);
     }
   }
+  /**
+   * @deprecated - use linker store instead
+   * @param from
+   * @param to
+   * @returns
+   */
   unlink(from: string, to: string) {
     try {
       const query = "return fn::memotron::unlink($from, $to)";

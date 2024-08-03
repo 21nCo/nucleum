@@ -19,7 +19,7 @@
   <slot />
   <div
     class={cn(
-      "flex flex-col gap-2 w-full rounded-b-md border-t items-start p-3 truncate",
+      "flex flex-col h-fit gap-2 w-full rounded-b-md border-t items-start p-3 truncate",
       {
         "bg-ccs4 border-ccs2": isApplyCustomColor,
         "bg-bgs2 border-brs3": !isApplyCustomColor
