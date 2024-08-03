@@ -1,4 +1,4 @@
-import localforage from "localforage";
+import localForage from "localforage";
 import {
   CacheStrategy,
   type CacheSource,
@@ -10,7 +10,7 @@ import { LocalDexie } from "$local/local";
  * The cache manager for the application.
  */
 export class CacheManager implements CacheSource {
-  indxDb: LocalForage = localforage.createInstance({ name: "guest" });
+  indxDb: LocalForage = localForage.createInstance({ name: "guest" });
   dexie: LocalDexie = new LocalDexie("d:guest");
   initialize() {
     let userId = "guest";
@@ -18,7 +18,7 @@ export class CacheManager implements CacheSource {
       const userInfo = JSON.parse(localStorage.getItem("userInfo")!);
       userId = userInfo.id;
     }
-    this.indxDb = localforage.createInstance({
+    this.indxDb = localForage.createInstance({
       name: userId
     });
     this.dexie = new LocalDexie("d:" + userId);

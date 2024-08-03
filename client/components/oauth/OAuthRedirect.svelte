@@ -14,7 +14,6 @@
   $: {
     if (debugMessage) {
       logger.log(debugMessage);
-      console.log(debugMessage);
     }
   }
   onMount(async () => {

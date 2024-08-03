@@ -3,7 +3,7 @@
   export let value: string | number = "";
   export let placeholder: string = "Time";
   let classList =
-    "rounded-md outline-none p-2 bg-bgs2 w-full focus:outline focus:outline-aps1";
+    "rounded-md outline-none p-2 bg-bgs2 w-full focus:outline focus:outline-aps1";  
 </script>
 
 <input

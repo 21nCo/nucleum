@@ -241,7 +241,10 @@ function init() {
       let mutatingResources: string[] = [];
       mutations.forEach((x) => {
         masterQuery += replaceParams(x.query, x.params) + ";";
-        mutatingResources = [...mutatingResources, ...x.mutatingResources];
+        mutatingResources = [
+          ...mutatingResources,
+          ...(x.mutatingResources ?? [])
+        ];
       });
       if (!masterQuery) {
         console.log("No valid mutations to sync");
@@ -255,9 +258,9 @@ function init() {
         response
       });
       for (let i = 0; i < response.length; i++) {
-        if (response[i]) {
+        if (response[i] && mutations[i]) {
           await mutationQueue.delete(mutations[i].id);
-        } else {
+        } else if (mutations[i]) {
           await mutationQueue.update(mutations[i].id, {
             retryCount: (mutations[i]?.retryCount ?? 0) + 1
           });

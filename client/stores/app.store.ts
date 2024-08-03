@@ -429,6 +429,7 @@ function initAppStore(seed: AppStore) {
   };
   const gotoErrorPage = (err: any) => {
     //TODO - log error, show error code on error page
+    console.log("error-page", { err });
     gotoPath("/error");
   };
   const gotoResource = async (
@@ -793,7 +794,7 @@ function initAppStore(seed: AppStore) {
       });
     },
     showFullScreenPlayer(path: string) {
-      console.log("showing full screen player", { path });
+      // console.log("showing full screen player", { path });
       update((n: AppStore) => {
         n.fullScreenComponentPath = path;
         runAction(path);
@@ -803,7 +804,6 @@ function initAppStore(seed: AppStore) {
       toggleSearchParam("fsp", path);
     },
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
-      console.log("hiding full screen player");
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
           n.player = resolveComponentFromPath(
