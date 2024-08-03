@@ -6,11 +6,13 @@ import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
 import type { IStore } from "$lib/client/types/data.type";
 import { propertyStore } from "./collection/properties/property.store";
+import { linker } from "./memotron.store";
 
 export const memotronCacheableStores: IStore[] = [
   nodeStore,
   collectionStore,
   propertyStore,
   viewStore,
-  captureStore
+  captureStore,
+  linker
 ];

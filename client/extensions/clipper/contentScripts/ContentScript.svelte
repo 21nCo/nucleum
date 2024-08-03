@@ -15,6 +15,7 @@
   import { webpage, toolbarState } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
+  import { linker } from "$lib/client/products/memotron/memotron.store";
 
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
@@ -73,8 +74,14 @@
       },
       false
     );
-    dataManager.refreshApp([nodeStore, collectionStore, toolbarState, webpage]);
-    dataManager.refreshOnAppear();
+    dataManager.loadStores([
+      nodeStore,
+      collectionStore,
+      toolbarState,
+      webpage,
+      linker
+    ]);
+    dataManager.refreshApp();
   });
 </script>
 

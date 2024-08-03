@@ -15,7 +15,7 @@
 <div class="flex justify-between w-full">
   <span class="flex gap-2 grow">
     {#if type === MemotronResourceType.NODE}
-      <!--TODO Avatar for node -->
+      <!--TODO Avatar and parent breadcrumbs for node -->
     {:else if type === MemotronResourceType.TYPED_COLLECTION && item.avatar}
       <AvatarView avatar={item.avatar} size={Size.sm} />
     {:else if type === MemotronResourceType.QUERY_COLLECTION}
@@ -23,7 +23,7 @@
     {/if}
     <span class="text-left w-5/6 truncate font-medium">
       <!-- TODO - if node and has parent, show breadcrumbs -->
-      {item.label ?? resolveEmptyLabel()}
+      {item.label ?? item.body ?? resolveEmptyLabel()}
     </span>
   </span>
   {#if item.isStarred}

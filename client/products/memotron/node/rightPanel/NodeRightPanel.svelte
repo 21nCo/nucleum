@@ -13,6 +13,7 @@
   import NodeMetadataPane from "./NodeMetadataPane.svelte";
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
   import type { ISelectItem } from "$lib/client/types/select.type";
+  import NodeLinksPane from "./links/NodeLinksPane.svelte";
   export let node: IActiveNodeStore;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
@@ -70,19 +71,7 @@
       {#if selectedRightPanel === RightPanelType.OUTLINE}
         <TableOfContents {mdId} />
       {:else if selectedRightPanel === RightPanelType.LINKS}
-        <div class="flex flex-col items-start gap-4 h-full w-full">
-          <div class="flex flex-col items-start gap-2">
-            <!-- <Text content="Direct" style={TextStyle.SECTION_HEADING_SMALL} />
-          <DirectLinks
-            links={$node?.forelinks?.filter(
-              (x) => x.linkType === LinkType.DIRECT
-            )}
-            context="nodepage"
-          /> -->
-            <Text content="Mentions" style={TextStyle.SECTION_HEADING_SMALL} />
-            <Mentions />
-          </div>
-        </div>
+        <NodeLinksPane {node} />
       {:else if selectedRightPanel === RightPanelType.PROPERTIES}
         <NodePropertiesPane {node} />
       {:else if selectedRightPanel === RightPanelType.TRACES}

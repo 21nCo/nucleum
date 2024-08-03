@@ -21,7 +21,7 @@ import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
-import { resolveTypes } from "../memotron.store";
+import { linker, resolveTypes } from "../memotron.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -35,7 +35,6 @@ class NodeStore extends ResourceStore<INode> {
         "fn::memotron::node::createMany",
         "fn::memotron::node::create",
         "fn::memotron::timeline",
-        "fn::memotron::link",
         "fn::memotron::pdfAnnotator::getAllClips",
         "fn::memotron::pdfAnnotator::saveClip"
       ]
@@ -54,7 +53,7 @@ class NodeStore extends ResourceStore<INode> {
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
-    const response = await this.db.query(query, {
+    const response = await this.db.executeReadFn(query, {
       date: formatDate(date, "iso")
     });
     return interceptSurrealResponse(response, "fetch timeline");
@@ -63,18 +62,6 @@ class NodeStore extends ResourceStore<INode> {
     const query = `fn::memotron::node::fetch($nodeId)`;
     const response = await this.db.executeReadFn(query, { nodeId });
     return interceptSurrealResponse(response, "fetch node");
-  }
-
-  async link(from: string, to: string, linkType: LinkType) {
-    let response = await this.db.query(
-      "return fn::memotron::link($from, $to, $linkType);",
-      {
-        from,
-        to,
-        linkType
-      }
-    );
-    return interceptSurrealResponse(response, "link");
   }
 }
 
@@ -105,9 +92,11 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   eventStore: any;
+  db: ISurrealDatabase;
   constructor(node: string) {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
+    this.db = new SurrealDatabase();
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
@@ -179,7 +168,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     });
   };
   mention = async (location: string, id: string) => {
-    return this.resourceStore.link(location, id, LinkType.MENTION);
+    return linker.link(location, id, LinkType.MENTION);
   };
   /**
    * Sets the focused block and parent for the focused block.
@@ -202,6 +191,21 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
       n.parent = [];
       return n;
     });
+  }
+
+  async fetchLinks() {
+    const node = this.get();
+    let id = node.id;
+    if (node.focusedBlock) id = node.focusedBlock;
+    const query = `BEGIN TRANSACTION; let $to = array::first(select value ->link.* from node where id is $id); 
+    let $from = array::first(select value <-link.* from node where id is $id);
+   return {from: $from, to: $to};
+    COMMIT TRANSACTION;`;
+    const response = await this.db.executeReadFn(query, {
+      id
+    });
+    console.log({ response });
+    return interceptSurrealResponse(response);
   }
 }
 

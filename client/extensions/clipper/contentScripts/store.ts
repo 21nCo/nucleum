@@ -21,6 +21,7 @@ import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { ClipperPersistence } from "../clipper.persistence";
 import { removeHighlight } from "./highlightV4";
 import type { IWebpage } from "./types";
+import { linker } from "$lib/client/products/memotron/memotron.store";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   private persistence = new ClipperPersistence();
@@ -108,7 +109,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const isAlreadyLinked = this.get().links?.some((l) => l === to);
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
-    const response = await this.persistence.link(this.get().id, to);
+    // const response = await this.persistence.link(this.get().id, to);
+    const response = await linker.link(this.get().id, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.links = [...(n.links ?? []), to];
@@ -117,7 +119,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForPage(to: string) {
-    const response = await this.persistence.unlink(this.get().id, to);
+    // const response = await this.persistence.unlink(this.get().id, to);
+    const response = await linker.unlink(this.get().id, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -132,7 +135,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const isAlreadyLinked = clip.links?.some((l) => l === to);
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
-    const response = await this.persistence.link(from, to);
+    // const response = await this.persistence.link(from, to);
+    const response = await linker.link(from, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.clips = n.clips.map((c) => {
@@ -147,7 +151,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForClip(from: string, to: string) {
-    const response = await this.persistence.unlink(from, to);
+    // const response = await this.persistence.unlink(from, to);
+    const response = await linker.unlink(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -229,8 +234,7 @@ class ClipperToolbarState extends KeyValueStore<
         dboDependencies: [
           "fn::memotron::clipper::fetchPage",
           "fn::memotron::clipper::saveWebpage",
-          "fn::memotron::clipper::saveClip",
-          "fn::memotron::unlink"
+          "fn::memotron::clipper::saveClip"
         ]
       }
     );

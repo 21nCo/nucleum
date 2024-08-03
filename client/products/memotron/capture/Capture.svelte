@@ -6,7 +6,7 @@
   import { isInEditMode } from "$lib/client/stores/app.store";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Linkbox from "../common/linkbox/Linkbox.svelte";
+  import LinkboxOnCapture from "../common/linkbox/LinkboxOnCapture.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -142,7 +142,7 @@
         </main>
         {#if !isEmptyState}
           <footer class="w-full dp:px-10 min-h-[10rem]">
-            <Linkbox />
+            <LinkboxOnCapture />
           </footer>
         {/if}
       </div>
