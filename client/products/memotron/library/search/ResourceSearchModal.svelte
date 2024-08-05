@@ -10,6 +10,7 @@
   import { SearchStore } from "../../memotron.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
   let data: any[] = [];
@@ -86,7 +87,13 @@
   <main class="flex overflow-auto">
     {#if data.length > 0 || searchQuery}
       <div class="flex flex-col px-4 w-full">
-        <SearchResults items={data} />
+        {#if data.length > 0}
+          <SearchResults items={data} />
+        {:else}
+          <div class="w-full h-full">
+            <EmptyStatusView isSearchContext={true} />
+          </div>
+        {/if}
       </div>
     {:else}
       <div class="flex flex-col w-full items-start px-4">

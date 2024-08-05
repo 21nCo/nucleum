@@ -23,7 +23,7 @@
           offsetInPx: 12,
           placement: Position.TopCenter
         };
-        placeholder = "Start typing to link to a node or add to a curation";
+        placeholder = "Start typing to link to a node or add to a collection";
         inputStyle = InputStyle.PLAIN;
         break;
       case "nodepage":
@@ -31,7 +31,8 @@
           offsetInPx: 12,
           placement: Position.BottomCenter
         };
-        placeholder = "Start typing to add a link";
+        placeholder = "Start searching to add a direct link";
+        icon = "arrow-right-left";
         inputStyle = InputStyle.BORDERED;
         break;
       case "clipper":

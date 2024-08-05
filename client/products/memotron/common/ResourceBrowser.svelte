@@ -31,6 +31,7 @@
   import { SearchStore } from "../memotron.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   export let resource: Resource;
   collectionStore.refresh();
   let searchQuery: string = "";
@@ -225,6 +226,12 @@
     {#key id}
       {#if id}
         <ResourceResolver {id} accessMode={ResourceAccessMode.INLINE} />
+      {:else}
+        <EmptyStatusView
+          size={Size.lg}
+          mainText="Nothing selected."
+          subText={`Please select a ${resource} to view it here.`}
+        />
       {/if}
     {/key}
   </slot>

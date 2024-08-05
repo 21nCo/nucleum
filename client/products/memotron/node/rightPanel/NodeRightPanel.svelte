@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Mentions from "$lib/client/components/markdown/Mentions.svelte";
   import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -10,10 +9,11 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IActiveNodeStore } from "../node.store";
-  import NodeMetadataPane from "./NodeMetadataPane.svelte";
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import NodeLinksPane from "./links/NodeLinksPane.svelte";
+  import NodeHistoryPane from "./history/NodeHistoryPane.svelte";
+  import NodeTracesPane from "./traces/NodeTracesPane.svelte";
   export let node: IActiveNodeStore;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
@@ -75,9 +75,9 @@
       {:else if selectedRightPanel === RightPanelType.PROPERTIES}
         <NodePropertiesPane {node} />
       {:else if selectedRightPanel === RightPanelType.TRACES}
-        <NodeMetadataPane {node} />
-      {:else if selectedRightPanel === RightPanelType.METADATA}
-        <NodeMetadataPane {node} />
+        <NodeTracesPane {node} />
+      {:else if selectedRightPanel === RightPanelType.HISTORY}
+        <NodeHistoryPane />
       {/if}
     </div>
   {/if}

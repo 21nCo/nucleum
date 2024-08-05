@@ -30,6 +30,7 @@
   import BulkEditBar from "../common/BulkEditBar.svelte";
   import { collectionStore } from "../collection/collection.store";
   import { SearchStore } from "../memotron.store";
+  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -147,6 +148,13 @@
     await refresh();
   });
   async function refresh() {
+    if (
+      !availableResources.includes(selectedResource) &&
+      selectedResource != Resource.everything
+    ) {
+      data = [];
+      return;
+    }
     data = await searchStore.refresh({
       resource: selectedResource,
       searchQuery,
@@ -178,7 +186,7 @@
     if (selectedResource === Resource.everything) label = "item";
     else if (selectedResource === Resource.archived) label = "archived item";
     else label = selectedResource;
-    return label + (data.length > 1 || isPlural ? "s" : "");
+    return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }
   function resolveEmptyStateMessage() {
     const label = resolveResourceLabel(true);
@@ -275,7 +283,12 @@
     <div
       class="flex w-full justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
     >
-      <span class="flex w-10/12 overflow-auto">
+      <span
+        class={cn("flex overflow-auto", {
+          "w-10/12": selectedResource != Resource.everything,
+          "w-full": selectedResource === Resource.everything
+        })}
+      >
         <ResourceSwitcher
           options={resources}
           bind:selected={selectedResource}
@@ -283,40 +296,42 @@
           size={Size.sm}
         />
       </span>
-      <span>
-        <!-- <SwitchInput
+      {#if selectedResource != Resource.everything}
+        <span>
+          <!-- <SwitchInput
         label={{ label: "Starred", orientation: Orientation.Horizontal }}
         size={Size.sm}
         bind:checked={isStarFilterSelected}
         on:change={refresh}
       /> -->
-        <span class="flex gap-2 items-center">
-          {#if availableResources.includes(selectedResource)}
-            <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
-            <!-- <Toggle
+          <span class="flex gap-2 items-center">
+            {#if availableResources.includes(selectedResource)}
+              <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
+              <!-- <Toggle
           icon={resolveIfPinned() ? "unpin" : "pin"}
           bind:on={isFiltersVisible}
           size={Size.sm}
         /> -->
-            <Button
-              icon="plus"
-              size={Size.sm}
-              type={ButtonVariant.PRIMARY}
-              style={ButtonStyle.DEFAULT}
-              label={selectedResource}
-              isPreventMinWidth={true}
-              on:click={() =>
-                appStore.runAction(
-                  resourceAction(selectedResource, ResourceActionType.CREATE)
-                )}
-            />
-            <ContextMenuAction {contextMenu} size={Size.lg} />
-          {/if}
+              <Button
+                icon="plus"
+                size={Size.sm}
+                type={ButtonVariant.PRIMARY}
+                style={ButtonStyle.DEFAULT}
+                label={selectedResource}
+                isPreventMinWidth={true}
+                on:click={() =>
+                  appStore.runAction(
+                    resourceAction(selectedResource, ResourceActionType.CREATE)
+                  )}
+              />
+              <ContextMenuAction {contextMenu} size={Size.lg} />
+            {/if}
+          </span>
         </span>
-      </span>
+      {/if}
     </div>
     <main class="flex flex-col gap-8 w-full grow px-5">
-      {#if data.length > 0}
+      {#if data && data.length > 0}
         <div class="flex flex-col grow">
           <Resources
             {data}
@@ -330,9 +345,17 @@
         </div>
         <ScrollViewBottomSpacer />
       {:else if availableResources.includes(selectedResource)}
-        <EmptyStatusView {...resolveEmptyStateMessage()} />
-      {:else}
         <EmptyStatusView
+          size={Size.lg}
+          {...resolveEmptyStateMessage()}
+          isSearchContext={true}
+        />
+      {:else}
+        <!-- <EmptyStatusView
+          mainText="Coming soon..."
+          subText="We are super thrilled to work with you on this feature. Stay tuned."
+        /> -->
+        <ComingSoonView
           mainText="Coming soon..."
           subText="We are super thrilled to work with you on this feature. Stay tuned."
         />

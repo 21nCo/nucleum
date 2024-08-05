@@ -261,10 +261,19 @@ export enum RightPanelType {
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
   TRACES = "TRACES",
+  /**
+   * @deprecated - merged into properties
+   */
   METADATA = "METADATA",
   LINKS = "LINKS",
+  /**
+   * @deprecated - merged into traces
+   */
   MENTIONS = "MENTIONS",
   HISTORY = "HISTORY",
+  /**
+   * @deprecated - will be shown as main panel
+   */
   SERENDIPITY = "SERENDIPITY"
 }
 
@@ -281,7 +290,7 @@ export type LinkThumbnail = Link & {
 export enum LinkType {
   DIRECT = "DIRECT",
   MENTION = "MENTION",
-  UNMENTION_APPEARANCE = "UNMENTION_APPEARANCE"
+  SUGGESTION = "SUGGESTION"
 }
 
 export type INodeMetadata = {

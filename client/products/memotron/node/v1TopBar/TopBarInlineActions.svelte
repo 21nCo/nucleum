@@ -22,7 +22,7 @@
   <EditToggleButton isReadModeVariant={true} />
   <Button
     size={Size.sm}
-    tooltip="show clones"
+    tooltip="show forks"
     icon="square-3-stack-3d"
     isStayActive={isClonesShown}
     on:click={() => {

@@ -105,7 +105,7 @@
           {#if item.icon}
             <Icon icon={item.icon} size={Size.sm} />
           {/if}
-          {item.label}
+          {item.label ?? item.value}
         </div>
       </button>
     {/each}

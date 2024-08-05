@@ -67,7 +67,7 @@
     <Button
       {...buttonCommonProps}
       icon="square-3-stack-3d"
-      tooltip="Show clones"
+      tooltip="Show forks"
     />
     <Button
       {...buttonCommonProps}

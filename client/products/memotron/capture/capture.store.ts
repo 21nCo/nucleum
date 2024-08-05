@@ -204,7 +204,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           metadata: root.metadata,
           creationContext: root.id,
           children: block.children,
-          links: []
+          links: val.links ? val.links.filter((x) => x.from === block.id) : []
         };
       });
     }

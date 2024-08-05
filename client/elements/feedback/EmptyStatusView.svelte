@@ -8,10 +8,13 @@
   import PageLoadingPulse from "./animations/PageLoadingPulse.svelte";
   import LogsLoadingPulse from "./animations/LogsPulse/LogsLoadingPulse.svelte";
   import DashboardLoadingPulse from "./animations/DashboardPulse/DashboardLoadingPulse.svelte";
+  import NoResultsIllustration from "$lib/client/illustrations/NoResultsIllustration.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
-  export let size: Size.sm | Size.md = Size.md;
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let isLoadingState: boolean = false;
+  export let isSearchContext: boolean = false;
   export let actionText: string | undefined = undefined;
   export let loadingText: string | undefined = undefined;
   export let loadingAnimation: LoadingAnimationType =
@@ -36,13 +39,25 @@
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.DASHBOARD_PULSE}
     <DashboardLoadingPulse />
   {:else}
-    <div class="flex flex-col gap-1 items-center">
-      {#if size === Size.sm}
+    <div class="flex flex-col gap-4 items-center">
+      {#if isSearchContext}
+        <div
+          class={cn({
+            "h-20 w-20": size === Size.sm,
+            "h-32 w-32": size === Size.md,
+            "h-40 w-40": size === Size.lg
+          })}
+        >
+          <NoResultsIllustration />
+        </div>
+      {:else if size === Size.sm}
         <EmptyStatusInbox width={40} />
+        <!-- <EmptyStatus size={Size.sm} /> -->
       {:else}
-        <EmptyStatus />
+        <EmptyStatus {size} />
       {/if}
-      <div>{mainText ?? ""}</div>
+
+      <div>{mainText ?? (isSearchContext ? "No results found." : "")}</div>
     </div>
     <div class="text-fgs3 text-center text-b3">
       {#if $$slots.subtext}

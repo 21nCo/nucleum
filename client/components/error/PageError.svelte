@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import PageNotFoundIllustration from "$lib/client/illustrations/PageNotFoundIllustration.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -12,7 +13,11 @@
 
 <main class="flex flex-col w-full justify-center items-center gap-4 p-4 grow">
   <h1 class="font-medium text-title text-bgs4">
+    <!-- {#if is404}
+      <PageNotFoundIllustration />
+    {:else} -->
     {is404 ? "404" : titles[Math.floor(Math.random() * titles.length)] + "!"}
+    <!-- {/if} -->
   </h1>
   <div class="text-b3 text-center text-ars1">
     {$page?.error?.message ?? "Something went wrong."}

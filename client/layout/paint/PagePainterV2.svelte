@@ -21,7 +21,7 @@
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
     }
-    return currentPath;
+    return currentPath.endsWith("/") ? currentPath.slice(0, -1) : currentPath;
   }
   onMount(async () => {
     pageSub = page.subscribe(async () => {
