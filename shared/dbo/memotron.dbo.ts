@@ -14,8 +14,7 @@ export const memotronDboDefinitions = {
   "fn::memotron::clipper::fetchPage": clipperFetchPage(),
   "fn::memotron::collection::fetchData": collectionFecthData(),
   "fn::memotron::timeline": timeline(),
-  "fn::memotron::link": link(),
-  "fn::memotron::unlink": unlink()
+  "fn::memotron::link": link()
 };
 
 function nodeFetch() {
@@ -111,6 +110,10 @@ function link() {
   return [def];
 }
 
+/**
+ * @deprecated - using direct client query instead
+ * @returns
+ */
 function unlink() {
   const def = `DEFINE FUNCTION fn::memotron::unlink($from: record, $to: record){
     DELETE $from->link where out=$to;

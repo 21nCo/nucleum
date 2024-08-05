@@ -108,6 +108,7 @@
   import Widen from "../icons/Widen.svelte";
   import Split from "../icons/Split.svelte";
   import ArrowRightLeft from "../icons/ArrowRightLeft.svelte";
+  import ArrowUTurnLeft from "../icons/ArrowUTurnLeft.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -364,6 +365,8 @@
         <ArrowsPointingIn {variant} />
       {:else if icon === "arrow-right-left"}
         <ArrowRightLeft {variant} />
+      {:else if icon === "arrow-uturn-left"}
+        <ArrowUTurnLeft {variant} />
       {:else if icon === "widen"}
         <Widen />
       {:else if icon === "unwiden"}

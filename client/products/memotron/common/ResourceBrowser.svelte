@@ -25,13 +25,13 @@
     ResourceAccessMode
   } from "$lib/client/components/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState.store";
-  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
   import BulkEditBar from "./BulkEditBar.svelte";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import { SearchStore } from "../memotron.store";
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
   export let resource: Resource;
   collectionStore.refresh();
   let searchQuery: string = "";
@@ -44,8 +44,10 @@
     "arrangement"
   );
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
+  $: multiSelectContext = resource + "-" + ResourceAccessPoint.BROWSER;
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   $: floatingButton =
-    $selectedResources.length > 0
+    $multiSelectStore.length > 0
       ? undefined
       : {
           label: "Create " + resource,
@@ -84,21 +86,21 @@
     await refresh();
   });
   function onSelectAll() {
-    $selectedResources = data.map((x) => x.id);
+    $multiSelectStore = data.map((x) => x.id);
   }
   async function onBulkAction(action: string) {
     if (action === "archive") {
-      await collectionStore.bulkModify($selectedResources, {
+      await collectionStore.bulkModify($multiSelectStore, {
         isArchived: true
       });
     } else if (action === "delete") {
-      await collectionStore.bulkTrash($selectedResources);
+      await collectionStore.bulkTrash($multiSelectStore);
     } else if (action === "star") {
-      await collectionStore.bulkModify($selectedResources, {
+      await collectionStore.bulkModify($multiSelectStore, {
         isStarred: true
       });
     }
-    $selectedResources = [];
+    $multiSelectStore = [];
   }
   async function refresh() {
     data = await searchStore.refresh({
@@ -209,10 +211,11 @@
         </div>
         <ScrollViewBottomSpacer />
       </main>
-      {#if $selectedResources.length > 0}
+      {#if $multiSelectStore.length > 0}
         <BottomFloat>
           <BulkEditBar
             size={Size.sm}
+            context={multiSelectContext}
             on:selectAll={onSelectAll}
             on:archive={() => onBulkAction("archive")}
             on:delete={() => onBulkAction("delete")}

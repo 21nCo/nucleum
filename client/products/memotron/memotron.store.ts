@@ -321,7 +321,7 @@ class Linker implements IStore {
   }
   async unlink(from: string, to: string) {
     let response = await this.db.query(
-      "return fn::memotron::unlink($from, $to);",
+      "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
       {
         from,
         to

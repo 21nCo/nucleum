@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -12,7 +11,7 @@
     ResourceAccessPoint,
     ResourceAccessMode
   } from "$lib/client/components/resourceStores/resource.type";
-  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
   export let data: any[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -20,17 +19,22 @@
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   let parentBgIndex = 1;
+  $: multiSelectContext = resource + "-" + accessPoint;
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   function onClick(e: MouseEvent, item: any) {
-    if ($selectedResources.length > 0) {
-      const isSelected = $selectedResources.includes(item.id);
-      if (isSelected) {
-        $selectedResources = $selectedResources.filter((x) => x != item.id);
-        return;
-      }
-      $selectedResources = [...$selectedResources, item.id];
-      return;
-    }
-    appStore.resourceClickHandler(e, item.id, defaultAccessMode);
+    multiSelectStore.clickHandler(e, item.id, {
+      accessMode: defaultAccessMode
+    });
+    // if ($selectedResources.length > 0) {
+    //   const isSelected = $selectedResources.includes(item.id);
+    //   if (isSelected) {
+    //     $selectedResources = $selectedResources.filter((x) => x != item.id);
+    //     return;
+    //   }
+    //   $selectedResources = [...$selectedResources, item.id];
+    //   return;
+    // }
+    // appStore.resourceClickHandler(e, item.id, defaultAccessMode);
   }
 </script>
 

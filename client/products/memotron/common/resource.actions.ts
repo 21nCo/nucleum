@@ -1,8 +1,8 @@
 import { appStore, isInEditMode } from "$lib/client/stores/app.store";
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import {
-  ResourceStore,
-  selectedResources
+  resolveMultiSelectStore,
+  ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
 import { copyResourceLinkToClipboard } from "../memotron.utils";
 import {
@@ -11,6 +11,8 @@ import {
 } from "$lib/client/components/resourceStores/resource.type";
 import { uiState } from "$lib/client/stores/uiState.store";
 import { get } from "svelte/store";
+import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+import { linker } from "../memotron.store";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -66,20 +68,30 @@ export class ResourceActions<T extends IMemotronItemBase> {
    * Action triggered from either resource browser or library page.
    * @returns
    */
-  select() {
+  select(accessPoint: ResourceAccessPoint, accessPointId?: string) {
+    let multiSelectContext =
+      determineResourceType(this.resource.id) + "-" + accessPoint;
+    if (accessPointId) {
+      multiSelectContext = accessPointId + "-" + accessPoint;
+    }
+    const multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+    console.log({
+      multiSelectContext,
+      multiSelectStoreValue: get(multiSelectStore)
+    });
     return {
-      label: get(selectedResources)?.includes(this.resource.id)
+      label: get(multiSelectStore)?.includes(this.resource.id)
         ? "Unselect"
         : "Select",
       value: "select",
       icon: "check-circle",
       callback: () => {
-        if (get(selectedResources)?.includes(this.resource.id)) {
-          selectedResources.update((x) =>
+        if (get(multiSelectStore)?.includes(this.resource.id)) {
+          multiSelectStore.update((x) =>
             x.filter((y) => y != this.resource.id)
           );
         } else {
-          selectedResources.update((x) => [...x, this.resource.id]);
+          multiSelectStore.update((x) => [...x, this.resource.id]);
         }
       }
     };
@@ -116,6 +128,17 @@ export class ResourceActions<T extends IMemotronItemBase> {
         } else {
           uiState.addResourceToTopBar(this.resource.id);
         }
+      }
+    };
+  }
+  unlink(contextId: string) {
+    return {
+      label: "Unlink",
+      value: "unlink",
+      icon: "arrow-uturn-left",
+      callback: async () => {
+        console.log("unlinking", { contextId, id: this.resource.id });
+        await linker.unlink(this.resource.id, contextId);
       }
     };
   }

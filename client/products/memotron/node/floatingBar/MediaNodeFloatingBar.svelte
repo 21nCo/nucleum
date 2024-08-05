@@ -33,11 +33,12 @@
       offsetInPx: 6
     }
   };
-  $: contextMenu = resolveNodeContextMenu(
-    $node,
-    ResourceAccessPoint.SELF,
-    true
+  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
+    (x) => x.isShowOnNodePage
   );
+  $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
+    isMediaNode: true
+  });
 </script>
 
 <!-- Using transition here caused modal freeze issue -->
@@ -176,7 +177,13 @@
         </span>
       </div>
       <div class="w-full">
-        <NodePropertiesOnMainPanel {node} isMediaNode={true} />
+        {#if propertiesOnMainPanel && propertiesOnMainPanel.length > 0}
+          <NodePropertiesOnMainPanel
+            {node}
+            {propertiesOnMainPanel}
+            isMediaNode={true}
+          />
+        {/if}
       </div>
     </div>
   </HoverableElement>

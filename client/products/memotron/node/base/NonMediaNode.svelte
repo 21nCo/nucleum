@@ -53,7 +53,6 @@
     // console.log("onLabelChange", e);
     if ($node.label) node.debouncedModify({ label: $node.label });
   }
-  $: console.log({ node: $node, propertiesOnMainPanel });
 </script>
 
 <div class="relative w-full h-full flex flex-col bg-bgs1">

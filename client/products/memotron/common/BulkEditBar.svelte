@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -7,6 +8,8 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let context: string = "";
+  $: multiSelectStore = resolveMultiSelectStore(context);
   const commonButtonProps: {} = {
     size: size === Size.sm ? Size.lg : Size.sm,
     style: size === Size.sm ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED,
@@ -26,7 +29,7 @@
   )}
 >
   <span class="flex whitespace-nowrap">
-    Selected: {$selectedResources.length}
+    Selected: {$multiSelectStore.length}
   </span>
   <span class="flex gap-2">
     <Button
@@ -38,15 +41,28 @@
         dispatch("selectAll");
       }}
     />
-    <Button
-      label={size === Size.sm ? undefined : "star"}
-      tooltip={size === Size.sm ? "Star" : undefined}
-      icon="star"
-      {...commonButtonProps}
-      on:click={() => {
-        dispatch("star");
-      }}
-    />
+    {#if context.includes(ResourceAccessPoint.NODE_LINKS)}
+      <Button
+        label={size === Size.sm ? undefined : "Unlink"}
+        tooltip="Unlink"
+        icon="arrow-uturn-left"
+        {...commonButtonProps}
+        on:click={() => {
+          dispatch("star");
+        }}
+      />
+    {:else}
+      <Button
+        label={size === Size.sm ? undefined : "star"}
+        tooltip={size === Size.sm ? "Star" : undefined}
+        icon="star"
+        {...commonButtonProps}
+        on:click={() => {
+          dispatch("star");
+        }}
+      />
+    {/if}
+
     <Button
       label={size === Size.sm ? undefined : "archive"}
       tooltip={size === Size.sm ? "Archive" : undefined}
@@ -74,7 +90,7 @@
       icon={size === Size.sm ? "cross" : "cross-circled"}
       {...commonButtonProps}
       on:click={() => {
-        $selectedResources = [];
+        $multiSelectStore = [];
       }}
     />
   </span>

@@ -18,11 +18,52 @@ import { prefixTable } from "../../../shared/utils/text.utils";
 import { dataManager } from "../../persistence/dataManager";
 import { ObservableStore } from "../../stores/client.store";
 import { resolveCurrentUserId } from "../../utils/account.utils";
-import type { IResource, ITrashInformation } from "./resource.type";
+import type {
+  IResource,
+  ITrashInformation,
+  ResourceAccessMode
+} from "./resource.type";
+import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
 
-export const selectedResources = writable<string[]>([]);
+const multiSelectStores = new Map<string, MultiSelectStore>();
+
+export function resolveMultiSelectStore(context: string) {
+  if (!multiSelectStores.has(context))
+    multiSelectStores.set(context, new MultiSelectStore(context));
+  return multiSelectStores.get(context)!;
+}
+
+class MultiSelectStore extends ObservableStore<string[]> {
+  constructor(context: string) {
+    super(context, StoreDataType.NA);
+    this.set([]);
+  }
+  clickHandler(
+    e: MouseEvent,
+    id: string,
+    params?: {
+      accessMode?: ResourceAccessMode;
+    }
+  ) {
+    let current = this.get();
+    if (current.length > 0) {
+      const isSelected = current.includes(id);
+      if (isSelected) {
+        current = current.filter((x) => x != id);
+        this.set(current);
+        return;
+      }
+      this.set([...current, id]);
+      return;
+    }
+    if (params?.accessMode)
+      appStore.resourceClickHandler(e, id, params.accessMode);
+  }
+}
+
+// export const selectedResources = writable<string[]>([]);
 
 export class ActiveResourceStore<
   T extends IResource,

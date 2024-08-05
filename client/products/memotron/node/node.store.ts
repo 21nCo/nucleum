@@ -240,18 +240,35 @@ function initActiveNodeEventStore(id: string) {
 
 export function resolveNodeContextMenu(
   node: INode,
-  context: ResourceAccessPoint,
-  isMediaNode: boolean = false
+  accessPoint: ResourceAccessPoint,
+  params?: {
+    isMediaNode?: boolean;
+    accessPointId?: string;
+  }
 ) {
   const resourceActions = new ResourceActions(node, nodeStore);
-  if (context != ResourceAccessPoint.SELF) {
+  if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
+    return [
+      {
+        group: "all",
+        items: [
+          resourceActions.unlink(params?.accessPointId),
+          resourceActions.select(accessPoint, params?.accessPointId)
+        ]
+      },
+      {
+        group: "more",
+        items: [resourceActions.trash()]
+      }
+    ];
+  } else if (accessPoint != ResourceAccessPoint.SELF) {
     return [
       {
         group: "all",
         items: [
           resourceActions.star(),
-          resourceActions.edit(context),
-          resourceActions.select(),
+          resourceActions.edit(accessPoint),
+          resourceActions.select(accessPoint),
           resourceActions.pinToTopBar(),
           resourceActions.copyLink()
         ]
@@ -261,13 +278,13 @@ export function resolveNodeContextMenu(
         items: [resourceActions.archive(), resourceActions.trash()]
       }
     ];
-  } else if (isMediaNode) {
+  } else if (params?.isMediaNode) {
     return [
       {
         group: "all",
         items: [
           resourceActions.star(),
-          resourceActions.edit(context),
+          resourceActions.edit(accessPoint),
           resourceActions.pinToTopBar(),
           resourceActions.copyLink(),
           {
@@ -293,7 +310,7 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        resourceActions.edit(context),
+        resourceActions.edit(accessPoint),
         resourceActions.pinToTopBar(),
         resourceActions.copyLink(),
         {

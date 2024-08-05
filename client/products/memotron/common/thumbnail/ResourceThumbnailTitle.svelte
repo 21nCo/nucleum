@@ -1,4 +1,5 @@
 <script lang="ts">
+  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
@@ -23,7 +24,14 @@
     {/if}
     <span class="text-left w-5/6 truncate font-medium">
       <!-- TODO - if node and has parent, show breadcrumbs -->
-      {item.label ?? item.body ?? resolveEmptyLabel()}
+      {#if item.label}
+        {item.label}
+      {:else if item.body}
+        <InlineMarkdownTextInput content={item.body} />
+      {:else}
+        {resolveEmptyLabel()}
+      {/if}
+      <!-- {item.label ?? item.body ?? resolveEmptyLabel()} -->
     </span>
   </span>
   {#if item.isStarred}

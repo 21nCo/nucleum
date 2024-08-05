@@ -3,16 +3,17 @@
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
   import { searchForLinking } from "../../memotron.store";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
-  import { Position } from "$lib/client/types/direction.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
+  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
   export let context: "capture" | "nodepage" | "clipper" = "capture";
   export let resultsPlacement: Position = Position.BottomCenter;
+  export let searchQuery: string;
   let popoverOptions: IPopoverOptions;
   let inputStyle: InputStyle = InputStyle.PLAIN;
   let placeholder: string =
     "Start typing to link to a node or add to a curation";
   let icon: string = "";
-  let link: string;
+  let label: InputLabel | undefined = undefined;
 
   resolveOptions(context);
 
@@ -34,6 +35,7 @@
         placeholder = "Start searching to add a direct link";
         icon = "arrow-right-left";
         inputStyle = InputStyle.BORDERED;
+        // label = { label: "Add link", orientation: Orientation.Vertical };
         break;
       case "clipper":
         popoverOptions = {
@@ -53,9 +55,10 @@
 </script>
 
 <TextSearchInput
-  bind:value={link}
+  bind:value={searchQuery}
   style={inputStyle}
   {icon}
+  {label}
   searchResultComponent={LinkSuggestionItem}
   {popoverOptions}
   on:select

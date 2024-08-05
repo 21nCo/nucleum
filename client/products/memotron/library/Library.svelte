@@ -26,11 +26,12 @@
     ResourceAccessPoint,
     ResourceActionType
   } from "$lib/client/components/resourceStores/resource.type";
-  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
   import BulkEditBar from "../common/BulkEditBar.svelte";
   import { collectionStore } from "../collection/collection.store";
   import { SearchStore } from "../memotron.store";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { nodeStore } from "../node/node.store";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -99,6 +100,8 @@
   $: isCurrentResourcePinned = $appMenuStore[$appStore.product]?.user?.includes(
     resourceAction(selectedResource, ResourceActionType.BROWSE)
   );
+  $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   $: contextMenu = [
     {
       group: "all",
@@ -207,25 +210,38 @@
       };
   }
   function onSelectAll() {
-    $selectedResources = data.map((x) => x.id);
+    $multiSelectStore = data.map((x) => x.id);
   }
   async function onBulkAction(action: string) {
     if (selectedResource === Resource.everything) return;
-    if (selectedResource === Resource.node) return;
-    if (selectedResource === Resource.collection) {
+    if (selectedResource === Resource.node) {
       if (action === "archive") {
-        await collectionStore.bulkModify($selectedResources, {
+        await nodeStore.bulkModify($multiSelectStore, {
           isArchived: true
         });
       } else if (action === "delete") {
-        await collectionStore.bulkTrash($selectedResources);
+        await nodeStore.bulkTrash($multiSelectStore);
       } else if (action === "star") {
-        await collectionStore.bulkModify($selectedResources, {
+        await nodeStore.bulkModify($multiSelectStore, {
+          isStarred: true
+        });
+      }
+      return;
+    }
+    if (selectedResource === Resource.collection) {
+      if (action === "archive") {
+        await collectionStore.bulkModify($multiSelectStore, {
+          isArchived: true
+        });
+      } else if (action === "delete") {
+        await collectionStore.bulkTrash($multiSelectStore);
+      } else if (action === "star") {
+        await collectionStore.bulkModify($multiSelectStore, {
           isStarred: true
         });
       }
     }
-    $selectedResources = [];
+    $multiSelectStore = [];
     await refresh();
   }
 </script>
@@ -362,9 +378,10 @@
       {/if}
     </main>
   </div>
-  {#if $selectedResources.length > 0}
+  {#if $multiSelectStore.length > 0}
     <BottomFloat>
       <BulkEditBar
+        context={multiSelectContext}
         on:selectAll={onSelectAll}
         on:archive={() => onBulkAction("archive")}
         on:delete={() => onBulkAction("delete")}
