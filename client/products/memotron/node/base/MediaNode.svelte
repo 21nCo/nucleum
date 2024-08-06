@@ -9,6 +9,7 @@
   let isShowFloatingBar: boolean = true;
   let isHoveringOnFloatingBar: boolean = false;
   let timeoutId: any;
+  let renderingDetails: any;
   function onInteraction(event: MouseEvent | TouchEvent | CustomEvent) {
     if (accessMode === ResourceAccessMode.POP) return;
     isShowFloatingBar = true;
@@ -22,10 +23,11 @@
 
 {#if $node}
   <main class="relative flex flex-col w-full h-full">
-    <MediaContent {node} {accessMode} />
+    <MediaContent {node} {accessMode} bind:renderingDetails />
     {#if accessMode === ResourceAccessMode.POP || isShowFloatingBar || accessMode === ResourceAccessMode.INLINE}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
+        {renderingDetails}
         {node}
         {accessMode}
         on:fullscreen={() => {

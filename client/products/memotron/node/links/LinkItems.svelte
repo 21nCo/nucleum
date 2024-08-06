@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { INode } from "../../node.type";
+  import type { INode } from "$lib/client/products/memotron/node/node.type";
   import LinkItem from "./LinkItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

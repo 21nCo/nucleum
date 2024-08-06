@@ -11,9 +11,9 @@
   import type { IActiveNodeStore } from "../node.store";
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
   import type { ISelectItem } from "$lib/client/types/select.type";
-  import NodeLinksPane from "./links/NodeLinksPane.svelte";
-  import NodeHistoryPane from "./history/NodeHistoryPane.svelte";
-  import NodeTracesPane from "./traces/NodeTracesPane.svelte";
+  import NodeLinksPane from "../../node/links/NodeLinksPane.svelte";
+  import NodeHistoryPane from "../../common/history/NodeHistoryPane.svelte";
+  import NodeTracesPane from "../traces/NodeTracesPane.svelte";
   export let node: IActiveNodeStore;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
@@ -42,7 +42,7 @@
 </script>
 
 <aside
-  class={cn("flex justify--end gap-2", {
+  class={cn("flex justify--end gap-2 h-full overflow-auto", {
     "mr-2 mb-2 bg-bgs2 rounded-md": nodePageVariant === "v1",
     "max-w-[28rem] w-[28rem] min-w-[28rem]": !isRightPanelCollapsed
   })}

@@ -64,6 +64,7 @@
       data: blob,
       url: newURL,
       type: file.type,
+      size: file.size,
       pdfAnnotations: []
     };
     dispatch("change", fileDetails);

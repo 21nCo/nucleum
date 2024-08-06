@@ -1,13 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { IActiveNodeStore } from "../../node.store";
-  import LinkSearch from "../../../common/linkbox/LinkSearch.svelte";
-  import { linker } from "../../../memotron.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { LinkType, type INode } from "../../node.type";
   import LinkItems from "./LinkItems.svelte";
-  import MultiselectDropdown from "$lib/client/elements/dropdown/MultiselectDropdown.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -18,10 +12,16 @@
     ResourceAccessPoint
   } from "$lib/client/components/resourceStores/resource.type";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "../../../common/BulkEditBar.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import BulkEditBar from "../../common/BulkEditBar.svelte";
   import InlineTimeoutMessage from "$lib/client/elements/text/InlineTimeoutMessage.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
+  import type { IActiveNodeStore } from "$lib/client/products/memotron/node/node.store";
+  import {
+    type INode,
+    LinkType
+  } from "$lib/client/products/memotron/node/node.type";
+  import { linker } from "$lib/client/products/memotron/memotron.store";
+  import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -137,16 +137,18 @@
   }
 </script>
 
-<div class="relative flex flex-col gap-3 pt-3 h-full w-full">
-  <div class="flex flex-col gap-1 w-full">
+<div class="relative flex flex-col gap-3 pt-1 h-full w-full">
+  <div class="flex flex-col w-full">
     <LinkSearch context="nodepage" on:select={onSelect} bind:searchQuery />
-    <div>
-      <InlineTimeoutMessage
-        bind:message={linkStatus.message}
-        type={linkStatus.type}
-        size={Size.sm}
-      />
-    </div>
+    {#if linkStatus.message}
+      <div>
+        <InlineTimeoutMessage
+          bind:message={linkStatus.message}
+          type={linkStatus.type}
+          size={Size.sm}
+        />
+      </div>
+    {/if}
     <!-- <div class="flex gap-3 w-full">
       <MultiselectDropdown
         options={[]}
@@ -156,7 +158,7 @@
       />
     </div> -->
   </div>
-  <div class="flex flex-col gap-4 w-full">
+  <div class="flex flex-col gap-4 w-full flex-grow">
     <OptionSelector
       size={Size.sm}
       bind:selected={selectedLinkType}

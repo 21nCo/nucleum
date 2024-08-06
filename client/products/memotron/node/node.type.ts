@@ -19,7 +19,12 @@ export type INode = INodeBase &
 
 export type INodeItemCaptured = Omit<
   INodeBase,
-  "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
+  | "createdAt"
+  | "modifiedAt"
+  | "createdBy"
+  | "modifiedBy"
+  | "interactedAt"
+  | "label"
 > &
   NodeContent & {
     children?: string[];
@@ -53,6 +58,7 @@ export type IActiveNode = INode & {
   types?: string[];
   avatars?: IAvatar[];
   propertyConfig?: IProperty[];
+  wordCount?: number;
 };
 
 export type NodeContent =
@@ -254,6 +260,7 @@ export type MediaBody = {
   url: string;
   type: string;
   size: number;
+  duration?: number;
 };
 
 export enum RightPanelType {

@@ -1,0 +1,137 @@
+<script lang="ts">
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { formatBytes, properCase } from "$lib/shared/utils/text.utils";
+  import { format } from "maplibre-gl";
+  import type { IActiveNodeStore } from "../node.store";
+  import { headingNodeTypes, NodeType } from "../node.type";
+  import BasicInfoItem from "./BasicInfoItem.svelte";
+  import InfoCard from "./InfoCard.svelte";
+  import LocationCard from "./LocationCard.svelte";
+  import { formatSeconds } from "$lib/client/utils/time.utils";
+  export let node: IActiveNodeStore;
+  export let isMediaNode: boolean = false;
+  export let renderingDetails: any = undefined;
+  $: kind = resolveKind($node.contentType);
+
+  $: console.log({ metadata: $node });
+
+  function resolveKind(contentType: NodeType) {
+    if (
+      headingNodeTypes.includes(contentType) ||
+      contentType === NodeType.NODULAR_MARKDOWN ||
+      contentType === NodeType.NON_NODULAR_MARKDOWN
+    )
+      return "Markdown";
+    else return properCase(contentType);
+  }
+
+  function calculateReadingTime(wordCount: number | undefined) {
+    if (!wordCount) return "NA";
+    const minutes = wordCount / 200;
+    if (minutes < 1) {
+      return "Less than a minute";
+    } else if (minutes < 60) {
+      return `${Math.round(minutes)} minute${minutes >= 1.5 ? "s" : ""}`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = Math.round(minutes % 60);
+      return `${hours} hour${hours > 1 ? "s" : ""} ${remainingMinutes} minute${remainingMinutes !== 1 ? "s" : ""}`;
+    }
+  }
+
+  function resolveFileFormat(fileType: string) {
+    if (fileType.includes("image/jpeg")) return "jpeg";
+    else if (fileType.includes("image/png")) return "png";
+    else if (fileType.includes("image/gif")) return "gif";
+    else if (fileType.includes("image/svg+xml")) return "svg";
+    else if (fileType.includes("video/mp4")) return "mp4";
+    else if (fileType.includes("video/quicktime")) return "quicktime";
+    else if (fileType.includes("video/x-msvideo")) return "avi";
+    else if (fileType.includes("video/x-ms-wmv")) return "wmv";
+    else if (fileType.includes("video/x-flv")) return "flv";
+    else if (fileType.includes("audio/mpeg")) return "mp3";
+    else if (fileType.includes("audio/x-wav")) return "wav";
+    else if (fileType.includes("audio/x-ms-wma")) return "wma";
+    else if (fileType.includes("audio/webm")) return "webm";
+    else return "NA";
+  }
+</script>
+
+<div class="flex flex-col gap-3 w-full flex-grow items-start">
+  {#if !isMediaNode}
+    <Text content="Metadata" style={TextStyle.PANEL_HEADING_SMALL} />
+  {/if}
+  <div
+    class={cn("flex w-full", {
+      "flex-wrap flex-grow gap-12": isMediaNode,
+      "flex-col gap-3": !isMediaNode
+    })}
+  >
+    <div
+      class={cn("flex flex-col gap-3 rounded-md mo:p-2 p-4", {
+        "w-full bg-bgs2": !isMediaNode,
+        "w-2/3 h-full overflow-auto": isMediaNode
+      })}
+    >
+      <BasicInfoItem label="Kind" value={kind} />
+      {#if isMediaNode && "body" in $node}
+        <BasicInfoItem
+          label="File format"
+          value={resolveFileFormat($node.body.type)}
+        />
+        <BasicInfoItem
+          label="Storage size"
+          value={$node.body.size ? formatBytes($node.body.size) : "NA"}
+        />
+        {#if $node.contentType === NodeType.AUDIO || ($node.contentType === NodeType.VIDEO && $node.body.duration)}
+          <BasicInfoItem
+            label="Duration"
+            value={$node.body.duration
+              ? formatSeconds($node.body.duration)
+              : "NA"}
+          />
+        {/if}
+        {#if $node.contentType === NodeType.IMAGE}
+          <BasicInfoItem
+            label="Rendered resolution"
+            value={renderingDetails?.renderedHeight
+              ? renderingDetails?.renderedHeight +
+                " x " +
+                renderingDetails?.renderedWidth
+              : "NA"}
+          />
+          <BasicInfoItem
+            label="Original resolution"
+            value={renderingDetails?.originalHeight
+              ? renderingDetails?.originalHeight +
+                " x " +
+                renderingDetails?.originalWidth
+              : "NA"}
+          />
+        {/if}
+      {/if}
+      <BasicInfoItem label="Created at" value={$node.createdAt} />
+      <BasicInfoItem label="Last viewed at" value={$node.interactedAt} />
+      <BasicInfoItem label="Last modified at" value={$node.modifiedAt} />
+    </div>
+    {#if !isMediaNode}
+      <div class="flex flex-wrap gap-3">
+        <InfoCard label="Word count" value={$node.wordCount} />
+        <InfoCard
+          label="Reading length"
+          value={calculateReadingTime($node.wordCount)}
+        />
+      </div>
+    {/if}
+    <div
+      class={cn("rounded-md", {
+        "w-full bg-bgs2": !isMediaNode,
+        "grow bg-bgs3 h-full": isMediaNode
+      })}
+    >
+      <LocationCard metadata={$node.metadata} />
+    </div>
+  </div>
+</div>

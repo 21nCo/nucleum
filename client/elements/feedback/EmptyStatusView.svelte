@@ -23,7 +23,7 @@
   export let parentBgIndex: number = 1;
 </script>
 
-<div class="flex flex-col w-full h-full justify-center items-center gap-2 px-2">
+<div class="flex flex-col w-full h-full justify-center items-center gap-6 px-2">
   {#if isLoadingState && loadingAnimation === LoadingAnimationType.SPINNER}
     <div class="text-fgs3 text-b3 flex flex-col gap-2 items-center">
       <!-- <InlineLoadingAnimation /> -->
@@ -39,35 +39,34 @@
   {:else if isLoadingState && loadingAnimation === LoadingAnimationType.DASHBOARD_PULSE}
     <DashboardLoadingPulse />
   {:else}
-    <div class="flex flex-col gap-4 items-center">
-      {#if isSearchContext}
-        <div
-          class={cn({
-            "h-20 w-20": size === Size.sm,
-            "h-32 w-32": size === Size.md,
-            "h-40 w-40": size === Size.lg
-          })}
-        >
-          <NoResultsIllustration />
-        </div>
-      {:else if size === Size.sm}
-        <EmptyStatusInbox width={40} />
-        <!-- <EmptyStatus size={Size.sm} /> -->
-      {:else}
-        <EmptyStatus {size} />
-      {/if}
-
-      <div>{mainText ?? (isSearchContext ? "No results found." : "")}</div>
-    </div>
-    <div class="text-fgs3 text-center text-b3">
-      {#if $$slots.subtext}
-        <slot name="subtext" />
-      {:else}
-        {subText ?? ""}
-      {/if}
-    </div>
-    {#if actionText}
-      <Button label={actionText} size={Size.xs} on:click {parentBgIndex} />
+    {#if isSearchContext}
+      <div
+        class={cn({
+          "h-20 w-20": size === Size.sm,
+          "h-32 w-32": size === Size.md,
+          "h-40 w-40": size === Size.lg
+        })}
+      >
+        <NoResultsIllustration />
+      </div>
+    {:else if size === Size.sm}
+      <EmptyStatusInbox width={40} />
+      <!-- <EmptyStatus size={Size.sm} /> -->
+    {:else}
+      <EmptyStatus {size} />
     {/if}
+    <div class="flex flex-col gap-0.5 items-center">
+      <div>{mainText ?? (isSearchContext ? "No results found." : "")}</div>
+      <div class="text-fgs3 text-center text-b3">
+        {#if $$slots.subtext}
+          <slot name="subtext" />
+        {:else}
+          {subText ?? ""}
+        {/if}
+      </div>
+      {#if actionText}
+        <Button label={actionText} size={Size.xs} on:click {parentBgIndex} />
+      {/if}
+    </div>
   {/if}
 </div>

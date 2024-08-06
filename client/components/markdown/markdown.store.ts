@@ -22,10 +22,7 @@ import {
 } from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
-import {
-  handleNodeMarkdownChildHierarchyChanges,
-  resolveImmediateParent
-} from "./markdown.utils";
+import { resolveImmediateParent } from "./markdown.utils";
 import type {
   IBlock,
   IMarkdownParams,
@@ -71,7 +68,8 @@ function loadMdStore(
   setter({
     params,
     blocks: md.blocks,
-    blockToFocus: md.blocks?.[0]?.id
+    blockToFocus: md.blocks?.[0]?.id,
+    activeHeading: md.blocks?.[0]?.id
   });
 }
 /**
@@ -346,6 +344,7 @@ function initMarkdownStore() {
   const { subscribe, set, update } = writable<IMarkdownStore>(seedMdStore);
   return {
     subscribe,
+    set,
     load: (md: IMarkdown, params: IMarkdownParams) =>
       loadMdStore(set, md, params),
     insert: (params: IBlockOperationContext) => insertBlock(update, params),

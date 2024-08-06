@@ -12,6 +12,7 @@ export type IMarkdownStore = IMarkdown & {
   blockToFocus?: string;
   reRenderBlock?: string;
   params?: IMarkdownParams;
+  activeHeading: string;
 };
 export type IMarkdown = { blocks: IBlock[] };
 export type DbBlock = IResourceBase & IBlock;

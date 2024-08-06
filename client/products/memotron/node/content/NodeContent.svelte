@@ -72,6 +72,7 @@
       wordCount = 0;
       charCount = 0;
     }
+    $node.wordCount = wordCount;
 
     function countWords(text: string): number {
       return text

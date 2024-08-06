@@ -2,7 +2,7 @@
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import type { IActiveNodeStore } from "../../node.store";
+  import type { IActiveNodeStore } from "../node.store";
 
   export let node: IActiveNodeStore;
 </script>

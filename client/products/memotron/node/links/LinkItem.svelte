@@ -1,9 +1,9 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ResourceThumbnailBase from "../../../common/thumbnail/ResourceThumbnailBase.svelte";
-  import ResourceThumbnailTitle from "../../../common/thumbnail/ResourceThumbnailTitle.svelte";
-  import type { INode } from "../../node.type";
+  import ResourceThumbnailBase from "$lib/client/products/memotron/common/thumbnail/ResourceThumbnailBase.svelte";
+  import ResourceThumbnailTitle from "$lib/client/products/memotron/common/thumbnail/ResourceThumbnailTitle.svelte";
+  import type { INode } from "$lib/client/products/memotron/node/node.type";
   export let accessPointId: string;
   export let item: INode;
 </script>

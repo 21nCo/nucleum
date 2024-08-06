@@ -6,28 +6,14 @@
     type IProperty,
     PropertyType
   } from "../../collection/properties/property.type";
+  import LocationCard from "../../node/metadata/LocationCard.svelte";
   import { resolveActiveNodeStore } from "../../node/node.store";
-  import { lookupAddressFromLatLong } from "./property.utils";
   export let config: IProperty;
   export let nodeId: string;
-  let address: string;
   const node = resolveActiveNodeStore(nodeId);
-  $: if (config.type === PropertyType.LOCATION && $node) {
-    lookupAddressFromLatLong(
-      $node.metadata?.location?.latitude,
-      $node.metadata?.location?.longitude
-    ).then((res) => {
-      console.log({ res });
-      if (res?.results?.length > 0) {
-        address = res.results.find((x: any) =>
-          x.types.includes("locality")
-        )?.formatted_address;
-      }
-    });
-  }
 </script>
 
-<div class="flex flex-col">
+<div class="flex flex-col w-full items-start">
   <FormControlLabel
     props={{
       label: config.label
@@ -38,6 +24,6 @@
   {:else if config.type === PropertyType.MODIFIED_TIME}
     {formatDatetime($userPreferences, new Date($node?.modifiedAt))}
   {:else if config.type === PropertyType.LOCATION}
-    <span>{address ?? ""}</span>
+    <LocationCard metadata={$node?.metadata} />
   {/if}
 </div>
