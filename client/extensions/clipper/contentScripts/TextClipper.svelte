@@ -12,11 +12,8 @@
     type TextHighlightContent
   } from "$lib/client/products/memotron/common/clip.type";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import {
-    ExtensionEvent,
-    type TabData
-  } from "$lib/client/types/extension.type";
-  import { extractFullTabData } from "$lib/client/utils/extension.utils";
+  import { ExtensionEvent } from "$lib/client/types/extension.type";
+  import { extractFullTabData } from "$lib/client/extensions/clipper/clipper.utils";
   import { webpage } from "./store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { AlertType } from "$lib/client/types/notification.type";
@@ -104,8 +101,7 @@
     const focusOffset = selection.focusOffset;
     try {
       let tabData;
-      const nodeData = await chrome.storage.local.get("node");
-      if (!nodeData?.node?.id) {
+      if (!$webpage.id) {
         tabData = extractFullTabData();
       }
       return webpage.saveClip(

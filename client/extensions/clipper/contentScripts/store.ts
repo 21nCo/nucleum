@@ -22,6 +22,8 @@ import { ClipperPersistence } from "../clipper.persistence";
 import { removeHighlight } from "./highlightV4";
 import type { IWebpage } from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
+import { NodeType, type IWebPageNode } from "$lib/client/products/memotron/node/node.type";
+import { generateResourceId } from "$lib/shared/utils/text.utils";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   private persistence = new ClipperPersistence();
@@ -72,19 +74,39 @@ class WebpageStore extends ObservableStore<IWebpage> {
   }
 
   /**
-   * TODO - save web page via NodeStore - to update nodes local cache
-   * @param data
+   * @param data - tab data
    * @returns
    */
-  async savePage(data: any) {
-    const response = await this.persistence.saveWebpage(data);
-    //TODO - add this to local node cache?
-    if (!response?.id) return;
+  async savePage(data: IWebPageNode) {
+    const id = generateResourceId(Resource.node);
+    const response = await nodeStore.createNode([
+      {
+        id,
+        ...data,
+        // body: {
+        //   hash: data.hash,
+        //   url: data.url,
+        //   description: data.description,
+        //   content: data.bodyContent,
+        // },
+        // label: data.label,
+        // metadata: data.metadata,
+        contentType: NodeType.WEBPAGE,
+      }
+    ], {
+      isUseQueueFirstApproach: true,
+      mutationId: `${this.id}-saveWebpage`
+    });
     this.update((n) => {
-      n.id = response.id;
+      n.id = id;
       return n;
     });
-    return response;
+    chrome.storage.local.set({ node: { id: id } });
+    chrome.runtime.sendMessage({
+      event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
+      node: id
+    });
+    return id;
   }
   /**
    * TODO - save clip via NodeStore - to update nodes local cache
@@ -96,14 +118,31 @@ class WebpageStore extends ObservableStore<IWebpage> {
     data: TextHighlightContent | VideoTimestampContent,
     tabData?: TabData
   ) {
-    const response = await this.persistence.saveClip(data, tabData);
-    if (!response?.parent) return;
+    // const response = await this.persistence.saveClip(data, tabData);
+    let webpage = this.get();
+    if (!webpage.id) {
+      await this.savePage(tabData);
+    }
+    webpage = this.get();
+    const clip = {
+      id: generateResourceId(Resource.node),
+      body: {
+        ...data.body,
+      },
+      metadata: data.metadata,
+      parent: webpage.id,
+      contentType: data.contentType,
+    }
+    await nodeStore.createNode([clip],
+      {
+        isUseQueueFirstApproach: true,
+        mutationId: `${this.id}-saveClip`
+      });
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), response];
-      if (n.id) n.id = response.parent;
+      n.clips = [...(n.clips ?? []), clip];
       return n;
     });
-    return response;
+    return clip;
   }
   async linkPage(to: string) {
     const isAlreadyLinked = this.get().links?.some((l) => l === to);
@@ -232,9 +271,7 @@ class ClipperToolbarState extends KeyValueStore<
       {
         refreshOnAppear: true,
         dboDependencies: [
-          "fn::memotron::clipper::fetchPage",
-          "fn::memotron::clipper::saveWebpage",
-          "fn::memotron::clipper::saveClip"
+          // "fn::memotron::clipper::fetchPage",
         ]
       }
     );

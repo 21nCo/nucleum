@@ -42,7 +42,7 @@ class NodeStore extends ResourceStore<INode> {
     this.db = new SurrealDatabase();
   }
   async createNode(
-    capture: INodeItemCaptured[],
+    capture: (INodeItemCaptured)[],
     queueParams?: IMutationQueueParams
   ) {
     return super.create(capture, {

@@ -13,7 +13,7 @@
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   export let isShown: boolean = false;
   export let feedback: string = "";
-  let autoCloseDuration = 3;
+  let autoCloseDuration = 30;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;

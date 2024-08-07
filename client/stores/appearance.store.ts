@@ -27,6 +27,7 @@ const seedAppearance: AppearanceStore = {
   systemTheme: Theme.LIGHT,
   typeface:
     " Avenir, Montserrat, Teachers, Hanken Grotesk, Proxima Nova,  Poppins, Noto Sans, Nunito ",
+      //BlinkMacSystemFont
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
   colorScheme:

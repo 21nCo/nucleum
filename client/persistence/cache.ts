@@ -5,6 +5,7 @@ import {
   type IStore
 } from "../types/data.type";
 import { LocalDexie } from "$local/local";
+import { resolveCurrentUserId } from "../utils/account.utils";
 
 /**
  * The cache manager for the application.
@@ -12,19 +13,13 @@ import { LocalDexie } from "$local/local";
 export class CacheManager implements CacheSource {
   indxDb: LocalForage = localForage.createInstance({ name: "guest" });
   dexie: LocalDexie = new LocalDexie("d:guest");
-  initialize() {
-    let userId = "guest";
-    if (localStorage.getItem("userInfo")) {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo")!);
-      userId = userInfo.id;
-    }
+  async initialize() {
+    let userId = await resolveCurrentUserId();
+    if(!userId) userId = "guest";
     this.indxDb = localForage.createInstance({
       name: userId
     });
     this.dexie = new LocalDexie("d:" + userId);
-  }
-  constructor() {
-    this.initialize();
   }
   /**
    * Retrieves the client mutation map.

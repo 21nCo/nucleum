@@ -45,6 +45,7 @@
         };
         placeholder = "Link to a node or add to a collection";
         icon = "arrow-up-right";
+        inputStyle = InputStyle.BORDERED;
         break;
     }
   }

@@ -303,7 +303,7 @@ export class SurrealDatabase implements ISurrealDatabase {
   surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
   constructor(private instance: string = "") {
     const instanceDefault =
-      import.meta.env?.VITE_DB ?? process.env.PLASMO_PUBLIC_DB_URL;
+      import.meta.env?.VITE_DB ?? process.env.PLASMO_PUBLIC_DB;
     this.instance = instanceDefault ?? instance;
     // this.token = resolveToken();
     if (isUseSurrealSDK == "true")

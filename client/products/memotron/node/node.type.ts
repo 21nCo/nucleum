@@ -9,13 +9,13 @@ import type {
 import type { ILink } from "../capture/capture.type";
 import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
 
-export type INode = INodeBase &
+export type INode = (INodeBase &
   NodeContent & {
     metadata: INodeMetadata;
     children?: INode[] | string[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
-  };
+  }) | IWebPageNode
 
 export type INodeItemCaptured = Omit<
   INodeBase,
@@ -302,7 +302,7 @@ export enum LinkType {
 
 export type INodeMetadata = {
   location?: any;
-};
+}
 
 export type INodeProperty = {
   id: string;
@@ -333,3 +333,47 @@ export type INodeStructure = {
   factor: number;
   children: string[];
 };
+
+
+
+export type IWebPageNode = INodeBase & {
+  body: {
+    url: string;
+    hash: string;
+    description?: string;
+  },
+  metadata: IWebPageMetadata;
+  contentType: NodeType.WEBPAGE;
+}
+
+export type IWebPageMetadata = {
+  favicon?: string;
+  faviconLink?: string;
+  appIconLinks?: string[];
+  keywords?: string;
+  hostname?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  twitterCard?: string;
+}
+
+
+export type ITweetNode = INodeBase & {
+  body: {
+    url: string;
+    hash: string;
+    description?: string;
+  },
+  metadata: ITweetMetadata;
+  contentType: NodeType.TW;
+}
+
+export type ITweetMetadata = {
+  card?: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string;
+}

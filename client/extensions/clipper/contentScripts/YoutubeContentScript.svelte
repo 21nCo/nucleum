@@ -4,7 +4,7 @@
   import {
     createClipButton,
     createClipPointer
-  } from "$lib/client/extensions/clipper/utils";
+  } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";

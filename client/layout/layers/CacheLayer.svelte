@@ -35,4 +35,5 @@
       // );
     }
   }, 1500);
+  $: console.log({ mutationQueue: $mutationQueue });
 </script>
