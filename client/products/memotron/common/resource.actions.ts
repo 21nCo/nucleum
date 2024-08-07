@@ -75,10 +75,10 @@ export class ResourceActions<T extends IMemotronItemBase> {
       multiSelectContext = accessPointId + "-" + accessPoint;
     }
     const multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-    console.log({
-      multiSelectContext,
-      multiSelectStoreValue: get(multiSelectStore)
-    });
+    // console.log({
+    //   multiSelectContext,
+    //   multiSelectStoreValue: get(multiSelectStore)
+    // });
     return {
       label: get(multiSelectStore)?.includes(this.resource.id)
         ? "Unselect"

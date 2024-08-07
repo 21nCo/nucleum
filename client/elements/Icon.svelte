@@ -158,7 +158,11 @@
     } else if (clParam) {
       classes = clParam;
     }
-    if (icon && solidOnlyIcons.includes(icon) && classes.includes("stroke-")) {
+    if (
+      icon &&
+      (solidOnlyIcons.includes(icon) || icon?.includes("-mini")) &&
+      classes.includes("stroke-")
+    ) {
       const color = classes.split("stroke-")[1];
       classes = `fill-${color}`;
     } else if (
@@ -205,13 +209,20 @@
         : icon == "capture2.0" || icon === "capture2.0-mini"
           ? "0 0 52 52"
           : "0 0 24 24"}
-      class={cn("flex items-center justify-center", _classList, {
-        "w-8 h-8": size === Size.xl,
-        "w-6 h-6": size === Size.lg,
-        "w-[1.25rem] h-[1.25rem]": size === Size.md,
-        "w-4 h-4": size === Size.sm,
-        "w-3 h-3": size === Size.xs
-      })}
+      class={cn(
+        "flex items-center justify-center",
+        _classList,
+        {
+          "w-3 h-3": icon.includes("-mini")
+        },
+        !icon.includes("-mini") && {
+          "w-8 h-8": size === Size.xl,
+          "w-6 h-6": size === Size.lg,
+          "w-[1.25rem] h-[1.25rem]": size === Size.md,
+          "w-4 h-4": size === Size.sm,
+          "w-3 h-3": size === Size.xs
+        }
+      )}
     >
       {#if icon === "home"}
         <Home {variant} />
@@ -241,6 +252,8 @@
         <Info {variant} />
       {:else if icon === "link"}
         <Link />
+      {:else if icon === "link-mini"}
+        <Link variant={IconVariant.Mini} />
       {:else if icon === "tag"}
         <Tag {variant} />
       {:else if icon === "share"}
@@ -347,6 +360,8 @@
         <Arrow direction={Position.BottomLeft} />
       {:else if icon === "arrow-up-right"}
         <Arrow direction={Position.TopRight} {variant} />
+      {:else if icon === "arrow-up-right-mini"}
+        <Arrow direction={Position.TopRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-down-right-mini"}
         <Arrow direction={Position.BottomRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}

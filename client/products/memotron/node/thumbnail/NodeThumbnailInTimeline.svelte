@@ -99,7 +99,7 @@
                 )}
               >
                 {node.children.length}
-                {node.contentType === NodeType.WEBPAGE ? " highlights" : ""}
+                {node.contentType === NodeType.WEB_PAGE ? " highlights" : ""}
               </div>
             {/if}
             <div

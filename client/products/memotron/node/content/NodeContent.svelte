@@ -192,7 +192,7 @@
       <ScrollViewBottomSpacer />
     {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
       <PdfAnnotator url={$node.body.url} />
-    {:else if $node?.contentType === NodeType.WEBPAGE && $node.children && $node.children.length > 0}
+    {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
       <div class="flex flex-col items-start gap-4">
         <Text content="Clips" style={TextStyle.SECTION_HEADING} />
         <div class="flex flex-col items-start gap-2 overflow-auto">

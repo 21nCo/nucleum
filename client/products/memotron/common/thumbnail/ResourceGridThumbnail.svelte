@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ResourceThumbnailTitle from "./ResourceThumbnailTitle.svelte";
   export let item: any;
   export let size: Size.sm | Size.md = Size.md;
   export let isApplyCustomColor: boolean = false;
@@ -26,7 +25,6 @@
       }
     )}
   >
-    <ResourceThumbnailTitle {item} />
     <slot name="bottom" />
   </div>
 </button>

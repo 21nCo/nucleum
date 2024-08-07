@@ -22,6 +22,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { linker } from "$lib/client/products/memotron/memotron.store";
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -190,6 +191,7 @@
         on:click={onClick}
         on:action={onAction}
       />
+      <ScrollViewBottomSpacer />
     {:else}
       <EmptyStatusView
         isSearchContext={true}
