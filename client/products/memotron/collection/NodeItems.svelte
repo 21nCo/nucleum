@@ -11,9 +11,9 @@
   import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { afterUpdate, onMount } from "svelte";
-  import ResourceThumbnailTitle from "../common/thumbnail/ResourceThumbnailTitle.svelte";
   import { fade } from "svelte/transition";
   import view from "$lib/client/stores/view.store";
+  import NodeThumbnailTitle from "../node/thumbnail/NodeThumbnailTitle.svelte";
 
   export let nodes: INodeThumbnail[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -110,7 +110,7 @@
             >
               <!-- TODO - hover content -->
               <!-- {item.label} -->
-              <ResourceThumbnailTitle {item} />
+              <NodeThumbnailTitle node={item} />
             </div>
           {/if}
         </HoverableElement>

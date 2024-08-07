@@ -8,6 +8,7 @@ import type {
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import type { ILink } from "../capture/capture.type";
 import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+import type { TabMetadata } from "$lib/client/types/extension.type";
 
 export type INode = (INodeBase &
   NodeContent & {
@@ -155,7 +156,7 @@ export type OtherNodeType =
   | NodeType.COLLECTION_AS_EMBED;
 
 export type ClipType =
-  | NodeType.WEBPAGE
+  | NodeType.WEB_PAGE
   | NodeType.TEXT_CLIP
   | NodeType.IMAGE_CLIP
   | NodeType.AUDIO_CLIP
@@ -204,17 +205,35 @@ export enum NodeType {
   ACCORDION = "ACCORDION",
 
   //CLIPS
-  WEBPAGE = "WEBPAGE",
+  WEB_PAGE = "WEB_PAGE",
   TEXT_CLIP = "TEXT_CLIP",
   IMAGE_CLIP = "IMAGE_CLIP",
   AUDIO_CLIP = "AUDIO_CLIP",
   VIDEO_CLIP = "VIDEO_CLIP",
   PDF_CLIP = "PDF_CLIP",
-  VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP"
+  VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP",
+
+  //EXTERNAL
+  KINDLE_BOOK = "KINDLE_BOOK",
+  KINDLE_HIGHLIGHT = "KINDLE_HIGHLIGHT",
+  TWEET = "TWEET",
+  TWITTER_PROFILE = "TWITTER_PROFILE",
+  REDDIT_THREAD = "REDDIT_THREAD",
+  DISCORD_THREAD = "DISCORD_THREAD",
+  YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
+  TED_VIDEO = "TED_VIDEO",
+  INSTAGRAM_POST = "INSTAGRAM_POST",
+  FACEBOOK_POST = "FACEBOOK_POST",
+  TWITCH_STREAM = "TWITCH_STREAM",
+  STACKOVERFLOW_THREAD = "STACKOVERFLOW_THREAD",
+  GITHUB_REPO = "GITHUB_REPO",
+  GITHUB_PROFILE = "GITHUB_PROFILE",
+  GITHUB_DISCUSSION = "GITHUB_DISCUSSION",
+  GITLAB_PROJECT = "GITLAB_PROJECT"
 }
 
 export const ClipNodeTypeList = [
-  NodeType.WEBPAGE,
+  NodeType.WEB_PAGE,
   NodeType.TEXT_CLIP,
   NodeType.IMAGE_CLIP,
   NodeType.AUDIO_CLIP,
@@ -236,7 +255,8 @@ export const rootNodeTypeList = [
   NodeType.PDF,
   NodeType.IMAGE,
   NodeType.VIDEO,
-  NodeType.AUDIO
+  NodeType.AUDIO,
+  NodeType.WEB_PAGE
 ];
 
 export const TextNodeTypeList = [
@@ -244,6 +264,13 @@ export const TextNodeTypeList = [
   NodeType.QUOTE,
   NodeType.CODE,
   ...headingNodeTypes
+];
+
+export const internalUrlNodeTypeList = [
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO,
+  NodeType.PDF
 ];
 
 export type TextNodeType =
@@ -300,9 +327,11 @@ export enum LinkType {
   SUGGESTION = "SUGGESTION"
 }
 
-export type INodeMetadata = {
-  location?: any;
-}
+export type INodeMetadata =
+  | {
+      location?: any;
+    }
+  | TabMetadata;
 
 export type INodeProperty = {
   id: string;

@@ -220,7 +220,10 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     super(Resource.globalPreferences, seedUserPreferences, {
       refreshOnAppear: true,
       isSynchronousCache: true,
-      dboDependencies: ["fn::global::resource::delete"]
+      dboDependencies: [
+        "fn::global::resource::delete",
+        "fn::global::resource::fetch"
+      ]
     });
   }
   loader(data: IUserGlobalPreferences) {

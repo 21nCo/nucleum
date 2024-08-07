@@ -7,6 +7,7 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import Check from "$lib/client/icons/Check.svelte";
   import CheckCircle from "$lib/client/icons/CheckCircle.svelte";
+  import { Arrangement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { resolveCollectionContextMenu } from "../../collection/collection.store";
@@ -15,9 +16,10 @@
   import { resolveNodeContextMenu } from "../../node/node.store";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  let isHovering = false;
+  export let isHovering = false;
   export let item: any;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let arrangement: Arrangement = Arrangement.LIST;
   export let isApplyCustomColor: boolean = false;
   export let accessPointId: string | undefined = undefined;
   $: multiSelectContext = accessPointId
@@ -72,16 +74,27 @@
   {/if}
   {#if isHovering}
     <button
-      class={cn(
-        "absolute top-0 right-0 flex gap-2 border rounded-md m-3 p--1",
-        {
-          "bg-ccs4 border-ccs2": isApplyCustomColor,
-          "bg-bgs2 border-brs3": !isApplyCustomColor
-        }
-      )}
+      class={cn("absolute top-0 right-0 flex gap-2 p--1", {
+        "m-3 border rounded-md": arrangement !== Arrangement.LIST,
+        "bg-ccs4 border-ccs2":
+          arrangement != Arrangement.LIST && isApplyCustomColor,
+        "bg-bgs2 border-brs3":
+          arrangement != Arrangement.LIST && !isApplyCustomColor,
+        "h-full flex-col justify-center": arrangement === Arrangement.LIST
+      })}
       on:click|stopPropagation
     >
-      <ContextMenuAction {contextMenu} size={Size.lg} on:action={onAction} />
+      <div
+        class={cn({
+          "mx-2 h-8 border rounded-md": arrangement === Arrangement.LIST,
+          "bg-ccs4 border-ccs2":
+            arrangement === Arrangement.LIST && isApplyCustomColor,
+          "bg-bgs2 border-brs3":
+            arrangement === Arrangement.LIST && !isApplyCustomColor
+        })}
+      >
+        <ContextMenuAction {contextMenu} size={Size.lg} on:action={onAction} />
+      </div>
     </button>
   {/if}
 </HoverableElement>
