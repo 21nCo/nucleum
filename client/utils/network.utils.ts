@@ -98,7 +98,7 @@ export async function performHttpNetworkOperation(params: {
     return response;
   } catch (error) {
     if (error instanceof TypeError) {
-      console.error("Network error:", error.message);
+      console.error("Network error: ", { params, errorMessage: error.message });
       //TEMP - 401 from /sql endpoint is erroring instead of response.status === 401
       // signout();
       window.dispatchEvent(

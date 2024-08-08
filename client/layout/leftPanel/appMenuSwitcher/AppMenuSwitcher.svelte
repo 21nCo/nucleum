@@ -92,24 +92,26 @@
         />
       {/each}
     </div>
-    <div class="flex flex-col gap-2">
-      <Divider />
-      {#if layoutContext === LayoutContext.DEFAULT}
-        <div class="px-1">
-          <Text content="Pinned" style={TextStyle.SECTION_HEADING} />
+    {#if userPinnedPages.length > 0}
+      <div class="flex flex-col gap-2">
+        <Divider />
+        {#if layoutContext === LayoutContext.DEFAULT}
+          <div class="px-1">
+            <Text content="Pinned" style={TextStyle.SECTION_HEADING} />
+          </div>
+        {/if}
+        <div class="flex flex-col">
+          {#each userPinnedPages as item, index}
+            <AppMenuSwitcherItem
+              {parentBackgroundIndex}
+              {layoutContext}
+              isShowLabel={layoutContext == LayoutContext.DEFAULT}
+              on:click={() => onClick(index, item)}
+              {item}
+            />
+          {/each}
         </div>
-      {/if}
-      <div class="flex flex-col">
-        {#each userPinnedPages as item, index}
-          <AppMenuSwitcherItem
-            {parentBackgroundIndex}
-            {layoutContext}
-            isShowLabel={layoutContext == LayoutContext.DEFAULT}
-            on:click={() => onClick(index, item)}
-            {item}
-          />
-        {/each}
       </div>
-    </div>
+    {/if}
   </div>
 {/if}

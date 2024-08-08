@@ -58,7 +58,7 @@
       }}
     />
   {/if}
-  {#if !$view.isPortrait && !$context.isEmbed}
+  {#if !$context.isEmbed}
     <Button
       icon="pip"
       tooltip="Picture in picture"

@@ -215,6 +215,7 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
+      title: "Break Reminder",
       layout: {
         size: Size.lg,
         orientation: Orientation.Vertical,
@@ -248,7 +249,7 @@ export const pointronActions: IAction[] = [
     label: "Add Tag",
     modalParams: {
       title: "Add Tag",
-      isShowAsSheet: true,
+      isShowAsSheet: false,
       layout: {
         size: Size.xs
       }

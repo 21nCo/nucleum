@@ -80,9 +80,7 @@
           <ControlBar />
         </div>
         <div class="flex justify-center">
-          <div class="w-5/6">
-            <Extras isInFullScreen={!isInline} />
-          </div>
+          <Extras isInFullScreen={!isInline} />
         </div>
       </div>
     {/if}

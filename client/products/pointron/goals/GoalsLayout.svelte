@@ -192,6 +192,7 @@
                 size={Size.sm}
                 isLoadingState={isGoalsLoading}
                 mainText="No goals found"
+                isSearchContext={true}
               >
                 <slot name="subtext" slot="subtext">
                   {#if selectedTagId === TagId.FAVORITES}

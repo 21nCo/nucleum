@@ -6,11 +6,11 @@
   import view from "$lib/client/stores/view.store";
   import type { IAction } from "$lib/client/types/action.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { HapticFeedback } from "$lib/client/types/haptic.enum";
-  import { hapticFeedback } from "$lib/client/utils/embed.utils";
+  import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { Position } from "$lib/client/types/direction.enum";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
+  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   const dispatch = createEventDispatcher();
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -30,7 +30,7 @@
   }
   $: tooltip = layoutContext === LayoutContext.THIN ? item.label : undefined;
   function onClick() {
-    hapticFeedback(HapticFeedback.MENUITEM);
+    postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
     rive?.fire();
     dispatch("click", {});
   }

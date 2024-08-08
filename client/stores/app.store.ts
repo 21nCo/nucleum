@@ -549,7 +549,8 @@ function initAppStore(seed: AppStore) {
       "&state=" +
       guestPartForState +
       ":" +
-      domainPartForState;
+      domainPartForState +
+      "&prompt=select_account";
     let redirectUri = "";
     if (config.response_mode === "form_post") {
       url += "&response_mode=form_post";

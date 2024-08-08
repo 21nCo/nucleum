@@ -247,16 +247,9 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       title: "Goal: " + goal.label,
       message: "Created successfully",
       type: AlertType.SUCCESS,
-      id: generateUID(),
-      actionText: "View",
-      callback: () => {
-        appStore.gotoResource(
-          Resource.goal,
-          prefixTable(goal.id, Resource.PointGoal)
-        );
-      }
+      id: generateUID()
     });
-
+    this.refresh({}, true);
     function isGoalNameValid(label: string) {
       if (!label) {
         goalEditErrorMessage.set("Please enter a valid goal name");
