@@ -20,6 +20,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import FocusNotes from "../../focus/notes/FocusNotes.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import GoalSearchThumbnail from "../../goals/thumbnails/GoalSearchThumbnail.svelte";
   export let item: IManualSessionLogForm;
   let label: string = "";
   let selectedGoal: any = undefined;
@@ -117,8 +118,10 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
+      searchResultComponent={GoalSearchThumbnail}
       searchStoreId={Resource.PointGoal}
       style={InputStyle.BORDERED}
+      popoverOptions={{ offsetInPx: 16 }}
       placeholder="Start typing to select goal"
     />
   {/if}

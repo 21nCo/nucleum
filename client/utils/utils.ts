@@ -271,4 +271,4 @@ export const archivedResourceFilter = (x: any) =>
 export const nonTrashFilter = (x: any) => !x.trashInformation;
 
 export const textTruncateMapper = (x: string, length: number = 15) =>
-  x.length > length ? x.slice(0, length) + "..." : x;
+  x?.length > length ? x.slice(0, length) + "..." : x;
