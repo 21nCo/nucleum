@@ -34,8 +34,8 @@
   import { logger } from "$lib/client/stores/log.store";
 
   import { globalActions } from "$lib/client/stores/actionMap";
-  import { localActions } from "$local/stores/localActionMap";
-  import { localCacheableStores } from "$local/stores/localStoresMap";
+  import { localActions } from "$local/localActionMap";
+  import { localCacheableStores } from "$local/localStoresMap";
   import {
     detectSystemOS,
     detectTouchDevice
