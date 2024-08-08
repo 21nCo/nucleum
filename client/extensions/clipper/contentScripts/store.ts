@@ -22,7 +22,7 @@ import { ClipperPersistence } from "../clipper.persistence";
 import { removeHighlight } from "./highlightV4";
 import type { IWebpage } from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
-import { NodeType, type IWebPageNode } from "$lib/client/products/memotron/node/node.type";
+import { NodeType, type IClippedNodeCapture } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
 
 class WebpageStore extends ObservableStore<IWebpage> {
@@ -77,7 +77,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @param data - tab data
    * @returns
    */
-  async savePage(data: IWebPageNode) {
+  async savePage(data: IClippedNodeCapture) {
     const id = generateResourceId(Resource.node);
     const response = await nodeStore.createNode([
       {
@@ -91,7 +91,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
         // },
         // label: data.label,
         // metadata: data.metadata,
-        contentType: NodeType.WEBPAGE,
+        contentType: NodeType.WEB_PAGE,
       }
     ], {
       isUseQueueFirstApproach: true,

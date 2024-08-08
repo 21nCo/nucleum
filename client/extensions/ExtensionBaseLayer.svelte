@@ -46,7 +46,7 @@
 <div
   {id}
   class={cn(
-    "text-base text-fgs1 bg-bgs1 relative",
+    "text-base text-fgs1 relative",
     $appearance.theme,
     $appearance.colorScheme.tailwindSelector
   )}

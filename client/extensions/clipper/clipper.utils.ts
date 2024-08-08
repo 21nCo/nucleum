@@ -1,3 +1,4 @@
+import { NodeType, type ITweetNode, type IWebPageNode } from "$lib/client/products/memotron/node/node.type";
 import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
 import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
 import * as CryptoJS from "crypto-js";
@@ -111,7 +112,7 @@ export async function resolveCurrentTabData(
    * Note: This function should be called only from the content script.
    * @returns TabData
    */
-  export function extractFullTabData(): TabData {
+  export function extractFullTabData(): IWebPageNode {
     const bodyContent = document.body.innerHTML;
     const title = document.title;
     const faviconLink = (
@@ -147,10 +148,13 @@ export async function resolveCurrentTabData(
     )?.content;
     const hash = CryptoJS.SHA256(bodyContent).toString();
     return {
-      url: window.location.href,
-      hash,
       label: title,
-      description,
+      contentType: NodeType.WEB_PAGE,
+      body: {
+        url: window.location.href,
+        hash,
+        description,
+      },
       metadata: {
         faviconLink,
         appIconLinks,
@@ -164,3 +168,6 @@ export async function resolveCurrentTabData(
     };
   }
   
+export function extractTweetData(): ITweetNode { 
+  
+}

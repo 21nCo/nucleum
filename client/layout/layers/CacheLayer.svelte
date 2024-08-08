@@ -6,8 +6,9 @@
   import type { IEvent } from "$lib/client/types/event.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { liveQuery } from "dexie";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   let mutationQueue = refreshMutationQueueLiveQuery();
+  let interval: any;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (
@@ -26,7 +27,7 @@
       $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
     );
   }
-  setInterval(() => {
+  interval = setInterval(() => {
     if (isValidArrayWithData($mutationQueue) && $account.isLoggedIn) {
       dataManager.syncPendingMutations();
       // console.log(
@@ -35,5 +36,7 @@
       // );
     }
   }, 1500);
-  $: console.log({ mutationQueue: $mutationQueue });
+  onDestroy(() => {
+    clearInterval(interval);
+  });
 </script>

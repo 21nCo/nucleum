@@ -8,15 +8,14 @@ import type {
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import type { ILink } from "../capture/capture.type";
 import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
-import type { TabMetadata } from "$lib/client/types/extension.type";
 
-export type INode = (INodeBase &
-  NodeContent & {
+export type INode = INodeBase &
+  ((NodeContent & {
     metadata: INodeMetadata;
     children?: INode[] | string[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
-  }) | IWebPageNode
+  }) | IClippedNode);
 
 export type INodeItemCaptured = Omit<
   INodeBase,
@@ -27,7 +26,7 @@ export type INodeItemCaptured = Omit<
   | "interactedAt"
   | "label"
 > &
-  NodeContent & {
+  (NodeContent & {
     children?: string[];
     /**
      * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
@@ -36,7 +35,7 @@ export type INodeItemCaptured = Omit<
     creationContext?: string;
     metadata?: INodeMetadata;
     links?: ILink[];
-  };
+  }) | IClippedNode;
 
 export type INodeThumbnail = INodeBase &
   NodeContent & {
@@ -327,11 +326,7 @@ export enum LinkType {
   SUGGESTION = "SUGGESTION"
 }
 
-export type INodeMetadata =
-  | {
-      location?: any;
-    }
-  | TabMetadata;
+export type INodeMetadata = { location?: any; }
 
 export type INodeProperty = {
   id: string;
@@ -365,14 +360,15 @@ export type INodeStructure = {
 
 
 
-export type IWebPageNode = INodeBase & {
+export type IWebPageNode = {
   body: {
     url: string;
     hash: string;
     description?: string;
   },
+  label: string;
   metadata: IWebPageMetadata;
-  contentType: NodeType.WEBPAGE;
+  contentType: NodeType.WEB_PAGE;
 }
 
 export type IWebPageMetadata = {
@@ -388,21 +384,36 @@ export type IWebPageMetadata = {
   twitterCard?: string;
 }
 
-
-export type ITweetNode = INodeBase & {
+export type ITweetNode = {
   body: {
     url: string;
-    hash: string;
-    description?: string;
+    content: string;
+    postedAt: string;
   },
   metadata: ITweetMetadata;
-  contentType: NodeType.TW;
+  contentType: NodeType.TWEET;
 }
 
-export type ITweetMetadata = {
-  card?: string;
-  title?: string;
-  description?: string;
-  image?: string;
-  url?: string;
+export type ITweetMetadata = {}
+
+export type ITwitterProfileNode = {
+  body: {
+    username: string;
+    bio: string;
+    profileImageUrl: string;
+  },
+  contentType: NodeType.TWITTER_PROFILE;
 }
+
+export type IClippedNode = IWebPageNode | ITwitterProfileNode | ITweetNode;
+
+export type IClippedNodeCapture = Omit<
+INodeBase,
+| "createdAt"
+| "modifiedAt"
+| "createdBy"
+| "modifiedBy"
+| "interactedAt"
+| "label"
+| "id"
+>  & IClippedNode;
