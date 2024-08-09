@@ -371,10 +371,12 @@
             tempFileList[0].file
           );
           const timeZone = detectTimeZone();
+          const region = $account.userInfo?.region;
           let body = {
             s3Url: url,
             userId: userId,
             timeZone: timeZone,
+            region: region,
             isArchiveAll: checked
           };
           isEverythingUploaded = true;
