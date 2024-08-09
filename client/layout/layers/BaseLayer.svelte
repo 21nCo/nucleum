@@ -42,12 +42,12 @@
   } from "$lib/client/utils/browser.utils";
   import { extractProduct } from "$lib/shared/utils/utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
-  import MetadataLayer from "./MetadataLayer.svelte";
   import { appMenuStore } from "../leftPanel/appMenu.store";
   import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
   import AppLoadingView from "../paint/AppLoadingView.svelte";
+  import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
 
   let timer: any;
   pingParent();
@@ -319,7 +319,7 @@
   <DebugLayer />
 {/if}
 {#if $appLoadingState.isBaseLoaded}
-  <MetadataLayer />
+  <DynamicMetadataLayer />
   <ModalLayer />
   <Shortcuts />
   <CacheLayer />
