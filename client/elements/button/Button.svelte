@@ -43,8 +43,7 @@
   export let id: string = "";
   let buttonRef: any;
   export let isHovering: boolean = false;
-  $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
-    style = ButtonStyle.PLAIN;
+  $: isIconOnlyButton = !label && !$$slots.default;
 </script>
 
 <HoverableElement
@@ -54,15 +53,17 @@
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
     {
-      "min-w-32": style != ButtonStyle.PLAIN && !isPreventMinWidth,
+      "min-w-32":
+        style != ButtonStyle.PLAIN && !isPreventMinWidth && !isIconOnlyButton,
       "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,
       "gap-2 text-b2 dp:text-base": size === Size.md,
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
-      "p-1.5 rounded-md": !$$slots.default && !label,
-      [bg(parentBgIndex)]: isHovering && !$$slots.default && !label,
+      "p-1.5 rounded-md": isIconOnlyButton,
+      [bg(parentBgIndex)]:
+        isHovering && isIconOnlyButton && style != ButtonStyle.PLAIN,
       "text-fgs2 hover:text-aps1": style === ButtonStyle.PLAIN,
       "underline-dotted hover:underline-dotted-primary":
         style === ButtonStyle.PLAIN && isUnderlined
@@ -75,17 +76,18 @@
         "h-8 py-2 px-4": size === Size.sm,
         "h-6 py-1 px-3": size === Size.xs
       },
-    style === ButtonStyle.DEFAULT && [
-      {
-        "hover:opacity-90 text-abg":
-          type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
-        "bg-aps1": type === ButtonVariant.PRIMARY,
-        "bg-ars1": type === ButtonVariant.DANGER,
-        "border border-transparent hover:border-brs3":
-          type === ButtonVariant.SECONDARY,
-        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY
-      }
-    ],
+    style === ButtonStyle.DEFAULT &&
+      !isIconOnlyButton && [
+        {
+          "hover:opacity-90 text-abg":
+            type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
+          "bg-aps1": type === ButtonVariant.PRIMARY,
+          "bg-ars1": type === ButtonVariant.DANGER,
+          "border border-transparent hover:border-brs3":
+            type === ButtonVariant.SECONDARY,
+          [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY
+        }
+      ],
     style === ButtonStyle.OUTLINED && [
       {
         border: true,

@@ -3,7 +3,7 @@
   import {
     extractVideoId,
     isYoutubeVideoUrl
-  } from "$lib/client/extensions/clipper/utils";
+  } from "$lib/client/extensions/clipper/clipper.utils";
   import {
     ClipperExtensionEvent,
     type Clip

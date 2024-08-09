@@ -242,7 +242,7 @@ class AccountStore extends ObservableStore<
    */
   async tempUploadToS3(input: any) {
     let itemLocalURL = new Blob([input], { type: input.type });
-    let customName = input.name.split(".")[0].trim();
+    let customName = input.name.split(".")[0].replace(/\s+/g, "");
     const result = await this.uploadFile(
       input.type,
       customName,

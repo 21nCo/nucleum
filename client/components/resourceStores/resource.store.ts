@@ -23,7 +23,7 @@ import type {
   ITrashInformation,
   ResourceAccessMode
 } from "./resource.type";
-import { appStore } from "$lib/client/stores/app.store";
+// import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
 
@@ -58,6 +58,7 @@ class MultiSelectStore extends ObservableStore<string[]> {
       this.set([...current, id]);
       return;
     }
+    //TODO - this is creating a circular dependency
     if (params?.accessMode)
       appStore.resourceClickHandler(e, id, params.accessMode);
   }

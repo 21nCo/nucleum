@@ -12,6 +12,9 @@ export type TabBaseData = {
     description?: string;
 }
 
+/**
+ * @deprecated - use IWebPageNode instead
+ */
 export type TabData = TabBaseData & {
     metadata: TabMetadata;
     hash?: string;
@@ -19,6 +22,9 @@ export type TabData = TabBaseData & {
 };
 
 
+/**
+ * @deprecated - use IWebPageMetadata instead
+ */
 export type TabMetadata = {
     favicon?: string;
     faviconLink?: string;

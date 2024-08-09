@@ -16,8 +16,8 @@
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
-  import ResourceThumbnailTitle from "../../common/thumbnail/ResourceThumbnailTitle.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
   export let item: INodeThumbnail;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -27,7 +27,7 @@
   export let parentBgIndex = 1;
 </script>
 
-<ResourceThumbnailBase {item} {accessPoint} {isApplyCustomColor}>
+<ResourceThumbnailBase {item} {accessPoint} {isApplyCustomColor} {arrangement}>
   <!-- {#if variant === Arrangement.LIST && collectionContext}
     <NodeThumbnailInList node={item} {parentBgIndex} on:click /> -->
   {#if arrangement === Arrangement.LIST}
@@ -38,7 +38,7 @@
       })}
       on:click
     >
-      <ResourceThumbnailTitle {item} />
+      <NodeThumbnailTitle node={item} />
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail
@@ -64,6 +64,7 @@
         {/if}
       </div>
       <slot slot="bottom" name="bottom">
+        <NodeThumbnailTitle node={item} />
         <!-- <span class="text-b3 text-fgs3">
       {formatDatetime($userPreferences, new Date(node.createdAt))}
       </span> -->

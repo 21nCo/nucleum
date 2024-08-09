@@ -125,7 +125,7 @@
    */
   function bootup() {
     setLaunchContext();
-    dataManager.loadStores([...cacheableStores, ...localCacheableStores]);
+    dataManager.initialize([...cacheableStores, ...localCacheableStores]);
     addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
