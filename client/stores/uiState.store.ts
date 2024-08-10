@@ -2,10 +2,7 @@ import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { logger } from "$lib/client/stores/log.store";
 import { get } from "svelte/store";
-import {
-  ResourceAccessPoint,
-  ResourceActionType
-} from "../components/resourceStores/resource.type";
+import { ResourceAccessPoint } from "../components/resourceStores/resource.type";
 import { appStore } from "./app.store";
 
 type UIState = {
@@ -66,6 +63,16 @@ class UiStateStore extends KeyValueStore<UIState> {
     if (!current?.includes(id)) return;
     const key = `${product}-${ResourceAccessPoint.TOP_BAR}`;
     this.modify({ [key]: current.filter((x) => x != id) });
+  }
+  getProductSpecificState(state: string) {
+    const product = get(appStore).product;
+    const key = `${product}-${state}`;
+    return this.get()[key];
+  }
+  setProductSpecificState(key: string, value: string | number | boolean) {
+    const product = get(appStore).product;
+    const fullKey = `${product}-${key}`;
+    this.modify({ [fullKey]: value });
   }
 }
 

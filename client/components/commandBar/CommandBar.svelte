@@ -7,6 +7,8 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let isFullPageContext: boolean = false;
   let value: string = "";
   let inputRef: HTMLInputElement;
   let resultsRef: any;
@@ -45,8 +47,16 @@
   }
 </script>
 
-<div class="flex flex-col h-full">
-  <div class="flex w-full bg-bgs2 justify-between items-center">
+<div
+  class={cn("flex flex-col h-full w-full", {
+    "border border-brs2 rounded-md": isFullPageContext
+  })}
+>
+  <div
+    class={cn("flex w-full bg-bgs2 justify-between items-center", {
+      "rounded-t-md": isFullPageContext
+    })}
+  >
     {#if isPerformingSearchAction}
       <div
         class="h-5/6 ml-2 bg-bgs3 flex items-center justify-center px-4 rounded-md"
@@ -97,7 +107,12 @@
     {/if}
   </div>
   <div
-    class="flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4"
+    class={cn(
+      "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4",
+      {
+        "rounded-b-md": isFullPageContext
+      }
+    )}
   >
     <span> Press <b>Esc</b> to close </span>
     <span> Cmd + K </span>
