@@ -34,7 +34,10 @@ import { Persistence } from "../persistence/persistence";
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
-import { confirmationNotification } from "$lib/client/stores/notification.store";
+import {
+  appEvents,
+  confirmationNotification
+} from "$lib/client/stores/notification.store";
 
 import { defaultAppData } from "$local/local";
 import { Embed, OperatingSystem } from "../types/context.type";
@@ -48,6 +51,7 @@ import {
 import { uiState } from "./uiState.store";
 import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 import { Action } from "../types/action.enum";
+import type { Event } from "../types/event.enum";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -484,6 +488,8 @@ function initAppStore(seed: AppStore) {
     } else if (action.type === ActionType.FUNCTION) {
       if (!action.fn) return;
       return action.fn(params?.componentParams);
+    } else if (action.type === ActionType.EVENT) {
+      appEvents.publish(action.action as Event, params?.componentParams);
     } else if (action.type === ActionType.CONFIRMATION && action.confirmation) {
       confirmationNotification.notify(action.confirmation);
     } else if (params.isReturnIfComponent) {

@@ -20,6 +20,7 @@ import modalEvent from "../components/modal/modal.store";
 import { Action } from "../types/action.enum";
 import Bootstrap from "../components/settings/account/Bootstrap.svelte";
 import Calendar from "../components/calendar/Calendar.svelte";
+import { GlobalEvent } from "../types/event.enum";
 
 export const globalActions: IAction[] = [
   {
@@ -324,5 +325,10 @@ export const globalActions: IAction[] = [
     icon: "calendar-days",
     type: ActionType.PAGE,
     component: Calendar
+  },
+  {
+    action: GlobalEvent.ACTIVATE_SEARCH_BOX,
+    isMeta: true,
+    type: ActionType.EVENT
   }
 ];

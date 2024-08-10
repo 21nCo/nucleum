@@ -8,14 +8,16 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { Action } from "$lib/client/types/action.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
   export let isFullPageContext: boolean = false;
   let value: string = "";
   let inputRef: HTMLInputElement;
   let resultsRef: any;
   let isPerformingSearchAction: boolean = false;
   let searchAction: IAction;
-  let defaultPlaceholder =
-    "Run a command or scroll to see list of all commands";
+  let defaultPlaceholder = isFullPageContext
+    ? "Search for a command or use arrow keys to navigate"
+    : "Run a command or scroll to see list of all commands";
   let placeholder = defaultPlaceholder;
   onMount(() => {
     inputRef?.focus();
@@ -45,6 +47,12 @@
   function close() {
     modalEvent.hideSpecific(Action.CMD);
   }
+  const shortcutListener = (event: KeyboardEvent) => {
+    console.log({ event });
+    if (event.key === "Meta") {
+      inputRef.focus();
+    }
+  };
 </script>
 
 <div
@@ -75,10 +83,13 @@
     />
     <div class="mr-4">
       <div
-        class="px-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
+        class="px-2 flex justify-center items-center gap-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
       >
         {#if value}
           Press <b>Enter</b> to run
+        {:else if isFullPageContext}
+          <Icon icon="command" size={Size.sm} />
+          <span> Cmd </span>
         {:else}
           Cmd bar
         {/if}
@@ -106,15 +117,15 @@
       />
     {/if}
   </div>
-  <div
-    class={cn(
-      "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4",
-      {
-        "rounded-b-md": isFullPageContext
-      }
-    )}
-  >
-    <span> Press <b>Esc</b> to close </span>
-    <span> Cmd + K </span>
-  </div>
+  {#if !isFullPageContext}
+    <div
+      class={cn(
+        "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4"
+      )}
+    >
+      <span> Press <b>Esc</b> to close </span>
+      <span> Cmd + K </span>
+    </div>
+  {/if}
 </div>
+<svelte:window on:keydown={shortcutListener} />

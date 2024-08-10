@@ -17,8 +17,14 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
   timeZoneOffset: number;
   timeZoneLabel: string;
   timeScales?: TimeScale[];
+  /**
+   * @deprecated - use keyboardShortcuts store instead
+   */
   recentCommands?: string[];
   shortcuts?: KeyboardShortcut[];
+  /**
+   * @deprecated - use uiState store instead
+   */
   uiStates: {
     all: IUIState;
     desktop: IUIState;
@@ -47,6 +53,9 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
   };
 };
 
+/**
+ * @deprecated - use {@link IKeyboardShortcut} instead
+ */
 export type KeyboardShortcut = {
   action: string;
   key: string;

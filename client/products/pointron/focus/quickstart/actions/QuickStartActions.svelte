@@ -7,16 +7,12 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import TagsContainer from "../../../goals/TagsContainer.svelte";
   import QuickStartLayoutToggle from "./QuickStartLayoutToggle.svelte";
+  import QuickStartSearch from "./QuickStartSearch.svelte";
   export let searchInput = "";
   export let selectedTagId = "";
   let isShowSearchBar = false;
   export let context: "bar" | "topright" = "bar";
   let searchInputRef: any;
-  $: {
-    if (searchInputRef) {
-      searchInputRef.focus();
-    }
-  }
 </script>
 
 {#if context === "topright"}
@@ -59,15 +55,6 @@
     {/if}
   </div>
 {:else}
-  <Autocomplete
-    bind:this={searchInputRef}
-    inputClassList="rounded-full"
-    bind:inputValue={searchInput}
-    placeholder="search goals (Cmd + Q)"
-    on:search
-    on:reset={() => {
-      isShowSearchBar = false;
-    }}
-  />
+  <QuickStartSearch bind:value={searchInput} on:search />
   <TagsContainer bind:selectedTagId on:select />
 {/if}

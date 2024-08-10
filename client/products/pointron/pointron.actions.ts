@@ -525,7 +525,7 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: "quickFocus",
+    action: PointronAction.QUICK_FOCUS,
     label: "Quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {

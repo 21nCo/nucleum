@@ -109,6 +109,7 @@
   import Split from "../icons/Split.svelte";
   import ArrowRightLeft from "../icons/ArrowRightLeft.svelte";
   import ArrowUTurnLeft from "../icons/ArrowUTurnLeft.svelte";
+  import Warning from "../icons/Warning.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -250,6 +251,8 @@
         <SidebarToggle {variant} />
       {:else if icon === "info"}
         <Info {variant} />
+      {:else if icon === "warning"}
+        <Warning {variant} />
       {:else if icon === "link"}
         <Link />
       {:else if icon === "link-mini"}

@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
   import { generateUID } from "$lib/client/utils/utils";
   import Icon from "../Icon.svelte";
-  import { IconVariant } from "$lib/client/types/icon.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";
@@ -46,6 +48,15 @@
   //   options = [];
 
   // }
+
+  onMount(() => {
+    const appEventSub = appEvents.subscribe((x: IEvent) => {
+      console.log({ x });
+      if (x.event === GlobalEvent.ACTIVATE_SEARCH_BOX) {
+        focus();
+      }
+    });
+  });
 
   function hideOptions() {
     selectedListItemIndex = -1;

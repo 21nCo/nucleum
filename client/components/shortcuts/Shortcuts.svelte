@@ -1,24 +1,9 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
   import { isTextElement } from "$lib/client/utils/browser.utils";
-  import { onMount } from "svelte";
   import { Action } from "$lib/client/types/action.enum";
-  let defaultKeyMap = $appStore?.appData?.shortcuts;
-  let userKeyMap = $userPreferences?.shortcuts;
-  onMount(() => {
-    const userPreferencesSub = userPreferences.subscribe((x) => {
-      userKeyMap = x?.shortcuts;
-    });
-    const appStoreSub = appStore.subscribe((x) => {
-      defaultKeyMap = x?.appData?.shortcuts;
-    });
-    return () => {
-      userPreferencesSub();
-      appStoreSub();
-    };
-  });
+  import { keyboardShortcuts } from "./shortcuts.store";
   function handleShortcutsForTextBoxScenario(event: KeyboardEvent) {
     const target = event.target || event.srcElement;
     if (event.key === "Escape") {
@@ -34,7 +19,6 @@
     }
   }
   const shortcutListener = (event: KeyboardEvent) => {
-    defaultKeyMap = $appStore?.appData?.shortcuts;
     const isShortcutRunCompleted = handleShortcutsForTextBoxScenario(event);
     if (isShortcutRunCompleted) return;
     let modifiers = [];
@@ -62,21 +46,13 @@
   };
 
   function runShortcut(key: string, modifiers: string[]) {
-    if (!defaultKeyMap) return;
-    let keyMap = defaultKeyMap;
-    if (userKeyMap) {
-      keyMap = defaultKeyMap.filter(
-        (x: KeyboardShortcut) =>
-          !userKeyMap?.some((y: KeyboardShortcut) => y.action === x.action)
-      );
-      keyMap = [...keyMap, ...userKeyMap];
-    }
-    // console.log({ keyMap, key, modifiers });
+    const keyMap = keyboardShortcuts.fecthKeyMap();
     const shortcut = keyMap.find((s: any) => {
-      if (s.key !== key) return false;
+      if (s.key.toLowerCase() !== key.toLowerCase()) return false;
       if (s.modifiers.length !== modifiers.length) return false;
       return s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()));
     });
+    console.log({ key, modifiers, shortcut, keyMap });
     if (!shortcut) return;
     appStore.runAction(shortcut.action);
     return true;

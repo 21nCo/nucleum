@@ -10,6 +10,7 @@
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { InfoTextType } from "$lib/client/types/text.type";
   import ShortcutSettings from "../shortcuts/ShortcutSettings.svelte";
   import { InteractionMode } from "./interactionMode.type";
   let selectedMode: InteractionMode = uiState.getProductSpecificState(
@@ -61,13 +62,13 @@
       },
       {
         value: InteractionMode.COMMAND_ONLY,
-        label: "Command only mode",
+        label: "Command only [beta]",
         // TODO - add keyboard icon
         icon: "command"
       },
       {
         value: InteractionMode.VOICE_MODE,
-        label: "Voice (coming soon)",
+        label: "Voice [coming soon]",
         icon: "microphone",
         isDisabled: true
       }
@@ -106,5 +107,10 @@
       <ShortcutSettings />
       <ScrollViewBottomSpacer />
     </div>
+  {:else if selectedMode === InteractionMode.COMMAND_ONLY}
+    <InlineInfoBanner
+      type={InfoTextType.WARNING}
+      content="Command only mode is currenlty in beta. Please report any issues you encounter."
+    />
   {/if}
 </div>

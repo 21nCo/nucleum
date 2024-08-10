@@ -1,19 +1,21 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
-  import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
+  import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
+  import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
+  import type { IKeyboardShortcut } from "../../shortcuts/shortcut.type";
   const dispatch = createEventDispatcher();
-  export let shortcut: KeyboardShortcut;
+  export let action: string;
+  export let shortcut: IKeyboardShortcut;
   let existingValue =
-    shortcut.modifiers.join(" + ") + " + " + shortcut.key.toUpperCase();
+    shortcut.modifiers?.join(" + ") + " + " + shortcut.key?.toUpperCase();
   let isConfigurationInProgress: boolean = false;
   let value: string = existingValue;
   let key: string;
   let modifiers: string[] = [];
   let inputRef: HTMLInputElement;
-  const action = appStore.resolveAction(shortcut.action);
+  const actionDetails = appStore.resolveAction(action);
   const systemShortcuts = [
     {
       key: "p",
@@ -90,33 +92,11 @@
     }
     return true;
   }
-  function saveShortcut() {
-    if ($userPreferences.shortcuts) {
-      const index = $userPreferences.shortcuts.findIndex(
-        (x) => x.action === shortcut.action
-      );
-      if (index > -1) {
-        $userPreferences.shortcuts[index] = {
-          action: shortcut.action,
-          modifiers,
-          key
-        };
-      } else {
-        $userPreferences.shortcuts.push({
-          action: shortcut.action,
-          modifiers,
-          key
-        });
-      }
-    } else {
-      $userPreferences.shortcuts = [
-        {
-          action: shortcut.action,
-          modifiers,
-          key
-        }
-      ];
-    }
+  async function saveShortcut() {
+    await keyboardShortcuts.saveShortcut(action, {
+      key,
+      modifiers
+    });
     existingValue = value;
   }
   function reset() {
@@ -126,10 +106,10 @@
   }
 </script>
 
-{#if action}
+{#if actionDetails}
   <div class="flex items-center justify-between gap-8">
     <span>
-      {action?.label}
+      {actionDetails?.label}
     </span>
     <button
       class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60"

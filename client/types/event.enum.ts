@@ -28,7 +28,8 @@ export enum GlobalEvent {
    */
   BOOTSTRAP = "BOOTSTRAP",
   CUSTOM_NAVIGATION = "custom:navigation",
-  CUSTOM_ALERT = "custom:alert"
+  CUSTOM_ALERT = "custom:alert",
+  ACTIVATE_SEARCH_BOX = "ACTIVATE_SEARCH_BOX"
 }
 
 export enum PlayActionState {
