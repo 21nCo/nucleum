@@ -89,6 +89,7 @@
     <EmptyStatusView
       size={Size.sm}
       {isLoadingState}
+      isSearchContext={true}
       mainText={selectedTagId === TagId.FAVORITES
         ? "No favorite goals found"
         : !selectedTagId || selectedTagId === TagId.ALL

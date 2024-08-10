@@ -38,7 +38,9 @@
 </script>
 
 <div class="flex w-full h-full">
-  <div class="flex flex-col gap-8 w-80 bg-bgs2 rounded-l-md py-4 items-start">
+  <div
+    class="flex flex-col overflow-auto gap-8 w-80 bg-bgs2 rounded-l-md py-4 items-start"
+  >
     <div class="pl-4">
       <Text content="Settings" style={TextStyle.PAGE_HEADING} />
     </div>
@@ -50,7 +52,7 @@
       }}
     />
     {#if config}
-      <div class="overflow-auto flex flex-col w-full gap-8">
+      <div class=" flex flex-col w-full gap-8">
         {#each config as section}
           <div class="flex flex-col w-full gap-2 items-start">
             {#if !section.isHideTitle}

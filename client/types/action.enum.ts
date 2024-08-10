@@ -1,5 +1,6 @@
 export enum Action {
   CMD = "CMD",
+  MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
@@ -13,5 +14,6 @@ export enum Action {
   ROADMAP = "roadmap",
   PRIVACY_POLICY = "privacy",
   TERMS_OF_SERVICE = "tos",
-  GLOBAL_SEARCH = "global-search"
+  GLOBAL_SEARCH = "global-search",
+  SHOW_MORE_SHORTCUT_HINTS = "SHOW_MORE_SHORTCUT_HINTS"
 }

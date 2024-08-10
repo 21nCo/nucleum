@@ -12,6 +12,7 @@ import SettingsAsModal from "../components/settings/SettingsAsModal.svelte";
 import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { Action } from "../types/action.enum";
+import InteractionModeSettings from "../components/settings/interactionMode/InteractionModeSettings.svelte";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -19,6 +20,18 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "Account Settings",
     path: "cp/account",
     component: AccountSettings
+  },
+  {
+    action: Action.MODE_OF_INTERACTION,
+    label: "Mode of interaction",
+    path: "cp/interaction-mode",
+    component: InteractionModeSettings,
+    modalParams: {
+      title: "Mode of interaction",
+      layout: {
+        size: Size.lg
+      }
+    }
   },
   {
     action: "theme",

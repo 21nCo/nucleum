@@ -360,7 +360,12 @@ export const pointronActions: IAction[] = [
     component: AnalyticsV2,
     type: ActionType.PAGE,
     icon: "chart",
-    label: "Analytics"
+    label: "Analytics",
+    modalParams: {
+      layout: {
+        size: Size.full
+      }
+    }
   },
   {
     action: "goal",
@@ -516,6 +521,19 @@ export const pointronActions: IAction[] = [
             appStore.gotoPath("focus");
           }
         });
+      }
+    }
+  },
+  {
+    action: "quickFocus",
+    label: "Quick focus",
+    type: ActionType.SEARCH_CMD,
+    searchActionParams: {
+      searchItemType: Resource.PointGoal,
+      itemLabel: "goal",
+      callback: (id: string, label?: string) => {
+        console.log("search action selected id:", { id });
+        sessionStore.quickStart(id);
       }
     }
   },

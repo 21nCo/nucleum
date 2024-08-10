@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
   import { generateUID } from "$lib/client/utils/utils";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let on = false;
   // export let label = "";
   export let id = "toggle-switch" + generateUID();
@@ -23,7 +25,9 @@
       bind:checked={on}
       class="sr-only"
       disabled={isDisabled}
-      on:change
+      on:change={() => {
+        dispatch("change", on);
+      }}
       on:click|stopPropagation
     />
     <div

@@ -45,6 +45,9 @@ import {
   ResourceActionType,
   ResourceAccessMode
 } from "../components/resourceStores/resource.type";
+import { uiState } from "./uiState.store";
+import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
+import { Action } from "../types/action.enum";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -471,6 +474,9 @@ function initAppStore(seed: AppStore) {
       gotoPath("404");
       return;
     }
+    const interactionMode = uiState.getProductSpecificState(
+      Action.MODE_OF_INTERACTION
+    );
     if (action.type === ActionType.LINK) {
       const url = get(appStore).appData.urls[action.action];
       if (!url) return;
@@ -482,7 +488,10 @@ function initAppStore(seed: AppStore) {
       confirmationNotification.notify(action.confirmation);
     } else if (params.isReturnIfComponent) {
       return action;
-    } else if (action.type === ActionType.MODAL) {
+    } else if (
+      action.type === ActionType.MODAL ||
+      interactionMode === InteractionMode.COMMAND_ONLY
+    ) {
       modalEvent.notify({
         path: action.action,
         isShow: true,

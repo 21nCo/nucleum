@@ -17,7 +17,12 @@
   import LocalLeftNav from "./LocalLeftNav.svelte";
   import view from "$lib/client/stores/view.store";
   import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
+  import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
+  import { uiState } from "$lib/client/stores/uiState.store";
+  import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
+  import { Action } from "$lib/client/types/action.enum";
   let isLiteMode = $context.isEmbed && $context.isSheet;
+  let interactionMode: InteractionMode;
   onMount(async () => {
     if ($account.isLoggedIn) await initializeData();
     const appEventSub = appEvents.subscribe(async (e) => {
@@ -26,10 +31,16 @@
         if (!e.value) sessionStore.loadEmptyState();
       }
     });
+    const uiStateSub = uiState.subscribe(() => {
+      interactionMode = uiState.getProductSpecificState(
+        Action.MODE_OF_INTERACTION
+      );
+    });
     $appLoadingState.isLocalLoaded = true;
     return () => {
       sessionStore.clearIntervals();
       appEventSub();
+      uiStateSub();
     };
   });
   async function initializeData() {
@@ -37,6 +48,9 @@
     if ($sessionStore?.isSessionRunning) {
       appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
     }
+    interactionMode = uiState.getProductSpecificState(
+      Action.MODE_OF_INTERACTION
+    );
   }
   async function handleVisibilityChange() {
     if (document?.hidden) {
@@ -61,13 +75,18 @@
 
 <BaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-    <LocalLeftNav />
-    <div
-      class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
-    >
-      <slot />
-    </div>
-    <!-- <RightPanel /> -->
+    <!-- TODO - except touch devices -->
+    {#if interactionMode === InteractionMode.COMMAND_ONLY}
+      <CommandModePage />
+    {:else}
+      <LocalLeftNav />
+      <div
+        class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
+      >
+        <slot />
+      </div>
+      <!-- <RightPanel /> -->
+    {/if}
   {/if}
   <Notifications />
   <BackgroundSoundPlayer />
