@@ -4,17 +4,15 @@
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
   import { Position } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
-  import { Size } from "$lib/client/types/size.enum";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   export let isInFullScreen: boolean = false;
   const buttonProps: {
-    size: Size.lg;
+    parentBgIndex: number;
     tooltipOptions: IPopoverRenderBaseParams;
   } = {
-    size: Size.lg,
+    parentBgIndex: isInFullScreen ? 2 : 1,
     tooltipOptions: {
       placement: Position.TopCenter,
       offsetInPx: 4,

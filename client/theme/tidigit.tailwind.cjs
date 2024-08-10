@@ -121,7 +121,7 @@ module.exports = {
       }
     }
   },
-  darkMode: "class",
+  darkMode: "selector",
   purge: {
     content: ["./lib/**/*.html", "./lib/**/*.svelte"],
     options: {
