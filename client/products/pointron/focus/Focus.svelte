@@ -44,7 +44,8 @@
     callback: onStartSessionClicked,
     icon: "play",
     variant: ButtonVariant.PRIMARY,
-    style: ButtonStyle.DEFAULT
+    style: ButtonStyle.DEFAULT,
+    shortcut: PointronAction.START_FOCUS_SESSION
   };
   /**
    * Refresh the page data

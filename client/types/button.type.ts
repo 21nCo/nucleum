@@ -15,6 +15,7 @@ export type IButtonParams = {
   variant?: ButtonVariant;
   style?: ButtonStyle;
   parentBgIndex?: number;
+  shortcut?: string;
 };
 
 export enum ButtonVariant {

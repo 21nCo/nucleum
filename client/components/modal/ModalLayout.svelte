@@ -85,6 +85,7 @@
     </div>
     {#if params.layout?.primaryAction || params.layout?.secondaryAction}
       <ModalFooter
+        action={path}
         primaryAction={params.layout?.primaryAction}
         secondaryAction={params.layout?.secondaryAction}
         bind:this={footerRef}

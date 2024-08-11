@@ -4,6 +4,9 @@ import { logger } from "$lib/client/stores/log.store";
 import { get } from "svelte/store";
 import { ResourceAccessPoint } from "../components/resourceStores/resource.type";
 import { appStore } from "./app.store";
+import { ObservableStore } from "./client.store";
+import { Action } from "../types/action.enum";
+import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 
 type UIState = {
   [key: string]: any;
@@ -73,7 +76,38 @@ class UiStateStore extends KeyValueStore<UIState> {
     const product = get(appStore).product;
     const fullKey = `${product}-${key}`;
     this.modify({ [fullKey]: value });
+    uiStateDerived.refreshState();
   }
 }
 
 export const uiState = new UiStateStore();
+
+class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
+  constructor() {
+    super("derived-ui-state");
+    this.set({ isShowHotKeyHints: false });
+  }
+
+  refreshState() {
+    this.refreshShortcutHintsState();
+  }
+
+  refreshShortcutHintsState() {
+    const modeOfInteraction = uiState.getProductSpecificState(
+      Action.MODE_OF_INTERACTION
+    );
+    const isShortcutHintsEnabled = uiState.getProductSpecificState(
+      Action.SHOW_MORE_SHORTCUT_HINTS
+    );
+    this.update((x) => {
+      return {
+        ...x,
+        isShowHotKeyHints:
+          modeOfInteraction === InteractionMode.KEYBOARD_CENTRIC &&
+          isShortcutHintsEnabled
+      };
+    });
+  }
+}
+
+export const uiStateDerived = new UIDerivedState();

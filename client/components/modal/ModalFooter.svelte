@@ -6,14 +6,32 @@
     ButtonStyle,
     type IButtonParams
   } from "$lib/client/types/button.type";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import { isPrimaryActionDisabled } from "./modal.store";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   const dispatch = createEventDispatcher();
+  export let action: string;
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
   export let primaryAction: IButtonParams | undefined = undefined;
   export let secondaryAction: IButtonParams | undefined = undefined;
   let isActionInProgress = false;
+  onMount(() => {
+    const appEventSub = appEvents.subscribe((x) => {
+      const frontDialog = getTopDialog();
+      console.log({ frontDialogId: frontDialog?.id, action, event: x.event });
+      if (!frontDialog || action != frontDialog?.id) return;
+      if (x.event === GlobalEvent.ESCAPE) {
+        close();
+      } else if (x.event === GlobalEvent.ENTER) {
+        onPrimaryClick();
+      }
+    });
+    return () => {
+      appEventSub();
+    };
+  });
   export async function close(
     from: "primary" | "secondary" | "close" = "close"
   ) {
@@ -22,6 +40,18 @@
       return false;
     }
     dispatch("close", from);
+  }
+  async function onPrimaryClick() {
+    isActionInProgress = true;
+    if (primaryAction?.callback) await primaryAction?.callback();
+    close("primary");
+  }
+  function getTopDialog() {
+    const dialogs = Array.from(document.querySelectorAll("dialog[open]"));
+    if (dialogs.length === 0) {
+      return null;
+    }
+    return dialogs[dialogs.length - 1];
   }
 </script>
 
@@ -33,11 +63,7 @@
       style={primaryAction.style ?? ButtonStyle.DEFAULT}
       isLoading={isActionInProgress}
       isDisabled={$isPrimaryActionDisabled}
-      on:click={async () => {
-        isActionInProgress = true;
-        if (primaryAction?.callback) await primaryAction?.callback();
-        close("primary");
-      }}
+      on:click={onPrimaryClick}
       label={primaryAction.label}
     />
   {/if}

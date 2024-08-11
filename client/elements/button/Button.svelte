@@ -7,6 +7,8 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   import HoverableElement from "../HoverableElement.svelte";
+  import { uiStateDerived } from "$lib/client/stores/uiState.store";
+  import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -43,7 +45,20 @@
   export let id: string = "";
   let buttonRef: any;
   export let isHovering: boolean = false;
+  export let shortcut: string | undefined = undefined;
   $: isIconOnlyButton = !label && !$$slots.default;
+
+  function resolveShortcutText() {
+    if (!shortcut) return;
+    const keyMap = keyboardShortcuts.fecthKeyMap();
+    const shortcutDetail = keyMap.find((x) => x.action === shortcut);
+    if (!shortcutDetail) return;
+    return (
+      shortcutDetail.modifiers.join(" + ") +
+      " + " +
+      shortcutDetail.key.toUpperCase()
+    );
+  }
 </script>
 
 <HoverableElement
@@ -138,6 +153,13 @@
       <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
+      {#if $uiStateDerived?.isShowHotKeyHints && shortcut}
+        <span
+          class="flex whitespace-nowrap text-b5 border border-brs3 rounded-md px-1 safe"
+        >
+          {resolveShortcutText()}
+        </span>
+      {/if}
     {:else}
       <slot />
     {/if}

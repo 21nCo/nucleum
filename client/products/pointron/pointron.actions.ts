@@ -538,6 +538,31 @@ export const pointronActions: IAction[] = [
     }
   },
   {
+    action: PointronAction.START_FOCUS_SESSION,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      sessionStore.startSession();
+    }
+  },
+  {
+    action: PointronAction.FINISH_FOCUS_SESSION,
+    label: "Finish the current session",
+    fn: sessionStore.finishSession,
+    type: ActionType.CONFIRMATION,
+    cmdBarPreCondition: isSessionRunningPreCondition,
+    confirmation: {
+      title: "Finish focus session",
+      message: "Are you sure you want to finish this focus session?",
+      confirmAction: {
+        label: "Finish",
+        variant: ButtonVariant.PRIMARY,
+        callback: () => {
+          return Promise.resolve(sessionStore.finishSession());
+        }
+      }
+    }
+  },
+  {
     action: PointronAction.ABANDON_SESSION,
     label: "Abandon the current session",
     fn: sessionStore.close,

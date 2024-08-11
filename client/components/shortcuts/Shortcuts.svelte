@@ -4,22 +4,25 @@
   import { isTextElement } from "$lib/client/utils/browser.utils";
   import { Action } from "$lib/client/types/action.enum";
   import { keyboardShortcuts } from "./shortcuts.store";
-  function handleShortcutsForTextBoxScenario(event: KeyboardEvent) {
-    const target = event.target || event.srcElement;
-    if (event.key === "Escape") {
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
+  function handleSystemShortcuts(event: KeyboardEvent) {
+    if (event.key === "Escape" || event.key === "Enter") {
       event.preventDefault();
-      modalEvent.hide();
+      appEvents.publish(event.key as GlobalEvent);
+      // modalEvent.hide();
       return true;
     }
-    if (isTextElement(target)) return;
-    if (event.key === "q") {
-      event.preventDefault();
-      appStore.runAction(Action.TOGGLE_SIDEBAR);
-      return true;
-    }
+    // if (event.key === "q") {
+    //   event.preventDefault();
+    //   appStore.runAction(Action.TOGGLE_SIDEBAR);
+    //   return true;
+    // }
   }
   const shortcutListener = (event: KeyboardEvent) => {
-    const isShortcutRunCompleted = handleShortcutsForTextBoxScenario(event);
+    const target = event.target || event.srcElement;
+    if (isTextElement(target)) return;
+    const isShortcutRunCompleted = handleSystemShortcuts(event);
     if (isShortcutRunCompleted) return;
     let modifiers = [];
     if (event.metaKey || event.ctrlKey) {
@@ -49,8 +52,12 @@
     const keyMap = keyboardShortcuts.fecthKeyMap();
     const shortcut = keyMap.find((s: any) => {
       if (s.key.toLowerCase() !== key.toLowerCase()) return false;
-      if (s.modifiers.length !== modifiers.length) return false;
-      return s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()));
+      if (s.modifiers && s.modifiers.length !== modifiers.length) return false;
+      return (
+        (s.modifiers &&
+          s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()))) ||
+        (!s.modifiers && modifiers.length === 0)
+      );
     });
     console.log({ key, modifiers, shortcut, keyMap });
     if (!shortcut) return;
