@@ -20,7 +20,7 @@ export type IGoal = {
   tags?: string[];
   isArchived?: boolean;
   isPinnedForQuickStart?: boolean;
-  isFavorite?: boolean;
+  isStarred?: boolean;
   isCompleted?: boolean;
   color?: number;
   analytics?: GoalAnalyticsType;
@@ -53,7 +53,7 @@ export type GoalAnalyticsType = {
 
 export type QuickFocusItem = Pick<
   IGoal,
-  "id" | "label" | "color" | "parent" | "tags" | "isFavorite"
+  "id" | "label" | "color" | "parent" | "tags" | "isStarred"
 > & {
   focus?: number;
 };

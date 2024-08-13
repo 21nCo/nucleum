@@ -81,7 +81,11 @@
     on:click={onClick}
     bind:isHovering
   >
-    <div class="flex gap-1">
+    <div
+      class={cn("flex gap-1", {
+        "flex-col items-center": layoutContext === LayoutContext.PORTRAIT
+      })}
+    >
       {#if item.icon && item.icon != "initials"}
         <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
         <div class="w-6 flex justify-center" bind:this={buttonRef}>

@@ -77,9 +77,8 @@
     class={cn(
       "modal flex flex-col items-center justify-between w-full h-full",
       {
-        "p-2 lg:p-4 gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-        "py-4 lg:py-6 px-3 tp:px-4 lg:px-6 gap-4 lg:gap-8":
-          !params.layout?.ignoreSafeArea && size !== Size.xs
+        "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
+        "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs
       }
     )}
     in:fly={{
@@ -100,7 +99,13 @@
           : params.layout?.isShowClose}
       />
     {/if}
-    <div class="flex flex-col gap-4 w-full flex-grow">
+    <div
+      class={cn("flex flex-col gap-4 w-full flex-grow", {
+        "p-2 lg:p-4": !params.layout?.ignoreSafeArea && size === Size.xs,
+        "px-3 tp:px-8 lg:px-12":
+          !params.layout?.ignoreSafeArea && size !== Size.xs
+      })}
+    >
       <slot />
     </div>
     {#if params.layout?.primaryAction || params.layout?.secondaryAction}

@@ -49,7 +49,7 @@
   <OptionSelector
     bind:selected={selectedMode}
     style={OptionSelectorStyle.OUTLINE}
-    size={Size.sm}
+    size={Size.md}
     labelProps={{
       label: "Preferred mode of interaction",
       tooltip: {
@@ -83,7 +83,6 @@
       }
     ]}
   />
-  <InlineInfoBanner content={resolveInfo(selectedMode)} />
   {#if selectedMode === InteractionMode.KEYBOARD_CENTRIC}
     <SwitchInput
       label={{
@@ -113,7 +112,6 @@
     <div class="flex flex-col items-start w-full gap-3">
       <Text content="Keyboard shortcuts" style={TextStyle.SECTION_HEADING} />
       <ShortcutSettings />
-      <ScrollViewBottomSpacer />
     </div>
   {:else if selectedMode === InteractionMode.COMMAND_ONLY}
     <InlineInfoBanner
@@ -121,4 +119,6 @@
       content="Command only mode is currenlty in beta. Please report any issues you encounter."
     />
   {/if}
+  <InlineInfoBanner content={resolveInfo(selectedMode)} />
+  <ScrollViewBottomSpacer />
 </div>

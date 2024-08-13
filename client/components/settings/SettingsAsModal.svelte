@@ -19,13 +19,15 @@
   let pageAction: IAction | null = null;
   let config: any;
   onMount(() => {
-    appStore.subscribe((x: AppStore) => {
+    const sub = appStore.subscribe((x: AppStore) => {
       if (x?.appData?.cp) {
         let cp = x.appData.cp;
         if (isValidArray(cp)) config = sortArrayByOrder(cp);
-        console.log({ config });
       }
     });
+    return () => {
+      sub();
+    };
   });
   async function runAction(slug: string) {
     if (!slug) return;
@@ -39,7 +41,7 @@
 
 <div class="flex w-full h-full">
   <div
-    class="flex flex-col overflow-auto gap-8 w-80 bg-bgs2 rounded-l-md py-4 items-start"
+    class="flex flex-col overflow-auto gap-8 w-80 shrink-0 bg-bgs2 rounded-l-md py-4 items-start"
   >
     <div class="pl-4">
       <Text content="Settings" style={TextStyle.PAGE_HEADING} />

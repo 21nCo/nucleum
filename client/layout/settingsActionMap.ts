@@ -25,11 +25,12 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     action: Action.MODE_OF_INTERACTION,
     label: "Mode of interaction",
     path: "cp/interaction-mode",
+    icon: "cursor-arrow-rays",
     component: InteractionModeSettings,
     modalParams: {
       title: "Mode of interaction",
       layout: {
-        size: Size.lg
+        size: Size.xl
       }
     }
   },

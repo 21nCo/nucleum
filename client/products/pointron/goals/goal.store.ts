@@ -43,7 +43,7 @@ export const seedGoal: IGoal = {
   color: undefined,
   isArchived: false,
   isCompleted: false,
-  isFavorite: false,
+  isStarred: false,
   isPinnedForQuickStart: false,
   subGoalCount: 0,
   subGoals: [],
@@ -75,8 +75,8 @@ function filterGoals(
   if (filters.tag) {
     if (filters.tag === TagId.ALL) {
       filteredGoals = allItems;
-    } else if (filters.tag === TagId.FAVORITES) {
-      filteredGoals = allItems.filter((x) => x.isFavorite);
+    } else if (filters.tag === TagId.STARRED) {
+      filteredGoals = allItems.filter((x) => x.isStarred);
     } else {
       filteredGoals = allItems.filter((x) =>
         x.tags?.includes(filters.tag as string)
@@ -140,7 +140,7 @@ function flattenSubGoalsAsGoals(
       : [],
     isArchived: goal.isArchived,
     isPinnedForQuickStart: goal.isPinnedForQuickStart,
-    isFavorite: goal.isFavorite,
+    isFavorite: goal.isStarred,
     isCompleted: goal.isCompleted,
     color: goal.color,
     createdAt: new Date().toISOString(),

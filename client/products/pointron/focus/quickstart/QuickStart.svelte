@@ -32,7 +32,7 @@
   $: selectedTagName =
     $quickFocusItemStore.selectedTagId &&
     $quickFocusItemStore.selectedTagId != TagId.ALL &&
-    $quickFocusItemStore.selectedTagId != TagId.FAVORITES
+    $quickFocusItemStore.selectedTagId != TagId.STARRED
       ? $tagStore.items.find((x) => x.id === $quickFocusItemStore.selectedTagId)
           ?.label
       : "";
@@ -127,6 +127,7 @@
           <Button
             label={isInEditMode ? "Close editor" : "Edit"}
             size={Size.sm}
+            isPreventMinWidth={true}
             on:click={() => (isInEditMode = !isInEditMode)}
           />
         </div>
@@ -138,7 +139,7 @@
       size={Size.sm}
       {isLoadingState}
       isSearchContext={true}
-      mainText={$quickFocusItemStore.selectedTagId === TagId.FAVORITES
+      mainText={$quickFocusItemStore.selectedTagId === TagId.STARRED
         ? "No favorite goals found"
         : !$quickFocusItemStore.selectedTagId ||
             $quickFocusItemStore.selectedTagId === TagId.ALL
@@ -157,7 +158,7 @@
       }}
     >
       <slot name="subtext" slot="subtext">
-        {#if $quickFocusItemStore.selectedTagId === TagId.FAVORITES}
+        {#if $quickFocusItemStore.selectedTagId === TagId.STARRED}
           Please favorite a pinned goal to see them here
         {:else if !$quickFocusItemStore.selectedTagId || $quickFocusItemStore.selectedTagId === TagId.ALL}
           Please create a new goal or pin an existing one to the quick focus

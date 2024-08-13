@@ -34,7 +34,7 @@
   $: selectedTagName =
     selectedTagId &&
     selectedTagId != TagId.ALL &&
-    selectedTagId != TagId.FAVORITES
+    selectedTagId != TagId.STARRED
       ? $tagStore.items.find((x) => x.id === selectedTagId)?.label
       : "";
 
@@ -196,7 +196,7 @@
                 isSearchContext={true}
               >
                 <slot name="subtext" slot="subtext">
-                  {#if selectedTagId === TagId.FAVORITES}
+                  {#if selectedTagId === TagId.STARRED}
                     Please favorite a goal to see them here.
                   {:else if !selectedTagId || selectedTagId === TagId.ALL}
                     Please create a new goal using the button below.

@@ -34,7 +34,7 @@
     isCollapsed = !isCollapsed;
     e.stopPropagation();
   }
-  $: console.log("view current path", $appStore.currentPath);
+  // $: console.log("view current path", $appStore.currentPath);
   $: isActive = $appStore.currentPath.includes(id);
 </script>
 
@@ -42,12 +42,12 @@
   <button on:click={onclick} class="relative flex flex-col w-full">
     <CustomColorPropagator
       color={content.color}
-      class={cn("flex justify-between w-full p-3 mo:py-4", {
+      class={cn("flex gap-4 w-full p-3 mo:py-4", {
         "bg-ccs1": isActive
       })}
       style="padding-left: {nestingLevel ? nestingLevel * 2.5 : 0.8}rem"
     >
-      <span class="flex gap-2 text-left w-full">
+      <span class="flex gap-2 text-left w-full min-w-0 flex-1">
         {#if content.icon}
           <Icon
             icon={content.icon}
@@ -66,12 +66,9 @@
             on:click={onchevclick}
           />
         {/if}
-        <TextWithHoverTooltip
-          text={content.label}
-          class="w-7/10 portrait:w-4/5 truncate"
-        />
+        <TextWithHoverTooltip text={content.label} class="truncate" />
       </span>
-      <span class="absolute right-0 mr-3">
+      <span class="shrink-0">
         {#if content.icon && content.childrenCount > 0}
           <Icon
             icon={isCollapsed ? "chevright" : "chevdown"}

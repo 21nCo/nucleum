@@ -411,6 +411,7 @@ export class ResourceFIRStore<
     this._mutation(PersistanceActionType.DELETE, id);
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != id);
+      x.filtered = this.defaultFilter ? this.defaultFilter(x.items) : x.items;
       return x;
     });
     this.cache();

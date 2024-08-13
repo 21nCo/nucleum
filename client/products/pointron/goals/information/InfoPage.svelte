@@ -24,7 +24,7 @@
 <div class="flex flex-col gap-10">
   <div class="flex flex-col gap-4">
     {#if $isInEditMode && !$currentGoal.isArchived}
-      <GoalActions />
+      <!-- <GoalActions /> -->
       {#if $currentGoal.parent?.hierarchy.length === 0}
         <GoalColorPickerWithPreview bind:hue={$currentGoal.color} />
       {/if}
@@ -63,7 +63,7 @@
   </div>
   <div class="flex flex-col gap-4">
     {#if $currentGoal.isArchived}
-      <GoalActions />
+      <!-- <GoalActions /> -->
       <InlineInfoBanner
         content="This goal is archived. **Unarchive** it to add sub goals, view insights, add while focusing. This goal will still be shown in analytics and journal. Please **delete** the goal to completely remove it everywhere."
       />

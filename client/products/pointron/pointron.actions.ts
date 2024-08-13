@@ -130,8 +130,7 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Session Log",
       layout: {
-        size: Size.xl,
-        isShowClose: true
+        size: Size.xl
       }
     }
   },
@@ -204,7 +203,7 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Edit Preset",
       layout: {
-        size: Size.lg
+        size: Size.xl
       }
     }
   },
@@ -581,7 +580,7 @@ export const pointronActions: IAction[] = [
       title: "Create a new goal",
       isShowAsSheet: false,
       layout: {
-        size: Size.lg
+        size: Size.xl
       }
     }
   },

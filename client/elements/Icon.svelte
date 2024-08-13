@@ -111,6 +111,7 @@
   import ArrowUTurnLeft from "../icons/ArrowUTurnLeft.svelte";
   import Warning from "../icons/Warning.svelte";
   import ArrowTurnDownLeft from "../icons/ArrowTurnDownLeft.svelte";
+  import CursorArrowRays from "../icons/CursorArrowRays.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -520,6 +521,8 @@
         <AltText />
       {:else if icon === "gift"}
         <Gift />
+      {:else if icon === "cursor-arrow-rays"}
+        <CursorArrowRays {variant} />
       {:else if icon === "link-arrow-left"}
         <LinkArrow2 />
       {:else if icon === "link-arrow-down"}

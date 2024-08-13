@@ -58,7 +58,9 @@
   function onQuickDurationSelected(event: any) {
     item.duration = event?.detail * 60;
     item.endDate = new Date(defaultTime);
-    item.endTime = formatTime($userPreferences, item.endDate, "24")!;
+    item.endTime = formatTime($userPreferences, item.endDate, {
+      format: "24"
+    })!;
     updateStartTimeWRTDuration();
     performValidationChecks();
   }

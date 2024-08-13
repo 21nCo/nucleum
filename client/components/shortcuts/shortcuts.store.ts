@@ -22,32 +22,32 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   }
   fecthKeyMap(): (IKeyboardShortcut & { action: string })[] {
     const defaultKeyMap = get(appStore)?.appData?.shortcuts;
-    const tempKeyMap = {
-      TOGGLE_SIDEBAR: {
-        key: "q"
-      },
-      focus: {
-        key: "f"
-      },
-      goal: {
-        key: "g"
-      },
-      analytics: {
-        key: "a"
-      },
-      journal: {
-        key: "j"
-      },
-      START_FOCUS_SESSION: {
-        key: "s",
-        modifiers: ["Shift"]
-      },
-      FINISH_FOCUS_SESSION: {
-        key: "f",
-        modifiers: ["Shift"]
-      }
-    };
-    return Object.entries({ ...tempKeyMap, ...defaultKeyMap, ...this.get() })
+    // const tempKeyMap = {
+    //   TOGGLE_SIDEBAR: {
+    //     key: "q"
+    //   },
+    //   focus: {
+    //     key: "f"
+    //   },
+    //   goal: {
+    //     key: "g"
+    //   },
+    //   analytics: {
+    //     key: "a"
+    //   },
+    //   journal: {
+    //     key: "j"
+    //   },
+    //   START_FOCUS_SESSION: {
+    //     key: "s",
+    //     modifiers: ["Shift"]
+    //   },
+    //   FINISH_FOCUS_SESSION: {
+    //     key: "f",
+    //     modifiers: ["Shift"]
+    //   }
+    // };
+    return Object.entries({ ...defaultKeyMap, ...this.get() })
       .map(([action, shortcut]) => ({
         action,
         key: shortcut?.key,
