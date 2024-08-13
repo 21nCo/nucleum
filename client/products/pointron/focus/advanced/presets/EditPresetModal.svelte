@@ -30,22 +30,6 @@
     numberOfBreaks: 1,
     breakReminder: $pointronPreferences.breakReminder
   };
-  // $sessionStore.composition ?? {
-  //   id: "",
-  //   type:
-  //     resolveUiState(
-  //       $userLocalPreferences.uiStates,
-  //       localUiStateEnum.advancedComposeType
-  //     ) ?? SessionCompositionType.POMODORO,
-  //   focusDuration:
-  //     $sessionStore.plannedDuration === 0
-  //       ? 28 * 60
-  //       : $sessionStore.plannedDuration,
-  //   breakDuration: 2 * 60,
-  //   numberOfBreaks: 1,
-  //   totalDuration: 0,
-  //   numberOfFocusRounds: 3,
-  // }
 
   onMount(() => {
     if (id) {
@@ -90,6 +74,7 @@
       />
     </div>
     <ModalFooter
+      action={PointronAction.EDIT_PRESET}
       primaryAction={{
         label: "Save",
         callback: saveHandler

@@ -14,11 +14,10 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import ComposeTotalsText from "./ComposeTotalsText.svelte";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
-  import { UIState } from "$lib/client/types/preferences.type";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   export let isExpandedMode: boolean = true;
-  let selectedMode: number = userPreferences.resolveUiState(
-    UIState.advancedMode
-  );
+  let selectedMode: number = refreshAdvancedModeState();
   let selectedDynamicDuration: number = 0;
   $: parentBackgroundIndex = isExpandedMode ? 1 : 2;
   function onDynamicSliderChange(event: any) {
@@ -35,17 +34,22 @@
   }
   function onModeSwitch(event: any) {
     console.log({ event });
-    const selected = event.detail === "Presets" ? 0 : 1;
-    userPreferences.setUiState({
-      property: UIState.advancedMode,
-      value: selected
+    selectedMode = event.detail === "Presets" ? 0 : 1;
+    uiState.setState(UIState.focusAdvancedComposeMode, selectedMode, {
+      isDeviceScoped: true
     });
   }
   onMount(() => {
     userPreferences.subscribe((value) => {
-      selectedMode = userPreferences.resolveUiState(UIState.advancedMode);
+      selectedMode = refreshAdvancedModeState();
     });
   });
+
+  function refreshAdvancedModeState() {
+    return uiState.getState(UIState.focusAdvancedComposeMode, {
+      isDeviceScoped: true
+    });
+  }
 </script>
 
 <div

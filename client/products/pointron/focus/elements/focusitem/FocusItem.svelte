@@ -49,14 +49,18 @@
   $: parentHierarchy = goal?.parent?.hierarchy?.map((x: any) => x.label);
   // $: console.log({ item, tasks, goal, parentHierarchy });
   onMount(() => {
-    if (item.id && contxt == "current") {
-      if (
-        isFocusAddTask &&
-        addTaskInputRef &&
-        $context.embed != Embed.HANDSET
-      ) {
-        addTaskInputRef?.focus();
+    try {
+      if (item.id && contxt == "current") {
+        if (
+          isFocusAddTask &&
+          addTaskInputRef &&
+          $context.embed != Embed.HANDSET
+        ) {
+          addTaskInputRef?.focus();
+        }
       }
+    } catch (e) {
+      console.warn("Error in focusItem.svelte", e);
     }
   });
   const unSubscribeDND = dragAndDropStore.subscribe(async (x: any) => {

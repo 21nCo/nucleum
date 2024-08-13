@@ -6,7 +6,6 @@
   } from "$lib/client/utils/touchGesture";
   import { onMount } from "svelte";
   import QuickStartThumbnail from "./QuickStartThumbnail.svelte";
-  import view from "$lib/client/stores/view.store";
   import { tagStore } from "$lib/client/products/pointron/pointron.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -16,41 +15,63 @@
   import { quickFocusItemStore } from "$lib/client/products/pointron/goals/goal.store";
   import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
-  import { UIState } from "$lib/client/types/preferences.type";
+  import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
 
   let isLoadingState = false;
   let searchInput = "";
-  let selectedTagId = "";
-  let layout = refreshLayoutState();
+  let layout = Layout.LIST;
+  let isInEditMode = false;
+  restoreLayoutState();
+  restoreTagSelection();
   $: selectedTagName =
-    selectedTagId &&
-    selectedTagId != TagId.ALL &&
-    selectedTagId != TagId.FAVORITES
-      ? $tagStore.items.find((x) => x.id === selectedTagId)?.label
+    $quickFocusItemStore.selectedTagId &&
+    $quickFocusItemStore.selectedTagId != TagId.ALL &&
+    $quickFocusItemStore.selectedTagId != TagId.FAVORITES
+      ? $tagStore.items.find((x) => x.id === $quickFocusItemStore.selectedTagId)
+          ?.label
       : "";
   async function refresh() {
     isLoadingState = true;
-    quickFocusItemStore.refresh({
-      tag: selectedTagId,
-      searchText: searchInput
-    });
+    quickFocusItemStore.refresh(searchInput);
     isLoadingState = false;
   }
   function filter() {
-    quickFocusItemStore.filter({ tag: selectedTagId, searchText: searchInput });
+    quickFocusItemStore.filter(searchInput);
   }
   onMount(() => {
-    const sub = userPreferences.subscribe((x) => {
-      layout = refreshLayoutState();
+    const sub = uiState.subscribe((x) => {
+      restoreLayoutState();
+      restoreTagSelection();
     });
     return () => {
       sub();
     };
   });
-  function refreshLayoutState() {
-    return userPreferences.resolveUiState(UIState.quickFocusLayout);
+  function restoreLayoutState() {
+    layout =
+      uiState.getState(UIState.quickFocusLayout, {
+        isDeviceScoped: true
+      }) ?? Layout.LIST;
+  }
+  function restoreTagSelection() {
+    $quickFocusItemStore.selectedTagId =
+      uiState.getState(UIState.quickFocusTag, {
+        isDeviceScoped: true
+      }) ?? TagId.ALL;
+    // filter();
+  }
+  function onTagSelect(e: CustomEvent<string>) {
+    console.log("onTagSelect", e.detail);
+    uiState.setState(UIState.quickFocusTag, e.detail, {
+      isDeviceScoped: true
+    });
+    filter();
   }
 </script>
 
@@ -64,38 +85,67 @@
   <!-- <div class="hidden text-xl" class:animate-spin={$swipeIsRefreshing}>↻</div> -->
   <QuickStartActions
     bind:searchInput
-    bind:selectedTagId
     on:search={filter}
-    on:select={filter}
+    on:select={onTagSelect}
   />
   {#if !isLoadingState && $quickFocusItemStore.filteredItems && $quickFocusItemStore.filteredItems.length > 0}
     <div
       id="QSinner"
       on:touchstart|stopPropagation={startTouch}
-      class={cn("relative flex w-full overflow-y-auto pb-60", {
-        "flex-col gap-3 flex-grow": layout === Layout.LIST,
-        "flex-wrap gap-2": layout != Layout.LIST
-      })}
+      class={cn("relative w-full flex flex-col gap-6 flex-grow")}
     >
       <!-- TODO - attach swipe refresh on touch device -->
-      {#if $quickFocusItemStore.isRefreshing}
-        <RefreshingOverlayFeedback />
+      <div
+        class={cn("w-full", {
+          "flex flex-col gap-3 grow": layout === Layout.LIST,
+          "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))]":
+            layout != Layout.LIST,
+          "gap-2": layout != Layout.LIST && !isInEditMode,
+          "gap-5 pt-4": isInEditMode
+        })}
+      >
+        {#if $quickFocusItemStore.isRefreshing}
+          <RefreshingOverlayFeedback />
+        {/if}
+        {#each $quickFocusItemStore.filteredItems as goal, index (goal)}
+          <QuickStartThumbnail {refresh} {goal} {layout} {isInEditMode} />
+        {/each}
+      </div>
+      {#if $quickFocusItemStore.selectedTagId === TagId.ALL}
+        <div class="flex flex--col gap-2 w-full justify-center items-center">
+          {#if isInEditMode}
+            <Button
+              label="Pin another goal"
+              size={Size.sm}
+              type={ButtonVariant.PRIMARY}
+              style={ButtonStyle.OUTLINED}
+              on:click={() => {
+                appStore.runAction(PointronAction.PIN_TO_QUICK_FOCUS);
+              }}
+            />
+          {/if}
+          <Button
+            label={isInEditMode ? "Close editor" : "Edit"}
+            size={Size.sm}
+            on:click={() => (isInEditMode = !isInEditMode)}
+          />
+        </div>
       {/if}
-      {#each $quickFocusItemStore.filteredItems as goal, index (goal)}
-        <QuickStartThumbnail {refresh} {goal} {layout} />
-      {/each}
+      <ScrollViewBottomSpacer />
     </div>
   {:else}
     <EmptyStatusView
       size={Size.sm}
       {isLoadingState}
       isSearchContext={true}
-      mainText={selectedTagId === TagId.FAVORITES
+      mainText={$quickFocusItemStore.selectedTagId === TagId.FAVORITES
         ? "No favorite goals found"
-        : !selectedTagId || selectedTagId === TagId.ALL
+        : !$quickFocusItemStore.selectedTagId ||
+            $quickFocusItemStore.selectedTagId === TagId.ALL
           ? "No pinned goals found"
           : "No goals found"}
-      actionText={!selectedTagId || selectedTagId === TagId.ALL
+      actionText={!$quickFocusItemStore.selectedTagId ||
+      $quickFocusItemStore.selectedTagId === TagId.ALL
         ? "Create new goal"
         : ""}
       on:click={() => {
@@ -107,9 +157,9 @@
       }}
     >
       <slot name="subtext" slot="subtext">
-        {#if selectedTagId === TagId.FAVORITES}
+        {#if $quickFocusItemStore.selectedTagId === TagId.FAVORITES}
           Please favorite a pinned goal to see them here
-        {:else if !selectedTagId || selectedTagId === TagId.ALL}
+        {:else if !$quickFocusItemStore.selectedTagId || $quickFocusItemStore.selectedTagId === TagId.ALL}
           Please create a new goal or pin an existing one to the quick focus
           section.
         {:else}

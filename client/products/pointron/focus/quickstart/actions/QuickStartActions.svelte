@@ -1,15 +1,15 @@
 <script lang="ts">
   import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { Display } from "$lib/client/types/view.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { quickFocusItemStore } from "../../../goals/goal.store";
   import TagsContainer from "../../../goals/TagsContainer.svelte";
   import QuickStartLayoutToggle from "./QuickStartLayoutToggle.svelte";
-  import QuickStartSearch from "./QuickStartSearch.svelte";
   export let searchInput = "";
-  export let selectedTagId = "";
   let isShowSearchBar = false;
   export let context: "bar" | "topright" = "bar";
   let searchInputRef: any;
@@ -47,7 +47,10 @@
         />
       </div>
       <div class="w-[76%]">
-        <TagsContainer bind:selectedTagId on:select />
+        <TagsContainer
+          bind:selectedTagId={$quickFocusItemStore.selectedTagId}
+          on:select
+        />
       </div>
       <div class="flex justify-center w-[12%]">
         <QuickStartLayoutToggle />
@@ -55,6 +58,13 @@
     {/if}
   </div>
 {:else}
-  <QuickStartSearch bind:value={searchInput} on:search />
-  <TagsContainer bind:selectedTagId on:select />
+  <InlineSearchBar
+    bind:query={searchInput}
+    on:search
+    placeholder="Search for a goal"
+  />
+  <TagsContainer
+    bind:selectedTagId={$quickFocusItemStore.selectedTagId}
+    on:select
+  />
 {/if}

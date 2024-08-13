@@ -30,6 +30,7 @@
     }}
   />
   <ModalFooter
+    action={PointronAction.EDIT_TAG}
     on:close={() => {
       modalEvent.hideSpecific(PointronAction.EDIT_TAG);
     }}

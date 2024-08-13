@@ -11,7 +11,7 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { uiStateDerived } from "$lib/client/stores/uiState.store";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
   const dispatch = createEventDispatcher();
   export let item: IAction;
@@ -55,6 +55,7 @@
 
 {#key tooltip}
   <HoverableElement
+    type="button"
     {tooltip}
     tooltipOptions={{ placement: Position.Right }}
     class={cn(
@@ -115,7 +116,7 @@
     {#if isShowHotKeyHint}
       <span
         class={cn(
-          "flex justify-center items-center w-4 h-4 text-b5 rounded-md",
+          "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
           {
             "bg-aps2 text-fgs1": isActive,
             "bg-bgs3": !isActive

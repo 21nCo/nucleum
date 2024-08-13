@@ -1,28 +1,20 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
-  import modalEvent from "$lib/client/components/modal/modal.store";
   import { isTextElement } from "$lib/client/utils/browser.utils";
-  import { Action } from "$lib/client/types/action.enum";
   import { keyboardShortcuts } from "./shortcuts.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   function handleSystemShortcuts(event: KeyboardEvent) {
     if (event.key === "Escape" || event.key === "Enter") {
-      event.preventDefault();
+      // event.preventDefault();
       appEvents.publish(event.key as GlobalEvent);
-      // modalEvent.hide();
       return true;
     }
-    // if (event.key === "q") {
-    //   event.preventDefault();
-    //   appStore.runAction(Action.TOGGLE_SIDEBAR);
-    //   return true;
-    // }
   }
   const shortcutListener = (event: KeyboardEvent) => {
     const target = event.target || event.srcElement;
-    if (isTextElement(target)) return;
     const isShortcutRunCompleted = handleSystemShortcuts(event);
+    if (isTextElement(target)) return;
     if (isShortcutRunCompleted) return;
     let modifiers = [];
     if (event.metaKey || event.ctrlKey) {

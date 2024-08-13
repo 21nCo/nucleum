@@ -35,7 +35,7 @@ export type IAction = {
   confirmation?: ConfirmationNotification;
   loadingComponent?: any;
   searchActionParams?: {
-    searchItemType: Resource;
+    searchStoreId: string;
     itemLabel: string;
     callback: (id: string, label?: string) => void;
   };

@@ -2,7 +2,6 @@
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import view from "$lib/client/stores/view.store";
   import { page } from "$app/stores";
-  import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import TagsContainer from "$lib/client/products/pointron/goals/TagsContainer.svelte";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -23,6 +22,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { tagStore } from "../pointron.store";
   import { archivedResourceFilter } from "$lib/client/utils/utils";
+  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
 
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
@@ -98,7 +98,6 @@
     class="flex w-full h-full select-none relative"
   >
     <Panel
-      title="Goals"
       panelSize={Size.md}
       floatingButton={{
         label: "Create new goal",
@@ -110,19 +109,21 @@
       }}
     >
       <slot name="nonpadded" slot="nonpadded">
-        <div class="flex flex-col gap-4 px-4 pb-2 items-start">
-          <Autocomplete
-            inputClassList="rounded-full"
-            bind:inputValue={searchInput}
+        <div class="flex flex-col w-full gap-4 pb-2 items-start">
+          <InlineSearchBar
+            size={Size.lg}
+            bind:query={searchInput}
             on:search={filter}
-            placeholder="search goals"
-            hideResetIcon
+            isPadded={true}
+            placeholder="Search goals"
           />
-          <TagsContainer
-            bind:selectedTagId
-            on:select={filter}
-            isShowAddTag={true}
-          />
+          <div class="px-2 w-full">
+            <TagsContainer
+              bind:selectedTagId
+              on:select={filter}
+              isShowAddTag={true}
+            />
+          </div>
         </div>
         <div
           id="GoalsLayoutInner"

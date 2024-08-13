@@ -174,7 +174,7 @@
     </ColorLayer>
   </div>
 {/if}
-{#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
+<!-- {#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
   <div class="fixed bottom-0 right-0 mr-6 mb-6">
     <Button
       icon={$appStore.appData?.bottomRightAction}
@@ -184,7 +184,7 @@
       }}
     />
   </div>
-{/if}
+{/if} -->
 
 {#if (isValidArrayWithData($toasts) || (isValidArrayWithData($mutationQueue) && isShowSyncErrorMessage)) && !$view.isPortrait}
   <div
@@ -236,7 +236,12 @@
 {/each}
 
 {#if $confirmationNotification}
-  <Modal show={true} id="confirmation" isDismissable={true} size={Size.xs}>
+  <Modal
+    show={true}
+    id={Action.CONFIRMATION}
+    isDismissable={true}
+    size={Size.xs}
+  >
     <ModalLayout
       path={Action.CONFIRMATION}
       params={{

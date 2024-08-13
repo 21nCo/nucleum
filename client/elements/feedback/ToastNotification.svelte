@@ -58,7 +58,7 @@
           {notification.actionText}
         </Button>
       {/if}
-      {#if !notification.isHideClose}
+      {#if !notification.isNonDismissable}
         <Button icon="cross" on:click={clickHandler} />
       {/if}
     </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { IAction } from "$lib/client/types/action.type";
+  import { ActionType, type IAction } from "$lib/client/types/action.type";
   import SearchActionResults from "./SearchActionResults.svelte";
   import CmdResults from "./CmdResults.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -9,6 +9,9 @@
   import { Action } from "$lib/client/types/action.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  export let command: string | undefined = undefined;
+  export let commandType: ActionType | undefined = undefined;
   export let isFullPageContext: boolean = false;
   let value: string = "";
   let inputRef: HTMLInputElement;
@@ -21,6 +24,11 @@
   let placeholder = defaultPlaceholder;
   onMount(() => {
     inputRef?.focus();
+    if (command && commandType && commandType === ActionType.SEARCH_CMD) {
+      const action = appStore.resolveAction(command);
+      if (!action) return;
+      onSearchAction({ detail: action });
+    }
   });
   function handleKeyUp(event: any) {
     if (event.key === "ArrowDown") {
@@ -33,9 +41,10 @@
   }
   function handleKeyDown(event: any) {
     if (event.key === "Backspace") {
-      if (value == "" && isPerformingSearchAction)
+      if (value == "" && isPerformingSearchAction) {
         isPerformingSearchAction = false;
-      else if (value == "") close();
+        placeholder = defaultPlaceholder;
+      } else if (value == "") close();
     }
   }
   function onSearchAction(event: any) {

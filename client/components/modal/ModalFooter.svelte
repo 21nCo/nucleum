@@ -1,15 +1,16 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-  import CloseButton from "$lib/client/elements/button/CloseButton.svelte";
-  import view from "$lib/client/stores/view.store";
   import {
     ButtonStyle,
+    ButtonVariant,
     type IButtonParams
   } from "$lib/client/types/button.type";
   import { createEventDispatcher, onMount } from "svelte";
   import { isPrimaryActionDisabled } from "./modal.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { resolveDialogOnFront } from "$lib/client/utils/browser.utils";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;
@@ -19,12 +20,10 @@
   let isActionInProgress = false;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
-      const frontDialog = getTopDialog();
+      const frontDialog = resolveDialogOnFront();
       console.log({ frontDialogId: frontDialog?.id, action, event: x.event });
       if (!frontDialog || action != frontDialog?.id) return;
-      if (x.event === GlobalEvent.ESCAPE) {
-        close();
-      } else if (x.event === GlobalEvent.ENTER) {
+      if (x.event === GlobalEvent.ENTER) {
         onPrimaryClick();
       }
     });
@@ -35,8 +34,8 @@
   export async function close(
     from: "primary" | "secondary" | "close" = "close"
   ) {
+    isActionInProgress = false;
     if (isPreventAutoClose) {
-      isActionInProgress = false;
       return false;
     }
     dispatch("close", from);
@@ -46,56 +45,43 @@
     if (primaryAction?.callback) await primaryAction?.callback();
     close("primary");
   }
-  function getTopDialog() {
-    const dialogs = Array.from(document.querySelectorAll("dialog[open]"));
-    if (dialogs.length === 0) {
-      return null;
-    }
-    return dialogs[dialogs.length - 1];
-  }
 </script>
 
 <div class="popover-footer flex gap-2 justify-center p-2">
   {#if primaryAction}
     <Button
-      type={primaryAction.variant ?? "primary"}
+      type={primaryAction.variant ?? ButtonVariant.PRIMARY}
       icon={primaryAction.icon}
       style={primaryAction.style ?? ButtonStyle.DEFAULT}
       isLoading={isActionInProgress}
       isDisabled={$isPrimaryActionDisabled}
       on:click={onPrimaryClick}
       label={primaryAction.label}
+      shortcut={GlobalEvent.ENTER}
     />
   {/if}
   {#if secondaryAction}
-    <!-- <Button
-      type={secondaryAction.variant ?? "secondary"}
+    <Button
+      type={secondaryAction.variant ?? ButtonVariant.SECONDARY}
       icon={secondaryAction.icon}
+      size={secondaryAction.size ?? Size.md}
+      style={ButtonStyle.OUTLINED}
       on:click={() => {
-        if (secondaryAction?.callback) secondaryAction?.callback();
-        close();
+        if (secondaryAction?.callback) secondaryAction.callback();
+        return close("secondary");
       }}
-    >
-      {secondaryAction.label}
-      {#if !$view.isPortrait && (secondaryAction.variant === ButtonVariant.SECONDARY || !secondaryAction.variant)}
-        <span class=" text-b4">Esc</span>
-      {/if}
-    </Button> -->
-    <CloseButton
-      params={{
-        ...secondaryAction,
-        callback: () => {
-          if (secondaryAction?.callback) secondaryAction.callback();
-          return close("secondary");
-        }
-      }}
+      label={secondaryAction?.label}
+      shortcut={!secondaryAction.variant ||
+      secondaryAction.variant === ButtonVariant.SECONDARY
+        ? GlobalEvent.ESCAPE
+        : undefined}
     />
   {:else if isShowClose}
-    <Button on:click={() => close("close")} style={ButtonStyle.OUTLINED}>
-      close
-      {#if !$view.isPortrait}
-        <span class="text-b3">Esc</span>
-      {/if}
-    </Button>
+    <Button
+      on:click={() => close("close")}
+      style={ButtonStyle.OUTLINED}
+      label="Close"
+      shortcut={GlobalEvent.ESCAPE}
+    />
   {/if}
 </div>

@@ -249,7 +249,12 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       type: AlertType.SUCCESS,
       id: generateUID()
     });
-    this.refresh({}, true);
+    this.refresh(
+      {
+        tag: TagId.ALL
+      },
+      true
+    );
     function isGoalNameValid(label: string) {
       if (!label) {
         goalEditErrorMessage.set("Please enter a valid goal name");
@@ -273,11 +278,15 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
       ]
     });
     if (!this.get()) {
-      this.set({ items: [], filteredItems: [] });
+      this.set({ items: [], filteredItems: [], selectedTagId: TagId.ALL });
     }
   }
-  filter(filters: { tag?: TagId | string; searchText?: string }) {
+  filter(searchQuery: string = "") {
     this.update((store) => {
+      const filters = {
+        tag: store.selectedTagId,
+        searchText: searchQuery
+      };
       let filteredItems = filterGoals(store.items, filters);
       filteredItems = filteredItems.map((x) => {
         x.color = x.color ?? x.parent?.color;
@@ -299,13 +308,13 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
       store.items = data;
       return store;
     });
-    this.filter({ tag: TagId.ALL, searchText: "" });
+    this.filter();
     this.cache();
   }
-  async refresh(filters: { tag?: TagId | string; searchText?: string }) {
+  async refresh(searchQuery: string = "") {
     logger.log("refreshing quickFocusItemStore");
     super.refresh();
-    this.filter(filters);
+    this.filter(searchQuery);
   }
   propagateDependencyChanges(data: any) {
     logger.log("propagateDependencyChanges to quickFocusItems store", data);
@@ -321,9 +330,17 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
         store.items.push(goalTransformed as QuickFocusItem);
         return store;
       });
-      this.filter({ tag: TagId.ALL, searchText: "" });
+      this.filter();
       this.cache();
     }
+  }
+  async pinGoal(id: string) {
+    const items = this.get().items;
+    const goal = items.find((x) => x.id === id);
+    if (goal) return -1;
+    await goalStore.modify({ id, isPinnedForQuickStart: true });
+    this.refresh();
+    return 1;
   }
 }
 

@@ -1,5 +1,5 @@
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import type { IAppMenuStore } from "$lib/client/types/appMenu.type";
+import type { IAppMenuStore } from "./appMenu.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { get } from "svelte/store";

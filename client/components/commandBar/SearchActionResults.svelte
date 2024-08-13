@@ -1,13 +1,12 @@
 <script lang="ts">
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { Persistence } from "$lib/client/persistence/persistence";
   import type { IAction } from "$lib/client/types/action.type";
   import { Size } from "$lib/client/types/size.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import ResultItem from "./ResultItem.svelte";
   import type { IResource } from "../resourceStores/resource.type";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let search: string = "";
@@ -20,12 +19,12 @@
   }
   $: if (search) searchResources();
   async function searchResources() {
-    if (!action.searchActionParams?.searchItemType) return;
+    if (!action.searchActionParams?.searchStoreId) return;
     isSearchInProgress = true;
     selectedIndex = 0;
-    results = await new Persistence().searchByLabel(
-      search,
-      action.searchActionParams?.searchItemType
+    results = await dataManager.search(
+      action.searchActionParams.searchStoreId,
+      search
     );
     isSearchInProgress = false;
   }

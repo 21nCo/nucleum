@@ -18,7 +18,7 @@
   import view from "$lib/client/stores/view.store";
   import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
-  import { uiState } from "$lib/client/stores/uiState.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import { Action } from "$lib/client/types/action.enum";
   let isLiteMode = $context.isEmbed && $context.isSheet;
@@ -32,9 +32,7 @@
       }
     });
     const uiStateSub = uiState.subscribe(() => {
-      interactionMode = uiState.getProductSpecificState(
-        Action.MODE_OF_INTERACTION
-      );
+      refreshInteractionModeState();
     });
     $appLoadingState.isLocalLoaded = true;
     return () => {
@@ -48,9 +46,12 @@
     if ($sessionStore?.isSessionRunning) {
       appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
     }
-    interactionMode = uiState.getProductSpecificState(
-      Action.MODE_OF_INTERACTION
-    );
+    refreshInteractionModeState();
+  }
+  function refreshInteractionModeState() {
+    interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
   }
   async function handleVisibilityChange() {
     if (document?.hidden) {

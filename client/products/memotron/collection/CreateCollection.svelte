@@ -197,6 +197,7 @@
       <InlineErrorMessage bind:error={errMsg} />
     {/if}
     <ModalFooter
+      action={resourceAction(Resource.collection, ResourceActionType.CREATE)}
       primaryAction={{
         label: "Save",
         callback: async () => {

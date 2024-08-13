@@ -397,14 +397,15 @@ export class ResourceFIRStore<
     });
     this.cache();
   }
-  async modify(item: T) {
-    this._mutation(PersistanceActionType.REPLACE, item);
+  async modify(item: Partial<T>) {
     this.update((x: S) => {
+      const current = x.items.find((x) => x.id == item.id);
       x.items = x.items.filter((t) => t.id != item.id);
-      x.items.push(item);
+      x.items.push({ ...current, ...item } as T);
       return x;
     });
     this.cache();
+    return this._mutation(PersistanceActionType.MERGE, item as T);
   }
   async delete(id: string) {
     this._mutation(PersistanceActionType.DELETE, id);

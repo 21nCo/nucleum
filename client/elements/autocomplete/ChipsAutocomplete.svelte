@@ -2,20 +2,15 @@
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
-  import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
+  import { generateUID } from "$lib/client/utils/utils";
   import { TextInputStyle } from "$lib/client/types/textinput.enum";
   import Chip from "./Chip.svelte";
   import { ChipVariant } from "$lib/client/types/chipVariant.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
   import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
-  import Autocomplete from "./Autocomplete.svelte";
   import Button from "../button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import appearance from "$lib/client/stores/appearance.store";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;
@@ -194,19 +189,6 @@
     else if (size == Size.md) defaultInputClasses += " text-base";
     else if (size == Size.sm) defaultInputClasses += " text-b2";
     else if (size == Size.xs) defaultInputClasses += " text-b3";
-  });
-
-  const sub = appEvents.subscribe((x: IEvent) => {
-    if (
-      x.event === GlobalEvent.WINDOW_CLICKED &&
-      x.value &&
-      x.value instanceof PointerEvent
-    ) {
-      actIfClickedOutside(x.value, wrapperId, actionsWhenClickOutside);
-    }
-  });
-  onDestroy(() => {
-    sub();
   });
 </script>
 

@@ -176,6 +176,7 @@
       {/if}
     </div>
     <ModalFooter
+      action={PointronAction.SESSION_LOG_MODAL}
       primaryAction={{
         label: "Delete log",
         icon: "trash",

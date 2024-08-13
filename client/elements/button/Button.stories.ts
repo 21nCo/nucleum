@@ -19,7 +19,7 @@ const meta = {
         ButtonVariant.DANGER
       ]
     },
-    toolTipPlacement: {
+    tooltipOptions: {
       control: { type: "select" },
       options: [Position.Top, Position.Bottom, Position.Left, Position.Right]
     },
@@ -31,13 +31,11 @@ const meta = {
       options: [ButtonStyle.DEFAULT, ButtonStyle.PLAIN, ButtonStyle.OUTLINED]
     },
     isDisabled: { control: { type: "boolean" } },
-    isStayActive: { control: { type: "boolean" } },
     isLoading: { control: { type: "boolean" } }
   },
   args: {
     size: Size.md,
-    isDisabled: false,
-    isStayActive: false
+    isDisabled: false
   }
 } satisfies Meta<Button>;
 

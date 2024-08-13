@@ -9,7 +9,7 @@ import {
   ResourceAccessPoint,
   ResourceAccessMode
 } from "$lib/client/components/resourceStores/resource.type";
-import { uiState } from "$lib/client/stores/uiState.store";
+import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
 import { linker } from "../memotron.store";
@@ -117,7 +117,9 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   pinToTopBar() {
     const isAlreadyPinned = uiState
-      .getTopBarState()
+      .getState(ResourceAccessPoint.TOP_BAR, {
+        isProductScoped: true
+      })
       ?.includes(this.resource.id);
     return {
       value: isAlreadyPinned ? "Unpin from top bar" : "Pin to top bar",

@@ -1,4 +1,4 @@
-import type { IObservableStoreSubject } from "./data.type";
+import type { IObservableStoreSubject } from "../../types/data.type";
 
 export type IAppMenuStore = IObservableStoreSubject & {
   [key: string]: Menu;

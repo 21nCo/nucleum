@@ -7,8 +7,8 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   import HoverableElement from "../HoverableElement.svelte";
-  import { uiStateDerived } from "$lib/client/stores/uiState.store";
-  import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import ShortcutText from "../text/ShortcutText.svelte";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -29,36 +29,16 @@
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
   };
-  /**
-   * @deprecated - Use tooltipOptions instead
-   */
-  export let toolTipPlacement: Position = Position.BottomCenter;
   export let isLoading: boolean = false;
   /**
    * Applicable when {@link ButtonStyle.PLAIN} style is choosen
    */
   export let isUnderlined: boolean = false;
-  /**
-   * @deprecated - Use toggle instead
-   */
-  export let isStayActive: boolean = false;
   export let id: string = "";
   let buttonRef: any;
   export let isHovering: boolean = false;
   export let shortcut: string | undefined = undefined;
   $: isIconOnlyButton = !label && !$$slots.default;
-
-  function resolveShortcutText() {
-    if (!shortcut) return;
-    const keyMap = keyboardShortcuts.fecthKeyMap();
-    const shortcutDetail = keyMap.find((x) => x.action === shortcut);
-    if (!shortcutDetail) return;
-    return (
-      shortcutDetail.modifiers.join(" + ") +
-      " + " +
-      shortcutDetail.key.toUpperCase()
-    );
-  }
 </script>
 
 <HoverableElement
@@ -154,11 +134,14 @@
         {label}
       </div>
       {#if $uiStateDerived?.isShowHotKeyHints && shortcut}
-        <span
-          class="flex whitespace-nowrap text-b5 border border-brs3 rounded-md px-1 safe"
-        >
-          {resolveShortcutText()}
-        </span>
+        <ShortcutText
+          {shortcut}
+          parentBgIndex={style === ButtonStyle.PLAIN
+            ? parentBgIndex
+            : style === ButtonStyle.OUTLINED
+              ? parentBgIndex + 1
+              : undefined}
+        />
       {/if}
     {:else}
       <slot />

@@ -162,25 +162,6 @@
       );
     }
   }
-
-  // onMount(() => {
-  //   setTimeout(() => {
-  //     focusOnInput();
-  //   }, 0);
-  // });
-
-  // const sub = appEvents.subscribe((x: AppEventType) => {
-  //   if (
-  //     x.event === AppEvent.WINDOW_CLICKED &&
-  //     x.value &&
-  //     x.value instanceof PointerEvent
-  //   ) {
-  //     actIfClickedOutside(x.value, containerId, hideOptions);
-  //   }
-  // });
-  // onDestroy(() => {
-  //   sub();
-  // });
 </script>
 
 <div

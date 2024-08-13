@@ -14,6 +14,5 @@ export enum Action {
   ROADMAP = "roadmap",
   PRIVACY_POLICY = "privacy",
   TERMS_OF_SERVICE = "tos",
-  GLOBAL_SEARCH = "global-search",
-  SHOW_MORE_SHORTCUT_HINTS = "SHOW_MORE_SHORTCUT_HINTS"
+  GLOBAL_SEARCH = "global-search"
 }

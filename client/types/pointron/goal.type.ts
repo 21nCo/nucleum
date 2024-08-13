@@ -7,6 +7,7 @@ import type {
   IResourceBase,
   ITrashInformation
 } from "../../components/resourceStores/resource.type";
+import { TagId } from "./tagId.enum";
 
 export type IGoal = {
   id: string;
@@ -66,4 +67,5 @@ export interface GoalStore extends IStore {
 export interface IQuickFocusItemStore extends IObservableStoreSubject {
   items: QuickFocusItem[];
   filteredItems: QuickFocusItem[];
+  selectedTagId: string | TagId;
 }

@@ -206,6 +206,7 @@
         size={Size.xs}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
+        isPreventMinWidth={true}
         label="Remove"
         on:click={() => manualLogStore.removeManualLog(item.id)}
       />

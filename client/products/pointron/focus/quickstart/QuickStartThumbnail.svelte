@@ -21,11 +21,14 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { resolveTaskFocus } from "../session.utils";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { goalStore } from "../../goals/goal.store";
+  import UnpinAction from "./actions/UnpinAction.svelte";
   export let goal: Pick<IGoal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
   export let layout: Layout;
   export let refresh: any;
+  export let isInEditMode: boolean = false;
   let isColorGoalTextExperimental = false;
   let todayFocusDuration: number | undefined = undefined;
   let parentLabels: string[] = [];
@@ -41,6 +44,7 @@
   let rem: number;
   let focusTime: number;
   let isHovering = false;
+  let isFinishingState: boolean = false;
   function enableManualLog() {
     handleSwipeRightEndOnleftThresholdCrossed();
     resetTouchEvent = true;
@@ -95,6 +99,8 @@
       parentLabels = goal.parent.hierarchy.map((x: any) => x.label) ?? [];
   });
   async function toggleSession() {
+    if (isInEditMode) return;
+    isFinishingState = true;
     if (isActive) {
       await sessionStore.finishSession(true);
     } else {
@@ -201,6 +207,10 @@
       console.log("error in unpinning: ", response);
     }
   }
+  async function unPin() {
+    await goalStore.modify({ id: goal.id, isPinnedForQuickStart: false });
+    refresh();
+  }
 </script>
 
 {#if layout === Layout.LIST}
@@ -209,8 +219,10 @@
     on:touchend|stopPropagation={handleTouchEnd} -->
   <HoverableElement
     id={goal.id}
+    type="button"
     bind:isHovering
-    class="cursor-pointer actualQSElement {distance < 0 && !leftThresholdCrossed
+    class="relative cursor-pointer actualQSElement {distance < 0 &&
+    !leftThresholdCrossed
       ? 'ml-auto'
       : ''}"
   >
@@ -218,15 +230,17 @@
       class={cn(
         "flex justify-between h-16 min-h-[4rem] w-full items-center rounded-md  z-10",
         {
-          "bg-ccs1 px-3": isActive,
-          "bg-bgs2 hover:bg-bgs3 pr-3": !isActive
+          "px-3": isActive || isInEditMode,
+          "bg-ccs1": isActive && !isInEditMode,
+          "bg-bgs2 hover:bg-bgs3 pr-3": !isActive && !isInEditMode,
+          "border-[1.5px] border-dashed border-ccs1 hover:bg-bgs2": isInEditMode
         }
       )}
       {color}
       on:click={toggleSession}
     >
       <div class="flex gap-2 items-center h-full">
-        {#if !isActive}
+        {#if !isActive && !isInEditMode}
           <div
             class={cn("w-0.5 h-8 ml-0.5 rounded-full", {
               "bg-ccs1": color,
@@ -282,7 +296,7 @@
         </div>
       {:else}
         <div class="text-b4">
-          {isHovering
+          {isHovering && !isInEditMode
             ? "Click to start"
             : todayFocusDuration
               ? "Today: " + formatSeconds(todayFocusDuration)
@@ -290,6 +304,9 @@
         </div>
       {/if}
     </CustomColorPropagator>
+    {#if isInEditMode}
+      <UnpinAction on:click={unPin} />
+    {/if}
   </HoverableElement>
   <!-- <div
     class="relativeQSThumbnailL1"
@@ -336,11 +353,11 @@
   <!-- TODO - dark:bg-ccs3 isn't working due to bg-cc classes implementation. replacing `bg-ccs4 dark:bg-ccs3` with regular bg classes `bg-bgs1 dark:bg-bgs2` works -->
   <CustomColorPropagator
     type="button"
-    class={cn("flex rounded-md h-[4.3rem] w-1/3 p-2 transition-ease", {
-      "bg-ccs1 border border-ccs1": isActive,
-      "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive
+    class={cn("relative flex rounded-md h-[4.3rem] p-2 transition-ease", {
+      "bg-ccs1 border border-ccs1": isActive && !isInEditMode,
+      "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive && !isInEditMode,
+      "border-[1.5px] border-dashed border-ccs1 hover:bg-bgs2": isInEditMode
     })}
-    style="width: calc(50% - 0.33rem);"
     {color}
     on:click={toggleSession}
   >
@@ -368,14 +385,19 @@
         </div>
       {:else}
         <div class="text-b4 text-fgs2">
-          {isHovering
-            ? "Click to start"
-            : todayFocusDuration
-              ? formatSeconds(todayFocusDuration) + " today"
-              : "Not focused today"}
+          {isFinishingState
+            ? "Finishing session..."
+            : isHovering && !isInEditMode
+              ? "Click to start"
+              : todayFocusDuration
+                ? formatSeconds(todayFocusDuration) + " today"
+                : "Not focused today"}
         </div>
       {/if}
     </HoverableElement>
+    {#if isInEditMode}
+      <UnpinAction on:click={unPin} />
+    {/if}
   </CustomColorPropagator>
 {/if}
 

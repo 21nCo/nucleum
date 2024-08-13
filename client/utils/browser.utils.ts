@@ -340,3 +340,11 @@ export function isExtensionEnvironment() {
 
   return false;
 }
+
+export function resolveDialogOnFront() {
+  const dialogs = Array.from(document.querySelectorAll("dialog[open]"));
+  if (dialogs.length === 0) {
+    return null;
+  }
+  return dialogs[dialogs.length - 1];
+}

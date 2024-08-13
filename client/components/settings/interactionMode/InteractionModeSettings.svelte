@@ -5,7 +5,8 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { uiState } from "$lib/client/stores/uiState.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Action } from "$lib/client/types/action.enum";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -13,11 +14,17 @@
   import { InfoTextType } from "$lib/client/types/text.type";
   import ShortcutSettings from "../shortcuts/ShortcutSettings.svelte";
   import { InteractionMode } from "./interactionMode.type";
-  let selectedMode: InteractionMode = uiState.getProductSpecificState(
-    Action.MODE_OF_INTERACTION
+  let selectedMode: InteractionMode = uiState.getState(
+    Action.MODE_OF_INTERACTION,
+    {
+      isProductScoped: true
+    }
   );
-  let isShortcutHintsEnabled = uiState.getProductSpecificState(
-    Action.SHOW_MORE_SHORTCUT_HINTS
+  let isShortcutHintsEnabled = uiState.getState(
+    UIState.SHOW_MORE_SHORTCUT_HINTS,
+    {
+      isProductScoped: true
+    }
   );
   function resolveInfo(mode: InteractionMode) {
     switch (mode) {
@@ -32,7 +39,9 @@
     }
   }
   function onInteractionModeSelect() {
-    uiState.setProductSpecificState(Action.MODE_OF_INTERACTION, selectedMode);
+    uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
+      isProductScoped: true
+    });
   }
 </script>
 
@@ -86,10 +95,9 @@
       isExpanded={true}
       bind:checked={isShortcutHintsEnabled}
       on:change={(e) => {
-        uiState.setProductSpecificState(
-          Action.SHOW_MORE_SHORTCUT_HINTS,
-          e.detail
-        );
+        uiState.setState(UIState.SHOW_MORE_SHORTCUT_HINTS, e.detail, {
+          isProductScoped: true
+        });
       }}
     />
     <SwitchInput

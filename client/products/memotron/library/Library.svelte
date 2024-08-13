@@ -18,7 +18,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ResourceSwitcher from "$lib/client/elements/switcher/resourceSwitcher/ResourceSwitcher.svelte";
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-  import { appMenuStore } from "$lib/client/layout/leftPanel/appMenu.store";
+  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   import { appStore } from "$lib/client/stores/app.store";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";

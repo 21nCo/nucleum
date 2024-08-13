@@ -1,6 +1,9 @@
 <script lang="ts">
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import {
+    appEvents,
+    confirmationNotification
+  } from "$lib/client/stores/notification.store";
   import { Size } from "$lib/client/types/size.enum";
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
@@ -11,11 +14,28 @@
   import { Embed } from "$lib/client/types/context.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import { onMount } from "svelte";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { resolveDialogOnFront } from "$lib/client/utils/browser.utils";
   export let path: string;
   export let params: ModalParams;
   let size: Size = Size.md;
   if (params.layout?.size) size = params.layout.size;
   let footerRef: any;
+  onMount(() => {
+    const appEventSub = appEvents.subscribe((x) => {
+      const frontDialog = resolveDialogOnFront();
+      // console.log({ frontDialogId: frontDialog?.id, path, event: x.event });
+      if (!frontDialog || path != frontDialog?.id) return;
+      if (x.event === GlobalEvent.ESCAPE) {
+        handleClose();
+      }
+    });
+    return () => {
+      appEventSub();
+    };
+  });
+
   export function close() {
     footerRef.close();
   }

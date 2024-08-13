@@ -17,7 +17,7 @@ export type Toast = {
   id: string;
   actionText?: string;
   callback?: () => void;
-  isHideClose?: boolean;
+  isNonDismissable?: boolean;
 };
 
 export type ConfirmationNotification = {

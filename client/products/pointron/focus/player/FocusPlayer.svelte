@@ -173,6 +173,7 @@
             <Icon
               icon="pip"
               on:click={pipHandler}
+              isTabbable={true}
               class={cn({
                 "stroke-cbg":
                   $sessionStore.state === SessionState.FOCUS_RUNNING &&
@@ -183,9 +184,11 @@
               })}
             />
           {/if}
+
           <Icon
             icon="chevup"
             on:click={clickHandler}
+            isTabbable={true}
             class={cn({
               "stroke-cbg":
                 $sessionStore.state === SessionState.FOCUS_RUNNING &&

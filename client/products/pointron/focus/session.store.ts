@@ -716,8 +716,14 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     this._resumeTimer();
     return true;
   }
+  /**
+   *
+   * Note: Not modifying `isQuickStartOn` state for finish session context as this is triggering refresh on QuickStart component and thus `isFinishingState` state on quick start thumbnail is being replaced which is not desirable.
+   * @param props
+   * @returns
+   */
   private async _stopCurrentTaskOrGoal(
-    props: { isPersist?: boolean } = {
+    props: { isPersist?: boolean; isSessionFinish?: boolean } = {
       isPersist: false
     }
   ) {
@@ -732,7 +738,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     return this.modify(
       {
         currentTask: undefined,
-        isQuickStartOn: false
+        isQuickStartOn: props?.isSessionFinish ? session.isQuickStartOn : false
       },
       {
         isPersist: props.isPersist,
@@ -809,7 +815,10 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       fullPageLoadingScreen.show("Finishing session...");
     try {
       const now = new Date().getTime();
-      if (session.currentTask) await this._stopCurrentTaskOrGoal();
+      if (session.currentTask)
+        await this._stopCurrentTaskOrGoal({
+          isSessionFinish: true
+        });
       // let lastBlock = n.intervals?.pop();
       // if (lastBlock) {
       //   lastBlock.end = now;
@@ -831,7 +840,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
           {
             isSessionRunning: false,
             state: SessionState.FINISHED,
-            currentTask: undefined
+            currentTask: undefined,
+            isQuickStartOn: false
           },
           {
             queueParams: {
