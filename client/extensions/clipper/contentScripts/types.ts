@@ -10,3 +10,12 @@ export interface IWebpage extends IObservableStoreSubject {
   notes?: string;
   relationships?: { node: string; relation: string }[];
 }
+
+export interface IArea{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type IImageElement= { src: string; alt: string }

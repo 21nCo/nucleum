@@ -52,6 +52,14 @@ export type MultimediaClipContent = {
   };
 };
 
+export type WebScreenshotClipContent = {
+  contentType: NodeType.WEB_SCREENSHOT_CLIP;
+  body: {
+    s3URL: string;
+  };
+  metadata?: any;
+};
+
 export enum ClipperExtensionEvent {
   CLIPS_CHANGED = "CLIPS_CHANGED",
   PAGE_SAVING_STATUS = "PAGE_SAVING_STATUS",

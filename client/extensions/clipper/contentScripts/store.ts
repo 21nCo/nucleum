@@ -12,7 +12,8 @@ import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   ClipperExtensionEvent,
   type TextHighlightContent,
-  type VideoTimestampContent
+  type VideoTimestampContent,
+  type WebScreenshotClipContent
 } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
@@ -115,12 +116,12 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @returns
    */
   async saveClip(
-    data: TextHighlightContent | VideoTimestampContent,
+    data: TextHighlightContent | VideoTimestampContent| WebScreenshotClipContent,
     tabData?: TabData
   ) {
     // const response = await this.persistence.saveClip(data, tabData);
     let webpage = this.get();
-    if (!webpage.id) {
+    if (!webpage.id && tabData) {
       await this.savePage(tabData);
     }
     webpage = this.get();
@@ -252,8 +253,11 @@ class WebpageStore extends ObservableStore<IWebpage> {
       this._debouncedPersistNotes(newValue.id, newValue.notes);
     }
   }
-  persistClipNotes(id: string, notes: string) {
-    return this._debouncedPersistNotes(id, notes);
+  async persistClipNotes(id: string, notes: string) {
+    return new Promise((resolve) => {
+      const result = this._debouncedPersistNotes(id, notes);
+        resolve(result);
+    });
   }
 }
 export const webpage = new WebpageStore();
