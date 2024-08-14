@@ -22,6 +22,7 @@
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { isPrimaryActionDisabled } from "$lib/client/components/modal/modal.store";
 
+  import GoalSearchThumbnail from "../../goals/thumbnails/GoalSearchThumbnail.svelte";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -234,8 +235,10 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
+      searchResultComponent={GoalSearchThumbnail}
       searchStoreId={Resource.PointGoal}
       style={InputStyle.BORDERED}
+      popoverOptions={{ offsetInPx: 16 }}
       placeholder="Start typing to select goal"
     />
   {/if}

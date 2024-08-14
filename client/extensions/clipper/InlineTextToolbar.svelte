@@ -13,7 +13,7 @@
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   const dispatch = createEventDispatcher();
   export let id: string | null = null;
-  export let colors: string[];
+  export let colors: string[] = [];
   export let selectedColor: string | null = null;
   export let feedback: { message: string; type: AlertType } | string = "";
   let isLinkboxOpened = false;
@@ -27,6 +27,7 @@
   }
   async function onNotesChange(e: CustomEvent) {
     feedback = "Saving...";
+    console.log("onNotesChange", id, notes);
     const response = await webpage.persistClipNotes(id, notes);
     //TODO - TEMP - show feedback from result - getting result from debounded function
     setTimeout(() => {
@@ -42,18 +43,20 @@
   class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-96"
 >
   <div class="flex justify-center items-center gap-3">
-    <span class="flex gap-2 items-center">
-      {#each colors as color}
-        <HightlightColorItem
-          {color}
-          isActive={color === selectedColor}
-          on:click={() => {
-            // console.log(color);
-            dispatch("color", color);
-          }}
-        />
-      {/each}
-    </span>
+    {#if colors.length > 0}
+      <span class="flex gap-2 items-center">
+        {#each colors as color}
+          <HightlightColorItem
+            {color}
+            isActive={color === selectedColor}
+            on:click={() => {
+              // console.log(color);
+              dispatch("color", color);
+            }}
+          />
+        {/each}
+      </span>
+    {/if}
     {#if id}
       <Divider />
       <!-- <Button

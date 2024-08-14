@@ -5,7 +5,7 @@
   export let slice: number | undefined = undefined;
   export let truncateLength: number = 15;
   let val =
-    slice != undefined && slice <= hierarchy.length
+    slice != undefined && slice <= hierarchy?.length
       ? [
           ...hierarchy
             .slice(0, Math.floor(slice / 2))

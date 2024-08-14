@@ -16,11 +16,16 @@
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
   import { linker } from "$lib/client/products/memotron/memotron.store";
+  import ScreenShot from "./ScreenShot.svelte";
+  import type { IImageElement } from "./types";
   export let id: string;
+  let nodeId: string = "";
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
   let isShowFeedbackPane = false;
   let feedback = "";
+  let isSnipEnabled: boolean = false;
+  let image: IImageElement | null = null;
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
   }
@@ -52,6 +57,11 @@
       webpage.propagatePageStatusFromSidebar({ id: message.node });
     }
   });
+  function resetFeedbackPaneInputs() {
+    image = null;
+    nodeId = "";
+    feedback = "";
+  }
 </script>
 
 <ExtensionBaseLayer
@@ -69,17 +79,34 @@
         feedback = "Page saved!";
         isShowFeedbackPane = !isShowFeedbackPane;
       }}
-      on:snip
+      on:snip={() => {
+        isSnipEnabled = !isSnipEnabled;
+      }}
       on:summarize
       on:collapse={() => toolbarState.toggle(false)}
     />
     {#if isShowFeedbackPane}
-      <div out:fade={{ duration: 150 }}>
-        <FeedbackPane bind:feedback bind:isShown={isShowFeedbackPane} />
-      </div>
+      <!-- <div out:fade={{ duration: 150 }}> -->
+      <FeedbackPane
+        bind:feedback
+        bind:isShown={isShowFeedbackPane}
+        on:resetInputs={resetFeedbackPaneInputs}
+        {image}
+        {nodeId}
+      />
+      <!-- </div> -->
     {/if}
     <TextClipper bind:this={textClipperRef} {colors} />
     <MultimediaClipper {colors} />
+    {#if isSnipEnabled}<ScreenShot
+        on:snipSaved={(e) => {
+          image = { src: e.detail.s3URL, alt: "Screenshot" };
+          nodeId = e.detail.id;
+          feedback = "Screenshot saved!";
+          isShowFeedbackPane = false;
+          isShowFeedbackPane = true;
+        }}
+      />{/if}
   {/if}
   <ClipperShortcuts
     on:save={onsaveWebpageClick}
