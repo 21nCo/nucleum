@@ -136,14 +136,17 @@ function init() {
         return refreshStores([store], { isShowRefreshingState });
       }
     },
-    refreshPage: async (storeIdentifiers: string[]) => {
+    refreshPage: async (
+      storeIdentifiers: string[],
+      isShowRefreshingState: boolean = false
+    ) => {
       const dm = get(dataManager);
       storeIdentifiers = [...storeIdentifiers, Resource.uiState];
       const stores = dm.cacheableStoresTable.filter((x) =>
         storeIdentifiers.includes(x.id)
       );
       if (isValidArrayWithData(stores)) {
-        refreshStores(stores, { isPageRefresh: true });
+        refreshStores(stores, { isPageRefresh: true, isShowRefreshingState });
       }
     },
     cache: (store: IStore) => {

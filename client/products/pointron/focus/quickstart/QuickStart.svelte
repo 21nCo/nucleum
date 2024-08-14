@@ -1,27 +1,25 @@
 <script lang="ts">
-  import {
-    startTouch,
-    moveTouch,
-    swipeIsRefreshing
-  } from "$lib/client/utils/touchGesture";
   import { onMount } from "svelte";
   import QuickStartThumbnail from "./QuickStartThumbnail.svelte";
   import { tagStore } from "$lib/client/products/pointron/pointron.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import QuickStartActions from "./actions/QuickStartActions.svelte";
+  import QuickStartCombinedTagsBar from "./actions/QuickStartCombinedTagsBar.svelte";
   import { Layout } from "$lib/client/types/layout.type";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import { quickFocusItemStore } from "$lib/client/products/pointron/goals/goal.store";
-  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
+  import TagsContainer from "../../goals/TagsContainer.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
+  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
 
   let isLoadingState = false;
   let searchInput = "";
@@ -36,9 +34,9 @@
       ? $tagStore.items.find((x) => x.id === $quickFocusItemStore.selectedTagId)
           ?.label
       : "";
-  async function refresh() {
+  async function refresh(isShowRefreshingState: boolean = false) {
     isLoadingState = true;
-    quickFocusItemStore.refresh(searchInput);
+    quickFocusItemStore.refresh(searchInput, isShowRefreshingState);
     isLoadingState = false;
   }
   function filter() {
@@ -75,26 +73,36 @@
   }
 </script>
 
-<div
-  id="QSouter"
-  on:touchstart={startTouch}
-  on:touchmove={() =>
-    moveTouch(event, undefined, undefined, refresh, undefined, undefined)}
-  class="flex flex-col h-full gap-4 w-full"
->
-  <!-- <div class="hidden text-xl" class:animate-spin={$swipeIsRefreshing}>↻</div> -->
-  <QuickStartActions
-    bind:searchInput
-    on:search={filter}
-    on:select={onTagSelect}
-  />
+<div class="flex flex-col flex-grow gap-4 w-full">
+  {#if $context.embed === Embed.HANDSET}
+    <QuickStartCombinedTagsBar
+      bind:searchInput
+      on:search={filter}
+      on:select={onTagSelect}
+    />
+  {:else}
+    <InlineSearchBar
+      bind:query={searchInput}
+      isPadded={true}
+      on:search={filter}
+      placeholder="Search for a goal"
+    />
+    <div class="mo:p-0 px-3">
+      <TagsContainer
+        bind:selectedTagId={$quickFocusItemStore.selectedTagId}
+        on:select={onTagSelect}
+      />
+    </div>
+  {/if}
   {#if !isLoadingState && $quickFocusItemStore.filteredItems && $quickFocusItemStore.filteredItems.length > 0}
-    <div
-      id="QSinner"
-      on:touchstart|stopPropagation={startTouch}
-      class={cn("relative w-full flex flex-col gap-6 flex-grow")}
+    <ScrollView
+      class="flex flex-col w-full flex-grow gap-6 mo:p-0 px-3"
+      isRefreshing={$quickFocusItemStore.isRefreshing}
+      isRefreshOnPull={true}
+      on:refresh={() => {
+        refresh(true);
+      }}
     >
-      <!-- TODO - attach swipe refresh on touch device -->
       <div
         class={cn("w-full", {
           "flex flex-col gap-3 grow": layout === Layout.LIST,
@@ -104,9 +112,6 @@
           "gap-5 pt-4": isInEditMode
         })}
       >
-        {#if $quickFocusItemStore.isRefreshing}
-          <RefreshingOverlayFeedback />
-        {/if}
         {#each $quickFocusItemStore.filteredItems as goal, index (goal)}
           <QuickStartThumbnail {refresh} {goal} {layout} {isInEditMode} />
         {/each}
@@ -132,8 +137,53 @@
           />
         </div>
       {/if}
-      <ScrollViewBottomSpacer />
-    </div>
+    </ScrollView>
+    <!-- <div
+      id="QSinner"
+      on:touchstart|stopPropagation={startTouch}
+      class="relative w-full flex flex-grow"
+    >
+      {#if $quickFocusItemStore.isRefreshing}
+        <RefreshingOverlayFeedback />
+      {/if}
+      <div class="flex flex-col w-full flex-grow gap-6 mo:p-0 px-3">
+        <div
+          class={cn("w-full", {
+            "flex flex-col gap-3 grow": layout === Layout.LIST,
+            "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))]":
+              layout != Layout.LIST,
+            "gap-2": layout != Layout.LIST && !isInEditMode,
+            "gap-5 pt-4": isInEditMode
+          })}
+        >
+          {#each $quickFocusItemStore.filteredItems as goal, index (goal)}
+            <QuickStartThumbnail {refresh} {goal} {layout} {isInEditMode} />
+          {/each}
+        </div>
+        {#if $quickFocusItemStore.selectedTagId === TagId.ALL}
+          <div class="flex flex--col gap-2 w-full justify-center items-center">
+            {#if isInEditMode}
+              <Button
+                label="Pin another goal"
+                size={Size.sm}
+                type={ButtonVariant.PRIMARY}
+                style={ButtonStyle.OUTLINED}
+                on:click={() => {
+                  appStore.runAction(PointronAction.PIN_TO_QUICK_FOCUS);
+                }}
+              />
+            {/if}
+            <Button
+              label={isInEditMode ? "Close editor" : "Edit"}
+              size={Size.sm}
+              isPreventMinWidth={true}
+              on:click={() => (isInEditMode = !isInEditMode)}
+            />
+          </div>
+        {/if}
+        <ScrollViewBottomSpacer />
+      </div>
+    </div> -->
   {:else}
     <EmptyStatusView
       size={Size.sm}

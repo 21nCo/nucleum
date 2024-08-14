@@ -67,6 +67,14 @@
     confirmationNotification.reset();
     appStore.closeResource({ isRestrictToModals: true });
   }
+
+  /**
+   * This is to prevent the dialog from closing when the user presses `Escape` key from any input element inside the dialog.
+   * @param e
+   */
+  function handleClose(e: any) {
+    dialog.showModal();
+  }
 </script>
 
 {#if show}
@@ -100,6 +108,7 @@
       <dialog
         bind:this={dialog}
         {id}
+        on:close|preventDefault={handleClose}
         class={cn(
           "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full",
           {
@@ -108,21 +117,25 @@
             "overlay-dark": isShowOverlay && $appearance.colorScheme.isDark,
             "bg-none": !isShowOverlay,
             "w-full h-full min-h-screen min-w-screen": size === Size.full,
-            "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
-            "w-[18rem] tp:w-[20rem] h-[20rem] min-h-[15rem]": size === Size.xs,
-            "w-[45rem] 2k:w-[55rem] h-[50rem] tp:h-[55rem] 2k:h-[60rem]":
+            // "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
+            "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.xs,
+            "w-[55rem] 2k:w-[65rem] h-full vm:h-[60rem] tp:h-[60rem] 2k:h-full":
+              orientation === Orientation.Vertical && size === Size.xxl,
+            "w-[45rem] 2k:w-[55rem] h-full vm:h-[60rem] tp:h-[60rem] 2k:h-full":
               orientation === Orientation.Vertical && size === Size.xl,
-            "w-[35rem] 2k:w-[40rem] h-[45rem] 2k:h-[55rem]":
+            "w-[40rem] 2k:w-[45rem] h-9/10 vm:h-[55rem] tp:h-[55rem] 2k:h-[60rem]":
               orientation === Orientation.Vertical && size === Size.lg,
-            "w-[30rem] 2k:w-[35rem] h-[35rem] 2k:h-[50rem]":
+            "w-[30rem] 2k:w-[35rem] h-[40rem] 2k:h-[50rem]":
               orientation === Orientation.Vertical && size === Size.md,
+            "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
+              orientation === Orientation.Vertical && size === Size.sm,
             "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-[80rem] vm:h-[90rem]":
               orientation === Orientation.Horizontal && size === Size.xxl,
             "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
               orientation === Orientation.Horizontal && size === Size.xl,
-            "w-[50rem] 2k:w-[60rem] h-[45rem] 2k:h-[50rem]":
+            "w-[60rem] 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
               orientation === Orientation.Horizontal && size === Size.lg,
-            "w-[45rem] 2k:w-[50rem] h-[30rem] 2k:h-[40rem]":
+            "w-[50rem] 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
               orientation === Orientation.Horizontal && size === Size.md
           }
         )}

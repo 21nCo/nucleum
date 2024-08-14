@@ -56,8 +56,12 @@
   function close() {
     modalEvent.hideSpecific(Action.CMD);
   }
+  /**
+   * Used in command-only mode.
+   * @param event
+   */
   const shortcutListener = (event: KeyboardEvent) => {
-    console.log({ event });
+    // console.log({ event });
     if (event.key === "Meta") {
       inputRef.focus();
     }

@@ -311,9 +311,12 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
     this.filter();
     this.cache();
   }
-  async refresh(searchQuery: string = "") {
+  async refresh(
+    searchQuery: string = "",
+    isShowRefreshingState: boolean = false
+  ) {
     logger.log("refreshing quickFocusItemStore");
-    super.refresh();
+    super.refresh({ isShowRefreshingState });
     this.filter(searchQuery);
   }
   propagateDependencyChanges(data: any) {

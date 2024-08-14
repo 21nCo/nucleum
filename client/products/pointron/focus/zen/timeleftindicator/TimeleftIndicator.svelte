@@ -2,7 +2,7 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { onMount } from "svelte";
   import Spoke from "./Spoke.svelte";
-  export let parentBackgroundIndex: number = 1;
+  export let parentBgIndex: number = 1;
   let numberOfSpokes = 0;
   let minorStops = 6;
   let stopValueInSeconds = 0;
@@ -125,7 +125,7 @@
       <Spoke
         {value}
         previousStop={arr[index - 1] ?? 0}
-        {parentBackgroundIndex}
+        {parentBgIndex}
         {timeRemaining}
         isMajorStop={majorStops.some((x) => x === value)}
       />

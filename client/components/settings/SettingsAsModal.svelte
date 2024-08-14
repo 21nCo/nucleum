@@ -41,7 +41,7 @@
 
 <div class="flex w-full h-full">
   <div
-    class="flex flex-col overflow-auto gap-8 w-80 shrink-0 bg-bgs2 rounded-l-md py-4 items-start"
+    class="flex flex-col overflow-auto gap-8 w-72 shrink-0 bg-bgs2 rounded-l-md py-4 items-start"
   >
     <div class="pl-4">
       <Text content="Settings" style={TextStyle.PAGE_HEADING} />

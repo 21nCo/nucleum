@@ -20,7 +20,6 @@
   let isSearchFocused: boolean = false;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
-      console.log({ x });
       if (x.event === GlobalEvent.ACTIVATE_SEARCH_BOX) {
         searchInputRef?.focus();
       }
@@ -32,11 +31,11 @@
 </script>
 
 <div
-  class={cn("flex items-center min-h-12 w-full gap-2 border-b", {
-    "py-1.5": size === Size.sm,
-    "py-2": size === Size.md,
-    "py-4": size === Size.lg,
-    "px-2": isPadded,
+  class={cn("flex items-center w-full gap-2 border-b", {
+    "h-10": size === Size.sm,
+    "min-h-12": size === Size.md,
+    "min-h-14": size === Size.lg,
+    "px-3": isPadded,
     "border-fgs3 border-opacity-80": isSearchFocused,
     "border-brs2": !isSearchFocused
   })}
@@ -47,7 +46,6 @@
     {size}
     {placeholder}
     style={InputStyle.PLAIN}
-    on:keydown
     on:focus={() => (isSearchFocused = true)}
     on:blur={() => (isSearchFocused = false)}
     on:change={() => dispatch("search")}

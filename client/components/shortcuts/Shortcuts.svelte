@@ -12,6 +12,7 @@
     }
   }
   const shortcutListener = (event: KeyboardEvent) => {
+    // console.log("shortcutListener", { event });
     const target = event.target || event.srcElement;
     const isShortcutRunCompleted = handleSystemShortcuts(event);
     if (isTextElement(target)) return;

@@ -1,22 +1,98 @@
 <script lang="ts">
+  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   export let isRefreshOnPull: boolean = false;
   export let bottomSpacerSize: Size.sm | Size.md | Size.lg = Size.md;
   export let isEnableScrollbar: boolean = false;
+  export let isRefreshing: boolean = false;
   let classList: string | object = "";
   export { classList as class };
+  import { spring } from "svelte/motion";
+  import ScrollViewBottomSpacer from "./ScrollViewBottomSpacer.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+
+  let container: HTMLDivElement;
+  let innerContainer: HTMLDivElement;
+  let initialY: any;
+  let currentY: any;
+  const threshold = 50;
+
+  const pullDistance = spring(0, {
+    stiffness: 0.1,
+    damping: 0.2
+  });
+
+  function onTouchStart(event: TouchEvent) {
+    if (!isRefreshOnPull) return;
+    initialY = event.touches[0].clientY;
+  }
+
+  function onTouchMove(event: TouchEvent) {
+    if (!isRefreshOnPull) return;
+    currentY = event.touches[0].clientY;
+    let diff = currentY - initialY;
+    if (innerContainer.scrollTop === 0 && diff > 0 && !isRefreshing) {
+      // event.preventDefault();
+      pullDistance.set(Math.min(diff * 0.5, threshold));
+    } else {
+      pullDistance.set(0);
+    }
+  }
+
+  function onTouchEnd() {
+    if (!isRefreshOnPull) return;
+    if ($pullDistance >= threshold) {
+      refresh();
+    } else {
+      pullDistance.set(0);
+    }
+  }
+
+  async function refresh() {
+    pullDistance.set(threshold);
+    dispatch("refresh");
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+    // pullDistance.set(0);
+  }
 </script>
 
 <!-- TODO - add pull refresh Gesture and refactor existing scroll views in Pointron: Analytics, Quick focus, Logs pane, goals layout - Memotron: Nodes list -->
 <div
-  class={cn(classList, "overflow-y-auto", {
-    "pb-60": bottomSpacerSize === Size.lg,
-    "pb-40": bottomSpacerSize === Size.md,
-    "pb-20": bottomSpacerSize === Size.sm,
-    "styledscroll pr-1.5": isEnableScrollbar,
-    "no-scrollbar": !isEnableScrollbar
-  })}
+  class="relative flex flex-col flex-grow w-full"
+  bind:this={container}
+  on:touchstart={onTouchStart}
+  on:touchmove={onTouchMove}
+  on:touchend={onTouchEnd}
 >
-  <slot />
+  {#if isRefreshing}
+    <RefreshingOverlayFeedback />
+  {/if}
+  <!-- <div
+    class="absolute top-0 left-0 right-0 bg-bgs2 flex items-center justify-center text-gray-500 pointer-events-none z-50"
+    style="transform: translateY({$pullDistance}px)"
+  >
+    {#if isRefreshing}
+      Refreshing...
+    {:else if $pullDistance > 0}
+      Pull to refresh {Math.round(($pullDistance / threshold) * 100)}%
+    {/if}
+  </div> -->
+  <!-- <div
+    class="w-full flex justify-center bg-bgs2"
+    style="height: {$pullDistance}px;"
+  >
+    ↺
+  </div> -->
+  <div
+    bind:this={innerContainer}
+    class={cn(classList, {
+      "styledscroll pr-1.5": isEnableScrollbar,
+      "no-scrollbar": !isEnableScrollbar
+    })}
+  >
+    <slot />
+    <ScrollViewBottomSpacer size={bottomSpacerSize} />
+  </div>
 </div>

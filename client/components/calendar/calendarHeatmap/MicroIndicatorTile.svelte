@@ -86,7 +86,7 @@
       offsetInPx: 4
     }}
     class={cn("tile text-b5 w-3 h-3 rounded-sm", {
-      "border-2 border-ass1 shadow-outline": isActive
+      "border-2 border-bgs1 outline outline-ass1 shadow-outline": isActive
     })}
     style={`background-color: ${colors[data.color]};`}
     on:click={() => {

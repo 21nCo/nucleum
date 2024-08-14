@@ -25,10 +25,10 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
-  import QuickStartActions from "./quickstart/actions/QuickStartActions.svelte";
   import { manualLogStore } from "../logs/log.store";
   import { appStore } from "$lib/client/stores/app.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+  import QuickStartLayoutToggle from "./quickstart/actions/QuickStartLayoutToggle.svelte";
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
   let addManualLogButton: IButtonParams = {
@@ -54,20 +54,20 @@
    */
   onMount(async () => {
     await refresh();
-    setTimeout(() => {
-      if ($sessionStore.isSessionRunning) {
-        if ($sessionStore.isQuickStartOn) {
-          mode = 0;
-        } else {
-          mode = 1;
-        }
-      } else if (
-        !$sessionStore.isSessionRunning &&
-        $sessionStore.state != SessionState.FINISHED
-      ) {
-        sessionStore.loadEmptyState();
-      }
-    }, 1000);
+    // setTimeout(() => {
+    //   if ($sessionStore.isSessionRunning) {
+    //     if ($sessionStore.isQuickStartOn) {
+    //       mode = 0;
+    //     } else {
+    //       mode = 1;
+    //     }
+    //   } else if (
+    //     !$sessionStore.isSessionRunning &&
+    //     $sessionStore.state != SessionState.FINISHED
+    //   ) {
+    //     sessionStore.loadEmptyState();
+    //   }
+    // }, 1000);
     let queryParamMode = $page.url.searchParams.get("mode");
     if (queryParamMode) {
       mode = +queryParamMode;
@@ -119,9 +119,7 @@
             {/if} -->
           </div>
           {#if mode === 0}
-            <div class="flex-grow w-full">
-              <QuickStart />
-            </div>
+            <QuickStart />
             <FloatingButton params={addManualLogButton} />
             <!-- <ManualFocusLog /> -->
           {:else}
@@ -145,10 +143,12 @@
         floatingButton={addManualLogButton}
         titleStyle={TextStyle.PANEL_HEADING}
       >
-        <QuickStart />
+        <slot name="nonpadded" slot="nonpadded">
+          <QuickStart />
+        </slot>
         <slot:fragment slot="toprightactions">
           <span>
-            <QuickStartActions context="topright" />
+            <QuickStartLayoutToggle />
           </span>
         </slot:fragment>
         <slot name="right" slot="right">

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import view from "$lib/client/stores/view.store";
   import { page } from "$app/stores";
   import TagsContainer from "$lib/client/products/pointron/goals/TagsContainer.svelte";
@@ -12,7 +11,6 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { goalStore } from "./goal.store";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
@@ -23,6 +21,7 @@
   import { tagStore } from "../pointron.store";
   import { archivedResourceFilter } from "$lib/client/utils/utils";
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
+  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
 
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
@@ -48,8 +47,12 @@
     goalStore.resolveSubGoalsIfNotPresent(id);
   }
 
-  function refresh() {
-    dataManager.refreshPage([Resource.PointGoal, Resource.PointTag]);
+  function refresh(isShowRefreshingState: boolean = false) {
+    console.log("refreshing goals");
+    dataManager.refreshPage(
+      [Resource.PointGoal, Resource.PointTag],
+      isShowRefreshingState
+    );
   }
   function filter() {
     goalStore.filter({
@@ -90,13 +93,7 @@
     <slot />
   </div>
 {:else if isGoalsHome || !$view.isPortrait}
-  <div
-    id="GoalsLayoutOuter"
-    on:touchstart={startTouch}
-    on:touchmove={() =>
-      moveTouch(event, undefined, undefined, refresh, undefined, undefined)}
-    class="flex w-full h-full select-none relative"
-  >
+  <div class="flex w-full h-full select-none relative">
     <Panel
       panelSize={Size.md}
       floatingButton={{
@@ -125,15 +122,14 @@
             />
           </div>
         </div>
-        <div
-          id="GoalsLayoutInner"
-          on:touchstart|stopPropagation={startTouch}
+        <ScrollView
+          isRefreshOnPull={true}
+          isRefreshing={$goalStore.isRefreshing}
+          on:refresh={() => {
+            refresh(true);
+          }}
           class="relative flex flex-col h-full gap-8 flex-grow pt-4"
         >
-          <!-- TODO - swipeIsRefreshing - attach to goalStore.isRefreshin - on swipe refresh -->
-          {#if $goalStore.isRefreshing}
-            <RefreshingOverlayFeedback />
-          {/if}
           <div class="h-full w-full">
             {#if isValidArrayWithData($goalStore.filtered)}
               <div class="w-full grow">
@@ -208,7 +204,7 @@
               </EmptyStatusView>
             {/if}
           </div>
-        </div>
+        </ScrollView>
       </slot>
       <slot name="right" slot="right">
         <slot />
@@ -221,7 +217,7 @@
     }
   </style>
 {/if}
-<PageLayer on:appear={refresh} />
+<PageLayer on:appear={() => refresh()} />
 
 <style>
   .animate-spin {

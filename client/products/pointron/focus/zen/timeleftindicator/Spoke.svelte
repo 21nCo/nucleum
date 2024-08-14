@@ -4,7 +4,7 @@
 
   export let value: number;
   export let previousStop: number;
-  export let parentBackgroundIndex: number = 1;
+  export let parentBgIndex: number = 1;
   export let timeRemaining: number;
   export let isMajorStop: boolean = false;
   let markerRef: any;
@@ -61,18 +61,18 @@
         style="left: -{activeMarkerLeftOffset}px;"
       >
         <div
-          class="h-4 w-4 {parentBackgroundIndex === 1
-            ? 'left-overlay-bgs2'
-            : 'left-overlay-bgs1'}"
+          class="h-4 w-4 {parentBgIndex === 1
+            ? 'left-overlay-bgs1'
+            : 'left-overlay-bgs2'}"
         />
         <div class="bg-fgs1 rounded-sm px-4">
           {formatSeconds(timeRemaining) + " left"}
         </div>
 
         <div
-          class="h-4 w-4 {parentBackgroundIndex === 1
-            ? 'right-overlay-bgs2'
-            : 'right-overlay-bgs1'}"
+          class="h-4 w-4 {parentBgIndex === 1
+            ? 'right-overlay-bgs1'
+            : 'right-overlay-bgs2'}"
         />
       </div>
     {:else if isMajorStop}

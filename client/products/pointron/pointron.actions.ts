@@ -130,7 +130,7 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Session Log",
       layout: {
-        size: Size.xl
+        size: Size.lg
       }
     }
   },
@@ -203,7 +203,7 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Edit Preset",
       layout: {
-        size: Size.xl
+        size: Size.lg
       }
     }
   },

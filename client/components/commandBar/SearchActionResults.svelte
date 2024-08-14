@@ -7,6 +7,8 @@
   import ResultItem from "./ResultItem.svelte";
   import type { IResource } from "../resourceStores/resource.type";
   import { dataManager } from "$lib/client/persistence/dataManager";
+  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
+  import { text } from "@sveltejs/kit";
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let search: string = "";
@@ -62,7 +64,10 @@
         selectedIndex = index;
         select();
       }}
-      >{result.label}
+    >
+      <span class="flex min-w-0 flex-1">
+        <TextWithHoverTooltip text={result.label} class="truncate" />
+      </span>
       <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
         {action.searchActionParams?.itemLabel}
       </div>
