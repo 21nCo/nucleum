@@ -55,7 +55,7 @@
 <FormControlLabelWrapper props={label}>
   <div
     class={label?.orientation === Orientation.Vertical
-      ? "max-w-md"
+      ? "max-w--md"
       : "max-w-[16rem]"}
   >
     <div class="text-center text-base self-center w-full">

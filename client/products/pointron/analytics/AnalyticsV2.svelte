@@ -22,8 +22,14 @@
     onPagelabelChange,
     onRemovePageClicked
   } from "./analytics.utils";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
+  import { postToParent } from "$lib/client/utils/embed.utils";
   $selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
+    if ($context.embed == Embed.HANDSET) {
+      postToParent({ bg: 2 });
+    }
     await dataManager.refresh(Resource.pointAnalyticsConfig);
     if (!$selectedPageId) {
       $selectedPageId = $analyticsConfigStore.pages[0]?.id;
@@ -92,6 +98,7 @@
               <Button
                 icon="sync"
                 label="reset"
+                isPreventMinWidth={true}
                 size={Size.xs}
                 on:click={analyticsConfigStore.reset}
               />

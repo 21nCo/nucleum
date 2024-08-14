@@ -168,7 +168,6 @@
       {#if isInEditMode || (context === "current" && !$sessionStore.isSessionRunning)}
         <TextInput
           on:keyup={handleKeyUp}
-          on:keydown
           on:focus
           on:blur
           bind:this={labelInputElement}

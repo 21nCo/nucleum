@@ -39,7 +39,7 @@
 </script>
 
 <div
-  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-80"
+  class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-96"
 >
   <div class="flex justify-center items-center gap-3">
     <span class="flex gap-2 items-center">

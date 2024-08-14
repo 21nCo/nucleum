@@ -9,15 +9,12 @@
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { UIState } from "$lib/client/types/preferences.type";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
 
   let currentStep = 0;
 
   let isPortraitModeInitialRender = true;
-  $: isOnboardingComplete = userPreferences.resolveUiState(
-    UIState.isOnboardingComplete
-  );
-
   let videoDuration: number;
   let stepsJson = [
     {
@@ -72,10 +69,8 @@
   }
 
   function onFinish() {
-    userPreferences.setUiState({
-      property: UIState.isOnboardingComplete,
-      value: true,
-      isGlobal: true
+    uiState.setState(UIState.isOnboardingComplete, true, {
+      isProductScoped: true
     });
     appStore.gotoPath("/");
   }

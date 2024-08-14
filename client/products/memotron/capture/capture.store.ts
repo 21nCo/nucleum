@@ -188,6 +188,24 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         };
       }
     } else if ("blocks" in val.body) {
+      let data;
+      let contentType;
+      let name;
+      /**
+       * When media grid is used in capture page we store the media in temp s3 storage , here before saving the capture to db we are sotring the medias in persistent s3 storage
+       */
+      for(let block of (val.body.blocks)){
+        if(block.contentType === NodeType.MEDIA_GRID)
+          for(let item of block.body.items){
+            data = await fetch(item.URL).then(r => r.blob())
+            contentType = item.type
+            name = item.name
+            const result = await account.uploadFile(contentType, name, data);
+            if (result) {
+            item.URL = result.uploadURL.split("?")[0];
+            }
+          }
+      }
       root = {
         ...root,
         children: val.rootStructure
@@ -204,7 +222,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           metadata: root.metadata,
           creationContext: root.id,
           children: block.children,
-          links: []
+          links: val.links ? val.links.filter((x) => x.from === block.id) : []
         };
       });
     }

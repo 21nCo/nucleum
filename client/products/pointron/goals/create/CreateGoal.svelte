@@ -17,16 +17,21 @@
   function close() {
     modalEvent.hideSpecific(PointronAction.CREATE_EDIT_GOAL);
   }
+  async function discard() {
+    newGoal.reset();
+    close();
+  }
 </script>
 
-<div class="flex flex-col items-start gap-6 w-full h-full">
-  <div class="flex flex-col gap-6 w-full px-1 grow overflow-y-auto">
+<div class="flex flex-col items-start gap-4 lg:gap-6 w-full h-full">
+  <div class="flex flex-col gap-6 w-full grow overflow-y-auto">
     <NewGoalForm />
   </div>
-  <footer class="flex flex-col w-full pb-8 gap-2">
+  <footer class="flex flex-col w-full gap-2">
     <InlineErrorMessage bind:error={$goalEditErrorMessage} />
     <ModalFooter
-      isPreventAutoClose={true}
+      action={PointronAction.CREATE_EDIT_GOAL}
+      on:close={discard}
       primaryAction={{
         label: "Save",
         callback: async () => {
@@ -36,10 +41,7 @@
       }}
       secondaryAction={{
         label: "Discard",
-        callback: async () => {
-          newGoal.reset();
-          close();
-        }
+        callback: discard
       }}
     />
   </footer>

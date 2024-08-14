@@ -14,6 +14,7 @@
   <ToastNotification {notification} isShownAsModal={true} />
 {/if}
 <ModalFooter
+  action={Action.MOBILE_TOAST}
   isPreventAutoClose={true}
   primaryAction={{
     label: "Done",

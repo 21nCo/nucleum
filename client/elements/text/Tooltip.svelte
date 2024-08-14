@@ -8,7 +8,7 @@
 
 {#if variant === "v1" && info}
   <div
-    class="text-left text-b2 text-bgs1 bg-fgs2 shadow-md rounded-md p-4 min-w-[15rem] max-w-sm"
+    class="text-left text-b2 text-bgs1 bg-fgs2 shadow-md rounded-md p-4 min-w-[25rem] max-w-sm"
   >
     <div class="flex flex-col gap-2">
       <div>

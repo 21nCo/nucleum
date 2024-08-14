@@ -17,7 +17,7 @@ export type Toast = {
   id: string;
   actionText?: string;
   callback?: () => void;
-  isHideClose?: boolean;
+  isNonDismissable?: boolean;
 };
 
 export type ConfirmationNotification = {
@@ -30,5 +30,6 @@ export type ConfirmationNotification = {
 export enum AlertType {
   SUCCESS = "SUCCESS",
   ERROR = "ERROR",
-  WARNING = "WARNING"
+  WARNING = "WARNING",
+  INFO = "INFO"
 }

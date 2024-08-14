@@ -88,6 +88,18 @@ export function formatSecondsToTimeInDecimals(
   }
 }
 
+export function toLocalISOString(date:Date) {
+  const pad = (number:number) => (number < 10 ? '0' + number : number);
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  const milliseconds = (date.getMilliseconds() / 1000).toFixed(3).slice(2, 5);
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
+}
+
 export function timePeriodLabel(period: TimePeriod) {
   const { scale, value } = period;
   if (

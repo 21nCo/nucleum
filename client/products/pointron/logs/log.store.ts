@@ -1,7 +1,8 @@
 import {
   attachTimeToDate,
   formatTime,
-  isSameDay
+  isSameDay,
+  toLocalISOString
 } from "$lib/client/utils/time.utils";
 import { currentTime, userPreferences } from "$lib/client/stores/app.store";
 import { get, writable } from "svelte/store";
@@ -34,6 +35,7 @@ import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
 import { pointSessionStore } from "../focus/session.store";
+import { BlockType } from "$lib/client/types/pointron/session.type";
 
 class PointLogStore extends ResourceStore<IPointLog> {
   constructor() {
@@ -104,16 +106,14 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
   }
   async saveManualLogs() {
     let n = this.get();
-    logger.log({ context: "saving manual logs", n });
-    //TODO: Add validation and set error message in store
-    let sessionEntries: IPointSession[] = [];
-    let logEntries: IPointLog[] = [];
+    let sessionEntries: Partial<IPointSession>[] = [];
+    let logEntries: Partial<IPointLog>[] = [];
     n.manualLogs.forEach((entry) => {
       const duration = entry.duration;
       let start = attachTimeToDate(entry.startDate, entry.startTime);
       let end = attachTimeToDate(entry.endDate, entry.endTime);
       const id = generateSessionId(start.getTime());
-      const log: IPointLog = {
+      const log: Partial<IPointLog> = {
         start: start.toISOString(),
         end: end.toISOString(),
         id: prefixTable(id, Resource.PointLog),
@@ -125,27 +125,46 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
         tzOffset: get(userPreferences).timeZoneOffset,
         targets: get(pointronPreferences).horizonTargets
       };
-      const session: IPointSession = {
+      const session: Partial<IPointSession> = {
         start: start.toISOString(),
         end: end.toISOString(),
         elapsed: duration,
         id: prefixTable(id, Resource.PointSession),
         manualEntryId: entry.id,
         logs: [{ ...log, start: start.getTime(), end: end.getTime() }],
-        blocks: [],
+        blocks: [
+          {
+            start: start.getTime(),
+            type: BlockType.FOCUS,
+            duration: duration,
+            progress: 1,
+            id
+          },
+          {
+            id: generateUID(),
+            start: end.getTime(),
+            type: BlockType.NONE,
+            progress: 0,
+            duration: 0
+          }
+        ],
+        focusItems: {
+          goals: [
+            {
+              id: entry.goalId,
+              blocks: [
+                {
+                  start: start.getTime(),
+                  end: end.getTime()
+                }
+              ]
+            }
+          ],
+          tasks: []
+        },
         notes: entry.notes ?? {
           blocks: []
         },
-        tasks: [
-          {
-            label: "Manual Entry",
-            estimated: duration,
-            worked: duration,
-            order: 0,
-            checked: true,
-            goalId: entry.goalId
-          }
-        ],
         type: SessionType.MANUAL_ENTRY,
         extended: 0
       };

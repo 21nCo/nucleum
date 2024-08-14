@@ -55,7 +55,9 @@
 <BaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     <div class="flex flex-col w-full h-full">
-      <PinnedTopBar />
+      {#if !$view.isPortrait}
+        <PinnedTopBar />
+      {/if}
       <div class="flex w-full flex-grow">
         {#if !topBarResourceId}
           <MemotronLeftNav />

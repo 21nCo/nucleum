@@ -5,14 +5,15 @@
   import { createEventDispatcher } from "svelte";
   import { searchForLinking } from "../../memotron.store";
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
+  import LinkSearch from "./LinkSearch.svelte";
   const dispatch = createEventDispatcher();
-  let link: string;
+  let searchQuery: string;
   function onsearch(searchQuery: string) {
     return searchForLinking(searchQuery);
   }
 </script>
 
-<TextSearchInput
+<!-- <TextSearchInput
   bind:value={link}
   icon="arrow-up-right"
   searchResultComponent={LinkSuggestionItem}
@@ -30,4 +31,16 @@
   }}
   searchCallback={onsearch}
   placeholder="Link to a node or add to a collection"
+/> -->
+
+<LinkSearch
+  context="clipper"
+  bind:searchQuery
+  resultsPlacement={$toolbarState.position === Position.Bottom
+    ? Position.TopCenter
+    : Position.BottomCenter}
+  on:select={(e) => {
+    if (e.detail?.item?.id) dispatch("link", e.detail?.item?.id);
+    searchQuery = "";
+  }}
 />

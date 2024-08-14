@@ -11,10 +11,11 @@
     type INodeHierarchyV1,
     type INodeStructure
   } from "$lib/client/products/memotron/node/node.type";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onDestroy } from "svelte";
   import Markdown from "./Markdown.svelte";
   import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";
   import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
+  import { isReplaceableMd } from "./markdown.store";
   const dispatch = createEventDispatcher();
 
   /**
@@ -22,6 +23,13 @@
    */
   export let node: INode | undefined = undefined;
 
+  /**
+   * Since node is undefined when NodularMarkdown is created from Writer we use this to decide if the media needs to be stored in temporary s3 storage or not
+   */
+  if (node == undefined) $isReplaceableMd = true;
+  onDestroy(() => {
+    $isReplaceableMd = false;
+  });
   /**
    * Markdown as a linear array of blocks i.e. blocks of the markdown stored as a single record on server.
    *
@@ -85,8 +93,13 @@
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
     reCalculateStructure(_md, true);
+    setTimeout(() => {
+      dispatch("ready");
+    }, 1000);
+    // dispatch("ready");
   } else {
     _md = md;
+    dispatch("ready");
   }
   /**
    * @deprecated - used with v1 resolution of {@link hierarchyV1}

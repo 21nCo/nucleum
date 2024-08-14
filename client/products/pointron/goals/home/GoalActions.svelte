@@ -30,11 +30,9 @@
         //   icon: "play"
         // },
         {
-          label: $currentGoal.isFavorite
-            ? "Remove from favorites"
-            : "Add to favorites",
+          label: $currentGoal.isStarred ? "Unstar" : "Star",
           action: GoalContextMenuAction.TOGGLE_FAVORITE,
-          icon: "heart"
+          icon: "star"
         },
         {
           label: $currentGoal.isPinnedForQuickStart
@@ -75,7 +73,7 @@
         break;
       }
       case GoalContextMenuAction.TOGGLE_FAVORITE: {
-        $currentGoal.isFavorite = !$currentGoal.isFavorite;
+        $currentGoal.isStarred = !$currentGoal.isStarred;
         break;
       }
       case GoalContextMenuAction.TOGGLE_PIN_TO_QUICK_START: {

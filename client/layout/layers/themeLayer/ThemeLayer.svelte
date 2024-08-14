@@ -8,10 +8,11 @@
   import ColorLayer from "./ColorLayer.svelte";
   import GlassSkin from "./GlassSkin.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
-  $: rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
-  $: document.documentElement.style.fontSize = `${rootFontSize}px`;
+  let rootFontSize: number = defaultRootFontSize + 0.6 * $view.scale;
+  let ref: any;
   onMount(() => {
     refreshTheme();
     const appearanceSub = appearance.subscribe(() => {
@@ -37,6 +38,13 @@
     refreshSizing();
     refreshTailwind();
   }
+  /**
+   *
+   *
+   * _Notes on extension context:_
+   * `shadowRoot.host.style.fontSize` doesn't effect the font size of the extension as tailwind relies on root font size for rem units and in a shadow root extention context, rem units are not reliable as web pages may have different root font size. For now, @thedutchcoder/postcss-rem-to-px is being used as a postcss plugin to convert rem to px during build time as a workaround.
+   *
+   */
   function refreshSizing() {
     if (
       $userPreferences?.accessibilitySizingFactor === undefined ||
@@ -54,6 +62,15 @@
       if ($view.scale > 0.55) defaultRootFontSize = 18;
       else defaultRootFontSize = 16;
     }
+    rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
+    const dom = document.getElementById(extensionContext + "-root");
+    if (extensionContext && dom) {
+      const shadowRoot = dom.shadowRoot;
+      if (!shadowRoot) return;
+      shadowRoot.host.style.fontSize = `${rootFontSize + 20}px`;
+    } else if (!extensionContext) {
+      document.documentElement.style.fontSize = `${rootFontSize}px`;
+    }
   }
 
   /**
@@ -64,7 +81,11 @@
    */
   function refreshTailwind() {
     fontFamily = $appearance.typeface ?? "Avenir";
-    //BlinkMacSystemFont
+    if (extensionContext && ref) {
+      ref.style.setProperty("--fontFamily-sans-0", fontFamily);
+      ref.style.fontFamily = fontFamily;
+      return;
+    }
     document.documentElement.style.setProperty(
       "--fontFamily-sans-0",
       fontFamily
@@ -111,6 +132,7 @@
 </svelte:head>
 
 <div
+  bind:this={ref}
   class={cn("flex h-full w-full", {
     glassy: $appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark

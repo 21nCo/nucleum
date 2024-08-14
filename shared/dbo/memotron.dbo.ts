@@ -14,8 +14,7 @@ export const memotronDboDefinitions = {
   "fn::memotron::clipper::fetchPage": clipperFetchPage(),
   "fn::memotron::collection::fetchData": collectionFecthData(),
   "fn::memotron::timeline": timeline(),
-  "fn::memotron::link": link(),
-  "fn::memotron::unlink": unlink()
+  "fn::memotron::link": link()
 };
 
 function nodeFetch() {
@@ -111,6 +110,10 @@ function link() {
   return [def];
 }
 
+/**
+ * @deprecated - using direct client query instead
+ * @returns
+ */
 function unlink() {
   const def = `DEFINE FUNCTION fn::memotron::unlink($from: record, $to: record){
     DELETE $from->link where out=$to;
@@ -149,6 +152,10 @@ function collectionFecthData() {
   return [...nodeFetch(), def];
 }
 
+/**
+ * @deprecated - using client store and mutation queue instead
+ * @returns 
+ */
 function saveClip() {
   const def = `DEFINE FUNCTION fn::memotron::clipper::saveClip($id: any, $content: any, $webpagedata: any) {
       let $existingNode = RETURN IF type::is::record($id) THEN $id ELSE array::first(select value id from node where url is $id) END;
@@ -160,6 +167,10 @@ function saveClip() {
   return [...saveWebpage(), def];
 }
 
+/**
+ * @deprecated - using client store and mutation queue instead
+ * @returns 
+ */
 function saveWebpage() {
   const def = `DEFINE FUNCTION fn::memotron::clipper::saveWebpage($url: string, $data: any){
       let $existingNode = select * from node where url is $url;
@@ -176,7 +187,7 @@ function saveWebpage() {
 
 function clipperFetchPage() {
   const def = `DEFINE FUNCTION fn::memotron::clipper::fetchPage($url: string){
-      let $page = array::first(select *, fn::memotron::fetchClips(id) as clips, ->link.out.id as links from node where url is $url);
+      let $page = array::first(select *, fn::memotron::fetchClips(id) as clips, ->link.out.id as links from node where body.url is $url);
       let $similarPageIds = return fn::memotron::clipper::fetchSimilarPages($url);
       let $similarPages = select *, fn::memotron::fetchClips(id) as clips from node where id in $similarPageIds;
       return { page: $page, similar: $similarPages};

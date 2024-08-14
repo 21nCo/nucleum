@@ -1,50 +1,32 @@
 <script lang="ts">
-  import Mentions from "$lib/client/components/markdown/Mentions.svelte";
   import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { Position } from "$lib/client/types/direction.enum";
-  import {
-    LinkType,
-    NodeType,
-    RightPanelType
-  } from "$lib/client/products/memotron/node/node.type";
+  import { RightPanelType } from "$lib/client/products/memotron/node/node.type";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
-  import DirectLinks from "../../common/foreLinks/DirectLinks.svelte";
   import type { IActiveNodeStore } from "../node.store";
-  import NodeMetadataPane from "./NodeMetadataPane.svelte";
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
+  import type { ISelectItem } from "$lib/client/types/select.type";
+  import NodeLinksPane from "../../node/links/NodeLinksPane.svelte";
+  import NodeHistoryPane from "../../common/history/NodeHistoryPane.svelte";
+  import NodeTracesPane from "../traces/NodeTracesPane.svelte";
   export let node: IActiveNodeStore;
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
+  export let isRightPanelCollapsed = true;
   let selectedRightPanel = RightPanelType.OUTLINE;
-  let isRightPanelCollapsed = true;
-  let verticalSwitcherItems = [
-    { label: RightPanelType.FORELINKS, icon: "arrow-up-right" },
-    { label: RightPanelType.PROPERTIES, icon: "widget" },
-    { label: RightPanelType.METADATA, icon: "info" }
+  let verticalSwitcherItems: ISelectItem[] = [
+    { value: RightPanelType.LINKS, icon: "arrow-up-right" },
+    { value: RightPanelType.OUTLINE, icon: "bars-center-left" },
+    { value: RightPanelType.PROPERTIES, icon: "widget" },
+    { value: RightPanelType.TRACES, icon: "bookmark" },
+    { value: RightPanelType.HISTORY, icon: "clock" }
   ];
-  //mentions - as sub section in forelinks
-  // if (node.type === NodeType.MARKDOWN) {
-  //   verticalSwitcherItems = [
-  //     { label: RightPanelType.MENTIONS, icon: "at-symbol" },
-  //     ...verticalSwitcherItems
-  //   ];
-  // }
-  if (
-    $node?.contentType === NodeType.NODULAR_MARKDOWN ||
-    $node?.contentType === NodeType.NON_NODULAR_MARKDOWN ||
-    $node?.contentType === NodeType.PDF
-  ) {
-    verticalSwitcherItems = [
-      { label: RightPanelType.OUTLINE, icon: "bars-center-left" },
-      { label: RightPanelType.TRACES, icon: "bookmark" },
-      ...verticalSwitcherItems
-    ];
-  }
+
   selectedRightPanel = isRightPanelCollapsed
     ? RightPanelType.NONE
     : verticalSwitcherItems[0].label;
@@ -60,54 +42,12 @@
 </script>
 
 <aside
-  class={cn("flex justify-end gap-4 pr-2 pt-4", {
+  class={cn("flex justify--end gap-2 h-full overflow-auto", {
     "mr-2 mb-2 bg-bgs2 rounded-md": nodePageVariant === "v1",
-    "border-l border-l-brs2": nodePageVariant != "v1" && !isRightPanelCollapsed,
-    "pl-2": isRightPanelCollapsed,
-    "p-4 w-96 min-w-[21rem]": !isRightPanelCollapsed
+    "max-w-[28rem] w-[28rem] min-w-[28rem]": !isRightPanelCollapsed
   })}
 >
-  {#if !isRightPanelCollapsed}
-    <div class="flex flex-col h-full flex-grow items-start gap-3">
-      <Text
-        content={properCase(selectedRightPanel)}
-        style={TextStyle.SECTION_HEADING}
-      />
-      {#if selectedRightPanel === RightPanelType.OUTLINE}
-        <TableOfContents {mdId} />
-      {:else if selectedRightPanel === RightPanelType.FORELINKS}
-        <div class="flex flex-col items-start gap-4 h-full w-full">
-          <div class="flex flex-col items-start gap-2">
-            <!-- <Text content="Direct" style={TextStyle.SECTION_HEADING_SMALL} />
-            <DirectLinks
-              links={$node?.forelinks?.filter(
-                (x) => x.linkType === LinkType.DIRECT
-              )}
-              context="nodepage"
-            /> -->
-            <Text content="Mentions" style={TextStyle.SECTION_HEADING_SMALL} />
-            <Mentions />
-          </div>
-        </div>
-      {:else if selectedRightPanel === RightPanelType.PROPERTIES}
-        <NodePropertiesPane {node} />
-      {:else if selectedRightPanel === RightPanelType.TRACES}
-        <NodeMetadataPane {node} />
-      {:else if selectedRightPanel === RightPanelType.METADATA}
-        <NodeMetadataPane {node} />
-      {/if}
-    </div>
-  {/if}
   <div class="flex flex-col justify-between items-center">
-    <!-- <Button
-    icon={isRightPanelCollapsed ? "chevdoubleright" : "chevdoubleleft"}
-    size={Size.sm}
-    on:click={() => {
-      isRightPanelCollapsed = !isRightPanelCollapsed;
-      if (isRightPanelCollapsed) selectedRightPanel = RightPanelType.NONE;
-      else selectedRightPanel = verticalSwitcherItems[0].label;
-    }}
-  /> -->
     <VerticalSwitcher
       items={verticalSwitcherItems}
       itemProps={{
@@ -116,8 +56,29 @@
       }}
       isHideBar={isRightPanelCollapsed}
       selected={selectedRightPanel}
-      style={VerticalSwitcherStyle.BAR}
+      style={VerticalSwitcherStyle.DOT}
       on:switch={onRightPanelSwitch}
     />
   </div>
+  {#if !isRightPanelCollapsed}
+    <div
+      class="flex flex-col h-full flex-grow items-start gap-3 border-l border-l-brs2 p-4"
+    >
+      <Text
+        content={properCase(selectedRightPanel)}
+        style={TextStyle.PANEL_HEADING_SMALL}
+      />
+      {#if selectedRightPanel === RightPanelType.OUTLINE}
+        <TableOfContents {mdId} />
+      {:else if selectedRightPanel === RightPanelType.LINKS}
+        <NodeLinksPane {node} />
+      {:else if selectedRightPanel === RightPanelType.PROPERTIES}
+        <NodePropertiesPane {node} />
+      {:else if selectedRightPanel === RightPanelType.TRACES}
+        <NodeTracesPane {node} />
+      {:else if selectedRightPanel === RightPanelType.HISTORY}
+        <NodeHistoryPane />
+      {/if}
+    </div>
+  {/if}
 </aside>

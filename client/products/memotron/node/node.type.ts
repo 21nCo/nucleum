@@ -10,18 +10,23 @@ import type { ILink } from "../capture/capture.type";
 import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
 
 export type INode = INodeBase &
-  NodeContent & {
+  ((NodeContent & {
     metadata: INodeMetadata;
     children?: INode[] | string[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
-  };
+  }) | IClippedNode);
 
 export type INodeItemCaptured = Omit<
   INodeBase,
-  "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy"
+  | "createdAt"
+  | "modifiedAt"
+  | "createdBy"
+  | "modifiedBy"
+  | "interactedAt"
+  | "label"
 > &
-  NodeContent & {
+  (NodeContent & {
     children?: string[];
     /**
      * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
@@ -30,7 +35,7 @@ export type INodeItemCaptured = Omit<
     creationContext?: string;
     metadata?: INodeMetadata;
     links?: ILink[];
-  };
+  }) | IClippedNode;
 
 export type INodeThumbnail = INodeBase &
   NodeContent & {
@@ -53,6 +58,7 @@ export type IActiveNode = INode & {
   types?: string[];
   avatars?: IAvatar[];
   propertyConfig?: IProperty[];
+  wordCount?: number;
 };
 
 export type NodeContent =
@@ -149,7 +155,7 @@ export type OtherNodeType =
   | NodeType.COLLECTION_AS_EMBED;
 
 export type ClipType =
-  | NodeType.WEBPAGE
+  | NodeType.WEB_PAGE
   | NodeType.TEXT_CLIP
   | NodeType.IMAGE_CLIP
   | NodeType.AUDIO_CLIP
@@ -198,17 +204,35 @@ export enum NodeType {
   ACCORDION = "ACCORDION",
 
   //CLIPS
-  WEBPAGE = "WEBPAGE",
+  WEB_PAGE = "WEB_PAGE",
   TEXT_CLIP = "TEXT_CLIP",
   IMAGE_CLIP = "IMAGE_CLIP",
   AUDIO_CLIP = "AUDIO_CLIP",
   VIDEO_CLIP = "VIDEO_CLIP",
   PDF_CLIP = "PDF_CLIP",
-  VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP"
+  VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP",
+
+  //EXTERNAL
+  KINDLE_BOOK = "KINDLE_BOOK",
+  KINDLE_HIGHLIGHT = "KINDLE_HIGHLIGHT",
+  TWEET = "TWEET",
+  TWITTER_PROFILE = "TWITTER_PROFILE",
+  REDDIT_THREAD = "REDDIT_THREAD",
+  DISCORD_THREAD = "DISCORD_THREAD",
+  YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
+  TED_VIDEO = "TED_VIDEO",
+  INSTAGRAM_POST = "INSTAGRAM_POST",
+  FACEBOOK_POST = "FACEBOOK_POST",
+  TWITCH_STREAM = "TWITCH_STREAM",
+  STACKOVERFLOW_THREAD = "STACKOVERFLOW_THREAD",
+  GITHUB_REPO = "GITHUB_REPO",
+  GITHUB_PROFILE = "GITHUB_PROFILE",
+  GITHUB_DISCUSSION = "GITHUB_DISCUSSION",
+  GITLAB_PROJECT = "GITLAB_PROJECT"
 }
 
 export const ClipNodeTypeList = [
-  NodeType.WEBPAGE,
+  NodeType.WEB_PAGE,
   NodeType.TEXT_CLIP,
   NodeType.IMAGE_CLIP,
   NodeType.AUDIO_CLIP,
@@ -230,7 +254,8 @@ export const rootNodeTypeList = [
   NodeType.PDF,
   NodeType.IMAGE,
   NodeType.VIDEO,
-  NodeType.AUDIO
+  NodeType.AUDIO,
+  NodeType.WEB_PAGE
 ];
 
 export const TextNodeTypeList = [
@@ -238,6 +263,13 @@ export const TextNodeTypeList = [
   NodeType.QUOTE,
   NodeType.CODE,
   ...headingNodeTypes
+];
+
+export const internalUrlNodeTypeList = [
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO,
+  NodeType.PDF
 ];
 
 export type TextNodeType =
@@ -254,6 +286,7 @@ export type MediaBody = {
   url: string;
   type: string;
   size: number;
+  duration?: number;
 };
 
 export enum RightPanelType {
@@ -261,10 +294,19 @@ export enum RightPanelType {
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
   TRACES = "TRACES",
+  /**
+   * @deprecated - merged into properties
+   */
   METADATA = "METADATA",
-  FORELINKS = "FORELINKS",
+  LINKS = "LINKS",
+  /**
+   * @deprecated - merged into traces
+   */
   MENTIONS = "MENTIONS",
   HISTORY = "HISTORY",
+  /**
+   * @deprecated - will be shown as main panel
+   */
   SERENDIPITY = "SERENDIPITY"
 }
 
@@ -281,12 +323,10 @@ export type LinkThumbnail = Link & {
 export enum LinkType {
   DIRECT = "DIRECT",
   MENTION = "MENTION",
-  UNMENTION_APPEARANCE = "UNMENTION_APPEARANCE"
+  SUGGESTION = "SUGGESTION"
 }
 
-export type INodeMetadata = {
-  location?: any;
-};
+export type INodeMetadata = { location?: any; }
 
 export type INodeProperty = {
   id: string;
@@ -317,3 +357,63 @@ export type INodeStructure = {
   factor: number;
   children: string[];
 };
+
+
+
+export type IWebPageNode = {
+  body: {
+    url: string;
+    hash: string;
+    description?: string;
+  },
+  label: string;
+  metadata: IWebPageMetadata;
+  contentType: NodeType.WEB_PAGE;
+}
+
+export type IWebPageMetadata = {
+  favicon?: string;
+  faviconLink?: string;
+  appIconLinks?: string[];
+  keywords?: string;
+  hostname?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  twitterCard?: string;
+}
+
+export type ITweetNode = {
+  body: {
+    url: string;
+    content: string;
+    postedAt: string;
+  },
+  metadata: ITweetMetadata;
+  contentType: NodeType.TWEET;
+}
+
+export type ITweetMetadata = {}
+
+export type ITwitterProfileNode = {
+  body: {
+    username: string;
+    bio: string;
+    profileImageUrl: string;
+  },
+  contentType: NodeType.TWITTER_PROFILE;
+}
+
+export type IClippedNode = IWebPageNode | ITwitterProfileNode | ITweetNode;
+
+export type IClippedNodeCapture = Omit<
+INodeBase,
+| "createdAt"
+| "modifiedAt"
+| "createdBy"
+| "modifiedBy"
+| "interactedAt"
+| "label"
+| "id"
+>  & IClippedNode;

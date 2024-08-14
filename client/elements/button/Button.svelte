@@ -1,17 +1,16 @@
 <script lang="ts">
   import { Size } from "$lib/client/types/size.enum";
-  import { onMount } from "svelte";
   import Icon from "../Icon.svelte";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import {
-    renderPopover,
-    resolveHoverState
-  } from "$lib/client/utils/browser.utils";
   import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
   import { Position } from "$lib/client/types/direction.enum";
-  import Tooltip from "../text/Tooltip.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
+  import HoverableElement from "../HoverableElement.svelte";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import ShortcutText from "../text/ShortcutText.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -32,111 +31,77 @@
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
   };
-  /**
-   * @deprecated - Use tooltipOptions instead
-   */
-  export let toolTipPlacement: Position = Position.BottomCenter;
   export let isLoading: boolean = false;
   /**
    * Applicable when {@link ButtonStyle.PLAIN} style is choosen
    */
   export let isUnderlined: boolean = false;
-  /**
-   * @deprecated - Use toggle instead
-   */
-  export let isStayActive: boolean = false;
   export let id: string = "";
-  // export let buttonBaseColor: string = "";
-  // export let buttonActiveColor: string = "";
-  // export let isActive: boolean = false;
-  let toolTipRef: any;
   let buttonRef: any;
   export let isHovering: boolean = false;
-  $: if (!label && icon && style == ButtonStyle.DEFAULT && !$$slots.default)
-    style = ButtonStyle.PLAIN;
-  const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
-    if (resolveHoverState(event)) {
-      isHovering = true;
-      if (tooltip) {
-        renderPopover({
-          ...tooltipOptions,
-          triggerRef: buttonRef,
-          popRef: toolTipRef
-        });
-      }
-    } else {
-      isHovering = false;
-      hideToolTip();
-    }
-  };
-  onMount(() => {
-    hideToolTip();
-  });
-  function hideToolTip() {
-    if (toolTipRef && toolTipRef?.style?.display != "none")
-      toolTipRef.style.display = "none";
-  }
+  export let shortcut: string | undefined = undefined;
+  $: isIconOnlyButton = !label && !$$slots.default;
 </script>
 
-<button
+<HoverableElement
   {id}
+  bind:isHovering
+  type="button"
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
     {
-      "min-w-32": style != ButtonStyle.PLAIN && !isPreventMinWidth,
+      "min-w-32":
+        style != ButtonStyle.PLAIN && !isPreventMinWidth && !isIconOnlyButton,
       "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,
       "gap-2 text-b2 dp:text-base": size === Size.md,
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
-      "gap-1 text-b4 dp:text-b3": size === Size.xs
+      "gap-1 text-b4 dp:text-b3": size === Size.xs,
+      "p-1.5 rounded-md": isIconOnlyButton,
+      [bg(parentBgIndex)]:
+        isHovering && isIconOnlyButton && style != ButtonStyle.PLAIN,
+      "text-fgs2 hover:text-aps1": style === ButtonStyle.PLAIN,
+      "underline-dotted hover:underline-dotted-primary":
+        style === ButtonStyle.PLAIN && isUnderlined
     },
     style != ButtonStyle.PLAIN &&
       (label || $$slots.default) && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,
-        "h-[2.75rem] py-3 px-5": size === Size.md,
+        "h-10 py-3 px-5": size === Size.md,
         "h-8 py-2 px-4": size === Size.sm,
         "h-6 py-1 px-3": size === Size.xs
       },
-    style === ButtonStyle.DEFAULT && [
-      (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER) &&
-        "text-abg",
-      type === ButtonVariant.SECONDARY && bg(parentBgIndex),
-      {
-        "hover:opacity-90":
-          type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
-        "bg-aps1": type === ButtonVariant.PRIMARY,
-        "bg-ars1": type === ButtonVariant.DANGER,
-        "border border-transparent hover:border-brs3":
-          type === ButtonVariant.SECONDARY
-      }
-    ],
+    style === ButtonStyle.DEFAULT &&
+      !isIconOnlyButton && [
+        {
+          "hover:opacity-90 text-abg":
+            type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER,
+          "bg-aps1": type === ButtonVariant.PRIMARY,
+          "bg-ars1": type === ButtonVariant.DANGER,
+          "border border-transparent hover:border-brs3":
+            type === ButtonVariant.SECONDARY,
+          [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY
+        }
+      ],
     style === ButtonStyle.OUTLINED && [
       {
         border: true,
-        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:border-aps1":
           type === ButtonVariant.PRIMARY,
         "border-brs3 text-fgs2 hover:text-fgs1 hover:bg-bgs2":
           type === ButtonVariant.SECONDARY,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }
     ],
-    style === ButtonStyle.PLAIN && [
-      "text-fgs2 hover:text-aps1",
-      {
-        "underline-dotted hover:underline-dotted-primary": isUnderlined
-      }
-    ],
     className
   )}
   on:click
   bind:this={buttonRef}
-  on:mouseover={toggleHoveringState}
-  on:mouseleave={toggleHoveringState}
-  on:focus={toggleHoveringState}
-  on:blur={toggleHoveringState}
-  disabled={isDisabled || isLoading}
+  {tooltip}
+  {tooltipOptions}
+  isDisabled={isDisabled || isLoading}
 >
   {#if isLoading}
     <InlineLoadingAnimation
@@ -170,14 +135,18 @@
       <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
+      {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
+        <ShortcutText
+          {shortcut}
+          parentBgIndex={style === ButtonStyle.PLAIN
+            ? parentBgIndex
+            : style === ButtonStyle.OUTLINED
+              ? parentBgIndex + 1
+              : undefined}
+        />
+      {/if}
     {:else}
       <slot />
     {/if}
   {/if}
-
-  {#if tooltip}
-    <div bind:this={toolTipRef}>
-      <Tooltip {tooltip} />
-    </div>
-  {/if}
-</button>
+</HoverableElement>

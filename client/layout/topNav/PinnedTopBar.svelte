@@ -1,18 +1,28 @@
 <script lang="ts">
-  import { uiState } from "$lib/client/stores/uiState.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { onMount } from "svelte";
   import TopBarResourceItem from "./TopBarResourceItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "$lib/client/components/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  let pinnedItems = uiState.getTopBarState();
+  import { Action } from "$lib/client/types/action.enum";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  let pinnedItems = refreshPinnedItems();
   $: console.log({ pinnedItems });
   onMount(() => {
     uiState.subscribe((x) => {
-      pinnedItems = uiState.getTopBarState();
+      pinnedItems = refreshPinnedItems();
     });
   });
+  function refreshPinnedItems() {
+    return uiState.getState(ResourceAccessPoint.TOP_BAR, {
+      isProductScoped: true
+    });
+  }
 </script>
 
 {#if pinnedItems?.length > 0}
@@ -39,11 +49,12 @@
       {/each}
     </span>
     <span>
-      <Icon
+      <Button
         icon="search"
         size={Size.lg}
+        parentBgIndex={2}
         on:click={() => {
-          appStore.toggleSearchParam(ResourceAccessMode.TOPBARFOCUS, undefined);
+          appStore.runAction(Action.GLOBAL_SEARCH);
         }}
       />
     </span>

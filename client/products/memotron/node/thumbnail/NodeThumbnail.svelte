@@ -16,21 +16,21 @@
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
-  import ResourceThumbnailTitle from "../../common/thumbnail/ResourceThumbnailTitle.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
   export let item: INodeThumbnail;
-  export let variant: Arrangement = Arrangement.LIST;
+  export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
-  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
 </script>
 
-<ResourceThumbnailBase {item} {context} {isApplyCustomColor}>
+<ResourceThumbnailBase {item} {accessPoint} {isApplyCustomColor} {arrangement}>
   <!-- {#if variant === Arrangement.LIST && collectionContext}
     <NodeThumbnailInList node={item} {parentBgIndex} on:click /> -->
-  {#if variant === Arrangement.LIST}
+  {#if arrangement === Arrangement.LIST}
     <button
       class={cn("flex w-full p-3 border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
@@ -38,14 +38,14 @@
       })}
       on:click
     >
-      <ResourceThumbnailTitle {item} />
+      <NodeThumbnailTitle node={item} />
     </button>
-  {:else if variant === Arrangement.GRID}
+  {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail
       {item}
       on:click
       {isApplyCustomColor}
-      size={context === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
+      size={accessPoint === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
     >
       <div class="relative grow w-full p-4">
         <!-- Preview content -->
@@ -64,12 +64,13 @@
         {/if}
       </div>
       <slot slot="bottom" name="bottom">
+        <NodeThumbnailTitle node={item} />
         <!-- <span class="text-b3 text-fgs3">
       {formatDatetime($userPreferences, new Date(node.createdAt))}
       </span> -->
       </slot>
     </ResourceGridThumbnail>
-  {:else if variant === Arrangement.TIMELINE}
+  {:else if arrangement === Arrangement.TIMELINE}
     <NodeThumbnailInTimeline node={item} on:click {parentBgIndex} />
   {/if}
 </ResourceThumbnailBase>

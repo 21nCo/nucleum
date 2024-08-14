@@ -1,7 +1,8 @@
 <script lang="ts">
   import "../app.css";
   import appearance from "$lib/client/stores/appearance.store";
-  import LocalBaseLayer from "$local/layout/LocalBaseLayer.svelte";
+  import LocalBaseLayer from "$local/LocalBaseLayer.svelte";
+  import MetadataLayer from "../layout/layers/MetadataLayer.svelte";
 </script>
 
 <div
@@ -13,3 +14,4 @@
     <slot />
   </LocalBaseLayer>
 </div>
+<MetadataLayer />

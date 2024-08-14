@@ -4,8 +4,6 @@ import type { AppStore } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
 import {
-  UIState,
-  type UIStateProps,
   type UserAppearanceSettings,
   type IUserGlobalPreferences
 } from "$lib/client/types/preferences.type";
@@ -34,7 +32,10 @@ import { Persistence } from "../persistence/persistence";
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
-import { confirmationNotification } from "$lib/client/stores/notification.store";
+import {
+  appEvents,
+  confirmationNotification
+} from "$lib/client/stores/notification.store";
 
 import { defaultAppData } from "$local/local";
 import { Embed, OperatingSystem } from "../types/context.type";
@@ -45,6 +46,10 @@ import {
   ResourceActionType,
   ResourceAccessMode
 } from "../components/resourceStores/resource.type";
+import { uiState } from "./uiState/uiState.store";
+import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
+import { Action } from "../types/action.enum";
+import type { Event } from "../types/event.enum";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -188,18 +193,6 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     lightColorSchemeId: defaultColorSchemeId,
     darkColorSchemeId: defaultDarkColorSchemeId
   },
-  uiStates: {
-    all: {
-      isOnboardingComplete: false,
-      isInThinMode: false
-    },
-    desktop: {
-      isInThinMode: false
-    },
-    portrait: {
-      isInThinMode: false
-    }
-  },
   avatarPicker: {
     skinIndex: 0,
     usedEmojis: [],
@@ -220,7 +213,10 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     super(Resource.globalPreferences, seedUserPreferences, {
       refreshOnAppear: true,
       isSynchronousCache: true,
-      dboDependencies: ["fn::global::resource::delete"]
+      dboDependencies: [
+        "fn::global::resource::delete",
+        "fn::global::resource::fetch"
+      ]
     });
   }
   loader(data: IUserGlobalPreferences) {
@@ -301,44 +297,6 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
       Resource.tz
     );
     return this._setTimezone(offset, label);
-  }
-  onBoardingStatusCheck() {
-    if (this.resolveUiState(UIState.isOnboardingComplete)) return true;
-    else {
-      appStore.gotoPath("/onboarding");
-      return false;
-    }
-  }
-  resolveUiState(property: string) {
-    const uiStates = get(userPreferences).uiStates;
-    let value = undefined;
-    if (get(view).isPortrait) {
-      //@ts-ignore
-      value = uiStates?.portrait[property];
-    } else {
-      //@ts-ignore
-      value = uiStates?.desktop[property];
-    }
-    if (value === undefined) {
-      //@ts-ignore
-      value = uiStates?.all[property];
-    }
-    return value;
-  }
-  setUiState({ property, value, isGlobal }: UIStateProps) {
-    const uiStates = get(userPreferences).uiStates;
-    if (!uiStates) return;
-    if (isGlobal) {
-      //@ts-ignore
-      uiStates.all[property] = value;
-    } else if (get(view).isPortrait) {
-      //@ts-ignore
-      uiStates.portrait[property] = value;
-    } else {
-      //@ts-ignore
-      uiStates.desktop[property] = value;
-    }
-    this.modify({ uiStates });
   }
 }
 
@@ -468,6 +426,9 @@ function initAppStore(seed: AppStore) {
       gotoPath("404");
       return;
     }
+    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
     if (action.type === ActionType.LINK) {
       const url = get(appStore).appData.urls[action.action];
       if (!url) return;
@@ -475,11 +436,23 @@ function initAppStore(seed: AppStore) {
     } else if (action.type === ActionType.FUNCTION) {
       if (!action.fn) return;
       return action.fn(params?.componentParams);
+    } else if (action.type === ActionType.SEARCH_CMD) {
+      appStore.runAction(Action.CMD, {
+        componentParams: {
+          command: action.action,
+          commandType: action.type
+        }
+      });
+    } else if (action.type === ActionType.EVENT) {
+      appEvents.publish(action.action as Event, params?.componentParams);
     } else if (action.type === ActionType.CONFIRMATION && action.confirmation) {
       confirmationNotification.notify(action.confirmation);
     } else if (params.isReturnIfComponent) {
       return action;
-    } else if (action.type === ActionType.MODAL) {
+    } else if (
+      action.type === ActionType.MODAL ||
+      interactionMode === InteractionMode.COMMAND_ONLY
+    ) {
       modalEvent.notify({
         path: action.action,
         isShow: true,
@@ -546,7 +519,8 @@ function initAppStore(seed: AppStore) {
       "&state=" +
       guestPartForState +
       ":" +
-      domainPartForState;
+      domainPartForState +
+      "&prompt=select_account";
     let redirectUri = "";
     if (config.response_mode === "form_post") {
       url += "&response_mode=form_post";
@@ -831,13 +805,6 @@ function initAppStore(seed: AppStore) {
           )?.associatedPlayer;
         }
         return n;
-      });
-    },
-    toggleSidebar() {
-      const val = userPreferences.resolveUiState(UIState.isInThinMode);
-      userPreferences.setUiState({
-        property: UIState.isInThinMode,
-        value: !val
       });
     },
     toggleMenuVisibility: (isHidden?: boolean) => {

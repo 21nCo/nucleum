@@ -45,6 +45,8 @@
   !$mdStore.params?.isReadOnly
     ? 'bg-bgs2'
     : ''}"
+  data-content={block.contentType}
+  data-node={block.id}
   on:pointerenter={() => {
     isHovering = true;
   }}

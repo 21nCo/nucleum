@@ -74,31 +74,17 @@
   >
     {#if control === Control.START || control === Control.RESUME || control === Control.SKIPBREAK}
       <!-- <Start {width} /> -->
-      <ControlIcon
-        icon={isFocusPlayerContext ? "play-circled-mini" : "play-circled"}
-        {...iconProps}
-      />
+      <ControlIcon icon="play-circled" {...iconProps} />
     {:else if control === Control.BREAK}
-      <ControlIcon
-        icon={!isFocusPlayerContext ? "clock" : "clock-mini"}
-        {...iconProps}
-      />
+      <ControlIcon icon="clock" {...iconProps} />
       <!-- <Break {width} /> -->
     {:else if control === Control.EXTEND}
       <Extend minutes={extendDuration} />
     {:else if control === Control.FINISH}
       <!-- <Finish {width} /> -->
-      <ControlIcon
-        icon={!isFocusPlayerContext
-          ? "arrow-right-circled"
-          : "arrow-right-circled-mini"}
-        {...iconProps}
-      />
+      <ControlIcon icon="arrow-right-circled" {...iconProps} />
     {:else if control === Control.ABANDON}
-      <ControlIcon
-        icon={!isFocusPlayerContext ? "cross" : "cross-mini"}
-        {...iconProps}
-      />
+      <ControlIcon icon="cross" {...iconProps} />
     {/if}
     {#if isProminent}
       <!-- <div
@@ -109,7 +95,7 @@
   </div>
   {#if !isFocusPlayerContext}
     <div
-      class="absolute top-full left-0 text-fgs2 self-center flex w-full justify-center mo:text-b3"
+      class="absolute top-full left-0 text-fgs2 self-center flex w-full justify-center mo:text-b3 mt-1"
     >
       {#if control === Control.START}
         Start

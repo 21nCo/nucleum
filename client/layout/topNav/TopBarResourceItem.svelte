@@ -4,7 +4,7 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { resolveResource } from "$lib/client/products/memotron/memotron.store";
-  import { uiState } from "$lib/client/stores/uiState.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   export let item: string;

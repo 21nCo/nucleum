@@ -16,6 +16,7 @@ export enum Resource {
   appMenu = "appMenu",
   accessLog = "accessLog",
   uiState = "uiState",
+  keyboardShortcuts = "keyboardShortcuts",
 
   //Pointron
   pointronPreferences = "pointronPreferences",

@@ -15,6 +15,8 @@
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
+  import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+  import { properCase } from "$lib/shared/utils/text.utils";
   export let item: any;
   export let isActive: boolean = false;
   let avatar: IAvatar | undefined = undefined;
@@ -32,6 +34,8 @@
     const type = await resolveAssociatedType(item.type);
     return type?.avatar;
   }
+  $: resourceType = determineResourceType(item.id);
+  $: console.log({ item, resourceType });
 </script>
 
 <button
@@ -60,12 +64,10 @@
         </span>
       {/if}
       <TextWithHoverTooltip
-        text={item.label}
+        text={item.label ?? item.body ?? "Untitled"}
         class="text-left truncate w-full"
       />
     </div>
   </span>
-  <span class="text-b3 text-fgs3"
-    >{item.type === CurationType.COLLECTION ? "Collection" : "Node"}</span
-  >
+  <span class="text-b3 text-fgs3">{properCase(resourceType)}</span>
 </button>

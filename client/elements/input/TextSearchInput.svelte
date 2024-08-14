@@ -89,7 +89,7 @@
     class={inputClasses}
     bind:value
     on:change|stopPropagation
-    on:keydown
+    on:keydown|stopPropagation
     on:keyup|stopPropagation={onKeyup}
     on:blur
     on:click|stopPropagation
@@ -106,6 +106,7 @@
     {placeholder}
     disabled={isDisabled}
     bind:this={inputRef}
+    autocomplete="off"
   />
   <slot name="popover" slot="popover">
     <SearchResultsPopover

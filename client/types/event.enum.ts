@@ -6,21 +6,6 @@ export type Event = GlobalEvent | PointronEvent | ClipperExtensionEvent;
 export enum GlobalEvent {
   NONE = "NONE",
   SHOW_APPEARANCE_PREVIEW = "SHOW_APPEARANCE_PREVIEW",
-  /**
-   * @deprecated
-   * Use svelte:window listener instead on the component
-   */
-  WINDOW_VISIBILITY_CHANGED = "WINDOW_VISIBILITY_CHANGED",
-  /**
-   * @deprecated
-   * Use svelte:window listener instead on the component
-   */
-  WINDOW_CLICKED = "WINDOW_CLICKED",
-  /**
-   * @deprecated
-   * Use svelte:window listener instead on the component
-   */
-  WINDOW_RESIZED = "WINDOW_RESIZED",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
   /**
@@ -28,7 +13,10 @@ export enum GlobalEvent {
    */
   BOOTSTRAP = "BOOTSTRAP",
   CUSTOM_NAVIGATION = "custom:navigation",
-  CUSTOM_ALERT = "custom:alert"
+  CUSTOM_ALERT = "custom:alert",
+  ACTIVATE_SEARCH_BOX = "ACTIVATE_SEARCH_BOX",
+  ENTER = "Enter",
+  ESCAPE = "Escape"
 }
 
 export enum PlayActionState {

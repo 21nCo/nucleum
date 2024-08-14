@@ -10,7 +10,8 @@
   } from "$lib/client/stores/notification.store";
   import {
     tagStore,
-    pointronPreferences
+    pointronPreferences,
+    lastImportTime
   } from "$lib/client/products/pointron/pointron.store";
   import {
     StatusMessageType,
@@ -46,7 +47,7 @@
     message: undefined,
     type: StatusMessageType.DEFAULT
   };
-
+  $: if ($lastImportTime) refreshImportHistory();
   function handleDeleteImportEntry(rowId: string) {
     confirmationNotification.notify({
       title: "Revert this import",
@@ -82,15 +83,19 @@
     {
       label: "Timemator",
       id: OtherApps.TIMEMATOR
+    },
+    {
+      label: "Pointron",
+      id: "POINTRON"
     }
   ];
 
   const importHistoryColumns: TableColumnItem[] = [
-    {
-      label: "Id",
-      key: "id"
-      // width: "min-w-[7rem]",
-    },
+    // {
+    //   label: "Id",
+    //   key: "id"
+    //   // width: "min-w-[7rem]",
+    // },
     {
       label: "Date and time",
       key: "created"
@@ -106,14 +111,14 @@
       key: "source"
       // width: "min-w-[7rem]",
     },
-    // {
-    //   label: "Status",
-    //   key: "status",
-    //   // width: "min-w-[7rem]",
-    //   render: (status: string) => {
-    //     return `<div class="text-ags1 capitalize flex gap-1 items-center"> <span class="w-[4px] h-[4px] bg-ags1 rounded-full"></span> ${status}</div>`;
-    //   }
-    // },
+    {
+      label: "Status",
+      key: "status",
+      // width: "min-w-[7rem]",
+      render: (status: string) => {
+        return `<div class="capitalize flex gap-1 justify-center items-center"> <span class="w-[4px] h-[4px] bg-fgs1 rounded-full"></span> ${status}</div>`;
+      }
+    },
     {
       label: "",
       key: "delete",
@@ -195,25 +200,20 @@
   <div class="flex flex-col gap-8 max-w-[1000px] h-full flex-grow">
     <div class="flex flex-col gap-3">
       <div class="text-left mo:text-b2 text-fgs2">
-        Importing from other apps will be available soon...
+        Pick an App to import data from:
       </div>
       <div
         class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
       >
-        <!-- {#each OtherAppsForImport as { label, id }}
-        <Button
-          width={`${$windowObject.isInPortraitMode ? `w-full` : `w-fit`}`}
-          on:click={() => onImportButtonClick(id)}
-          {label}
-        />
-      {/each} -->
+        {#each OtherAppsForImport as { label, id }}
+          <Button on:click={() => onImportButtonClick(id)} {label} />
+        {/each}
       </div>
-      <ImportData on:refresh={refreshImportHistory} />
     </div>
 
     <div class="flex flex-col gap-3">
       <div class="text-left mo:text-b2">Import history</div>
-      <div class={$view.isPortrait ? `` : `w-full max-w-[1000px]`}>
+      <div class={$view.isPortrait ? `` : `w-full max-w-[800px]`}>
         <Table
           width={"w-full"}
           columns={importHistoryColumns}

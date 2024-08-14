@@ -49,14 +49,18 @@
   $: parentHierarchy = goal?.parent?.hierarchy?.map((x: any) => x.label);
   // $: console.log({ item, tasks, goal, parentHierarchy });
   onMount(() => {
-    if (item.id && contxt == "current") {
-      if (
-        isFocusAddTask &&
-        addTaskInputRef &&
-        $context.embed != Embed.HANDSET
-      ) {
-        addTaskInputRef?.focus();
+    try {
+      if (item.id && contxt == "current") {
+        if (
+          isFocusAddTask &&
+          addTaskInputRef &&
+          $context.embed != Embed.HANDSET
+        ) {
+          addTaskInputRef?.focus();
+        }
       }
+    } catch (e) {
+      console.warn("Error in focusItem.svelte", e);
     }
   });
   const unSubscribeDND = dragAndDropStore.subscribe(async (x: any) => {
@@ -126,7 +130,7 @@
         class="flex flex-col gap-2 w-full pb-2 border-2 border-bgs2 rounded-md"
       >
         <div
-          class={cn("text-left px-3 pt-3 font-medium truncate w-4/5", {
+          class={cn("text-left px-3 pt-3 font-medium truncate min-w-0 flex-1", {
             "text-ccs1": goal.color,
             "text-fgs2": !goal.color
           })}
@@ -173,6 +177,7 @@
             size={Size.xs}
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
+            isPreventMinWidth={true}
             label="Remove"
             on:click={onDeleteClicked}
           />
@@ -182,7 +187,7 @@
   {:else if item.id}
     <CustomColorPropagator
       class={cn(
-        "flex justify-between items-center border-2 border-bgs2 w-full p-3 rounded-md",
+        "flex  gap-4 items-center border-2 border-bgs2 w-full p-3 rounded-md",
         {
           "bg-ccs1 border-ccs1": isInprogress,
           "text-ccs1": !isInprogress
@@ -191,7 +196,7 @@
       color={goal.color}
       on:click={clickHandler}
     >
-      <div class="text-left truncate w-4/5">
+      <div class="text-left truncate min-w-0 flex-1">
         <div>
           <BreadcrumbMini
             hierarchy={parentHierarchy}

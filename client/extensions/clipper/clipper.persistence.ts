@@ -8,7 +8,6 @@ import { Surreal } from "surrealdb.js";
 import type { TabData } from "$lib/client/types/extension.type";
 import {
   interceptSurrealResponse,
-  resolveCurrentTabData,
   sendMessageToContentScript
 } from "$lib/client/utils/extension.utils";
 import {
@@ -17,6 +16,7 @@ import {
   type BookNode,
   type HighlightNode
 } from "./contentScripts/KindleHighlights.types";
+import { resolveCurrentTabData } from "./clipper.utils";
 
 /**
  * TODO- Delegate all calls to tidy lib SurrealDatabase once token handshake is complete.
@@ -97,6 +97,9 @@ export class ClipperPersistence {
   }
 
   /**
+   * 
+   * @deprecated - use clipper store instead
+   * 
    * Can be triggered from either content script or side bar.
    * If triggered from content script, tab data will be present in the message.
    *
@@ -135,6 +138,12 @@ export class ClipperPersistence {
     }
   }
 
+  /**
+   * @deprecated - use linker store instead
+   * @param from
+   * @param to
+   * @returns
+   */
   link(from: string, to: string) {
     try {
       const query = "return fn::memotron::link($from, $to)";
@@ -143,6 +152,12 @@ export class ClipperPersistence {
       console.error("ERROR", e);
     }
   }
+  /**
+   * @deprecated - use linker store instead
+   * @param from
+   * @param to
+   * @returns
+   */
   unlink(from: string, to: string) {
     try {
       const query = "return fn::memotron::unlink($from, $to)";
@@ -175,6 +190,7 @@ export class ClipperPersistence {
   }
 
   /**
+   * @deprecated - use clipper store instead
    * Delegated from content scripts. tabData is passed from content script to save the web page if the web page is not saved already.
    *
    * TODO - save clip via NodeStore - to update nodes local cache

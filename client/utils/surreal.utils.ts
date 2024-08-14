@@ -12,12 +12,14 @@ export function surrealUnixTimestamp(date?: string | Date) {
   return +(new Date(date).getTime() / 1000).toFixed();
 }
 
-export function resolveRefreshQuery(id: string, dataType: StoreDataType) {
+export function resolveRefreshQuery(id: string, dataType: StoreDataType, params?: {
+  isFetchAll?: boolean;
+}) {
   if (dataType === StoreDataType.KVO)
     return `array::first(select * from kv:${id});`;
   else if (dataType === StoreDataType.FIR) return `select * from ${id};`;
   else if (dataType === StoreDataType.IFR) {
-    return `select * from ${id} where modifiedAt > $since;`;
+    return `fn::global::resource::fetch("${id}", $since);`
   }
 }
 

@@ -115,6 +115,7 @@ const seedSessionStore: IActiveSessionStore = {
   currentIdle: 0,
   isSessionRunning: false,
   currentBlockId: "",
+  currentTask: undefined,
   composition: {
     totalDuration: 60 * 60,
     focusDuration: 60 * 60,
@@ -715,8 +716,14 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     this._resumeTimer();
     return true;
   }
+  /**
+   *
+   * Note: Not modifying `isQuickStartOn` state for finish session context as this is triggering refresh on QuickStart component and thus `isFinishingState` state on quick start thumbnail is being replaced which is not desirable.
+   * @param props
+   * @returns
+   */
   private async _stopCurrentTaskOrGoal(
-    props: { isPersist?: boolean } = {
+    props: { isPersist?: boolean; isSessionFinish?: boolean } = {
       isPersist: false
     }
   ) {
@@ -731,7 +738,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     return this.modify(
       {
         currentTask: undefined,
-        isQuickStartOn: false
+        isQuickStartOn: props?.isSessionFinish ? session.isQuickStartOn : false
       },
       {
         isPersist: props.isPersist,
@@ -808,7 +815,10 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       fullPageLoadingScreen.show("Finishing session...");
     try {
       const now = new Date().getTime();
-      if (session.currentTask) await this._stopCurrentTaskOrGoal();
+      if (session.currentTask)
+        await this._stopCurrentTaskOrGoal({
+          isSessionFinish: true
+        });
       // let lastBlock = n.intervals?.pop();
       // if (lastBlock) {
       //   lastBlock.end = now;
@@ -827,7 +837,12 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         this.shallowReset();
         // this.propagateMessageToParent(session);
         this.modify(
-          { isSessionRunning: false, state: SessionState.FINISHED },
+          {
+            isSessionRunning: false,
+            state: SessionState.FINISHED,
+            currentTask: undefined,
+            isQuickStartOn: false
+          },
           {
             queueParams: {
               isUseQueueFirstApproach: true,
@@ -1395,27 +1410,27 @@ class PointSessionStore extends ResourceStore<IPointSession> {
   finishFocus() {
     const activeSession = sessionStore.get();
     const focusItemStore = focusItemsStore.get();
+    const plannedEndTime = resolvePlannedEndTime(activeSession);
+    const endTime =
+      plannedEndTime && new Date().getTime() > plannedEndTime.getTime()
+        ? plannedEndTime
+        : new Date();
     const session: Partial<IPointSession> = {
       elapsed: activeSession.totalElapsed,
       extended: activeSession.totalExtended,
       start: activeSession.start?.toISOString() ?? "",
-      end: new Date(
-        (activeSession.start?.getTime() ?? 0) +
-          activeSession.totalElapsed * 1000
-      ).toISOString(),
-
+      end: endTime.toISOString(),
       id: prefixTable(
-        activeSession.currentSessionId ??
-          generateSessionId(new Date().getTime()),
+        activeSession.currentSessionId ?? generateSessionId(endTime.getTime()),
         Resource.PointSession
       ),
-      plannedEnd: resolvePlannedEndTime(activeSession),
+      plannedEnd: plannedEndTime?.toISOString(),
       type: activeSession.type,
       blocks: [
         ...activeSession.intervals,
         {
           id: generateUID(),
-          start: new Date().getTime(),
+          start: endTime.getTime(),
           type: BlockType.NONE,
           progress: 0,
           duration: 0
@@ -1463,12 +1478,12 @@ class PointSessionStore extends ResourceStore<IPointSession> {
 
     function resolvePlannedEndTime(session: IActiveSessionStore) {
       if (session.type == SessionType.COUNTUP) {
-        return "";
-      } else if (session.end) return session.end.toISOString();
+        return;
+      } else if (session.end) return session.end;
       else if (session.start) {
         return new Date(
           session.start.getTime() + session.plannedDuration * 1000
-        ).toISOString();
+        );
       }
     }
     function generateLogFromBlock(

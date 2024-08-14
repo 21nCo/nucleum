@@ -61,7 +61,7 @@
         <SessionTimeText size={Size.sm} />
         {#if $sessionStore.type != SessionType.COUNTUP && isShowTimeLeftOnMobile}
           <div class="w-full px-6">
-            <TimeleftIndicator parentBackgroundIndex={0} />
+            <TimeleftIndicator parentBgIndex={0} />
           </div>
         {/if}
       </div>
@@ -80,14 +80,13 @@
           <ControlBar />
         </div>
         <div class="flex justify-center">
-          <div class="w-5/6">
-            <Extras isInFullScreen={!isInline} />
-          </div>
+          <Extras isInFullScreen={!isInline} />
         </div>
       </div>
     {/if}
   </div>
 {:else if layout == 1}
+  {@const parentBgIndex = isInline && !$sessionStore.isQuickStartOn ? 1 : 2}
   <div
     class="flex w-full h-full {$appearance.skin === AppSkin.Glassy
       ? 'glassthick'
@@ -96,7 +95,7 @@
   >
     <div
       class={cn("flex flex-col items-center justify-center flex-grow ", {
-        "bg-bgs1": isInline && !$sessionStore.isQuickStartOn,
+        "bg-bgs1": parentBgIndex === 1,
         "bg-bgs2": !isInline || $sessionStore.isQuickStartOn
       })}
     >
@@ -107,17 +106,9 @@
             : IntervalBarContext.ZEN_ON_DESKTOP}
         />
         <div class="flex flex-col w-full items-center px-4 lg:px-8 xl:px-20">
-          <SessionTimeText
-            parentBackgroundIndex={isInline && !$sessionStore.isQuickStartOn
-              ? 1
-              : 2}
-          />
+          <SessionTimeText parentBackgroundIndex={parentBgIndex} />
           {#if $sessionStore.type != SessionType.COUNTUP}
-            <TimeleftIndicator
-              parentBackgroundIndex={isInline && !$sessionStore.isQuickStartOn
-                ? 0
-                : 1}
-            />
+            <TimeleftIndicator {parentBgIndex} />
           {/if}
         </div>
         <div class="flex flex-col gap-20">
@@ -126,7 +117,7 @@
           </div>
           <div class="flex justify-center">
             <div class="w-3/4 xl:w-1/2">
-              <Extras isInFullScreen={!isInline} />
+              <Extras isInFullScreen={!isInline} {parentBgIndex} />
             </div>
           </div>
         </div>

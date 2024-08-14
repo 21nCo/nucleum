@@ -43,7 +43,7 @@ export const seedGoal: IGoal = {
   color: undefined,
   isArchived: false,
   isCompleted: false,
-  isFavorite: false,
+  isStarred: false,
   isPinnedForQuickStart: false,
   subGoalCount: 0,
   subGoals: [],
@@ -75,8 +75,8 @@ function filterGoals(
   if (filters.tag) {
     if (filters.tag === TagId.ALL) {
       filteredGoals = allItems;
-    } else if (filters.tag === TagId.FAVORITES) {
-      filteredGoals = allItems.filter((x) => x.isFavorite);
+    } else if (filters.tag === TagId.STARRED) {
+      filteredGoals = allItems.filter((x) => x.isStarred);
     } else {
       filteredGoals = allItems.filter((x) =>
         x.tags?.includes(filters.tag as string)
@@ -140,7 +140,7 @@ function flattenSubGoalsAsGoals(
       : [],
     isArchived: goal.isArchived,
     isPinnedForQuickStart: goal.isPinnedForQuickStart,
-    isFavorite: goal.isFavorite,
+    isFavorite: goal.isStarred,
     isCompleted: goal.isCompleted,
     color: goal.color,
     createdAt: new Date().toISOString(),
@@ -247,16 +247,14 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       title: "Goal: " + goal.label,
       message: "Created successfully",
       type: AlertType.SUCCESS,
-      id: generateUID(),
-      actionText: "View",
-      callback: () => {
-        appStore.gotoResource(
-          Resource.goal,
-          prefixTable(goal.id, Resource.PointGoal)
-        );
-      }
+      id: generateUID()
     });
-
+    this.refresh(
+      {
+        tag: TagId.ALL
+      },
+      true
+    );
     function isGoalNameValid(label: string) {
       if (!label) {
         goalEditErrorMessage.set("Please enter a valid goal name");
@@ -280,11 +278,15 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
       ]
     });
     if (!this.get()) {
-      this.set({ items: [], filteredItems: [] });
+      this.set({ items: [], filteredItems: [], selectedTagId: TagId.ALL });
     }
   }
-  filter(filters: { tag?: TagId | string; searchText?: string }) {
+  filter(searchQuery: string = "") {
     this.update((store) => {
+      const filters = {
+        tag: store.selectedTagId,
+        searchText: searchQuery
+      };
       let filteredItems = filterGoals(store.items, filters);
       filteredItems = filteredItems.map((x) => {
         x.color = x.color ?? x.parent?.color;
@@ -306,13 +308,16 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
       store.items = data;
       return store;
     });
-    this.filter({ tag: TagId.ALL, searchText: "" });
+    this.filter();
     this.cache();
   }
-  async refresh(filters: { tag?: TagId | string; searchText?: string }) {
+  async refresh(
+    searchQuery: string = "",
+    isShowRefreshingState: boolean = false
+  ) {
     logger.log("refreshing quickFocusItemStore");
-    super.refresh();
-    this.filter(filters);
+    super.refresh({ isShowRefreshingState });
+    this.filter(searchQuery);
   }
   propagateDependencyChanges(data: any) {
     logger.log("propagateDependencyChanges to quickFocusItems store", data);
@@ -328,9 +333,17 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
         store.items.push(goalTransformed as QuickFocusItem);
         return store;
       });
-      this.filter({ tag: TagId.ALL, searchText: "" });
+      this.filter();
       this.cache();
     }
+  }
+  async pinGoal(id: string) {
+    const items = this.get().items;
+    const goal = items.find((x) => x.id === id);
+    if (goal) return -1;
+    await goalStore.modify({ id, isPinnedForQuickStart: true });
+    this.refresh();
+    return 1;
   }
 }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ButtonStyle } from "$lib/client/types/button.type";
   import { Position } from "$lib/client/types/direction.enum";
   import {
     type IPopoverRenderBaseParams,
@@ -24,7 +25,12 @@
   options={{ placement: Position.BottomRight }}
 >
   <slot>
-    <Button icon="ellipsis-vertical" {tooltip} {tooltipOptions} />
+    <Button
+      icon="ellipsis-vertical"
+      {tooltip}
+      {tooltipOptions}
+      style={ButtonStyle.PLAIN}
+    />
   </slot>
   <slot name="popover" slot="popover">
     <ContextMenu

@@ -1,12 +1,12 @@
 <script lang="ts">
   import PropertiesListView from "../../collection/properties/PropertiesListView.svelte";
+  import type { IProperty } from "../../collection/properties/property.type";
   import { mapPropertyValues } from "../../collection/properties/property.utils";
   import type { IActiveNodeStore } from "../node.store";
   export let node: IActiveNodeStore;
+  export let propertiesOnMainPanel: IProperty[];
   export let isMediaNode: boolean = false;
-  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
-    (x) => x.isShowOnNodePage
-  );
+
   $: nodeProperties = mapPropertyValues(
     propertiesOnMainPanel,
     $node.properties

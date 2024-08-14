@@ -90,3 +90,9 @@ export type DaySummary = {
   focus: number;
   break: number;
 };
+
+export enum LastActionPerformed {
+  START_TIME_CHANGED = "START_TIME_CHANGED",
+  END_TIME_CHANGED = "END_TIME_CHANGED",
+  DURATION_CHANGED = "DURATION_CHANGED",
+}

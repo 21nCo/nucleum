@@ -98,12 +98,17 @@ export async function performHttpNetworkOperation(params: {
     return response;
   } catch (error) {
     if (error instanceof TypeError) {
-      console.error("Network error:", error.message);
+      let errorMessage = error.message;
+      if (error.message === "Failed to fetch") {
+        errorMessage =
+          "Failed to fetch. Please check your internet connection.";
+      }
+      console.error("Network error: ", { params, errorMessage });
       //TEMP - 401 from /sql endpoint is erroring instead of response.status === 401
       // signout();
       window.dispatchEvent(
         new CustomEvent(GlobalEvent.CUSTOM_ALERT, {
-          detail: { error: "networkerror", message: error.message }
+          detail: { error: "networkerror", message: errorMessage }
         })
       );
       throw new Error("Network error. Please check your internet connection.");

@@ -53,6 +53,6 @@
   <SwitchInput
     label={{ label: "Mark as favorite" }}
     isExpanded={true}
-    bind:checked={$newGoal.isFavorite}
+    bind:checked={$newGoal.isStarred}
   />
 </div>

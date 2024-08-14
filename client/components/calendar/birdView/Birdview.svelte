@@ -51,7 +51,7 @@
   let thresholdCrossed = false;
   let cursorDirection: "right" | "left" | "bidirectional" | "default" =
     "default";
-  let mode: Modes = Modes.ZONES;
+  let mode: Modes = Modes.DAYS;
   const zones = [
     "6am-9am",
     "9am-12pm",
@@ -689,7 +689,7 @@
     <PanelSwitcher
       size={Size.sm}
       style={PanelSwitcherStyle.TRAIN}
-      items={["Bird", "Classic", "Heatmap", "Funnel"]}
+      items={["Bird", "Classic", "Heatmap"]}
       value={"Bird"}
       on:switch={(e) => {
         console.log(e.detail);

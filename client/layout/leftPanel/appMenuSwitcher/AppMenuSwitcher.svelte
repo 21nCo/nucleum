@@ -5,12 +5,17 @@
   import type { IAction } from "$lib/client/types/action.type";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { appMenuStore } from "../appMenu.store";
-  import type { IAppMenuStore } from "$lib/client/types/appMenu.type";
+  import { appMenuStore } from "../../../stores/appMenu/appMenu.store";
+  import type { IAppMenuStore } from "$lib/client/stores/appMenu/appMenu.type";
+  import Divider from "../Divider.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
-  let pages: IAction[] = [];
+  let allPages: IAction[] = [];
+  let defaultPages: IAction[] = [];
+  let userPinnedPages: IAction[] = [];
   let selected: number;
   refresh(appMenuStore.get());
   onMount(() => {
@@ -20,10 +25,12 @@
   });
 
   function refresh(x: IAppMenuStore) {
-    pages = [];
+    allPages = [];
     let items = [];
     const app = $appStore.product;
-    const contextualMenu = [...x[app].default, ...x[app].user];
+    const defaultMenu = x[app]?.default ?? [];
+    const userPinnedMenu = x[app]?.user ?? [];
+    const contextualMenu = [...defaultMenu, ...userPinnedMenu];
     // console.log({ contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
       items = contextualMenu.slice(
@@ -37,39 +44,74 @@
     items.forEach((action: string) => {
       const currentPage = appStore.resolveAction(action);
       if (currentPage) {
-        pages.push(currentPage);
+        allPages.push(currentPage);
       }
     });
+    defaultPages = allPages.filter((x) => defaultMenu.includes(x.action));
+    userPinnedPages = allPages.filter((x) => userPinnedMenu.includes(x.action));
+    if (layoutContext != LayoutContext.PORTRAIT) {
+    }
     let currentPath = window?.location?.pathname?.replace("/", "");
-    let currentPage = pages.find((item) =>
+    let currentPage = allPages.find((item) =>
       currentPath.includes(item.path ?? item.action)
     );
-    selected = currentPage ? pages.indexOf(currentPage) : 0;
+    selected = currentPage ? allPages.indexOf(currentPage) : 0;
+  }
+
+  function onClick(index: number, item: IAction) {
+    selected = index;
+    appStore.runAction(item.action);
   }
 </script>
 
-<div
-  class="flex {layoutContext === LayoutContext.PORTRAIT
-    ? 'justify-around items-center px-2'
-    : 'flex-col justify-center rounded-lg'} min-w-min w-full"
->
-  {#each pages as item, index}
-    {#if index == Math.floor(pages.length / 2) && layoutContext === LayoutContext.PORTRAIT && $appStore.appData?.isShowCaptureOnMobile}
-      <CaptureComponent />
-    {/if}
-    {#if layoutContext != LayoutContext.MINIMIZED || (layoutContext === LayoutContext.MINIMIZED && (isHovered || selected == index))}
+{#if layoutContext == LayoutContext.PORTRAIT}
+  <div class="flex justify-around items-center px-2 min-w-min w-full">
+    {#each allPages as item, index}
+      {#if index == Math.floor(allPages.length / 2) && $appStore.appData?.isShowCaptureOnMobile}
+        <CaptureComponent />
+      {/if}
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
         {layoutContext}
-        isShowLabel={layoutContext == LayoutContext.DEFAULT ||
-          layoutContext == LayoutContext.PORTRAIT ||
-          (layoutContext === LayoutContext.MINIMIZED && isHovered)}
-        on:click={() => {
-          selected = index;
-          appStore.runAction(item.action);
-        }}
+        isShowLabel={true}
+        on:click={() => onClick(index, item)}
         {item}
       />
+    {/each}
+  </div>
+{:else}
+  <div class="flex flex-col gap-3 justify-center rounded-lg min-w-min w-full">
+    <div class="flex flex-col">
+      {#each defaultPages as item, index}
+        <AppMenuSwitcherItem
+          {parentBackgroundIndex}
+          {layoutContext}
+          isShowLabel={layoutContext == LayoutContext.DEFAULT}
+          on:click={() => onClick(index, item)}
+          {item}
+        />
+      {/each}
+    </div>
+    {#if userPinnedPages.length > 0}
+      <div class="flex flex-col gap-2">
+        <Divider />
+        {#if layoutContext === LayoutContext.DEFAULT}
+          <div class="px-1">
+            <Text content="Pinned" style={TextStyle.SECTION_HEADING} />
+          </div>
+        {/if}
+        <div class="flex flex-col">
+          {#each userPinnedPages as item, index}
+            <AppMenuSwitcherItem
+              {parentBackgroundIndex}
+              {layoutContext}
+              isShowLabel={layoutContext == LayoutContext.DEFAULT}
+              on:click={() => onClick(index, item)}
+              {item}
+            />
+          {/each}
+        </div>
+      </div>
     {/if}
-  {/each}
-</div>
+  </div>
+{/if}

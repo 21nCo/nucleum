@@ -7,7 +7,7 @@ const surrealDb = new SurrealDatabase();
 
 export class AnalyticsPersistence {
   async fetchTargetsData() {
-    const response = await surrealDb.query(
+    const response = await surrealDb.executeReadFn(
       "return fn::pointron::analytics::targets::v3();"
     );
     return interceptSurrealResponse(response);
@@ -15,7 +15,7 @@ export class AnalyticsPersistence {
 
   async fetchGoalAnalytics(id: string, chartPeriods: TimePeriod[]) {
     const params = generateParamsForCharts(chartPeriods);
-    const response = await surrealDb.query(
+    const response = await surrealDb.executeReadFn(
       "return fn::pointron::analytics::goal::v3($id, $params);",
       {
         id,

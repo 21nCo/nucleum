@@ -8,11 +8,14 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { createEventDispatcher } from "svelte";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let items: BreadcrumbItem[] = [];
   export let isPreventDefault: boolean = false;
+  export let spaceAvailable: Size.sm | Size.md | Size.lg = Size.md;
   $: slice = resolveSlice($view.display);
-  $: truncateLength = determineTruncateLength($view.display);
+  $: truncateLength = determineTruncateLength($view.display, spaceAvailable);
+  // let truncateLength = undefined;
   let _items: BreadcrumbItem[] = [];
   $: _items =
     slice != undefined && slice <= items.length

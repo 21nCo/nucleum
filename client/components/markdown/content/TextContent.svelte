@@ -8,6 +8,7 @@
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
 
   import {
+    headingNodeTypes,
     ListType,
     NodeType,
     type ListContent,
@@ -105,11 +106,12 @@
    */
   onMount(() => {
     hidePopover();
+    // TODO - urgent - add sub event for focus event
     const focusBlockSub = mdStore.subscribe((md: IMarkdownStore) => {
       if (md.blockToFocus === block.id) {
-        setTimeout(() => {
-          textRef.focus();
-        }, 10);
+        // setTimeout(() => {
+        //   textRef.focus();
+        // }, 10);
         assignPlaceholder();
       }
     });
@@ -608,6 +610,15 @@
           on:change={dispatchChangeEvent}
           on:focus={() => {
             isFocusing = true;
+            const currentBlockIndex = $mdStore.blocks.findIndex(
+              (x) => x.id == block.id
+            );
+            for (let i = currentBlockIndex; i >= 0; i--) {
+              if (headingNodeTypes.includes($mdStore.blocks[i].contentType)) {
+                $mdStore.activeHeading = $mdStore.blocks[i].id;
+                break;
+              }
+            }
           }}
           on:blur={() => {
             isFocusing = false;

@@ -6,12 +6,19 @@
   import { cn } from "$lib/client/utils/ui.utils";
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
+  export let renderingDetails: any;
   let refreshId = Date.now();
-  let img: HTMLImageElement;
+  let imgRef: HTMLImageElement;
   let isPortrait = true;
 
-  $: if (img) {
-    isPortrait = img.naturalHeight > img.naturalWidth;
+  $: if (imgRef) {
+    isPortrait = imgRef.naturalHeight > imgRef.naturalWidth;
+    renderingDetails = {
+      originalHeight: imgRef.naturalHeight,
+      originalWidth: imgRef.naturalWidth,
+      renderedHeight: imgRef.clientHeight,
+      renderedWidth: imgRef.clientWidth
+    };
   }
   function retireveNode() {
     node.fetch();
@@ -43,7 +50,7 @@
       ></div>
       <div class="absolute inset-0 bg-black opacity-30"></div> -->
     <img
-      bind:this={img}
+      bind:this={imgRef}
       alt="..."
       class={cn("absolute inset-0 w-full h-full object-contain", {
         // "object-contain": isPortrait,

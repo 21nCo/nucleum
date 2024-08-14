@@ -4,6 +4,7 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
   import type { IActiveNodeStore } from "../node.store";
+  import { Size } from "$lib/client/types/size.enum";
   export let node: IActiveNodeStore;
   let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
   onMount(() => {
@@ -44,6 +45,7 @@
   <Breadcrumb
     items={breadcrumbs}
     isPreventDefault={true}
+    spaceAvailable={Size.lg}
     on:click={onBreadcrumbClick}
   />
 {/if}

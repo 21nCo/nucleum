@@ -1,19 +1,21 @@
 <script lang="ts">
-  import { Position, Orientation } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import {
-    VerticalSwitcherStyle,
-    type SwitchItem
-  } from "$lib/client/types/switcher.enum";
+  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
   import VerticalSwitcherItem from "./VerticalSwitcherItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
-  export let items: SwitchItem[];
-  export let selected: string;
+  export let items: ISelectItem[];
+  export let selected: ISelectValue;
   export let isHideBar: boolean = false;
   export let itemProps: {
-    size?: Size;
+    size?: Size.sm | Size.md | Size.lg;
     activeStatusPlacement?: Position;
     isHideLabel?: boolean;
   } = {
@@ -23,10 +25,11 @@
 </script>
 
 <aside
-  class="flex flex-col h-full justify-center {itemProps.activeStatusPlacement ===
-  Position.Left
-    ? 'items-start'
-    : 'items-end'}"
+  class={cn("flex flex-col h-full justify-center", {
+    "items-start": itemProps.activeStatusPlacement === Position.Left,
+    "items-end": itemProps.activeStatusPlacement === Position.Right,
+    "gap-3": style === VerticalSwitcherStyle.DOT
+  })}
 >
   {#each items as item}
     <VerticalSwitcherItem
@@ -34,9 +37,9 @@
       {...itemProps}
       {style}
       {isHideBar}
-      isActive={selected === item.label}
+      isActive={selected === item.value}
       on:click={() => {
-        selected = item.label;
+        selected = item.value;
         dispatch("switch", selected);
       }}
     />

@@ -4,17 +4,21 @@
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
   import { Position } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
-  import { Size } from "$lib/client/types/size.enum";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
+  import { Size } from "$lib/client/types/size.enum";
+  import view from "$lib/client/stores/view.store";
+  import { Display } from "$lib/client/types/view.type";
   export let isInFullScreen: boolean = false;
+  export let parentBgIndex: number = 1;
   const buttonProps: {
-    size: Size.lg;
+    parentBgIndex: number;
+    size: Size.sm | Size.md | Size.lg;
     tooltipOptions: IPopoverRenderBaseParams;
   } = {
-    size: Size.lg,
+    parentBgIndex,
+    size: $view.display === Display.MO ? Size.md : Size.lg,
     tooltipOptions: {
       placement: Position.TopCenter,
       offsetInPx: 4,
@@ -31,7 +35,7 @@
 </script>
 
 <div
-  class="flex gap-4 rounded-full border border-brs3 p-2 w-full justify-around"
+  class="flex gap-4 rounded-full border border-brs3 mo:px-2 mo:py-1 p-2 w-full justify-around"
 >
   <!-- <Button
     icon="music"
@@ -58,7 +62,7 @@
       }}
     />
   {/if}
-  {#if !$view.isPortrait && !$context.isEmbed}
+  {#if !$context.isEmbed}
     <Button
       icon="pip"
       tooltip="Picture in picture"

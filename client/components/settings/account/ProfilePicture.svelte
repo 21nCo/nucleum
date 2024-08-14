@@ -3,6 +3,8 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
   import { logger } from "$lib/client/stores/log.store";
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let context: "cmd-page" | "cp-profile" = "cp-profile";
   let initials: string | undefined = undefined;
   let profilePictureUrl: string | undefined = undefined;
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
@@ -42,12 +44,20 @@
   }
 </script>
 
-<div class="w-20 h-20 rounded-full flex justify-center items-center bg-bgs3">
+<div
+  class={cn(" flex justify-center items-center bg-bgs3", {
+    "rounded-full w-16 h-16": context === "cp-profile",
+    "rounded-md w-20 h-20": context === "cmd-page"
+  })}
+>
   {#if initials}
     <div class="text-h3 text-fgs3">{initials}</div>
   {:else if profilePictureUrl}
     <img
-      class="w-full h-full rounded-full"
+      class={cn("w-full h-full", {
+        "rounded-md": context === "cmd-page",
+        "rounded-full": context === "cp-profile"
+      })}
       src={$account.userInfo?.profilePictureUrl}
       alt="Profile picture"
     />

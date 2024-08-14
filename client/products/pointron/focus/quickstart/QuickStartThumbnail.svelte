@@ -20,11 +20,15 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { resolveTaskFocus } from "../session.utils";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { goalStore } from "../../goals/goal.store";
+  import UnpinAction from "./actions/UnpinAction.svelte";
   export let goal: Pick<IGoal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
   export let layout: Layout;
   export let refresh: any;
+  export let isInEditMode: boolean = false;
   let isColorGoalTextExperimental = false;
   let todayFocusDuration: number | undefined = undefined;
   let parentLabels: string[] = [];
@@ -39,6 +43,8 @@
   let goalPersistance = new GoalPersistence();
   let rem: number;
   let focusTime: number;
+  let isHovering = false;
+  let isFinishingState: boolean = false;
   function enableManualLog() {
     handleSwipeRightEndOnleftThresholdCrossed();
     resetTouchEvent = true;
@@ -93,6 +99,8 @@
       parentLabels = goal.parent.hierarchy.map((x: any) => x.label) ?? [];
   });
   async function toggleSession() {
+    if (isInEditMode) return;
+    isFinishingState = true;
     if (isActive) {
       await sessionStore.finishSession(true);
     } else {
@@ -199,36 +207,47 @@
       console.log("error in unpinning: ", response);
     }
   }
+  async function unPin() {
+    await goalStore.modify({ id: goal.id, isPinnedForQuickStart: false });
+    refresh();
+  }
 </script>
 
 {#if layout === Layout.LIST}
-  <div
+  <!--     on:touchstart|stopPropagation={startTouch}
+    on:touchmove|stopPropagation={handleTouchMovements}
+    on:touchend|stopPropagation={handleTouchEnd} -->
+  <HoverableElement
     id={goal.id}
-    class="cursor-pointer actualQSElement {distance < 0 && !leftThresholdCrossed
+    type="button"
+    bind:isHovering
+    class="relative cursor-pointer actualQSElement {distance < 0 &&
+    !leftThresholdCrossed
       ? 'ml-auto'
       : ''}"
-    on:touchstart|stopPropagation={startTouch}
-    on:touchmove|stopPropagation={handleTouchMovements}
-    on:touchend|stopPropagation={handleTouchEnd}
   >
     <CustomColorPropagator
       class={cn(
-        "flex justify-between h-16 min-h-[4rem] w-full items-center rounded-r-md pr-4 z-10",
+        "flex justify-between h-16 min-h-[4rem] w-full items-center rounded-md  z-10",
         {
-          "bg-ccs1": isActive,
-          "bg-bgs2": !isActive
+          "px-3": isActive || isInEditMode,
+          "bg-ccs1": isActive && !isInEditMode,
+          "bg-bgs2 hover:bg-bgs3 pr-3": !isActive && !isInEditMode,
+          "border-[1.5px] border-dashed border-ccs1 hover:bg-bgs2": isInEditMode
         }
       )}
       {color}
       on:click={toggleSession}
     >
       <div class="flex gap-2 items-center h-full">
-        <div
-          class={cn("w-0.5 h-full rounded-full", {
-            "bg-ccs1": color,
-            "bg-fgs2": !color
-          })}
-        />
+        {#if !isActive && !isInEditMode}
+          <div
+            class={cn("w-0.5 h-8 ml-0.5 rounded-full", {
+              "bg-ccs1": color,
+              "bg-fgs2": !color
+            })}
+          />
+        {/if}
         <div
           class={cn("flex flex-col items-start", {
             "text-ccs1": !isActive && isColorGoalTextExperimental,
@@ -249,8 +268,15 @@
               <BreadcrumbMini hierarchy={parentLabels} slice={2} />
             </div>
           {/key}
-          <div class="font-medium text-left truncate actualQSContent">
-            {goal.label ?? ""}
+          <div
+            class="font-medium text-left flex items-center gap-2 truncate actualQSContent"
+          >
+            <!-- {#if !isActive}
+              <div class="w-2 h-2 bg-ccs1 rounded-full"></div>
+            {/if} -->
+            <div>
+              {goal.label ?? ""}
+            </div>
           </div>
         </div>
       </div>
@@ -270,14 +296,19 @@
         </div>
       {:else}
         <div class="text-b4">
-          {todayFocusDuration
-            ? "Today: " + formatSeconds(todayFocusDuration)
-            : "Not focused today"}
+          {isHovering && !isInEditMode
+            ? "Click to start"
+            : todayFocusDuration
+              ? "Today: " + formatSeconds(todayFocusDuration)
+              : "Not focused today"}
         </div>
       {/if}
     </CustomColorPropagator>
-  </div>
-  <div
+    {#if isInEditMode}
+      <UnpinAction on:click={unPin} />
+    {/if}
+  </HoverableElement>
+  <!-- <div
     class="relativeQSThumbnailL1"
     class:relativeQSThumbnailL1Custom={rightthresholdCrossed}
   >
@@ -317,45 +348,56 @@
         >
       </div>
     </div>
-  </div>
+  </div> -->
 {:else}
+  <!-- TODO - dark:bg-ccs3 isn't working due to bg-cc classes implementation. replacing `bg-ccs4 dark:bg-ccs3` with regular bg classes `bg-bgs1 dark:bg-bgs2` works -->
   <CustomColorPropagator
     type="button"
-    class={cn(
-      "flex justify-between rounded-md h-16 flex-col items-start w-1/3 p-2 transition-ease",
-      {
-        "bg-ccs1 border border-ccs1": isActive,
-        "bg-ccs4 border border-ccs2": !isActive
-      }
-    )}
-    style="width: calc(50% - 0.33rem);"
+    class={cn("relative flex rounded-md h-[4.3rem] p-2 transition-ease", {
+      "bg-ccs1 border border-ccs1": isActive && !isInEditMode,
+      "bg-ccs4 dark:bg-ccs3 border border-ccs2": !isActive && !isInEditMode,
+      "border-[1.5px] border-dashed border-ccs1 dark:border-ccs2 hover:bg-bgs2":
+        isInEditMode
+    })}
     {color}
     on:click={toggleSession}
   >
-    <div class="flex gap-2 items-center">
-      <div class="flex flex-col items-start">
-        <div class="text-left text-b2 truncate w-40 md:w-40">
-          {goal.label ?? ""}
+    <HoverableElement
+      bind:isHovering
+      class="flex flex-col items-start w-full h-full justify-between"
+    >
+      <div class="flex gap-2 items-center">
+        <div class="flex flex-col items-start">
+          <div class="text-left text-b2 truncate w-40 md:w-40">
+            {goal.label ?? ""}
+          </div>
         </div>
       </div>
-    </div>
-    {#if isActive && $sessionStore.currentTask}
-      <div class="flex w-full justify-between text-h4">
-        <!-- <div class="flex items-center gap-1 text-b5">
+      {#if isActive && $sessionStore.currentTask}
+        <div class="flex w-full justify-between text-h4">
+          <!-- <div class="flex items-center gap-1 text-b5">
           <div>
             {formatTime($sessionStore.start ?? new Date())}
           </div>
         </div> -->
-        <div class="leading-none">
-          {formatSeconds(focusTime, TimeFormat.CLOCK)}
+          <div class="leading-none font-medium">
+            {formatSeconds(focusTime, TimeFormat.CLOCK)}
+          </div>
         </div>
-      </div>
-    {:else}
-      <div class="text-b5 text-fgs2">
-        {todayFocusDuration
-          ? formatSeconds(todayFocusDuration) + " today"
-          : "Not focused today"}
-      </div>
+      {:else}
+        <div class="text-b4 text-fgs2">
+          {isFinishingState
+            ? "Finishing session..."
+            : isHovering && !isInEditMode
+              ? "Click to start"
+              : todayFocusDuration
+                ? formatSeconds(todayFocusDuration) + " today"
+                : "Not focused today"}
+        </div>
+      {/if}
+    </HoverableElement>
+    {#if isInEditMode}
+      <UnpinAction on:click={unPin} />
     {/if}
   </CustomColorPropagator>
 {/if}

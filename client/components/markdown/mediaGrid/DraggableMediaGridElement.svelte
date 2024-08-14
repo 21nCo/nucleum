@@ -25,6 +25,9 @@
   let style = `${sizeProperty}: 100%;
 object-fit: scale-down;
 cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
+  $: style = `${sizeProperty}: 100%;
+object-fit: scale-down;
+cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   let isDragOver = false;
   let highlightBorder = "left";
   let dragId: any;

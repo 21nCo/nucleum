@@ -21,10 +21,12 @@
   import NodePropertiesOnMainPanel from "../content/NodePropertiesOnMainPanel.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
+  import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
   export let isHovering: boolean = false;
+  export let renderingDetails: any;
   let overlay: string | undefined = undefined;
   let contextMenu = [];
   let buttonCommonProps = {
@@ -33,11 +35,12 @@
       offsetInPx: 6
     }
   };
-  $: contextMenu = resolveNodeContextMenu(
-    $node,
-    ResourceAccessPoint.SELF,
-    true
+  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
+    (x) => x.isShowOnNodePage
   );
+  $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
+    isMediaNode: true
+  });
 </script>
 
 <!-- Using transition here caused modal freeze issue -->
@@ -78,8 +81,11 @@
             <Text content="Notes" style={TextStyle.SECTION_HEADING} />
           </div>
         {:else if overlay === "metadata"}
-          <div class="flex flex-col h-60 gap-4 w-full items-start">
+          <div
+            class="flex flex-col h-60 gap-4 w-full items-start overflow-auto"
+          >
             <Text content="Metadata" style={TextStyle.SECTION_HEADING} />
+            <NodeMetadataPane {node} isMediaNode={true} {renderingDetails} />
           </div>
         {:else if $node.isArchived || $node.trashInformation}
           <ResourceStatusBanner resource={node} />
@@ -175,9 +181,15 @@
           {/if}
         </span>
       </div>
-      <div class="w-full">
-        <NodePropertiesOnMainPanel {node} isMediaNode={true} />
-      </div>
+      {#if propertiesOnMainPanel && propertiesOnMainPanel.length > 0}
+        <div class="w-full">
+          <NodePropertiesOnMainPanel
+            {node}
+            {propertiesOnMainPanel}
+            isMediaNode={true}
+          />
+        </div>
+      {/if}
     </div>
   </HoverableElement>
 </div>

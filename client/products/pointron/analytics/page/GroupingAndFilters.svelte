@@ -18,6 +18,7 @@
     icon="funnel"
     label={$view.isPortrait ? "" : "Options"}
     {parentBgIndex}
+    isPreventMinWidth={true}
     tooltip={$view.isPortrait ? "Filters and grouping" : ""}
     size={$view.isPortrait ? Size.lg : Size.xs}
   />

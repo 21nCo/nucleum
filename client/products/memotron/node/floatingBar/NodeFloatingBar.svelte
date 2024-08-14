@@ -19,6 +19,9 @@
   import { MemotronAction } from "../../memotronAction.enum";
   import { resolveNodeContextMenu, type IActiveNodeStore } from "../node.store";
   import { bg, cn } from "$lib/client/utils/ui.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -26,6 +29,7 @@
   export let isWidened: boolean = false;
   let bgIndex = 2;
   let buttonCommonProps = {
+    parentBgIndex: bgIndex,
     tooltipOptions: {
       placement: Position.TopCenter,
       offsetInPx: 6
@@ -46,12 +50,12 @@
     <PanelSwitcher
       bind:value={selectedView}
       parentBgIndex={bgIndex}
-      items={["Content", "Links", "Bird view"]}
+      items={["Content", "Graph", "Bird view"]}
       style={PanelSwitcherStyle.BAR}
       barStyle={BarStyle.DOT}
     />
   </span>
-  <span class="flex gap-5 h-full">
+  <span class="flex items-center gap-3 h-full">
     <Button {...buttonCommonProps} icon="document-text" tooltip="Footnotes" />
     <Button
       {...buttonCommonProps}
@@ -63,7 +67,7 @@
     <Button
       {...buttonCommonProps}
       icon="square-3-stack-3d"
-      tooltip="Show clones"
+      tooltip="Show forks"
     />
     <Button
       {...buttonCommonProps}
@@ -115,12 +119,25 @@
     {#if accessMode != ResourceAccessMode.INLINE}
       <Button
         {...buttonCommonProps}
-        icon="cross-circled"
-        tooltip="Close"
+        label="Close node"
+        size={Size.xs}
+        style={ButtonStyle.PLAIN}
+        isUnderlined={true}
+        isPreventMinWidth={true}
+        tooltip="Close node"
+        class="fill-ars1"
         on:click={() => {
           appStore.closeResource({ inlineRestoreId: $node.id });
         }}
       />
+      <!-- <span class="text-ars1 text-b2 whitespace-nowrap"> Close page </span> -->
+      <!-- <Icon
+        icon="cross-circled"
+        class="fill-ars1"
+        on:click={() => {
+          appStore.closeResource({ inlineRestoreId: $node.id });
+        }}
+      /> -->
     {/if}
   </span>
 </div>

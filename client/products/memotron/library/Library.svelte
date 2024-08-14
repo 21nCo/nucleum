@@ -18,7 +18,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ResourceSwitcher from "$lib/client/elements/switcher/resourceSwitcher/ResourceSwitcher.svelte";
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-  import { appMenuStore } from "$lib/client/layout/leftPanel/appMenu.store";
+  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   import { appStore } from "$lib/client/stores/app.store";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
@@ -26,10 +26,12 @@
     ResourceAccessPoint,
     ResourceActionType
   } from "$lib/client/components/resourceStores/resource.type";
-  import { selectedResources } from "$lib/client/components/resourceStores/resource.store";
   import BulkEditBar from "../common/BulkEditBar.svelte";
   import { collectionStore } from "../collection/collection.store";
   import { SearchStore } from "../memotron.store";
+  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { nodeStore } from "../node/node.store";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
@@ -98,6 +100,8 @@
   $: isCurrentResourcePinned = $appMenuStore[$appStore.product]?.user?.includes(
     resourceAction(selectedResource, ResourceActionType.BROWSE)
   );
+  $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
+  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   $: contextMenu = [
     {
       group: "all",
@@ -147,6 +151,13 @@
     await refresh();
   });
   async function refresh() {
+    if (
+      !availableResources.includes(selectedResource) &&
+      selectedResource != Resource.everything
+    ) {
+      data = [];
+      return;
+    }
     data = await searchStore.refresh({
       resource: selectedResource,
       searchQuery,
@@ -178,7 +189,7 @@
     if (selectedResource === Resource.everything) label = "item";
     else if (selectedResource === Resource.archived) label = "archived item";
     else label = selectedResource;
-    return label + (data.length > 1 || isPlural ? "s" : "");
+    return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }
   function resolveEmptyStateMessage() {
     const label = resolveResourceLabel(true);
@@ -199,25 +210,38 @@
       };
   }
   function onSelectAll() {
-    $selectedResources = data.map((x) => x.id);
+    $multiSelectStore = data.map((x) => x.id);
   }
   async function onBulkAction(action: string) {
     if (selectedResource === Resource.everything) return;
-    if (selectedResource === Resource.node) return;
-    if (selectedResource === Resource.collection) {
+    if (selectedResource === Resource.node) {
       if (action === "archive") {
-        await collectionStore.bulkModify($selectedResources, {
+        await nodeStore.bulkModify($multiSelectStore, {
           isArchived: true
         });
       } else if (action === "delete") {
-        await collectionStore.bulkTrash($selectedResources);
+        await nodeStore.bulkTrash($multiSelectStore);
       } else if (action === "star") {
-        await collectionStore.bulkModify($selectedResources, {
+        await nodeStore.bulkModify($multiSelectStore, {
+          isStarred: true
+        });
+      }
+      return;
+    }
+    if (selectedResource === Resource.collection) {
+      if (action === "archive") {
+        await collectionStore.bulkModify($multiSelectStore, {
+          isArchived: true
+        });
+      } else if (action === "delete") {
+        await collectionStore.bulkTrash($multiSelectStore);
+      } else if (action === "star") {
+        await collectionStore.bulkModify($multiSelectStore, {
           isStarred: true
         });
       }
     }
-    $selectedResources = [];
+    $multiSelectStore = [];
     await refresh();
   }
 </script>
@@ -275,7 +299,12 @@
     <div
       class="flex w-full justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
     >
-      <span class="flex w-10/12 overflow-auto">
+      <span
+        class={cn("flex overflow-auto", {
+          "w-10/12": selectedResource != Resource.everything,
+          "w-full": selectedResource === Resource.everything
+        })}
+      >
         <ResourceSwitcher
           options={resources}
           bind:selected={selectedResource}
@@ -283,44 +312,46 @@
           size={Size.sm}
         />
       </span>
-      <span>
-        <!-- <SwitchInput
+      {#if selectedResource != Resource.everything}
+        <span>
+          <!-- <SwitchInput
         label={{ label: "Starred", orientation: Orientation.Horizontal }}
         size={Size.sm}
         bind:checked={isStarFilterSelected}
         on:change={refresh}
       /> -->
-        <span class="flex gap-2 items-center">
-          {#if availableResources.includes(selectedResource)}
-            <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
-            <!-- <Toggle
+          <span class="flex gap-2 items-center">
+            {#if availableResources.includes(selectedResource)}
+              <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
+              <!-- <Toggle
           icon={resolveIfPinned() ? "unpin" : "pin"}
           bind:on={isFiltersVisible}
           size={Size.sm}
         /> -->
-            <Button
-              icon="plus"
-              size={Size.sm}
-              type={ButtonVariant.PRIMARY}
-              style={ButtonStyle.DEFAULT}
-              label={selectedResource}
-              isPreventMinWidth={true}
-              on:click={() =>
-                appStore.runAction(
-                  resourceAction(selectedResource, ResourceActionType.CREATE)
-                )}
-            />
-            <ContextMenuAction {contextMenu} size={Size.lg} />
-          {/if}
+              <Button
+                icon="plus"
+                size={Size.sm}
+                type={ButtonVariant.PRIMARY}
+                style={ButtonStyle.DEFAULT}
+                label={selectedResource}
+                isPreventMinWidth={true}
+                on:click={() =>
+                  appStore.runAction(
+                    resourceAction(selectedResource, ResourceActionType.CREATE)
+                  )}
+              />
+              <ContextMenuAction {contextMenu} size={Size.lg} />
+            {/if}
+          </span>
         </span>
-      </span>
+      {/if}
     </div>
     <main class="flex flex-col gap-8 w-full grow px-5">
-      {#if data.length > 0}
+      {#if data && data.length > 0}
         <div class="flex flex-col grow">
           <Resources
             {data}
-            context={ResourceAccessPoint.LIBRARY}
+            accessPoint={ResourceAccessPoint.LIBRARY}
             resource={selectedResource}
             arrangement={Arrangement.GRID}
           />
@@ -330,18 +361,27 @@
         </div>
         <ScrollViewBottomSpacer />
       {:else if availableResources.includes(selectedResource)}
-        <EmptyStatusView {...resolveEmptyStateMessage()} />
-      {:else}
         <EmptyStatusView
+          size={Size.lg}
+          {...resolveEmptyStateMessage()}
+          isSearchContext={true}
+        />
+      {:else}
+        <!-- <EmptyStatusView
+          mainText="Coming soon..."
+          subText="We are super thrilled to work with you on this feature. Stay tuned."
+        /> -->
+        <ComingSoonView
           mainText="Coming soon..."
           subText="We are super thrilled to work with you on this feature. Stay tuned."
         />
       {/if}
     </main>
   </div>
-  {#if $selectedResources.length > 0}
+  {#if $multiSelectStore.length > 0}
     <BottomFloat>
       <BulkEditBar
+        context={multiSelectContext}
         on:selectAll={onSelectAll}
         on:archive={() => onBulkAction("archive")}
         on:delete={() => onBulkAction("delete")}

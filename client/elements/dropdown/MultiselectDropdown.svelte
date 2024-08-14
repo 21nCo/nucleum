@@ -1,16 +1,12 @@
 <script lang="ts">
-  import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
+  import { generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { appEvents } from "$lib/client/stores/notification.store";
   import Check from "$lib/client/icons/Check.svelte";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
-  import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
@@ -25,22 +21,6 @@
   $: selectedItems = options.filter((item) =>
     selected.some((x) => x == item.value)
   );
-  onMount(() => {
-    const sub = appEvents.subscribe((x: IEvent) => {
-      if (
-        x.event === GlobalEvent.WINDOW_CLICKED &&
-        x.value &&
-        x.value instanceof PointerEvent
-      ) {
-        actIfClickedOutside(x.value, containerId, () => {
-          isActive = false;
-        });
-      }
-    });
-    return () => {
-      sub();
-    };
-  });
   function onCheckClicked(item: DropdownItem) {
     if (item.disabled) return;
     if (selected.some((x) => x == item.value)) {
@@ -105,7 +85,7 @@
           {#if item.icon}
             <Icon icon={item.icon} size={Size.sm} />
           {/if}
-          {item.label}
+          {item.label ?? item.value}
         </div>
       </button>
     {/each}

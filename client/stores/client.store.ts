@@ -71,6 +71,6 @@ export class ObservableStore<T extends IObservableStoreSubject>
     this.cache();
   }
   refresh(params?: any): Promise<any> {
-    return dataManager.refresh(this.id);
+    return dataManager.refresh(this.id, params?.isShowRefreshingState);
   }
 }

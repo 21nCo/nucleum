@@ -5,30 +5,30 @@
     type ICollection
   } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailTitle from "../../common/thumbnail/ResourceThumbnailTitle.svelte";
   import Counts from "./Counts.svelte";
   import Cover from "./Cover.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
+  import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";
   export let item: ICollection;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
-  export let context: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
 </script>
 
-<ResourceThumbnailBase bind:item {context}>
+<ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
   {#if arrangement === Arrangement.LIST}
     <button
-      class="flex gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
+      class="flex h-20 gap-4 w-full rounded-md bg-bgs2 border border-transparent hover:border-aps2 p-3"
       on:click
     >
       <div class="flex h-full w-14">
         <Cover {item} {arrangement} />
       </div>
       <div class="flex flex-col gap-2 grow">
-        <ResourceThumbnailTitle {item} />
+        <CollectionThumbnailTitle {item} />
         <Counts {item} />
       </div>
     </button>
@@ -43,6 +43,7 @@
       {/if}
       <Cover {item} {arrangement} />
       <slot slot="bottom" name="bottom">
+        <CollectionThumbnailTitle {item} />
         <Counts {item} />
       </slot>
     </ResourceGridThumbnail>

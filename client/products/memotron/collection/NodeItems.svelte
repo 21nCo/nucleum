@@ -11,15 +11,17 @@
   import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { afterUpdate, onMount } from "svelte";
-  import ResourceThumbnailTitle from "../common/thumbnail/ResourceThumbnailTitle.svelte";
   import { fade } from "svelte/transition";
+  import view from "$lib/client/stores/view.store";
+  import NodeThumbnailTitle from "../node/thumbnail/NodeThumbnailTitle.svelte";
 
   export let nodes: INodeThumbnail[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
   //TODO - user setting - columns, gap
-  export let columns = 4;
+  export let columns = Math.floor(($view.width / 500) * 2);
+  $: console.log({ columns });
   export let gap = 12; // Gap size in pixels
   let gridRef: any;
   let hoveredMasonryItem: string | undefined = undefined;
@@ -93,12 +95,13 @@
                   gridRef.querySelector(`[data-id="${item.id}"]`)
                 )}
             />
-          {:else if "body" in item && item.body}
-            <span
+          {:else if item.label}
+            <!-- <span
               class="block text-left text-b2 p-4 bg-bgs2 rounded-lg shadow-md"
             >
               {item.label}
-            </span>
+            </span> -->
+            <NodeThumbnail {item} {parentBgIndex} {arrangement} />
           {/if}
           {#if hoveredMasonryItem === item.id && item.contentType === NodeType.IMAGE}
             <div
@@ -107,7 +110,7 @@
             >
               <!-- TODO - hover content -->
               <!-- {item.label} -->
-              <ResourceThumbnailTitle {item} />
+              <NodeThumbnailTitle node={item} />
             </div>
           {/if}
         </HoverableElement>
@@ -129,7 +132,7 @@
         <NodeThumbnail
           {item}
           {parentBgIndex}
-          variant={arrangement}
+          {arrangement}
           collectionContext={"board"}
           {isApplyCustomColor}
           on:click={(e) =>

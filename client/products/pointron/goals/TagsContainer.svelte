@@ -26,8 +26,8 @@
         id: TagId.ALL
       },
       {
-        label: "Favs",
-        id: TagId.FAVORITES
+        label: "Starred",
+        id: TagId.STARRED
       }
     ];
   }
@@ -48,10 +48,10 @@
       {#each tagList as tag}
         <TagItem
           id={tag.id}
-          label={tag.id === TagId.FAVORITES || tag.id === TagId.ALL
+          label={tag.id === TagId.STARRED || tag.id === TagId.ALL
             ? tag.label
             : prefix(tag.label, "#")}
-          icon={tag.id === TagId.FAVORITES ? `heart` : ``}
+          icon={tag.id === TagId.STARRED ? `star` : ``}
           isActive={tag.id === selectedTagId}
           on:click={handleTagClick}
         />

@@ -80,7 +80,7 @@
       {/if}
     </div>
   </div>
-  <div class="grow w-full">
+  <div id="mdContent" class="grow w-full">
     {#if isValidAndUniqueArray($mdStore.blocks)}
       {#each $mdStore.blocks as block (block.id)}
         <Block

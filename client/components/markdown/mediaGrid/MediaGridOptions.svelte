@@ -31,6 +31,7 @@
 <div
   class="absolute h-[110px] bottom-6 flex -m-2"
   style="width: {config.gridWidth}px;"
+  on:keydown|stopPropagation
 >
   <div
     class="mx-auto h-full bg-bgs1 rounded-lg border border-bgs4 shadow-lg py-2 px-3"
@@ -133,7 +134,7 @@
               placeholder="E.g. A diverse art gallery featuring various artworks."
               bind:value={config.altText}
               on:keydown={checkTextLimit}
-              class="border border-bgs4 text-sm w-[277px] h-[120px] resize-none"
+              class="bg-bgs1 border border-bgs4 text-sm w-[277px] h-[120px] resize-none"
             />
 
             <div class="text-end text-xs text-fgs3">

@@ -366,18 +366,18 @@ export const combinationLayoutOptions = [
 
 export function resolveCollectionContextMenu(
   collection: ICollection,
-  context: ResourceAccessPoint
+  accessPoint: ResourceAccessPoint
 ) {
   const resourceActions = new ResourceActions(collection, collectionStore);
-  if (context != ResourceAccessPoint.SELF) {
+  if (accessPoint != ResourceAccessPoint.SELF) {
     return [
       {
         group: "all",
         items: [
           resourceActions.star(),
-          resourceActions.edit(context),
+          resourceActions.edit(accessPoint),
           resourceActions.pinToTopBar(),
-          resourceActions.select(),
+          resourceActions.select(accessPoint),
           resourceActions.copyLink()
         ]
       },
@@ -392,7 +392,7 @@ export function resolveCollectionContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        resourceActions.edit(context),
+        resourceActions.edit(accessPoint),
         resourceActions.copyLink()
       ]
     },
