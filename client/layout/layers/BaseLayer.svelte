@@ -28,7 +28,7 @@
   import ThemeLayer from "./themeLayer/ThemeLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
-  import Shortcuts from "./Shortcuts.svelte";
+  import Shortcuts from "../../components/shortcuts/Shortcuts.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
   import { logger } from "$lib/client/stores/log.store";
@@ -42,7 +42,7 @@
   } from "$lib/client/utils/browser.utils";
   import { extractProduct } from "$lib/shared/utils/utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
-  import { appMenuStore } from "../leftPanel/appMenu.store";
+  import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
@@ -103,9 +103,7 @@
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
   };
-  const windowClickEventListener = (event: MouseEvent) => {
-    appEvents.publish(GlobalEvent.WINDOW_CLICKED, event);
-  };
+
   const messageReceivedListener = (event: any) => {
     try {
     } catch (e) {
@@ -277,7 +275,8 @@
         title: "Network Error",
         message: event.detail.message ?? "Something went wrong.",
         type: AlertType.ERROR,
-        id: "networkerror"
+        id: "networkerror",
+        isNonDismissable: true
       });
     }
   }
@@ -327,7 +326,6 @@
 <Intercom />
 <svelte:window
   on:resize={windowResizeListener}
-  on:click={windowClickEventListener}
   on:message={messageReceivedListener}
 />
 

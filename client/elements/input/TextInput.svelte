@@ -120,6 +120,7 @@
         {placeholder}
         disabled={isDisabled}
         bind:this={inputRef}
+        autocomplete="off"
       />
     {:else if type === "number"}
       <input
@@ -146,7 +147,7 @@
         class={inputClasses}
         bind:value
         on:change|stopPropagation
-        on:keydown
+        on:keydown|stopPropagation
         on:keyup|stopPropagation={handleKeyUp}
         on:blur={() => {
           isFocused = false;
@@ -161,6 +162,7 @@
         {placeholder}
         disabled={isDisabled}
         bind:this={inputRef}
+        autocomplete="off"
       />
       {#if icon}
         <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">

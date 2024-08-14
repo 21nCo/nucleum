@@ -85,7 +85,9 @@
         <Button
           icon="adjustments-vertical"
           tooltip="Advanced filters"
-          toolTipPlacement={Position.Right}
+          tooltipOptions={{
+            placement: Position.Right
+          }}
           size={Size.sm}
         />
       </div>

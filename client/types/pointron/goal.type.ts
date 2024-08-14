@@ -7,6 +7,7 @@ import type {
   IResourceBase,
   ITrashInformation
 } from "../../components/resourceStores/resource.type";
+import { TagId } from "./tagId.enum";
 
 export type IGoal = {
   id: string;
@@ -19,7 +20,7 @@ export type IGoal = {
   tags?: string[];
   isArchived?: boolean;
   isPinnedForQuickStart?: boolean;
-  isFavorite?: boolean;
+  isStarred?: boolean;
   isCompleted?: boolean;
   color?: number;
   analytics?: GoalAnalyticsType;
@@ -52,7 +53,7 @@ export type GoalAnalyticsType = {
 
 export type QuickFocusItem = Pick<
   IGoal,
-  "id" | "label" | "color" | "parent" | "tags" | "isFavorite"
+  "id" | "label" | "color" | "parent" | "tags" | "isStarred"
 > & {
   focus?: number;
 };
@@ -66,4 +67,5 @@ export interface GoalStore extends IStore {
 export interface IQuickFocusItemStore extends IObservableStoreSubject {
   items: QuickFocusItem[];
   filteredItems: QuickFocusItem[];
+  selectedTagId: string | TagId;
 }

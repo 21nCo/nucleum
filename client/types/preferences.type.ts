@@ -17,13 +17,10 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
   timeZoneOffset: number;
   timeZoneLabel: string;
   timeScales?: TimeScale[];
+  /**
+   * @deprecated - use keyboardShortcuts store instead
+   */
   recentCommands?: string[];
-  shortcuts?: KeyboardShortcut[];
-  uiStates: {
-    all: IUIState;
-    desktop: IUIState;
-    portrait: IUIState;
-  };
   avatarPicker: {
     skinIndex: number;
     usedEmojis: [IAvatar][];
@@ -46,33 +43,6 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
     grid: any[];
   };
 };
-
-export type KeyboardShortcut = {
-  action: string;
-  key: string;
-  modifiers: string[];
-};
-
-type IUIState = {
-  isOnboardingComplete?: boolean;
-  isInThinMode: boolean;
-};
-
-export type UIStateProps = {
-  property: string;
-  value: any;
-  isGlobal?: boolean;
-};
-
-export enum UIState {
-  isOnboardingComplete = "isOnboardingComplete",
-  isInThinMode = "isInThinMode",
-
-  //Pointron
-  quickFocusLayout = "quickFocusLayout",
-  advancedComposeType = "advancedComposeType",
-  advancedMode = "advancedMode"
-}
 
 export type UserAppearanceSettings = {
   skin: AppSkin;

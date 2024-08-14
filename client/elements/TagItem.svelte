@@ -1,9 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   import Icon from "./Icon.svelte";
-  import { IconVariant } from "../types/icon.type";
-  import { SelectionItemActiveStyle } from "../types/switcher.enum";
   import { abg, cn } from "../utils/ui.utils";
+  import { Size } from "../types/size.enum";
   export let label: string;
   export let id: string;
   export let icon: string | undefined = "";
@@ -27,9 +26,7 @@
   )}
 >
   {#if icon}
-    <div class="min-w-[1rem] mr-2 flex justify-center items-center w-4 h-4">
-      <Icon isAccentBgContext={isActive} {icon} />
-    </div>
+    <Icon isAccentBgContext={isActive} {icon} size={Size.sm} />
   {/if}
   {label}
 </button>

@@ -110,7 +110,7 @@
 </script>
 
 {#if log}
-  <div class="flex flex-col gap-4 px-2 flex-grow w-full items-center">
+  <div class="flex flex-col gap-4 flex-grow w-full items-center">
     <LogIntervalBar {log} />
     {#if isValidDataString(log?.plannedEnd) && !isSameDateTime( new Date(log.end), new Date(log.plannedEnd), { isIgnoreSeconds: true } ) && new Date(log.end).getTime() < new Date(log.plannedEnd).getTime()}
       <InlineInfoBanner>
@@ -176,6 +176,7 @@
       {/if}
     </div>
     <ModalFooter
+      action={PointronAction.SESSION_LOG_MODAL}
       primaryAction={{
         label: "Delete log",
         icon: "trash",

@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import view from "$lib/client/stores/view.store";
   import { page } from "$app/stores";
-  import Autocomplete from "$lib/client/elements/autocomplete/Autocomplete.svelte";
   import TagsContainer from "$lib/client/products/pointron/goals/TagsContainer.svelte";
   import { TagId } from "$lib/client/types/pointron/tagId.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
@@ -13,7 +11,6 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { goalStore } from "./goal.store";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
@@ -23,6 +20,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { tagStore } from "../pointron.store";
   import { archivedResourceFilter } from "$lib/client/utils/utils";
+  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
+  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
 
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
@@ -34,7 +33,7 @@
   $: selectedTagName =
     selectedTagId &&
     selectedTagId != TagId.ALL &&
-    selectedTagId != TagId.FAVORITES
+    selectedTagId != TagId.STARRED
       ? $tagStore.items.find((x) => x.id === selectedTagId)?.label
       : "";
 
@@ -48,8 +47,12 @@
     goalStore.resolveSubGoalsIfNotPresent(id);
   }
 
-  function refresh() {
-    dataManager.refreshPage([Resource.PointGoal, Resource.PointTag]);
+  function refresh(isShowRefreshingState: boolean = false) {
+    console.log("refreshing goals");
+    dataManager.refreshPage(
+      [Resource.PointGoal, Resource.PointTag],
+      isShowRefreshingState
+    );
   }
   function filter() {
     goalStore.filter({
@@ -90,15 +93,8 @@
     <slot />
   </div>
 {:else if isGoalsHome || !$view.isPortrait}
-  <div
-    id="GoalsLayoutOuter"
-    on:touchstart={startTouch}
-    on:touchmove={() =>
-      moveTouch(event, undefined, undefined, refresh, undefined, undefined)}
-    class="flex w-full h-full select-none relative"
-  >
+  <div class="flex w-full h-full select-none relative">
     <Panel
-      title="Goals"
       panelSize={Size.md}
       floatingButton={{
         label: "Create new goal",
@@ -110,29 +106,30 @@
       }}
     >
       <slot name="nonpadded" slot="nonpadded">
-        <div class="flex flex-col gap-4 px-4 pb-2 items-start">
-          <Autocomplete
-            inputClassList="rounded-full"
-            bind:inputValue={searchInput}
+        <div class="flex flex-col w-full gap-4 pb-2 items-start">
+          <InlineSearchBar
+            size={Size.lg}
+            bind:query={searchInput}
             on:search={filter}
-            placeholder="search goals"
-            hideResetIcon
+            isPadded={true}
+            placeholder="Search goals"
           />
-          <TagsContainer
-            bind:selectedTagId
-            on:select={filter}
-            isShowAddTag={true}
-          />
+          <div class="px-2 w-full">
+            <TagsContainer
+              bind:selectedTagId
+              on:select={filter}
+              isShowAddTag={true}
+            />
+          </div>
         </div>
-        <div
-          id="GoalsLayoutInner"
-          on:touchstart|stopPropagation={startTouch}
+        <ScrollView
+          isRefreshOnPull={true}
+          isRefreshing={$goalStore.isRefreshing}
+          on:refresh={() => {
+            refresh(true);
+          }}
           class="relative flex flex-col h-full gap-8 flex-grow pt-4"
         >
-          <!-- TODO - swipeIsRefreshing - attach to goalStore.isRefreshin - on swipe refresh -->
-          {#if $goalStore.isRefreshing}
-            <RefreshingOverlayFeedback />
-          {/if}
           <div class="h-full w-full">
             {#if isValidArrayWithData($goalStore.filtered)}
               <div class="w-full grow">
@@ -195,7 +192,7 @@
                 isSearchContext={true}
               >
                 <slot name="subtext" slot="subtext">
-                  {#if selectedTagId === TagId.FAVORITES}
+                  {#if selectedTagId === TagId.STARRED}
                     Please favorite a goal to see them here.
                   {:else if !selectedTagId || selectedTagId === TagId.ALL}
                     Please create a new goal using the button below.
@@ -207,7 +204,7 @@
               </EmptyStatusView>
             {/if}
           </div>
-        </div>
+        </ScrollView>
       </slot>
       <slot name="right" slot="right">
         <slot />
@@ -220,7 +217,7 @@
     }
   </style>
 {/if}
-<PageLayer on:appear={refresh} />
+<PageLayer on:appear={() => refresh()} />
 
 <style>
   .animate-spin {

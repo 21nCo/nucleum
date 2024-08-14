@@ -5,8 +5,8 @@
   import type { IAction } from "$lib/client/types/action.type";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { appMenuStore } from "../appMenu.store";
-  import type { IAppMenuStore } from "$lib/client/types/appMenu.type";
+  import { appMenuStore } from "../../../stores/appMenu/appMenu.store";
+  import type { IAppMenuStore } from "$lib/client/stores/appMenu/appMenu.type";
   import Divider from "../Divider.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";

@@ -9,6 +9,7 @@ export const pointronDboDefinitions = {
   "fn::pointron::analytics::page::fetch": analyticsPageFetch(),
   "fn::pointron::analytics::targetsAndStreak::v2":
     analyticsTargetsAndStreakV2(),
+  "fn::pointron::analytics::targets::v3": analyticsTargetsV3(),
   "fn::pointron::analytics::goal::v3": analyticsGoalV3(),
   "fn::pointron::export": pointronExport(),
   "fn::pointron::import": pointronImport(),
@@ -270,7 +271,7 @@ return select fn::pointron::goal::fetchParent(id) as parent, label,id,isArchived
 
 function goalFetchAll() {
   const def = `DEFINE FUNCTION fn::pointron::goal::fetchAll(){
-    let $goalsInitial = select label,id, isFavorite, isPinnedForQuickStart, tags, isArchived, trashInformation, description, color,fn::pointron::goal::fetchParent(id) as parent, fn::pointron::goal::fetchSubGoals(id, true) as subGoals from PointGoal;
+    let $goalsInitial = select label,id, isStarred, isPinnedForQuickStart, tags, isArchived, trashInformation, description, color,fn::pointron::goal::fetchParent(id) as parent, fn::pointron::goal::fetchSubGoals(id, true) as subGoals from PointGoal;
     return select *, count(subGoals) as subGoalCount from $goalsInitial;
 };`;
   return [...goalFetchParent(), ...goalFetchSubGoals(), def];
@@ -285,7 +286,7 @@ return array::first(select value count(parent.isArchived) from $id)
 
 function goalFetchQuickFocusItemsV2() {
   const def = `DEFINE FUNCTION fn::pointron::goal::fetchQuickFocusItems::v2(){
-  return select label, id, color, tags, isFavorite, fn::pointron::analytics::focusByCurrentHorizon::v3('DAYS',id).focus as focus, fn::pointron::goal::fetchParent(id) as parent from PointGoal 
+  return select label, id, color, tags, isStarred, fn::pointron::analytics::focusByCurrentHorizon::v3('DAYS',id).focus as focus, fn::pointron::goal::fetchParent(id) as parent from PointGoal 
   where isPinnedForQuickStart is true and 
   ((isArchived is false or isArchived is none) and trashInformation is none and fn::pointron::goal::isParentArchived(id) < 1);
 };`;

@@ -7,7 +7,7 @@
   } from "$lib/client/types/popover.type";
   import { renderPopover } from "$lib/client/utils/browser.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { actIfClickedOutside, generateUID } from "$lib/client/utils/utils";
+  import { generateUID } from "$lib/client/utils/utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   /**
@@ -81,10 +81,44 @@
     if (!options?.id || !isPopoverVisible) return;
     actIfClickedOutside(x, [containerId, options.id], hide);
   }
+
+  /**
+   * Checks if the event target is outside the target element and performs the action if true.
+   *
+   * Note: pop-overlay, input are excluded for the following reasons.
+   *
+   * pop-overlay is getting triggered when space is pressed on the input field.
+   * input is excluded to prevent the action from being triggered when the input field is clicked.
+   *
+   * @param event the event object
+   * @param target the target element
+   * @param action the action to be performed
+   */
+  function actIfClickedOutside(
+    event: PointerEvent | MouseEvent,
+    target: string | string[],
+    action: any
+  ) {
+    if (!(event.target instanceof Element)) return;
+    if (
+      event.target.classList.contains("pop-overlay") ||
+      event.target.nodeName === "INPUT"
+    )
+      return;
+    const targets = Array.isArray(target) ? target : [target];
+    const clickedOutsideAllTargets = targets.every((t) => {
+      const nodeTarget = document.querySelector("#" + t);
+      return !nodeTarget?.contains(event.target as Node);
+    });
+    if (clickedOutsideAllTargets) {
+      action();
+    }
+  }
 </script>
 
 <button
   id={containerId}
+  tabindex="-1"
   bind:this={triggerRef}
   on:click={(e) => {
     if (triggerMethod === PopoverTriggerMethod.CLICK && !isPreventDefault) {

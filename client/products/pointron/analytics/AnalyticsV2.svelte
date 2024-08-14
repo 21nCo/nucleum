@@ -98,6 +98,7 @@
               <Button
                 icon="sync"
                 label="reset"
+                isPreventMinWidth={true}
                 size={Size.xs}
                 on:click={analyticsConfigStore.reset}
               />

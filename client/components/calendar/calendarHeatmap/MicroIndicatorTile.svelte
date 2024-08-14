@@ -2,7 +2,6 @@
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
-  import { renderPopover } from "$lib/client/utils/browser.utils";
   import {
     TileAppearance,
     type DailyData,
@@ -11,6 +10,8 @@
   import { CalendarHeatMapLayout } from "./calendarHeatmap.store";
   import { heatMapColorRange } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let data: DailyData | MonthlyData;
   export let classList: string = "";
@@ -21,9 +22,7 @@
       : tileValue;
   $: colors = heatMapColorRange($appearance, "aps1", 6);
   let tileRef: HTMLSpanElement;
-  let toolTipRef: HTMLDivElement;
-  let isHovering: boolean = false;
-  let tooltip: string | undefined = undefined;
+  let tooltip: string | undefined = resolveToolTip();
   $: isActive =
     ("date" in data &&
       data.date == formatDate($selectedTimePeriod, "iso-short")) ||
@@ -61,17 +60,12 @@
   }
   function resolveToolTip() {
     if ("date" in data) {
-      tooltip = formatDate(new Date(data.date), "verbose");
+      return formatDate(new Date(data.date), "verbose");
     }
-  }
-  function hideToolTip() {
-    if (toolTipRef && toolTipRef?.style?.display != "none")
-      toolTipRef.style.display = "none";
   }
 </script>
 
 <span
-  style:--tileBgColor={colors[data.color]}
   style:--topThreadColor={data.display == TileAppearance.LTile ||
   data.display == TileAppearance.MTile
     ? colors[5]
@@ -82,28 +76,19 @@
     : ""}
   bind:this={tileRef}
   class="relative {classList}"
-  on:pointerenter={() => {
-    isHovering = true;
-    resolveToolTip();
-    setTimeout(() => {
-      if (tooltip && toolTipRef) {
-        renderPopover({
-          triggerRef: tileRef,
-          popRef: toolTipRef,
-          placement: Position.Right
-        });
-      }
-    }, 100);
-  }}
-  on:pointerleave={() => {
-    isHovering = false;
-    tooltip = undefined;
-    hideToolTip();
-  }}
 >
-  <button
+  <HoverableElement
     id="MITile"
-    class={isActive ? "border-2 border-bgs1 shadow-outline" : ""}
+    type="button"
+    {tooltip}
+    tooltipOptions={{
+      placement: Position.Right,
+      offsetInPx: 4
+    }}
+    class={cn("tile text-b5 w-3 h-3 rounded-sm", {
+      "border-2 border-bgs1 outline outline-ass1 shadow-outline": isActive
+    })}
+    style={`background-color: ${colors[data.color]};`}
     on:click={() => {
       //TODO - date.date and date.month to be in Date type approach
       let val;
@@ -130,20 +115,11 @@
         />
       </div> -->
     {/if}
-  </button>
-  {#if tooltip}
-    <div
-      bind:this={toolTipRef}
-      class="min-w-fit bg-fgs3 text-bgs1 text-b4 rounded-sm z-30 ml-1 px-2"
-      style="display: none;"
-    >
-      {tooltip}
-    </div>
-  {/if}
+  </HoverableElement>
 </span>
 
 <style>
-  button {
+  .tile {
     /* color: var(--colors-fg-s2, #545454); */
     font-size: 8px;
     height: 13px;

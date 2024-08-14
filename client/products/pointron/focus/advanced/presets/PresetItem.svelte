@@ -36,18 +36,17 @@
   <HoverableElement
     type="button"
     bind:isHovering
-    class={cn(
-      "relative flex items-center gap-1 justify-between px-2 2k:px-3 py-4 rounded-md border border-brs2",
-      abg(isActive, parentBackgroundIndex),
-      {
-        "w-full max-w-md": isExpandedVariant,
-        "w-36 min-w-[9rem] h-10": !isExpandedVariant,
-        "hover:bg-bgs3": !isActive
-      }
-    )}
+    class={cn("relative flex items-center gap-2 px-2 2k:px-3 py-4 rounded-md", {
+      [abg(isActive, parentBackgroundIndex)]: !isInEditMode,
+      "w-full max-w-md": isExpandedVariant,
+      "w-36 min-w-[9rem] h-10": !isExpandedVariant,
+      "hover:bg-bgs3": !isActive && !isInEditMode,
+      "border border-brs2": !isInEditMode,
+      "border border-dashed border-fgs2 hover:bg-bgs2": isInEditMode
+    })}
     on:click={handleClick}
   >
-    <span class="flex gap-1 w-1/3 dp:w-1/2 h-full">
+    <span class="flex gap-1 h-full min-w-0 flex-1">
       <Icon
         icon={preset.type === SessionCompositionType.POMODORO
           ? "pomodoro"
@@ -70,7 +69,7 @@
         {/if}
       </span>
     </span>
-    <span class="flex w-2/3 dp:w-1/2 justify-end items-center h-full">
+    <span class="flex justify--end items-center h-full shrink-0">
       <PresetDurationText
         {preset}
         {isExpandedVariant}
@@ -81,7 +80,7 @@
 
     {#if isInEditMode && isExpandedVariant && isHovering}
       <span
-        class="absolute right-0 h-full flex items-center bg-gradient-to-l from-bgs3 via-bgs3 to-transparent pr-3 pl-10 rounded-md"
+        class="absolute right-0 h-full flex items-center bg-gradient-to-l from-bgs2 via-bgs2 to-transparent pr-3 pl-10 rounded-md"
       >
         <Button icon="trash" on:click={deleteHandler} tooltip="Delete preset" />
       </span>

@@ -26,9 +26,9 @@
   >
     {#if title}
       <div
-        class="flex justify-between w-full {$view.isPortrait
-          ? 'px-4 py-2'
-          : 'px-4 pt-4 pb-2'}"
+        class={cn(
+          "flex justify-between w-full portrait:px-4 portrait:py-2 px-3 pt-2"
+        )}
       >
         <Text style={titleStyle} content={title} />
         <slot name="toprightactions" />

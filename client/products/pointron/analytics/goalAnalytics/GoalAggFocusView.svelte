@@ -17,10 +17,10 @@
 </script>
 
 <div
-  class={cn("flex flex-col grow p-4 rounded-md bg-bgs2", {
-    "h-20": $view.isPortrait,
-    "h-30": !$view.isPortrait
-  })}
+  class={cn(
+    "flex flex-col justify-around grow p-4 rounded-md bg-bgs2 h-28 portrait:h-20",
+    {}
+  )}
 >
   <div class="text-fgs2 {$view.isPortrait ? 'text-b3' : 'text-base'}">
     {label}

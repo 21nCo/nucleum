@@ -8,11 +8,14 @@
   export let id: string = "";
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
-  export let tooltipOptions: IPopoverRenderBaseParams = {
+  export let tooltipOptions: IPopoverRenderBaseParams & {
+    delay?: number;
+  } = {
     placement: Position.BottomCenter,
     offsetInPx: 4,
     isSpanToTriggerWidth: false,
-    isUseAbsolutePositioning: false
+    isUseAbsolutePositioning: false,
+    delay: 800
   };
   let classList: string = "";
   let styles: string = "";
@@ -47,7 +50,7 @@
             isUseAbsolutePositioning:
               tooltipOptions.isUseAbsolutePositioning ?? false
           });
-        }, 800);
+        }, tooltipOptions.delay ?? 800);
     } else {
       if (toolTipTimeout) clearTimeout(toolTipTimeout);
       hideToolTip();

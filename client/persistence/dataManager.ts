@@ -8,7 +8,8 @@ import {
   type ResourceDependency,
   DependencySyncType,
   PersistanceActionType,
-  type IMutationParams
+  type IMutationParams,
+  type IObservableStore
 } from "../types/data.type";
 import {
   surrealUnixTimestamp,
@@ -26,7 +27,6 @@ import { CacheManager } from "./cache";
 import { logger } from "$lib/client/stores/log.store";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { KeyValueStore } from "../components/resourceStores/kv.store";
 import { performApiCall } from "../utils/network.utils";
 
 // const surrealDb = new SurrealDatabase();
@@ -53,7 +53,10 @@ function init() {
      * @param item
      * @returns
      */
-    refreshForIFR: async (item: Resource, params?: { isFetchAll?: boolean }) => {
+    refreshForIFR: async (
+      item: Resource,
+      params?: { isFetchAll?: boolean }
+    ) => {
       const dm = get(dataManager);
       const store = dm.cacheableStoresTable.find((x) => x.id === item);
       if (!store) return;
@@ -133,13 +136,17 @@ function init() {
         return refreshStores([store], { isShowRefreshingState });
       }
     },
-    refreshPage: async (storeIdentifiers: string[]) => {
+    refreshPage: async (
+      storeIdentifiers: string[],
+      isShowRefreshingState: boolean = false
+    ) => {
       const dm = get(dataManager);
+      storeIdentifiers = [...storeIdentifiers];
       const stores = dm.cacheableStoresTable.filter((x) =>
         storeIdentifiers.includes(x.id)
       );
       if (isValidArrayWithData(stores)) {
-        refreshStores(stores, { isPageRefresh: true });
+        refreshStores(stores, { isPageRefresh: true, isShowRefreshingState });
       }
     },
     cache: (store: IStore) => {
@@ -188,7 +195,7 @@ function init() {
       let data = dm.cacheableStoresTable
         .filter((x) => x.dataType === StoreDataType.KVO)
         .map((x) => {
-          const k = x as KeyValueStore<any>;
+          const k = x as IObservableStore<any>;
           return { id: k.id, ...k.seed };
         });
       data = [...data, { id: "mutationMap" }];
@@ -251,11 +258,22 @@ function init() {
         console.log("No valid mutations to sync");
         return;
       }
-      let response = await dm.db.query(masterQuery, {});
-      response = response.map((x: any) => checkSurrealResponse(x));
       console.log({
         context: "syncPendingMutations",
-        mutations: mutations.map((x) => x.id),
+        mutations: mutations.map((x) => x.id)
+      });
+      let response = await dm.db.query(masterQuery, {});
+      if (!response) {
+        for (let i = 0; i < mutations.length; i++) {
+          await mutationQueue.update(mutations[i].id, {
+            retryCount: (mutations[i]?.retryCount ?? 0) + 1
+          });
+        }
+        return;
+      }
+      response = response.map((x: any) => checkSurrealResponse(x));
+      console.log({
+        context: "syncPendingMutations - response",
         response
       });
       for (let i = 0; i < response.length; i++) {
@@ -712,34 +730,43 @@ async function resolveStoresRefreshQuery(stores: IStore[]) {
  * @param storeData
  * @returns
  */
-async function resolveRefreshQueryForIFR(storeData: IStore, isFetchAll: boolean = false) {
+async function resolveRefreshQueryForIFR(
+  storeData: IStore,
+  isFetchAll: boolean = false
+) {
   let customQuery: string | undefined = storeData.refreshQuery;
   let query: string | undefined = undefined;
   let since;
-  if (!isFetchAll) { 
+  if (!isFetchAll) {
     let dm = get(dataManager);
     // @ts-ignore
     const table = dm.cacheSource.dexie[storeData.id];
     if (!table) return;
     const latestRecord = await table.orderBy("modifiedAt").last();
     since =
-    latestRecord?.modifiedAt ??
-    new Date(new Date().getTime() - 20 * 365 * 24 * 60 * 60 * 1000);
+      latestRecord?.modifiedAt ??
+      new Date(new Date().getTime() - 20 * 365 * 24 * 60 * 60 * 1000);
   }
   if (!customQuery) {
-    query = resolveRefreshQuery(storeData.id, StoreDataType.IFR, { isFetchAll });
+    query = resolveRefreshQuery(storeData.id, StoreDataType.IFR, {
+      isFetchAll
+    });
   } else query = customQuery;
   if (query) query = replaceParams(query, { since });
   return query;
 }
 
-async function mergeIFRRecords(item: Resource, response: { records: any[], totalCount: number }) {
+async function mergeIFRRecords(
+  item: Resource,
+  response: { records: any[]; totalCount: number }
+) {
   let dm = get(dataManager);
   const dexie = dm.cacheSource.dexie;
   // @ts-ignore
   const table: Table = dexie[item];
   if (!table) return;
-  if(isValidArrayWithData(response.records)) await table.bulkPut(response.records);
+  if (isValidArrayWithData(response.records))
+    await table.bulkPut(response.records);
   const totalCacheCount = await table.count();
   console.log({ totalCacheCount, totalServerCount: response.totalCount });
   if (totalCacheCount < response.totalCount) {

@@ -58,8 +58,8 @@
       class="flex flex-col bg-bgs2 border-l border-l-brs3 items-start gap-4 justify-start h-full flex-grow p-4"
     >
       <ComingSoonView
-        mainText="Timeline"
-        subText="We are hard at work to build this feature. Stay tuned."
+        mainText="Coming soon..."
+        subText="We are working on something amazing. Stay tuned."
         size={Size.sm}
       />
       <!-- <TargetGuages size={Size.md} /> -->

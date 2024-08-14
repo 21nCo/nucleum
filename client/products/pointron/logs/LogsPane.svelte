@@ -136,6 +136,7 @@
       <EmptyStatusView
         size={Size.sm}
         loadingAnimation={LoadingAnimationType.LOGS_PULSE}
+        isSearchContext={true}
         pulseCount={2}
         isLoadingState={$logsPaneStore.isRefreshing ||
           $logsPaneStore.isPageRefreshing}

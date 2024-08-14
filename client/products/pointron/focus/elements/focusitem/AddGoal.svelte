@@ -56,7 +56,9 @@
           on:click={reset}
           icon="cross"
           tooltip="Clear"
-          toolTipPlacement={Position.Left}
+          tooltipOptions={{
+            placement: Position.Left
+          }}
         />
       </div>
     {/if}

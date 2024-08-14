@@ -13,31 +13,27 @@ import { generateUID } from "$lib/client/utils/utils";
 import type { IEvent } from "../types/event.type";
 import type { Event } from "../types/event.enum";
 import { appStore } from "./app.store";
+import { ObservableStore } from "./client.store";
 import { Action } from "../types/action.enum";
 
-export const appEvents = initEventStore({
-  event: GlobalEvent.NONE,
-  value: false
-});
-function initEventStore(seed: IEvent) {
-  const { subscribe, set, update } = writable<IEvent>(seed);
-  return {
-    subscribe,
-    set: (m: IEvent) => {
-      set(m);
-    },
-    reset: () => {
-      update(() => {
-        return { event: GlobalEvent.NONE, value: false };
-      });
-    },
-    publish: (m: Event, value: any = undefined) => {
-      update((n: IEvent) => {
-        return { ...n, value, event: m };
-      });
-    }
-  };
+class AppEventStore extends ObservableStore<IEvent> {
+  constructor() {
+    super("appEvents");
+    this.reset();
+  }
+  reset() {
+    this.set({ event: GlobalEvent.NONE, value: false });
+  }
+  publish(m: Event, value: any = undefined) {
+    this.update((n: IEvent) => {
+      return { event: m, value };
+    });
+    this.reset();
+  }
 }
+
+export const appEvents = new AppEventStore();
+
 export const scheduledNotifications = initScheduledNotificationStore();
 
 function initScheduledNotificationStore() {
@@ -79,11 +75,15 @@ function initToastStore() {
    */
   const trigger = (event: Toast) => {
     console.log("triggering toast", event);
+    let isAlreadyPresent = false;
     update((n: Toast[]) => {
+      isAlreadyPresent = n.some((x) => x.id === event.id);
+      if (isAlreadyPresent) return n;
       if (n.length > 3) n.shift();
       n.push(event);
       return n;
     });
+    if (isAlreadyPresent) return;
     if (get(view).isPortrait) {
       appStore.runAction(Action.MOBILE_TOAST, {
         componentParams: { id: event.id }

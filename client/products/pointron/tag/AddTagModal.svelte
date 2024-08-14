@@ -5,7 +5,6 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import modalEvent from "$lib/client/components/modal/modal.store";
   let label: string = "";
-  let modalRef: any;
   async function onAdd() {
     if (!label) return;
     await tagStore.create({ label });
@@ -13,16 +12,9 @@
 </script>
 
 <div class="h-full flex flex-col justify-between p-1">
-  <TextInput
-    bind:value={label}
-    placeholder={"Tag name"}
-    on:keydown={(e) => {
-      if (e.key === "Enter") {
-        modalRef.close();
-      }
-    }}
-  />
+  <TextInput bind:value={label} placeholder={"Tag name"} />
   <ModalFooter
+    action={PointronAction.ADD_TAG}
     on:close={() => {
       modalEvent.hideSpecific(PointronAction.ADD_TAG);
     }}

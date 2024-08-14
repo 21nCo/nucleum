@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { cn } from "$lib/client/utils/ui.utils";
   import {
     easeBackIn,
     easeBackOut,
@@ -19,8 +20,9 @@
 <button
   bind:this={ref}
   on:click
-  class="w-full flex justify-between items-center px-4 py-2 h-14 {isActive &&
-    'bg-bgs3'}"
+  class={cn("w-full flex items-center px-4 py-2 h-14 truncate", {
+    "bg-bgs3": isActive
+  })}
   in:fly={{
     duration: 500,
     delay: index * 1.2 * 50,

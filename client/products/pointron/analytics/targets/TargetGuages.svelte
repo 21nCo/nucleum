@@ -45,7 +45,8 @@
         let item = data.find((x) => x.scale === key);
         if (!item) return;
         try {
-          if (item.target != undefined && item.actual != undefined) {
+          if (item.target != undefined) {
+            if (!item.actual) item.actual = 0;
             const actual = +item.actual.toFixed(2);
             const label =
               getCorrespoingHorizonFrequencyLabel(item.scale) +
@@ -64,7 +65,7 @@
       }
     });
   }
-  $: console.log({ guages });
+  // $: console.log({ guages });
 </script>
 
 <div class="flex justify-evenly w-full flex-wrap gap-8">

@@ -109,6 +109,9 @@
   import Split from "../icons/Split.svelte";
   import ArrowRightLeft from "../icons/ArrowRightLeft.svelte";
   import ArrowUTurnLeft from "../icons/ArrowUTurnLeft.svelte";
+  import Warning from "../icons/Warning.svelte";
+  import ArrowTurnDownLeft from "../icons/ArrowTurnDownLeft.svelte";
+  import CursorArrowRays from "../icons/CursorArrowRays.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -122,6 +125,10 @@
    * Similar to accent color context, this is for custom bg context.
    */
   export let isCustomBgContext: boolean | undefined = undefined;
+  /**
+   * Whether the icon is tabbable or not. Default is false as icons are used in buttons and other elements that are tabbable by default.
+   */
+  export let isTabbable: boolean = false;
   let classListParam = "";
   export { classListParam as class };
   let _classList = "";
@@ -200,6 +207,7 @@
 {#if icon}
   <button
     class={cn("relative inline-flex items-center justify-center")}
+    tabindex={isTabbable ? 0 : -1}
     on:click
   >
     <svg
@@ -250,6 +258,8 @@
         <SidebarToggle {variant} />
       {:else if icon === "info"}
         <Info {variant} />
+      {:else if icon === "warning"}
+        <Warning {variant} />
       {:else if icon === "link"}
         <Link />
       {:else if icon === "link-mini"}
@@ -382,6 +392,8 @@
         <ArrowRightLeft {variant} />
       {:else if icon === "arrow-uturn-left"}
         <ArrowUTurnLeft {variant} />
+      {:else if icon === "arrow-turn-down-left"}
+        <ArrowTurnDownLeft {variant} />
       {:else if icon === "widen"}
         <Widen />
       {:else if icon === "unwiden"}
@@ -509,6 +521,8 @@
         <AltText />
       {:else if icon === "gift"}
         <Gift />
+      {:else if icon === "cursor-arrow-rays"}
+        <CursorArrowRays {variant} />
       {:else if icon === "link-arrow-left"}
         <LinkArrow2 />
       {:else if icon === "link-arrow-down"}

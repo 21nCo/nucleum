@@ -7,6 +7,10 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   import HoverableElement from "../HoverableElement.svelte";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import ShortcutText from "../text/ShortcutText.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -27,22 +31,15 @@
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
   };
-  /**
-   * @deprecated - Use tooltipOptions instead
-   */
-  export let toolTipPlacement: Position = Position.BottomCenter;
   export let isLoading: boolean = false;
   /**
    * Applicable when {@link ButtonStyle.PLAIN} style is choosen
    */
   export let isUnderlined: boolean = false;
-  /**
-   * @deprecated - Use toggle instead
-   */
-  export let isStayActive: boolean = false;
   export let id: string = "";
   let buttonRef: any;
   export let isHovering: boolean = false;
+  export let shortcut: string | undefined = undefined;
   $: isIconOnlyButton = !label && !$$slots.default;
 </script>
 
@@ -72,7 +69,7 @@
       (label || $$slots.default) && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,
-        "h-[2.75rem] py-3 px-5": size === Size.md,
+        "h-10 py-3 px-5": size === Size.md,
         "h-8 py-2 px-4": size === Size.sm,
         "h-6 py-1 px-3": size === Size.xs
       },
@@ -91,7 +88,7 @@
     style === ButtonStyle.OUTLINED && [
       {
         border: true,
-        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:border-aps1":
           type === ButtonVariant.PRIMARY,
         "border-brs3 text-fgs2 hover:text-fgs1 hover:bg-bgs2":
           type === ButtonVariant.SECONDARY,
@@ -138,6 +135,16 @@
       <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
+      {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
+        <ShortcutText
+          {shortcut}
+          parentBgIndex={style === ButtonStyle.PLAIN
+            ? parentBgIndex
+            : style === ButtonStyle.OUTLINED
+              ? parentBgIndex + 1
+              : undefined}
+        />
+      {/if}
     {:else}
       <slot />
     {/if}

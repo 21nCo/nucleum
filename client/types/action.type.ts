@@ -35,7 +35,7 @@ export type IAction = {
   confirmation?: ConfirmationNotification;
   loadingComponent?: any;
   searchActionParams?: {
-    searchItemType: Resource;
+    searchStoreId: string;
     itemLabel: string;
     callback: (id: string, label?: string) => void;
   };
@@ -58,7 +58,11 @@ export enum ActionType {
    */
   FUNCTION = "FUNCTION",
   CONFIRMATION = "CONFIRMATION_MODAL",
-  SEARCH_CMD = "SEARCH_CMD"
+  SEARCH_CMD = "SEARCH_CMD",
+  /**
+   * Triggers an event - subscribers will take care of the action.
+   */
+  EVENT = "EVENT"
 }
 
 export enum PaintType {

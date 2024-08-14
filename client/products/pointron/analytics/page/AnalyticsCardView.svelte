@@ -118,6 +118,7 @@
               tooltip={$view.isPortrait ? "Remove" : ""}
               label={$view.isPortrait ? "" : "Remove"}
               {parentBgIndex}
+              isPreventMinWidth={true}
               type={ButtonVariant.DANGER}
               style={$view.isPortrait
                 ? ButtonStyle.DEFAULT

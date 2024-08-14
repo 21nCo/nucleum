@@ -58,7 +58,9 @@
   function onQuickDurationSelected(event: any) {
     item.duration = event?.detail * 60;
     item.endDate = new Date(defaultTime);
-    item.endTime = formatTime($userPreferences, item.endDate, "24")!;
+    item.endTime = formatTime($userPreferences, item.endDate, {
+      format: "24"
+    })!;
     updateStartTimeWRTDuration();
     performValidationChecks();
   }
@@ -206,6 +208,7 @@
         size={Size.xs}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
+        isPreventMinWidth={true}
         label="Remove"
         on:click={() => manualLogStore.removeManualLog(item.id)}
       />

@@ -51,11 +51,10 @@ import {
   pointSessionStore,
   sessionStore
 } from "$lib/client/products/pointron/focus/session.store";
-import { Persistence } from "$lib/client/persistence/persistence";
-import { appStore } from "$lib/client/stores/app.store";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
+import { goalStore, quickFocusItemStore } from "./goals/goal.store";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
@@ -131,8 +130,7 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Session Log",
       layout: {
-        size: Size.xl,
-        isShowClose: true
+        size: Size.lg
       }
     }
   },
@@ -360,7 +358,12 @@ export const pointronActions: IAction[] = [
     component: AnalyticsV2,
     type: ActionType.PAGE,
     icon: "chart",
-    label: "Analytics"
+    label: "Analytics",
+    modalParams: {
+      layout: {
+        size: Size.full
+      }
+    }
   },
   {
     action: "goal",
@@ -490,32 +493,60 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: "finishSession",
-    label: "Finish the session",
-    fn: sessionStore.finishSession,
-    cmdBarPreCondition: isSessionRunningPreCondition,
-    type: ActionType.FUNCTION
-  },
-  {
-    action: "pinAGoal",
+    action: PointronAction.PIN_TO_QUICK_FOCUS,
     label: "Pin a goal to quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchItemType: Resource.PointGoal,
+      searchStoreId: Resource.PointGoal,
+      itemLabel: "goal",
+      callback: async (id: string, label?: string) => {
+        console.log("search action selected id:", { id });
+        const result = await quickFocusItemStore.pinGoal(id);
+        toasts.trigger({
+          title: "Goal: " + label,
+          message: result === -1 ? "Already pinned" : "Pinned to quick focus",
+          type: result === -1 ? AlertType.ERROR : AlertType.SUCCESS,
+          id: generateUID()
+        });
+      }
+    }
+  },
+  {
+    action: PointronAction.QUICK_FOCUS,
+    label: "Quick focus",
+    type: ActionType.SEARCH_CMD,
+    searchActionParams: {
+      searchStoreId: Resource.PointGoal,
       itemLabel: "goal",
       callback: (id: string, label?: string) => {
         console.log("search action selected id:", { id });
-        new Persistence().update({ isPinnedForQuickStart: true, id });
-        toasts.trigger({
-          title: "Goal: " + label,
-          message: "Pinned to quick focus",
-          actionText: "View",
-          type: AlertType.SUCCESS,
-          id: generateUID(),
-          callback: () => {
-            appStore.gotoPath("focus");
-          }
-        });
+        sessionStore.quickStart(id);
+      }
+    }
+  },
+  {
+    action: PointronAction.START_FOCUS_SESSION,
+    label: "Start a new focus session",
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      sessionStore.startSession();
+    }
+  },
+  {
+    action: PointronAction.FINISH_FOCUS_SESSION,
+    label: "Finish the current session",
+    fn: sessionStore.finishSession,
+    type: ActionType.CONFIRMATION,
+    cmdBarPreCondition: isSessionRunningPreCondition,
+    confirmation: {
+      title: "Finish focus session",
+      message: "Are you sure you want to finish this focus session?",
+      confirmAction: {
+        label: "Finish",
+        variant: ButtonVariant.PRIMARY,
+        callback: () => {
+          return Promise.resolve(sessionStore.finishSession());
+        }
       }
     }
   },
@@ -549,7 +580,7 @@ export const pointronActions: IAction[] = [
       title: "Create a new goal",
       isShowAsSheet: false,
       layout: {
-        size: Size.lg
+        size: Size.xl
       }
     }
   },

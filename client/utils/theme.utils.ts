@@ -48,7 +48,7 @@ export function generateCustomColorShade(
   } else if (shade === 2) {
     lightness = appearance.colorScheme.isDark ? 20 : 85;
   } else if (shade === 3) {
-    lightness = appearance.colorScheme.isDark ? 15 : 90;
+    lightness = appearance.colorScheme.isDark ? 15 : 92;
   } else if (shade === 4) {
     lightness = appearance.colorScheme.isDark ? 10 : 98;
   }

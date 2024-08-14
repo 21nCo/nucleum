@@ -24,7 +24,7 @@
     ResourceActionType,
     ResourceAccessMode
   } from "$lib/client/components/resourceStores/resource.type";
-  import { uiState } from "$lib/client/stores/uiState.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import BulkEditBar from "./BulkEditBar.svelte";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import { SearchStore } from "../memotron.store";
@@ -32,6 +32,7 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   export let resource: Resource;
   collectionStore.refresh();
   let searchQuery: string = "";
@@ -41,7 +42,7 @@
   let arrangement: Arrangement = uiState.getResourceState(
     resource,
     ResourceAccessPoint.BROWSER,
-    "arrangement"
+    UIState.arrangement
   );
   $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
   $: multiSelectContext = resource + "-" + ResourceAccessPoint.BROWSER;
@@ -113,6 +114,7 @@
   <slot name="nonpadded" slot="nonpadded">
     <div class="relative flex flex-col gap-4 h-full">
       <header class="flex gap-1 items-center py-4 px-5 border-b border-brs2">
+        <!-- TODO - use InlineSearchBar -->
         <TextInput
           bind:value={searchQuery}
           size={Size.lg}
@@ -136,7 +138,9 @@
         <Button
           icon="adjustments-vertical"
           tooltip="Settings & refine"
-          toolTipPlacement={Position.Right}
+          tooltipOptions={{
+            placement: Position.Right
+          }}
           size={Size.md}
           on:click={() => (isRefineShown = !isRefineShown)}
         />
@@ -174,7 +178,7 @@
                 uiState.setResourceState(
                   resource,
                   ResourceAccessPoint.BROWSER,
-                  "arrangement",
+                  UIState.arrangement,
                   newArrangement
                 );
                 arrangement = newArrangement;

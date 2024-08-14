@@ -1,6 +1,6 @@
 <script lang="ts">
   import AppMenuSwitcher from "$lib/client/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { LayoutContext } from "$lib/client/types/layout.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -10,10 +10,10 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import { onMount } from "svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { UIState } from "$lib/client/types/preferences.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -25,7 +25,7 @@
     if ($view.landscapiness < 1.25) {
       isInThinMode = true;
     }
-    const sub = userPreferences.subscribe((x) => {
+    const sub = uiState.subscribe((x) => {
       isInThinMode = refreshSidebarCollapseState();
     });
     return () => {
@@ -33,7 +33,7 @@
     };
   });
   function refreshSidebarCollapseState() {
-    return userPreferences.resolveUiState(UIState.isInThinMode);
+    return uiState.getState(UIState.isInThinMode);
   }
   function onMinimizeToggled() {
     isMinimized = !isMinimized;
@@ -119,7 +119,7 @@
                 icon="sidebar-toggle"
                 size={Size.lg}
                 on:click={() => {
-                  appStore.toggleSidebar();
+                  uiState.toggleSidebar();
                 }}
               />
             {/if}

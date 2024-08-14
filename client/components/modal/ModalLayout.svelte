@@ -1,6 +1,9 @@
 <script lang="ts">
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import {
+    appEvents,
+    confirmationNotification
+  } from "$lib/client/stores/notification.store";
   import { Size } from "$lib/client/types/size.enum";
   import ModalFooter from "./ModalFooter.svelte";
   import ModalHeader from "./ModalHeader.svelte";
@@ -11,11 +14,28 @@
   import { Embed } from "$lib/client/types/context.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import { onMount } from "svelte";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { resolveDialogOnFront } from "$lib/client/utils/browser.utils";
   export let path: string;
   export let params: ModalParams;
   let size: Size = Size.md;
   if (params.layout?.size) size = params.layout.size;
   let footerRef: any;
+  onMount(() => {
+    const appEventSub = appEvents.subscribe((x) => {
+      const frontDialog = resolveDialogOnFront();
+      // console.log({ frontDialogId: frontDialog?.id, path, event: x.event });
+      if (!frontDialog || path != frontDialog?.id) return;
+      if (x.event === GlobalEvent.ESCAPE) {
+        handleClose();
+      }
+    });
+    return () => {
+      appEventSub();
+    };
+  });
+
   export function close() {
     footerRef.close();
   }
@@ -57,9 +77,9 @@
     class={cn(
       "modal flex flex-col items-center justify-between w-full h-full",
       {
-        "p-2 lg:p-4 gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-        "py-4 lg:py-6 px-3 tp:px-4 lg:px-6 gap-4 lg:gap-8":
-          !params.layout?.ignoreSafeArea && size !== Size.xs
+        "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
+        "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs,
+        "pt-6": !params.title && !params.layout?.ignoreSafeArea
       }
     )}
     in:fly={{
@@ -80,11 +100,18 @@
           : params.layout?.isShowClose}
       />
     {/if}
-    <div class="flex flex-col gap-4 w-full flex-grow">
+    <div
+      class={cn("flex flex-col gap-4 w-full flex-grow", {
+        "p-2 lg:p-4": !params.layout?.ignoreSafeArea && size === Size.xs,
+        "px-3 tp:px-8 lg:px-12":
+          !params.layout?.ignoreSafeArea && size !== Size.xs
+      })}
+    >
       <slot />
     </div>
     {#if params.layout?.primaryAction || params.layout?.secondaryAction}
       <ModalFooter
+        action={path}
         primaryAction={params.layout?.primaryAction}
         secondaryAction={params.layout?.secondaryAction}
         bind:this={footerRef}
