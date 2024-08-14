@@ -1,0 +1,3 @@
+openai-whisper
+boto3
+pydub
