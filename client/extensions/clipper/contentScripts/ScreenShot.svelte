@@ -1,0 +1,170 @@
+<script lang="ts">
+  import { ExtensionEvent } from "$lib/client/types/extension.type";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { createEventDispatcher, onMount } from "svelte";
+  import type { IArea } from "./types";
+  import { webpage } from "./store";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import account from "$lib/client/stores/account.store";
+  const dispatch = createEventDispatcher();
+  let screenshotElement: HTMLElement;
+  let topValue: number = 0;
+  let leftValue: number = 0;
+  let widthValue: number = 0;
+  let heightValue: number = 0;
+  let lockedTopValue: number = -1;
+  let lockedLeftValue: number = -1;
+  let recordMousemove: boolean = false;
+  let bgColor: string = "rgba(0,0,0,0.1)";
+
+  /**
+   * @summary Sets the capture area shade color
+   * @description Gets the background color of the body element and converts it to RGB values then inverts the RGB values to form a visible color for the capture area shade
+   */
+  onMount(() => {
+    screenshotElement.style.cursor = "crosshair";
+    const bodyBackgroundColor = getComputedStyle(document.body).backgroundColor;
+    const rgbValues: any = bodyBackgroundColor.match(/\d+/g);
+    const red = parseInt(rgbValues[0]);
+    const green = parseInt(rgbValues[1]);
+    const blue = parseInt(rgbValues[2]);
+    const compRed = 255 - red;
+    const compGreen = 255 - green;
+    const compBlue = 255 - blue;
+    bgColor = `rgba(${compRed},${compGreen},${compBlue},0.6)`;
+  });
+
+  async function saveSnip(s3URL: string) {
+    const response = await webpage.saveClip({
+      contentType: NodeType.WEB_SCREENSHOT_CLIP,
+      body: {
+        s3URL: s3URL
+      }
+    });
+    dispatch("snipSaved", { s3URL, id: response.id });
+  }
+
+  function processScreenshot(data, area: IArea) {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = data;
+    const canvas = document.createElement("canvas");
+    canvas.width = area.width;
+    canvas.height = area.height;
+    const canvasContext = canvas.getContext("2d");
+    img.onload = async () => {
+      if (canvasContext) {
+        canvasContext.drawImage(
+          img,
+          area.x,
+          area.y,
+          area.width,
+          area.height,
+          0,
+          0,
+          area.width,
+          area.height
+        );
+        const contentType = "image/png";
+        const dataURL = canvas.toDataURL(contentType);
+        const s3SignedURL = await account.getSignedUrl(
+          contentType,
+          "screenshot.png",
+          false
+        );
+
+        chrome.runtime.sendMessage(
+          {
+            event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+            data: { s3SignedURL, dataURL, contentType }
+          },
+          (response) => {
+            if (response == 200) {
+              saveSnip(s3SignedURL.uploadURL.split("?")[0]);
+            }
+          }
+        );
+      }
+    };
+  }
+  async function snip(area: IArea) {
+    await resetComputedValues();
+    if (area.width <= 5 || area.height <= 5) return;
+    chrome.runtime.sendMessage(
+      {
+        event: ExtensionEvent.SCREENSHOT
+      },
+      (data) => {
+        processScreenshot(data, area);
+      }
+    );
+  }
+
+  /**
+   * @summary To remove the captured area shade on the screen before screenshot is taken
+   * await tick() doesn't work as expected thus capturing the shade also at times thus using setTimeout
+   */
+  function resetComputedValues(): Promise<void> {
+    return new Promise(async (resolve) => {
+      topValue = 0;
+      leftValue = 0;
+      heightValue = 0;
+      widthValue = 0;
+      lockedTopValue = -1;
+      lockedLeftValue = -1;
+      setTimeout(() => {
+        resolve();
+      }, 10);
+    });
+  }
+  function onMousedown(e: MouseEvent) {
+    topValue = e.clientY;
+    leftValue = e.clientX;
+    recordMousemove = true;
+  }
+
+  function onMousemove(e: MouseEvent) {
+    if (!recordMousemove) return;
+    if (lockedTopValue !== -1)
+      heightValue = Math.abs(e.clientY - lockedTopValue);
+    else heightValue = Math.abs(e.clientY - topValue);
+    if (e.clientY <= topValue || e.clientY <= lockedTopValue) {
+      if (lockedTopValue === -1) {
+        lockedTopValue = topValue;
+      }
+      topValue = e.clientY;
+    } else if (e.clientY > lockedTopValue) {
+      lockedTopValue = -1;
+    }
+
+    if (lockedLeftValue !== -1)
+      widthValue = Math.abs(e.clientX - lockedLeftValue);
+    else widthValue = Math.abs(e.clientX - leftValue);
+    if (e.clientX <= leftValue || e.clientX <= lockedLeftValue) {
+      if (lockedLeftValue === -1) {
+        lockedLeftValue = leftValue;
+      }
+      leftValue = e.clientX;
+    } else if (e.clientX > lockedLeftValue) {
+      lockedLeftValue = -1;
+    }
+  }
+  function onMouseup(e: MouseEvent) {
+    if (!recordMousemove) return;
+    snip({ x: leftValue, y: topValue, width: widthValue, height: heightValue });
+    recordMousemove = false;
+  }
+</script>
+
+<button
+  bind:this={screenshotElement}
+  class={cn("-z-10 fixed h-dvh w-full")}
+  on:mousedown={onMousedown}
+  on:mouseup={onMouseup}
+  on:mousemove={onMousemove}
+>
+  <div
+    class={cn("fixed")}
+    style="top:{topValue}px; left:{leftValue}px;height:{heightValue}px; width:{widthValue}px;background-color:{bgColor};"
+  ></div>
+</button>
