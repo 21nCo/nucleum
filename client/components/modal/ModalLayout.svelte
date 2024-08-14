@@ -78,7 +78,8 @@
       "modal flex flex-col items-center justify-between w-full h-full",
       {
         "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-        "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs
+        "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs,
+        "pt-6": !params.title && !params.layout?.ignoreSafeArea
       }
     )}
     in:fly={{

@@ -67,7 +67,7 @@
     on:change={switchTheme}
     isExpanded={true}
     label={{
-      label: "Sync with system",
+      label: "Sync theme with system",
       tooltip: {
         body: "Enable this to automatically switch between light and dark themes based on your system settings."
       }

@@ -21,7 +21,7 @@
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
       const frontDialog = resolveDialogOnFront();
-      console.log({ frontDialogId: frontDialog?.id, action, event: x.event });
+      // console.log({ frontDialogId: frontDialog?.id, action, event: x.event });
       if (!frontDialog || action != frontDialog?.id) return;
       if (x.event === GlobalEvent.ENTER) {
         onPrimaryClick();

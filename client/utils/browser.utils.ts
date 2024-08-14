@@ -22,7 +22,7 @@ export function renderPopover(params: IPopoverRenderParams) {
     isUseAbsolutePositioning: params.isUseAbsolutePositioning ?? false,
     isPlaceAtCaret: params.isPlaceAtCaret ?? false
   };
-  // console.log("renderPopover ",{params: deepCopy(params)});
+  // console.log("renderPopover ", { params: deepCopy(params) });
   if (params.isUseAbsolutePositioning) {
     return renderPopoverUsingAbsolutePositioning({
       ...params
@@ -149,6 +149,12 @@ async function _renderPopoverUsingFixedPositioning(
 
   if (placement === Position.Right) {
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
+    popRef.style.top = `${triggerRect.top - popRect.height / 2}px`;
+    // console.log({
+    //   popRectHeight: popRect.height,
+    //   triggerRectTop: triggerRect.top,
+    //   popRefTop: popRef.style.top
+    // });
   } else if (placement === Position.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
   } else if (
@@ -165,7 +171,7 @@ async function _renderPopoverUsingFixedPositioning(
   }
   // console.log({
   //   triggerRect,
-  //   popRect,
+  //   popRect: deepCopy(popRect),
   //   placement,
   //   documentWidth,
   //   documentHeight
@@ -347,4 +353,36 @@ export function resolveDialogOnFront() {
     return null;
   }
   return dialogs[dialogs.length - 1];
+}
+
+export function trackPosition(node, options = {}) {
+  let frame;
+  let lastX = 0;
+  let lastY = 0;
+
+  function update() {
+    const rect = node.getBoundingClientRect();
+    const x = rect.left + window.scrollX;
+    const y = rect.top + window.scrollY;
+
+    if (x !== lastX || y !== lastY) {
+      lastX = x;
+      lastY = y;
+      node.dispatchEvent(
+        new CustomEvent("positionchange", {
+          detail: { x, y }
+        })
+      );
+    }
+
+    frame = requestAnimationFrame(update);
+  }
+
+  update();
+
+  return {
+    destroy() {
+      cancelAnimationFrame(frame);
+    }
+  };
 }

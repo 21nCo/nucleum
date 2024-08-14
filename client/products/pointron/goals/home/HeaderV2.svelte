@@ -58,7 +58,7 @@
         },
         {
           value: "focus",
-          icon: "arrow-right-circled",
+          icon: "bolt",
           callback: () => {
             sessionStore.quickStart($currentGoal.id);
           }

@@ -9,6 +9,7 @@ export const pointronDboDefinitions = {
   "fn::pointron::analytics::page::fetch": analyticsPageFetch(),
   "fn::pointron::analytics::targetsAndStreak::v2":
     analyticsTargetsAndStreakV2(),
+  "fn::pointron::analytics::targets::v3": analyticsTargetsV3(),
   "fn::pointron::analytics::goal::v3": analyticsGoalV3(),
   "fn::pointron::export": pointronExport(),
   "fn::pointron::import": pointronImport(),

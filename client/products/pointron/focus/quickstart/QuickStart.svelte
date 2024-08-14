@@ -140,7 +140,7 @@
       {isLoadingState}
       isSearchContext={true}
       mainText={$quickFocusItemStore.selectedTagId === TagId.STARRED
-        ? "No favorite goals found"
+        ? "No starred goals found"
         : !$quickFocusItemStore.selectedTagId ||
             $quickFocusItemStore.selectedTagId === TagId.ALL
           ? "No pinned goals found"
@@ -159,7 +159,7 @@
     >
       <slot name="subtext" slot="subtext">
         {#if $quickFocusItemStore.selectedTagId === TagId.STARRED}
-          Please favorite a pinned goal to see them here
+          Please star a pinned goal to see them here
         {:else if !$quickFocusItemStore.selectedTagId || $quickFocusItemStore.selectedTagId === TagId.ALL}
           Please create a new goal or pin an existing one to the quick focus
           section.

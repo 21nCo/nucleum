@@ -33,8 +33,8 @@
       case InteractionMode.KEYBOARD_CENTRIC:
         return "In **keyboard centric mode**, additional hot keys will be enabled and shortcut hints will be shown if enabled. We have designed this mode to maximize keyboard usage eliminating the need to use trackpad or mouse.";
       case InteractionMode.COMMAND_ONLY:
-        return "**Command only mode** is taking keyboard centric mode to next level. Everything will be hidden except the command bar.";
-      case InteractionMode.VOICE_MODE:
+        return "**Command only mode** is taking keyboard centric mode to next level. Everything will be hidden and can be accessed on-demand using commands.";
+      case InteractionMode.VOICE_ONLY:
         return "For a complete **hands-free experience**, turn on this mode and let the voice commander take care of the rest. Will be available soon...";
     }
   }
@@ -76,7 +76,7 @@
         icon: "command"
       },
       {
-        value: InteractionMode.VOICE_MODE,
+        value: InteractionMode.VOICE_ONLY,
         label: "Voice [coming soon]",
         icon: "microphone",
         isDisabled: true

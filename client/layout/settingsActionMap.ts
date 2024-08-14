@@ -30,18 +30,19 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     modalParams: {
       title: "Mode of interaction",
       layout: {
-        size: Size.xl
+        size: Size.lg
       }
     }
   },
   {
     action: "theme",
     label: "Appearance",
-    cmdLabel: ["Appearance Settings", "Switch Theme"],
+    cmdLabel: ["Appearance Settings", "Switch Theme", "Toggle Dark Mode"],
     path: "cp/theme",
     icon: "palette",
     component: ThemeSettingView,
     modalParams: {
+      title: "Appearance Settings",
       layout: {
         size: Size.lg
       }
