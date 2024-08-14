@@ -33,6 +33,10 @@ import type {
 } from "$lib/client/components/markdown/md.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 
+/**
+ * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used
+ */
+export const isReplaceableMd = writable<boolean>(false);
 export const emptyBlock: IBlock = {
   contentType: NodeType.SIMPLE_TEXT,
   body: "",
