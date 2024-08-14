@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import LogItem from "./ManualLogItem.svelte";
+  import ManualLogItem from "./ManualLogItem.svelte";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -8,6 +8,7 @@
 
   onMount(() => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
+    if (!$manualLogStore.manualLogs) manualLogStore.reset();
     if ($manualLogStore.manualLogs.length === 0) {
       manualLogStore.addNewManualLog();
     }
@@ -18,7 +19,7 @@
   <div class="flex flex-col gap-8 w-full mt-4">
     {#if $manualLogStore?.manualLogs && $manualLogStore.manualLogs.length > 0}
       {#each $manualLogStore.manualLogs as item}
-        <LogItem {item} />
+        <ManualLogItem {item} />
       {/each}
     {/if}
   </div>

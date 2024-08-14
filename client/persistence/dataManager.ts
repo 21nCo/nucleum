@@ -141,7 +141,7 @@ function init() {
       isShowRefreshingState: boolean = false
     ) => {
       const dm = get(dataManager);
-      storeIdentifiers = [...storeIdentifiers, Resource.uiState];
+      storeIdentifiers = [...storeIdentifiers];
       const stores = dm.cacheableStoresTable.filter((x) =>
         storeIdentifiers.includes(x.id)
       );

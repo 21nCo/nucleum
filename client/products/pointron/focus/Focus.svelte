@@ -83,9 +83,9 @@
   async function refresh() {
     await dataManager.refreshPage([
       Resource.quickFocusItems,
-      Resource.PointTag,
-      Resource.pointSessionFocusItemsv2,
-      Resource.pointSessionSnapshotv2
+      Resource.PointTag
+      // Resource.pointSessionFocusItemsv2,
+      // Resource.pointSessionSnapshotv2
     ]);
   }
 </script>
