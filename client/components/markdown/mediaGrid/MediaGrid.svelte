@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
   import MediaGridOptions from "./MediaGridOptions.svelte";
   import type { Item, Config } from "./mediaGrid.type";
   import {
     dragAndDropStore,
+    isInEditMode,
     userPreferences
   } from "$lib/client/stores/app.store";
   import { generateUID } from "$lib/client/utils/utils";
@@ -12,16 +13,46 @@
   import DraggableMediaGridElement from "$lib/client/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
   import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
   import account from "$lib/client/stores/account.store";
-  export let items: Item[] = $userPreferences.mediaGridTestitems;
-  $: $userPreferences.mediaGridTestitems = items;
+  import type { IBlock } from "../md.type";
+  import { isReplaceableMd, type MdStoreType } from "../markdown.store";
+
+  // export let items: Item[] = $userPreferences.mediaGridTestitems;
+  // $: $userPreferences.mediaGridTestitems = items;
+
+  export let block: any;
+  export let mdStore: MdStoreType;
+
+  if (block.body == "") {
+    block.body = {};
+    block.body.items = [];
+  }
+  if (!block.body.isWideLayout) block.body.isWideLayout = false;
+  if (!block.body.gap) block.body.gap = 0;
+  if (!block.body.altText) block.body.altText = "media grid";
+  if (!block.body.type) block.body.type = "AUTO";
+  if (!block.body.noOfColumns) block.body.noOfColumns = 1;
+  let items: Item[] = block.body.items;
+  const dispatch = createEventDispatcher();
+  $: {
+    block.body.items = items;
+    dispatch("change", { id: block.id, body: block.body });
+  }
+  $: if (config) {
+    block.body.isWideLayout = config.isWideLayout;
+    block.body.gap = config.gap;
+    block.body.altText = config.altText;
+    block.body.type = config.type;
+    block.body.noOfColumns = config.noOfColumns;
+    dispatch("change", { id: block.id, body: block.body });
+  }
 
   let config: Config = {
-    isWideLayout: false,
+    isWideLayout: block.body.isWideLayout,
+    gap: block.body.gap,
+    altText: block.body.altText,
+    type: block.body.type,
+    noOfColumns: block.body.noOfColumns,
     isHovered: false,
-    gap: 0,
-    altText: "media grid",
-    type: "AUTO",
-    noOfColumns: 1,
     isAutoHighlighted: false,
     isColumnHighlighted: Array(1).fill(false),
     columns: [],
@@ -30,7 +61,7 @@
     leastItemsInAColumn: 3,
     gridWidth: 740
   };
-  let isReadingMode: boolean = false;
+
   let isDragging = false;
   let typeURLFocused: boolean = false;
   /**
@@ -46,6 +77,12 @@
   let autoItems: any[] = [];
   let unSubdragAndDropStore: () => void;
 
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key == "Enter" && block.id) {
+      const newBlockId = mdStore.insert({ id: block.id });
+      dispatch("insert", { insertedAt: block.id, id: newBlockId });
+    }
+  }
   /**
    * handleNewImageLoad is used to rezie the images in the media grid whenever a new image is uploaded or dropped and also when spacing and layout changes changes.
    * Since the height of the grid container is 370px we set the intial height of each image as 360px to start with.
@@ -154,10 +191,13 @@
    * @param type
    */
   function sortItems(type: "AUTO" | "COLUMNS") {
+    if (items.length == 0) return;
     if (type === "AUTO")
-      items.sort((a, b) => a.position.auto - b.position.auto);
+      items?.sort((a, b) => a.position.auto - b.position.auto);
     else if (type === "COLUMNS")
-      items.sort((a, b) => a.position.columns.index - b.position.columns.index);
+      items?.sort(
+        (a, b) => a.position.columns.index - b.position.columns.index
+      );
     items = items;
   }
   /**
@@ -171,7 +211,8 @@
     let s3Response = await account.uploadFile(
       input.type,
       customName,
-      itemLocalURL
+      itemLocalURL,
+      $isReplaceableMd
     );
     let s3URL = s3Response.uploadURL.split("?")[0];
     return s3URL;
@@ -193,6 +234,7 @@
    * Used to create the columnArray when the mediaGrid is mounted and also to recreate when an column is removed during drag operation
    */
   function calculateColumnArray() {
+    if (items.length == 0) return;
     items.forEach((item) => {
       const columnNo = item.position.columns.columnNo;
       updateColumnArray(columnNo);
@@ -309,7 +351,7 @@
     const pattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w.-]*)*\/?$/;
     return pattern.test(url);
   }
-  function handleKeyDown(e: KeyboardEvent) {
+  function handleKeyDownInTypeURL(e: KeyboardEvent) {
     if (e.key === "Enter") {
       let URL = (e.target as HTMLInputElement).value;
       //TODO-research how to get the file type from URL and then enable saving & correpsonding enable GridOption
@@ -391,6 +433,7 @@
     }
     let item = {
       id: generateUID(),
+      name: file.name,
       URL: newURL,
       type: file.type,
       position: {
@@ -659,6 +702,11 @@
        */
       setTimeout(() => handleNewImageLoad(), 1);
   }
+  function onDelete() {
+    mdStore.deleteBlock(block.id);
+    dispatch("delete", { id: block.id });
+  }
+
   onMount(() => {
     if (config.type == "AUTO") sortItems("AUTO");
     else sortItems("COLUMNS");
@@ -674,13 +722,10 @@
 </script>
 
 <!-- <div> -->
-<button on:click={() => (items = [])}>delete all items</button>
-<button on:click={() => (isReadingMode = !isReadingMode)}
-  >Reading:{isReadingMode}</button
->
-<div
+<button
   on:mouseenter={() => (config.isHovered = true)}
   on:mouseleave={() => (config.isHovered = false)}
+  on:keydown={handleKeyDown}
   class={"relative m-2 p-1 border border-bgs2"}
   style="width:{config.gridWidth}px;height:{config.type == 'AUTO'
     ? '370px'
@@ -764,7 +809,7 @@
       {/each}
     </div>
   {/if}
-  {#if !isDragging && config.isHovered && !isReadingMode}
+  {#if !isDragging && config.isHovered && $isInEditMode}
     <MediaGridOptions
       {chevDown}
       {chevUp}
@@ -773,9 +818,9 @@
       {sortItems}
       bind:config
       {columnArray}
-      on:delete
+      on:delete={onDelete}
     />{/if}
-</div>
+</button>
 <!-- <div class="viewer m-2">
       <img src={currentImage} alt="..." />
     </div> -->

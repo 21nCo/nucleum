@@ -189,12 +189,6 @@
           description: "Media stack block",
           type: NodeType.MEDIA_STACK,
           icon: "rectangle-stack"
-        },
-        {
-          label: "Media grid",
-          description: "Media grid block",
-          type: NodeType.MEDIA_GRID,
-          icon: "rectangle-group"
         }
       ]
     },
@@ -253,6 +247,12 @@
           description: "Embed Collection block",
           type: NodeType.COLLECTION_AS_EMBED,
           icon: "collection"
+        },
+        {
+          label: "Media grid",
+          description: "Media grid block",
+          type: NodeType.MEDIA_GRID,
+          icon: "rectangle-group"
         }
       ]
     }
