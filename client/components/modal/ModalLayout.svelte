@@ -16,7 +16,8 @@
   import { Action } from "$lib/client/types/action.enum";
   import { onMount } from "svelte";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { resolveDialogOnFront } from "$lib/client/utils/browser.utils";
+  import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
+  import { logger } from "../debug/logger.client";
   export let path: string;
   export let params: ModalParams;
   let size: Size = Size.md;
@@ -24,9 +25,13 @@
   let footerRef: any;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
-      const frontDialog = resolveDialogOnFront();
-      // console.log({ frontDialogId: frontDialog?.id, path, event: x.event });
-      if (!frontDialog || path != frontDialog?.id) return;
+      const frontModal = resolveModalOnFront();
+      logger.log({
+        frontModalId: frontModal?.id,
+        path,
+        event: x.event
+      });
+      if (!frontModal || path != frontModal?.id) return;
       if (x.event === GlobalEvent.ESCAPE) {
         handleClose();
       }

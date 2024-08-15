@@ -21,6 +21,7 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import { Action } from "$lib/client/types/action.enum";
+  import { Embed } from "$lib/client/types/context.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   onMount(async () => {
@@ -77,7 +78,7 @@
 <BaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     <!-- TODO - except touch devices -->
-    {#if interactionMode === InteractionMode.COMMAND_ONLY}
+    {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
       <CommandModePage />
     {:else}
       <LocalLeftNav />

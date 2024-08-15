@@ -79,9 +79,9 @@
   })}
 >
   <div
-    class={cn("flex mo:flex-col w-full bg-bgs2 justify-between items-center", {
-      "rounded-t-md": isFullPageContext
-    })}
+    class={cn(
+      "flex mo:flex-col w-full bg-bgs2 justify-between items-center rounded-t-md"
+    )}
   >
     {#if isPerformingSearchAction}
       <div
@@ -144,7 +144,7 @@
   {:else if !isFullPageContext}
     <div
       class={cn(
-        "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4"
+        "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4 rounded-b-md"
       )}
     >
       <span> Press <b>Esc</b> to close </span>

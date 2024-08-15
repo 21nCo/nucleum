@@ -411,6 +411,8 @@ function initAppStore(seed: AppStore) {
     let action = actions.find(
       (x) => x.action?.toLowerCase() == slug.toLowerCase()
     );
+    const contextData = get(context);
+    if (action && action.hideContext?.includes(contextData.embed)) return null;
     if (action) return action;
     return null;
   };
@@ -451,7 +453,8 @@ function initAppStore(seed: AppStore) {
       return action;
     } else if (
       action.type === ActionType.MODAL ||
-      interactionMode === InteractionMode.COMMAND_ONLY
+      (interactionMode === InteractionMode.COMMAND_ONLY &&
+        get(context).embed !== Embed.HANDSET)
     ) {
       modalEvent.notify({
         path: action.action,

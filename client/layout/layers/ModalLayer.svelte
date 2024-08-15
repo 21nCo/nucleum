@@ -23,7 +23,6 @@
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { logger } from "$lib/client/stores/log.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { liveQuery } from "dexie";
   import context from "$lib/client/stores/context.store";
@@ -34,6 +33,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import ColorLayer from "./themeLayer/ColorLayer.svelte";
   import { Action } from "$lib/client/types/action.enum";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -45,6 +45,7 @@
   let isShowSyncErrorMessage: boolean = false;
   let mutationQueue = refreshMutationQueueLiveQuery();
   let isWindowVisible: boolean = true;
+  let isDialogEnabled: boolean = false;
   function refreshMutationQueueLiveQuery() {
     return liveQuery(() =>
       $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
@@ -99,7 +100,7 @@
         });
         return;
       }
-      logger.log({ context: "modal event - ModalLayer", event: x });
+      logger.debug({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
@@ -188,7 +189,7 @@
 
 {#if (isValidArrayWithData($toasts) || (isValidArrayWithData($mutationQueue) && isShowSyncErrorMessage)) && !$view.isPortrait}
   <div
-    class="fixed bottom-0 right-0 mb-6 mr-20 flex flex-col gap-4 z-[100]"
+    class="fixed bottom-0 right-0 mb-6 mr-12 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}
   >
     {#each $toasts as toast}
@@ -215,14 +216,16 @@
   </div>
 {/if}
 
-{#each modals as modal (modal.path)}
+{#each modals as modal, index (modal.path)}
   <Modal
     show={modal.isShow}
     id={modal.path}
+    {index}
     isDismissable={modal.isDismissable ?? true}
     isShowOverlay={modal.isShowOverlay ?? true}
     isUseDialog={modal.layout?.size != Size.full &&
-      $context.embed != Embed.HANDSET}
+      $context.embed != Embed.HANDSET &&
+      isDialogEnabled}
     size={modal.layout?.size ?? Size.md}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
   >
@@ -293,7 +296,8 @@
       isDismissable={pop.params?.isDismissable ?? true}
       isShowOverlay={pop.params?.isShowOverlay ?? true}
       isUseDialog={pop.params?.layout?.size != Size.full &&
-        $context.embed != Embed.HANDSET}
+        $context.embed != Embed.HANDSET &&
+        isDialogEnabled}
       size={pop.params?.layout?.size ?? Size.md}
       orientation={pop.params?.layout?.orientation ?? Orientation.Horizontal}
     >

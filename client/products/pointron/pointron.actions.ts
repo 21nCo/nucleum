@@ -495,7 +495,7 @@ export const pointronActions: IAction[] = [
     action: PointronAction.BACKGROUND_MUSIC,
     label: "Background music",
     type: ActionType.MODAL,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     component: BackgroundMusic,
     modalParams: {
       layout: {
@@ -551,7 +551,7 @@ export const pointronActions: IAction[] = [
     label: "Finish the current session",
     fn: sessionStore.finishSession,
     type: ActionType.CONFIRMATION,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     confirmation: {
       title: "Finish focus session",
       message: "Are you sure you want to finish this focus session?",
@@ -569,7 +569,7 @@ export const pointronActions: IAction[] = [
     label: "Abandon the current session",
     fn: sessionStore.close,
     type: ActionType.CONFIRMATION,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     confirmation: {
       title: "Abandon focus session",
       message: "Are you sure you want to abandon this focus session?",
@@ -603,7 +603,7 @@ export const pointronActions: IAction[] = [
     label: "Think mode",
     icon: "think",
     type: ActionType.MODAL,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     component: Think,
     modalParams: {
       layout: {

@@ -9,8 +9,9 @@
   import { isPrimaryActionDisabled } from "./modal.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { resolveDialogOnFront } from "$lib/client/utils/browser.utils";
+  import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import { logger } from "../debug/logger.client";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;
@@ -20,9 +21,9 @@
   let isActionInProgress = false;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
-      const frontDialog = resolveDialogOnFront();
-      // console.log({ frontDialogId: frontDialog?.id, action, event: x.event });
-      if (!frontDialog || action != frontDialog?.id) return;
+      const frontModal = resolveModalOnFront();
+      logger.log({ frontModalId: frontModal?.id, action, event: x.event });
+      if (!frontModal || action != frontModal?.id) return;
       if (x.event === GlobalEvent.ENTER) {
         onPrimaryClick();
       }

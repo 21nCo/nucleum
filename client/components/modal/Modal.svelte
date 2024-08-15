@@ -10,17 +10,17 @@
   import appearance from "$lib/client/stores/appearance.store";
   import ColorLayer from "$lib/client/layout/layers/themeLayer/ColorLayer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { logger } from "../debug/logger.client";
+  export let index: number = 0;
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
   export let isOnRight: boolean = false;
   export let isDismissable: boolean = true;
-  export let isUseDialog: boolean = true;
+  export let isUseDialog: boolean = false;
   export let size: Size = Size.md;
   export let orientation: Orientation = Orientation.Vertical;
   let dialog: HTMLDialogElement;
-  let width: number;
-  let left: any;
   /**
    * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
    *
@@ -34,7 +34,7 @@
     // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
-    // console.log("overlayClicked", event, id);
+    logger.log({ at: "overlayClicked", event, id });
     if (
       (((event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
@@ -47,20 +47,7 @@
       close();
     }
   };
-  // onMount(() => {
-  //   setTimeout(() => document.body.focus(), 10);
-  // });
-  // $: {
-  //   if (size == Size.xs) {
-  //     width = 400;
-  //   } else if ($windowObject.documentWidth >= 650) {
-  //     width = 600;
-  //   } else {
-  //     width = $windowObject.documentWidth - 50;
-  //   }
-  //   left = $windowObject.documentWidth / 2 - width / 2;
-  //   // top = $windowObject.documentHeight / 2 - height / 2;
-  // }
+
   function close() {
     show = false;
     modalEvent.hideSpecific(id, "Modal.svelte");
@@ -75,14 +62,44 @@
   function handleClose(e: any) {
     dialog.showModal();
   }
+
+  function resolveSizeClasses() {
+    return {
+      "w-full h-full min-h-screen min-w-screen": size === Size.full,
+      // "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
+      "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.xs,
+      "w-[55rem] 2k:w-[65rem] h-full dp:h-full tp:h-[60rem] vm:h-[60rem] 2k:h-full":
+        orientation === Orientation.Vertical && size === Size.xxl,
+      "w-[45rem] 2k:w-[55rem] h-full tp:h-[60rem] dp:h-full vm:h-[60rem]  2k:h-full":
+        orientation === Orientation.Vertical && size === Size.xl,
+      "w-[40rem] 2k:w-[45rem] h-9/10 vm:h-[55rem] tp:h-[55rem] 2k:h-[60rem]":
+        orientation === Orientation.Vertical && size === Size.lg,
+      "w-[30rem] 2k:w-[35rem] h-[40rem] 2k:h-[50rem]":
+        orientation === Orientation.Vertical && size === Size.md,
+      "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
+        orientation === Orientation.Vertical && size === Size.sm,
+      "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-[80rem] vm:h-[90rem]":
+        orientation === Orientation.Horizontal && size === Size.xxl,
+      "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
+        orientation === Orientation.Horizontal && size === Size.xl,
+      "w-[60rem] 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
+        orientation === Orientation.Horizontal && size === Size.lg,
+      "w-[50rem] 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
+        orientation === Orientation.Horizontal && size === Size.md
+    };
+  }
 </script>
 
 {#if show}
   <button
-    class="pop-overlay fixed w-screen h-screen inset-0 {isShowOverlay
-      ? 'bg-bgs1 bg-opacity-80'
-      : 'bg-opacity-0'} z-50"
-    id="{id}-overlay"
+    class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
+      "bg-opacity-0": !isShowOverlay,
+      "flex justify-center items-center p-3": !isUseDialog,
+      "backdrop-blur-md backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
+        isShowOverlay && !isUseDialog
+    })}
+    {id}
+    data-modal={index}
     transition:fade={{ duration: 100 }}
     on:click={overlayClicked}
   >
@@ -107,7 +124,7 @@
     {:else if isUseDialog}
       <dialog
         bind:this={dialog}
-        {id}
+        id={id + "-modal"}
         on:close|preventDefault={handleClose}
         class={cn(
           "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full",
@@ -116,27 +133,7 @@
             "overlay-light": isShowOverlay && !$appearance.colorScheme.isDark,
             "overlay-dark": isShowOverlay && $appearance.colorScheme.isDark,
             "bg-none": !isShowOverlay,
-            "w-full h-full min-h-screen min-w-screen": size === Size.full,
-            // "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.sm,
-            "w-[20rem] tp:w-[25rem] h-[25rem] min-h-[20rem]": size === Size.xs,
-            "w-[55rem] 2k:w-[65rem] h-full vm:h-[60rem] tp:h-[60rem] 2k:h-full":
-              orientation === Orientation.Vertical && size === Size.xxl,
-            "w-[45rem] 2k:w-[55rem] h-full vm:h-[60rem] tp:h-[60rem] 2k:h-full":
-              orientation === Orientation.Vertical && size === Size.xl,
-            "w-[40rem] 2k:w-[45rem] h-9/10 vm:h-[55rem] tp:h-[55rem] 2k:h-[60rem]":
-              orientation === Orientation.Vertical && size === Size.lg,
-            "w-[30rem] 2k:w-[35rem] h-[40rem] 2k:h-[50rem]":
-              orientation === Orientation.Vertical && size === Size.md,
-            "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
-              orientation === Orientation.Vertical && size === Size.sm,
-            "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-[80rem] vm:h-[90rem]":
-              orientation === Orientation.Horizontal && size === Size.xxl,
-            "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
-              orientation === Orientation.Horizontal && size === Size.xl,
-            "w-[60rem] 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
-              orientation === Orientation.Horizontal && size === Size.lg,
-            "w-[50rem] 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
-              orientation === Orientation.Horizontal && size === Size.md
+            ...resolveSizeClasses()
           }
         )}
       >
@@ -144,19 +141,14 @@
         <ColorLayer>
           <slot />
         </ColorLayer>
-        <!-- <div class="popover-content" style="max-height: 80vh;" /> -->
       </dialog>
     {:else}
-      <!-- <div
-        class="popover-container max-h-max flex flex-col p-4 fixed rounded-md shadow-lg bg-bgs1 z-50 overflow-y-auto"
-        style="width: {width}px;  top: 5%; left: {left}px; max-height: 80vh;"
-        transition:fade={{ duration: 200 }}
+      <div
+        id={id + "-modal"}
+        class={cn("bg-bgs1 mo:w-full mo:h-full rounded-lg", {
+          ...resolveSizeClasses()
+        })}
       >
-        <div class="popover-body h-full w-full mb-10">
-          <slot />
-        </div>
-      </div> -->
-      <div class="bg-bgs1 w-full h-full">
         <ColorLayer>
           <slot />
         </ColorLayer>
@@ -171,23 +163,14 @@
   }
 
   dialog.overlay::backdrop {
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(10px) grayscale(100%);
   }
 
-  /* Backdrop similar shade as bg */
-  /* dialog.overlay-light::backdrop {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  dialog.overlay-dark::backdrop {
-    background-color: rgba(251, 251, 251, 0.05);
-  } */
-
-  /* Backdrop - opposite shade of bg */
   dialog.overlay-light::backdrop {
     background-color: rgba(0, 0, 0, 0.2);
   }
   dialog.overlay-dark::backdrop {
-    background-color: rgba(251, 251, 251, 0.3);
+    background-color: rgba(251, 251, 251, 0.4);
   }
   dialog.bg-none::backdrop {
     background-color: transparent;

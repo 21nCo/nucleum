@@ -13,6 +13,7 @@ import { Size } from "../types/size.enum";
 import { Orientation } from "../types/direction.enum";
 import { Action } from "../types/action.enum";
 import InteractionModeSettings from "../components/settings/interactionMode/InteractionModeSettings.svelte";
+import { Embed } from "../types/context.type";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -32,7 +33,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
       layout: {
         size: Size.lg
       }
-    }
+    },
+    hideContext: [Embed.HANDSET]
   },
   {
     action: "theme",
@@ -61,7 +63,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "Shortcuts",
     path: "cp/shortcuts",
     icon: "command",
-    component: ShortcutSettings
+    component: ShortcutSettings,
+    hideContext: [Embed.HANDSET]
   },
   {
     action: "datetime-settings",

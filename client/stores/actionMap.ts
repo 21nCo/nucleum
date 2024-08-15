@@ -21,6 +21,7 @@ import { Action } from "../types/action.enum";
 import Bootstrap from "../components/settings/account/Bootstrap.svelte";
 import Calendar from "../components/calendar/Calendar.svelte";
 import { GlobalEvent } from "../types/event.enum";
+import { uiState } from "./uiState/uiState.store";
 
 export const globalActions: IAction[] = [
   {
@@ -303,7 +304,7 @@ export const globalActions: IAction[] = [
     type: ActionType.FUNCTION,
     label: "Toggle sidebar",
     fn: async () => {
-      appStore.toggleSidebar();
+      uiState.toggleSidebar();
     }
   },
   {

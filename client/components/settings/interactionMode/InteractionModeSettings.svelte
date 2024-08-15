@@ -120,6 +120,6 @@
       content="Command only mode is currenlty in beta. Please report any issues you encounter."
     />
   {/if}
-  <InlineInfoBanner content={resolveInfo(selectedMode)} />
   <ScrollViewBottomSpacer />
+  <InlineInfoBanner content={resolveInfo(selectedMode)} />
 </div>

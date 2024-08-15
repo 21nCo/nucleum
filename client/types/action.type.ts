@@ -1,17 +1,41 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Embed, OperatingSystem } from "./context.type";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
 
 export type IAction = {
   action: string;
   type: ActionType;
+  /**
+   * If true, the action will not be shown in command bar.
+   */
   isMeta?: boolean;
   path?: string;
+  /**
+   * function to be called when the action is triggered if the type is {@link ActionType.FUNCTION}
+   * @param params
+   * @returns
+   */
   fn?: (params?: any) => Promise<any>;
-  cmdBarPreCondition?: () => void;
+  /**
+   * The pre condition to be met in order for the action to be shown in command bar.
+   * @returns true if the action is shown in command bar, false otherwise.
+   */
+  preCondition?: () => boolean;
+  /**
+   * Svelte component associated with the action. This is required if the type is {@link ActionType.MODAL} or {@link ActionType.PAGE}
+   */
   component?: any;
+  /**
+   * Label to be shown in command bar or anywhere else in the app.
+   */
   label?: string;
+  /**
+   * Additional labels for the same action - to improve findability in command bar.
+   */
   cmdLabel?: string | string[];
+  /**
+   * Icon associated with the action.
+   */
   icon?: string;
   /**
    * @deprecated
@@ -27,18 +51,45 @@ export type IAction = {
   thinModeBehavior?: ThinModeBehavior;
   contentType?: ContentType;
   associatedPlayer?: string;
+  /**
+   * @deprecated - not used anywhere
+   */
   context?: string;
+  /**
+   * @deprecated - not used anywhere
+   */
   params?: any;
+  /**
+   * If true, app menu will be hidden for this action.
+   */
   isMenuHidden?: boolean;
   isInactive?: boolean;
+  /**
+   * Details of the modal to be shown when the action is triggered if the type is {@link ActionType.MODAL}
+   */
   modalParams?: ModalParams;
+  /**
+   * Details of the confirmation to be shown when the action type is {@link ActionType.CONFIRMATION}
+   */
   confirmation?: ConfirmationNotification;
+  /**
+   * Loading animation component to be shown when the action type is {@link ActionType.PAGE} or {@link ActionType.MODAL}
+   */
   loadingComponent?: any;
+  /**
+   * Search action params to be used when the action type is {@link ActionType.SEARCH_CMD}
+   */
   searchActionParams?: {
     searchStoreId: string;
     itemLabel: string;
     callback: (id: string, label?: string) => void;
   };
+  /**
+   * Contexts in which the action will be hidden.
+   *
+   * Ex: Useful to hide certain settings on mobile devices.
+   */
+  hideContext?: (Embed | OperatingSystem)[];
 };
 
 export enum ActionType {
@@ -65,6 +116,9 @@ export enum ActionType {
   EVENT = "EVENT"
 }
 
+/**
+ * @deprecated
+ */
 export enum PaintType {
   YSTACK,
   XSTACK,
@@ -74,6 +128,9 @@ export enum PaintType {
   JUMP_TO_PARENT
 }
 
+/**
+ * @deprecated
+ */
 export enum ThinModeBehavior {
   JUMP_TO_PARENT,
   GRAND_CHILDREN_ON_MENU,
