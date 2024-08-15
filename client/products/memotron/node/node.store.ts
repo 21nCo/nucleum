@@ -22,6 +22,7 @@ import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
 import { linker, resolveTypes } from "../memotron.store";
+import type { IContextMenu } from "$lib/client/types/select.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -245,7 +246,7 @@ export function resolveNodeContextMenu(
     isMediaNode?: boolean;
     accessPointId?: string;
   }
-) {
+): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
   if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     return [

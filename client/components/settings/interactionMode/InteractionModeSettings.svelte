@@ -8,6 +8,7 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Action } from "$lib/client/types/action.enum";
+  import { Orientation } from "$lib/client/types/direction.enum";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -49,12 +50,13 @@
   <OptionSelector
     bind:selected={selectedMode}
     style={OptionSelectorStyle.OUTLINE}
-    size={Size.md}
+    size={Size.sm}
     labelProps={{
       label: "Preferred mode of interaction",
       tooltip: {
         body: "We will try to change the design of the app based your preferred mode of interaction."
-      }
+      },
+      orientation: Orientation.Vertical
     }}
     on:select={onInteractionModeSelect}
     options={[
@@ -72,7 +74,6 @@
       {
         value: InteractionMode.COMMAND_ONLY,
         label: "Command only [beta]",
-        // TODO - add keyboard icon
         icon: "command"
       },
       {

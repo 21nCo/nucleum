@@ -1,24 +1,23 @@
 <script lang="ts">
+  import { resolveShortcutText } from "$lib/client/components/settings/shortcuts/shortcut.utils";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
+  import context from "$lib/client/stores/context.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "../Icon.svelte";
   export let shortcut: string;
   export let parentBgIndex: number | undefined = undefined;
-  $: text = resolveShortcutText(shortcut);
-  function resolveShortcutText(shortcut: string | undefined) {
+  $: text = resolveText(shortcut);
+  function resolveText(shortcut: string | undefined) {
     if (!shortcut) return;
     if (shortcut === GlobalEvent.ESCAPE) return "Esc";
     else if (shortcut === GlobalEvent.ENTER) return "↵";
     const keyMap = keyboardShortcuts.fecthKeyMap();
     const shortcutDetail = keyMap.find((x) => x.action === shortcut);
     if (!shortcutDetail) return;
-    return (
-      shortcutDetail.modifiers.join(" + ") +
-      " + " +
-      shortcutDetail.key.toUpperCase()
-    );
+    let text = resolveShortcutText(shortcutDetail.key, shortcutDetail.modifiers, $context.os);
+    return text;
   }
 </script>
 

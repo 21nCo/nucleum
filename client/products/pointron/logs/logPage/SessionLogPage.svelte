@@ -11,7 +11,6 @@
   import LogTotals from "./LogTotals.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { transformFocusItemsV1 } from "$lib/client/products/pointron/focus/session.utils";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -36,7 +35,6 @@
   async function refresh() {
     isLoadingState = true;
     const response = await pointSessionStore.fetch(id);
-    console.log("session log response", response);
     if (response && response.id) {
       log = response;
       if (
@@ -57,14 +55,6 @@
               checked: x.checked
             };
           });
-        // focusItems = transformFocusItemsV1(log.tasks);
-        // console.log("focusItems", { focusItems, goals: log.goals });
-        // focusItems = focusItems.map((item) => {
-        //   // const goal = log.goals.find((x: any) => x.id === item.goalId);
-        //   // item.label = goal.label ?? item.label;
-        //   // item.color = goal.color ?? goal.parent.color ?? item.color;
-        //   return item;
-        // });
         focusItems = log.tasks
           .filter((x) => !x.taskId)
           .map((x) => {
@@ -77,7 +67,6 @@
               estimated: x.estimate
             };
           });
-        console.log({ focusItems, tasksList });
       } else if (
         log.focusItems &&
         log.focusItems.goals &&

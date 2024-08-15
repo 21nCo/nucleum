@@ -108,7 +108,7 @@
           <svelte:component this={column.component} {row} />
         {/if}
       {:else}
-        <div>{row[column.key]}</div>
+        <div>{row[column.key] ?? "NA"}</div>
       {/if}
     {/each}
   </div>

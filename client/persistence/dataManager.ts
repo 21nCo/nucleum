@@ -24,12 +24,12 @@ import {
 } from "$lib/client/utils/utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { CacheManager } from "./cache";
-import { logger } from "$lib/client/stores/log.store";
 import type { Table } from "dexie";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { performApiCall } from "../utils/network.utils";
+import { logger } from "../components/debug/logger.client";
+import { LogType } from "../components/debug/debug.type";
 
-// const surrealDb = new SurrealDatabase();
 export type DataMangerStore = ReturnType<typeof init>;
 const allResources = Object.values(Resource);
 
@@ -73,12 +73,15 @@ function init() {
       data: any,
       params: IMutationParams
     ) => {
-      console.log({
-        context: "performing mutation for IFR",
-        item,
-        data,
-        params
-      });
+      logger.log(
+        {
+          context: "performing mutation for IFR",
+          item,
+          data,
+          params
+        },
+        LogType.INFO
+      );
       let localPersistancePromise;
       let bulkUpdatePromise: any[] = [];
       if (params.cacheStrategy === CacheStrategy.NO_CACHE) {
@@ -238,11 +241,7 @@ function init() {
         .where("retryCount")
         .between(0, 3)
         .toArray();
-      // const mutations = (await mutationQueue.toArray()).filter(
-      //   (x) => x.retryCount < 3 || x.retryCount === undefined
-      // );
       if (mutations.length < 1) {
-        // console.log("No mutations to sync");
         return;
       }
       let masterQuery = "";
@@ -255,13 +254,16 @@ function init() {
         ];
       });
       if (!masterQuery) {
-        console.log("No valid mutations to sync");
+        logger.log("No valid mutations to sync");
         return;
       }
-      console.log({
-        context: "syncPendingMutations",
-        mutations: mutations.map((x) => x.id)
-      });
+      logger.log(
+        {
+          context: "syncPendingMutations",
+          mutations: mutations.map((x) => x.id)
+        },
+        LogType.INFO
+      );
       let response = await dm.db.query(masterQuery, {});
       if (!response) {
         for (let i = 0; i < mutations.length; i++) {
@@ -272,7 +274,7 @@ function init() {
         return;
       }
       response = response.map((x: any) => checkSurrealResponse(x));
-      console.log({
+      logger.log({
         context: "syncPendingMutations - response",
         response
       });
@@ -315,7 +317,7 @@ async function runDboUpdate() {
     const data = await response.json();
     return data;
   } catch (err) {
-    logger.logError(err);
+    logger.error(err);
   }
 }
 
@@ -656,7 +658,6 @@ async function refreshStores(
     for (let i = 0; i < storesThatNeedRefresh.length; i++) {
       const store = storesThatNeedRefresh[i];
       const data = response[i];
-      // console.log({ data, store: store.id, loader: store.loader });
       if (store.loader && data) {
         store.loader(data);
       } else if (store.dataType === StoreDataType.IFR && data) {
@@ -664,7 +665,7 @@ async function refreshStores(
       }
     }
   } catch (error) {
-    logger.logError({ context: "Error refreshing stores", error });
+    logger.error({ at: "Error refreshing stores", error });
   } finally {
     await setRefreshingState(storesThatNeedRefresh, false);
     if (params.isPageRefresh)
@@ -768,11 +769,8 @@ async function mergeIFRRecords(
   if (isValidArrayWithData(response.records))
     await table.bulkPut(response.records);
   const totalCacheCount = await table.count();
-  console.log({ totalCacheCount, totalServerCount: response.totalCount });
+  logger.log({ totalCacheCount, totalServerCount: response.totalCount });
   if (totalCacheCount < response.totalCount) {
     await dataManager.refreshForIFR(item, { isFetchAll: true });
   }
-  // records.forEach((record) => {
-  //   table.put(record);
-  // });
 }

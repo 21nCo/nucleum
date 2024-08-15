@@ -20,6 +20,7 @@
 
 <div class="flex items-center gap-4">
   <EditToggleButton isReadModeVariant={true} />
+  <!-- TODO - use toggle button instead-->
   <Button
     size={Size.sm}
     tooltip="show forks"

@@ -13,8 +13,10 @@ export enum OptionSelectorStyle {
   CHECK_CIRCLE
 }
 
+export type IContextMenu = { group: string; items: IContextMenuItem[] }[];
+
 export type IContextMenuItem = ISelectItem & {
-  callback: () => void;
+  callback: () => Promise<void>;
 };
 
 export type ISelectValue = string | number | boolean;

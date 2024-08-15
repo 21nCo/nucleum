@@ -10,6 +10,11 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import view from "$lib/client/stores/view.store";
+  import { Display } from "$lib/client/types/view.type";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let isFullPageContext: boolean = false;
@@ -74,13 +79,13 @@
   })}
 >
   <div
-    class={cn("flex w-full bg-bgs2 justify-between items-center", {
+    class={cn("flex mo:flex-col w-full bg-bgs2 justify-between items-center", {
       "rounded-t-md": isFullPageContext
     })}
   >
     {#if isPerformingSearchAction}
       <div
-        class="h-5/6 ml-2 bg-bgs3 flex items-center justify-center px-4 rounded-md"
+        class="h-5/6 mo:w-full mo:ml-0 ml-2 bg-bgs3 flex items-center justify-center px-4 mo:rounded-b-md rounded-md"
       >
         {searchAction.cmdLabel}
       </div>
@@ -91,23 +96,25 @@
       bind:value
       on:keyup={handleKeyUp}
       on:keydown={handleKeyDown}
-      class="h-[3.6rem] bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
+      class="h-[3.6rem] mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
       {placeholder}
     />
-    <div class="mr-4">
-      <div
-        class="px-2 flex justify-center items-center gap-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
-      >
-        {#if value}
-          Press <b>Enter</b> to run
-        {:else if isFullPageContext}
-          <Icon icon="command" size={Size.sm} />
-          <span> Cmd </span>
-        {:else}
-          Cmd bar
-        {/if}
+    {#if $view.display !== Display.MO}
+      <div class="mr-4">
+        <div
+          class="px-2 flex justify-center items-center gap-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
+        >
+          {#if value}
+            Press <b>Enter</b> to run
+          {:else if isFullPageContext}
+            <Icon icon="command" size={Size.sm} />
+            <span> Cmd </span>
+          {:else}
+            Cmd bar
+          {/if}
+        </div>
       </div>
-    </div>
+    {/if}
   </div>
   <div class="flex-grow">
     {#if isPerformingSearchAction}
@@ -130,14 +137,19 @@
       />
     {/if}
   </div>
-  {#if !isFullPageContext}
+  {#if $view.display === Display.MO}
+    <div class="flex w-full justify-center py-2 pb-8">
+      <Button label="Close" style={ButtonStyle.PLAIN} on:click={close} />
+    </div>
+  {:else if !isFullPageContext}
     <div
       class={cn(
         "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4"
       )}
     >
       <span> Press <b>Esc</b> to close </span>
-      <span> Cmd + K </span>
+      <!-- <span> Cmd + K </span> -->
+      <ShortcutText shortcut={Action.CMD} parentBgIndex={1} />
     </div>
   {/if}
 </div>

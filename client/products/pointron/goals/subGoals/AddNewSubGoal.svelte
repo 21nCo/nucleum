@@ -5,6 +5,8 @@
   import { currentGoal } from "$lib/client/products/pointron/goals/goal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import view from "$lib/client/stores/view.store";
+  import { Display } from "$lib/client/types/view.type";
 
   let label: string | undefined = undefined;
   let isNewSubGoalInputVisible: boolean = false;
@@ -25,8 +27,6 @@
 
   async function addNewSubGoal() {
     try {
-      //after success
-      //add new sub goal
       if (!label) return;
       await currentGoal.addSubGoal(label);
       label = "";
@@ -52,19 +52,21 @@
       bind:value={label}
     />
     {#if label}
-      <div class="flex gap-2">
+      <div class="flex mo:gap-0 gap-2">
         <Button
           icon="check-circle"
-          label="add"
+          label={$view.display === Display.MO ? undefined : "add"}
           parentBgIndex={2}
-          size={Size.xs}
+          size={$view.display === Display.MO ? Size.lg : Size.xs}
+          isPreventMinWidth={true}
           on:click={addNewSubGoal}
         />
         <Button
           icon="cross"
-          label="clear"
+          label={$view.display === Display.MO ? undefined : "clear"}
           parentBgIndex={2}
-          size={Size.xs}
+          size={$view.display === Display.MO ? Size.lg : Size.xs}
+          isPreventMinWidth={true}
           on:click={() => (label = "")}
         />
       </div>

@@ -5,66 +5,80 @@
   import { createEventDispatcher } from "svelte";
   import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
   import type { IKeyboardShortcut } from "../../shortcuts/shortcut.type";
+  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
+  import { OperatingSystem } from "$lib/client/types/context.type";
+  import context from "$lib/client/stores/context.store";
+  import { resolveShortcutText, resolveModifiers } from "./shortcut.utils";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let shortcut: IKeyboardShortcut;
-  let existingValue =
-    shortcut.modifiers?.join(" + ") + " + " + shortcut.key?.toUpperCase();
+  let existingValue = resolveShortcutText(
+    shortcut.key,
+    shortcut.modifiers,
+    $context.os
+  );
   let isConfigurationInProgress: boolean = false;
   let value: string = existingValue;
   let key: string;
-  let modifiers: string[] = [];
+  let modifiers: ModifierKey[] = [];
   let inputRef: HTMLInputElement;
   const actionDetails = appStore.resolveAction(action);
-  const systemShortcuts = [
-    {
-      key: "p",
-      modifiers: ["Ctrl"]
-    },
-    {
-      key: "c",
-      modifiers: ["Ctrl"]
-    },
-    {
-      key: "v",
-      modifiers: ["Ctrl"]
-    },
-    {
-      key: "s",
-      modifiers: ["Ctrl"]
-    },
-    {
-      key: "z",
-      modifiers: ["Ctrl"]
-    },
-    {
-      key: "t",
-      modifiers: ["Ctrl"]
-    },
-    {
-      key: "z",
-      modifiers: ["Ctrl", "Shift"]
-    }
-  ];
-  function onKeydown(event: any) {
-    modifiers = [];
-    if (event.key === "Escape") {
+  const systemShortcuts = resolveSystemShortcuts();
+
+  function resolveSystemShortcuts() {
+    let primaryModifier = ModifierKey.CTRL;
+    if ($context.os === OperatingSystem.MACOS)
+      primaryModifier = ModifierKey.META;
+
+    return [
+      {
+        key: "p",
+        modifiers: [primaryModifier]
+      },
+      {
+        key: "c",
+        modifiers: [primaryModifier]
+      },
+      {
+        key: "v",
+        modifiers: [primaryModifier]
+      },
+      {
+        key: "s",
+        modifiers: [primaryModifier]
+      },
+      {
+        key: "z",
+        modifiers: [primaryModifier]
+      },
+      {
+        key: "t",
+        modifiers: [primaryModifier]
+      },
+      {
+        key: "z",
+        modifiers: [primaryModifier, ModifierKey.SHIFT]
+      }
+    ];
+  }
+  function onKeydown(event: KeyboardEvent) {
+    console.log({ event });
+    if (event.key === KeyboardKey.ESCAPE) {
       isConfigurationInProgress = false;
+      resetToOldValue(event);
+      return;
+    } else if (event.key === KeyboardKey.ENTER) {
+      accept(event);
+      event.stopPropagation();
+      event.preventDefault();
       return;
     } else {
-      if (event.metaKey || event.ctrlKey) {
-        modifiers.push("Ctrl");
-      }
-      if (event.altKey) {
-        modifiers.push("Alt");
-      }
-      if (event.shiftKey) {
-        modifiers.push("Shift");
-      }
+      modifiers = [];
+      modifiers = resolveModifiers(event);
     }
-    if (!["Meta", "Shift", "Control", "Alt"].some((x) => x === event.key)) {
+    if (Object.values(ModifierKey).every((key) => key !== event.key)) {
       key = event.key;
-      value = modifiers.join(" + ") + " + " + key.toUpperCase();
+      value = resolveShortcutText(key, modifiers, $context.os);
       isValidConfiguration();
     }
     event.stopPropagation();
@@ -104,16 +118,29 @@
     key = "";
     modifiers = [];
   }
+  function resetToOldValue(event: CustomEvent | KeyboardEvent) {
+    isConfigurationInProgress = false;
+    value = existingValue;
+    if (event.detail instanceof PointerEvent) event.detail?.stopPropagation();
+  }
+  function accept(event: CustomEvent | KeyboardEvent) {
+    if (isValidConfiguration()) {
+      isConfigurationInProgress = false;
+      saveShortcut();
+    }
+    if (event.detail instanceof PointerEvent) event.detail?.stopPropagation();
+  }
 </script>
 
 {#if actionDetails}
-  <div class="flex items-center justify-between gap-8">
+  <div class="flex items-center justify-between gap-8 w-full">
     <span>
       {actionDetails?.label}
     </span>
     <button
-      class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60"
+      class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60 h-10"
       on:click={() => {
+        console.log("clicked");
         if (!isConfigurationInProgress) {
           isConfigurationInProgress = true;
           reset();
@@ -124,46 +151,45 @@
       <input
         bind:this={inputRef}
         bind:value
+        tabindex="-1"
         id="shortcutInput"
-        class="bg-transparent cursor-pointer focus:outline-none w-32 text-fgs2"
+        class="bg-transparent cursor-pointer focus:outline-none w-32 text-fgs2 text-center"
         placeholder="record shortcut"
         type="text"
         on:keydown|stopPropagation={onKeydown}
         on:paste|preventDefault
       />
       {#if isConfigurationInProgress}
+        {@const parentBgIndex = 2}
         <div class="flex gap-1">
           <Button
-            tooltip="clear"
-            size={Size.xs}
+            tooltip="Clear"
+            size={Size.sm}
+            {parentBgIndex}
             icon="cross"
             on:click={(event) => {
+              if (!key) {
+                resetToOldValue(event);
+                return;
+              }
               reset();
               inputRef.focus();
-              event.stopPropagation();
+              event.detail.stopPropagation();
             }}
           />
           <Button
-            tooltip="reset to old value"
-            icon="sync"
-            size={Size.xs}
-            on:click={(event) => {
-              isConfigurationInProgress = false;
-              value = existingValue;
-              event.stopPropagation();
-            }}
-          />
-          <Button
-            tooltip="accept"
+            tooltip="Accept"
             icon="check-circle"
-            size={Size.xs}
-            on:click={(event) => {
-              if (isValidConfiguration()) {
-                isConfigurationInProgress = false;
-                saveShortcut();
-              }
-              event.stopPropagation();
-            }}
+            size={Size.sm}
+            {parentBgIndex}
+            on:click={accept}
+          />
+          <Button
+            tooltip="Reset to old value"
+            icon="sync"
+            size={Size.sm}
+            {parentBgIndex}
+            on:click={resetToOldValue}
           />
         </div>
       {/if}
