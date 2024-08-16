@@ -12,7 +12,6 @@ import colorSchemes from "$lib/client/theme/colorschemes.json";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { TimeScale } from "../types/time.type";
 import { shuffleEmojis } from "../data/avatars";
-import type { IObservableStoreSubject } from "../types/data.type";
 import { ActionType, type IAction } from "../types/action.type";
 import type {
   IdentityProvider,
@@ -50,6 +49,7 @@ import { uiState } from "./uiState/uiState.store";
 import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 import { Action } from "../types/action.enum";
 import type { Event } from "../types/event.enum";
+import { logger } from "../components/debug/logger.client";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -365,7 +365,7 @@ function initAppStore(seed: AppStore) {
       queryParams?: any;
     }
   ) => {
-    // console.log({ method: "gotoPath", path });
+    logger.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
     update((n: AppStore) => {
@@ -387,7 +387,7 @@ function initAppStore(seed: AppStore) {
   };
   const gotoErrorPage = (err: any) => {
     //TODO - log error, show error code on error page
-    console.log("error-page", { err });
+    logger.log({ at: "gotoErrorPage", err });
     gotoPath("/error");
   };
   const gotoResource = async (
@@ -411,6 +411,8 @@ function initAppStore(seed: AppStore) {
     let action = actions.find(
       (x) => x.action?.toLowerCase() == slug.toLowerCase()
     );
+    const contextData = get(context);
+    if (action && action.hideContext?.includes(contextData.embed)) return null;
     if (action) return action;
     return null;
   };
@@ -451,7 +453,8 @@ function initAppStore(seed: AppStore) {
       return action;
     } else if (
       action.type === ActionType.MODAL ||
-      interactionMode === InteractionMode.COMMAND_ONLY
+      (interactionMode === InteractionMode.COMMAND_ONLY &&
+        get(context).embed !== Embed.HANDSET)
     ) {
       modalEvent.notify({
         path: action.action,
@@ -460,13 +463,13 @@ function initAppStore(seed: AppStore) {
         ...action.modalParams
       });
     } else if (action.component) {
-      console.log("running action", { action });
+      logger.log({ at: "running action", action });
       gotoPath("/" + (action.path ?? action.action));
       return;
     }
   };
   const openLink = (url: string) => {
-    console.log("opening link", url);
+    logger.log({ at: "opening link", url });
     const ctx = get(context);
     if (!url) return;
     if (!url.includes("http")) {
@@ -548,7 +551,7 @@ function initAppStore(seed: AppStore) {
   };
 
   function runClientUpdate() {
-    console.log("running client update");
+    logger.log("running client update");
     //todo - show user a message that an update is available - auto updating for now
     window?.location?.reload();
   }
@@ -651,7 +654,13 @@ function initAppStore(seed: AppStore) {
     const accessMode = determineClickAccessMode(event);
     if (accessMode) toggleSearchParam(accessMode, id);
     else toggleSearchParam(defaultTo, id);
-    // console.log("resourceClickHandler", { id, defaultTo, accessMode, event });
+    logger.log({
+      at: "resourceClickHandler",
+      id,
+      defaultTo,
+      accessMode,
+      event
+    });
   };
   const resourceClickHandlerWithReplace = (
     event: MouseEvent,
@@ -695,7 +704,7 @@ function initAppStore(seed: AppStore) {
     removeSearchParam(currentMode);
     if (currentMode === ResourceAccessMode.FOCUS) {
       const prevMode = url.searchParams.get("prev");
-      console.log({ currentMode, prevMode });
+      logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
       if (prevMode) url.searchParams.set(prevMode, resourceId);
       else url.searchParams.set(ResourceAccessMode.POP, resourceId);
       removeSearchParam("prev");
@@ -735,7 +744,6 @@ function initAppStore(seed: AppStore) {
         } else {
           n.appData = data;
         }
-        // console.log({ appData: n.appData, data, env });
         persistLocally(Resource.appData, data);
         return n;
       });
@@ -768,7 +776,7 @@ function initAppStore(seed: AppStore) {
       });
     },
     showFullScreenPlayer(path: string) {
-      // console.log("showing full screen player", { path });
+      logger.log({ at: "showFullScreenPlayer", path });
       update((n: AppStore) => {
         n.fullScreenComponentPath = path;
         runAction(path);

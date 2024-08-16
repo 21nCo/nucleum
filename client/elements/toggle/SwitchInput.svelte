@@ -19,7 +19,6 @@
       orientation: Orientation.Horizontal
     };
   }
-  $: console.log({ isExpanded, style });
 </script>
 
 {#if !isExpanded && (label.orientation === Orientation.Horizontal || !label.orientation)}

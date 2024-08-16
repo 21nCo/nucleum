@@ -16,6 +16,9 @@
   import { sessionStore } from "../../focus/session.store";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
+  import type { IContextMenu } from "$lib/client/types/select.type";
+  import { Display } from "$lib/client/types/view.type";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   let parentBreadcrumbs: BreadcrumbItem[] = [];
   $: refresh($currentGoal);
   function refresh(goal: IGoal) {
@@ -46,61 +49,101 @@
     else appStore.gotoPath(`/goal`);
   }
 
-  let contextMenu = [
-    {
-      group: "all",
-      items: [
-        {
-          value: "edit",
-          label: $isInEditMode ? "Close edit mode" : "Edit",
-          icon: "pencil-square",
-          callback: () => isInEditMode.toggle()
-        },
-        {
-          value: "focus",
-          icon: "bolt",
-          callback: () => {
-            sessionStore.quickStart($currentGoal.id);
-          }
-        },
-        {
-          value: "star",
-          label: $currentGoal.isStarred ? "Unstar" : "Star",
-          icon: "star",
-          callback: () => {
-            $currentGoal.isStarred = !$currentGoal.isStarred;
-          }
-        }
-      ]
-    },
-    {
-      group: "more",
-      items: [
-        {
-          value: "archive",
-          label: $currentGoal.isArchived ? "Unarchive" : "Archive",
-          icon: "archive",
-          callback: () => {
-            $currentGoal.isArchived = !$currentGoal.isArchived;
-          }
-        },
-        {
-          value: "delete",
-          icon: "trash",
-          callback: () =>
-            confirmationNotification.notify({
-              title: "Delete goal",
-              message: "Are you sure you want to delete this goal?",
-              confirmAction: {
-                label: "Delete",
-                variant: ButtonVariant.DANGER,
-                callback: handleDeleteGoal
+  let contextMenu: IContextMenu = [];
+  refreshContextMenu();
+
+  function refreshContextMenu() {
+    contextMenu = [
+      {
+        group: "all",
+        items: [
+          {
+            value: "edit",
+            label: $isInEditMode ? "Close edit mode" : "Edit",
+            icon: "pencil-square",
+            callback: async () => isInEditMode.toggle()
+          },
+          {
+            value: "focus",
+            label: "Focus now",
+            icon: "bolt",
+            callback: async () => {
+              if ($sessionStore.isSessionRunning) {
+                confirmationNotification.notify({
+                  title: "Session running",
+                  message:
+                    "There is already a session running. Do you want to finish this session and start a new one?",
+                  confirmAction: {
+                    label: "Finish and start",
+                    icon: "play",
+                    variant: ButtonVariant.PRIMARY,
+                    callback: async () => {
+                      await sessionStore.finishSession();
+                      await sessionStore.quickStart($currentGoal.id);
+                    }
+                  }
+                });
+              } else {
+                await sessionStore.quickStart($currentGoal.id);
               }
-            })
-        }
-      ]
-    }
-  ];
+              if ($view.display === Display.MO) {
+                appStore.runAction(PointronAction.FOCUS);
+              }
+            }
+          },
+          {
+            value: "pin",
+            icon: "pin",
+            label: $currentGoal.isPinnedForQuickStart
+              ? "Unpin from quick start"
+              : "Pin to quick start",
+            callback: async () => {
+              $currentGoal.isPinnedForQuickStart =
+                !$currentGoal.isPinnedForQuickStart;
+              refreshContextMenu();
+            }
+          },
+          {
+            value: "star",
+            label: $currentGoal.isStarred ? "Unstar" : "Star",
+            icon: "star",
+            callback: async () => {
+              $currentGoal.isStarred = !$currentGoal.isStarred;
+              refreshContextMenu();
+            }
+          }
+        ]
+      },
+      {
+        group: "more",
+        items: [
+          {
+            value: "archive",
+            label: $currentGoal.isArchived ? "Unarchive" : "Archive",
+            icon: "archive",
+            callback: async () => {
+              $currentGoal.isArchived = !$currentGoal.isArchived;
+              refreshContextMenu();
+            }
+          },
+          {
+            value: "delete",
+            icon: "trash",
+            callback: async () =>
+              confirmationNotification.notify({
+                title: "Delete goal",
+                message: "Are you sure you want to delete this goal?",
+                confirmAction: {
+                  label: "Delete",
+                  variant: ButtonVariant.DANGER,
+                  callback: handleDeleteGoal
+                }
+              })
+          }
+        ]
+      }
+    ];
+  }
 </script>
 
 <div class="flex w-full gap-2">

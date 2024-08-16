@@ -55,6 +55,7 @@ import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
 import { goalStore, quickFocusItemStore } from "./goals/goal.store";
+import { appStore } from "$lib/client/stores/app.store";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
@@ -347,7 +348,7 @@ export const pointronActions: IAction[] = [
     component: FocusPlayer
   },
   {
-    action: "focus",
+    action: PointronAction.FOCUS,
     component: Focus,
     icon: "bolt",
     type: ActionType.PAGE,
@@ -413,9 +414,8 @@ export const pointronActions: IAction[] = [
       }
     }
   },
-
   {
-    action: "importexport",
+    action: PointronAction.IMPORT_EXPORT,
     get cmdLabel() {
       return this.modalParams?.title;
     },
@@ -428,9 +428,23 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Import / Export data",
       layout: {
-        size: Size.lg,
+        size: Size.xl,
         orientation: Orientation.Horizontal
       }
+    }
+  },
+  {
+    action: PointronAction.IMPORT_EXPORT_TRIGGER,
+    get cmdLabel() {
+      return this.modalParams?.title;
+    },
+    label: "Import / Export",
+    path: "cp/importexport",
+    icon: "data",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.runAction(PointronAction.IMPORT_EXPORT);
     }
   },
   {
@@ -481,7 +495,7 @@ export const pointronActions: IAction[] = [
     action: PointronAction.BACKGROUND_MUSIC,
     label: "Background music",
     type: ActionType.MODAL,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     component: BackgroundMusic,
     modalParams: {
       layout: {
@@ -537,7 +551,7 @@ export const pointronActions: IAction[] = [
     label: "Finish the current session",
     fn: sessionStore.finishSession,
     type: ActionType.CONFIRMATION,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     confirmation: {
       title: "Finish focus session",
       message: "Are you sure you want to finish this focus session?",
@@ -555,7 +569,7 @@ export const pointronActions: IAction[] = [
     label: "Abandon the current session",
     fn: sessionStore.close,
     type: ActionType.CONFIRMATION,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     confirmation: {
       title: "Abandon focus session",
       message: "Are you sure you want to abandon this focus session?",
@@ -589,7 +603,7 @@ export const pointronActions: IAction[] = [
     label: "Think mode",
     icon: "think",
     type: ActionType.MODAL,
-    cmdBarPreCondition: isSessionRunningPreCondition,
+    preCondition: isSessionRunningPreCondition,
     component: Think,
     modalParams: {
       layout: {

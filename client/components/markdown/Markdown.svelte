@@ -20,6 +20,7 @@
   export let id: string | undefined = undefined;
   let mdId: string = id ?? generateUID();
   const mdStore = getMdStore(mdId);
+  //TODO - use context API
   // console.log(
   //   "md",
   //   md.blocks.map((x) => x.id)

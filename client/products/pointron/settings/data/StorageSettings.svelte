@@ -1,45 +1,40 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-
-  import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
-  import { removeDuplicatesById } from "$lib/shared/utils/obj.utils";
   import view from "$lib/client/stores/view.store";
   import {
     toasts,
     confirmationNotification
   } from "$lib/client/stores/notification.store";
-  import {
-    tagStore,
-    pointronPreferences,
-    lastImportTime
-  } from "$lib/client/products/pointron/pointron.store";
+  import { lastImportTime } from "$lib/client/products/pointron/pointron.store";
   import {
     StatusMessageType,
     type StatusMessage
   } from "$lib/client/types/statusMessage.type";
-  import StatusMessageText from "$lib/client/elements/text/StatusMessageText.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import context from "$lib/client/stores/context.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { OtherApps } from "$lib/client/types/pointron/otherApps.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import Table from "$lib/client/elements/table/Table.svelte";
   import type {
     TableColumnItem,
     TableRowItem
   } from "$lib/client/types/tableCell.type";
   import { onMount } from "svelte";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
   import ExportData from "./ExportData.svelte";
-  import ImportData from "./ImportData.svelte";
   import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { download, generateUID } from "$lib/client/utils/utils";
-  import { AlertType } from "$lib/client/types/notification.type";
   import { appStore } from "$lib/client/stores/app.store";
   import type { IPointSession } from "../../logs/log.type";
+  import Table2 from "$lib/client/elements/table/Table2.svelte";
+  import {
+    TableCellType,
+    type TableColumn
+  } from "$lib/client/types/table.type";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { InfoTextType } from "$lib/client/types/text.type";
 
   let clearMessage: string | undefined = undefined;
   let fileInput: HTMLInputElement;
@@ -130,6 +125,36 @@
     }
   ];
 
+  const columns: TableColumn[] = [
+    {
+      label: "Date and time",
+      key: "created"
+    },
+    {
+      label: "File Name",
+      key: "fileName"
+    },
+    {
+      label: "Source",
+      key: "source",
+      width: 0.3
+    },
+    {
+      label: "Status",
+      key: "status",
+      width: 0.3
+    },
+    {
+      label: "Actions",
+      key: "trash",
+      width: 0.1,
+      type: TableCellType.ACTION,
+      action: (data: any) => {
+        handleDeleteImportEntry(data.id);
+      }
+    }
+  ];
+
   let importHistoryData: TableRowItem[] = [];
 
   // function exportPreferences() {
@@ -197,10 +222,10 @@
     }}
   />
 {:else}
-  <div class="flex flex-col gap-8 max-w-[1000px] h-full flex-grow">
+  <div class="flex flex-col gap-8 h-full flex-grow">
     <div class="flex flex-col gap-3">
       <div class="text-left mo:text-b2 text-fgs2">
-        Pick an App to import data from:
+        Pick an app to import data
       </div>
       <div
         class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
@@ -213,16 +238,12 @@
 
     <div class="flex flex-col gap-3">
       <div class="text-left mo:text-b2">Import history</div>
-      <div class={$view.isPortrait ? `` : `w-full max-w-[800px]`}>
-        <Table
-          width={"w-full"}
-          columns={importHistoryColumns}
-          data={importHistoryData}
-        />
-        <!-- <ComingSoonView
-        size={Size.sm}
-        subText="Import history will be available soon..."
-      /> -->
+      <div class="w-full">
+        {#if !importHistoryData || importHistoryData.length === 0}
+          <EmptyStatusView size={Size.sm} subText="No import history found" />
+        {:else}
+          <Table2 {columns} data={importHistoryData} isStyled={true} />
+        {/if}
       </div>
     </div>
     <div class={`flex flex-col ${$view.isPortrait ? `gap-3` : `gap-4`}`}>
@@ -232,16 +253,11 @@
         content="Export data"
       />
       <ExportData />
-      <!-- <div class="flex gap-2">
-      <Button
-        label={"Export session data (JSON)"}
-        on:click={exportSessionData}
-      />
-      <Button
-        label={"Export preferences (JSON)"}
-        on:click={exportPreferences}
-      />
-    </div> -->
     </div>
+    <ScrollViewBottomSpacer />
+    <InlineInfoBanner
+      content="**Note:** When a large amount of data is imported, Analytics data may take some time to get reflected. Please bear with us as we work on improving this scenario."
+      type={InfoTextType.WARNING}
+    />
   </div>
 {/if}

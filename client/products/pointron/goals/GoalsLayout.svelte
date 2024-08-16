@@ -41,14 +41,7 @@
   let searchInput: string = "";
   let isGoalsLoading: boolean = false;
 
-  async function handleAccordionStateChange({ detail }: CustomEvent) {
-    console.log("handleAccordianstatechagne", { detail });
-    const { id } = detail;
-    goalStore.resolveSubGoalsIfNotPresent(id);
-  }
-
   function refresh(isShowRefreshingState: boolean = false) {
-    console.log("refreshing goals");
     dataManager.refreshPage(
       [Resource.PointGoal, Resource.PointTag],
       isShowRefreshingState

@@ -5,12 +5,12 @@
     type IPopoverRenderBaseParams,
     PopoverTriggerMethod
   } from "$lib/client/types/popover.type";
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
+  import type { IContextMenu } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "../button/Button.svelte";
   import Popover from "../popover/Popover.svelte";
   import ContextMenu from "./ContextMenu.svelte";
-  export let contextMenu: { group: string; items: IContextMenuItem[] }[] = [];
+  export let contextMenu: IContextMenu = [];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;

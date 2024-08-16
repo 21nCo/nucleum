@@ -60,7 +60,7 @@
         </Button>
       {/if}
       {#if !notification.isNonDismissable}
-        <Button icon="cross" on:click={clickHandler} />
+        <Button icon="cross" on:click={clickHandler} parentBgIndex={2} />
       {/if}
     </div>
   </button>

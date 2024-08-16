@@ -12,7 +12,7 @@
 
 <div
   class={cn("popover-header flex w-full rounded-t-md pt-4", {
-    "justify-between": isShowClose,
+    "justify-between px-3": isShowClose,
     "justify-center": !isShowClose
   })}
 >

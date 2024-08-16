@@ -73,7 +73,7 @@
         action.label &&
         !action.isInactive &&
         !action.isMeta &&
-        (action.cmdBarPreCondition ? action.cmdBarPreCondition() : true)
+        (action.preCondition ? action.preCondition() : true)
     );
     primitive.forEach((action) => {
       if (!action.cmdLabel) {

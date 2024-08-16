@@ -354,6 +354,13 @@ export function resolveDialogOnFront() {
   }
   return dialogs[dialogs.length - 1];
 }
+export function resolveModalOnFront() {
+  const modals = Array.from(document.querySelectorAll("[data-modal]"));
+  if (modals.length === 0) {
+    return null;
+  }
+  return modals[modals.length - 1];
+}
 
 export function trackPosition(node, options = {}) {
   let frame;

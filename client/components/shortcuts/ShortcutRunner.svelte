@@ -4,39 +4,25 @@
   import { keyboardShortcuts } from "./shortcuts.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { KeyboardKey } from "$lib/client/types/keyboard.type";
+  import { resolveModifiers } from "../settings/shortcuts/shortcut.utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
+
   function handleSystemShortcuts(event: KeyboardEvent) {
-    if (event.key === "Escape" || event.key === "Enter") {
-      // event.preventDefault();
-      appEvents.publish(event.key as GlobalEvent);
+    if (event.key === KeyboardKey.ESCAPE || event.key === KeyboardKey.ENTER) {
+      appEvents.publish(event.key.toString() as GlobalEvent);
       return true;
     }
   }
   const shortcutListener = (event: KeyboardEvent) => {
-    // console.log("shortcutListener", { event });
+    logger.log({ event, at: "shortcutListener" });
     const target = event.target || event.srcElement;
     const isShortcutRunCompleted = handleSystemShortcuts(event);
     if (isTextElement(target)) return;
     if (isShortcutRunCompleted) return;
     let modifiers = [];
-    if (event.metaKey || event.ctrlKey) {
-      modifiers.push("ctrl");
-    }
-    if (event.altKey) {
-      modifiers.push("alt");
-    }
-    if (event.shiftKey) {
-      modifiers.push("shift");
-    }
+    modifiers = resolveModifiers(event);
     const isShortcutFound = runShortcut(event.key, modifiers);
-    // if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
-    //   event.preventDefault();
-    //   runAction(Action.CMD);
-    // } else if (event.key === "e" && (event.metaKey || event.ctrlKey)) {
-    //   event.preventDefault();
-    //   runAction(Action.EDIT_MODE);
-    // } else if (event.key === "Escape") {
-    //   modalEvent.hide();
-    // }
     event.stopPropagation();
     if (isShortcutFound) event.preventDefault();
   };
@@ -47,12 +33,11 @@
       if (s.key.toLowerCase() !== key.toLowerCase()) return false;
       if (s.modifiers && s.modifiers.length !== modifiers.length) return false;
       return (
-        (s.modifiers &&
-          s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()))) ||
+        (s.modifiers && s.modifiers.every((m: any) => modifiers.includes(m))) ||
         (!s.modifiers && modifiers.length === 0)
       );
     });
-    console.log({ key, modifiers, shortcut, keyMap });
+    logger.log({ key, modifiers, shortcut, keyMap });
     if (!shortcut) return;
     appStore.runAction(shortcut.action);
     return true;

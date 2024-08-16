@@ -28,7 +28,7 @@
   import ThemeLayer from "./themeLayer/ThemeLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
-  import Shortcuts from "../../components/shortcuts/Shortcuts.svelte";
+  import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
   import { logger } from "$lib/client/stores/log.store";
@@ -320,7 +320,7 @@
 {#if $appLoadingState.isBaseLoaded}
   <DynamicMetadataLayer />
   <ModalLayer />
-  <Shortcuts />
+  <ShortcutRunner />
   <CacheLayer />
 {/if}
 <Intercom />
