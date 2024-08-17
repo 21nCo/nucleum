@@ -84,7 +84,7 @@
           />
         {:else if "body" in item && item.body}
           <span class="text-left text-b2">
-            {contentPreview(item.body, item.contentType)}
+            {contentPreview(item.body, item.contentType, item.metadata)}
           </span>
         {/if}
         <!-- <ResourceThumbnailContentTypeOverlay

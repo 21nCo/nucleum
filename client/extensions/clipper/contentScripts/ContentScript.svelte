@@ -55,7 +55,11 @@
     return new Promise(async (resolve, reject) => {
       const host = window.location.host;
       console.log({ host });
-      if (commonMetadata.some((x) => host.includes(x.domain))) {
+      if (
+        commonMetadata.some(
+          (x) => host === x.domain || host.includes("." + x.domain)
+        )
+      ) {
         console.log("minimal metadata page");
         const tab = extractMinimalTabData();
         await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });

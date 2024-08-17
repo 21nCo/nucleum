@@ -10,11 +10,13 @@ import { logger } from "$lib/client/components/debug/logger.client";
 
 export function contentPreview(
   body: IMarkdown | ITweetBody,
-  contentType: NodeType
+  contentType: NodeType,
+  metadata?: any
 ) {
   logger.log({ at: "contentPreview", body, contentType });
   if (contentType === NodeType.TWEET && "content" in body) {
-    return truncateString(body.content, 100);
+    if (body.content) return truncateString(body.content, 100);
+    else return metadata?.ogTitle ?? "";
   }
   if (body && typeof body === "object" && "blocks" in body) {
     const block = body.blocks[0];

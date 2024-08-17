@@ -8,6 +8,7 @@
   import { lazyLoad } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import { type INode, NodeType, webNodeTypeList } from "../../node/node.type";
+  import { commonMetadata } from "../../common/urlMap";
   export let node: INode;
   let dynamicLabel: string | undefined = undefined;
   const dynamicLabelNodeTypes = [NodeType.TWEET];
@@ -32,18 +33,42 @@
       return parent.body.name + " on X";
     }
   }
+  function resolveFavicon() {
+    let favicon;
+    if (node.metadata?.faviconLink) {
+      favicon = node.metadata.faviconLink;
+    } else {
+      if (
+        !("url" in node.body) ||
+        !node.body.url ||
+        !node.body.url.includes("https://")
+      )
+        return;
+      const hostPart = new URL(node.body.url).host;
+      favicon = commonMetadata.find(
+        (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
+      )?.faviconUrl;
+      if (!favicon) {
+        //TODO - testing
+        favicon = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostPart}&size=128"`;
+      }
+    }
+    return favicon;
+  }
 </script>
 
 <div class="flex justify-between w-full">
   <span class="flex gap-2 min-w-0 flex-1">
     <!--TODO Avatar and parent breadcrumbs for node -->
     {#if webNodeTypeList.includes(node.contentType)}
-      {#if node.metadata?.faviconLink}
+      {@const favicon = resolveFavicon()}
+      {#if favicon}
         <img
-          use:lazyLoad={node.metadata.faviconLink}
+          use:lazyLoad={favicon}
           alt="favicon"
           class="w-5 h-5 rounded-full"
         />
+      {:else}
         <Icon icon="globe-alt" size={Size.sm} />
       {/if}
     {/if}
