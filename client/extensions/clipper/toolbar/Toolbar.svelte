@@ -7,22 +7,36 @@
   import { Position, Orientation } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { webpage, toolbarState } from "../contentScripts/store";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { screenShotOnlyPages } from "../urlMap";
+  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   const dispatch = createEventDispatcher();
   export let colors: string[] = [];
   export let activeColor: string | null = null;
+  export let isSnipActive: boolean = false;
+  export let contentType: NodeType = NodeType.WEB_PAGE;
+
   let isAutoHighlighterExpanded = false;
+  $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
+    regex.test($webpage.url)
+  );
+
   if ($toolbarState.position === undefined) {
     toolbarState.changePosition(Position.Right);
   }
+
+  $: tooltipOptions = {
+    placement:
+      $toolbarState.position === Position.Bottom
+        ? Position.TopCenter
+        : Position.Left,
+    isUseAbsolutePositioning: true,
+    offsetInPx: 8
+  };
   $: buttonParams = {
-    tooltipOptions: {
-      placement:
-        $toolbarState.position === Position.Bottom
-          ? Position.TopCenter
-          : Position.Left,
-      isUseAbsolutePositioning: true,
-      offsetInPx: 8
-    }
+    tooltipOptions
   };
   function toggleAutoHighligher() {
     isAutoHighlighterExpanded = !isAutoHighlighterExpanded;
@@ -44,44 +58,47 @@
     }
   )}
 >
-  {#if $webpage?.id}
-    <button
-      class="flex border border-transparent outline-dotted outline-fgs2 hover:outline-aps1 rounded-full"
-    >
-      <Icon
-        icon="check-circle"
+  {#if !isScreenShotOnly}
+    {#if $webpage?.id}
+      <button
+        class="flex border border-transparent outline-dotted outline-fgs2 hover:outline-aps1 rounded-full"
+      >
+        <Icon
+          icon="check-circle"
+          on:click={() => {
+            dispatch("saved");
+          }}
+          class="fill-fgs2"
+        />
+      </button>
+    {:else}
+      <Button
+        icon="plus"
+        tooltip={`Save ${enumToString(contentType)}`}
+        {...buttonParams}
         on:click={() => {
-          dispatch("saved");
+          dispatch("save");
         }}
-        class="fill-fgs2"
       />
-    </button>
-  {:else}
+    {/if}
+  {/if}
+  <Toggle
+    icon="cube-transparent"
+    tooltip="Snip"
+    size={Size.sm}
+    bind:on={isSnipActive}
+    {tooltipOptions}
+  />
+  {#if !isScreenShotOnly}
     <Button
-      icon="plus"
-      tooltip="Save page"
+      icon="document-text"
+      tooltip="Generate summary"
       {...buttonParams}
       on:click={() => {
-        dispatch("save");
+        dispatch("summarize");
       }}
     />
   {/if}
-  <Button
-    icon="cube-transparent"
-    tooltip="Snip"
-    {...buttonParams}
-    on:click={() => {
-      dispatch("snip");
-    }}
-  />
-  <Button
-    icon="document-text"
-    tooltip="Generate summary"
-    {...buttonParams}
-    on:click={() => {
-      dispatch("summarize");
-    }}
-  />
   <div
     class={cn("flex gap-2 items-center", {
       "flex-col w-full":

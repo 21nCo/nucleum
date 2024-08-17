@@ -1,10 +1,7 @@
 <script lang="ts">
-  import type {
-    Clip,
-    VideoTimestampContent
-  } from "$lib/client/products/memotron/common/clip.type";
+  import type { IVideoTimestampClip } from "$lib/client/products/memotron/node/node.type";
 
-  export let clip: Clip<VideoTimestampContent>;
+  export let clip: IVideoTimestampClip;
 
   /**
    * TODO - use time.utils.ts from lib

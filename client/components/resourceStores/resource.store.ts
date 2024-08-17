@@ -159,7 +159,7 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @param params additional params like custom query, queue params etc.
    * @returns
    */
-  create(
+  async create(
     input: Partial<T> | Partial<T>[],
     params?: {
       customQuery?: string;
@@ -200,12 +200,13 @@ export class ResourceStore<T extends IResource> implements IStore {
         data = input;
       }
     }
-    return dataManager.performMutationForIFR(this.id, data, {
+    await dataManager.performMutationForIFR(this.id, data, {
       action,
       query: params?.customQuery,
       queueParams: params?.queueParams,
       cacheStrategy: this.cacheStrategy
     });
+    return data;
   }
   /**
    * Modifies the resource with given id - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.

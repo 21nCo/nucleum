@@ -6,14 +6,12 @@
     getQuery
   } from "$lib/client/extensions/clipper/contentScripts/getQuery";
   import { onMount } from "svelte";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import {
-    ClipperExtensionEvent,
-    type IClip,
-    type TextHighlightContent
-  } from "$lib/client/products/memotron/common/clip.type";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+    NodeType,
+    type ITextClip
+  } from "$lib/client/products/memotron/node/node.type";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { extractFullTabData } from "$lib/client/extensions/clipper/clipper.utils";
   import { webpage } from "./store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { AlertType } from "$lib/client/types/notification.type";
@@ -100,27 +98,20 @@
     const anchorOffset = selection.anchorOffset;
     const focusOffset = selection.focusOffset;
     try {
-      let tabData;
-      if (!$webpage.id) {
-        tabData = extractFullTabData();
-      }
-      return webpage.saveClip(
-        {
-          contentType: NodeType.TEXT_CLIP,
-          body: {
-            text: selectedText,
-            color
-          },
-          metadata: {
-            container: getQuery(container),
-            anchorNode: getQuery(selection.anchorNode),
-            anchorOffset: anchorOffset,
-            focusNode: getQuery(selection.focusNode),
-            focusOffset: focusOffset
-          }
+      return webpage.saveClip({
+        contentType: NodeType.TEXT_CLIP,
+        body: {
+          text: selectedText,
+          color
         },
-        tabData
-      );
+        metadata: {
+          container: getQuery(container),
+          anchorNode: getQuery(selection.anchorNode),
+          anchorOffset: anchorOffset,
+          focusNode: getQuery(selection.focusNode),
+          focusOffset: focusOffset
+        }
+      });
     } catch (e) {
       console.error("ERROR", e);
     }
@@ -167,8 +158,9 @@
     // });
   }
   export async function refreshPageClips() {
-    const clips: IClip<TextHighlightContent>[] =
-      $webpage.clips as IClip<TextHighlightContent>[];
+    const clips: ITextClip[] = $webpage.clips?.filter(
+      (clip) => clip.contentType === NodeType.TEXT_CLIP
+    ) as ITextClip[];
     for (const record of clips) {
       const selection = {
         anchorNode: elementFromQuery(record.metadata.anchorNode),
@@ -274,7 +266,6 @@
     console.log("onclick", e);
     handleTextSelection();
   }
-  $: console.log({ selectedClip });
 </script>
 
 {#if isShowInlineToolbar}

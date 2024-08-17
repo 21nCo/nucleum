@@ -26,9 +26,12 @@ export function properCase(str: string) {
 export function prefixTable(id: string | number, itemType: Resource) {
   return `${itemType}:${id}`;
 }
-export function generateResourceId(itemType: Resource) {
-  const id = generateUID();
-  return `${itemType}:${id}`;
+export function generateResourceId(itemType: Resource, params?: {
+  prefix?: string;
+  id?: string;
+}) {
+  const id = params?.id ?? generateUID();
+  return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 
 export function stripTablePrefix(id: string) {

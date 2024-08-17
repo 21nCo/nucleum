@@ -1,72 +1,37 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  export let id: string;
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { Position } from "$lib/client/types/direction.enum";
+  import { Size } from "$lib/client/types/size.enum";
+  import { webpage } from "./store";
+  import { extractTweet } from "../clipper.utils";
+  let isSaved: boolean = false;
 
-  function findAncestorOrSelf(element, selector) {
-    if (element.matches(selector)) {
-      return element;
+  async function onClick(event) {
+    const tweetNode = extractTweet(event.target);
+    if (!tweetNode) {
+      logger.error("Tweet node not found");
+      return;
     }
-    let currentElement = element;
-    while (currentElement) {
-      if (
-        currentElement.nodeType === Node.DOCUMENT_FRAGMENT_NODE &&
-        currentElement.host
-      ) {
-        currentElement = currentElement.host;
-      } else {
-        currentElement = currentElement.parentNode;
-      }
-      if (!currentElement || currentElement === document) {
-        return null;
-      }
-      if (currentElement.matches && currentElement.matches(selector)) {
-        return currentElement;
-      }
-    }
-    return null;
-  }
-
-  function parseTweetContent(tweetArticle: Element) {
-    console.log({ tweetArticle });
-    if (!tweetArticle) return;
-
-    const tweetBody = tweetArticle.querySelector('[data-testid="tweetText"]');
-    const linkElements = tweetArticle.querySelectorAll("a");
-    const timeElements = tweetArticle.querySelectorAll("time");
-
-    let tweetContent = tweetBody
-      ? tweetBody.textContent
-      : "No tweet content found";
-    let tweetLinks = Array.from(linkElements).map((link) => ({
-      text: link.textContent,
-      href: link.getAttribute("href")
-    }));
-    let tweetTime = Array.from(timeElements).map((time) => {
-      return {
-        text: time.textContent,
-        datetime: time.getAttribute("datetime")
-      };
-    });
-    console.log({ tweetContent, tweetLinks, tweetTime });
-  }
-
-  function findTweetArticle(element) {
-    return findAncestorOrSelf(element, 'article[data-testid="tweet"]');
-  }
-
-  function onClick(event) {
-    const tweetArticle = findTweetArticle(event.target);
-    if (tweetArticle) {
-      console.log("Found tweet article:", tweetArticle);
-      parseTweetContent(tweetArticle);
-    } else {
-      console.log("Tweet article not found");
-    }
+    await webpage.saveTweet(tweetNode);
+    isSaved = true;
   }
 </script>
 
-<!-- <button on:click={onClick}>Click me</button> -->
-<button class="p-1 rounded-md mr-2 mt--2" on:click|stopPropagation={onClick}>
-  <Button icon="plus" tooltip="Save to Memotron" />
-  <!-- <Icon icon="plus" /> -->
+<button class="mr-2 mt-1" on:click|stopPropagation={onClick}>
+  <HoverableElement
+    tooltip={isSaved ? "Saved to Memotron" : "Save to Memotron"}
+    tooltipOptions={{
+      isUseAbsolutePositioning: true,
+      placement: Position.TopCenter
+    }}
+    class="flex justify-center items-center p-1 rounded-md hover:bg-fgs3 dark:hover:bg-bgs3"
+  >
+    <Icon
+      icon={isSaved ? "check-circle" : "plus"}
+      size={Size.lg}
+      class="stroke-bgs1 dark:stroke-fgs1"
+    />
+  </HoverableElement>
 </button>

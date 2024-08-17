@@ -1,7 +1,12 @@
-import { NodeType, type ITweetNode, type IWebPageNode } from "$lib/client/products/memotron/node/node.type";
+import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
+import { NodeType, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage } from "$lib/client/products/memotron/node/node.type";
 import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
 import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
 import * as CryptoJS from "crypto-js";
+import { contentTypeMap } from "./urlMap";
+import { enumToString } from "$lib/shared/utils/text.utils";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/clip.type";
 
 export function isYoutubeVideoUrl(url) {
     const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -112,7 +117,7 @@ export async function resolveCurrentTabData(
    * Note: This function should be called only from the content script.
    * @returns TabData
    */
-  export function extractFullTabData(): IWebPageNode {
+  export function extractFullTabData(): IResourceCapture<IWebPage> {
     const bodyContent = document.body.innerHTML;
     const title = document.title;
     const faviconLink = (
@@ -167,7 +172,198 @@ export async function resolveCurrentTabData(
       }
     };
   }
-  
-export function extractTweetData(): ITweetNode { 
-  
+
+
+
+export function resolveContentTypeString(contentType: NodeType | null) {
+  if (!contentType) return "webpage";
+  else if (contentType === NodeType.WEB_SCREENSHOT_CLIP)
+    return "screenshot";
+  else return enumToString(contentType);
 }
+
+export function resolveContentTypeForUrl(url: string) {
+  return contentTypeMap.find((item) => item.regex.some((regex) => regex.test(url)))?.contentType ?? NodeType.WEB_PAGE;
+}
+
+
+
+
+function parseTweetContent(tweetArticle: Element): IClipCapture<
+  ITweet & {
+    username: string;
+    profileUrl: string;
+    authorName: string;
+    profileImageUrl: string;
+  }
+> {
+  if (!tweetArticle) return;
+  const tweetBody = tweetArticle.querySelector('[data-testid="tweetText"]');
+  const linkElements = tweetArticle.querySelectorAll("a");
+  const timeElements = tweetArticle.querySelectorAll("time");
+
+  let tweetContent = tweetBody
+    ? tweetBody.textContent
+    : "No tweet content found";
+  let tweetLinks = Array.from(linkElements).map((link) => ({
+    text: link.textContent,
+    href: link.getAttribute("href")
+  }));
+  let tweetTime = Array.from(timeElements).map((time) => {
+    return {
+      text: time.textContent,
+      datetime: time.getAttribute("datetime")
+    };
+  });
+  logger.log({
+    at: "parsedTweetContent",
+    tweetContent,
+    tweetLinks,
+    tweetTime
+  });
+  const domain = contentTypeMap.find((item) => item.contentType === NodeType.TWEET)?.currentDomain;
+  const {
+    username,
+    authorName,
+    tweetId,
+    media,
+    externalLinks,
+    profileImageUrl
+  } = extractTweetInfo(tweetLinks);
+  return {
+    contentType: NodeType.TWEET,
+    body: {
+      url: `https://${domain}/${username}/status/${tweetId}`,
+      content: tweetContent,
+      postedAt: tweetTime[0]?.datetime
+    },
+    metadata: {
+      tweetId,
+      media,
+      externalLinks
+    },
+    username,
+    profileUrl: `https://${domain}/${username}`,
+    authorName,
+    profileImageUrl
+  };
+
+  function extractTweetInfo(data) {
+    let username = "";
+    let authorName = "";
+    let tweetId = "";
+    const currentUrl = window.location.pathname;
+
+    const urlMatch = currentUrl.match(/\/(\w+)\/status\/(\d+)/);
+    if (urlMatch) {
+      username = urlMatch[1];
+      tweetId = urlMatch[2];
+    } else {
+      const statusItem = data.find((item) => item.href.includes("/status/"));
+      if (statusItem) {
+        const match = statusItem.href.match(/\/(\w+)\/status\/(\d+)/);
+        if (match) {
+          username = match[1];
+          tweetId = match[2];
+        }
+      }
+    }
+    if (username) {
+      const authorItem = data.find(
+        (item) =>
+          item.href === `/${username}` &&
+          item.text &&
+          item.text !== `@${username}`
+      );
+      if (authorItem) {
+        authorName = authorItem.text;
+      }
+    }
+    const media = data
+      .filter((item) => item.href.includes("/photo"))
+      .map((item) => item.href);
+    const imgElements = tweetArticle.querySelectorAll("img");
+    if (imgElements) {
+      media.push(...Array.from(imgElements).map((img) => img.src));
+    }
+    const externalLinks = data
+      .filter((item) => item.href.includes("https://"))
+      .map((item) => item.href);
+    const profileImageUrl = media.find((item) =>
+      item.includes("profile_images")
+    );
+    return {
+      username,
+      authorName,
+      tweetId,
+      media,
+      externalLinks,
+      profileImageUrl
+    };
+  }
+}
+
+export function extractTweet(element) {
+  const tweetArticle = findAncestorOrSelf(element, 'article[data-testid="tweet"]');
+  if (!tweetArticle) return;
+  return parseTweetContent(tweetArticle);
+
+  function findAncestorOrSelf(element, selector) {
+    if (element.matches(selector)) {
+      return element;
+    }
+    let currentElement = element;
+    while (currentElement) {
+      if (
+        currentElement.nodeType === Node.DOCUMENT_FRAGMENT_NODE &&
+        currentElement.host
+      ) {
+        currentElement = currentElement.host;
+      } else {
+        currentElement = currentElement.parentNode;
+      }
+      if (!currentElement || currentElement === document) {
+        return null;
+      }
+      if (currentElement.matches && currentElement.matches(selector)) {
+        return currentElement;
+      }
+    }
+    return null;
+  }
+
+}
+
+export function extractTweetFromTweeetPage() {
+  const tweetElement = document.getElementById(
+    ClipperElementIdentifier.MAIN_TWEET_POST
+  );
+  const tweetId = window.location.pathname.split("/status/")[1];
+  const regex = new RegExp(tweetId, 'i');
+  const allLinks = document.querySelectorAll('a');
+  const element = Array.from(allLinks).find(link => regex.test(link.getAttribute('href')));
+  if (!tweetElement && !element) return;
+  return extractTweet(tweetElement ?? element);
+}
+
+/**
+ * This function is triggered from twitter profile page.
+ * @returns 
+ */
+export function extractTwitterProfile(): IClipCapture<ITwitterProfile & {
+  username: string;
+}> { 
+  const bioElement = document.querySelector('[data-testid="UserDescription"]');
+  const nameElement = document.querySelector('[data-testid="UserName"]');
+  const linkElement = document.querySelector('[data-testid="UserUrl"]');
+  const avatarElement = document.querySelector('[data-testid^="UserAvatar-Container-"]');
+  const imgElement = avatarElement?.querySelector('img');
+  const profileImageUrl = imgElement?.src;
+  const name = nameElement?.textContent?.split("@")[0];
+  const bio = bioElement?.textContent;
+  const bioLink = linkElement?.textContent;
+  const url = window.location.href;
+  const username = url.split("https://")[1].split("/")[1];
+  return { body: { name, bio, bioLink, url, profileImageUrl }, username, contentType: NodeType.TWITTER_PROFILE };
+}
+
