@@ -1,14 +1,10 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
-  import {
-    focusItemsStore,
-    sessionStore
-  } from "$lib/client/products/pointron/focus/session.store";
-  import { BlockType } from "$lib/client/types/pointron/session.type";
+  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
   import ControlBar from "../elements/controls/ControlBar.svelte";
   import { onMount } from "svelte";
   import FocusPlayerTimeText from "./FocusPlayerTimeText.svelte";
@@ -18,7 +14,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import context from "$lib/client/stores/context.store";
-  import { goalStore } from "../../goals/goal.store";
+  import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
+  import appearance from "$lib/client/stores/appearance.store";
+  import IntervalBar from "../elements/intervalbar/IntervalBar.svelte";
   let playerContainerRef: any;
   let player: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
@@ -28,7 +26,6 @@
     $sessionStore.timeRemainingToTakeBreak != undefined &&
     $sessionStore.timeRemainingToTakeBreak < 0;
   $: currentGoal = sessionStore.resolveCurrentGoal($sessionStore.currentTask);
-
   function enableFullScreenPlayer() {
     if (isPipOn) return;
     appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
@@ -63,8 +60,8 @@
         const pipWindow = await (
           window.documentPictureInPicture as any
         ).requestWindow({
-          width: playerContainerRef.clientWidth - 30,
-          height: playerContainerRef.clientHeight + 20
+          width: playerContainerRef.clientWidth - 20,
+          height: playerContainerRef.clientHeight + 80
         });
         pipWindow.addEventListener("pagehide", (event: any) => {
           closePip();
@@ -103,6 +100,11 @@
   onMount(() => {
     player = document.getElementById("focusplayer");
     playerContainer = document.getElementById("playercontainer");
+    const sessionSub = sessionStore.subscribe((x) => {
+      if (x.state === SessionState.FINISHED) {
+        closePip();
+      }
+    });
     const sub = appStore.subscribe((app) => {
       if (app.isPipOn && !isPipOn) {
         pipHandler(null);
@@ -112,6 +114,7 @@
     });
     return () => {
       sub();
+      sessionSub();
     };
   });
 </script>
@@ -131,75 +134,106 @@
   class={!$view.isPortrait ? "m-6" : "w-full"}
   bind:this={playerContainerRef}
 >
-  <CustomColorPropagator
-    type="button"
-    color={currentGoal?.color}
+  <div
     id="focusplayer"
-    class={cn(
-      "flex h-full border-t border-bgs3 border-opacity-50 justify-between items-center px-4 py-2",
-      {
-        "w-full": $view.isPortrait || isPipOn,
-        "w-[26rem] rounded-md": !($view.isPortrait || isPipOn),
-        "bg-ars1 text-abg": isBreakReminderMode,
-        "bg-ccs1 text-cbg":
-          $sessionStore.state === SessionState.FOCUS_RUNNING &&
-          !isBreakReminderMode,
-        "bg-ass1 text-abg": $sessionStore.state != SessionState.FOCUS_RUNNING
-      }
-    )}
-    on:click={clickHandler}
+    class={cn("flex w-full h-full", $appearance.colorScheme.tailwindSelector, {
+      "text-base text-fgs1": isPipOn,
+      "bg-bgs1": isPipOn && !isBreakReminderMode,
+      "bg-ars1 animate--pulse animate-pulse-subtle":
+        isBreakReminderMode && isPipOn
+    })}
+    style="font-family: {$appearance.typeface ?? 'Avenir'};"
   >
-    {#if $sessionStore.state === SessionState.FINISHED}
-      <div class="flex w-full h-12 justify-center items-center">
-        <InlineLoadingAnimation />Finishing session...
-      </div>
-    {:else}
-      <div class="flex items-center gap-4 h-full">
-        <!-- <div
-  class="h-14 w-1 rounded-full"
-  style={`background-color: ${
-    $sessionStore.currentBlock.type == BlockType.FOCUS
-      ? $sessionStore.currentLog.color ?? defaultFocusColor
-      : breakColor
-  };`}
-/> -->
-        <FocusPlayerTimeText />
-      </div>
-
-      <div class="flex gap-4">
-        <ControlBar isFocusPlayerContext={true} />
-        {#if !$view.isPortrait && !isPipOn}
-          {#if !$context.isEmbed}
-            <Icon
-              icon="pip"
-              on:click={pipHandler}
-              isTabbable={true}
-              class={cn({
-                "stroke-cbg":
-                  $sessionStore.state === SessionState.FOCUS_RUNNING &&
-                  !isBreakReminderMode,
-                "stroke-abg":
-                  isBreakReminderMode ||
-                  $sessionStore.state != SessionState.FOCUS_RUNNING
-              })}
-            />
-          {/if}
-
-          <Icon
-            icon="chevup"
-            on:click={clickHandler}
-            isTabbable={true}
-            class={cn({
-              "stroke-cbg":
+    <ThemeLayer extensionContext={isPipOn ? "focusplayer" : undefined}>
+      <div class="flex flex-col gap-1 w-full">
+        <CustomColorPropagator
+          type="button"
+          color={currentGoal?.color}
+          class={cn(
+            "flex h-full justify-between items-center px-4 py-2",
+            isPipOn && {
+              "text-abg": isBreakReminderMode,
+              "bg-bgs2 dark:bg-[#202124]": !isBreakReminderMode
+            },
+            !isPipOn && {
+              "border-t border-bgs3 border-opacity-50": true,
+              "w-full": $view.isPortrait,
+              "w-[26rem] rounded-md": !$view.isPortrait,
+              "bg-ars1 text-abg": isBreakReminderMode,
+              "bg-ccs1 text-cbg":
                 $sessionStore.state === SessionState.FOCUS_RUNNING &&
                 !isBreakReminderMode,
-              "stroke-abg":
-                isBreakReminderMode ||
+              "bg-ass1 text-abg":
                 $sessionStore.state != SessionState.FOCUS_RUNNING
+            },
+            isPipOn && {
+              "w-full": true
+            }
+          )}
+          on:click={clickHandler}
+        >
+          {#if $sessionStore.state === SessionState.FINISHED}
+            <div class="flex w-full h-12 justify-center items-center">
+              <InlineLoadingAnimation />Finishing session...
+            </div>
+          {:else}
+            <div class="flex items-center gap-4 h-full">
+              <FocusPlayerTimeText
+                context={isPipOn
+                  ? SessionUIContext.PIP
+                  : SessionUIContext.FOCUS_PLAYER}
+              />
+            </div>
+            <div class="flex gap-4">
+              <ControlBar
+                context={isPipOn
+                  ? SessionUIContext.PIP
+                  : SessionUIContext.FOCUS_PLAYER}
+              />
+              {#if !$view.isPortrait && !isPipOn}
+                {#if !$context.isEmbed}
+                  <Icon
+                    icon="pip"
+                    on:click={pipHandler}
+                    isTabbable={true}
+                    class={cn({
+                      "stroke-cbg":
+                        $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                        !isBreakReminderMode,
+                      "stroke-abg":
+                        isBreakReminderMode ||
+                        $sessionStore.state != SessionState.FOCUS_RUNNING
+                    })}
+                  />
+                {/if}
+
+                <Icon
+                  icon="chevup"
+                  on:click={clickHandler}
+                  isTabbable={true}
+                  class={cn({
+                    "stroke-cbg":
+                      $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                      !isBreakReminderMode,
+                    "stroke-abg":
+                      isBreakReminderMode ||
+                      $sessionStore.state != SessionState.FOCUS_RUNNING
+                  })}
+                />
+              {/if}
+            </div>
+          {/if}
+        </CustomColorPropagator>
+        {#if isPipOn}
+          <div
+            class={cn("flex w-full flex-1 px-4 pb-2", {
+              "text-abg": isBreakReminderMode
             })}
-          />
+          >
+            <IntervalBar context={SessionUIContext.PIP} />
+          </div>
         {/if}
       </div>
-    {/if}
-  </CustomColorPropagator>
+    </ThemeLayer>
+  </div>
 </div>

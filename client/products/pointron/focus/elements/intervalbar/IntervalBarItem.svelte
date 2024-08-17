@@ -2,7 +2,7 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import {
     BlockType,
-    IntervalBarContext
+    SessionUIContext
   } from "$lib/client/types/pointron/session.type";
   import { currentTime, userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
@@ -10,7 +10,7 @@
   export let progress: number = 0;
   export let color: string | undefined = undefined;
   export let type: BlockType = BlockType.FOCUS;
-  export let context: IntervalBarContext = IntervalBarContext.DEFAULT;
+  export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let isActiveProgress: boolean;
   let barClassList: string;
   let activeBarRef: any;
@@ -37,7 +37,7 @@
 
 <div
   class="w-full rounded-full bg-bgs4 overflow-hidden mb-1 {context ===
-  IntervalBarContext.ZEN_ON_DESKTOP
+  SessionUIContext.ZEN_ON_DESKTOP
     ? 'h-2'
     : 'h-1'}"
 >
@@ -47,10 +47,10 @@
     style="width: {progress * 100}%"
     bind:this={activeBarRef}
   >
-    {#if $sessionStore.isSessionRunning && isActiveProgress && xPosition && yPositon && xPosition > 0 && yPositon > 0}
+    {#if context !== SessionUIContext.PIP && $sessionStore.isSessionRunning && isActiveProgress && xPosition && yPositon && xPosition > 0 && yPositon > 0}
       <div
         class="fixed text-b3 rounded-md flex justify-center items-center min-w-fit px-1 {context ===
-        IntervalBarContext.ZEN_ON_DESKTOP
+        SessionUIContext.ZEN_ON_DESKTOP
           ? 'bg-bgs3 text-fgs2 text-b3 h-6'
           : 'bg-bgs2 text-fgs3 text-b4 h-4'}"
         style="left: calc({xPosition}px - {$view.isPortrait

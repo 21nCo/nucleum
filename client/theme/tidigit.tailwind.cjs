@@ -118,6 +118,16 @@ module.exports = {
         "7/10": "70%",
         "8/10": "80%",
         "9/10": "90%"
+      },
+      animation: {
+        "pulse-subtle":
+          "pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+      },
+      keyframes: {
+        "pulse-subtle": {
+          "0%, 100%": { filter: "saturate(80%)" },
+          "50%": { filter: "saturate(120%)" }
+        }
       }
     }
   },

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Celebrate from "$lib/client/icons/Celebrate.svelte";
-  import { IntervalBarContext } from "$lib/client/types/pointron/session.type";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import { Size } from "$lib/client/types/size.enum";
   import IntervalBar from "./intervalbar/IntervalBar.svelte";
   import SessionTimeText from "./sessionTimeText/SessionTimeText.svelte";
@@ -18,7 +18,7 @@
   class="flex flex-col w-full gap-12 p-4 items-center justify-center text-center"
 >
   <!-- <div>Session finished!</div> -->
-  <IntervalBar context={IntervalBarContext.THIN_ON_DESKTOP} />
+  <IntervalBar context={SessionUIContext.THIN_ON_DESKTOP} />
   <div class="flex flex-col w-full items-center gap-4">
     <SessionTimeText size={Size.sm} parentBackgroundIndex={1} />
   </div>

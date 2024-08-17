@@ -1,7 +1,7 @@
 <script lang="ts">
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { IntervalBarContext } from "$lib/client/types/pointron/session.type";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
@@ -102,8 +102,8 @@
       <div class="flex flex-col justify-between w-full h-full py-6 px-10">
         <IntervalBar
           context={isInline
-            ? IntervalBarContext.DEFAULT
-            : IntervalBarContext.ZEN_ON_DESKTOP}
+            ? SessionUIContext.DEFAULT
+            : SessionUIContext.ZEN_ON_DESKTOP}
         />
         <div class="flex flex-col w-full items-center px-4 lg:px-8 xl:px-20">
           <SessionTimeText parentBackgroundIndex={parentBgIndex} />

@@ -10,7 +10,7 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import TimeComposition from "./composition/TimeComposition.svelte";
   import SimpleDigitalClock from "../../clocks/SimpleDigitalClock.svelte";
-  import { IntervalBarContext } from "$lib/client/types/pointron/session.type";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   $: isExpandedMode =
     ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3;
   $: isExtraLargeScreen = $view.landscapiness > 1.5 && $view.scale > 1.5;
@@ -26,7 +26,7 @@
   {:else}
     <div class="flex w-full flex-grow pb-10">
       <div class="flex flex-col gap-8 py-4 w-1/2 max-w-xl h-full">
-        <IntervalBar context={IntervalBarContext.THIN_ON_DESKTOP} />
+        <IntervalBar context={SessionUIContext.THIN_ON_DESKTOP} />
         <TimeComposition {isExpandedMode} />
       </div>
       <div class="flex flex-col justify-center h-full px-4">

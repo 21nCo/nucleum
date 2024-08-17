@@ -106,10 +106,12 @@ export type IFocusTask = IFocusItem & {
   label: string;
 };
 
-export enum IntervalBarContext {
+export enum SessionUIContext {
+  DEFAULT = "DEFAULT",
   ZEN_ON_DESKTOP = "ZEN_ON_DESKTOP",
   THIN_ON_DESKTOP = "THIN_ON_DESKTOP",
-  DEFAULT = "DEFAULT"
+  FOCUS_PLAYER = "FOCUS_PLAYER",
+  PIP = "PIP"
 }
 
 export interface IFocusItemsStore extends IObservableStoreSubject {

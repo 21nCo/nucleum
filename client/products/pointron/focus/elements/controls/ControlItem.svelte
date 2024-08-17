@@ -7,10 +7,11 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { sessionStore } from "../../session.store";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   export let control: Control;
   export let isProminent: boolean = false;
-  export let isFocusPlayerContext: boolean = false;
-  let iconProps = { isFocusPlayerContext };
+  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  $: iconProps = { context };
   $: extendDuration = $pointronPreferences.extendDuration;
   let timer: any;
   const dispatch = createEventDispatcher();
@@ -50,18 +51,20 @@
     class={cn(
       "relative rounded-full flex items-center justify-center",
       {
-        "w-12 h-12 border": isFocusPlayerContext,
-        "w-20 h-20 mo:w-16 mo:h-16 hover:bg-opacity-80": !isFocusPlayerContext,
+        "w-20 h-20 mo:w-16 mo:h-16 hover:bg-opacity-80":
+          context === SessionUIContext.DEFAULT,
+        "w-12 h-12 hover:bg-opacity-80": context === SessionUIContext.PIP
+      },
+      context === SessionUIContext.FOCUS_PLAYER && {
+        "w-12 h-12 border": true,
         "border-cbg":
-          isFocusPlayerContext &&
           $sessionStore.state == SessionState.FOCUS_RUNNING &&
           !isBreakReminderMode,
         "border-abg":
-          isFocusPlayerContext &&
-          ($sessionStore.state != SessionState.FOCUS_RUNNING ||
-            isBreakReminderMode)
+          $sessionStore.state != SessionState.FOCUS_RUNNING ||
+          isBreakReminderMode
       },
-      !isFocusPlayerContext && {
+      context !== SessionUIContext.FOCUS_PLAYER && {
         "bg-ass1": control === Control.BREAK,
         "bg-fgs4": control === Control.ABANDON,
         "bg-ags1": control === Control.RESUME,
@@ -93,7 +96,7 @@
       /> -->
     {/if}
   </div>
-  {#if !isFocusPlayerContext}
+  {#if context === SessionUIContext.DEFAULT}
     <div
       class="absolute top-full left-0 text-fgs2 self-center flex w-full justify-center mo:text-b3 mt-1"
     >

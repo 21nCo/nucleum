@@ -7,8 +7,9 @@
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let isFocusPlayerContext: boolean = false;
-  let controlItemProps = { isFocusPlayerContext };
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
+  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  $: controlItemProps = { context };
   async function controlClickHandler(event: any) {
     let control = event.detail.control;
     if (control === Control.START) {
@@ -35,8 +36,10 @@
 
 <div
   class={cn("flex flex-row items-center", {
-    "gap-4": isFocusPlayerContext,
-    "gap-8 mo:gap-6": !isFocusPlayerContext
+    "gap-4":
+      context === SessionUIContext.FOCUS_PLAYER ||
+      context === SessionUIContext.PIP,
+    "gap-8 mo:gap-6": context === SessionUIContext.DEFAULT
   })}
 >
   {#if $sessionStore.state === SessionState.NOT_STARTED}

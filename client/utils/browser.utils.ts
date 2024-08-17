@@ -187,6 +187,7 @@ async function _renderPopoverUsingFixedPositioning(
 function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
   let { triggerRef, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
     params;
+  if (!popRef) return;
   const triggerRect = triggerRef?.getBoundingClientRect();
   popRef.style.display = "block";
   popRef.style.opacity = "0";

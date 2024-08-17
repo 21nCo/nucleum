@@ -3,7 +3,7 @@
   import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import {
-    IntervalBarContext,
+    SessionUIContext,
     type ISessionInterval
   } from "$lib/client/types/pointron/session.type";
   import TimeLabel from "./TimeLabel.svelte";
@@ -11,7 +11,7 @@
   import MoreBarsInfo from "./MoreBarsInfo.svelte";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
-  export let context: IntervalBarContext = IntervalBarContext.DEFAULT;
+  export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let preceedingHiddenBars: ISessionInterval[] = [];
   let succeedingHiddenBars: ISessionInterval[] = [];
   function resolveCountupBarDuration(bar: ISessionInterval) {
@@ -26,7 +26,7 @@
     }
   }
   $: visibleLimit =
-    $view.isPortrait || context === IntervalBarContext.THIN_ON_DESKTOP ? 4 : 10;
+    $view.isPortrait || context === SessionUIContext.THIN_ON_DESKTOP ? 4 : 10;
   $: isHideSomeBars = $sessionStore.intervals.length > visibleLimit;
   $: visibleBars = resolveVisibleBars($sessionStore.intervals);
   function resolveVisibleBars(blocks: ISessionInterval[]) {

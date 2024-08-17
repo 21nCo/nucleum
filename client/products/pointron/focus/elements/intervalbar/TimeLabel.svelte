@@ -1,7 +1,7 @@
 <script lang="ts">
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { IntervalBarContext } from "$lib/client/types/pointron/session.type";
+  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
@@ -14,7 +14,7 @@
   import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   export let label: "start" | "end" = "start";
-  export let context: IntervalBarContext = IntervalBarContext.DEFAULT;
+  export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let timeClassList = "";
   let labelClassList = "";
   let isHovering = false;
@@ -23,7 +23,7 @@
   let labelRef: HTMLElement;
   onMount(() => {
     hideToolTip();
-    if (context === IntervalBarContext.ZEN_ON_DESKTOP) {
+    if (context === SessionUIContext.ZEN_ON_DESKTOP) {
       timeClassList = "text-h4";
     } else if ($sessionStore.state === SessionState.NOT_STARTED) {
       timeClassList = "text-base";
@@ -31,7 +31,7 @@
       timeClassList = "text-base";
     }
     labelClassList =
-      context === IntervalBarContext.ZEN_ON_DESKTOP
+      context === SessionUIContext.ZEN_ON_DESKTOP
         ? "text-b2 -top-2/3"
         : $sessionStore.state === SessionState.NOT_STARTED
           ? "text-b4 -top-2/3"
@@ -67,13 +67,15 @@
   on:blur={toggleHoverState}
 >
   {#if label === "start"}
-    <div class="absolute text-fgs3 left-0 {labelClassList}">
-      {$sessionStore.state === SessionState.NOT_STARTED
-        ? "Now"
-        : context != IntervalBarContext.ZEN_ON_DESKTOP
-          ? "Start"
-          : "Start time"}
-    </div>
+    {#if context !== SessionUIContext.PIP}
+      <div class="absolute text-fgs3 left-0 {labelClassList}">
+        {$sessionStore.state === SessionState.NOT_STARTED
+          ? "Now"
+          : context != SessionUIContext.ZEN_ON_DESKTOP
+            ? "Start"
+            : "Start time"}
+      </div>
+    {/if}
     <div class={timeClassList}>
       {#if $sessionStore.state == SessionState.NOT_STARTED && $currentTime}
         {formatTime($userPreferences, $currentTime)}
@@ -82,9 +84,11 @@
       {/if}
     </div>
   {:else}
-    <div class="absolute text-fgs3 right-0 {labelClassList}">
-      {context != IntervalBarContext.ZEN_ON_DESKTOP ? "End" : "End time"}
-    </div>
+    {#if context !== SessionUIContext.PIP}
+      <div class="absolute text-fgs3 right-0 {labelClassList}">
+        {context != SessionUIContext.ZEN_ON_DESKTOP ? "End" : "End time"}
+      </div>
+    {/if}
     {#if $sessionStore.state === SessionState.NOT_STARTED}
       <button
         class=" rounded-md underline-dotted border- border--dotted border--brs3 {$sessionStore

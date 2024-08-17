@@ -41,7 +41,12 @@
     {#if label}
       <div class="flex gap-2">
         {#if label}
-          <Button on:click={save} size={Size.xs} label="⮐ add" />
+          <Button
+            on:click={save}
+            size={Size.xs}
+            label="⮐ add"
+            isPreventMinWidth={true}
+          />
         {/if}
         <Button
           on:click={reset}
