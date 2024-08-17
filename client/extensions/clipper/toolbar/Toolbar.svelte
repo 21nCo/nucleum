@@ -9,7 +9,7 @@
   import { webpage, toolbarState } from "../contentScripts/store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { screenShotOnlyPages } from "../urlMap";
+  import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   const dispatch = createEventDispatcher();

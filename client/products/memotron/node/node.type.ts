@@ -483,13 +483,18 @@ type ITwitterProfileBody = {
   url: string;
   name: string;
   bio?: string;
-  bioLink?: string;
   profileImageUrl: string;
 };
+
+export type ITwitterProfileMetadata = IWebPageMetadata & {
+  bioLink?: string;
+  bioLinkText?: string;
+};
+
 export type ITwitterProfile = INodeInterface<
   NodeType.TWITTER_PROFILE,
   ITwitterProfileBody,
-  IWebPageMetadata
+  ITwitterProfileMetadata
 >;
 
 export type IClip =

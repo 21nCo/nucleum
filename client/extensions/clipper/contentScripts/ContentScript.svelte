@@ -2,6 +2,7 @@
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import {
     extractFullTabData,
+    extractMinimalTabData,
     extractTweetFromTweeetPage,
     extractTwitterProfile,
     resolveContentTypeForUrl
@@ -23,6 +24,7 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import account from "$lib/client/stores/account.store";
+  import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
   export let id: string;
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
@@ -32,34 +34,43 @@
     textClipperRef.onActivateColor(e);
   }
   async function onSaveClick() {
-    let screenshotUrl: string | null = null;
-    screenshotWebpage((s3Url) => {
-      console.log({ s3Url });
-      screenshotUrl = s3Url;
-      proceedWithSave();
-    });
-    async function proceedWithSave() {
-      const contentTypeStr = enumToString(contentType);
-      $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
-      $feedbackPane.isShown = true;
-      if (contentType === NodeType.WEB_PAGE) {
-        let data = extractFullTabData();
-        data.metadata = { ...data.metadata, screenshotUrl };
-        await webpage.savePage(data);
-      } else if (contentType === NodeType.TWEET) {
-        const tweetNode = extractTweetFromTweeetPage();
-        if (!tweetNode) return;
-        tweetNode.metadata = { ...tweetNode.metadata, screenshotUrl };
-        await webpage.saveTweet(tweetNode, true);
-      } else if (contentType === NodeType.TWITTER_PROFILE) {
-        const data = extractTwitterProfile();
-        if (!data) return;
-        data.metadata = { ...data.metadata, screenshotUrl };
-        await webpage.saveTwitterProfile(data);
-      }
-      $feedbackPane.feedback = `${contentTypeStr} saved!`;
+    const contentTypeStr = enumToString(contentType);
+    $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
+    $feedbackPane.isShown = true;
+    if (contentType === NodeType.WEB_PAGE) {
+      await saveGenericWebpage();
+    } else if (contentType === NodeType.TWEET) {
+      const tweetNode = extractTweetFromTweeetPage();
+      if (!tweetNode) return;
+      await webpage.saveTweet(tweetNode, true);
+    } else if (contentType === NodeType.TWITTER_PROFILE) {
+      const data = extractTwitterProfile();
+      if (!data) return;
+      await webpage.saveTwitterProfile(data);
     }
+    $feedbackPane.feedback = `${contentTypeStr} saved!`;
   }
+
+  function saveGenericWebpage() {
+    return new Promise(async (resolve, reject) => {
+      const host = window.location.host;
+      console.log({ host });
+      if (commonMetadata.some((x) => host.includes(x.domain))) {
+        console.log("minimal metadata page");
+        const tab = extractMinimalTabData();
+        await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });
+        resolve(true);
+        return;
+      }
+      screenshotWebpage(async (s3Url) => {
+        const tab = extractFullTabData();
+        tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
+        await webpage.savePage(tab);
+        resolve(true);
+      });
+    });
+  }
+
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (
       message.event === ExtensionEvent.TAB_CHANGE ||
