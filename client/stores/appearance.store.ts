@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   AppSkin,
@@ -158,8 +158,14 @@ function initAppearanceStore() {
         return modified;
       });
     },
+    /**
+     * Sets the system theme in appearance store to either light or dark based on `prefers-color-scheme: dark` media query and updates color scheme accordingly.
+     * @param isDark boolean value to set the system theme to dark or light
+     */
     setSystemTheme: (isDark: boolean) => {
+      const current = get(appearance);
       const theme = isDark ? Theme.DARK : Theme.LIGHT;
+      if(current.systemTheme === theme) return;
       update((a) => {
         let modified: AppearanceStore = { ...a, systemTheme: theme };
         if (a.isSyncWithSystem) {

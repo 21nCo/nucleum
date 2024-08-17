@@ -1,13 +1,11 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
-  import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import CacheLayer from "../layout/layers/CacheLayer.svelte";
-  import ThemeLayer from "../layout/layers/themeLayer/ThemeLayer.svelte";
   import { dataManager } from "../persistence/dataManager";
   import type { IStore } from "../types/data.type";
   import { resolveToken } from "../utils/account.utils";
   import account from "../stores/account.store";
+  import ExtensionThemeBase from "./ExtensionThemeBase.svelte";
   export let id: string;
   export let stores: IStore[] = [];
   let isMounted: boolean = false;
@@ -43,7 +41,7 @@
   });
 </script>
 
-<div
+<!-- <div
   {id}
   class={cn(
     "text-base text-fgs1 relative",
@@ -57,4 +55,10 @@
   {#if isMounted}
     <CacheLayer />
   {/if}
-</div>
+</div> -->
+<ExtensionThemeBase {id}>
+  <slot />
+  {#if isMounted}
+    <CacheLayer />
+  {/if}
+</ExtensionThemeBase>

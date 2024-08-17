@@ -4,8 +4,13 @@
   import { createEventDispatcher, onMount } from "svelte";
   import type { IArea } from "./types";
   import { webpage } from "./store";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import {
+    NodeType,
+    type IClipCapture,
+    type IWebScreenshotClip
+  } from "$lib/client/products/memotron/node/node.type";
   import account from "$lib/client/stores/account.store";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -35,13 +40,14 @@
   });
 
   async function saveSnip(s3URL: string) {
-    const response = await webpage.saveClip({
+    const snip: IClipCapture<IWebScreenshotClip> = {
       contentType: NodeType.WEB_SCREENSHOT_CLIP,
       body: {
         s3URL: s3URL
       }
-    });
-    dispatch("snipSaved", { s3URL, id: response.id });
+    };
+    const response = await webpage.saveClip(snip);
+    dispatch("saved", { s3URL, id: response.id });
   }
 
   function processScreenshot(data, area: IArea) {
@@ -92,7 +98,7 @@
     if (area.width <= 5 || area.height <= 5) return;
     chrome.runtime.sendMessage(
       {
-        event: ExtensionEvent.SCREENSHOT
+        event: ClipperExtensionEvent.SCREENSHOT
       },
       (data) => {
         processScreenshot(data, area);
@@ -154,6 +160,11 @@
     snip({ x: leftValue, y: topValue, width: widthValue, height: heightValue });
     recordMousemove = false;
   }
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      dispatch("close");
+    }
+  }
 </script>
 
 <button
@@ -168,3 +179,4 @@
     style="top:{topValue}px; left:{leftValue}px;height:{heightValue}px; width:{widthValue}px;background-color:{bgColor};"
   ></div>
 </button>
+<svelte:window on:keydown={handleKeyDown} />

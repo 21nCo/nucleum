@@ -6,36 +6,21 @@ import type {
   IProperty,
   IPropertyValue
 } from "$lib/client/products/memotron/collection/properties/property.type";
-import type { ILink } from "../capture/capture.type";
-import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceAccessMode, type IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
 
-export type INode = INodeBase &
-  ((NodeContent & {
-    metadata: INodeMetadata;
+
+export type INode = ((INodeInterface<NodeType, NodeContent, INodeMetadata>) | IClip) & 
+  {
+
     children?: INode[] | string[];
     childrenHierarchy?: string[];
     forelinks?: LinkThumbnail[];
-  }) | IClippedNode);
+  }; 
 
-export type INodeItemCaptured = Omit<
-  INodeBase,
-  | "createdAt"
-  | "modifiedAt"
-  | "createdBy"
-  | "modifiedBy"
-  | "interactedAt"
-  | "label"
-> &
-  (NodeContent & {
-    children?: string[];
-    /**
-     * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
-     * This helps in determining what to show as items on a timeline etc.
-     */
-    creationContext?: string;
-    metadata?: INodeMetadata;
-    links?: ILink[];
-  }) | IClippedNode;
+
+export type INodeItemCaptured = IResourceCapture<INodeInterface> & {
+  id: string;
+}
 
 export type INodeThumbnail = INodeBase &
   NodeContent & {
@@ -45,8 +30,23 @@ export type INodeThumbnail = INodeBase &
 
 export type INodeBase = IMemotronItemBase & {
   generatedLabel?: string;
+  /**
+   * @deprecated - avatar is dynamically resolved from typed collections
+   */
   avatar?: IAvatar;
   properties?: INodeProperty[];
+  parent?: string;
+  /**
+   * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
+   * This helps in determining what to show as items on a timeline etc.
+   */
+  creationContext?: string;
+};
+
+type INodeInterface<TType = NodeType, TBody = any,TMetadata = any> = INodeBase & {
+  body: TBody;
+  contentType: TType;
+  metadata?: TMetadata;
 };
 
 export type IActiveNode = INode & {
@@ -61,6 +61,9 @@ export type IActiveNode = INode & {
   wordCount?: number;
 };
 
+/**
+ * TODO - refactor similar to {@link IClip} to use {@link INodeInterface} instead
+ */
 export type NodeContent =
   | TextContent
   | ListContent
@@ -107,6 +110,9 @@ export type NonNodularMarkdownContent = {
   body: IMarkdown;
 };
 
+/**
+ * @deprecated - use {@link IClip} instead
+ */
 export type ClipContent = {
   contentType: ClipType;
   body: any;
@@ -361,6 +367,16 @@ export type INodeStructure = {
 
 
 
+type IWebPageBody = {
+  url: string;
+  hash: string;
+  description?: string;
+};
+export type IWebPage = INodeInterface<NodeType.WEB_PAGE, IWebPageBody, IWebPageMetadata>;
+
+/**
+ * @deprecated - use {@link IWebPage} instead
+ */
 export type IWebPageNode = {
   body: {
     url: string;
@@ -383,38 +399,77 @@ export type IWebPageMetadata = {
   ogImage?: string;
   ogUrl?: string;
   twitterCard?: string;
+  screenshotUrl?: string;
 }
 
-export type ITweetNode = {
-  body: {
-    url: string;
-    content: string;
-    postedAt: string;
-  },
-  metadata: ITweetMetadata;
-  contentType: NodeType.TWEET;
+
+type ITextClipBody = {
+  text: string;
+  pre?: string;
+  post?: string;
+  color: string;
 }
-
-export type ITweetMetadata = {}
-
-export type ITwitterProfileNode = {
-  body: {
-    username: string;
-    bio: string;
-    profileImageUrl: string;
-  },
-  contentType: NodeType.TWITTER_PROFILE;
+type ITextClipMetadata = {
+  container: string;
+  anchorNode: string;
+  focusNode: string;
+  anchorOffset: number;
+  focusOffset: number;
 }
+export type ITextClip = INodeInterface<NodeType.TEXT_CLIP, ITextClipBody, ITextClipMetadata>;
 
-export type IClippedNode = IWebPageNode | ITwitterProfileNode | ITweetNode;
 
-export type IClippedNodeCapture = Omit<
-INodeBase,
-| "createdAt"
-| "modifiedAt"
-| "createdBy"
-| "modifiedBy"
-| "interactedAt"
-| "label"
-| "id"
->  & IClippedNode;
+type IVideoTimestampClipBody = {
+  timestamp: number;
+  url: string;
+}
+export type IVideoTimestampClip = INodeInterface<NodeType.VIDEO_TIMESTAMP_CLIP, IVideoTimestampClipBody, any>;
+
+
+type IWebScreenshotClipBody = {
+  s3URL: string;
+}
+export type IWebScreenshotClip = INodeInterface<NodeType.WEB_SCREENSHOT_CLIP, IWebScreenshotClipBody, any>;
+
+
+type IMultimediaClipBody = {
+  srcUrl: string;
+  url: string;
+  color: string;
+}
+export type IMultimediaClip = INodeInterface<NodeType.IMAGE_CLIP, IMultimediaClipBody, any>;
+
+
+
+type ITweetBody = {
+  url: string;
+  content: string;
+  postedAt: string;
+}
+type ITweetMetadata = IWebPageMetadata & {
+  tweetId?: string;
+  media?: string[];
+  externalLinks?: string[];
+}
+export type ITweet = INodeInterface<NodeType.TWEET, ITweetBody, ITweetMetadata>;
+
+
+type ITwitterProfileBody = {
+  url: string;
+  name: string;
+  bio?: string;
+  bioLink?: string;
+  profileImageUrl: string;
+}
+export type ITwitterProfile = INodeInterface<NodeType.TWITTER_PROFILE, ITwitterProfileBody, IWebPageMetadata>;
+
+export type IClip = ITwitterProfile | ITweet | IMultimediaClip | IVideoTimestampClip | ITextClip | IWebScreenshotClip;
+
+export type IClipCapture<T = IClip> = Omit<IResourceCapture<T>, 'label'>
+
+
+
+
+export enum NodeIdPrefix {
+  TWITTER_PROFILE = "twitterProfile",
+}

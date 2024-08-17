@@ -7,36 +7,33 @@ import {
   type IObservableStoreSubject
 } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
-import type { TabData } from "$lib/client/types/extension.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
-  ClipperExtensionEvent,
-  type TextHighlightContent,
-  type VideoTimestampContent,
-  type WebScreenshotClipContent
+  ClipperExtensionEvent
 } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
-import { ClipperPersistence } from "../clipper.persistence";
 import { removeHighlight } from "./highlightV4";
-import type { IWebpage } from "./types";
+import type { IFeedbackPaneStore, IWebpage } from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
-import { NodeType, type IClippedNodeCapture } from "$lib/client/products/memotron/node/node.type";
+import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage, type IWebScreenshotClip } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
+import { extractFullTabData } from "../clipper.utils";
+import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
+import { logger } from "$lib/client/components/debug/logger.client";
 
 class WebpageStore extends ObservableStore<IWebpage> {
-  private persistence = new ClipperPersistence();
   previousValue: string = "";
   constructor() {
     super("clipperContentScriptStore", StoreDataType.NA, {
-      refreshOnAppear: true
+      refreshOnAppear: false
     });
     this.set({ url: "", clips: [] });
   }
   async loader(data: any) {
-    console.log("loader", data);
+    logger.log({ at: "webpage loader", data });
     const page = data.page;
     if (page) {
       this.update((n) => {
@@ -71,27 +68,21 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const url = tab.url;
     if (url === this.get().url) return;
     this.set({ url, clips: [] });
-    // this.refresh();
+    logger.log({ at: "onContextChange", url });
+    feedbackPane.reset();
+    this.refresh();
   }
 
   /**
    * @param data - tab data
    * @returns
    */
-  async savePage(data: IClippedNodeCapture) {
+  async savePage(data: IResourceCapture<IWebPage>) {
     const id = generateResourceId(Resource.node);
     const response = await nodeStore.createNode([
       {
         id,
         ...data,
-        // body: {
-        //   hash: data.hash,
-        //   url: data.url,
-        //   description: data.description,
-        //   content: data.bodyContent,
-        // },
-        // label: data.label,
-        // metadata: data.metadata,
         contentType: NodeType.WEB_PAGE,
       }
     ], {
@@ -110,18 +101,20 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return id;
   }
   /**
-   * TODO - save clip via NodeStore - to update nodes local cache
+   * Saves the clip to the database. If the webpage is not saved, it will be saved first by parsing the DOM for web page metadata.
+   * 
+   * Note: This method will not work if called from non content script context as parsing the DOM is not possible.
    * @param data
    * @param tabData
    * @returns
    */
   async saveClip(
-    data: TextHighlightContent | VideoTimestampContent| WebScreenshotClipContent,
-    tabData?: TabData
+    data: IClipCapture
   ) {
-    // const response = await this.persistence.saveClip(data, tabData);
     let webpage = this.get();
-    if (!webpage.id && tabData) {
+    logger.log({ at: "saveClip", webpage, data });
+    if (!webpage.id) {
+      const tabData = extractFullTabData();
       await this.savePage(tabData);
     }
     webpage = this.get();
@@ -133,23 +126,95 @@ class WebpageStore extends ObservableStore<IWebpage> {
       metadata: data.metadata,
       parent: webpage.id,
       contentType: data.contentType,
+      label: undefined
     }
-    await nodeStore.createNode([clip],
+    const response = await nodeStore.createNode([clip],
       {
         isUseQueueFirstApproach: true,
         mutationId: `${this.id}-saveClip`
       });
+    if (!response) return;
+    const clipNode = response.resources[0] as IWebScreenshotClip;
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), clip];
+      n.clips = [...(n.clips ?? []), clipNode];
       return n;
     });
+    if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) { 
+      feedbackPane.focus(clipNode, "Clip saved!");
+    }
     return clip;
+  }
+  async saveTweet(data: IClipCapture<ITweet & {
+    username: string;
+    profileUrl: string;
+    authorName: string;
+    profileImageUrl: string;
+  }>, isFromTweetPage: boolean = false) { 
+    logger.log({ at: "saveTweet", data });
+    const id = generateResourceId(Resource.node);
+    const twitterProfileId = generateResourceId(Resource.node, {prefix: NodeIdPrefix.TWITTER_PROFILE, id: data.username})
+    const tweetNode: IClipCapture<ITweet> & { id: string } = {
+      id,
+      body: data.body,
+      metadata: data.metadata,
+      parent: twitterProfileId,
+      contentType: NodeType.TWEET,
+    };
+    const twitterProfileNode: IClipCapture<ITwitterProfile> = {
+      body: {
+        url: data.profileUrl,
+        name: data.authorName,
+        profileImageUrl: data.profileImageUrl
+      },
+      metadata: {},
+      contentType: NodeType.TWITTER_PROFILE
+    }
+    const response = await nodeStore.createNode([
+      { ...tweetNode, label: undefined },
+      { ...twitterProfileNode, id: twitterProfileId, label: undefined }
+    ], {
+      isUseQueueFirstApproach: true,
+      mutationId: `${this.id}-saveTweet`
+    });
+    if (!response) return;
+    const tweet = response.resources[0] as ITweet;
+    this.update((n) => {
+      n.clips = [...(n.clips ?? []), tweet];
+      if (isFromTweetPage) n.id = tweet.id;
+      return n;
+    });
+    feedbackPane.focus(tweet, "Tweet saved!");
+    return tweetNode;
+  }
+
+  /**
+   * Triggers from twitter profile page.
+   * @param data 
+   * @returns 
+   */
+  async saveTwitterProfile(data: IClipCapture<ITwitterProfile & { username: string}>) { 
+    const twitterProfileId = generateResourceId(Resource.node, { prefix: NodeIdPrefix.TWITTER_PROFILE, id: data.username })
+    logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
+    const response = await nodeStore.createNode([
+      { ...data, id: twitterProfileId, label: undefined }
+    ], {
+      isUseQueueFirstApproach: true,
+      mutationId: `${this.id}-saveTwitterProfile`
+    });
+    if (!response) return;
+    const node = response.resources[0] as ITwitterProfile;
+    this.update((n) => {
+      n.clips = [...(n.clips ?? []), node];
+      n.id = node.id;
+      return n;
+    });
+    feedbackPane.focus(node, "Twitter profile saved!");
+    return node;
   }
   async linkPage(to: string) {
     const isAlreadyLinked = this.get().links?.some((l) => l === to);
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
-    // const response = await this.persistence.link(this.get().id, to);
     const response = await linker.link(this.get().id, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -159,7 +224,6 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForPage(to: string) {
-    // const response = await this.persistence.unlink(this.get().id, to);
     const response = await linker.unlink(this.get().id, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
@@ -175,7 +239,6 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const isAlreadyLinked = clip.links?.some((l) => l === to);
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
-    // const response = await this.persistence.link(from, to);
     const response = await linker.link(from, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -191,7 +254,6 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForClip(from: string, to: string) {
-    // const response = await this.persistence.unlink(from, to);
     const response = await linker.unlink(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
@@ -262,6 +324,35 @@ class WebpageStore extends ObservableStore<IWebpage> {
 }
 export const webpage = new WebpageStore();
 
+
+class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> { 
+  constructor() {
+    super("feedbackPane",);
+    this.set({ isShown: false, feedback: "", focusedClip: null });
+  }
+  reset() {
+    this.update(() => {
+      return { isShown: false, feedback: "", focusedClip: null };
+    });
+  }
+  toggle() {
+    this.update((n) => {
+      n.isShown = !n.isShown;
+      return n;
+    });
+  }
+  focus(clip: IClip | null, message: string) {
+    this.update((n) => {
+      n.focusedClip = clip;
+      n.feedback = message;
+      n.isShown = true;
+      return n;
+    });
+  }
+}
+
+export const feedbackPane = new FeedbackPaneStore();
+
 class ClipperToolbarState extends KeyValueStore<
   {
     isOpen: boolean;
@@ -275,7 +366,8 @@ class ClipperToolbarState extends KeyValueStore<
       {
         refreshOnAppear: true,
         dboDependencies: [
-          // "fn::memotron::clipper::fetchPage",
+          "fn::memotron::clipper::fetchPage",
+          "fn::global::utils::resolveUrlParts::v2"
         ]
       }
     );

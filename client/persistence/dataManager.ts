@@ -210,6 +210,7 @@ function init() {
      * Refreshes and updates the store with the new data.
      */
     refreshApp: async () => {
+      logger.log({ at: "dataManager.refreshApp" });
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
       //await setSeedMutationMap();
@@ -240,6 +241,7 @@ function init() {
       const mutations = await mutationQueue
         .where("retryCount")
         .between(0, 3)
+        .and((x) => x.isInProgress === false)
         .toArray();
       if (mutations.length < 1) {
         return;
@@ -264,26 +266,30 @@ function init() {
         },
         LogType.INFO
       );
+      mutationQueue.bulkPut(mutations.map((x) => ({ ...x, isInProgress: true })));
       let response = await dm.db.query(masterQuery, {});
+      logger.log({
+        context: "syncPendingMutations - response",
+        response
+      },
+      LogType.INFO);
       if (!response) {
         for (let i = 0; i < mutations.length; i++) {
           await mutationQueue.update(mutations[i].id, {
-            retryCount: (mutations[i]?.retryCount ?? 0) + 1
+            retryCount: (mutations[i]?.retryCount ?? 0) + 1,
+            isInProgress: false
           });
         }
         return;
       }
       response = response.map((x: any) => checkSurrealResponse(x));
-      logger.log({
-        context: "syncPendingMutations - response",
-        response
-      });
       for (let i = 0; i < response.length; i++) {
         if (response[i] && mutations[i]) {
           await mutationQueue.delete(mutations[i].id);
         } else if (mutations[i]) {
           await mutationQueue.update(mutations[i].id, {
-            retryCount: (mutations[i]?.retryCount ?? 0) + 1
+            retryCount: (mutations[i]?.retryCount ?? 0) + 1,
+            isInProgress: false
           });
         }
       }
@@ -352,7 +358,8 @@ async function addToMutationQueue(
     query: params.query,
     params: params.params,
     mutatingResources: params.mutatingResources,
-    retryCount: 0
+    retryCount: 0,
+    isInProgress: false
   });
 }
 
