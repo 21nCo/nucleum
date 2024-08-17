@@ -11,7 +11,7 @@
     //TODO - based on resource type
     return "Untitled";
   }
-  $: console.log({ item });
+  // $: console.log({ item });
 </script>
 
 <div class="flex justify-between w-full">

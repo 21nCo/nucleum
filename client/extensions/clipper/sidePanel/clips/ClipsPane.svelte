@@ -4,20 +4,20 @@
     extractVideoId,
     isYoutubeVideoUrl
   } from "$lib/client/extensions/clipper/clipper.utils";
-  import {
-    ClipperExtensionEvent,
-    type Clip
-  } from "$lib/client/products/memotron/common/clip.type";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import EmptyStatusInbox from "$lib/client/illustrations/EmptyStatusInbox.svelte";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import {
+    NodeType,
+    type IClip
+  } from "$lib/client/products/memotron/node/node.type";
   import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
   import TextClip from "./TextClip.svelte";
   import VideoTimestampClip from "./VideoTimestampClip.svelte";
   // import "~style.css";
   let timestampData = [];
   let textData = [];
-  let clips: Clip[] = [];
+  let clips: IClip[] = [];
   refreshTabdatav2();
   /**
    * @deprecated - use refreshTabdatav2 instead
@@ -80,7 +80,7 @@
     const result = await new ClipperPersistence().fetchPage(url);
     // console.log("refreshTabdatav2", { url, result });
     if (result?.page?.clips && result.page.clips.length > 0) {
-      const rawClips: Clip[] = result.page.clips;
+      const rawClips: IClip[] = result.page.clips;
       textClips = rawClips.filter(
         (clip) => clip.contentType === NodeType.TEXT_CLIP
       );

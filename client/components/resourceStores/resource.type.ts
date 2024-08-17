@@ -92,3 +92,14 @@ export enum ResourceAccessPoint {
    */
   NODE_LINKS = "nodelinks"
 }
+
+
+export type IResourceCapture<T = IResource> = Omit<
+T,
+| "createdAt"
+| "modifiedAt"
+| "createdBy"
+| "modifiedBy"
+| "interactedAt"
+| "id"
+  >;

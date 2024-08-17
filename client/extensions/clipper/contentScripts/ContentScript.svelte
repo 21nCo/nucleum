@@ -1,50 +1,90 @@
 <script lang="ts">
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
-  import { extractFullTabData } from "$lib/client/extensions/clipper/clipper.utils";
+  import {
+    extractFullTabData,
+    extractMinimalTabData,
+    extractTweetFromTweeetPage,
+    extractTwitterProfile,
+    resolveContentTypeForUrl
+  } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/FeedbackPane.svelte";
   import ClipperShortcuts from "$lib/client/extensions/clipper/ClipperShortcuts.svelte";
-  import { onMount } from "svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
-  import { fade } from "svelte/transition";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import MultimediaClipper from "$lib/client/extensions/clipper/contentScripts/MultimediaClipper.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
-  import { webpage, toolbarState } from "./store";
+  import { webpage, toolbarState, feedbackPane } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
   import { linker } from "$lib/client/products/memotron/memotron.store";
   import ScreenShot from "./ScreenShot.svelte";
-  import type { IImageElement } from "./types";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import account from "$lib/client/stores/account.store";
+  import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
   export let id: string;
-  let nodeId: string = "";
   let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
-  let isShowFeedbackPane = false;
-  let feedback = "";
-  let isSnipEnabled: boolean = false;
-  let image: IImageElement | null = null;
+  let isSnipActive: boolean = false;
+  $: contentType = resolveContentTypeForUrl($webpage.url);
   function onActivateColor(e) {
     textClipperRef.onActivateColor(e);
   }
-  async function onsaveWebpageClick() {
-    feedback = "Saving page...";
-    isShowFeedbackPane = true;
-    const data = extractFullTabData();
-    await webpage.savePage(data);
-    feedback = "Page saved!";
+  async function onSaveClick() {
+    const contentTypeStr = enumToString(contentType);
+    $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
+    $feedbackPane.isShown = true;
+    if (contentType === NodeType.WEB_PAGE) {
+      await saveGenericWebpage();
+    } else if (contentType === NodeType.TWEET) {
+      const tweetNode = extractTweetFromTweeetPage();
+      if (!tweetNode) return;
+      await webpage.saveTweet(tweetNode, true);
+    } else if (contentType === NodeType.TWITTER_PROFILE) {
+      const data = extractTwitterProfile();
+      if (!data) return;
+      await webpage.saveTwitterProfile(data);
+    }
+    $feedbackPane.feedback = `${contentTypeStr} saved!`;
   }
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Content script - message received: ", {
-      message,
-      sender
+
+  function saveGenericWebpage() {
+    return new Promise(async (resolve, reject) => {
+      const host = window.location.host;
+      console.log({ host });
+      if (
+        commonMetadata.some(
+          (x) => host === x.domain || host.includes("." + x.domain)
+        )
+      ) {
+        console.log("minimal metadata page");
+        const tab = extractMinimalTabData();
+        await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });
+        resolve(true);
+        return;
+      }
+      screenshotWebpage(async (s3Url) => {
+        const tab = extractFullTabData();
+        tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
+        await webpage.savePage(tab);
+        resolve(true);
+      });
     });
+  }
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (
       message.event === ExtensionEvent.TAB_CHANGE ||
       message.event === ExtensionEvent.TAB_UPDATE
     ) {
+      logger.log({
+        at: "onMessage - tab change or update",
+        event: message.event,
+        message
+      });
       webpage.onContextChange(message.tab);
       return;
     } else if (message.event === ExtensionEvent.READ_PAGE_CONTENT) {
@@ -57,10 +97,36 @@
       webpage.propagatePageStatusFromSidebar({ id: message.node });
     }
   });
-  function resetFeedbackPaneInputs() {
-    image = null;
-    nodeId = "";
-    feedback = "";
+
+  function screenshotWebpage(callback: (data: string) => void) {
+    chrome.runtime.sendMessage(
+      {
+        event: ClipperExtensionEvent.SCREENSHOT
+      },
+      (data) => {
+        processScreenshot(data);
+      }
+    );
+
+    async function processScreenshot(dataURL) {
+      const contentType = "image/png";
+      const s3SignedURL = await account.getSignedUrl(
+        contentType,
+        "screenshot.png",
+        false
+      );
+      chrome.runtime.sendMessage(
+        {
+          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+          data: { s3SignedURL, dataURL, contentType }
+        },
+        (response) => {
+          if (response == 200) {
+            callback(s3SignedURL.uploadURL.split("?")[0]);
+          }
+        }
+      );
+    }
   }
 </script>
 
@@ -73,43 +139,37 @@
   {:else}
     <Toolbar
       {colors}
+      {contentType}
+      bind:isSnipActive
       on:color={onActivateColor}
-      on:save={onsaveWebpageClick}
+      on:save={onSaveClick}
       on:saved={() => {
-        feedback = "Page saved!";
-        isShowFeedbackPane = !isShowFeedbackPane;
-      }}
-      on:snip={() => {
-        isSnipEnabled = !isSnipEnabled;
+        $feedbackPane.feedback = "Page saved!";
+        feedbackPane.toggle();
       }}
       on:summarize
       on:collapse={() => toolbarState.toggle(false)}
     />
-    {#if isShowFeedbackPane}
+    {#if $feedbackPane.isShown}
       <!-- <div out:fade={{ duration: 150 }}> -->
-      <FeedbackPane
-        bind:feedback
-        bind:isShown={isShowFeedbackPane}
-        on:resetInputs={resetFeedbackPaneInputs}
-        {image}
-        {nodeId}
-      />
+      <FeedbackPane />
       <!-- </div> -->
     {/if}
     <TextClipper bind:this={textClipperRef} {colors} />
     <MultimediaClipper {colors} />
-    {#if isSnipEnabled}<ScreenShot
-        on:snipSaved={(e) => {
-          image = { src: e.detail.s3URL, alt: "Screenshot" };
-          nodeId = e.detail.id;
-          feedback = "Screenshot saved!";
-          isShowFeedbackPane = false;
-          isShowFeedbackPane = true;
+    {#if isSnipActive}
+      <ScreenShot
+        on:saved={() => {
+          isSnipActive = false;
         }}
-      />{/if}
+        on:close={() => {
+          isSnipActive = false;
+        }}
+      />
+    {/if}
   {/if}
   <ClipperShortcuts
-    on:save={onsaveWebpageClick}
+    on:save={onSaveClick}
     on:collapse={() => {
       toolbarState.toggle();
     }}

@@ -1,16 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import { renderPopover, resolveHoverState } from "../utils/browser.utils";
-  import type { IPopoverRenderBaseParams } from "../types/popover.type";
   import { Position } from "../types/direction.enum";
   import Tooltip from "./text/Tooltip.svelte";
+  import type { IToolTipOptions } from "./text/text.type";
   export let type: string = "div";
   export let id: string = "";
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
-  export let tooltipOptions: IPopoverRenderBaseParams & {
-    delay?: number;
-  } = {
+  export let tooltipOptions: IToolTipOptions = {
     placement: Position.BottomCenter,
     offsetInPx: 4,
     isSpanToTriggerWidth: false,

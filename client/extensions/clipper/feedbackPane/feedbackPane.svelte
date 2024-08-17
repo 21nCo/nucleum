@@ -5,35 +5,38 @@
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { createEventDispatcher, onMount } from "svelte";
-  import { toolbarState, webpage } from "../contentScripts/store";
+  import { onMount } from "svelte";
+  import { feedbackPane, toolbarState, webpage } from "../contentScripts/store";
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   import InlineFeedbackText from "../InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import type { IImageElement } from "../contentScripts/types";
-  export let isShown: boolean = false;
-  export let feedback: string = "";
-  export let image: IImageElement | null = null;
-  export let nodeId: string = "";
-
-  const dispatch = createEventDispatcher();
-  let content = image ? "image" : "webpage";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import { resolveContentTypeString } from "../clipper.utils";
+  import { truncateString } from "$lib/shared/utils/text.utils";
   let notes: string = "";
   let autoCloseDuration = 30;
   let closeTimer: any;
   let closeActionTimestamp: number;
   let isHovering = false;
   let now = Date.now();
+  $: contentTypeStr = resolveContentTypeString(
+    $feedbackPane.focusedClip?.contentType
+  );
+
+  let notesTimeout: any;
   async function onNotesChange(e: CustomEvent) {
-    feedback = "Saving...";
-    console.log("saving notes", nodeId, notes, image);
-    if (image && nodeId) {
-      const response = await webpage.persistClipNotes(nodeId, notes);
+    $feedbackPane.feedback = "Saving...";
+    if ($feedbackPane.focusedClip) {
+      const response = await webpage.persistClipNotes(
+        $feedbackPane.focusedClip.id,
+        notes
+      );
     } else $webpage.notes = notes;
     //TODO - TEMP - show feedback from result - getting result from debounded function
-    setTimeout(() => {
-      feedback = "Notes saved!";
+    clearTimeout(notesTimeout);
+    notesTimeout = setTimeout(() => {
+      $feedbackPane.feedback = "Notes saved!";
     }, 1000);
   }
   function onHover() {
@@ -46,8 +49,7 @@
     };
   });
   function closePane() {
-    isShown = false;
-    dispatch("resetInputs");
+    feedbackPane.reset();
   }
   function restartCloseTimer() {
     clearTimeout(closeTimer);
@@ -60,24 +62,29 @@
     }, autoCloseDuration * 1000);
   }
   async function onLink(e) {
-    feedback = "Linking...";
+    $feedbackPane.feedback = "Linking...";
     let result;
     if (e.detail) {
-      if (image) result = await webpage.linkClip(nodeId, e.detail);
+      if ($feedbackPane.focusedClip)
+        result = await webpage.linkClip($feedbackPane.focusedClip.id, e.detail);
       else result = await webpage.linkPage(e.detail);
     }
-    feedback = result?.message
+    $feedbackPane.feedback = result?.message
       ? result
       : { message: "Linking failed", type: AlertType.ERROR };
   }
   async function onUnlink(e) {
-    feedback = "Removing link...";
+    $feedbackPane.feedback = "Removing link...";
     let result;
     if (e.detail) {
-      if (image) result = await webpage.removeLinkForClip(nodeId, e.detail);
+      if ($feedbackPane.focusedClip)
+        result = await webpage.removeLinkForClip(
+          $feedbackPane.focusedClip.id,
+          e.detail
+        );
       else result = await webpage.removeLinkForPage(e.detail);
     }
-    feedback = result?.message
+    $feedbackPane.feedback = result?.message
       ? result
       : { message: "Unlinking failed", type: AlertType.ERROR };
   }
@@ -108,16 +115,16 @@
       <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
       <FormControlLabel
         props={{
-          label: `Link this ${content}`,
+          label: `Link this ${contentTypeStr}`,
           tooltip: {
-            body: `Link this ${content} to a node or add it to a collection by searching and clicking`
+            body: `Link this ${contentTypeStr} to a node or add it to a collection by searching and clicking`
           }
         }}
       />
       <span class="h-6 w-6 flex justify-center items-center">
         {#if isHovering}
           <Button icon="cross-circled" on:click={closePane} />
-        {:else if isShown}
+        {:else if $feedbackPane.isShown}
           <!-- TODO closing animation circle -->
           <span
             class="border border-fgs2 rounded-full text-b4 text-fgs2 px-1 h-4 flex justify-center items-center"
@@ -143,8 +150,16 @@
       on:input={onNotesChange}
     />
   </div>
-  {#if image != null}
-    <img src={image.src} alt={image.alt} class="w-full" />
+  {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+    <img
+      src={$feedbackPane.focusedClip.body.s3URL}
+      alt="Screenshot"
+      class="w-full"
+    />
+  {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
+    <span class="text-b3">
+      {truncateString($feedbackPane.focusedClip.body.content, 200)}
+    </span>
   {/if}
-  <InlineFeedbackText bind:feedback />
+  <InlineFeedbackText bind:feedback={$feedbackPane.feedback} />
 </HoverableElement>

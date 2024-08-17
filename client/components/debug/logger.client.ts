@@ -3,15 +3,23 @@ import { LogType } from "./debug.type";
 class Logger {
   level: LogType;
   constructor() {
-    const logQueryParam = window.location.search
-      .split("?")[1]
-      ?.split("&")
-      .find((x) => x.startsWith("log="));
-    if (logQueryParam) {
-      const logLevel = logQueryParam.split("=")[1];
-      this.level = +logLevel as LogType;
-    } else {
-      this.level = LogType.INFO;
+    try {
+      if (window?.location?.search?.includes("log=")) {
+        const logQueryParam = window?.location?.search
+          .split("?")[1]
+          ?.split("&")
+          .find((x) => x.startsWith("log="));
+        const logLevel = logQueryParam?.split("=")[1];
+        this.level = +(logLevel ?? "0") as LogType;
+      } else {
+        this.level =
+          import.meta.env?.VITE_LOG_LEVEL ??
+          process.env.PLASMO_PUBLIC_LOG_LEVEL ??
+          LogType.INFO;
+      }
+    } catch (e) {
+      console.error("Error setting log level", e);
+      this.level = LogType.ERROR;
     }
   }
 

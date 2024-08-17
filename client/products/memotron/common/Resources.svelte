@@ -12,6 +12,7 @@
     ResourceAccessMode
   } from "$lib/client/components/resourceStores/resource.type";
   import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { appStore } from "$lib/client/stores/app.store";
   export let data: any[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -22,19 +23,9 @@
   $: multiSelectContext = resource + "-" + accessPoint;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   function onClick(e: MouseEvent, item: any) {
-    multiSelectStore.clickHandler(e, item.id, {
-      accessMode: defaultAccessMode
-    });
-    // if ($selectedResources.length > 0) {
-    //   const isSelected = $selectedResources.includes(item.id);
-    //   if (isSelected) {
-    //     $selectedResources = $selectedResources.filter((x) => x != item.id);
-    //     return;
-    //   }
-    //   $selectedResources = [...$selectedResources, item.id];
-    //   return;
-    // }
-    // appStore.resourceClickHandler(e, item.id, defaultAccessMode);
+    console.log("onClick", item, e);
+    const result = multiSelectStore.clickHandler(item.id);
+    if (!result) appStore.resourceClickHandler(e, item.id, defaultAccessMode);
   }
 </script>
 

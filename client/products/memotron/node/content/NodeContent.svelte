@@ -21,6 +21,7 @@
   import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let node: IActiveNodeStore;
   export let mdId: string;
   let previousRootStructure: string[] = [];
@@ -29,7 +30,7 @@
   onMount(() => {
     refreshCounts();
     const focusEventSub = node.eventStore.subscribe((x) => {
-      console.log("nodeFocusEvent", { x, id: $node.id });
+      logger.log({ at: "Node content - nodeFocusEvent", x, id: $node.id });
       if (!x) return;
       const currentAccessMode = appStore.determineCurrentResourceAccessMode(
         $node.id
@@ -42,7 +43,6 @@
         return;
       }
       const result = markdownRef?.focus(x.id);
-      console.log("focus result", { result });
       if (result.status === 1) {
         node.onFocus(x.id, result.parent);
       } else if (result.status === 0) {

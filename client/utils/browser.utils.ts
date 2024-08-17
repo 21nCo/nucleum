@@ -362,6 +362,12 @@ export function resolveModalOnFront() {
   return modals[modals.length - 1];
 }
 
+/**
+ * Tracks the position of an element in the viewport.
+ * @param node
+ * @param options
+ * @returns
+ */
 export function trackPosition(node, options = {}) {
   let frame;
   let lastX = 0;
@@ -390,6 +396,31 @@ export function trackPosition(node, options = {}) {
   return {
     destroy() {
       cancelAnimationFrame(frame);
+    }
+  };
+}
+
+/**
+ * Lazy loads an image when it is in the viewport.
+ * @param image
+ * @param src
+ * @returns
+ */
+export function lazyLoad(image, src) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        image.src = src;
+        observer.unobserve(image);
+      }
+    });
+  });
+
+  observer.observe(image);
+
+  return {
+    destroy() {
+      observer.unobserve(image);
     }
   };
 }

@@ -1,9 +1,6 @@
 <script lang="ts">
-  import type {
-    Clip,
-    TextHighlightContent
-  } from "$lib/client/products/memotron/common/clip.type";
-  export let clip: Clip<TextHighlightContent>;
+  import type { ITextClip } from "$lib/client/products/memotron/node/node.type";
+  export let clip: ITextClip;
   export let id: string = "";
 </script>
 

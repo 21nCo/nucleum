@@ -1,7 +1,12 @@
-import { NodeType, type ITweetNode, type IWebPageNode } from "$lib/client/products/memotron/node/node.type";
+import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
+import { NodeType, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage,} from "$lib/client/products/memotron/node/node.type";
 import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
 import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
 import * as CryptoJS from "crypto-js";
+import { contentTypeMap } from "$lib/client/products/memotron/common/urlMap";
+import { enumToString } from "$lib/shared/utils/text.utils";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/clip.type";
 
 export function isYoutubeVideoUrl(url) {
     const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -107,67 +112,283 @@ export async function resolveCurrentTabData(
     }
   }
   
-  /**
-   * Extracts full tab data from the current tab.
-   * Note: This function should be called only from the content script.
-   * @returns TabData
-   */
-  export function extractFullTabData(): IWebPageNode {
-    const bodyContent = document.body.innerHTML;
-    const title = document.title;
-    const faviconLink = (
-      document.querySelector("link[rel*='icon']") as HTMLLinkElement
-    )?.href;
-    const appIconLinks = Array.from(
-      document.querySelectorAll("link[rel='apple-touch-icon']"),
-      (link) => (link as HTMLLinkElement).href
-    );
-    const description = (
-      document.querySelector("meta[name='description']") as HTMLMetaElement
-    )?.content;
-    const keywords = (
-      document.querySelector("meta[name='keywords']") as HTMLMetaElement
-    )?.content;
-    const ogImage = (
-      document.querySelector("meta[property='og:image']") as HTMLMetaElement
-    )?.content;
-    const ogTitle = (
-      document.querySelector("meta[property='og:title']") as HTMLMetaElement
-    )?.content;
-    const ogDescription = (
-      document.querySelector("meta[property='og:description']") as HTMLMetaElement
-    )?.content;
-    const ogUrl = (
-      document.querySelector("meta[property='og:url']") as HTMLMetaElement
-    )?.content;
-    const ogSiteName = (
-      document.querySelector("meta[property='og:site_name']") as HTMLMetaElement
-    )?.content;
-    const twitterCard = (
-      document.querySelector("meta[name='twitter:card']") as HTMLMetaElement
-    )?.content;
-    const hash = CryptoJS.SHA256(bodyContent).toString();
+/**
+ * Extracts full tab data from the current tab.
+ * Note: This function should be called only from the content script.
+ * @returns TabData
+ */
+export function extractFullTabData(): IResourceCapture<IWebPage> {
+  const title = document.title;
+  const faviconLink = (
+    document.querySelector("link[rel*='icon']") as HTMLLinkElement
+  )?.href;
+  const appIconLinks = Array.from(
+    document.querySelectorAll("link[rel='apple-touch-icon']"),
+    (link) => (link as HTMLLinkElement).href
+  );
+  const description = (
+    document.querySelector("meta[name='description']") as HTMLMetaElement
+  )?.content;
+  const keywords = (
+    document.querySelector("meta[name='keywords']") as HTMLMetaElement
+  )?.content;
+  const twitterCard = (
+    document.querySelector("meta[name='twitter:card']") as HTMLMetaElement
+  )?.content;
+  const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
+  const hash = generateContentHash(document.body.innerHTML);
+  return {
+    label: title,
+    contentType: NodeType.WEB_PAGE,
+    body: {
+      url: window.location.href,
+      hash,
+      description,
+    },
+    metadata: {
+      faviconLink,
+      appIconLinks,
+      keywords,
+      ogImage,
+      ogTitle,
+      ogDescription,
+      ogUrl,
+      twitterCard
+    }
+  };
+}
+
+export function extractMinimalTabData(): IResourceCapture<IWebPage> { 
+  const title = document.title;
+  const hash = generateContentHash(document.body.innerHTML);
+  const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
+  return {
+    metadata: { ogTitle, ogImage, ogDescription, ogUrl }, label: title, contentType: NodeType.WEB_PAGE, body: { url: window.location.href, hash }
+  };
+}
+
+function generateContentHash(content: string) {
+  return CryptoJS.SHA256(content).toString();
+}
+
+function resolveOgData() {
+  const ogTitle = (
+    document.querySelector("meta[property='og:title']") as HTMLMetaElement
+  )?.content
+  const ogImage = (
+    document.querySelector("meta[property='og:image']") as HTMLMetaElement
+  )?.content;
+  const ogDescription = (
+    document.querySelector("meta[property='og:description']") as HTMLMetaElement
+  )?.content;
+  const ogUrl = (
+    document.querySelector("meta[property='og:url']") as HTMLMetaElement
+  )?.content;
+  const ogSiteName = (
+    document.querySelector("meta[property='og:site_name']") as HTMLMetaElement
+  )?.content;
+  return {ogTitle, ogImage, ogDescription, ogUrl, ogSiteName};
+}
+
+
+
+export function resolveContentTypeString(contentType: NodeType | null) {
+  if (!contentType) return "webpage";
+  else if (contentType === NodeType.WEB_SCREENSHOT_CLIP)
+    return "screenshot";
+  else return enumToString(contentType);
+}
+
+export function resolveContentTypeForUrl(url: string) {
+  return contentTypeMap.find((item) => item.regex.some((regex) => regex.test(url)))?.contentType ?? NodeType.WEB_PAGE;
+}
+
+
+
+/**
+ * 
+ * Note: media is not currently included in the content of the tweet as it might require reuploading the media to s3 and using in the app.
+ * 
+ * @param tweetArticle 
+ * @returns 
+ */
+function parseTweetContent(tweetArticle: Element): IClipCapture<
+  ITweet & {
+    username: string;
+    profileUrl: string;
+    authorName: string;
+    profileImageUrl: string;
+  }
+> {
+  if (!tweetArticle) return;
+  const tweetBody = tweetArticle.querySelector('[data-testid="tweetText"]');
+  const linkElements = tweetArticle.querySelectorAll("a");
+  const timeElements = tweetArticle.querySelectorAll("time");
+
+  let tweetContent = tweetBody
+    ? tweetBody.textContent
+    : "No tweet content found";
+  let tweetLinks = Array.from(linkElements).map((link) => ({
+    text: link.textContent,
+    href: link.getAttribute("href")
+  }));
+  let tweetTime = Array.from(timeElements).map((time) => {
     return {
-      label: title,
-      contentType: NodeType.WEB_PAGE,
-      body: {
-        url: window.location.href,
-        hash,
-        description,
-      },
-      metadata: {
-        faviconLink,
-        appIconLinks,
-        keywords,
-        ogImage,
-        ogTitle,
-        ogDescription,
-        ogUrl,
-        twitterCard
+      text: time.textContent,
+      datetime: time.getAttribute("datetime")
+    };
+  });
+  const { ogTitle } = resolveOgData();
+
+  logger.log({
+    at: "parsedTweetContent",
+    tweetContent,
+    tweetLinks,
+    tweetTime
+  });
+  const domain = contentTypeMap.find((item) => item.contentType === NodeType.TWEET)?.currentDomain;
+  const {
+    username,
+    authorName,
+    tweetId,
+    externalLinks,
+    profileImageUrl
+  } = extractInfoFromLinks(tweetLinks);
+  return {
+    contentType: NodeType.TWEET,
+    body: {
+      url: `https://${domain}/${username}/status/${tweetId}`,
+      content: tweetContent,
+      postedAt: tweetTime[0]?.datetime
+    },
+    metadata: {
+      tweetId,
+      ogTitle,
+      externalLinks
+    },
+    username,
+    profileUrl: `https://${domain}/${username}`,
+    authorName,
+    profileImageUrl
+  };
+
+  function extractInfoFromLinks(data) {
+    let username = "";
+    let authorName = "";
+    let tweetId = "";
+    const currentUrl = window.location.pathname;
+
+    const urlMatch = currentUrl.match(/\/(\w+)\/status\/(\d+)/);
+    if (urlMatch) {
+      username = urlMatch[1];
+      tweetId = urlMatch[2];
+    } else {
+      const statusItem = data.find((item) => item.href.includes("/status/"));
+      if (statusItem) {
+        const match = statusItem.href.match(/\/(\w+)\/status\/(\d+)/);
+        if (match) {
+          username = match[1];
+          tweetId = match[2];
+        }
       }
+    }
+    if (username) {
+      const authorItem = data.find(
+        (item) =>
+          item.href === `/${username}` &&
+          item.text &&
+          item.text !== `@${username}`
+      );
+      if (authorItem) {
+        authorName = authorItem.text;
+      }
+    }
+    const media = data
+      .filter((item) => item.href.includes("/photo"))
+      .map((item) => item.href);
+    const imgElements = tweetArticle.querySelectorAll("img");
+    if (imgElements) {
+      media.push(...Array.from(imgElements).map((img) => img.src));
+    }
+    const externalLinks = data
+      .filter((item) => item.href.includes("https://"))
+      .map((item) => item.href);
+    const profileImageUrl = media.find((item) =>
+      item.includes("profile_images")
+    );
+    return {
+      username,
+      authorName,
+      tweetId,
+      externalLinks,
+      profileImageUrl
     };
   }
-  
-export function extractTweetData(): ITweetNode { 
-  
 }
+
+export function extractTweet(element) {
+  const tweetArticle = findAncestorOrSelf(element, 'article[data-testid="tweet"]');
+  if (!tweetArticle) return;
+  return parseTweetContent(tweetArticle);
+
+  function findAncestorOrSelf(element, selector) {
+    if (element.matches(selector)) {
+      return element;
+    }
+    let currentElement = element;
+    while (currentElement) {
+      if (
+        currentElement.nodeType === Node.DOCUMENT_FRAGMENT_NODE &&
+        currentElement.host
+      ) {
+        currentElement = currentElement.host;
+      } else {
+        currentElement = currentElement.parentNode;
+      }
+      if (!currentElement || currentElement === document) {
+        return null;
+      }
+      if (currentElement.matches && currentElement.matches(selector)) {
+        return currentElement;
+      }
+    }
+    return null;
+  }
+
+}
+
+export function extractTweetFromTweeetPage() {
+  const tweetElement = document.getElementById(
+    ClipperElementIdentifier.MAIN_TWEET_POST
+  );
+  const tweetId = window.location.pathname.split("/status/")[1];
+  const regex = new RegExp(tweetId, 'i');
+  const allLinks = document.querySelectorAll('a');
+  const element = Array.from(allLinks).find(link => regex.test(link.getAttribute('href')));
+  if (!tweetElement && !element) return;
+  return extractTweet(tweetElement ?? element);
+}
+
+/**
+ * This function is triggered from twitter profile page.
+ * @returns 
+ */
+export function extractTwitterProfile(): IClipCapture<ITwitterProfile & {
+  username: string;
+}> { 
+  const bioElement = document.querySelector('[data-testid="UserDescription"]');
+  const nameElement = document.querySelector('[data-testid="UserName"]');
+  const linkElement = document.querySelector('[data-testid="UserUrl"]');
+  const avatarElement = document.querySelector('[data-testid^="UserAvatar-Container-"]');
+  const imgElement = avatarElement?.querySelector('img');
+  const { ogTitle } = resolveOgData();
+  const profileImageUrl = imgElement?.src;
+  const name = nameElement?.textContent?.split("@")[0];
+  const bio = bioElement?.textContent;
+  const bioLink = linkElement?.href;
+  const bioLinkText = linkElement?.textContent;
+  const url = window.location.href;
+  const username = url.split("https://")[1].split("/")[1];
+  return { body: { name, bio, url, profileImageUrl }, metadata:{ ogTitle, bioLink, bioLinkText }, username, contentType: NodeType.TWITTER_PROFILE };
+}
+

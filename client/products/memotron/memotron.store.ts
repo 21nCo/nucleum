@@ -231,7 +231,10 @@ export class SearchStore {
     }
     //TODO - use sort from library state settings
     //.reverse().sortBy("interactedAt");
-    return data;
+    return data.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   private recentNodes() {

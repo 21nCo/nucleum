@@ -94,7 +94,7 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md border border-brs2 p-4",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-4",
         {
           "w-full": accessMode === ResourceAccessMode.POP,
           "rounded-md": accessMode === ResourceAccessMode.FOCUS

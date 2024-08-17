@@ -124,7 +124,7 @@
     {/if}
     <slot />
     {#if !isHideLabel}
-      <span class="w-min {isActive ? 'font-medium' : ''}"
+      <span class="w-min whitespace-nowrap {isActive ? 'font-medium' : ''}"
         >{properCase(item?.label ?? item?.value?.toString())}</span
       >
     {/if}

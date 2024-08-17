@@ -40,27 +40,18 @@ class MultiSelectStore extends ObservableStore<string[]> {
     super(context, StoreDataType.NA);
     this.set([]);
   }
-  clickHandler(
-    e: MouseEvent,
-    id: string,
-    params?: {
-      accessMode?: ResourceAccessMode;
-    }
-  ) {
+  clickHandler(id: string) {
     let current = this.get();
     if (current.length > 0) {
       const isSelected = current.includes(id);
       if (isSelected) {
         current = current.filter((x) => x != id);
         this.set(current);
-        return;
+        return true;
       }
       this.set([...current, id]);
-      return;
+      return true;
     }
-    //TODO - this is creating a circular dependency
-    if (params?.accessMode)
-      appStore.resourceClickHandler(e, id, params.accessMode);
   }
 }
 
@@ -159,7 +150,7 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @param params additional params like custom query, queue params etc.
    * @returns
    */
-  create(
+  async create(
     input: Partial<T> | Partial<T>[],
     params?: {
       customQuery?: string;
@@ -200,12 +191,13 @@ export class ResourceStore<T extends IResource> implements IStore {
         data = input;
       }
     }
-    return dataManager.performMutationForIFR(this.id, data, {
+    await dataManager.performMutationForIFR(this.id, data, {
       action,
       query: params?.customQuery,
       queueParams: params?.queueParams,
       cacheStrategy: this.cacheStrategy
     });
+    return data;
   }
   /**
    * Modifies the resource with given id - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.
