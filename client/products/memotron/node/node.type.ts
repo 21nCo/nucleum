@@ -6,21 +6,23 @@ import type {
   IProperty,
   IPropertyValue
 } from "$lib/client/products/memotron/collection/properties/property.type";
-import { ResourceAccessMode, type IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
+import {
+  ResourceAccessMode,
+  type IResourceCapture
+} from "$lib/client/components/resourceStores/resource.type";
 
-
-export type INode = ((INodeInterface<NodeType, NodeContent, INodeMetadata>) | IClip) & 
-  {
-
-    children?: INode[] | string[];
-    childrenHierarchy?: string[];
-    forelinks?: LinkThumbnail[];
-  }; 
-
+export type INode = (
+  | INodeInterface<NodeType, NodeContent, INodeMetadata>
+  | IClip
+) & {
+  children?: INode[] | string[];
+  childrenHierarchy?: string[];
+  forelinks?: LinkThumbnail[];
+};
 
 export type INodeItemCaptured = IResourceCapture<INodeInterface> & {
   id: string;
-}
+};
 
 export type INodeThumbnail = INodeBase &
   NodeContent & {
@@ -43,7 +45,11 @@ export type INodeBase = IMemotronItemBase & {
   creationContext?: string;
 };
 
-type INodeInterface<TType = NodeType, TBody = any,TMetadata = any> = INodeBase & {
+type INodeInterface<
+  TType = NodeType,
+  TBody = any,
+  TMetadata = any
+> = INodeBase & {
   body: TBody;
   contentType: TType;
   metadata?: TMetadata;
@@ -238,14 +244,19 @@ export enum NodeType {
   GITLAB_PROJECT = "GITLAB_PROJECT"
 }
 
-export const ClipNodeTypeList = [
+/**
+ * Web node types with body.url present.
+ */
+export const webNodeTypeList = [
   NodeType.WEB_PAGE,
   NodeType.TEXT_CLIP,
   NodeType.IMAGE_CLIP,
   NodeType.AUDIO_CLIP,
   NodeType.VIDEO_CLIP,
   NodeType.PDF_CLIP,
-  NodeType.VIDEO_TIMESTAMP_CLIP
+  NodeType.VIDEO_TIMESTAMP_CLIP,
+  NodeType.TWEET,
+  NodeType.TWITTER_PROFILE
 ];
 export const headingNodeTypes = [
   NodeType.HEADING1,
@@ -262,7 +273,10 @@ export const rootNodeTypeList = [
   NodeType.IMAGE,
   NodeType.VIDEO,
   NodeType.AUDIO,
-  NodeType.WEB_PAGE
+  NodeType.WEB_PAGE,
+  NodeType.WEB_SCREENSHOT_CLIP,
+  NodeType.TWEET,
+  NodeType.TWITTER_PROFILE
 ];
 
 export const TextNodeTypeList = [
@@ -333,7 +347,7 @@ export enum LinkType {
   SUGGESTION = "SUGGESTION"
 }
 
-export type INodeMetadata = { location?: any; }
+export type INodeMetadata = { location?: any };
 
 export type INodeProperty = {
   id: string;
@@ -365,14 +379,16 @@ export type INodeStructure = {
   children: string[];
 };
 
-
-
 type IWebPageBody = {
   url: string;
   hash: string;
   description?: string;
 };
-export type IWebPage = INodeInterface<NodeType.WEB_PAGE, IWebPageBody, IWebPageMetadata>;
+export type IWebPage = INodeInterface<
+  NodeType.WEB_PAGE,
+  IWebPageBody,
+  IWebPageMetadata
+>;
 
 /**
  * @deprecated - use {@link IWebPage} instead
@@ -382,11 +398,11 @@ export type IWebPageNode = {
     url: string;
     hash: string;
     description?: string;
-  },
+  };
   label: string;
   metadata: IWebPageMetadata;
   contentType: NodeType.WEB_PAGE;
-}
+};
 
 export type IWebPageMetadata = {
   favicon?: string;
@@ -400,59 +416,68 @@ export type IWebPageMetadata = {
   ogUrl?: string;
   twitterCard?: string;
   screenshotUrl?: string;
-}
-
+};
 
 type ITextClipBody = {
   text: string;
   pre?: string;
   post?: string;
   color: string;
-}
+};
 type ITextClipMetadata = {
   container: string;
   anchorNode: string;
   focusNode: string;
   anchorOffset: number;
   focusOffset: number;
-}
-export type ITextClip = INodeInterface<NodeType.TEXT_CLIP, ITextClipBody, ITextClipMetadata>;
-
+};
+export type ITextClip = INodeInterface<
+  NodeType.TEXT_CLIP,
+  ITextClipBody,
+  ITextClipMetadata
+>;
 
 type IVideoTimestampClipBody = {
   timestamp: number;
   url: string;
-}
-export type IVideoTimestampClip = INodeInterface<NodeType.VIDEO_TIMESTAMP_CLIP, IVideoTimestampClipBody, any>;
-
+};
+export type IVideoTimestampClip = INodeInterface<
+  NodeType.VIDEO_TIMESTAMP_CLIP,
+  IVideoTimestampClipBody,
+  any
+>;
 
 type IWebScreenshotClipBody = {
   s3URL: string;
-}
-export type IWebScreenshotClip = INodeInterface<NodeType.WEB_SCREENSHOT_CLIP, IWebScreenshotClipBody, any>;
-
+};
+export type IWebScreenshotClip = INodeInterface<
+  NodeType.WEB_SCREENSHOT_CLIP,
+  IWebScreenshotClipBody,
+  any
+>;
 
 type IMultimediaClipBody = {
   srcUrl: string;
   url: string;
   color: string;
-}
-export type IMultimediaClip = INodeInterface<NodeType.IMAGE_CLIP, IMultimediaClipBody, any>;
+};
+export type IMultimediaClip = INodeInterface<
+  NodeType.IMAGE_CLIP,
+  IMultimediaClipBody,
+  any
+>;
 
-
-
-type ITweetBody = {
+export type ITweetBody = {
   url: string;
   content: string;
   postedAt: string;
-}
+};
 type ITweetMetadata = IWebPageMetadata & {
   tweetId?: string;
   media?: string[];
   externalLinks?: string[];
-}
+};
 export type ITweet = INodeInterface<NodeType.TWEET, ITweetBody, ITweetMetadata>;
-
 
 type ITwitterProfileBody = {
   url: string;
@@ -460,16 +485,23 @@ type ITwitterProfileBody = {
   bio?: string;
   bioLink?: string;
   profileImageUrl: string;
-}
-export type ITwitterProfile = INodeInterface<NodeType.TWITTER_PROFILE, ITwitterProfileBody, IWebPageMetadata>;
+};
+export type ITwitterProfile = INodeInterface<
+  NodeType.TWITTER_PROFILE,
+  ITwitterProfileBody,
+  IWebPageMetadata
+>;
 
-export type IClip = ITwitterProfile | ITweet | IMultimediaClip | IVideoTimestampClip | ITextClip | IWebScreenshotClip;
+export type IClip =
+  | ITwitterProfile
+  | ITweet
+  | IMultimediaClip
+  | IVideoTimestampClip
+  | ITextClip
+  | IWebScreenshotClip;
 
-export type IClipCapture<T = IClip> = Omit<IResourceCapture<T>, 'label'>
-
-
-
+export type IClipCapture<T = IClip> = Omit<IResourceCapture<T>, "label">;
 
 export enum NodeIdPrefix {
-  TWITTER_PROFILE = "twitterProfile",
+  TWITTER_PROFILE = "twitterProfile"
 }

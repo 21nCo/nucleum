@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Arrangement } from "$lib/client/types/direction.enum";
   import {
+    type INode,
     NodeType,
     type INodeThumbnail
   } from "$lib/client/products/memotron/node/node.type";
@@ -18,16 +19,40 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
-  export let item: INodeThumbnail;
+  import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
+  import { Placement } from "$lib/client/types/placement.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
+  import { lazyLoad } from "$lib/client/utils/browser.utils";
+  export let item: INode;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
+  let isHovering: boolean = false;
+  let isGridBottomHovering = false;
+  function resolvePreviewImageSrc(item: INode) {
+    if (item.contentType === NodeType.IMAGE) return item.body.url;
+    else if (item.contentType === NodeType.WEB_SCREENSHOT_CLIP)
+      return item.body.s3URL;
+    else if (
+      item.contentType === NodeType.WEB_PAGE &&
+      (item.metadata?.ogImage || item.metadata?.screenshotUrl)
+    )
+      return item.metadata?.ogImage ?? item.metadata.screenshotUrl;
+    return undefined;
+  }
 </script>
 
-<ResourceThumbnailBase {item} {accessPoint} {isApplyCustomColor} {arrangement}>
+<ResourceThumbnailBase
+  {item}
+  {accessPoint}
+  {isApplyCustomColor}
+  {arrangement}
+  bind:isHovering
+>
   <!-- {#if variant === Arrangement.LIST && collectionContext}
     <NodeThumbnailInList node={item} {parentBgIndex} on:click /> -->
   {#if arrangement === Arrangement.LIST}
@@ -49,22 +74,56 @@
     >
       <div class="relative grow w-full p-4">
         <!-- Preview content -->
-        {#if item.contentType === NodeType.IMAGE}
+        {#if item.contentType === NodeType.IMAGE || item.contentType === NodeType.WEB_SCREENSHOT_CLIP || (item.contentType === NodeType.WEB_PAGE && resolvePreviewImageSrc(item))}
           <img
             alt="..."
             class={cn(
               "absolute inset-0 w-full rounded-t-md object-cover h-full"
             )}
-            src={item.body.url}
+            use:lazyLoad={resolvePreviewImageSrc(item)}
           />
         {:else if "body" in item && item.body}
           <span class="text-left text-b2">
-            {contentPreview(item.body)}
+            {contentPreview(item.body, item.contentType)}
           </span>
         {/if}
+        <!-- <ResourceThumbnailContentTypeOverlay
+          contentType={item.contentType}
+          placement={Placement.BOTTOM_RIGHT}
+        /> -->
       </div>
       <slot slot="bottom" name="bottom">
-        <NodeThumbnailTitle node={item} />
+        <HoverableElement
+          bind:isHovering={isGridBottomHovering}
+          class="flex  w-full h-5"
+        >
+          {#if isHovering && "url" in item.body && item.body.url}
+            <a
+              href={item.body.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-1 text-b3 text-fgs3 w-full hover:text-aps1"
+              on:click={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Icon
+                icon="arrow-up-right"
+                size={Size.xs}
+                class={cn({
+                  "fill-fgs3": !isGridBottomHovering,
+                  "fill-aps1": isGridBottomHovering
+                })}
+              />
+              <span class="truncate w-5/6 text-left">
+                {item.body.url}
+              </span>
+            </a>
+          {:else}
+            <NodeThumbnailTitle node={item} />
+          {/if}
+        </HoverableElement>
+
         <!-- <span class="text-b3 text-fgs3">
       {formatDatetime($userPreferences, new Date(node.createdAt))}
       </span> -->

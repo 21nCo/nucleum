@@ -145,7 +145,7 @@
     {:else}
       <div
         id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full rounded-lg", {
+        class={cn("bg-bgs1 mo:w-full mo:h-full rounded-md", {
           ...resolveSizeClasses()
         })}
       >

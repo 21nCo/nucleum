@@ -40,27 +40,18 @@ class MultiSelectStore extends ObservableStore<string[]> {
     super(context, StoreDataType.NA);
     this.set([]);
   }
-  clickHandler(
-    e: MouseEvent,
-    id: string,
-    params?: {
-      accessMode?: ResourceAccessMode;
-    }
-  ) {
+  clickHandler(id: string) {
     let current = this.get();
     if (current.length > 0) {
       const isSelected = current.includes(id);
       if (isSelected) {
         current = current.filter((x) => x != id);
         this.set(current);
-        return;
+        return true;
       }
       this.set([...current, id]);
-      return;
+      return true;
     }
-    //TODO - this is creating a circular dependency
-    if (params?.accessMode)
-      appStore.resourceClickHandler(e, id, params.accessMode);
   }
 }
 

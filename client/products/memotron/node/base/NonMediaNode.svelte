@@ -55,7 +55,7 @@
   }
 </script>
 
-<div class="relative w-full h-full flex flex-col bg-bgs1">
+<div class="relative w-full h-full flex flex-col bg-bgs1 rounded-md">
   {#if $node}
     {#if selectedView === "Content"}
       <div

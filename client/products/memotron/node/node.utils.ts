@@ -1,13 +1,21 @@
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import { truncateString } from "$lib/shared/utils/text.utils";
 import {
+  type ITweetBody,
   NodeType,
   type INodeMetadata
 } from "$lib/client/products/memotron/node/node.type";
-import type { ClipContent } from "$lib/client/products/memotron/common/clip.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
+import { logger } from "$lib/client/components/debug/logger.client";
 
-export function contentPreview(body: IMarkdown | ClipContent) {
+export function contentPreview(
+  body: IMarkdown | ITweetBody,
+  contentType: NodeType
+) {
+  logger.log({ at: "contentPreview", body, contentType });
+  if (contentType === NodeType.TWEET && "content" in body) {
+    return truncateString(body.content, 100);
+  }
   if (body && typeof body === "object" && "blocks" in body) {
     const block = body.blocks[0];
     let strValue = "";

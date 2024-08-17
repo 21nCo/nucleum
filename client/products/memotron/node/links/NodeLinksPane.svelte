@@ -23,6 +23,7 @@
   import { linker } from "$lib/client/products/memotron/memotron.store";
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -122,9 +123,13 @@
       .toArray();
   }
   function onClick(e: CustomEvent) {
-    multiSelectStore.clickHandler(e.detail.event, e.detail.id, {
-      accessMode: ResourceAccessMode.POP
-    });
+    const result = multiSelectStore.clickHandler(e.detail.id);
+    if (!result)
+      appStore.resourceClickHandler(
+        e.detail.event,
+        e.detail.id,
+        ResourceAccessMode.POP
+      );
   }
   function onSelectAll() {
     $multiSelectStore = filtered?.map((x) => x.id) ?? [];

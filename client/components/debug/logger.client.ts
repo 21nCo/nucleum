@@ -6,15 +6,18 @@ class Logger {
     try {
       if (window?.location?.search?.includes("log=")) {
         const logQueryParam = window?.location?.search
-        .split("?")[1]
-        ?.split("&")
-        .find((x) => x.startsWith("log="));
-        const logLevel = logQueryParam.split("=")[1];
-        this.level = +logLevel as LogType;
+          .split("?")[1]
+          ?.split("&")
+          .find((x) => x.startsWith("log="));
+        const logLevel = logQueryParam?.split("=")[1];
+        this.level = +(logLevel ?? "0") as LogType;
       } else {
-        this.level = import.meta.env?.VITE_LOG_LEVEL ?? process.env.PLASMO_PUBLIC_LOG_LEVEL ?? LogType.INFO;
+        this.level =
+          import.meta.env?.VITE_LOG_LEVEL ??
+          process.env.PLASMO_PUBLIC_LOG_LEVEL ??
+          LogType.INFO;
       }
-    } catch(e) {
+    } catch (e) {
       console.error("Error setting log level", e);
       this.level = LogType.ERROR;
     }

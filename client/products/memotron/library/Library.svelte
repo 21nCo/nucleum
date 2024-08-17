@@ -317,7 +317,12 @@
     >
       {#if variant === "v2" || variant === "v3"}
         <div class="flex w-60 border-r border-brs2">
-          <VerticalSwitcher
+          <span
+            class="w-full h-full flex justify-center items-center text-b3 text-fgs3"
+          >
+            Filters
+          </span>
+          <!-- <VerticalSwitcher
             items={[
               {
                 value: "All",
@@ -337,7 +342,7 @@
               }
             ]}
             bind:selected={selectedSubType}
-          />
+          /> -->
         </div>
       {/if}
       <div

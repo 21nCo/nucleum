@@ -12,6 +12,7 @@
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
   import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";
+  import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
   export let item: ICollection;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -34,13 +35,14 @@
     </button>
   {:else if arrangement === Arrangement.GRID}
     <ResourceGridThumbnail {item} {size} on:click>
-      {#if item.type === CollectionType.TYPED || item.type === CollectionType.QUERY}
+      <!-- {#if item.type === CollectionType.TYPED || item.type === CollectionType.QUERY}
         <div
           class="absolute top-0 left-0 flex bg-bgs2 rounded-md px-2 py-1 m-2 text-b3"
         >
           {properCase(item.type)} collection
         </div>
-      {/if}
+      {/if} -->
+      <ResourceThumbnailContentTypeOverlay contentType={item.type} />
       <Cover {item} {arrangement} />
       <slot slot="bottom" name="bottom">
         <CollectionThumbnailTitle {item} />

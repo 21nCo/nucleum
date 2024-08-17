@@ -2,41 +2,68 @@
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { dataManager } from "$lib/client/persistence/dataManager";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { type INode, NodeType } from "../../node/node.type";
+  import { lazyLoad } from "$lib/client/utils/browser.utils";
+  import { onMount } from "svelte";
+  import { type INode, NodeType, webNodeTypeList } from "../../node/node.type";
   export let node: INode;
+  let dynamicLabel: string | undefined = undefined;
+  const dynamicLabelNodeTypes = [NodeType.TWEET];
   function resolveEmptyLabel() {
     //TODO - based on resource type
     return "Untitled";
   }
-  $: console.log({ node });
+  onMount(async () => {
+    if (dynamicLabelNodeTypes.includes(node.contentType)) {
+      dynamicLabel = await resolveLabel();
+    }
+  });
+
+  async function resolveLabel() {
+    const dexie = $dataManager.cacheSource.dexie;
+    if (node.contentType === NodeType.TWEET) {
+      const defaultLabel = "Unknown tweet";
+      if (!node.parent) return defaultLabel;
+      const parent = await dexie.node.get(node.parent);
+      if (!parent || !("name" in parent.body) || !parent.body?.name)
+        return defaultLabel;
+      return parent.body.name + " on X";
+    }
+  }
 </script>
 
 <div class="flex justify-between w-full">
-  <span class="flex gap-2 grow">
+  <span class="flex gap-2 min-w-0 flex-1">
     <!--TODO Avatar and parent breadcrumbs for node -->
-    {#if node.contentType === NodeType.WEB_PAGE}
-      {#if node.metadata.faviconLink}
+    {#if webNodeTypeList.includes(node.contentType)}
+      {#if node.metadata?.faviconLink}
         <img
-          src={node.metadata.faviconLink}
+          use:lazyLoad={node.metadata.faviconLink}
           alt="favicon"
           class="w-5 h-5 rounded-full"
         />
-      {:else}
         <Icon icon="globe-alt" size={Size.sm} />
       {/if}
     {/if}
-    <span class="text-left w-5/6 truncate text-b2 font--medium">
+    <span
+      class="flex justify-between text-left truncate text-b2 font--medium min-w-0 flex-1"
+    >
       <!-- TODO - if node and has parent, show breadcrumbs -->
       {#if node.label}
         {node.label}
+      {:else if dynamicLabelNodeTypes.includes(node.contentType)}
+        {dynamicLabel}
       {:else if node.body && typeof node.body === "string"}
         <InlineMarkdownTextInput content={node.body} />
       {:else if node.body && node.body.text && typeof node.body.text === "string"}
         {node.body.text}
       {:else}
         {resolveEmptyLabel()}
+      {/if}
+      {#if node.body?.url}
+        <Icon icon="arrow-up-right" class="fill-fgs3" size={Size.xs} />
       {/if}
       <!-- {item.label ?? item.body ?? resolveEmptyLabel()} -->
     </span>
