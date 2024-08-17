@@ -13,6 +13,7 @@
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { resolveContentTypeString } from "../clipper.utils";
+  import { truncateString } from "$lib/shared/utils/text.utils";
   let notes: string = "";
   let autoCloseDuration = 30;
   let closeTimer: any;
@@ -157,7 +158,7 @@
     />
   {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
     <span class="text-b3">
-      {$feedbackPane.focusedClip.body.content}
+      {truncateString($feedbackPane.focusedClip.body.content, 200)}
     </span>
   {/if}
   <InlineFeedbackText bind:feedback={$feedbackPane.feedback} />

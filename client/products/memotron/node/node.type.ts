@@ -458,10 +458,15 @@ type ITwitterProfileBody = {
   url: string;
   name: string;
   bio?: string;
-  bioLink?: string;
   profileImageUrl: string;
 }
-export type ITwitterProfile = INodeInterface<NodeType.TWITTER_PROFILE, ITwitterProfileBody, IWebPageMetadata>;
+
+export type ITwitterProfileMetadata = IWebPageMetadata & {
+  bioLink?: string;
+  bioLinkText?: string;
+}
+
+export type ITwitterProfile = INodeInterface<NodeType.TWITTER_PROFILE, ITwitterProfileBody, ITwitterProfileMetadata>;
 
 export type IClip = ITwitterProfile | ITweet | IMultimediaClip | IVideoTimestampClip | ITextClip | IWebScreenshotClip;
 
