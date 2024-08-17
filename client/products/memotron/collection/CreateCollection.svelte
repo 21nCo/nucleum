@@ -2,9 +2,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
@@ -31,9 +29,8 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
   import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
   let title: string;
-  let errMsg: string;
-  let isCreationInProgress: boolean = false;
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.TYPED;
   let selectedView: CollectionLayout;
@@ -192,44 +189,36 @@
       bind:selected={selectedView}
     />
   </div>
-  <footer class="flex flex-col w-full gap-2">
-    {#if errMsg}
-      <InlineErrorMessage bind:error={errMsg} />
-    {/if}
-    <ModalFooter
-      action={resourceAction(Resource.collection, ResourceActionType.CREATE)}
-      primaryAction={{
-        label: "Save",
-        callback: async () => {
-          console.log("creating collection", {
-            title,
-            selectedType,
-            typeToExtend
-          });
-          isCreationInProgress = true;
-          collectionStore.create({
-            label: title,
-            type: selectedType,
-            defaultLayout: selectedView,
-            isStarred,
-            typeToExtend: typeToExtend?.id ?? undefined,
-            isCaptureShortcutEnabled,
-            avatar
-          });
-          isCreationInProgress = false;
-          modalEvent.hideSpecific(
-            resourceAction(Resource.collection, ResourceActionType.CREATE)
-          );
-        }
-      }}
-      secondaryAction={{
-        label: "Discard",
-        callback: async () => {
-          modalEvent.hideSpecific(
-            resourceAction(Resource.collection, ResourceActionType.CREATE)
-          );
-        }
-      }}
-    />
-  </footer>
+
+  <ModalFooter
+    action={resourceAction(Resource.collection, ResourceActionType.CREATE)}
+    primaryAction={{
+      label: "Save",
+      callback: async () => {
+        logger.log({
+          at: "create collection",
+          title,
+          selectedType,
+          typeToExtend
+        });
+        const result = await collectionStore.create({
+          label: title,
+          type: selectedType,
+          defaultLayout: selectedView,
+          isStarred,
+          typeToExtend: typeToExtend?.id ?? undefined,
+          isCaptureShortcutEnabled,
+          avatar
+        });
+        if (!result)
+          return {
+            error: "Error creating collection. Please try again."
+          };
+        return true;
+      }
+    }}
+    secondaryAction={{
+      label: "Discard"
+    }}
+  />
 </div>

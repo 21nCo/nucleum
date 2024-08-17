@@ -96,8 +96,8 @@ export const globalActions: IAction[] = [
     icon: "chatleftright",
     type: ActionType.FUNCTION,
     fn: async () => {
-      modalEvent.hideSpecific(Action.HELP);
-      modalEvent.hideSpecific(Action.SETTINGS);
+      modalEvent.hide(Action.HELP);
+      modalEvent.hide(Action.SETTINGS);
       setTimeout(() => {
         if ((window as any).Intercom) {
           (window as any).Intercom("boot", {

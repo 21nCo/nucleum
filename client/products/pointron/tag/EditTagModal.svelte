@@ -9,8 +9,8 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   export let id: string;
   let label: string = "";
-  async function onAdd() {
-    if (!label || !id) return;
+  async function onUpdateClick() {
+    if (!label || !id) return { error: "Please enter a valid tag name" };
     return tagStore.modify({ label, id });
   }
   onMount(() => {
@@ -22,25 +22,26 @@
   <TextInput bind:value={label} placeholder={"Tag name"} />
   <ModalFooter
     action={PointronAction.EDIT_TAG}
-    on:close={() => {
-      modalEvent.hideSpecific(PointronAction.EDIT_TAG);
-    }}
     primaryAction={{
       label: "Update",
-      callback: onAdd
+      callback: onUpdateClick
     }}
     secondaryAction={{
       label: "Delete",
       variant: ButtonVariant.DANGER,
       callback: async () => {
-        if (!id) return false;
+        if (!id) return;
         confirmationNotification.notify({
           title: "Delete tag",
           message: "Are you sure you want to delete this tag?",
           confirmAction: {
             label: "Delete",
             variant: ButtonVariant.DANGER,
-            callback: () => tagStore.delete(id)
+            callback: async () => {
+              tagStore.delete(id);
+              modalEvent.hide(PointronAction.EDIT_TAG);
+              return true;
+            }
           }
         });
       }

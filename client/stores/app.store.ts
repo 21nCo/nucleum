@@ -792,7 +792,7 @@ function initAppStore(seed: AppStore) {
             n.fullScreenComponentPath
           )?.associatedPlayer;
         else if (isHideMiniPlayer) n.player = undefined;
-        modalEvent.hideSpecific(n.fullScreenComponentPath ?? "", "app.store");
+        modalEvent.hide(n.fullScreenComponentPath ?? "", "app.store");
         // n.fullScreenComponentPath = undefined;
         return n;
       });

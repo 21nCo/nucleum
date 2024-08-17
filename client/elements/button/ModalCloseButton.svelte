@@ -22,7 +22,7 @@
     on:click={() => {
       console.log("ModalCloseButton", { path });
       appStore.closeResource({ isRestrictToModals: true });
-      modalEvent.hideSpecific(path, "ModalCloseButton.svelte");
+      modalEvent.hide(path, "ModalCloseButton.svelte");
     }}
   />
 </div>

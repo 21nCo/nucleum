@@ -59,7 +59,7 @@
     placeholder = "select a " + searchAction.searchActionParams?.itemLabel;
   }
   function close() {
-    modalEvent.hideSpecific(Action.CMD);
+    modalEvent.hide(Action.CMD);
   }
   /**
    * Used in command-only mode.

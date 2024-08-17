@@ -17,9 +17,7 @@
   onMount(() => {
     progress.set(0);
     const timer = setTimeout(() => {
-      modalEvent.hideSpecific(
-        PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY
-      );
+      modalEvent.hide(PointronAction.PREDEFINED_INTERVAL_NOTIFIER_OVERLAY);
     }, duration);
     return () => clearTimeout(timer);
   });

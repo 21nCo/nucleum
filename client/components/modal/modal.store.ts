@@ -1,8 +1,6 @@
-import { appStore } from "$lib/client/stores/app.store";
-import { logger } from "$lib/client/stores/log.store";
-import { confirmationNotification } from "$lib/client/stores/notification.store";
 import type { ModalEvent } from "$lib/client/types/popup.type";
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
+import { logger } from "../debug/logger.client";
 
 const defaultModal = {
   path: "",
@@ -11,6 +9,7 @@ const defaultModal = {
 };
 const modalEvent = initModalStore(defaultModal);
 export const isPrimaryActionDisabled = writable<boolean>(false);
+
 function initModalStore(seed: ModalEvent) {
   const { subscribe, set, update } = writable<ModalEvent>(seed);
   return {
@@ -23,20 +22,8 @@ function initModalStore(seed: ModalEvent) {
         return defaultModal;
       });
     },
-    hide: async () => {
-      logger.log({ method: "modalEvent.hide" });
-      const modal = get(modalEvent);
-      if (modal.isDismissable === false) return false;
-      update((n: ModalEvent) => {
-        // console.log("hiding modal", { n });
-        return { ...n, isShow: false };
-      });
-      confirmationNotification.reset();
-      appStore.showAssociatedPlayerIfRequired();
-      return true;
-    },
-    hideSpecific: (action: string, context: string = "") => {
-      logger.log({ method: "modalEvent.hideSpecific", action, context });
+    hide: (action: string, context: string = "") => {
+      logger.log({ at: "modalEvent.hide", action, context });
       update((n: ModalEvent) => {
         return { path: action, isShow: false };
       });

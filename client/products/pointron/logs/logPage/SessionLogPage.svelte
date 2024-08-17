@@ -15,7 +15,6 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
@@ -177,10 +176,6 @@
         }
       }}
       secondaryAction={{ label: "Close" }}
-      on:close={(event) => {
-        if (event.detail === "primary") return;
-        modalEvent.hideSpecific(PointronAction.SESSION_LOG_MODAL);
-      }}
     />
   </div>
 {:else}

@@ -15,12 +15,11 @@
 {/if}
 <ModalFooter
   action={Action.MOBILE_TOAST}
-  isPreventAutoClose={true}
   primaryAction={{
     label: "Done",
     callback: async () => {
       notification?.callback?.();
-      modalEvent.hideSpecific(Action.MOBILE_TOAST);
+      modalEvent.hide(Action.MOBILE_TOAST);
     }
   }}
 />

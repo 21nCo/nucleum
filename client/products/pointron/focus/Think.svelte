@@ -34,7 +34,7 @@
         label="close"
         size={Size.sm}
         on:click={() => {
-          modalEvent.hideSpecific(PointronAction.THINK_MODE);
+          modalEvent.hide(PointronAction.THINK_MODE);
         }}
       />
     </div>

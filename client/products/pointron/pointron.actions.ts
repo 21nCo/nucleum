@@ -10,7 +10,6 @@ import Journal from "$lib/client/products/pointron/journal/Journal.svelte";
 import AddTagModal from "$lib/client/products/pointron/tag/AddTagModal.svelte";
 import ImportAppData from "$lib/client/products/pointron/settings/ImportAppData/ImportAppData.svelte";
 import TagsList from "$lib/client/products/pointron/settings/tags/TagsList.svelte";
-import ConvertToSubGoalModal from "$lib/client/products/pointron/goals/ConvertToSubGoalModal.svelte";
 import EditPresetView from "$lib/client/products/pointron/focus/advanced/presets/EditPresetModal.svelte";
 import Onboarding from "$lib/client/products/pointron/onboarding/Onboarding.svelte";
 import ComposeByEndTimeModal from "$lib/client/products/pointron/focus/advanced/composition/ComposeByEndTimeModal.svelte";
@@ -54,7 +53,7 @@ import {
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
-import { goalStore, quickFocusItemStore } from "./goals/goal.store";
+import { quickFocusItemStore } from "./goals/goal.store";
 import { appStore } from "$lib/client/stores/app.store";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
@@ -265,12 +264,6 @@ export const pointronActions: IAction[] = [
         size: Size.xs
       }
     }
-  },
-  {
-    action: PointronAction.CONVERT_TO_SUBGOAL,
-    component: ConvertToSubGoalModal,
-    type: ActionType.MODAL,
-    isMeta: true
   },
   {
     action: PointronAction.IMPORT_APP_DATA,
@@ -631,7 +624,8 @@ export const pointronActions: IAction[] = [
             } else {
               toasts.error("Failed to delete session log");
             }
-            modalEvent.hideSpecific(PointronAction.SESSION_LOG_MODAL);
+            modalEvent.hide(PointronAction.SESSION_LOG_MODAL);
+            return true;
           }
         }
       });

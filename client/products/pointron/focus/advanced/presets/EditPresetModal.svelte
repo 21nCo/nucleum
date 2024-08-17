@@ -9,7 +9,6 @@
   } from "$lib/client/types/pointron/sessionComposition.type";
   import ComposeDuration from "../composition/ComposeDuration.svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
@@ -40,22 +39,18 @@
       composition = deepCopy(seedPreset);
     }
   });
-  $: console.log({ composition, savedPresets: $pointronPreferences.presets });
-  async function close() {
-    return modalEvent.hideSpecific(PointronAction.EDIT_PRESET);
-  }
   async function saveHandler() {
     if (id) {
       pointronPreferences.updatePreset(composition);
     } else {
       pointronPreferences.addPreset(composition);
     }
-    return close();
+    return true;
   }
-  function deleteHandler() {
+  async function deleteHandler() {
     if (composition && composition.id)
       pointronPreferences.removePreset(composition.id);
-    return close();
+    return true;
   }
 </script>
 
@@ -82,7 +77,7 @@
       secondaryAction={{
         label: id ? "Delete" : "Discard",
         variant: id ? ButtonVariant.DANGER : ButtonVariant.SECONDARY,
-        callback: id ? deleteHandler : close
+        callback: id ? deleteHandler : undefined
       }}
     />
   {/if}

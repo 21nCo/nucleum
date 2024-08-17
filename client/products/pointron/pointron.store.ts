@@ -318,10 +318,12 @@ class TagStore extends ResourceFIRStore<ITag> {
   async modify(item: ITag) {
     super.modify(item);
     toasts.success("Tag updated successfully");
+    return true;
   }
   async create(data: Omit<ITag, "id">, id?: string) {
     super.create(data, id);
     toasts.success("Tag created successfully");
+    return true;
   }
   async delete(id: string) {
     super.delete(id);

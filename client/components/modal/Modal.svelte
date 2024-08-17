@@ -50,7 +50,7 @@
 
   function close() {
     show = false;
-    modalEvent.hideSpecific(id, "Modal.svelte");
+    modalEvent.hide(id, "Modal.svelte");
     confirmationNotification.reset();
     appStore.closeResource({ isRestrictToModals: true });
   }

@@ -1,7 +1,5 @@
 <script lang="ts">
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import {
     spaceInContext,
@@ -34,16 +32,15 @@
     />
   {/if}
   <ModalFooter
+    action={GatheryEvent.SPACE_BROWSER}
     secondaryAction={{
-      label: "Close",
-      callback: async () => {
-        modalEvent.hideSpecific(GatheryEvent.SPACE_BROWSER);
-      }
+      label: "Close"
     }}
     primaryAction={{
       label: "Create Space",
       callback: async () => {
         appStore.runAction(GatheryEvent.CREATE_SPACE);
+        return true;
       }
     }}
   />

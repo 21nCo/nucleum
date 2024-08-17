@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goalEditErrorMessage } from "$lib/client/products/pointron/goals/goal.store";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
   import NewGoalForm from "./NewGoalForm.svelte";
   import { page } from "$app/stores";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -14,12 +13,9 @@
     isPinToQuickFocus = isPinToQuickFocusParam === "true";
   }
   $newGoal.isPinnedForQuickStart = isPinToQuickFocus;
-  function close() {
-    modalEvent.hideSpecific(PointronAction.CREATE_EDIT_GOAL);
-  }
   async function discard() {
     newGoal.reset();
-    close();
+    return true;
   }
 </script>
 
@@ -31,12 +27,12 @@
     <InlineErrorMessage bind:error={$goalEditErrorMessage} />
     <ModalFooter
       action={PointronAction.CREATE_EDIT_GOAL}
-      on:close={discard}
       primaryAction={{
         label: "Save",
         callback: async () => {
           await newGoal.save();
-          if (!$goalEditErrorMessage) close();
+          if ($goalEditErrorMessage) return false;
+          return true;
         }
       }}
       secondaryAction={{

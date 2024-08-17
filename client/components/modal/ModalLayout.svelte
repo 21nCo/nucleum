@@ -46,7 +46,7 @@
   }
   function handleClose() {
     if (path === Action.CONFIRMATION) confirmationNotification.reset();
-    else modalEvent.hideSpecific(path, "ModalLayout.svelte");
+    else modalEvent.hide(path, "ModalLayout.svelte");
   }
 </script>
 
@@ -119,6 +119,7 @@
         action={path}
         primaryAction={params.layout?.primaryAction}
         secondaryAction={params.layout?.secondaryAction}
+        isDelegateClose={true}
         bind:this={footerRef}
         on:close={() => handleClose()}
         isShowClose={params.layout?.isShowClose}

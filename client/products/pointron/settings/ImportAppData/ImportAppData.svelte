@@ -407,7 +407,7 @@
 
   function onClose() {
     resetFileInput();
-    modalEvent.hideSpecific(PointronAction.IMPORT_APP_DATA);
+    modalEvent.hide(PointronAction.IMPORT_APP_DATA);
   }
 
   function getSizeString(sizeInBytes: number) {

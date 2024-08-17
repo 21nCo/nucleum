@@ -396,6 +396,7 @@ export class ResourceFIRStore<
       return x;
     });
     this.cache();
+    return true;
   }
   async modify(item: Partial<T>) {
     this.update((x: S) => {

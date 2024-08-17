@@ -195,8 +195,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   reset() {
     logger.log("session store reset");
     this.shallowReset();
-    modalEvent.hideSpecific(PointronEvent.SESSION_FINISHED);
-    modalEvent.hideSpecific(PointronEvent.BREAK_REMINDER);
+    modalEvent.hide(PointronEvent.SESSION_FINISHED);
+    modalEvent.hide(PointronEvent.BREAK_REMINDER);
     let newSession: IActiveSessionStore = deepCopy(seedSessionStore);
     newSession.composition.breakReminder =
       get(pointronPreferences)?.breakReminder;
@@ -780,7 +780,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       savedSessionStore.isSessionRunning
     ) {
       const currentValue = this.get();
-      modalEvent.hideSpecific(PointronEvent.SESSION_FINISHED);
+      modalEvent.hide(PointronEvent.SESSION_FINISHED);
       const isRestored = appStore.restoreFullScreenPlayer();
       if (!isRestored) appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
       this.modify(
