@@ -301,7 +301,14 @@
       size={pop.params?.layout?.size ?? Size.md}
       orientation={pop.params?.layout?.orientation ?? Orientation.Horizontal}
     >
-      <ModalLayout path={pop.path} params={{ ...pop?.params }}>
+      <ModalLayout
+        path={pop.path}
+        resource={pop.resource}
+        params={{
+          ...pop?.params,
+          layout: { ...pop.params?.layout, isShowCantileverClose: true }
+        }}
+      >
         <SplitView
           id={pop.resource}
           componentParams={{

@@ -131,7 +131,7 @@
           bind:isHovering={isGridBottomHovering}
           class="flex  w-full h-5"
         >
-          {#if isHovering && "url" in item.body && item.body.url}
+          {#if isHovering && item.body && "url" in item.body && item.body.url}
             <a
               href={item.body.url}
               target="_blank"
