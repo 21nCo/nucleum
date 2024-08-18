@@ -12,9 +12,9 @@
   import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   const dispatch = createEventDispatcher();
-  export let colors: string[] = [];
-  export let activeColor: string | null = null;
+  export let activeHighlighter: string | null = null;
   export let isSnipActive: boolean = false;
   export let contentType: NodeType = NodeType.WEB_PAGE;
 
@@ -41,7 +41,7 @@
   function toggleAutoHighligher() {
     isAutoHighlighterExpanded = !isAutoHighlighterExpanded;
     if (!isAutoHighlighterExpanded) {
-      activeColor = null;
+      activeHighlighter = null;
       dispatch("color", 0);
     }
   }
@@ -127,14 +127,13 @@
           "flex-row h-full": $toolbarState.position === Position.Bottom
         })}
       >
-        {#each colors as color}
+        {#each $highlightStore.highlighters as highlighter}
           <HightlightColorItem
-            {color}
-            isActive={color === activeColor}
+            {highlighter}
+            isActive={highlighter.id === activeHighlighter}
             on:click={() => {
-              // console.log(color);
-              activeColor = color;
-              dispatch("color", color);
+              activeHighlighter = highlighter.id;
+              dispatch("color", highlighter);
             }}
           />
         {/each}

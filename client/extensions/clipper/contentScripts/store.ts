@@ -77,12 +77,13 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @param data - tab data
    * @returns
    */
-  async savePage(data: IResourceCapture<IWebPage>) {
+  async savePage(data: IResourceCapture<IWebPage>, creationContext?: string) {
     const id = generateResourceId(Resource.node);
     const response = await nodeStore.createNode([
       {
         id,
         ...data,
+        creationContext,
         contentType: NodeType.WEB_PAGE,
       }
     ], {
@@ -113,15 +114,17 @@ class WebpageStore extends ObservableStore<IWebpage> {
   ) {
     let webpage = this.get();
     logger.log({ at: "saveClip", webpage, data });
+    const id = generateResourceId(Resource.node);
     if (!webpage.id) {
       const tabData = extractFullTabData();
-      await this.savePage(tabData);
+      await this.savePage(tabData, id);
     }
     webpage = this.get();
     const clip = {
-      id: generateResourceId(Resource.node),
+      id,
       body: {
         ...data.body,
+        url: (webpage.url ?? window.location.href ) + "#" + id
       },
       metadata: data.metadata,
       parent: webpage.id,
@@ -171,7 +174,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     }
     const response = await nodeStore.createNode([
       { ...tweetNode, label: undefined },
-      { ...twitterProfileNode, id: twitterProfileId, label: undefined }
+      { ...twitterProfileNode, id: twitterProfileId, label: undefined, creationContext: id }
     ], {
       isUseQueueFirstApproach: true,
       mutationId: `${this.id}-saveTweet`
