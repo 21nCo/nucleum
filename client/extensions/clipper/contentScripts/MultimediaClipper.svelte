@@ -1,3 +1,4 @@
+<!-- @deprecated - using MultimediaClipperContentScript instead -->
 <script lang="ts">
   import { onMount } from "svelte";
   import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";

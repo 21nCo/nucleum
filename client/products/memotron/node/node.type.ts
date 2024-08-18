@@ -437,9 +437,9 @@ export type IWebPageMetadata = {
 
 type ITextClipBody = {
   text: string;
+  highlighterId: string;
   pre?: string;
   post?: string;
-  color: string;
 };
 type ITextClipMetadata = {
   container: string;

@@ -15,12 +15,14 @@
   import { webpage } from "./store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { AlertType } from "$lib/client/types/notification.type";
-  export let colors: string[];
+  import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
-  let activeColor: string | null = null;
+  let activeHighlighter: IHighlighter | null = null;
   // export let page: any;
-  let selectedClip: { color: string; id: string } | null = null;
+  let selectedClip: { highlighterId: string; id: string } | null = null;
   let selectedClipId: string = "";
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
   onMount(() => {
@@ -41,8 +43,8 @@
         selection.anchorNode?.classList?.contains("memotron-clipped");
       if (focusNodeHasClass && anchorNodeHasClass) {
         selectedClip = {
-          color:
-            selection.focusNode?.dataset?.highlightColor ??
+          highlighterId:
+            selection.focusNode?.dataset?.highlighterId ??
             selection.focusNode?.style?.backgroundColor ??
             "",
           id: selection.focusNode?.dataset?.highlightId ?? ""
@@ -78,11 +80,11 @@
         left: rect.left + (isUpwards ? -50 : -50)
       };
       if (selection?.toString().length > 0) {
-        if (activeColor) {
-          await highlightSelectedText(selection, activeColor);
+        if (activeHighlighter) {
+          await highlightSelectedText(selection, activeHighlighter);
           selectedClip = {
-            color: activeColor ?? "",
-            id: selectedClipId
+            id: selectedClipId,
+            highlighterId: activeHighlighter.id ?? ""
           };
         }
         isShowInlineToolbar = true;
@@ -94,7 +96,12 @@
     }
   }
 
-  async function saveSelectedText(selectedText, container, selection, color) {
+  async function saveSelectedText(
+    selectedText,
+    container,
+    selection,
+    highlighterId: string
+  ) {
     const anchorOffset = selection.anchorOffset;
     const focusOffset = selection.focusOffset;
     try {
@@ -102,7 +109,7 @@
         contentType: NodeType.TEXT_CLIP,
         body: {
           text: selectedText,
-          color
+          highlighterId
         },
         metadata: {
           container: getQuery(container),
@@ -117,7 +124,7 @@
     }
   }
 
-  async function highlightSelectedText(selection, color) {
+  async function highlightSelectedText(selection, highlighter: IHighlighter) {
     let selectedText = selection.toString();
     if (selectedText.length <= 0 || selectedText.trim().length === 0) return;
     let container = selection.getRangeAt(0).commonAncestorContainer;
@@ -129,7 +136,7 @@
       selectedText,
       container,
       selection,
-      color
+      highlighter.id
     );
     if (!result?.id) {
       inlineToolbarFeedback = {
@@ -144,7 +151,7 @@
       selectedText,
       container,
       selection,
-      color,
+      highlighter,
       textColor,
       result.id,
       highlightClickCallback
@@ -171,12 +178,15 @@
       const container = elementFromQuery(record.metadata.container);
 
       let textColor = "white";
+      const highlighter = $highlightStore.highlighters.find(
+        (x) => x.id === record.body.highlighterId
+      );
       if (selection.anchorNode && selection.focusNode && container) {
         highlight(
           record.body.text,
           container,
           selection,
-          record.body.color,
+          highlighter,
           textColor,
           record.id,
           highlightClickCallback
@@ -216,24 +226,24 @@
     }
   }
 
-  export function onActivateColor(e: CustomEvent<string | number>) {
-    console.log("onActivateColor", e.detail);
+  export function onActivateColor(e: CustomEvent<IHighlighter | number>) {
+    logger.log({ at: "onActivateColor", e });
     if (e.detail === 0) {
-      activeColor = null;
-    } else if (typeof e.detail === "string") {
-      activeColor = e.detail;
+      activeHighlighter = null;
+    } else if (typeof e.detail !== "number") {
+      activeHighlighter = e.detail;
     }
   }
-  async function onInlineColorSelection(e: CustomEvent<string>) {
+  async function onInlineColorSelection(e: CustomEvent<IHighlighter>) {
     console.log("onInlineColorSelection", e.detail);
-    const color = e.detail;
+    const highlighter = e.detail;
     const selection = window.getSelection();
     if (selection?.toString().length > 0) {
       console.log("Selected text: ", selection.toString());
       inlineToolbarFeedback = "saving...";
-      await highlightSelectedText(selection, color);
+      await highlightSelectedText(selection, highlighter);
       selectedClip = {
-        color,
+        highlighterId: highlighter.id,
         id: selectedClipId
       };
     }
@@ -242,7 +252,7 @@
     console.log("highlightClickCallback", e);
     selectedClip = {
       id: e.id,
-      color: e.color
+      highlighterId: e.highlighterId
     };
     selectedClipId = e.id;
     handleTextSelection();
@@ -274,9 +284,8 @@
   >
     <InlineTextToolbar
       on:color={onInlineColorSelection}
-      {colors}
       bind:feedback={inlineToolbarFeedback}
-      selectedColor={selectedClip?.color ?? ""}
+      selectedHighlighterId={selectedClip?.highlighterId ?? ""}
       id={selectedClip?.id}
     />
   </div>

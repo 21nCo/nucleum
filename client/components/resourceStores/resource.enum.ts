@@ -53,6 +53,7 @@ export enum Resource {
   capture = "capture",
   view = "view",
   file = "file",
+  highlight = "highlight",
 
   //Memotron clipper
   clipperToolbarState = "clipperToolbarState"
