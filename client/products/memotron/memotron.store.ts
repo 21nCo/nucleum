@@ -172,7 +172,14 @@ export class SearchStore {
           item.label?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
           ("body" in item &&
             typeof item.body === "string" &&
-            item.body?.toLowerCase().includes(this.searchQuery.toLowerCase()))
+            item.body
+              ?.toLowerCase()
+              .includes(this.searchQuery.toLowerCase())) ||
+          ("content" in item.body &&
+            typeof item.body.content === "string" &&
+            item.body.content
+              ?.toLowerCase()
+              .includes(this.searchQuery.toLowerCase()))
       );
     }
     return query.toArray();

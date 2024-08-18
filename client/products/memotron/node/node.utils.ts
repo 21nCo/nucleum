@@ -16,11 +16,12 @@ export function resolveContentPreview(
   metadata?: any
 ) {
   logger.log({ at: "contentPreview", body, contentType });
+  const truncateLength = 250;
   if (contentType === NodeType.TWEET && "content" in body) {
-    if (body.content) return truncateString(body.content, 100);
+    if (body.content) return truncateString(body.content, truncateLength);
     else return metadata?.ogTitle ?? "";
   } else if (contentType === NodeType.TWITTER_PROFILE) {
-    if (body.bio) return truncateString(body.bio, 100);
+    if (body.bio) return truncateString(body.bio, truncateLength);
     if (!body.url) return "";
     const hostPart = new URL(body.url).host;
     const ogImageUrl = commonMetadata.find(
