@@ -39,8 +39,11 @@ export type INodeBase = IMemotronItemBase & {
   properties?: INodeProperty[];
   parent?: string;
   /**
-   * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block.
-   * This helps in determining what to show as items on a timeline etc.
+   * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.
+   * This helps in determining what to show as individual items in library, resource browser or on a timeline and similar scenarios.
+   *
+   * Note: In context of search, all root nodes are shown irrespective of the context.
+   *
    */
   creationContext?: string;
 };
@@ -256,7 +259,8 @@ export const webNodeTypeList = [
   NodeType.PDF_CLIP,
   NodeType.VIDEO_TIMESTAMP_CLIP,
   NodeType.TWEET,
-  NodeType.TWITTER_PROFILE
+  NodeType.TWITTER_PROFILE,
+  NodeType.WEB_SCREENSHOT_CLIP
 ];
 export const headingNodeTypes = [
   NodeType.HEADING1,
@@ -266,6 +270,18 @@ export const headingNodeTypes = [
   NodeType.HEADING5
 ];
 
+/**
+ * List of root node types that are shown in the library, resource browser and similar contexts.
+ *
+ * In context of search, all root nodes are shown along with heading nodes irrespective of the creationContext. In all other places, root nodes with creationContext i.e. nodes created as sub blocks or as supplement will be ignored.
+ *
+ * Examples for supplements: Twitter profile being saved as supplement when a tweet is clipped. A web page being saved as supplement when a text clip is clipped. A twitter profile or web page can separately be saved without any creationContext i.e. when saving by clicking on clipper tool bar.
+ *
+ * Supplements are not shown directly in the library, resource browser or timeline to avoid confusion as these are auto created and user might find it confusing to see them. On the other hand, supplements are shown in search results because these supplements are interactable from creationContext page. If the user can click on link to supplement and interact with it from a text clip page or a tweet page, user would expect to go back anytime to the supplement page.
+ *
+ * Note: Clips belonging to the same parent might be grouped together in places like Timeline. In this case, the supplement (i.e. the parent) is what's shown.
+ *
+ */
 export const rootNodeTypeList = [
   NodeType.NODULAR_MARKDOWN,
   NodeType.NON_NODULAR_MARKDOWN,
@@ -274,6 +290,7 @@ export const rootNodeTypeList = [
   NodeType.VIDEO,
   NodeType.AUDIO,
   NodeType.WEB_PAGE,
+  NodeType.TEXT_CLIP,
   NodeType.WEB_SCREENSHOT_CLIP,
   NodeType.TWEET,
   NodeType.TWITTER_PROFILE
@@ -479,7 +496,7 @@ type ITweetMetadata = IWebPageMetadata & {
 };
 export type ITweet = INodeInterface<NodeType.TWEET, ITweetBody, ITweetMetadata>;
 
-type ITwitterProfileBody = {
+export type ITwitterProfileBody = {
   url: string;
   name: string;
   bio?: string;

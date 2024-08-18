@@ -7,7 +7,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import NodeThumbnailInList from "./NodeThumbnailInList.svelte";
   import NodeThumbnailInTimeline from "./NodeThumbnailInTimeline.svelte";
-  import { contentPreview } from "$lib/client/products/memotron/node/node.utils";
+  import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
   import {
     formatDate,
     formatDatetime,
@@ -24,6 +24,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { lazyLoad } from "$lib/client/utils/browser.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
   export let item: INode;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -40,8 +41,11 @@
     else if (
       item.contentType === NodeType.WEB_PAGE &&
       (item.metadata?.ogImage || item.metadata?.screenshotUrl)
-    )
-      return item.metadata?.ogImage ?? item.metadata.screenshotUrl;
+    ) {
+      return isValidString(item.metadata?.ogImage)
+        ? item.metadata?.ogImage
+        : item.metadata.screenshotUrl;
+    }
     return undefined;
   }
 </script>
@@ -66,6 +70,12 @@
       <NodeThumbnailTitle node={item} />
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
+    {@const contentPreview = resolveContentPreview(
+      item.body,
+      item.contentType,
+      item.metadata
+    )}
+    {@const previewImageSrc = resolvePreviewImageSrc(item)}
     <ResourceGridThumbnail
       {item}
       on:click
@@ -74,17 +84,17 @@
     >
       <div class="relative grow w-full p-4">
         <!-- Preview content -->
-        {#if item.contentType === NodeType.IMAGE || item.contentType === NodeType.WEB_SCREENSHOT_CLIP || (item.contentType === NodeType.WEB_PAGE && resolvePreviewImageSrc(item))}
+        {#if item.contentType === NodeType.IMAGE || item.contentType === NodeType.WEB_SCREENSHOT_CLIP || (item.contentType === NodeType.WEB_PAGE && previewImageSrc) || contentPreview.includes("https://")}
           <img
             alt="..."
             class={cn(
               "absolute inset-0 w-full rounded-t-md object-cover h-full"
             )}
-            use:lazyLoad={resolvePreviewImageSrc(item)}
+            use:lazyLoad={previewImageSrc ?? contentPreview}
           />
         {:else if "body" in item && item.body}
           <span class="text-left text-b2">
-            {contentPreview(item.body, item.contentType, item.metadata)}
+            {contentPreview}
           </span>
         {/if}
         <!-- <ResourceThumbnailContentTypeOverlay
@@ -115,7 +125,7 @@
                   "fill-aps1": isGridBottomHovering
                 })}
               />
-              <span class="truncate w-5/6 text-left">
+              <span class="truncate w-full text-left">
                 {item.body.url}
               </span>
             </a>

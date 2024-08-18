@@ -153,6 +153,10 @@ export class SearchStore {
           : rootNodeTypeList
       );
 
+    if (!this.searchQuery) {
+      query = query.and((node) => !node.creationContext);
+    }
+
     if (this.resource === Resource.archived) {
       query = query.and((item) => item.isArchived === true);
     } else {

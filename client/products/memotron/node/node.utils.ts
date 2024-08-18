@@ -3,13 +3,15 @@ import { truncateString } from "$lib/shared/utils/text.utils";
 import {
   type ITweetBody,
   NodeType,
-  type INodeMetadata
+  type INodeMetadata,
+  type ITwitterProfileBody
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { commonMetadata } from "../common/urlMap";
 
-export function contentPreview(
-  body: IMarkdown | ITweetBody,
+export function resolveContentPreview(
+  body: IMarkdown | ITweetBody | ITwitterProfileBody,
   contentType: NodeType,
   metadata?: any
 ) {
@@ -17,6 +19,14 @@ export function contentPreview(
   if (contentType === NodeType.TWEET && "content" in body) {
     if (body.content) return truncateString(body.content, 100);
     else return metadata?.ogTitle ?? "";
+  } else if (contentType === NodeType.TWITTER_PROFILE) {
+    if (body.bio) return truncateString(body.bio, 100);
+    if (!body.url) return "";
+    const hostPart = new URL(body.url).host;
+    const ogImageUrl = commonMetadata.find(
+      (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
+    )?.ogImage;
+    return ogImageUrl ?? "";
   }
   if (body && typeof body === "object" && "blocks" in body) {
     const block = body.blocks[0];
