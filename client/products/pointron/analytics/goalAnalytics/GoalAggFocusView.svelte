@@ -4,7 +4,7 @@
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { cn } from "$lib/client/utils/ui.utils";
 
-  export let scale: TimeScale;
+  export let scale: TimeScale | "LIFETIME";
   export let value: number;
   let label: string;
   if (scale === TimeScale.DAYS) {
@@ -13,12 +13,14 @@
     label = "This month so far";
   } else if (scale === TimeScale.YEARS) {
     label = "This year so far";
+  } else if (scale === "LIFETIME") {
+    label = "Lifetime so far";
   }
 </script>
 
 <div
   class={cn(
-    "flex flex-col justify-around grow p-4 rounded-md bg-bgs2 h-28 portrait:h-20",
+    "flex flex-col justify-around grow p-4 rounded-md bg-bgs2 h-28 portrait:h-20 mo:min-w-32 min-w-48",
     {}
   )}
 >

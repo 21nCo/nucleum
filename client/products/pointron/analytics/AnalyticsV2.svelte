@@ -25,6 +25,8 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
+  import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import { ButtonVariant } from "$lib/client/types/button.type";
   $selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
@@ -100,7 +102,21 @@
                 label="reset"
                 isPreventMinWidth={true}
                 size={Size.xs}
-                on:click={analyticsConfigStore.reset}
+                on:click={() => {
+                  confirmationNotification.notify({
+                    title: "Reset analytics",
+                    message:
+                      "Are you sure you want to reset analytics? This will remove all pages and cards.",
+                    confirmAction: {
+                      label: "Reset",
+                      variant: ButtonVariant.DANGER,
+                      callback: async () => {
+                        await analyticsConfigStore.reset();
+                        return true;
+                      }
+                    }
+                  });
+                }}
               />
             {/if}
             <EditModeToggle />

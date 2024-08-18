@@ -31,7 +31,6 @@
   import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
-  import { logger } from "$lib/client/stores/log.store";
 
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
@@ -48,6 +47,7 @@
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
   import AppLoadingView from "../paint/AppLoadingView.svelte";
   import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   let timer: any;
   pingParent();
@@ -107,7 +107,7 @@
   const messageReceivedListener = (event: any) => {
     try {
     } catch (e) {
-      logger.logError(e);
+      logger.error(e);
     }
     // postMessageToParent(event.data);
   };
@@ -190,7 +190,7 @@
         }
         appStore.loadAppData(appData);
       } catch (e) {
-        logger.logError(e);
+        logger.error(e);
         appStore.gotoErrorPage(e);
       }
     }
@@ -266,7 +266,9 @@
     }
   }
   function handleCustomNavigation(event: any) {
-    if (event.detail) goto(event.detail);
+    logger.log({ at: "handleCustomNavigation", event });
+    if (event.detail?.isReload) window.location.reload();
+    else if (event.detail.path) goto(event.detail.path);
   }
   function handleCustomAlert(event: any) {
     if (event.detail) console.log("custom alert:", event.detail);

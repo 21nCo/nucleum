@@ -79,7 +79,7 @@
             label:
               getCorrespoingHorizonFrequencyLabel(chart.period.scale) +
               " target",
-            value: targetValue,
+            value: targetValue / (60 * 60),
             fillColor: colors.aps1
           }
         ]

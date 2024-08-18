@@ -180,11 +180,13 @@ function analyticsGoalV3() {
     let $dayFocus = fn::pointron::analytics::focusByCurrentHorizon::v3('DAYS',$goalId);
     let $monthFocus = fn::pointron::analytics::focusByCurrentHorizon::v3('MONTHS',$goalId);
     let $yearFocus = fn::pointron::analytics::focusByCurrentHorizon::v3('YEARS',$goalId);
+    let $lifetime = return array::first(select math::sum(focus) as focus from (select math::sum(totalFocus) as focus,year from PointAggFocusByGoal where goalId is $goalId or (parent and array::first(parent).id is $goalId) group by year) group all);
     LET $charts = (SELECT VALUE fn::pointron::analytics::focusByGoal::v3(scale, begin, end, $goalId) FROM $params);
     RETURN { aggs:[
         {scale: 'DAYS', value: $dayFocus.focus},
         {scale: 'MONTHS', value: $monthFocus.focus},
-        {scale: 'YEARS', value: $yearFocus.focus}
+        {scale: 'YEARS', value: $yearFocus.focus},
+        {scale: 'LIFETIME', value: $lifetime.focus}
     ], charts: $charts};
 };`;
   return [

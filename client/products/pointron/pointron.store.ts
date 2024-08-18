@@ -175,6 +175,7 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
         changedProperties[key] = newValue[key as keyof IPointronPreferences];
       });
       //TODO - create separate method for updating horizons with targets instead of duplicating custom set method (set() is present in KeyValueStore class)
+      console.log({ differences });
       if (differences.some((x) => x === "horizonsWithTarget")) {
         let horizonTargets = newValue.horizonTargets?.filter((x) =>
           newValue.horizonsWithTarget?.some((y) => y === x.scale)
@@ -182,7 +183,9 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
         changedProperties.horizonTargets = horizonTargets;
       }
     }
-    this.modify(newValue, { isPersist: !objIsEmpty(changedProperties) });
+    this.modify(changedProperties, {
+      isPersist: !objIsEmpty(changedProperties)
+    });
   }
   resetHorizonChartConfiguration() {
     this.modify({ horizonCharts: defaultHorizonChartConfiguration });

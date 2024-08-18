@@ -15,32 +15,36 @@ import { analyticsConfigStore, selectedPageId } from "./analytics.store";
 import {
   AnalyticsCardGrouping,
   AnalyticsCardType,
+  type AnalyticsPage,
   type AnalyticsCard
 } from "./analytics.types";
-
 
 export function onAddPageClicked() {
   analyticsConfigStore.addPage();
 }
 export function onRemovePageClicked(e: CustomEvent<string>) {
-  const id=e.detail;
-    if(id==get(selectedPageId)){
-      const pages= get(analyticsConfigStore).pages;
-      const index = pages.findIndex(
-        (page) => page.id !== id
-      );
+  const id = e.detail;
+  if (id == get(selectedPageId)) {
+    const pages = get(analyticsConfigStore).pages;
+    const index = pages.findIndex((page) => page.id !== id);
     if (index !== -1) {
       let event = new CustomEvent("pageSwitch", {
         detail: pages[index]?.id
       });
-      onPageSwitch(event)
-    } else selectedPageId.set(null);} 
-    analyticsConfigStore.removePage(e.detail);
+      onPageSwitch(event);
+    } else selectedPageId.set(null);
+  }
+  analyticsConfigStore.removePage(e.detail);
 }
 export function onPageSwitch(e: CustomEvent<string>) {
-  selectedPageId.set(get(analyticsConfigStore).pages.find((page) => page.id === e.detail)?.id as string);  
+  selectedPageId.set(
+    get(analyticsConfigStore).pages.find((page) => page.id === e.detail)
+      ?.id as string
+  );
 }
-export function onPagelabelChange(e: CustomEvent<{ value: string; label: string }>) {
+export function onPagelabelChange(
+  e: CustomEvent<{ value: string; label: string }>
+) {
   if (!e.detail.label || !e.detail.value) return;
   analyticsConfigStore.editPageLabel(e.detail.value, e.detail.label);
 }
@@ -342,4 +346,52 @@ export function generateAnalyticsSeedPages() {
     ]
   };
   return deepCopy([page1, page2, page3, page4]);
+}
+
+export function generateAnalyticsSeedPage(): AnalyticsPage {
+  return {
+    id: generateUID(),
+    label: "New view",
+    cards: [
+      {
+        id: generateUID(),
+        grouping: AnalyticsCardGrouping.DEFAULT,
+        filter: [],
+        type: AnalyticsCardType.DONUT,
+        period: {
+          scale: TimeScale.DAYS,
+          value: {
+            type: TimePeriodType.RELATIVE,
+            param: 0
+          }
+        }
+      },
+      {
+        id: generateUID(),
+        grouping: AnalyticsCardGrouping.DEFAULT,
+        filter: [],
+        type: AnalyticsCardType.TOP_N,
+        period: {
+          scale: TimeScale.DAYS,
+          value: {
+            type: TimePeriodType.RELATIVE,
+            param: -7
+          }
+        }
+      },
+      {
+        id: generateUID(),
+        grouping: AnalyticsCardGrouping.DEFAULT,
+        filter: [],
+        type: AnalyticsCardType.BAR,
+        period: {
+          scale: TimeScale.DAYS,
+          value: {
+            type: TimePeriodType.RELATIVE,
+            param: -14
+          }
+        }
+      }
+    ]
+  };
 }

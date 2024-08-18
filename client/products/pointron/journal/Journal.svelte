@@ -40,7 +40,7 @@
         <CalendarHeatMap
           touchDevice={false}
           orientation={Orientation.Vertical}
-          variant={CalendarHmVariant.PLAIN}
+          variant={CalendarHmVariant.YEARS_SWITCH}
           provider={focusHeatmapStore}
         />
       </div>

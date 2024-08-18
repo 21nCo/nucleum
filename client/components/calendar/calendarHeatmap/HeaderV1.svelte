@@ -12,7 +12,7 @@
   export let provider: ICalendarHeatMapDataProvider;
   export let options: CalendarHeatmapOptions = {};
   let dataManager = new CalendarHeatmapDataManager(provider, options);
-  let logstartdate = "2000-01-01"; //fetch log start date and put here
+  let logstartdate = "2000-01-01";
   let logstartYear = new Date(logstartdate).getFullYear();
   let currentYear = new Date().getFullYear();
   let items: DropdownItem[] = [];
@@ -20,35 +20,27 @@
   for (let year = logstartYear; year <= currentYear; year++) {
     items.push({ label: year.toString(), value: year });
   }
-  let value: any = items[items.length - 1].value;
-  let label: string = "Last 365 days";
-  let isLast365: boolean = true;
-  // $:console.log("isLast365 ",isLast365);
-  function handleSelect(event: any) {
-    isLast365 = false;
+  items.push({ label: "Last 365 days", value: 0 });
+  items.reverse();
+  let value: any = items[0].value;
+  async function handleSelect(event: any) {
     const year = event.detail;
-    console.log("in handle select e.target.value", year);
-    dataManager.fetchDailyDataForTheYear(year);
-  }
-  async function handleLast365() {
-    isLast365 = true;
-    console.log("in handle last 365");
-    await dataManager.fetchLast12MonthsDailyData();
+    if (year == 0) {
+      await dataManager.fetchLast12MonthsDailyData();
+    } else {
+      await dataManager.fetchDailyDataForTheYear(year);
+    }
   }
 </script>
 
-<div class="flex flex-row w-full justify-end p-1">
-  <span class="w-fit"
-    ><DropDown
+<div class="flex gap-2 px-2 w-full justify-end items-center p-1">
+  <span class="w-40">
+    <DropDown
       on:select={handleSelect}
       {items}
       bind:value
-      style={InputStyle.BORDERED}
-    /></span
-  >
-  <Button
-    on:click={handleLast365}
-    {label}
-    type={isLast365 ? "primary" : "secondary"}
-  />
+      style={InputStyle.PLAIN}
+      isDisableSearch={true}
+    />
+  </span>
 </div>

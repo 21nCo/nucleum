@@ -45,7 +45,6 @@
       param: { start: new Date(), end: new Date() }
     };
   }
-  console.log({ previouslySelectedAbsolute, previouslySelectedRelative });
   let scales = Object.keys(TimeScale); //$userPreferences.timeScales ??
   let selectedScale = period.scale;
 </script>

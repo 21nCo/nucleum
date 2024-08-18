@@ -149,7 +149,7 @@ async function _renderPopoverUsingFixedPositioning(
 
   if (placement === Position.Right) {
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
-    popRef.style.top = `${triggerRect.top - popRect.height / 2}px`;
+    popRef.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
     // console.log({
     //   popRectHeight: popRect.height,
     //   triggerRectTop: triggerRect.top,
@@ -305,9 +305,11 @@ export function resolveHoverState(event: MouseEvent | FocusEvent) {
  * @param path
  * @param queryParams
  */
-export function goto(path: string) {
+export function goto(path: string, isReload: boolean = false) {
   window.dispatchEvent(
-    new CustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { detail: path })
+    new CustomEvent(GlobalEvent.CUSTOM_NAVIGATION, {
+      detail: { path, isReload }
+    })
   );
 }
 

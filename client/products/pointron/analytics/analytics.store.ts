@@ -13,6 +13,7 @@ import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
+  generateAnalyticsSeedPage,
   generateAnalyticsSeedPages,
   generateParamsForCards
 } from "./analytics.utils";
@@ -21,51 +22,6 @@ import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 export const selectedPageId = writable<string | null>(null);
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
-const seedPage: AnalyticsPage = {
-  id: generateUID(),
-  label: "New view",
-  cards: [
-    {
-      id: generateUID(),
-      grouping: AnalyticsCardGrouping.DEFAULT,
-      filter: [],
-      type: AnalyticsCardType.DONUT,
-      period: {
-        scale: TimeScale.DAYS,
-        value: {
-          type: TimePeriodType.RELATIVE,
-          param: 0
-        }
-      }
-    },
-    {
-      id: generateUID(),
-      grouping: AnalyticsCardGrouping.DEFAULT,
-      filter: [],
-      type: AnalyticsCardType.TOP_N,
-      period: {
-        scale: TimeScale.DAYS,
-        value: {
-          type: TimePeriodType.RELATIVE,
-          param: -7
-        }
-      }
-    },
-    {
-      id: generateUID(),
-      grouping: AnalyticsCardGrouping.DEFAULT,
-      filter: [],
-      type: AnalyticsCardType.BAR,
-      period: {
-        scale: TimeScale.DAYS,
-        value: {
-          type: TimePeriodType.RELATIVE,
-          param: -14
-        }
-      }
-    }
-  ]
-};
 const seedAnalyticsConfig: IAnalyticsConfigStore = {
   isIncludeBreakInAnalytics: false,
   pages: generateAnalyticsSeedPages()
@@ -79,8 +35,8 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       {
         dboDependencies: [
           "fn::pointron::analytics::page::fetch",
-          "fn::pointron::analytics::targets::v3",
-          "fn::pointron::analytics::goal::v3"
+          "fn::pointron::analytics::targets::v3"
+          // "fn::pointron::analytics::goal::v3"
         ]
       }
     );
@@ -89,8 +45,11 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     this.modify(config, { isDebouncedPersist: true });
   }
   reset() {
-    const val = { ...seedAnalyticsConfig, pages: [deepCopy(seedPage)] };
-    this.modify(val, { isDebouncedPersist: true });
+    const val = {
+      ...seedAnalyticsConfig,
+      pages: [generateAnalyticsSeedPage()]
+    };
+    return this.modify(val, { isDebouncedPersist: true });
   }
   loader(data: IAnalyticsConfigStore) {
     if (data.pages.length === 0) {
@@ -140,7 +99,8 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   }
   addPage() {
     let state = this.get();
-    state.pages.push({ ...seedPage, id: generateUID() });
+    const newPage = generateAnalyticsSeedPage();
+    state.pages.push({ ...newPage, id: generateUID() });
     this.modify(state, { isDebouncedPersist: true });
   }
   editPageLabel(id: string, label: string) {

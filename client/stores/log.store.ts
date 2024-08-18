@@ -11,6 +11,9 @@ const seedLogStore: LogStore = {
   items: []
 };
 
+/**
+ * @deprecated - use {@link logger} from components/debug/logger.client instead
+ */
 export const logger = initLogStore();
 const propagate = async (log: any) => {
   // try {

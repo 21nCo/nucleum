@@ -77,7 +77,6 @@
    * @param item DropdownItem
    */
   function onitemclick(e: MouseEvent, item: DropdownItem) {
-    console.log({ item });
     if (item.isDisabled) return;
     value = item.value;
     dispatch("select", item.value);

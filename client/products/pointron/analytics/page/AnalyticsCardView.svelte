@@ -84,7 +84,9 @@
   style={!$view.isPortrait
     ? position.total === 1
       ? "height: calc(100vh - 8rem);"
-      : "height: calc(50vh - 2.85rem);"
+      : $isInEditMode
+        ? "height: calc(60vh - 2.85rem);"
+        : "height: calc(50vh - 2.85rem);"
     : ""}
 >
   <header

@@ -7,6 +7,7 @@ import { getprevDateRange } from "$lib/client/components/calendar/calendarHeatma
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { StoreDataType } from "$lib/client/types/data.type";
+import { isSameDay } from "$lib/client/utils/time.utils";
 const last12MonthDateRange = getprevDateRange();
 
 const seedFocusHeatmapStore: IFocusHeatMapStore = {
@@ -33,33 +34,43 @@ class FocusHeatmapStore
   }
   async refresh() {
     const n = this.get();
-    if (n.isPageRefreshing) {
-      return new Promise((resolve) => setTimeout(() => resolve(-1), 1000));
-    } else {
-      return dataManager.refresh(this.id);
-    }
+    // if (n.isPageRefreshing) {
+    //   return new Promise((resolve) => setTimeout(() => resolve(-1), 1000));
+    // } else {
+    //   return dataManager.refresh(this.id);
+    // }
+    return dataManager.refresh(this.id);
   }
   resolveRefreshQuery() {
-    //TODO - if default scale is not DAYS - retrieve current UI State of scale, resolve start and end accordingly
-    const dateRange = getprevDateRange();
+    const n = this.get();
     return replaceParams(
       "return fn::pointron::journal::fetch($scale, $start, $end)",
       {
         scale: TimeScale.DAYS,
-        start: dateRange.firstMonthEndDate,
-        end: dateRange.lastMonthStartDate
+        start: n.dailyJournalDateRange.start,
+        end: n.dailyJournalDateRange.end
       }
     );
   }
   async fetchDailyJournal(start: Date, end: Date) {
     const n: IFocusHeatMapStore = this.get();
-    if (n.dailyJournal.length > 0) {
+    if (
+      n.dailyJournal.length > 0 &&
+      isSameDay(start, n.dailyJournalDateRange.start) &&
+      isSameDay(end, n.dailyJournalDateRange.end)
+    ) {
       return n.dailyJournal;
     } else {
-      while (this.get().isPageRefreshing) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-      if (this.get().dailyJournal.length === 0) await this.refresh();
+      this.update((n) => {
+        n.dailyJournalDateRange = { start, end };
+        n.dailyJournal = [];
+        return n;
+      });
+      // while (this.get().isPageRefreshing) {
+      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      // }
+      // if (this.get().dailyJournal.length === 0)
+      await this.refresh();
       return this.get().dailyJournal;
     }
   }

@@ -266,13 +266,17 @@ function init() {
         },
         LogType.INFO
       );
-      mutationQueue.bulkPut(mutations.map((x) => ({ ...x, isInProgress: true })));
+      mutationQueue.bulkPut(
+        mutations.map((x) => ({ ...x, isInProgress: true }))
+      );
       let response = await dm.db.query(masterQuery, {});
-      logger.log({
-        context: "syncPendingMutations - response",
-        response
-      },
-      LogType.INFO);
+      logger.log(
+        {
+          context: "syncPendingMutations - response",
+          response
+        },
+        LogType.INFO
+      );
       if (!response) {
         for (let i = 0; i < mutations.length; i++) {
           await mutationQueue.update(mutations[i].id, {
@@ -328,7 +332,7 @@ async function runDboUpdate() {
 }
 
 async function refreshOnAppear() {
-  runDboUpdate();
+  // runDboUpdate();
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
     (x) => (x as IStore).refreshOnAppear
