@@ -13,7 +13,6 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
-  import MultimediaClipper from "$lib/client/extensions/clipper/contentScripts/MultimediaClipper.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage, toolbarState, feedbackPane } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
@@ -25,8 +24,8 @@
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import account from "$lib/client/stores/account.store";
   import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
+  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   export let id: string;
-  let colors = ["#be8686", "#f6e05e", "#88c0d0", "#a3be8c", "#d08770"];
   let textClipperRef: any;
   let isSnipActive: boolean = false;
   $: contentType = resolveContentTypeForUrl($webpage.url);
@@ -132,13 +131,19 @@
 
 <ExtensionBaseLayer
   {id}
-  stores={[nodeStore, collectionStore, toolbarState, webpage, linker]}
+  stores={[
+    nodeStore,
+    collectionStore,
+    toolbarState,
+    webpage,
+    linker,
+    highlightStore
+  ]}
 >
   {#if !$toolbarState?.isOpen}
     <ToolbarOpener on:click={() => toolbarState.toggle(true)} />
   {:else}
     <Toolbar
-      {colors}
       {contentType}
       bind:isSnipActive
       on:color={onActivateColor}
@@ -155,8 +160,7 @@
       <FeedbackPane />
       <!-- </div> -->
     {/if}
-    <TextClipper bind:this={textClipperRef} {colors} />
-    <MultimediaClipper {colors} />
+    <TextClipper bind:this={textClipperRef} />
     {#if isSnipActive}
       <ScreenShot
         on:saved={() => {

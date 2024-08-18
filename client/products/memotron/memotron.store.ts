@@ -153,6 +153,10 @@ export class SearchStore {
           : rootNodeTypeList
       );
 
+    if (!this.searchQuery) {
+      query = query.and((node) => !node.creationContext);
+    }
+
     if (this.resource === Resource.archived) {
       query = query.and((item) => item.isArchived === true);
     } else {
@@ -168,7 +172,14 @@ export class SearchStore {
           item.label?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
           ("body" in item &&
             typeof item.body === "string" &&
-            item.body?.toLowerCase().includes(this.searchQuery.toLowerCase()))
+            item.body
+              ?.toLowerCase()
+              .includes(this.searchQuery.toLowerCase())) ||
+          ("content" in item.body &&
+            typeof item.body.content === "string" &&
+            item.body.content
+              ?.toLowerCase()
+              .includes(this.searchQuery.toLowerCase()))
       );
     }
     return query.toArray();

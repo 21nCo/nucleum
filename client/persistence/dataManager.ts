@@ -29,6 +29,7 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { performApiCall } from "../utils/network.utils";
 import { logger } from "../components/debug/logger.client";
 import { LogType } from "../components/debug/debug.type";
+import { isExtensionEnvironment } from "../utils/browser.utils";
 
 export type DataMangerStore = ReturnType<typeof init>;
 const allResources = Object.values(Resource);
@@ -269,6 +270,9 @@ function init() {
       mutationQueue.bulkPut(
         mutations.map((x) => ({ ...x, isInProgress: true }))
       );
+      mutationQueue.bulkPut(
+        mutations.map((x) => ({ ...x, isInProgress: true }))
+      );
       let response = await dm.db.query(masterQuery, {});
       logger.log(
         {
@@ -332,7 +336,8 @@ async function runDboUpdate() {
 }
 
 async function refreshOnAppear() {
-  // runDboUpdate();
+  //TODO - temporary disable dbo update for extension environment - as it is triggering for some web pages - on every tab update
+  if (!isExtensionEnvironment()) runDboUpdate();
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
     (x) => (x as IStore).refreshOnAppear

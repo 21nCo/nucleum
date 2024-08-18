@@ -11,10 +11,10 @@
   import InlineFeedbackText from "./InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   const dispatch = createEventDispatcher();
   export let id: string | null = null;
-  export let colors: string[] = [];
-  export let selectedColor: string | null = null;
+  export let selectedHighlighterId: string | null = null;
   export let feedback: { message: string; type: AlertType } | string = "";
   let isLinkboxOpened = false;
   let isNotesOpened = false;
@@ -43,15 +43,14 @@
   class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-96"
 >
   <div class="flex justify-center items-center gap-3">
-    {#if colors.length > 0}
+    {#if $highlightStore.highlighters.length > 0}
       <span class="flex gap-2 items-center">
-        {#each colors as color}
+        {#each $highlightStore.highlighters as highlighter}
           <HightlightColorItem
-            {color}
-            isActive={color === selectedColor}
+            {highlighter}
+            isActive={highlighter.id === selectedHighlighterId}
             on:click={() => {
-              // console.log(color);
-              dispatch("color", color);
+              dispatch("color", highlighter);
             }}
           />
         {/each}

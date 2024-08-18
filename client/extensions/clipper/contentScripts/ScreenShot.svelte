@@ -11,6 +11,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import account from "$lib/client/stores/account.store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -55,21 +56,39 @@
     img.crossOrigin = "Anonymous";
     img.src = data;
     const canvas = document.createElement("canvas");
-    canvas.width = area.width;
-    canvas.height = area.height;
+    const dpr = window.devicePixelRatio || 1;
+    const scaledArea = {
+      x: area.x * dpr,
+      y: area.y * dpr,
+      width: area.width * dpr,
+      height: area.height * dpr
+    };
+    canvas.width = scaledArea.width;
+    canvas.height = scaledArea.height;
     const canvasContext = canvas.getContext("2d");
     img.onload = async () => {
+      const screenshotDimensions = await getScreenshotDimensions(data);
+      logger.log({
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight
+        },
+        screenshotDimensions,
+        dpr,
+        area,
+        scaledArea
+      });
       if (canvasContext) {
         canvasContext.drawImage(
           img,
-          area.x,
-          area.y,
-          area.width,
-          area.height,
+          scaledArea.x,
+          scaledArea.y,
+          scaledArea.width,
+          scaledArea.height,
           0,
           0,
-          area.width,
-          area.height
+          scaledArea.width,
+          scaledArea.height
         );
         const contentType = "image/png";
         const dataURL = canvas.toDataURL(contentType);
@@ -104,6 +123,24 @@
         processScreenshot(data, area);
       }
     );
+  }
+
+  function getScreenshotDimensions(
+    dataUrl: string
+  ): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          width: img.width,
+          height: img.height
+        });
+      };
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+      img.src = dataUrl;
+    });
   }
 
   /**

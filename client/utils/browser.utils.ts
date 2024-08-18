@@ -427,3 +427,26 @@ export function lazyLoad(image, src) {
     }
   };
 }
+
+export function resolveIframability(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    iframe.onload = () => {
+      resolve(true);
+    };
+
+    iframe.onerror = () => {
+      resolve(false);
+    };
+
+    iframe.src = url;
+
+    // Set a timeout to catch X-Frame-Options or CSP blocks
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 5000);
+  });
+}

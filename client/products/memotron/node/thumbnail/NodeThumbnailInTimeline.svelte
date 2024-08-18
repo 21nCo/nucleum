@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { contentPreview } from "$lib/client/products/memotron/node/node.utils";
+  import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
   import { userPreferences } from "$lib/client/stores/app.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import {
@@ -79,7 +79,7 @@
           </div>
           {#if "body" in node && node.body}
             <span class="text-left text-b2">
-              {contentPreview(node.body)}
+              {resolveContentPreview(node.body)}
             </span>
           {/if}
           {#if node.contentType === NodeType.AUDIO}

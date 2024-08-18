@@ -6,7 +6,7 @@
     type INodeThumbnail
   } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { contentPreview } from "$lib/client/products/memotron/node/node.utils";
+  import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import {
     formatDate,
@@ -44,7 +44,7 @@
     {/if}
     {#if "body" in node && node.body}
       <span class="text-left text-b2">
-        {contentPreview(node.body)}
+        {resolveContentPreview(node.body)}
       </span>
     {/if}
     {#if node.links}
@@ -69,7 +69,7 @@
       </span>
       {#if "body" in node && node.body}
         <span class="text-left text-b2">
-          {contentPreview(node.body)}
+          {resolveContentPreview(node.body)}
         </span>
       {/if}
     </span>

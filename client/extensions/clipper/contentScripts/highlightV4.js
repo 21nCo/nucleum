@@ -8,13 +8,13 @@ export function highlight(
   selString,
   container,
   selection,
-  color,
+  highlighter,
   textColor,
   id,
   callback
 ) {
   const highlightInfo = {
-    color: color ? color : "yellow",
+    highlighter,
     textColor: textColor ? textColor : "inherit",
     id,
     selectionString: selString,
@@ -51,8 +51,8 @@ export function initializeHighlightEventListeners(el, callback) {
     selection.removeAllRanges();
     selection.addRange(range);
     const id = this.getAttribute("data-highlight-id");
-    const color = this.getAttribute("data-highlight-color");
-    if (callback) callback({id, color});
+    const highlighterId = this.getAttribute("data-highlighter-id");
+    if (callback) callback({id, highlighterId});
   };
 }
 
@@ -71,7 +71,7 @@ function _recursiveWrapper(
     focus,
     anchorOffset,
     focusOffset,
-    color,
+    highlighter,
     textColor,
     id,
     selectionString,
@@ -170,12 +170,13 @@ function _recursiveWrapper(
     // Wrap the highlighted text in a span with the highlight class name
     const highlightNode = document.createElement("span");
     highlightNode.classList.add(
-      color === "inherit" ? DELETED_CLASS : HIGHLIGHT_CLASS
+      highlighter.id === "inherit" ? DELETED_CLASS : HIGHLIGHT_CLASS
     );
-    highlightNode.style.backgroundColor = color;
+    highlightNode.style.backgroundColor = highlighter.color;
     highlightNode.style.color = textColor;
     highlightNode.dataset.highlightId = id;
-    highlightNode.dataset.highlightColor = color;
+    highlightNode.dataset.highlightColor = highlighter.color;
+    highlightNode.dataset.highlighterId = highlighter.id;
     highlightNode.textContent = highlightTextEl.nodeValue;
     highlightTextEl.remove();
     parent.insertBefore(highlightNode, insertBeforeElement);

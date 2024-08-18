@@ -6,7 +6,11 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
+  import {
+    appStore,
+    isInEditMode,
+    userPreferences
+  } from "$lib/client/stores/app.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Orientation, Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -22,6 +26,9 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
+  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import { Size } from "$lib/client/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -164,12 +171,13 @@
             <Button
               {...buttonCommonProps}
               icon="full-screen"
+              tooltip="Full screen"
               on:click={() => {
                 dispatch("fullscreen");
               }}
             />
           {/if}
-          {#if accessMode != ResourceAccessMode.INLINE}
+          {#if accessMode === ResourceAccessMode.FOCUS}
             <Button
               {...buttonCommonProps}
               icon="cross-circled"
@@ -190,6 +198,24 @@
           />
         </div>
       {/if}
+      <div class="flex w-full justify-between">
+        {#if $node.contentType === NodeType.WEB_PAGE}
+          <Button
+            icon="arrow-up-right"
+            label="Open link"
+            size={Size.xs}
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.OUTLINED}
+            on:click={() => {
+              appStore.openLink($node.body.url);
+            }}
+          />
+        {/if}
+        <div></div>
+        <div class="text-b4 text-fgs3 mt-2">
+          Created {formatDatetime($userPreferences, $node.createdAt)}
+        </div>
+      </div>
     </div>
   </HoverableElement>
 </div>

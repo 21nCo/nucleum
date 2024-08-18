@@ -4,6 +4,7 @@
   import AudioScrubablePreview from "../../capture/AudioScrubablePreview.svelte";
   import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import WebPageContent from "./WebPageContent.svelte";
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
   export let renderingDetails: any;
@@ -58,5 +59,7 @@
       })}
       src={$node.body.url}
     />
+  {:else if $node?.contentType === NodeType.WEB_PAGE}
+    <WebPageContent {node} />
   {/if}
 </div>

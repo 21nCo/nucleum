@@ -11,7 +11,6 @@ import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWhee
 import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
-import TypeEditor from "$lib/client/products/memotron/collection/properties/TypeEditor.svelte";
 import Library from "$lib/client/products/memotron/library/Library.svelte";
 import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
@@ -81,19 +80,6 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: MemotronAction.CREATE_TYPE,
-    component: TypeEditor,
-    label: "Create a new type",
-    type: ActionType.MODAL,
-    modalParams: {
-      title: "Create type",
-      layout: {
-        orientation: Orientation.Horizontal,
-        size: Size.xl
-      }
-    }
-  },
-  {
     action: MemotronAction.JOURNAL_MODAL_VIEWER,
     component: JournalModalViewer,
     type: ActionType.MODAL,
@@ -135,7 +121,7 @@ export const memotronActions: IAction[] = [
     loadingComponent: NodeLoadingPulse,
     modalParams: {
       layout: {
-        size: Size.xxl,
+        size: Size.xl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }

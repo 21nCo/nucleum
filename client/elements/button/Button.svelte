@@ -50,8 +50,6 @@
   class={cn(
     "relative flex flex-row justify-center items-center rounded-full",
     {
-      "min-w-32":
-        style != ButtonStyle.PLAIN && !isPreventMinWidth && !isIconOnlyButton,
       "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
       "gap-4 text-base": size === Size.lg,
@@ -66,12 +64,18 @@
         style === ButtonStyle.PLAIN && isUnderlined
     },
     style != ButtonStyle.PLAIN &&
+      !isPreventMinWidth &&
+      !isIconOnlyButton && {
+        "min-w-32": size === Size.lg || size === Size.md || size === Size.sm,
+        "min-w-fit": size === Size.xs
+      },
+    style != ButtonStyle.PLAIN &&
       (label || $$slots.default) && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,
         "h-10 py-3 px-5": size === Size.md,
         "h-8 py-2 px-4": size === Size.sm,
-        "h-6 py-1 px-3": size === Size.xs
+        "h-6 py-1 px-2": size === Size.xs
       },
     style === ButtonStyle.DEFAULT &&
       !isIconOnlyButton && [

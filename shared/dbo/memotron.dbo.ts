@@ -21,7 +21,7 @@ function nodeFetch() {
   const def = `define function fn::memotron::node::fetch($id: record){
     return array::first(select *, (select * from node where parent is $id) as clips,
     (fn::memotron::node::children($parent.children)) as children, 
-    (fn::memotron::node::parent($id)) as parent,
+    (fn::memotron::node::parent($id)) as mdParent,
     ->link->collection as collections from node where id is $id);
 };`;
   return [...nodeChildren(), ...nodeParent(), def];
@@ -154,7 +154,7 @@ function collectionFecthData() {
 
 /**
  * @deprecated - using client store and mutation queue instead
- * @returns 
+ * @returns
  */
 function saveClip() {
   const def = `DEFINE FUNCTION fn::memotron::clipper::saveClip($id: any, $content: any, $webpagedata: any) {
@@ -169,7 +169,7 @@ function saveClip() {
 
 /**
  * @deprecated - using client store and mutation queue instead
- * @returns 
+ * @returns
  */
 function saveWebpage() {
   const def = `DEFINE FUNCTION fn::memotron::clipper::saveWebpage($url: string, $data: any){

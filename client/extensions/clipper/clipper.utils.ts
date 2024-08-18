@@ -376,19 +376,19 @@ export function extractTweetFromTweeetPage() {
 export function extractTwitterProfile(): IClipCapture<ITwitterProfile & {
   username: string;
 }> { 
+  const url = window.location.href;
+  const username = url.split("https://")[1].split("/")[1];
   const bioElement = document.querySelector('[data-testid="UserDescription"]');
   const nameElement = document.querySelector('[data-testid="UserName"]');
   const linkElement = document.querySelector('[data-testid="UserUrl"]');
-  const avatarElement = document.querySelector('[data-testid^="UserAvatar-Container-"]');
+  const avatarElement = document.querySelector(`[data-testid^="UserAvatar-Container-${username}"]`);
   const imgElement = avatarElement?.querySelector('img');
-  const { ogTitle } = resolveOgData();
   const profileImageUrl = imgElement?.src;
+  const { ogTitle } = resolveOgData();
   const name = nameElement?.textContent?.split("@")[0];
   const bio = bioElement?.textContent;
   const bioLink = linkElement?.href;
   const bioLinkText = linkElement?.textContent;
-  const url = window.location.href;
-  const username = url.split("https://")[1].split("/")[1];
   return { body: { name, bio, url, profileImageUrl }, metadata:{ ogTitle, bioLink, bioLinkText }, username, contentType: NodeType.TWITTER_PROFILE };
 }
 

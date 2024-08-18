@@ -30,4 +30,5 @@ export type ModalLayoutParams = {
   secondaryAction?: IButtonParams;
   ignoreSafeArea?: boolean;
   isShowClose?: boolean;
+  isShowCantileverClose?: boolean;
 };
