@@ -7,6 +7,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import NodeTitleLabelPart from "./NodeTitleLabelPart.svelte";
   export let node: IActiveNodeStore;
   function onLabelChange(e: any) {
     console.log("onLabelChange", e);
@@ -16,9 +17,7 @@
 
 <div class="flex items-center gap-3 grow">
   {#if !$node.focusedBlock}
-    {#if $node.avatars}
-      <NodeAvatar avatars={$node.avatars} size={Size.sm} />
-    {/if}
+    <NodeAvatar avatars={$node.avatars} node={$node} size={Size.sm} />
     {#if $isInEditMode}
       <TextInput
         size={Size.xl}
@@ -29,8 +28,9 @@
         on:input={onLabelChange}
       />
     {:else}
-      <span class={cn("text-h4 font-medium text-start")}>
-        {$node.label ?? $node.body ?? ""}
+      <span class={cn("text-h4 font-medium text-start truncate")}>
+        <!-- {$node.label ?? $node.body ?? ""} -->
+        <NodeTitleLabelPart node={$node} />
       </span>
     {/if}
     {#if $node.isStarred}

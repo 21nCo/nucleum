@@ -88,8 +88,8 @@ export function formatSecondsToTimeInDecimals(
   }
 }
 
-export function toLocalISOString(date:Date) {
-  const pad = (number:number) => (number < 10 ? '0' + number : number);
+export function toLocalISOString(date: Date) {
+  const pad = (number: number) => (number < 10 ? "0" + number : number);
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
   const day = pad(date.getDate());
@@ -564,8 +564,9 @@ export function attachTimeToDate(date: Date, time: string) {
 
 export function formatDatetime(
   userPreferences: IUserGlobalPreferences,
-  date: Date
+  date: Date | string
 ) {
+  if (typeof date === "string") date = new Date(date);
   const formattedDate = formatDate(date);
   const formattedTime = formatTime(userPreferences, date);
   return `${formattedDate} ${formattedTime}`;

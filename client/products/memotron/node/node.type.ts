@@ -262,6 +262,13 @@ export const webNodeTypeList = [
   NodeType.TWITTER_PROFILE,
   NodeType.WEB_SCREENSHOT_CLIP
 ];
+
+export const mediaNodeTypeList = [
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO
+];
+
 export const headingNodeTypes = [
   NodeType.HEADING1,
   NodeType.HEADING2,

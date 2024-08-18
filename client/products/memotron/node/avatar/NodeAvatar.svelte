@@ -3,11 +3,15 @@
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  export let avatars: IAvatar[];
+  import { type INode, webNodeTypeList } from "../node.type";
+  import NodeFavicon from "./NodeFavicon.svelte";
+  export let avatars: IAvatar[] | undefined = undefined;
+  export let node: INode | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  $: console.log({ node });
 </script>
 
-{#if avatars}
+<!-- {#if avatars && avatars.length > 0}
   <span class="flex">
     {#each avatars as avatar, index (avatar)}
       <div
@@ -19,4 +23,7 @@
       </div>
     {/each}
   </span>
+{/if} -->
+{#if node && webNodeTypeList.includes(node.contentType)}
+  <NodeFavicon {node} />
 {/if}

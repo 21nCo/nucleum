@@ -18,7 +18,10 @@
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
   import { logger } from "../debug/logger.client";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   export let path: string;
+  export let resource: string | undefined = undefined;
   export let params: ModalParams;
   let size: Size = Size.md;
   if (params.layout?.size) size = params.layout.size;
@@ -46,6 +49,7 @@
   }
   function handleClose() {
     if (path === Action.CONFIRMATION) confirmationNotification.reset();
+    else if (resource) appStore.closeResource({ inlineRestoreId: resource });
     else modalEvent.hide(path, "ModalLayout.svelte");
   }
 </script>
@@ -80,7 +84,7 @@
 {:else}
   <div
     class={cn(
-      "modal flex flex-col items-center justify-between w-full h-full",
+      "relative modal flex flex-col items-center justify-between w-full h-full",
       {
         "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
         "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs,
@@ -124,6 +128,14 @@
         on:close={() => handleClose()}
         isShowClose={params.layout?.isShowClose}
       />
+    {/if}
+    {#if params.layout?.isShowCantileverClose}
+      <button
+        class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
+        on:click={() => handleClose()}
+      >
+        <Icon icon="cross" size={Size.lg} class="stroke-abg" />
+      </button>
     {/if}
   </div>
 {/if}

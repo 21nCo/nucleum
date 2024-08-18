@@ -95,7 +95,7 @@
     class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
       "bg-opacity-0": !isShowOverlay,
       "flex justify-center items-center p-3": !isUseDialog,
-      "backdrop-blur-md backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
+      "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
         isShowOverlay && !isUseDialog
     })}
     {id}

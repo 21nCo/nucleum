@@ -5,7 +5,7 @@
   import { prefixTable } from "$lib/shared/utils/text.utils";
   import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import { NodeType } from "./node.type";
+  import { mediaNodeTypeList, NodeType, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
   export let id: string;
@@ -40,7 +40,7 @@
 </script>
 
 {#if $node && !isLoading}
-  {#if $node.contentType === NodeType.IMAGE || $node.contentType === NodeType.AUDIO || $node.contentType === NodeType.VIDEO}
+  {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
     <MediaNode {node} {accessMode} />
   {:else}
     <NonMediaNode {node} {accessMode} />

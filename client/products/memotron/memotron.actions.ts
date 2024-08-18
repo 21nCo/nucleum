@@ -121,7 +121,7 @@ export const memotronActions: IAction[] = [
     loadingComponent: NodeLoadingPulse,
     modalParams: {
       layout: {
-        size: Size.xxl,
+        size: Size.xl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }
