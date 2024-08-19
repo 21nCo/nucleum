@@ -105,12 +105,13 @@
     [ImportSource.TIMEMATOR]: [
       {
         subTitle: "Let us guide you through importing files from Timemator",
-        description: "Step 1: Go to Reports",
+        description: "Step 1: Go to **Reports** from the app menu.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle: "Let us guide you through importing files from Timemator",
-        description: "Step 2: Click on share icon",
+        description:
+          "Step 2: Click on **Share** button on the top right corner.",
         type: StepType.NON_INTERACTIVE
       },
       {
@@ -308,7 +309,7 @@
 
       // onClose();
     } else {
-      alert("Please upload a file");
+      toasts.error("Please upload a file");
     }
   }
 
@@ -419,178 +420,167 @@
 </script>
 
 <div class="flex flex-col gap-4 justify-between w-full h-full">
-  <div>
-    {#if $view.display === Display.MO}
-      <div class="header flex justify-between">
-        {#if activeStepIndex !== 0}
-          <Icon size={Size.sm} on:click={onBack} icon={"chevleft"} />
-        {/if}
-        <div class="ml-auto">
-          <Button
-            size={$view.isPortrait ? Size.sm : Size.md}
-            on:click={onClose}
-            icon={"cross"}
+  {#if $view.display === Display.MO}
+    <div class="header flex justify-between">
+      {#if activeStepIndex !== 0}
+        <Icon size={Size.sm} on:click={onBack} icon={"chevleft"} />
+      {/if}
+      <div class="ml-auto">
+        <Button
+          size={$view.isPortrait ? Size.sm : Size.md}
+          on:click={onClose}
+          icon={"cross"}
+        />
+      </div>
+    </div>
+  {/if}
+  {#if steps[importSource][activeStepIndex].type === StepType.NON_INTERACTIVE}
+    <div class="flex flex-col items-center gap-2">
+      <div class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}>
+        {resolveTitle(importSource)}
+      </div>
+      <div
+        class={`font-normal w-full ${$view.isPortrait ? `text-b4` : `text-b3`}`}
+      >
+        {#key steps[importSource][activeStepIndex].subTitle}
+          <InlineMarkdownTextInput
+            class="text-center"
+            content={steps[importSource][activeStepIndex].subTitle}
           />
+        {/key}
+      </div>
+    </div>
+    <div class="flex flex-col items-center gap-2 w-full">
+      <div
+        class={`text-fgs2 mr-auto dp:mt-4 w-full ${
+          $view.isPortrait ? `text-left text-b4` : `text-b2`
+        }`}
+      >
+        {#key steps[importSource][activeStepIndex].description}
+          <InlineMarkdownTextInput
+            class="text-center"
+            content={steps[importSource][activeStepIndex].description}
+          />
+        {/key}
+      </div>
+      <div
+        class={`rounded-xl overflow-auto object-contain mt-4  flex items-center justify-center mo:w-full w-4/5`}
+      >
+        <img
+          class="w-full"
+          alt={`Step-${activeStepIndex + 1}`}
+          src={resolveImageSrc(importSource, activeStepIndex)}
+        />
+      </div>
+    </div>
+  {:else if steps[importSource][activeStepIndex].type === StepType.UPLOAD}
+    <div class="flex flex-col items-center gap-2 w-full">
+      <div class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}>
+        {resolveTitle(importSource)}
+      </div>
+      <div class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}>
+        {#key steps[importSource][activeStepIndex].subTitle}
+          <InlineMarkdownTextInput
+            class="text-center"
+            content={steps[importSource][activeStepIndex].subTitle}
+          />
+        {/key}
+      </div>
+    </div>
+    <div class="flex flex-col items-center gap-2 w-full">
+      <div
+        class={`text-fgs2 mr-auto ${
+          $view.isPortrait
+            ? `text-left text-b4`
+            : `flex justify-center text-b2 w-full`
+        }`}
+      >
+        {#key steps[importSource][activeStepIndex].description}
+          <InlineMarkdownTextInput
+            class="text-center"
+            content={steps[importSource][activeStepIndex].description}
+          />
+        {/key}
+      </div>
+      <div
+        class={`rounded-xl border-dashed p-4 overflow-auto mt-4 border  flex items-center justify-center ${
+          $view.isPortrait ? `w-full` : `w-[530px]`
+        } ${tempFileList?.length ? `border-a1` : `h-[290px] border-bgs4`}`}
+      >
+        <div
+          class={`flex items-center ${
+            tempFileList?.length && !$view.isPortrait
+              ? `gap-3`
+              : `flex-col gap-2 `
+          }`}
+        >
+          <Icon icon="upload" />
+          <div
+            class={`flex-col ${
+              tempFileList?.length && !$view.isPortrait
+                ? `text-left`
+                : `text-center`
+            }`}
+          >
+            <div class={`${$view.isPortrait ? `text-b4` : `text-b2`}`}>
+              Browse a file or drag and drop here
+            </div>
+            <div
+              class={`text-fgs3 ${tempFileList?.length ? `` : `mb-4`} 
+                   ${$view.isPortrait ? `text-b4` : `text-b2`}`}
+            >
+              {note}
+            </div>
+          </div>
+          <input
+            multiple={false}
+            bind:files={locallyUploadedFiles}
+            class="hidden"
+            {accept}
+            bind:this={inputRef}
+            type="file"
+          />
+          <Button
+            size={Size.sm}
+            on:click={() => {
+              inputRef.click();
+            }}
+          >
+            Browse
+          </Button>
         </div>
       </div>
-    {/if}
-    <div
-      class={`steps-container flex flex-col gap-6 items-center justify-center`}
-    >
-      {#if steps[importSource][activeStepIndex].type === StepType.NON_INTERACTIVE}
-        <div class="flex flex-col items-center text-fgs1 gap-2">
-          <div
-            class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}
-          >
-            {resolveTitle(importSource)}
-          </div>
-          <div
-            class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}
-          >
-            {#key steps[importSource][activeStepIndex].subTitle}
-              <InlineMarkdownTextInput
-                content={steps[importSource][activeStepIndex].subTitle}
-              />
-            {/key}
-          </div>
-          <div
-            class={`text-fgs2 mr-auto ${
-              $view.isPortrait ? `text-left text-b4` : `text-b2`
-            }`}
-          >
-            {#key steps[importSource][activeStepIndex].description}
-              <InlineMarkdownTextInput
-                content={steps[importSource][activeStepIndex].description}
-              />
-            {/key}
-          </div>
-          <div
-            class={`rounded-xl overflow-auto object-contain mt-4  flex items-center justify-center ${
-              $view.isPortrait ? `w-full` : `w-[530px]`
-            }`}
-          >
-            <img
-              class="w-full"
-              alt={`Step-${activeStepIndex + 1}`}
-              src={resolveImageSrc(importSource, activeStepIndex)}
-            />
-          </div>
-        </div>
-      {:else if steps[importSource][activeStepIndex].type === StepType.UPLOAD}
-        <div class="flex flex-col items-center text-fgs1 gap-2">
-          <div
-            class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}
-          >
-            {resolveTitle(importSource)}
-          </div>
-          <div
-            class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}
-          >
-            {#key steps[importSource][activeStepIndex].subTitle}
-              <InlineMarkdownTextInput
-                class="text-center"
-                content={steps[importSource][activeStepIndex].subTitle}
-              />
-            {/key}
-          </div>
-          <div
-            class={`text-fgs2 mr-auto ${
-              $view.isPortrait
-                ? `text-left text-b4`
-                : `flex justify-center text-b2 w-full`
-            }`}
-          >
-            {#key steps[importSource][activeStepIndex].description}
-              <InlineMarkdownTextInput
-                class="text-center"
-                content={steps[importSource][activeStepIndex].description}
-              />
-            {/key}
-          </div>
-          <div
-            class={`rounded-xl border-dashed p-4 overflow-auto mt-4 border  flex items-center justify-center ${
-              $view.isPortrait ? `w-full` : `w-[530px]`
-            } ${tempFileList?.length ? `border-a1` : `h-[290px] border-bgs4`}`}
-          >
-            <div
-              class={`flex items-center ${
-                tempFileList?.length && !$view.isPortrait
-                  ? `gap-3`
-                  : `flex-col gap-2 `
-              }`}
-            >
-              <Icon icon="upload" />
-              <div
-                class={`flex-col ${
-                  tempFileList?.length && !$view.isPortrait
-                    ? `text-left`
-                    : `text-center`
-                }`}
-              >
-                <div class={`${$view.isPortrait ? `text-b4` : `text-b2`}`}>
-                  Browse a file or drag and drop here
-                </div>
-                <div
-                  class={`text-fgs3 ${tempFileList?.length ? `` : `mb-4`} 
-                   ${$view.isPortrait ? `text-b4` : `text-b2`}`}
-                >
-                  {note}
-                </div>
-              </div>
-              <input
-                multiple={false}
-                bind:files={locallyUploadedFiles}
-                class="hidden"
-                {accept}
-                bind:this={inputRef}
-                type="file"
-              />
-              <Button
-                size={Size.sm}
-                on:click={() => {
-                  inputRef.click();
-                }}
-              >
-                Browse
-              </Button>
-            </div>
-          </div>
-          {#if tempFileList?.length}
-            <div
-              class={`w-full  overflow-auto ${
-                $view.isPortrait ? `h-[11.5rem]` : `h-[15rem]`
-              }`}
-            >
-              {#each tempFileList as file, index}
-                <FileItem
-                  label={file.label}
-                  size={getSizeString(file.size)}
-                  uploadStatus={file.uploadStatus}
-                  uploadProgress={file.uploadProgress}
-                  on:remove={handleRemove(index)}
-                />
-              {/each}
-            </div>
-          {/if}
-          <!-- {/if} -->
-        </div>
-      {/if}
-      {#if !tempFileList?.length}
-        <div class="navigation-dots flex gap-3">
-          {#each steps[importSource] as step, index}
-            <button
-              class={`navigation-dot w-2 h-2 rounded-full  ${
-                activeStepIndex === index ? "bg-aps1" : "bg-fgs2"
-              }`}
-              on:click={() => {
-                activeStepIndex = index;
-              }}
+    </div>
+    {#if tempFileList?.length}
+      <div class="flex w-full justify-center">
+        <div class="w-4/5 overflow-auto h-60 border rounded-md border-brs2">
+          {#each tempFileList as file, index}
+            <FileItem
+              label={file.label}
+              size={getSizeString(file.size)}
+              uploadStatus={file.uploadStatus}
+              uploadProgress={file.uploadProgress}
+              on:remove={handleRemove(index)}
             />
           {/each}
         </div>
-      {/if}
+      </div>
+    {/if}
+  {/if}
+  {#if !tempFileList?.length}
+    <div class="navigation-dots flex gap-3 w-full justify-center">
+      {#each steps[importSource] as step, index}
+        <button
+          class={`navigation-dot w-2 h-2 rounded-full  ${
+            activeStepIndex === index ? "bg-aps1" : "bg-fgs2"
+          }`}
+          on:click={() => {
+            activeStepIndex = index;
+          }}
+        />
+      {/each}
     </div>
-  </div>
+  {/if}
   <footer>
     <Divider />
     {#if activeStepIndex === steps[importSource]?.length - 1 && isEverythingUploaded}

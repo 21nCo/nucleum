@@ -30,7 +30,7 @@
     icon="image"
   />
   <div class={`w-full flex flex-col  ${$view.isPortrait ? `gap-1` : `gap-2`}`}>
-    <div class="flex text-b4 justify-between items-center w-full">
+    <div class="flex text-b3 justify-between items-center w-full">
       <div class="text-fgs2">{label} ({size})</div>
       {#if uploadStatus === UploadStatus.NOT_STARTED}
         <Icon size={Size.sm} icon="cross" on:click={onRemove} />

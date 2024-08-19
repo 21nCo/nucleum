@@ -271,7 +271,7 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.md,
+        size: Size.xl,
         orientation: Orientation.Horizontal
       }
     }
