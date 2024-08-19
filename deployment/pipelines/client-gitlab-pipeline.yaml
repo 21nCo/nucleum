@@ -1,7 +1,18 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
+
+.submodule_auth: &submodule_auth
+  before_script:
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/"
+
+
+
 stages:
   - build
   - deploy
 .base_build_job:
+  <<: *submodule_auth
   stage: build
   image: node:latest
   script:
@@ -16,6 +27,7 @@ stages:
       - build/
     expire_in: 1 hour
 .base_cdk_deploy_job:
+  <<: *submodule_auth
   stage: deploy
   image: node:latest
   script:
