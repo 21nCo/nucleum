@@ -95,7 +95,7 @@ function initToastStore() {
           n.shift();
           return n;
         });
-      }, 500000);
+      }, 5000);
     }
   };
   return {

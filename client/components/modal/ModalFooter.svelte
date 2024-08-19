@@ -42,7 +42,7 @@
     else modalEvent.hide(action);
   }
   async function onPrimaryClick() {
-    logger.debug({ at: "onPrimaryClick", action });
+    logger.log({ at: "onPrimaryClick", action });
     isPrimaryActionInProgress = true;
     let result;
     if (primaryAction?.callback) result = await primaryAction?.callback();
@@ -56,7 +56,7 @@
       close("primary");
   }
   async function onSecondaryClick() {
-    logger.debug({ at: "onSecondaryClick", action });
+    logger.log({ at: "onSecondaryClick", action });
     let result;
     if (secondaryAction?.callback) result = await secondaryAction?.callback();
     if (result && result.error) {

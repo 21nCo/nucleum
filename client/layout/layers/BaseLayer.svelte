@@ -117,7 +117,7 @@
     const versionOnClient = $appStore.appData?.version;
     await refreshAppStaticData();
     const latestVersion = $appStore.appData?.version;
-    if (versionOnClient === latestVersion) {
+    if (versionOnClient !== latestVersion) {
       if (!$context.isEmbed) {
         toasts.trigger({
           id: "appUpdateAvailable",
@@ -129,7 +129,7 @@
           }
         });
       }
-      // dataManager.runDboUpdate();
+      dataManager.runDboUpdate();
     }
     logger.log(
       {
