@@ -2,11 +2,10 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { toasts } from "../../stores/notification.store";
   import { AlertType, type Toast } from "../../types/notification.type";
-  import { Size } from "../../types/size.enum";
-  import Button from "../button/Button.svelte";
+  import Icon from "../Icon.svelte";
   export let notification: Toast;
   export let isShownAsModal = false;
-  function clickHandler(event: MouseEvent) {
+  function close(event: MouseEvent) {
     toasts.reset();
     event.stopPropagation();
   }
@@ -29,7 +28,13 @@
   </div>
 {:else}
   <button
-    class="flex gap-2 bg-bgs2 shadow-md text-fgs2 border-t border-bgs3 border-opacity-50 items-center w-96 h-20 pr-2 rounded-md"
+    class={cn(
+      "flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 border- border-brs3 border--opacity-50 items-center w-96 pr-2 rounded-md",
+      {
+        "h-20": notification.message && notification.title,
+        "h-12": !notification.message || !notification.title
+      }
+    )}
     on:click|stopPropagation
   >
     <div
@@ -42,25 +47,35 @@
     <div class="flex h-full items-center gap-4 min-w-0 flex-1">
       <div class="flex flex-col gap-2 items-start truncate">
         {#if notification.title}
-          <div class="text-fgs2 font-bold">{notification.title}</div>
+          <div
+            class={cn("text-bgs2", {
+              "font-semibold": notification.message,
+              "text-b2": !notification.message
+            })}
+          >
+            {notification.title}
+          </div>
         {/if}
-        <div class="text-b2">
-          {notification.message}
-        </div>
+        {#if notification.message}
+          <div class="text-b3">
+            {notification.message}
+          </div>
+        {/if}
       </div>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 items-center">
       {#if notification.actionText}
-        <Button
+        <button
           on:click={notification.callback}
-          size={Size.xs}
-          parentBgIndex={2}
+          class="bg-fgs2 rounded-full px-2 py-1 text-b3"
         >
           {notification.actionText}
-        </Button>
+        </button>
       {/if}
       {#if !notification.isNonDismissable}
-        <Button icon="cross" on:click={clickHandler} parentBgIndex={2} />
+        <div class="flex items-center justify-center hover:bg-fgs3 rounded-md">
+          <Icon icon="cross" on:click={close} class="stroke-bgs1" />
+        </div>
       {/if}
     </div>
   </button>

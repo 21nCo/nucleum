@@ -18,6 +18,7 @@
   import view from "$lib/client/stores/view.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { performApiCall } from "$lib/client/utils/network.utils";
+  import { Action } from "$lib/client/types/action.enum";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -71,7 +72,7 @@
     }
     if (isLoginFromExtension) {
       postTokenToExtension(json);
-      appStore.runAction("ext-login");
+      appStore.runAction(Action.EXTENSTION_LOGIN);
     } else await account.signIn(json, { isFromSignup: isSignup });
     actionInProgress = false;
   }

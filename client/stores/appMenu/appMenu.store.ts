@@ -3,7 +3,7 @@ import type { IAppMenuStore } from "./appMenu.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { get } from "svelte/store";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 
 class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {

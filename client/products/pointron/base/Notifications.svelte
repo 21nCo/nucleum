@@ -6,7 +6,7 @@
   import type { IEvent } from "$lib/client/types/event.type";
   import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
   import { postNotificationToParent } from "$lib/client/utils/embed.utils";
-  import { logger } from "$lib/client/stores/log.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import context from "$lib/client/stores/context.store";
 

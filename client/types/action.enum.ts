@@ -14,5 +14,7 @@ export enum Action {
   ROADMAP = "roadmap",
   PRIVACY_POLICY = "privacy",
   TERMS_OF_SERVICE = "tos",
-  GLOBAL_SEARCH = "global-search"
+  GLOBAL_SEARCH = "global-search",
+  EXTENSTION_LOGIN = "EXTENSTION_LOGIN",
+  EXTENSTION_UNINSTALL = "EXTENSTION_UNINSTALL"
 }

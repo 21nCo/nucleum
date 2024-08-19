@@ -1,5 +1,10 @@
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { retrieveLocally } from "$lib/client/utils/storage.utils";
+import { logger } from "../components/debug/logger.client";
+import { ClientStorageKey } from "../persistence/persistence.type";
+import {
+  clientStorage,
+  retrieveLocally
+} from "../persistence/persistence.utils";
 import { goto, isExtensionEnvironment } from "./browser.utils";
 import { postToParent } from "./embed.utils";
 
@@ -42,10 +47,10 @@ export async function resolveCurrentUserId() {
 }
 
 export function signout(ctx: string = "") {
-  console.log("Signing out", { ctx });
-  localStorage.removeItem("stoken");
-  localStorage.removeItem("userInfo");
-  localStorage.removeItem("isOnboardingComplete");
+  logger.log({ at: "signout", context: ctx });
+  clientStorage.remove(ClientStorageKey.STOKEN);
+  clientStorage.remove(ClientStorageKey.USER_INFO);
+  clientStorage.remove(ClientStorageKey.GUEST);
   postToParent({
     account: JSON.stringify({
       isLoggedIn: false

@@ -3,7 +3,9 @@
   import account from "$lib/client/stores/account.store";
   import view from "$lib/client/stores/view.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  localStorage.setItem("intercomId", intercomId);
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  clientStorage.set(ClientStorageKey.INTERCOM_ID, intercomId);
   $: if (!$view.isPortrait && $account.userInfo) {
     (<any>window).intercomSettings = {
       api_base: "https://api-iam.intercom.io",

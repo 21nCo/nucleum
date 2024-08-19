@@ -1,9 +1,6 @@
 <script lang="ts">
-  import { page } from "$app/stores";
-  import { OtherApps } from "$lib/client/types/pointron/otherApps.enum";
   import view from "$lib/client/stores/view.store";
   import modalEvent from "$lib/client/components/modal/modal.store";
-  import { StepType } from "$lib/client/types/pointron/stepType.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
@@ -21,13 +18,19 @@
   import { isEmptyArray, isValidArray } from "$lib/shared/utils/obj.utils";
   import { PointronPersistence } from "../../pointron.persistence";
   import { performApiCall } from "$lib/client/utils/network.utils";
+  import { ImportSource, StepType } from "../data/data.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { Display } from "$lib/client/types/view.type";
+  import { enumToString, properCase } from "$lib/shared/utils/text.utils";
 
-  export let id: OtherApps | "POINTRON" = "POINTRON";
+  export let importSource: ImportSource = ImportSource.SELF;
   let checked: boolean = false;
   let inputRef: HTMLInputElement;
   let accept = ".json";
   let note = "File format: JSON, max size: 10MB";
-  if (id !== "POINTRON") {
+  if (importSource !== ImportSource.SELF) {
     accept = ".csv";
     note = "File format: CSV, max size: 10MB";
   }
@@ -51,201 +54,110 @@
   let isUploading: boolean = false;
 
   const steps: any = {
-    ["POINTRON"]: [
+    [ImportSource.SELF]: [
       {
-        title: "Import from Pointron",
-        subTitle:
-          "Disclaimer: Do not exit this modal until the import is complete",
+        subTitle: "Note: Do not exit this modal until the import is complete",
         description: "Browse and choose a exported json file",
         type: StepType.UPLOAD
       }
     ],
-    [OtherApps.ATRACKER]: [
+    [ImportSource.ATRACKER]: [
       {
-        title: "Import from Atracker",
-        subTitle: "Let Us Guide You Through Importing Files from ATracker",
+        subTitle: "Let us guide you through importing files from ATracker",
         description: "Step-1: Go to Reports",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Atracker",
-        subTitle: "Let Us Guide You Through Importing Files from ATracker",
+        subTitle: "Let us guide you through importing files from ATracker",
         description:
           "Step-2: Click on share button and choose email (this will export a csv file)",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Atracker",
         subTitle:
-          "Disclaimer: Each task from Atracker will become a goal in Pointron",
-        description: "Step-3: Upload screen",
+          "Note: Each task from Atracker will become a goal in Pointron",
+        description: "Upload",
         type: StepType.UPLOAD
       }
     ],
-    // [OtherApps.CSV]: [
-    // {
-    //   title: "Import from CSV",
-    //   subTitle: "Let Us Guide You Through Importing Files from CSV",
-    //   description: "Step-1: Go to Reports",
-    //   image: {
-    //     portrait: "/images/import/importPortraitStep1.png",
-    //     landscape: "/images/import/importLandscapeStep1.png",
-    //   },
-    //   type: StepType.NON_INTERACTIVE,
-    // },
-    // {
-    //   title: "Import from CSV",
-    //   subTitle: "Let Us Guide You Through Importing Files from CSV",
-    //   description:
-    //     "Step-2: Click on share button and choose email (this will export a csv file)",
-    //   image: {
-    //     portrait: "/images/import/importPortraitStep1.png",
-    //     landscape: "/images/import/importLandscapeStep1.png",
-    //   },
-    //   type: StepType.NON_INTERACTIVE,
-    // },
-    // {
-    //   title: "Import from CSV",
-    //   subTitle:
-    //     "Disclaimer: Each row from CSV will become a goal in Pointron",
-    //   description: "Upload screen",
-    //   type: StepType.UPLOAD
-    // }
-    // ],
-    [OtherApps.SESSION]: [
+    [ImportSource.SESSION]: [
       {
-        title: "Import from Session",
-        subTitle: "Let Us Guide You Through Importing Files from Session",
+        subTitle: "Let us guide you through importing files from Session",
         description: "Step-1: Go to Reports",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Session",
-        subTitle: "Let Us Guide You Through Importing Files from Session",
+        subTitle: "Let us guide you through importing files from Session",
         description: "Step-2: Click on the share button",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Session",
-        subTitle: "Let Us Guide You Through Importing Files from Session",
+        subTitle: "Let us guide you through importing files from Session",
         description: "Step-3: Choose Export to CSV option",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Session",
         subTitle:
-          "Disclaimer: Each project from Session will become a goal and each task will become a task in Pointron",
-        description: "Step-4: Import - upload screen",
+          "Note: Each project from Session will become a goal and each task will become a task in Pointron",
+        description: "Upload",
         type: StepType.UPLOAD
       }
     ],
-    [OtherApps.TIMEMATOR]: [
+    [ImportSource.TIMEMATOR]: [
       {
-        title: "Import from Timemator",
-        subTitle: "Let Us Guide You Through Importing Files from Timemator",
+        subTitle: "Let us guide you through importing files from Timemator",
         description: "Step-1: Go to Reports",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Timemator",
-        subTitle: "Let Us Guide You Through Importing Files from Timemator",
+        subTitle: "Let us guide you through importing files from Timemator",
         description: "Step-2: Click on share icon",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Timemator",
-        subTitle: "Let Us Guide You Through Importing Files from Timemator",
+        subTitle: "Let us guide you through importing files from Timemator",
         description: "Step-3: Choose Export as CSV",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Timemator",
         subTitle:
-          "Disclaimer: Each folder from Timemator will become a goal and each task  inside a folder will become its sub goal",
-        description: "Step-4: Upload screen",
+          "Note: Each folder from Timemator will become a goal and each task  inside a folder will become its sub goal",
+        description: "Upload",
         type: StepType.UPLOAD
       }
     ],
-    [OtherApps.TOGGL_TRACK]: [
+    [ImportSource.TOGGL_TRACK]: [
       {
-        title: "Import from Toggl Track",
-        subTitle: "Let Us Guide You Through Importing Files from Toggl Track",
+        subTitle: "Let us guide you through importing files from Toggl Track",
         description: "Step-1: Go to Import/Export menu",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Toggl Track",
-        subTitle: "Let Us Guide You Through Importing Files from Toggl Track",
+        subTitle: "Let us guide you through importing files from Toggl Track",
         description: "Step-2: Click on data export",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Toggl Track",
-        subTitle: "Let Us Guide You Through Importing Files from Toggl Track",
+        subTitle: "Let us guide you through importing files from Toggl Track",
         description:
           "Step-3: Click on  Export time entries after choosing the time period",
-        image: {
-          portrait: "/images/import/importPortraitStep1.png",
-          landscape: "/images/import/importLandscapeStep1.png"
-        },
         type: StepType.NON_INTERACTIVE
       },
       {
-        title: "Import from Toggl Track",
         subTitle:
-          "Disclaimer: Each project from Toggl will become a goal and each task will become a task in Pointron",
-        description: "Step-4: Upload screen",
+          "Note: Each project from Toggl will become a goal and each task will become a task in Pointron",
+        description: "Upload",
         type: StepType.UPLOAD
       }
     ]
   };
 
   function onJumpToUpload() {
-    activeStepIndex = steps[id]?.length - 1;
+    activeStepIndex = steps[importSource]?.length - 1;
   }
 
   function onNext() {
-    if (activeStepIndex < steps[id]?.length - 1) {
+    if (activeStepIndex < steps[importSource]?.length - 1) {
       activeStepIndex++;
     }
   }
@@ -488,80 +400,98 @@
   $: {
     tempFileList = handleLocallyUploadedFileChange(locallyUploadedFiles);
   }
+
+  function resolveTitle(importSource: ImportSource) {
+    if (importSource === ImportSource.SELF) return "Import from Pointron";
+    else {
+      return `Import from ${properCase(enumToString(importSource))} App`;
+    }
+  }
+
+  function resolveImageSrc(importSource: ImportSource, index: number) {
+    if (importSource === ImportSource.SELF) return "/images/blank.png";
+    else {
+      return import.meta.env?.VITE_STATIC_URL
+        ? import.meta.env?.VITE_STATIC_URL +
+            "/pointron/import/" +
+            importSource.toLowerCase() +
+            "/" +
+            index +
+            ".png"
+        : "/images/blank.png";
+    }
+  }
 </script>
 
-<div class={`flex flex-col w-full`}>
-  <div class={` ${$view.isPortrait ? `p-4` : `p-8`}`}>
-    <div class="header flex justify-between">
-      {#if $view.isPortrait && activeStepIndex !== 0}
-        <Icon size={Size.sm} on:click={onBack} icon={"chevleft"} />
-      {/if}
-      <div class="ml-auto">
-        <Icon
-          size={$view.isPortrait ? Size.sm : Size.md}
-          on:click={onClose}
-          icon={"cross"}
-        />
+<div class="flex flex-col gap-4 justify-between w-full h-full">
+  <div>
+    {#if $view.display === Display.MO}
+      <div class="header flex justify-between">
+        {#if activeStepIndex !== 0}
+          <Icon size={Size.sm} on:click={onBack} icon={"chevleft"} />
+        {/if}
+        <div class="ml-auto">
+          <Button
+            size={$view.isPortrait ? Size.sm : Size.md}
+            on:click={onClose}
+            icon={"cross"}
+          />
+        </div>
       </div>
-    </div>
+    {/if}
     <div
       class={`steps-container flex flex-col gap-6 items-center justify-center`}
     >
-      {#if steps[id][activeStepIndex].type === StepType.NON_INTERACTIVE}
+      {#if steps[importSource][activeStepIndex].type === StepType.NON_INTERACTIVE}
         <div class="flex flex-col items-center text-fgs1 gap-2">
           <div
             class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}
           >
-            {steps[id][activeStepIndex].title}
+            {resolveTitle(importSource)}
           </div>
           <div
             class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}
           >
-            {steps[id][activeStepIndex].subTitle}
+            {steps[importSource][activeStepIndex].subTitle}
           </div>
           <div
             class={`text-fgs2 mr-auto mt-8 ${
               $view.isPortrait ? `text-left text-b4` : `text-b2`
             }`}
           >
-            {steps[id][activeStepIndex].description}
+            {steps[importSource][activeStepIndex].description}
           </div>
-          {#if $view.isPortrait ? steps[id][activeStepIndex]?.image?.portrait : steps[id][activeStepIndex]?.image?.landscape}
-            <div
-              class={`rounded-xl overflow-auto object-contain mt-4  flex items-center justify-center ${
-                $view.isPortrait ? `w-full` : `w-[530px]`
-              }`}
-            >
-              <img
-                class="w-full"
-                alt={`Step-${activeStepIndex + 1}`}
-                src={$view.isPortrait
-                  ? steps[id][activeStepIndex]?.image?.portrait
-                  : steps[id][activeStepIndex]?.image?.landscape}
-              />
-            </div>
-          {/if}
+          <div
+            class={`rounded-xl overflow-auto object-contain mt-4  flex items-center justify-center ${
+              $view.isPortrait ? `w-full` : `w-[530px]`
+            }`}
+          >
+            <img
+              class="w-full"
+              alt={`Step-${activeStepIndex + 1}`}
+              src={resolveImageSrc(importSource, activeStepIndex)}
+            />
+          </div>
         </div>
-      {:else if steps[id][activeStepIndex].type === StepType.UPLOAD}
+      {:else if steps[importSource][activeStepIndex].type === StepType.UPLOAD}
         <div class="flex flex-col items-center text-fgs1 gap-2">
           <div
             class={`font-normal ${$view.isPortrait ? `text-b1` : `text-h4 `}`}
           >
-            {steps[id][activeStepIndex].title}
+            {resolveTitle(importSource)}
           </div>
           <div
             class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}
           >
-            {steps[id][activeStepIndex].subTitle}
+            {steps[importSource][activeStepIndex].subTitle}
           </div>
           <div
             class={`text-fgs2 mr-auto mt-8 ${
               $view.isPortrait ? `text-b4` : `text-b2`
             }`}
           >
-            {steps[id][activeStepIndex].description}
+            {steps[importSource][activeStepIndex].description}
           </div>
-          <!-- {#if steps[id][activeStepIndex].image} -->
           <div
             class={`rounded-xl border-dashed p-4 overflow-auto mt-4 border  flex items-center justify-center ${
               $view.isPortrait ? `w-full` : `w-[530px]`
@@ -632,7 +562,7 @@
       {/if}
       {#if !tempFileList?.length}
         <div class="navigation-dots flex gap-3">
-          {#each steps[id] as step, index}
+          {#each steps[importSource] as step, index}
             <button
               class={`navigation-dot w-2 h-2 rounded-full  ${
                 activeStepIndex === index ? "bg-aps1" : "bg-fgs2"
@@ -646,52 +576,60 @@
       {/if}
     </div>
   </div>
-  <div class="bg-bgs2 w-full h-[1px]" />
-  {#if activeStepIndex === steps[id]?.length - 1 && isEverythingUploaded}
-    <div class="p-4">
-      Upload completed successfully, Importing in background, Check the import
-      table after a few minutes for status
-    </div>
-  {/if}
-  {#if id != "POINTRON" && activeStepIndex === steps[id]?.length - 1 && !isEverythingUploaded}
-    <div class="p-4">
-      <CheckboxInput bind:checked label="Archive All Imported Goals" />
-    </div>
-  {/if}
-  <div
-    class={`footer-buttons flex ${
-      $view.isPortrait ? `px-4 py-2.5` : `px-10 py-5`
-    }`}
-  >
-    {#if $view.isPortrait}
-      {#if activeStepIndex !== steps[id]?.length - 1}
-        <Button size={Size.sm} on:click={onJumpToUpload}>Jump to upload</Button>
-      {:else}
-        <Button size={Size.sm} on:click={onClose}>Cancel</Button>
-      {/if}
-    {:else if activeStepIndex !== steps[id]?.length - 1}
-      <Button size={Size.sm} on:click={onJumpToUpload}>Jump to upload</Button>
-    {:else}
-      <Button size={Size.sm} on:click={onBack}>Back</Button>
+  <footer>
+    <Divider />
+    {#if activeStepIndex === steps[importSource]?.length - 1 && isEverythingUploaded}
+      <div class="p-4">
+        Upload completed successfully, Importing in background, Check the import
+        table after a few minutes for status
+      </div>
     {/if}
-    <div class="ml-auto flex gap-3">
-      {#if !$view.isPortrait}
-        {#if activeStepIndex !== 0 && activeStepIndex !== steps[id]?.length - 1}
-          <Button size={Size.sm} on:click={onBack}>Back</Button>
-        {:else if activeStepIndex === steps[id]?.length - 1}
+    {#if importSource != ImportSource.SELF && activeStepIndex === steps[importSource]?.length - 1 && !isEverythingUploaded}
+      <div class="p-4">
+        <CheckboxInput bind:checked label="Archive All Imported Goals" />
+      </div>
+    {/if}
+    <div class="flex mo:px-3 mo:py-2 p-4">
+      {#if $view.isPortrait}
+        {#if activeStepIndex !== steps[importSource]?.length - 1}
+          <Button size={Size.sm} on:click={onJumpToUpload}
+            >Jump to upload</Button
+          >
+        {:else}
           <Button size={Size.sm} on:click={onClose}>Cancel</Button>
         {/if}
+      {:else if activeStepIndex !== steps[importSource]?.length - 1}
+        <Button size={Size.sm} on:click={onJumpToUpload}>Jump to upload</Button>
+      {:else}
+        <Button size={Size.sm} on:click={onBack}>Back</Button>
       {/if}
+      <div class="ml-auto flex gap-3">
+        {#if !$view.isPortrait}
+          {#if activeStepIndex !== 0 && activeStepIndex !== steps[importSource]?.length - 1}
+            <Button size={Size.sm} on:click={onBack}>Back</Button>
+          {:else if activeStepIndex === steps[importSource]?.length - 1}
+            <Button size={Size.sm} on:click={onClose}>Cancel</Button>
+          {/if}
+        {/if}
 
-      {#if activeStepIndex !== steps[id]?.length - 1}
-        <Button size={Size.sm} on:click={onNext}>Next</Button>
-      {:else if activeStepIndex === steps[id]?.length - 1 && !isEverythingUploaded}
-        <Button isLoading={isUploading} size={Size.sm} on:click={onUpload}
-          >Upload</Button
-        >
-      {:else if activeStepIndex === steps[id]?.length - 1 && isEverythingUploaded}
-        <Button size={Size.sm} on:click={onClose}>Done</Button>
-      {/if}
+        {#if activeStepIndex !== steps[importSource]?.length - 1}
+          <Button
+            size={Size.sm}
+            on:click={onNext}
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.OUTLINED}>Next</Button
+          >
+        {:else if activeStepIndex === steps[importSource]?.length - 1 && !isEverythingUploaded}
+          <Button
+            isLoading={isUploading}
+            size={Size.sm}
+            on:click={onUpload}
+            type={ButtonVariant.PRIMARY}>Import</Button
+          >
+        {:else if activeStepIndex === steps[importSource]?.length - 1 && isEverythingUploaded}
+          <Button size={Size.sm} on:click={onClose}>Done</Button>
+        {/if}
+      </div>
     </div>
-  </div>
+  </footer>
 </div>

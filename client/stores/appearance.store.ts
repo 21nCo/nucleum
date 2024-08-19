@@ -11,7 +11,7 @@ import { StoreDataType } from "../types/data.type";
 import {
   persistLocally,
   retrieveLocally
-} from "$lib/client/utils/storage.utils";
+} from "$lib/client/persistence/persistence.utils";
 import type { UserAppearanceSettings } from "../types/preferences.type";
 import { userPreferences } from "./app.store";
 
@@ -27,7 +27,7 @@ const seedAppearance: AppearanceStore = {
   systemTheme: Theme.LIGHT,
   typeface:
     " Avenir, Montserrat, Teachers, Hanken Grotesk, Proxima Nova,  Poppins, Noto Sans, Nunito ",
-      //BlinkMacSystemFont
+  //BlinkMacSystemFont
   lightColorSchemeId: defaultLightColorSchemeId,
   darkColorSchemeId: defaultDarkColorSchemeId,
   colorScheme:
@@ -165,7 +165,7 @@ function initAppearanceStore() {
     setSystemTheme: (isDark: boolean) => {
       const current = get(appearance);
       const theme = isDark ? Theme.DARK : Theme.LIGHT;
-      if(current.systemTheme === theme) return;
+      if (current.systemTheme === theme) return;
       update((a) => {
         let modified: AppearanceStore = { ...a, systemTheme: theme };
         if (a.isSyncWithSystem) {

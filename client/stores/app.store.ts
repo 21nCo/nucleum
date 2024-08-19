@@ -22,7 +22,7 @@ import { debouncer, generateUID } from "$lib/client/utils/utils";
 import {
   persistLocally,
   retrieveLocally
-} from "$lib/client/utils/storage.utils";
+} from "$lib/client/persistence/persistence.utils";
 import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 
@@ -50,6 +50,8 @@ import { InteractionMode } from "../components/settings/interactionMode/interact
 import { Action } from "../types/action.enum";
 import type { Event } from "../types/event.enum";
 import { logger } from "../components/debug/logger.client";
+import { clientStorage } from "../persistence/persistence.utils";
+import { ClientStorageKey } from "../persistence/persistence.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -81,7 +83,7 @@ export const excludedPathsForRedirectionCheck = [
   "welcome",
   "play",
   "fw",
-  "ext-login",
+  Action.EXTENSTION_LOGIN,
   "oauth"
 ];
 
@@ -504,7 +506,7 @@ function initAppStore(seed: AppStore) {
       ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
       : window.location.origin;
     // const origin = window.location.origin;
-    const guestPartForState = localStorage.getItem("guest") ?? "";
+    const guestPartForState = clientStorage.get(ClientStorageKey.GUEST) ?? "";
     const domainPartForState =
       (ctx.os === OperatingSystem.MACOS ||
         (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&

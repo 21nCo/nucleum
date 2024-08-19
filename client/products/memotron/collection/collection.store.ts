@@ -32,7 +32,7 @@ import { Arrangement } from "$lib/client/types/direction.enum";
 import { CombinationViewType } from "../curation/curation.type";
 import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 
 class CollectionStore extends ResourceStore<ICollection> {
   db: ISurrealDatabase;

@@ -5,7 +5,7 @@
   import view from "$lib/client/stores/view.store";
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { logger } from "$lib/client/stores/log.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
   import appearance from "$lib/client/stores/appearance.store";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
@@ -162,7 +162,8 @@
     >
       <Icon icon="minus-circled" size={Size.lg} />
     </button>
-    <div class="flex flex-col items-start gap-2 overflow-y-auto">
+    <span> Replaced with telemetry. </span>
+    <!-- <div class="flex flex-col items-start gap-2 overflow-y-auto">
       {#if $logger.items && $logger.items.length > 0}
         {#each $logger.items as log}
           <div class="text-left">
@@ -173,7 +174,7 @@
       {:else}
         <div>No logs</div>
       {/if}
-    </div>
+    </div> -->
   </div>
 {/if}
 {#if environment}

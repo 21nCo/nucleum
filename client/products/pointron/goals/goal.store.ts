@@ -31,7 +31,7 @@ import {
 } from "$lib/client/types/data.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import { Persistence } from "$lib/client/persistence/persistence";
 import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
 import { ObservableStore } from "$lib/client/stores/client.store";

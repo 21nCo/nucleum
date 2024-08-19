@@ -1,11 +1,13 @@
 <script lang="ts">
+  import { ClientStorageKey } from "../persistence/persistence.type";
+  import { clientStorage } from "../persistence/persistence.utils";
   import { Size } from "../types/size.enum";
   export let subatom: string | undefined = undefined;
   export let size: Size.sm | Size.md = Size.md;
 
   $: {
     if (!subatom) {
-      subatom = localStorage.getItem("product") ?? "tidigit";
+      subatom = clientStorage.get(ClientStorageKey.PRODUCT) ?? "tidigit";
     }
     // console.log({ subatom });
   }

@@ -1,6 +1,6 @@
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import { get } from "svelte/store";
 import { ResourceAccessPoint } from "../../components/resourceStores/resource.type";
 import { appStore } from "../app.store";

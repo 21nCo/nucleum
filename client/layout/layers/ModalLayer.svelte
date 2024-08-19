@@ -21,8 +21,6 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { liveQuery } from "dexie";
   import context from "$lib/client/stores/context.store";
@@ -100,7 +98,7 @@
         });
         return;
       }
-      logger.debug({ context: "modal event - ModalLayer", event: x });
+      logger.log({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
         modals = modals.filter((y) => y.path != x.path);
         postToParent({
@@ -189,7 +187,7 @@
 
 {#if (isValidArrayWithData($toasts) || (isValidArrayWithData($mutationQueue) && isShowSyncErrorMessage)) && !$view.isPortrait}
   <div
-    class="fixed bottom-0 right-0 mb-6 mr-12 flex flex-col gap-4 z-[100]"
+    class="fixed bottom-0 right-0 mb-6 mr-6 flex flex-col gap-4 z-[100]"
     transition:slide={{ duration: 200 }}
   >
     {#each $toasts as toast}

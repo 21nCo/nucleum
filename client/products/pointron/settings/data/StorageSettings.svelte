@@ -13,7 +13,6 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import context from "$lib/client/stores/context.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { OtherApps } from "$lib/client/types/pointron/otherApps.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
   import type {
@@ -35,6 +34,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
+  import { ImportSource } from "./data.type";
 
   let clearMessage: string | undefined = undefined;
   let fileInput: HTMLInputElement;
@@ -62,66 +62,26 @@
     }
   }
 
-  const OtherAppsForImport = [
+  const importSources = [
     {
       label: "Atracker",
-      id: OtherApps.ATRACKER
+      id: ImportSource.ATRACKER
     },
     {
       label: "Session",
-      id: OtherApps.SESSION
+      id: ImportSource.SESSION
     },
     {
       label: "Toggl track",
-      id: OtherApps.TOGGL_TRACK
+      id: ImportSource.TOGGL_TRACK
     },
     {
       label: "Timemator",
-      id: OtherApps.TIMEMATOR
+      id: ImportSource.TIMEMATOR
     },
     {
       label: "Pointron",
-      id: "POINTRON"
-    }
-  ];
-
-  const importHistoryColumns: TableColumnItem[] = [
-    // {
-    //   label: "Id",
-    //   key: "id"
-    //   // width: "min-w-[7rem]",
-    // },
-    {
-      label: "Date and time",
-      key: "created"
-      // width: "min-w-[10rem]",
-    },
-    {
-      label: "File Name",
-      key: "fileName"
-      // width: "min-w-[7rem]",
-    },
-    {
-      label: "Source",
-      key: "source"
-      // width: "min-w-[7rem]",
-    },
-    {
-      label: "Status",
-      key: "status",
-      // width: "min-w-[7rem]",
-      render: (status: string) => {
-        return `<div class="capitalize flex gap-1 justify-center items-center"> <span class="w-[4px] h-[4px] bg-fgs1 rounded-full"></span> ${status}</div>`;
-      }
-    },
-    {
-      label: "",
-      key: "delete",
-      icon: "trash",
-      width: "w-[2rem]",
-      action: (rowId: string) => {
-        handleDeleteImportEntry(rowId);
-      }
+      id: ImportSource.SELF
     }
   ];
 
@@ -157,43 +117,9 @@
 
   let importHistoryData: TableRowItem[] = [];
 
-  // function exportPreferences() {
-  //   let preferences = JSON.stringify({
-  //     global: $userPreferences,
-  //     local: $userLocalPreferences,
-  //     tags: $tagStore
-  //   });
-  //   if (!preferences) return;
-  //   const dataJSON = preferences;
-  //   download(dataJSON, "preferences");
-  // }
-  function isValidUserPreferences(item: any) {
-    return (
-      item &&
-      item.global &&
-      item.local &&
-      item.tags &&
-      typeof item.tags === "object"
-    );
-  }
-  function isValidSessionType(item: any): item is IPointSession {
-    return (
-      item && typeof item.elapsed === "number" && typeof item.start === "number"
-    );
-  }
-
-  function isListOfSessions(data: any) {
-    return (
-      data &&
-      Array.isArray(data.sessions) &&
-      Array.isArray(data.tasks) &&
-      data.sessions?.every(isValidSessionType)
-    );
-  }
-
-  function onImportButtonClick(id: OtherApps) {
+  function onImportButtonClick(id: ImportSource) {
     appStore.runAction(PointronAction.IMPORT_APP_DATA, {
-      componentParams: { id }
+      componentParams: { importSource: id }
     });
   }
   async function refreshImportHistory() {
@@ -230,7 +156,7 @@
       <div
         class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
       >
-        {#each OtherAppsForImport as { label, id }}
+        {#each importSources as { label, id }}
           <Button on:click={() => onImportButtonClick(id)} {label} />
         {/each}
       </div>

@@ -3,7 +3,7 @@ import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { get } from "svelte/store";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { cloudProvider } from "$lib/client/persistence/persistence";
-import { retrieveLocally } from "$lib/client/utils/storage.utils";
+import { retrieveLocally } from "$lib/client/persistence/persistence.utils";
 
 export class TagPersistence {
   search(query: string) {

@@ -37,7 +37,8 @@
   import { localCacheableStores } from "$local/localStoresMap";
   import {
     detectSystemOS,
-    detectTouchDevice
+    detectTouchDevice,
+    isExtensionEnvironment
   } from "$lib/client/utils/browser.utils";
   import { extractProduct } from "$lib/shared/utils/utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
@@ -48,6 +49,9 @@
   import AppLoadingView from "../paint/AppLoadingView.svelte";
   import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { LogType } from "$lib/client/components/debug/debug.type";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 
   let timer: any;
   pingParent();
@@ -76,6 +80,9 @@
   });
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
+   *
+   * TODO - Prompt user if timezone change detected before directly setting the timezone.
+   *
    * @param isSignup - If the user is signing up
    */
   function refreshTimeZone() {
@@ -98,8 +105,42 @@
     let isValid = await account.performLoginStatusCheck();
     if (!isValid) return;
     dataManager.refreshOnAppear();
+    if (isExtensionEnvironment()) return;
+    performAppUpdateCheck();
     account.ping();
   };
+
+  /**
+   * Checks if the app version on client is different from the version on server. If the versions are different, it will run the dbo update and prompt user to reload the app if it is a web app.
+   */
+  async function performAppUpdateCheck() {
+    const versionOnClient = $appStore.appData?.version;
+    await refreshAppStaticData();
+    const latestVersion = $appStore.appData?.version;
+    if (versionOnClient === latestVersion) {
+      if (!$context.isEmbed) {
+        toasts.trigger({
+          id: "appUpdateAvailable",
+          title: `App update available (v${latestVersion}) 🎉`,
+          type: AlertType.INFO,
+          actionText: "Reload",
+          callback: () => {
+            window.location.reload();
+          }
+        });
+      }
+      // dataManager.runDboUpdate();
+    }
+    logger.log(
+      {
+        at: "operformAppUpdateCheck",
+        versionOnClient,
+        appDataVersion: latestVersion
+      },
+      LogType.INFO
+    );
+  }
+
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
   };
@@ -113,7 +154,7 @@
   };
   async function appEventHandler(e: IEvent) {
     if (e.event === GlobalEvent.USER_LOGIN) {
-      if (e.value) dataManager.refreshApp();
+      if (e.value) dataManager.refreshClientCache();
     }
   }
   /**
@@ -153,7 +194,7 @@
     }
   }
   /**
-   * Initializes the app with necessary data.
+   * Initializes the app with necessary data and runs dbo update. For this, the app should have already mounted and all stores should be available.
    *
    * Note: The order of operations is important as later operations rely on earlier ones.
    * @param isLiteMode
@@ -164,7 +205,9 @@
     }
     initActions(isLiteMode);
     if ($account.isLoggedIn && !isLiteMode) {
-      await dataManager.refreshApp();
+      await dataManager.refreshClientCache();
+      const isDev = import.meta.env.DEV;
+      if (!isDev) await dataManager.runDboUpdate();
       refreshTimeZone();
       appMenuStore.setDefaults(defaultAppMenu, true);
       account.setAnalyticsUserIdentity();
@@ -181,20 +224,6 @@
       await account.performLoginStatusCheck();
     }
 
-    async function refreshAppStaticData() {
-      //todo - check if the saved timezone is different from current user timezone
-      try {
-        const appData = await new Persistence().fetchAppData();
-        if (!appData) {
-          throw new Error("App data not found");
-        }
-        appStore.loadAppData(appData);
-      } catch (e) {
-        logger.error(e);
-        appStore.gotoErrorPage(e);
-      }
-    }
-
     function initActions(isSheet?: boolean) {
       const modifiedGlobalActions = globalActions.filter(
         (x) => !localActions.some((y) => y.action === x.action)
@@ -209,6 +238,23 @@
         );
     }
   }
+
+  /**
+   * Refreshes the app static data from the server.
+   */
+  async function refreshAppStaticData() {
+    try {
+      const appData = await new Persistence().fetchAppData();
+      if (!appData) {
+        throw new Error("App data not found");
+      }
+      appStore.loadAppData(appData);
+    } catch (e) {
+      logger.error(e);
+      appStore.gotoErrorPage(e);
+    }
+  }
+
   /**
    * Sets the launch context of the app. This includes the product, debug mode, embed mode, touch device, protocol, and OS.
    */
@@ -220,7 +266,10 @@
           window.location.host
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
-      localStorage.setItem("product", appDetails?.product ?? "tidigit");
+      clientStorage.set(
+        ClientStorageKey.PRODUCT,
+        appDetails?.product ?? "tidigit"
+      );
       let isDebugMode =
         $page.url?.searchParams?.get("debug") ||
         import.meta.env?.VITE_DEBUG_MODE === "true";
@@ -258,10 +307,23 @@
    * Checks if the environment has changed and signs out the user if the environment has changed to avoid issues of using the cached token and 401 errors.
    */
   function checkForEnvironmentChange() {
-    const envCachedOnMachine = localStorage.getItem("env");
+    const envCachedOnMachine = clientStorage.get(ClientStorageKey.ENV);
+    console.log("checkForEnvironmentChange", $appStore.env, envCachedOnMachine);
+    if (envCachedOnMachine === null) {
+      clientStorage.set(ClientStorageKey.ENV, $appStore.env);
+      return;
+    }
     if (envCachedOnMachine && $appStore.env !== envCachedOnMachine) {
-      localStorage.setItem("env", $appStore.env);
-      console.log("environment changed");
+      clientStorage.set(ClientStorageKey.ENV, $appStore.env);
+      logger.log(
+        {
+          at: "checkForEnvironmentChange",
+          message: "Environment changed. Signing out user.",
+          envCachedOnMachine,
+          env: $appStore.env
+        },
+        LogType.INFO
+      );
       account.signOut();
     }
   }

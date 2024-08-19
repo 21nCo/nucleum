@@ -8,7 +8,11 @@
   import { onMount } from "svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed, OperatingSystem } from "$lib/client/types/context.type";
-  import { logger } from "$lib/client/stores/log.store";
+  import { logger } from "../debug/logger.client";
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { postTokenToExtension } from "$lib/client/utils/embed.utils";
+  import { Action } from "$lib/client/types/action.enum";
 
   let debugMessage = "debug";
   $: {
@@ -53,7 +57,14 @@
       embed: $context.embed,
       userAgent: navigator.userAgent
     });
-    if (
+    const isExtensionLogin = clientStorage.getForSession(
+      ClientStorageKey.IS_EXTENSION_LOGIN
+    );
+    if (isExtensionLogin) {
+      clientStorage.removeForSession(ClientStorageKey.IS_EXTENSION_LOGIN);
+      postTokenToExtension(data);
+      appStore.runAction(Action.EXTENSTION_LOGIN);
+    } else if (
       ($context.os == OperatingSystem.MACOS ||
         ($context.os == OperatingSystem.IOS &&
           $context.embed === Embed.TABLET)) &&
@@ -79,7 +90,7 @@
       });
       goto($appStore.product + "://oauthsignin" + "?token=" + token);
     } catch (err) {
-      logger.logError({ err, ctx: "handleiOSEmbedRedirection" });
+      logger.error({ err, ctx: "handleiOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }
@@ -97,7 +108,7 @@
       );
     } catch (err) {
       debugMessage = "macos - embed redirection error" + err;
-      logger.logError({ err, ctx: "handleMacOSEmbedRedirection" });
+      logger.error({ err, ctx: "handleMacOSEmbedRedirection" });
       appStore.gotoErrorPage(debugMessage);
     }
   }

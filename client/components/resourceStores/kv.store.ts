@@ -1,6 +1,6 @@
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import {
   type IMutationQueueParams,
   type IObservableStore,
@@ -13,7 +13,7 @@ import type { Resource } from "$lib/client/components/resourceStores/resource.en
 import {
   persistLocally,
   retrieveLocally
-} from "$lib/client/utils/storage.utils";
+} from "$lib/client/persistence/persistence.utils";
 import { debouncer } from "$lib/client/utils/utils";
 import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 

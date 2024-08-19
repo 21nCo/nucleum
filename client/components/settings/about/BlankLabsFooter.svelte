@@ -5,7 +5,7 @@
 </script>
 
 <div class="flex gap-2">
-  {isComingSoon ? "In works at" : "Built openly at"}<a
+  {isComingSoon ? "In works at" : "Built at"}<a
     href="https://blanklabs.org"
     target="_blank"
   >

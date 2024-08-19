@@ -1,6 +1,6 @@
-import { logger } from "../stores/log.store";
 import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
 import type { HapticFeedback } from "$lib/client/types/haptic.enum";
+import { logger } from "../components/debug/logger.client";
 
 export function pingParent(isExtended: boolean = false) {
   let elapsed = 0;
@@ -27,13 +27,13 @@ export function postToParent(message: any) {
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {
-    logger.logError(error);
+    logger.error(error);
   }
   try {
     //@ts-ignore
     window?.webkit?.messageHandlers?.iOSNative?.postMessage(message);
   } catch (error) {
-    logger.logError(error);
+    logger.error(error);
   }
 }
 

@@ -12,6 +12,8 @@
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -27,11 +29,14 @@
   onMount(() => {
     if (!$account.isLoggedIn) return;
     const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
+    if (isLoginFromExtensionParam) {
+      clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);
+    }
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
-      const token = localStorage.getItem("stoken");
-      const userInfo = localStorage.getItem("userInfo");
+      const token = clientStorage.get(ClientStorageKey.STOKEN);
+      const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
       postTokenToExtension({ token, userInfo });
-      appStore.runAction("ext-login");
+      appStore.runAction(Action.EXTENSTION_LOGIN);
     } else appStore.gotoPath("/");
   });
 </script>

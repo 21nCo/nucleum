@@ -10,11 +10,11 @@ export type ScheduledNotification = {
 };
 
 export type Toast = {
-  message: string;
-  title?: string;
-  type: AlertType;
-  sound?: string;
   id: string;
+  type: AlertType;
+  message?: string;
+  title?: string;
+  sound?: string;
   actionText?: string;
   callback?: () => void;
   isNonDismissable?: boolean;

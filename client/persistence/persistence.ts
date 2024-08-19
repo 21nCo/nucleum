@@ -9,15 +9,17 @@ import {
   performStaticDataOperation
 } from "$lib/client/utils/network.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import {
+  clientStorage,
   persistLocally,
   retrieveLocally
-} from "$lib/client/utils/storage.utils";
+} from "./persistence.utils";
 import type {
   IResource,
   IResourceBase
 } from "../components/resourceStores/resource.type";
+import { ClientStorageKey } from "./persistence.type";
 
 export const cloudProvider = writable(Cloud.surreal);
 
@@ -61,7 +63,7 @@ export class Persistence {
       // account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
       return true;
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     }
   };
   getUserInfo = async (token: string) => {
@@ -76,7 +78,7 @@ export class Persistence {
       if (!data?.userInfo) return;
       return data;
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     }
   };
   ping = async () => {
@@ -88,7 +90,7 @@ export class Persistence {
       const data = await response.json();
       return isValidArrayWithData(data);
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     }
   };
   async runAccountAction(action: string, params: any) {
@@ -103,7 +105,7 @@ export class Persistence {
       const data = await response.json();
       return data;
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     }
   }
   getLatestAppVersion = async () => {
@@ -112,12 +114,12 @@ export class Persistence {
       if (!appData) return;
       return appData.version;
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     }
   };
   fetchAppData = async () => {
     try {
-      const product = localStorage.getItem("product");
+      const product = clientStorage.get(ClientStorageKey.PRODUCT);
       if (!product) return;
       let response = await performStaticDataOperation(`${product}.json`);
       if (response?.ok) {
@@ -269,7 +271,7 @@ export class Persistence {
       }
       return [];
     } catch (error) {
-      logger.logError(error);
+      logger.error(error);
     }
   }
   async searchByLabel(

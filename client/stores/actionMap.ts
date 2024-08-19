@@ -45,7 +45,7 @@ export const globalActions: IAction[] = [
     component: Offline
   },
   {
-    action: "ext-login",
+    action: Action.EXTENSTION_LOGIN,
     type: ActionType.PAGE,
     isMeta: true,
     component: ExtensionLoginStatusPage,

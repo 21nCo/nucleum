@@ -2,7 +2,7 @@
   import account from "$lib/client/stores/account.store";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
-  import { logger } from "$lib/client/stores/log.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
   export let context: "cmd-page" | "cp-profile" = "cp-profile";
   let initials: string | undefined = undefined;

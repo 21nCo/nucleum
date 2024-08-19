@@ -1,0 +1,13 @@
+export enum ImportSource {
+  SELF = "SELF",
+  CSV = "CSV",
+  ATRACKER = "ATRACKER",
+  SESSION = "SESSION",
+  TOGGL_TRACK = "TOGGL_TRACK",
+  TIMEMATOR = "TIMEMATOR"
+}
+
+export enum StepType {
+  UPLOAD = "UPLOAD",
+  NON_INTERACTIVE = "NON_INTERACTIVE"
+}

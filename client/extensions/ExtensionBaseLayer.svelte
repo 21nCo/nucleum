@@ -15,7 +15,6 @@
       function (event) {
         if (event.source != window) return;
         if (event.data.type && event.data.type == "signin") {
-          // console.log("Token data is: " + JSON.stringify(event.data.token));
           localStorage.setItem("stoken", event.data.token.token);
           chrome.storage.sync.set(
             {
@@ -36,7 +35,7 @@
       $account.isLoggedIn = true;
     }
     await dataManager.initialize(stores);
-    await dataManager.refreshApp();
+    await dataManager.refreshClientCache();
     isMounted = true;
   });
 </script>

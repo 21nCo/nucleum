@@ -29,7 +29,8 @@ import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { performApiCall } from "../utils/network.utils";
 import { logger } from "../components/debug/logger.client";
 import { LogType } from "../components/debug/debug.type";
-import { isExtensionEnvironment } from "../utils/browser.utils";
+import { ClientStorageKey } from "./persistence.type";
+import { clientStorage } from "./persistence.utils";
 
 export type DataMangerStore = ReturnType<typeof init>;
 const allResources = Object.values(Resource);
@@ -194,7 +195,7 @@ function init() {
      * This will persist all kv seed data on cloud.
      */
     bootstrap: async () => {
-      runDboUpdate();
+      await runDboUpdate();
       const dm = get(dataManager);
       let data = dm.cacheableStoresTable
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -208,9 +209,9 @@ function init() {
       return response;
     },
     /**
-     * Refreshes and updates the store with the new data.
+     * Refreshes and updates the client side cached data with the latest data from the server.
      */
-    refreshApp: async () => {
+    refreshClientCache: async () => {
       logger.log({ at: "dataManager.refreshApp" });
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
@@ -315,7 +316,12 @@ function init() {
 }
 export const dataManager = init();
 
+/**
+ * Runs the dbo update for the app resolving dbo dependencies from all registered stores.
+ * @returns
+ */
 async function runDboUpdate() {
+  logger.log({ at: "runDboUpdate" });
   const dm = get(dataManager);
   const dependencies = dm.cacheableStoresTable
     .map((x) => x.dboDependencies)
@@ -336,8 +342,6 @@ async function runDboUpdate() {
 }
 
 async function refreshOnAppear() {
-  //TODO - temporary disable dbo update for extension environment - as it is triggering for some web pages - on every tab update
-  if (!isExtensionEnvironment()) runDboUpdate();
   const dm = get(dataManager);
   const storesThatNeedRefresh = dm.cacheableStoresTable.filter(
     (x) => (x as IStore).refreshOnAppear
@@ -541,7 +545,7 @@ async function performMutation(
  */
 async function fetchServerMutationMap() {
   const surrealDb = get(dataManager).db;
-  const appName = localStorage.getItem("product");
+  const appName = clientStorage.get(ClientStorageKey.PRODUCT);
   if (!appName) return;
   let serverMutationMap: any = {};
   const response = await surrealDb.executeReadFn(

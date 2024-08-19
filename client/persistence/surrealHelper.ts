@@ -13,6 +13,8 @@ import {
 import { PersistanceActionType } from "../types/data.type";
 import type { ISurrealDatabase } from "../types/db.type";
 import type { IResourceBase } from "../components/resourceStores/resource.type";
+import { clientStorage } from "./persistence.utils";
+import { ClientStorageKey } from "./persistence.type";
 
 const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
 
@@ -28,7 +30,7 @@ export class SurrealDatabaseUsingRest {
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
-    this.token = localStorage.getItem("stoken") ?? this.token;
+    this.token = clientStorage.get(ClientStorageKey.STOKEN) ?? this.token;
     await fetch(instance, { method: "POST" });
   }
   /**

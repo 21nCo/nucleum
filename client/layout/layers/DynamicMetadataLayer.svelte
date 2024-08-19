@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  const product = localStorage.getItem("product");
+  const product = clientStorage.get(ClientStorageKey.PRODUCT);
 </script>
 
 <svelte:head>

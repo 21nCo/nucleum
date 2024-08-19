@@ -1,5 +1,6 @@
 import type { JsonValue } from "$lib/client/types/json.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { ClientStorageKey } from "./persistence.type";
 
 export function resetLocalStorage() {
   if (import.meta.env?.SSR || !import.meta.env || !window?.localStorage) {
@@ -33,3 +34,37 @@ export function retrieveLocally(itemType: Resource) {
     return null;
   }
 }
+
+class ClientKeyValueStorage {
+  get(key: ClientStorageKey) {
+    return window?.localStorage.getItem(key);
+  }
+
+  set(key: ClientStorageKey, value: any) {
+    if (typeof value === "object") {
+      value = JSON.stringify(value);
+    }
+    window?.localStorage.setItem(key, value);
+  }
+
+  remove(key: ClientStorageKey) {
+    window?.localStorage.removeItem(key);
+  }
+  getForSession(key: ClientStorageKey) {
+    return window?.sessionStorage.getItem(key);
+  }
+
+  setForSession(key: ClientStorageKey, value: any) {
+    window?.sessionStorage.setItem(key, value);
+  }
+
+  removeForSession(key: ClientStorageKey) {
+    window?.sessionStorage.removeItem(key);
+  }
+  clearAll() {
+    window?.localStorage.clear();
+    window?.sessionStorage.clear();
+  }
+}
+
+export const clientStorage = new ClientKeyValueStorage();

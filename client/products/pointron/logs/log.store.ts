@@ -13,7 +13,7 @@ import {
   StoreDataType
 } from "$lib/client/types/data.type";
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
 import { pointronPreferences } from "../pointron.store";
 import { dataManager } from "$lib/client/persistence/dataManager";

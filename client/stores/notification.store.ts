@@ -15,6 +15,7 @@ import type { Event } from "../types/event.enum";
 import { appStore } from "./app.store";
 import { ObservableStore } from "./client.store";
 import { Action } from "../types/action.enum";
+import { logger } from "../components/debug/logger.client";
 
 class AppEventStore extends ObservableStore<IEvent> {
   constructor() {
@@ -74,7 +75,7 @@ function initToastStore() {
    * @param event Toast event with message and type
    */
   const trigger = (event: Toast) => {
-    console.log("triggering toast", event);
+    logger.log({ at: "toast", event });
     let isAlreadyPresent = false;
     update((n: Toast[]) => {
       isAlreadyPresent = n.some((x) => x.id === event.id);
@@ -94,7 +95,7 @@ function initToastStore() {
           n.shift();
           return n;
         });
-      }, 5000);
+      }, 500000);
     }
   };
   return {

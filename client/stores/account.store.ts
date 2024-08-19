@@ -13,7 +13,6 @@ import { appStore, userPreferences } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { wait } from "../utils/time.utils";
 import { signout } from "../utils/account.utils";
-import { logger } from "./log.store";
 import { ObservableStore } from "./client.store";
 import {
   StoreDataType,
@@ -22,6 +21,9 @@ import {
 import { generateUID } from "../utils/utils";
 import { dataManager } from "../persistence/dataManager";
 import posthog from "posthog-js";
+import { clientStorage } from "../persistence/persistence.utils";
+import { ClientStorageKey } from "../persistence/persistence.type";
+import { logger } from "../components/debug/logger.client";
 
 export const isRefreshingToken = writable(false);
 
@@ -35,12 +37,14 @@ class AccountStore extends ObservableStore<
       isLoggedIn: false,
       token: null
     };
-    if (localStorage.getItem("stoken")) {
-      seed.token = localStorage.getItem("stoken");
+    const token = clientStorage.get(ClientStorageKey.STOKEN);
+    if (token) {
+      seed.token = token;
       seed.isLoggedIn = true;
     }
-    if (localStorage.getItem("userInfo")) {
-      seed.userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+    const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
+    if (userInfo) {
+      seed.userInfo = JSON.parse(userInfo ?? "");
     }
     this.set(seed);
     this.postToEmbed(seed);
@@ -48,8 +52,10 @@ class AccountStore extends ObservableStore<
 
   postToEmbed(data: any = null) {
     if (!data) {
-      const token = localStorage.getItem("stoken");
-      const userInfo = JSON.parse(localStorage.getItem("userInfo") ?? "");
+      const token = clientStorage.get(ClientStorageKey.STOKEN);
+      const userInfo = JSON.parse(
+        clientStorage.get(ClientStorageKey.USER_INFO) ?? ""
+      );
       data = { token, userInfo };
     }
     if (!data) return;
@@ -64,8 +70,8 @@ class AccountStore extends ObservableStore<
   }
 
   expire() {
-    logger.log({ context: "account.store - Expiring account" });
-    localStorage.removeItem("stoken");
+    logger.log({ at: "account.store - Expiring account" });
+    clientStorage.remove(ClientStorageKey.STOKEN);
     this.update(() => {
       const n = { token: null, isLoggedIn: false };
       return n;
@@ -85,9 +91,12 @@ class AccountStore extends ObservableStore<
     } = { isIgnoreRefresh: false }
   ) {
     console.log("signing in", { data });
-    localStorage.setItem("stoken", data.token);
+    clientStorage.set(ClientStorageKey.STOKEN, data.token);
+    clientStorage.set(
+      ClientStorageKey.USER_INFO,
+      JSON.stringify(data.userInfo)
+    );
     localStorage.setItem("refresh-token", data.refreshToken ?? "");
-    localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
     this.postToEmbed(data);
     this.update(() => {
       return {
@@ -113,7 +122,7 @@ class AccountStore extends ObservableStore<
     this.clearAllCache();
   }
   async embedOAuthSignin(token: string) {
-    localStorage.setItem("stoken", token);
+    clientStorage.set(ClientStorageKey.STOKEN, token);
     let response = await this.persistence.getUserInfo(token);
     if (response?.userInfo) {
       await this.signIn({
@@ -158,10 +167,10 @@ class AccountStore extends ObservableStore<
     return this.persistence.ping();
   }
   logGuest() {
-    let id = localStorage.getItem("guest");
+    let id = clientStorage.get(ClientStorageKey.GUEST);
     if (!id) {
       id = generateUID();
-      localStorage.setItem("guest", id);
+      clientStorage.set(ClientStorageKey.GUEST, id);
     }
     return this.persistence.runAccountAction("guest", { id });
   }
@@ -190,7 +199,7 @@ class AccountStore extends ObservableStore<
     return true;
   }
   async performLoginStatusCheck() {
-    const token = localStorage.getItem("stoken");
+    const token = clientStorage.get(ClientStorageKey.STOKEN);
     if (!token) {
       console.log("Token not found. Redirecting to signup");
       appStore.gotoPath("/signup");
@@ -254,7 +263,7 @@ class AccountStore extends ObservableStore<
   }
 
   async checkIfSessionExpired() {
-    const token = localStorage.getItem("stoken");
+    const token = clientStorage.get(ClientStorageKey.STOKEN);
     if (!token) {
       this.expire();
       return true;
@@ -297,15 +306,14 @@ class AccountStore extends ObservableStore<
     }
   }
   clearAllCache() {
-    const env = localStorage.getItem("env");
-    const appData = localStorage.getItem("appData");
-    const product = localStorage.getItem("product");
-    localStorage.clear();
-    sessionStorage.clear();
+    const env = clientStorage.get(ClientStorageKey.ENV);
+    const appData = clientStorage.get(ClientStorageKey.APP_DATA);
+    const product = clientStorage.get(ClientStorageKey.PRODUCT);
+    clientStorage.clearAll();
     get(dataManager)?.cacheSource?.clearCache();
-    if (env) localStorage.setItem("env", env);
-    if (product) localStorage.setItem("product", product);
-    if (appData) localStorage.setItem("appData", appData);
+    if (env) clientStorage.set(ClientStorageKey.ENV, env);
+    if (product) clientStorage.set(ClientStorageKey.PRODUCT, product);
+    if (appData) clientStorage.set(ClientStorageKey.APP_DATA, appData);
   }
 
   setAnalyticsUserIdentity() {

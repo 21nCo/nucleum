@@ -19,7 +19,7 @@ import { prefixTable } from "$lib/shared/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
 import { resolveResourceType } from "../memotron.utils";
 

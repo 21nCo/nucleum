@@ -41,7 +41,7 @@ import {
   DependencySyncType,
   PersistanceActionType
 } from "$lib/client/types/data.type";
-import { logger } from "$lib/client/stores/log.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 import {
   type IPointLog,
   type IPointSession,
@@ -829,7 +829,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       // session.isSessionRunning = false;
       pointSessionStore.finishFocus();
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     } finally {
       if (isClose) {
         this.close();
@@ -1078,7 +1078,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       await focusItemsStore.addGoal(goal);
       await this.startSession(true);
     } catch (err) {
-      logger.logError(err);
+      logger.error(err);
     }
   }
   async onPresetSelection(preset: SessionComposition) {
