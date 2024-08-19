@@ -24,6 +24,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Display } from "$lib/client/types/view.type";
   import { enumToString, properCase } from "$lib/shared/utils/text.utils";
+  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
 
   export let importSource: ImportSource = ImportSource.SELF;
   let checked: boolean = false;
@@ -57,66 +58,64 @@
     [ImportSource.SELF]: [
       {
         subTitle: "Note: Do not exit this modal until the import is complete",
-        description: "Browse and choose a exported json file",
+        description: "Browse and choose a exported *Pointron json* file",
         type: StepType.UPLOAD
       }
     ],
     [ImportSource.ATRACKER]: [
       {
         subTitle: "Let us guide you through importing files from ATracker",
-        description: "Step-1: Go to Reports",
+        description:
+          "Step 1: Go to Reports from the app menu and click on share button on top right corner. Choose email option.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle: "Let us guide you through importing files from ATracker",
         description:
-          "Step-2: Click on share button and choose email (this will export a csv file)",
+          "Step 2: Once your receive a email with a **csv file** in it, please download the csv file and proceed to the next step.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle:
           "Note: Each task from Atracker will become a goal in Pointron",
-        description: "Upload",
+        description: "Upload the csv file you downloaded in the previous step.",
         type: StepType.UPLOAD
       }
     ],
     [ImportSource.SESSION]: [
       {
         subTitle: "Let us guide you through importing files from Session",
-        description: "Step-1: Go to Reports",
+        description:
+          "Step 1: Go to **Reports** from the app menu and click on **share** button.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle: "Let us guide you through importing files from Session",
-        description: "Step-2: Click on the share button",
-        type: StepType.NON_INTERACTIVE
-      },
-      {
-        subTitle: "Let us guide you through importing files from Session",
-        description: "Step-3: Choose Export to CSV option",
+        description:
+          "Step 2: Choose **Export to CSV** option from the share menu. This will export a csv file.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle:
-          "Note: Each project from Session will become a goal and each task will become a task in Pointron",
-        description: "Upload",
+          "**Note:** Each project from Session will become a goal and each task will become a task in Pointron. Also, Session currently does not support bulk export. So, please export the data for each month and then import it individually.",
+        description: "Upload the csv file you downloaded in the previous step.",
         type: StepType.UPLOAD
       }
     ],
     [ImportSource.TIMEMATOR]: [
       {
         subTitle: "Let us guide you through importing files from Timemator",
-        description: "Step-1: Go to Reports",
+        description: "Step 1: Go to Reports",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle: "Let us guide you through importing files from Timemator",
-        description: "Step-2: Click on share icon",
+        description: "Step 2: Click on share icon",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle: "Let us guide you through importing files from Timemator",
-        description: "Step-3: Choose Export as CSV",
+        description: "Step 3: Choose Export as CSV",
         type: StepType.NON_INTERACTIVE
       },
       {
@@ -129,24 +128,20 @@
     [ImportSource.TOGGL_TRACK]: [
       {
         subTitle: "Let us guide you through importing files from Toggl Track",
-        description: "Step-1: Go to Import/Export menu",
-        type: StepType.NON_INTERACTIVE
-      },
-      {
-        subTitle: "Let us guide you through importing files from Toggl Track",
-        description: "Step-2: Click on data export",
+        description:
+          "Step 1: Select **Import/Export** from the app menu and click on **Data export**.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle: "Let us guide you through importing files from Toggl Track",
         description:
-          "Step-3: Click on  Export time entries after choosing the time period",
+          "Step 3: Click on **Export time entries** after choosing the time period.",
         type: StepType.NON_INTERACTIVE
       },
       {
         subTitle:
           "Note: Each project from Toggl will become a goal and each task will become a task in Pointron",
-        description: "Upload",
+        description: "Upload the csv file you downloaded in the previous step.",
         type: StepType.UPLOAD
       }
     ]
@@ -452,14 +447,22 @@
           <div
             class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}
           >
-            {steps[importSource][activeStepIndex].subTitle}
+            {#key steps[importSource][activeStepIndex].subTitle}
+              <InlineMarkdownTextInput
+                content={steps[importSource][activeStepIndex].subTitle}
+              />
+            {/key}
           </div>
           <div
-            class={`text-fgs2 mr-auto mt-8 ${
+            class={`text-fgs2 mr-auto ${
               $view.isPortrait ? `text-left text-b4` : `text-b2`
             }`}
           >
-            {steps[importSource][activeStepIndex].description}
+            {#key steps[importSource][activeStepIndex].description}
+              <InlineMarkdownTextInput
+                content={steps[importSource][activeStepIndex].description}
+              />
+            {/key}
           </div>
           <div
             class={`rounded-xl overflow-auto object-contain mt-4  flex items-center justify-center ${
@@ -483,14 +486,26 @@
           <div
             class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}
           >
-            {steps[importSource][activeStepIndex].subTitle}
+            {#key steps[importSource][activeStepIndex].subTitle}
+              <InlineMarkdownTextInput
+                class="text-center"
+                content={steps[importSource][activeStepIndex].subTitle}
+              />
+            {/key}
           </div>
           <div
-            class={`text-fgs2 mr-auto mt-8 ${
-              $view.isPortrait ? `text-b4` : `text-b2`
+            class={`text-fgs2 mr-auto ${
+              $view.isPortrait
+                ? `text-left text-b4`
+                : `flex justify-center text-b2 w-full`
             }`}
           >
-            {steps[importSource][activeStepIndex].description}
+            {#key steps[importSource][activeStepIndex].description}
+              <InlineMarkdownTextInput
+                class="text-center"
+                content={steps[importSource][activeStepIndex].description}
+              />
+            {/key}
           </div>
           <div
             class={`rounded-xl border-dashed p-4 overflow-auto mt-4 border  flex items-center justify-center ${
@@ -598,15 +613,15 @@
         {:else}
           <Button size={Size.sm} on:click={onClose}>Cancel</Button>
         {/if}
-      {:else if activeStepIndex !== steps[importSource]?.length - 1}
-        <Button size={Size.sm} on:click={onJumpToUpload}>Jump to upload</Button>
-      {:else}
+      {:else if activeStepIndex !== 0}
         <Button size={Size.sm} on:click={onBack}>Back</Button>
       {/if}
       <div class="ml-auto flex gap-3">
         {#if !$view.isPortrait}
-          {#if activeStepIndex !== 0 && activeStepIndex !== steps[importSource]?.length - 1}
-            <Button size={Size.sm} on:click={onBack}>Back</Button>
+          {#if activeStepIndex !== steps[importSource]?.length - 1}
+            <Button size={Size.sm} on:click={onJumpToUpload}
+              >Jump to upload</Button
+            >
           {:else if activeStepIndex === steps[importSource]?.length - 1}
             <Button size={Size.sm} on:click={onClose}>Cancel</Button>
           {/if}

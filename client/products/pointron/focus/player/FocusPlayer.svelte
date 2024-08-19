@@ -41,7 +41,7 @@
     isPipOn = false;
     if ($appStore.isPipOn) appStore.togglePip(PointronAction.FOCUS_PLAYER);
     if ("documentPictureInPicture" in window)
-      (window.documentPictureInPicture as any).window.close();
+      (window.documentPictureInPicture as any).window?.close();
   }
   async function pipHandler(event: any) {
     event?.stopPropagation();

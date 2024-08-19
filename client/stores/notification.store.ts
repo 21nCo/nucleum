@@ -109,12 +109,12 @@ function initToastStore() {
         return [];
       });
     },
-    success: (message: string, title: string = "SUCCESS") => {
+    success: (message: string, title?: string) => {
       const id = generateUID();
       trigger({ title, message, type: AlertType.SUCCESS, id });
       return id;
     },
-    error: (message: string, title: string = "ERROR") => {
+    error: (message: string, title?: string) => {
       const id = generateUID();
       trigger({ title, message, type: AlertType.ERROR, id });
       return id;

@@ -187,6 +187,7 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
     toasts.success("Manual log added successfully");
     appEvents.publish(PointronEvent.REFRESH_QUICK_FOCUS, true);
     appEvents.publish(PointronEvent.REFRESH_LOGS, true);
+    return true;
   }
 }
 

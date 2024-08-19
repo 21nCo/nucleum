@@ -238,7 +238,6 @@
       searchResultComponent={GoalSearchThumbnail}
       searchStoreId={Resource.PointGoal}
       style={InputStyle.BORDERED}
-      popoverOptions={{ offsetInPx: 16 }}
       placeholder="Start typing to select goal"
     />
   {/if}

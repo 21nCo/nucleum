@@ -14,7 +14,10 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { sessionStore } from "../../focus/session.store";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import {
+    confirmationNotification,
+    toasts
+  } from "$lib/client/stores/notification.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import type { IContextMenu } from "$lib/client/types/select.type";
   import { Display } from "$lib/client/types/view.type";
@@ -41,12 +44,15 @@
       : [];
   }
   async function handleDeleteGoal() {
-    //TODO - delete goal - using resource store.
-    await goalStore.delete($currentGoal.id);
-    // await new Persistence().delete($currentGoal.id, Resource.PointGoal);
-    // check if success then redirect to the parent goal or /goals(if the parent does not exists)
+    const result = await goalStore.delete($currentGoal.id);
+    if (!result) {
+      toasts.error("Something went wrong. Please try again later.");
+      return;
+    }
+    toasts.success("Goal deleted successfully");
     if (!parent || parent.length === 0) appStore.gotoPath(Resource.goal);
     else appStore.gotoPath(`/goal`);
+    return true;
   }
 
   let contextMenu: IContextMenu = [];

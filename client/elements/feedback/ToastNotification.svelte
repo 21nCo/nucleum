@@ -1,14 +1,25 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
+  import { tweened } from "svelte/motion";
   import { toasts } from "../../stores/notification.store";
   import { AlertType, type Toast } from "../../types/notification.type";
   import Icon from "../Icon.svelte";
+  import { linear } from "svelte/easing";
+  import { onMount } from "svelte";
   export let notification: Toast;
   export let isShownAsModal = false;
+  const duration = 5000;
+  const progress = tweened(100, {
+    duration,
+    easing: linear
+  });
   function close(event: MouseEvent) {
     toasts.reset();
     event.stopPropagation();
   }
+  onMount(() => {
+    progress.set(0);
+  });
 </script>
 
 <!-- TODO - use snippets in Svlete 5 to reuse markup -->
@@ -29,7 +40,7 @@
 {:else}
   <button
     class={cn(
-      "flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 border- border-brs3 border--opacity-50 items-center w-96 pr-2 rounded-md",
+      "flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 items-center w-96 pr-2 rounded-md",
       {
         "h-20": notification.message && notification.title,
         "h-12": !notification.message || !notification.title
@@ -38,7 +49,7 @@
     on:click|stopPropagation
   >
     <div
-      class={cn("h-full w-1 shrink-0", {
+      class={cn("h-3/4 rounded-full w-1 shrink-0", {
         "bg-ags1": notification.type === AlertType.SUCCESS,
         "bg-ars1": notification.type === AlertType.ERROR,
         "bg-ass1": notification.type === AlertType.WARNING
@@ -57,7 +68,12 @@
           </div>
         {/if}
         {#if notification.message}
-          <div class="text-b3">
+          <div
+            class={cn({
+              "text-b3": notification.title,
+              "text-b2": !notification.title
+            })}
+          >
             {notification.message}
           </div>
         {/if}
@@ -77,6 +93,12 @@
           <Icon icon="cross" on:click={close} class="stroke-bgs1" />
         </div>
       {/if}
+    </div>
+    <div class="absolute bottom-0 left-0 w-full h-1 bg-fgs1 rounded-b-md">
+      <div
+        class="h-full transition-all duration-100 ease-linear bg-fgs2 rounded-bl-md"
+        style="width: {$progress}%;"
+      ></div>
     </div>
   </button>
 {/if}

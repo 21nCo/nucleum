@@ -95,7 +95,7 @@
           appStore.runAction(PointronAction.CREATE_EDIT_GOAL),
         icon: "plus",
         variant: ButtonVariant.PRIMARY,
-        style: ButtonStyle.DEFAULT
+        style: ButtonStyle.OUTLINED
       }}
     >
       <slot name="nonpadded" slot="nonpadded">

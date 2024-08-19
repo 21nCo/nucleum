@@ -401,13 +401,14 @@ export class ResourceFIRStore<
     return this._mutation(PersistanceActionType.MERGE, item as T);
   }
   async delete(id: string) {
-    this._mutation(PersistanceActionType.DELETE, id);
+    const result = this._mutation(PersistanceActionType.DELETE, id);
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != id);
       x.filtered = this.defaultFilter ? this.defaultFilter(x.items) : x.items;
       return x;
     });
     this.cache();
+    return result;
   }
   async trash(id: string) {
     let item = this.get().items.find((x) => x.id == id);

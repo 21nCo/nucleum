@@ -244,8 +244,7 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       action: PersistanceActionType.CREATE
     });
     toasts.trigger({
-      title: "Goal: " + goal.label,
-      message: "Created successfully",
+      message: goal.label + " created successfully.",
       type: AlertType.SUCCESS,
       id: generateUID()
     });
@@ -413,14 +412,19 @@ function initCurrentGoalStore(initialValue: IGoal) {
         set(newValue);
         persist(changedProperties)
           .then(() => {
-            toasts.success("Updated successfully", "Goal: " + newValue.label);
+            const successMessage = changedProperties.isPinnedForQuickStart
+              ? " pinned successfully."
+              : changedProperties.isArchived && newValue.isArchived
+                ? " archived successfully."
+                : " updated successfully.";
+            toasts.success("Goal: " + newValue.label + successMessage);
             propagateChangesTemp();
             if (get(view).isPortrait) {
               if (newValue.isArchived) appStore.gotoPath("/goals");
             }
           })
           .catch((e) => {
-            toasts.error("Something went wrong", "Goal: " + newValue.label);
+            toasts.error("Something went wrong. Please try again later.");
             console.error(e);
           });
       } else {
