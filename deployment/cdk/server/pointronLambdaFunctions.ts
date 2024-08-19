@@ -35,7 +35,9 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
             __dirname,
             "./../../../../src/endpoints/pointron/importJob/image"
           ),
+          // path.join(__dirname, "./../../../../"),
           {
+            // file: "src/endpoints/pointron/importJob/image/Dockerfile",
             platform: aws_ecr_assets.Platform.LINUX_AMD64
           }
         ),
