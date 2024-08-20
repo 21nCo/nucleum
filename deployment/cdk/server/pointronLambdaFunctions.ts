@@ -7,6 +7,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import { defaults } from "../config";
 import * as path from "path";
 import { LambdaIntegration, MockIntegration } from "aws-cdk-lib/aws-apigateway";
+
 export class PointronLambdaFunctions extends cdk.NestedStack {
   constructor(
     scope: Construct,
@@ -26,6 +27,8 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
     };
     const pointronEndpoint = props.api.root.addResource("pointron");
 
+    const uniquePrefix = `pointron-${cdk.Names.uniqueId(this)}`;
+
     const importJobFunction = new lambda.DockerImageFunction(
       this,
       `importJobFunction-${this.region}`,
@@ -35,8 +38,16 @@ export class PointronLambdaFunctions extends cdk.NestedStack {
             __dirname,
             "./../../../../src/endpoints/pointron/importJob/image"
           ),
+          // path.join(__dirname, "./../../../../"),
           {
-            platform: aws_ecr_assets.Platform.LINUX_AMD64
+            // file: "src/endpoints/pointron/importJob/image/Dockerfile",
+            platform: aws_ecr_assets.Platform.LINUX_AMD64,
+            assetName: `${uniquePrefix}-${cdk.FileSystem.fingerprint(
+              path.join(
+                __dirname,
+                "./../../../../src/endpoints/pointron/importJob/image"
+              )
+            )}`
           }
         ),
         environment: props.lambdaEnvVars,
