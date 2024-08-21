@@ -22,6 +22,9 @@
   import type { IContextMenu } from "$lib/client/types/select.type";
   import { Display } from "$lib/client/types/view.type";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { LogType } from "$lib/client/components/debug/debug.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
   let parentBreadcrumbs: BreadcrumbItem[] = [];
   $: refresh($currentGoal);
   function refresh(goal: IGoal) {
@@ -67,7 +70,10 @@
             value: "edit",
             label: $isInEditMode ? "Close edit mode" : "Edit",
             icon: "pencil-square",
-            callback: async () => isInEditMode.toggle()
+            callback: async () => {
+              isInEditMode.toggle();
+              refreshContextMenu();
+            }
           },
           {
             value: "focus",
@@ -85,14 +91,18 @@
                     variant: ButtonVariant.PRIMARY,
                     callback: async () => {
                       await sessionStore.finishSession();
-                      await sessionStore.quickStart($currentGoal.id);
+                      return sessionStore.quickStart($currentGoal.id);
                     }
                   }
                 });
               } else {
                 await sessionStore.quickStart($currentGoal.id);
               }
-              if ($view.display === Display.MO) {
+              logger.log(
+                { display: $view.display, isPortrait: $view.isPortrait },
+                LogType.INFO
+              );
+              if ($view.isPortrait) {
                 appStore.runAction(PointronAction.FOCUS);
               }
             }
@@ -101,8 +111,8 @@
             value: "pin",
             icon: "pin",
             label: $currentGoal.isPinnedForQuickStart
-              ? "Unpin from quick start"
-              : "Pin to quick start",
+              ? "Unpin from quick focus"
+              : "Pin to quick focus",
             callback: async () => {
               $currentGoal.isPinnedForQuickStart =
                 !$currentGoal.isPinnedForQuickStart;
@@ -156,7 +166,7 @@
   <div class="flex flex-col gap-1 items-start min-w-0 flex-1">
     <Breadcrumb items={parentBreadcrumbs} />
     <span
-      class={cn("text-ccs1 w-full", {
+      class={cn("flex gap-2 text-ccs1 w-full", {
         "text-h3": $view.isPortrait,
         "text-h2 font-medium": !$view.isPortrait
       })}
@@ -170,6 +180,9 @@
         />
       {:else}
         <TextWithHoverTooltip text={$currentGoal.label} class="truncate" />
+      {/if}
+      {#if $currentGoal.isStarred}
+        <Icon icon="star" class="fill-yellow-400" />
       {/if}
     </span>
   </div>

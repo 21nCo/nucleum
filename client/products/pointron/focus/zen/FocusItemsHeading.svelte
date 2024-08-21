@@ -10,12 +10,14 @@
     <Text style={TextStyle.PANEL_HEADING_SMALL} content="Focus Items" />
     <EditToggleButton />
   </div>
-  {#if $isInEditMode}
-    <div class="flex flex-col items-center gap-1 text-fgs3">
+  <div class="flex flex-col items-center gap-1 text-fgs3">
+    {#if $isInEditMode}
       <span class="text-b3">Edit mode is on.</span>
       <span class="text-b4"
         >Turn off edit mode to start tasks or switch between them.</span
       >
-    </div>
-  {/if}
+    {:else}
+      <span class="text-b3"> Tap on a task/goal to start or stop it. </span>
+    {/if}
+  </div>
 </div>

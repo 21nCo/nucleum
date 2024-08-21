@@ -10,6 +10,7 @@
   import Divider from "../Divider.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { toasts } from "$lib/client/stores/notification.store";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -59,6 +60,9 @@
   }
 
   function onClick(index: number, item: IAction) {
+    if (layoutContext == LayoutContext.PORTRAIT) {
+      toasts.reset();
+    }
     selected = index;
     appStore.runAction(item.action);
   }

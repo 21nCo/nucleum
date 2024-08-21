@@ -14,20 +14,39 @@
       return true;
     }
   }
+  /**
+   * Listens to keyboard events and runs the shortcut if the event is a shortcut.
+   *
+   * Avoids running the shortcut if the event is a text input element and the key is `Enter`. This is to avoid running the shortcut when the user is typing in a text field with suggestions.
+   * @param event
+   */
   const shortcutListener = (event: KeyboardEvent) => {
     logger.log({ event, at: "shortcutListener" });
     const target = event.target || event.srcElement;
-    const isShortcutRunCompleted = handleSystemShortcuts(event);
-    if (isTextElement(target)) return;
-    if (isShortcutRunCompleted) return;
+    const isTextInputSource = isTextElement(target);
     let modifiers = [];
     modifiers = resolveModifiers(event);
-    const isShortcutFound = runShortcut(event.key, modifiers);
+    const shortcut = resolveShortcut(event.key, modifiers);
+    if (
+      isTextInputSource &&
+      (event.key === KeyboardKey.ENTER ||
+        (modifiers.length === 0 &&
+          ![KeyboardKey.ESCAPE].includes(event.key as KeyboardKey)))
+    )
+      return;
+    const isSystemShortcut = handleSystemShortcuts(event);
+    if (isSystemShortcut || !shortcut) return;
+    appStore.runAction(shortcut.action);
     event.stopPropagation();
-    if (isShortcutFound) event.preventDefault();
+    event.preventDefault();
   };
 
-  function runShortcut(key: string, modifiers: string[]) {
+  /**
+   * Resolves the shortcut for the given key and modifiers.
+   * @param key
+   * @param modifiers
+   */
+  function resolveShortcut(key: string, modifiers: string[]) {
     const keyMap = keyboardShortcuts.fecthKeyMap();
     const shortcut = keyMap.find((s: any) => {
       if (s.key.toLowerCase() !== key.toLowerCase()) return false;
@@ -38,9 +57,7 @@
       );
     });
     logger.log({ key, modifiers, shortcut, keyMap });
-    if (!shortcut) return;
-    appStore.runAction(shortcut.action);
-    return true;
+    return shortcut;
   }
 </script>
 

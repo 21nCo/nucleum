@@ -56,5 +56,5 @@ export function signout(ctx: string = "") {
       isLoggedIn: false
     })
   });
-  goto("/signup?msg=signedout", true);
+  goto("/signup?msg=signedout");
 }

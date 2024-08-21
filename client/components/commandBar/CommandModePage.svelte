@@ -7,7 +7,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Display } from "$lib/client/types/view.type";
   import { formatDatetime } from "$lib/client/utils/time.utils";
-  import InlineMarkdownTextInput from "../markdown/content/InlineMarkdownTextInput.svelte";
+  import { renderMdAsHtml } from "../markdown/markdown.utils";
   import ProfilePicture from "../settings/account/ProfilePicture.svelte";
   import CommandBar from "./CommandBar.svelte";
 </script>
@@ -43,9 +43,9 @@
   </div>
   <footer class="w-full flex justify-center h-1/12 text-fgs2 text-b2">
     <span>
-      <InlineMarkdownTextInput
-        content="Command only mode is in **beta**. Please report any issues you encounter using *Chat with us* command."
-      />
+      {@html renderMdAsHtml(
+        "Command only mode is in **beta**. Please report any issues you encounter using *Chat with us* command."
+      )}
     </span>
   </footer>
 </div>

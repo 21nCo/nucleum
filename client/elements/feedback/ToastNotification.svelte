@@ -40,10 +40,10 @@
 {:else}
   <button
     class={cn(
-      "flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 items-center w-96 pr-2 rounded-md",
+      "flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 items-center portrait:flex-1 portrait:min-w-0 portrait:mx-4 portrait:w-4/5 w-96 pr-2 rounded-md",
       {
-        "h-20": notification.message && notification.title,
-        "h-12": !notification.message || !notification.title
+        "min-h-20": notification.message && notification.title,
+        "min-h-12": !notification.message || !notification.title
       }
     )}
     on:click|stopPropagation
@@ -94,7 +94,9 @@
         </div>
       {/if}
     </div>
-    <div class="absolute bottom-0 left-0 w-full h-1 bg-fgs1 rounded-b-md">
+    <div
+      class="absolute bottom-0 left-0 w-full portrait:mx-4 portrait:w-4/5 h-1 bg-fgs1 rounded-b-md"
+    >
       <div
         class="h-full transition-all duration-100 ease-linear bg-fgs2 rounded-bl-md"
         style="width: {$progress}%;"

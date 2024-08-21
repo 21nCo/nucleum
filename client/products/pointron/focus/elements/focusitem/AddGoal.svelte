@@ -7,6 +7,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import GoalSearchThumbnail from "../../../goals/thumbnails/GoalSearchThumbnail.svelte";
+  import { newGoal } from "../../../goals/create/store";
   export let label: string = "";
   let inputRef: any;
   async function save(event: any) {
@@ -18,20 +19,20 @@
       return;
     }
     reset();
-    // await focusItemsStore.addGoal({
-    //   goalId: goal.id,
-    //   label: goal.label,
-    //   color: goal.color ?? goal.parent?.color,
-    //   order: $focusItemsStore.items.length,
-    //   estimated: 0,
-    //   checked: false,
-    //   worked: 0,
-    //   hierarchy: goal.parent?.hierarchy?.map((x: any) => x.label)
-    // });
     await focusItemsStore.addGoal(goal.id);
   }
   function reset() {
     inputRef.reset();
+  }
+  async function handleEmptyEnter(e: CustomEvent<string>) {
+    console.log({ e });
+    const goal = await newGoal.saveGoalWithLabel(e.detail);
+    if (!goal) {
+      toasts.error("Something went wrong. Please try again later.");
+      return;
+    }
+    await focusItemsStore.addGoal(goal.id);
+    reset();
   }
 </script>
 
@@ -40,8 +41,10 @@
     on:blur
     on:focus
     on:select={save}
+    on:empty-enter={handleEmptyEnter}
     bind:value={label}
     bind:this={inputRef}
+    emptyStateLabel="No goals found. Press **Enter** to create a new goal."
     searchResultComponent={GoalSearchThumbnail}
     searchStoreId={Resource.PointGoal}
     style={InputStyle.PLAIN}

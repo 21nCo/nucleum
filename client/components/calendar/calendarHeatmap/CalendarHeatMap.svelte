@@ -62,7 +62,9 @@
       tileScale === TileScale.DAYS &&
       variant != CalendarHmVariant.SCALE_SWITCH
     ) {
-      await heatmapDataManager.fetchLast12MonthsDailyData();
+      if (options.selectedYear)
+        heatmapDataManager.fetchDailyDataForTheYear(options.selectedYear);
+      else await heatmapDataManager.fetchLast12MonthsDailyData();
     } else if (
       tileScale === TileScale.DAYS &&
       variant === CalendarHmVariant.SCALE_SWITCH

@@ -32,6 +32,7 @@
   import ColorLayer from "./themeLayer/ColorLayer.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -121,6 +122,7 @@
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         // modals = [x];
         modals = [...modals, x];
+        if ($view.isPortrait) toasts.reset();
       }
       logger.log({ modals });
     }
@@ -211,6 +213,23 @@
         }}
       />
     {/if} -->
+  </div>
+{/if}
+{#if isValidArrayWithData($toasts) && $view.isPortrait}
+  <div
+    class={cn(
+      "fixed bottom-0 left-0 mx-6 flex flex-col justify-center w-full gap-4 z-[100]",
+      {
+        // "mb-8": isAppMenuHidden,
+        "mb-[10.5rem]": $appStore.player,
+        "mb-24": $view.isPortrait
+      }
+    )}
+    transition:slide={{ duration: 200, axis: "x" }}
+  >
+    {#each $toasts as toast}
+      <ToastNotification notification={toast} />
+    {/each}
   </div>
 {/if}
 

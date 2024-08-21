@@ -470,7 +470,7 @@ function initAppStore(seed: AppStore) {
       return;
     }
   };
-  const openLink = (url: string) => {
+  const openLink = (url: string, isOauthFlow: boolean = false) => {
     logger.log({ at: "opening link", url });
     const ctx = get(context);
     if (!url) return;
@@ -479,9 +479,15 @@ function initAppStore(seed: AppStore) {
       return;
     }
     if (ctx.isEmbed) {
-      postToParent({
-        link: url
-      });
+      if (isOauthFlow) {
+        postToParent({
+          oauth: url
+        });
+      } else {
+        postToParent({
+          link: url
+        });
+      }
     } else {
       let win = window?.open(url, "_blank");
       if (win) {
@@ -546,7 +552,7 @@ function initAppStore(seed: AppStore) {
     url += "&redirect_uri=" + redirectUri;
     // url += "&redirect_uri=" + encodeURIComponent(redirectUri);
     if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
-      openLink(url);
+      openLink(url, true);
     } else {
       goto(url);
     }

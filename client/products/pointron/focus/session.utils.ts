@@ -25,6 +25,12 @@ export function transformFocusItemsV1(rawItems: any[]) {
   });
   return sortArrayByOrder(items);
 }
+
+/**
+ * Resolves the total time of the task time from the focus item blocks.
+ * @param focusItemBlocks
+ * @returns time in seconds
+ */
 export function resolveTotalTaskTime(
   focusItemBlocks: { start: number; end: number }[]
 ) {
@@ -34,7 +40,7 @@ export function resolveTotalTaskTime(
       return acc + ((curr.end ?? new Date().getTime()) - curr.start);
     }, 0);
   }
-  return totalFromBlocks;
+  return totalFromBlocks / 1000;
 }
 
 type FocusItemBlock = { start: number; end: number; type: BlockType };

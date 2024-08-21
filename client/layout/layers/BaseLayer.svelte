@@ -153,8 +153,9 @@
     // postMessageToParent(event.data);
   };
   async function appEventHandler(e: IEvent) {
-    if (e.event === GlobalEvent.USER_LOGIN) {
-      if (e.value) dataManager.refreshClientCache();
+    if (e.event === GlobalEvent.USER_LOGIN && e.value) {
+      dataManager.initialize([...cacheableStores, ...localCacheableStores]);
+      dataManager.refreshClientCache();
     }
   }
   /**
@@ -329,8 +330,16 @@
   }
   function handleCustomNavigation(event: any) {
     logger.log({ at: "handleCustomNavigation", event });
-    if (event.detail?.isReload) window.location.reload();
-    else if (event.detail.path) goto(event.detail.path);
+    if (event.detail?.isReload) {
+      if (!$context.isEmbed) window.location.reload();
+      else {
+        goto(
+          (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
+            "://localhost/index.html"
+        );
+        // postToParent({ reload: true });
+      }
+    } else if (event.detail.path) goto(event.detail.path);
   }
   function handleCustomAlert(event: any) {
     if (event.detail) console.log("custom alert:", event.detail);

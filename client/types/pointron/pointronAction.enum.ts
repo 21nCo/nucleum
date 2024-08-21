@@ -37,5 +37,9 @@ export enum PointronAction {
   FINISH_FOCUS_SESSION = "FINISH_FOCUS_SESSION",
   PIN_TO_QUICK_FOCUS = "PIN_TO_QUICK_FOCUS",
   IMPORT_EXPORT_TRIGGER = "importexport",
+  /**
+   * The onboarding modal which shows on user signup.
+   */
+  IMPORT_ONBOARDING = "importonboarding",
   IMPORT_EXPORT = "importexportpage"
 }

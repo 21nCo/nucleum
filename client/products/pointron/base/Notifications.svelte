@@ -9,6 +9,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import context from "$lib/client/stores/context.store";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
 
   let src: string | null = null;
   let body: string = "";
@@ -16,6 +17,7 @@
 
   onMount(() => {
     const pointronEventSub = appEvents.subscribe((event: IEvent) => {
+      if (event.event === GlobalEvent.NONE) return;
       src = null;
       switch (event.event) {
         case PointronEvent.BREAK_ENDED:
@@ -63,13 +65,9 @@
             sound: src ? src.split("/sounds/")[1] : ""
           });
           if (!$context.isEmbed) {
-            console.log({ context: "playing sound", event, src });
+            logger.log({ context: "playing sound", event, src });
             audio?.play();
           }
-          setTimeout(() => {
-            src = null;
-            appEvents.reset();
-          }, 2000);
         }, 200);
       } catch (e) {
         console.error("Error in playing sound - Notifications", e);

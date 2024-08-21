@@ -24,8 +24,8 @@
     <SessionStatusLabel size={$view.isPortrait ? Size.sm : Size.md} />
     <div
       class={cn("flex justify-center", {
-        "text-7xl font-medium": size === Size.sm,
-        "text-9xl font-semibold": size !== Size.sm,
+        "text-7xl font-bold": size === Size.sm,
+        "text-9xl font-black": size !== Size.sm,
         "text-ars1":
           $sessionStore.timeRemainingToTakeBreak != undefined &&
           $sessionStore.timeRemainingToTakeBreak < 0

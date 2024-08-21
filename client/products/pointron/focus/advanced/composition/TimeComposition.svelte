@@ -16,6 +16,8 @@
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { deepCopy } from "$lib/shared/utils/obj.utils";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let isExpandedMode: boolean = true;
   let selectedMode: number = refreshAdvancedModeState();
   let selectedDynamicDuration: number = 0;
@@ -30,6 +32,10 @@
     sessionStore.onSliderDurationChange(selectedDynamicDuration);
   }
   function onCompositionChanges() {
+    logger.log({
+      at: "onCompositionChanges",
+      composition: deepCopy($sessionStore.composition)
+    });
     sessionStore.onComposeComplete();
   }
   function onModeSwitch(event: any) {

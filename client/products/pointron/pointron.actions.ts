@@ -55,6 +55,8 @@ import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
 import { quickFocusItemStore } from "./goals/goal.store";
 import { appStore } from "$lib/client/stores/app.store";
+import { Embed } from "$lib/client/types/context.type";
+import ImportOnboarding from "./settings/data/ImportOnboarding.svelte";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
@@ -259,6 +261,7 @@ export const pointronActions: IAction[] = [
     isMeta: true,
     component: EditTagModal,
     modalParams: {
+      title: "Edit Tag",
       isShowAsSheet: false,
       layout: {
         size: Size.xs
@@ -425,6 +428,23 @@ export const pointronActions: IAction[] = [
         size: Size.xl,
         orientation: Orientation.Horizontal
       }
+    },
+    hideContext: [Embed.HANDSET]
+  },
+  {
+    action: PointronAction.IMPORT_ONBOARDING,
+    label: "Import onboarding",
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: ImportOnboarding,
+    modalParams: {
+      layout: {
+        size: Size.md,
+        primaryAction: {
+          label: "I will do it later",
+          icon: "clock"
+        }
+      }
     }
   },
   {
@@ -439,7 +459,8 @@ export const pointronActions: IAction[] = [
     type: ActionType.FUNCTION,
     fn: async () => {
       appStore.runAction(PointronAction.IMPORT_EXPORT);
-    }
+    },
+    hideContext: [Embed.HANDSET]
   },
   {
     action: "widgets",

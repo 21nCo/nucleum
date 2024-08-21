@@ -179,9 +179,10 @@ export const symbolPatterns = [
 
 export function renderMdAsHtml(text: string) {
   let parsedText = text;
-  inlineStylingPatterns.forEach((pattern) => {
-    parsedText = parsedText.replace(pattern.regex, pattern.replacement);
-  });
+  parsedText = replaceSymbolPatterns(parsedText);
+  parsedText = replaceInlineStylePatterns(parsedText);
+  parsedText = parsedText.replace(/\n/g, "<br>");
+  parsedText = parsedText.replace(/ /g, "&nbsp;");
   return parsedText;
 }
 type MatchPattern = {

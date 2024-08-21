@@ -94,7 +94,7 @@
   <button
     class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
       "bg-opacity-0": !isShowOverlay,
-      "flex justify-center items-center p-3":
+      "flex justify-center items-center mo:p-0 p-3":
         !isUseDialog && size !== Size.full,
       "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
         isShowOverlay && !isUseDialog
@@ -146,7 +146,7 @@
     {:else}
       <div
         id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full rounded-md", {
+        class={cn("bg-bgs1 mo:w-full mo:h-full mo:rounded-none rounded-md", {
           ...resolveSizeClasses()
         })}
       >
