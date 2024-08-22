@@ -23,6 +23,7 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { goalStore } from "../../goals/goal.store";
   import UnpinAction from "./actions/UnpinAction.svelte";
+  import { toasts } from "$lib/client/stores/notification.store";
   export let goal: Pick<IGoal, "id" | "label" | "color" | "parent"> & {
     focus?: number;
   };
@@ -209,6 +210,7 @@
   }
   async function unPin() {
     await goalStore.modify({ id: goal.id, isPinnedForQuickStart: false });
+    toasts.success(`Goal **${goal.label}** unpinned from quick focus`);
     refresh();
   }
 </script>
@@ -296,11 +298,13 @@
         </div>
       {:else}
         <div class="text-b4">
-          {isHovering && !isInEditMode
-            ? "Click to start"
-            : todayFocusDuration
-              ? "Today: " + formatSeconds(todayFocusDuration)
-              : "Not focused today"}
+          {isFinishingState
+            ? "Finishing session..."
+            : isHovering && !isInEditMode
+              ? "Click to start"
+              : todayFocusDuration
+                ? "Today: " + formatSeconds(todayFocusDuration)
+                : "Not focused today"}
         </div>
       {/if}
     </CustomColorPropagator>

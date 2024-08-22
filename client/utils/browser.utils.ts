@@ -3,6 +3,7 @@ import { OperatingSystem } from "../types/context.type";
 import { GlobalEvent } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "../../shared/utils/obj.utils";
+import { logger } from "../components/debug/logger.client";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -161,21 +162,25 @@ async function _renderPopoverUsingFixedPositioning(
     placement === Position.TopCenter ||
     placement === Position.BottomCenter
   ) {
-    popRef.style.left = `${
-      triggerRect.left - (popRect.width / 2 - triggerRect.width / 2)
-    }px`;
+    if (isSpanToTriggerWidth) {
+      popRef.style.left = triggerRect.left + "px";
+    } else {
+      popRef.style.left = `${
+        triggerRect.left + triggerRect.width / 2 - popRect.width / 2
+      }px`;
+    }
   }
   popRect = popRef.getBoundingClientRect();
   if (popRect.width > documentWidth) {
     popRef.style.width = `${documentWidth - 12}px`;
   }
-  // console.log({
-  //   triggerRect,
-  //   popRect: deepCopy(popRect),
-  //   placement,
-  //   documentWidth,
-  //   documentHeight
-  // });
+  logger.log({
+    triggerRect,
+    popRect: deepCopy(popRect),
+    placement,
+    documentWidth,
+    documentHeight
+  });
   if (popRect.left < 0 || popRect.right > documentWidth) {
     popRef.style.left = "6px";
     popRef.style.right = "6px";

@@ -329,6 +329,7 @@ export const globalActions: IAction[] = [
   },
   {
     action: GlobalEvent.ACTIVATE_SEARCH_BOX,
+    label: "Activate search box",
     isMeta: true,
     type: ActionType.EVENT
   }

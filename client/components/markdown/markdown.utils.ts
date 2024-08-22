@@ -177,12 +177,26 @@ export const symbolPatterns = [
   { regex: /=&gt;/g, replacement: "⇒" }
 ];
 
-export function renderMdAsHtml(text: string) {
+/**
+ * Renders markdown as html. It replaces symbols, inline styles and spaces with html entities.
+ *
+ * In cases of search results, where parts of the text are highlighted, plain text spaces are not rendered correctly. To avoid this, spaces are rendered as &nbsp; when isIncludeSpaces is true.
+ *
+ * @param text
+ * @param params
+ * @returns
+ */
+export function renderMdAsHtml(
+  text: string,
+  params?: {
+    isIncludeSpaces?: boolean;
+  }
+) {
   let parsedText = text;
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
   parsedText = parsedText.replace(/\n/g, "<br>");
-  parsedText = parsedText.replace(/ /g, "&nbsp;");
+  if (params?.isIncludeSpaces) parsedText = parsedText.replace(/ /g, "&nbsp;");
   return parsedText;
 }
 type MatchPattern = {

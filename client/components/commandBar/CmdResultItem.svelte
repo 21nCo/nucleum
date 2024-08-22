@@ -32,7 +32,9 @@
       Go to&nbsp;
     {/if}
     <!-- {@html label} -->
-    {@html renderMdAsHtml(label)}
+    {@html renderMdAsHtml(label, {
+      isIncludeSpaces: true
+    })}
   </div>
   <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
     {generateCmdType(action?.type)}

@@ -147,7 +147,7 @@
         class={inputClasses}
         bind:value
         on:change|stopPropagation
-        on:keydown|stopPropagation
+        on:keydown
         on:keyup|stopPropagation={handleKeyUp}
         on:blur={() => {
           isFocused = false;
@@ -163,6 +163,7 @@
         disabled={isDisabled}
         bind:this={inputRef}
         autocomplete="off"
+        tabindex={isDisabled ? -1 : 0}
       />
       {#if icon}
         <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">

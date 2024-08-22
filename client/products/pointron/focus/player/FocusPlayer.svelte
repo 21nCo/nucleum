@@ -101,7 +101,10 @@
     player = document.getElementById("focusplayer");
     playerContainer = document.getElementById("playercontainer");
     const sessionSub = sessionStore.subscribe((x) => {
-      if (x.state === SessionState.FINISHED) {
+      if (
+        x.state === SessionState.FINISHED ||
+        x.state === SessionState.NOT_STARTED
+      ) {
         closePip();
       }
     });
@@ -131,7 +134,7 @@
       20
     )}
   id="playercontainer"
-  class={!$view.isPortrait ? "m-6" : "w-full"}
+  class={!$view.isPortrait ? "m--6" : "w-full"}
   bind:this={playerContainerRef}
 >
   <div

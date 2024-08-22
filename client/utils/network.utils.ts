@@ -1,3 +1,4 @@
+import { logger } from "../components/debug/logger.client";
 import { GlobalEvent } from "../types/event.enum";
 import { resolveToken, signout } from "./account.utils";
 import { isExtensionEnvironment } from "./browser.utils";
@@ -84,12 +85,7 @@ export async function performHttpNetworkOperation(params: {
     });
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(
-        "API call failed with status:",
-        response.status,
-        "Response:",
-        errorText
-      );
+      logger.error({ at: "API call failed with status", response, errorText });
       if (response.status === 401 && !isExtensionEnvironment()) {
         signout();
       }
@@ -103,7 +99,7 @@ export async function performHttpNetworkOperation(params: {
         errorMessage =
           "Failed to fetch. Please check your internet connection.";
       }
-      console.error("Network error: ", { params, errorMessage });
+      logger.error({ at: "Network error", params, errorMessage });
       //TEMP - 401 from /sql endpoint is erroring instead of response.status === 401
       // signout();
       window.dispatchEvent(
@@ -113,10 +109,10 @@ export async function performHttpNetworkOperation(params: {
       );
       throw new Error("Network error. Please check your internet connection.");
     } else if (error instanceof Error) {
-      console.error("API call failed:", error.message);
+      logger.error({ at: "API call failed", error: error.message });
       throw error;
     } else {
-      console.error("Unknown error:", error);
+      logger.error({ at: "Unknown error", error: error });
       throw new Error("An unknown error occurred");
     }
   }

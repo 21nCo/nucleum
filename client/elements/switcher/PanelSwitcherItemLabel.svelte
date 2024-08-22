@@ -19,6 +19,8 @@
     undefined;
   export let isActive: boolean = false;
   export let triggerItemEdit: string | null = null;
+  export let isShowNumberShortcut: boolean = false;
+  export let index: number = 0;
   $: isAddNewItem = item.value === "$add";
   let labelEditPopoverRef: any;
   let inputRef: any;
@@ -76,11 +78,16 @@
   </span>
 {:else}
   <span
-    class={cn("min-w-fit whitespace-nowrap", {
+    class={cn("flex gap-2 items-center min-w-fit whitespace-nowrap", {
       "text-bgs4": isDisabled
     })}
   >
     <TextWithHoverTooltip text={item.label} truncateLength={20} />
+    {#if isShowNumberShortcut}
+      <span class="text-b4 text-fgs3 w-4 h-4 bg-bgs2 rounded-md">
+        {index + 1}
+      </span>
+    {/if}
   </span>
 {/if}
 

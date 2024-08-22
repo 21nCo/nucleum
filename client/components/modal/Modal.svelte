@@ -34,13 +34,18 @@
     // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
-    logger.log({ at: "overlayClicked", event, id });
+    logger.log({
+      at: "overlayClicked",
+      id,
+      classList: event.target?.classList,
+      eventTargetId: event.target?.id,
+      pointerId: event.pointerId,
+      eventNodeName: event.target?.nodeName
+    });
     if (
-      (((event.target?.classList?.contains("pop-overlay") ||
+      (event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
-        event.target?.id === id) &&
-        event.pointerId &&
-        event.pointerId != -1) ||
+        event.target?.id === id ||
         event.target.nodeName === "DIALOG") &&
       isDismissable
     ) {
@@ -49,6 +54,7 @@
   };
 
   function close() {
+    logger.log({ at: "close", id });
     show = false;
     modalEvent.hide(id, "Modal.svelte");
     confirmationNotification.reset();

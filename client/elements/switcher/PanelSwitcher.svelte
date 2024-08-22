@@ -31,6 +31,7 @@
    */
   export let isInversePlacement: boolean = false;
   export let triggerItemEdit: string | null = null;
+  export let isShowNumberShortcut: boolean = false;
   let _items: ISelectItem[];
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
@@ -130,6 +131,8 @@
           {barStyle}
           {isInversePlacement}
           {parentBgIndex}
+          {isShowNumberShortcut}
+          {index}
           bind:triggerItemEdit
           isActive={value === item.value}
           isDisabled={isDisableEnabled && value !== item.value}

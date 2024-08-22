@@ -168,13 +168,7 @@
     </div>
   </div>
 {/if}
-{#if $appStore.player && !$view.isPortrait}
-  <div class="fixed bottom-0 right-0">
-    <ColorLayer>
-      <ComponentResolver path={$appStore.player} />
-    </ColorLayer>
-  </div>
-{/if}
+
 <!-- {#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
   <div class="fixed bottom-0 right-0 mr-6 mb-6">
     <Button
@@ -187,34 +181,28 @@
   </div>
 {/if} -->
 
-{#if (isValidArrayWithData($toasts) || (isValidArrayWithData($mutationQueue) && isShowSyncErrorMessage)) && !$view.isPortrait}
-  <div
-    class="fixed bottom-0 right-0 mb-6 mr-6 flex flex-col gap-4 z-[100]"
-    transition:slide={{ duration: 200 }}
-  >
-    {#each $toasts as toast}
-      <ToastNotification notification={toast} />
-    {/each}
-    <!-- {#if isValidArrayWithData($mutationQueue)}
-      <ToastNotification
-        notification={{
-          id: "syncNotification",
-          type: AlertType.WARNING,
-          message:
-            $mutationQueue.length +
-            ($mutationQueue.length === 1 ? " change" : " changes") +
-            " pending sync",
-          title: "Sync error - we're sorry!",
-          actionText: "Sync manually",
-          callback: () => {
-            dataManager.syncPendingMutations();
-          },
-          isHideClose: true
-        }}
-      />
-    {/if} -->
+{#if !$view.isPortrait && (isValidArrayWithData($toasts) || $appStore.player)}
+  <div class="fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4">
+    {#if isValidArrayWithData($toasts)}
+      <div
+        class="flex flex-col gap-3 z-[100]"
+        transition:slide={{ duration: 200 }}
+      >
+        {#each $toasts as toast}
+          <ToastNotification notification={toast} />
+        {/each}
+      </div>
+    {/if}
+    {#if $appStore.player}
+      <div class="player">
+        <ColorLayer>
+          <ComponentResolver path={$appStore.player} />
+        </ColorLayer>
+      </div>
+    {/if}
   </div>
 {/if}
+
 {#if isValidArrayWithData($toasts) && $view.isPortrait}
   <div
     class={cn(

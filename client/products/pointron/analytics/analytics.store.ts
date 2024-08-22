@@ -19,7 +19,7 @@ import {
 } from "./analytics.utils";
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 
-export const selectedPageId = writable<string | null>(null);
+export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
 const seedAnalyticsConfig: IAnalyticsConfigStore = {
@@ -35,8 +35,8 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       {
         dboDependencies: [
           "fn::pointron::analytics::page::fetch",
-          "fn::pointron::analytics::targets::v3"
-          // "fn::pointron::analytics::goal::v3"
+          "fn::pointron::analytics::targets::v3",
+          "fn::pointron::analytics::goal::v3"
         ]
       }
     );

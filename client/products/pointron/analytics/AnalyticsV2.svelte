@@ -26,7 +26,9 @@
   import { Embed } from "$lib/client/types/context.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+
   $selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
     if ($context.embed == Embed.HANDSET) {
@@ -56,23 +58,25 @@
             <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Analytics" />
             <EditModeToggle />
           </div>
-          <div class="flex w-full items-center">
+          <div class="flex w-full gap-2 items-center">
             <div class="overflow-x-auto">
               <OptionSelector
                 options={pages}
                 size={Size.sm}
                 isPreventWrap={true}
-                on:select={onPageSwitch}
+                bind:selected={$selectedPageId}
               />
             </div>
             {#if $isInEditMode}
               <Button
                 class="min-w-fit"
                 size={Size.xs}
-                icon="pencil"
+                parentBgIndex={2}
+                icon="pencil-square"
+                style={ButtonStyle.OUTLINED}
                 on:click={() =>
                   appStore.runAction(
-                    PointronAction.ANALYTICSVIEWSPAGEEDITMOBILE
+                    PointronAction.ANALYTICS_VIEWS_PAGE_EDIT_MOBILE
                   )}
               >
                 edit</Button
@@ -89,7 +93,8 @@
               isExpandToFullWidth={true}
               isEnableAnimationForTitle={false}
               isInEditMode={$isInEditMode}
-              on:switch={onPageSwitch}
+              isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
+              bind:value={$selectedPageId}
               on:add={onAddPageClicked}
               on:remove={onRemovePageClicked}
               on:change={onPagelabelChange}
@@ -135,3 +140,12 @@
     {/if}
   {/key}
 </div>
+
+<svelte:document
+  on:keydown={(event) => {
+    let index;
+    if (event.code.includes("Digit")) index = +event.key;
+    if (!index) return;
+    selectedPageId.set($analyticsConfigStore.pages[index - 1]?.id ?? "");
+  }}
+/>
