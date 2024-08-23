@@ -11,6 +11,8 @@
   import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
   import { captureStore, currentUserId } from "./capture.store";
   import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+  import account from "$lib/client/stores/account.store";
+  import { Audio2MD } from "./AudioToMarkdown.utils";
 
   export let body: any = {};
   export let url: string = "";
@@ -31,32 +33,45 @@
     | PlayActionState.PAUSEPREVIEWING
     | PlayActionState.RESUMEPREVIEWING = PlayActionState.RESUMEPREVIEWING;
   let isError: boolean = false;
+
+  let isConvertToMarkdown: boolean = false;
+
   /**
    * To Transcribe the audio, shows necessary feedback on transcription start, end and also on error.
    * Auto Refreshes the page the dispplay the content once transcription is completed
-   *
    * TODO - move to store, lambda url - env
    */
   async function onTranscribe() {
     isDisabled = true;
+    const region = $account.userInfo?.region;
     let body = {
       s3Url: url,
       userId: userId,
-      nodeId: nodeId
+      nodeId: nodeId,
+      region: region
     };
     let jsonBody = JSON.stringify(body);
-    const response = await fetch(
-      "https://ykc7vk56p3munwz27rieasmxbm0rgajq.lambda-url.us-east-1.on.aws/",
-      {
+    console.log("JSON BODY", jsonBody);
+    try {
+      const response = await fetch(import.meta.env.VITE_AUDIOTRANS_F_URL, {
         method: "POST",
+        body: jsonBody,
         headers: {
           "Content-Type": "application/json"
-        },
-        body: jsonBody
+        }
+      });
+      isDisabled = false;
+      const result: string = (await response.json()).result;
+      if (isConvertToMarkdown) {
+        return result;
       }
-    );
-
-    if (!response.ok) {
+      if (isReplaceable || $captureStore?.fileDetails?.data) {
+        $captureStore.fileDetails.transcription = result;
+        $captureStore.fileDetails.initTranscription = false;
+        label = "Re-Transcribe";
+      } else dispatch("refresh");
+    } catch (error) {
+      console.error("Network or JSON parsing error:", error);
       isError = true;
       setTimeout(() => (isError = false), 3000);
       isDisabled = false;
@@ -65,18 +80,18 @@
         body: { initTranscription: false },
         contentType: "AUDIO"
       });
-      const message = `An error has occurred: ${response.status}`;
-      throw new Error(message);
+    } finally {
+      isDisabled = false;
     }
-    isDisabled = false;
-    const result = (await response.json()).result;
-    if (isReplaceable || $captureStore?.fileDetails?.data) {
-      $captureStore.fileDetails.transcription = result;
-      $captureStore.fileDetails.initTranscription = false;
-      label = "Re-Transcribe";
-    } else dispatch("refresh");
   }
 
+  async function convertToMarkdown() {
+    isConvertToMarkdown = true;
+    let transcript = await onTranscribe();
+    isConvertToMarkdown = false;
+    if (typeof transcript !== "string") return "transcript is not a string";
+    Audio2MD.convertAudioToMarkdown(transcript);
+  }
   /**
    * @description Creates wavesurfer instance for preview and uses timeline plugin to add timeline to the interactive visualization.
    */
@@ -181,13 +196,18 @@
         />
       {/if}
     {/if}
-    {#if isReplaceable}
-      <Button
+    <!-- {#if isReplaceable} -->
+    <!-- <Button
         on:click={() => dispatch("startRecording")}
         icon="arrow-path"
         label="Replace"
-      />
-    {/if}
+      /> -->
+    <Button
+      on:click={convertToMarkdown}
+      icon="arrow-path"
+      label="Convert to Markdown"
+    />
+    <!-- {/if} -->
     <Button on:click={onTranscribe} {isDisabled} icon="document-text" {label} />
   </div>
 </div>
