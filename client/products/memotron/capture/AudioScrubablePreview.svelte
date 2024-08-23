@@ -13,6 +13,7 @@
   import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
   import account from "$lib/client/stores/account.store";
   import { Audio2MD } from "./AudioToMarkdown.utils";
+  import { CaptureType } from "./capture.type";
 
   export let body: any = {};
   export let url: string = "";
@@ -90,7 +91,10 @@
     let transcript = await onTranscribe();
     isConvertToMarkdown = false;
     if (typeof transcript !== "string") return "transcript is not a string";
-    Audio2MD.convertAudioToMarkdown(transcript);
+    const blocks = Audio2MD.convertAudioToMarkdown(transcript);
+    console.log("BLOCKS of A2MD", blocks);
+    $captureStore.body.blocks = blocks;
+    $captureStore.captureType = CaptureType.MARKDOWN;
   }
   /**
    * @description Creates wavesurfer instance for preview and uses timeline plugin to add timeline to the interactive visualization.
@@ -196,18 +200,18 @@
         />
       {/if}
     {/if}
-    <!-- {#if isReplaceable} -->
-    <!-- <Button
+    {#if isReplaceable}
+      <Button
         on:click={() => dispatch("startRecording")}
         icon="arrow-path"
         label="Replace"
-      /> -->
-    <Button
-      on:click={convertToMarkdown}
-      icon="arrow-path"
-      label="Convert to Markdown"
-    />
-    <!-- {/if} -->
+      />
+      <Button
+        on:click={convertToMarkdown}
+        icon="arrow-path"
+        label="Convert to Markdown"
+      />
+    {/if}
     <Button on:click={onTranscribe} {isDisabled} icon="document-text" {label} />
   </div>
 </div>

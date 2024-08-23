@@ -1,5 +1,9 @@
+import { prefixTable } from "$lib/shared/utils/text.utils";
+import { generateUID } from "$lib/client/utils/utils";
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 
 interface Block {
+  id?: string;
   contentType?: string;
   body?: string;
   listType?: string;
@@ -45,6 +49,7 @@ class AudioToMarkdown{
      this.lastCreatedULSC = {};
      this.lastCreatedListVariant= null;
     this.currentBlock= { ...this.defaultBlock };
+    this.blocks=[]
     }
 
     pushCurrentBlockToBlocks(){
@@ -76,7 +81,9 @@ class AudioToMarkdown{
               this.lastCreatedULSC.children.push(this.currentBlock);
               break;
           }
-        } else this.blocks.push(this.currentBlock);
+        } else {
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.blocks.push(this.currentBlock);}
         this.currentBlock = { ...this.defaultBlock };
       }
     }
@@ -87,7 +94,7 @@ class AudioToMarkdown{
       .split(/\W+/)
       .filter((word: string) => word.length > 0);
     console.log("audio to md WORDS", words);
-    for (let i = 0; i < words.length && this.flag; i++) {
+    for (let i = 0; i < words.length ; i++) {
       this.word = words[i];
       switch (this.word) {
         case "H1":
@@ -99,11 +106,13 @@ class AudioToMarkdown{
           this.pushCurrentBlockToBlocks();
           this.currentBlock.contentType = `HEADING${this.word.slice(1)}`;
           this.currentBlock.body = "";
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
           break;
         case "OL":
         case "UL":
           this.pushCurrentBlockToBlocks();
           this.currentBlock = { ...this.defaultListBlockValues };
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
           if (this.word === "OL") {
             this.currentBlock.listType = "ORDERED";
             this.lastCreatedOL = this.currentBlock;
@@ -118,6 +127,7 @@ class AudioToMarkdown{
         case "ULC":
           this.pushCurrentBlockToBlocks();
           this.currentBlock = { ...this.defaultListBlockValues };
+          this.currentBlock.id = generateUID();
           if (this.word === "OLC") {
             this.currentBlock.listType = "ORDERED";
             this.lastCreatedOLC = this.currentBlock;
@@ -132,6 +142,7 @@ class AudioToMarkdown{
         case "ULSC":
           this.pushCurrentBlockToBlocks();
           this.currentBlock = { ...this.defaultListBlockValues };
+          this.currentBlock.id = generateUID();
           if (this.word === "OLSC") {
             this.currentBlock.listType = "ORDERED";
             this.lastCreatedOLSC = this.currentBlock;
@@ -146,6 +157,7 @@ class AudioToMarkdown{
         case "ULSSC":
           this.pushCurrentBlockToBlocks();
           this.currentBlock = { ...this.defaultListBlockValues };
+          this.currentBlock.id = generateUID();
           if (this.word === "OLSSC") {
             this.currentBlock.listType = "ORDERED";
             this.lastCreatedListVariant = "OLSSC";
@@ -161,9 +173,7 @@ class AudioToMarkdown{
         case "H5E":
         case "H6E":
           this.blocks.push(this.currentBlock);
-          // console.log("audio to md BLOCKS", [...this.blocks]);
           this.currentBlock = { ...this.defaultBlock };
-          // flag = false;
           break;
         case "OLE":
         case "ULE":
@@ -204,9 +214,9 @@ class AudioToMarkdown{
           if (this.currentBlock.body && this.currentBlock.body.length > 0) this.currentBlock.body += " " + this.word;
           else this.currentBlock.body = this.word;
       }
-      console.log("audio to md CURRENT BLOCK", this.currentBlock, [...this.blocks]);
     }
     this.pushCurrentBlockToBlocks();
+    return this.blocks;
 }
 }
 
