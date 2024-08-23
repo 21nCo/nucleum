@@ -14,8 +14,8 @@
     $sessionStore.timeRemainingToTakeBreak < 0;
 </script>
 
-<div class="flex flex-col items-start">
-  <div class="flex w-48">
+<div class="flex flex-col items-start w-full">
+  <div class="flex-1 min-w-0 w-full text-start">
     {#if isBreakReminderMode}
       <div class="animate-pulse">BREAK REMINDER</div>
     {:else if currentTask?.label && $sessionStore.state === SessionState.FOCUS_RUNNING}

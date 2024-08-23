@@ -28,6 +28,7 @@
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import { isTextElement } from "$lib/client/utils/browser.utils";
 
   $selectedPageId = $analyticsConfigStore.pages[0]?.id;
   onMount(async () => {
@@ -144,6 +145,8 @@
 <svelte:document
   on:keydown={(event) => {
     let index;
+    const isTextInputSource = isTextElement(event.target);
+    if (isTextInputSource) return;
     if (event.code.includes("Digit")) index = +event.key;
     if (!index) return;
     selectedPageId.set($analyticsConfigStore.pages[index - 1]?.id ?? "");

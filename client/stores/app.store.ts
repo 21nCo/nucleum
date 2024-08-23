@@ -763,6 +763,11 @@ function initAppStore(seed: AppStore) {
       });
     },
 
+    /**
+     * @deprecated - use player store instead
+     * @param path
+     * @param params
+     */
     showMiniPlayer(path: string, params: any = null) {
       update((n: AppStore) => {
         n.player = path;
@@ -770,6 +775,10 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
+    /**
+     * @deprecated - use player store instead
+     * @param path
+     */
     togglePip(path: string) {
       update((n: AppStore) => {
         if (!n.player) n.player = path;
@@ -777,12 +786,19 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
+    /**
+     * @deprecated - use player store instead
+     */
     hideMiniPlayer() {
       update((n: AppStore) => {
         n.player = undefined;
         return n;
       });
     },
+    /**
+     * @deprecated - use player store instead
+     * @param path
+     */
     showFullScreenPlayer(path: string) {
       logger.log({ at: "showFullScreenPlayer", path });
       update((n: AppStore) => {
@@ -793,6 +809,10 @@ function initAppStore(seed: AppStore) {
       });
       toggleSearchParam("fsp", path);
     },
+    /**
+     * @deprecated - use player store instead
+     * @param isHideMiniPlayer - hides the mini player if true
+     */
     hideFullScreenPlayer(isHideMiniPlayer: boolean = false) {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath && !isHideMiniPlayer)
@@ -806,6 +826,10 @@ function initAppStore(seed: AppStore) {
       });
       toggleSearchParam("fsp");
     },
+    /**
+     * @deprecated - use player store instead
+     * @returns
+     */
     restoreFullScreenPlayer() {
       const fspParam = new URLSearchParams(window.location.search).get("fsp");
       if (fspParam) {
@@ -813,6 +837,9 @@ function initAppStore(seed: AppStore) {
         return true;
       }
     },
+    /**
+     * @deprecated - use player store instead
+     */
     showAssociatedPlayerIfRequired() {
       update((n: AppStore) => {
         if (n.fullScreenComponentPath) {
