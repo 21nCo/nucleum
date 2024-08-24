@@ -1,4 +1,5 @@
 import type { IButtonParams } from "./button.type";
+import { IObservableStoreSubject } from "./data.type";
 import type { Orientation } from "./direction.enum";
 import type { Size } from "./size.enum";
 
@@ -31,4 +32,10 @@ export type ModalLayoutParams = {
   ignoreSafeArea?: boolean;
   isShowClose?: boolean;
   isShowCantileverClose?: boolean;
+};
+
+export type IPlayer = IObservableStoreSubject & {
+  action?: string;
+  isMiniOn: boolean;
+  isPipOn: boolean;
 };

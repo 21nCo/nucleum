@@ -22,6 +22,7 @@
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { Embed } from "$lib/client/types/context.type";
+  import { fullScreen } from "$lib/client/components/modal/modal.store";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   onMount(async () => {
@@ -45,7 +46,7 @@
   async function initializeData() {
     if (isLiteMode) return;
     if ($sessionStore?.isSessionRunning) {
-      appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
+      fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
     }
     refreshInteractionModeState();
   }

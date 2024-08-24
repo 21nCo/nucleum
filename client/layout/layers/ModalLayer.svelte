@@ -2,7 +2,7 @@
   import Modal from "$lib/client/components/modal/Modal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import modalEvent from "$lib/client/components/modal/modal.store";
+  import modalEvent, { player } from "$lib/client/components/modal/modal.store";
   import {
     toasts,
     confirmationNotification,
@@ -181,22 +181,21 @@
   </div>
 {/if} -->
 
-{#if !$view.isPortrait && (isValidArrayWithData($toasts) || $appStore.player)}
-  <div class="fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4">
+{#if !$view.isPortrait && (isValidArrayWithData($toasts) || $player.isMiniOn)}
+  <div
+    class="fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4 z-[100]"
+  >
     {#if isValidArrayWithData($toasts)}
-      <div
-        class="flex flex-col gap-3 z-[100]"
-        transition:slide={{ duration: 200 }}
-      >
+      <div class="flex flex-col gap-3" transition:slide={{ duration: 200 }}>
         {#each $toasts as toast}
           <ToastNotification notification={toast} />
         {/each}
       </div>
     {/if}
-    {#if $appStore.player}
+    {#if $player.isMiniOn}
       <div class="player">
         <ColorLayer>
-          <ComponentResolver path={$appStore.player} />
+          <ComponentResolver path={$player.action} />
         </ColorLayer>
       </div>
     {/if}
@@ -209,7 +208,7 @@
       "fixed bottom-0 left-0 mx-6 flex flex-col justify-center w-full gap-4 z-[100]",
       {
         // "mb-8": isAppMenuHidden,
-        "mb-[10.5rem]": $appStore.player,
+        "mb-[10.5rem]": $player.isMiniOn,
         "mb-24": $view.isPortrait
       }
     )}

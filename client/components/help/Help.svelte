@@ -34,7 +34,10 @@
             pageAction = null;
           }}
         />
-        <ComponentResolver action={pageAction} />
+        <ComponentResolver
+          action={pageAction}
+          params={pageAction.modalParams?.componentParams}
+        />
       </div>
     {:else}
       <div class="flex w-full justify-between">
@@ -71,7 +74,7 @@
             </div>
           </div>
         {/each}
-        <ProductInfoFooter />
+        <ProductInfoFooter isShowSystemStatus={true} isHideAppVersion={true} />
       </div>
     {/if}
   </div>

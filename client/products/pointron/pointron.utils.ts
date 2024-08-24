@@ -11,6 +11,7 @@ import {
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { sessionStore } from "./focus/session.store";
 import { generateUID } from "$lib/client/utils/utils";
+import { type IPointSession, SessionType } from "./logs/log.type";
 
 export function getTotalsFromComposition(
   params: {
@@ -186,7 +187,9 @@ function generateIntervals(composition: SessionComposition) {
   return bars;
 }
 
-export function resolveSessionTime(intervals: ISessionInterval[]) {
+export function resolveSessionSplitFromIntervals(
+  intervals: ISessionInterval[]
+) {
   intervals = intervals.filter((x) => x.progress > 0);
   let focus = intervals
     .filter((x) => x.type === BlockType.FOCUS)
@@ -195,6 +198,38 @@ export function resolveSessionTime(intervals: ISessionInterval[]) {
     .filter((x) => x.type === BlockType.BREAK)
     .reduce((acc, curr) => acc + curr.duration * curr.progress, 0);
   return { focus, brek };
+}
+
+export function resolveSessionTimeSplit(x: IPointSession) {
+  let sessionTime = { focus: 0, brek: 0 };
+  if (
+    (x.type === SessionType.COUNTUP || x.type === SessionType.MANUAL_ENTRY) &&
+    new Date(x.start).getTime() < new Date("2024-08-22").getTime()
+  ) {
+    sessionTime = resolveSessionTimeLegacy(x);
+  } else {
+    sessionTime = resolveSessionSplitFromIntervals(x.blocks);
+  }
+  return sessionTime;
+}
+
+export function resolveSessionTimeLegacy(session: IPointSession) {
+  if (
+    (session.type === SessionType.COUNTUP && session.blocks.length === 1) ||
+    session.type === SessionType.MANUAL_ENTRY
+  ) {
+    return { focus: session.elapsed, brek: 0 };
+  } else if (session.type === SessionType.COUNTUP) {
+    let focus = session.blocks
+      .filter((x) => x.type === BlockType.FOCUS)
+      .reduce((acc, curr) => acc + (curr.end - curr.start), 0);
+    let brek = session.blocks
+      .filter((x) => x.type === BlockType.BREAK)
+      .reduce((acc, curr) => acc + (curr.end - curr.start), 0);
+    return { focus: focus / 1000, brek: brek / 1000 };
+  } else {
+    return resolveSessionSplitFromIntervals(session.blocks);
+  }
 }
 
 export function roundOffToNdigitsAfterDecimal(number: number, n: number) {

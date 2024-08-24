@@ -26,7 +26,10 @@ import {
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
 import { appStore, userPreferences } from "$lib/client/stores/app.store";
-import modalEvent from "$lib/client/components/modal/modal.store";
+import modalEvent, {
+  fullScreen,
+  player
+} from "$lib/client/components/modal/modal.store";
 import {
   toasts,
   scheduledNotifications,
@@ -185,7 +188,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   }
   shallowReset() {
     this.clearTimers();
-    appStore.hideFullScreenPlayer(true);
+    fullScreen.hide(false);
+    player.reset();
     scheduledNotifications.reset();
   }
   /**
@@ -779,8 +783,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     ) {
       const currentValue = this.get();
       modalEvent.hide(PointronEvent.SESSION_FINISHED);
-      const isRestored = appStore.restoreFullScreenPlayer();
-      if (!isRestored) appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
+      const isRestored = fullScreen.restore();
+      if (!isRestored) player.showMini(PointronAction.FOCUS_PLAYER);
       this.modify(
         {
           ...savedSessionStore,
@@ -985,8 +989,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   async startSession(isQuickStart: boolean = false) {
     this.onComposeComplete(false);
     //todo - if auto open enabled
-    if (isQuickStart) appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
-    else appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
+    if (isQuickStart) player.showMini(PointronAction.FOCUS_PLAYER);
+    else fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
 
     if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();

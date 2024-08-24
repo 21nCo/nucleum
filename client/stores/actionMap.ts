@@ -22,6 +22,8 @@ import Bootstrap from "../components/settings/account/Bootstrap.svelte";
 import Calendar from "../components/calendar/Calendar.svelte";
 import { GlobalEvent } from "../types/event.enum";
 import { uiState } from "./uiState/uiState.store";
+import BookACall from "../components/cx/BookACall.svelte";
+import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -114,7 +116,8 @@ export const globalActions: IAction[] = [
     action: "call",
     label: "Book a call",
     icon: "video-camera",
-    type: ActionType.LINK
+    type: ActionType.MODAL,
+    component: BookACall
   },
   {
     action: "faqs",
@@ -198,16 +201,17 @@ export const globalActions: IAction[] = [
     },
     icon: "sparkles",
     type: ActionType.MODAL,
-    contentType: ContentType.SPACE_DOC,
+    component: SupahubEmbed,
     modalParams: {
       title: "What's new",
-      layout: {
-        size: Size.xl
+      componentParams: {
+        context: "Changelog"
       }
     }
   },
   {
-    action: Action.ROADMAP,
+    action: Action.ROADMAP + "inactive",
+    isInactive: true,
     get label() {
       return this.modalParams?.title;
     },
@@ -222,6 +226,32 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: Action.ROADMAP,
+    label: "Roadmap",
+    icon: "map",
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.runAction(Action.ROADMAP + "supahub");
+    }
+  },
+  {
+    action: Action.ROADMAP + "supahub",
+    label: "Roadmap",
+    icon: "map",
+    type: ActionType.MODAL,
+    component: SupahubEmbed,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      },
+      componentParams: {
+        context: "Roadmap"
+      }
+    }
+  },
+  {
     action: "feedback",
     label: "Give feedback",
     icon: "chat-bubble-bottom-center",
@@ -231,8 +261,7 @@ export const globalActions: IAction[] = [
     action: "requestfeature",
     label: "Request a feature",
     icon: "light-bulb",
-    type: ActionType.MODAL,
-    isInactive: true
+    type: ActionType.LINK
   },
   {
     action: "report",

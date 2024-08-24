@@ -140,8 +140,8 @@ export function getSettingsAsModal(): IAction[] {
       component: SettingsAsModal,
       modalParams: {
         layout: {
-          size: Size.xxl,
-          orientation: Orientation.Vertical,
+          size: Size.xl,
+          orientation: Orientation.Horizontal,
           ignoreSafeArea: true
         }
       }
