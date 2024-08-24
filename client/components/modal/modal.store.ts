@@ -53,7 +53,7 @@ class PlayerStore extends ObservableStore<IPlayer> {
 
   showMini(action: string, isOnlyIfNoPip: boolean = false) {
     const isPipOn = this.get().isPipOn;
-    console.log({ isPipOn, action, isOnlyIfNoPip });
+    logger.log({ isPipOn, action, isOnlyIfNoPip });
     if (isOnlyIfNoPip && isPipOn) return;
     this.update((n: IPlayer) => {
       n.isMiniOn = true;

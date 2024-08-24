@@ -604,7 +604,7 @@ export const pointronActions: IAction[] = [
       title: "Create a new goal",
       isShowAsSheet: false,
       layout: {
-        size: Size.xl
+        size: Size.lg
       }
     }
   },

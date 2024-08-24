@@ -9,7 +9,7 @@
 </script>
 
 <div
-  class={cn("flex items-center w-full pt-20", {
+  class={cn("flex items-center w-full pt-10", {
     "justify-between": isShowSystemStatus,
     "justify-center": !isShowSystemStatus
   })}

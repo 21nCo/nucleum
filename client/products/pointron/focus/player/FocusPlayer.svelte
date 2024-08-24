@@ -40,6 +40,9 @@
     if (playerRef && $sessionStore.isSessionRunning)
       playerContainer?.append(playerRef);
     isPipShown = false;
+    if ($player.isPipOn) {
+      player.togglePip(PointronAction.FOCUS_PLAYER);
+    }
     if ("documentPictureInPicture" in window)
       (window.documentPictureInPicture as any).window?.close();
   }
@@ -192,20 +195,25 @@
               />
               {#if !$view.isPortrait && !isPipShown}
                 {#if !$context.isEmbed}
-                  <Icon
-                    icon="pip"
-                    on:click={() =>
-                      player.togglePip(PointronAction.FOCUS_PLAYER)}
-                    isTabbable={true}
-                    class={cn({
-                      "stroke-cbg":
-                        $sessionStore.state === SessionState.FOCUS_RUNNING &&
-                        !isBreakReminderMode,
-                      "stroke-abg":
-                        isBreakReminderMode ||
-                        $sessionStore.state != SessionState.FOCUS_RUNNING
-                    })}
-                  />
+                  <button
+                    class="flex items-center justify-center"
+                    on:click|stopPropagation={(event) => {
+                      player.togglePip(PointronAction.FOCUS_PLAYER);
+                    }}
+                  >
+                    <Icon
+                      icon="pip"
+                      isTabbable={true}
+                      class={cn({
+                        "stroke-cbg":
+                          $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                          !isBreakReminderMode,
+                        "stroke-abg":
+                          isBreakReminderMode ||
+                          $sessionStore.state != SessionState.FOCUS_RUNNING
+                      })}
+                    />
+                  </button>
                 {/if}
 
                 <Icon

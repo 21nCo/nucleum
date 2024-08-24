@@ -24,6 +24,7 @@ import { GlobalEvent } from "../types/event.enum";
 import { uiState } from "./uiState/uiState.store";
 import BookACall from "../components/cx/BookACall.svelte";
 import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
+import GhostEmbed from "../components/cx/ghost/GhostEmbed.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -84,6 +85,7 @@ export const globalActions: IAction[] = [
     action: "tutorial",
     label: "Start tutorial",
     icon: "play",
+    isInactive: true,
     type: ActionType.LINK
   },
   {
@@ -135,6 +137,7 @@ export const globalActions: IAction[] = [
     action: "opencollective",
     label: "Support us",
     icon: "gift",
+    isInactive: true,
     type: ActionType.LINK
   },
   {
@@ -149,6 +152,7 @@ export const globalActions: IAction[] = [
       return this.modalParams?.title;
     },
     icon: "face-smile",
+    isInactive: true,
     type: ActionType.MODAL,
     contentType: ContentType.SPACE_DOC,
     modalParams: {
@@ -162,6 +166,7 @@ export const globalActions: IAction[] = [
     action: "git",
     label: "Star us on git",
     icon: "star",
+    isInactive: true,
     type: ActionType.LINK
   },
   {
@@ -201,7 +206,8 @@ export const globalActions: IAction[] = [
     },
     icon: "sparkles",
     type: ActionType.MODAL,
-    component: SupahubEmbed,
+    // component: SupahubEmbed,
+    component: GhostEmbed,
     modalParams: {
       title: "What's new",
       componentParams: {
@@ -229,7 +235,8 @@ export const globalActions: IAction[] = [
     action: Action.ROADMAP,
     label: "Roadmap",
     icon: "map",
-    type: ActionType.FUNCTION,
+    isMeta: true,
+    type: ActionType.LINK,
     fn: async () => {
       appStore.runAction(Action.ROADMAP + "supahub");
     }
@@ -255,6 +262,7 @@ export const globalActions: IAction[] = [
     action: "feedback",
     label: "Give feedback",
     icon: "chat-bubble-bottom-center",
+    isInactive: true,
     type: ActionType.LINK
   },
   {

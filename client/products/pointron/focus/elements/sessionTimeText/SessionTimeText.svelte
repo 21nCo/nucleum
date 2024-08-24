@@ -49,7 +49,6 @@
       }
     )}
   >
-    <!-- <div class="font-medium">TOTALS</div> -->
     <div>
       Session: {formatSeconds($sessionStore.totalElapsed, TimeFormat.CLOCK)}
     </div>

@@ -2,7 +2,10 @@
   import Modal from "$lib/client/components/modal/Modal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import modalEvent, { player } from "$lib/client/components/modal/modal.store";
+  import modalEvent, {
+    fullScreen,
+    player
+  } from "$lib/client/components/modal/modal.store";
   import {
     toasts,
     confirmationNotification,
@@ -193,7 +196,8 @@
       </div>
     {/if}
     {#if $player.isMiniOn}
-      <div class="player">
+      <!-- Opacity is used as `hidden` or svelte `#if` will impair associated PIP functionality -->
+      <div class={cn("player", { "opacity-0": $fullScreen.path })}>
         <ColorLayer>
           <ComponentResolver path={$player.action} />
         </ColorLayer>
