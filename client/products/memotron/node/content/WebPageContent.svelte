@@ -22,7 +22,7 @@
 </script>
 
 <div class="flex gap-6 w-full h-full">
-  <main class="h-full w-3/4 2k:w-1/2">
+  <main class="relative h-full w-3/5 2k:w-1/2">
     {#if isLoading}
       <div class="w-full h-full flex justify-center items-center">
         <div class="text-center text-b3 text-fgs3">Loading...</div>
@@ -51,9 +51,21 @@
         </div>
       </div>
     {/if}
+    <div class="absolute bottom-0 left-0 m-2 flex gap-2 items-center">
+      <Button
+        icon="arrow-up-right"
+        label={$node.body.url?.split("?")[0]}
+        size={Size.xs}
+        type={ButtonVariant.PRIMARY}
+        style={ButtonStyle.OUTLINED}
+        on:click={() => {
+          appStore.openLink($node.body.url);
+        }}
+      />
+    </div>
   </main>
-  <footer class="flex flex-col gap-4 justify-center items-center flex-1">
-    <Button
+  <aside class="flex flex-col gap-4 justify-center items-center flex-1">
+    <!-- <Button
       icon="arrow-up-right"
       label="Open link"
       size={Size.sm}
@@ -62,7 +74,7 @@
       on:click={() => {
         appStore.openLink($node.body.url);
       }}
-    />
+    /> -->
     {#if isIframable}
       <Button
         icon="play"
@@ -90,5 +102,5 @@
     <!-- <div class="text-b3 text-fgs3 mt-2">
       Clipped at {formatDatetime($userPreferences, $node.createdAt)}
     </div> -->
-  </footer>
+  </aside>
 </div>

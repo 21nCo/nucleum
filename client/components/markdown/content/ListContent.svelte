@@ -52,12 +52,6 @@
       on:deleterelay
       on:tab={handleTab}
       on:shifttab={handleTab}
-      on:change
-      on:insert
-      on:convert
-      on:delete
-      on:mention
-      on:unmention
       {mdStore}
       {isHovering}
       {block}
@@ -72,12 +66,6 @@
             ? [...parentHierarchy, block.id]
             : parentHierarchy}
           block={item}
-          on:change
-          on:insert
-          on:convert
-          on:delete
-          on:mention
-          on:unmention
         />
       {/each}
     {/if}

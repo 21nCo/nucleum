@@ -10,7 +10,6 @@ import {
   type ICaptureStore,
   type FileDetails
 } from "$lib/client/products/memotron/capture/capture.type";
-import { AlertType } from "$lib/client/types/notification.type";
 import { generateUID } from "$lib/client/utils/utils";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
@@ -194,15 +193,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       /**
        * When media grid is used in capture page we store the media in temp s3 storage , here before saving the capture to db we are sotring the medias in persistent s3 storage
        */
-      for(let block of (val.body.blocks)){
-        if(block.contentType === NodeType.MEDIA_GRID)
-          for(let item of block.body.items){
-            data = await fetch(item.URL).then(r => r.blob())
-            contentType = item.type
-            name = item.name
+      for (let block of val.body.blocks) {
+        if (block.contentType === NodeType.MEDIA_GRID)
+          for (let item of block.body.items) {
+            data = await fetch(item.URL).then((r) => r.blob());
+            contentType = item.type;
+            name = item.name;
             const result = await account.uploadFile(contentType, name, data);
             if (result) {
-            item.URL = result.uploadURL.split("?")[0];
+              item.URL = result.uploadURL.split("?")[0];
             }
           }
       }
@@ -232,11 +231,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     let result: any = await nodeStore.createNode([root, ...remainingResources]);
 
     if (!result) {
-      toasts.trigger({
-        id: generateUID(),
-        type: AlertType.ERROR,
-        message: "Error saving"
-      });
+      toasts.error("Something went wrong. Please try again later.");
       return null;
     }
     if (
@@ -258,12 +253,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       nodeStore.create(pdfAnnotations);
     }
     this.modify({ ...generateSeedStore() }, { isPersist: false });
-    toasts.trigger({
-      id: generateUID(),
-      type: AlertType.SUCCESS,
-      title: "Saved",
-      message: "Node saved successfully"
-    });
+    toasts.success("Node saved successfully!");
     return result;
 
     function getContentTypeFromFileDetails(fileDetails: FileDetails) {

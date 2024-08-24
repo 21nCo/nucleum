@@ -145,7 +145,7 @@
     "grab",
     "capture2.0-mini"
   ];
-  const strokeOnlyIcons = ["link-arrow-left", "link-arrow-down"];
+  const strokeOnlyIcons = ["link-arrow-left", "link-arrow-down", "capture"];
   $: _classList = resolveClasses(
     classListParam,
     isAccentBgContext,

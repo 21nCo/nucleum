@@ -3,16 +3,18 @@
     IBlock,
     IMarkdownStore
   } from "$lib/client/components/markdown/md.type";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { getContext, onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
   import LeftControls from "./LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import {
+    type StructuralNodeType,
+    structuralNodeTypes
+  } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  const dispatch = createEventDispatcher();
+  import { setContext } from "svelte";
+  import { logger } from "../debug/logger.client";
+
   export let block: IBlock;
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
@@ -20,6 +22,48 @@
   let isReRendering: boolean = false;
   let isShowBgOnFocus: boolean = false;
   // const mdStore = getMdStore(mdId);
+
+  const markdownContext = getContext<any>("markdown");
+
+  function propagate(event: string, data: any) {
+    markdownContext({
+      event,
+      data: {
+        ...data,
+        source: block.id
+      }
+    });
+  }
+
+  function blockContextEventListener(event: string, data: any) {
+    logger.log({ at: "blockContextEventListener", event, data });
+    if (!event) return;
+    if (event === "convert") {
+      const fromType = block.contentType;
+      block.contentType = data.toType;
+      if (data.params?.listType) block.listType = data.params?.listType;
+      propagate(event, { ...data, fromType });
+    } else if (event === "delete") {
+      mdStore.deleteBlock(block.id);
+      propagate(event, {});
+    } else if (event === "insert") {
+      let newBlockId;
+      if (data?.blockType && structuralNodeTypes.includes(data.blockType)) {
+        newBlockId = mdStore.insertStructualBlock(
+          block.id,
+          data.blockType as StructuralNodeType
+        );
+      } else newBlockId = mdStore.insert({ source: block.id, ...data });
+      propagate(event, { ...data, id: newBlockId });
+    } else {
+      propagate(event, data);
+    }
+  }
+  const blockContext = {
+    publish: blockContextEventListener
+  };
+  setContext("block", blockContext);
+
   onMount(() => {
     //TODO - check the need for rerendering
     const mdStoreSub = mdStore.subscribe((md: IMarkdownStore) => {
@@ -69,12 +113,6 @@
       {mdStore}
       {isHovering}
       bind:isFocusing
-      on:change
-      on:insert
-      on:convert
-      on:delete
-      on:mention
-      on:unmention
       on:blur={() => {
         isHovering = false;
       }}

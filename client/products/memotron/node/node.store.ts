@@ -291,12 +291,12 @@ export function resolveNodeContextMenu(
           {
             value: "download",
             icon: "download",
-            callback: () => {}
+            callback: async () => {}
           },
           {
             value: "share",
             icon: "share",
-            callback: () => {}
+            callback: async () => {}
           }
         ]
       },
@@ -317,12 +317,12 @@ export function resolveNodeContextMenu(
         {
           value: "export",
           icon: "share",
-          callback: () => {}
+          callback: async () => {}
         },
         {
           value: "share",
           icon: "share",
-          callback: () => {
+          callback: async () => {
             appStore.runAction(MemotronAction.PUBLISH, {
               componentParams: { id: node.id }
             });
@@ -331,7 +331,7 @@ export function resolveNodeContextMenu(
         {
           value: "history",
           icon: "history",
-          callback: () => {}
+          callback: async () => {}
         }
       ]
     },

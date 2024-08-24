@@ -23,6 +23,40 @@
   import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
   import { searchForLinking } from "$lib/client/products/memotron/memotron.store";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
+  import { getContext } from "svelte";
+  import { logger } from "../../debug/logger.client";
+
+  const nodeContext = getContext<any>("node");
+  const blockContext = getContext<any>("block");
+
+  function propagateToNode(event: string, data: any) {
+    if (!nodeContext) {
+      logger.error({
+        at: "TextContent propagateToNode",
+        error: "No Node context found",
+        data
+      });
+      return;
+    }
+    nodeContext({ event, data });
+  }
+
+  /**
+   * Relays an event to the block context.
+   * @param event event name
+   * @param data event data
+   */
+  function relay(event: string, data?: any) {
+    if (!blockContext.publish) {
+      logger.error({
+        at: "TextContent propagate",
+        error: "No block context found",
+        data
+      });
+      return;
+    }
+    blockContext.publish(event, data);
+  }
 
   const dispatch = createEventDispatcher();
   export let mdStore: MdStoreType;
@@ -106,12 +140,11 @@
    */
   onMount(() => {
     hidePopover();
-    // TODO - urgent - add sub event for focus event
-    const focusBlockSub = mdStore.subscribe((md: IMarkdownStore) => {
-      if (md.blockToFocus === block.id) {
-        // setTimeout(() => {
-        //   textRef.focus();
-        // }, 10);
+    const focusBlockSub = mdStore.focus.subscribe((x) => {
+      if (x?.id === block.id) {
+        setTimeout(() => {
+          textRef.focus();
+        }, 10);
         assignPlaceholder();
       }
     });
@@ -119,6 +152,26 @@
       focusBlockSub();
     };
   });
+
+  /**
+   * Relays the convert event to the parent.
+   *
+   * @param toType
+   * @param params
+   */
+  function convert(
+    toType: TextNodeType | NodeType.LIST,
+    params?: {
+      listType?: ListType;
+    }
+  ) {
+    if (block.contentType === toType) return;
+    relay("convert", {
+      toType,
+      params
+    });
+  }
+
   function hidePopover(
     popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
   ) {
@@ -217,16 +270,17 @@
 
   function handleKeyDown(e: CustomEvent<KeyboardEvent>) {
     const event = e.detail;
+    logger.log({ at: "handleKeyDown", event, body: block.body });
     const functions = [
       () => handleBlockBrowser(event),
-      () => handleMentionShortcut(event)
+      () => handleMentionShortcut(event),
+      () => handleBackspace(event)
     ];
 
     for (const func of functions) {
       if (func()) return;
     }
     const isRelayOperations = block.contentType === NodeType.LIST;
-    // context === BlockContext.LIST_CHILD
 
     if (event.key === "Tab") {
       if (isRelayOperations) {
@@ -242,18 +296,9 @@
       (event.key === "Enter" && event.metaKey)
     ) {
       if (block.id && !isRelayOperations) {
-        const newBlockId = mdStore.insert({ id: block.id });
-        dispatch("insert", { insertedAt: block.id, id: newBlockId });
+        relay("insert");
       } else if (block.body != "") {
         dispatch("insertrelay", block.id);
-      }
-      event.preventDefault();
-    } else if (event.key === "Backspace" && !block.body) {
-      if (block.id && !isRelayOperations) {
-        mdStore.deleteBlock(block.id);
-        dispatch("delete", { id: block.id });
-      } else {
-        dispatch("deleterelay", block.id);
       }
       event.preventDefault();
     }
@@ -275,16 +320,9 @@
       block.body = block.body.replace(shortcut, "");
       textRef.replace(shortcut, "");
       if (block.id) {
-        const newBlockId = mdStore.insert({
-          id: block.id,
+        relay("insert", {
           blockType: type,
           listType
-        });
-        dispatch("insert", {
-          insertedAt: block.id,
-          blockType: type,
-          listType,
-          id: newBlockId
         });
       }
       setTimeout(() => {
@@ -325,8 +363,7 @@
           block.body = block.body.replace(shortcut, "");
           dispatchChangeEvent();
           textRef.replace(shortcut, "");
-          block.contentType = type;
-          dispatch("convert", { id: block.id, blockType: type });
+          convert(type);
           return true;
         } else {
           return handleEscShortcutForSecondaryLines(shortcut, type);
@@ -342,7 +379,7 @@
           textRef.set("");
           //TODO - handling structural block insertion for list
           if (block.contentType === NodeType.LIST || !block.id) return false;
-          mdStore.insertStructualBlock(block.id, type as StructuralNodeType);
+          relay("insert", { blockType: type });
           return true;
         }
         return false;
@@ -355,7 +392,7 @@
           block.body = block.body.replace(shortcut, "");
           dispatchChangeEvent();
           textRef.replace(shortcut, "");
-          mdStore.convert({ id: block.id, blockType: NodeType.LIST, listType });
+          convert(NodeType.LIST, { listType });
           return true;
         }
         return handleEscShortcutForSecondaryLines(
@@ -391,10 +428,10 @@
     let match;
     while ((match = mentionPattern.exec(removed)) !== null) {
       const id = match[1];
-      dispatch("unmention", { location: block.id, id });
+      propagateToNode("unmention", { location: block.id, id });
     }
     previousVal = deepCopy(block.body);
-    dispatch("change", { id: block.id, body: block.body });
+    relay("change", { body: block.body });
   }
   /**
    * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
@@ -411,52 +448,69 @@
   ) {
     const event = e.detail.event;
     const caretPosition = e.detail.caretPosition;
+    logger.log({ at: "handleKeyUp", event, body: block.body, caretPosition });
     const steps = [
       () => handleBlockBrowser(event, "keyup"),
       () => handleMentionShortcut(event, "keyup"),
-      //performEscapeShortcutsT1(),
       performEscapeShortcutsT2,
-      handleBackspaceAtBeginOfLine
+      () => handleBackspace(event, { caretPosition, type: "keyup" })
     ];
     for (const func of steps) {
       if (func()) break;
     }
     mdContentChangeEvent.trigger();
     dispatchChangeEvent();
-    /**
-     * Handles backspace key entry if occured at the start of the block
-     *
-     *
-     * If the block is empty or not
-     * 1. If the block is a list child: Converts the block to a simple text block
-     * 2. If the block is a text type but not simple text: Removes formatting of heading, quote, etc. and converts it to a simple text block if the block is not simple text
-     *
-     *
-     * If the block is not empty and is simple text: Deletes the current block and moves all the content to the previous block if it exists
-     *
-     *
-     * If the block is empty: Deletes the block and shifts focus to the previous block if it exists
-     *
-     *
-     * TODO - check for the need for dispatch("delete") in else - delete of block and delete relay is happening in keydown fn.. this is causing issues in Nodular Markdown - double delete events and this event is passing previous block id
-     *
-     */
-    function handleBackspaceAtBeginOfLine() {
-      if (event.key != "Backspace" || !(caretPosition === 0)) return false;
-      if (block.contentType === NodeType.LIST) {
-        // context === BlockContext.LIST_CHILD
-        mdStore.convert({ id: block.id, blockType: NodeType.SIMPLE_TEXT });
-      } else if (block.contentType != NodeType.SIMPLE_TEXT) {
-        block.contentType = NodeType.SIMPLE_TEXT;
-        dispatch("convert", { id: block.id, blockType: NodeType.SIMPLE_TEXT });
-      } else if (block.body != "") {
-        //TODO - Move the content to the previous block, delete the current block and focus the previous block
-        mdStore.focusPreviousSibling(block.id);
+  }
+
+  /**
+   * Handles backspace key entry if occured at the start of the block
+   *
+   *
+   * If the block is empty or not - if the caret position is at the start of the block
+   * -> If the block is not a simple text type: Removes formatting of heading, quote, etc. and converts it to a simple text block if the block is not simple text
+   *
+   *
+   * If the block is not empty and is simple text: Deletes the current block and moves all the content to the previous block if it exists
+   *
+   *
+   * If the block is empty: Deletes the block and shifts focus to the previous block if it exists
+   *
+   *
+   * Note: "keydown" event is used in cases when event.preventDefault() needs to stop the removal of the character to happen i.e. preventing the actual backspace event from happening.
+   *
+   */
+  function handleBackspace(
+    event: KeyboardEvent,
+    params?: {
+      caretPosition?: number;
+      type?: "keyup" | "keydown";
+    }
+  ) {
+    if (event.key !== "Backspace") return false;
+    if (params?.type === "keyup") {
+      if (!(params?.caretPosition === 0)) return false;
+      if (block.body !== "" && block.contentType === NodeType.SIMPLE_TEXT) {
+        mdStore.backspaceWithContent(block);
         event.preventDefault();
-      } else {
-        // dispatch("delete", { id: block.id });
+      } else if (block.body !== "") {
+        //TODO - event.preventDefault() is not preventing from the backspace event to happen - but moving this to keydown event is not reliable as caretPosition is not reliable in keydown event - This unintended case only happens when backspaced from one charater offset in the front.
+        convert(NodeType.SIMPLE_TEXT);
+        event.preventDefault();
       }
       return true;
+    }
+    if (!block.body) {
+      if (block.contentType === NodeType.SIMPLE_TEXT) {
+        performDelete();
+      } else {
+        convert(NodeType.SIMPLE_TEXT);
+      }
+      event.preventDefault();
+      return true;
+    }
+
+    function performDelete() {
+      relay("delete");
     }
   }
 
@@ -519,21 +573,14 @@
     if (parts[0]) {
       block.body = parts[0];
       textRef.removeSlashText();
-      const newBlockId = mdStore.insert({
-        id: block.id,
+      relay("insert", {
         blockType: event.detail.type
-      });
-      dispatch("insert", {
-        insertedAt: block.id,
-        blockType: event.detail.type,
-        id: newBlockId
       });
     } else {
       block.body = "";
       textRef.set("");
       if (block.id) {
-        mdStore.convert({ id: block.id, blockType: event.detail.type });
-        dispatch("convert", { id: block.id, blockType: event.detail.type });
+        convert(event.detail.type);
       }
     }
     hidePopover();
@@ -546,7 +593,10 @@
     const item = event.detail.item;
     textRef.addMention(item);
     hidePopover("mentionSearch");
-    dispatch("mention", { location: block.id, id: item.id });
+    propagateToNode("mention", {
+      location: block.id,
+      id: item.id
+    });
   }
 </script>
 

@@ -13,6 +13,7 @@ import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
 import { linker } from "../memotron.store";
+import type { IContextMenuItem } from "$lib/client/types/select.type";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -22,42 +23,42 @@ export class ResourceActions<T extends IMemotronItemBase> {
     this.resource = resource;
     this.store = store;
   }
-  copyLink() {
+  copyLink(): IContextMenuItem {
     return {
       label: "Copy link",
       value: "link",
       icon: "copy",
-      callback: () => copyResourceLinkToClipboard(this.resource.id)
+      callback: async () => copyResourceLinkToClipboard(this.resource.id)
     };
   }
-  star() {
+  star(): IContextMenuItem {
     return {
       label: this.resource.isStarred ? "Unstar" : "Star this resource",
       value: "star",
       icon: "star",
-      callback: () => {
+      callback: async () => {
         this.store.modify(this.resource.id, {
           isStarred: !this.resource.isStarred
         } as T);
       }
     };
   }
-  archive() {
+  archive(): IContextMenuItem {
     return {
       value: this.resource.isArchived ? "unarchive" : "archive",
       icon: "archive",
-      callback: () => {
+      callback: async () => {
         this.resource.isArchived
           ? this.store.unarchive(this.resource.id)
           : this.store.archive(this.resource.id);
       }
     };
   }
-  trash() {
+  trash(): IContextMenuItem {
     return {
       value: this.resource.trashInformation ? "restore" : "delete",
       icon: "trash",
-      callback: () => {
+      callback: async () => {
         this.resource.trashInformation
           ? this.store.restore(this.resource.id)
           : this.store.trash(this.resource.id);
@@ -68,7 +69,10 @@ export class ResourceActions<T extends IMemotronItemBase> {
    * Action triggered from either resource browser or library page.
    * @returns
    */
-  select(accessPoint: ResourceAccessPoint, accessPointId?: string) {
+  select(
+    accessPoint: ResourceAccessPoint,
+    accessPointId?: string
+  ): IContextMenuItem {
     let multiSelectContext =
       determineResourceType(this.resource.id) + "-" + accessPoint;
     if (accessPointId) {
@@ -85,7 +89,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
         : "Select",
       value: "select",
       icon: "check-circle",
-      callback: () => {
+      callback: async () => {
         if (get(multiSelectStore)?.includes(this.resource.id)) {
           multiSelectStore.update((x) =>
             x.filter((y) => y != this.resource.id)
@@ -96,12 +100,12 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
-  edit(context: ResourceAccessPoint) {
+  edit(context: ResourceAccessPoint): IContextMenuItem {
     return {
       label: "Edit",
       value: "edit",
       icon: "pencil-square",
-      callback: () => {
+      callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.resourceClickHandler(
             {} as MouseEvent,
@@ -115,7 +119,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
-  pinToTopBar() {
+  pinToTopBar(): IContextMenuItem {
     const isAlreadyPinned = uiState
       .getState(ResourceAccessPoint.TOP_BAR, {
         isProductScoped: true
@@ -124,7 +128,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       value: isAlreadyPinned ? "Unpin from top bar" : "Pin to top bar",
       icon: "rocket",
-      callback: () => {
+      callback: async () => {
         if (isAlreadyPinned) {
           uiState.removeResourceFromTopBar(this.resource.id);
         } else {
@@ -133,7 +137,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
-  unlink(contextId: string) {
+  unlink(contextId: string): IContextMenuItem {
     return {
       label: "Unlink",
       value: "unlink",

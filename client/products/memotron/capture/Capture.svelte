@@ -4,7 +4,6 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { isInEditMode } from "$lib/client/stores/app.store";
-  import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import LinkboxOnCapture from "../common/linkbox/LinkboxOnCapture.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -19,6 +18,7 @@
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import { resolveTypes } from "../memotron.store";
   import type { IAvatar } from "$lib/client/types/avatar.type";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -40,15 +40,14 @@
         x.from === "root"
     )
     ?.map((x) => x.to);
-  $: console.log({ types, links: $captureStore.links });
+
   async function resolveAvatars(types: string[]) {
     avatars = (await resolveTypes(types)).avatars;
   }
 </script>
 
 {#if isSaving}
-  <div></div>
-  <AppLoadingView message="Saving..." />
+  <EmptyStatusView isLoadingState={true} />
   <!-- {:else if $view.isPortrait}
   <div class="w-full h-full flex flex-col">
     <div
@@ -86,6 +85,7 @@
                 label="save"
                 type={ButtonVariant.PRIMARY}
                 size={Size.sm}
+                isPreventMinWidth={true}
                 icon="bookmark"
                 on:click={async () => {
                   isSaving = true;
@@ -96,6 +96,7 @@
               <Button
                 label="clear"
                 style={ButtonStyle.OUTLINED}
+                isPreventMinWidth={true}
                 size={Size.sm}
                 icon="cross"
                 on:click={() => {

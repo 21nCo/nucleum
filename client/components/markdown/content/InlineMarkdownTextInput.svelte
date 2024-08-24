@@ -582,7 +582,6 @@
     typingTimeout = setTimeout(() => {
       typing = false;
     }, 10);
-
     /**
      * Replaces symbol shortcut patterns with the symbols
      */
