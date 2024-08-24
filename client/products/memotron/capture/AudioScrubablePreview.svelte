@@ -36,23 +36,32 @@
   let isError: boolean = false;
 
   let isConvertToMarkdown: boolean = false;
-
+  let modelOptions: string[] = [
+    "tiny",
+    "tiny.en",
+    "base",
+    "base.en",
+    "small",
+    "small.en"
+  ];
   /**
    * To Transcribe the audio, shows necessary feedback on transcription start, end and also on error.
    * Auto Refreshes the page the dispplay the content once transcription is completed
    * TODO - move to store, lambda url - env
    */
-  async function onTranscribe() {
+
+  $: console.log("transcription", $captureStore.fileDetails.transcription);
+  async function onTranscribe(): Promise<string> {
     isDisabled = true;
     const region = $account.userInfo?.region;
     let body = {
       s3Url: url,
       userId: userId,
       nodeId: nodeId,
-      region: region
+      region: region,
+      model: modelOptions[3]
     };
     let jsonBody = JSON.stringify(body);
-    console.log("JSON BODY", jsonBody);
     try {
       const response = await fetch(import.meta.env.VITE_AUDIOTRANS_F_URL, {
         method: "POST",
@@ -83,15 +92,22 @@
       });
     } finally {
       isDisabled = false;
+      return " transcription successful";
     }
   }
 
   async function convertToMarkdown() {
     isConvertToMarkdown = true;
-    let transcript = await onTranscribe();
+    let transcript: string;
+    if ($captureStore?.fileDetails?.transcription)
+      transcript = $captureStore.fileDetails.transcription;
+    else transcript = await onTranscribe();
+    // "H1, this is going to be the super cool form of italic writing a markdown italic. ul, there's going to be my bold first bold stop point in the first. One was the inductor, this will be the second point. ul, so this will be my another point. ul child, this is going to be my subchild of my previous point. ul sub-child this is example for Sc ul sub child 2nd exmaple for sc ul sub sub child example for ssc ul child, this is going to be my second subchild of my previous point. And let's check.";
+    // "H1, this is going to be the super cool form of writing a markdown. ul, there's going to be my first point in the first. One was the inductor, this will be the second point. ul, so this will be my another point. ul child, this is going to be my subchild of my previous point. ul child, this is going to be my second subchild of my previous point. And let's check.";
     isConvertToMarkdown = false;
     if (typeof transcript !== "string") return "transcript is not a string";
-    const blocks = Audio2MD.convertAudioToMarkdown(transcript);
+    console.log("transcript passed to A2MD", transcript);
+    const blocks = Audio2MD.convertAudioToMarkdownV2(transcript);
     console.log("BLOCKS of A2MD", blocks);
     $captureStore.body.blocks = blocks;
     $captureStore.captureType = CaptureType.MARKDOWN;
