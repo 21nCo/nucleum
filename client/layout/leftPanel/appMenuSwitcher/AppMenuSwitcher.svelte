@@ -7,10 +7,11 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { appMenuStore } from "../../../stores/appMenu/appMenu.store";
   import type { IAppMenuStore } from "$lib/client/stores/appMenu/appMenu.type";
-  import Divider from "../Divider.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { toasts } from "$lib/client/stores/notification.store";
+  import Divider from "$lib/client/elements/Divider.svelte";
+  import { ColorStrength } from "$lib/client/types/appearance.type";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -97,8 +98,8 @@
       {/each}
     </div>
     {#if userPinnedPages.length > 0}
-      <div class="flex flex-col gap-2">
-        <Divider />
+      <div class="flex flex-col gap-1.5">
+        <Divider colorStrength={ColorStrength.Strong} />
         {#if layoutContext === LayoutContext.DEFAULT}
           <div class="px-1">
             <Text content="Pinned" style={TextStyle.SECTION_HEADING} />

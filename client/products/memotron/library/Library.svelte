@@ -12,9 +12,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ResourceSwitcher from "$lib/client/elements/switcher/resourceSwitcher/ResourceSwitcher.svelte";
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
@@ -26,7 +24,6 @@
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
   import { nodeStore } from "../node/node.store";
-  import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import LibrarySearchBox from "./LibrarySearchBox.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
@@ -72,12 +69,12 @@
       value: Resource.combination,
       icon: "rectangle-group"
     },
-    {
-      ...commonResourceProps,
-      label: "Archived",
-      value: Resource.archived,
-      icon: "archive"
-    },
+    // {
+    //   ...commonResourceProps,
+    //   label: "Archived",
+    //   value: Resource.archived,
+    //   icon: "archive"
+    // },
     {
       ...commonResourceProps,
       label: "Files",
@@ -95,56 +92,10 @@
     //   icon: "paper-clip"
     // }
   ];
-  $: isCurrentResourcePinned = $appMenuStore[$appStore.product]?.user?.includes(
-    resourceAction(selectedResource, ResourceActionType.BROWSE)
-  );
+
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-  $: contextMenu = [
-    {
-      group: "all",
-      items: [
-        {
-          label: isCurrentResourcePinned
-            ? "Unpin from App menu"
-            : "Pin to App menu",
-          value: "pin",
-          icon: isCurrentResourcePinned ? "unpin" : "pin",
-          callback: () => {
-            if (!isCurrentResourcePinned)
-              appMenuStore.addUserMenuItem(
-                resourceAction(selectedResource, ResourceActionType.BROWSE)
-              );
-            else
-              appMenuStore.removeUserMenuItem(
-                resourceAction(selectedResource, ResourceActionType.BROWSE)
-              );
-          }
-        },
-        {
-          label: "Create new",
-          value: "create",
-          icon: "plus",
-          callback: () => {
-            appStore.runAction(
-              resourceAction(selectedResource, ResourceActionType.CREATE)
-            );
-          }
-        }
-      ]
-    },
-    {
-      group: "more",
-      items: [
-        {
-          label: "Show archived",
-          value: "archived",
-          icon: "archive",
-          callback: () => {}
-        }
-      ]
-    }
-  ];
+
   onMount(async () => {
     await refresh();
   });
@@ -257,11 +208,11 @@
       />
     {/if}
     <div
-      class="flex w-full justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
+      class="flex w-full gap-2 justify-between items-center px-5 resource-switcher sticky-disabled bg-bgs1 py-5 top-0 z-10"
     >
       <span
         class={cn("flex overflow-auto", {
-          "w-10/12": selectedResource != Resource.everything,
+          "flex-1": selectedResource != Resource.everything,
           "w-full": selectedResource === Resource.everything
         })}
       >
@@ -292,7 +243,7 @@
                 icon="plus"
                 size={Size.sm}
                 type={ButtonVariant.PRIMARY}
-                style={ButtonStyle.DEFAULT}
+                style={ButtonStyle.OUTLINED}
                 label={selectedResource}
                 isPreventMinWidth={true}
                 on:click={() =>
@@ -300,7 +251,6 @@
                     resourceAction(selectedResource, ResourceActionType.CREATE)
                   )}
               />
-              <ContextMenuAction {contextMenu} size={Size.lg} />
             {/if}
           </span>
         </span>
@@ -312,11 +262,11 @@
     <main
       class={cn("flex w-full", {
         grow: variant === "v1",
-        "flex-grow": variant === "v2" || variant === "v3"
+        "flex-grow px-5 gap-5": variant === "v2" || variant === "v3"
       })}
     >
       {#if variant === "v2" || variant === "v3"}
-        <div class="flex w-60 border-r border-brs2">
+        <div class="flex w-60 border border-brs2 rounded-md mb-1">
           <span
             class="w-full h-full flex justify-center items-center text-b3 text-fgs3"
           >
@@ -348,7 +298,7 @@
       <div
         class={cn("flex flex-col gap-8 w-full", {
           "grow px-5": variant === "v1",
-          "flex-grow px-10": variant === "v2" || variant === "v3"
+          "flex-grow": variant === "v2" || variant === "v3"
         })}
       >
         {#if variant === "v2"}

@@ -9,7 +9,7 @@
 <LeftNav>
   <slot name="top" slot="top">
     <div class="text-b4 text-fgs3">
-      {"Memotron [Preview]"}
+      {"[Preview release]"}
     </div>
   </slot>
   <slot name="header" slot="header">
