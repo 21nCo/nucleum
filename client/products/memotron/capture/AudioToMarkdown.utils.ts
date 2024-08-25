@@ -1,43 +1,23 @@
 import { prefixTable } from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { ListType } from "../node/node.type";
-
-interface Block {
-  id?: string;
-  contentType?: string;
-  body?: string;
-  listType?: string;
-  children?: Block[];
-}
-
-enum ListKeys {
-  OL = "ol",
-  OL_CHILD = "olchild",
-  OL_SUB_CHILD = "olsubchild",
-  OL_SUB_SUB_CHILD = "olsubsubchild",
-  UL = "ul",
-  UL_CHILD = "ulchild",
-  UL_SUB_CHILD = "ulsubchild",
-  UL_SUB_SUB_CHILD = "ulsubsubchild"
-}
-
-enum HeadingKeys {
-  H1 = "h1",
-  H2 = "h2",
-  H3 = "h3",
-  H4 = "h4",
-  H5 = "h5",
-  H6 = "h6"
-}
-enum InlineKeys {
-  ITALIC = "italic",
-  BOLD = "bold"
-}
-
+import { ListType, NodeType } from "../node/node.type";
+import {
+  HeadingKeys,
+  InlineKeys,
+  ListKeys,
+  type Block,
+  BlockKeys
+} from "./AudioToMarkdown.type";
 class AudioToMarkdown {
   words: string[] | undefined;
   word: string | undefined;
+
+  readonly simpleTextCase: string[] = [BlockKeys.SIMPLE_TEXT];
+  readonly quoteCase = [BlockKeys.QUOTE, "quotes"];
+  readonly dividerCase: string[] = [BlockKeys.DIVIDER];
+  readonly doubleDividerCase: string[] = [BlockKeys.DOUBLE_DIVIDER];
+
   readonly h1Case = [HeadingKeys.H1, "hone", "heading1", "headingone"];
   readonly h2Case = [HeadingKeys.H2, "htwo", "heading2", "headingtwo"];
   readonly h3Case = [HeadingKeys.H3, "hthree", "heading3", "headingthree"];
@@ -79,6 +59,11 @@ class AudioToMarkdown {
   readonly italicCase = [InlineKeys.ITALIC, "italicstop"];
   readonly boldCase = [InlineKeys.BOLD, "boldstop"];
 
+  /**
+   * TODO: Stop cases like h1StopCase and others similar items having suffix as stopCase can be commented out if felt not required and use only blankStopCase or remove stopCase altogether since we have keywords for all blocks including simpletext. And inline cases also has the same start keyword as end keyword is just provided additionally ${inlineShorthand}Stop
+   */
+  readonly simpleTextStopCase = ["simpletextstop"];
+  readonly quoteStopCase = ["quotestop"];
   readonly h1StopCase = [
     "h1stop",
     "honestop",
@@ -140,7 +125,11 @@ class AudioToMarkdown {
   ];
 
   readonly stopCase = ["blankstop"];
-
+  /**
+   * Stop keywords are used to indicate that the current block should be pushed to the blocks array and the current block should be reset to the default block
+   * All stop keywords are also included in the keywords array
+   * Any new stopCase created should be added here
+   */
   readonly stopKeywords = [
     ...this.h1StopCase,
     ...this.h2StopCase,
@@ -156,9 +145,14 @@ class AudioToMarkdown {
     ...this.ulSubChildStopCase,
     ...this.olSubSubChildStopCase,
     ...this.ulSubSubChildStopCase,
+    ...this.quoteStopCase,
+    ...this.simpleTextStopCase,
     ...this.stopCase
   ];
-
+  /**
+   * keywords are used to identify the keywords in the transcript
+   * Any new keywords created should be added here esepcially if the keyword is a combination of more than one word
+   */
   readonly keywords = [
     ...this.headingCase,
     ...this.olCase,
@@ -169,6 +163,10 @@ class AudioToMarkdown {
     ...this.ulSubChildCase,
     ...this.olSubSubChildCase,
     ...this.ulSubSubChildCase,
+    ...this.quoteCase,
+    ...this.dividerCase,
+    ...this.doubleDividerCase,
+    ...this.simpleTextCase,
     ...this.italicCase,
     ...this.boldCase,
     ...this.stopKeywords
@@ -182,221 +180,24 @@ class AudioToMarkdown {
     children: []
   };
   lastCreatedOL: any = null;
-  lastCreatedOLC: any = null;
-  lastCreatedOLSC: any = {};
-  lastCreatedUL: any = {};
-  lastCreatedULC: any = {};
-  lastCreatedULSC: any = {};
-  lastCreatedListVariantV1:
-    | "OL"
-    | "UL"
-    | "OLC"
-    | "ULC"
-    | "OLSC"
-    | "ULSC"
-    | "OLSSC"
-    | "ULSSC"
-    | null = null;
-
+  lastCreatedUL: any = null;
   lastCreatedOLchild: any = null;
   lastCreatedOLsubchild: any = null;
   lastCreatedULchild: any = null;
   lastCreatedULsubchild: any = null;
-  lastCreatedListVariantV2: ListKeys | null = null;
+  lastCreatedListVariant: ListKeys | null = null;
   currentBlock = { ...this.defaultBlock };
 
-  resetInitialStatesV1() {
-    this.lastCreatedOL = {};
-    this.lastCreatedOLC = {};
-    this.lastCreatedOLSC = {};
-    this.lastCreatedUL = {};
-    this.lastCreatedULC = {};
-    this.lastCreatedULSC = {};
-    this.lastCreatedListVariantV1 = null;
-    this.currentBlock = { ...this.defaultBlock };
-    this.blocks = [];
-  }
-
-  resetInitialStatesV2() {
+  resetInitialStates() {
     this.lastCreatedOL = null;
     this.lastCreatedUL = null;
     this.lastCreatedOLchild = null;
     this.lastCreatedOLsubchild = null;
     this.lastCreatedULchild = null;
     this.lastCreatedULsubchild = null;
-    this.lastCreatedListVariantV2 = null;
+    this.lastCreatedListVariant = null;
     this.currentBlock = { ...this.defaultBlock };
     this.blocks = [];
-  }
-  pushCurrentBlockToBlocksV1() {
-    if (this.currentBlock.body && this.currentBlock.body.length > 0) {
-      if (this.currentBlock.contentType === "LIST") {
-        switch (this.lastCreatedListVariantV1) {
-          case "OL":
-            this.blocks.push(this.lastCreatedOL);
-            break;
-          case "UL":
-            this.blocks.push(this.lastCreatedUL);
-            break;
-          case "OLC":
-            this.lastCreatedOL.children.push(this.currentBlock);
-            break;
-          case "ULC":
-            this.lastCreatedUL.children.push(this.currentBlock);
-            break;
-          case "OLSC":
-            this.lastCreatedOLC.children.push(this.currentBlock);
-            break;
-          case "ULSC":
-            this.lastCreatedULC.children.push(this.currentBlock);
-            break;
-          case "OLSSC":
-            this.lastCreatedOLSC.children.push(this.currentBlock);
-            break;
-          case "ULSSC":
-            this.lastCreatedULSC.children.push(this.currentBlock);
-            break;
-        }
-      } else {
-        this.currentBlock.id = prefixTable(generateUID(), Resource.node);
-        this.blocks.push(this.currentBlock);
-      }
-      this.currentBlock = { ...this.defaultBlock };
-    }
-  }
-
-  loopThroughAndDecodeV1(words: string[]) {
-    for (let i = 0; i < words.length; i++) {
-      this.word = words[i];
-      switch (this.word) {
-        case "H1":
-        case "H2":
-        case "H3":
-        case "H4":
-        case "H5":
-        case "H6":
-          this.pushCurrentBlockToBlocksV1();
-          this.currentBlock.contentType = `HEADING${this.word.slice(1)}`;
-          this.currentBlock.body = "";
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
-          break;
-        case "OL":
-        case "UL":
-          this.pushCurrentBlockToBlocksV1();
-          this.currentBlock = JSON.parse(
-            JSON.stringify(this.defaultListBlockValues)
-          );
-          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
-          if (this.word === "OL") {
-            this.currentBlock.listType = "ORDERED";
-            this.lastCreatedOL = this.currentBlock;
-            this.lastCreatedListVariantV1 = "OL";
-          } else {
-            this.currentBlock.listType = "UNORDERED";
-            this.lastCreatedUL = this.currentBlock;
-            this.lastCreatedListVariantV1 = "UL";
-          }
-          break;
-        case "OLC":
-        case "ULC":
-          this.pushCurrentBlockToBlocksV1();
-          this.currentBlock = JSON.parse(
-            JSON.stringify(this.defaultListBlockValues)
-          );
-          this.currentBlock.id = generateUID();
-          if (this.word === "OLC") {
-            this.currentBlock.listType = "ORDERED";
-            this.lastCreatedOLC = this.currentBlock;
-            this.lastCreatedListVariantV1 = "OLC";
-          } else {
-            this.currentBlock.listType = "UNORDERED";
-            this.lastCreatedULC = this.currentBlock;
-            this.lastCreatedListVariantV1 = "ULC";
-          }
-          break;
-        case "OLSC":
-        case "ULSC":
-          this.pushCurrentBlockToBlocksV1();
-          this.currentBlock = JSON.parse(
-            JSON.stringify(this.defaultListBlockValues)
-          );
-          this.currentBlock.id = generateUID();
-          if (this.word === "OLSC") {
-            this.currentBlock.listType = "ORDERED";
-            this.lastCreatedOLSC = this.currentBlock;
-            this.lastCreatedListVariantV1 = "OLSC";
-          } else {
-            this.currentBlock.listType = "UNORDERED";
-            this.lastCreatedULSC = this.currentBlock;
-            this.lastCreatedListVariantV1 = "ULSC";
-          }
-          break;
-        case "OLSSC":
-        case "ULSSC":
-          this.pushCurrentBlockToBlocksV1();
-          this.currentBlock = JSON.parse(
-            JSON.stringify(this.defaultListBlockValues)
-          );
-          this.currentBlock.id = generateUID();
-          if (this.word === "OLSSC") {
-            this.currentBlock.listType = "ORDERED";
-            this.lastCreatedListVariantV1 = "OLSSC";
-          } else {
-            this.currentBlock.listType = "UNORDERED";
-            this.lastCreatedListVariantV1 = "ULSSC";
-          }
-          break;
-        case "H1E":
-        case "H2E":
-        case "H3E":
-        case "H4E":
-        case "H5E":
-        case "H6E":
-          this.blocks.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "OLE":
-        case "ULE":
-          this.blocks.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "OLCE":
-          this.lastCreatedOL.children.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "OLSCE":
-          this.lastCreatedOLC.children.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "OLSSCE":
-          this.lastCreatedOLSC.children.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "ULCE":
-          this.lastCreatedUL.children.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "ULSCE":
-          this.lastCreatedULC.children.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "ULSSCE":
-          this.lastCreatedULSC.children.push(this.currentBlock);
-          this.currentBlock = { ...this.defaultBlock };
-          break;
-        case "IS":
-        case "ISE":
-          this.currentBlock.body += "*";
-        case "BS":
-        case "BSE":
-          this.currentBlock.body += "**";
-        default:
-          if (this.currentBlock.body && this.currentBlock.body.length > 0)
-            this.currentBlock.body += " " + this.word;
-          else this.currentBlock.body = this.word;
-      }
-    }
-    this.pushCurrentBlockToBlocksV1();
   }
 
   /**
@@ -427,13 +228,13 @@ class AudioToMarkdown {
       this.lastCreatedOL.children.push(this.currentBlock);
     else this.blocks.push(this.currentBlock);
   }
-  pushCurrentBlockToBlocksV2() {
+  pushCurrentBlockToBlocks() {
     if (this.currentBlock.body && this.currentBlock.body.length > 0) {
       this.currentBlock.body = this.removeSpacesBetweenAsterisks(
         this.currentBlock.body
       );
       if (this.currentBlock.contentType === "LIST") {
-        switch (this.lastCreatedListVariantV2) {
+        switch (this.lastCreatedListVariant) {
           case ListKeys.OL:
             this.blocks.push(this.lastCreatedOL);
             break;
@@ -479,8 +280,13 @@ class AudioToMarkdown {
         this.currentBlock.id = prefixTable(generateUID(), Resource.node);
         this.blocks.push(this.currentBlock);
       }
-      this.currentBlock = { ...this.defaultBlock };
+    } else if (
+      this.currentBlock.contentType === NodeType.DIVIDER ||
+      this.currentBlock.contentType === NodeType.DOUBLE_DIVIDER
+    ) {
+      this.blocks.push(this.currentBlock);
     }
+    this.currentBlock = { ...this.defaultBlock };
   }
   checkForKeywords(
     c0: string,
@@ -496,7 +302,25 @@ class AudioToMarkdown {
     else return [c0, 0];
   }
 
-  loopThroughAndDecodeV2(words: string[]) {
+  resolveHeadingContentType(keyword: string): string {
+    switch (true) {
+      case this.h1Case.includes(keyword):
+        return NodeType.HEADING1;
+      case this.h2Case.includes(keyword):
+        return NodeType.HEADING2;
+      case this.h3Case.includes(keyword):
+        return NodeType.HEADING3;
+      case this.h4Case.includes(keyword):
+        return NodeType.HEADING4;
+      case this.h5Case.includes(keyword):
+        return NodeType.HEADING5;
+      //TODO- add H6 once implemented in markdown
+      default:
+        return NodeType.SIMPLE_TEXT;
+    }
+  }
+
+  loopThroughAndDecode(words: string[]) {
     let currentWord: string = "";
     for (let i = 0; i < words.length; i++) {
       const casePreservedWord = words[i];
@@ -514,18 +338,20 @@ class AudioToMarkdown {
       );
       i += add;
       if (this.stopKeywords.includes(currentWord)) {
-        this.pushCurrentBlockToBlocksV2();
+        this.pushCurrentBlockToBlocks();
         continue;
       }
       switch (true) {
         case this.headingCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
-          this.currentBlock.contentType = `HEADING${currentWord.slice(1)}`;
+          this.pushCurrentBlockToBlocks();
+          this.currentBlock.contentType =
+            this.resolveHeadingContentType(currentWord);
           this.currentBlock.body = "";
           this.currentBlock.id = prefixTable(generateUID(), Resource.node);
           break;
+
         case this.olCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
@@ -533,10 +359,11 @@ class AudioToMarkdown {
           this.currentBlock.listType = ListType.ORDERED;
           this.lastCreatedOL = {};
           this.lastCreatedOL = this.currentBlock;
-          this.lastCreatedListVariantV2 = ListKeys.OL;
+          this.lastCreatedListVariant = ListKeys.OL;
           break;
+
         case this.ulCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
@@ -544,10 +371,11 @@ class AudioToMarkdown {
           this.currentBlock.listType = ListType.UNORDERED;
           this.lastCreatedUL = {};
           this.lastCreatedUL = this.currentBlock;
-          this.lastCreatedListVariantV2 = ListKeys.UL;
+          this.lastCreatedListVariant = ListKeys.UL;
           break;
+
         case this.olChildCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
@@ -555,10 +383,11 @@ class AudioToMarkdown {
           this.currentBlock.listType = ListType.ORDERED;
           this.lastCreatedOLchild = {};
           this.lastCreatedOLchild = this.currentBlock;
-          this.lastCreatedListVariantV2 = ListKeys.OL_CHILD;
+          this.lastCreatedListVariant = ListKeys.OL_CHILD;
           break;
+
         case this.ulChildCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
@@ -566,10 +395,11 @@ class AudioToMarkdown {
           this.currentBlock.listType = ListType.UNORDERED;
           this.lastCreatedULchild = {};
           this.lastCreatedULchild = this.currentBlock;
-          this.lastCreatedListVariantV2 = ListKeys.UL_CHILD;
+          this.lastCreatedListVariant = ListKeys.UL_CHILD;
           break;
+
         case this.olSubChildCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
@@ -577,10 +407,11 @@ class AudioToMarkdown {
           this.currentBlock.listType = ListType.ORDERED;
           this.lastCreatedOLsubchild = {};
           this.lastCreatedOLsubchild = this.currentBlock;
-          this.lastCreatedListVariantV2 = ListKeys.OL_SUB_CHILD;
+          this.lastCreatedListVariant = ListKeys.OL_SUB_CHILD;
           break;
+
         case this.ulSubChildCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
@@ -588,58 +419,87 @@ class AudioToMarkdown {
           this.currentBlock.listType = ListType.UNORDERED;
           this.lastCreatedULsubchild = {};
           this.lastCreatedULsubchild = this.currentBlock;
-          this.lastCreatedListVariantV2 = ListKeys.UL_SUB_CHILD;
+          this.lastCreatedListVariant = ListKeys.UL_SUB_CHILD;
           break;
+
         case this.olSubSubChildCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
           this.currentBlock.id = generateUID();
           this.currentBlock.listType = ListType.ORDERED;
-          this.lastCreatedListVariantV2 = ListKeys.OL_SUB_SUB_CHILD;
+          this.lastCreatedListVariant = ListKeys.OL_SUB_SUB_CHILD;
           break;
+
         case this.ulSubSubChildCase.includes(currentWord):
-          this.pushCurrentBlockToBlocksV2();
+          this.pushCurrentBlockToBlocks();
           this.currentBlock = JSON.parse(
             JSON.stringify(this.defaultListBlockValues)
           );
           this.currentBlock.id = generateUID();
           this.currentBlock.listType = ListType.UNORDERED;
-          this.lastCreatedListVariantV2 = ListKeys.UL_SUB_SUB_CHILD;
+          this.lastCreatedListVariant = ListKeys.UL_SUB_SUB_CHILD;
           break;
+
+        case this.quoteCase.includes(currentWord):
+          this.pushCurrentBlockToBlocks();
+          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.contentType = NodeType.QUOTE;
+          break;
+
+        case this.dividerCase.includes(currentWord):
+          this.pushCurrentBlockToBlocks();
+          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.contentType = NodeType.DIVIDER;
+          this.currentBlock.body = "";
+          this.pushCurrentBlockToBlocks();
+          break;
+
+        case this.doubleDividerCase.includes(currentWord):
+          this.pushCurrentBlockToBlocks();
+          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.contentType = NodeType.DOUBLE_DIVIDER;
+          this.pushCurrentBlockToBlocks();
+          break;
+
+        case this.simpleTextCase.includes(currentWord):
+          this.pushCurrentBlockToBlocks();
+          this.currentBlock = JSON.parse(JSON.stringify(this.defaultBlock));
+          this.currentBlock.id = prefixTable(generateUID(), Resource.node);
+          this.currentBlock.contentType = NodeType.SIMPLE_TEXT;
+          break;
+
         case this.italicCase.includes(currentWord):
           if (this.currentBlock.body && this.currentBlock.body.length > 0)
             this.currentBlock.body += " " + "*";
           else this.currentBlock.body = "*";
           break;
+
         case this.boldCase.includes(currentWord):
           if (this.currentBlock.body && this.currentBlock.body.length > 0)
             this.currentBlock.body += " " + "**";
           else this.currentBlock.body = "**";
           break;
+
         default:
           if (this.currentBlock.body && this.currentBlock.body.length > 0)
             this.currentBlock.body += " " + casePreservedWord;
           else this.currentBlock.body = casePreservedWord;
       }
     }
-    this.pushCurrentBlockToBlocksV2();
+    this.pushCurrentBlockToBlocks();
   }
-  convertAudioToMarkdownV1(transcript: string) {
-    this.resetInitialStatesV1();
+
+  convertAudioToMarkdown(transcript: string) {
+    this.resetInitialStates();
     let words: string[] = transcript
       .split(/\W+/)
       .filter((word: string) => word.length > 0);
-    this.loopThroughAndDecodeV1(words);
-    return this.blocks;
-  }
-  convertAudioToMarkdownV2(transcript: string) {
-    this.resetInitialStatesV2();
-    let words: string[] = transcript
-      .split(/\W+/)
-      .filter((word: string) => word.length > 0);
-    this.loopThroughAndDecodeV2(words);
+    this.loopThroughAndDecode(words);
     return this.blocks;
   }
 }
