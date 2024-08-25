@@ -50,7 +50,7 @@
    * TODO - move to store, lambda url - env
    */
 
-  $: console.log("transcription", $captureStore.fileDetails.transcription);
+  $: console.log("transcription", $captureStore?.fileDetails?.transcription);
   async function onTranscribe(): Promise<string> {
     isDisabled = true;
     const region = $account.userInfo?.region;
