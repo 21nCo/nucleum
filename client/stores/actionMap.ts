@@ -200,16 +200,28 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: "changelog",
-    get label() {
-      return this.modalParams?.title;
-    },
+    action: Action.CHANGELOG,
+    label: "What's new",
     icon: "sparkles",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.runAction(Action.CHANGELOG + "supahub");
+    }
+  },
+  {
+    action: Action.CHANGELOG + "supahub",
+    label: "What's new",
+    icon: "sparkles",
+    cmdLabel: ["What's new", "Changelog"],
     type: ActionType.MODAL,
-    // component: SupahubEmbed,
-    component: GhostEmbed,
+    component: SupahubEmbed,
     modalParams: {
-      title: "What's new",
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      },
       componentParams: {
         context: "Changelog"
       }
@@ -236,7 +248,7 @@ export const globalActions: IAction[] = [
     label: "Roadmap",
     icon: "map",
     isMeta: true,
-    type: ActionType.LINK,
+    type: ActionType.FUNCTION,
     fn: async () => {
       appStore.runAction(Action.ROADMAP + "supahub");
     }

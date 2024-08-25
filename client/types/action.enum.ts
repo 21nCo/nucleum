@@ -12,6 +12,7 @@ export enum Action {
   MOBILE_TOAST = "MOBILE_TOAST",
   CONFIRMATION = "CONFIRMATION",
   ROADMAP = "roadmap",
+  CHANGELOG = "changelog",
   PRIVACY_POLICY = "privacy",
   TERMS_OF_SERVICE = "tos",
   GLOBAL_SEARCH = "global-search",
