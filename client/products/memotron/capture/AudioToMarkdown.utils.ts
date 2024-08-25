@@ -181,8 +181,8 @@ class AudioToMarkdown {
     contentType: "LIST",
     children: []
   };
-  lastCreatedOL: any = {};
-  lastCreatedOLC: any = {};
+  lastCreatedOL: any = null;
+  lastCreatedOLC: any = null;
   lastCreatedOLSC: any = {};
   lastCreatedUL: any = {};
   lastCreatedULC: any = {};
@@ -198,10 +198,10 @@ class AudioToMarkdown {
     | "ULSSC"
     | null = null;
 
-  lastCreatedOLchild: any = {};
-  lastCreatedOLsubchild: any = {};
-  lastCreatedULchild: any = {};
-  lastCreatedULsubchild: any = {};
+  lastCreatedOLchild: any = null;
+  lastCreatedOLsubchild: any = null;
+  lastCreatedULchild: any = null;
+  lastCreatedULsubchild: any = null;
   lastCreatedListVariantV2: ListKeys | null = null;
   currentBlock = { ...this.defaultBlock };
 
@@ -218,12 +218,12 @@ class AudioToMarkdown {
   }
 
   resetInitialStatesV2() {
-    this.lastCreatedOL = {};
-    this.lastCreatedUL = {};
-    this.lastCreatedOLchild = {};
-    this.lastCreatedOLsubchild = {};
-    this.lastCreatedULchild = {};
-    this.lastCreatedULsubchild = {};
+    this.lastCreatedOL = null;
+    this.lastCreatedUL = null;
+    this.lastCreatedOLchild = null;
+    this.lastCreatedOLsubchild = null;
+    this.lastCreatedULchild = null;
+    this.lastCreatedULsubchild = null;
     this.lastCreatedListVariantV2 = null;
     this.currentBlock = { ...this.defaultBlock };
     this.blocks = [];
@@ -409,7 +409,24 @@ class AudioToMarkdown {
     const output = input.replace(/\*\*\s+([^\*]+?)\s+\*\*/g, "**$1**");
     return output;
   }
-
+  pushToAvailableULParent() {
+    if (this.lastCreatedULsubchild != null)
+      this.lastCreatedULsubchild.children.push(this.currentBlock);
+    else if (this.lastCreatedULchild != null)
+      this.lastCreatedULchild.children.push(this.currentBlock);
+    else if (this.lastCreatedUL != null)
+      this.lastCreatedUL.children.push(this.currentBlock);
+    else this.blocks.push(this.currentBlock);
+  }
+  pushToAvailableOLParent() {
+    if (this.lastCreatedOLsubchild != null)
+      this.lastCreatedOLsubchild.children.push(this.currentBlock);
+    else if (this.lastCreatedOLchild != null)
+      this.lastCreatedOLchild.children.push(this.currentBlock);
+    else if (this.lastCreatedOL != null)
+      this.lastCreatedOL.children.push(this.currentBlock);
+    else this.blocks.push(this.currentBlock);
+  }
   pushCurrentBlockToBlocksV2() {
     if (this.currentBlock.body && this.currentBlock.body.length > 0) {
       this.currentBlock.body = this.removeSpacesBetweenAsterisks(
@@ -424,22 +441,38 @@ class AudioToMarkdown {
             this.blocks.push(this.lastCreatedUL);
             break;
           case ListKeys.OL_CHILD:
-            this.lastCreatedOL.children.push(this.currentBlock);
+            if (this.lastCreatedOL == null) {
+              this.lastCreatedOLchild = null;
+              this.pushToAvailableOLParent();
+            } else this.lastCreatedOL.children.push(this.currentBlock);
             break;
           case ListKeys.UL_CHILD:
-            this.lastCreatedUL.children.push(this.currentBlock);
+            if (this.lastCreatedUL == null) {
+              this.lastCreatedULchild = null;
+              this.pushToAvailableULParent();
+            } else this.lastCreatedUL.children.push(this.currentBlock);
             break;
           case ListKeys.OL_SUB_CHILD:
-            this.lastCreatedOLchild.children.push(this.currentBlock);
+            if (this.lastCreatedOLchild == null) {
+              this.lastCreatedOLsubchild = null;
+              this.pushToAvailableOLParent();
+            } else this.lastCreatedOLchild.children.push(this.currentBlock);
             break;
           case ListKeys.UL_SUB_CHILD:
-            this.lastCreatedULchild.children.push(this.currentBlock);
+            if (this.lastCreatedULchild == null) {
+              this.lastCreatedULsubchild = null;
+              this.pushToAvailableULParent();
+            } else this.lastCreatedULchild.children.push(this.currentBlock);
             break;
           case ListKeys.OL_SUB_SUB_CHILD:
-            this.lastCreatedOLsubchild.children.push(this.currentBlock);
+            if (this.lastCreatedOLsubchild == null)
+              this.pushToAvailableOLParent();
+            else this.lastCreatedOLsubchild.children.push(this.currentBlock);
             break;
           case ListKeys.UL_SUB_SUB_CHILD:
-            this.lastCreatedULsubchild.children.push(this.currentBlock);
+            if (this.lastCreatedULsubchild == null)
+              this.pushToAvailableULParent();
+            else this.lastCreatedULsubchild.children.push(this.currentBlock);
             break;
         }
       } else {
