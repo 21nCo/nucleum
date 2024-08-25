@@ -6,6 +6,8 @@ import type {
   IKeyboardShortcut,
   IKeyboardShortcutsStore
 } from "./shortcut.type";
+import { logger } from "../debug/logger.client";
+import { resolveModifiers } from "./shortcut.utils";
 
 class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   constructor() {
@@ -60,6 +62,27 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     return this.fecthKeyMap().filter((x) =>
       configurableShortcuts?.includes(x.action)
     );
+  }
+
+  /**
+   * Resolves the shortcut for the given key and modifiers.
+   * @param key
+   * @param modifiers
+   */
+  resolveShortcut(event: KeyboardEvent) {
+    const key = event.key;
+    const modifiers = resolveModifiers(event);
+    const keyMap = this.fecthKeyMap();
+    const shortcut = keyMap.find((s: any) => {
+      if (s.key.toLowerCase() !== key.toLowerCase()) return false;
+      if (s.modifiers && s.modifiers.length !== modifiers.length) return false;
+      return (
+        (s.modifiers && s.modifiers.every((m: any) => modifiers.includes(m))) ||
+        (!s.modifiers && modifiers.length === 0)
+      );
+    });
+    logger.log({ key, modifiers, shortcut, keyMap });
+    return { shortcut, modifiers };
   }
 }
 

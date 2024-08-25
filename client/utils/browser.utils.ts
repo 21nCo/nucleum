@@ -363,7 +363,7 @@ export function resolveDialogOnFront() {
   return dialogs[dialogs.length - 1];
 }
 export function resolveModalOnFront() {
-  const modals = Array.from(document.querySelectorAll("[data-modal]"));
+  const modals = Array.from(document.querySelectorAll("[data-blank-modal]"));
   if (modals.length === 0) {
     return null;
   }

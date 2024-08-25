@@ -106,7 +106,7 @@
         isShowOverlay && !isUseDialog
     })}
     {id}
-    data-modal={index}
+    data-blank-modal={index}
     transition:fade={{ duration: 100 }}
     on:click={overlayClicked}
   >
@@ -152,8 +152,9 @@
     {:else}
       <div
         id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full mo:rounded-none rounded-md", {
-          ...resolveSizeClasses()
+        class={cn("bg-bgs1 mo:w-full mo:h-full", {
+          ...resolveSizeClasses(),
+          "mo:rounded-none rounded-md": size !== Size.full
         })}
       >
         <ColorLayer>

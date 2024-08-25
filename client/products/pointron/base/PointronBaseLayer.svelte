@@ -23,8 +23,10 @@
   import { Action } from "$lib/client/types/action.enum";
   import { Embed } from "$lib/client/types/context.type";
   import { fullScreen } from "$lib/client/components/modal/modal.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
+  let isHideLeftNavBar: boolean = refreshSidebarState();
   onMount(async () => {
     if ($account.isLoggedIn) await initializeData();
     const appEventSub = appEvents.subscribe(async (e) => {
@@ -35,6 +37,7 @@
     });
     const uiStateSub = uiState.subscribe(() => {
       refreshInteractionModeState();
+      isHideLeftNavBar = refreshSidebarState();
     });
     $appLoadingState.isLocalLoaded = true;
     return () => {
@@ -43,6 +46,9 @@
       uiStateSub();
     };
   });
+  function refreshSidebarState() {
+    return uiState.getState(UIState.isHideLeftNavBar);
+  }
   async function initializeData() {
     if (isLiteMode) return;
     if ($sessionStore?.isSessionRunning) {
@@ -82,7 +88,9 @@
     {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
       <CommandModePage />
     {:else}
-      <LocalLeftNav />
+      {#if !isHideLeftNavBar || interactionMode === InteractionMode.DEFAULT || $context.embed === Embed.HANDSET}
+        <LocalLeftNav />
+      {/if}
       <div
         class="flex flex-col h-full {$view.isPortrait ? 'w-full' : 'flex-grow'}"
       >

@@ -51,7 +51,7 @@
     bind:checked={$newGoal.isPinnedForQuickStart}
   />
   <SwitchInput
-    label={{ label: "Mark as favorite" }}
+    label={{ label: "Star goal" }}
     isExpanded={true}
     bind:checked={$newGoal.isStarred}
   />

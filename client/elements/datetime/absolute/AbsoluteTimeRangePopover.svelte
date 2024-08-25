@@ -8,6 +8,7 @@
   import { TimeScale } from "../../../types/time.type";
   import Button from "../../button/Button.svelte";
   import { abg, bg, cn } from "$lib/client/utils/ui.utils";
+  import { isSameDay } from "$lib/client/utils/time.utils";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
@@ -385,15 +386,17 @@
           <Icon icon="chevright" size={Size.sm} />
         </button>
       </div>
-      <Button
-        icon="calendar"
-        label="Jump to Today"
-        size={Size.xs}
-        on:click={() => {
-          // selectDate(thisYear, thisMonth, thisDay);
-          selectedDate = new Date();
-        }}
-      />
+      {#if !isSameDay(selectedDate, new Date())}
+        <Button
+          icon="calendar"
+          label="Jump to Today"
+          size={Size.xs}
+          on:click={() => {
+            // selectDate(thisYear, thisMonth, thisDay);
+            selectedDate = new Date();
+          }}
+        />
+      {/if}
     </div>
     {#if monthMode || dayMode}
       <div class="w-full flex items-center justify-between text-b3">

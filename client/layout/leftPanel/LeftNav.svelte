@@ -15,6 +15,7 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { player } from "$lib/client/components/modal/modal.store";
+  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -163,8 +164,9 @@
                 Press <button
                   class="text-fgs2 px-2 py-0.5 rounded-md bg-bgs3 hover:bg-bgs4"
                   on:click={() => appStore.runAction(Action.CMD)}
-                  >Cmd + K</button
-                > for command bar
+                >
+                  <ShortcutText shortcut={Action.CMD} isPlainText={true} />
+                </button> for command bar
               </div>
             {/if}
           {/if}

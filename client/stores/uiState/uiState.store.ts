@@ -9,6 +9,7 @@ import { Action } from "../../types/action.enum";
 import { InteractionMode } from "../../components/settings/interactionMode/interactionMode.type";
 import { UIState, type IUIStateStore } from "./uiState.type";
 import context from "../context.store";
+import { Embed } from "$lib/client/types/context.type";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -111,6 +112,22 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 
   toggleSidebar() {
+    const interactionMode = this.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
+    if (interactionMode === InteractionMode.KEYBOARD_CENTRIC) {
+      const isCompletelyHideLeftNavBar = this.getState(
+        UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
+        {
+          isProductScoped: true
+        }
+      );
+      if (isCompletelyHideLeftNavBar) {
+        const currentState = this.getState(UIState.isHideLeftNavBar);
+        this.setState(UIState.isHideLeftNavBar, !currentState);
+        return;
+      }
+    }
     const val = this.getState(UIState.isInThinMode);
     this.setState(UIState.isInThinMode, !val);
   }
@@ -138,12 +155,14 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
         isProductScoped: true
       }
     );
+    const embed = get(context).embed;
     this.update((x) => {
       return {
         ...x,
         isShowHotKeyHints:
           modeOfInteraction === InteractionMode.KEYBOARD_CENTRIC &&
-          isShortcutHintsEnabled
+          isShortcutHintsEnabled &&
+          embed !== Embed.HANDSET
       };
     });
   }

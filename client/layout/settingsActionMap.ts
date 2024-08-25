@@ -1,7 +1,7 @@
 import { ActionType, type IAction } from "../types/action.type";
 import AccountSettings from "../components/settings/account/AccountSettings.svelte";
 import SettingsAsPage from "../components/settings/asPage/SettingsAsPage.svelte";
-import ShortcutSettings from "../components/settings/shortcuts/ShortcutSettings.svelte";
+import ShortcutSettings from "../components/shortcuts/settings/ShortcutSettings.svelte";
 import AboutSettings from "../components/settings/about/AboutSettings.svelte";
 import ShareToFriends from "../components/settings/ShareToFriends.svelte";
 import DateTimeSettings from "../components/settings/datetime/DateTimeSettings.svelte";

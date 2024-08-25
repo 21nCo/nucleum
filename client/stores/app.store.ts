@@ -52,6 +52,7 @@ import type { Event } from "../types/event.enum";
 import { logger } from "../components/debug/logger.client";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
+import { Size } from "../types/size.enum";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -458,6 +459,13 @@ function initAppStore(seed: AppStore) {
       (interactionMode === InteractionMode.COMMAND_ONLY &&
         get(context).embed !== Embed.HANDSET)
     ) {
+      if (action.type === ActionType.PAGE) {
+        action.modalParams = {
+          layout: {
+            size: Size.full
+          }
+        };
+      }
       modalEvent.notify({
         path: action.action,
         isShow: true,

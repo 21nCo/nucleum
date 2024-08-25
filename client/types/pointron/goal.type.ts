@@ -42,7 +42,7 @@ export type IPointGoal = IResourceBase & {
   tags?: string[];
   isArchived?: boolean;
   isPinnedForQuickStart?: boolean;
-  isFavorite?: boolean;
+  isStarred?: boolean;
   isCompleted?: boolean;
   color?: number | null;
 };

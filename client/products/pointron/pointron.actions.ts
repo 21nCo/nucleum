@@ -57,6 +57,9 @@ import { quickFocusItemStore } from "./goals/goal.store";
 import { appStore } from "$lib/client/stores/app.store";
 import { Embed } from "$lib/client/types/context.type";
 import ImportOnboarding from "./settings/data/ImportOnboarding.svelte";
+import { Action } from "$lib/client/types/action.enum";
+import FocusPlayerCommandModeWidget from "./focus/player/FocusPlayerCommandModeWidget.svelte";
+import Goals from "./goals/Goals.svelte";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
@@ -345,6 +348,12 @@ export const pointronActions: IAction[] = [
     component: FocusPlayer
   },
   {
+    action: PointronAction.FOCUS_PLAYER + Action.CMD,
+    type: ActionType.INLINE,
+    isMeta: true,
+    component: FocusPlayerCommandModeWidget
+  },
+  {
     action: PointronAction.FOCUS,
     component: Focus,
     icon: "bolt",
@@ -356,16 +365,11 @@ export const pointronActions: IAction[] = [
     component: AnalyticsV2,
     type: ActionType.PAGE,
     icon: "chart",
-    label: "Analytics",
-    modalParams: {
-      layout: {
-        size: Size.full
-      }
-    }
+    label: "Analytics"
   },
   {
     action: "goal",
-    component: GoalHomeV2,
+    component: Goals,
     icon: "goals",
     type: ActionType.PAGE,
     label: "Goals"

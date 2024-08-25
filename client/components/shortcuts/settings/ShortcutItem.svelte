@@ -3,12 +3,12 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
-  import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
-  import type { IKeyboardShortcut } from "../../shortcuts/shortcut.type";
+  import { keyboardShortcuts } from "../shortcuts.store";
+  import type { IKeyboardShortcut } from "../shortcut.type";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import context from "$lib/client/stores/context.store";
-  import { resolveShortcutText, resolveModifiers } from "./shortcut.utils";
+  import { resolveShortcutText, resolveModifiers } from "../shortcut.utils";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let shortcut: IKeyboardShortcut;

@@ -3,7 +3,7 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
-  import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
+  import { keyboardShortcuts } from "../shortcuts.store";
   import ShortcutItem from "./ShortcutItem.svelte";
   let error: string | undefined = undefined;
   let keyMap = keyboardShortcuts.fetchConfiguratbleShortcuts();

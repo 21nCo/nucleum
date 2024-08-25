@@ -12,7 +12,7 @@
   export let prefix: string | undefined = undefined;
   let action: IAction | null = null;
   let pageSub: any;
-  const fileBasedRoutes = ["goal", "cp", "curation"];
+  const fileBasedRoutes = ["cp"];
   function resolvePath() {
     if ($context.isSheet) {
       return $appStore.sheetPath;

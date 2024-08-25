@@ -17,6 +17,7 @@
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
+  import { keyboardShortcuts } from "../shortcuts/shortcuts.store";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let isFullPageContext: boolean = false;
@@ -25,8 +26,9 @@
   let resultsRef: any;
   let isPerformingSearchAction: boolean = false;
   let searchAction: IAction;
+  let isFocusing: boolean = false;
   let defaultPlaceholder = isFullPageContext
-    ? "Search for a command or use arrow keys to navigate"
+    ? "Search for a command"
     : "Run a command or scroll to see list of all commands";
   let placeholder = defaultPlaceholder;
   onMount(() => {
@@ -68,16 +70,21 @@
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
-    // console.log({ event });
-    if (event.key === "Meta") {
-      inputRef.focus();
+    const { shortcut } = keyboardShortcuts.resolveShortcut(event);
+    if (shortcut && shortcut.action === Action.CMD) {
+      if (!isFocusing) inputRef.focus();
+      else {
+        inputRef.blur();
+        isFocusing = false;
+      }
     }
   };
 </script>
 
 <div
-  class={cn("flex flex-col h-full w-full", {
-    "border border-brs2 rounded-md": isFullPageContext
+  class={cn("flex flex-col w-full", {
+    "border border-brs2 rounded-md": isFullPageContext,
+    "h-full": !isFullPageContext || (isFullPageContext && isFocusing)
   })}
 >
   <div
@@ -98,6 +105,12 @@
       bind:value
       on:keyup={handleKeyUp}
       on:keydown={handleKeyDown}
+      on:focus={() => {
+        isFocusing = true;
+      }}
+      on:blur={() => {
+        isFocusing = false;
+      }}
       class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
       {placeholder}
     />
@@ -110,7 +123,11 @@
             Press <b>Enter</b> to run
           {:else if isFullPageContext}
             <Icon icon="command" size={Size.sm} />
-            <span> Cmd </span>
+            <ShortcutText
+              shortcut={Action.CMD}
+              parentBgIndex={2}
+              isPlainText={true}
+            />
           {:else}
             Cmd bar
           {/if}
@@ -130,7 +147,7 @@
       {:else}
         <EmptyStatusView size={Size.sm} subText="start typing to search..." />
       {/if}
-    {:else}
+    {:else if !isFullPageContext || (isFullPageContext && isFocusing)}
       <CmdResults
         search={value}
         bind:this={resultsRef}
@@ -150,7 +167,6 @@
       )}
     >
       <span> Press <b>Esc</b> to close </span>
-      <!-- <span> Cmd + K </span> -->
       <ShortcutText shortcut={Action.CMD} parentBgIndex={1} />
     </div>
   {/if}
