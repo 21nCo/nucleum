@@ -36,14 +36,14 @@
 
 <div class="flex flex-col space-y-4 justify-center items-center">
   {#each pages as page}
-    <div class="flex justify-center gap-1 border border-brs3">
-      <button
+    <div class="flex justify-center gap-1 border border-brs3 rounded-md w-full">
+      <!-- <button
         on:click
         class="hover:bg-bgs3 rounded-md h-full flex items-center"
       >
         <Icon icon="grab" size={Size.md} />
-      </button>
-      <div class="w-3/4 mr-2 px-4 py-2">
+      </button> -->
+      <div class="flex-1 mr-2 px-4 py-2">
         <TextInput
           value={page.label}
           style={InputStyle.PLAIN}

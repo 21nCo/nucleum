@@ -17,7 +17,7 @@
     isActive = $view.currentPath === "/" + component?.path;
 </script>
 
-{#if component}
+{#if component && !component.isInactive}
   <button
     class={cn(orientation === Orientation.Vertical ? width : "", {
       "flex px-4 py-3 w-full items-center justify-between":

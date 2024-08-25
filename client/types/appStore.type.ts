@@ -7,10 +7,19 @@ export type AppStore = {
   isDebugMode: boolean;
   isExperimentalMode: boolean;
   pageMenu?: string[];
+  /**
+   * @deprecated - use player store instead
+   */
   player?: string;
   //TACO - dynamic actions
   dynamicBlocks?: IAction[];
+  /**
+   * @deprecated - use player store instead
+   */
   fullScreenComponentPath?: string;
+  /**
+   * @deprecated - use player store instead
+   */
   isPipOn?: boolean;
   currentPath: string;
   isMenuHidden?: boolean;

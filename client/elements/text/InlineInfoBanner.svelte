@@ -16,7 +16,7 @@
 </script>
 
 <div
-  class={cn("flex w-full rounded-md gap-4 p-4 text-base", {
+  class={cn("flex w-full rounded-md gap-4 p-4 text-b2", {
     "bg-bgs2": type === InfoTextType.INFO,
     "bg-ars2": type === InfoTextType.ERROR,
     "bg-aps2": type === InfoTextType.WARNING

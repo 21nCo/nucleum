@@ -7,10 +7,12 @@
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IResource } from "$lib/client/components/resourceStores/resource.type";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let shortcutTrigger: string | undefined = undefined;
+  export let emptyStateLabel: string = "No results found";
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
@@ -72,6 +74,7 @@
         onSearchResultSelection(results[selectedIndex]);
       } else {
         //save();
+        dispatch("empty-enter", value);
       }
     } else {
       currentValue = value;
@@ -142,7 +145,9 @@
         {#if isSearchInProgress}
           Searching...
         {:else if results.length === 0}
-          No results found
+          <span>
+            {@html renderMdAsHtml(emptyStateLabel)}
+          </span>
         {/if}
       </div>
     {/if}

@@ -14,6 +14,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { player } from "$lib/client/components/modal/modal.store";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -48,8 +49,8 @@
         ? 'bottom-14'
         : 'bottom-0'} flex flex-col justify-center items-center z-30 w-full"
     >
-      {#if $appStore.player}
-        <ComponentResolver path={$appStore.player} />
+      {#if $player.isMiniOn}
+        <ComponentResolver path={$player.action} />
       {/if}
       <div
         class=" border-t border--bgs2 w-full min-w-min pb-8 pt-3 glassmenubar bg-bgs1 border-brs1"

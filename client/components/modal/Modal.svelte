@@ -34,13 +34,18 @@
     // setTimeout(() => focusTrap?.focus(), 0);
   }
   const overlayClicked = (event: any) => {
-    logger.log({ at: "overlayClicked", event, id });
+    logger.log({
+      at: "overlayClicked",
+      id,
+      classList: event.target?.classList,
+      eventTargetId: event.target?.id,
+      pointerId: event.pointerId,
+      eventNodeName: event.target?.nodeName
+    });
     if (
-      (((event.target?.classList?.contains("pop-overlay") ||
+      (event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
-        event.target?.id === id) &&
-        event.pointerId &&
-        event.pointerId != -1) ||
+        event.target?.id === id ||
         event.target.nodeName === "DIALOG") &&
       isDismissable
     ) {
@@ -49,6 +54,7 @@
   };
 
   function close() {
+    logger.log({ at: "close", id });
     show = false;
     modalEvent.hide(id, "Modal.svelte");
     confirmationNotification.reset();
@@ -78,7 +84,7 @@
         orientation === Orientation.Vertical && size === Size.md,
       "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
         orientation === Orientation.Vertical && size === Size.sm,
-      "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-[80rem] vm:h-[90rem]":
+      "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-full vm:h-[90rem]":
         orientation === Orientation.Horizontal && size === Size.xxl,
       "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
         orientation === Orientation.Horizontal && size === Size.xl,
@@ -94,7 +100,7 @@
   <button
     class={cn("pop-overlay fixed w-screen h-screen inset-0 z-50", {
       "bg-opacity-0": !isShowOverlay,
-      "flex justify-center items-center p-3":
+      "flex justify-center items-center mo:p-0 p-3":
         !isUseDialog && size !== Size.full,
       "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
         isShowOverlay && !isUseDialog
@@ -146,7 +152,7 @@
     {:else}
       <div
         id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full rounded-md", {
+        class={cn("bg-bgs1 mo:w-full mo:h-full mo:rounded-none rounded-md", {
           ...resolveSizeClasses()
         })}
       >

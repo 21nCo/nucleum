@@ -29,7 +29,7 @@
           return;
         }
       } catch (e) {
-        logger.logError({ context: "profilepic error", e });
+        logger.error({ context: "profilepic error", e });
       }
       // profilePictureUrl = x.userInfo?.profilePictureUrl;
       // return;

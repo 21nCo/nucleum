@@ -29,11 +29,13 @@ export const memotronActions: IAction[] = [
     component: Capture,
     label: "Capture",
     icon: "capture",
-    type: ActionType.PAGE,
+    type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.full,
-        ignoreSafeArea: true
+        size: Size.xl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true
       }
     }
   },
@@ -121,7 +123,7 @@ export const memotronActions: IAction[] = [
     loadingComponent: NodeLoadingPulse,
     modalParams: {
       layout: {
-        size: Size.xl,
+        size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true
       }

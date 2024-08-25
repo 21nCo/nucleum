@@ -52,10 +52,10 @@
     };
   });
   function restoreLayoutState() {
-    layout =
-      uiState.getState(UIState.quickFocusLayout, {
-        isDeviceScoped: true
-      }) ?? Layout.LIST;
+    const layoutState = uiState.getState(UIState.quickFocusLayout, {
+      isDeviceScoped: true
+    });
+    layout = layoutState ?? Layout.LIST;
   }
   function restoreTagSelection() {
     $quickFocusItemStore.selectedTagId =
@@ -98,6 +98,7 @@
     <ScrollView
       class="flex flex-col w-full flex-grow gap-6 mo:p-0 px-3"
       isRefreshing={$quickFocusItemStore.isRefreshing}
+      bottomSpacerSize={Size.lg}
       isRefreshOnPull={true}
       on:refresh={() => {
         refresh(true);

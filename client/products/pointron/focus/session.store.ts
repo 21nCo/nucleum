@@ -26,7 +26,10 @@ import {
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
 import { appStore, userPreferences } from "$lib/client/stores/app.store";
-import modalEvent from "$lib/client/components/modal/modal.store";
+import modalEvent, {
+  fullScreen,
+  player
+} from "$lib/client/components/modal/modal.store";
 import {
   toasts,
   scheduledNotifications,
@@ -185,7 +188,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   }
   shallowReset() {
     this.clearTimers();
-    appStore.hideFullScreenPlayer(true);
+    fullScreen.hide(false);
+    player.reset();
     scheduledNotifications.reset();
   }
   /**
@@ -321,7 +325,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     }
   }
   private _postNotificationsToEmbed() {
-    console.log("posting notifications to embed");
     const notifications = get(scheduledNotifications);
     postToParent({
       notifications
@@ -426,7 +429,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         interval.start - bufferTime <= now &&
         index === intervals.length - 1
       ) {
-        console.log("interval is last");
+        logger.log("interval is last");
         currentInterval = interval;
         return true;
       }
@@ -434,12 +437,12 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         interval.start - bufferTime <= now &&
         intervals[index + 1]?.start - bufferTime > now
       ) {
-        console.log({ interval, index, nextOne: intervals[index + 1] });
+        logger.log({ interval, index, nextOne: intervals[index + 1] });
         currentInterval = interval;
         return true;
       }
     });
-    console.log({ currentInterval, now });
+    logger.log({ currentInterval, now });
     if (!currentInterval) return;
     currentInterval = currentInterval as ISessionInterval;
     this.modify(
@@ -530,7 +533,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     if (!isValidArrayWithData(intervals)) {
       countup();
     }
-    console.log({
+    logger.log({
       context: "composeSession",
       blocks: intervals,
       sessionType,
@@ -727,7 +730,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       isPersist: false
     }
   ) {
-    console.log("stopping current task or goal");
     let session = this.get();
     if (!session.currentTask) return;
     let end = new Date().getTime();
@@ -781,8 +783,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     ) {
       const currentValue = this.get();
       modalEvent.hide(PointronEvent.SESSION_FINISHED);
-      const isRestored = appStore.restoreFullScreenPlayer();
-      if (!isRestored) appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
+      const isRestored = fullScreen.restore();
+      if (!isRestored) player.showMini(PointronAction.FOCUS_PLAYER);
       this.modify(
         {
           ...savedSessionStore,
@@ -857,45 +859,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     return session;
   }
   async startTask(id: string) {
-    // const newLog: FocusLog = {
-    //   taskId: id,
-    //   goalId,
-    //   taskName,
-    //   color,
-    //   start: new Date().getTime(),
-    //   blocks: [
-    //     {
-    //       start: new Date().getTime(),
-    //       type: BlockType.FOCUS
-    //     }
-    //   ]
-    // };
-    let n = this.get();
-    if (n.currentTask) await this._stopCurrentTaskOrGoal();
-    this.modify(
-      { currentTask: { start: new Date().getTime(), id } },
-      { isPersist: n.state != SessionState.BREAK_RUNNING }
-    );
-    if (n.state === SessionState.BREAK_RUNNING) {
-      await this._resumeSession();
-    }
-  }
-  async startGoal(id: string) {
     let session = this.get();
     if (session.currentTask) await this._stopCurrentTaskOrGoal();
-    // const currentLog = {
-    //   goalId: id,
-    //   taskName: goalName,
-    //   taskId: "",
-    //   color,
-    //   start: new Date().getTime(),
-    //   blocks: [
-    //     {
-    //       start: new Date().getTime(),
-    //       type: BlockType.FOCUS
-    //     }
-    //   ]
-    // };
     this.modify(
       { currentTask: { start: new Date().getTime(), id } },
       { isPersist: session.state != SessionState.BREAK_RUNNING }
@@ -1024,26 +989,39 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   async startSession(isQuickStart: boolean = false) {
     this.onComposeComplete(false);
     //todo - if auto open enabled
-    if (isQuickStart) appStore.showMiniPlayer(PointronAction.FOCUS_PLAYER);
-    else appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
+    if (isQuickStart) player.showMini(PointronAction.FOCUS_PLAYER);
+    else fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
 
     if (!get(context).isEmbed && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
     const sessionId = generateSessionId(new Date().getTime());
     this.isIntervalTimeLimitNotified = false;
+    let currentTask = this.get().currentTask;
+    let focusItems = focusItemsStore.get();
+    if (
+      !isQuickStart &&
+      (focusItems.tasks.length > 0 || focusItems.goals.length > 0)
+    ) {
+      currentTask = {
+        id: focusItems.tasks?.[0]?.id ?? focusItems.goals[0].id,
+        start: new Date().getTime()
+      };
+    }
     this.modify(
       {
         currentSessionId: sessionId,
         isSessionRunning: true,
         start: new Date(),
-        state: SessionState.FOCUS_RUNNING
+        state: SessionState.FOCUS_RUNNING,
+        currentTask
       },
       { isPersist: false }
     );
     this._resumeTimer();
     const mutationId = `${this.id}-startSession`;
     this.persist(undefined, { isUseQueueFirstApproach: true, mutationId });
+    return true;
   }
   /**
    * Starts a quick start session for a given goal.
@@ -1076,7 +1054,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         { isPersist: false }
       );
       await focusItemsStore.addGoal(goal);
-      await this.startSession(true);
+      return this.startSession(true);
     } catch (err) {
       logger.error(err);
     }
@@ -1195,7 +1173,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     );
   }
   reset(isPersist: boolean = false) {
-    console.log({ context: "focus items store - reset" });
+    logger.log({ context: "focus items store - reset" });
     this.modify(
       { goals: [], tasks: [] },
       {
@@ -1493,8 +1471,14 @@ class PointSessionStore extends ResourceStore<IPointSession> {
     ) {
       const total = resolveTotalTaskTime([block]);
       const focus = resolveTaskFocus(session.blocks, [block]);
-      console.log({ focus, blocks: deepCopy(session.blocks), total, block });
-      const breakTime = total - focus;
+      const breakTime = Number((total - focus).toFixed(1));
+      logger.debug({
+        focus,
+        blocks: deepCopy(session.blocks),
+        total,
+        block,
+        breakTime
+      });
       return {
         id: generateResourceId(Resource.PointLog),
         start: new Date(block.start).toISOString(),

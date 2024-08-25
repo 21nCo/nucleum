@@ -14,9 +14,7 @@
   let inputRef: any;
 
   let units: TimeUnit[] = [TimeUnit.MINUTES, TimeUnit.HOURS];
-  let currentUnit: TimeUnit;
-
-  $: currentUnit = value < 3600 ? TimeUnit.MINUTES : TimeUnit.HOURS;
+  let currentUnit: TimeUnit = value < 3600 ? TimeUnit.MINUTES : TimeUnit.HOURS;
 
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -48,7 +46,7 @@
       value = value * 3600;
     else if (newTimeUnit === TimeUnit.SECONDS && oldTimeUnit === TimeUnit.HOURS)
       value = value / 3600;
-    dispatch("change", value);
+    dispatch("change", { value });
   }
 </script>
 

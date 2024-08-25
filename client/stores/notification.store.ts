@@ -85,18 +85,18 @@ function initToastStore() {
       return n;
     });
     if (isAlreadyPresent) return;
-    if (get(view).isPortrait) {
-      appStore.runAction(Action.MOBILE_TOAST, {
-        componentParams: { id: event.id }
+    // if (get(view).isPortrait) {
+    //   appStore.runAction(Action.MOBILE_TOAST, {
+    //     componentParams: { id: event.id }
+    //   });
+    // } else {
+    timer = setTimeout(() => {
+      update((n: Toast[]) => {
+        n.shift();
+        return n;
       });
-    } else {
-      timer = setTimeout(() => {
-        update((n: Toast[]) => {
-          n.shift();
-          return n;
-        });
-      }, 5000);
-    }
+    }, 5000);
+    // }
   };
   return {
     subscribe,

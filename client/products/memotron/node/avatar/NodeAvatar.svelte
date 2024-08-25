@@ -8,7 +8,6 @@
   export let avatars: IAvatar[] | undefined = undefined;
   export let node: INode | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
-  $: console.log({ node });
 </script>
 
 <!-- {#if avatars && avatars.length > 0}

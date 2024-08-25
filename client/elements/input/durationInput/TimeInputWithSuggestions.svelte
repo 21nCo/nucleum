@@ -9,6 +9,10 @@
   export let duration: number;
   export let currentUnit: TimeUnit;
   export let hoursLimit: number | undefined = undefined;
+  /**
+   * Suggestions are temporarily disabled due to lack of reliability.
+   */
+  export let isSuggestionsDisabled: boolean = true;
   let isFocusing: boolean = false;
   let value = "";
   $: {
@@ -75,7 +79,7 @@
   function onsearch(searchQuery: string) {
     console.log({ value: searchQuery });
     let suggestions: { label: string; value: number; unit: TimeUnit }[] = [];
-    if (searchQuery.length > 0) {
+    if (searchQuery.length > 0 && !isSuggestionsDisabled) {
       suggestions = generateSuggestions(searchQuery);
     }
     console.log({ suggestions });
@@ -116,6 +120,18 @@
     dispatch("change", { value: duration, unit: currentUnit });
     event.preventDefault();
   }
+  function onChange(event: any) {
+    if (!event.detail?.value) return;
+    if (!/^\d+$/.test(value)) return;
+    duration =
+      +value *
+      (currentUnit === TimeUnit.HOURS
+        ? 3600
+        : currentUnit === TimeUnit.MINUTES
+          ? 60
+          : 1);
+    dispatch("change", { value: duration, unit: currentUnit });
+  }
 </script>
 
 <div
@@ -129,9 +145,10 @@
     on:keyup={onkeyup}
     on:focus={() => (isFocusing = true)}
     on:blur={() => (isFocusing = false)}
+    on:change={onChange}
     style={InputStyle.PLAIN}
     placeholder="Duration"
-    searchCallback={onsearch}
+    searchCallback={isSuggestionsDisabled ? undefined : onsearch}
     on:select={onselect}
     popoverOptions={{ offsetInPx: 10 }}
   />

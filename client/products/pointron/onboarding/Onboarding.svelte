@@ -11,6 +11,8 @@
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import context from "$lib/client/stores/context.store";
 
   let currentStep = 0;
 
@@ -73,6 +75,7 @@
       isProductScoped: true
     });
     appStore.gotoPath("/");
+    if (!$context.isEmbed) appStore.runAction(PointronAction.IMPORT_ONBOARDING);
   }
 
   function handleStepButtonClick(action: "+" | "-") {

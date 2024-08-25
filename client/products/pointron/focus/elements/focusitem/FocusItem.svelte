@@ -103,7 +103,7 @@
       if (isInprogress) {
         await sessionStore.stopCurrentTaskOrGoal();
       } else {
-        await sessionStore.startGoal(item.id);
+        await sessionStore.startTask(item.id);
       }
     }
   }

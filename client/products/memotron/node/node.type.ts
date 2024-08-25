@@ -277,6 +277,12 @@ export const headingNodeTypes = [
   NodeType.HEADING5
 ];
 
+export const structuralNodeTypes = [
+  NodeType.DIVIDER,
+  NodeType.DOUBLE_DIVIDER,
+  NodeType.TOC
+];
+
 /**
  * List of root node types that are shown in the library, resource browser and similar contexts.
  *

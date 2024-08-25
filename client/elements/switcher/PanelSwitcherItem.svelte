@@ -23,6 +23,8 @@
   export let triggerItemEdit: string | null = null;
   export let isInversePlacement: boolean = false;
   export let parentBgIndex: number = 1;
+  export let isShowNumberShortcut: boolean = false;
+  export let index: number = 0;
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");
@@ -70,6 +72,8 @@
         {size}
         {isActive}
         {isDisabled}
+        {isShowNumberShortcut}
+        {index}
         bind:triggerItemEdit
         on:remove
         on:change
@@ -101,6 +105,8 @@
       {size}
       {isActive}
       {isDisabled}
+      {isShowNumberShortcut}
+      {index}
       bind:triggerItemEdit
       on:remove
       on:change
@@ -153,6 +159,8 @@
         {size}
         {isActive}
         {isDisabled}
+        {isShowNumberShortcut}
+        {index}
         bind:triggerItemEdit
         on:remove
         on:change

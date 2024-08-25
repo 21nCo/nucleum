@@ -16,6 +16,7 @@
   import { recursivelyExtractAllChildrenIntoArray } from "./markdown.utils";
   import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
   import { isReplaceableMd } from "./markdown.store";
+  import { logger } from "../debug/logger.client";
   const dispatch = createEventDispatcher();
 
   /**
@@ -137,69 +138,6 @@
         return 100;
     }
   }
-  /**
-   * @deprecated - used with v1 resolution of {@link hierarchyV1}
-   * @param root
-   * @param insertedAt
-   * @param parent
-   * @param id
-   */
-  function traverse(
-    root: INodeHierarchyV1,
-    insertedAt: string,
-    parent: INodeHierarchyV1 | null,
-    id?: string
-  ): { parent: INodeHierarchyV1 | null; siblings: INodeHierarchyV1[] } | null {
-    if (root.id === insertedAt) {
-      let siblings: INodeHierarchyV1[] = [];
-      if (parent) {
-        const index = parent.children.findIndex(
-          (child) => child.id === insertedAt
-        );
-        siblings = parent.children.slice(index + 1);
-        if (id) {
-          parent.children = [
-            ...parent.children.slice(0, index + 1),
-            { id, factor: 0, children: [] },
-            ...siblings
-          ];
-        }
-      }
-      return { parent, siblings };
-    }
-    for (const child of root.children) {
-      const found = traverse(child, insertedAt, root, id);
-      if (found) {
-        return found;
-      }
-    }
-    return null;
-  }
-  /**
-   * @deprecated
-   * @param event
-   */
-  function onBlockInsertV1(event: any) {
-    const detail = event.detail;
-    console.log("onBlockInsert", {
-      detail,
-      hierarchy: hierarchyV1,
-      blocks: node
-    });
-    if (!detail.blockType || !headingNodeTypes.includes(detail.blockType)) {
-      const root = { id: "md", factor: 0, children: hierarchyV1 };
-      const location = traverse(root, detail.insertedAt, null, detail.id);
-      hierarchyV1 = root.children;
-      console.log({ location, root, hierarchy: hierarchyV1 });
-    } else if (
-      detail.blockType &&
-      headingNodeTypes.includes(detail.blockType)
-    ) {
-      const factor = resolveFactorV1(detail.blockType);
-      let headingChildren: any = [];
-      //TODO - recursive function to find the children going up the tree
-    }
-  }
 
   /**
    * Extracts the structure of the children blocks from the markdown.
@@ -239,7 +177,7 @@
       const item = structure.find((x) => x.id === block.id);
       if (item) item.children = block.children;
     });
-    console.log({ collapsedHierarchy, structure });
+    logger.log({ collapsedHierarchy, structure });
     return structure;
   }
   /**
@@ -311,7 +249,8 @@
   function onBlockStructuralChanges(event: any) {
     if (isNodular) reCalculateStructure(event.detail.md);
     propagateChanges(event.detail.md);
-    console.log("onBlockStructuralChanges", {
+    logger.log({
+      at: "onBlockStructuralChanges",
       detail: event.detail,
       childrenWithStructure,
       rootStructure,
@@ -361,7 +300,7 @@
    * @param event
    */
   function onBlockContentChange(event: any) {
-    console.log("onBlockChanges", { event });
+    logger.log({ at: "onBlockChanges", event });
     const detail = event.detail;
     propagateChanges(detail.md);
     dispatch("change", { md, block: detail });
@@ -381,7 +320,7 @@
     const factor = childrenWithStructure.find(
       (x) => x.id === focusedBlock
     )?.factor;
-    console.log({ focusBlockIndex, factor });
+    logger.log({ focusBlockIndex, factor });
     if (!factor) return { focusBlockIndex, anchorBlockIndex };
     const succeedingBlocks = childrenWithStructure.slice(focusBlockIndex + 1);
     anchorBlock = succeedingBlocks.find((b) => b.factor <= factor);
@@ -417,7 +356,8 @@
     const blocks = md.blocks.slice(focusBlockIndex, anchorBlockIndex);
     _md = { blocks };
     refreshId = new Date().getTime();
-    console.log("focus", {
+    logger.log({
+      at: "focus",
       blockToFocus,
       anchorBlock,
       focusBlockIndex,
@@ -433,14 +373,13 @@
     focus(event.detail.id);
     const parent = extractParent(event.detail.id);
     dispatch("focus", { id: event.detail.id, parent });
-    console.log("onBlockFocus", { event, parent, md });
+    logger.log({ at: "onBlockFocus", event, parent, md });
   }
   export function unFocus() {
     focusedBlock = undefined;
     _md = { blocks: md.blocks };
     refreshId = new Date().getTime();
   }
-  $: console.log({ focusedBlock, node, md });
 </script>
 
 {#key refreshId}
@@ -458,7 +397,5 @@
     on:convert={onBlockConvert}
     on:focus={onBlockFocus}
     on:delete={onBlockDelete}
-    on:mention
-    on:unmention
   />
 {/key}

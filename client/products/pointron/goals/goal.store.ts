@@ -240,8 +240,28 @@ class GoalStore extends ResourceFIRStore<IGoal> {
   }
   async save(goal: IGoal) {
     if (!isGoalNameValid(goal.label)) return;
-    await dataManager.performMutation(this.id, flattenSubGoalsAsGoals(goal), {
+    let goalForDB: IPointGoal = {
+      id: goal.id,
+      label: goal.label,
+      description: goal.description,
+      tags: goal.tags,
+      parent: goal?.parent
+        ? goal.parent.hierarchy.map(({ id }: { id: string }) => id)
+        : [],
+      isArchived: goal.isArchived,
+      isPinnedForQuickStart: goal.isPinnedForQuickStart,
+      isFavorite: goal.isStarred,
+      isCompleted: goal.isCompleted,
+      color: goal.color,
+      createdAt: new Date().toISOString(),
+      modifiedAt: new Date().toISOString()
+    };
+    await dataManager.performMutation(this.id, goalForDB, {
       action: PersistanceActionType.CREATE
+    });
+    this.update((store) => {
+      store.items.push(goalForDB);
+      return store;
     });
     toasts.trigger({
       message: goal.label + " created successfully.",
@@ -301,8 +321,10 @@ class QuickFocusItemStore extends ObservableStore<IQuickFocusItemStore> {
     });
   }
   loader(data: any) {
-    logger.log("quickFocusItemStore loader", data);
-    if (!data || !isValidArray(data)) return;
+    logger.log({ context: "quickFocusItemStore loader", data });
+    if (!data || !isValidArray(data)) {
+      return;
+    }
     this.update((store) => {
       store.items = data;
       return store;
@@ -412,16 +434,18 @@ function initCurrentGoalStore(initialValue: IGoal) {
         set(newValue);
         persist(changedProperties)
           .then(() => {
-            const successMessage = changedProperties.isPinnedForQuickStart
-              ? " pinned successfully."
-              : changedProperties.isArchived && newValue.isArchived
-                ? " archived successfully."
-                : " updated successfully.";
-            toasts.success("Goal: " + newValue.label + successMessage);
-            propagateChangesTemp();
-            if (get(view).isPortrait) {
-              if (newValue.isArchived) appStore.gotoPath("/goals");
+            if (
+              !get(view).isPortrait ||
+              "isPinnedForQuickStart" in changedProperties
+            ) {
+              const successMessage = changedProperties.isPinnedForQuickStart
+                ? " pinned successfully."
+                : changedProperties.isArchived && newValue.isArchived
+                  ? " archived successfully."
+                  : " updated successfully.";
+              toasts.success("Goal: " + newValue.label + successMessage);
             }
+            propagateChangesTemp();
           })
           .catch((e) => {
             toasts.error("Something went wrong. Please try again later.");

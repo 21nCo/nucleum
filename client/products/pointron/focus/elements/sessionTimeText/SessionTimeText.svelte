@@ -8,10 +8,10 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
-  import { resolveSessionTime } from "../../../pointron.utils";
+  import { resolveSessionSplitFromIntervals } from "../../../pointron.utils";
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
-  $: splits = resolveSessionTime($sessionStore.intervals);
+  $: splits = resolveSessionSplitFromIntervals($sessionStore.intervals);
   // $: console.log({
   //   splits,
   //   timeElapsed: $sessionStore.timeElapsed,
@@ -20,12 +20,12 @@
 </script>
 
 <div class="flex w-full flex-col items-center gap-3">
-  <div class="flex flex-col gap-1">
+  <div class="flex flex-col items-center gap-1">
     <SessionStatusLabel size={$view.isPortrait ? Size.sm : Size.md} />
     <div
       class={cn("flex justify-center", {
-        "text-7xl font-medium": size === Size.sm,
-        "text-9xl font-semibold": size !== Size.sm,
+        "text-7xl font-bold": size === Size.sm,
+        "text-9xl font-black": size !== Size.sm,
         "text-ars1":
           $sessionStore.timeRemainingToTakeBreak != undefined &&
           $sessionStore.timeRemainingToTakeBreak < 0
@@ -49,7 +49,6 @@
       }
     )}
   >
-    <!-- <div class="font-medium">TOTALS</div> -->
     <div>
       Session: {formatSeconds($sessionStore.totalElapsed, TimeFormat.CLOCK)}
     </div>

@@ -22,7 +22,9 @@
   triggerMethod={$$slots.default
     ? PopoverTriggerMethod.RIGHT_CLICK
     : PopoverTriggerMethod.CLICK}
-  options={{ placement: Position.BottomRight }}
+  options={{
+    placement: $$slots.default ? Position.BottomCenter : Position.BottomRight
+  }}
 >
   <slot>
     <Button

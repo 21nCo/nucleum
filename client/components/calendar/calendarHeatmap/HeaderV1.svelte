@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -8,6 +7,13 @@
     ICalendarHeatMapDataProvider,
     CalendarHeatmapOptions
   } from "./calendarHeatmap.types";
+  import { getContext } from "svelte";
+
+  const handleEvent = getContext<any>("heatmap-event");
+
+  function propagateEvent(data: any) {
+    handleEvent(data);
+  }
 
   export let provider: ICalendarHeatMapDataProvider;
   export let options: CalendarHeatmapOptions = {};
@@ -22,7 +28,7 @@
   }
   items.push({ label: "Last 365 days", value: 0 });
   items.reverse();
-  let value: any = items[0].value;
+  let value: any = options.selectedYear ?? items[0].value;
   async function handleSelect(event: any) {
     const year = event.detail;
     if (year == 0) {
@@ -30,6 +36,10 @@
     } else {
       await dataManager.fetchDailyDataForTheYear(year);
     }
+    propagateEvent({
+      year,
+      type: "year-selection"
+    });
   }
 </script>
 

@@ -15,6 +15,8 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
   export let isFullPageContext: boolean = false;
@@ -80,7 +82,7 @@
 >
   <div
     class={cn(
-      "flex mo:flex-col w-full bg-bgs2 justify-between items-center rounded-t-md"
+      "flex mo:flex-col w-full bg-bgs2 justify-between items-center mo:rounded-none rounded-t-md"
     )}
   >
     {#if isPerformingSearchAction}
@@ -96,10 +98,10 @@
       bind:value
       on:keyup={handleKeyUp}
       on:keydown={handleKeyDown}
-      class="h-[3.6rem] mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
+      class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
       {placeholder}
     />
-    {#if $view.display !== Display.MO}
+    {#if $view.display !== Display.MO && $context.embed !== Embed.HANDSET}
       <div class="mr-4">
         <div
           class="px-2 flex justify-center items-center gap-2 bg-bgs3 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit"
@@ -137,7 +139,7 @@
       />
     {/if}
   </div>
-  {#if $view.display === Display.MO}
+  {#if $view.display === Display.MO || $context.embed === Embed.HANDSET}
     <div class="flex w-full justify-center py-2 pb-8">
       <Button label="Close" style={ButtonStyle.PLAIN} on:click={close} />
     </div>

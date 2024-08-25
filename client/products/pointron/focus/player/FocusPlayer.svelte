@@ -3,7 +3,6 @@
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import ControlBar from "../elements/controls/ControlBar.svelte";
   import { onMount } from "svelte";
@@ -17,18 +16,20 @@
   import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import IntervalBar from "../elements/intervalbar/IntervalBar.svelte";
+  import { fullScreen, player } from "$lib/client/components/modal/modal.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
   let playerContainerRef: any;
-  let player: HTMLElement | null = document.getElementById("focusplayer");
+  let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
     document.getElementById("playercontainer");
-  let isPipOn = false;
+  let isPipShown = false;
   $: isBreakReminderMode =
     $sessionStore.timeRemainingToTakeBreak != undefined &&
     $sessionStore.timeRemainingToTakeBreak < 0;
   $: currentGoal = sessionStore.resolveCurrentGoal($sessionStore.currentTask);
   function enableFullScreenPlayer() {
-    if (isPipOn) return;
-    appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
+    if (isPipShown) return;
+    fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
   }
   function clickHandler(event: any) {
     //if ($windowObject.isInPortraitMode) return;
@@ -36,16 +37,18 @@
   }
 
   function closePip() {
-    if (player && $sessionStore.isSessionRunning)
-      playerContainer?.append(player);
-    isPipOn = false;
-    if ($appStore.isPipOn) appStore.togglePip(PointronAction.FOCUS_PLAYER);
+    if (playerRef && $sessionStore.isSessionRunning)
+      playerContainer?.append(playerRef);
+    isPipShown = false;
+    if ($player.isPipOn) {
+      player.togglePip(PointronAction.FOCUS_PLAYER);
+    }
     if ("documentPictureInPicture" in window)
       (window.documentPictureInPicture as any).window?.close();
   }
-  async function pipHandler(event: any) {
+  async function showPip(event: any) {
     event?.stopPropagation();
-    if (!player) return;
+    if (!playerRef) return;
     try {
       if (
         "documentPictureInPicture" in window &&
@@ -56,7 +59,6 @@
         "documentPictureInPicture" in window &&
         !(window.documentPictureInPicture as any).window
       ) {
-        // Open a Picture-in-Picture window.
         const pipWindow = await (
           window.documentPictureInPicture as any
         ).requestWindow({
@@ -86,29 +88,30 @@
             pipWindow.document.head.appendChild(link);
           }
         });
-        // console.log({ player });
-        pipWindow.document.body.append(player);
-        isPipOn = true;
+        pipWindow.document.body.append(playerRef);
+        isPipShown = true;
       } else {
-        // console.log({ player, playerContainer });
         closePip();
       }
     } catch (e) {
-      console.error(e);
+      logger.error({ at: "pipHandler", e });
     }
   }
   onMount(() => {
-    player = document.getElementById("focusplayer");
+    playerRef = document.getElementById("focusplayer");
     playerContainer = document.getElementById("playercontainer");
     const sessionSub = sessionStore.subscribe((x) => {
-      if (x.state === SessionState.FINISHED) {
+      if (
+        x.state === SessionState.FINISHED ||
+        x.state === SessionState.NOT_STARTED
+      ) {
         closePip();
       }
     });
-    const sub = appStore.subscribe((app) => {
-      if (app.isPipOn && !isPipOn) {
-        pipHandler(null);
-      } else if (!app.isPipOn && isPipOn) {
+    const sub = player.subscribe((x) => {
+      if (x.isPipOn && !isPipShown) {
+        showPip(null);
+      } else if (!x.isPipOn && isPipShown) {
         closePip();
       }
     });
@@ -131,31 +134,31 @@
       20
     )}
   id="playercontainer"
-  class={!$view.isPortrait ? "m-6" : "w-full"}
+  class={!$view.isPortrait ? "m--6" : "w-full"}
   bind:this={playerContainerRef}
 >
   <div
     id="focusplayer"
     class={cn("flex w-full h-full", $appearance.colorScheme.tailwindSelector, {
-      "text-base text-fgs1": isPipOn,
-      "bg-bgs1": isPipOn && !isBreakReminderMode,
+      "text-base text-fgs1": isPipShown,
+      "bg-bgs1": isPipShown && !isBreakReminderMode,
       "bg-ars1 animate--pulse animate-pulse-subtle":
-        isBreakReminderMode && isPipOn
+        isBreakReminderMode && isPipShown
     })}
     style="font-family: {$appearance.typeface ?? 'Avenir'};"
   >
-    <ThemeLayer extensionContext={isPipOn ? "focusplayer" : undefined}>
+    <ThemeLayer extensionContext={isPipShown ? "focusplayer" : undefined}>
       <div class="flex flex-col gap-1 w-full">
         <CustomColorPropagator
           type="button"
           color={currentGoal?.color}
           class={cn(
-            "flex h-full justify-between items-center px-4 py-2",
-            isPipOn && {
+            "flex gap-2 h-full justify-between items-center px-4 py-2",
+            isPipShown && {
               "text-abg": isBreakReminderMode,
               "bg-bgs2 dark:bg-[#202124]": !isBreakReminderMode
             },
-            !isPipOn && {
+            !isPipShown && {
               "border-t border-bgs3 border-opacity-50": true,
               "w-full": $view.isPortrait,
               "w-[26rem] rounded-md": !$view.isPortrait,
@@ -166,7 +169,7 @@
               "bg-ass1 text-abg":
                 $sessionStore.state != SessionState.FOCUS_RUNNING
             },
-            isPipOn && {
+            isPipShown && {
               "w-full": true
             }
           )}
@@ -177,34 +180,40 @@
               <InlineLoadingAnimation />Finishing session...
             </div>
           {:else}
-            <div class="flex items-center gap-4 h-full">
+            <div class="flex items-center gap-4 h-full flex-1 min-w-0">
               <FocusPlayerTimeText
-                context={isPipOn
+                context={isPipShown
                   ? SessionUIContext.PIP
                   : SessionUIContext.FOCUS_PLAYER}
               />
             </div>
             <div class="flex gap-4">
               <ControlBar
-                context={isPipOn
+                context={isPipShown
                   ? SessionUIContext.PIP
                   : SessionUIContext.FOCUS_PLAYER}
               />
-              {#if !$view.isPortrait && !isPipOn}
+              {#if !$view.isPortrait && !isPipShown}
                 {#if !$context.isEmbed}
-                  <Icon
-                    icon="pip"
-                    on:click={pipHandler}
-                    isTabbable={true}
-                    class={cn({
-                      "stroke-cbg":
-                        $sessionStore.state === SessionState.FOCUS_RUNNING &&
-                        !isBreakReminderMode,
-                      "stroke-abg":
-                        isBreakReminderMode ||
-                        $sessionStore.state != SessionState.FOCUS_RUNNING
-                    })}
-                  />
+                  <button
+                    class="flex items-center justify-center"
+                    on:click|stopPropagation={(event) => {
+                      player.togglePip(PointronAction.FOCUS_PLAYER);
+                    }}
+                  >
+                    <Icon
+                      icon="pip"
+                      isTabbable={true}
+                      class={cn({
+                        "stroke-cbg":
+                          $sessionStore.state === SessionState.FOCUS_RUNNING &&
+                          !isBreakReminderMode,
+                        "stroke-abg":
+                          isBreakReminderMode ||
+                          $sessionStore.state != SessionState.FOCUS_RUNNING
+                      })}
+                    />
+                  </button>
                 {/if}
 
                 <Icon
@@ -224,7 +233,7 @@
             </div>
           {/if}
         </CustomColorPropagator>
-        {#if isPipOn}
+        {#if isPipShown}
           <div
             class={cn("flex w-full flex-1 px-4 pb-2", {
               "text-abg": isBreakReminderMode

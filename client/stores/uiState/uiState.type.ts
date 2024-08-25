@@ -12,5 +12,6 @@ export enum UIState {
   quickFocusLayout = "quickFocusLayout",
   quickFocusTag = "quickFocusTag",
   focusComposeType = "focusComposeType",
-  focusAdvancedComposeMode = "focusAdvancedComposeMode"
+  focusAdvancedComposeMode = "focusAdvancedComposeMode",
+  journalYearSelection = "journalYearSelection"
 }

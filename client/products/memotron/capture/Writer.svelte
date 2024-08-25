@@ -5,7 +5,24 @@
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import FileCapture from "./FileCapture.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let isEmptyState: boolean = true;
+  import { setContext } from "svelte";
+
+  function handleEvent(message: any) {
+    logger.log({ at: "capture handleEvent", message });
+    if (!message) return;
+    const data = message.data;
+    if (message.event === "mention") {
+      if (!data?.id || !data?.location) return;
+      captureStore.addMentionLink(data.location, data.id);
+    } else if (message.event === "unmention") {
+      if (!data?.id || !data?.location) return;
+      captureStore.removeMentionLink(data.location, data.id);
+    }
+  }
+  setContext("node", handleEvent);
+
   refreshEmptyState();
   let isShowTOC: boolean = false;
   function onFileChanges(event: any) {
@@ -16,16 +33,6 @@
       $captureStore.captureType === CaptureType.MARKDOWN &&
       "blocks" in $captureStore.body &&
       isEmptyMd(e?.detail || $captureStore.body);
-  }
-  function onMention(e: CustomEvent) {
-    const detail = e.detail;
-    if (!detail.id || !detail.location) return;
-    captureStore.addMentionLink(detail.location, detail.id);
-  }
-  function onUnmention(e: CustomEvent) {
-    const detail = e.detail;
-    if (!detail.id || !detail.location) return;
-    captureStore.removeMentionLink(detail.location, detail.id);
   }
 </script>
 
@@ -49,8 +56,6 @@
         bind:childrenWithStructure={$captureStore.childrenWithStructure}
         bind:rootStructure={$captureStore.rootStructure}
         on:change={refreshEmptyState}
-        on:mention={onMention}
-        on:unmention={onUnmention}
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

@@ -55,12 +55,14 @@ import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "./analytics/AnalyticsViewsPageEditMobile.svelte";
 import { quickFocusItemStore } from "./goals/goal.store";
 import { appStore } from "$lib/client/stores/app.store";
+import { Embed } from "$lib/client/types/context.type";
+import ImportOnboarding from "./settings/data/ImportOnboarding.svelte";
 
 const isSessionRunningPreCondition = () => get(sessionStore).isSessionRunning;
 
 export const pointronActions: IAction[] = [
   {
-    action: PointronAction.ANALYTICSVIEWSPAGEEDITMOBILE,
+    action: PointronAction.ANALYTICS_VIEWS_PAGE_EDIT_MOBILE,
     component: AnalyticsViewsPageEditMobile,
     type: ActionType.MODAL,
     modalParams: {
@@ -259,6 +261,7 @@ export const pointronActions: IAction[] = [
     isMeta: true,
     component: EditTagModal,
     modalParams: {
+      title: "Edit Tag",
       isShowAsSheet: false,
       layout: {
         size: Size.xs
@@ -425,6 +428,23 @@ export const pointronActions: IAction[] = [
         size: Size.xl,
         orientation: Orientation.Horizontal
       }
+    },
+    hideContext: [Embed.HANDSET]
+  },
+  {
+    action: PointronAction.IMPORT_ONBOARDING,
+    label: "Import onboarding",
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: ImportOnboarding,
+    modalParams: {
+      layout: {
+        size: Size.md,
+        primaryAction: {
+          label: "I will do it later",
+          icon: "clock"
+        }
+      }
     }
   },
   {
@@ -439,7 +459,8 @@ export const pointronActions: IAction[] = [
     type: ActionType.FUNCTION,
     fn: async () => {
       appStore.runAction(PointronAction.IMPORT_EXPORT);
-    }
+    },
+    hideContext: [Embed.HANDSET]
   },
   {
     action: "widgets",
@@ -508,14 +529,9 @@ export const pointronActions: IAction[] = [
       searchStoreId: Resource.PointGoal,
       itemLabel: "goal",
       callback: async (id: string, label?: string) => {
-        console.log("search action selected id:", { id });
         const result = await quickFocusItemStore.pinGoal(id);
-        toasts.trigger({
-          title: "Goal: " + label,
-          message: result === -1 ? "Already pinned" : "Pinned to quick focus",
-          type: result === -1 ? AlertType.ERROR : AlertType.SUCCESS,
-          id: generateUID()
-        });
+        if (result === -1) toasts.error("Goal already pinned");
+        else toasts.success(`Goal **${label}** pinned to quick focus`);
       }
     }
   },
@@ -588,7 +604,7 @@ export const pointronActions: IAction[] = [
       title: "Create a new goal",
       isShowAsSheet: false,
       layout: {
-        size: Size.xl
+        size: Size.lg
       }
     }
   },

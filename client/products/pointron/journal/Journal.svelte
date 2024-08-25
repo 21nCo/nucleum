@@ -14,6 +14,19 @@
   import { CalendarHmVariant } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import { focusHeatmapStore } from "./journal.store";
   import TodayButton from "$lib/client/elements/button/TodayButton.svelte";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import { setContext } from "svelte";
+
+  function handleEvent(data: any) {
+    if (data.type === "year-selection") {
+      uiState.setState(UIState.journalYearSelection, data.year, {
+        isDeviceScoped: true
+      });
+    }
+  }
+  setContext("heatmap-event", handleEvent);
+
   function refresh() {
     dataManager.refreshPage([
       Resource.logsPane,
@@ -22,6 +35,9 @@
     ]);
   }
   refresh();
+  const selectedHeatmapYear = uiState.getState(UIState.journalYearSelection, {
+    isDeviceScoped: true
+  });
 </script>
 
 {#if $view.isPortrait}
@@ -41,6 +57,7 @@
           touchDevice={false}
           orientation={Orientation.Vertical}
           variant={CalendarHmVariant.YEARS_SWITCH}
+          options={{ selectedYear: selectedHeatmapYear }}
           provider={focusHeatmapStore}
         />
       </div>

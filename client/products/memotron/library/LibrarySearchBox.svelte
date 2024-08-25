@@ -15,7 +15,7 @@
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];
-  export let variant: "v1" | "v2";
+  export let variant: "v1" | "v2" | "v3";
   export let searchQuery: string = "";
   export let isStarFilterSelected: boolean = false;
   export let isStickied: boolean = false;
@@ -31,7 +31,7 @@
 </script>
 
 <div class="flex flex-col bg-bgs1 sticky top-0 z-20 shadow--sm">
-  <div class="flex w-full justify-between px-5 py-3 pt-6">
+  <div class="flex w-full justify-between p-5 py--3 pt-6 leading-none">
     <input
       class="text-h2 w-full bg-transparent focus:outline-none focus:border-none"
       type="text"
@@ -86,3 +86,11 @@
       : ColorStrength.Normal}
   />
 </div>
+
+<style>
+  input::placeholder {
+    font-weight: lighter;
+    /* font-style: italic; */
+    color: rgba(var(--colors-fgs2), 0.4);
+  }
+</style>

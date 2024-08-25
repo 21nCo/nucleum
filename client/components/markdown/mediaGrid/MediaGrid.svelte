@@ -79,7 +79,7 @@
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key == "Enter" && block.id) {
-      const newBlockId = mdStore.insert({ id: block.id });
+      const newBlockId = mdStore.insert({ source: block.id });
       dispatch("insert", { insertedAt: block.id, id: newBlockId });
     }
   }

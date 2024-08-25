@@ -27,7 +27,7 @@
   export let accessMode: ResourceAccessMode;
   export let selectedView: string = "Content";
   export let isWidened: boolean = false;
-  let bgIndex = 2;
+  let bgIndex = 1;
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
     tooltipOptions: {
@@ -117,7 +117,7 @@
       }}
     />
     {#if accessMode != ResourceAccessMode.INLINE}
-      <Button
+      <!-- <Button
         {...buttonCommonProps}
         label="Close node"
         size={Size.xs}
@@ -129,7 +129,7 @@
         on:click={() => {
           appStore.closeResource({ inlineRestoreId: $node.id });
         }}
-      />
+      /> -->
       <!-- <span class="text-ars1 text-b2 whitespace-nowrap"> Close page </span> -->
       <!-- <Icon
         icon="cross-circled"

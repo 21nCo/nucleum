@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
   import view from "$lib/client/stores/view.store";
   import {
     toasts,
@@ -12,7 +11,6 @@
   } from "$lib/client/types/statusMessage.type";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import context from "$lib/client/stores/context.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import Text from "$lib/client/elements/text/Text.svelte";
   import type {
@@ -23,8 +21,6 @@
   import ExportData from "./ExportData.svelte";
   import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { IPointSession } from "../../logs/log.type";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
   import {
     TableCellType,
@@ -34,7 +30,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
-  import { ImportSource } from "./data.type";
+  import ImportAppListPart from "./ImportAppListPart.svelte";
 
   let clearMessage: string | undefined = undefined;
   let fileInput: HTMLInputElement;
@@ -61,29 +57,6 @@
       refreshImportHistory();
     }
   }
-
-  const importSources = [
-    {
-      label: "Atracker",
-      id: ImportSource.ATRACKER
-    },
-    {
-      label: "Session",
-      id: ImportSource.SESSION
-    },
-    {
-      label: "Toggl track",
-      id: ImportSource.TOGGL_TRACK
-    },
-    {
-      label: "Timemator",
-      id: ImportSource.TIMEMATOR
-    },
-    {
-      label: "Pointron",
-      id: ImportSource.SELF
-    }
-  ];
 
   const columns: TableColumn[] = [
     {
@@ -117,11 +90,6 @@
 
   let importHistoryData: TableRowItem[] = [];
 
-  function onImportButtonClick(id: ImportSource) {
-    appStore.runAction(PointronAction.IMPORT_APP_DATA, {
-      componentParams: { importSource: id }
-    });
-  }
   async function refreshImportHistory() {
     let response = await new PointronPersistence().fetchImportHistory();
     importHistoryData = response;
@@ -149,19 +117,7 @@
   />
 {:else}
   <div class="flex flex-col gap-8 h-full flex-grow">
-    <div class="flex flex-col gap-3">
-      <div class="text-left mo:text-b2 text-fgs2">
-        Pick an app to import data
-      </div>
-      <div
-        class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
-      >
-        {#each importSources as { label, id }}
-          <Button on:click={() => onImportButtonClick(id)} {label} />
-        {/each}
-      </div>
-    </div>
-
+    <ImportAppListPart />
     <div class="flex flex-col gap-3">
       <div class="text-left mo:text-b2">Import history</div>
       <div class="w-full">

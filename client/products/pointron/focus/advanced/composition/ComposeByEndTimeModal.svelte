@@ -7,8 +7,7 @@
   import ComposeBreak from "./ComposeBreak.svelte";
   import ComposeTotalsText from "./ComposeTotalsText.svelte";
   export const id: string = "";
-  let endTime: Date =
-    $sessionStore.end ?? new Date(incrementTime(new Date(), 1, true));
+  let endTime: Date = new Date(incrementTime(new Date(), 1, true));
   let hour: number = endTime.getHours();
   let minute: number = endTime.getMinutes();
   onChange();

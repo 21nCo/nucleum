@@ -24,7 +24,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Display } from "$lib/client/types/view.type";
   import { enumToString, properCase } from "$lib/shared/utils/text.utils";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
 
   export let importSource: ImportSource = ImportSource.SELF;
   let checked: boolean = false;
@@ -443,10 +443,7 @@
         class={`font-normal w-full ${$view.isPortrait ? `text-b4` : `text-b3`}`}
       >
         {#key steps[importSource][activeStepIndex].subTitle}
-          <InlineMarkdownTextInput
-            class="text-center"
-            content={steps[importSource][activeStepIndex].subTitle}
-          />
+          {@html renderMdAsHtml(steps[importSource][activeStepIndex].subTitle)}
         {/key}
       </div>
     </div>
@@ -457,10 +454,9 @@
         }`}
       >
         {#key steps[importSource][activeStepIndex].description}
-          <InlineMarkdownTextInput
-            class="text-center"
-            content={steps[importSource][activeStepIndex].description}
-          />
+          {@html renderMdAsHtml(
+            steps[importSource][activeStepIndex].description
+          )}
         {/key}
       </div>
       <div
@@ -480,10 +476,7 @@
       </div>
       <div class={`font-normal ${$view.isPortrait ? `text-b4` : `text-b3`}`}>
         {#key steps[importSource][activeStepIndex].subTitle}
-          <InlineMarkdownTextInput
-            class="text-center"
-            content={steps[importSource][activeStepIndex].subTitle}
-          />
+          {@html renderMdAsHtml(steps[importSource][activeStepIndex].subTitle)}
         {/key}
       </div>
     </div>
@@ -496,10 +489,9 @@
         }`}
       >
         {#key steps[importSource][activeStepIndex].description}
-          <InlineMarkdownTextInput
-            class="text-center"
-            content={steps[importSource][activeStepIndex].description}
-          />
+          {@html renderMdAsHtml(
+            steps[importSource][activeStepIndex].description
+          )}
         {/key}
       </div>
       <div

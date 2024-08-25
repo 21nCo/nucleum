@@ -22,6 +22,7 @@
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
+  export let emptyStateLabel: string | undefined = undefined;
   let isFocused: boolean = false;
   let inputClasses: string =
     "text-input w-full bg-transparent focus:outline-none focus:border-none placeholder:font-light placeholder:text-fgs3 placeholder:text-b2";
@@ -51,11 +52,12 @@
     inputClasses = inputClasses + " " + resolveStyles().join(" ");
   });
   function onKeyup(event: any) {
-    if (!value) {
+    if (!value || (!searchCallback && !searchStoreId)) {
       hide();
-      return;
+      // return;
     } else show();
     searchResultsPopover.keyup(event);
+    dispatch("change", { value });
   }
   export function reset() {
     onReset();
@@ -89,7 +91,7 @@
     class={inputClasses}
     bind:value
     on:change|stopPropagation
-    on:keydown|stopPropagation
+    on:keydown
     on:keyup|stopPropagation={onKeyup}
     on:blur
     on:click|stopPropagation
@@ -114,8 +116,10 @@
       on:hide={hide}
       {searchStoreId}
       {searchCallback}
+      {emptyStateLabel}
       {searchResultComponent}
       on:select
+      on:empty-enter
       on:reset={onReset}
     />
   </slot>

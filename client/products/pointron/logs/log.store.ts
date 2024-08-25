@@ -28,7 +28,7 @@ import {
   type IPointLogStore,
   type IPointSession
 } from "./log.type";
-import { resolveSessionTime } from "$lib/client/products/pointron/pointron.utils";
+import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
@@ -229,8 +229,12 @@ class LogsPaneStore extends ObservableStore<ILogsPaneStore> {
     let logs = [];
     if (data && data.length > 0) {
       logs = data.map((x: any) => {
-        const { focus, brek } = resolveSessionTime(x.blocks);
-        return { ...x, totalFocus: focus, totalBreak: brek };
+        let sessionTime = resolveSessionTimeSplit(x);
+        return {
+          ...x,
+          totalFocus: sessionTime.focus,
+          totalBreak: sessionTime.brek
+        };
       });
     } else {
       logs = [];

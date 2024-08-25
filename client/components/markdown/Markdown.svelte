@@ -13,6 +13,29 @@
   import { generateUID } from "$lib/client/utils/utils";
   import { isValidAndUniqueArray } from "$lib/shared/utils/obj.utils";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import { setContext } from "svelte";
+
+  /**
+   * Propagates the event to the parent component.
+   *
+   * Repropagating by tapping the events from children to parent as blocks in `md` are not latest versions during some events when the NodularMarkdown component is receiving the events directly without interference from this component.
+   *
+   * @param event
+   * @param data
+   */
+  function propagate(event: string, data: any) {
+    dispatch(event, {
+      ...data,
+      md: { ...md, blocks: $mdStore.blocks }
+    });
+  }
+
+  function markdownContext(message: any) {
+    if (!message) return;
+    if (message.event) propagate(message.event, message.data);
+  }
+  setContext("markdown", markdownContext);
+
   export let md: IMarkdown;
   export let params: IMarkdownParams | undefined = undefined;
   export let parentBackgroundIndex: number | undefined = undefined;
@@ -20,11 +43,6 @@
   export let id: string | undefined = undefined;
   let mdId: string = id ?? generateUID();
   const mdStore = getMdStore(mdId);
-  //TODO - use context API
-  // console.log(
-  //   "md",
-  //   md.blocks.map((x) => x.id)
-  // );
   mdStore.load(md, params);
   // $: console.log("blocks", $mdStore.blocks);
   onMount(() => {
@@ -88,37 +106,8 @@
           {block}
           {mdStore}
           on:focus={(e) => {
-            dispatch("focus", {
-              ...e.detail,
-              md: { ...md, blocks: $mdStore.blocks }
-            });
+            propagate("focus", e.detail);
           }}
-          on:change={(e) => {
-            dispatch("change", {
-              ...e.detail,
-              md: { ...md, blocks: $mdStore.blocks }
-            });
-          }}
-          on:insert={(e) => {
-            dispatch("insert", {
-              ...e.detail,
-              md: { ...md, blocks: $mdStore.blocks }
-            });
-          }}
-          on:delete={(e) => {
-            dispatch("delete", {
-              ...e.detail,
-              md: { ...md, blocks: $mdStore.blocks }
-            });
-          }}
-          on:convert={(e) => {
-            dispatch("convert", {
-              ...e.detail,
-              md: { ...md, blocks: $mdStore.blocks }
-            });
-          }}
-          on:mention
-          on:unmention
         />
       {/each}
     {:else}

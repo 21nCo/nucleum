@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appStore } from "../stores/app.store";
+  import { player } from "../components/modal/modal.store";
   import view from "../stores/view.store";
   import { cn } from "../utils/ui.utils";
   export let isAppMenuHidden: boolean = false;
@@ -12,7 +12,7 @@
     "absolute bottom-0 flex w-full justify-center z-20",
     {
       "mb-8": $view.isPortrait && isAppMenuHidden,
-      "mb-[10.5rem]": $view.isPortrait && $appStore.player,
+      "mb-[10.5rem]": $view.isPortrait && $player.isMiniOn,
       "mb-24": $view.isPortrait,
       "mb-4": !$view.isPortrait
     },

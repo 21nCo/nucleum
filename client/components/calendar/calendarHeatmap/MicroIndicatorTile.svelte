@@ -22,7 +22,7 @@
       : tileValue;
   $: colors = heatMapColorRange($appearance, "aps1", 6);
   let tileRef: HTMLSpanElement;
-  let tooltip: string | undefined = resolveToolTip();
+  $: tooltip = resolveToolTip(data.date);
   $: isActive =
     ("date" in data &&
       data.date == formatDate($selectedTimePeriod, "iso-short")) ||
@@ -58,9 +58,10 @@
       tileValue = monthTitles[month];
     }
   }
-  function resolveToolTip() {
+  function resolveToolTip(date: string | undefined) {
+    if (!date) return;
     if ("date" in data) {
-      return formatDate(new Date(data.date), "verbose");
+      return formatDate(new Date(date), "verbose");
     }
   }
 </script>

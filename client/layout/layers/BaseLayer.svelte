@@ -153,8 +153,9 @@
     // postMessageToParent(event.data);
   };
   async function appEventHandler(e: IEvent) {
-    if (e.event === GlobalEvent.USER_LOGIN) {
-      if (e.value) dataManager.refreshClientCache();
+    if (e.event === GlobalEvent.USER_LOGIN && e.value) {
+      dataManager.initialize([...cacheableStores, ...localCacheableStores]);
+      dataManager.refreshClientCache();
     }
   }
   /**
@@ -329,12 +330,36 @@
   }
   function handleCustomNavigation(event: any) {
     logger.log({ at: "handleCustomNavigation", event });
-    if (event.detail?.isReload) window.location.reload();
-    else if (event.detail.path) goto(event.detail.path);
+    if (event.detail?.isReload) {
+      if (!$context.isEmbed) window.location.reload();
+      else {
+        goto(
+          (import.meta.env?.VITE_CUSTOM_PROTOCOL ?? "blanklabs") +
+            "://localhost/index.html"
+        );
+        // postToParent({ reload: true });
+      }
+    } else if (event.detail.path) goto(event.detail.path);
   }
+
+  /**
+   * Handles custom alert events from the app like network.utils and similar files where stores are directly used.
+   *
+   *
+   * Disabling network error message for embed mode as on iOS and macOS app, sometimes the network call is failing with error "Load Failed" - which is only happening on iOS and macOS embed scenarios.
+   * TODO - further investigation is required to understand the root cause of this issue.
+   *
+   * @param event
+   */
   function handleCustomAlert(event: any) {
     if (event.detail) console.log("custom alert:", event.detail);
     if (event.detail?.error === "networkerror") {
+      if (
+        $context.isEmbed &&
+        event.detail.message.tolowerCase().includes("load failed")
+      ) {
+        return;
+      }
       toasts.trigger({
         title: "Network Error",
         message: event.detail.message ?? "Something went wrong.",

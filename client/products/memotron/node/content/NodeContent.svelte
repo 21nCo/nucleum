@@ -27,6 +27,19 @@
   let previousRootStructure: string[] = [];
   let refreshId = Date.now();
   let markdownRef: any;
+  import { setContext } from "svelte";
+
+  function handleEvent(message: any) {
+    logger.log({ at: "node context", message });
+    if (!message) return;
+    const detail = message.data;
+    if (message.event === "mention") {
+      if (!detail.id || !detail.location) return;
+      node.mention(detail.location, detail.id);
+    }
+  }
+  setContext("node", handleEvent);
+
   onMount(() => {
     refreshCounts();
     const focusEventSub = node.eventStore.subscribe((x) => {
@@ -93,14 +106,15 @@
     refreshId = Date.now();
   }
   function onMarkdownContentChange(e: CustomEvent) {
-    console.log("Markdown content changed", { e });
+    logger.log({ at: "onMarkdownContentChange - test", ...e.detail });
     refreshCounts();
-    if (e.detail.block.id && "body" in e.detail.block) {
-      node.updateBlock(e.detail.block.id, { body: e.detail.block.body });
+    const block = e.detail.block;
+    if (block.source && "body" in block) {
+      node.updateBlock(block.source, { body: block.body });
     }
   }
   async function onMarkdownInsertChanges(e: CustomEvent) {
-    console.log("Markdown insert changes", { e });
+    logger.log({ at: "onMarkdownInsertChanges", ...e.detail });
     refreshCounts();
     const detail = e.detail;
     if (!detail?.id) return;
@@ -110,18 +124,24 @@
     );
   }
   function onMarkdownConvertChanges(e: CustomEvent) {
-    console.log("Markdown convert changes", { e });
-    if (e.detail.id && e.detail.blockType) {
-      node.updateBlock(e.detail.id, { contentType: e.detail.blockType });
+    logger.log({ at: "onMarkdownConvertChanges", ...e.detail });
+    if (e.detail.source && e.detail.toType) {
+      if (headingNodeTypes.includes(e.detail.fromType)) {
+        node.updateBlock(e.detail.source, {
+          contentType: e.detail.toType,
+          children: []
+        });
+      } else
+        node.updateBlock(e.detail.source, { contentType: e.detail.toType });
     }
   }
   function onMarkdownBlockDelete(e: CustomEvent) {
-    console.log("Markdown block deleted", { e });
-    if (!e.detail.id) return;
-    node.deleteBlock(e.detail.id);
+    logger.log({ at: "onMarkdownBlockDelete", e });
+    if (!e.detail.source) return;
+    node.deleteBlock(e.detail.source);
   }
   function onReStructure(e: CustomEvent) {
-    console.log("Markdown restructured", { e });
+    logger.log({ at: "onReStructure", ...e.detail });
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
@@ -135,17 +155,9 @@
         node.updateBlock(child.id, { children: child.children });
       });
   }
-  function onMention(e: CustomEvent) {
-    const detail = e.detail;
-    console.log("Mention", { e });
-    if (!detail.id || !detail.location) return;
-    node.mention(detail.location, detail.id);
-  }
-  function onUnMention(e: CustomEvent) {
-    console.log("Unmention", { e });
-  }
+
   function onFocus(e: CustomEvent) {
-    console.log("onFocus", { e });
+    logger.log({ at: "onFocus", ...e.detail });
     if (e.detail.id && e.detail.parent) {
       node.onFocus(e.detail.id, e.detail.parent);
     }
@@ -165,8 +177,6 @@
         on:convert={onMarkdownConvertChanges}
         on:delete={onMarkdownBlockDelete}
         on:restructure={onReStructure}
-        on:mention={onMention}
-        on:unmention={onUnMention}
         on:focus={onFocus}
         on:ready={refreshCounts}
       />

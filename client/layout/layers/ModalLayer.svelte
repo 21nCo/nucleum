@@ -2,7 +2,10 @@
   import Modal from "$lib/client/components/modal/Modal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
-  import modalEvent from "$lib/client/components/modal/modal.store";
+  import modalEvent, {
+    fullScreen,
+    player
+  } from "$lib/client/components/modal/modal.store";
   import {
     toasts,
     confirmationNotification,
@@ -32,6 +35,7 @@
   import ColorLayer from "./themeLayer/ColorLayer.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -121,6 +125,7 @@
       } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
         // modals = [x];
         modals = [...modals, x];
+        if ($view.isPortrait) toasts.reset();
       }
       logger.log({ modals });
     }
@@ -166,13 +171,7 @@
     </div>
   </div>
 {/if}
-{#if $appStore.player && !$view.isPortrait}
-  <div class="fixed bottom-0 right-0">
-    <ColorLayer>
-      <ComponentResolver path={$appStore.player} />
-    </ColorLayer>
-  </div>
-{/if}
+
 <!-- {#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
   <div class="fixed bottom-0 right-0 mr-6 mb-6">
     <Button
@@ -185,32 +184,43 @@
   </div>
 {/if} -->
 
-{#if (isValidArrayWithData($toasts) || (isValidArrayWithData($mutationQueue) && isShowSyncErrorMessage)) && !$view.isPortrait}
+{#if !$view.isPortrait && (isValidArrayWithData($toasts) || $player.isMiniOn)}
   <div
-    class="fixed bottom-0 right-0 mb-6 mr-6 flex flex-col gap-4 z-[100]"
-    transition:slide={{ duration: 200 }}
+    class="fixed bottom-0 right-0 mr-6 mb-6 flex flex-col items-end gap-4 z-[100]"
+  >
+    {#if isValidArrayWithData($toasts)}
+      <div class="flex flex-col gap-3" transition:slide={{ duration: 200 }}>
+        {#each $toasts as toast}
+          <ToastNotification notification={toast} />
+        {/each}
+      </div>
+    {/if}
+    {#if $player.isMiniOn}
+      <!-- Opacity is used as `hidden` or svelte `#if` will impair associated PIP functionality -->
+      <div class={cn("player", { "opacity-0": $fullScreen.path })}>
+        <ColorLayer>
+          <ComponentResolver path={$player.action} />
+        </ColorLayer>
+      </div>
+    {/if}
+  </div>
+{/if}
+
+{#if isValidArrayWithData($toasts) && $view.isPortrait}
+  <div
+    class={cn(
+      "fixed bottom-0 left-0 mx-6 flex flex-col justify-center w-full gap-4 z-[100]",
+      {
+        // "mb-8": isAppMenuHidden,
+        "mb-[10.5rem]": $player.isMiniOn,
+        "mb-24": $view.isPortrait
+      }
+    )}
+    transition:slide={{ duration: 200, axis: "x" }}
   >
     {#each $toasts as toast}
       <ToastNotification notification={toast} />
     {/each}
-    <!-- {#if isValidArrayWithData($mutationQueue)}
-      <ToastNotification
-        notification={{
-          id: "syncNotification",
-          type: AlertType.WARNING,
-          message:
-            $mutationQueue.length +
-            ($mutationQueue.length === 1 ? " change" : " changes") +
-            " pending sync",
-          title: "Sync error - we're sorry!",
-          actionText: "Sync manually",
-          callback: () => {
-            dataManager.syncPendingMutations();
-          },
-          isHideClose: true
-        }}
-      />
-    {/if} -->
   </div>
 {/if}
 

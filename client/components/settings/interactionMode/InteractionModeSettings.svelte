@@ -122,4 +122,5 @@
   {/if}
   <ScrollViewBottomSpacer />
   <InlineInfoBanner content={resolveInfo(selectedMode)} />
+  <ScrollViewBottomSpacer />
 </div>

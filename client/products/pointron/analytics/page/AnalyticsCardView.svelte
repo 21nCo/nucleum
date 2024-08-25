@@ -71,7 +71,7 @@
   class={cn("flex flex-col grow border border-brs2 rounded-md mo:bg-bgs1", {
     "w-full h-96 p-2": $view.isPortrait,
     "h-[32rem]": $view.isPortrait && $isInEditMode,
-    "min-w-1/2 w-1/2 p-4 bg-bgs2": !$view.isPortrait,
+    "min-w-1/2 w-1/2 2k:min-w-min 2k:w-3/10 p-4 bg-bgs2": !$view.isPortrait,
     "w-4/5": position.total === 1 && !$view.isPortrait,
     "w-1/3":
       !$view.isPortrait &&

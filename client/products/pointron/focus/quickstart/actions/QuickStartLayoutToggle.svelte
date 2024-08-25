@@ -15,9 +15,10 @@
     };
   });
   function refreshLayoutState() {
-    return uiState.getState(UIState.quickFocusLayout, {
+    const layoutState = uiState.getState(UIState.quickFocusLayout, {
       isDeviceScoped: true
     });
+    return layoutState ?? Layout.LIST;
   }
 </script>
 
@@ -27,7 +28,7 @@
   on:click={() => {
     uiState.setState(
       UIState.quickFocusLayout,
-      layout === Layout.LIST ? Layout.GRID : Layout.LIST,
+      layout === Layout.LIST || !layout ? Layout.GRID : Layout.LIST,
       {
         isDeviceScoped: true
       }

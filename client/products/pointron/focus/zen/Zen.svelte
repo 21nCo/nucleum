@@ -2,7 +2,7 @@
   import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
   import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
+  import { isInEditMode } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import SessionTimeText from "../elements/sessionTimeText/SessionTimeText.svelte";
@@ -12,28 +12,18 @@
   import FocusItemsHeading from "./FocusItemsHeading.svelte";
   import TimeleftIndicator from "./timeleftindicator/TimeleftIndicator.svelte";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import Extras from "../elements/controls/Extras.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import appearance from "$lib/client/stores/appearance.store";
   import SessionNotes from "../notes/SessionNotes.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { fullScreen } from "$lib/client/components/modal/modal.store";
   export let isInline: boolean = false;
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
-  // if ($focusItemsStore.length < 1) {
-  //   isInEditMode = true;
-  // }
-  function onFullScreenToggle(isShowFullScreen: boolean = true) {
-    if (isShowFullScreen) {
-      appStore.showFullScreenPlayer(PointronAction.FULL_SCREEN_FOCUS);
-    } else {
-      appStore.hideFullScreenPlayer();
-    }
-  }
+
   $: isExtraLargeScreen = $view.landscapiness > 1.5 && $view.scale > 1.5;
 </script>
 
@@ -49,7 +39,7 @@
         event,
         undefined,
         undefined,
-        appStore.hideFullScreenPlayer,
+        fullScreen.hide,
         undefined,
         undefined
       )}

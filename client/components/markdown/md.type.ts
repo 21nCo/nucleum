@@ -1,3 +1,4 @@
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type {
   NodeContent,
   ListChild,
@@ -8,12 +9,16 @@ import type {
 } from "../../products/memotron/node/node.type";
 import type { IResourceBase } from "../resourceStores/resource.type";
 
-export type IMarkdownStore = IMarkdown & {
-  blockToFocus?: string;
-  reRenderBlock?: string;
-  params?: IMarkdownParams;
-  activeHeading: string;
-};
+export type IMarkdownStore = IMarkdown &
+  IObservableStoreSubject & {
+    /**
+     * @deprecated - use focus writable on MarkdownStore instead
+     */
+    blockToFocus?: string;
+    reRenderBlock?: string;
+    params?: IMarkdownParams;
+    activeHeading: string;
+  };
 export type IMarkdown = { blocks: IBlock[] };
 export type DbBlock = IResourceBase & IBlock;
 
@@ -81,7 +86,7 @@ export type IListOperation = {
 };
 
 export type IBlockOperationContext = {
-  id: string;
+  source: string;
   blockType?: NodeType;
   listType?: ListType;
 };

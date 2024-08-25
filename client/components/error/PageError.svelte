@@ -5,7 +5,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
-  import InlineMarkdownTextInput from "../markdown/content/InlineMarkdownTextInput.svelte";
+  import { renderMdAsHtml } from "../markdown/markdown.utils";
   $: is404 = $page?.url.pathname === "/404" || $page?.url.pathname === "/404/";
   $: erroredPath = $page?.url?.searchParams?.get("path");
   const titles = ["Yikes", "Uh-oh", "Oops", "Oh no", "Whoops", "Dang", "Shoot"];
@@ -22,12 +22,11 @@
   <div class="text-b3 text-center text-ars1">
     {$page?.error?.message ?? "Something went wrong."}
   </div>
-  <InlineMarkdownTextInput
-    class="text-fgs3 text-b2 text-center"
-    content={is404
+  {@html renderMdAsHtml(
+    is404
       ? `Oops! The page **${erroredPath ?? ""}** you're looking for doesn't exist.`
-      : "We would never want you to see this page. Please chat with us or try again."}
-  />
+      : "We would never want you to see this page. Please chat with us or try again."
+  )}
   <div class="flex gap-2">
     <Button
       size={Size.sm}

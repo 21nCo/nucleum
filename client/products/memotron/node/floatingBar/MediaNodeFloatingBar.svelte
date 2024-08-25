@@ -101,7 +101,7 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-4",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-3",
         {
           "w-full": accessMode === ResourceAccessMode.POP,
           "rounded-md": accessMode === ResourceAccessMode.FOCUS
@@ -109,7 +109,7 @@
       )}
     >
       <div class="flex justify-between items-center w-full">
-        <span>
+        <span class="flex-1">
           <NodeTitle {node} />
         </span>
         <span class="flex gap-5">
@@ -199,20 +199,8 @@
         </div>
       {/if}
       <div class="flex w-full justify-between">
-        {#if $node.contentType === NodeType.WEB_PAGE}
-          <Button
-            icon="arrow-up-right"
-            label="Open link"
-            size={Size.xs}
-            type={ButtonVariant.PRIMARY}
-            style={ButtonStyle.OUTLINED}
-            on:click={() => {
-              appStore.openLink($node.body.url);
-            }}
-          />
-        {/if}
         <div></div>
-        <div class="text-b4 text-fgs3 mt-2">
+        <div class="text-b3 text-fgs3 mt-2">
           Created {formatDatetime($userPreferences, $node.createdAt)}
         </div>
       </div>
