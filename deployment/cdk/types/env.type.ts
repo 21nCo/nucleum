@@ -1,4 +1,8 @@
 export type IEnvironment = {
+  /**
+   * Name of the environment ex: dev, pre, live
+   */
+  environment: string;
   domain: string;
   subdomain?: string;
   allRegionList: string[];
