@@ -260,10 +260,10 @@ echo "User data script execution completed at $(date)"
         bundleSize = "small";
         break;
       case "pre":
-        bundleSize = "medium";
+        bundleSize = "small";
         break;
-      case "prod":
-        bundleSize = "large";
+      case "live":
+        bundleSize = "medium";
         break;
       default:
         bundleSize = "small";
