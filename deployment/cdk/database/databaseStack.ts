@@ -46,7 +46,7 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
     this.diskName =
       this.env.region + (props.isMasterDb ? "-master-db-disk" : "-db-disk");
     this.availabilityZone = this.env.region + "a";
-    this.instanceName = `${this.domainName}-instance`;
+    this.instanceName = `${this.domainName}-instance-change`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
 
     const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
