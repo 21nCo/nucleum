@@ -9,6 +9,7 @@ import type {
   LinkType
 } from "$lib/client/products/memotron/node/node.type";
 import { MemotronResourceType } from "../memotron.type";
+import { type A2MDBlock } from "./AudioToMarkdown.type";
 
 export enum CaptureType {
   ANY = "Any",
@@ -48,6 +49,7 @@ export type FileDetails = {
   duration?: number;
   transcription?: string;
   initTranscription?: boolean;
+  mdBlocks?: A2MDBlock[];
   pdfAnnotations?: any[];
 };
 

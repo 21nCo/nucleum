@@ -202,6 +202,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     filled: false,
     usedIcons: []
   },
+  lastUsedTranscriptionModel: "tiny.en",
   annotations: [],
   mediaGridTestitems: [],
   infiniteGrid: {

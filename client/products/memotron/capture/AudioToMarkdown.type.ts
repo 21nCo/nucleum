@@ -1,9 +1,9 @@
-export interface Block {
+export interface A2MDBlock {
   id?: string;
   contentType?: string;
   body?: string;
   listType?: string;
-  children?: Block[];
+  children?: A2MDBlock[];
 }
 
 export enum ListKeys {

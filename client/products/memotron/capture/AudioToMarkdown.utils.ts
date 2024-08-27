@@ -6,7 +6,7 @@ import {
   HeadingKeys,
   InlineKeys,
   ListKeys,
-  type Block,
+  type A2MDBlock,
   BlockKeys
 } from "./AudioToMarkdown.type";
 class AudioToMarkdown {
@@ -172,9 +172,9 @@ class AudioToMarkdown {
     ...this.stopKeywords
   ];
 
-  blocks: Block[] = [];
-  defaultBlock: Block = { body: "", contentType: "SIMPLE_TEXT" };
-  defaultListBlockValues: Block = {
+  blocks: A2MDBlock[] = [];
+  defaultBlock: A2MDBlock = { body: "", contentType: "SIMPLE_TEXT" };
+  defaultListBlockValues: A2MDBlock = {
     body: "",
     contentType: "LIST",
     children: []
