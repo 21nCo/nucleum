@@ -3,10 +3,10 @@
   import { onMount } from "svelte";
   import AnalyticsTags from "./AnalyticsTags.svelte";
   import posthog from "posthog-js";
-
+  export let isLanding: boolean = false;
   let isAnalyticsTagsMapped = false;
   onMount(() => {
-    if ($userPreferences?.isAnonymousAnalyticsEnabled) {
+    if ($userPreferences?.isAnonymousAnalyticsEnabled || isLanding) {
       localStorage.removeItem("gaTag");
       localStorage.removeItem("clarityTag");
       const gaTag = import.meta.env.VITE_GA_TAG;
