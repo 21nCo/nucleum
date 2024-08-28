@@ -26,15 +26,10 @@
 </script>
 
 {#if pinnedItems?.length > 0}
-  <div class="flex gap-3 justify-between w-full h-12 bg-bgs2 py-2 px-6">
-    <span class="flex gap-3 grow">
-      <Icon
-        icon="home"
-        size={Size.lg}
-        on:click={() => {
-          appStore.toggleSearchParam(ResourceAccessMode.TOPBARFOCUS, undefined);
-        }}
-      />
+  <div
+    class="flex gap-3 justify-between items-center w-full h--12 bg-bgs2 py--2 pr-4"
+  >
+    <span class="flex gap--2 grow">
       {#each pinnedItems as item (item)}
         <TopBarResourceItem
           {item}
@@ -51,7 +46,7 @@
     <span>
       <Button
         icon="search"
-        size={Size.lg}
+        size={Size.sm}
         parentBgIndex={2}
         on:click={() => {
           appStore.runAction(Action.GLOBAL_SEARCH);

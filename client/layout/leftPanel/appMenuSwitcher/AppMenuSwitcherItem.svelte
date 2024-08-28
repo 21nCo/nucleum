@@ -64,6 +64,7 @@
         layoutContext === LayoutContext.MINIMIZED) && {
         "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && isOutlineStyle,
+        "hover:bg-bgs3": !isActive,
         [abg()]: isActive && !isOutlineStyle,
         "border border-transparent": !isActive && isOutlineStyle
       },
@@ -72,7 +73,7 @@
         "text-aps1": isActive
       },
       {
-        "text-b2 gap-2 rounded-lg p-3 h-10":
+        "text-b2 gap-2 rounded-lg p-2 h-9":
           isShowLabel && layoutContext != LayoutContext.PORTRAIT,
         "p-4 rounded-full": !isShowLabel,
         "justify-between": isShowHotKeyHint
@@ -93,8 +94,8 @@
             icon={item.icon}
             size={layoutContext === LayoutContext.THIN ||
             layoutContext === LayoutContext.PORTRAIT
-              ? Size.lg
-              : Size.md}
+              ? Size.md
+              : Size.sm}
             class={cn(
               (layoutContext === LayoutContext.DEFAULT ||
                 layoutContext === LayoutContext.MINIMIZED) && {

@@ -6,11 +6,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
-  import {
-    appStore,
-    isInEditMode,
-    userPreferences
-  } from "$lib/client/stores/app.store";
+  import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Orientation, Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -18,23 +14,16 @@
   import { MemotronAction } from "../../memotronAction.enum";
   import { resolveNodeContextMenu, type IActiveNodeStore } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
-  import { NodeType } from "../node.type";
-  import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  import { NodeRightPaneType, NodeType } from "../node.type";
   import NodePropertiesOnMainPanel from "../content/NodePropertiesOnMainPanel.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
-  import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
   export let isHovering: boolean = false;
-  export let renderingDetails: any;
-  let overlay: string | undefined = undefined;
+  export let rightPane: NodeRightPaneType | undefined = undefined;
   let contextMenu = [];
   let buttonCommonProps = {
     tooltipOptions: {
@@ -48,6 +37,14 @@
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
     isMediaNode: true
   });
+
+  function onPanelAction(param: NodeRightPaneType) {
+    if (rightPane === param) {
+      rightPane = undefined;
+      return;
+    }
+    rightPane = param;
+  }
 </script>
 
 <!-- Using transition here caused modal freeze issue -->
@@ -69,7 +66,7 @@
         accessMode === ResourceAccessMode.FOCUS
     })}
   >
-    {#if overlay || $node.isArchived || $node.trashInformation}
+    {#if $node.isArchived || $node.trashInformation}
       <div
         class={cn("bg-bgs2 rounded-md p-4 border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
@@ -78,25 +75,7 @@
           "w-full": accessMode === ResourceAccessMode.FOCUS
         })}
       >
-        {#if overlay === "properties"}
-          <div class="flex flex-col gap-4 w-full items-start">
-            <Text content="Properties" style={TextStyle.SECTION_HEADING} />
-            <NodePropertiesPane {node} isMediaNode={true} />
-          </div>
-        {:else if overlay === "notes"}
-          <div class="flex flex-col h-80 gap-4 w-full items-start">
-            <Text content="Notes" style={TextStyle.SECTION_HEADING} />
-          </div>
-        {:else if overlay === "metadata"}
-          <div
-            class="flex flex-col h-60 gap-4 w-full items-start overflow-auto"
-          >
-            <Text content="Metadata" style={TextStyle.SECTION_HEADING} />
-            <NodeMetadataPane {node} isMediaNode={true} {renderingDetails} />
-          </div>
-        {:else if $node.isArchived || $node.trashInformation}
-          <ResourceStatusBanner resource={node} />
-        {/if}
+        <ResourceStatusBanner resource={node} />
       </div>
     {/if}
     <div
@@ -108,21 +87,25 @@
         }
       )}
     >
-      <div class="flex justify-between items-center w-full">
-        <span class="flex-1">
+      <div class="flex gap-3 justify-between items-center w-full">
+        <span class="flex-1 min-w-0">
           <NodeTitle {node} />
         </span>
         <span class="flex gap-5">
           <Button
             {...buttonCommonProps}
             icon="document-text"
-            tooltip="Footnotes"
+            tooltip="Side notes"
             on:click={() => {
-              if (overlay === "notes") {
-                overlay = undefined;
-                return;
-              }
-              overlay = "notes";
+              onPanelAction(NodeRightPaneType.SIDENOTES);
+            }}
+          />
+          <Button
+            {...buttonCommonProps}
+            icon="arrow-up-right"
+            tooltip="Show all links"
+            on:click={() => {
+              onPanelAction(NodeRightPaneType.LINKS);
             }}
           />
           <Button
@@ -130,11 +113,7 @@
             icon="widget"
             tooltip="Show properties"
             on:click={() => {
-              if (overlay === "properties") {
-                overlay = undefined;
-                return;
-              }
-              overlay = "properties";
+              onPanelAction(NodeRightPaneType.PROPERTIES);
             }}
           />
           <!-- <EditToggleButton isReadModeVariant={true} /> -->
@@ -146,18 +125,6 @@
               appStore.runAction(MemotronAction.SERENDIPITY, {
                 componentParams: { id: $node.id }
               });
-            }}
-          />
-          <Button
-            {...buttonCommonProps}
-            icon="info"
-            tooltip="Show metadata"
-            on:click={() => {
-              if (overlay === "metadata") {
-                overlay = undefined;
-                return;
-              }
-              overlay = "metadata";
             }}
           />
           <ContextMenuAction {contextMenu} />

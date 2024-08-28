@@ -1,7 +1,7 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { type IActiveNodeStore } from "../node.store";
-  import NodeRightPanel from "../rightPanel/NodeRightPanel.svelte";
+  import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
@@ -139,7 +139,7 @@
             </main>
           </div>
         </div>
-        <NodeRightPanel {node} {mdId} bind:isRightPanelCollapsed />
+        <NodeRightPane {node} {mdId} bind:isRightPanelCollapsed />
       </div>
     {:else}
       <ComingSoonView />

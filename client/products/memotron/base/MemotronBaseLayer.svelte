@@ -55,29 +55,31 @@
 <BaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     <div class="flex flex-col w-full h-full">
-      {#if !$view.isPortrait}
-        <PinnedTopBar />
-      {/if}
       <div class="flex w-full flex-grow">
-        {#if !topBarResourceId}
-          <MemotronLeftNav />
-        {/if}
+        <!-- {#if !topBarResourceId} -->
+        <MemotronLeftNav />
+        <!-- {/if} -->
         <div
           class="flex flex-col h-full {$view.isPortrait
             ? 'w-full'
             : 'flex-grow'}"
         >
-          <AppSplitView>
-            <slot name="main" slot="main">
-              {#if topBarResourceId}
-                {#key topBarResourceId}
-                  <ResourceResolver id={topBarResourceId} />
-                {/key}
-              {:else}
-                <slot />
-              {/if}
-            </slot>
-          </AppSplitView>
+          {#if !$view.isPortrait}
+            <PinnedTopBar />
+          {/if}
+          <div class="w-full flex-grow">
+            <AppSplitView>
+              <slot name="main" slot="main">
+                {#if topBarResourceId}
+                  {#key topBarResourceId}
+                    <ResourceResolver id={topBarResourceId} />
+                  {/key}
+                {:else}
+                  <slot />
+                {/if}
+              </slot>
+            </AppSplitView>
+          </div>
         </div>
         <!-- <RightPanel /> -->
       </div>

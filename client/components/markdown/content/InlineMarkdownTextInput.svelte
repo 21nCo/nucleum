@@ -571,6 +571,7 @@
     // });
     saveCaretPosition();
     content = parsedMdContent ?? "";
+    dispatch("change");
     const steps = [replaceInlineSymbols, () => replaceInlineStyling(event)];
     for (const func of steps) {
       if (func()) return;

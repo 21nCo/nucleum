@@ -5,7 +5,8 @@
   export let label: string;
   export let value: string;
   function valueFormatter(value: string) {
-    if (value.includes("T")) {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
       return formatDatetime($userPreferences, new Date(value));
     }
     return value;

@@ -9,6 +9,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
   export let node: IActiveNodeStore;
+  export let renderingDetails: any = undefined;
   export let isMediaNode: boolean = false;
   $: nodeProperties = mapPropertyValues(
     $node?.propertyConfig,
@@ -50,7 +51,7 @@
   {#if !isMediaNode}
     <div class="flex flex-col gap-3 w-full">
       <Divider />
-      <NodeMetadataPane {node} />
+      <NodeMetadataPane {node} {renderingDetails} />
     </div>
   {/if}
   <ScrollViewBottomSpacer />

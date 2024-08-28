@@ -340,11 +340,12 @@ export type MediaBody = {
   duration?: number;
 };
 
-export enum RightPanelType {
+export enum NodeRightPaneType {
   NONE = "NONE",
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
   TRACES = "TRACES",
+  SIDENOTES = "SIDENOTES",
   /**
    * @deprecated - merged into properties
    */

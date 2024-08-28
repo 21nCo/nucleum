@@ -1,10 +1,22 @@
 <script lang="ts">
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
   import { type INode, NodeType } from "../node.type";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let node: INode;
-  let dynamicLabel: string | undefined = undefined;
+  export let isNodePageContext: boolean = false;
+  let dynamicLabel:
+    | string
+    | {
+        label: string;
+        parent: {
+          id: string;
+          label: string;
+        };
+      }
+    | undefined = undefined;
   const dynamicLabelNodeTypes = [
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
@@ -28,18 +40,30 @@
     if (node.contentType === NodeType.TEXT_CLIP) {
       const defaultLabel = "Clipped Text - " + node.body.text;
       if (!parent || !parent.label) return defaultLabel;
-      return "Text clipped from - " + parent.label;
+      return {
+        label: "Text clipped from -",
+        parent
+      };
     }
     if (node.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
       const defaultLabel = "Web screenshot";
       if (!parent || !parent.label) return defaultLabel;
-      return "Screenshot: " + parent.label;
+      return {
+        label: "Screenshot -",
+        parent
+      };
     }
     if (node.contentType === NodeType.TWEET) {
       const defaultLabel = "Unknown tweet";
       if (!parent || !("name" in parent.body) || !parent.body?.name)
         return defaultLabel;
-      return parent.body.name + " on X";
+      return {
+        label: "Tweet by ",
+        parent: {
+          id: parent.id,
+          label: parent.body.name
+        }
+      };
     } else if (node.contentType === NodeType.TWITTER_PROFILE) {
       const defaultLabel = "Unknown X profile";
       if (node.metadata?.ogTitle) return node.metadata.ogTitle;
@@ -53,9 +77,29 @@
 {#if node.label}
   {node.label}
 {:else if dynamicLabelNodeTypes.includes(node.contentType)}
-  {dynamicLabel}
+  {#if typeof dynamicLabel === "string"}
+    {dynamicLabel}
+  {:else}
+    {dynamicLabel?.label}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <span
+      class={cn({
+        "underline-dotted truncate cursor-pointer hover:underline-dotted-primary":
+          isNodePageContext
+      })}
+      on:click={(e) => {
+        appStore.resourceClickHandlerWithReplace(
+          e,
+          dynamicLabel?.parent.id,
+          node.id
+        );
+      }}
+    >
+      {dynamicLabel?.parent?.label}
+    </span>
+  {/if}
 {:else if node.body && typeof node.body === "string"}
-  <InlineMarkdownTextInput content={node.body} />
+  {@html renderMdAsHtml(node.body)}
 {:else if node.body && node.body.text && typeof node.body.text === "string"}
   {node.body.text}
 {:else}

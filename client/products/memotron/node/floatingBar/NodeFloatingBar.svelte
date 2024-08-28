@@ -56,7 +56,7 @@
     />
   </span>
   <span class="flex items-center gap-3 h-full">
-    <Button {...buttonCommonProps} icon="document-text" tooltip="Footnotes" />
+    <Button {...buttonCommonProps} icon="document-text" tooltip="Side notes" />
     <Button
       {...buttonCommonProps}
       icon="book-open"
