@@ -28,7 +28,7 @@
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;
 
-  let selectedGoalId: string = "";
+  let selectedGoalId: string | undefined = undefined;
   let selectedTagId: TagId | string = TagId.ALL;
   $: isGoalsHome =
     $page?.url.pathname === "/goal" || $page?.url.pathname === "/goal/";
@@ -64,7 +64,7 @@
   }
 </script>
 
-{#if $view.isPortrait && !isGoalsHome}
+{#if $view.isPortrait && selectedGoalId}
   <div class="flex flex-col h-full w-full">
     <!-- <button
         class="flex max-w-min bg-bgs2 px-2"
@@ -79,13 +79,14 @@
       class="flex mt-4 gap-1 items-center min-w-fit p-4 h-2 text-aps1"
       style="top: 1.75rem;"
       on:click={() => {
-        appStore.gotoPath("/goal");
+        // appStore.gotoPath("/goal");
+        selectedGoalId = undefined;
       }}
     >
       <Icon icon="chevleft" size={Size.sm} class="stroke-aps1" />
       <div class="pr-1">Back</div>
     </button>
-    <slot />
+    <GoalHomeV2 id={selectedGoalId} />
   </div>
 {:else if isGoalsHome || !$view.isPortrait}
   <div class="flex w-full h-full select-none relative">
