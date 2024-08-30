@@ -1,5 +1,6 @@
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IClip, INodeProperty } from "$lib/client/products/memotron/node/node.type";
+import type { AlertType } from "$lib/client/types/notification.type";
 export interface IWebpage extends IObservableStoreSubject {
   url: string;
   id?: string;
@@ -21,7 +22,7 @@ export type IImageElement = { src: string; alt: string }
 
 export interface IFeedbackPaneStore extends IObservableStoreSubject {
   isShown: boolean;
-  feedback: string;
+  feedback: string | {message: string, type: AlertType};
     /**
    * The clip that is currently focused in the feedback pane.
    */

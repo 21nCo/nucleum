@@ -20,7 +20,7 @@
   {#if $node.contentType === NodeType.WEB_PAGE}
     <WebPagePreview {node} />
   {:else if $node.contentType === NodeType.TEXT_CLIP || $node.contentType === NodeType.VIDEO_TIMESTAMP_CLIP || $node.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <WebClipPreview {node} />
+    <WebClipPreview node={$node} />
   {:else if $node.contentType === NodeType.TWEET}
     <TweetPreview {node} />
   {/if}

@@ -1,7 +1,7 @@
 import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
 import { NodeType, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage,} from "$lib/client/products/memotron/node/node.type";
 import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
-import { sendMessageToContentScript } from "$lib/client/utils/extension.utils";
+import { relayToContentScript } from "$lib/client/utils/extension.utils";
 import * as CryptoJS from "crypto-js";
 import { contentTypeMap } from "$lib/client/products/memotron/common/urlMap";
 import { enumToString } from "$lib/shared/utils/text.utils";
@@ -92,8 +92,8 @@ export async function resolveCurrentTabData(
       };
     }
     try {
-      const data = await sendMessageToContentScript(
-        { event: ExtensionEvent.READ_PAGE_CONTENT },
+      const data = await relayToContentScript(
+        { event: ExtensionEvent.PAGE_STATE },
         tab.id
       );
       return {

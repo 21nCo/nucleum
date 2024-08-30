@@ -12,6 +12,7 @@
   import account from "$lib/client/stores/account.store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -98,31 +99,23 @@
           false
         );
 
-        chrome.runtime.sendMessage(
-          {
-            event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-            data: { s3SignedURL, dataURL, contentType }
-          },
-          (response) => {
-            if (response == 200) {
-              saveSnip(s3SignedURL.uploadURL.split("?")[0]);
-            }
-          }
-        );
+        const response = await relayToBackgroundScript({
+          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+          data: { s3SignedURL, dataURL, contentType }
+        });
+        if (response == 200) {
+          saveSnip(s3SignedURL.uploadURL.split("?")[0]);
+        }
       }
     };
   }
   async function snip(area: IArea) {
     await resetComputedValues();
     if (area.width <= 5 || area.height <= 5) return;
-    chrome.runtime.sendMessage(
-      {
-        event: ClipperExtensionEvent.SCREENSHOT
-      },
-      (data) => {
-        processScreenshot(data, area);
-      }
-    );
+    const data = await relayToBackgroundScript({
+      event: ClipperExtensionEvent.SCREENSHOT
+    });
+    processScreenshot(data, area);
   }
 
   function getScreenshotDimensions(

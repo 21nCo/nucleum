@@ -8,7 +8,6 @@ import { Surreal } from "surrealdb.js";
 import type { TabData } from "$lib/client/types/extension.type";
 import {
   interceptSurrealResponse,
-  sendMessageToContentScript
 } from "$lib/client/utils/extension.utils";
 import {
   kindleSyncState,
@@ -97,76 +96,11 @@ export class ClipperPersistence {
   }
 
   /**
-   * 
    * @deprecated - use clipper store instead
    * 
-   * Can be triggered from either content script or side bar.
-   * If triggered from content script, tab data will be present in the message.
-   *
-   * TODO - save web page node via NodeStore - to update nodes local cache
-   *
-   * @returns
+   * @param url 
+   * @returns 
    */
-  async saveWebpage(tabData?: TabData) {
-    try {
-      const query = "fn::memotron::clipper::saveWebpage($url, $data)";
-      let isFromSidepanel = false;
-      if (!tabData) {
-        isFromSidepanel = true;
-        tabData = await resolveCurrentTabData(true);
-      }
-      const params = { url: tabData.url, data: tabData };
-      const result = await this.queryUsingHttp(query, params);
-      console.log("save web page", { result });
-      if (result?.id) {
-        chrome.storage.local.set({ node: { id: result.id } });
-        if (isFromSidepanel) {
-          sendMessageToContentScript({
-            event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
-            node: result.id
-          });
-        } else {
-          chrome.runtime.sendMessage({
-            event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
-            node: result.id
-          });
-        }
-      }
-      return result;
-    } catch (e) {
-      console.error("ERROR", e);
-    }
-  }
-
-  /**
-   * @deprecated - use linker store instead
-   * @param from
-   * @param to
-   * @returns
-   */
-  link(from: string, to: string) {
-    try {
-      const query = "return fn::memotron::link($from, $to)";
-      return this.queryUsingHttp(query, { from, to });
-    } catch (e) {
-      console.error("ERROR", e);
-    }
-  }
-  /**
-   * @deprecated - use linker store instead
-   * @param from
-   * @param to
-   * @returns
-   */
-  unlink(from: string, to: string) {
-    try {
-      const query = "return fn::memotron::unlink($from, $to)";
-      return this.queryUsingHttp(query, { from, to });
-    } catch (e) {
-      console.error("ERROR", e);
-    }
-  }
-
   async fetchPage(url?: string) {
     try {
       if (!url) {

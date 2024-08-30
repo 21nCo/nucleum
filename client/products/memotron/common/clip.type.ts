@@ -76,8 +76,14 @@ export type WebScreenshotClipContent = {
 };
 
 export enum ClipperExtensionEvent {
+  /**
+   * Event to communicate to side panel from content script when clips are altered.
+   */
   CLIPS_CHANGED = "CLIPS_CHANGED",
   /**
+   * 
+   * @deprecated - use ExtensionEvent.PAGE_STATE instead for exchanging page state between content script and side panel.
+   * 
    * Event to communicate about the status of saving a page between content script and side panel.
    */
   PAGE_SAVING_STATUS = "PAGE_SAVING_STATUS",
@@ -89,6 +95,14 @@ export enum ClipperExtensionEvent {
    * Event to communicate about taking a screenshot between content script and background script.
    */
   SCREENSHOT = "SCREENSHOT",
+  /**
+   * Event to relay saving web page from side panel or background script -> to content script to parse web page content and save it.
+   */
+  SAVE_WEBPAGE = "SAVE_WEBPAGE",
+  /**
+   * Event to trigger refreshing of clips rendering on the content script.
+   */
+  REFRESH_CLIPS_RENDERING = "REFRESH_CLIPS_RENDERING"
 }
 
 

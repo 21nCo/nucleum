@@ -13,6 +13,8 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import { ExtensionEvent } from "$lib/client/types/extension.type";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   const dispatch = createEventDispatcher();
   export let activeHighlighter: string | null = null;
   export let isSnipActive: boolean = false;
@@ -90,14 +92,15 @@
     {tooltipOptions}
   />
   {#if !isScreenShotOnly}
-    <Button
+    <!-- TODO - enable this when generate summary is implemented -->
+    <!-- <Button
       icon="document-text"
       tooltip="Generate summary"
       {...buttonParams}
       on:click={() => {
         dispatch("summarize");
       }}
-    />
+    /> -->
   {/if}
   <div
     class={cn("flex gap-2 items-center", {
@@ -146,12 +149,11 @@
     />
   </div>
   <Button
-    icon="home"
-    tooltip="Open Side bar"
+    icon="sidebar-toggle"
+    tooltip="Open Side panel"
     {...buttonParams}
-    on:click={() => {
-      //Open sidebar
-    }}
+    on:click={() =>
+      relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL })}
   />
   <Button
     icon={$toolbarState.position === Position.Right

@@ -18,6 +18,7 @@
   import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import { relayToSidePanel } from "$lib/client/utils/extension.utils";
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
   let activeHighlighter: IHighlighter | null = null;
@@ -27,8 +28,8 @@
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
   onMount(() => {
     appEvents.subscribe((x) => {
-      if (x.event === ClipperExtensionEvent.CLIPS_CHANGED) {
-        console.log("refreshing page clips");
+      if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
+        logger.log({ at: "onMessage - refreshing page clips" });
         refreshPageClips();
       }
     });
@@ -156,7 +157,10 @@
       result.id,
       highlightClickCallback
     );
-    chrome.runtime.sendMessage({ event: ClipperExtensionEvent.CLIPS_CHANGED });
+    relayToSidePanel({
+      event: ClipperExtensionEvent.CLIPS_CHANGED,
+      data: $webpage.clips
+    });
     //selection.removeAllRanges();
 
     // Save the selected text and current URL to the database.
@@ -197,11 +201,12 @@
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Content script - message received: ", {
+    logger.log({
+      at: "onMessage - Text clipper",
       message,
       sender
     });
-    if (message.event === ExtensionEvent.CLICK_SIDEBAR) {
+    if (message.event === ExtensionEvent.CLICK_FROM_SIDEPANEL) {
       if (message.clip.id) scrollToHighlight(message.clip.id);
     } else if (
       message.event === ClipperExtensionEvent.RESOLVE_TEXT_HIGHLIGHTS_ORDER

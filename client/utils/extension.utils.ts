@@ -1,3 +1,5 @@
+import type { ClipperExtensionEvent } from "../products/memotron/common/clip.type";
+import type { ExtensionEvent } from "../types/extension.type";
 
 
 //TODO - Temp - use utils.ts after lib refactoring
@@ -22,8 +24,13 @@ function checkSurrealResponse(
   }
 }
 
-export async function sendMessageToContentScript(
-  message: any,
+/**
+ * @param message 
+ * @param tabId 
+ * @returns 
+ */
+export async function relayToContentScript(
+  message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any},
   tabId?: number
 ): Promise<any> {
   if (!tabId) {
@@ -39,5 +46,43 @@ export async function sendMessageToContentScript(
       }
     });
   });
+  //TODO - use the below way to resolve tab instead of storing tab to chrome.storage and retriving it back
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, message);
+  });
 }
 
+
+export async function relayToSidePanel(  message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any}) { 
+  chrome.runtime.sendMessage(message);
+}
+
+export async function relayToBackgroundScript(message: {event: ExtensionEvent | ClipperExtensionEvent, data?: any}) { 
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(response);
+      }
+    });
+  });
+}
+
+
+export async function openLink(url: string) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.create({ url: url }, (tab) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(tab);
+      }
+    })
+  });
+}
+
+export async function openAppPath(path: string) {
+  const appUrl = process.env.PLASMO_PUBLIC_APP_URL ?? "https://app.memotron.io" 
+  return openLink(appUrl + "/" + path)
+}

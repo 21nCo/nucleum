@@ -1,8 +1,24 @@
 export enum ExtensionEvent {
+    /**
+     * A tab change event - sent from background script.
+     */
     TAB_CHANGE = "TAB_CHANGE",
+    /**
+     * A tab update event - sent from background script.
+     */
     TAB_UPDATE = "TAB_UPDATE",
-    CLICK_SIDEBAR = "CLICK_SIDEBAR",
-    READ_PAGE_CONTENT = "READ_PAGE_CONTENT",
+    /**
+     * A click event from any resource click on side panel - to show relevant state in content scripts.
+     */
+    CLICK_FROM_SIDEPANEL = "CLICK_FROM_SIDEPANEL",
+    /**
+     * An event to toggle (open or close) side panel - typically sent from content script.
+     */
+    TOGGLE_SIDEPANEL = "TOGGLE_SIDEPANEL",
+    /**
+     * An event to exchange the state of the page - typically sent from side panel and relayed to conent script or published from content script.
+     */
+    PAGE_STATE = "PAGE_STATE",
     UPLOAD_TO_S3_USING_UPLOAD_URL= "UPLOAD_TO_S3_USING_UPLOAD_URL",
 }
 

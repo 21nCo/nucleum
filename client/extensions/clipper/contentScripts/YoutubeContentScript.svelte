@@ -8,6 +8,7 @@
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+  import { webpage } from "./store";
 
   async function refreshVideoTimestamps(url: string) {
     const result = await new ClipperPersistence().fetchPage(url);
@@ -74,7 +75,8 @@
         // });
 
         chrome.runtime.sendMessage({
-          event: ClipperExtensionEvent.CLIPS_CHANGED
+          event: ClipperExtensionEvent.CLIPS_CHANGED,
+          clips: $webpage.clips
         });
       });
 
@@ -143,7 +145,10 @@
     if (message.event === ExtensionEvent.TAB_UPDATE) {
       removeAllPointers();
       refreshVideoTimestamps(message.tab.url);
-    } else if (message.event === ExtensionEvent.CLICK_SIDEBAR && message.clip) {
+    } else if (
+      message.event === ExtensionEvent.CLICK_FROM_SIDEPANEL &&
+      message.clip
+    ) {
       const player = document.querySelector("video");
       if (player && message.clip?.body?.timestamp) {
         console.log("Seeking to timestamp: ", message.clip.body.timestamp);

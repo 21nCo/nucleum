@@ -23,6 +23,8 @@ import { generateResourceId } from "$lib/shared/utils/text.utils";
 import { extractFullTabData } from "../clipper.utils";
 import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { ExtensionEvent } from "$lib/client/types/extension.type";
+import { relayToSidePanel } from "$lib/client/utils/extension.utils";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
@@ -44,7 +46,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
         n.notes = page.notes;
         return n;
       });
-      appEvents.publish(ClipperExtensionEvent.CLIPS_CHANGED);
+      appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+      relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
     }
   }
   resolveRefreshQuery() {
@@ -79,14 +82,13 @@ class WebpageStore extends ObservableStore<IWebpage> {
    */
   async savePage(data: IResourceCapture<IWebPage>, creationContext?: string) {
     const id = generateResourceId(Resource.node);
-    const response = await nodeStore.createNode([
-      {
-        id,
-        ...data,
-        creationContext,
-        contentType: NodeType.WEB_PAGE,
-      }
-    ], {
+    const node = {
+      id,
+      ...data,
+      creationContext,
+      contentType: NodeType.WEB_PAGE,
+    }
+    const response = await nodeStore.createNode([ node ], {
       isUseQueueFirstApproach: true,
       mutationId: `${this.id}-saveWebpage`
     });
@@ -94,11 +96,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       n.id = id;
       return n;
     });
-    chrome.storage.local.set({ node: { id: id } });
-    chrome.runtime.sendMessage({
-      event: ClipperExtensionEvent.PAGE_SAVING_STATUS,
-      node: id
-    });
+    relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: node });
     return id;
   }
   /**
@@ -253,7 +251,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       });
       return n;
     });
-    appEvents.publish(ClipperExtensionEvent.CLIPS_CHANGED);
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForClip(from: string, to: string) {
@@ -269,7 +267,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       });
       return n;
     });
-    appEvents.publish(ClipperExtensionEvent.CLIPS_CHANGED);
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
   async removeClip(id: string) {
@@ -285,6 +283,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
   /**
+   * 
+   * @deprecated - using content script as main source of state. save page event from side panel is now relayed to content script.
+   * 
    * If the save page happened from side bar - the toolbar and other content on web page should reflect the change. This method is called to update the store with the new page data when content script receive the message from side bar.
    * @param data ``
    */

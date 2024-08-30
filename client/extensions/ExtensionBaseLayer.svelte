@@ -23,6 +23,7 @@
             },
             function () {
               console.log("Token is stored to be used later.");
+              dataManager.runDboUpdate();
               $account.isLoggedIn = true;
             }
           );

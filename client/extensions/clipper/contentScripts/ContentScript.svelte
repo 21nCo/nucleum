@@ -25,6 +25,8 @@
   import account from "$lib/client/stores/account.store";
   import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import { AlertType } from "$lib/client/types/notification.type";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
@@ -47,48 +49,47 @@
       if (!data) return;
       await webpage.saveTwitterProfile(data);
     }
-    $feedbackPane.feedback = `${contentTypeStr} saved!`;
+    $feedbackPane.feedback = {
+      message: `${contentTypeStr} saved!`,
+      type: AlertType.SUCCESS
+    };
   }
 
-  function saveGenericWebpage() {
-    return new Promise(async (resolve, reject) => {
-      const host = window.location.host;
-      console.log({ host });
-      if (
-        commonMetadata.some(
-          (x) => host === x.domain || host.includes("." + x.domain)
-        )
-      ) {
-        console.log("minimal metadata page");
-        const tab = extractMinimalTabData();
-        await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });
-        resolve(true);
-        return;
-      }
-      screenshotWebpage(async (s3Url) => {
-        const tab = extractFullTabData();
-        tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
-        await webpage.savePage(tab);
-        resolve(true);
-      });
-    });
+  async function saveGenericWebpage() {
+    const host = window.location.host;
+    if (
+      commonMetadata.some(
+        (x) => host === x.domain || host.includes("." + x.domain)
+      )
+    ) {
+      console.log("minimal metadata page");
+      const tab = extractMinimalTabData();
+      await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });
+      return true;
+    }
+    const s3Url = await screenshotWebpage();
+    const tab = extractFullTabData();
+    tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
+    return webpage.savePage(tab);
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    logger.debug({
+      at: "onMessage - Content script",
+      event: message.event,
+      message
+    });
     if (
       message.event === ExtensionEvent.TAB_CHANGE ||
       message.event === ExtensionEvent.TAB_UPDATE
     ) {
-      logger.log({
-        at: "onMessage - tab change or update",
-        event: message.event,
-        message
-      });
       webpage.onContextChange(message.tab);
       return;
-    } else if (message.event === ExtensionEvent.READ_PAGE_CONTENT) {
-      const data = extractFullTabData();
+    } else if (message.event === ExtensionEvent.PAGE_STATE) {
+      const data = $webpage;
       sendResponse(data);
+    } else if (message.event === ClipperExtensionEvent.SAVE_WEBPAGE) {
+      onSaveClick();
     } else if (
       message.event === ClipperExtensionEvent.PAGE_SAVING_STATUS &&
       message.node
@@ -97,15 +98,11 @@
     }
   });
 
-  function screenshotWebpage(callback: (data: string) => void) {
-    chrome.runtime.sendMessage(
-      {
-        event: ClipperExtensionEvent.SCREENSHOT
-      },
-      (data) => {
-        processScreenshot(data);
-      }
-    );
+  async function screenshotWebpage() {
+    const data = await relayToBackgroundScript({
+      event: ClipperExtensionEvent.SCREENSHOT
+    });
+    return processScreenshot(data);
 
     async function processScreenshot(dataURL) {
       const contentType = "image/png";
@@ -114,17 +111,14 @@
         "screenshot.png",
         false
       );
-      chrome.runtime.sendMessage(
-        {
-          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-          data: { s3SignedURL, dataURL, contentType }
-        },
-        (response) => {
-          if (response == 200) {
-            callback(s3SignedURL.uploadURL.split("?")[0]);
-          }
-        }
-      );
+      const response = await relayToBackgroundScript({
+        event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+        data: { s3SignedURL, dataURL, contentType }
+      });
+      if (response == 200) {
+        return s3SignedURL.uploadURL.split("?")[0];
+        // callback(s3SignedURL.uploadURL.split("?")[0]);
+      }
     }
   }
 </script>
