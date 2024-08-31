@@ -11,7 +11,7 @@
 
 <Section>
   <Title {title} />
-  <div class="grid grid-cols-1 gap-x-28 gap-y-20 md:grid-cols-2 pb-24">
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 pb-24">
     {#each items as item}
       <TileItem {item} />
     {/each}

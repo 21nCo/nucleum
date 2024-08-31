@@ -23,3 +23,8 @@ export type ITileItem = {
   description: string;
   href?: string;
 };
+
+export type IListItem = {
+  title: string;
+  href: string;
+};

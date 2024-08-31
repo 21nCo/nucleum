@@ -43,6 +43,6 @@
   </div>
   {#if item?.description}
     {@const description = item.description}
-    <p class="text-[20px] text-justify">{description}</p>
+    <p class="text-[20px] text-left">{description}</p>
   {/if}
 </button>

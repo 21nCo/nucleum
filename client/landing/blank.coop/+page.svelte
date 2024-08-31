@@ -1,10 +1,12 @@
 <script lang="ts">
+  import Footer from "../shared/footer/Footer.svelte";
   import GridItemsSection from "../shared/grid/GridItemsSection.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
   import type {
     IHeroInputs,
     IGridItem,
-    ITileItem
+    ITileItem,
+    IListItem
   } from "../shared/Landing.types";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
@@ -58,8 +60,7 @@
       href: "https://docs.blanklabs.org/soft"
     }
   ];
-
-  let products: ITileItem[] = [
+  let currentProducts: ITileItem[] = [
     {
       image: "pointron-product-image",
       title: "Pointron",
@@ -71,7 +72,16 @@
       title: "Memotron",
       description: "The kind of second brain that you are waiting for",
       href: "https://app.memotron.io"
-    },
+    }
+  ];
+
+  let transformedProducts: IListItem[] = currentProducts.map((product) => ({
+    title: product.title,
+    href: product.href || "/"
+  }));
+
+  let products: ITileItem[] = [
+    ...currentProducts,
     {
       title: "Recloud",
       description: "Next generation cloud and authentication provider",
@@ -89,3 +99,5 @@
 <GridItemsSection items={corePrinciples} title="Our Core principles" />
 
 <TileItemsSection items={products} title="Our products" />
+
+<Footer products={transformedProducts} />
