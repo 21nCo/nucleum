@@ -10,8 +10,16 @@ export type IHeroInputs = {
   label: string;
 };
 
-export type IItem = {
+export type IGridItem = {
   icon: string;
   title: string;
   description: string;
+  href: string;
+};
+
+export type ITileItem = {
+  image?: string;
+  title: string;
+  description: string;
+  href?: string;
 };

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Size } from "../types/size.enum";
+  import { Size } from "../types/size.enum";
   import { cn } from "../utils/ui.utils";
 
   export let icon: string | null = null;
-  export let size: Size | null = null;
+  export let size: Size | "5xl" = Size.lg;
   let className: string = "";
   export { className as class };
   const tailwindSizes: any = {
@@ -13,7 +13,7 @@
     lg: "w-6 h-6",
     xl: "w-8 h-8",
     xxl: "w-10 h-10",
-    null: ""
+    "5xl": "w-16 h-16"
   };
   function importIcon(icon: string) {
     return import(`../SVGIcons/${icon}.svg?raw`);

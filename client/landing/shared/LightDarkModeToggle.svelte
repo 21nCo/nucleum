@@ -9,6 +9,8 @@
     const theme = $appearance.theme;
     console.log("toggle b4", theme);
     if (initialize) {
+      $appearance.lightColorSchemeId = "colorscheme:clean_tidymono_light";
+      $appearance.darkColorSchemeId = "colorscheme:clean_tidymono_dark";
       if (theme === Theme.DARK) {
         mode.classList.remove("day");
         modeChild.classList.remove("sun");

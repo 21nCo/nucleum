@@ -13,7 +13,7 @@
     <div class="w-full flex pt-7 pr-5 pl-10" style="height: {navBarHeight}px;">
       {#if topNavBarValues.icon}
         {@const icon = topNavBarValues.icon}
-        <SvgIcon {icon} />
+        <SvgIcon {icon} size="5xl" class="-mt-3" />
       {/if}
       {#if topNavBarValues.title}
         {@const title = topNavBarValues.title}

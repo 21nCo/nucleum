@@ -14,7 +14,7 @@
 </script>
 
 <button
-  class="m-2 bg-fgs1 hover:bg-fgs2 flex items-center justify-center gap-9 py-4 px-14 rounded-xl"
+  class="m-2 bg-fgs1 hover:bg-fgs2 flex items-center justify-center gap-3 py-4 px-14 rounded-xl"
   on:click={onClick}
 >
   <span class="text-bgs1 text-[24px] leading-[33px] font-medium">{label}</span>
