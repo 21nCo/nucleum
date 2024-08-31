@@ -212,7 +212,7 @@ function init() {
      * Refreshes and updates the client side cached data with the latest data from the server.
      */
     refreshClientCache: async () => {
-      logger.log({ at: "dataManager.refreshApp" });
+      logger.log({ at: "dataManager.refreshClientCache" });
       const dm = get(dataManager);
       const cacheSource = dm.cacheSource;
       //await setSeedMutationMap();

@@ -20,7 +20,7 @@ import type { IFeedbackPaneStore, IWebpage } from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
 import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage, type IWebScreenshotClip } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
-import { extractFullTabData } from "../clipper.utils";
+import { extractFullTabData, resolveUrl } from "../clipper.utils";
 import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
@@ -37,24 +37,23 @@ class WebpageStore extends ObservableStore<IWebpage> {
   async loader(data: any) {
     logger.log({ at: "webpage loader", data });
     const page = data.page;
-    if (page) {
-      this.update((n) => {
-        n.id = page.id;
-        n.clips =
-          page.clips?.length > 0 ? page.clips.filter(activeResourceFilter) : [];
-        n.links = page.links;
-        n.notes = page.notes;
-        return n;
-      });
-      appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
-      relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
-    }
+    this.update((n) => {
+      n.id = page?.id;
+      n.clips =
+        page?.clips?.length > 0 ? page.clips.filter(activeResourceFilter) : [];
+      n.links = page?.links ?? [];
+      n.notes = page?.notes ?? "";
+      return n;
+    });
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
+    relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
   }
   resolveRefreshQuery() {
     let url = this.get().url;
     if (!url) {
-      url = window.location.href;
+      url = resolveUrl();
     }
+    logger.log({ at: "resolveRefreshQuery", url, thisgeturl: this.get().url });
     return replaceParams("return fn::memotron::clipper::fetchPage($url)", {
       url
     });
@@ -67,11 +66,10 @@ class WebpageStore extends ObservableStore<IWebpage> {
   * @returns
   */
   onContextChange(tab: chrome.tabs.Tab) {
-    // console.log("onContextChange", tab);
-    const url = tab.url;
+    const url = resolveUrl(tab.url);
+    logger.log({ at: "onContextChange", url });
     if (url === this.get().url) return;
     this.set({ url, clips: [] });
-    logger.log({ at: "onContextChange", url });
     feedbackPane.reset();
     this.refresh();
   }

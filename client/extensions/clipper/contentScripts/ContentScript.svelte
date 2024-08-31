@@ -73,29 +73,67 @@
     return webpage.savePage(tab);
   }
 
+  async function onClipMutationFromSidePanel(data: any) {
+    let result;
+    if (data.action === "link") {
+      result = await webpage.linkClip(data.clipId, data.linkTo);
+    } else if (data.action === "unlink") {
+      result = await webpage.removeLinkForClip(data.clipId, data.linkTo);
+    } else if (data.action === "notes") {
+      //TODO - result
+      await webpage.persistClipNotes(data.clipId, data.notes);
+      result = { id: data.clipId, type: AlertType.SUCCESS };
+    }
+    if (result.type === AlertType.SUCCESS)
+      return $webpage.clips.find((clip) => clip.id === data.clipId);
+    else return result;
+  }
+
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    logger.debug({
+    logger.log({
       at: "onMessage - Content script",
       event: message.event,
       message
     });
-    if (
-      message.event === ExtensionEvent.TAB_CHANGE ||
-      message.event === ExtensionEvent.TAB_UPDATE
-    ) {
-      webpage.onContextChange(message.tab);
-      return;
-    } else if (message.event === ExtensionEvent.PAGE_STATE) {
-      const data = $webpage;
-      sendResponse(data);
-    } else if (message.event === ClipperExtensionEvent.SAVE_WEBPAGE) {
-      onSaveClick();
-    } else if (
-      message.event === ClipperExtensionEvent.PAGE_SAVING_STATUS &&
-      message.node
-    ) {
-      webpage.propagatePageStatusFromSidebar({ id: message.node });
-    }
+
+    const handleMessage = async () => {
+      try {
+        switch (message.event) {
+          case ExtensionEvent.TAB_CHANGE:
+          case ExtensionEvent.TAB_UPDATE:
+            webpage.onContextChange(message.tab);
+            return;
+
+          case ExtensionEvent.PAGE_STATE:
+            return $webpage;
+
+          case ClipperExtensionEvent.SAVE_WEBPAGE:
+            await onSaveClick();
+            return { success: true };
+
+          case ClipperExtensionEvent.CLIP_MUTATION:
+            const result = await onClipMutationFromSidePanel(message.data);
+            return result;
+
+          case ClipperExtensionEvent.PAGE_SAVING_STATUS:
+            if (message.node) {
+              webpage.propagatePageStatusFromSidebar({ id: message.node });
+              return { success: true };
+            }
+            return { success: false, error: "No node provided" };
+
+          default:
+            return { success: false, error: "Unknown event" };
+        }
+      } catch (error) {
+        console.error("Error handling message:", error);
+        return { success: false, error: error.message };
+      }
+    };
+
+    // This keeps the message channel open for asynchronous processing
+    handleMessage().then(sendResponse);
+    return true; // Indicates that the response will be sent asynchronously
   });
 
   async function screenshotWebpage() {

@@ -27,12 +27,15 @@
   let selectedClipId: string = "";
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
   onMount(() => {
-    appEvents.subscribe((x) => {
+    const sub = appEvents.subscribe((x) => {
       if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
-        logger.log({ at: "onMessage - refreshing page clips" });
+        logger.log({ at: "onMessage - text clipper", event: x.event });
         refreshPageClips();
       }
     });
+    return () => {
+      sub();
+    };
   });
   async function handleTextSelection() {
     const selection = window.getSelection();

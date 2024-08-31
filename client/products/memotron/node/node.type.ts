@@ -46,6 +46,7 @@ export type INodeBase = IMemotronItemBase & {
    *
    */
   creationContext?: string;
+  notes?: string;
 };
 
 type INodeInterface<
@@ -471,6 +472,7 @@ export type ITextClip = INodeInterface<
 type IVideoTimestampClipBody = {
   timestamp: number;
   url: string;
+  s3Url?: string;
 };
 export type IVideoTimestampClip = INodeInterface<
   NodeType.VIDEO_TIMESTAMP_CLIP,

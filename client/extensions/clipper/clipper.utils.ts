@@ -18,7 +18,11 @@ export function extractVideoId(url) {
     return match ? match[2] : null;
 }
 
-
+/**
+ * @deprecated - using anchor and svelte component instead
+ * @param controlElement 
+ * @returns 
+ */
 export function createClipButton(controlElement) {
     const clipButton = document.createElement('button');
     clipButton.className = 'ytclip'; 
@@ -57,17 +61,40 @@ export function createClipPointer() {
     pointer.className = 'my-custom-pointer';
         
     pointer.innerHTML = `
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M10.9931 19.1996L2.58332 5.92103C2.33031 5.52154 2.61734 5 3.09021 5H19.9098C20.3827 5 20.6697 5.52154 20.4167 5.92103L12.0069 19.1996C11.7713 19.5716 11.2287 19.5716 10.9931 19.1996Z" fill="#B4D7FF"/>
-                         </svg>
+                       <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0.6 0H15.4C15.7314 0 16 0.26863 16 0.600001V13.1844C16 13.382 15.9027 13.5669 15.7399 13.6788L8.33992 18.7663C8.13517 18.9071 7.86483 18.9071 7.66008 18.7663L0.260083 13.6788C0.0972701 13.5669 0 13.382 0 13.1844V0.6C0 0.268629 0.26863 0 0.6 0Z" fill="#2c70dd"/>
+          <path d="M0.6 0H15.4C15.7314 0 16 0.26863 16 0.600001V13.1844C16 13.382 15.9027 13.5669 15.7399 13.6788L8.33992 18.7663C8.13517 18.9071 7.86483 18.9071 7.66008 18.7663L0.260083 13.6788C0.0972701 13.5669 0 13.382 0 13.1844V0.6C0 0.268629 0.26863 0 0.6 0Z" fill="none" stroke="white" stroke-width="0" />
+</svg>
+
                            `;
     pointer.style.backgroundSize = 'contain';
     pointer.style.backgroundRepeat = 'no-repeat';
     pointer.style.width = '20px'; 
     pointer.style.height = '20px';
+    pointer.style.cursor = "pointer";
+  pointer.style.position = 'absolute';
+  pointer.style.zIndex = '10000';
+  pointer.style.bottom = '70px';
+  
+  const path = pointer.querySelector('path');
+  const strokePath = pointer.querySelectorAll('path')[1];
+  path.style.transition = 'fill-opacity 0.2s';
+  path.style.fillOpacity = '0.6';
+  path.style.border = '1px solid transparent';
+  strokePath.style.transition = 'stroke-width 0.2s';
 
-    pointer.style.position = 'absolute';
-    pointer.style.bottom = '60px';
+    pointer.addEventListener('mouseenter', () => {
+      path.style.fillOpacity = '1'; 
+      pointer.style.bottom = '72px';
+      strokePath.style.strokeWidth = '2';
+    });
+
+    pointer.addEventListener('mouseleave', () => {
+      path.style.fillOpacity = '0.6';
+      pointer.style.bottom = '70px';
+      path.style.border = '1px solid transparent';
+      strokePath.style.strokeWidth = '0';
+    });
 
     return pointer;
 }
@@ -141,7 +168,7 @@ export function extractFullTabData(): IResourceCapture<IWebPage> {
     label: title,
     contentType: NodeType.WEB_PAGE,
     body: {
-      url: window.location.href,
+      url: resolveUrl(),
       hash,
       description,
     },
@@ -163,9 +190,19 @@ export function extractMinimalTabData(): IResourceCapture<IWebPage> {
   const hash = generateContentHash(document.body.innerHTML);
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
   return {
-    metadata: { ogTitle, ogImage, ogDescription, ogUrl }, label: title, contentType: NodeType.WEB_PAGE, body: { url: window.location.href, hash }
+    metadata: { ogTitle, ogImage, ogDescription, ogUrl }, label: title, contentType: NodeType.WEB_PAGE, body: { url: resolveUrl(), hash }
   };
 }
+
+
+export function resolveUrl(url?: string) {
+  if(!url) url = window.location.href;
+  if (url.includes("youtube.com")) { 
+    return url.split("&")[0]
+  }
+  return url;
+}
+
 
 function generateContentHash(content: string) {
   return CryptoJS.SHA256(content).toString();

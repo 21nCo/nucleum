@@ -102,7 +102,11 @@ export enum ClipperExtensionEvent {
   /**
    * Event to trigger refreshing of clips rendering on the content script.
    */
-  REFRESH_CLIPS_RENDERING = "REFRESH_CLIPS_RENDERING"
+  REFRESH_CLIPS_RENDERING = "REFRESH_CLIPS_RENDERING",
+  /**
+   * Relayed from side panel to content script when any clip is mutated like editing notes, links or deleting etc.
+   */
+  CLIP_MUTATION = "CLIP_MUTATION"
 }
 
 

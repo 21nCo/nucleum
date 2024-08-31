@@ -16,6 +16,10 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+  import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
+  import { webpage } from "../contentScripts/store";
+  import { linker } from "$lib/client/products/memotron/memotron.store";
   let mode: "clips" | "capture" = "clips";
   let title = "";
   let isPageSaved = false;
@@ -58,7 +62,11 @@
   }
 </script>
 
-<ExtensionBaseLayer id="sidePanel">
+<!-- svelte-ignore missing-declaration -->
+<ExtensionBaseLayer
+  id="sidePanel"
+  stores={[nodeStore, collectionStore, webpage, linker]}
+>
   <div class="w-full h-screen">
     <div class="flex flex-col gap-4 w-full h-full bg-bgs1 text-b2 text-fgs1">
       <header
@@ -84,7 +92,7 @@
       </header>
       {#if mode === "clips"}
         <div class="flex flex-col gap-2 p-4 flex-grow">
-          <Text content="Clips" style={TextStyle.SECTION_HEADING} />
+          <Text content="Clips" style={TextStyle.PANEL_HEADING_SMALL} />
           {#key clips}
             <ClipsPane {clips} />
           {/key}

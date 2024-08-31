@@ -12,6 +12,7 @@
   import { onMount } from "svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   export let clips: IClip[] = [];
   let transformedClips: IClip[] = [];
@@ -28,21 +29,19 @@
    * A timeout is added to fetch the order of the text highlights from the content script as the content script needs to resolve the highlights first and render them.
    * @param url
    */
-  async function refresh(clip: IClip[]) {
+  async function refresh(rawClips: IClip[]) {
+    if (!rawClips || rawClips.length === 0) return [];
+    logger.log({ at: "refresh - ClipsPane", rawClips });
     let textClips = [];
     let videoTimestampClips = [];
-    if (clip && clip.length > 0) {
-      const rawClips: IClip[] = clip;
-      textClips = rawClips.filter(
-        (clip) => clip.contentType === NodeType.TEXT_CLIP
-      );
-      videoTimestampClips = rawClips
-        .filter((clip) => clip.contentType === NodeType.VIDEO_TIMESTAMP_CLIP)
-        ?.sort((a, b) => a.body.timestamp - b.body.timestamp);
-      await wait(1000);
-      return resolveOrderAndRenderClips();
-    }
-    return [];
+    textClips = rawClips.filter(
+      (clip) => clip.contentType === NodeType.TEXT_CLIP
+    );
+    videoTimestampClips = rawClips
+      .filter((clip) => clip.contentType === NodeType.VIDEO_TIMESTAMP_CLIP)
+      ?.sort((a, b) => a.body.timestamp - b.body.timestamp);
+    await wait(1000);
+    return resolveOrderAndRenderClips();
 
     async function resolveOrderAndRenderClips() {
       const order = await relayToContentScript({

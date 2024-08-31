@@ -12,6 +12,8 @@
   import { AlertType } from "$lib/client/types/notification.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import LinkActionOnClipper from "$lib/client/products/memotron/common/linkbox/LinkActionOnClipper.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
   const dispatch = createEventDispatcher();
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
@@ -27,7 +29,7 @@
   }
   async function onNotesChange(e: CustomEvent) {
     feedback = "Saving...";
-    console.log("onNotesChange", id, notes);
+    logger.log({ at: "onNotesChange", id, notes });
     const response = await webpage.persistClipNotes(id, notes);
     //TODO - TEMP - show feedback from result - getting result from debounded function
     setTimeout(() => {
@@ -64,38 +66,7 @@
         label="link"
         size={Size.xs}
       /> -->
-      <button
-        class={cn(
-          "flex gap-1 items-center justify-center px-2 py-0.5 rounded-md text-b3",
-          abg(isLinkboxOpened),
-          {
-            "bg-bgs2 border border-transparent hover:border-brs2":
-              !isLinkboxOpened
-          }
-        )}
-        on:click={() => {
-          isLinkboxOpened = !isLinkboxOpened;
-        }}
-      >
-        <Icon
-          icon={isLinkboxOpened ? "link-arrow-down" : "link-arrow-left"}
-          isAccentBgContext={isLinkboxOpened}
-        />
-        <span> Link </span>
-        {#if clip?.links?.length > 0}
-          <span
-            class={cn(
-              "flex items-center justify-center text-fgs2 text-b4 rounded-full h-4 w-4",
-              {
-                "bg-bgs3": !isLinkboxOpened,
-                "bg-aps2": isLinkboxOpened
-              }
-            )}
-          >
-            {clip.links.length}
-          </span>
-        {/if}
-      </button>
+      <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
       <Button
         icon="document-text"
         tooltip="Add notes"
@@ -148,7 +119,6 @@
       placeholder="Add notes"
       bind:content={notes}
       on:change={onNotesChange}
-      on:input={onNotesChange}
     />
   {/if}
   {#if feedback}

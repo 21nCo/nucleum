@@ -728,7 +728,7 @@
       {id}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
       class={cn(
-        "relative w-full h-full text-left outline-none py-2",
+        "inline-markdown relative w-full h-full text-left outline-none py-2",
         classList,
         {
           customcaret: isCustomCaret,

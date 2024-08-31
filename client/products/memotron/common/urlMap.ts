@@ -1,12 +1,19 @@
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 
 /**
- * Web URLs that only support screen shots. Options like save page, summarize will be disabled for these pages.
+ * Web URLs that only support screen shots. Options like save page, text highlighter, summarize will all be disabled for these pages.
  */
 export const screenShotOnlyPages = [
   /^https:\/\/app\.[^\/]+\/.*/,
-  /^https:\/\/(?:www\.)?figma\.com\/(?:design|files)\/.+/,
   /^https:\/\/(?:twitter\.com|x\.com)\/(?:(i|jobs|explore|home|settings|messages|notifications|search|hashtag|compose)(?:\/(.+))?|([^\/]+)\/lists)?\/?$/
+];
+
+/**
+ * Web URLs that only support saving page and screenshot. Options like text highlighter, summarize will be disabled for these pages.
+ */
+export const saveOnlyPages = [
+  /^https:\/\/(?:www\.)?figma\.com\/(?:design|files)\/.+/,
+  /^https?:\/\/(?:www\.)?(youtube\.com|youtu\.be)\/.*/,
 ];
 
 export const contentTypeMap = [

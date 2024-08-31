@@ -112,6 +112,7 @@
   import Warning from "../icons/Warning.svelte";
   import ArrowTurnDownLeft from "../icons/ArrowTurnDownLeft.svelte";
   import CursorArrowRays from "../icons/CursorArrowRays.svelte";
+  import Document from "../icons/Document.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -508,6 +509,8 @@
         <TableCells {variant} />
       {:else if icon === "globe-alt"}
         <GlobeAlt {variant} />
+      {:else if icon === "document"}
+        <Document {variant} />
       {:else if icon === "document-text"}
         <DocumentText {variant} />
       {:else if icon === "funnel"}

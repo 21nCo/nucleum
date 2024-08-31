@@ -9,7 +9,10 @@
   import { webpage, toolbarState } from "../contentScripts/store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
+  import {
+    saveOnlyPages,
+    screenShotOnlyPages
+  } from "$lib/client/products/memotron/common/urlMap";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
@@ -24,6 +27,8 @@
   $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
     regex.test($webpage.url)
   );
+
+  $: isSaveOnly = saveOnlyPages.some((regex) => regex.test($webpage.url));
 
   if ($toolbarState.position === undefined) {
     toolbarState.changePosition(Position.Right);
@@ -91,7 +96,7 @@
     bind:on={isSnipActive}
     {tooltipOptions}
   />
-  {#if !isScreenShotOnly}
+  {#if !isScreenShotOnly && !isSaveOnly}
     <!-- TODO - enable this when generate summary is implemented -->
     <!-- <Button
       icon="document-text"
@@ -101,53 +106,53 @@
         dispatch("summarize");
       }}
     /> -->
+    <div
+      class={cn("flex gap-2 items-center", {
+        "flex-col w-full":
+          $toolbarState.position === Position.Right ||
+          $toolbarState.position === Position.Left,
+        "flex-row h-full": $toolbarState.position === Position.Bottom
+      })}
+    >
+      <Divider
+        orientation={$toolbarState.position === Position.Bottom
+          ? Orientation.Vertical
+          : Orientation.Horizontal}
+      />
+      <Button
+        icon="pencil"
+        {...buttonParams}
+        tooltip="Auto Highlight"
+        on:click={toggleAutoHighligher}
+      />
+      {#if isAutoHighlighterExpanded}
+        <div
+          class={cn("flex gap-2 items-center justify-center", {
+            "flex-col w-full":
+              $toolbarState.position === Position.Right ||
+              $toolbarState.position === Position.Left,
+            "flex-row h-full": $toolbarState.position === Position.Bottom
+          })}
+        >
+          {#each $highlightStore.highlighters as highlighter}
+            <HightlightColorItem
+              {highlighter}
+              isActive={highlighter.id === activeHighlighter}
+              on:click={() => {
+                activeHighlighter = highlighter.id;
+                dispatch("color", highlighter);
+              }}
+            />
+          {/each}
+        </div>
+      {/if}
+      <Divider
+        orientation={$toolbarState.position === Position.Bottom
+          ? Orientation.Vertical
+          : Orientation.Horizontal}
+      />
+    </div>
   {/if}
-  <div
-    class={cn("flex gap-2 items-center", {
-      "flex-col w-full":
-        $toolbarState.position === Position.Right ||
-        $toolbarState.position === Position.Left,
-      "flex-row h-full": $toolbarState.position === Position.Bottom
-    })}
-  >
-    <Divider
-      orientation={$toolbarState.position === Position.Bottom
-        ? Orientation.Vertical
-        : Orientation.Horizontal}
-    />
-    <Button
-      icon="pencil"
-      {...buttonParams}
-      tooltip="Auto Highlight"
-      on:click={toggleAutoHighligher}
-    />
-    {#if isAutoHighlighterExpanded}
-      <div
-        class={cn("flex gap-2 items-center justify-center", {
-          "flex-col w-full":
-            $toolbarState.position === Position.Right ||
-            $toolbarState.position === Position.Left,
-          "flex-row h-full": $toolbarState.position === Position.Bottom
-        })}
-      >
-        {#each $highlightStore.highlighters as highlighter}
-          <HightlightColorItem
-            {highlighter}
-            isActive={highlighter.id === activeHighlighter}
-            on:click={() => {
-              activeHighlighter = highlighter.id;
-              dispatch("color", highlighter);
-            }}
-          />
-        {/each}
-      </div>
-    {/if}
-    <Divider
-      orientation={$toolbarState.position === Position.Bottom
-        ? Orientation.Vertical
-        : Orientation.Horizontal}
-    />
-  </div>
   <Button
     icon="sidebar-toggle"
     tooltip="Open Side panel"
