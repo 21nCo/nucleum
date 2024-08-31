@@ -74,7 +74,6 @@
     }
   });
   async function onManualLogClicked() {
-    manualLogStore.reset();
     appStore.runAction(PointronAction.MANUAL_FOCUS_ENTRY_POP);
   }
   async function onStartSessionClicked() {
