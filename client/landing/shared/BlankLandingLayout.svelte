@@ -10,8 +10,6 @@
   export let topNavBarValues: ITopNavBar;
 
   const navBarHeight = 66;
-  const currentProducts = [];
-  const upcomingProducts = [];
 </script>
 
 <LandingBaseLayer>

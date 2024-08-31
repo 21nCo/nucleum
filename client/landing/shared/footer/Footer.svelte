@@ -1,11 +1,21 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { IListItem, ITileItem } from "../Landing.types";
   import Section from "../Section.svelte";
   import Button from "../elements/Button.svelte";
   import Box from "./Box.svelte";
   import ListWithTitle from "./ListWithTitle.svelte";
+  import view from "$lib/client/stores/view.store";
+  import { paintQRCode } from "$lib/client/utils/ui.utils";
   export let products: IListItem[];
+  export let url: string = "https://pointron.io";
 
+  let isHovering = false;
+  let canvas: HTMLCanvasElement;
+
+  onMount(async () => {
+    await paintQRCode(canvas, url, 122);
+  });
   let socials = [
     {
       href: "https://twitter.com/blanklabs",
@@ -47,7 +57,19 @@
 <Section>
   <div class="flex flex-col gap-7">
     <div class="w-full flex gap-x-7">
-      <Box />
+      <Box>
+        <div class="flex h-full flex-col items-center justify-center gap-9">
+          <canvas
+            on:mouseenter={() => (isHovering = true)}
+            on:mouseleave={() => (isHovering = false)}
+            bind:this={canvas}
+            class:scale-[1.4]={isHovering}
+            class:scale-[1]={!isHovering}
+            class="border-2 transition-transform duration-300 ease-in-out origin-center"
+          />
+          <p class="text-[24px] font-medium leading-[33px]">Scan & Download</p>
+        </div>
+      </Box>
       <Box>
         <ListWithTitle title="Information" items={information} />
       </Box>

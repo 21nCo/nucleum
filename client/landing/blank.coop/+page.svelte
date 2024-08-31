@@ -8,6 +8,10 @@
     ITileItem,
     IListItem
   } from "../shared/Landing.types";
+  import {
+    currentProductsStore,
+    upcomingProductsStore
+  } from "../shared/store/shared.store";
   import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
 
   let heroInputs: IHeroInputs = {
@@ -60,37 +64,17 @@
       href: "https://docs.blanklabs.org/soft"
     }
   ];
-  let currentProducts: ITileItem[] = [
-    {
-      image: "pointron-product-image",
-      title: "Pointron",
-      description: "The one focus time tracker that you will ever need",
-      href: "https://app.pointron.io"
-    },
-    {
-      image: "pointron-product-image",
-      title: "Memotron",
-      description: "The kind of second brain that you are waiting for",
-      href: "https://app.memotron.io"
-    }
-  ];
 
-  let transformedProducts: IListItem[] = currentProducts.map((product) => ({
-    title: product.title,
-    href: product.href || "/"
-  }));
+  let transformedProducts: IListItem[] = $currentProductsStore?.map(
+    (product) => ({
+      title: product.title,
+      href: product.href || "/"
+    })
+  );
 
   let products: ITileItem[] = [
-    ...currentProducts,
-    {
-      title: "Recloud",
-      description: "Next generation cloud and authentication provider",
-      href: "https:/app.gathery.io"
-    },
-    {
-      title: "Selftron",
-      description: "The best body-mind tracking and analytics ever built"
-    }
+    ...$currentProductsStore,
+    ...$upcomingProductsStore
   ];
 </script>
 
