@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { ITileItem } from "../Landing.types";
   import PanelButton from "../elements/PanelButton.svelte";
+  import { isProductsPanelOpen } from "../store/shared.store";
   import TileItem from "./TileItem.svelte";
 
   export let currentProducts: ITileItem[];
   export let upcomingProducts: ITileItem[];
-
-  export let isProductsPanelOpen: Boolean;
 </script>
 
 <div
@@ -35,6 +34,6 @@
   <PanelButton
     label="Close"
     icon="close"
-    on:click={() => (isProductsPanelOpen = false)}
+    on:click={() => ($isProductsPanelOpen = false)}
   />
 </div>

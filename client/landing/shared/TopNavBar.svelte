@@ -3,6 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ITopNavBar } from "./Landing.types";
   import LightDarkModeToggle from "./LightDarkModeToggle.svelte";
+  import Button from "./elements/Button.svelte";
 
   export let topNavBarValues: ITopNavBar;
   export let navBarHeight: number = 66;
@@ -22,10 +23,20 @@
       <div class="ml-auto inline-flex gap-8">
         <LightDarkModeToggle />
         {#each topNavBarValues.items as item}
-          <a href={item.href}>{item.label}</a>
+          <a
+            class={cn(
+              "block text-fgs1 text-[20px] font-normal leading-[28px] hover:text-aps1",
+              topNavBarValues.items.length > 1 && "text-[16px]"
+            )}
+            href={item.href}>{item.label}</a
+          >
         {/each}
         {#if topNavBarValues.cta}
-          <button>cta button</button>
+          <Button
+            href={topNavBarValues.cta.href}
+            label={topNavBarValues.cta.label}
+            class="-mt-3 text-[16px]"
+          />
         {/if}
       </div>
     </div>

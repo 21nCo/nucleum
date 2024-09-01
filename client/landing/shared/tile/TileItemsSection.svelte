@@ -3,6 +3,7 @@
   import Section from "../Section.svelte";
   import Title from "../Title.svelte";
   import Button from "../elements/Button.svelte";
+  import { isProductsPanelOpen } from "../store/shared.store";
   import TileItem from "./TileItem.svelte";
 
   export let title: string;
@@ -18,7 +19,7 @@
   </div>
   <Button
     label="More Products"
-    href="https://docs.blanklabs.org/soft"
     icon="long-arrow-right"
+    on:click={() => ($isProductsPanelOpen = true)}
   />
 </Section>

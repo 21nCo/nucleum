@@ -5,13 +5,13 @@
     icon: "blank-coop",
     title: "Pointron",
     items: [
-      { label: "About", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Contact", href: "/contact" }
+      { label: "Discord", href: "https://discord.gg/blanklabs" },
+      { label: "Road map", href: "/blog" },
+      { label: "Pricing", href: "/pricing" }
     ],
     cta: {
-      label: "Sign Up",
-      href: "/signup"
+      label: "Aceess Web",
+      href: "https://app.pointron.io"
     }
   };
 </script>

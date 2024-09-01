@@ -7,6 +7,7 @@
   import ListWithTitle from "./ListWithTitle.svelte";
   import view from "$lib/client/stores/view.store";
   import { paintQRCode } from "$lib/client/utils/ui.utils";
+  import { goto } from "$app/navigation";
   export let products: IListItem[];
   export let url: string = "https://pointron.io";
 
@@ -87,7 +88,11 @@
           connected future through innovation and collaboration, making a
           difference by empowering people and preserving our planet.
         </p>
-        <Button label="Join us" href="https://tally.so/r/wLzN8j" />
+        <Button
+          label="Join us"
+          class="text-[20px]"
+          on:click={() => goto("https://tally.so/r/wLzN8j")}
+        />
       </div>
     </div>
     <div class="w-[1222px] h-[72px] rounded-[20px] flex bg-bgs2 p-7">

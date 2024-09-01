@@ -4,6 +4,7 @@
   import Item from "./Item.svelte";
   import Title from "../Title.svelte";
   import Button from "../elements/Button.svelte";
+  import { goto } from "$app/navigation";
   export let title: string;
   export let items: IGridItem[];
 </script>
@@ -17,7 +18,7 @@
   </div>
   <Button
     label="White paper"
-    href="https://docs.blanklabs.org/soft"
     icon="long-arrow-right"
+    on:click={() => goto("https://docs.blanklabs.org/soft")}
   />
 </Section>

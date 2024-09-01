@@ -1,24 +1,23 @@
 <script lang="ts">
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { Size } from "../../../types/size.enum";
   export let label = "";
-  export let href: string = "";
   export let icon = "";
   export let position: "start" | "end" = "start";
-  function onClick() {
-    if (href) {
-      //   window.location.href = href;
-      window.open(href, "_blank");
-    }
-  }
+  let className: string = "";
+  export { className as class };
 </script>
 
 <button
-  class="m-2 bg-fgs1 hover:bg-fgs2 flex items-center justify-center gap-3 py-4 px-14 rounded-xl"
-  on:click={onClick}
+  class={cn(
+    "bg-fgs1 hover:bg-fgs2 flex items-center justify-center gap-3 py-4 px-10 rounded-xl text-bgs1 text-[24px] leading-[33px] font-medium",
+    className
+  )}
+  on:click
 >
-  <span class="text-bgs1 text-[24px] leading-[33px] font-medium">{label}</span>
+  <span>{label}</span>
   {#if icon}
-    <SvgIcon {icon} size={Size.lg} class="text-bgs1 " />
+    <SvgIcon {icon} size={Size.lg} />
   {/if}
 </button>

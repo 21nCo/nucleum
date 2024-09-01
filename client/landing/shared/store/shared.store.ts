@@ -44,3 +44,5 @@ export const upcomingProductsStore = writable<ITileItem[]>([
     description: "The best way to find your friends and family"
   }
 ]);
+
+export const isProductsPanelOpen = writable<Boolean>(false);
