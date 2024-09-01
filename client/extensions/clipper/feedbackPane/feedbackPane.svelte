@@ -152,7 +152,7 @@
   </div>
   {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT_CLIP}
     <img
-      src={$feedbackPane.focusedClip.body.s3URL}
+      src={$feedbackPane.focusedClip.body.s3Url}
       alt="Screenshot"
       class="w-full"
     />

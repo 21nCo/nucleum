@@ -37,8 +37,11 @@
   let isGridBottomHovering = false;
   function resolvePreviewImageSrc(item: INode) {
     if (item.contentType === NodeType.IMAGE) return item.body.url;
-    else if (item.contentType === NodeType.WEB_SCREENSHOT_CLIP)
-      return item.body.s3URL;
+    else if (
+      item.contentType === NodeType.WEB_SCREENSHOT_CLIP ||
+      item.contentType === NodeType.VIDEO_TIMESTAMP_CLIP
+    )
+      return item.body.s3Url;
     else if (
       item.contentType === NodeType.WEB_PAGE &&
       (item.metadata?.ogImage || item.metadata?.screenshotUrl)
@@ -80,6 +83,7 @@
     {@const isImagePreview =
       item.contentType === NodeType.IMAGE ||
       item.contentType === NodeType.WEB_SCREENSHOT_CLIP ||
+      item.contentType === NodeType.VIDEO_TIMESTAMP_CLIP ||
       (item.contentType === NodeType.WEB_PAGE && previewImageSrc) ||
       contentPreview.includes("https://")}
     <ResourceGridThumbnail

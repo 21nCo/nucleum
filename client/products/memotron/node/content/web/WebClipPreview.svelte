@@ -27,11 +27,11 @@
         {contentPreview}
       </span>
     </div>
-  {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP && node.body.s3URL}
+  {:else if (node.contentType === NodeType.WEB_SCREENSHOT_CLIP || node.contentType === NodeType.VIDEO_TIMESTAMP_CLIP) && node.body.s3Url}
     <img
       alt="..."
       class="absolute inset-0 w-full rounded-t-md object-contain h-full"
-      src={node.body.s3URL}
+      src={node.body.s3Url}
     />
   {/if}
 </div>

@@ -5,6 +5,8 @@
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { TimeFormat } from "$lib/client/types/time.type";
   export let node: INode;
   export let isNodePageContext: boolean = false;
   let dynamicLabel:
@@ -21,7 +23,8 @@
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
     NodeType.TEXT_CLIP,
-    NodeType.WEB_SCREENSHOT_CLIP
+    NodeType.WEB_SCREENSHOT_CLIP,
+    NodeType.VIDEO_TIMESTAMP_CLIP
   ];
   function resolveEmptyLabel() {
     //TODO - based on resource type
@@ -42,6 +45,15 @@
       if (!parent || !parent.label) return defaultLabel;
       return {
         label: "Text clipped from -",
+        parent
+      };
+    }
+    if (node.contentType === NodeType.VIDEO_TIMESTAMP_CLIP) {
+      const timeStampStr = formatSeconds(node.body.timestamp, TimeFormat.CLOCK);
+      const defaultLabel = "Video timestamp - " + timeStampStr;
+      if (!parent || !parent.label) return defaultLabel;
+      return {
+        label: timeStampStr + " - ",
         parent
       };
     }

@@ -45,7 +45,7 @@
     const snip: IClipCapture<IWebScreenshotClip> = {
       contentType: NodeType.WEB_SCREENSHOT_CLIP,
       body: {
-        s3URL: s3URL
+        s3Url: s3URL
       }
     };
     const response = await webpage.saveClip(snip);

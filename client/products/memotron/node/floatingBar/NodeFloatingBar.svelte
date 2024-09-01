@@ -50,7 +50,7 @@
     <PanelSwitcher
       bind:value={selectedView}
       parentBgIndex={bgIndex}
-      items={["Content", "Graph", "Bird view"]}
+      items={["Content", "Bird view"]}
       style={PanelSwitcherStyle.BAR}
       barStyle={BarStyle.DOT}
     />

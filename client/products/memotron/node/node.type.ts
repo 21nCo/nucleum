@@ -259,9 +259,12 @@ export const webNodeTypeList = [
   NodeType.VIDEO_CLIP,
   NodeType.PDF_CLIP,
   NodeType.VIDEO_TIMESTAMP_CLIP,
+  NodeType.WEB_SCREENSHOT_CLIP,
+
   NodeType.TWEET,
   NodeType.TWITTER_PROFILE,
-  NodeType.WEB_SCREENSHOT_CLIP
+  NodeType.KINDLE_BOOK,
+  NodeType.KINDLE_HIGHLIGHT
 ];
 
 export const mediaNodeTypeList = [
@@ -303,11 +306,8 @@ export const rootNodeTypeList = [
   NodeType.IMAGE,
   NodeType.VIDEO,
   NodeType.AUDIO,
-  NodeType.WEB_PAGE,
-  NodeType.TEXT_CLIP,
-  NodeType.WEB_SCREENSHOT_CLIP,
-  NodeType.TWEET,
-  NodeType.TWITTER_PROFILE
+
+  ...webNodeTypeList
 ];
 
 export const TextNodeTypeList = [
@@ -481,7 +481,7 @@ export type IVideoTimestampClip = INodeInterface<
 >;
 
 type IWebScreenshotClipBody = {
-  s3URL: string;
+  s3Url: string;
 };
 export type IWebScreenshotClip = INodeInterface<
   NodeType.WEB_SCREENSHOT_CLIP,
@@ -490,7 +490,7 @@ export type IWebScreenshotClip = INodeInterface<
 >;
 
 type IMultimediaClipBody = {
-  srcUrl: string;
+  s3Url: string;
   url: string;
   color: string;
 };
