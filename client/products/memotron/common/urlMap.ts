@@ -27,6 +27,14 @@ export const contentTypeMap = [
   {
     contentType: NodeType.TWITTER_PROFILE,
     regex: [/^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/?$/]
+  },
+  {
+    contentType: NodeType.YOUTUBE_VIDEO,
+    regex: [/^https:\/\/(?:www\.)?(youtube\.com)\/watch\?v=([a-zA-Z0-9_-]+)/]
+  },
+  {
+    contentType: NodeType.YOUTUBE_CHANNEL,
+    regex: [/^https:\/\/(?:www\.)?(youtube\.com)\/channel\/([a-zA-Z0-9_-]+)/]
   }
 ];
 

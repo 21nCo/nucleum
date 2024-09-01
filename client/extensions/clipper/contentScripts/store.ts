@@ -18,13 +18,15 @@ import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import type { IFeedbackPaneStore, IWebpage } from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
-import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage, type IWebScreenshotClip } from "$lib/client/products/memotron/node/node.type";
+import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebScreenshotClip, type IWebPage } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
-import { extractFullTabData, resolveUrl } from "../clipper.utils";
+import { extractFullTabData, extractMinimalTabData, resolveUrl } from "../clipper.utils";
 import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { relayToSidePanel } from "$lib/client/utils/extension.utils";
+import { relayToBackgroundScript, relayToSidePanel } from "$lib/client/utils/extension.utils";
+import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
+import account from "$lib/client/stores/account.store";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
@@ -78,13 +80,13 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @param data - tab data
    * @returns
    */
-  async savePage(data: IResourceCapture<IWebPage>, creationContext?: string) {
+  async savePage(creationContext?: string) {
+    let data: IResourceCapture<IWebPage> = await extractData();
     const id = generateResourceId(Resource.node);
     const node = {
       id,
       ...data,
       creationContext,
-      contentType: NodeType.WEB_PAGE,
     }
     const response = await nodeStore.createNode([ node ], {
       isUseQueueFirstApproach: true,
@@ -96,6 +98,45 @@ class WebpageStore extends ObservableStore<IWebpage> {
     });
     relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: node });
     return id;
+
+    async function extractData() {
+      const host = window.location.host;
+      if (
+        commonMetadata.some(
+          (x) => host === x.domain || host.includes("." + x.domain)
+        )
+      ) {
+        logger.log({ at: "extractData", host, message: "minimal metadata page" });
+        return extractMinimalTabData();
+      }
+      const s3Url = await screenshotWebpage();
+      const tab = extractFullTabData();
+      tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
+      return tab;
+
+      async function screenshotWebpage() {
+        const data = await relayToBackgroundScript({
+          event: ClipperExtensionEvent.SCREENSHOT
+        });
+        return processScreenshot(data);
+    
+        async function processScreenshot(dataURL) {
+          const contentType = "image/png";
+          const s3SignedURL = await account.getSignedUrl(
+            contentType,
+            "screenshot.png",
+            false
+          );
+          const response = await relayToBackgroundScript({
+            event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+            data: { s3SignedURL, dataURL, contentType }
+          });
+          if (response == 200) {
+            return s3SignedURL.uploadURL.split("?")[0];
+          }
+        }
+      }
+    }
   }
   /**
    * Saves the clip to the database. If the webpage is not saved, it will be saved first by parsing the DOM for web page metadata.
@@ -109,18 +150,18 @@ class WebpageStore extends ObservableStore<IWebpage> {
     data: IClipCapture
   ) {
     let webpage = this.get();
-    logger.log({ at: "saveClip", webpage, data });
+    logger.debug({ at: "saveClip", webpage, data });
     const id = generateResourceId(Resource.node);
     if (!webpage.id) {
-      const tabData = extractFullTabData();
-      await this.savePage(tabData, id);
+      await this.savePage(id);
     }
     webpage = this.get();
+    const clipUrl = resolveClipUrl(data.body);
     const clip = {
       id,
       body: {
         ...data.body,
-        url: (webpage.url ?? window.location.href ) + "#" + id
+        url: clipUrl
       },
       metadata: data.metadata,
       parent: webpage.id,
@@ -142,6 +183,11 @@ class WebpageStore extends ObservableStore<IWebpage> {
       feedbackPane.focus(clipNode, "Clip saved!");
     }
     return clip;
+
+    function resolveClipUrl(body: any) {
+      if ("url" in body && body.url) return body.url;
+      else return (webpage.url ?? window.location.href ) + "#" + id
+    }
   }
   async saveTweet(data: IClipCapture<ITweet & {
     username: string;
@@ -344,6 +390,7 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
     });
   }
   focus(clip: IClip | null, message: string) {
+    logger.debug({ at: "feedbackPane.focus", clip, message });
     this.update((n) => {
       n.focusedClip = clip;
       n.feedback = message;

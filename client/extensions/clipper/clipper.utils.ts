@@ -164,11 +164,13 @@ export function extractFullTabData(): IResourceCapture<IWebPage> {
   )?.content;
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
   const hash = generateContentHash(document.body.innerHTML);
+  const url = resolveUrl();
+  const contentType = resolveContentTypeForUrl(url);
   return {
     label: title,
-    contentType: NodeType.WEB_PAGE,
+    contentType,
     body: {
-      url: resolveUrl(),
+      url,
       hash,
       description,
     },
@@ -189,8 +191,11 @@ export function extractMinimalTabData(): IResourceCapture<IWebPage> {
   const title = document.title;
   const hash = generateContentHash(document.body.innerHTML);
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
+  const url = resolveUrl();
+  const contentType = resolveContentTypeForUrl(url);
+  logger.debug({ at: "extractMinimalTabData", url, contentType });
   return {
-    metadata: { ogTitle, ogImage, ogDescription, ogUrl }, label: title, contentType: NodeType.WEB_PAGE, body: { url: resolveUrl(), hash }
+    metadata: { ogTitle, ogImage, ogDescription, ogUrl }, label: title, contentType, body: { url, hash }
   };
 }
 

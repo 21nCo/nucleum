@@ -41,15 +41,15 @@
     bgColor = `rgba(${compRed},${compGreen},${compBlue},0.6)`;
   });
 
-  async function saveSnip(s3URL: string) {
+  async function saveSnip(s3Url: string) {
     const snip: IClipCapture<IWebScreenshotClip> = {
       contentType: NodeType.WEB_SCREENSHOT_CLIP,
       body: {
-        s3Url: s3URL
+        s3Url
       }
     };
     const response = await webpage.saveClip(snip);
-    dispatch("saved", { s3URL, id: response.id });
+    dispatch("saved", { s3Url, id: response.id });
   }
 
   function processScreenshot(data, area: IArea) {

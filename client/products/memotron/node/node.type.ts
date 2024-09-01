@@ -237,6 +237,7 @@ export enum NodeType {
   REDDIT_THREAD = "REDDIT_THREAD",
   DISCORD_THREAD = "DISCORD_THREAD",
   YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
+  YOUTUBE_CHANNEL = "YOUTUBE_CHANNEL",
   TED_VIDEO = "TED_VIDEO",
   INSTAGRAM_POST = "INSTAGRAM_POST",
   FACEBOOK_POST = "FACEBOOK_POST",
@@ -411,19 +412,19 @@ export type INodeStructure = {
   children: string[];
 };
 
-type IWebPageBody = {
+type IGenericWebPageBody = {
   url: string;
   hash: string;
   description?: string;
 };
-export type IWebPage = INodeInterface<
+export type IGenericWebPage = INodeInterface<
   NodeType.WEB_PAGE,
-  IWebPageBody,
+  IGenericWebPageBody,
   IWebPageMetadata
 >;
 
 /**
- * @deprecated - use {@link IWebPage} instead
+ * @deprecated - use {@link IGenericWebPage} instead
  */
 export type IWebPageNode = {
   body: {
@@ -478,7 +479,42 @@ export type IVideoTimestampClip = INodeInterface<
   NodeType.VIDEO_TIMESTAMP_CLIP,
   IVideoTimestampClipBody,
   any
+  >;
+
+export type IYoutubeChannelBody = {
+  url: string;
+  title: string;
+  description?: string;
+  channelImageUrl?: string;
+};
+
+export type IYoutubeChannelMetadata = IWebPageMetadata & {
+  externalLinks?: string[];
+};
+
+export type IYoutubeChannel = INodeInterface<
+  NodeType.YOUTUBE_CHANNEL,
+  IYoutubeChannelBody,
+  IYoutubeChannelMetadata
 >;
+
+export type IYoutubeVideoBody = {
+  url: string;
+  title: string;
+  description?: string;
+  s3Url?: string;
+};
+
+export type IYoutubeVideoMetadata = IWebPageMetadata & {
+  popularity?: number;
+};
+
+export type IYoutubeVideo = INodeInterface<
+  NodeType.YOUTUBE_VIDEO,
+  IYoutubeVideoBody,
+  IYoutubeVideoMetadata
+>;
+  
 
 type IWebScreenshotClipBody = {
   s3Url: string;
@@ -537,6 +573,12 @@ export type IClip =
   | IVideoTimestampClip
   | ITextClip
   | IWebScreenshotClip;
+
+export type IWebPage = 
+  | IGenericWebPage
+  | IYoutubeChannel
+  | IYoutubeVideo
+  | ITwitterProfile
 
 export type IClipCapture<T = IClip> = Omit<IResourceCapture<T>, "label">;
 

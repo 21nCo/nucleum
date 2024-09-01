@@ -1,8 +1,6 @@
 <script lang="ts">
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import {
-    extractFullTabData,
-    extractMinimalTabData,
     extractTweetFromTweeetPage,
     extractTwitterProfile,
     resolveContentTypeForUrl
@@ -22,11 +20,8 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import account from "$lib/client/stores/account.store";
-  import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { AlertType } from "$lib/client/types/notification.type";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
@@ -38,9 +33,7 @@
     const contentTypeStr = enumToString(contentType);
     $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
     $feedbackPane.isShown = true;
-    if (contentType === NodeType.WEB_PAGE) {
-      await saveGenericWebpage();
-    } else if (contentType === NodeType.TWEET) {
+    if (contentType === NodeType.TWEET) {
       const tweetNode = extractTweetFromTweeetPage();
       if (!tweetNode) return;
       await webpage.saveTweet(tweetNode, true);
@@ -48,29 +41,13 @@
       const data = extractTwitterProfile();
       if (!data) return;
       await webpage.saveTwitterProfile(data);
+    } else {
+      await webpage.savePage();
     }
     $feedbackPane.feedback = {
       message: `${contentTypeStr} saved!`,
       type: AlertType.SUCCESS
     };
-  }
-
-  async function saveGenericWebpage() {
-    const host = window.location.host;
-    if (
-      commonMetadata.some(
-        (x) => host === x.domain || host.includes("." + x.domain)
-      )
-    ) {
-      console.log("minimal metadata page");
-      const tab = extractMinimalTabData();
-      await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });
-      return true;
-    }
-    const s3Url = await screenshotWebpage();
-    const tab = extractFullTabData();
-    tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
-    return webpage.savePage(tab);
   }
 
   async function onClipMutationFromSidePanel(data: any) {
@@ -135,30 +112,6 @@
     handleMessage().then(sendResponse);
     return true; // Indicates that the response will be sent asynchronously
   });
-
-  async function screenshotWebpage() {
-    const data = await relayToBackgroundScript({
-      event: ClipperExtensionEvent.SCREENSHOT
-    });
-    return processScreenshot(data);
-
-    async function processScreenshot(dataURL) {
-      const contentType = "image/png";
-      const s3SignedURL = await account.getSignedUrl(
-        contentType,
-        "screenshot.png",
-        false
-      );
-      const response = await relayToBackgroundScript({
-        event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-        data: { s3SignedURL, dataURL, contentType }
-      });
-      if (response == 200) {
-        return s3SignedURL.uploadURL.split("?")[0];
-        // callback(s3SignedURL.uploadURL.split("?")[0]);
-      }
-    }
-  }
 </script>
 
 <ExtensionBaseLayer
