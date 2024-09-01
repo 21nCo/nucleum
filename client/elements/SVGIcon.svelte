@@ -21,7 +21,7 @@
 </script>
 
 {#if icon}
-  <i class={cn(tailwindSizes[size], className)}>
+  <i on:click on:keypress class={cn(tailwindSizes[size], className)}>
     {#await importIcon(icon)}
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
     {:then mod}

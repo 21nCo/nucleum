@@ -5,11 +5,19 @@
   import TopNavBar from "./TopNavBar.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ITopNavBar } from "./Landing.types";
+  import { onMount } from "svelte";
+  import view from "$lib/client/stores/view.store";
 
   export let isProductsPage = true;
   export let topNavBarValues: ITopNavBar;
 
   const navBarHeight = 66;
+  onMount(async () => {
+    view.update(window.innerWidth, window.innerHeight);
+  });
+  const windowResizeListener = (event: Event) => {
+    view.update(window.innerWidth, window.innerHeight);
+  };
 </script>
 
 <LandingBaseLayer>
@@ -22,3 +30,5 @@
   </div>
   <RightPanel />
 </LandingBaseLayer>
+
+<svelte:window on:resize={windowResizeListener} />

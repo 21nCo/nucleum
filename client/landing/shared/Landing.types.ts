@@ -28,3 +28,8 @@ export type IListItem = {
   title: string;
   href: string;
 };
+
+export enum PanelName {
+  PRODUCTS = "Products",
+  BUILT_AT_BLANK_COOP = "Built at Blank.coop"
+}
