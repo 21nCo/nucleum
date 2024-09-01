@@ -28,3 +28,17 @@ export interface IFeedbackPaneStore extends IObservableStoreSubject {
    */
   focusedClip: IClip | null;
 }
+
+export interface ISyncStore extends IObservableStoreSubject {
+  id?: string;
+  status?: SyncStatus;
+  isShowSyncPane?: boolean;
+  lastSyncedAt?: string;
+}
+
+export enum SyncStatus {
+  SYNCED = "SYNCED",
+  SYNCING = "SYNCING",
+  NOT_SYNCED = "NOT_SYNCED",
+  ERRORED = "ERRORED"
+}

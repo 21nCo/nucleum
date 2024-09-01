@@ -12,7 +12,7 @@
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
-  import { webpage, toolbarState, feedbackPane } from "./store";
+  import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
   import { linker } from "$lib/client/products/memotron/memotron.store";
@@ -22,6 +22,7 @@
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import { AlertType } from "$lib/client/types/notification.type";
+  import SyncPane from "../syncPane/SyncPane.svelte";
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
@@ -140,11 +141,13 @@
       on:summarize
       on:collapse={() => toolbarState.toggle(false)}
     />
+    <!-- <div out:fade={{ duration: 150 }}> -->
     {#if $feedbackPane.isShown}
-      <!-- <div out:fade={{ duration: 150 }}> -->
       <FeedbackPane />
-      <!-- </div> -->
+    {:else if $syncStore.isShowSyncPane}
+      <SyncPane />
     {/if}
+    <!-- </div> -->
     <TextClipper bind:this={textClipperRef} />
     {#if isSnipActive}
       <ScreenShot

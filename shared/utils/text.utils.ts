@@ -140,6 +140,15 @@ export function enumToString(val: any, isProperCase: boolean = true) {
   return isProperCase ? properCase(str) : str;
 }
 
+export function enumToCamelCase(val: any) {
+  let output = "";
+  val.toString().split("_").forEach((x, index) => {
+    if (index === 0) output += x.toLowerCase();
+    else output += x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
+  });
+  return output;
+}
+
 export function determineTruncateLength(
   display: Display,
   space: Size.sm | Size.md | Size.lg = Size.md

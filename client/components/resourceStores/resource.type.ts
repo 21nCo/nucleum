@@ -103,3 +103,12 @@ T,
 | "interactedAt"
 | "id"
   >;
+
+export type IResourceCaptureWithId<T = IResource> = Omit<
+T,
+| "createdAt"
+| "modifiedAt"
+| "createdBy"
+| "modifiedBy"
+| "interactedAt"
+  >;

@@ -228,6 +228,10 @@ export class ClipperPersistence {
         // uploadFileToServer(blob, multimediaSrc, color);
       });
   }
+    /**
+   * @deprecated - use syncStore instead
+   * @returns 
+   */
   async saveAllBooks(books: BookNode[]) {
     try {
       const query = "INSERT INTO node $books";
@@ -238,7 +242,10 @@ export class ClipperPersistence {
       console.error("Error saving books:", e);
     }
   }
-
+  /**
+   * @deprecated - use syncStore instead
+   * @returns 
+   */
   async deleteAllBooksAndHiglights() {
     try {
       const query = `DELETE node WHERE contentType='KINDLE_NOTES&HIGHLIGHTS_BOOK' OR contentType='KINDLE_NOTE&HIGHLIGHT'`;
@@ -250,6 +257,11 @@ export class ClipperPersistence {
       console.error("Error saving books:", e);
     }
   }
+
+    /**
+   * @deprecated - use syncStore instead
+   * @returns 
+   */
   async saveHighlightsAndNotes(nodes: HighlightNode[]) {
     try {
       const query = `INSERT INTO node $nodes`;
@@ -261,6 +273,10 @@ export class ClipperPersistence {
     }
   }
 
+  /**
+   * @deprecated - use syncStore instead
+   * @returns 
+   */
   async updateKindleSyncState(state: any) {
     try {
       const query =
@@ -271,6 +287,10 @@ export class ClipperPersistence {
       console.error("ERROR", e);
     }
   }
+  /**
+   * @deprecated - use syncStore instead
+   * @returns 
+   */
   async getKindleSyncState() {
     try {
       const query = "SELECT kindleSyncState FROM kv:clipperToolbarState;";

@@ -14,19 +14,21 @@ import {
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
-import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
+import { activeResourceFilter, debouncer, interceptSurrealResponse } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
-import type { IFeedbackPaneStore, IWebpage } from "./types";
+import { SyncStatus, type IFeedbackPaneStore, type ISyncStore, type IWebpage } from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
-import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebScreenshotClip, type IWebPage } from "$lib/client/products/memotron/node/node.type";
+import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebScreenshotClip, type IWebPage, type IKindleBook, type IKindleHighlight } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
 import { extractFullTabData, extractMinimalTabData, resolveUrl } from "../clipper.utils";
-import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
+import type { IResourceCapture, IResourceCaptureWithId } from "$lib/client/components/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
 import { relayToBackgroundScript, relayToSidePanel } from "$lib/client/utils/extension.utils";
 import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
 import account from "$lib/client/stores/account.store";
+import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
@@ -438,3 +440,98 @@ class ClipperToolbarState extends KeyValueStore<
 }
 
 export const toolbarState = new ClipperToolbarState();
+
+
+class SyncStore extends ObservableStore<ISyncStore> {
+  db: ISurrealDatabase;
+  constructor() {
+    super("syncStore");
+    this.set({ id: undefined, status: SyncStatus.NOT_SYNCED, isShowSyncPane: false });
+  }
+  async init(id: string) {
+    this.update((n) => {
+      n.id = id;
+      return n;
+    });
+    this.db = new SurrealDatabase();
+    await this.refreshSyncState();
+    this.update((n) => {
+      n.isShowSyncPane = true;
+      return n;
+    });
+  }
+
+  togglePane() { 
+    this.update((n) => {
+      n.isShowSyncPane = !n.isShowSyncPane;
+      return n;
+    });
+  }
+
+  async save(items: IResourceCaptureWithId<IKindleBook | IKindleHighlight>[]) { 
+    logger.debug({ at: "syncStore save", items });
+    if (!items || items.length < 1) return;
+    const limitCount = 500;
+    let response;
+    if (items.length > limitCount) {
+      response = await Promise.all(resolveChunks());
+    } else {
+      response = await nodeStore.createNode(items);
+    }
+
+    function resolveChunks() {
+      const promises = [];
+      for (let i = 0; i < items.length; i += limitCount) {
+        promises.push(
+          nodeStore.createNode(items.slice(i, i + limitCount))
+        );
+      }
+      return promises;
+    }
+  }
+
+  async updateSyncStatus(status: SyncStatus) { 
+    this.update((n) => {
+      n.status = status;
+      return n;
+    });
+    if(status == SyncStatus.SYNCED) await this.persistSyncStatus(status);
+  }
+
+  async refreshSyncState() {
+    try {
+      const id = this.get().id;
+      const query = `SELECT ${id} FROM kv:clipperSync;`
+      const result = interceptSurrealResponse(await this.db.executeReadFn(query, {}));
+      logger.debug({ at: "syncStore refreshSyncState", result, id });
+      if (result && result.length > 0) {
+        const record = result[0];
+        if (record[id]) { 
+          this.update((n) => {
+            n.status = record[id].status;
+            n.lastSyncedAt = record[id].updatedAt;
+            return n;
+          });
+        }
+      }
+    } catch (e) {
+      logger.error(e);
+    }
+  }
+
+  async persistSyncStatus(status: SyncStatus) { 
+    try {
+      const id = this.get().id;
+      const query = `UPDATE kv:clipperSync SET ${id}={
+        status: "${status}",
+        updatedAt: time::now()
+      };`
+      const result = await this.db.query(query, {});
+      console.log({ result });
+    } catch (e) {
+      logger.error(e);
+    }
+  }
+}
+
+export const syncStore = new SyncStore();

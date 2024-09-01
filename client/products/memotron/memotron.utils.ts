@@ -1,11 +1,13 @@
+import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
   CollectionType,
   type ICollection
 } from "$lib/client/products/memotron/collection/collection.type";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-import type { INode } from "$lib/client/products/memotron/node/node.type";
+import type { INode, NodeType } from "$lib/client/products/memotron/node/node.type";
 
 import { copyToClipboard } from "$lib/client/utils/utils";
+import { enumToCamelCase, generateResourceId } from "$lib/shared/utils/text.utils";
 
 export function resolveResourceType(item: ICollection | INode) {
   if (item.id.startsWith("node:")) return MemotronResourceType.NODE;
@@ -41,4 +43,17 @@ function resolveLinkForResource(resource: string) {
 export function copyResourceLinkToClipboard(id: string) {
   const link = resolveLinkForResource(id);
   copyToClipboard(link);
+}
+
+/**
+ * Generates a node id using the externalId and type.
+ * @param externalId 
+ * @param type NodeType
+ * @returns 
+ */
+export function generateSyncedResourceId(externalId: string, type: NodeType) { 
+  return generateResourceId(Resource.node, {
+    prefix: enumToCamelCase(type),
+    id: externalId,
+  });
 }

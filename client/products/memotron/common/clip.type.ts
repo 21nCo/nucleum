@@ -31,7 +31,11 @@ export enum ClipperExtensionEvent {
   /**
    * Relayed from side panel to content script when any clip is mutated like editing notes, links or deleting etc.
    */
-  CLIP_MUTATION = "CLIP_MUTATION"
+  CLIP_MUTATION = "CLIP_MUTATION",
+  /**
+   * Event to trigger syncing of highlights from sync pages.
+   */
+  START_SYNC = "START_SYNC",
 }
 
 

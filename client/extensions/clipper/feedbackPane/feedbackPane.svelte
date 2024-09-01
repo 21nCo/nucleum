@@ -1,12 +1,9 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
-  import { feedbackPane, toolbarState, webpage } from "../contentScripts/store";
+  import { feedbackPane, webpage } from "../contentScripts/store";
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   import InlineFeedbackText from "../InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
@@ -14,6 +11,7 @@
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { resolveContentTypeString } from "../clipper.utils";
   import { truncateString } from "$lib/shared/utils/text.utils";
+  import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
   let notes: string = "";
   let autoCloseDuration = 30;
   let closeTimer: any;
@@ -98,18 +96,7 @@
   }
 </script>
 
-<HoverableElement
-  bind:isHovering
-  on:hover={onHover}
-  class={cn(
-    "fixed w-80 flex flex-col gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
-    {
-      "right-16 top-1/2 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Position.Right,
-      "bottom-0 right-0 m-6": $toolbarState.position === Position.Bottom
-    }
-  )}
->
+<FeedbackPaneBase bind:isHovering on:hover={onHover}>
   <div class="flex flex-col gap-2">
     <div class="flex w-full justify-between items-center">
       <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
@@ -162,4 +149,4 @@
     </span>
   {/if}
   <InlineFeedbackText bind:feedback={$feedbackPane.feedback} />
-</HoverableElement>
+</FeedbackPaneBase>

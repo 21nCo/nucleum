@@ -6,7 +6,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { webpage, toolbarState } from "../contentScripts/store";
+  import { webpage, toolbarState, syncStore } from "../contentScripts/store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import {
@@ -65,7 +65,7 @@
     }
   )}
 >
-  {#if !isScreenShotOnly}
+  {#if !isScreenShotOnly && !$syncStore.id}
     {#if $webpage?.id}
       <button
         class="flex border border-transparent outline-dotted outline-fgs2 hover:outline-aps1 rounded-full"
@@ -88,6 +88,22 @@
         }}
       />
     {/if}
+  {:else if $syncStore.id}
+    <!-- <Button
+      icon="sync"
+      tooltip="Sync"
+      {...buttonParams}
+      on:click={() => {
+        syncStore.togglePane();
+      }}
+    /> -->
+    <Toggle
+      icon="sync"
+      tooltip="Sync"
+      size={Size.sm}
+      bind:on={$syncStore.isShowSyncPane}
+      {tooltipOptions}
+    />
   {/if}
   <Toggle
     icon="cube-transparent"

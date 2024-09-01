@@ -564,7 +564,39 @@ export type ITwitterProfile = INodeInterface<
   NodeType.TWITTER_PROFILE,
   ITwitterProfileBody,
   ITwitterProfileMetadata
+  >;
+
+export type IKindleBookBody = {
+  id: string;
+  author: string;
+  asin?: string;
+  url?: string;
+  imageUrl?: string;
+  lastAnnotatedDate?: Date;
+}
+
+export type IKindleBook = INodeInterface<
+  NodeType.KINDLE_BOOK,
+  IKindleBookBody,
+  IWebPageMetadata
 >;
+
+export type IKindleHighlightBody = {
+  id: string;
+  text: string;
+  location?: string;
+  page?: string;
+  note?: string;
+  color?: 'pink' | 'blue' | 'yellow' | 'orange';
+  createdDate?: Date;
+}
+
+export type IKindleHighlight = INodeInterface<
+  NodeType.KINDLE_HIGHLIGHT,
+  IKindleHighlightBody,
+  IWebPageMetadata
+  >;
+
 
 export type IClip =
   | ITwitterProfile
