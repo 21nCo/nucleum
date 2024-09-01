@@ -25,5 +25,22 @@ export const upcomingProductsStore = writable<ITileItem[]>([
   {
     title: "Selftron",
     description: "The best body-mind tracking and analytics ever built"
+  },
+  {
+    title: "Longpress",
+    description: "Next gen discovery platform powered by AI"
+  },
+  {
+    title: "Biordic",
+    description:
+      "Digital repository of foods, inspired by periodic table arrangement"
+  },
+  {
+    title: "Nearby maps",
+    description: "The best way to find your friends and family"
+  },
+  {
+    title: "Alt 100",
+    description: "The best way to find your friends and family"
   }
 ]);

@@ -7,7 +7,6 @@
     const mode = document.getElementById("modeToggle")!;
     const modeChild = document.getElementById("modeToggleChild")!;
     const theme = $appearance.theme;
-    console.log("toggle b4", theme);
     if (initialize) {
       $appearance.lightColorSchemeId = "colorscheme:clean_tidymono_light";
       $appearance.darkColorSchemeId = "colorscheme:clean_tidymono_dark";

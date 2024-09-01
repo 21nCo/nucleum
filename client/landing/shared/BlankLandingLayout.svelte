@@ -16,7 +16,7 @@
   {#if isProductsPage}
     <LeftPanel />
   {/if}
-  <div class="border w-full overflow-auto">
+  <div class="w-full overflow-auto">
     <TopNavBar {topNavBarValues} {navBarHeight} />
     <slot />
   </div>

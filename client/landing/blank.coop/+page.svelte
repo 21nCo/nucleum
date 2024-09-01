@@ -73,8 +73,8 @@
   );
 
   let products: ITileItem[] = [
-    ...$currentProductsStore,
-    ...$upcomingProductsStore
+    ...$currentProductsStore.slice(0, 2),
+    ...$upcomingProductsStore.slice(0, 2)
   ];
 </script>
 

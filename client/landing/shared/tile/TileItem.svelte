@@ -6,6 +6,9 @@
   import type { ITileItem } from "../Landing.types";
 
   export let item: ITileItem;
+  export let isPanelView: Boolean = false;
+  export let isEnableBackground: Boolean = false;
+
   let isHovered = false;
   function onMouseEnter() {
     isHovered = true;
@@ -21,7 +24,16 @@
 </script>
 
 <button
-  class="flex flex-col items-start justify-startc gap-3 w-[598px] h-[471px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3"
+  class={cn(
+    !isPanelView &&
+      "relative flex flex-col items-start justify-start gap-3 w-[598px] h-[471px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
+    isPanelView &&
+      "relative w-[260px] rounded-xl px-4 pt-4 flex flex-col items-start justify-start gap-2",
+    isPanelView && isEnableBackground && "bg-bgs2 hover:bg-bgs3 h-[256px]",
+    isPanelView &&
+      !isEnableBackground &&
+      "border-2 border-brs3 hover:border-brs4 h-[190px]"
+  )}
   on:mouseenter={onMouseEnter}
   on:mouseleave={onMouseLeave}
   on:click={onClick}
@@ -29,10 +41,15 @@
   {#if item?.title}
     {@const title = item.title}
     <div class="flex items-center w-full">
-      <h1 class="text-[30px] leading-10 font-extrabold">
+      <h1
+        class={cn(
+          !isPanelView && "text-[30px] leading-10 font-extrabold",
+          isPanelView && "text-[22px] leading-8 font-extrabold"
+        )}
+      >
         {title}
       </h1>
-      {#if item.href}
+      {#if item.href && !isPanelView}
         <div class="ml-auto">
           <span
             class={cn(
@@ -57,7 +74,12 @@
   {/if}
   {#if item?.description}
     {@const description = item.description}
-    <p class="text-[20px] leading-[28px] font-normal text-justify">
+    <p
+      class={cn(
+        !isPanelView && "text-[20px] leading-[28px] font-normal text-left",
+        isPanelView && "text-base leading-[22px] font-normal text-left"
+      )}
+    >
       {description}
     </p>
   {/if}
@@ -66,7 +88,10 @@
     <img
       src={`/images/${image}.png`}
       alt={item.title}
-      class="w-[480px] h-[280px] mt-16 ml-16"
+      class={cn(
+        !isPanelView && "absolute w-[480px] h-[280px] bottom-1 right-1",
+        isPanelView && "absolute w-[214px] h-[110px] bottom-1 right-1"
+      )}
     />
   {/if}
 </button>

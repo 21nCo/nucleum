@@ -5,7 +5,7 @@
   // export let backgroundImage: string;
 </script>
 
-<div class="flex w-full items-center justify-center border border-rose-600">
+<div class="flex w-full items-center justify-center">
   <div
     class={cn(
       "w-[1440px] flex flex-col items-center justify-center min-h-[93vh] px-12 py-12",

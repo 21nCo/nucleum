@@ -1,8 +1,9 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Modal from "$lib/client/components/modal/Modal.svelte";
+  import appearance from "$lib/client/stores/appearance.store";
+  import { cn } from "$lib/client/utils/ui.utils";
   import type { ITileItem } from "./Landing.types";
+  import PanelButton from "./elements/PanelButton.svelte";
   import {
     currentProductsStore,
     upcomingProductsStore
@@ -13,22 +14,26 @@
   const upcomingProducts: ITileItem[] = $upcomingProductsStore;
   let isProductsPanelOpen: Boolean = false;
   function onClick() {
+    console.log("onClick");
     isProductsPanelOpen = true;
   }
 </script>
 
 {#if isProductsPanelOpen}
   <div
-    class="fixed w-[100vw] h-[100vh] bg-bgs1 opacity-90 z-[51] overflow-scroll"
+    class={cn(
+      "fixed w-[100vw] h-[100vh] z-[51]",
+      !$appearance.colorScheme.isDark && "bg-[hsla(0,0%,0%,0.3)]",
+      $appearance.colorScheme.isDark && "bg-[hsla(0,0%,100%,0.3)]"
+    )}
+    on:click={() => (isProductsPanelOpen = false)}
+    on:keypress
   >
-    <TileItemsPanel {currentProducts} {upcomingProducts} />
+    <TileItemsPanel
+      bind:isProductsPanelOpen
+      {currentProducts}
+      {upcomingProducts}
+    />
   </div>
-{:else}
-  <button
-    class="w-[115px] h-full border-r border-brs3 flex flex-col items-center justify-center p-4 text-center text-fgs3 text-base leading-5"
-    on:click={onClick}
-  >
-    <SvgIcon icon="ham-burger-menu" size={Size.lg} />
-    Products
-  </button>
 {/if}
+<PanelButton label="Products" icon="ham-burger-menu" on:click={onClick} />
