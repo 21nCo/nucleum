@@ -38,7 +38,7 @@
       (clip) => clip.contentType === NodeType.TEXT_CLIP
     );
     videoTimestampClips = rawClips
-      .filter((clip) => clip.contentType === NodeType.VIDEO_TIMESTAMP_CLIP)
+      .filter((clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP)
       ?.sort((a, b) => a.body.timestamp - b.body.timestamp);
     await wait(1000);
     return resolveOrderAndRenderClips();
@@ -83,7 +83,7 @@
             on:click={() => onThumbnailClick(clip.id)}
             on:keydown
           />
-        {:else if clip.contentType === NodeType.VIDEO_TIMESTAMP_CLIP && "timestamp" in clip.body}
+        {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
           <VideoTimestampClip
             {clip}
             on:click={() => onThumbnailClick(clip.id)}

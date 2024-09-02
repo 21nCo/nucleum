@@ -177,7 +177,7 @@ export type ClipType =
   | NodeType.AUDIO_CLIP
   | NodeType.VIDEO_CLIP
   | NodeType.PDF_CLIP
-  | NodeType.VIDEO_TIMESTAMP_CLIP;
+  | NodeType.YOUTUBE_TIMESTAMP_CLIP;
 
 export enum NodeType {
   NODULAR_MARKDOWN = "NODULAR_MARKDOWN",
@@ -226,7 +226,6 @@ export enum NodeType {
   AUDIO_CLIP = "AUDIO_CLIP",
   VIDEO_CLIP = "VIDEO_CLIP",
   PDF_CLIP = "PDF_CLIP",
-  VIDEO_TIMESTAMP_CLIP = "VIDEO_TIMESTAMP_CLIP",
   WEB_SCREENSHOT_CLIP = "WEB_SCREENSHOT_CLIP",
 
   //EXTERNAL
@@ -237,6 +236,7 @@ export enum NodeType {
   REDDIT_THREAD = "REDDIT_THREAD",
   DISCORD_THREAD = "DISCORD_THREAD",
   YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
+  YOUTUBE_TIMESTAMP_CLIP = "YOUTUBE_TIMESTAMP_CLIP",
   YOUTUBE_CHANNEL = "YOUTUBE_CHANNEL",
   TED_VIDEO = "TED_VIDEO",
   INSTAGRAM_POST = "INSTAGRAM_POST",
@@ -259,9 +259,11 @@ export const webNodeTypeList = [
   NodeType.AUDIO_CLIP,
   NodeType.VIDEO_CLIP,
   NodeType.PDF_CLIP,
-  NodeType.VIDEO_TIMESTAMP_CLIP,
   NodeType.WEB_SCREENSHOT_CLIP,
 
+  NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_CHANNEL,
+  NodeType.YOUTUBE_TIMESTAMP_CLIP,
   NodeType.TWEET,
   NodeType.TWITTER_PROFILE,
   NodeType.KINDLE_BOOK,
@@ -451,11 +453,12 @@ export type IWebPageMetadata = {
   screenshotUrl?: string;
 };
 
-type ITextClipBody = {
+export type ITextClipBody = {
   text: string;
   highlighterId: string;
   pre?: string;
   post?: string;
+  url: string;
 };
 type ITextClipMetadata = {
   container: string;
@@ -470,16 +473,16 @@ export type ITextClip = INodeInterface<
   ITextClipMetadata
 >;
 
-type IVideoTimestampClipBody = {
+export type IVideoTimestampClipBody = {
   timestamp: number;
   url: string;
   s3Url?: string;
 };
 export type IVideoTimestampClip = INodeInterface<
-  NodeType.VIDEO_TIMESTAMP_CLIP,
+  NodeType.YOUTUBE_TIMESTAMP_CLIP,
   IVideoTimestampClipBody,
   any
-  >;
+>;
 
 export type IYoutubeChannelBody = {
   url: string;
@@ -514,7 +517,6 @@ export type IYoutubeVideo = INodeInterface<
   IYoutubeVideoBody,
   IYoutubeVideoMetadata
 >;
-  
 
 type IWebScreenshotClipBody = {
   s3Url: string;
@@ -564,7 +566,7 @@ export type ITwitterProfile = INodeInterface<
   NodeType.TWITTER_PROFILE,
   ITwitterProfileBody,
   ITwitterProfileMetadata
-  >;
+>;
 
 export type IKindleBookBody = {
   id: string;
@@ -573,7 +575,7 @@ export type IKindleBookBody = {
   url?: string;
   imageUrl?: string;
   lastAnnotatedDate?: Date;
-}
+};
 
 export type IKindleBook = INodeInterface<
   NodeType.KINDLE_BOOK,
@@ -587,16 +589,15 @@ export type IKindleHighlightBody = {
   location?: string;
   page?: string;
   note?: string;
-  color?: 'pink' | 'blue' | 'yellow' | 'orange';
+  color?: "pink" | "blue" | "yellow" | "orange";
   createdDate?: Date;
-}
+};
 
 export type IKindleHighlight = INodeInterface<
   NodeType.KINDLE_HIGHLIGHT,
   IKindleHighlightBody,
   IWebPageMetadata
-  >;
-
+>;
 
 export type IClip =
   | ITwitterProfile
@@ -604,13 +605,15 @@ export type IClip =
   | IMultimediaClip
   | IVideoTimestampClip
   | ITextClip
-  | IWebScreenshotClip;
+  | IWebScreenshotClip
+  | IKindleHighlight;
 
-export type IWebPage = 
+export type IWebPage =
   | IGenericWebPage
   | IYoutubeChannel
   | IYoutubeVideo
   | ITwitterProfile
+  | IKindleBook;
 
 export type IClipCapture<T = IClip> = Omit<IResourceCapture<T>, "label">;
 

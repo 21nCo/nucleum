@@ -20,7 +20,7 @@
     logger.log({ at: "refreshTimestamps", clips });
     if (clips && clips.length > 0) {
       const timestamps = clips.filter(
-        (clip) => clip.contentType === NodeType.VIDEO_TIMESTAMP_CLIP
+        (clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
       );
       clipCount = timestamps.length;
       for (let i = 0; i < timestamps.length; i++) {
@@ -147,7 +147,7 @@
     const { videoUrlWithTimestamp, timestamp, s3Url } = await clip();
 
     await webpage.saveClip({
-      contentType: NodeType.VIDEO_TIMESTAMP_CLIP,
+      contentType: NodeType.YOUTUBE_TIMESTAMP_CLIP,
       body: {
         timestamp,
         url: videoUrlWithTimestamp,

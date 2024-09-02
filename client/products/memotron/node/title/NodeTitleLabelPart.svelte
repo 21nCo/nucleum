@@ -1,7 +1,14 @@
 <script lang="ts">
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
-  import { type INode, NodeType } from "../node.type";
+  import {
+    type INode,
+    type ITextClipBody,
+    NodeType,
+    type IVideoTimestampClipBody,
+    type ITwitterProfileBody,
+    type ITwitterProfile
+  } from "../node.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -24,7 +31,8 @@
     NodeType.TWITTER_PROFILE,
     NodeType.TEXT_CLIP,
     NodeType.WEB_SCREENSHOT_CLIP,
-    NodeType.VIDEO_TIMESTAMP_CLIP
+    NodeType.YOUTUBE_TIMESTAMP_CLIP,
+    NodeType.KINDLE_HIGHLIGHT
   ];
   function resolveEmptyLabel() {
     //TODO - based on resource type
@@ -37,50 +45,71 @@
   });
 
   async function resolveLabel() {
+    if (!node) return "";
     const dexie = $dataManager.cacheSource.dexie;
     let parent;
     if (node.parent) parent = await dexie.node.get(node.parent);
-    if (node.contentType === NodeType.TEXT_CLIP) {
-      const defaultLabel = "Clipped Text - " + node.body.text;
-      if (!parent || !parent.label) return defaultLabel;
-      return {
-        label: "Text clipped from -",
-        parent
-      };
+
+    const defaultLabels = {
+      [NodeType.TEXT_CLIP]:
+        "Clipped Text - " + (node.body as ITextClipBody).text,
+      [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
+        "Video timestamp - " +
+        resolveVideoTimeStampStr(node.body as IVideoTimestampClipBody),
+      [NodeType.WEB_SCREENSHOT_CLIP]: "Web screenshot",
+      [NodeType.TWEET]: "Unknown tweet",
+      [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
+    };
+
+    switch (node.contentType) {
+      case NodeType.TEXT_CLIP:
+      case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+      case NodeType.WEB_SCREENSHOT_CLIP:
+      case NodeType.KINDLE_HIGHLIGHT:
+        if (!parent?.label) return defaultLabels[node.contentType];
+        return {
+          label: getLabelPrefix(),
+          parent
+        };
+      case NodeType.TWEET:
+        parent = parent as ITwitterProfile;
+        if (!parent?.body?.name) return defaultLabels[NodeType.TWEET];
+        return {
+          label: "Tweet by ",
+          parent: { id: parent.id, label: parent.body.name }
+        };
+      case NodeType.TWITTER_PROFILE:
+        node = node as ITwitterProfile;
+        return (
+          node.metadata?.ogTitle ||
+          ((node.body as ITwitterProfileBody).name
+            ? node.body.name + " X profile"
+            : "Unknown X profile")
+        );
+      default:
+        return "";
     }
-    if (node.contentType === NodeType.VIDEO_TIMESTAMP_CLIP) {
-      const timeStampStr = formatSeconds(node.body.timestamp, TimeFormat.CLOCK);
-      const defaultLabel = "Video timestamp - " + timeStampStr;
-      if (!parent || !parent.label) return defaultLabel;
-      return {
-        label: timeStampStr + " - ",
-        parent
-      };
+
+    function getLabelPrefix() {
+      switch (node.contentType) {
+        case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+          return (
+            resolveVideoTimeStampStr(node.body as IVideoTimestampClipBody) +
+            " - "
+          );
+        case NodeType.TEXT_CLIP:
+          return "Text clipped from - ";
+        case NodeType.WEB_SCREENSHOT_CLIP:
+          return "Screenshot - ";
+        case NodeType.KINDLE_HIGHLIGHT:
+          return "Kindle highlight - ";
+        default:
+          return "";
+      }
     }
-    if (node.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
-      const defaultLabel = "Web screenshot";
-      if (!parent || !parent.label) return defaultLabel;
-      return {
-        label: "Screenshot -",
-        parent
-      };
-    }
-    if (node.contentType === NodeType.TWEET) {
-      const defaultLabel = "Unknown tweet";
-      if (!parent || !("name" in parent.body) || !parent.body?.name)
-        return defaultLabel;
-      return {
-        label: "Tweet by ",
-        parent: {
-          id: parent.id,
-          label: parent.body.name
-        }
-      };
-    } else if (node.contentType === NodeType.TWITTER_PROFILE) {
-      const defaultLabel = "Unknown X profile";
-      if (node.metadata?.ogTitle) return node.metadata.ogTitle;
-      else if (node.body.name) return node.body.name + " X profile";
-      else return defaultLabel;
+
+    function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {
+      return formatSeconds(body.timestamp, TimeFormat.CLOCK);
     }
   }
 </script>

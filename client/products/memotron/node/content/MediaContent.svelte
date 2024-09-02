@@ -70,7 +70,7 @@
         src={$node.body.url}
       />
     {:else if webNodeTypeList.includes($node?.contentType)}
-      <WebNodeContent {node} />
+      <WebNodeContent node={$node} />
     {/if}
   </main>
   {#if rightPane || webNodeTypeList.includes($node?.contentType)}
