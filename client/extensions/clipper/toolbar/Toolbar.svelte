@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import HightlightColorItem from "../HightlightColorItem.svelte";
+  import HightlightColorItem from "$lib/client/products/memotron/common/highlighters/HightlightColorItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { cn } from "$lib/client/utils/ui.utils";

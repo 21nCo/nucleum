@@ -1,5 +1,4 @@
-import InlineToolBar from "./InlineToolBar.svelte";
-export default {
+import InlineToolBar from "./InlineToolBar.sveltet default {
   component: InlineToolBar,
   parameters: { layout: "centered" }
 };

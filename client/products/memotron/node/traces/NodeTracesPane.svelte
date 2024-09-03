@@ -1,32 +1,105 @@
 <script lang="ts">
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import { hexToRGBA } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { Size } from "$lib/client/types/size.enum";
   import type { IActiveNodeStore } from "../node.store";
+  import { getContext } from "svelte";
+  import { NodeType } from "../node.type";
+  import { highlightStore } from "../../common/highlighters/highlight.store";
+  import { AnnotationType } from "../../pdfAnnotator/pdfAnnotator.type";
+  const contentContext = getContext<any>("content");
 
-  export let node: IActiveNodeStore;
+  export let node: IActiveNodeStore | null = null;
+  $: pdfAnnotations = $node?.pdfAnnotations ?? [];
+  let options =
+    $node?.contentType === NodeType.PDF
+      ? [
+          {
+            value: "Highlights",
+            icon: "bookmark"
+          },
+          {
+            value: "Tasks",
+            icon: "rocket"
+          }
+        ]
+      : [
+          {
+            value: "Bookmarks",
+            icon: "bookmark"
+          },
+          {
+            value: "Comments",
+            icon: "chat-bubble-bottom-center"
+          },
+          {
+            value: "Tasks",
+            icon: "rocket"
+          },
+          {
+            value: "Outgoing mentions",
+            icon: "at-symbol"
+          }
+        ];
 </script>
 
-<OptionSelector
-  options={[
-    {
-      value: "Bookmarks",
-      icon: "bookmark"
-    },
-    {
-      value: "Comments",
-      icon: "chat-bubble-bottom-center"
-    },
-    {
-      value: "Tasks",
-      icon: "rocket"
-    },
-    {
-      value: "Outgoing mentions",
-      icon: "at-symbol"
-    }
-  ]}
-  size={Size.sm}
-/>
+<OptionSelector {options} size={Size.sm} />
 
-<ComingSoonView size={Size.sm} />
+{#if pdfAnnotations.length > 0}
+  <div class="h-full w-full flex flex-col gap-2 mt-2 overflow-y-scroll">
+    {#each pdfAnnotations as trace, index}
+      <button
+        class="block relative w-full p-2 text-b2 text-left border border-brs3 rounded-md hover:bg-bgs2"
+        on:click={() => {
+          contentContext.publish("pdf-trace-click", {
+            id: trace.id,
+            pageNumber: trace.pageNumber
+          });
+        }}
+      >
+        <!-- TODO - delete, link, edit actions within traces panel -->
+        <!-- <button
+          on:click|stopPropagation={() => handleAnnotDelete(null, trace.id)}
+          class="absolute top-1 right-0 material-symbols-rounded text-base text-fgs4 hover:text-h4 hover:text-fgs2 z-40"
+          >{@html "&#Xe92b"}</button
+        > -->
+        {#if trace.comment}
+          <div
+            class="flex flex-col gap-2 w-full min-h-fit p-2 rounded-md text-fgs2"
+          >
+            {#if trace.selectedText}
+              <blockquote
+                class="border-l-2 border-orange-400 p-2 opacity-50 text-b3"
+              >
+                {trace.selectedText.slice(0, 100)}
+              </blockquote>
+            {/if}
+            <div>
+              {trace.comment}
+            </div>
+          </div>
+        {:else}
+          {@const color = highlightStore.resolveColor(trace.color)}
+          <div
+            class="w-full min-h-fit p-2 rounded-md text-fgs2"
+            style="text-decoration: 2px {trace.annotType?.toLowerCase()} {trace.annotType !==
+            AnnotationType.HIGHLIGHT
+              ? color
+              : ''}; "
+          >
+            <span
+              style={trace.annotType === AnnotationType.HIGHLIGHT
+                ? `background-color: ${hexToRGBA(color, 0.2)};`
+                : ""}
+            >
+              {trace.selectedText.slice(0, 100)}</span
+            >
+          </div>
+        {/if}
+      </button>
+    {/each}
+  </div>
+{:else}
+  <ComingSoonView size={Size.sm} />
+{/if}

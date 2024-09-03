@@ -14,7 +14,6 @@
     shallowDiff
   } from "$lib/shared/utils/obj.utils";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import PdfAnnotator from "../../pdfAnnotator/pdfAnnotator.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
@@ -200,8 +199,6 @@
       <ScrollViewBottomSpacer />
       <ScrollViewBottomSpacer />
       <ScrollViewBottomSpacer />
-    {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
-      <PdfAnnotator url={$node.body.url} />
     {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
       <div class="flex flex-col items-start gap-4">
         <Text content="Clips" style={TextStyle.SECTION_HEADING} />

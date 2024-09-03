@@ -5,7 +5,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import AudioScrubablePreview from "./AudioScrubablePreview.svelte";
   import { captureStore } from "./capture.store";
-  import PdfAnnotator from "../pdfAnnotator/pdfAnnotator.svelte";
+  import PdfAnnotator from "../pdfAnnotator/PdfAnnotator.svelte";
   import InlineLoadingAnimation from "$lib/client/elements/feedback/animations/InlineLoadingAnimation.svelte";
   let isUploading: boolean = false;
   let isDraggedIn = false;

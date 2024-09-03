@@ -23,20 +23,25 @@
   import { onMount } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
   import { userPreferences } from "$lib/client/stores/app.store";
-  import InlineToolBar from "./InlineToolBar.svelte";
-  import Comment from "./Comment.svelte";
-  import InlineEditToolBar from "./InlineEditToolBar.svelte";
-  import CommentEditor from "./CommentEditor.svelte";
+  import InlineToolBar from "./toolbar/InlineToolBar.svelte";
+  import Comment from "./comment/Comment.svelte";
+  import InlineEditToolBar from "./toolbar/InlineEditToolBar.svelte";
+  import CommentEditor from "./comment/CommentEditor.svelte";
   import TracesPanel from "./TracesPanel.svelte";
-  import ToolBar from "./ToolBar.svelte";
+  import ToolBar from "./toolbar/ToolBar.svelte";
   import { FindState } from "pdfjs-dist/web/pdf_viewer.mjs";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { captureStore } from "../capture/capture.store";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import type { IHighlighter } from "../common/highlighters/highlight.type";
+  import { highlightStore } from "../common/highlighters/highlight.store";
 
   export let url: string = "/Liu_Deep_Supervised_Hashing_CVPR_2016_paper.pdf";
+  $: console.log({ url });
   export let isReplaceable: boolean = false;
-  let annots: any[];
+  export let annots: any[];
   /**
    * varibales for drawing shapes adding shapes or click annotations
    */
@@ -91,7 +96,7 @@
    * annotations variables
    */
   let inlineToolBarVisible = false;
-  let InlineEditorVisible = false;
+  let isInlineEditBarVisible = false;
   let commentEditorVisible = false;
   let popupStyle = "";
   let removeAllRanges: any;
@@ -100,7 +105,7 @@
   let annotClickedId = "";
   let annotClickedColor = "";
   let annotCickedType = "";
-  let selectedColor = "#FFC0CB";
+  let selectedColor = $highlightStore.highlighters[0].id;
   let annotClickedComment = "";
   let clickBoundingRect: LTWH | null;
   $: if (pdfViewer) {
@@ -135,7 +140,7 @@
    */
   function falseAll() {
     inlineToolBarVisible = false;
-    InlineEditorVisible = false;
+    isInlineEditBarVisible = false;
     commentEditorVisible = false;
   }
 
@@ -207,7 +212,10 @@
   async function annotate(event: any, editorValues: any = {}) {
     // console.log("annotating as", event.detail, comment);
     annotation.annotType = event.detail;
-    if (event.detail === "COMMENT" || event.detail === "TASK") {
+    if (
+      event.detail === AnnotationType.COMMENT ||
+      event.detail === AnnotationType.TASK
+    ) {
       annotation.comment = editorValues.comment;
       if (event.detail.DueDate) annotation.DueDate = editorValues.DueDate;
     }
@@ -243,9 +251,12 @@
     let elements = document.getElementsByClassName(id);
     let element = elements[0];
     annotClickedId = id;
-    annotClickedColor = element?.dataset?.color || "";
+    annotClickedColor = element?.dataset?.highlighter || "";
     annotCickedType = element?.dataset?.annottype || "";
-    if (annotCickedType == "COMMENT" || annotCickedType == "TASK")
+    if (
+      annotCickedType == AnnotationType.COMMENT ||
+      annotCickedType == AnnotationType.TASK
+    )
       annotClickedComment = element?.dataset?.comment || "";
     let rect = element?.getBoundingClientRect();
     let top = rect?.top || 0;
@@ -253,9 +264,9 @@
     // top += Number(scrollTop);
     commentEditorVisible = false;
     inlineToolBarVisible = false;
-    InlineEditorVisible = false;
+    isInlineEditBarVisible = false;
     popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 1000;`;
-    InlineEditorVisible = true;
+    isInlineEditBarVisible = true;
   }
 
   /**
@@ -300,7 +311,10 @@
       else if (highlight.rect) {
         modifiedRect = scaleValues(highlight.rect);
       }
-      if (highlight.annotType == "COMMENT" || highlight.annotType == "TASK") {
+      if (
+        highlight.annotType == AnnotationType.COMMENT ||
+        highlight.annotType == AnnotationType.TASK
+      ) {
         new Comment({
           target: highlightsContainer,
           props: {
@@ -308,7 +322,7 @@
             rect: modifiedRect,
             annotType: highlight.annotType,
             id: highlight.id,
-            color: highlight.color,
+            highlighter: highlight.color,
             comment: highlight.comment,
             pageRectTop: highlight?.rect?.pageRectTop,
             showIcon:
@@ -325,7 +339,7 @@
             rects: modifiedRects,
             annotType: highlight.annotType,
             id: highlight.id,
-            color: highlight.color
+            highlighter: highlight.color
           }
         }).$on("click", (event) => handleAnnotClick(event.detail));
       }
@@ -340,7 +354,7 @@
    * @param id
    * @param pageNumber
    */
-  function scrollToAnnot(id: string, pageNumber: Number) {
+  export function scrollToAnnot(id: string, pageNumber: Number) {
     pdfViewer.scrollPageIntoView({
       pageNumber: pageNumber
     });
@@ -428,25 +442,26 @@
     else await surrealPDF.deleteClip(deleteAnnot);
     annotClickedComment = "";
     renderHighlightLayers();
+    isInlineEditBarVisible = false;
   }
 
   /**
    * To handle the color change of the annotation, the function is invoked when the user changes the color of the annotation.
-   * @param color
+   * @param highlighter
    */
-  async function handleColorChange(color: string) {
+  async function handleColorChange(highlighter: IHighlighter) {
     if (isReplaceable && $captureStore.fileDetails)
       $captureStore.fileDetails.pdfAnnotations =
         $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
           if (highlight.id === annotClickedId) {
-            highlight.color = color;
-            // console.log("color changed", highlight.color);
+            highlight.color = highlighter.id;
           }
           return highlight;
         });
-    else await surrealPDF.updateClip(annotClickedId, { color: color });
-    selectedColor = color;
+    else await surrealPDF.updateClip(annotClickedId, { color: highlighter.id });
+    selectedColor = highlighter.id;
     renderHighlightLayers();
+    isInlineEditBarVisible = false;
   }
 
   /**
@@ -831,15 +846,23 @@
   });
 </script>
 
-<div class="relative h-9/10 w-full border border-yellow-800">
-  <div class="flex bg-bgs2 h-8">
-    <div
-      class="flex justify-between search-bar bg-bgs3 px-1 py-0.5 ml-2/10 w-5/10"
-    >
-      <div class="w-6/10">
-        <div class="inline-flex rounded h-8/10 w-8/10 bg-bgs2">
-          <Icon icon="search" size={Size.xs} />
-          <input
+<div class="relative h-full w-full">
+  <div
+    class="flex items-center justify-between w-full h-14 px-4 gap-8 border-b border-b-brs2"
+  >
+    <div class="flex gap-6 items-center search-bar flex-1">
+      <div class="w-6/10 flex gap-4 items-center">
+        <div class="flex items-center w-9/10">
+          <TextInput
+            placeholder="Search"
+            bind:value={searchText}
+            on:keydown={(e) => {
+              if (e.key === "Enter") onSearch();
+            }}
+            size={Size.sm}
+            icon="search"
+          />
+          <!-- <input
             type="search"
             placeholder="Search"
             bind:value={searchText}
@@ -847,30 +870,51 @@
               if (e.key === "Enter") onSearch();
             }}
             class="w-full h-full p-0.5 pl-2 bg-bgs2 text-fgs1 text-sm truncate outline-none"
-          />
+          /> -->
         </div>
         <!-- <button on:click={onSearch}>Search</button> -->
-
-        <Icon icon="chevdown" size={Size.sm} on:click={findNext} />
-        <Icon icon="chevup" size={Size.sm} on:click={findPrevious} />
+        <div class="flex gap-2 items-center">
+          <Button icon="chevdown" on:click={findNext} />
+          <Button icon="chevup" on:click={findPrevious} />
+        </div>
       </div>
       <!-- <input type="text" bind:value={searchText} placeholder="Search text" /> -->
-      <label class="text-xs mt-2">
+      <!-- <label class="text-xs mt-2">
         <input type="checkbox" bind:checked={searchCaseSensitive} /> Case sensitive</label
       >
       <label class="text-xs mt-2"
         ><input type="checkbox" bind:checked={searchHighlightAll} /> Highlight all</label
-      >
+      > -->
+      <div class="flex gap-4 items-center justify-start">
+        <SwitchInput
+          size={Size.sm}
+          label={{
+            label: "Case sensitive"
+          }}
+          bind:checked={searchCaseSensitive}
+        />
+        <SwitchInput
+          size={Size.sm}
+          label={{
+            label: "Highlight all"
+          }}
+          bind:checked={searchHighlightAll}
+        />
+      </div>
     </div>
-    <button
-      on:click={() =>
-        embedAnnotationsandDownload(url, $userPreferences.annotations)}
-      class="material-symbols-rounded ml-auto">{@html "&#Xf090"}</button
-    >
-    <!-- <button
-      on:click={deleleAllAnnotations}
-      class="material-symbols-rounded mx-2">{@html "&#Xe16c"}</button
+    <div>
+      <Button
+        icon="download"
+        size={Size.sm}
+        label="Download"
+        on:click={() =>
+          embedAnnotationsandDownload(url, $userPreferences.annotations)}
+      />
+      <!-- <button
+    on:click={deleleAllAnnotations}
+    class="material-symbols-rounded mx-2">{@html "&#Xe16c"}</button
     > -->
+    </div>
   </div>
   <PdfViewer bind:pdfViewer bind:pdfDocument bind:scale {url}
     >{#if shapeVisible}
@@ -880,11 +924,12 @@
     {#if inlineToolBarVisible}
       <InlineToolBar
         style={popupStyle}
-        bind:inlineToolBarVisible
         bind:selectedColor
         on:annotate={(event) => {
-          if (event.detail == "COMMENT") commentEditorVisible = true;
+          if (event.detail == AnnotationType.COMMENT)
+            commentEditorVisible = true;
           else annotate(event);
+          inlineToolBarVisible = false;
         }}
       />
     {/if}
@@ -892,48 +937,54 @@
       <CommentEditor
         bind:annotationMode
         style={popupStyle}
-        on:saveComment={(event) => {
+        on:save={(event) => {
           commentEditorVisible = false;
-          let detail = event.detail.dueDate ? "TASK" : "COMMENT";
+          let detail = event.detail.dueDate
+            ? AnnotationType.TASK
+            : AnnotationType.COMMENT;
           annotate({ detail }, event.detail);
         }}
-        on:updateComment={(event) => {
+        on:update={(event) => {
           commentEditorVisible = false;
           handleUpdateComment(event.detail);
         }}
-        on:cancelComment={() => {
+        on:cancel={() => {
           commentEditorVisible = false;
         }}
         comment={annotClickedComment}
         editingItemType={annotCickedType}
       />
     {/if}
-    {#if InlineEditorVisible}
+    {#if isInlineEditBarVisible}
       <InlineEditToolBar
         style={popupStyle}
-        bind:InlineEditorVisible
         bind:selectedColor={annotClickedColor}
-        on:deleteClicked={handleAnnotDelete}
-        on:colorClicked={(event) => handleColorChange(event.detail)}
-        on:editClicked={() => {
+        on:delete={handleAnnotDelete}
+        on:color={(event) => handleColorChange(event.detail)}
+        on:edit={() => {
           commentEditorVisible = true;
+          isInlineEditBarVisible = false;
         }}
-        editable={annotCickedType == "COMMENT" || annotCickedType == "TASK"}
+        editable={annotCickedType == AnnotationType.COMMENT ||
+          annotCickedType == AnnotationType.TASK}
       />
     {/if}
   </PdfViewer>
-  <TracesPanel
+  <!-- <TracesPanel
     {annots}
     {handleAnnotDelete}
     on:traceclicked={(event) =>
       scrollToAnnot(event.detail.id, event.detail.pageNumber)}
-  />
-  <ToolBar
-    style="position:absolute;bottom:2rem;left:22%;"
-    bind:annotationMode
-    bind:selectedColor
-    {pageNumber}
-    {totalPages}
-    on:pageRerender={(event) => handleRenderOptions(event.detail)}
-  />
+  /> -->
+  <div
+    class="absolute bottom-0 left-[18%] w--full m-2 flex gap-2 items-center justify-center"
+  >
+    <ToolBar
+      bind:selectedAnnotationMode={annotationMode}
+      bind:selectedColor
+      {pageNumber}
+      {totalPages}
+      on:pageRerender={(event) => handleRenderOptions(event.detail)}
+    />
+  </div>
 </div>

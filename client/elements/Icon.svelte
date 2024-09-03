@@ -113,6 +113,11 @@
   import ArrowTurnDownLeft from "../icons/ArrowTurnDownLeft.svelte";
   import CursorArrowRays from "../icons/CursorArrowRays.svelte";
   import Document from "../icons/Document.svelte";
+  import MagnifyingGlassPlus from "../icons/MagnifyingGlassPlus.svelte";
+  import MagnifyingGlassMinus from "../icons/MagnifyingGlassMinus.svelte";
+  import Underline from "../icons/Underline.svelte";
+  import Strikethrough from "../icons/Strikethrough.svelte";
+  import Highlight from "../icons/Highlight.svelte";
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -146,7 +151,12 @@
     "grab",
     "capture2.0-mini"
   ];
-  const strokeOnlyIcons = ["link-arrow-left", "link-arrow-down", "capture"];
+  const strokeOnlyIcons = [
+    "link-arrow-left",
+    "link-arrow-down",
+    "capture",
+    "highlight"
+  ];
   $: _classList = resolveClasses(
     classListParam,
     isAccentBgContext,
@@ -523,7 +533,17 @@
       {:else if icon === "alt-text"}
         <AltText />
       {:else if icon === "gift"}
-        <Gift />
+        <Gift {variant} />
+      {:else if icon === "magnifying-glass-plus"}
+        <MagnifyingGlassPlus {variant} />
+      {:else if icon === "magnifying-glass-minus"}
+        <MagnifyingGlassMinus {variant} />
+      {:else if icon === "underline"}
+        <Underline {variant} />
+      {:else if icon === "strikethrough"}
+        <Strikethrough {variant} />
+      {:else if icon === "highlight"}
+        <Highlight />
       {:else if icon === "cursor-arrow-rays"}
         <CursorArrowRays {variant} />
       {:else if icon === "link-arrow-left"}

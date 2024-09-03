@@ -69,6 +69,7 @@ export type IActiveNode = INode & {
   avatars?: IAvatar[];
   propertyConfig?: IProperty[];
   wordCount?: number;
+  pdfAnnotations?: any[];
 };
 
 /**
@@ -273,7 +274,8 @@ export const webNodeTypeList = [
 export const mediaNodeTypeList = [
   NodeType.IMAGE,
   NodeType.VIDEO,
-  NodeType.AUDIO
+  NodeType.AUDIO,
+  NodeType.PDF
 ];
 
 export const headingNodeTypes = [

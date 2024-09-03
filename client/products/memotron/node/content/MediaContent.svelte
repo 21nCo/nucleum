@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    type NodeRightPaneType,
+    NodeRightPaneType,
     NodeType,
     webNodeTypeList
   } from "$lib/client/products/memotron/node/node.type";
@@ -10,9 +10,14 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import WebNodeContent from "./WebNodeContent.svelte";
   import MediaNodeRightPane from "../rightPanel/MediaNodeRightPane.svelte";
+  import PdfAnnotator from "../../pdfAnnotator/PdfAnnotator.svelte";
+  import { setContext } from "svelte";
+
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
-  export let rightPane: NodeRightPaneType | undefined = undefined;
+  export let rightPane: NodeRightPaneType | undefined =
+    $node?.contentType === NodeType.PDF ? NodeRightPaneType.TRACES : undefined;
+  let pdfContent: any;
   let renderingDetails: any;
   let refreshId = Date.now();
   let imgRef: HTMLImageElement;
@@ -27,6 +32,17 @@
       renderedWidth: imgRef.clientWidth
     };
   }
+
+  function contextEventListener(event: string, data: any) {
+    if (event === "pdf-trace-click") {
+      pdfContent.scrollToAnnot(data.id, data.pageNumber);
+    }
+  }
+  const contentContext = {
+    publish: contextEventListener
+  };
+  setContext("content", contentContext);
+
   function retireveNode() {
     node.fetch();
     refreshId = Date.now();
@@ -71,6 +87,12 @@
       />
     {:else if webNodeTypeList.includes($node?.contentType)}
       <WebNodeContent node={$node} />
+    {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
+      <PdfAnnotator
+        bind:this={pdfContent}
+        url={$node.body.url}
+        bind:annots={$node.pdfAnnotations}
+      />
     {/if}
   </main>
   {#if rightPane || webNodeTypeList.includes($node?.contentType)}

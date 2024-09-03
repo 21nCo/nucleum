@@ -19,6 +19,8 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
+  import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
+  import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -44,6 +46,34 @@
       return;
     }
     rightPane = param;
+  }
+
+  function resolveVisibleActions(): IToggleItem[] {
+    const baseActions: IToggleItem[] = [
+      {
+        value: NodeRightPaneType.SIDENOTES,
+        icon: "document-text",
+        tooltip: "Side notes"
+      },
+      {
+        value: NodeRightPaneType.LINKS,
+        icon: "arrow-up-right",
+        tooltip: "Show links"
+      },
+      {
+        value: NodeRightPaneType.PROPERTIES,
+        icon: "widget",
+        tooltip: "Show properties"
+      }
+    ];
+    if ($node.contentType === NodeType.PDF) {
+      baseActions.unshift({
+        value: NodeRightPaneType.TRACES,
+        icon: "bookmark",
+        tooltip: "Show traces"
+      });
+    }
+    return baseActions;
   }
 </script>
 
@@ -92,34 +122,20 @@
           <NodeTitle {node} />
         </span>
         <span class="flex gap-5">
-          <Button
-            {...buttonCommonProps}
-            icon="document-text"
-            tooltip="Side notes"
-            on:click={() => {
-              onPanelAction(NodeRightPaneType.SIDENOTES);
+          <ToggleGroup
+            items={resolveVisibleActions()}
+            class="gap-5"
+            on:change={(e) => {
+              onPanelAction(e.detail);
             }}
-          />
-          <Button
-            {...buttonCommonProps}
-            icon="arrow-up-right"
-            tooltip="Show all links"
-            on:click={() => {
-              onPanelAction(NodeRightPaneType.LINKS);
-            }}
-          />
-          <Button
-            {...buttonCommonProps}
-            icon="widget"
-            tooltip="Show properties"
-            on:click={() => {
-              onPanelAction(NodeRightPaneType.PROPERTIES);
+            on:none={() => {
+              rightPane = undefined;
             }}
           />
           <!-- <EditToggleButton isReadModeVariant={true} /> -->
           <Button
             {...buttonCommonProps}
-            tooltip="Serendipity"
+            tooltip="Bird view"
             icon="light-bulb"
             on:click={() => {
               appStore.runAction(MemotronAction.SERENDIPITY, {

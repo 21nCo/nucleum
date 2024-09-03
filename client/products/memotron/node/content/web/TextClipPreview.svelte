@@ -35,7 +35,6 @@
       return undefined;
     }
   }
-  $: console.log({ contentPreview });
 </script>
 
 <div

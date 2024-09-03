@@ -1,5 +1,4 @@
-import ToolBar from "./ToolBar.svelte";
-export default {
+import ToolBar from "./ToolBar.sveltet default {
   component: ToolBar,
   parameters: { layout: "centered" }
 };

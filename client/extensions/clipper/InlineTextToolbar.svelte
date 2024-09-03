@@ -1,20 +1,16 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
-  import HightlightColorItem from "./HightlightColorItem.svelte";
+  import { onMount } from "svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
   import { webpage } from "./contentScripts/store";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import InlineFeedbackText from "./InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
   import LinkActionOnClipper from "$lib/client/products/memotron/common/linkbox/LinkActionOnClipper.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  const dispatch = createEventDispatcher();
+  import HighlightColors from "$lib/client/products/memotron/common/highlighters/HighlightColors.svelte";
   export let id: string | null = null;
   export let selectedHighlighterId: string | null = null;
   export let feedback: { message: string; type: AlertType } | string = "";
@@ -45,19 +41,8 @@
   class="shadow-md border border-brs2 bg-bgs1 rounded-md flex flex-col justify-center items-center px-4 py-3 gap-3 max-w-fit w-96"
 >
   <div class="flex justify-center items-center gap-3">
-    {#if $highlightStore.highlighters.length > 0}
-      <span class="flex gap-2 items-center">
-        {#each $highlightStore.highlighters as highlighter}
-          <HightlightColorItem
-            {highlighter}
-            isActive={highlighter.id === selectedHighlighterId}
-            on:click={() => {
-              dispatch("color", highlighter);
-            }}
-          />
-        {/each}
-      </span>
-    {/if}
+    <!-- TODO test colors change from pdf annotator changes -->
+    <HighlightColors bind:selected={selectedHighlighterId} on:color />
     {#if id}
       <Divider />
       <!-- <Button
