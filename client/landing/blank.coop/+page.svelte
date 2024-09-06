@@ -65,13 +65,6 @@
     }
   ];
 
-  let transformedProducts: IListItem[] = $currentProductsStore?.map(
-    (product) => ({
-      title: product.title,
-      href: product.href || "/"
-    })
-  );
-
   let products: ITileItem[] = [
     ...$currentProductsStore.slice(0, 2),
     ...$upcomingProductsStore.slice(0, 2)
@@ -83,5 +76,3 @@
 <GridItemsSection items={corePrinciples} title="Our Core principles" />
 
 <TileItemsSection items={products} title="Our products" />
-
-<Footer products={transformedProducts} />

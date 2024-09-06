@@ -4,14 +4,21 @@
   import LeftPanel from "./LeftPanel.svelte";
   import TopNavBar from "./TopNavBar.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITopNavBar } from "./Landing.types";
+  import type { IListItem, ITopNavBar } from "./Landing.types";
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
+  import { currentProductsStore } from "./store/shared.store";
+  import Footer from "./footer/Footer.svelte";
 
   export let isProductsPage = true;
   export let topNavBarValues: ITopNavBar;
+  let transformedProducts: IListItem[] = $currentProductsStore?.map(
+    (product) => ({
+      title: product.title,
+      href: product.href || "/"
+    })
+  );
 
-  const navBarHeight = 66;
   onMount(async () => {
     view.update(window.innerWidth, window.innerHeight);
   });
@@ -25,8 +32,9 @@
     <LeftPanel />
   {/if}
   <div class="w-full overflow-auto">
-    <TopNavBar {topNavBarValues} {navBarHeight} />
+    <TopNavBar {topNavBarValues} {isProductsPage} />
     <slot />
+    <Footer products={transformedProducts} />
   </div>
   <RightPanel />
 </LandingBaseLayer>

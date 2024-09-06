@@ -5,7 +5,6 @@
   import Button from "../elements/Button.svelte";
   import Box from "./Box.svelte";
   import ListWithTitle from "./ListWithTitle.svelte";
-  import view from "$lib/client/stores/view.store";
   import { paintQRCode } from "$lib/client/utils/ui.utils";
   import { goto } from "$app/navigation";
   export let products: IListItem[];
@@ -61,12 +60,10 @@
       <Box>
         <div class="flex h-full flex-col items-center justify-center gap-9">
           <canvas
-            on:mouseenter={() => (isHovering = true)}
-            on:mouseleave={() => (isHovering = false)}
             bind:this={canvas}
             class:scale-[1.4]={isHovering}
             class:scale-[1]={!isHovering}
-            class="border-2 transition-transform duration-300 ease-in-out origin-center"
+            class="border-2 transition-transform duration-300 ease-in-out origin-bottom-left"
           />
           <p class="text-[24px] font-medium leading-[33px]">Scan & Download</p>
         </div>

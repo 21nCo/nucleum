@@ -2,7 +2,7 @@
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
 
   let topNavBarValues: any = {
-    icon: "blank-coop",
+    icon: "pointron",
     title: "Pointron",
     items: [
       { label: "Discord", href: "https://discord.gg/blanklabs" },

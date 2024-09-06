@@ -2,8 +2,8 @@
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
 
   let topNavBarValues: any = {
-    icon: "blank-coop",
-    title: "memotron",
+    icon: "pointron",
+    title: "Memotron",
     items: [
       { label: "About", href: "/about" },
       { label: "Blog", href: "/blog" },

@@ -1,8 +1,11 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
   import { Theme } from "$lib/client/types/appearance.type";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
 
+  let className: string = "";
+  export { className as class };
   function toggle(initialize: boolean = false): void {
     const mode = document.getElementById("modeToggle")!;
     const modeChild = document.getElementById("modeToggleChild")!;
@@ -31,7 +34,11 @@
   });
 </script>
 
-<button on:click={() => toggle()} id="modeToggle" class="tdnn day">
+<button
+  on:click={() => toggle()}
+  id="modeToggle"
+  class={cn("tdnn day", className)}
+>
   <div id="modeToggleChild" class="moon sun"></div>
 </button>
 
