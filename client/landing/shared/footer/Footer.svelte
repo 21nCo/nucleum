@@ -7,31 +7,61 @@
   import ListWithTitle from "./ListWithTitle.svelte";
   import { paintQRCode } from "$lib/client/utils/ui.utils";
   import { goto } from "$app/navigation";
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import appearance from "$lib/client/stores/appearance.store";
+  import view from "$lib/client/stores/view.store";
+  import { Theme } from "$lib/client/types/appearance.type";
   export let products: IListItem[];
-  export let url: string = "https://pointron.io";
+  export let url: string = "https://blanklabs.org";
 
   let isHovering = false;
   let canvas: HTMLCanvasElement;
+  let iconColors = {
+    bgLight: "hsla(0, 0%, 92%, 1)",
+    bgDark: "hsla(0, 0%, 20%, 1)",
+    fgDark: "hsla(0, 0%, 100%, 1)",
+    fgLight: "hsla(0, 0%, 20%, 1)"
+  };
+  // let lightIconBGColor: string = "hsla(0, 0%, 20%, 1)";
+  // let darkIconBGColor: string = "hsla(0, 0%, 92%, 1)";
+  function handleHover(index: number) {
+    console.log(index);
+    socials[index].isHovered = true;
+  }
 
+  function handleLeave(index: number) {
+    console.log(index);
+    socials[index].isHovered = false;
+  }
   onMount(async () => {
     await paintQRCode(canvas, url, 122);
   });
   let socials = [
     {
       href: "https://twitter.com/blanklabs",
-      icon: "twitter"
+      icon: "x",
+      primary: "hsla(0, 0%, 0%, 1)",
+      isHovered: false
     },
     {
       href: "https://discord.gg/blanklabs",
-      icon: "discord"
+      icon: "discord",
+      primary: "hsla(235, 86%, 65%, 1)",
+      isHovered: false
     },
     {
       href: "https://github.com/blanklabs",
-      icon: "github"
+      icon: "youtube",
+      primary: "hsla(0, 100%, 50%, 1)",
+      isHovered: false
     },
     {
       href: "https://www.linkedin.com/company/blanklabs",
-      icon: "linkedin"
+      icon: "linkedin",
+      primary: "hsla(200, 100%, 35%, 1)",
+      isHovered: false
     }
   ];
   let information = [
@@ -92,15 +122,28 @@
         />
       </div>
     </div>
-    <div class="w-[1222px] h-[72px] rounded-[20px] flex bg-bgs2 p-7">
+    <div
+      class="w-[1222px] h-[72px] rounded-[20px] flex items-center bg-bgs2 px-7"
+    >
       <p>Blank.coop</p>
       <div class="mx-auto flex gap-5">
-        {#each socials as social}
-          <a
-            href={social.href}
-            class="text-fgs1 text-[20px] font-medium leading-[28px] hover:text-aps1"
-            >{social.icon}</a
+        {#each socials as social, index}
+          <div
+            style="--bg-color:{social.isHovered
+              ? social.primary
+              : $appearance.theme == Theme.DARK
+                ? iconColors.bgDark
+                : iconColors.bgLight};--fg-color:{social.isHovered
+              ? iconColors.bgLight
+              : $appearance.theme == Theme.DARK
+                ? iconColors.fgDark
+                : iconColors.fgLight};
+                height:32px;width:32px;"
+            on:mouseenter={() => handleHover(index)}
+            on:mouseleave={() => handleLeave(index)}
           >
+            <SvgIcon icon={social.icon} size={Size.lg} />
+          </div>
         {/each}
       </div>
       <p>HQ Hyderabad</p>
