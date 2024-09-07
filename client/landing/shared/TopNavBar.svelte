@@ -47,7 +47,12 @@
               : isProductsPage
                 ? Size.xl
                 : "5xl"}
-            <SvgIcon {icon} {size} />
+            {@const className = isProductsPage
+              ? ""
+              : $view.isPortrait
+                ? "relative top-2.5"
+                : ""}
+            <SvgIcon {icon} {size} class={className} />
           {/if}
           <div class="flex flex-col">
             {#if $view.isPortrait}
@@ -64,7 +69,11 @@
             {#if topNavBarValues.title}
               {@const title = topNavBarValues.title}
               <p
-                class="font-extrabold text-h2 leading-7 mo:text-h4 mo:leading-5"
+                class={cn(
+                  "font-extrabold leading-7 mo:leading-5",
+                  isProductsPage && "text-h2 mo:text-h4",
+                  !isProductsPage && "text-h1 mo:text-h3"
+                )}
               >
                 {title}
               </p>

@@ -13,7 +13,7 @@
     lg: "w-6 h-6",
     xl: "w-8 h-8",
     xxl: "w-10 h-10",
-    "5xl": "w-16 h-16"
+    "5xl": "w-16 h-full"
   };
   function importIcon(icon: string) {
     return import(`../SVGIcons/${icon}.svg?raw`);
