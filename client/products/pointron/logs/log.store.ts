@@ -7,11 +7,7 @@ import {
 import { currentTime, userPreferences } from "$lib/client/stores/app.store";
 import { get, writable } from "svelte/store";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import {
-  CacheStrategy,
-  PersistanceActionType,
-  StoreDataType
-} from "$lib/client/types/data.type";
+import { CacheStrategy, StoreDataType } from "$lib/client/types/data.type";
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";

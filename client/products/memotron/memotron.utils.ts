@@ -4,12 +4,19 @@ import {
   type ICollection
 } from "$lib/client/products/memotron/collection/collection.type";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-import type { INode, NodeType } from "$lib/client/products/memotron/node/node.type";
+import type {
+  INode,
+  NodeType
+} from "$lib/client/products/memotron/node/node.type";
 
 import { copyToClipboard } from "$lib/client/utils/utils";
-import { enumToCamelCase, generateResourceId } from "$lib/shared/utils/text.utils";
+import {
+  enumToCamelCase,
+  generateResourceId
+} from "$lib/shared/utils/text.utils";
 
 export function resolveResourceType(item: ICollection | INode) {
+  if (typeof item.id !== "string") return item.id.tb as MemotronResourceType;
   if (item.id.startsWith("node:")) return MemotronResourceType.NODE;
   else if (item.id.startsWith("task:")) return MemotronResourceType.TASK;
   else if (item.id.startsWith("combination:"))
@@ -47,13 +54,13 @@ export function copyResourceLinkToClipboard(id: string) {
 
 /**
  * Generates a node id using the externalId and type.
- * @param externalId 
+ * @param externalId
  * @param type NodeType
- * @returns 
+ * @returns
  */
-export function generateSyncedResourceId(externalId: string, type: NodeType) { 
+export function generateSyncedResourceId(externalId: string, type: NodeType) {
   return generateResourceId(Resource.node, {
     prefix: enumToCamelCase(type),
-    id: externalId,
+    id: externalId
   });
 }

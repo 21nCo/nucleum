@@ -24,6 +24,7 @@ import posthog from "posthog-js";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
+import { flux } from "../persistence/dataManagerv2";
 
 export const isRefreshingToken = writable(false);
 
@@ -195,6 +196,7 @@ class AccountStore extends ObservableStore<
     appEvents.publish(GlobalEvent.BOOTSTRAP, true);
     this.setAnalyticsUserIdentity();
     await dataManager.bootstrap();
+    await flux.bootstrap();
     await userPreferences.initializeTimeZoneForSignup();
     return true;
   }

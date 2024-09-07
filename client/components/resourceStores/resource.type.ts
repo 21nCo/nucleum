@@ -1,5 +1,7 @@
+import type { RecordId } from "surrealdb";
+
 export interface IResourceBase {
-  id: string;
+  id: string | RecordId;
   createdAt: string;
 }
 
@@ -26,13 +28,15 @@ export interface IResource extends IResourceBase {
    * Trash information of the resource
    */
   trashInformation?: ITrashInformation;
+
+  [key: string]: unknown;
 }
 
 export type IUnlabeledResource = Omit<IResource, "label">;
 
 export interface IResourseShareable {
-  createdBy: string;
-  modifiedBy: string;
+  createdBy: string | RecordId;
+  modifiedBy: string | RecordId;
 }
 
 export interface ITrashInformation {
@@ -93,22 +97,17 @@ export enum ResourceAccessPoint {
   NODE_LINKS = "nodelinks"
 }
 
+export type IResourceCapture<T extends IResource> = Omit<
+  T,
+  | "createdAt"
+  | "modifiedAt"
+  | "createdBy"
+  | "modifiedBy"
+  | "interactedAt"
+  | "id"
+>;
 
-export type IResourceCapture<T = IResource> = Omit<
-T,
-| "createdAt"
-| "modifiedAt"
-| "createdBy"
-| "modifiedBy"
-| "interactedAt"
-| "id"
-  >;
-
-export type IResourceCaptureWithId<T = IResource> = Omit<
-T,
-| "createdAt"
-| "modifiedAt"
-| "createdBy"
-| "modifiedBy"
-| "interactedAt"
-  >;
+export type IResourceCaptureWithId<T extends IResource> = Omit<
+  T,
+  "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy" | "interactedAt"
+>;

@@ -104,7 +104,7 @@
     $multiSelectStore = [];
   }
   async function refresh() {
-    data = await searchStore.refresh({
+    data = await searchStore.select({
       searchQuery
     });
   }

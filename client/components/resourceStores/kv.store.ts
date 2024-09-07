@@ -6,7 +6,7 @@ import {
   type IObservableStore,
   type IObservableStoreSubject,
   type IStore,
-  PersistanceActionType,
+  PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import type { Resource } from "$lib/client/components/resourceStores/resource.enum";
@@ -16,6 +16,7 @@ import {
 } from "$lib/client/persistence/persistence.utils";
 import { debouncer } from "$lib/client/utils/utils";
 import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
+import { flux } from "$lib/client/persistence/dataManagerv2";
 
 export class KeyValueStore<T extends IObservableStoreSubject>
   extends ObservableStore<T>
@@ -26,6 +27,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
   seed: T;
+  private isUseV2: boolean = true;
   private _debouncedPersist = debouncer(this.persist, 3000);
   constructor(
     item: Resource,
@@ -98,13 +100,16 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     queueParams?: IMutationQueueParams
   ) {
     if (!n) n = this.get();
+    if (this.isUseV2) {
+      return flux.kvMerge(this.id, n);
+    }
     return dataManager.performMutation(
       this.id,
       {
         ...n,
         id: this.id
       },
-      { action: PersistanceActionType.MERGE, queueParams }
+      { action: PersistenceActionType.MERGE, queueParams }
     );
   }
   /**

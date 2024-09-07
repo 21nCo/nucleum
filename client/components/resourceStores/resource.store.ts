@@ -5,24 +5,31 @@ import {
   generateUID
 } from "../../utils/utils";
 import {
-  PersistanceActionType,
+  PersistenceActionType,
   StoreDataType,
   type IStore,
   type IMutationQueueParams,
   type IObservableStoreSubject,
   type IObservableStore,
-  CacheStrategy
+  CacheStrategy,
+  type IMutationParamsv2
 } from "../../types/data.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { prefixTable } from "../../../shared/utils/text.utils";
+import {
+  generateResourceId,
+  prefixTable
+} from "../../../shared/utils/text.utils";
 import { dataManager } from "../../persistence/dataManager";
 import { ObservableStore } from "../../stores/client.store";
 import { resolveCurrentUserId } from "../../utils/account.utils";
 import type {
   IResource,
+  IResourceCapture,
+  IResourceCaptureWithId,
   ITrashInformation,
   ResourceAccessMode
 } from "./resource.type";
+import { flux } from "$lib/client/persistence/dataManagerv2";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -121,6 +128,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   mutatingResources: string[];
   cacheStrategy?: CacheStrategy;
   dboDependencies?: string[];
+  private isUseV2: boolean = true;
   constructor(
     resourceType: Resource,
     params?: Pick<
@@ -151,7 +159,11 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @returns
    */
   async create(
-    input: Partial<T> | Partial<T>[],
+    input:
+      | IResourceCapture<T>
+      | IResourceCapture<T>[]
+      | IResourceCaptureWithId<T>
+      | IResourceCaptureWithId<T>[],
     params?: {
       customQuery?: string;
       queueParams?: IMutationQueueParams;
@@ -159,14 +171,53 @@ export class ResourceStore<T extends IResource> implements IStore {
     }
   ) {
     let data;
-    let action = PersistanceActionType.CREATE;
+    let action = PersistenceActionType.CREATE;
     let commonProps = {
-      createdAt: new Date().toISOString(),
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+      interactedAt: new Date(),
       createdBy: this.currentUserId,
       modifiedBy: this.currentUserId
     };
+
+    if (this.isUseV2) {
+      let data: IMutationParamsv2<T>;
+      let resources: T[] = [];
+      if (Array.isArray(input)) {
+        resources = input?.map((r) => ({
+          ...r,
+          id: "id" in r && r.id ? r.id : generateResourceId(this.id),
+          ...commonProps
+        }));
+      } else {
+        resources = [
+          {
+            ...input,
+            id:
+              "id" in input && input.id
+                ? input.id
+                : generateResourceId(this.id),
+            ...commonProps
+          }
+        ];
+      }
+
+      if (params?.customQuery) {
+        //TODO - use $resource in query
+        data = {
+          action: PersistenceActionType.CUSTOM,
+          query: params.customQuery,
+          data: {
+            resources,
+            ...params?.customQueryAdditionalParams
+          }
+        };
+      } else {
+        data = { action: PersistenceActionType.INSERT, resources };
+      }
+      return flux.mutation<T>(this.id, data);
+    }
+
     if (Array.isArray(input)) {
       input = input?.map((r) => ({
         ...r,
@@ -177,7 +228,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         data = { resources: input, ...params?.customQueryAdditionalParams };
       } else {
         data = [...input];
-        action = PersistanceActionType.INSERT;
+        action = PersistenceActionType.INSERT;
       }
     } else {
       input = {
@@ -232,8 +283,14 @@ export class ResourceStore<T extends IResource> implements IStore {
       ...properties,
       ...modificationProps
     };
+    if (this.isUseV2) {
+      return flux.mutation<T>(this.id, {
+        action: PersistenceActionType.MERGE,
+        resource: data
+      });
+    }
     return dataManager.performMutationForIFR(this.id, data, {
-      action: PersistanceActionType.MERGE,
+      action: PersistenceActionType.MERGE,
       queueParams: mutatationQueueParams,
       cacheStrategy: this.cacheStrategy
     });
@@ -247,6 +304,18 @@ export class ResourceStore<T extends IResource> implements IStore {
     } as Partial<T>);
   }
   async bulkModify(ids: string[], data: Partial<T>) {
+    if (this.isUseV2) {
+      return flux.mutation<T>(this.id, {
+        action: PersistenceActionType.BULK_MERGE,
+        resources: ids.map((id) => ({
+          id,
+          ...data,
+          modifiedBy: this.currentUserId,
+          modifiedAt: new Date().toISOString(),
+          interactedAt: new Date().toISOString()
+        }))
+      });
+    }
     return dataManager.performMutationForIFR(
       this.id,
       {
@@ -259,7 +328,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       } as any,
       {
-        action: PersistanceActionType.BULK_MERGE,
+        action: PersistenceActionType.BULK_MERGE,
         cacheStrategy: this.cacheStrategy
       }
     );
@@ -291,6 +360,7 @@ export class ResourceStore<T extends IResource> implements IStore {
 }
 
 /**
+ * @deprecated - use ResourceStore instead
  * Extensible FIR resource store.
  */
 export class ResourceFIRStore<
@@ -348,7 +418,7 @@ export class ResourceFIRStore<
       filtered: [] as T[]
     } as S;
   }
-  private async _mutation(action: PersistanceActionType, record: string | T) {
+  private async _mutation(action: PersistenceActionType, record: string | T) {
     const data = typeof record === "string" ? { id: record } : record;
     return dataManager.performMutation(this.id, data, { action });
   }
@@ -382,7 +452,7 @@ export class ResourceFIRStore<
   async create(data: Omit<T, "id">, id?: string) {
     const newId = id ?? prefixTable(generateUID(), this.id);
     const newItem = { ...data, id: newId } as T;
-    this._mutation(PersistanceActionType.CREATE, newItem);
+    this._mutation(PersistenceActionType.CREATE, newItem);
     this.update((x: S) => {
       x.items.push(newItem);
       return x;
@@ -398,10 +468,10 @@ export class ResourceFIRStore<
       return x;
     });
     this.cache();
-    return this._mutation(PersistanceActionType.MERGE, item as T);
+    return this._mutation(PersistenceActionType.MERGE, item as T);
   }
   async delete(id: string) {
-    const result = this._mutation(PersistanceActionType.DELETE, id);
+    const result = this._mutation(PersistenceActionType.DELETE, id);
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != id);
       x.filtered = this.defaultFilter ? this.defaultFilter(x.items) : x.items;
@@ -423,7 +493,7 @@ export class ResourceFIRStore<
       modifiedAt: new Date().toISOString(),
       interactedAt: new Date().toISOString()
     };
-    this._mutation(PersistanceActionType.MERGE, { ...item, id });
+    this._mutation(PersistenceActionType.MERGE, { ...item, id });
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != id);
       return x;

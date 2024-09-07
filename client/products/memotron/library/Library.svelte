@@ -107,7 +107,7 @@
       data = [];
       return;
     }
-    data = await searchStore.refresh({
+    data = await searchStore.select({
       resource: selectedResource,
       searchQuery,
       isStarFilterSelected

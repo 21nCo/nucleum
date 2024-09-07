@@ -23,11 +23,12 @@ import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
 import { linker, resolveTypes } from "../memotron.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
+import { flux } from "$lib/client/persistence/dataManagerv2";
+import { logger } from "$lib/client/components/debug/logger.client";
 
 export const hierarchyFactorLimit = 5;
 
 class NodeStore extends ResourceStore<INode> {
-  db: ISurrealDatabase;
   constructor() {
     super(Resource.node, {
       refreshOnAppear: true,
@@ -40,29 +41,29 @@ class NodeStore extends ResourceStore<INode> {
         "fn::memotron::pdfAnnotator::saveClip"
       ]
     });
-    this.db = new SurrealDatabase();
-  }
-  async createNode(
-    capture: INodeItemCaptured[],
-    queueParams?: IMutationQueueParams
-  ) {
-    return super.create(capture, {
-      customQuery:
-        "return fn::memotron::node::createMany($resources, $mutatedAt);",
-      queueParams
-    });
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
-    const response = await this.db.executeReadFn(query, {
+    const response = await flux.selectByQuery(query, {
       date: formatDate(date, "iso")
     });
-    return interceptSurrealResponse(response, "fetch timeline");
+    logger.debug({ at: "fetch timeline", response });
+    return response;
   }
+
+  /**
+   *
+   *
+   * Note: sending nodeId as param with $nodeId placeholder is not working in case of surreal.js + wasm engine. It is not detecting it as record id. Sending the fn param without single quotes is working.
+   *
+   * @param nodeId
+   * @returns
+   */
   async fetch(nodeId: string) {
-    const query = `fn::memotron::node::fetch($nodeId)`;
-    const response = await this.db.executeReadFn(query, { nodeId });
-    return interceptSurrealResponse(response, "fetch node");
+    const query = `fn::memotron::node::fetch(${nodeId})`;
+    const response = await flux.selectByQuery(query);
+    logger.debug({ at: "fetch node", response });
+    return response;
   }
 }
 
@@ -147,20 +148,14 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     debouncer(id, mutationId, changedProps);
   };
   createBlock = async (id: string, contentType: any) => {
-    return this.resourceStore.createNode(
-      [
-        {
-          id,
-          body: "",
-          contentType,
-          creationContext: this.id
-        }
-      ],
+    return this.resourceStore.create([
       {
-        isUseQueueFirstApproach: true,
-        mutationId: `${id}-create`
+        id,
+        body: "",
+        contentType,
+        creationContext: this.id
       }
-    );
+    ]);
   };
   deleteBlock = async (id: string) => {
     return this.resourceStore.trash(id, {

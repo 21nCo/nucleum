@@ -6,15 +6,15 @@ import { resolveUrlPartsV2, userDatev4 } from "./dbo";
 export const memotronDboDefinitions = {
   "fn::memotron::node::fetch": nodeFetch(),
   "fn::memotron::node::create": nodeCreate(),
-  "fn::memotron::node::createMany": nodeCreateMany(),
   "fn::memotron::pdfAnnotator::getAllClips": pdfAnnotatorGetAllClips(),
   "fn::memotron::pdfAnnotator::saveClip": pdfAnnotatorSaveClip(),
-  "fn::memotron::clipper::saveClip": saveClip(),
-  "fn::memotron::clipper::saveWebpage": saveWebpage(),
   "fn::memotron::clipper::fetchPage": clipperFetchPage(),
   "fn::memotron::collection::fetchData": collectionFecthData(),
   "fn::memotron::timeline": timeline(),
-  "fn::memotron::link": link()
+  "fn::memotron::link": link(),
+  "fn::memotron::clipper::saveClip": saveClip(),
+  "fn::memotron::clipper::saveWebpage": saveWebpage(),
+  "fn::memotron::node::createMany": nodeCreateMany()
 };
 
 function nodeFetch() {
@@ -82,9 +82,15 @@ return select fn::memotron::link(from, to, linkType) from $links; };`;
   return [...link(), def];
 }
 
+/**
+ * @deprecated - use direct insert + linkMany instead
+ *
+ * Using this function via surreal.js + surreal.wasm is causing record links not recognized as Record Ids. Using direct Insert query instead.
+ *
+ * @returns
+ */
 function nodeCreateMany() {
-  const def = `define function fn::memotron::node::createMany($resources: any, $mutatedAt: int){
-    update kv:mutationMap merge {node: $mutatedAt };
+  const def = `define function fn::memotron::node::createMany($resources: any){
     let $created = insert into node $resources;
     select fn::memotron::linkMany(links) from $resources;
     return $created;

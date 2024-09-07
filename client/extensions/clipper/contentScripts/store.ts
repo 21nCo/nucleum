@@ -8,23 +8,51 @@ import {
 } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import {
-  ClipperExtensionEvent
-} from "$lib/client/products/memotron/common/clip.type";
+import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
-import { activeResourceFilter, debouncer, interceptSurrealResponse } from "$lib/client/utils/utils";
+import {
+  activeResourceFilter,
+  debouncer,
+  interceptSurrealResponse
+} from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
-import { SyncStatus, type IFeedbackPaneStore, type ISyncStore, type IWebpage } from "./types";
+import {
+  SyncStatus,
+  type IFeedbackPaneStore,
+  type ISyncStore,
+  type IWebpage
+} from "./types";
 import { linker } from "$lib/client/products/memotron/memotron.store";
-import { NodeIdPrefix, NodeType, type IClip, type IClipCapture, type ITweet, type ITwitterProfile, type IWebScreenshotClip, type IWebPage, type IKindleBook, type IKindleHighlight } from "$lib/client/products/memotron/node/node.type";
+import {
+  NodeIdPrefix,
+  NodeType,
+  type IClip,
+  type IClipCapture,
+  type ITweet,
+  type ITwitterProfile,
+  type IWebScreenshotClip,
+  type IWebPage,
+  type IKindleBook,
+  type IKindleHighlight
+} from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
-import { extractFullTabData, extractMinimalTabData, resolveUrl } from "../clipper.utils";
-import type { IResourceCapture, IResourceCaptureWithId } from "$lib/client/components/resourceStores/resource.type";
+import {
+  extractFullTabData,
+  extractMinimalTabData,
+  resolveUrl
+} from "../clipper.utils";
+import type {
+  IResourceCapture,
+  IResourceCaptureWithId
+} from "$lib/client/components/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { relayToBackgroundScript, relayToSidePanel } from "$lib/client/utils/extension.utils";
+import {
+  relayToBackgroundScript,
+  relayToSidePanel
+} from "$lib/client/utils/extension.utils";
 import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
 import account from "$lib/client/stores/account.store";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
@@ -88,12 +116,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const node = {
       id,
       ...data,
-      creationContext,
-    }
-    const response = await nodeStore.createNode([ node ], {
-      isUseQueueFirstApproach: true,
-      mutationId: `${this.id}-saveWebpage`
-    });
+      creationContext
+    };
+    const response = await nodeStore.create([node]);
     this.update((n) => {
       n.id = id;
       return n;
@@ -108,7 +133,11 @@ class WebpageStore extends ObservableStore<IWebpage> {
           (x) => host === x.domain || host.includes("." + x.domain)
         )
       ) {
-        logger.log({ at: "extractData", host, message: "minimal metadata page" });
+        logger.log({
+          at: "extractData",
+          host,
+          message: "minimal metadata page"
+        });
         return extractMinimalTabData();
       }
       const s3Url = await screenshotWebpage();
@@ -121,7 +150,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
           event: ClipperExtensionEvent.SCREENSHOT
         });
         return processScreenshot(data);
-    
+
         async function processScreenshot(dataURL) {
           const contentType = "image/png";
           const s3SignedURL = await account.getSignedUrl(
@@ -142,15 +171,13 @@ class WebpageStore extends ObservableStore<IWebpage> {
   }
   /**
    * Saves the clip to the database. If the webpage is not saved, it will be saved first by parsing the DOM for web page metadata.
-   * 
+   *
    * Note: This method will not work if called from non content script context as parsing the DOM is not possible.
    * @param data
    * @param tabData
    * @returns
    */
-  async saveClip(
-    data: IClipCapture
-  ) {
+  async saveClip(data: IClipCapture) {
     let webpage = this.get();
     logger.debug({ at: "saveClip", webpage, data });
     const id = generateResourceId(Resource.node);
@@ -169,43 +196,47 @@ class WebpageStore extends ObservableStore<IWebpage> {
       parent: webpage.id,
       contentType: data.contentType,
       label: undefined
-    }
-    const response = await nodeStore.createNode([clip],
-      {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-saveClip`
-      });
+    };
+    const response = await nodeStore.create([clip]);
     if (!response) return;
     const clipNode = response.resources[0] as IWebScreenshotClip;
     this.update((n) => {
       n.clips = [...(n.clips ?? []), clipNode];
       return n;
     });
-    if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) { 
+    if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
       feedbackPane.focus(clipNode, "Clip saved!");
     }
     return clip;
 
     function resolveClipUrl(body: any) {
       if ("url" in body && body.url) return body.url;
-      else return (webpage.url ?? window.location.href ) + "#" + id
+      else return (webpage.url ?? window.location.href) + "#" + id;
     }
   }
-  async saveTweet(data: IClipCapture<ITweet & {
-    username: string;
-    profileUrl: string;
-    authorName: string;
-    profileImageUrl: string;
-  }>, isFromTweetPage: boolean = false) { 
+  async saveTweet(
+    data: IClipCapture<
+      ITweet & {
+        username: string;
+        profileUrl: string;
+        authorName: string;
+        profileImageUrl: string;
+      }
+    >,
+    isFromTweetPage: boolean = false
+  ) {
     logger.log({ at: "saveTweet", data });
     const id = generateResourceId(Resource.node);
-    const twitterProfileId = generateResourceId(Resource.node, {prefix: NodeIdPrefix.TWITTER_PROFILE, id: data.username})
+    const twitterProfileId = generateResourceId(Resource.node, {
+      prefix: NodeIdPrefix.TWITTER_PROFILE,
+      id: data.username
+    });
     const tweetNode: IClipCapture<ITweet> & { id: string } = {
       id,
       body: data.body,
       metadata: data.metadata,
       parent: twitterProfileId,
-      contentType: NodeType.TWEET,
+      contentType: NodeType.TWEET
     };
     const twitterProfileNode: IClipCapture<ITwitterProfile> = {
       body: {
@@ -215,14 +246,16 @@ class WebpageStore extends ObservableStore<IWebpage> {
       },
       metadata: {},
       contentType: NodeType.TWITTER_PROFILE
-    }
-    const response = await nodeStore.createNode([
+    };
+    const response = await nodeStore.create([
       { ...tweetNode, label: undefined },
-      { ...twitterProfileNode, id: twitterProfileId, label: undefined, creationContext: id }
-    ], {
-      isUseQueueFirstApproach: true,
-      mutationId: `${this.id}-saveTweet`
-    });
+      {
+        ...twitterProfileNode,
+        id: twitterProfileId,
+        label: undefined,
+        creationContext: id
+      }
+    ]);
     if (!response) return;
     const tweet = response.resources[0] as ITweet;
     this.update((n) => {
@@ -236,18 +269,20 @@ class WebpageStore extends ObservableStore<IWebpage> {
 
   /**
    * Triggers from twitter profile page.
-   * @param data 
-   * @returns 
+   * @param data
+   * @returns
    */
-  async saveTwitterProfile(data: IClipCapture<ITwitterProfile & { username: string}>) { 
-    const twitterProfileId = generateResourceId(Resource.node, { prefix: NodeIdPrefix.TWITTER_PROFILE, id: data.username })
-    logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
-    const response = await nodeStore.createNode([
-      { ...data, id: twitterProfileId, label: undefined }
-    ], {
-      isUseQueueFirstApproach: true,
-      mutationId: `${this.id}-saveTwitterProfile`
+  async saveTwitterProfile(
+    data: IClipCapture<ITwitterProfile & { username: string }>
+  ) {
+    const twitterProfileId = generateResourceId(Resource.node, {
+      prefix: NodeIdPrefix.TWITTER_PROFILE,
+      id: data.username
     });
+    logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
+    const response = await nodeStore.create([
+      { ...data, id: twitterProfileId, label: undefined }
+    ]);
     if (!response) return;
     const node = response.resources[0] as ITwitterProfile;
     this.update((n) => {
@@ -329,9 +364,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Clip removed!", type: AlertType.SUCCESS };
   }
   /**
-   * 
+   *
    * @deprecated - using content script as main source of state. save page event from side panel is now relayed to content script.
-   * 
+   *
    * If the save page happened from side bar - the toolbar and other content on web page should reflect the change. This method is called to update the store with the new page data when content script receive the message from side bar.
    * @param data ``
    */
@@ -368,16 +403,15 @@ class WebpageStore extends ObservableStore<IWebpage> {
   async persistClipNotes(id: string, notes: string) {
     return new Promise((resolve) => {
       const result = this._debouncedPersistNotes(id, notes);
-        resolve(result);
+      resolve(result);
     });
   }
 }
 export const webpage = new WebpageStore();
 
-
-class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> { 
+class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
   constructor() {
-    super("feedbackPane",);
+    super("feedbackPane");
     this.set({ isShown: false, feedback: "", focusedClip: null });
   }
   reset() {
@@ -441,12 +475,15 @@ class ClipperToolbarState extends KeyValueStore<
 
 export const toolbarState = new ClipperToolbarState();
 
-
 class SyncStore extends ObservableStore<ISyncStore> {
   db: ISurrealDatabase;
   constructor() {
     super("syncStore");
-    this.set({ id: undefined, status: SyncStatus.NOT_SYNCED, isShowSyncPane: false });
+    this.set({
+      id: undefined,
+      status: SyncStatus.NOT_SYNCED,
+      isShowSyncPane: false
+    });
   }
   async init(id: string) {
     this.update((n) => {
@@ -461,14 +498,14 @@ class SyncStore extends ObservableStore<ISyncStore> {
     });
   }
 
-  togglePane() { 
+  togglePane() {
     this.update((n) => {
       n.isShowSyncPane = !n.isShowSyncPane;
       return n;
     });
   }
 
-  async save(items: IResourceCaptureWithId<IKindleBook | IKindleHighlight>[]) { 
+  async save(items: IResourceCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.debug({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
     const limitCount = 500;
@@ -476,37 +513,37 @@ class SyncStore extends ObservableStore<ISyncStore> {
     if (items.length > limitCount) {
       response = await Promise.all(resolveChunks());
     } else {
-      response = await nodeStore.createNode(items);
+      response = await nodeStore.create(items);
     }
 
     function resolveChunks() {
       const promises = [];
       for (let i = 0; i < items.length; i += limitCount) {
-        promises.push(
-          nodeStore.createNode(items.slice(i, i + limitCount))
-        );
+        promises.push(nodeStore.create(items.slice(i, i + limitCount)));
       }
       return promises;
     }
   }
 
-  async updateSyncStatus(status: SyncStatus) { 
+  async updateSyncStatus(status: SyncStatus) {
     this.update((n) => {
       n.status = status;
       return n;
     });
-    if(status == SyncStatus.SYNCED) await this.persistSyncStatus(status);
+    if (status == SyncStatus.SYNCED) await this.persistSyncStatus(status);
   }
 
   async refreshSyncState() {
     try {
       const id = this.get().id;
-      const query = `SELECT ${id} FROM kv:clipperSync;`
-      const result = interceptSurrealResponse(await this.db.executeReadFn(query, {}));
+      const query = `SELECT ${id} FROM kv:clipperSync;`;
+      const result = interceptSurrealResponse(
+        await this.db.executeReadFn(query, {})
+      );
       logger.debug({ at: "syncStore refreshSyncState", result, id });
       if (result && result.length > 0) {
         const record = result[0];
-        if (record[id]) { 
+        if (record[id]) {
           this.update((n) => {
             n.status = record[id].status;
             n.lastSyncedAt = record[id].updatedAt;
@@ -519,13 +556,13 @@ class SyncStore extends ObservableStore<ISyncStore> {
     }
   }
 
-  async persistSyncStatus(status: SyncStatus) { 
+  async persistSyncStatus(status: SyncStatus) {
     try {
       const id = this.get().id;
       const query = `UPDATE kv:clipperSync SET ${id}={
         status: "${status}",
         updatedAt: time::now()
-      };`
+      };`;
       const result = await this.db.query(query, {});
       console.log({ result });
     } catch (e) {

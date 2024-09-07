@@ -2,6 +2,7 @@ import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
   LinkType,
+  NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import {
@@ -16,10 +17,17 @@ import { isValidString } from "$lib/shared/utils/text.utils";
 import type { IProperty } from "./collection/properties/property.type";
 import { CollectionType } from "./collection/collection.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
-import { MemotronDexie } from "./memotron.dexie";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { type IStore, StoreDataType } from "$lib/client/types/data.type";
+import {
+  type IResourceSelectOrderBy,
+  type IStore,
+  StoreDataType
+} from "$lib/client/types/data.type";
+import { flux } from "$lib/client/persistence/dataManagerv2";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { isValidArray } from "$lib/shared/utils/obj.utils";
+import { toasts } from "$lib/client/stores/notification.store";
 
 /**
  * @deprecated
@@ -109,12 +117,15 @@ export async function resolveResource(id: string) {
 
 export class SearchStore {
   resource: Resource = Resource.everything;
+  contentType: CollectionType | NodeType | undefined = undefined;
   searchQuery: string = "";
   isStarFilterSelected: boolean = false;
-  dexie: MemotronDexie;
+  limit: number | undefined = undefined;
+  offset: number | undefined = undefined;
+  orderBy: IResourceSelectOrderBy | undefined = undefined;
+
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
-    this.dexie = get(dataManager).cacheSource.dexie;
   }
   levenshteinDistance(a: string, b: string): number {
     const matrix = [];
@@ -144,123 +155,139 @@ export class SearchStore {
     return matrix[b.length][a.length];
   }
 
-  async refreshNodes() {
-    let query = this.dexie.node
-      .where("contentType")
-      .anyOfIgnoreCase(
-        this.searchQuery
-          ? [...rootNodeTypeList, ...headingNodeTypes]
-          : rootNodeTypeList
-      );
+  async nodes() {
+    const result = await flux.selectMany(Resource.node, {
+      properties: ["*", "parent.* as parent"],
+      filters: {
+        contentType:
+          this.contentType ??
+          (this.searchQuery
+            ? [...rootNodeTypeList, ...headingNodeTypes]
+            : rootNodeTypeList),
+        isArchived: this.resource === Resource.archived,
+        trashInformation: false,
+        isStarred: this.isStarFilterSelected ? true : undefined,
+        creationContext: isValidString(this.searchQuery) ? undefined : false
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["label", "body", "content", "contentType"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        createdAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
 
-    if (!this.searchQuery) {
-      query = query.and((node) => !node.creationContext);
-    }
+    logger.debug({ at: "refreshNodes", result });
 
-    if (this.resource === Resource.archived) {
-      query = query.and((item) => item.isArchived === true);
-    } else {
-      query = query.and((node) => activeResourceFilter(node));
-    }
-
-    if (this.isStarFilterSelected) {
-      query = query.and((item) => item.isStarred === true);
-    }
-    if (this.searchQuery) {
-      query = query.and(
-        (item) =>
-          item.label?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          ("body" in item &&
-            typeof item.body === "string" &&
-            item.body
-              ?.toLowerCase()
-              .includes(this.searchQuery.toLowerCase())) ||
-          ("content" in item.body &&
-            typeof item.body.content === "string" &&
-            item.body.content
-              ?.toLowerCase()
-              .includes(this.searchQuery.toLowerCase()))
-      );
-    }
-    return query.toArray();
+    const result2 = await flux.selectByQuery("select * from node;");
+    logger.debug({ at: "all nodes: ", result2 });
+    return result;
   }
 
-  async refreshCollections() {
-    let query = this.dexie.collection.where("id").notEqual("");
-
-    if (this.resource === Resource.archived) {
-      query = query.and((item) => item.isArchived === true);
-    } else {
-      query = query.and((node) => activeResourceFilter(node));
-    }
-
-    if (this.isStarFilterSelected) {
-      query = query.and((item) => item.isStarred === true);
-    }
-
-    if (isValidString(this.searchQuery)) {
-      query = query.filter((collection) => {
-        if (!collection.label) return false;
-        const labelValue = collection.label.toLowerCase();
-        const searchValue = this.searchQuery.toLowerCase();
-        if (labelValue.includes(searchValue)) return true;
-        const levenshteinDistanceValue = this.levenshteinDistance(
-          labelValue,
-          searchValue
-        );
-        console.log({ labelValue, searchValue, levenshteinDistanceValue });
-        return levenshteinDistanceValue <= 2;
-      });
-    }
-    return query.toArray();
+  async collections() {
+    const result = await flux.selectMany(Resource.collection, {
+      filters: {
+        // isArchived: this.resource === Resource.archived,
+        // trashInformation: false,
+        isStarred: this.isStarFilterSelected ? true : undefined,
+        type: this.contentType ?? undefined
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["label", "contentType"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        createdAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.debug({ at: "refreshCollections", result });
+    return result;
   }
 
-  async refresh(params: {
+  async select(params: {
     resource?: Resource;
     searchQuery?: string;
     isStarFilterSelected?: boolean;
+    limit?: number;
+    offset?: number;
+    orderBy?: IResourceSelectOrderBy;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
+    this.limit = params.limit ?? this.limit;
+    this.offset = params.offset ?? this.offset;
+    this.orderBy = params.orderBy ?? this.orderBy;
     this.isStarFilterSelected =
       params.isStarFilterSelected != undefined
         ? params.isStarFilterSelected
         : this.isStarFilterSelected;
     // let data: any[] = [];
+    logger.debug({
+      at: "SearchStore.refresh",
+      ...this
+    });
     let data: any;
     if (
       this.resource === Resource.everything ||
       this.resource === Resource.archived
     ) {
-      const nodes = await this.refreshNodes();
-      const collections = await this.refreshCollections();
+      const nodes = await this.nodes();
+      const collections = await this.collections();
       data = [...nodes, ...(collections ?? [])];
     } else if (this.resource === Resource.node) {
-      data = await this.refreshNodes();
+      data = await this.nodes();
     } else if (this.resource === Resource.collection) {
-      data = (await this.refreshCollections()) ?? [];
+      data = (await this.collections()) ?? [];
     }
-    //TODO - use sort from library state settings
-    //.reverse().sortBy("interactedAt");
-    return data.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    if (isValidArray(data)) {
+      return data;
+    } else {
+      toasts.error("Something went wrong. Please try again later.");
+      return [];
+    }
   }
 
-  private recentNodes() {
-    return this.dexie.node
-      .where("contentType")
-      .anyOfIgnoreCase([...rootNodeTypeList, ...headingNodeTypes])
-      .and((item: any) => activeResourceFilter(item))
-      .toArray();
+  private async recentNodes() {
+    const result = await flux.selectMany(Resource.node, {
+      properties: ["*", "parent.* as parent"],
+      filters: {
+        contentType: rootNodeTypeList.concat(headingNodeTypes),
+        isArchived: false,
+        trashInformation: false,
+        creationContext: false
+      },
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.debug({ at: "recentNodes", result });
+    return result;
   }
-  private recentCollections() {
-    return this.dexie.collection
-      .where("id")
-      .notEqual("")
-      .and((item: any) => activeResourceFilter(item))
-      .toArray();
+  private async recentCollections() {
+    const result = await flux.selectMany(Resource.collection, {
+      filters: {
+        isArchived: false,
+        trashInformation: false
+      },
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.debug({ at: "recentCollections", result });
+    return result;
   }
 
   async recents(resource: Resource) {
@@ -272,11 +299,7 @@ export class SearchStore {
     ) {
       const nodes = await this.recentNodes();
       const collections = await this.recentCollections();
-      // console.log({ nodes, collections });
       data = [...nodes, ...(collections ?? [])];
-      // data = [...nodes, ...(collections ?? [])].sort(
-      //   (a, b) => b.interactedAt - a.interactedAt
-      // );
     } else if (this.resource === Resource.node) {
       data = await this.recentNodes();
     } else if (this.resource === Resource.collection) {
@@ -318,10 +341,15 @@ class Linker implements IStore {
   id: string = "linker";
   dataType: StoreDataType = StoreDataType.NA;
   db: ISurrealDatabase;
-  dboDependencies: string[] = ["fn::memotron::link", "fn::memotron::unlink"];
+  dboDependencies: string[] = [
+    "fn::memotron::link",
+    "fn::memotron::unlink",
+    "fn::memotron::linkMany"
+  ];
   constructor() {
     this.db = new SurrealDatabase();
   }
+
   async link(from: string, to: string, linkType: LinkType = LinkType.DIRECT) {
     let response = await this.db.query(
       "return fn::memotron::link($from, $to, $linkType);",
@@ -333,6 +361,7 @@ class Linker implements IStore {
     );
     return interceptSurrealResponse(response, "link");
   }
+
   async unlink(from: string, to: string) {
     let response = await this.db.query(
       "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
@@ -343,6 +372,17 @@ class Linker implements IStore {
     );
     return interceptSurrealResponse(response, "unlink");
   }
+
+  async linkMany(links: any[]) {
+    let response = await this.db.query(
+      "return fn::memotron::linkMany($links);",
+      {
+        links
+      }
+    );
+    return interceptSurrealResponse(response, "linkMany");
+  }
+
   get() {}
 }
 

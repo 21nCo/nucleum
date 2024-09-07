@@ -42,7 +42,7 @@
   });
   async function refresh() {
     if (isValidString(searchQuery)) {
-      data = await searchStore.refresh({
+      data = await searchStore.select({
         resource,
         searchQuery,
         isStarFilterSelected

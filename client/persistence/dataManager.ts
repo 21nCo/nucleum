@@ -7,7 +7,7 @@ import {
   type DataManager,
   type ResourceDependency,
   DependencySyncType,
-  PersistanceActionType,
+  PersistenceActionType,
   type IMutationParams,
   type IObservableStore
 } from "../types/data.type";
@@ -92,25 +92,25 @@ function init() {
       const dexie = get(dataManager).cacheSource.dexie;
       // @ts-ignore
       const table: Table = dexie[item];
-      if (params.action === PersistanceActionType.DELETE) {
+      if (params.action === PersistenceActionType.DELETE) {
         table.delete(data.id);
       } else if (
-        params.action === PersistanceActionType.CREATE ||
-        params.action === PersistanceActionType.INSERT
+        params.action === PersistenceActionType.CREATE ||
+        params.action === PersistenceActionType.INSERT
       ) {
         if (params.query) {
           if ("resources" in data) table.bulkAdd(data.resources);
           else if ("resource" in data) table.add(data.resource);
-        } else if (params.action === PersistanceActionType.INSERT) {
+        } else if (params.action === PersistenceActionType.INSERT) {
           localPersistancePromise = table.bulkAdd(data);
         } else {
           localPersistancePromise = table.add(data);
         }
-      } else if (params.action === PersistanceActionType.REPLACE) {
+      } else if (params.action === PersistenceActionType.REPLACE) {
         localPersistancePromise = table.put(data);
-      } else if (params.action === PersistanceActionType.MERGE) {
+      } else if (params.action === PersistenceActionType.MERGE) {
         localPersistancePromise = table.update(data.id, data);
-      } else if (params.action === PersistanceActionType.BULK_MERGE) {
+      } else if (params.action === PersistenceActionType.BULK_MERGE) {
         // localPersistancePromise = table.bulkUpdate(data.id, data);
         if (data.ids && data.ids.length > 0) {
           data.ids.forEach((id: string) => {
@@ -394,7 +394,7 @@ async function performMutation(
   const { resources, isKVStore } = resolveMutatingResources(mutatedAt);
   const mutationQuery = resolveMutationQuery2();
   const mutationParams =
-    params.query || params.action === PersistanceActionType.BULK_MERGE
+    params.query || params.action === PersistenceActionType.BULK_MERGE
       ? { ...data, mutatedAt }
       : { data, mutatedAt };
   const mutationId = params.queueParams?.mutationId ?? generateUID();
@@ -445,8 +445,8 @@ async function performMutation(
         data.id = id;
       }
       if (
-        params.action === PersistanceActionType.INSERT ||
-        params.action === PersistanceActionType.BULK_MERGE
+        params.action === PersistenceActionType.INSERT ||
+        params.action === PersistenceActionType.BULK_MERGE
       ) {
         id = storeId;
       }

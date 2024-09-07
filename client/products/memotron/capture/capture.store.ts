@@ -21,6 +21,8 @@ import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
 import { resolveResourceType } from "../memotron.utils";
+import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+import { linker } from "../memotron.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -149,19 +151,14 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     //TODO - extract nodes from markdown blocks and save
     const metadata = await resolveNodeCaptureMetadata();
     console.log("capture store", { val, metadata });
-    const id = prefixTable(generateUID(), Resource.node);
+    const id = prefixTable(generateRandomId(), Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",
       properties: val.properties,
       body: "",
       contentType: getContentTypeFromFileDetails(val?.fileDetails!),
-      metadata,
-      links: [
-        ...(val.links ? val.links.filter((x) => x.from === "root") : [])
-      ].map((x) => {
-        return { ...x, from: id };
-      })
+      metadata
     };
     let remainingResources: INodeItemCaptured[] = [];
     if (val.fileDetails) {
@@ -219,16 +216,23 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
           metadata: root.metadata,
-          creationContext: root.id,
-          children: block.children,
-          links: val.links ? val.links.filter((x) => x.from === block.id) : []
+          creationContext: id,
+          children: block.children
         };
       });
     }
     if (root.contentType == NodeType.PDF)
       root = { ...root, url: root.body.url };
 
-    let result: any = await nodeStore.createNode([root, ...remainingResources]);
+    let result: any = await nodeStore.create([root, ...remainingResources]);
+    //TODO - save links
+    const rootLinks = [
+      ...(val.links ? val.links.filter((x) => x.from === "root") : [])
+    ].map((x) => {
+      return { ...x, from: id };
+    });
+    const blockLinks = val.links?.filter((x) => x.from !== "root");
+    await linker.linkMany([...rootLinks, ...(blockLinks ?? [])]);
 
     if (!result) {
       toasts.error("Something went wrong. Please try again later.");

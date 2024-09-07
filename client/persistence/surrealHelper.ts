@@ -10,7 +10,7 @@ import {
   replaceParams,
   resolveMutationQuery
 } from "$lib/client/utils/surreal.utils";
-import { PersistanceActionType } from "../types/data.type";
+import { PersistenceActionType } from "../types/data.type";
 import type { ISurrealDatabase } from "../types/db.type";
 import type { IResourceBase } from "../components/resourceStores/resource.type";
 import { clientStorage } from "./persistence.utils";
@@ -41,7 +41,7 @@ export class SurrealDatabaseUsingRest {
    */
   async create(recordId: string, data: IResourceBase) {
     return this.query(
-      resolveMutationQuery(PersistanceActionType.CREATE, recordId),
+      resolveMutationQuery(PersistenceActionType.CREATE, recordId),
       {
         data
       }
@@ -49,7 +49,7 @@ export class SurrealDatabaseUsingRest {
   }
   async insert(tableName: string, data: IResourceBase[]) {
     return this.query(
-      resolveMutationQuery(PersistanceActionType.INSERT, tableName),
+      resolveMutationQuery(PersistenceActionType.INSERT, tableName),
       {
         data
       }
@@ -63,7 +63,7 @@ export class SurrealDatabaseUsingRest {
    */
   async merge(recordId: string, data: MergeRecord) {
     return this.query(
-      resolveMutationQuery(PersistanceActionType.MERGE, recordId),
+      resolveMutationQuery(PersistenceActionType.MERGE, recordId),
       {
         data
       }
@@ -71,7 +71,7 @@ export class SurrealDatabaseUsingRest {
   }
   async update(recordId: string, data: IResourceBase) {
     return this.query(
-      resolveMutationQuery(PersistanceActionType.REPLACE, recordId),
+      resolveMutationQuery(PersistenceActionType.REPLACE, recordId),
       {
         data
       }
@@ -84,7 +84,7 @@ export class SurrealDatabaseUsingRest {
   }
   async delete(recordId: string, userId?: string) {
     return await this.query(
-      resolveMutationQuery(PersistanceActionType.DELETE, recordId, { userId })
+      resolveMutationQuery(PersistenceActionType.DELETE, recordId, { userId })
     );
   }
   async executeReadFn(

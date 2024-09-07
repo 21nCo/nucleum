@@ -53,6 +53,8 @@ import { logger } from "../components/debug/logger.client";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
+import { flux } from "../persistence/dataManagerv2";
+import { PersistenceActionType } from "../types/data.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -291,14 +293,24 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
       offset = val.offset;
       label = val.label;
     }
-    await persistance.create(
-      {
-        offset,
-        date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
-        label: label ?? ""
-      },
-      Resource.tz
-    );
+    await flux.mutation(Resource.tz, {
+      action: PersistenceActionType.INSERT,
+      resources: [
+        {
+          offset,
+          date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
+          label: label ?? ""
+        }
+      ]
+    });
+    // await persistance.create(
+    //   {
+    //     offset,
+    //     date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
+    //     label: label ?? ""
+    //   },
+    //   Resource.tz
+    // );
     return this._setTimezone(offset, label);
   }
 }
@@ -517,7 +529,7 @@ function initAppStore(seed: AppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
     const guestPartForState = clientStorage.get(ClientStorageKey.GUEST) ?? "";
@@ -652,20 +664,20 @@ function initAppStore(seed: AppStore) {
     defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
     if (!id) return;
-    accessLogStore.create(
-      {
-        resource: id.split(":")[0],
-        action: ResourceActionType.OPEN,
-        resourceId: id,
-        timestamp: new Date().toISOString()
-      },
-      {
-        queueParams: {
-          isUseQueueFirstApproach: true,
-          mutationId: `${id}-accessLog-create`
-        }
-      }
-    );
+    // accessLogStore.create(
+    //   {
+    //     resource: id.split(":")[0],
+    //     action: ResourceActionType.OPEN,
+    //     resourceId: id,
+    //     timestamp: new Date().toISOString()
+    //   },
+    //   {
+    //     queueParams: {
+    //       isUseQueueFirstApproach: true,
+    //       mutationId: `${id}-accessLog-create`
+    //     }
+    //   }
+    // );
     toggleSearchParam("view");
     const accessMode = determineClickAccessMode(event);
     if (accessMode) toggleSearchParam(accessMode, id);

@@ -52,6 +52,7 @@
   import { LogType } from "$lib/client/components/debug/debug.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { flux } from "$lib/client/persistence/dataManagerv2";
 
   let timer: any;
   pingParent();
@@ -206,6 +207,15 @@
     }
     initActions(isLiteMode);
     if ($account.isLoggedIn && !isLiteMode) {
+      await flux.initialize(
+        [...cacheableStores, ...localCacheableStores],
+        $account.userId ?? $account.userInfo?.id ?? ""
+      );
+
+      //TEMP - bootstrap
+      // await userPreferences.initializeTimeZoneForSignup();
+      // await flux.bootstrap();
+
       await dataManager.refreshClientCache();
       const isDev = import.meta.env.DEV;
       if (!isDev) await dataManager.runDboUpdate();
@@ -215,6 +225,10 @@
       await account.ping();
     } else {
       await account.logGuest();
+      // await dataManagerV2.initialize(
+      //   [...cacheableStores, ...localCacheableStores],
+      //   //TODO - guest id
+      // );
     }
     if (isLiteMode) return;
     if (

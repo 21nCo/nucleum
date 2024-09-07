@@ -5,7 +5,6 @@ import { prefixTable } from "$lib/shared/utils/text.utils";
 import {
   activeResourceFilter,
   debouncer,
-  generateUID,
   interceptSurrealResponse
 } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
@@ -33,6 +32,8 @@ import { CombinationViewType } from "../curation/curation.type";
 import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { flux } from "$lib/client/persistence/dataManagerv2";
+import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   db: ISurrealDatabase;
@@ -45,7 +46,7 @@ class CollectionStore extends ResourceStore<ICollection> {
   async create(
     form: Partial<ICollection> & { defaultLayout: CollectionLayout }
   ) {
-    const id = prefixTable(generateUID(), Resource.collection);
+    const id = generateRandomId();
     const properties = propertyEditorStore.get();
     const resource: Partial<ICollection> = {
       ...form,
@@ -54,35 +55,17 @@ class CollectionStore extends ResourceStore<ICollection> {
       properties: []
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
-      await propertyStore.create(properties, {
-        queueParams: {
-          isUseQueueFirstApproach: true,
-          mutationId: `${id}-createProperties`
-        }
-      });
+      await propertyStore.create(properties);
       resource.properties = properties.map((p) => p.id);
     }
-    const viewId = prefixTable(generateUID(), Resource.view);
-    await viewStore.create(
-      {
-        id: viewId,
-        layout: form.defaultLayout,
-        label: "Default"
-      },
-      {
-        queueParams: {
-          isUseQueueFirstApproach: true,
-          mutationId: `${id}-${viewId}-create`
-        }
-      }
-    );
-    resource.views = [viewId];
-    return super.create(resource, {
-      queueParams: {
-        isUseQueueFirstApproach: true,
-        mutationId: `${id}-create`
-      }
+    const viewId = generateRandomId();
+    await viewStore.create({
+      id: viewId,
+      layout: form.defaultLayout,
+      label: "Default"
     });
+    resource.views = [prefixTable(viewId, Resource.view)];
+    return super.create(resource);
   }
   search(query: string) {
     if (!query) return [] as any;
@@ -149,6 +132,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * Initialized the collection with local cached data
    */
   async init() {
+    logger.debug({ at: "ActiveCollectionStore.init", id: this.id });
     try {
       this.resourceStore.modify(this.id, {
         interactedAt: new Date().toISOString()
@@ -158,23 +142,30 @@ class ActiveCollectionStore extends ActiveResourceStore<
         else val = { isPageLoading: true };
         return val;
       });
-      const dm = get(dataManager);
-      const record = await dm.cacheSource.dexie.collection.get(this.id);
-      const views = record?.views ?? [];
-      let viewsWithData: ICollectionView[] = [];
-      if (views.length > 0) {
-        viewsWithData = await dm.cacheSource.dexie.view
-          .where("id")
-          .anyOfIgnoreCase(views.filter((x) => x))
-          .toArray();
-      }
+      const result = await flux.select(this.id, [
+        "*",
+        // "type::string(id) as id",
+        "(select * from $parent.views) as views"
+      ]);
+      logger.debug({ at: "ActiveCollectionStore.init - select", result });
+      let record = result;
+      // const dm = get(dataManager);
+      // const record = await dm.cacheSource.dexie.collection.get(this.id);
+      // const views = record?.views ?? [];
+      // let viewsWithData: ICollectionView[] = [];
+      // if (isValidArrayWithData(views)) {
+      //   viewsWithData = await dm.cacheSource.dexie.view
+      //     .where("id")
+      //     .anyOfIgnoreCase(views?.filter((x) => x))
+      //     .toArray();
+      // }
       if (!record) return;
       this.set({
         ...record,
         isViewDataRefreshing: false,
         isViewDataLoading: true,
         isPageLoading: false,
-        views: viewsWithData.map((x) => {
+        views: record.views.map((x) => {
           return { ...x, data: [] };
         })
       });

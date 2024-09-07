@@ -15,6 +15,10 @@ export function onInterval(
   //return interval;
 }
 
+/**
+ * @deprecated - use lib/shared/crypto.utils instead
+ * @returns
+ */
 export function generateUID() {
   return (
     Date.now().toString(36) +
