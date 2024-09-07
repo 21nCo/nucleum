@@ -7,7 +7,8 @@ import {
   type IMutationParamsv2,
   StoreDataType,
   type IObservableStore,
-  type IResourceSelectParams
+  type IResourceSelectParams,
+  type IRecordId
 } from "../types/data.type";
 import { type IPersistence, PersistenceProvider } from "./persistence.type";
 import { SurrealPersistence } from "./surreal.persistence";
@@ -57,7 +58,7 @@ class DataManagerV2 {
    * This method will be called on signup and database is bootstrapped.
    * This will persist all kv seed data on cloud.
    */
-  async bootstrap() {
+  async seed() {
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -124,7 +125,7 @@ class DataManagerV2 {
     return response;
   }
 
-  async select(resourceId: string, properties?: string[]) {
+  async select(resourceId: IRecordId, properties?: string[]) {
     try {
       logger.log({ at: "dataManagerV2.select", resourceId });
       const result = await this.persistence.select(resourceId, properties);

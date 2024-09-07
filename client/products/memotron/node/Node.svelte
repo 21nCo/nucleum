@@ -8,8 +8,11 @@
   import { mediaNodeTypeList, NodeType, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
+  import { setContext } from "svelte";
+
   export let id: string;
   export let accessMode: ResourceAccessMode;
+
   console.log({ id, accessMode });
   export let isFromSplitView: boolean = false;
   let isRenderSplitView = false;
@@ -35,8 +38,17 @@
   async function fetchNode() {
     isLoading = true;
     await node.fetch();
+    nodeContext.parent = $node.parent;
     isLoading = false;
   }
+
+  function contextEventListener(message: any) {}
+  const nodeContext = {
+    parent: $node?.parent,
+    publish: contextEventListener
+  };
+
+  setContext("node", nodeContext);
 </script>
 
 {#if $node && !isLoading}

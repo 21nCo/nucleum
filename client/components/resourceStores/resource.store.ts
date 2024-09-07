@@ -12,7 +12,9 @@ import {
   type IObservableStoreSubject,
   type IObservableStore,
   CacheStrategy,
-  type IMutationParamsv2
+  type IMutationParamsv2,
+  type IResourceSelectParams,
+  type IRecordId
 } from "../../types/data.type";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
@@ -68,7 +70,7 @@ export class ActiveResourceStore<
   T extends IResource,
   U extends ResourceStore<T>
 > {
-  id: string;
+  id: IRecordId;
   protected subject = writable<T>();
   protected debouncedPersist: any;
   protected resourceStore: U;
@@ -76,7 +78,7 @@ export class ActiveResourceStore<
   subscribe = this.subject.subscribe;
   set = this.subject.set;
   update = this.subject.update;
-  constructor(id: string, resourceStore: U) {
+  constructor(id: IRecordId, resourceStore: U) {
     this.id = id;
     this.resourceStore = resourceStore;
     resolveCurrentUserId().then((x) => {
@@ -258,7 +260,7 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @returns
    */
   async modify(
-    id: string,
+    id: IRecordId,
     properties: Partial<T>,
     mutatationQueueParams?: IMutationQueueParams
   ) {
@@ -270,7 +272,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       modifiedAt: new Date().toISOString(),
       interactedAt: new Date().toISOString()
     };
-    const activeResource = activeResources.get(id);
+    const activeResource = activeResources.get(id.toString());
     if (activeResource) {
       activeResource.update((prev: T) => ({
         ...prev,
@@ -295,7 +297,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       cacheStrategy: this.cacheStrategy
     });
   }
-  async trash(id: string) {
+  async trash(id: IRecordId) {
     return this.modify(id, {
       trashInformation: {
         deletedBy: this.currentUserId,
@@ -341,22 +343,31 @@ export class ResourceStore<T extends IResource> implements IStore {
       }
     } as Partial<T>);
   }
-  archive(id: string) {
+  archive(id: IRecordId) {
     return this.modify(id, {
       isArchived: true
     } as Partial<T>);
   }
-  unarchive(id: string) {
+  unarchive(id: IRecordId) {
     return this.modify(id, {
       isArchived: false
     } as Partial<T>);
   }
-  restore(id: string) {
+  restore(id: IRecordId) {
     return this.modify(id, {
       trashInformation: undefined
     } as Partial<T>);
   }
+
   get() {}
+
+  selectMany(params?: IResourceSelectParams) {
+    return flux.selectMany(this.id, params);
+  }
+
+  select(resourceId: string, properties?: string[]) {
+    return flux.select(resourceId, properties);
+  }
 }
 
 /**

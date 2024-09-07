@@ -212,9 +212,8 @@ export function checkSurrealResponse(
     else return null;
   } else if (response.status === "OK" && response.result) {
     return response.result;
-  } else {
-    return response.status === "OK";
-  }
+  } else if (response.result) return response.result;
+  else return response.status === "OK";
 }
 
 /**
@@ -236,6 +235,11 @@ export function debouncer(func: any, timeout: number) {
 
 export const activeResourceFilter = (x: any) =>
   !x.isArchived && !x.trashInformation;
+
+export const activeResourceFilterV2 = {
+  isArchived: false,
+  trashInformation: false
+};
 
 export const archivedResourceFilter = (x: any) =>
   x.isArchived && !x.trashInformation;

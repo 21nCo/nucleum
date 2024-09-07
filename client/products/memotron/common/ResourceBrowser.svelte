@@ -59,30 +59,9 @@
           icon: "plus",
           variant: ButtonVariant.PRIMARY
         };
-  let starred = liveQuery(() =>
-    //@ts-ignore
-    $dataManager.cacheSource.dexie[resource]
-      .where("id")
-      .notEqual("")
-      .and((item: any) => activeResourceFilter(item))
-      .and((item: any) => item.isStarred === true)
-      .toArray()
-  );
 
   let data: any[] = [];
-  // let data = liveQuery(() =>
-  //   searchStore.refresh({
-  //     searchQuery
-  //   })
-  // );
-  // let data = liveQuery(() =>
-  //   //@ts-ignore
-  //   $dataManager.cacheSource.dexie[resource]
-  //     .where("id")
-  //     .notEqual("")
-  //     .and((item: any) => activeResourceFilter(item))
-  //     .toArray()
-  // );
+  let starred: any[] = [];
   onMount(async () => {
     await refresh();
   });
@@ -107,6 +86,7 @@
     data = await searchStore.select({
       searchQuery
     });
+    starred = await searchStore.starred();
   }
 </script>
 
@@ -190,7 +170,7 @@
           <div class="flex flex-col gap-4">
             <Text style={TextStyle.SECTION_HEADING} content="Starred" />
             <Resources
-              data={$starred}
+              data={starred}
               accessPoint={ResourceAccessPoint.BROWSER}
               {resource}
               {arrangement}

@@ -29,14 +29,6 @@ export function resolveResourceType(item: ICollection | INode) {
     else return MemotronResourceType.COLLECTION;
   } else return MemotronResourceType.NODE;
 }
-export function resolveResourceTypeFromId(id: string) {
-  if (id.startsWith("node:")) return MemotronResourceType.NODE;
-  else if (id.startsWith("task:")) return MemotronResourceType.TASK;
-  else if (id.startsWith("combination:"))
-    return MemotronResourceType.COMBINATION;
-  else if (id.startsWith("collection:")) return MemotronResourceType.COLLECTION;
-  else return MemotronResourceType.NODE;
-}
 
 function resolveLinkForResource(resource: string) {
   return (

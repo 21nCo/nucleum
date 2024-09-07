@@ -1,4 +1,7 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type {
   NodeContent,
   ListChild,
@@ -23,7 +26,7 @@ export type IMarkdown = { blocks: IBlock[] };
 export type DbBlock = IResourceBase & IBlock;
 
 export type IBlock<T = NodeContent> = T & {
-  id: string;
+  id: IRecordId;
   childrenHierarchy?: string[];
 };
 export enum InlineType {

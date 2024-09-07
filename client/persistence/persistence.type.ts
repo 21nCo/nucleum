@@ -1,6 +1,6 @@
 import type { Resource } from "../components/resourceStores/resource.enum";
 import type { IResource } from "../components/resourceStores/resource.type";
-import type { IResourceSelectParams } from "../types/data.type";
+import type { IRecordId, IResourceSelectParams } from "../types/data.type";
 
 export enum ClientStorageKey {
   ENV = "env",
@@ -14,6 +14,7 @@ export enum ClientStorageKey {
   USER_INFO = "userInfo",
   GUEST = "guest",
   SPACE_IN_CONTEXT = "spaceInContext",
+  OFFLINE_SESSION_ID = "offlineSessionId",
 
   INTERCOM_ID = "intercomId"
 }
@@ -44,7 +45,10 @@ export interface IPersistence {
     params?: IResourceSelectParams
   ): Promise<any> | undefined;
 
-  select(resourceId: string, properties?: string[]): Promise<any> | undefined;
+  select(
+    resourceId: IRecordId,
+    properties?: string[]
+  ): Promise<any> | undefined;
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { Writable } from "svelte/store";
 import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
+import type { RecordId } from "surrealdb.js";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -239,7 +240,7 @@ export type IBulkEditMutation<T> = {
 export type ICustomMutationParams = {
   action: PersistenceActionType.CUSTOM;
   query: string;
-  data: any;
+  data?: any;
 };
 
 export type IMutationParamsv2<T> =
@@ -353,3 +354,5 @@ export type IResourceSelectParams = {
    */
   omit?: string[];
 };
+
+export type IRecordId = RecordId | string;

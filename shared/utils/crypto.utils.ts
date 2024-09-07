@@ -31,3 +31,14 @@ export function generateRandomId(length = 16) {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
+
+/**
+ * Generates a simple unique identifier.
+ */
+export function generateSimpleRandomId() {
+  return (
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 10) +
+    Math.random().toString(36).slice(2, 10)
+  );
+}

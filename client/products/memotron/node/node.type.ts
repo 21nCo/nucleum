@@ -1,7 +1,7 @@
 import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
 import type { IAvatar } from "../../../types/avatar.type";
 import type { IMarkdown } from "../../../components/markdown/md.type";
-import type { IStore } from "../../../types/data.type";
+import type { IRecordId, IStore } from "../../../types/data.type";
 import type {
   IProperty,
   IPropertyValue
@@ -21,7 +21,7 @@ export type INode = (
 };
 
 export type INodeItemCaptured = IResourceCapture<INodeInterface> & {
-  id: string;
+  id: IRecordId;
 };
 
 export type INodeThumbnail = INodeBase &
@@ -61,7 +61,7 @@ type INodeInterface<
 
 export type IActiveNode = INode & {
   md: IMarkdown;
-  parent?: string[];
+  parent?: IRecordId[] | INode;
   accessMode: ResourceAccessMode;
   focusedBlock?: string;
   collections?: string[];

@@ -13,6 +13,9 @@ import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
 import { generateUID } from "./utils";
+import { generateRandomId } from "./crypto.utils";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { RecordId } from "surrealdb.js";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -26,11 +29,18 @@ export function properCase(str: string) {
 export function prefixTable(id: string | number, itemType: Resource) {
   return `${itemType}:${id}`;
 }
-export function generateResourceId(itemType: Resource, params?: {
-  prefix?: string;
-  id?: string;
-}) {
-  const id = params?.id ?? generateUID();
+export function generateResourceId(
+  itemType: Resource,
+  params?: {
+    prefix?: string;
+    id?: string;
+  }
+): IRecordId {
+  const id = params?.id ?? generateRandomId();
+  // return new RecordId(
+  //   itemType,
+  //   params?.prefix ? params?.prefix + "_" : "" + id
+  // );
   return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 
@@ -142,10 +152,13 @@ export function enumToString(val: any, isProperCase: boolean = true) {
 
 export function enumToCamelCase(val: any) {
   let output = "";
-  val.toString().split("_").forEach((x, index) => {
-    if (index === 0) output += x.toLowerCase();
-    else output += x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
-  });
+  val
+    .toString()
+    .split("_")
+    .forEach((x, index) => {
+      if (index === 0) output += x.toLowerCase();
+      else output += x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
+    });
   return output;
 }
 

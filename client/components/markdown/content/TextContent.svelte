@@ -21,12 +21,12 @@
   import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
   import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
   import LinkSuggestionItem from "$lib/client/products/memotron/common/linkbox/LinkSuggestionItem.svelte";
-  import { searchForLinking } from "$lib/client/products/memotron/memotron.store";
   import { deepCopy } from "$lib/shared/utils/obj.utils";
   import { getContext } from "svelte";
   import { logger } from "../../debug/logger.client";
+  import { SearchStore } from "$lib/client/products/memotron/memotron.store";
 
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
 
   function propagateToNode(event: string, data: any) {
@@ -586,7 +586,7 @@
     hidePopover();
   }
   function onMentionSearch(searchQuery: string) {
-    return searchForLinking(searchQuery);
+    return new SearchStore().searchForLinking(searchQuery);
   }
 
   function onMentionSelect(event: CustomEvent) {

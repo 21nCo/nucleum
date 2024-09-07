@@ -1,118 +1,28 @@
-import { dataManager } from "$lib/client/persistence/dataManager";
+// import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
   LinkType,
   NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
-import {
-  activeResourceFilter,
-  interceptSurrealResponse
-} from "$lib/client/utils/utils";
-import { get } from "svelte/store";
-import { resolveResourceTypeFromId } from "./memotron.utils";
-import { MemotronResourceType } from "./memotron.type";
+import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
-import type { IProperty } from "./collection/properties/property.type";
 import { CollectionType } from "./collection/collection.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
   type IResourceSelectOrderBy,
   type IStore,
+  PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import { flux } from "$lib/client/persistence/dataManagerv2";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
+import { replaceParams } from "$lib/client/utils/surreal.utils";
 
-/**
- * @deprecated
- * @param typeId
- * @returns
- */
-export function resolveAssociatedType(typeId: string) {
-  if (!typeId) return null;
-  const tb = get(dataManager).cacheSource.dexie.type;
-  return tb.get(typeId);
-}
-
-export function resolveNodeParent(id: string) {
-  const tb = get(dataManager).cacheSource.dexie.node;
-  //   return tb.where("children").anyOf(id).toArray();
-  return tb
-    .filter((node) => node.children && node.children.includes(id))
-    .first();
-}
-
-export async function resolveNodeParentHierarchy(id: string) {
-  const hierarchy = [];
-  let traverseComplete = true;
-  while (traverseComplete) {
-    const parent = await resolveNodeParent(id);
-    if (parent) {
-      hierarchy.push(parent);
-      id = parent.id;
-    } else {
-      traverseComplete = false;
-    }
-  }
-  return hierarchy.reverse();
-}
-
-export async function searchForLinking(query: string) {
-  const dexie = get(dataManager).cacheSource.dexie;
-  // const nodesPromise = dexie.node
-  //   .where("title")
-  //   .anyOfIgnoreCase(query)
-  //   .toArray()
-  //   .then((nodes) => nodes.map((node) => ({ ...node, label: node.title })));
-  const nodesPromise = dexie.node
-    .filter(activeResourceFilter)
-    .filter(
-      (node) =>
-        (node.label &&
-          node.label.toLowerCase().includes(query.toLowerCase())) ||
-        (headingNodeTypes.includes(node.contentType) &&
-          node.body.toLowerCase().includes(query.toLowerCase())) ||
-        false
-    )
-    .toArray()
-    .then((nodes) =>
-      nodes.map((node) => ({ ...node, label: node.label ?? node.body }))
-    );
-
-  // const collectionsPromise = dexie.curation
-  //   .where("label")
-  //   .anyOfIgnoreCase(query)
-  //   .and((collection) => collection.type === CurationType.COLLECTION)
-  //   .toArray();
-  const collectionsPromise = dexie.collection
-    .filter(activeResourceFilter)
-    .filter((collection) =>
-      collection.label?.toLowerCase().includes(query.toLowerCase())
-    )
-    .toArray();
-  // return nodesPromise;
-  return Promise.all([nodesPromise, collectionsPromise]).then(
-    ([nodes, collections]) => nodes.concat(collections)
-  );
-}
-
-export async function resolveResource(id: string) {
-  const resourceType = resolveResourceTypeFromId(id);
-  const dexie = get(dataManager).cacheSource.dexie;
-  switch (resourceType) {
-    case MemotronResourceType.NODE:
-      return await dexie.node.get(id);
-    case MemotronResourceType.COLLECTION:
-      return await dexie.collection.get(id);
-    default:
-      return null;
-  }
+export function resolveResource(id: string) {
+  return flux.select(id);
 }
 
 export class SearchStore {
@@ -184,8 +94,8 @@ export class SearchStore {
 
     logger.debug({ at: "refreshNodes", result });
 
-    const result2 = await flux.selectByQuery("select * from node;");
-    logger.debug({ at: "all nodes: ", result2 });
+    // const result2 = await flux.selectByQuery("select * from node;");
+    // logger.debug({ at: "all nodes: ", result2 });
     return result;
   }
 
@@ -256,13 +166,58 @@ export class SearchStore {
     }
   }
 
+  starred() {
+    return flux.selectMany(this.resource, {
+      filters: {
+        ...activeResourceFilterV2,
+        isStarred: true
+      },
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      }
+    });
+  }
+
+  /**
+   *
+   * TODO - test parent and mdParent
+   * @param query
+   * @returns
+   */
+  async searchForLinking(query: string) {
+    const nodes = await flux.selectMany(Resource.node, {
+      properties: [
+        "*",
+        "parent.* as parent",
+        "(fn::memotron::node::parent($parent.id)) as mdParent"
+      ],
+      filters: {
+        contentType: [...rootNodeTypeList, ...headingNodeTypes],
+        ...activeResourceFilterV2
+      },
+      search: {
+        properties: ["body", "label"],
+        query
+      }
+    });
+    const collections = await flux.selectMany(Resource.collection, {
+      filters: {
+        ...activeResourceFilterV2
+      },
+      search: {
+        properties: ["label"],
+        query
+      }
+    });
+    return [...(nodes ?? []), ...(collections ?? [])];
+  }
+
   private async recentNodes() {
     const result = await flux.selectMany(Resource.node, {
       properties: ["*", "parent.* as parent"],
       filters: {
         contentType: rootNodeTypeList.concat(headingNodeTypes),
-        isArchived: false,
-        trashInformation: false,
+        ...activeResourceFilterV2,
         creationContext: false
       },
       orderBy: this.orderBy ?? {
@@ -277,8 +232,7 @@ export class SearchStore {
   private async recentCollections() {
     const result = await flux.selectMany(Resource.collection, {
       filters: {
-        isArchived: false,
-        trashInformation: false
+        ...activeResourceFilterV2
       },
       orderBy: this.orderBy ?? {
         modifiedAt: "desc"
@@ -309,78 +263,54 @@ export class SearchStore {
   }
 }
 
-export async function resolveTypes(collections: string[]) {
-  let types: string[] = [];
-  let propertyConfig: IProperty[] = [];
-  let avatars: IAvatar[] = [];
-  if (!collections) return { types, propertyConfig, avatars };
-  const dexie = get(dataManager).cacheSource.dexie;
-  const typeCollectionLinks = await dexie.collection
-    .where("id")
-    .anyOfIgnoreCase(collections)
-    .and((collection) => collection.type === CollectionType.TYPED)
-    .toArray();
-  if (!typeCollectionLinks || typeCollectionLinks.length == 0)
-    return { types, propertyConfig, avatars };
-  types = typeCollectionLinks.map((type) => type.id);
-  let allProperties: string[] = [];
-  typeCollectionLinks.map((type) => {
-    allProperties = [...allProperties, ...(type.properties ?? [])];
-  });
-  avatars =
-    typeCollectionLinks.map((type) => type.avatar).filter((x) => x) ?? [];
-  propertyConfig = await dexie.property
-    .where("id")
-    .anyOfIgnoreCase(allProperties)
-    .filter(activeResourceFilter)
-    .toArray();
-  return { types, propertyConfig, avatars };
-}
-
 class Linker implements IStore {
   id: string = "linker";
   dataType: StoreDataType = StoreDataType.NA;
-  db: ISurrealDatabase;
-  dboDependencies: string[] = [
-    "fn::memotron::link",
-    "fn::memotron::unlink",
-    "fn::memotron::linkMany"
-  ];
-  constructor() {
-    this.db = new SurrealDatabase();
-  }
 
   async link(from: string, to: string, linkType: LinkType = LinkType.DIRECT) {
-    let response = await this.db.query(
-      "return fn::memotron::link($from, $to, $linkType);",
+    const response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query: this.generateLinkQuery(from, to, linkType)
+    });
+    logger.debug({ at: "link", response });
+    return response;
+  }
+
+  async unlink(from: string, to: string) {
+    let response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query:
+        "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
+      data: {
+        from,
+        to
+      }
+    });
+    logger.debug({ at: "unlink", response });
+    return response;
+  }
+
+  async linkMany(links: any[]) {
+    const query = links
+      .map((link) => this.generateLinkQuery(link.from, link.to, link.linkType))
+      .join("; ");
+    let response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query
+    });
+    logger.debug({ at: "linkMany", response });
+    return response;
+  }
+
+  private generateLinkQuery(from: string, to: string, linkType: string) {
+    return replaceParams(
+      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
       {
         from,
         to,
         linkType
       }
     );
-    return interceptSurrealResponse(response, "link");
-  }
-
-  async unlink(from: string, to: string) {
-    let response = await this.db.query(
-      "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
-      {
-        from,
-        to
-      }
-    );
-    return interceptSurrealResponse(response, "unlink");
-  }
-
-  async linkMany(links: any[]) {
-    let response = await this.db.query(
-      "return fn::memotron::linkMany($links);",
-      {
-        links
-      }
-    );
-    return interceptSurrealResponse(response, "linkMany");
   }
 
   get() {}

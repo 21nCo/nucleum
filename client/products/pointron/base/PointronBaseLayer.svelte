@@ -28,7 +28,7 @@
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
   onMount(async () => {
-    if ($account.isLoggedIn) await initializeData();
+    if ($account.isCloudUser) await initializeData();
     const appEventSub = appEvents.subscribe(async (e) => {
       if (isLiteMode) return;
       if (e.event === GlobalEvent.USER_LOGIN) {

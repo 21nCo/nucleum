@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
   import {
     type INode,
@@ -46,9 +45,9 @@
 
   async function resolveLabel() {
     if (!node) return "";
-    const dexie = $dataManager.cacheSource.dexie;
+
     let parent;
-    if (node.parent) parent = await dexie.node.get(node.parent);
+    if (node.parent && node.parent.id) parent = await node.parent;
 
     const defaultLabels = {
       [NodeType.TEXT_CLIP]:

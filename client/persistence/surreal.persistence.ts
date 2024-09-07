@@ -9,6 +9,7 @@ import type { Resource } from "../components/resourceStores/resource.enum";
 import type { IResource } from "../components/resourceStores/resource.type";
 import type {
   IPrimitiveDbDataType,
+  IRecordId,
   IResourceSelectParams
 } from "../types/data.type";
 import { Mutex } from "mutex-ts";
@@ -41,7 +42,7 @@ export class SurrealPersistence implements IPersistence {
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
       // await this.logInfo();
-      await this.testQuery();
+      // await this.testQuery();
     } catch (err) {
       logger.error({ at: "surreal.persistence.initialize", err });
       throw err;
@@ -135,7 +136,7 @@ export class SurrealPersistence implements IPersistence {
   }
 
   private async logInfo() {
-    const info = await this.instance?.query("INFO FOR DATABASE;");
+    const info = await this.instance?.query("INFO FOR NS; INFO FOR DATABASE;");
     logger.debug({
       at: "surreal.persistence.logInfo",
       userId: this.userId,
@@ -143,9 +144,7 @@ export class SurrealPersistence implements IPersistence {
     });
   }
   private async testQuery() {
-    const result = await this.instance?.query(
-      "select * from collection; select * from kv;"
-    );
+    const result = await this.instance?.query("select * from link;");
     logger.debug({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
@@ -252,7 +251,7 @@ export class SurrealPersistence implements IPersistence {
    * @param properties
    * @returns
    */
-  async select(resourceId: string, properties?: string[]): Promise<any> {
+  async select(resourceId: IRecordId, properties?: string[]): Promise<any> {
     await this.awaiter();
     const props = properties ?? [];
     const selectClause =
@@ -281,7 +280,14 @@ export class SurrealPersistence implements IPersistence {
       query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
     if (params?.limit) query += ` LIMIT ${params.limit}`;
     if (params?.offset) query += ` START ${params.offset}`;
-    logger.debug({ at: "SurrealPersistence.selectMany", query, params });
+    logger.debug({
+      at: "SurrealPersistence.selectMany",
+      query,
+      params,
+      userId: this.userId
+    });
+    // await this.logInfo();
+    // await this.testQuery();
     const result = await this.instance?.query_raw(query, params);
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
@@ -294,15 +300,23 @@ export class SurrealPersistence implements IPersistence {
       .join(", ");
   }
 
+  /**
+   *
+   * Note: using `string::lowercase()` on property field is resulting in no results at times.
+   *
+   * Ex: when searching for nodes and if property is `label`. Working fine for other properties like `body` or `contentType` or for Collection search with label property.
+   * @param search
+   * @returns
+   */
   private generateSearchClause(search: IResourceSelectParams["search"]) {
     if (!search) return "";
     const conditions: string[] = [];
-    for (const [key, value] of Object.entries(search)) {
-      conditions.push(
-        `string::lowercase('${value}') IN string::lowercase(${key})`
-      );
-    }
-    return conditions.join(" AND ");
+    search.properties?.forEach((property) => {
+      // conditions.push(`string::lowercase('${search.query}') IN string::lowercase(${property})`);
+      conditions.push(`'${search.query}' IN ${property}`);
+      // conditions.push(`${property} @@ '${search.query}'`);
+    });
+    return `(${conditions.join(" OR ")})`;
   }
 
   private generateWhereClause(params?: IResourceSelectParams): string {

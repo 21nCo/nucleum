@@ -1,7 +1,7 @@
-import type { RecordId } from "surrealdb";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export interface IResourceBase {
-  id: string | RecordId;
+  id: IRecordId;
   createdAt: string;
 }
 
@@ -35,8 +35,8 @@ export interface IResource extends IResourceBase {
 export type IUnlabeledResource = Omit<IResource, "label">;
 
 export interface IResourseShareable {
-  createdBy: string | RecordId;
-  modifiedBy: string | RecordId;
+  createdBy: IRecordId;
+  modifiedBy: IRecordId;
 }
 
 export interface ITrashInformation {

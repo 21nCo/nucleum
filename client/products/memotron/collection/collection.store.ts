@@ -1,21 +1,11 @@
-import { dataManager } from "$lib/client/persistence/dataManager";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { prefixTable } from "$lib/shared/utils/text.utils";
-import {
-  activeResourceFilter,
-  debouncer,
-  interceptSurrealResponse
-} from "$lib/client/utils/utils";
-import { get } from "svelte/store";
+import { debouncer } from "$lib/client/utils/utils";
 import {
   activeResources,
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
-import { Persistence } from "$lib/client/persistence/persistence";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import {
   CollectionLayout,
   type IActiveCollection,
@@ -34,19 +24,21 @@ import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/persistence/dataManagerv2";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+import type { IProperty } from "./properties/property.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { generateResourceId } from "$lib/shared/utils/text.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
-  db: ISurrealDatabase;
   constructor() {
     super(Resource.collection, {
       refreshOnAppear: true
     });
-    this.db = new SurrealDatabase();
   }
   async create(
     form: Partial<ICollection> & { defaultLayout: CollectionLayout }
   ) {
-    const id = generateRandomId();
+    const id = generateResourceId(Resource.collection);
     const properties = propertyEditorStore.get();
     const resource: Partial<ICollection> = {
       ...form,
@@ -58,25 +50,29 @@ class CollectionStore extends ResourceStore<ICollection> {
       await propertyStore.create(properties);
       resource.properties = properties.map((p) => p.id);
     }
-    const viewId = generateRandomId();
+    const viewId = generateResourceId(Resource.view);
     await viewStore.create({
       id: viewId,
       layout: form.defaultLayout,
       label: "Default"
     });
-    resource.views = [prefixTable(viewId, Resource.view)];
+    resource.views = [viewId];
     return super.create(resource);
   }
-  search(query: string) {
-    if (!query) return [] as any;
-    const dexie = get(dataManager).cacheSource.dexie;
-    const collectionsPromise = dexie.collection
-      .filter(activeResourceFilter)
-      .filter((collection) =>
-        collection.label?.toLowerCase()?.includes(query.toLowerCase())
-      )
-      .toArray();
-    return collectionsPromise;
+
+  /**
+   * TODO - testing extended properties
+   * @param types
+   * @returns
+   */
+  async resolveTypes(collections: string[]) {
+    let types: string[] = [];
+    let propertyConfig: IProperty[] = [];
+    let avatars: IAvatar[] = [];
+    if (!collections) return { types, propertyConfig, avatars };
+    const query = `return select properties.* as properties, typeToExtend.properties.* as extendProperties from collection where id in $types;`;
+    const result = await flux.selectByQuery(query, { types });
+    return { types, propertyConfig, avatars };
   }
 }
 
@@ -95,11 +91,15 @@ const activeCollectionStoreMap = new Map<string, IActiveCollectionStore>();
  * @param context - The context from which the store is being accessed. This is used for debugging purposes.
  * @returns The active curation store
  */
-export function resolveActiveCollectionStore(id: string, context: string = "") {
-  if (!activeResources.has(id)) {
-    activeResources.set(id, new ActiveCollectionStore(id));
+export function resolveActiveCollectionStore(
+  id: IRecordId,
+  context: string = ""
+) {
+  const idStr = id.toString();
+  if (!activeResources.has(idStr)) {
+    activeResources.set(idStr, new ActiveCollectionStore(id));
   }
-  let val = activeResources.get(id);
+  let val = activeResources.get(idStr);
   return val!;
 }
 
@@ -124,7 +124,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
     viewStore.modify(id, view);
   }, 2000);
 
-  constructor(collectionId: string) {
+  constructor(collectionId: IRecordId) {
     super(collectionId, collectionStore);
   }
 
@@ -144,21 +144,11 @@ class ActiveCollectionStore extends ActiveResourceStore<
       });
       const result = await flux.select(this.id, [
         "*",
-        // "type::string(id) as id",
-        "(select * from $parent.views) as views"
+        "(select * from $parent.views) as views",
+        "(select * from $parent.properties) as properties"
       ]);
       logger.debug({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
-      // const dm = get(dataManager);
-      // const record = await dm.cacheSource.dexie.collection.get(this.id);
-      // const views = record?.views ?? [];
-      // let viewsWithData: ICollectionView[] = [];
-      // if (isValidArrayWithData(views)) {
-      //   viewsWithData = await dm.cacheSource.dexie.view
-      //     .where("id")
-      //     .anyOfIgnoreCase(views?.filter((x) => x))
-      //     .toArray();
-      // }
       if (!record) return;
       this.set({
         ...record,
@@ -204,33 +194,18 @@ class ActiveCollectionStore extends ActiveResourceStore<
         arrangement: Arrangement.LIST
       };
     }
-    const createdViewResult = await viewStore.create(partial, {
-      queueParams: {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-createView-${Date.now()}`
-      }
-    });
-    const createdViewId = createdViewResult[0] as string;
-    const dm = get(dataManager);
-    const createdView = await dm.cacheSource.dexie.view.get(createdViewId);
-    if (!createdView) return;
-    console.log("createdView", { createdView });
+    const createdView = await viewStore.create(partial);
+    logger.debug({ at: "ActiveCollectionStore.createView", createdView });
+    if (!createdView || !createdView.id) return;
 
     this.update((val: IActiveCollection) => {
       val.views.push({ ...createdView, data: [] });
       return val;
     });
 
-    this.resourceStore.modify(
-      this.id,
-      {
-        views: [...(this.get().views.map((x) => x.id) ?? []), createdView.id]
-      },
-      {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-addView-${Date.now()}`
-      }
-    );
+    this.resourceStore.modify(this.id, {
+      views: [...(this.get().views.map((x) => x.id) ?? []), createdView.id]
+    });
     return createdView.id;
   }
 
@@ -244,7 +219,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
       };
       return val;
     });
-    return viewStore.delete(id);
+    return viewStore.trash(id);
   }
 
   updateView(id: string, view: Partial<ICollectionView>) {
@@ -264,12 +239,17 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * @returns
    */
   async loadViewData(viewId: string) {
-    console.log({ context: "loadViewData", viewId });
+    logger.debug({ at: "ActiveCollectionStore.loadViewData", viewId });
+    if (!viewId) return;
     this.update((val: IActiveCollection) => {
       val.isViewDataLoading = true;
       return val;
     });
-    const response = await viewStore.fetchViewData(viewId, this.id);
+    const response = await viewStore.fetchViewData(viewId, this.get().id);
+    logger.debug({
+      at: "ActiveCollectionStore.loadViewData - response",
+      response
+    });
     if (!response || !isValidArrayWithData(response)) {
       this.update((val: IActiveCollection) => {
         val.isViewDataLoading = false;
@@ -296,7 +276,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
       val.isViewDataRefreshing = true;
       return val;
     });
-    const response = await viewStore.fetchViewData(viewId, this.id);
+    const response = await viewStore.fetchViewData(viewId, this.get().id);
     if (!response || !isValidArrayWithData(response)) {
       this.update((val: IActiveCollection) => {
         val.refreshError = "Error refreshing data.";
@@ -315,21 +295,18 @@ class ActiveCollectionStore extends ActiveResourceStore<
 }
 
 class CollectionViewStore extends ResourceStore<ICollectionView> {
-  db: ISurrealDatabase;
   constructor() {
     super(Resource.view, {
       refreshOnAppear: true,
       dboDependencies: ["fn::memotron::collection::fetchData"]
     });
-    this.db = new SurrealDatabase();
   }
-  async fetchViewData(viewId: string, collectionId: string) {
+  fetchViewData(viewId: IRecordId, collectionId: IRecordId) {
     const query = `fn::memotron::collection::fetchData($viewId, $collectionId)`;
-    const response = await this.db.executeReadFn(query, {
+    return flux.selectByQuery(query, {
       viewId,
       collectionId
     });
-    return interceptSurrealResponse(response, "fetch view data");
   }
 }
 

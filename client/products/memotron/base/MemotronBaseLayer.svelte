@@ -23,7 +23,7 @@
     ResourceAccessMode.TOPBARFOCUS
   );
   onMount(async () => {
-    if ($account.isLoggedIn) await initializeData();
+    if ($account.isCloudUser) await initializeData();
     $appLoadingState.isLocalLoaded = true;
     postMessageToParent(EmbedMessage.MOUNT);
   });

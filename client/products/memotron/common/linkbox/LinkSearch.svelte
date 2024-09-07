@@ -1,10 +1,10 @@
 <script lang="ts">
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
-  import { searchForLinking } from "../../memotron.store";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import { Orientation, Position } from "$lib/client/types/direction.enum";
   import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
+  import { SearchStore } from "../../memotron.store";
   export let context: "capture" | "nodepage" | "clipper" = "capture";
   export let resultsPlacement: Position = Position.BottomCenter;
   export let searchQuery: string;
@@ -51,7 +51,7 @@
   }
 
   function onsearch(searchQuery: string) {
-    return searchForLinking(searchQuery);
+    return new SearchStore().searchForLinking(searchQuery);
   }
 </script>
 

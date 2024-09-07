@@ -1,6 +1,5 @@
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
-  type INodeItemCaptured,
   LinkType,
   type IActiveNode,
   type INodeProperty,
@@ -15,16 +14,16 @@ import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import type { IMutationQueueParams } from "../../../types/data.type";
 import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
-import { linker, resolveTypes } from "../memotron.store";
+import { linker } from "../memotron.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
 import { flux } from "$lib/client/persistence/dataManagerv2";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { collectionStore } from "../collection/collection.store";
 
 export const hierarchyFactorLimit = 5;
 
@@ -122,9 +121,8 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (node) {
       this.set(node);
     }
-    const { types, propertyConfig, avatars } = await resolveTypes(
-      node.collections
-    );
+    const { types, propertyConfig, avatars } =
+      await collectionStore.resolveTypes(node.collections);
     this.update((n) => {
       n.types = types;
       n.propertyConfig = propertyConfig;
@@ -197,10 +195,10 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     let $from = array::first(select value <-link.* from node where id is $id);
    return {from: $from, to: $to};
     COMMIT TRANSACTION;`;
-    const response = await this.db.executeReadFn(query, {
+    const response = await flux.selectByQuery(query, {
       id
     });
-    console.log({ response });
+    logger.debug({ at: "ActiveNodeStore.resolveLinks", response });
     return interceptSurrealResponse(response);
   }
 }

@@ -19,7 +19,7 @@ export const memotronDboDefinitions = {
 
 function nodeFetch() {
   const def = `define function fn::memotron::node::fetch($id: record){
-    return array::first(select *, (select * from node where parent is $id) as clips,
+    return array::first(select *, parent.* as parent, (select * from node where parent is $id) as clips,
     (fn::memotron::node::children($parent.children)) as children, 
     (fn::memotron::node::parent($id)) as mdParent,
     ->link->collection as collections from node where id is $id);
@@ -98,6 +98,10 @@ function nodeCreateMany() {
   return [...linkMany(), def];
 }
 
+/**
+ * @deprecated - using direct client query instead
+ * @returns
+ */
 function linkMany() {
   const def = `define function fn::memotron::linkMany($links: option<array>){
     return if type::is::array($links) and array::len($links) > 0 {
@@ -109,6 +113,10 @@ function linkMany() {
   return [...link(), def];
 }
 
+/**
+ * @deprecated - using direct client query instead
+ * @returns
+ */
 function link() {
   const def = `define function fn::memotron::link($from: record, $to: record, $linkType: option<string>){
     relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}

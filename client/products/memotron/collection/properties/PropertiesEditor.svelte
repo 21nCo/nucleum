@@ -10,10 +10,12 @@
     type TableColumn
   } from "$lib/client/types/table.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { enumToString, prefixTable } from "$lib/shared/utils/text.utils";
-  import { generateUID } from "$lib/client/utils/utils";
+  import {
+    enumToString,
+    generateResourceId
+  } from "$lib/shared/utils/text.utils";
 
-  import { type IProperty, PropertyType } from "./property.type";
+  import { PropertyType } from "./property.type";
   import {
     autoPropertiesGroupLabel,
     metaPropertyOptions,
@@ -73,34 +75,6 @@
         row.type === PropertyType.LOCATION
     }
   ];
-
-  let seedData: IProperty[] = [
-    // {
-    //   id: "property:one",
-    //   label: "Description",
-    //   isShowOnNodePage: true,
-    //   type: PropertyType.RATING,
-    //   order: 0
-    // },
-    {
-      id: "property:two",
-      label: "Status",
-      isShowOnNodePage: false,
-      isShowOnCapture: true,
-      type: PropertyType.SINGLE_SELECT,
-      order: 1
-    },
-    {
-      id: "property:three",
-      label: "Is Archived",
-      isShowOnNodePage: false,
-      isShowOnCapture: false,
-      type: PropertyType.CHECKBOX,
-      order: 2
-    }
-  ];
-  // properties = seedData;
-  // $: console.log({ data });
 </script>
 
 <div class="flex flex-col gap-4 w-full text-b2">
@@ -124,7 +98,7 @@
         $propertyEditorStore = [
           ...$propertyEditorStore,
           {
-            id: prefixTable(generateUID(), Resource.property),
+            id: generateResourceId(Resource.property),
             label: "",
             isShowOnNodePage: false,
             isShowOnCapture: false,

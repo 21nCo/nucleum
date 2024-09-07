@@ -32,7 +32,7 @@
     {#if nodeProperties && nodeProperties.length > 0}
       <PropertiesListView
         bind:properties={nodeProperties}
-        types={$node.types}
+        propertyConfig={$node?.propertyConfig}
         context={isMediaNode ? "medianode" : "rightpanel"}
         isReadMode={!$isInEditMode}
         nodeId={$node.id}

@@ -26,7 +26,7 @@
 {#if propertiesOnMainPanel && nodeProperties && propertiesOnMainPanel.length > 0 && nodeProperties.length > 0}
   <PropertiesListView
     bind:properties={nodeProperties}
-    types={$node.types}
+    propertyConfig={$node?.propertyConfig}
     on:change={propagateChanges}
     context={isMediaNode ? "medianode" : "nodepage"}
   />

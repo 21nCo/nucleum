@@ -206,16 +206,11 @@
       await refreshAppStaticData();
     }
     initActions(isLiteMode);
-    if ($account.isLoggedIn && !isLiteMode) {
+    if ($account.isCloudUser && !isLiteMode) {
       await flux.initialize(
         [...cacheableStores, ...localCacheableStores],
         $account.userId ?? $account.userInfo?.id ?? ""
       );
-
-      //TEMP - bootstrap
-      // await userPreferences.initializeTimeZoneForSignup();
-      // await flux.bootstrap();
-
       await dataManager.refreshClientCache();
       const isDev = import.meta.env.DEV;
       if (!isDev) await dataManager.runDboUpdate();
@@ -224,11 +219,11 @@
       account.setAnalyticsUserIdentity();
       await account.ping();
     } else {
-      await account.logGuest();
-      // await dataManagerV2.initialize(
-      //   [...cacheableStores, ...localCacheableStores],
-      //   //TODO - guest id
-      // );
+      const guestId = await account.logGuest();
+      await flux.initialize(
+        [...cacheableStores, ...localCacheableStores],
+        guestId
+      );
     }
     if (isLiteMode) return;
     if (

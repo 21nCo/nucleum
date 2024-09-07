@@ -13,7 +13,6 @@
   });
 
   async function resolveFavicon() {
-    const dexie = $dataManager.cacheSource.dexie;
     if (
       node.contentType === NodeType.TWITTER_PROFILE &&
       "profileImageUrl" in node.body &&
@@ -29,9 +28,10 @@
     } else if (node.metadata?.faviconLink) {
       return node.metadata.faviconLink;
     } else if (node.parent) {
-      const parent = await dexie.node.get(node.parent);
-      if (parent && parent.metadata?.faviconLink)
-        return parent.metadata.faviconLink;
+      //TODO - resolve using context API
+      // const parent = await dexie.node.get(node.parent);
+      // if (parent && parent.metadata?.faviconLink)
+      //   return parent.metadata.faviconLink;
     }
 
     if (!node.body) return;

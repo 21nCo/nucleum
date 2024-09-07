@@ -6,21 +6,13 @@
   import BoardPane from "./BoardPane.svelte";
   import { resolvePropertyOptions } from "../../curation/curation.utils";
   import NodeItems from "../NodeItems.svelte";
-  import { liveQuery } from "dexie";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import type { IProperty } from "../properties/property.type";
   export let view: ICollectionView;
   export let data: INodeThumbnail[] = [];
-  export let propertyIds: string[] = [];
+  export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
-  let properties = liveQuery(() =>
-    $dataManager.cacheSource.dexie.property
-      .where("id")
-      .anyOfIgnoreCase(propertyIds)
-      .toArray()
-  );
 
-  $: groups = resolveBoards(view.groupBy, $properties);
+  $: groups = resolveBoards(view.groupBy, properties);
 
   function resolveBoards(id: string, properties: IProperty[]) {
     // if (view.groups) return view.groups;
@@ -43,7 +35,7 @@
         {view}
         {group}
         {isBoardOverflow}
-        properties={$properties}
+        {properties}
         data={filterGroupData(group.value)}
       />
     {/each}

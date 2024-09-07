@@ -16,6 +16,8 @@
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { player } from "$lib/client/components/modal/modal.store";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import account from "$lib/client/stores/account.store";
+  import { UserSessionType } from "$lib/client/types/account.type";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -63,7 +65,7 @@
       </div>
     </div>
   {:else if isMinimized}
-    <div
+    <button
       class="flex flex-col items-center gap-4 absolute rounded-md left-1 z-30 {isHovered
         ? 'bg-bgs3 p-4 w-48'
         : 'bg-aps1 opacity-50'}"
@@ -83,9 +85,9 @@
           label="switch to verbose"
         />
       {/if}
-    </div>
+    </button>
   {:else}
-    <div
+    <button
       class={cn("flex justify-center items-center h-full", {
         "w-16 min-w-[4rem]": isInThinMode,
         "w-56 min-w-[14rem]": !isInThinMode,
@@ -150,6 +152,14 @@
               parentBgIndex={2}
             />
           {/if}
+          {#if $account.sessionType === UserSessionType.LOCAL}
+            <button
+              class={cn("text-fgs3 bg-bgs3 rounded-md px-2 py-1 my-1", {
+                "text-b4": isInThinMode,
+                "text-b3": !isInThinMode
+              })}>{isInThinMode ? "Offline" : "Offline mode"}</button
+            >
+          {/if}
           {#if $appStore?.appData?.isCmdBarEnabled === true}
             {#if isInThinMode}
               <!-- todo - on click - show command bar -->
@@ -162,7 +172,7 @@
             {:else}
               <div class="text-b3 text-fgs3 mb-4">
                 Press <button
-                  class="text-fgs2 px-2 py-0.5 rounded-md bg-bgs3 hover:bg-bgs4"
+                  class="text-fgs2 px-1 py-[1px] rounded-md border border-brs3 hover:bg-bgs3"
                   on:click={() => appStore.runAction(Action.CMD)}
                 >
                   <ShortcutText shortcut={Action.CMD} isPlainText={true} />
@@ -174,6 +184,6 @@
           <LeftBottomBar {isInThinMode} {isRounded} />
         </div>
       </div>
-    </div>
+    </button>
   {/if}
 {/if}

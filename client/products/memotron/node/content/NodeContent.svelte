@@ -37,7 +37,7 @@
       node.mention(detail.location, detail.id);
     }
   }
-  setContext("node", handleEvent);
+  setContext("content", handleEvent);
 
   onMount(() => {
     refreshCounts();

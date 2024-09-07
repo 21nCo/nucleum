@@ -2,6 +2,7 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import account from "$lib/client/stores/account.store";
   import { appEvents } from "$lib/client/stores/notification.store";
+  import { UserSessionType } from "$lib/client/types/account.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import type { IEvent } from "$lib/client/types/event.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -28,7 +29,10 @@
     );
   }
   interval = setInterval(() => {
-    if (isValidArrayWithData($mutationQueue) && $account.isLoggedIn) {
+    if (
+      isValidArrayWithData($mutationQueue) &&
+      $account.sessionType === UserSessionType.CLOUD
+    ) {
       dataManager.syncPendingMutations();
       // console.log(
       //   "Syncing mutations",

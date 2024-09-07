@@ -36,8 +36,8 @@
   import type { ICollectionViewWithData } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -63,7 +63,6 @@
   let isReady = false;
   let isNotInlineAccess: boolean = false;
   let selectedArrangement: Arrangement = Arrangement.LIST;
-  $: console.log({ activeView });
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -102,15 +101,11 @@
       value: "none",
       icon: "none"
     };
-    const properties = await $dataManager.cacheSource.dexie.property
-      .where("id")
-      .anyOfIgnoreCase($collection?.properties ?? [])
-      .toArray();
-    return properties
+    return $collection?.properties
       ? [
           noneOption,
-          ...(properties
-            ? properties.map((x: IProperty) => {
+          ...($collection?.properties
+            ? $collection?.properties.map((x: IProperty) => {
                 return { label: x.label, value: x.id };
               })
             : []),
@@ -175,6 +170,7 @@
   }
 
   function loadActiveView() {
+    logger.debug({ at: "loadActiveView", selectedViewId });
     if (!selectedViewId) return;
     const view = $collection.views.find((x) => x.id === selectedViewId) ?? null;
     if (!view) return;
@@ -190,6 +186,7 @@
   ) {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
+    logger.debug({ at: "refresh", activeView });
     if (props.isNewView) await collection.loadViewData(activeView.id);
     else await collection.refreshViewData(activeView.id);
     loadActiveView();
@@ -306,7 +303,7 @@
               <ViewTabSwitcher
                 view={activeView}
                 bind:value={selectedTab}
-                propertyIds={$collection?.properties}
+                properties={$collection?.properties}
                 on:select={onTabSwitch}
               />
             {/if}

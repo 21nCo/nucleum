@@ -40,7 +40,7 @@
     "w-full": context !== "page"
   })}
 >
-  {#if $account.isLoggedIn}
+  {#if $account.isCloudUser}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
       on:click
