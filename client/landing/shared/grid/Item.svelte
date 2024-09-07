@@ -21,7 +21,7 @@
 </script>
 
 <button
-  class="flex flex-col items-start justify-center gap-3 w-[480px]"
+  class="flex flex-col items-start justify-center gap-3 w-[480px] mo:w-[342px]"
   on:click={onClick}
   on:mouseenter={onMouseEnter}
   on:mouseleave={onMouseLeave}
@@ -38,11 +38,17 @@
     {/if}
     {#if item?.title}
       {@const title = item.title}
-      <h1 class="text-[28px] leading-10 font-extrabold">{title}</h1>
+      <h1
+        class="text-[28px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold"
+      >
+        {title}
+      </h1>
     {/if}
   </div>
   {#if item?.description}
     {@const description = item.description}
-    <p class="text-[20px] text-left">{description}</p>
+    <p class="text-[20px] mo:text-base text-left mo:text-justify">
+      {description}
+    </p>
   {/if}
 </button>

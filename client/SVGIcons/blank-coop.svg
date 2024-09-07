@@ -1,18 +1,6 @@
 <svg width="100%" height="100%" viewBox="0 0 22 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="2" y="3" width="16" height="2" fill="currentColor"/>
+  <rect x="2" y="3" width="16" height="2" fill="currentColor"/>
   <rect x="17" y="6" width="3" height="1" fill="currentColor"/>
   <rect x="19" y="1" width="1" height="6"  fill="currentColor"/>
 </svg>
 
-<!-- <svg width="100%" height="100%" viewBox="0 0 65 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="8" y="14.7876" width="43.5556" height="5.57545" fill="currentColor"/>
-<rect x="48.8936" y="23.2119" width="8.10617" height="2.78772" fill="currentColor"/>
-<rect x="54.2773" y="25.9385" width="13.9386" height="2.72222" transform="rotate(-90 54.2773 25.9385)" fill="currentColor"/>
-</svg> -->
-
-
-<!-- <svg width="100%" height="100%" viewBox="0 0 49 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect y="2.7876" width="43.5556" height="5.57545" fill="currentColor"/>
-<rect x="40.8936" y="11.2119" width="8.10617" height="2.78772" fill="currentColor"/>
-<rect x="46.2773" y="13.9385" width="13.9386" height="2.72222" transform="rotate(-90 46.2773 13.9385)" fill="currentColor"/>
-</svg> -->

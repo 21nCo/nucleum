@@ -3,7 +3,7 @@
 </script>
 
 <p
-  class="w-[800px] text-center text-[72px] font-black leading-[98px] h-[200px]"
+  class="w-[800px] mo:w-[342px] text-center text-[72px] mo:text-[29px] font-black leading-[98px] mo:leading-10 h-[200px] mo:h-[50px]"
 >
   {title}
 </p>

@@ -34,13 +34,11 @@
   });
 </script>
 
-<button
-  on:click={() => toggle()}
-  id="modeToggle"
-  class={cn("tdnn day", className)}
->
-  <div id="modeToggleChild" class="moon sun"></div>
-</button>
+<div class={className}>
+  <button on:click={() => toggle()} id="modeToggle" class={cn("tdnn day")}>
+    <div id="modeToggleChild" class="moon sun"></div>
+  </button>
+</div>
 
 <style>
   :root {

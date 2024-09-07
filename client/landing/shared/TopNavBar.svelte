@@ -82,7 +82,9 @@
         </div>
       </div>
       <div class="ml-auto inline-flex dp:gap-8 tp:gap-4 mo:gap-6">
-        <LightDarkModeToggle class="" />
+        {#if !$view.isPortrait}
+          <LightDarkModeToggle />
+        {/if}
         <SvgIcon
           {icon}
           size={Size.lg}
