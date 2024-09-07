@@ -5,7 +5,7 @@
 </script>
 
 <div
-  class={cn("w-[390px] h-[356px] rounded-[20px] p-7 bg-bgs2")}
+  class={cn("w-full max-w-[390px] min-h-[356px] rounded-[20px] p-7 bg-bgs2")}
   style="background-image: url('/backgroundMedia/{backgroundImage}.png');"
 >
   <slot />

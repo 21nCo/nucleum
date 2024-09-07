@@ -24,8 +24,6 @@
     fgDark: "hsla(0, 0%, 100%, 1)",
     fgLight: "hsla(0, 0%, 20%, 1)"
   };
-  // let lightIconBGColor: string = "hsla(0, 0%, 20%, 1)";
-  // let darkIconBGColor: string = "hsla(0, 0%, 92%, 1)";
   function handleHover(index: number) {
     console.log(index);
     socials[index].isHovered = true;
@@ -64,7 +62,14 @@
       isHovered: false
     }
   ];
+  let joinUs = {
+    title: "Join us",
+    href: "https://tally.so/r/wLzN8j",
+    description:
+      "Become a part of Blank and join us in shaping a more sustainable and connected future through innovation and collaboration, making a difference by empowering people and preserving our planet."
+  };
   let information = [
+    { title: "Information" },
     {
       title: "Our story",
       href: "https://docs.blanklabs.org/soft"
@@ -82,51 +87,62 @@
       href: "https://docs.blanklabs.org/soft"
     }
   ];
+  const combinedLI = [...information, joinUs, ...products];
 </script>
 
 <Section>
-  <div class="flex flex-col gap-7">
-    <div class="w-full flex gap-x-7">
+  <div class="flex flex-col items-center gap-7 w-full tp:px-12">
+    {#if $view.isPortrait}
       <Box>
-        <div class="flex h-full flex-col items-center justify-center gap-9">
-          <canvas
-            bind:this={canvas}
-            class:scale-[1.4]={isHovering}
-            class:scale-[1]={!isHovering}
-            class="border-2 transition-transform duration-300 ease-in-out origin-bottom-left"
-          />
-          <p class="text-[24px] font-medium leading-[33px]">Scan & Download</p>
-        </div>
+        <ListWithTitle items={combinedLI} />
       </Box>
-      <Box>
-        <ListWithTitle title="Information" items={information} />
-      </Box>
-      <Box>
-        <ListWithTitle title="Products" items={products} />
-      </Box>
-    </div>
-    <div class="w-full flex gap-x-7">
-      <Box backgroundImage="our-team" />
-      <div
-        class="flex flex-col items-center justify-center gap-9 flex-grow-0 w-[806px] h-[356px] bg-bgs2 rounded-[20px] p-7"
-      >
-        <p class="text-fgs2 text-[20px] leading-[28px] font-normal text-center">
-          Become a part of Blank and join us in shaping a more sustainable and
-          connected future through innovation and collaboration, making a
-          difference by empowering people and preserving our planet.
-        </p>
-        <Button
-          label="Join us"
-          class="text-[20px]"
-          on:click={() => goto("https://tally.so/r/wLzN8j")}
-        />
+    {:else}
+      <div class="w-full flex justify-between">
+        <Box>
+          <div class="flex h-full flex-col items-center justify-center gap-9">
+            <canvas
+              bind:this={canvas}
+              class:scale-[1.4]={isHovering}
+              class:scale-[1]={!isHovering}
+              class="border-2 transition-transform duration-300 ease-in-out origin-bottom-left"
+            />
+            <p class="text-[24px] font-medium leading-[33px]">
+              Scan & Download
+            </p>
+          </div>
+        </Box>
+        <Box>
+          <ListWithTitle items={information} />
+        </Box>
+        <Box>
+          <ListWithTitle items={products} />
+        </Box>
       </div>
-    </div>
+      <div class="w-full flex gap-x-7">
+        <Box backgroundImage="our-team" />
+        <div
+          class="flex flex-col items-center justify-center gap-9 w-full h-[356px] bg-bgs2 rounded-[20px] p-7"
+        >
+          <p
+            class="text-fgs2 text-[20px] leading-[28px] font-normal text-center"
+          >
+            {joinUs.description}
+          </p>
+          <Button
+            label={joinUs.title}
+            class="text-[20px]"
+            on:click={() => goto(joinUs.href)}
+          />
+        </div>
+      </div>
+    {/if}
     <div
-      class="w-[1222px] h-[72px] rounded-[20px] flex items-center bg-bgs2 px-7"
+      class="w-full mo:max-w-[390px] rounded-[20px] flex mo:flex-col mo:gap-y-4 items-center bg-bgs2 px-7 py-4 mo:px-0 mo:py-4"
     >
-      <p>Blank.coop</p>
-      <div class="mx-auto flex gap-5">
+      {#if !$view.isPortrait}
+        <p>Blank.coop</p>
+      {/if}
+      <div class="mx-auto flex gap-5 mo:gap-3">
         {#each socials as social, index}
           <div
             style="--bg-color:{social.isHovered

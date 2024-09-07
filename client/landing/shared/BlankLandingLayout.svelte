@@ -12,12 +12,13 @@
 
   export let isProductsPage = true;
   export let topNavBarValues: ITopNavBar;
-  let transformedProducts: IListItem[] = $currentProductsStore?.map(
-    (product) => ({
+  let transformedProducts: IListItem[] = [
+    { title: "Products" },
+    ...$currentProductsStore?.map((product) => ({
       title: product.title,
       href: product.href || "/"
-    })
-  );
+    }))
+  ];
 
   onMount(async () => {
     view.update(window.innerWidth, window.innerHeight);

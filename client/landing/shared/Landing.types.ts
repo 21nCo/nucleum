@@ -26,7 +26,7 @@ export type ITileItem = {
 
 export type IListItem = {
   title: string;
-  href: string;
+  href?: string;
 };
 
 export enum PanelName {
