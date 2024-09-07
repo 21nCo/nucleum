@@ -7,6 +7,7 @@
   let className: string = "";
   export { className as class };
   const tailwindSizes: any = {
+    xxs: "w-2 h-2",
     xs: "w-3 h-3",
     sm: "w-4 h-4",
     md: "w-[1.25rem] h-[1.25rem]",

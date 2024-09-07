@@ -8,7 +8,7 @@
   export let heroInputs: IHeroInputs;
 </script>
 
-<Section class="relative">
+<Section class="relative justify-center min-h-[93vh]">
   <div class="flex flex-col items-center justify-center text-center -mt-32">
     {#if heroInputs.title}
       {@const title = heroInputs.title}

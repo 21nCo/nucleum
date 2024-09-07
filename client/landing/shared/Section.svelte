@@ -8,7 +8,7 @@
 <div class="flex w-full items-center justify-center">
   <div
     class={cn(
-      "w-[1440px] mo:min-w-[320px] flex flex-col items-center justify-center min-h-[93vh] px-12 mo:px-6 py-12",
+      "w-[1440px] mo:min-w-[320px] flex flex-col items-center justify-start tp:min-h-[93vh] px-12 mo:px-6 py-12 mo:py-8",
       className
     )}
   >
