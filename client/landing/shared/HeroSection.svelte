@@ -2,8 +2,8 @@
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
+  import DayAndNightToggle from "./DayAndNightToggle.svelte";
   import type { IHeroInputs } from "./Landing.types";
-  import LightDarkModeToggle from "./LightDarkModeToggle.svelte";
   import Section from "./Section.svelte";
   import Pulldown from "./play/Pulldown.svelte";
   import { isProductsPanelOpen } from "./store/shared.store";
@@ -41,7 +41,7 @@
     {/if}
   </div>
   {#if $view.isPortrait}
-    <LightDarkModeToggle class="absolute bottom-12" />
+    <DayAndNightToggle class="absolute bottom-12" />
   {:else}
     <Pulldown class="absolute bottom-12" />
   {/if}

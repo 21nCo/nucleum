@@ -6,13 +6,13 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import type { ITopNavBar } from "./Landing.types";
-  import LightDarkModeToggle from "./LightDarkModeToggle.svelte";
   import Button from "./elements/Button.svelte";
   import { isProductsPanelOpen } from "./store/shared.store";
+  import DayAndNightToggle from "./DayAndNightToggle.svelte";
 
   export let topNavBarValues: ITopNavBar;
   export let isProductsPage = true;
-  export let isExpandHamMenu: boolean = true;
+  export let isExpandHamMenu: boolean = false;
   let icon = "ham-burger-menu";
 
   function setIcon() {
@@ -29,7 +29,6 @@
 
   onMount(() => {
     setIcon();
-    console.log(window.location.href);
   });
 </script>
 
@@ -83,7 +82,7 @@
       </div>
       <div class="ml-auto inline-flex dp:gap-8 tp:gap-4 mo:gap-6">
         {#if !$view.isPortrait}
-          <LightDarkModeToggle />
+          <DayAndNightToggle />
         {/if}
         <SvgIcon
           {icon}
@@ -94,9 +93,9 @@
         <div
           class={cn(
             "flex dp:gap-8 tp:gap-2",
-            !isExpandHamMenu && "mo:hidden",
+            !isExpandHamMenu && "animate-slide-up mo:hidden",
             isExpandHamMenu &&
-              "mo:flex mo:flex-col mo:fixed mo:w-screen mo:h-full bg-bgs1 left-0 top-20 mo:items-center mo:py-14 mo:gap-7"
+              "animate-slide-down mo:flex mo:flex-col mo:fixed mo:w-screen mo:h-full bg-bgs1 left-0 top-20 mo:items-center mo:py-14 mo:gap-7 flex-shrink flex-grow"
           )}
         >
           {#each topNavBarValues.items as item}
