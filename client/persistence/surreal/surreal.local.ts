@@ -1,26 +1,37 @@
-import type { IPersistence, IPersistenceInitParams } from "./persistence.type";
+import type {
+  IPersistence,
+  IPersistenceInitParams,
+  ISyncDelegate
+} from "../persistence.type";
 import { Surreal } from "surrealdb";
 import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { Surreal } from "surrealdb.js";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
-import { logger } from "../components/debug/logger.client";
+import { logger } from "../../components/debug/logger.client";
 import { resolveDboUpdateQuery } from "$lib/shared/utils/surreal.utils";
-import type { Resource } from "../components/resourceStores/resource.enum";
-import type { IResource } from "../components/resourceStores/resource.type";
+import { Resource } from "../../components/resourceStores/resource.enum";
+import type {
+  IMetaResource,
+  IResource
+} from "../../components/resourceStores/resource.type";
 import type {
   IPrimitiveDbDataType,
   IRecordId,
   IResourceSelectParams
-} from "../types/data.type";
-import { Mutex } from "mutex-ts";
-import { interceptSurrealResponse } from "../utils/utils";
+} from "../../types/data.type";
+import { interceptSurrealResponse } from "../../utils/utils";
+import { SyncDelegate } from "../sync";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
+  syncDelegate: ISyncDelegate;
   userId: string = "";
   private isLocalMode: boolean = false;
-  private mutex: Mutex = new Mutex();
   private isProcessingOperation: boolean = false;
+
+  constructor() {
+    this.syncDelegate = new SyncDelegate(this);
+  }
 
   async initialize(userId: string, params?: IPersistenceInitParams) {
     if (this.userId === userId && this.instance) return;
@@ -47,92 +58,6 @@ export class SurrealPersistence implements IPersistence {
       logger.error({ at: "surreal.persistence.initialize", err });
       throw err;
     }
-    // this.wrapMethodsWithMutex();
-  }
-
-  /**
-   * Using Mutex to wrap methods with surreal.js instance to prevent multiple requests from being executed at the same time. This is to avoid surreal-wasm throwing the error "esm.js?v=51497eef:2 Uncaught Error: recursive use of an object detected which would lead to unsafe aliasing in rust"
-   */
-  private wrapMethodsWithMutex() {
-    const methodsToWrap = [
-      "query",
-      "insert",
-      "update",
-      "merge",
-      "delete",
-      "select"
-    ];
-
-    methodsToWrap.forEach((method) => {
-      const originalMethod = this.instance?.[method]?.bind(this.instance);
-      if (originalMethod) {
-        this.instance[method] = async (...args: any[]) => {
-          const operationId = Math.random().toString(36).substr(2, 9); // Generate a unique operation ID
-          logger.debug({
-            at: `SurrealPersistence.${method}`,
-            message: "Operation starting",
-            operationId,
-            args
-          });
-
-          let release: (() => void) | undefined;
-          try {
-            logger.debug({
-              at: `SurrealPersistence.${method}`,
-              message: "Acquiring mutex",
-              operationId
-            });
-            release = await this.mutex.obtain();
-            logger.debug({
-              at: `SurrealPersistence.${method}`,
-              message: "Mutex acquired",
-              operationId
-            });
-
-            logger.debug({
-              at: `SurrealPersistence.${method}`,
-              message: "Executing operation",
-              operationId
-            });
-            const result = await originalMethod(...args);
-            logger.debug({
-              at: `SurrealPersistence.${method}`,
-              message: "Operation executed successfully",
-              operationId
-            });
-
-            return result;
-          } catch (error) {
-            logger.error({
-              at: `SurrealPersistence.${method}`,
-              message: "Operation failed",
-              error,
-              operationId
-            });
-            throw error; // Re-throw the error after logging
-          } finally {
-            if (release) {
-              logger.debug({
-                at: `SurrealPersistence.${method}`,
-                message: "Releasing mutex",
-                operationId
-              });
-              release();
-              logger.debug({
-                at: `SurrealPersistence.${method}`,
-                message: "Mutex released",
-                operationId
-              });
-            }
-            logger.debug({
-              at: `SurrealPersistence.${method}`,
-              message: "Operation completed",
-              operationId
-            });
-          }
-        };
-      }
-    });
   }
 
   private async logInfo() {
@@ -144,7 +69,7 @@ export class SurrealPersistence implements IPersistence {
     });
   }
   private async testQuery() {
-    const result = await this.instance?.query("select * from link;");
+    const result = await this.instance?.query("select * from mutation;");
     logger.debug({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
@@ -152,15 +77,35 @@ export class SurrealPersistence implements IPersistence {
     });
   }
 
+  async delegateSync(query: string, resourceId?: IRecordId | Resource) {
+    logger.debug({
+      at: "SurrealPersistence.delegateSync",
+      query,
+      resourceId,
+      isLocalMode: this.isLocalMode
+    });
+    if (
+      this.isLocalMode ||
+      resourceId === Resource.mutation ||
+      resourceId === Resource.file ||
+      resourceId?.toString()?.includes(Resource.mutation)
+    )
+      return;
+    return this.syncDelegate.mutation(query, resourceId);
+  }
+
   /**
    * Updates the database with dbo definitions.
    */
-  updateDbo(params?: IPersistenceInitParams) {
+  async updateDbo(params?: IPersistenceInitParams) {
     logger.debug({ at: "surreal.persistence.updateDbo" });
+    await this.awaiter();
     const dependencies = params?.dbo;
     if (!dependencies) return;
     const query = resolveDboUpdateQuery(dependencies);
-    return this.instance?.query(query);
+    const result = await this.instance?.query(query);
+    this.isProcessingOperation = false;
+    return result;
   }
 
   private awaiter() {
@@ -178,7 +123,7 @@ export class SurrealPersistence implements IPersistence {
   /**
    *
    *
-   * Note: Using `.insert` method surreal.js directly would result in surreal-wasm not recognizing record links.
+   * Note: Using `.insert` method surreal.js directly would result in surreal-wasm not recognizing record links. Also, using quert would remove the need for generating query anyways for `delegateSync`.
    *
    * Workaround to use .insert would be to use type::thing() transform for record links
    *
@@ -189,20 +134,26 @@ export class SurrealPersistence implements IPersistence {
    * @param resource - resource i.e. table name
    * @returns
    */
-  async insert<T extends IResource>(
+  async insert<T extends IResource | IMetaResource>(
     records: T[],
     resource: string
   ): Promise<any> {
+    logger.debug({
+      at: "SurrealPersistence.insert",
+      resource,
+      isProcessingOperation: this.isProcessingOperation
+    });
     await this.awaiter();
     let result;
     if (resource === "file") {
       result = await this.instance?.insert<T>(resource, records);
+      this.isProcessingOperation = false;
     } else {
-      result = await this.instance?.query(
-        `INSERT INTO ${resource} ${JSON.stringify(records)};`
-      );
+      const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+      result = await this.instance?.query(query);
+      this.isProcessingOperation = false;
+      await this.delegateSync(query, resource);
     }
-    this.isProcessingOperation = false;
     return result;
   }
 
@@ -211,7 +162,6 @@ export class SurrealPersistence implements IPersistence {
   }
 
   /**
-   * TODO - test `.merge` method non functioning reason.
    * @param record
    * @returns
    */
@@ -219,14 +169,18 @@ export class SurrealPersistence implements IPersistence {
     if (!record.id) return;
     await this.awaiter();
     logger.debug({ at: "SurrealPersistence.merge", record });
-    // return this.instance?.merge(record.id, record);
-    const result = await this.instance?.query(
-      `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`
-    );
+    const query = `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`;
+    const result = await this.instance?.query(query);
     this.isProcessingOperation = false;
+    await this.delegateSync(query, record.id);
     return result;
   }
 
+  /**
+   * TODO - delegateSync
+   * @param resourceId
+   * @returns
+   */
   delete(resourceId: string): Promise<any> | undefined {
     return this.instance?.delete(resourceId);
   }
@@ -349,7 +303,7 @@ export class SurrealPersistence implements IPersistence {
       ) {
         //TODO - ranges
         conditions.push(
-          `${key} BETWEEN ${formatValue(value.from)} AND ${formatValue(value.to)}`
+          `${key} >= ${formatValue(value.from)} AND ${key} <= ${formatValue(value.to)}`
         );
       } else if (typeof value === "boolean") {
         if (value === true) {

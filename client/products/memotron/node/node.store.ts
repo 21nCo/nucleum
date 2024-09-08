@@ -10,10 +10,8 @@ import {
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
+import { debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
@@ -24,6 +22,7 @@ import type { IContextMenu } from "$lib/client/types/select.type";
 import { flux } from "$lib/client/persistence/dataManagerv2";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -58,7 +57,7 @@ class NodeStore extends ResourceStore<INode> {
    * @param nodeId
    * @returns
    */
-  async fetch(nodeId: string) {
+  async fetch(nodeId: IRecordId) {
     const query = `fn::memotron::node::fetch(${nodeId})`;
     const response = await flux.selectByQuery(query);
     logger.debug({ at: "fetch node", response });
@@ -93,11 +92,9 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   eventStore: any;
-  db: ISurrealDatabase;
   constructor(node: string) {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
-    this.db = new SurrealDatabase();
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
@@ -156,10 +153,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     ]);
   };
   deleteBlock = async (id: string) => {
-    return this.resourceStore.trash(id, {
-      isUseQueueFirstApproach: true,
-      mutationId: `${id}-delete`
-    });
+    return this.resourceStore.trash(id);
   };
   mention = async (location: string, id: string) => {
     return linker.link(location, id, LinkType.MENTION);
@@ -199,7 +193,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
       id
     });
     logger.debug({ at: "ActiveNodeStore.resolveLinks", response });
-    return interceptSurrealResponse(response);
+    return response;
   }
 }
 

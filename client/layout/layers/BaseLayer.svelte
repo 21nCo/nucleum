@@ -53,6 +53,8 @@
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { UserSessionType } from "$lib/client/types/account.type";
 
   let timer: any;
   pingParent();
@@ -206,14 +208,15 @@
       await refreshAppStaticData();
     }
     initActions(isLiteMode);
-    if ($account.isCloudUser && !isLiteMode) {
+    if ($account.sessionType === UserSessionType.CLOUD && !isLiteMode) {
       await flux.initialize(
         [...cacheableStores, ...localCacheableStores],
         $account.userId ?? $account.userInfo?.id ?? ""
       );
-      await dataManager.refreshClientCache();
-      const isDev = import.meta.env.DEV;
-      if (!isDev) await dataManager.runDboUpdate();
+      // await dataManager.refreshClientCache();
+      // const isDev = import.meta.env.DEV;
+      // if (!isDev) await dataManager.runDboUpdate();
+      // await account.seed();
       refreshTimeZone();
       appMenuStore.setDefaults(defaultAppMenu, true);
       account.setAnalyticsUserIdentity();
@@ -270,6 +273,12 @@
    */
   function setLaunchContext() {
     try {
+      let dapId = clientStorage.get(ClientStorageKey.DAP_ID);
+      if (!dapId) {
+        dapId = generateSimpleRandomId();
+        clientStorage.set(ClientStorageKey.DAP_ID, dapId);
+      }
+      $context.dapId = dapId;
       const appDetails = extractProduct(
         import.meta.env?.VITE_HOST ??
           process.env.PLASMO_PUBLIC_HOST ??
@@ -338,7 +347,11 @@
     }
   }
   function handleCustomNavigation(event: any) {
-    logger.log({ at: "handleCustomNavigation", event });
+    logger.debug({
+      at: "handleCustomNavigation",
+      event,
+      path: event.detail?.path
+    });
     if (event.detail?.isReload) {
       if (!$context.isEmbed) window.location.reload();
       else {
@@ -348,7 +361,16 @@
         );
         // postToParent({ reload: true });
       }
-    } else if (event.detail.path) goto(event.detail.path);
+    }
+    const host = window.location.host;
+    if (
+      event.detail.path &&
+      ((event.detail.path.includes("http") &&
+        event.detail.path.includes(host)) ||
+        !event.detail.path.includes("http"))
+    )
+      goto(event.detail.path);
+    else if (event.detail.path) window.location = event.detail.path;
   }
 
   /**

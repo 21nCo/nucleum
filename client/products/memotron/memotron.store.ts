@@ -10,6 +10,7 @@ import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import { CollectionType } from "./collection/collection.type";
 import {
+  type IRecordId,
   type IResourceSelectOrderBy,
   type IStore,
   PersistenceActionType,
@@ -267,7 +268,11 @@ class Linker implements IStore {
   id: string = "linker";
   dataType: StoreDataType = StoreDataType.NA;
 
-  async link(from: string, to: string, linkType: LinkType = LinkType.DIRECT) {
+  async link(
+    from: IRecordId,
+    to: IRecordId,
+    linkType: LinkType = LinkType.DIRECT
+  ) {
     const response = await flux.mutation(Resource.link, {
       action: PersistenceActionType.CUSTOM,
       query: this.generateLinkQuery(from, to, linkType)
@@ -276,7 +281,7 @@ class Linker implements IStore {
     return response;
   }
 
-  async unlink(from: string, to: string) {
+  async unlink(from: IRecordId, to: IRecordId) {
     let response = await flux.mutation(Resource.link, {
       action: PersistenceActionType.CUSTOM,
       query:
@@ -302,7 +307,7 @@ class Linker implements IStore {
     return response;
   }
 
-  private generateLinkQuery(from: string, to: string, linkType: string) {
+  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
     return replaceParams(
       `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
       {

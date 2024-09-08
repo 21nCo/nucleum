@@ -10,16 +10,22 @@ import {
   type IResourceSelectParams,
   type IRecordId
 } from "../types/data.type";
-import { type IPersistence, PersistenceProvider } from "./persistence.type";
-import { SurrealPersistence } from "./surreal.persistence";
+import {
+  ClientStorageKey,
+  type IPersistence,
+  PersistenceProvider
+} from "./persistence.type";
+import { clientStorage } from "./persistence.utils";
+import { SurrealPersistence } from "./surreal/surreal.local";
+import { SurrealSync } from "./surreal/surreal.sync";
 
 class DataManagerV2 {
   stores: IStore[] = [];
   provider: PersistenceProvider;
   persistence: IPersistence;
-  constructor(provder: PersistenceProvider) {
-    this.provider = provder;
-    switch (provder) {
+  constructor(provider: PersistenceProvider) {
+    this.provider = provider;
+    switch (provider) {
       case PersistenceProvider.SURREAL_SURREAL:
         this.persistence = new SurrealPersistence();
         break;
@@ -184,6 +190,31 @@ class DataManagerV2 {
     storeIdentifiers: string[],
     isShowRefreshingState: boolean = false
   ) {}
+
+  async sync() {
+    const lastSyncedAt = clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
+    logger.debug({ at: "DataManagerV2.sync", lastSyncedAt });
+    if (!lastSyncedAt) return;
+    const mutations = await this.persistence.selectMany(Resource.mutation, {
+      filters: {
+        createdAt: {
+          from: lastSyncedAt
+            ? new Date(+lastSyncedAt).toISOString()
+            : new Date().toISOString(),
+          to: new Date().toISOString()
+        }
+      }
+    });
+    if (!mutations || mutations.length === 0) return;
+    switch (this.provider) {
+      case PersistenceProvider.SURREAL_SURREAL:
+        await new SurrealSync().sync(mutations);
+        break;
+      default:
+        break;
+    }
+    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+  }
 }
 
 export const flux = new DataManagerV2(PersistenceProvider.SURREAL_SURREAL);

@@ -18,6 +18,7 @@ export interface IResource extends IResourceBase {
    * The last time user interacted with the resource
    *
    * This is almost same as modifiedAt but it is used to track the last time user interacted with the resource. For example, if user has opened a resource, interactedAt will be reset.
+   *
    */
   interactedAt: string;
   /**
@@ -29,6 +30,14 @@ export interface IResource extends IResourceBase {
    */
   trashInformation?: ITrashInformation;
 
+  [key: string]: unknown;
+}
+
+/**
+ * Meta resource are created by system and are not meant to be created by the user. Ex: mutation, accessLog, etc.
+ */
+export interface IMetaResource extends IResourceBase {
+  modifiedAt?: string;
   [key: string]: unknown;
 }
 

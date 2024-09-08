@@ -1,5 +1,8 @@
 import type { Resource } from "../components/resourceStores/resource.enum";
-import type { IResource } from "../components/resourceStores/resource.type";
+import type {
+  IMetaResource,
+  IResource
+} from "../components/resourceStores/resource.type";
 import type { IRecordId, IResourceSelectParams } from "../types/data.type";
 
 export enum ClientStorageKey {
@@ -15,6 +18,11 @@ export enum ClientStorageKey {
   GUEST = "guest",
   SPACE_IN_CONTEXT = "spaceInContext",
   OFFLINE_SESSION_ID = "offlineSessionId",
+  LAST_SYNCED_AT = "lastSyncedAt",
+  /**
+   * Device access point id
+   */
+  DAP_ID = "dapId",
 
   INTERCOM_ID = "intercomId"
 }
@@ -22,7 +30,7 @@ export enum ClientStorageKey {
 export interface IPersistence {
   initialize(userId: string, params?: IPersistenceInitParams): Promise<void>;
 
-  insert<T extends IResource>(
+  insert<T extends IResource | IMetaResource>(
     records: T[],
     resource: Resource
   ): Promise<any> | undefined;
@@ -71,4 +79,11 @@ export enum PersistenceProvider {
 export interface IPersistenceInitParams {
   isLocalMode?: boolean;
   dbo?: string[];
+}
+
+export interface ISyncDelegate {
+  mutation(
+    query: string,
+    resourceId?: IRecordId | Resource
+  ): Promise<void> | undefined;
 }

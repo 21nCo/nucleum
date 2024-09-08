@@ -1,5 +1,6 @@
 <script lang="ts">
   import { dataManager } from "$lib/client/persistence/dataManager";
+  import { flux } from "$lib/client/persistence/dataManagerv2";
   import account from "$lib/client/stores/account.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { UserSessionType } from "$lib/client/types/account.type";
@@ -29,17 +30,17 @@
     );
   }
   interval = setInterval(() => {
-    if (
-      isValidArrayWithData($mutationQueue) &&
-      $account.sessionType === UserSessionType.CLOUD
-    ) {
+    if ($account.sessionType !== UserSessionType.CLOUD) return;
+    if (isValidArrayWithData($mutationQueue)) {
       dataManager.syncPendingMutations();
       // console.log(
       //   "Syncing mutations",
       //   $mutationQueue.map((m) => m.id)
       // );
     }
-  }, 1500);
+    //TODO - check if network is available
+    // flux.sync();
+  }, 3500);
   onDestroy(() => {
     clearInterval(interval);
   });

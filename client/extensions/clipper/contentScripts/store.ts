@@ -3,8 +3,10 @@ import { ObservableStore } from "$lib/client/stores/client.store";
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { appEvents } from "$lib/client/stores/notification.store";
 import {
+  PersistenceActionType,
   StoreDataType,
-  type IObservableStoreSubject
+  type IObservableStoreSubject,
+  type IRecordId
 } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
@@ -12,11 +14,7 @@ import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { replaceParams } from "$lib/client/utils/surreal.utils";
-import {
-  activeResourceFilter,
-  debouncer,
-  interceptSurrealResponse
-} from "$lib/client/utils/utils";
+import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {
   SyncStatus,
@@ -55,8 +53,7 @@ import {
 } from "$lib/client/utils/extension.utils";
 import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
 import account from "$lib/client/stores/account.store";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { flux } from "$lib/client/persistence/dataManagerv2";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
@@ -110,7 +107,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @param data - tab data
    * @returns
    */
-  async savePage(creationContext?: string) {
+  async savePage(creationContext?: IRecordId) {
     let data: IResourceCapture<IWebPage> = await extractData();
     const id = generateResourceId(Resource.node);
     const node = {
@@ -201,7 +198,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     if (!response) return;
     const clipNode = response.resources[0] as IWebScreenshotClip;
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), clipNode];
+      n.clips = [...(n.clips ?? []), { ...clipNode, links: [] }];
       return n;
     });
     if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
@@ -229,9 +226,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const id = generateResourceId(Resource.node);
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
-      id: data.username
+      id: data.username as string
     });
-    const tweetNode: IClipCapture<ITweet> & { id: string } = {
+    const tweetNode: IClipCapture<ITweet> & { id: IRecordId } = {
       id,
       body: data.body,
       metadata: data.metadata,
@@ -259,7 +256,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     if (!response) return;
     const tweet = response.resources[0] as ITweet;
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), tweet];
+      n.clips = [...(n.clips ?? []), { ...tweet, links: [] }];
       if (isFromTweetPage) n.id = tweet.id;
       return n;
     });
@@ -277,7 +274,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
   ) {
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
-      id: data.username
+      id: data.username as string
     });
     logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
     const response = await nodeStore.create([
@@ -286,7 +283,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     if (!response) return;
     const node = response.resources[0] as ITwitterProfile;
     this.update((n) => {
-      n.clips = [...(n.clips ?? []), node];
+      n.clips = [...(n.clips ?? []), { ...node, links: [] }];
       n.id = node.id;
       return n;
     });
@@ -294,10 +291,12 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return node;
   }
   async linkPage(to: string) {
-    const isAlreadyLinked = this.get().links?.some((l) => l === to);
+    const webpage = this.get();
+    const isAlreadyLinked = webpage.links?.some((l) => l === to);
     if (isAlreadyLinked)
       return { message: "Already linked", type: AlertType.ERROR };
-    const response = await linker.link(this.get().id, to);
+    if (!webpage.id) return;
+    const response = await linker.link(webpage.id, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
       n.links = [...(n.links ?? []), to];
@@ -306,7 +305,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
   async removeLinkForPage(to: string) {
-    const response = await linker.unlink(this.get().id, to);
+    const webpage = this.get();
+    if (!webpage.id) return;
+    const response = await linker.unlink(webpage.id, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -316,7 +317,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
   async linkClip(from: string, to: string) {
-    const clip = this.get().clips.find((c) => c.id === from);
+    const webpage = this.get();
+    const clip = webpage?.clips?.find((c) => c.id === from);
     if (!clip) return;
     const isAlreadyLinked = clip.links?.some((l) => l === to);
     if (isAlreadyLinked)
@@ -324,7 +326,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const response = await linker.link(from, to);
     if (!response) return { message: "Linking failed", type: AlertType.ERROR };
     this.update((n) => {
-      n.clips = n.clips.map((c) => {
+      n.clips = n.clips?.map((c) => {
         if (c.id === from) {
           c.links = [...(c.links ?? []), to];
         }
@@ -340,7 +342,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     this.update((n) => {
-      n.clips = n.clips.map((c) => {
+      n.clips = n.clips?.map((c) => {
         if (c.id === from) {
           c.links = c.links?.filter((l) => l !== to);
         }
@@ -357,7 +359,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     if (!response)
       return { message: "Clip removal failed", type: AlertType.ERROR };
     this.update((n) => {
-      n.clips = n.clips.filter((c) => c.id !== id);
+      n.clips = n.clips?.filter((c) => c.id !== id);
       return n;
     });
     removeHighlight(id);
@@ -476,9 +478,8 @@ class ClipperToolbarState extends KeyValueStore<
 export const toolbarState = new ClipperToolbarState();
 
 class SyncStore extends ObservableStore<ISyncStore> {
-  db: ISurrealDatabase;
   constructor() {
-    super("syncStore");
+    super(Resource.clipperSync);
     this.set({
       id: undefined,
       status: SyncStatus.NOT_SYNCED,
@@ -490,7 +491,6 @@ class SyncStore extends ObservableStore<ISyncStore> {
       n.id = id;
       return n;
     });
-    this.db = new SurrealDatabase();
     await this.refreshSyncState();
     this.update((n) => {
       n.isShowSyncPane = true;
@@ -537,12 +537,10 @@ class SyncStore extends ObservableStore<ISyncStore> {
     try {
       const id = this.get().id;
       const query = `SELECT ${id} FROM kv:clipperSync;`;
-      const result = interceptSurrealResponse(
-        await this.db.executeReadFn(query, {})
-      );
+      const result = await flux.selectByQuery(query);
       logger.debug({ at: "syncStore refreshSyncState", result, id });
-      if (result && result.length > 0) {
-        const record = result[0];
+      if (result) {
+        const record = result;
         if (record[id]) {
           this.update((n) => {
             n.status = record[id].status;
@@ -563,7 +561,10 @@ class SyncStore extends ObservableStore<ISyncStore> {
         status: "${status}",
         updatedAt: time::now()
       };`;
-      const result = await this.db.query(query, {});
+      const result = await flux.mutation(Resource.clipperSync, {
+        action: PersistenceActionType.CUSTOM,
+        query
+      });
       console.log({ result });
     } catch (e) {
       logger.error(e);
