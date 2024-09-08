@@ -34,13 +34,16 @@ export function generateResourceId(
   params?: {
     prefix?: string;
     id?: string;
+    isAsRecordId?: boolean;
   }
 ): IRecordId {
   const id = params?.id ?? generateRandomId();
-  // return new RecordId(
-  //   itemType,
-  //   params?.prefix ? params?.prefix + "_" : "" + id
-  // );
+  if (params?.isAsRecordId) {
+    return new RecordId(
+      itemType,
+      params?.prefix ? params?.prefix + "_" : "" + id
+    );
+  }
   return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 

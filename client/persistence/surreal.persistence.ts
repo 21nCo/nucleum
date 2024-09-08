@@ -182,6 +182,8 @@ export class SurrealPersistence implements IPersistence {
    *
    * Workaround to use .insert would be to use type::thing() transform for record links
    *
+   * For files, insert is used as files contain bytes data type.
+   *
    *
    * @param records - records to be inserted
    * @param resource - resource i.e. table name
@@ -192,10 +194,14 @@ export class SurrealPersistence implements IPersistence {
     resource: string
   ): Promise<any> {
     await this.awaiter();
-    // return this.instance?.insert<T>(resource, records);
-    const result = await this.instance?.query(
-      `INSERT INTO ${resource} ${JSON.stringify(records)};`
-    );
+    let result;
+    if (resource === "file") {
+      result = await this.instance?.insert<T>(resource, records);
+    } else {
+      result = await this.instance?.query(
+        `INSERT INTO ${resource} ${JSON.stringify(records)};`
+      );
+    }
     this.isProcessingOperation = false;
     return result;
   }

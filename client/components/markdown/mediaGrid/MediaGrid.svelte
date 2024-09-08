@@ -204,6 +204,9 @@
    * Used to upload a file to s#
    * @param input the file that needs to be uploaded to the S3
    * @returns {string} S3Url where the file is available
+   *
+   * TODO - use uploadFileV2 instead
+   *
    */
   async function uploadToS3(input: any) {
     let itemLocalURL = new Blob([input], { type: input.type });

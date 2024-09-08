@@ -169,6 +169,7 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   }
 </script>
 
+<!-- TODO - use File component -->
 {#if item.type.startsWith("image/")}
   <img
     alt="..."

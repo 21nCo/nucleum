@@ -29,6 +29,7 @@ import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
 import { flux } from "../persistence/dataManagerv2";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import { fileStore } from "../components/files/file.store";
 
 export const isRefreshingToken = writable(false);
 
@@ -285,6 +286,57 @@ class AccountStore extends ObservableStore<
       );
       return signedUrlResponse;
     } else return null;
+  }
+
+  async uploadFileV2(
+    contentType: string,
+    fileName: string,
+    blob: any,
+    isTemp: boolean = false
+  ) {
+    try {
+      const account = this.get();
+      const id = contentType.split("/")[0] + "_" + generateSimpleRandomId();
+      logger.debug({ at: "uploadFileV2", id, contentType, fileName });
+      if (account.sessionType === UserSessionType.LOCAL) {
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const response = await fileStore.create([
+          {
+            id,
+            label: fileName,
+            type: contentType,
+            data: uint8Array
+          }
+        ]);
+        return response;
+      } else {
+        const signedUrlResponse = await this.getSignedUrl(
+          contentType,
+          fileName,
+          isTemp
+        );
+        if (!signedUrlResponse || !signedUrlResponse.uploadURL) return null;
+
+        await this.persistence.uploadFile(
+          signedUrlResponse.uploadURL,
+          contentType,
+          blob
+        );
+        const url = signedUrlResponse.uploadURL.split("?")[0];
+        const response = await fileStore.create([
+          {
+            id,
+            label: fileName,
+            type: contentType,
+            url
+          }
+        ]);
+        return response;
+      }
+    } catch (e) {
+      logger.error({ at: "uploadFileV2", error: e });
+    }
   }
 
   /**

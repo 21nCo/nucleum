@@ -478,6 +478,13 @@ export type ITextClip = INodeInterface<
 export type IVideoTimestampClipBody = {
   timestamp: number;
   url: string;
+  /**
+   * The thumbnail of the video. - file id
+   */
+  thumbnail?: IRecordId;
+  /**
+   * @deprecated - use thumbnail instead
+   */
   s3Url?: string;
 };
 export type IVideoTimestampClip = INodeInterface<
@@ -507,6 +514,13 @@ export type IYoutubeVideoBody = {
   url: string;
   title: string;
   description?: string;
+  /**
+   * The thumbnail of the video. - file id
+   */
+  thumbnail?: IRecordId;
+  /**
+   * @deprecated - use thumbnail instead
+   */
   s3Url?: string;
 };
 
@@ -521,6 +535,13 @@ export type IYoutubeVideo = INodeInterface<
 >;
 
 type IWebScreenshotClipBody = {
+  /**
+   * The file id
+   */
+  file: IRecordId;
+  /**
+   * @deprecated - use file instead
+   */
   s3Url: string;
 };
 export type IWebScreenshotClip = INodeInterface<
@@ -530,6 +551,13 @@ export type IWebScreenshotClip = INodeInterface<
 >;
 
 type IMultimediaClipBody = {
+  /**
+   * file id
+   */
+  file: IRecordId;
+  /**
+   * @deprecated - use file instead
+   */
   s3Url: string;
   url: string;
   color: string;

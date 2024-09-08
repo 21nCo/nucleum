@@ -45,7 +45,7 @@ function collection() {
   const def = `DEFINE TABLE collection SCHEMAFULL;
   DEFINE FIELD label on TABLE collection TYPE option<string>;
   DEFINE FIELD type on TABLE collection TYPE string;
-  DEFINE FIELD cover on TABLE collection TYPE option<string>;
+  DEFINE FIELD cover on TABLE collection TYPE option<string | record<file>>;
   DEFINE FIELD description on TABLE collection TYPE option<string>;
   DEFINE FIELD views on TABLE collection TYPE option<array<record<view>>>;
   DEFINE FIELD isCaptureShortcutEnabled on TABLE collection DEFAULT false;

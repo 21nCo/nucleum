@@ -32,6 +32,7 @@ import type {
   ResourceAccessMode
 } from "./resource.type";
 import { flux } from "$lib/client/persistence/dataManagerv2";
+import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -188,17 +189,14 @@ export class ResourceStore<T extends IResource> implements IStore {
       if (Array.isArray(input)) {
         resources = input?.map((r) => ({
           ...r,
-          id: "id" in r && r.id ? r.id : generateResourceId(this.id),
+          id: "id" in r && r.id ? r.id : generateRandomId(),
           ...commonProps
         }));
       } else {
         resources = [
           {
             ...input,
-            id:
-              "id" in input && input.id
-                ? input.id
-                : generateResourceId(this.id),
+            id: "id" in input && input.id ? input.id : generateRandomId(),
             ...commonProps
           }
         ];
@@ -365,7 +363,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     return flux.selectMany(this.id, params);
   }
 
-  select(resourceId: string, properties?: string[]) {
+  select(resourceId: IRecordId, properties?: string[]) {
     return flux.select(resourceId, properties);
   }
 }

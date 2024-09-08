@@ -135,6 +135,9 @@
     isDisabled = false;
   }
 
+  /**
+   * TODO - use uploadFileV2 instead
+   */
   async function tempUpload() {
     const contentType = "audio/webm";
     const result = await account.uploadFile(
