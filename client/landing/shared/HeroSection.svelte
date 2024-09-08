@@ -1,9 +1,12 @@
 <script lang="ts">
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import view from "$lib/client/stores/view.store";
+  import { Size } from "$lib/client/types/size.enum";
   import type { IHeroInputs } from "./Landing.types";
   import LightDarkModeToggle from "./LightDarkModeToggle.svelte";
   import Section from "./Section.svelte";
   import Pulldown from "./play/Pulldown.svelte";
+  import { isProductsPanelOpen } from "./store/shared.store";
 
   export let heroInputs: IHeroInputs;
 </script>
@@ -25,6 +28,16 @@
       >
         {label}
       </p>
+    {/if}
+    {#if $view.isPortrait}
+      <div
+        class="flex items-center justify-end w-[138px] h-[36px] border-b pb-0 mt-6"
+        on:click={() => ($isProductsPanelOpen = true)}
+        on:keypress
+      >
+        <p class="text-[16px] leading-9 text-center">See our products</p>
+        <SvgIcon icon="long-arrow-right" size={Size.sm} class="ml-1" />
+      </div>
     {/if}
   </div>
   {#if $view.isPortrait}

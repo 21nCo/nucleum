@@ -23,7 +23,7 @@
         href={item.href}>{item.title}</a
       >
     {:else}
-      <p class="text-fgs3 text-base underline font-normal leading-[22px]">
+      <p class="text-fgs3 text-base underline font-normal leading-[22px] mt-4">
         {item.title}
       </p>
     {/if}

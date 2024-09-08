@@ -32,11 +32,13 @@
     !isPanelView &&
       "relative flex flex-col items-start justify-start gap-3 min-w-[320px] w-[598px] h-[471px] mo:h-[292px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
     isPanelView &&
-      "relative w-[260px] rounded-xl px-4 pt-4 flex flex-col items-start justify-start gap-2",
-    isPanelView && isEnableBackground && "bg-bgs2 hover:bg-bgs3 h-[256px]",
+      "relative min-w-[161px] max-w-[260px] rounded-xl px-2 pt-4 flex flex-col items-start justify-start gap-2",
+    isPanelView &&
+      isEnableBackground &&
+      "bg-bgs2 hover:bg-bgs3 h-[256px] mo:h-[197px]",
     isPanelView &&
       !isEnableBackground &&
-      "border-2 border-brs3 hover:border-brs4 h-[190px]",
+      "border-2 border-brs3 hover:border-brs4 h-[190px] mo:h-[161px]",
     className
   )}
   on:mouseenter={onMouseEnter}
@@ -50,7 +52,8 @@
         class={cn(
           !isPanelView &&
             "text-[30px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold",
-          isPanelView && "text-[22px] leading-8 font-extrabold"
+          isPanelView &&
+            "text-[22px] mo:text-[16px] leading-8 mo:leading-5 font-extrabold"
         )}
       >
         {title}
@@ -91,7 +94,8 @@
       class={cn(
         !isPanelView &&
           "text-[20px] mo:text-[14px] leading-[28px] mo:leading-5 font-normal text-left mo:w-[290px]",
-        isPanelView && "text-base leading-[22px] font-normal text-left"
+        isPanelView &&
+          "text-base mo:text-[14px] leading-[22px] mo:leading-5 font-normal text-left"
       )}
     >
       {description}
@@ -102,7 +106,7 @@
     <img
       src={`/images/${image}.png`}
       alt={item.title}
-      class={cn("absolute w-[80%] h-[55%] bottom-1 right-1")}
+      class={cn("absolute h-[45%] mo:h-[39%] object-contain bottom-1 right-1")}
     />
   {/if}
 </button>
