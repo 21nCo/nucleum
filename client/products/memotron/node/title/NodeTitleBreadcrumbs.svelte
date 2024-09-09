@@ -2,20 +2,19 @@
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { onMount } from "svelte";
-  import type { IActiveNodeStore } from "../node.store";
   import { Size } from "$lib/client/types/size.enum";
   import { flux } from "$lib/client/persistence/dataManagerv2";
   import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-  export let node: IActiveNodeStore;
-  let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
-  onMount(() => {
-    node.subscribe(async (x) => {
-      if (x.parent) breadcrumbs = await refreshBreadcrumbs(x.parent);
-    });
+  import type { INode } from "../node.type";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  export let node: INode;
+  export let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
+  onMount(async () => {
+    breadcrumbs = await refreshBreadcrumbs(node.parent ?? node.mdParent);
   });
   async function refreshBreadcrumbs(parent: string[]) {
-    console.log("refreshing breadcrumbs", { node: $node });
-    if (!parent) return;
+    if (!parent || parent.length === 0) return;
     const parentItems = await flux.selectMany(Resource.node, {
       filters: {
         id: parent
@@ -32,14 +31,9 @@
       .filter((x) => x);
   }
   function onBreadcrumbClick(e: CustomEvent) {
-    console.log("onBreadcrumbClick", e);
     if (!e.detail.item.resourceId) return;
-    node.eventStore.set({
-      event: e.detail.event,
-      id: e.detail.item.resourceId
-    });
+    dispatch("click", e.detail);
   }
-  $: console.log({ node: $node });
 </script>
 
 {#if breadcrumbs && breadcrumbs.length > 0}

@@ -173,9 +173,9 @@ export function determineTruncateLength(
     if (display === Display.MO || display === Display.CW) {
       return 20;
     } else if (display === Display.TP || display === Display.DP) {
-      return 30;
-    } else if (display === Display.TK) {
       return 40;
+    } else if (display === Display.TK) {
+      return 60;
     } else {
       return 20;
     }

@@ -86,7 +86,7 @@
   </header>
   <main class="flex overflow-auto">
     {#if data.length > 0 || searchQuery}
-      <div class="flex flex-col px-4 w-full">
+      <div class="flex flex-col w-full">
         {#if data.length > 0}
           <SearchResults items={data} />
         {:else}
@@ -96,8 +96,10 @@
         {/if}
       </div>
     {:else}
-      <div class="flex flex-col w-full items-start px-4">
-        <Text style={TextStyle.SECTION_HEADING} content="Recents" />
+      <div class="flex flex-col w-full items-start">
+        <span class="flex px-4">
+          <Text style={TextStyle.SECTION_HEADING} content="Recents" />
+        </span>
         <SearchResults items={recents} />
       </div>
     {/if}

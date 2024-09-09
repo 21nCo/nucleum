@@ -74,7 +74,17 @@
           >
             {#if $node.parent && $node.parent.length > 0}
               <header class="flex w-full px-12 py-4">
-                <NodeTitleBreadcrumbs {node} />
+                {#key $node.parent}
+                  <NodeTitleBreadcrumbs
+                    node={$node}
+                    on:click={(e) => {
+                      node.eventStore.set({
+                        event: e.detail.event,
+                        id: e.detail.item.resourceId
+                      });
+                    }}
+                  />
+                {/key}
               </header>
             {/if}
             <main

@@ -1,4 +1,9 @@
-export const memotronTables = [...nodesByDay(), ...collection()];
+export const memotronTables = [
+  ...nodesByDay(),
+  ...collection(),
+  ...nodeIndices(),
+  ...collectionIndices()
+];
 
 function node() {
   const def = `DEFINE TABLE node SCHEMAFULL;
@@ -22,10 +27,23 @@ DEFINE FIELD isArchived on TABLE node DEFAULT false;
 DEFINE FIELD isStarred on TABLE node DEFAULT false;
 DEFINE FIELD creationContext on TABLE node TYPE any;
 DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;
-DEFINE INDEX nodetextSearchIndex ON TABLE node COLUMNS label, body SEARCH ANALYZER ascii BM25 HIGHLIGHTS;
-DEFINE ANALYZER ascii TOKENIZERS class FILTERS lowercase,ascii;
 `;
   return [def];
+}
+
+/**
+ * 
+ * Note: Combining multiple columns in single Index is not working as expected
+ * ->     "surrealdb": "^1.0.0-beta.21",
+    "surrealdb.js": "^1.0.0-beta.9",
+    "surrealdb.wasm": "^1.0.0-beta.15",
+ * 
+ * @returns 
+ */
+function nodeIndices() {
+  const def = `DEFINE INDEX nodetextSearchIndex ON TABLE node COLUMNS body SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  const label = `DEFINE INDEX nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  return [def, label];
 }
 
 function nodesByTime() {
@@ -60,7 +78,11 @@ function collection() {
   DEFINE FIELD modifiedAt on TABLE collection TYPE datetime;
   DEFINE FIELD isArchived on TABLE collection DEFAULT false;
   DEFINE FIELD isStarred on TABLE collection DEFAULT false;
-  DEFINE INDEX collectionTextSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii BM25 HIGHLIGHTS;
 `;
+  return [def];
+}
+
+function collectionIndices() {
+  const def = `DEFINE INDEX collectionLabelSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
   return [def];
 }

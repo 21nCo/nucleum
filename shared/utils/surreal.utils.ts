@@ -1,8 +1,9 @@
-import { globalDbo } from "$lib/shared/dbo/dbo";
+import { globalDbo } from "$lib/shared/dbo/global.dbo";
 import { memotronDboDefinitions } from "$lib/shared/dbo/memotron.dbo";
 import { memotronTables } from "$lib/shared/dbo/memotron.tables";
 import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
+import { globalTables } from "../dbo/global.tables";
 
 /**
  * Resolves a dbo update query based on the provided dependencies from the database operations.
@@ -16,7 +17,11 @@ export function resolveDboUpdateQuery(dbo: string[]) {
     return "";
   }
 
-  const tables = new Set([...pointronTables, ...memotronTables]);
+  const tables = new Set([
+    ...globalTables,
+    ...pointronTables,
+    ...memotronTables
+  ]);
   const functions = {
     ...globalDbo,
     ...pointronDboDefinitions,

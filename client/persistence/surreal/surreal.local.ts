@@ -61,20 +61,24 @@ export class SurrealPersistence implements IPersistence {
   }
 
   private async logInfo() {
+    await this.awaiter();
     const info = await this.instance?.query("INFO FOR NS; INFO FOR DATABASE;");
     logger.debug({
       at: "surreal.persistence.logInfo",
       userId: this.userId,
       info
     });
+    this.isProcessingOperation = false;
   }
   private async testQuery() {
+    await this.awaiter();
     const result = await this.instance?.query("select * from mutation;");
     logger.debug({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
       result
     });
+    this.isProcessingOperation = false;
   }
 
   async delegateSync(query: string, resourceId?: IRecordId | Resource) {
@@ -249,6 +253,7 @@ export class SurrealPersistence implements IPersistence {
     // await this.logInfo();
     // await this.testQuery();
     const result = await this.instance?.query_raw(query, params);
+    logger.debug({ at: "SurrealPersistence.selectMany - result", result });
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
   }
@@ -271,10 +276,10 @@ export class SurrealPersistence implements IPersistence {
   private generateSearchClause(search: IResourceSelectParams["search"]) {
     if (!search) return "";
     const conditions: string[] = [];
-    search.properties?.forEach((property) => {
+    search.properties?.forEach((property, index) => {
       // conditions.push(`string::lowercase('${search.query}') IN string::lowercase(${property})`);
-      conditions.push(`'${search.query}' IN ${property}`);
-      // conditions.push(`${property} @@ '${search.query}'`);
+      // conditions.push(`'${search.query}' IN ${property}`);
+      conditions.push(`${property} @${index + 1}@ '${search.query}'`);
     });
     return `(${conditions.join(" OR ")})`;
   }

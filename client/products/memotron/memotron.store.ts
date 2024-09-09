@@ -66,15 +66,22 @@ export class SearchStore {
     return matrix[b.length][a.length];
   }
 
+  /**
+   * TODO - group by mdParent if searching
+   * @returns
+   */
   async nodes() {
     const result = await flux.selectMany(Resource.node, {
-      properties: ["*", "parent.* as parent"],
+      properties: [
+        "*",
+        "parent.* as parent",
+        "search::highlight('**', '**', 1, false) AS bodySearch",
+        "search::highlight('**', '**', 2, false) AS labelSearch",
+        "(fn::memotron::node::parent($parent.id)) as mdParent"
+      ],
       filters: {
         contentType:
-          this.contentType ??
-          (this.searchQuery
-            ? [...rootNodeTypeList, ...headingNodeTypes]
-            : rootNodeTypeList),
+          this.contentType ?? (this.searchQuery ? undefined : rootNodeTypeList),
         isArchived: this.resource === Resource.archived,
         trashInformation: false,
         isStarred: this.isStarFilterSelected ? true : undefined,
@@ -83,7 +90,7 @@ export class SearchStore {
       search: isValidString(this.searchQuery)
         ? {
             query: this.searchQuery,
-            properties: ["label", "body", "content", "contentType"]
+            properties: ["body", "label"]
           }
         : undefined,
       orderBy: this.orderBy ?? {
@@ -102,16 +109,20 @@ export class SearchStore {
 
   async collections() {
     const result = await flux.selectMany(Resource.collection, {
+      properties: [
+        "search::highlight('**', '**', 1, false) AS labelSearch",
+        "*"
+      ],
       filters: {
-        // isArchived: this.resource === Resource.archived,
-        // trashInformation: false,
+        isArchived: this.resource === Resource.archived,
+        trashInformation: false,
         isStarred: this.isStarFilterSelected ? true : undefined,
         type: this.contentType ?? undefined
       },
       search: isValidString(this.searchQuery)
         ? {
             query: this.searchQuery,
-            properties: ["label", "contentType"]
+            properties: ["label"]
           }
         : undefined,
       orderBy: this.orderBy ?? {
@@ -153,9 +164,9 @@ export class SearchStore {
     ) {
       const nodes = await this.nodes();
       const collections = await this.collections();
-      data = [...nodes, ...(collections ?? [])];
+      data = [...(nodes ?? []), ...(collections ?? [])];
     } else if (this.resource === Resource.node) {
-      data = await this.nodes();
+      data = (await this.nodes()) ?? [];
     } else if (this.resource === Resource.collection) {
       data = (await this.collections()) ?? [];
     }

@@ -21,8 +21,8 @@
   export let isStickied: boolean = false;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
-  function onKeydown(event: any) {
-    console.log({ event });
+  function onKeydown(event: any) {}
+  function onKeyup(event: any) {
     refresh();
   }
   function refresh() {
@@ -37,6 +37,7 @@
       type="text"
       bind:value={searchQuery}
       on:keydown={onKeydown}
+      on:keyup={onKeyup}
       on:focus={() => (isSearchFocused = true)}
       on:blur={() => (isSearchFocused = false)}
       placeholder={"Search " +

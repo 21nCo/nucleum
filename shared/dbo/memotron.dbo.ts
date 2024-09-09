@@ -1,4 +1,4 @@
-import { resolveUrlPartsV2, userDatev4 } from "./dbo";
+import { resolveUrlPartsV2, userDatev4 } from "./global.dbo";
 
 /**
  * Memotron dbo definitions used by the client apps.

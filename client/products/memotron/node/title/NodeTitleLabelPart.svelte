@@ -115,7 +115,8 @@
 
 <!-- TODO - if node and has parent, show breadcrumbs -->
 {#if node.label}
-  {node.label}
+  <!-- {node.label} -->
+  {@html renderMdAsHtml(node.labelSearch ?? node.label)}
 {:else if dynamicLabelNodeTypes.includes(node.contentType)}
   {#if typeof dynamicLabel === "string"}
     {dynamicLabel}
@@ -139,7 +140,7 @@
     </span>
   {/if}
 {:else if node.body && typeof node.body === "string"}
-  {@html renderMdAsHtml(node.body)}
+  {@html renderMdAsHtml(node.bodySearch ?? node.body)}
 {:else if node.body && node.body.text && typeof node.body.text === "string"}
   {node.body.text}
 {:else}
