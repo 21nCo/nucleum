@@ -7,10 +7,10 @@
   import type { IListItem, ITopNavBar } from "./Landing.types";
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
-  import { currentProductsStore } from "./store/shared.store";
+  import { currentProductsStore, isProductsPage } from "./store/shared.store";
   import Footer from "./footer/Footer.svelte";
+  import { page } from "$app/stores";
 
-  export let isProductsPage = true;
   export let topNavBarValues: ITopNavBar;
   let transformedProducts: IListItem[] = [
     { title: "Products" },
@@ -19,9 +19,10 @@
       href: product.href || "/"
     }))
   ];
-
   onMount(async () => {
     view.update(window.innerWidth, window.innerHeight);
+    if ($page.url.href.includes("blank")) $isProductsPage = false;
+    else $isProductsPage = true;
   });
   const windowResizeListener = (event: Event) => {
     view.update(window.innerWidth, window.innerHeight);
@@ -33,7 +34,7 @@
     <LeftPanel />
   {/if}
   <div class="w-full overflow-auto">
-    <TopNavBar {topNavBarValues} {isProductsPage} />
+    <TopNavBar {topNavBarValues} />
     <slot />
     <Footer products={transformedProducts} />
   </div>

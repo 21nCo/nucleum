@@ -5,9 +5,23 @@ export type ITopNavBar = {
   cta?: { label: string; href: string };
 };
 
+export type IHeroBtn1 = {
+  label: string;
+  iosDownloadUrl: string;
+  androidDownloadUrl: string;
+};
+
+export type IHeroBtn2 = {
+  label: string;
+  macDownloadUrl: string;
+  windowsDownloadUrl: string;
+  icon: string;
+};
 export type IHeroInputs = {
   title: string;
   label: string;
+  btn1?: IHeroBtn1;
+  btn2?: IHeroBtn2;
 };
 
 export type IGridItem = {

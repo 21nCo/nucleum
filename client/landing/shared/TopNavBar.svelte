@@ -7,11 +7,10 @@
   import { onMount } from "svelte";
   import type { ITopNavBar } from "./Landing.types";
   import Button from "./elements/Button.svelte";
-  import { isProductsPanelOpen } from "./store/shared.store";
+  import { isProductsPage, isProductsPanelOpen } from "./store/shared.store";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
 
   export let topNavBarValues: ITopNavBar;
-  export let isProductsPage = true;
   export let isExpandHamMenu: boolean = false;
   let icon = "ham-burger-menu";
 
@@ -40,13 +39,13 @@
           {#if topNavBarValues.icon}
             {@const icon = topNavBarValues.icon}
             {@const size = $view.isPortrait
-              ? isProductsPage
+              ? $isProductsPage
                 ? Size.lg
                 : Size.xxl
-              : isProductsPage
+              : $isProductsPage
                 ? Size.xl
                 : "5xl"}
-            {@const className = isProductsPage
+            {@const className = $isProductsPage
               ? ""
               : $view.isPortrait
                 ? "relative top-2.5"
@@ -58,8 +57,8 @@
               <p
                 class={cn(
                   "text-[11px] font-medium leading-4 text-fgs3",
-                  isProductsPage && "visible",
-                  !isProductsPage && "invisible"
+                  $isProductsPage && "visible",
+                  !$isProductsPage && "invisible"
                 )}
               >
                 Blank.coop
@@ -70,8 +69,8 @@
               <p
                 class={cn(
                   "font-extrabold leading-7 mo:leading-5",
-                  isProductsPage && "text-h2 mo:text-h4",
-                  !isProductsPage && "text-h1 mo:text-h3"
+                  $isProductsPage && "text-h2 mo:text-h4",
+                  !$isProductsPage && "text-h1 mo:text-h3"
                 )}
               >
                 {title}
@@ -93,7 +92,7 @@
         <div
           class={cn(
             "flex dp:gap-8 tp:gap-2",
-            !isExpandHamMenu && "animate-slide-up mo:hidden",
+            !isExpandHamMenu && "mo:hidden",
             isExpandHamMenu &&
               "animate-slide-down mo:flex mo:flex-col mo:fixed mo:w-screen mo:h-full bg-bgs1 left-0 top-20 mo:items-center mo:py-14 mo:gap-7 flex-shrink flex-grow"
           )}

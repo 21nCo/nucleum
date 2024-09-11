@@ -13,6 +13,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
   import { Theme } from "$lib/client/types/appearance.type";
+  import QrElement from "../elements/QRElement.svelte";
   export let products: IListItem[];
   export let url: string = "https://blanklabs.org";
 
@@ -33,9 +34,6 @@
     console.log(index);
     socials[index].isHovered = false;
   }
-  onMount(async () => {
-    await paintQRCode(canvas, url, 122);
-  });
   let socials = [
     {
       href: "https://twitter.com/blanklabs",
@@ -100,12 +98,7 @@
       <div class="w-full flex justify-between">
         <Box>
           <div class="flex h-full flex-col items-center justify-center gap-9">
-            <canvas
-              bind:this={canvas}
-              class:scale-[1.4]={isHovering}
-              class:scale-[1]={!isHovering}
-              class="border-2 transition-transform duration-300 ease-in-out origin-bottom-left"
-            />
+            <QrElement {url} enableHover={false} />
             <p class="text-[24px] font-medium leading-[33px]">
               Scan & Download
             </p>

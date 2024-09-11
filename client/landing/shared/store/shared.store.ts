@@ -46,3 +46,5 @@ export const upcomingProductsStore = writable<ITileItem[]>([
 ]);
 
 export const isProductsPanelOpen = writable<Boolean>(false);
+
+export const isProductsPage = writable<Boolean>(false);
