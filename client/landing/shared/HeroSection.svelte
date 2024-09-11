@@ -27,7 +27,7 @@
     class={cn(
       "flex flex-col items-center text-center",
       !$isProductsPage && "justify-center -mt-32",
-      $isProductsPage && "mt-20"
+      $isProductsPage && "mt-16"
     )}
   >
     {#if heroInputs.title}
@@ -98,7 +98,7 @@
     <Pulldown class="absolute bottom-12" />
   {/if}
   {#if $isProductsPage}
-    <div class="relative w-[1046px] h-[590px] mt-[178px]">
+    <div class="relative w-[1046px] h-[590px] mt-[178px] rounded-xl">
       {#if !isVideoPlaying}
         <img
           src="https://img.youtube.com/vi/tktyAa_bWiY/maxresdefault.jpg"

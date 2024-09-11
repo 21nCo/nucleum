@@ -14,6 +14,7 @@
   import view from "$lib/client/stores/view.store";
   import { Theme } from "$lib/client/types/appearance.type";
   import QrElement from "../elements/QRElement.svelte";
+  import { isProductsPage } from "../store/shared.store";
   export let products: IListItem[];
   export let url: string = "https://blanklabs.org";
 
@@ -133,7 +134,12 @@
       class="w-full mo:max-w-[390px] rounded-[20px] flex mo:flex-col mo:gap-y-4 items-center bg-bgs2 px-7 py-4 mo:px-0 mo:py-4"
     >
       {#if !$view.isPortrait}
-        <p>Blank.coop</p>
+        <p>
+          {#if $isProductsPage}
+            <span>Built at</span>
+          {/if}
+          Blank.coop
+        </p>
       {/if}
       <div class="mx-auto flex gap-5 mo:gap-3">
         {#each socials as social, index}

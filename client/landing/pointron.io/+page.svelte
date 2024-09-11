@@ -1,6 +1,11 @@
 <script lang="ts">
   import HeroSection from "../shared/HeroSection.svelte";
-  import type { IHeroInputs } from "../shared/Landing.types";
+  import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
+  import {
+    currentProductsStore,
+    upcomingProductsStore
+  } from "../shared/store/shared.store";
+  import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
   let heroInputs: IHeroInputs = {
     title: "The one focus time tracker that you will ever need",
     label:
@@ -17,9 +22,17 @@
       windowsDownloadUrl: "https://www.pointron.io/windows"
     }
   };
+  let products: ITileItem[] = [
+    ...$currentProductsStore.slice(0, 2),
+    ...$upcomingProductsStore.slice(0, 2)
+  ];
 </script>
 
 <HeroSection {heroInputs} class="min-h-[70vh]" />
+<IrregularTileItemsSection
+  items={products}
+  title="Navigating your productivity"
+/>
 <span
   class="flex text-h3 text-aps1 w-full h-full bg-bgs1 justify-center items-center"
 >
