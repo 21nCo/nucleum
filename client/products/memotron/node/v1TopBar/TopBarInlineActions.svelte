@@ -59,7 +59,7 @@
       }}
     />
   {/if}
-  <ContextMenuAction {contextMenu} />
+  <ContextMenuAction {contextMenu} id="nodeContextMenu" />
   <!--TODO Show close only if launched from modal -->
   <Button
     icon="cross-circled"

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import { tweened } from "svelte/motion";
-  import { toasts } from "../../stores/notification.store";
+  import {
+    toastDefaultDuration,
+    toasts
+  } from "../../stores/notification.store";
   import { AlertType, type Toast } from "../../types/notification.type";
   import Icon from "../Icon.svelte";
   import { linear } from "svelte/easing";
@@ -9,9 +12,9 @@
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let notification: Toast;
   export let isShownAsModal = false;
-  const duration = 5000;
+
   const progress = tweened(100, {
-    duration,
+    duration: toastDefaultDuration,
     easing: linear
   });
   function close(event: MouseEvent) {

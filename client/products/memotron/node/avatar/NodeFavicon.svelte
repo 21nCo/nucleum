@@ -1,11 +1,10 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { Size } from "$lib/client/types/size.enum";
-  import { lazyLoad } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import { type INode, NodeType } from "../../node/node.type";
   import { commonMetadata } from "../../common/urlMap";
+  import { lazyLoad } from "$lib/client/actions/lazyload.action";
   export let node: INode;
   let favicon: string | undefined = undefined;
   onMount(async () => {

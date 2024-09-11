@@ -27,6 +27,7 @@
   let refreshId = Date.now();
   let markdownRef: any;
   import { setContext } from "svelte";
+  import { BlockAction } from "$lib/client/components/markdown/md.type";
 
   function handleEvent(message: any) {
     logger.log({ at: "node context", message });
@@ -105,42 +106,16 @@
     refreshId = Date.now();
   }
   function onMarkdownContentChange(e: CustomEvent) {
-    logger.log({ at: "onMarkdownContentChange - test", ...e.detail });
+    logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     refreshCounts();
     const block = e.detail.block;
     if (block.source && "body" in block) {
       node.updateBlock(block.source, { body: block.body });
     }
   }
-  async function onMarkdownInsertChanges(e: CustomEvent) {
-    logger.log({ at: "onMarkdownInsertChanges", ...e.detail });
-    refreshCounts();
-    const detail = e.detail;
-    if (!detail?.id) return;
-    const result = await node.createBlock(
-      detail.id,
-      detail.blockType ?? NodeType.SIMPLE_TEXT
-    );
-  }
-  function onMarkdownConvertChanges(e: CustomEvent) {
-    logger.log({ at: "onMarkdownConvertChanges", ...e.detail });
-    if (e.detail.source && e.detail.toType) {
-      if (headingNodeTypes.includes(e.detail.fromType)) {
-        node.updateBlock(e.detail.source, {
-          contentType: e.detail.toType,
-          children: []
-        });
-      } else
-        node.updateBlock(e.detail.source, { contentType: e.detail.toType });
-    }
-  }
-  function onMarkdownBlockDelete(e: CustomEvent) {
-    logger.log({ at: "onMarkdownBlockDelete", e });
-    if (!e.detail.source) return;
-    node.deleteBlock(e.detail.source);
-  }
+
   function onReStructure(e: CustomEvent) {
-    logger.log({ at: "onReStructure", ...e.detail });
+    logger.log({ at: "NodeContent - onReStructure", ...e.detail });
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
@@ -156,9 +131,68 @@
   }
 
   function onFocus(e: CustomEvent) {
-    logger.log({ at: "onFocus", ...e.detail });
+    logger.log({ at: "NodeContent - onFocus", ...e.detail });
     if (e.detail.id && e.detail.parent) {
       node.onFocus(e.detail.id, e.detail.parent);
+    }
+  }
+
+  function onBlockAction(e: CustomEvent) {
+    logger.log({
+      at: "NodeContent - onBlockAction",
+      action: e.detail.action,
+      detail: e.detail
+    });
+    switch (e.detail.action) {
+      case BlockAction.INSERT:
+        onInsert(e);
+        break;
+      case BlockAction.CONVERT:
+        onConvert(e);
+        break;
+      case BlockAction.DUPLICATE:
+        onDuplicate(e);
+        break;
+      case BlockAction.DELETE:
+        onDelete(e);
+        break;
+    }
+    async function onInsert(e: CustomEvent) {
+      logger.log({ at: "NodeContent - onInsert", ...e.detail });
+      refreshCounts();
+      const detail = e.detail;
+      if (!detail?.id) return;
+      const result = await node.createBlock(
+        detail.id,
+        detail.blockType ?? NodeType.SIMPLE_TEXT
+      );
+    }
+
+    function onConvert(e: CustomEvent) {
+      logger.log({ at: "NodeContent - onConvert", ...e.detail });
+      if (e.detail.source && e.detail.toType) {
+        if (headingNodeTypes.includes(e.detail.fromType)) {
+          node.updateBlock(e.detail.source, {
+            contentType: e.detail.toType,
+            children: []
+          });
+        } else
+          node.updateBlock(e.detail.source, { contentType: e.detail.toType });
+      }
+    }
+
+    async function onDuplicate(e: CustomEvent) {
+      logger.log({ at: "NodeContent - onDuplicate", ...e.detail });
+      const block = e.detail;
+      const result = await node.createBlock(block.id, block.contentType, {
+        body: block.body
+      });
+    }
+
+    function onDelete(e: CustomEvent) {
+      logger.log({ at: "NodeContent - onDelete", e });
+      if (!e.detail.source) return;
+      node.deleteBlock(e.detail.source);
     }
   }
 </script>
@@ -172,12 +206,10 @@
         bind:md={$node.md}
         bind:this={markdownRef}
         on:change={onMarkdownContentChange}
-        on:insert={onMarkdownInsertChanges}
-        on:convert={onMarkdownConvertChanges}
-        on:delete={onMarkdownBlockDelete}
         on:restructure={onReStructure}
         on:focus={onFocus}
         on:ready={refreshCounts}
+        on:action={onBlockAction}
       />
       <div class="flex w-full justify-center items-center mt--20 mt-4">
         <div class="flex flex-col gap-2 ml-12 w-full mo:w--9/10 w--4/5">

@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { IRecordId } from "$lib/client/types/data.type";
   import { FileType, type IFile } from "./file.type";
-  import { fileLoader } from "$lib/client/utils/browser.utils";
   import { fileStore } from "./file.store";
   import { logger } from "../debug/logger.client";
   import { onMount } from "svelte";
+  import { fileLoader } from "$lib/client/actions/lazyload.action";
   export let file: IFile | undefined = undefined;
   export let id: IRecordId | undefined = undefined;
   export let isLazyLoad: boolean = false;

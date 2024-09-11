@@ -54,7 +54,7 @@
     class={cn(
       "relative flex w-full justify-center flex-1 border-r border-brs3",
       {
-        "h-full": accessMode === ResourceAccessMode.FOCUS,
+        "h-full": accessMode === ResourceAccessMode.FULL,
         grow:
           accessMode === ResourceAccessMode.POP ||
           accessMode === ResourceAccessMode.INLINE

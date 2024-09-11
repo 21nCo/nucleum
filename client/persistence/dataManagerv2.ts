@@ -42,7 +42,7 @@ class DataManagerV2 {
       isLocalMode?: boolean;
     }
   ) {
-    logger.debug({ at: "dataManagerV2.initialize", stores, userId, params });
+    logger.log({ at: "dataManagerV2.initialize", stores, userId, params });
     this.stores = stores;
     const dbo = [...resolveDboDependencies()];
     await this.persistence.initialize(userId, {
@@ -84,7 +84,7 @@ class DataManagerV2 {
     params: IMutationParamsv2<T>
   ) {
     let response;
-    logger.debug({ at: "dataManagerV2.mutation", resource, params });
+    logger.log({ at: "dataManagerV2.mutation", resource, params });
     try {
       switch (params.action) {
         case PersistenceActionType.CUSTOM:
@@ -122,7 +122,7 @@ class DataManagerV2 {
     }
     const dependantStores = this.resolveDependantStores(resource);
     //TODO refresh stores
-    logger.debug({
+    logger.log({
       at: "dataManagerV2.mutation - result",
       resource,
       response,
@@ -148,9 +148,9 @@ class DataManagerV2 {
 
   async selectMany(resource: Resource, params?: IResourceSelectParams) {
     try {
-      logger.debug({ at: "dataManagerV2.selectMany", resource, params });
+      logger.log({ at: "dataManagerV2.selectMany", resource, params });
       const result = await this.persistence.selectMany(resource, params);
-      logger.debug({ at: "dataManagerV2.selectMany - result", result });
+      logger.log({ at: "dataManagerV2.selectMany - result", result });
       return result;
     } catch (e) {
       logger.error({
@@ -167,7 +167,7 @@ class DataManagerV2 {
   }
 
   kvMerge(storeId: string, data: any) {
-    logger.debug({ at: "kvMerge", storeId, data });
+    logger.log({ at: "kvMerge", storeId, data });
     return this.persistence.merge({
       ...data,
       id: `kv:${storeId}`
@@ -193,7 +193,7 @@ class DataManagerV2 {
 
   async sync() {
     const lastSyncedAt = clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
-    logger.debug({ at: "DataManagerV2.sync", lastSyncedAt });
+    logger.log({ at: "DataManagerV2.sync", lastSyncedAt });
     if (!lastSyncedAt) return;
     const mutations = await this.persistence.selectMany(Resource.mutation, {
       filters: {

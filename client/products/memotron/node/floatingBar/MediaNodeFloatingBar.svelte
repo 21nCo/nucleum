@@ -80,7 +80,7 @@
 <!-- Using transition here caused modal freeze issue -->
 <div
   class={cn("flex flex-col w-full justify-center items-center", {
-    "mb-6 absolute z-10 bottom-0": accessMode === ResourceAccessMode.FOCUS,
+    "mb-6 absolute z-10 bottom-0": accessMode === ResourceAccessMode.FULL,
     relative:
       accessMode === ResourceAccessMode.POP ||
       accessMode === ResourceAccessMode.INLINE
@@ -93,7 +93,7 @@
         accessMode === ResourceAccessMode.POP ||
         accessMode === ResourceAccessMode.INLINE,
       "mo:w-full tp:w-4/5 dp:w-3/5 2k:w-[50rem] rounded-md":
-        accessMode === ResourceAccessMode.FOCUS
+        accessMode === ResourceAccessMode.FULL
     })}
   >
     {#if $node.isArchived || $node.trashInformation}
@@ -102,7 +102,7 @@
           "absolute z-10 bottom-full mb-2 w-[98%]":
             accessMode === ResourceAccessMode.POP ||
             accessMode === ResourceAccessMode.INLINE,
-          "w-full": accessMode === ResourceAccessMode.FOCUS
+          "w-full": accessMode === ResourceAccessMode.FULL
         })}
       >
         <ResourceStatusBanner resource={node} />
@@ -113,7 +113,7 @@
         "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-3",
         {
           "w-full": accessMode === ResourceAccessMode.POP,
-          "rounded-md": accessMode === ResourceAccessMode.FOCUS
+          "rounded-md": accessMode === ResourceAccessMode.FULL
         }
       )}
     >
@@ -143,7 +143,7 @@
               });
             }}
           />
-          <ContextMenuAction {contextMenu} />
+          <ContextMenuAction {contextMenu} id="mediaNodeContextMenu" />
           <div class="h-8">
             <Divider
               orientation={Orientation.Vertical}
@@ -160,7 +160,7 @@
               }}
             />
           {/if}
-          {#if accessMode === ResourceAccessMode.FOCUS}
+          {#if accessMode === ResourceAccessMode.FULL}
             <Button
               {...buttonCommonProps}
               icon="cross-circled"

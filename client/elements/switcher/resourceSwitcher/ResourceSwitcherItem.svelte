@@ -76,7 +76,7 @@
   ];
 </script>
 
-<ContextMenuAction {contextMenu}>
+<ContextMenuAction {contextMenu} id="resourceSwitcherContextMenu">
   <HoverableElement
     type="button"
     bind:isHovering

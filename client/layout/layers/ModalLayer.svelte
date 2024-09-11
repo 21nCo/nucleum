@@ -64,7 +64,7 @@
         pop = undefined;
       }
       fullscreen =
-        value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
+        value.url.searchParams.get(ResourceAccessMode.FULL) ?? undefined;
       // console.log({ pop, fullscreen });
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
@@ -276,7 +276,7 @@
           id={fullscreen}
           componentParams={{
             isModal: true,
-            accessMode: ResourceAccessMode.FOCUS
+            accessMode: ResourceAccessMode.FULL
           }}
         />
       </ModalLayout>

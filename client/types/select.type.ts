@@ -16,7 +16,12 @@ export enum OptionSelectorStyle {
 export type IContextMenu = { group: string; items: IContextMenuItem[] }[];
 
 export type IContextMenuItem = ISelectItem & {
-  callback: () => Promise<void>;
+  callback?: (props?: any) => Promise<void>;
+  action?: string;
+  secondStepComponent?: {
+    component: any;
+    props?: any;
+  };
 };
 
 export type ISelectValue = string | number | boolean;

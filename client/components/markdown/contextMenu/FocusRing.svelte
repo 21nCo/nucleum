@@ -1,0 +1,21 @@
+<script lang="ts">
+  import { cn } from "$lib/client/utils/ui.utils";
+  export let isFocusing: boolean = false;
+  export let isHint: boolean = false;
+</script>
+
+{#if isHint}
+  <button class="h-3 w-3 rounded-full border-2 border-dotted border-fgs4"
+  ></button>
+{:else}
+  <button
+    class={cn(
+      "h-4 w-4 rounded-full border-2 border-dotted hover:border-aps1 hover:border-2 hover:border-solid",
+      {
+        "border-aps1": isFocusing,
+        "border-fgs3": !isFocusing
+      }
+    )}
+    on:click
+  />
+{/if}

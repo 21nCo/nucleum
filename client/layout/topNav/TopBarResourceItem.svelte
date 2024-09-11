@@ -17,7 +17,7 @@
         {
           value: "remove",
           icon: "cross",
-          callback: () => uiState.removeResourceFromTopBar(item)
+          callback: async () => uiState.removeResourceFromTopBar(item)
         }
       ]
     }
@@ -29,7 +29,7 @@
   });
 </script>
 
-<ContextMenuAction {contextMenu}>
+<ContextMenuAction {contextMenu} id="topBarContextMenu">
   <HoverableElement
     type="button"
     bind:isHovering

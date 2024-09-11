@@ -1,27 +1,32 @@
 <script lang="ts">
-  import type {
-    IBlock,
-    IMarkdownStore
+  import {
+    BlockAction,
+    type IBlock,
+    type IMarkdownStore
   } from "$lib/client/components/markdown/md.type";
   import { getContext, onMount } from "svelte";
   import BlockContent from "./content/BlockContent.svelte";
-  import LeftControls from "./LeftControls.svelte";
+  import LeftControls from "./contextMenu/LeftControls.svelte";
   import type { MdStoreType } from "./markdown.store";
   import {
+    headingNodeTypes,
     type StructuralNodeType,
     structuralNodeTypes
   } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { setContext } from "svelte";
   import { logger } from "../debug/logger.client";
+  import FocusRing from "./contextMenu/FocusRing.svelte";
+  import { copyToClipboard } from "$lib/client/utils/utils";
+  import { toasts } from "$lib/client/stores/notification.store";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
   let isHovering: boolean = false;
   let isFocusing: boolean = false;
   let isReRendering: boolean = false;
-  let isShowBgOnFocus: boolean = false;
-  // const mdStore = getMdStore(mdId);
+  $: isFocusable =
+    $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
 
   const markdownContext = getContext<any>("markdown");
 
@@ -34,19 +39,29 @@
       }
     });
   }
+  function propagateAsAction(action: string, data: any) {
+    markdownContext({
+      event: "action",
+      data: {
+        ...data,
+        source: block.id,
+        action
+      }
+    });
+  }
 
-  function blockContextEventListener(event: string, data: any) {
-    logger.log({ at: "blockContextEventListener", event, data });
-    if (!event) return;
-    if (event === "convert") {
+  function blockContextEventListener(action: BlockAction, data: any) {
+    logger.log({ at: "blockContextEventListener", event: action, data });
+    if (!action) return;
+    if (action === BlockAction.CONVERT) {
       const fromType = block.contentType;
       block.contentType = data.toType;
       if (data.params?.listType) block.listType = data.params?.listType;
-      propagate(event, { ...data, fromType });
-    } else if (event === "delete") {
+      propagateAsAction(action, { ...data, fromType });
+    } else if (action === BlockAction.DELETE) {
       mdStore.deleteBlock(block.id);
-      propagate(event, {});
-    } else if (event === "insert") {
+      propagateAsAction(action, {});
+    } else if (action === BlockAction.INSERT) {
       let newBlockId;
       if (data?.blockType && structuralNodeTypes.includes(data.blockType)) {
         newBlockId = mdStore.insertStructualBlock(
@@ -54,9 +69,21 @@
           data.blockType as StructuralNodeType
         );
       } else newBlockId = mdStore.insert({ source: block.id, ...data });
-      propagate(event, { ...data, id: newBlockId });
+      propagateAsAction(action, { ...data, id: newBlockId });
+    } else if (
+      action === BlockAction.MOVEUP ||
+      action === BlockAction.MOVEDOWN
+    ) {
+      mdStore.move(block.id, action);
+      propagateAsAction(action, data);
+    } else if (action === BlockAction.DUPLICATE) {
+      const newBlock = mdStore.duplicate(block.id);
+      propagateAsAction(action, newBlock);
+    } else if (action === BlockAction.COPY_BLOCK_TEXT) {
+      copyToClipboard(block.body);
+      toasts.success("Block copied to clipboard");
     } else {
-      propagate(event, data);
+      propagate(action, data);
     }
   }
   const blockContext = {
@@ -80,34 +107,52 @@
       mdStoreSub();
     };
   });
+
+  function onContextMenuAction(
+    e: CustomEvent<{
+      action: BlockAction;
+      data: any;
+    }>
+  ) {
+    blockContextEventListener(e.detail.action, e.detail.data);
+  }
 </script>
 
 <div
-  class="flex w-full items-center gap-2 rounded-md {isHovering &&
-  isShowBgOnFocus &&
-  $mdStore.params?.isNodular &&
-  !$mdStore.params?.isReadOnly
-    ? 'bg-bgs2'
-    : ''}"
+  class={cn(
+    "grid grid-cols-[2.5rem_1fr] w-full min-h-fit items-center gap-2 rounded-md border border-transparent",
+    $mdStore.params?.isNodular &&
+      !$mdStore.params?.isReadOnly && {
+        "bg-bgs2 bg-opacity-50 !border-brs1": isHovering && !isFocusing
+        // "!border-brs1": isHovering && isFocusing
+      }
+  )}
+  draggable="true"
   data-content={block.contentType}
   data-node={block.id}
   on:pointerenter={() => {
     isHovering = true;
+    window.dispatchEvent(
+      new CustomEvent("blockHover", {
+        detail: { id: block.id }
+      })
+    );
   }}
   on:pointerleave={() => {
     isHovering = false;
   }}
 >
   {#if $mdStore.params?.isNodular && !$mdStore.params?.isReadOnly}
-    <div
-      class={cn("opacity-0 w-12 min-w-[3rem] flex h-full", {
-        "opacity-100": (isHovering || isFocusing) && $mdStore.params?.isNodular
-      })}
-    >
-      <LeftControls {mdStore} {block} on:focus />
-    </div>
+    <LeftControls
+      {mdStore}
+      {block}
+      {isFocusing}
+      isBlockHovering={isHovering}
+      on:nodularize
+      on:action={onContextMenuAction}
+    />
   {/if}
-  <div class="grow">
+  <div class="relative flex-1">
     <BlockContent
       {block}
       {mdStore}
@@ -117,16 +162,16 @@
         isHovering = false;
       }}
     />
+    {#if isHovering && isFocusable && !isFocusing}
+      <div
+        class="absolute top-0 right-0 flex h-full items-center justify-center bg-gradient-to-r from-bgs2/40 via-bgs2 to-bgs2 pl-32"
+      >
+        <span class="text-b3 text-fgs1 rounded-md px-2 py-1">
+          Click
+          <FocusRing isHint={true} />
+          to focus
+        </span>
+      </div>
+    {/if}
   </div>
 </div>
-
-<!-- <style>
-  #sss:hover::before {
-    content: "sss";
-    width: 2rem;
-  }
-  #sss:before {
-    content: "";
-    width: 2rem;
-  }
-</style> -->

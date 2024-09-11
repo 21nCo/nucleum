@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "$lib/client/components/debug/logger.client";
   import { Position } from "$lib/client/types/direction.enum";
   import {
     type IPopoverOptions,
@@ -7,8 +8,8 @@
   } from "$lib/client/types/popover.type";
   import { renderPopover } from "$lib/client/utils/browser.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { generateUID } from "$lib/client/utils/utils";
-  import { createEventDispatcher } from "svelte";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { createEventDispatcher, onMount } from "svelte";
   const dispatch = createEventDispatcher();
   /**
    * @deprecated
@@ -22,16 +23,19 @@
   export let isPreventDefault: boolean = false;
   export let triggerMethod: PopoverTriggerMethod = PopoverTriggerMethod.CLICK;
   export let isPreventDefaultStyling: boolean = false;
+
   const defaultOptions: IPopoverOptions = {
     element: "div",
     class: "",
-    id: generateUID(),
+    id: generateSimpleRandomId(),
     isPreventDefaultStyling: false,
     parentBgIndex: 0,
     placement: Position.BottomCenter,
     isSpanToTriggerWidth: false,
     offsetInPx: 2,
-    isUseAbsolutePositioning: false
+    isUseAbsolutePositioning: false,
+    groupId: undefined,
+    isOnlyOneVisiblePerGroup: false
   };
   export let options: IPopoverOptions = defaultOptions;
   if (!options.id) options.id = defaultOptions.id;
@@ -44,8 +48,22 @@
    * Use toggle() to toggle the visibility. Use show() and hide() to show and hide the popover. Changing this value directly will not affect the popover visibility.
    */
   export let isPopoverVisible = false;
-  let containerId = generateUID();
+  let containerId = generateSimpleRandomId();
+
+  onMount(() => {
+    window.addEventListener("hidePopover", hidePopoverListener);
+    return () => {
+      window.removeEventListener("hidePopover", hidePopoverListener);
+    };
+  });
+
+  function hidePopoverListener(e: any) {
+    if (!e.detail || e.detail.source === containerId) return;
+    if (e.detail.group === options.groupId) hide();
+  }
+
   export function toggle() {
+    logger.log({ at: "Popover - toggle", id: options.id });
     isPopoverVisible = !isPopoverVisible;
     if (isPopoverVisible) {
       show();
@@ -53,6 +71,13 @@
     } else hide();
   }
   export function show() {
+    if (options.groupId && options.isOnlyOneVisiblePerGroup) {
+      window.dispatchEvent(
+        new CustomEvent("hidePopover", {
+          detail: { group: options.groupId, source: containerId }
+        })
+      );
+    }
     const config: IPopoverRenderParams = {
       ...options,
       triggerRef: triggerRef,
@@ -62,7 +87,7 @@
     renderPopover(config);
   }
   export function hide() {
-    // console.log("hiding", { id: options.id });
+    // logger.log({ at: "Popover - hide", id: options.id });
     isPopoverVisible = false;
     if (popOverRef) popOverRef.style.display = "none";
     dispatch("hide");
@@ -73,11 +98,11 @@
       destroy() {}
     };
   }
+
+  onMount(() => {});
+
   function onWindowClick(x: MouseEvent) {
-    // console.log("window click", {
-    //   options,
-    //   isPopoverVisible,
-    // });
+    // logger.log({ at: "Popover - onWindowClick", id: options.id });
     if (!options?.id || !isPopoverVisible) return;
     actIfClickedOutside(x, [containerId, options.id], hide);
   }
@@ -111,6 +136,11 @@
       return !nodeTarget?.contains(event.target as Node);
     });
     if (clickedOutsideAllTargets) {
+      logger.log({
+        at: "Popover - actIfClickedOutside - performing action",
+        id: options.id,
+        target: event.target
+      });
       action();
     }
   }
@@ -119,6 +149,7 @@
 <button
   id={containerId}
   tabindex="-1"
+  data-group-id={options.groupId}
   bind:this={triggerRef}
   on:click={(e) => {
     if (triggerMethod === PopoverTriggerMethod.CLICK && !isPreventDefault) {

@@ -258,18 +258,7 @@
       md
     });
   }
-  function onBlockInsertV2(event: any) {
-    dispatch("insert", event.detail);
-    onBlockStructuralChanges(event);
-  }
-  function onBlockConvert(event: any) {
-    dispatch("convert", event.detail);
-    onBlockStructuralChanges(event);
-  }
-  function onBlockDelete(event: any) {
-    dispatch("delete", event.detail);
-    onBlockStructuralChanges(event);
-  }
+
   /**
    * Merges the focused markdown with the root markdown when a heading is focused.
    * @param focusedMd - the markdown of the focused heading
@@ -380,6 +369,12 @@
     _md = { blocks: md.blocks };
     refreshId = new Date().getTime();
   }
+
+  function onBlockAction(event: CustomEvent) {
+    logger.log({ at: "onBlockAction", event });
+    dispatch("action", event.detail);
+    onBlockStructuralChanges(event);
+  }
 </script>
 
 {#key refreshId}
@@ -393,9 +388,7 @@
       ...params
     }}
     on:change={onBlockContentChange}
-    on:insert={onBlockInsertV2}
-    on:convert={onBlockConvert}
     on:focus={onBlockFocus}
-    on:delete={onBlockDelete}
+    on:action={onBlockAction}
   />
 {/key}

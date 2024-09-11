@@ -21,9 +21,9 @@
   import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { lazyLoad } from "$lib/client/utils/browser.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import TextClipPreview from "../content/web/TextClipPreview.svelte";
+  import { lazyLoad } from "$lib/client/actions/lazyload.action";
   export let item: INode;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;

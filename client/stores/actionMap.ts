@@ -24,7 +24,7 @@ import { GlobalEvent } from "../types/event.enum";
 import { uiState } from "./uiState/uiState.store";
 import BookACall from "../components/cx/BookACall.svelte";
 import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
-import GhostEmbed from "../components/cx/ghost/GhostEmbed.svelte";
+import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -381,5 +381,17 @@ export const globalActions: IAction[] = [
     label: "Activate search box",
     isMeta: true,
     type: ActionType.EVENT
+  },
+  {
+    action: Action.MARKDOWN_SHORTCUTS,
+    label: "Markdown shortcuts",
+    component: MdShortcuts,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Markdown shortcuts",
+      layout: {
+        size: Size.lg
+      }
+    }
   }
 ];

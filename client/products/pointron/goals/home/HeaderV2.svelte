@@ -187,6 +187,6 @@
     </span>
   </div>
   <div class="flex items-center gap-8 min-w-fit shrink-0">
-    <ContextMenuAction {contextMenu} />
+    <ContextMenuAction {contextMenu} id="currentGoalContextMenu" />
   </div>
 </div>

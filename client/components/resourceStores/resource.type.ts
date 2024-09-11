@@ -55,13 +55,22 @@ export interface ITrashInformation {
 
 export enum ResourceAccessMode {
   INLINE = "inline",
+  /**
+   * Inline split
+   */
   SPLIT = "split",
   /**
-   * Split in focus mode
+   * Split in full screen or pop mode
    */
   FSPLIT = "fsplit",
+  /**
+   * Pop mode
+   */
   POP = "pop",
-  FOCUS = "focus",
+  /**
+   * Full screen mode
+   */
+  FULL = "full",
   TOPBARFOCUS = "tbf"
 }
 

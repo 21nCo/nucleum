@@ -68,7 +68,7 @@
     // console.log("onMount - collection", { id });
     const viewQueryParam = new URLSearchParams(location.search).get("view");
     const focusParam = new URLSearchParams(location.search).get(
-      ResourceAccessMode.FOCUS
+      ResourceAccessMode.FULL
     );
     const splitParam = new URLSearchParams(location.search).get(
       ResourceAccessMode.SPLIT

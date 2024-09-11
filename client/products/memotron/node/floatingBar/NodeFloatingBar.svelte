@@ -37,6 +37,7 @@
   };
   let contextMenu = [];
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF);
+  $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
 </script>
 
 <div
@@ -82,34 +83,46 @@
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       {contextMenu}
+      id="nodeContextMenu"
       tooltip="More actions"
     />
     <Divider
       orientation={Orientation.Vertical}
       colorStrength={ColorStrength.Strong}
     />
+    {#if currentMode === ResourceAccessMode.SPLIT || currentMode === ResourceAccessMode.FSPLIT}
+      <Button
+        {...buttonCommonProps}
+        icon="cross-circled"
+        tooltip="Close split view"
+        on:click={() => {
+          appStore.closeResource({ accessMode: currentMode });
+        }}
+      />
+    {:else}
+      <Button
+        {...buttonCommonProps}
+        icon={isWidened ? "unwiden" : "widen"}
+        tooltip={isWidened ? "Collapse" : "Expand"}
+        on:click={() => {
+          isWidened = !isWidened;
+        }}
+      />
+      {#if currentMode !== ResourceAccessMode.FULL}
+        <Button
+          {...buttonCommonProps}
+          icon="split"
+          tooltip="Open in split view"
+          on:click={() => {
+            dispatch("split");
+          }}
+        />
+      {/if}
+    {/if}
     <Button
       {...buttonCommonProps}
-      icon={isWidened ? "unwiden" : "widen"}
-      tooltip={isWidened ? "Collapse" : "Expand"}
-      on:click={() => {
-        isWidened = !isWidened;
-      }}
-    />
-    <Button
-      {...buttonCommonProps}
-      icon="split"
-      tooltip="Open in split view"
-      on:click={() => {
-        dispatch("split");
-      }}
-    />
-    <Button
-      {...buttonCommonProps}
-      icon={accessMode === ResourceAccessMode.FOCUS
-        ? "collapse"
-        : "full-screen"}
-      tooltip={accessMode === ResourceAccessMode.FOCUS
+      icon={accessMode === ResourceAccessMode.FULL ? "collapse" : "full-screen"}
+      tooltip={accessMode === ResourceAccessMode.FULL
         ? "Minimize"
         : "Full screen"}
       on:click={() => {

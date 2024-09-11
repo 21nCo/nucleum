@@ -48,7 +48,7 @@ export class SurrealPersistence implements IPersistence {
     this.userId = userId;
     this.isLocalMode = params?.isLocalMode ?? false;
     try {
-      logger.debug({ at: "surreal.persistence.initialize", userId });
+      logger.log({ at: "surreal.persistence.initialize", userId });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
@@ -63,7 +63,7 @@ export class SurrealPersistence implements IPersistence {
   private async logInfo() {
     await this.awaiter();
     const info = await this.instance?.query("INFO FOR NS; INFO FOR DATABASE;");
-    logger.debug({
+    logger.log({
       at: "surreal.persistence.logInfo",
       userId: this.userId,
       info
@@ -73,7 +73,7 @@ export class SurrealPersistence implements IPersistence {
   private async testQuery() {
     await this.awaiter();
     const result = await this.instance?.query("select * from mutation;");
-    logger.debug({
+    logger.log({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
       result
@@ -82,7 +82,7 @@ export class SurrealPersistence implements IPersistence {
   }
 
   async delegateSync(query: string, resourceId?: IRecordId | Resource) {
-    logger.debug({
+    logger.log({
       at: "SurrealPersistence.delegateSync",
       query,
       resourceId,
@@ -102,7 +102,7 @@ export class SurrealPersistence implements IPersistence {
    * Updates the database with dbo definitions.
    */
   async updateDbo(params?: IPersistenceInitParams) {
-    logger.debug({ at: "surreal.persistence.updateDbo" });
+    logger.log({ at: "surreal.persistence.updateDbo" });
     await this.awaiter();
     const dependencies = params?.dbo;
     if (!dependencies) return;
@@ -142,7 +142,7 @@ export class SurrealPersistence implements IPersistence {
     records: T[],
     resource: string
   ): Promise<any> {
-    logger.debug({
+    logger.log({
       at: "SurrealPersistence.insert",
       resource,
       isProcessingOperation: this.isProcessingOperation
@@ -172,7 +172,7 @@ export class SurrealPersistence implements IPersistence {
   async merge<T extends IResource>(record: Partial<T>): Promise<any> {
     if (!record.id) return;
     await this.awaiter();
-    logger.debug({ at: "SurrealPersistence.merge", record });
+    logger.log({ at: "SurrealPersistence.merge", record });
     const query = `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`;
     const result = await this.instance?.query(query);
     this.isProcessingOperation = false;
@@ -202,7 +202,7 @@ export class SurrealPersistence implements IPersistence {
     // return this.instance?.query(query, params);
     await this.awaiter();
     const result = await this.instance?.query_raw(query, params);
-    logger.debug({ at: "SurrealPersistence.query", query, params, result });
+    logger.log({ at: "SurrealPersistence.query", query, params, result });
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
   }
@@ -221,7 +221,7 @@ export class SurrealPersistence implements IPersistence {
     const selectClause =
       props.length > 0 ? `SELECT ${props.join(", ")}` : "SELECT *";
     const query = `${selectClause} FROM ONLY ${resourceId};`;
-    logger.debug({ at: "SurrealPersistence.select", query });
+    logger.log({ at: "SurrealPersistence.select", query });
     const result = await this.instance?.query_raw(query);
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
@@ -244,7 +244,7 @@ export class SurrealPersistence implements IPersistence {
       query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
     if (params?.limit) query += ` LIMIT ${params.limit}`;
     if (params?.offset) query += ` START ${params.offset}`;
-    logger.debug({
+    logger.log({
       at: "SurrealPersistence.selectMany",
       query,
       params,
@@ -253,7 +253,7 @@ export class SurrealPersistence implements IPersistence {
     // await this.logInfo();
     // await this.testQuery();
     const result = await this.instance?.query_raw(query, params);
-    logger.debug({ at: "SurrealPersistence.selectMany - result", result });
+    logger.log({ at: "SurrealPersistence.selectMany - result", result });
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
   }

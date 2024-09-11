@@ -1,8 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import type {
-    IMarkdownStore,
-    IBlock
+  import {
+    type IMarkdownStore,
+    type IBlock,
+    BlockAction
   } from "$lib/client/components/markdown/md.type";
   import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
@@ -46,7 +47,7 @@
    * @param event event name
    * @param data event data
    */
-  function relay(event: string, data?: any) {
+  function relay(event: BlockAction, data?: any) {
     if (!blockContext.publish) {
       logger.error({
         at: "TextContent propagate",
@@ -142,6 +143,7 @@
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
       if (x?.id === block.id) {
+        // logger.debug({ at: "focus.subscribe", x, block });
         setTimeout(() => {
           textRef.focus();
         }, 10);
@@ -166,7 +168,7 @@
     }
   ) {
     if (block.contentType === toType) return;
-    relay("convert", {
+    relay(BlockAction.CONVERT, {
       toType,
       params
     });
@@ -268,13 +270,24 @@
     return true;
   }
 
-  function handleKeyDown(e: CustomEvent<KeyboardEvent>) {
-    const event = e.detail;
-    logger.log({ at: "handleKeyDown", event, body: block.body });
+  function handleKeyDown(
+    e: CustomEvent<{
+      event: KeyboardEvent;
+      position: any;
+      position2: any;
+    }>
+  ) {
+    const event = e.detail.event;
+    logger.log({
+      at: "handleKeyDown",
+      body: block.body,
+      event
+    });
     const functions = [
       () => handleBlockBrowser(event),
       () => handleMentionShortcut(event),
-      () => handleBackspace(event)
+      () => handleBackspace(event),
+      () => handleArrowKeys(e)
     ];
 
     for (const func of functions) {
@@ -296,12 +309,54 @@
       (event.key === "Enter" && event.metaKey)
     ) {
       if (block.id && !isRelayOperations) {
-        relay("insert");
+        relay(BlockAction.INSERT);
       } else if (block.body != "") {
         dispatch("insertrelay", block.id);
       }
       event.preventDefault();
     }
+  }
+
+  function handleArrowKeys(
+    e: CustomEvent<{
+      event: KeyboardEvent;
+      position: any;
+      position2: any;
+    }>
+  ) {
+    const event = e.detail.event;
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return false;
+    const position = e.detail.position;
+    const position2 = e.detail.position2;
+    // logger.debug({
+    //   at: "handleArrowKeys",
+    //   position,
+    //   position2,
+    //   event
+    // });
+    if (!event.altKey) {
+      if (event.key === "ArrowUp" && position.isFirstLine) {
+        mdStore.shiftFocus(block.id, "up", {
+          xOffset: position2?.caretOffset
+        });
+      } else if (event.key === "ArrowDown" && position.isLastLine) {
+        mdStore.shiftFocus(block.id, "down", {
+          xOffset: position2?.caretOffset
+        });
+      }
+      event.preventDefault();
+      return true;
+    } else if (event.altKey) {
+      if (event.key === "ArrowUp") {
+        relay(BlockAction.MOVEUP);
+      } else if (event.key === "ArrowDown") {
+        relay(BlockAction.MOVEDOWN);
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      return true;
+    }
+    return false;
   }
 
   function handleEscShortcutForSecondaryLines(
@@ -320,7 +375,7 @@
       block.body = block.body.replace(shortcut, "");
       textRef.replace(shortcut, "");
       if (block.id) {
-        relay("insert", {
+        relay(BlockAction.INSERT, {
           blockType: type,
           listType
         });
@@ -379,7 +434,7 @@
           textRef.set("");
           //TODO - handling structural block insertion for list
           if (block.contentType === NodeType.LIST || !block.id) return false;
-          relay("insert", { blockType: type });
+          relay(BlockAction.INSERT, { blockType: type });
           return true;
         }
         return false;
@@ -431,7 +486,7 @@
       propagateToNode("unmention", { location: block.id, id });
     }
     previousVal = deepCopy(block.body);
-    relay("change", { body: block.body });
+    relay(BlockAction.CHANGE, { body: block.body });
   }
   /**
    * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
@@ -444,11 +499,19 @@
    * @param event
    */
   function handleKeyUp(
-    e: CustomEvent<{ event: KeyboardEvent; caretPosition: any }>
+    e: CustomEvent<{
+      event: KeyboardEvent;
+      caretPosition: any;
+    }>
   ) {
     const event = e.detail.event;
     const caretPosition = e.detail.caretPosition;
-    logger.log({ at: "handleKeyUp", event, body: block.body, caretPosition });
+    logger.log({
+      at: "handleKeyUp",
+      body: block.body,
+      caretPosition,
+      event
+    });
     const steps = [
       () => handleBlockBrowser(event, "keyup"),
       () => handleMentionShortcut(event, "keyup"),
@@ -510,7 +573,7 @@
     }
 
     function performDelete() {
-      relay("delete");
+      relay(BlockAction.DELETE);
     }
   }
 
@@ -573,7 +636,7 @@
     if (parts[0]) {
       block.body = parts[0];
       textRef.removeSlashText();
-      relay("insert", {
+      relay(BlockAction.INSERT, {
         blockType: event.detail.type
       });
     } else {
@@ -597,6 +660,25 @@
       location: block.id,
       id: item.id
     });
+  }
+
+  function onFocus() {
+    isFocusing = true;
+    const currentBlockIndex = $mdStore.blocks.findIndex(
+      (x) => x.id == block.id
+    );
+    for (let i = currentBlockIndex; i >= 0; i--) {
+      if (headingNodeTypes.includes($mdStore.blocks[i].contentType)) {
+        $mdStore.activeHeading = $mdStore.blocks[i].id;
+        break;
+      }
+    }
+  }
+
+  function onBlur() {
+    if (!isFirstBlockAndIsEmpty) placeholder = "";
+    dispatch("blur");
+    isFocusing = false;
   }
 </script>
 
@@ -635,7 +717,7 @@
       <div
         id={block.id}
         style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-        class="flex justify-start text-left w-full h-full outline-none py-2 {sizing} {block.contentType ===
+        class="flex justify-start text-left w-full min-h-fit outline-none py-2 {sizing} {block.contentType ===
         NodeType.QUOTE
           ? 'px-2'
           : 'px-1'}"
@@ -647,7 +729,7 @@
         class={cn(
           sizing,
           "w-full flex justify-start",
-          block.contentType === NodeType.QUOTE ? "pl-2" : ""
+          block.contentType === NodeType.QUOTE ? "pl-4" : ""
         )}
       >
         <InlineMarkdownTextInput
@@ -658,29 +740,16 @@
           on:keydown={handleKeyDown}
           on:keyup={handleKeyUp}
           on:change={dispatchChangeEvent}
-          on:focus={() => {
-            isFocusing = true;
-            const currentBlockIndex = $mdStore.blocks.findIndex(
-              (x) => x.id == block.id
-            );
-            for (let i = currentBlockIndex; i >= 0; i--) {
-              if (headingNodeTypes.includes($mdStore.blocks[i].contentType)) {
-                $mdStore.activeHeading = $mdStore.blocks[i].id;
-                break;
-              }
-            }
-          }}
-          on:blur={() => {
-            isFocusing = false;
-            if (!isFirstBlockAndIsEmpty) placeholder = "";
-            dispatch("blur");
-          }}
+          on:focus={onFocus}
+          on:blur={onBlur}
           bind:placeholder
         />
       </div>
     {/if}
     {#if block.contentType === NodeType.QUOTE}
-      <div class="absolute top-0 left-0 h-full w-0.5 bg-aps1"></div>
+      <div class="absolute top-0 left-0 h-full flex flex-col justify-center">
+        <span class="w-1 bg-aps1 h-full my-2 rounded-md" />
+      </div>
     {/if}
   </div>
   <slot slot="popover" name="popover">

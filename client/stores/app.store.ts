@@ -54,7 +54,7 @@ import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { Size } from "../types/size.enum";
 import { flux } from "../persistence/dataManagerv2";
-import { PersistenceActionType } from "../types/data.type";
+import { PersistenceActionType, type IRecordId } from "../types/data.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -405,6 +405,13 @@ function initAppStore(seed: AppStore) {
     logger.log({ at: "gotoErrorPage", err });
     gotoPath("/error");
   };
+
+  /**
+   * @deprecated - use openResource instead
+   * @param item
+   * @param id
+   * @param params
+   */
   const gotoResource = async (
     item: Resource,
     id: string,
@@ -602,7 +609,7 @@ function initAppStore(seed: AppStore) {
   const isFSplit = () => {
     return (
       new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FOCUS
+        ResourceAccessMode.FULL
       ) ||
       new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
     );
@@ -616,10 +623,10 @@ function initAppStore(seed: AppStore) {
       return ResourceAccessMode.POP;
     else if (
       new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FOCUS
+        ResourceAccessMode.FULL
       ) === id
     )
-      return ResourceAccessMode.FOCUS;
+      return ResourceAccessMode.FULL;
     else if (
       new URLSearchParams(window.location.search).get(
         ResourceAccessMode.SPLIT
@@ -636,12 +643,13 @@ function initAppStore(seed: AppStore) {
   };
 
   const determineCurrentResourceAccessMode = (
-    id: string
+    id: IRecordId
   ): ResourceAccessMode => {
     const searchParams = new URLSearchParams(window.location.search);
 
     const mode = (Object.values(ResourceAccessMode) as string[]).find(
-      (m) => m !== ResourceAccessMode.INLINE && searchParams.get(m) === id
+      (m) =>
+        m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
     );
 
     return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
@@ -649,7 +657,7 @@ function initAppStore(seed: AppStore) {
 
   const determineClickAccessMode = (event: MouseEvent) => {
     //TODO - shortcuts from user settings
-    if (event.shiftKey) return ResourceAccessMode.FOCUS;
+    if (event.shiftKey) return ResourceAccessMode.FULL;
     else if (event.altKey) {
       const isFromFocusOrPop = isFSplit();
       if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
@@ -658,10 +666,10 @@ function initAppStore(seed: AppStore) {
       // TODO - open in new tab?
     }
   };
-  const resourceClickHandler = (
-    event: MouseEvent,
-    id: string,
-    defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
+
+  const openResource = (
+    id: IRecordId,
+    accessMode: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
     if (!id) return;
     // accessLogStore.create(
@@ -678,10 +686,21 @@ function initAppStore(seed: AppStore) {
     //     }
     //   }
     // );
+
+    toggleSearchParam(accessMode, id.toString());
+  };
+
+  const resourceClickHandler = (
+    event: MouseEvent,
+    id: IRecordId,
+    defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
+  ) => {
+    if (!id) return;
     toggleSearchParam("view");
-    const accessMode = determineClickAccessMode(event);
-    if (accessMode) toggleSearchParam(accessMode, id);
-    else toggleSearchParam(defaultTo, id);
+    let accessMode;
+    if (event) accessMode = determineClickAccessMode(event);
+    if (accessMode) openResource(id, accessMode);
+    else openResource(id, defaultTo);
     logger.log({
       at: "resourceClickHandler",
       id,
@@ -699,10 +718,16 @@ function initAppStore(seed: AppStore) {
     resourceClickHandler(event, id, currentAccessMode);
   };
   const closeResource = (props?: {
+    id?: IRecordId;
+    accessMode?: ResourceAccessMode;
     isRestrictToModals?: boolean;
     inlineRestoreId?: string;
   }) => {
     const url = new URL(window.location.href);
+    if (props?.accessMode) {
+      toggleSearchParam(props.accessMode);
+      return;
+    }
     if (props?.isRestrictToModals) {
       toggleSearchParam(ResourceAccessMode.FSPLIT);
       debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
@@ -713,7 +738,7 @@ function initAppStore(seed: AppStore) {
       url.searchParams.set(prevMode, props?.inlineRestoreId);
     removeSearchParam("prev");
     removeSearchParam(ResourceAccessMode.SPLIT);
-    removeSearchParam(ResourceAccessMode.FOCUS);
+    removeSearchParam(ResourceAccessMode.FULL);
     removeSearchParam(ResourceAccessMode.POP);
     removeSearchParam(ResourceAccessMode.FSPLIT);
     appStore.gotoPath(url.href);
@@ -730,14 +755,14 @@ function initAppStore(seed: AppStore) {
   ) => {
     const url = new URL(window.location.href);
     removeSearchParam(currentMode);
-    if (currentMode === ResourceAccessMode.FOCUS) {
+    if (currentMode === ResourceAccessMode.FULL) {
       const prevMode = url.searchParams.get("prev");
       logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
       if (prevMode) url.searchParams.set(prevMode, resourceId);
       else url.searchParams.set(ResourceAccessMode.POP, resourceId);
       removeSearchParam("prev");
     } else {
-      url.searchParams.set(ResourceAccessMode.FOCUS, resourceId);
+      url.searchParams.set(ResourceAccessMode.FULL, resourceId);
       url.searchParams.set("prev", currentMode);
     }
     appStore.gotoPath(url.href);
@@ -927,6 +952,7 @@ function initAppStore(seed: AppStore) {
     initiateOAuth2Flow,
     toggleSearchParam,
     resourceClickHandler,
+    openResource,
     toggleFocusAccessMode,
     resourceClickHandlerWithReplace,
     determineCurrentResourceAccessMode,

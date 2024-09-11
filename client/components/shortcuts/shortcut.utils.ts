@@ -13,7 +13,7 @@ export function resolveShortcutText(
     modifierLabels = modifiers.map((x) => {
       if (x === ModifierKey.META) {
         if (os === OperatingSystem.MACOS) {
-          return "Cmd";
+          return "⌘";
         } else {
           return "Win";
         }
@@ -22,6 +22,7 @@ export function resolveShortcutText(
       } else return x;
     });
   }
+  if (modifierLabels.length === 0) return key.toUpperCase();
   return modifierLabels.join(" + ") + " + " + key.toUpperCase();
 }
 

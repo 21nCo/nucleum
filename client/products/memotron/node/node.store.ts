@@ -142,13 +142,19 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
     debouncer(id, mutationId, changedProps);
   };
-  createBlock = async (id: string, contentType: any) => {
+  createBlock = async (
+    id: string,
+    contentType: any,
+    params?: { body?: any }
+  ) => {
+    logger.log({ at: "ActiveNodeStore.createBlock", id, contentType, params });
     return this.resourceStore.create([
       {
         id,
         body: "",
         contentType,
-        creationContext: this.id
+        creationContext: this.id,
+        ...params
       }
     ]);
   };
