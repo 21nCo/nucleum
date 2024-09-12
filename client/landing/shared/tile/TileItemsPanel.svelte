@@ -1,0 +1,61 @@
+<script lang="ts">
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import view from "$lib/client/stores/view.store";
+  import type { ITileItem } from "../Landing.types";
+  import PanelButton from "../elements/PanelButton.svelte";
+  import { isProductsPanelOpen } from "../store/shared.store";
+  import TileItem from "./TileItem.svelte";
+
+  export let currentProducts: ITileItem[];
+  export let upcomingProducts: ITileItem[];
+</script>
+
+<div
+  class="absolute right-0 w-[740px] mo:w-full h-[100vh] flex bg-bgs1"
+  on:click|stopPropagation
+  on:keypress|stopPropagation
+>
+  <div class="flex flex-col gap-3 w-full p-10 mo:p-6">
+    {#if $view.isPortrait}
+      <div class="flex pb-4">
+        <p class="text-[17px] leading-6 font-extrabold">Products</p>
+        <SvgIcon
+          icon="close"
+          class="ml-auto"
+          on:click={() => ($isProductsPanelOpen = false)}
+        />
+      </div>
+    {/if}
+    <div class="flex flex-col gap-3 overflow-y-scroll">
+      <p
+        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
+      >
+        Current Products
+      </p>
+      <div class="grid grid-cols-2 gap-6">
+        {#each currentProducts as product}
+          <TileItem
+            item={product}
+            isPanelView={true}
+            isEnableBackground={true}
+          />
+        {/each}
+      </div>
+      <p
+        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium mt-6"
+      >
+        Upcoming Products
+      </p>
+      <div class="grid grid-cols-2 gap-3">
+        {#each upcomingProducts as product}
+          <TileItem item={product} isPanelView={true} />
+        {/each}
+      </div>
+    </div>
+  </div>
+  <PanelButton
+    label="Close"
+    icon="close"
+    on:click={() => ($isProductsPanelOpen = false)}
+  />
+</div>

@@ -121,12 +121,51 @@ module.exports = {
       },
       animation: {
         "pulse-subtle":
-          "pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+          "pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "slide-down": "slide-down 0.5s ease-in-out forwards",
+        "slide-up": "slide-up 0.5s ease-in-out forwards",
+        rotate45: "rotate45 1s forwards",
+        fadeIn: "fadeIn 1s forwards",
+        fadeOut: "fadeOut 1s forwards"
       },
       keyframes: {
         "pulse-subtle": {
           "0%, 100%": { filter: "saturate(80%)" },
           "50%": { filter: "saturate(120%)" }
+        },
+        "slide-down": {
+          "0%": { height: "0", opacity: "0" },
+          "50%": { height: "50%", opacity: "0.5" },
+          "100%": { height: "100%", opacity: "1" }
+        },
+        "slide-up": {
+          "0%": { height: "100%", opacity: "1" },
+          "50%": { height: "50%", opacity: "0.5" },
+          "100%": { height: "0", opacity: "0" }
+        },
+        rotate45: {
+          "0%": {
+            transform: "rotate(0deg)"
+          },
+          "100%": {
+            transform: "rotate(45deg)"
+          }
+        },
+        fadeIn: {
+          "0%": {
+            opacity: 0
+          },
+          "100%": {
+            opacity: 1
+          }
+        },
+        fadeOut: {
+          "0%": {
+            opacity: 1
+          },
+          "100%": {
+            opacity: 0
+          }
         }
       }
     }

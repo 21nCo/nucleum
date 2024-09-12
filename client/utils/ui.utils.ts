@@ -1,6 +1,6 @@
 import type { ClassValue } from "clsx";
 import { clsx } from "clsx";
-
+import QRCode from "qrcode";
 /**
  * Utility function to combine class names
  * @param inputs
@@ -39,4 +39,20 @@ export function emptyTranstition() {
     duration: 1,
     css: () => `transition: none;`
   };
+}
+
+export async function paintQRCode(
+  canvas: HTMLCanvasElement,
+  url: string,
+  width: number
+) {
+  if (!canvas || !url || !width) return;
+  await QRCode.toCanvas(canvas, url, {
+    width: width,
+    margin: 0,
+    color: {
+      dark: "#000000",
+      light: "#ffffff"
+    }
+  });
 }
