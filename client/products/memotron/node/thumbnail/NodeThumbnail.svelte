@@ -15,7 +15,7 @@
   } from "$lib/client/utils/time.utils";
   import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";

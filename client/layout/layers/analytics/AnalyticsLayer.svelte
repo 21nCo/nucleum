@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { onMount } from "svelte";
   import AnalyticsTags from "./AnalyticsTags.svelte";
   import posthog from "posthog-js";

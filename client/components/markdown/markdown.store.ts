@@ -31,7 +31,7 @@ import {
   type IBlockOperationContext,
   BlockAction
 } from "$lib/client/components/markdown/md.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 

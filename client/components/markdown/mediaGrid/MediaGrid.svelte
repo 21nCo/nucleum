@@ -3,11 +3,7 @@
 
   import MediaGridOptions from "./MediaGridOptions.svelte";
   import type { Item, Config } from "./mediaGrid.type";
-  import {
-    dragAndDropStore,
-    isInEditMode,
-    userPreferences
-  } from "$lib/client/stores/app.store";
+  import { dragAndDropStore, isInEditMode } from "$lib/client/stores/app.store";
   import { generateUID } from "$lib/client/utils/utils";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
   import DraggableMediaGridElement from "$lib/client/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";

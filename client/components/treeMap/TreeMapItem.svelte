@@ -6,7 +6,7 @@
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { ResourceAccessMode } from "../resourceStores/resource.type";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import { page } from "$app/stores";
   const dispatch = createEventDispatcher();
   export let id: string;

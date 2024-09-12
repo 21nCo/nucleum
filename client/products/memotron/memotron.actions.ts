@@ -9,15 +9,15 @@ import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadi
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
 import Library from "$lib/client/products/memotron/library/Library.svelte";
 import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
 import { MemotronAction } from "./memotronAction.enum";
-import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
-import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";

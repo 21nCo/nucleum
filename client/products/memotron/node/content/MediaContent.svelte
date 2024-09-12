@@ -6,7 +6,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { type IActiveNodeStore } from "../node.store";
   import AudioScrubablePreview from "../../capture/AudioScrubablePreview.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import WebNodeContent from "./WebNodeContent.svelte";
   import MediaNodeRightPane from "../rightPanel/MediaNodeRightPane.svelte";

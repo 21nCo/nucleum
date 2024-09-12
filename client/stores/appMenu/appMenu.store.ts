@@ -1,6 +1,6 @@
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import type { IAppMenuStore } from "./appMenu.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { get } from "svelte/store";
 import { logger } from "$lib/client/components/debug/logger.client";

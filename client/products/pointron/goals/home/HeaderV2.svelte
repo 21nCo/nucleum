@@ -9,7 +9,7 @@
   import view from "$lib/client/stores/view.store";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";

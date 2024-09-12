@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import ResourceThumbnailBase from "$lib/client/products/memotron/common/thumbnail/ResourceThumbnailBase.svelte";
   import type { INode } from "$lib/client/products/memotron/node/node.type";

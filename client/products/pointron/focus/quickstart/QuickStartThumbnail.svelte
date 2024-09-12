@@ -7,9 +7,9 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import {
     appStore,
-    leftThresholdCrossedStore,
-    userPreferences
+    leftThresholdCrossedStore
   } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { Layout } from "$lib/client/types/layout.type";
   import { TimeFormat } from "$lib/client/types/time.type";
   import { formatTime, formatSeconds } from "$lib/client/utils/time.utils";

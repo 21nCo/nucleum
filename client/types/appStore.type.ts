@@ -1,4 +1,5 @@
 import type { IAction } from "$lib/client/types/action.type";
+import type { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 
 export type AppStore = {
   product: string;
@@ -26,4 +27,8 @@ export type AppStore = {
   currentComponent?: IAction;
   sheetPath?: string;
   actions: IAction[];
+  /**
+   * Derived value from uiState. This is to avoid the dependency of appStore on uiState as appStore is used non-logged in user context.
+   */
+  interactionMode: InteractionMode;
 };

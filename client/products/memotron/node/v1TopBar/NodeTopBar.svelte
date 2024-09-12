@@ -11,8 +11,8 @@
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { onMount } from "svelte";
-  import { flux } from "$lib/client/persistence/dataManagerv2";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { flux } from "$lib/client/components/flux/flux";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   export let node: IActiveNodeStore;
   export let isClonesShown: boolean = false;
   export let nodePageVariant: "v1" | "v2" = "v1";

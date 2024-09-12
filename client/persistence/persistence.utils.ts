@@ -1,5 +1,5 @@
 import type { JsonValue } from "$lib/client/types/json.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ClientStorageKey } from "./persistence.type";
 
 export function resetLocalStorage() {

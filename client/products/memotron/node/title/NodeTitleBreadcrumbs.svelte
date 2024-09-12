@@ -3,8 +3,8 @@
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { flux } from "$lib/client/persistence/dataManagerv2";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { flux } from "$lib/client/components/flux/flux";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { INode } from "../node.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

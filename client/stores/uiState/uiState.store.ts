@@ -1,8 +1,8 @@
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { get } from "svelte/store";
-import { ResourceAccessPoint } from "../../components/resourceStores/resource.type";
+import { ResourceAccessPoint } from "../../components/flux/resourceStores/resource.type";
 import { appStore } from "../app.store";
 import { ObservableStore } from "../client.store";
 import { Action } from "../../types/action.enum";
@@ -12,11 +12,16 @@ import context from "../context.store";
 import { Embed } from "$lib/client/types/context.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { toasts } from "../notification.store";
+import type { IFlux } from "$lib/client/components/flux/flux.type";
+import { flux } from "$lib/client/components/flux/flux";
 
+export type UiStateStoreType = InstanceType<typeof UiStateStore>;
 class UiStateStore extends KeyValueStore<IUIStateStore> {
-  constructor() {
+  constructor(flux: IFlux) {
+    console.trace({ at: "UiStateStore constructor" });
     super(
       Resource.uiState,
+      flux,
       {},
       {
         refreshOnAppear: true,
@@ -142,8 +147,10 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 }
 
-export const uiState = new UiStateStore();
-
+/**
+ *
+ * TODO - populate app store derived value for interaction mode on uiState restore from cloud
+ */
 class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
   constructor() {
     super("derived-ui-state");
@@ -155,10 +162,13 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
   }
 
   refreshShortcutHintsState() {
-    const modeOfInteraction = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
-    });
-    const isShortcutHintsEnabled = uiState.getState(
+    const modeOfInteraction = flux.uiState.getState(
+      Action.MODE_OF_INTERACTION,
+      {
+        isProductScoped: true
+      }
+    );
+    const isShortcutHintsEnabled = flux.uiState.getState(
       UIState.SHOW_MORE_SHORTCUT_HINTS,
       {
         isProductScoped: true

@@ -6,7 +6,7 @@ import {
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import { CollectionType } from "./collection/collection.type";
 import {
@@ -16,7 +16,7 @@ import {
   PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
-import { flux } from "$lib/client/persistence/dataManagerv2";
+import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";

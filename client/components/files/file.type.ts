@@ -1,4 +1,4 @@
-import type { IResource } from "../resourceStores/resource.type";
+import type { IResource } from "../flux/resourceStores/resource.type";
 
 export type IFile = IResource & {
   type: string;

@@ -5,13 +5,13 @@
   import CollectionThumbnail from "../collection/thumbnail/CollectionThumbnail.svelte";
   import { resolveResourceType } from "../memotron.utils";
   import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
     ResourceAccessPoint,
     ResourceAccessMode
-  } from "$lib/client/components/resourceStores/resource.type";
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { appStore } from "$lib/client/stores/app.store";
   export let data: any[] = [];
   export let resource: Resource = Resource.node;

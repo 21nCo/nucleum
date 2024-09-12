@@ -12,7 +12,7 @@ import {
 } from "$lib/client/utils/surreal.utils";
 import { PersistenceActionType } from "../types/data.type";
 import type { ISurrealDatabase } from "../types/db.type";
-import type { IResourceBase } from "../components/resourceStores/resource.type";
+import type { IResourceBase } from "../components/flux/resourceStores/resource.type";
 import { clientStorage } from "./persistence.utils";
 import { ClientStorageKey } from "./persistence.type";
 

@@ -1,7 +1,7 @@
 import type {
   IResource,
   IResourseShareable
-} from "$lib/client/components/resourceStores/resource.type";
+} from "$lib/client/components/flux/resourceStores/resource.type";
 
 export interface IMemotronItemBase extends IResource, IResourseShareable {
   label: string;

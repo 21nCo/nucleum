@@ -12,7 +12,7 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "./collection.store";
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   const dispatch = createEventDispatcher();
   export let collection: IActiveCollectionStore;

@@ -13,7 +13,7 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import TreeMap from "$lib/client/components/treeMap/TreeMap.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
@@ -23,7 +23,7 @@
   import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   import GoalHomeV2 from "./home/GoalHomeV2.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   export let isGoalsHome = window.location.pathname === "/goal";
   export let parentBackgroundIndex: number = 0;

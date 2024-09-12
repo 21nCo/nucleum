@@ -1,5 +1,5 @@
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { get } from "svelte/store";
 import type {
@@ -8,6 +8,8 @@ import type {
 } from "./shortcut.type";
 import { logger } from "../debug/logger.client";
 import { resolveModifiers } from "./shortcut.utils";
+
+export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
 class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   constructor() {

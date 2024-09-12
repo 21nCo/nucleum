@@ -2,7 +2,7 @@
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";

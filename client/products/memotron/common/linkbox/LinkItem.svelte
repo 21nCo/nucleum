@@ -4,7 +4,7 @@
   import { createEventDispatcher } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
-  import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { flux } from "$lib/client/components/flux/flux";
   const dispatch = createEventDispatcher();
   export let id: string;
   let item: any;

@@ -1,4 +1,4 @@
-import type { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
 import type {
   IBlock,

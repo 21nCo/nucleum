@@ -9,8 +9,8 @@
   import { appStore } from "$lib/client/stores/app.store";
   import type { InputLabel } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { flux } from "$lib/client/persistence/dataManagerv2";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { flux } from "$lib/client/components/flux/flux";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { CollectionType } from "../collection/collection.type";
   export let isCapturePage: boolean = false;
   export let label: InputLabel = { label: "Select Type" };

@@ -9,7 +9,7 @@ import {
 } from "./analytics.types";
 import { generateUID, interceptSurrealResponse } from "$lib/client/utils/utils";
 import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import {
@@ -17,7 +17,7 @@ import {
   generateAnalyticsSeedPages,
   generateParamsForCards
 } from "./analytics.utils";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 
 export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;

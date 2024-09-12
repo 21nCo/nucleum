@@ -15,9 +15,9 @@
   import MemotronNotifications from "./MemotronNotifications.svelte";
   import PinnedTopBar from "$lib/client/layout/topNav/PinnedTopBar.svelte";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
-  import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
+  import ProductBaseLayer from "$lib/client/layout/layers/ProductBaseLayer.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   $: topBarResourceId = $page.url.searchParams.get(
     ResourceAccessMode.TOPBARFOCUS
@@ -52,7 +52,7 @@
   }
 </script>
 
-<BaseLayer>
+<ProductBaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     <div class="flex flex-col w-full h-full">
       <div class="flex w-full flex-grow">
@@ -86,5 +86,5 @@
     </div>
   {/if}
   <MemotronNotifications />
-</BaseLayer>
+</ProductBaseLayer>
 <svelte:document on:visibilitychange={handleVisibilityChange} />

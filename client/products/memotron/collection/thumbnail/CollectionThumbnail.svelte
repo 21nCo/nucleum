@@ -8,7 +8,7 @@
   import Counts from "./Counts.svelte";
   import Cover from "./Cover.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "../../common/thumbnail/ResourceThumbnailBase.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
   import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";

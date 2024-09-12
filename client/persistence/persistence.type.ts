@@ -1,8 +1,8 @@
-import type { Resource } from "../components/resourceStores/resource.enum";
+import type { Resource } from "../components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
-} from "../components/resourceStores/resource.type";
+} from "../components/flux/resourceStores/resource.type";
 import type { IRecordId, IResourceSelectParams } from "../types/data.type";
 
 export enum ClientStorageKey {
@@ -20,7 +20,10 @@ export enum ClientStorageKey {
   OFFLINE_SESSION_ID = "offlineSessionId",
   LAST_SYNCED_AT = "lastSyncedAt",
   /**
-   * Device access point id
+   * Device access point id. This id will be unique for each access point on a given device. Ex: different broswer logins, macOS app login etc.
+   *
+   * This is used to determine the need for cloning cloud db to local db if logged in from different access points.
+   *
    */
   DAP_ID = "dapId",
 

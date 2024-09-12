@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   CacheStrategy,
   StoreDataType,

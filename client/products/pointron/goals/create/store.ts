@@ -4,7 +4,7 @@ import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 class NewGoalStore extends ObservableStore<IGoal & IObservableStoreSubject> {
   constructor() {

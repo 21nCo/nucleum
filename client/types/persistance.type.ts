@@ -1,4 +1,4 @@
-import type { IResource } from "../components/resourceStores/resource.type";
+import type { IResource } from "../components/flux/resourceStores/resource.type";
 
 export type QueryParams =
   | string

@@ -12,7 +12,7 @@ import type {
 } from "$lib/client/types/pointron/goal.type";
 import { GoalPersistence } from "./goal.persistence";
 import { prefixTable } from "$lib/shared/utils/text.utils";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   deepCopy,
   isValidArray,
@@ -33,7 +33,7 @@ import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { Persistence } from "$lib/client/persistence/persistence";
-import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
+import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { AlertType } from "$lib/client/types/notification.type";
 

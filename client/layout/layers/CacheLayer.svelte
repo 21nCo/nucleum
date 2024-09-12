@@ -1,6 +1,6 @@
 <script lang="ts">
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { flux } from "$lib/client/components/flux/flux";
   import account from "$lib/client/stores/account.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { UserSessionType } from "$lib/client/types/account.type";

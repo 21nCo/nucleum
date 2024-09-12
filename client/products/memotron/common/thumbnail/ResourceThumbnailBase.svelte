@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
-  import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";

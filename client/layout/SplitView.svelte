@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import ResourceResolver from "./paint/ResourceResolver.svelte";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import RightSplit from "./RightSplit.svelte";
   export let id: string;
   let split: string | undefined = undefined;

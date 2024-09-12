@@ -6,7 +6,7 @@
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
   import { Action } from "$lib/client/types/action.enum";
   import Button from "$lib/client/elements/button/Button.svelte";

@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { logger } from "../components/debug/logger.client";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import {

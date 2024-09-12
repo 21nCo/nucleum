@@ -5,10 +5,8 @@
   import Divider from "../Divider.svelte";
   import Button from "../button/Button.svelte";
   import Icon from "../Icon.svelte";
-  import {
-    appStoreShuffleEmojis,
-    userPreferences
-  } from "../../stores/app.store";
+  import { appStoreShuffleEmojis } from "../../stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { Size } from "../../types/size.enum";
   import { createEventDispatcher, onMount } from "svelte";
   import { debouncer } from "$lib/client/utils/utils";

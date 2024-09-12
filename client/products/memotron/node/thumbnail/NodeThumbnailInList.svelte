@@ -1,6 +1,6 @@
 <script lang="ts">
   import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import {
     NodeType,
     type INodeThumbnail

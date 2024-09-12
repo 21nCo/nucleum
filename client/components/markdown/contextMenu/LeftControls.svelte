@@ -25,7 +25,7 @@
   import { writable } from "svelte/store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "../../resourceStores/resource.type";
+  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
   const dispatch = createEventDispatcher();

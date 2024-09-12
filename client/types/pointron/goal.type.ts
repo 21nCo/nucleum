@@ -6,7 +6,7 @@ import type { TimePeriod } from "$lib/client/types/time.type";
 import type {
   IResourceBase,
   ITrashInformation
-} from "../../components/resourceStores/resource.type";
+} from "../../components/flux/resourceStores/resource.type";
 import { TagId } from "./tagId.enum";
 
 export type IGoal = {

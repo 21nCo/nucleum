@@ -9,7 +9,7 @@ import type {
 import {
   ResourceAccessMode,
   type IResourceCapture
-} from "$lib/client/components/resourceStores/resource.type";
+} from "$lib/client/components/flux/resourceStores/resource.type";
 
 export type INode = (
   | INodeInterface<NodeType, NodeContent, INodeMetadata>

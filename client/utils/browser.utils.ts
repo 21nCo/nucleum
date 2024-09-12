@@ -316,6 +316,10 @@ export function goto(path: string, isReload: boolean = false) {
   );
 }
 
+export function dispatchCustomEvent(event: string, data: any) {
+  window.dispatchEvent(new CustomEvent(event, { detail: data }));
+}
+
 /**
  * TODO - test the reliability of this function
  * @returns true if the current environment is an extension environment

@@ -13,7 +13,7 @@ import {
   confirmationNotification,
   appEvents
 } from "$lib/client/stores/notification.store";
-import { appStore, userPreferences } from "./app.store";
+import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
 import { wait } from "../utils/time.utils";
 import { signout } from "../utils/account.utils";
@@ -170,10 +170,6 @@ class AccountStore extends ObservableStore<
     return true;
   }
 
-  performRedirectionCheck() {
-    return this.performLoginStatusCheck();
-  }
-
   ping() {
     this.postToEmbed();
     return this.persistence.ping();
@@ -236,30 +232,6 @@ class AccountStore extends ObservableStore<
 
   async seed() {
     await flux.seed();
-    await userPreferences.initializeTimeZoneForSignup();
-  }
-
-  async performLoginStatusCheck() {
-    const token = clientStorage.get(ClientStorageKey.STOKEN);
-    const offlineSessionId = clientStorage.get(
-      ClientStorageKey.OFFLINE_SESSION_ID
-    );
-    if (!token && !offlineSessionId) {
-      console.log("Token not found. Redirecting to signup");
-      appStore.gotoPath("/signup");
-      return false;
-    }
-    let isSessionExpiredOrRefreshing = await this.checkIfSessionExpired();
-    if (isSessionExpiredOrRefreshing && get(isRefreshingToken)) {
-      while (get(isRefreshingToken)) {
-        await wait(1000);
-      }
-    }
-    isSessionExpiredOrRefreshing = await this.checkIfSessionExpired();
-    if (isSessionExpiredOrRefreshing) {
-      appStore.gotoPath("/signup?msg=expired");
-      return false;
-    } else return true;
   }
 
   getSignedUrl(contentType: string, fileName: string, isTemp: boolean) {

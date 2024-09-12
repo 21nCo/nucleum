@@ -13,6 +13,7 @@ export enum GlobalEvent {
    */
   BOOTSTRAP = "BOOTSTRAP",
   CUSTOM_NAVIGATION = "custom:navigation",
+  PERSIST_APPEARANCE_USER = "PERSIST_APPEARANCE_USER",
   CUSTOM_ALERT = "custom:alert",
   ACTIVATE_SEARCH_BOX = "ACTIVATE_SEARCH_BOX",
   ENTER = "Enter",

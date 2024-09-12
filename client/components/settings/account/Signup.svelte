@@ -14,6 +14,8 @@
   import { Action } from "$lib/client/types/action.enum";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import { UserSessionType } from "$lib/client/types/account.type";
+
   let isSignup = true;
   let message: string | undefined = undefined;
   let messageParam = $page.url.searchParams.get("msg");
@@ -27,7 +29,7 @@
     }
   }
   onMount(() => {
-    if (!$account.isCloudUser) return;
+    if ($account.sessionType !== UserSessionType.CLOUD) return;
     const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
     if (isLoginFromExtensionParam) {
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);

@@ -6,11 +6,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import BulkEditBar from "../../common/BulkEditBar.svelte";
   import InlineTimeoutMessage from "$lib/client/elements/text/InlineTimeoutMessage.svelte";
@@ -27,8 +27,8 @@
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { flux } from "$lib/client/persistence/dataManagerv2";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { flux } from "$lib/client/components/flux/flux";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);

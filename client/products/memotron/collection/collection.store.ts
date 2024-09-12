@@ -1,11 +1,11 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { debouncer } from "$lib/client/utils/utils";
 import {
   activeResources,
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/resourceStores/resource.store";
+} from "$lib/client/components/flux/resourceStores/resource.store";
 import {
   CollectionLayout,
   type IActiveCollection,
@@ -19,10 +19,10 @@ import {
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
 import { CombinationViewType } from "../curation/curation.type";
-import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { flux } from "$lib/client/persistence/dataManagerv2";
+import { flux } from "$lib/client/components/flux/flux";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { IProperty } from "./properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";

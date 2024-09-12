@@ -3,15 +3,15 @@ import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.t
 import {
   resolveMultiSelectStore,
   ResourceStore
-} from "$lib/client/components/resourceStores/resource.store";
+} from "$lib/client/components/flux/resourceStores/resource.store";
 import { copyResourceLinkToClipboard } from "../memotron.utils";
 import {
   ResourceAccessPoint,
   ResourceAccessMode
-} from "$lib/client/components/resourceStores/resource.type";
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
-import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "../memotron.store";
 import type { IContextMenuItem } from "$lib/client/types/select.type";
 

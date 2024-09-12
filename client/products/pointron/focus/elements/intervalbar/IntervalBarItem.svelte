@@ -4,7 +4,8 @@
     BlockType,
     SessionUIContext
   } from "$lib/client/types/pointron/session.type";
-  import { currentTime, userPreferences } from "$lib/client/stores/app.store";
+  import { currentTime } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import { formatTime } from "$lib/client/utils/time.utils";
   export let progress: number = 0;

@@ -10,7 +10,7 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
 
   onMount(() => {

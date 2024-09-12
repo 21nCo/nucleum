@@ -1,5 +1,5 @@
 import { Cloud } from "$lib/client/types/cloud.enum";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { get } from "svelte/store";
 import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { cloudProvider } from "$lib/client/persistence/persistence";

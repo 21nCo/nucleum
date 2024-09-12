@@ -18,7 +18,7 @@
     type ICollection
   } from "$lib/client/products/memotron/collection/collection.type";
   import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import Memocon from "../common/Memocon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -27,8 +27,8 @@
   import { onMount } from "svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   let title: string;
   let isStarred: boolean = false;

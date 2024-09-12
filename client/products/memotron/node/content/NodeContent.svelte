@@ -19,7 +19,8 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let node: IActiveNodeStore;
   export let mdId: string;

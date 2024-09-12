@@ -10,7 +10,7 @@ import type {
   NodeType,
   ListType
 } from "../../products/memotron/node/node.type";
-import type { IResourceBase } from "../resourceStores/resource.type";
+import type { IResourceBase } from "../flux/resourceStores/resource.type";
 
 export type IMarkdownStore = IMarkdown &
   IObservableStoreSubject & {

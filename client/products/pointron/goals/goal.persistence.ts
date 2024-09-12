@@ -1,6 +1,6 @@
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import type { IPointGoal } from "$lib/client/types/pointron/goal.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 const surrealDb = new SurrealDatabase();
 

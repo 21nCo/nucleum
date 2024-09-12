@@ -16,7 +16,7 @@
   import context from "$lib/client/stores/context.store";
   import LocalLeftNav from "./LocalLeftNav.svelte";
   import view from "$lib/client/stores/view.store";
-  import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
+  import ProductBaseLayer from "$lib/client/layout/layers/ProductBaseLayer.svelte";
   import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
@@ -82,7 +82,7 @@
   }
 </script>
 
-<BaseLayer>
+<ProductBaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     <!-- TODO - except touch devices -->
     {#if interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
@@ -101,5 +101,5 @@
   {/if}
   <Notifications />
   <BackgroundSoundPlayer />
-</BaseLayer>
+</ProductBaseLayer>
 <svelte:document on:visibilitychange={handleVisibilityChange} />

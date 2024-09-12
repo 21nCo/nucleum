@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import type { IActiveNodeStore } from "../node.store";
   import { NodeRightPaneType } from "../node.type";

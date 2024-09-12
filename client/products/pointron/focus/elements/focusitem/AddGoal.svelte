@@ -1,6 +1,6 @@
 <script lang="ts">
   import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { toasts } from "$lib/client/stores/notification.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { Position } from "$lib/client/types/direction.enum";

@@ -1,12 +1,12 @@
-import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   type IProperty,
   PropertyType
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
+import type { IResourceCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 
 class PropertyStore extends ResourceStore<IProperty> {
   constructor() {

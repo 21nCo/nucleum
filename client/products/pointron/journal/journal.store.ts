@@ -1,5 +1,5 @@
 import type { ICalendarHeatMapDataProvider } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatmap.types";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { TimeScale } from "$lib/client/types/time.type";
 import type { IFocusHeatMapStore } from "./journal.types";
 import { replaceParams } from "$lib/client/utils/surreal.utils";

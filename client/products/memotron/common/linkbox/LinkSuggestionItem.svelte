@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
-  import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { properCase } from "$lib/shared/utils/text.utils";
   import NodeThumbnailTitle from "../../node/thumbnail/NodeThumbnailTitle.svelte";
   import NodeTitleBreadcrumbs from "../../node/title/NodeTitleBreadcrumbs.svelte";

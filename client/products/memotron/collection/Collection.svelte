@@ -29,7 +29,7 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";

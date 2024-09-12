@@ -18,7 +18,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { fade, slide } from "svelte/transition";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
   export let selectedView: string = "Content";

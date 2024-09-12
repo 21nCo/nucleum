@@ -2,7 +2,8 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import account from "$lib/client/stores/account.store";
-  import { currentTime, userPreferences } from "$lib/client/stores/app.store";
+  import { currentTime } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import { Action } from "$lib/client/types/action.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";

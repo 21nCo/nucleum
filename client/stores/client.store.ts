@@ -6,8 +6,7 @@ import {
   type IStore,
   type ResourceDependency
 } from "../types/data.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { dataManager } from "../persistence/dataManager";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export class ObservableStore<T extends IObservableStoreSubject>
   implements IObservableStore<T>
@@ -42,13 +41,13 @@ export class ObservableStore<T extends IObservableStoreSubject>
     this.dependencies = params?.dependencies;
     this.mutatingResources = params?.mutatingResources;
     this.dboDependencies = params?.dboDependencies;
-    dataManager.retrieveCache(this.id).then((x: T | null) => {
-      if (!x) {
-        return;
-      } else {
-        this._set(x);
-      }
-    });
+    // dataManager.retrieveCache(this.id).then((x: T | null) => {
+    //   if (!x) {
+    //     return;
+    //   } else {
+    //     this._set(x);
+    //   }
+    // });
   }
   set(val: T) {
     this._set(val);
@@ -60,7 +59,7 @@ export class ObservableStore<T extends IObservableStoreSubject>
    * Caches the data locally
    */
   protected async cache() {
-    dataManager.cache(this);
+    // dataManager.cache(this);
   }
   /**
    * This function gets triggered from dataManager when the data is fetched from the server.
@@ -71,6 +70,7 @@ export class ObservableStore<T extends IObservableStoreSubject>
     this.cache();
   }
   refresh(params?: any): Promise<any> {
-    return dataManager.refresh(this.id, params?.isShowRefreshingState);
+    // return dataManager.refresh(this.id, params?.isShowRefreshingState);
+    return Promise.resolve(true);
   }
 }

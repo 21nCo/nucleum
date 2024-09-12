@@ -7,8 +7,8 @@
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   import HoverableElement from "../HoverableElement.svelte";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
-  import ShortcutText from "../text/ShortcutText.svelte";
+  // import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  // import ShortcutText from "../text/ShortcutText.svelte";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   export let parentBgIndex: number = 1;
@@ -139,7 +139,7 @@
       <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
-      {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
+      <!-- {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
         <ShortcutText
           {shortcut}
           parentBgIndex={style === ButtonStyle.PLAIN
@@ -148,7 +148,7 @@
               ? parentBgIndex + 1
               : undefined}
         />
-      {/if}
+      {/if} -->
     {:else}
       <slot />
     {/if}

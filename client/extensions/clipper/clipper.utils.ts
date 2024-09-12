@@ -1,5 +1,11 @@
-import type { IResourceCapture } from "$lib/client/components/resourceStores/resource.type";
-import { NodeType, type IClipCapture, type ITweet, type ITwitterProfile, type IWebPage,} from "$lib/client/products/memotron/node/node.type";
+import type { IResourceCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  NodeType,
+  type IClipCapture,
+  type ITweet,
+  type ITwitterProfile,
+  type IWebPage
+} from "$lib/client/products/memotron/node/node.type";
 import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
 import { relayToContentScript } from "$lib/client/utils/extension.utils";
 import { contentTypeMap } from "$lib/client/products/memotron/common/urlMap";
@@ -9,136 +15,137 @@ import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/c
 import { generateHash } from "$lib/shared/utils/crypto.utils";
 
 export function isYoutubeVideoUrl(url) {
-    const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
-    return regex.test(url);
+  const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
+  return regex.test(url);
 }
 
 export function extractVideoId(url) {
-    const match = url.match(/^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
-    return match ? match[2] : null;
+  const match = url.match(
+    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/
+  );
+  return match ? match[2] : null;
 }
 
 /**
  * @deprecated - using anchor and svelte component instead
- * @param controlElement 
- * @returns 
+ * @param controlElement
+ * @returns
  */
 export function createClipButton(controlElement) {
-    const clipButton = document.createElement('button');
-    clipButton.className = 'ytclip'; 
-    clipButton.innerHTML = `
+  const clipButton = document.createElement("button");
+  clipButton.className = "ytclip";
+  clipButton.innerHTML = `
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                            <path d="M15.8103 5.45252L20.6058 5.00266C20.9096 4.97418 21.0723 5.17793 20.9688 5.45836C20.9688 5.45836 13.6738 17.2629 13.076 18.1115C12.4782 18.9602 11.9535 19.5909 10.8974 18.1115C9.84133 16.6322 3.03079 5.45836 3.03079 5.45836C2.92804 5.17793 3.09079 4.97418 3.39455 5.00266L8.19013 5.45252C8.49388 5.481 8.82314 5.73222 8.92364 6.01265C8.92364 6.01265 11.5 10.9796 12.0133 10.9796C12.5266 10.9796 15.0767 6.01338 15.0767 6.01338C15.1772 5.73222 15.5057 5.481 15.8103 5.45252Z" fill="white"/>
                           </svg>
                           `;
 
-     const controlHeight = controlElement.offsetHeight;
-     clipButton.style.padding = '0';
-     clipButton.style.border = '1px solid #0056b3';
-     clipButton.style.background = '#007bff';
-     clipButton.style.height = '${controlHeight}px';
-     clipButton.style.width = '${controlHeight}px';
-     clipButton.style.borderRadius = '4px';
-     clipButton.style.display = 'flex';
-     clipButton.style.alignItems = 'center';
-     clipButton.style.justifyContent = 'center';
+  const controlHeight = controlElement.offsetHeight;
+  clipButton.style.padding = "0";
+  clipButton.style.border = "1px solid #0056b3";
+  clipButton.style.background = "#007bff";
+  clipButton.style.height = "${controlHeight}px";
+  clipButton.style.width = "${controlHeight}px";
+  clipButton.style.borderRadius = "4px";
+  clipButton.style.display = "flex";
+  clipButton.style.alignItems = "center";
+  clipButton.style.justifyContent = "center";
 
-      clipButton.addEventListener('mousedown', () => {
-          clipButton.style.transform = 'scale(0.95)';
-      });
-      clipButton.addEventListener('mouseup', () => {
-         clipButton.style.transform = 'scale(1)';
-      });
-      clipButton.addEventListener('mouseout', () => {
-          clipButton.style.transform = 'scale(1)';
-     });
+  clipButton.addEventListener("mousedown", () => {
+    clipButton.style.transform = "scale(0.95)";
+  });
+  clipButton.addEventListener("mouseup", () => {
+    clipButton.style.transform = "scale(1)";
+  });
+  clipButton.addEventListener("mouseout", () => {
+    clipButton.style.transform = "scale(1)";
+  });
 
-     return clipButton;
+  return clipButton;
 }
 
 export function createClipPointer() {
-    const pointer = document.createElement('div');
-    pointer.className = 'my-custom-pointer';
-        
-    pointer.innerHTML = `
+  const pointer = document.createElement("div");
+  pointer.className = "my-custom-pointer";
+
+  pointer.innerHTML = `
                        <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M0.6 0H15.4C15.7314 0 16 0.26863 16 0.600001V13.1844C16 13.382 15.9027 13.5669 15.7399 13.6788L8.33992 18.7663C8.13517 18.9071 7.86483 18.9071 7.66008 18.7663L0.260083 13.6788C0.0972701 13.5669 0 13.382 0 13.1844V0.6C0 0.268629 0.26863 0 0.6 0Z" fill="#2c70dd"/>
           <path d="M0.6 0H15.4C15.7314 0 16 0.26863 16 0.600001V13.1844C16 13.382 15.9027 13.5669 15.7399 13.6788L8.33992 18.7663C8.13517 18.9071 7.86483 18.9071 7.66008 18.7663L0.260083 13.6788C0.0972701 13.5669 0 13.382 0 13.1844V0.6C0 0.268629 0.26863 0 0.6 0Z" fill="none" stroke="white" stroke-width="0" />
 </svg>
 
                            `;
-    pointer.style.backgroundSize = 'contain';
-    pointer.style.backgroundRepeat = 'no-repeat';
-    pointer.style.width = '20px'; 
-    pointer.style.height = '20px';
-    pointer.style.cursor = "pointer";
-  pointer.style.position = 'absolute';
-  pointer.style.zIndex = '10000';
-  pointer.style.bottom = '70px';
-  
-  const path = pointer.querySelector('path');
-  const strokePath = pointer.querySelectorAll('path')[1];
-  path.style.transition = 'fill-opacity 0.2s';
-  path.style.fillOpacity = '0.6';
-  path.style.border = '1px solid transparent';
-  strokePath.style.transition = 'stroke-width 0.2s';
+  pointer.style.backgroundSize = "contain";
+  pointer.style.backgroundRepeat = "no-repeat";
+  pointer.style.width = "20px";
+  pointer.style.height = "20px";
+  pointer.style.cursor = "pointer";
+  pointer.style.position = "absolute";
+  pointer.style.zIndex = "10000";
+  pointer.style.bottom = "70px";
 
-    pointer.addEventListener('mouseenter', () => {
-      path.style.fillOpacity = '1'; 
-      pointer.style.bottom = '72px';
-      strokePath.style.strokeWidth = '2';
-    });
+  const path = pointer.querySelector("path");
+  const strokePath = pointer.querySelectorAll("path")[1];
+  path.style.transition = "fill-opacity 0.2s";
+  path.style.fillOpacity = "0.6";
+  path.style.border = "1px solid transparent";
+  strokePath.style.transition = "stroke-width 0.2s";
 
-    pointer.addEventListener('mouseleave', () => {
-      path.style.fillOpacity = '0.6';
-      pointer.style.bottom = '70px';
-      path.style.border = '1px solid transparent';
-      strokePath.style.strokeWidth = '0';
-    });
+  pointer.addEventListener("mouseenter", () => {
+    path.style.fillOpacity = "1";
+    pointer.style.bottom = "72px";
+    strokePath.style.strokeWidth = "2";
+  });
 
-    return pointer;
+  pointer.addEventListener("mouseleave", () => {
+    path.style.fillOpacity = "0.6";
+    pointer.style.bottom = "70px";
+    path.style.border = "1px solid transparent";
+    strokePath.style.strokeWidth = "0";
+  });
+
+  return pointer;
 }
 
-
 export async function resolveCurrentTabData(
-    isParseDOM: boolean = false
-  ): Promise<TabData> {
-    const tabData = await chrome.storage.local.get("tab");
-    console.log({ tabData });
-    const tab = tabData?.tab;
-    if (!tab) return;
-    let hash = "";
-    if (!isParseDOM) {
-      return {
-        url: tab.url,
-        label: tab.title,
-        metadata: {
-          favicon: tab.favIconUrl,
-          hostname: new URL(tab.url).hostname
-        }
-      };
-    }
-    try {
-      const data = await relayToContentScript(
-        { event: ExtensionEvent.PAGE_STATE },
-        tab.id
-      );
-      return {
-        url: tab.url,
-        label: tab.title,
-        description: data.description,
-        hash,
-        metadata: {
-          favicon: tab.favIconUrl,
-          hostname: new URL(tab.url).hostname,
-          ...data.metadata
-        }
-      };
-    } catch (e) {
-      console.error("ERROR", e);
-    }
+  isParseDOM: boolean = false
+): Promise<TabData> {
+  const tabData = await chrome.storage.local.get("tab");
+  console.log({ tabData });
+  const tab = tabData?.tab;
+  if (!tab) return;
+  let hash = "";
+  if (!isParseDOM) {
+    return {
+      url: tab.url,
+      label: tab.title,
+      metadata: {
+        favicon: tab.favIconUrl,
+        hostname: new URL(tab.url).hostname
+      }
+    };
   }
-  
+  try {
+    const data = await relayToContentScript(
+      { event: ExtensionEvent.PAGE_STATE },
+      tab.id
+    );
+    return {
+      url: tab.url,
+      label: tab.title,
+      description: data.description,
+      hash,
+      metadata: {
+        favicon: tab.favIconUrl,
+        hostname: new URL(tab.url).hostname,
+        ...data.metadata
+      }
+    };
+  } catch (e) {
+    console.error("ERROR", e);
+  }
+}
+
 /**
  * Extracts full tab data from the current tab.
  * Note: This function should be called only from the content script.
@@ -172,7 +179,7 @@ export function extractFullTabData(): IResourceCapture<IWebPage> {
     body: {
       url,
       hash,
-      description,
+      description
     },
     metadata: {
       faviconLink,
@@ -187,7 +194,7 @@ export function extractFullTabData(): IResourceCapture<IWebPage> {
   };
 }
 
-export function extractMinimalTabData(): IResourceCapture<IWebPage> { 
+export function extractMinimalTabData(): IResourceCapture<IWebPage> {
   const title = document.title;
   const hash = generateHash(document.body.innerHTML);
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
@@ -195,24 +202,25 @@ export function extractMinimalTabData(): IResourceCapture<IWebPage> {
   const contentType = resolveContentTypeForUrl(url);
   logger.debug({ at: "extractMinimalTabData", url, contentType });
   return {
-    metadata: { ogTitle, ogImage, ogDescription, ogUrl }, label: title, contentType, body: { url, hash }
+    metadata: { ogTitle, ogImage, ogDescription, ogUrl },
+    label: title,
+    contentType,
+    body: { url, hash }
   };
 }
 
-
 export function resolveUrl(url?: string) {
-  if(!url) url = window.location.href;
-  if (url.includes("youtube.com")) { 
-    return url.split("&")[0]
+  if (!url) url = window.location.href;
+  if (url.includes("youtube.com")) {
+    return url.split("&")[0];
   }
   return url;
 }
 
-
 function resolveOgData() {
   const ogTitle = (
     document.querySelector("meta[property='og:title']") as HTMLMetaElement
-  )?.content
+  )?.content;
   const ogImage = (
     document.querySelector("meta[property='og:image']") as HTMLMetaElement
   )?.content;
@@ -225,30 +233,28 @@ function resolveOgData() {
   const ogSiteName = (
     document.querySelector("meta[property='og:site_name']") as HTMLMetaElement
   )?.content;
-  return {ogTitle, ogImage, ogDescription, ogUrl, ogSiteName};
+  return { ogTitle, ogImage, ogDescription, ogUrl, ogSiteName };
 }
-
-
 
 export function resolveContentTypeString(contentType: NodeType | null) {
   if (!contentType) return "webpage";
-  else if (contentType === NodeType.WEB_SCREENSHOT_CLIP)
-    return "screenshot";
+  else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) return "screenshot";
   else return enumToString(contentType);
 }
 
 export function resolveContentTypeForUrl(url: string) {
-  return contentTypeMap.find((item) => item.regex.some((regex) => regex.test(url)))?.contentType ?? NodeType.WEB_PAGE;
+  return (
+    contentTypeMap.find((item) => item.regex.some((regex) => regex.test(url)))
+      ?.contentType ?? NodeType.WEB_PAGE
+  );
 }
 
-
-
 /**
- * 
+ *
  * Note: media is not currently included in the content of the tweet as it might require reuploading the media to s3 and using in the app.
- * 
- * @param tweetArticle 
- * @returns 
+ *
+ * @param tweetArticle
+ * @returns
  */
 function parseTweetContent(tweetArticle: Element): IClipCapture<
   ITweet & {
@@ -284,14 +290,11 @@ function parseTweetContent(tweetArticle: Element): IClipCapture<
     tweetLinks,
     tweetTime
   });
-  const domain = contentTypeMap.find((item) => item.contentType === NodeType.TWEET)?.currentDomain;
-  const {
-    username,
-    authorName,
-    tweetId,
-    externalLinks,
-    profileImageUrl
-  } = extractInfoFromLinks(tweetLinks);
+  const domain = contentTypeMap.find(
+    (item) => item.contentType === NodeType.TWEET
+  )?.currentDomain;
+  const { username, authorName, tweetId, externalLinks, profileImageUrl } =
+    extractInfoFromLinks(tweetLinks);
   return {
     contentType: NodeType.TWEET,
     body: {
@@ -365,7 +368,10 @@ function parseTweetContent(tweetArticle: Element): IClipCapture<
 }
 
 export function extractTweet(element) {
-  const tweetArticle = findAncestorOrSelf(element, 'article[data-testid="tweet"]');
+  const tweetArticle = findAncestorOrSelf(
+    element,
+    'article[data-testid="tweet"]'
+  );
   if (!tweetArticle) return;
   return parseTweetContent(tweetArticle);
 
@@ -392,7 +398,6 @@ export function extractTweet(element) {
     }
     return null;
   }
-
 }
 
 export function extractTweetFromTweeetPage() {
@@ -400,33 +405,43 @@ export function extractTweetFromTweeetPage() {
     ClipperElementIdentifier.MAIN_TWEET_POST
   );
   const tweetId = window.location.pathname.split("/status/")[1];
-  const regex = new RegExp(tweetId, 'i');
-  const allLinks = document.querySelectorAll('a');
-  const element = Array.from(allLinks).find(link => regex.test(link.getAttribute('href')));
+  const regex = new RegExp(tweetId, "i");
+  const allLinks = document.querySelectorAll("a");
+  const element = Array.from(allLinks).find((link) =>
+    regex.test(link.getAttribute("href"))
+  );
   if (!tweetElement && !element) return;
   return extractTweet(tweetElement ?? element);
 }
 
 /**
  * This function is triggered from twitter profile page.
- * @returns 
+ * @returns
  */
-export function extractTwitterProfile(): IClipCapture<ITwitterProfile & {
-  username: string;
-}> { 
+export function extractTwitterProfile(): IClipCapture<
+  ITwitterProfile & {
+    username: string;
+  }
+> {
   const url = window.location.href;
   const username = url.split("https://")[1].split("/")[1];
   const bioElement = document.querySelector('[data-testid="UserDescription"]');
   const nameElement = document.querySelector('[data-testid="UserName"]');
   const linkElement = document.querySelector('[data-testid="UserUrl"]');
-  const avatarElement = document.querySelector(`[data-testid^="UserAvatar-Container-${username}"]`);
-  const imgElement = avatarElement?.querySelector('img');
+  const avatarElement = document.querySelector(
+    `[data-testid^="UserAvatar-Container-${username}"]`
+  );
+  const imgElement = avatarElement?.querySelector("img");
   const profileImageUrl = imgElement?.src;
   const { ogTitle } = resolveOgData();
   const name = nameElement?.textContent?.split("@")[0];
   const bio = bioElement?.textContent;
   const bioLink = linkElement?.href;
   const bioLinkText = linkElement?.textContent;
-  return { body: { name, bio, url, profileImageUrl }, metadata:{ ogTitle, bioLink, bioLinkText }, username, contentType: NodeType.TWITTER_PROFILE };
+  return {
+    body: { name, bio, url, profileImageUrl },
+    metadata: { ogTitle, bioLink, bioLinkText },
+    username,
+    contentType: NodeType.TWITTER_PROFILE
+  };
 }
-

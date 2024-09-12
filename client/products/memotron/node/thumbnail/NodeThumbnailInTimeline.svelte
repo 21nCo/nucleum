@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import {
     NodeType,

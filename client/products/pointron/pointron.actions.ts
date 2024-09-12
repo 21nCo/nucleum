@@ -24,7 +24,7 @@ import BackgroundMusic from "$lib/client/products/pointron/focus/backgroundMusic
 import { Size } from "$lib/client/types/size.enum";
 import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
 import { get } from "svelte/store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import modalEvent from "$lib/client/components/modal/modal.store";
 import {
   toasts,

@@ -83,6 +83,7 @@ export type AppearanceStore = IStore & {
   isSyncWithSystem: boolean;
   systemTheme: Theme;
   typeface: string;
+  accessibilitySizingFactor: number;
 };
 
 export enum Color {

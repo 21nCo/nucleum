@@ -2,7 +2,7 @@
   import Chart from "$lib/client/components/charts/Chart.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import TimePeriodValueSelector from "$lib/client/elements/datetime/timeperiodpicker/RelativeTimeRangeSelector.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { ChartType } from "$lib/client/types/analytics.type";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import {

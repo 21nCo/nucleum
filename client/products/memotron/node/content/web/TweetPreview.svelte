@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { getContext, onMount } from "svelte";
   import { resolveContentPreview } from "../../node.utils";

@@ -1,6 +1,6 @@
 <script lang="ts">
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import {
     type IProperty,

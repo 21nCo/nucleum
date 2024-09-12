@@ -5,6 +5,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Action } from "$lib/client/types/action.enum";
@@ -49,6 +50,7 @@
     uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
       isProductScoped: true
     });
+    $appStore.interactionMode = selectedMode;
   }
 </script>
 

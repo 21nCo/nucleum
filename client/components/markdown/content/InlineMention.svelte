@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolveResource } from "$lib/client/products/memotron/memotron.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
   export let id: string;
   let resource: any;

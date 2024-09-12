@@ -1,6 +1,6 @@
 import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { appEvents } from "$lib/client/stores/notification.store";
 import {
   PersistenceActionType,
@@ -9,7 +9,7 @@ import {
   type IRecordId
 } from "$lib/client/types/data.type";
 import { Position } from "$lib/client/types/direction.enum";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
@@ -44,7 +44,7 @@ import {
 import type {
   IResourceCapture,
   IResourceCaptureWithId
-} from "$lib/client/components/resourceStores/resource.type";
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
 import {
@@ -53,7 +53,7 @@ import {
 } from "$lib/client/utils/extension.utils";
 import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
 import account from "$lib/client/stores/account.store";
-import { flux } from "$lib/client/persistence/dataManagerv2";
+import { flux } from "$lib/client/components/flux/flux";
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";

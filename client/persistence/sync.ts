@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { logger } from "../components/debug/logger.client";
 import type { IRecordId } from "../types/data.type";

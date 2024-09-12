@@ -387,6 +387,20 @@ export function detectTimeZone() {
   }
 }
 
+/**
+ * Date().getTimezoneOffset() returns the offset in minutes and calculates offfset by measuring current user's timezone as 0 and relative measure of UTC from that.
+ *
+ * Ex: If user is in UTC+5:30, getTimezoneOffset() will return -330 which is UTC is -330 minutes away from current user's timezone.
+ *
+ * On the database, the offset is stored as an offset of user's zone from UTC, so the offset is stored as +330 for UTC+5:30
+ *
+ */
+export function detectTimeZoneFallback() {
+  const offset = -new Date().getTimezoneOffset() * 60;
+  const label = detectTimeZone()?.label ?? "UTC";
+  return { offset, label };
+}
+
 //todo cleanup - this is duplicate of formatSeconds
 export function getTimeLabel(time: number) {
   //time in minutes

@@ -1,5 +1,5 @@
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type { IHighlightStore } from "./highlight.type";
 
 const seedHighlighters: IHighlightStore = {

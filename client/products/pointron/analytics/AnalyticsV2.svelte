@@ -6,7 +6,7 @@
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import view from "$lib/client/stores/view.store";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { TextStyle } from "$lib/client/types/text.enum";

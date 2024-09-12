@@ -9,11 +9,11 @@ import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
 import { logger } from "../../components/debug/logger.client";
 import { resolveDboUpdateQuery } from "$lib/shared/utils/surreal.utils";
-import { Resource } from "../../components/resourceStores/resource.enum";
+import { Resource } from "../../components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
-} from "../../components/resourceStores/resource.type";
+} from "../../components/flux/resourceStores/resource.type";
 import type {
   IPrimitiveDbDataType,
   IRecordId,

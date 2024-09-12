@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   type IActiveSessionStore,
   type ISessionInterval,
@@ -25,7 +25,8 @@ import {
   type SessionComposition,
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
-import { appStore, userPreferences } from "$lib/client/stores/app.store";
+import { appStore } from "$lib/client/stores/app.store";
+import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import modalEvent, {
   fullScreen,
   player
@@ -55,10 +56,10 @@ import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import context from "$lib/client/stores/context.store";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { goalStore } from "../goals/goal.store";
-import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
@@ -281,8 +282,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder
+          ? (session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder)
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -613,7 +614,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : currentLastBar.duration ?? 0 + params.timeElapsed
+          : (currentLastBar.duration ?? 0 + params.timeElapsed)
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }

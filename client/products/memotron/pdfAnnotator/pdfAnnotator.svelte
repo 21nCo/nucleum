@@ -22,7 +22,7 @@
   import { debouncer, generateUID } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import InlineToolBar from "./toolbar/InlineToolBar.svelte";
   import Comment from "./comment/Comment.svelte";
   import InlineEditToolBar from "./toolbar/InlineEditToolBar.svelte";

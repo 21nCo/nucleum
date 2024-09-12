@@ -2,7 +2,7 @@ import { Cloud } from "$lib/client/types/cloud.enum";
 import { get, writable } from "svelte/store";
 import type { JsonValue } from "$lib/client/types/json.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import {
   performApiCall,
@@ -18,7 +18,7 @@ import {
 import type {
   IResource,
   IResourceBase
-} from "../components/resourceStores/resource.type";
+} from "../components/flux/resourceStores/resource.type";
 import { ClientStorageKey } from "./persistence.type";
 
 export const cloudProvider = writable(Cloud.surreal);

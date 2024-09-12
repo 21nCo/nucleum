@@ -3,7 +3,7 @@
   import MediaContent from "../content/MediaContent.svelte";
   import MediaNodeFloatingBar from "../floatingBar/MediaNodeFloatingBar.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { NodeRightPaneType } from "../node.type";
 
   export let node: IActiveNodeStore;

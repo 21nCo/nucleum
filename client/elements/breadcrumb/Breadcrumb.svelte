@@ -7,7 +7,7 @@
   import { determineTruncateLength } from "$lib/shared/utils/text.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let items: BreadcrumbItem[] = [];

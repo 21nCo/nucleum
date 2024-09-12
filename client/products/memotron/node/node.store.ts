@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   LinkType,
   type IActiveNode,
@@ -9,17 +9,17 @@ import {
   activeResources,
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/resourceStores/resource.store";
+} from "$lib/client/components/flux/resourceStores/resource.store";
 import { debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
 import { linker } from "../memotron.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
-import { flux } from "$lib/client/persistence/dataManagerv2";
+import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";

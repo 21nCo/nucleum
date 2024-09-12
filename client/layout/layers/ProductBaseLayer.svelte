@@ -1,0 +1,241 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { page } from "$app/stores";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
+
+  import type { IEvent } from "$lib/client/types/event.type";
+  import { pingParent, postToParent } from "$lib/client/utils/embed.utils";
+  import { detectTimeZone } from "$lib/client/utils/time.utils";
+
+  import { Persistence } from "$lib/client/persistence/persistence";
+  import { dataManager } from "$lib/client/persistence/dataManager";
+
+  import view from "$lib/client/stores/view.store";
+  import account from "$lib/client/stores/account.store";
+  import {
+    appLoadingState,
+    appStore,
+    currentTime,
+    excludedPathsForRedirectionCheck
+  } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { appEvents, toasts } from "$lib/client/stores/notification.store";
+  import context from "$lib/client/stores/context.store";
+
+  import DebugLayer from "./debug/DebugLayer.svelte";
+  import ModalLayer from "./ModalLayer.svelte";
+  import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
+  import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
+  import Intercom from "./Intercom.svelte";
+  import CacheLayer from "./CacheLayer.svelte";
+
+  import { globalActions } from "$lib/client/stores/actionMap";
+  import { localActions } from "$local/localActionMap";
+  import { localCacheableStores } from "$local/localStoresMap";
+  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+
+  import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
+  import { appMenuStore } from "../../stores/appMenu/appMenu.store";
+  import { defaultAppMenu } from "$local/local";
+  import { AlertType } from "$lib/client/types/notification.type";
+  import { cacheableStores } from "$lib/client/stores/globalStoresMap";
+  import AppLoadingView from "../paint/AppLoadingView.svelte";
+  import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { LogType } from "$lib/client/components/debug/debug.type";
+  import { flux, initFlux } from "$lib/client/components/flux/flux";
+  import { UserSessionType } from "$lib/client/types/account.type";
+  import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
+
+  onMount(async () => {
+    if (
+      !$context.isSheet &&
+      $context.isEmbed &&
+      $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
+    ) {
+      await parseEmbedToken();
+    }
+    appMenuStore.setDefaults(defaultAppMenu);
+    await initializeData($context.isSheet);
+    const appEventSub = appEvents.subscribe(appEventHandler);
+    $appLoadingState.isBaseLoaded = true;
+
+    return () => {
+      appEventSub();
+    };
+  });
+  /**
+   * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
+   *
+   * TODO - Prompt user if timezone change detected before directly setting the timezone.
+   *
+   * @param isSignup - If the user is signing up
+   */
+  function refreshTimeZone() {
+    const timeZone = detectTimeZone();
+    if (!timeZone || !$userPreferences) return;
+    if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
+      return userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
+    }
+  }
+  const visibilityChangeListener = async (event: Event) => {
+    if (document?.hidden) return;
+    refreshTimeZone();
+    dataManager.refreshOnAppear();
+    if (isExtensionEnvironment()) return;
+    performAppUpdateCheck();
+    account.ping();
+  };
+
+  /**
+   * Checks if the app version on client is different from the version on server. If the versions are different, it will run the dbo update and prompt user to reload the app if it is a web app.
+   */
+  async function performAppUpdateCheck() {
+    const versionOnClient = $appStore.appData?.version;
+    await refreshAppStaticData();
+    const latestVersion = $appStore.appData?.version;
+    if (versionOnClient !== latestVersion) {
+      if (!$context.isEmbed) {
+        toasts.trigger({
+          id: "appUpdateAvailable",
+          title: `App update available (v${latestVersion}) 🎉`,
+          type: AlertType.INFO,
+          actionText: "Reload",
+          callback: () => {
+            window.location.reload();
+          }
+        });
+      }
+      dataManager.runDboUpdate();
+    }
+    logger.log(
+      {
+        at: "operformAppUpdateCheck",
+        versionOnClient,
+        appDataVersion: latestVersion
+      },
+      LogType.INFO
+    );
+  }
+
+  const windowResizeListener = (event: Event) => {
+    view.update(window.innerWidth, window.innerHeight);
+  };
+
+  const messageReceivedListener = (event: any) => {
+    try {
+    } catch (e) {
+      logger.error(e);
+    }
+    // postMessageToParent(event.data);
+  };
+  async function appEventHandler(e: IEvent) {
+    if (e.event === GlobalEvent.USER_LOGIN && e.value) {
+      dataManager.initialize([...cacheableStores, ...localCacheableStores]);
+      dataManager.refreshClientCache();
+    }
+  }
+
+  async function parseEmbedToken() {
+    const token = $page.url?.searchParams?.get("token");
+    if (token) {
+      await account.embedOAuthSignin(token);
+    }
+  }
+  /**
+   * Initializes the app with necessary data and runs dbo update. For this, the app should have already mounted and all stores should be available.
+   *
+   * Note: The order of operations is important as later operations rely on earlier ones.
+   * @param isLiteMode
+   */
+  async function initializeData(isLiteMode: boolean = false) {
+    if (!isLiteMode) {
+      await refreshAppStaticData();
+    }
+    initActions(isLiteMode);
+    if ($account.sessionType === UserSessionType.CLOUD && !isLiteMode) {
+      await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
+
+      // await dataManager.refreshClientCache();
+      // const isDev = import.meta.env.DEV;
+      // if (!isDev) await dataManager.runDboUpdate();
+      // await account.seed();
+      refreshTimeZone();
+      appMenuStore.setDefaults(defaultAppMenu, true);
+      account.setAnalyticsUserIdentity();
+      await account.ping();
+    } else {
+      const guestId = await account.logGuest();
+      await initializeFlux(guestId, true);
+    }
+    if (isLiteMode) return;
+
+    function initActions(isSheet?: boolean) {
+      const modifiedGlobalActions = globalActions.filter(
+        (x) => !localActions.some((y) => y.action === x.action)
+      );
+      let actions = [...modifiedGlobalActions, ...localActions];
+      if (isSheet) appStore.initActionsForSheet(actions);
+      else
+        appStore.initActions(
+          actions,
+          getSettingsAsModal(),
+          getSettingsAsPages()
+        );
+    }
+  }
+
+  async function initializeFlux(userId: string, isLocalMode: boolean = false) {
+    await initFlux(
+      {
+        ...cacheableStores,
+        ...localCacheableStores
+      },
+      PersistenceProvider.SURREAL_SURREAL,
+      userId,
+      { isLocalMode }
+    );
+  }
+
+  /**
+   * Refreshes the app static data from the server.
+   */
+  async function refreshAppStaticData() {
+    try {
+      const appData = await new Persistence().fetchAppData();
+      if (!appData) {
+        throw new Error("App data not found");
+      }
+      appStore.loadAppData(appData);
+    } catch (e) {
+      logger.error(e);
+      appStore.gotoErrorPage(e);
+    }
+  }
+</script>
+
+{#if $appStore?.appData?.isAnalyticsEnabled}
+  <AnalyticsLayer />
+{/if}
+<div class="flex h-screen w-screen">
+  {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
+    <AppLoadingView />
+  {/if}
+  <slot />
+</div>
+{#if $appStore.isDebugMode}
+  <DebugLayer />
+{/if}
+{#if $appLoadingState.isBaseLoaded}
+  <DynamicMetadataLayer />
+  <ModalLayer />
+  <ShortcutRunner />
+  <CacheLayer />
+{/if}
+<Intercom />
+<svelte:window
+  on:resize={windowResizeListener}
+  on:message={messageReceivedListener}
+/>
+
+<svelte:document on:visibilitychange={visibilityChangeListener} />

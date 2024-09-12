@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   AppSkin,
   Theme,
@@ -13,7 +13,8 @@ import {
   retrieveLocally
 } from "$lib/client/persistence/persistence.utils";
 import type { UserAppearanceSettings } from "../types/preferences.type";
-import { userPreferences } from "./app.store";
+import { dispatchCustomEvent } from "../utils/browser.utils";
+import { GlobalEvent } from "../types/event.enum";
 
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
@@ -25,6 +26,7 @@ const seedAppearance: AppearanceStore = {
   isSyncWithSystem: true,
   userThemeSetting: Theme.LIGHT,
   systemTheme: Theme.LIGHT,
+  accessibilitySizingFactor: 1,
   typeface:
     " Avenir, Montserrat, Teachers, Hanken Grotesk, Proxima Nova,  Poppins, Noto Sans, Nunito ",
   //BlinkMacSystemFont
@@ -50,7 +52,7 @@ function initAppearanceStore() {
   };
 
   const persist = (store: AppearanceStore) => {
-    userPreferences.setAppearance({
+    dispatchCustomEvent(GlobalEvent.PERSIST_APPEARANCE_USER, {
       skin: store.skin,
       theme: store.theme,
       isSyncWithSystem: store.isSyncWithSystem,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";

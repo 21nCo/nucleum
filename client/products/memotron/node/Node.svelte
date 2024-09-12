@@ -1,9 +1,9 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { resolveActiveNodeStore, type IActiveNodeStore } from "./node.store";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { prefixTable } from "$lib/shared/utils/text.utils";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { mediaNodeTypeList, NodeType, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";

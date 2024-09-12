@@ -11,9 +11,9 @@
   import HoverableElement from "../../HoverableElement.svelte";
   import ContextMenuAction from "../../contextMenu/ContextMenuAction.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;

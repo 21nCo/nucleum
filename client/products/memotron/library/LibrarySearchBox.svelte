@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";

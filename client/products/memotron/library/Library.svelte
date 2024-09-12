@@ -8,21 +8,21 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ResourceSwitcher from "$lib/client/elements/switcher/resourceSwitcher/ResourceSwitcher.svelte";
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import BulkEditBar from "../common/BulkEditBar.svelte";
   import { collectionStore } from "../collection/collection.store";
   import { SearchStore } from "../memotron.store";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { nodeStore } from "../node/node.store";
   import LibrarySearchBox from "./LibrarySearchBox.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";

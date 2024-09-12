@@ -6,7 +6,7 @@
   import { dataManager } from "$lib/client/persistence/dataManager";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { IResource } from "$lib/client/components/resourceStores/resource.type";
+  import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;

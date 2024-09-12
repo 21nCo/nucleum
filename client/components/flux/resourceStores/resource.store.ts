@@ -3,7 +3,7 @@ import {
   activeResourceFilter,
   debouncer,
   generateUID
-} from "../../utils/utils";
+} from "../../../utils/utils";
 import {
   PersistenceActionType,
   StoreDataType,
@@ -15,15 +15,15 @@ import {
   type IMutationParamsv2,
   type IResourceSelectParams,
   type IRecordId
-} from "../../types/data.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+} from "../../../types/data.type";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   generateResourceId,
   prefixTable
-} from "../../../shared/utils/text.utils";
-import { dataManager } from "../../persistence/dataManager";
-import { ObservableStore } from "../../stores/client.store";
-import { resolveCurrentUserId } from "../../utils/account.utils";
+} from "../../../../shared/utils/text.utils";
+import { dataManager } from "../../../persistence/dataManager";
+import { ObservableStore } from "../../../stores/client.store";
+import { resolveCurrentUserId } from "../../../utils/account.utils";
 import type {
   IResource,
   IResourceCapture,
@@ -31,8 +31,8 @@ import type {
   ITrashInformation,
   ResourceAccessMode
 } from "./resource.type";
-import { flux } from "$lib/client/persistence/dataManagerv2";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+import type { IFlux } from "../flux.type";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -131,15 +131,18 @@ export class ResourceStore<T extends IResource> implements IStore {
   mutatingResources: string[];
   cacheStrategy?: CacheStrategy;
   dboDependencies?: string[];
+  private flux: IFlux;
   private isUseV2: boolean = true;
   constructor(
     resourceType: Resource,
+    flux: IFlux,
     params?: Pick<
       IStore,
       "refreshOnAppear" | "refreshQuery" | "cacheStrategy" | "dboDependencies"
     >
   ) {
     this.id = resourceType;
+    this.flux = flux;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
@@ -215,7 +218,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       } else {
         data = { action: PersistenceActionType.INSERT, resources };
       }
-      return flux.mutation<T>(this.id, data);
+      return this.flux.mutation<T>(this.id, data);
     }
 
     if (Array.isArray(input)) {
@@ -284,7 +287,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       ...modificationProps
     };
     if (this.isUseV2) {
-      return flux.mutation<T>(this.id, {
+      return this.flux.mutation<T>(this.id, {
         action: PersistenceActionType.MERGE,
         resource: data
       });
@@ -305,7 +308,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   }
   async bulkModify(ids: string[], data: Partial<T>) {
     if (this.isUseV2) {
-      return flux.mutation<T>(this.id, {
+      return this.flux.mutation<T>(this.id, {
         action: PersistenceActionType.BULK_MERGE,
         resources: ids.map((id) => ({
           id,
@@ -360,11 +363,11 @@ export class ResourceStore<T extends IResource> implements IStore {
   get() {}
 
   selectMany(params?: IResourceSelectParams) {
-    return flux.selectMany(this.id, params);
+    return this.flux.selectMany(this.id, params);
   }
 
   select(resourceId: IRecordId, properties?: string[]) {
-    return flux.select(resourceId, properties);
+    return this.flux.select(resourceId, properties);
   }
 }
 

@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   NodeType,
   LinkType,
@@ -15,7 +15,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/shared/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
 import { resolveResourceType } from "../memotron.utils";
