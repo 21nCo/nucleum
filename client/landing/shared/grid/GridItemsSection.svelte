@@ -21,6 +21,6 @@
   <Button
     label="White paper"
     icon="long-arrow-right"
-    on:click={() => goto("https://docs.blanklabs.org/soft")}
+    on:click={() => (window.location.href = "https://docs.blanklabs.org/soft")}
   />
 </Section>

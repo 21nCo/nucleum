@@ -70,10 +70,6 @@
   let information = [
     { title: "Information" },
     {
-      title: "Our story",
-      href: "https://docs.blanklabs.org/soft"
-    },
-    {
       title: "Help center",
       href: "https://docs.blanklabs.org/soft"
     },
@@ -113,7 +109,17 @@
         </Box>
       </div>
       <div class="w-full flex gap-x-7">
-        <Box backgroundImage="our-team" />
+        <Box backgroundImage="our-story">
+          <div class="w-full h-full flex items-center justify-center">
+            <Button
+              type="secondary"
+              label="Our story"
+              on:click={() => {
+                window.location.href = "https://docs.blanklabs.org/soft";
+              }}
+            />
+          </div>
+        </Box>
         <div
           class="flex flex-col items-center justify-center gap-9 w-full h-[356px] bg-bgs2 rounded-[20px] p-7"
         >
@@ -125,7 +131,7 @@
           <Button
             label={joinUs.title}
             class="text-[20px]"
-            on:click={() => goto(joinUs.href)}
+            on:click={() => (window.location.href = joinUs.href)}
           />
         </div>
       </div>
@@ -156,6 +162,8 @@
                 height:32px;width:32px;"
             on:mouseenter={() => handleHover(index)}
             on:mouseleave={() => handleLeave(index)}
+            role="button"
+            tabindex="0"
           >
             <SvgIcon icon={social.icon} size={Size.lg} />
           </div>

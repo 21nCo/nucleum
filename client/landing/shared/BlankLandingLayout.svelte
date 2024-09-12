@@ -30,7 +30,7 @@
 </script>
 
 <LandingBaseLayer>
-  {#if isProductsPage}
+  {#if $isProductsPage}
     <LeftPanel />
   {/if}
   <div class="w-full overflow-auto">

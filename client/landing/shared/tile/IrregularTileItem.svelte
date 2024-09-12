@@ -28,7 +28,7 @@
 
 <button
   class={cn(
-    "relative flex flex-col items-start justify-start gap-3 min-w-[320px] w-[512px]  mo:h-[292px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
+    "relative flex flex-col items-start justify-start gap-3 min-w-[320px] max-w-[512px] mo:h-[400px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
     className
   )}
   on:mouseenter={onMouseEnter}
@@ -40,7 +40,7 @@
     <div class="flex items-center w-full">
       <h1
         class={cn(
-          "text-[30px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold"
+          "text-[30px] mo:text-[20px] leading-10 mo:leading-7 font-extrabold text-left"
         )}
       >
         {title}
@@ -59,9 +59,9 @@
   {/if}
   {#if item?.image}
     {@const image = item.image}
-    <div class="flex justify-center h-45% mt-9">
+    <div class="flex justify-center h-45% mt-9 mo:mt-4">
       <img
-        src={`/images/${image}.png`}
+        src={`/gifs/${image}.gif`}
         alt={item.title}
         class={cn("object-contain")}
       />

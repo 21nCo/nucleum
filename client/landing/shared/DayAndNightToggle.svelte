@@ -10,6 +10,7 @@
   export { className as class };
   let isNight: boolean = false;
   onMount(() => {
+    $appearance.isSyncWithSystem = false;
     $appearance.lightColorSchemeId = "colorscheme:clean_tidymono_light";
     $appearance.darkColorSchemeId = "colorscheme:clean_tidymono_dark";
     if ($appearance.theme === Theme.DARK) isNight = true;
@@ -49,7 +50,6 @@
   }
   .bounce-r {
     animation: bounce-r 0.3s ease-in-out;
-    /* animation-delay: 0.1s; */
   }
 
   @keyframes bounce-r {

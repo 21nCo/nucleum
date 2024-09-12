@@ -55,9 +55,11 @@
         {label}
       </p>
     {/if}
-    {#if $view.isPortrait}
+    {#if $view.isPortrait && !$isProductsPage}
       <div
         class="flex items-center justify-end w-[138px] h-[36px] border-b pb-0 mt-6"
+        role="button"
+        tabindex="0"
         on:click={() => ($isProductsPanelOpen = true)}
         on:keypress
       >
@@ -66,7 +68,7 @@
       </div>
     {/if}
   </div>
-  {#if $view.isPortrait}
+  {#if $view.isPortrait && !$isProductsPage}
     <DayAndNightToggle class="absolute bottom-12" />
   {:else if heroInputs.btn1 && heroInputs.btn2}
     <div class="flex w-[1110px] mo:w-[342px] justify-center gap-16 mt-14">
@@ -82,23 +84,27 @@
           }
         }}
       />
-      <Button
-        type="secondary"
-        label={heroInputs.btn2.label}
-        icon={heroInputs.btn2.icon}
-        on:click={() => {
-          const url = heroInputs?.btn2?.macDownloadUrl;
-          if (url) {
-            goto(url);
-          }
-        }}
-      />
+      {#if !$view.isPortrait}
+        <Button
+          type="secondary"
+          label={heroInputs.btn2.label}
+          icon={heroInputs.btn2.icon}
+          on:click={() => {
+            const url = heroInputs?.btn2?.macDownloadUrl;
+            if (url) {
+              goto(url);
+            }
+          }}
+        />
+      {/if}
     </div>
   {:else}
     <Pulldown class="absolute bottom-12" />
   {/if}
   {#if $isProductsPage}
-    <div class="relative w-[1046px] h-[590px] mt-[178px] rounded-xl">
+    <div
+      class="relative w-[1046px] mo:w-[343px] h-[590px] mo:h-[194px] mt-[178px] mo:mt-[102px] rounded-xl"
+    >
       {#if !isVideoPlaying}
         <img
           src="https://img.youtube.com/vi/tktyAa_bWiY/maxresdefault.jpg"

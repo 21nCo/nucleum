@@ -22,15 +22,50 @@
       windowsDownloadUrl: "https://www.pointron.io/windows"
     }
   };
-  let products: ITileItem[] = [
-    ...$currentProductsStore.slice(0, 2),
-    ...$upcomingProductsStore.slice(0, 2)
+
+  let features: ITileItem[] = [
+    {
+      title: "Powerful ways to focus",
+      description:
+        "Create a focus session in ways more effective than one can imagine",
+
+      image: "focusitems"
+    },
+    {
+      title: "infinitely nested goals",
+      description:
+        "In a more granular manner, you can create goals and infinitely nest sub goals, attach tags to goals to track your progress.",
+      image: "goals"
+    },
+    {
+      title: "Jounrnal",
+      description: "",
+      image: "quickfocus"
+    },
+    {
+      title: "Focus goals and tasks",
+      description:
+        "You can work on single or multiple goals in a focus session. What's more? You can also work on tasks and add task estimations.",
+      image: "custom"
+    },
+    {
+      title: "Advanced analytics",
+      description:
+        "When its time, make thoughtful decisions or track the progress of your goals and sub goals using powerful analytics.",
+      image: "analytics"
+    },
+    {
+      title: "Perosnalize it your way",
+      description:
+        "Pointron doesn’t just help you manage time it adapts to you. Personalize your productivity experience with a variety of color schemes that cater to your taste.",
+      image: "personalization"
+    }
   ];
 </script>
 
 <HeroSection {heroInputs} class="min-h-[70vh]" />
 <IrregularTileItemsSection
-  items={products}
+  items={features}
   title="Navigating your productivity"
 />
 <span

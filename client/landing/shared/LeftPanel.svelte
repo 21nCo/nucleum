@@ -10,5 +10,5 @@
 <PanelButton
   label={PanelName.BUILT_AT_BLANK_COOP}
   icon="long-arrow-left"
-  on:click={() => goto("https://blanklabs.org/")}
+  on:click={() => (window.location.href = "https://blanklabs.org/")}
 />

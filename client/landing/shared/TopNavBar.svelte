@@ -116,13 +116,16 @@
             />
           {/if}
 
-          <p
+          <button
             class="hidden mo:block text-h4 leading-9 font-normal underline underline-offset-4 mt-9"
             on:click={() => ($isProductsPanelOpen = true)}
             on:keypress
           >
             Explore more Blank.coop products
-          </p>
+          </button>
+          {#if $view.isPortrait}
+            <DayAndNightToggle class="mt-auto mb-10" />
+          {/if}
         </div>
       </div>
     </div>
