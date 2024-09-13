@@ -7,7 +7,6 @@
   import ComponentResolver from "./ComponentResolver.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let prefix: string | undefined = undefined;
-  console.log({ at: "PagePainterV2", prefix });
   let action: IAction | null = null;
   let pageSub: any;
   const fileBasedRoutes = ["cp"];
@@ -52,7 +51,6 @@
     }
     $appStore.currentComponent = action;
     $appStore.isMenuHidden = action.isMenuHidden || $context.isSheet;
-    logger.debug({ at: "PagePainterV2 - refresh", path, action });
   }
 </script>
 

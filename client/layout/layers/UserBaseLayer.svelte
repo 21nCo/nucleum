@@ -1,39 +1,25 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { page } from "$app/stores";
+  import { onDestroy, onMount } from "svelte";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-
   import type { IEvent } from "$lib/client/types/event.type";
-  import { pingParent, postToParent } from "$lib/client/utils/embed.utils";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
-
   import { Persistence } from "$lib/client/persistence/persistence";
-  import { dataManager } from "$lib/client/persistence/dataManager";
-
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
-  import {
-    appLoadingState,
-    appStore,
-    currentTime,
-    excludedPathsForRedirectionCheck
-  } from "$lib/client/stores/app.store";
+  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { appEvents, toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
-
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
   import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
   import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
   import Intercom from "./Intercom.svelte";
   import CacheLayer from "./CacheLayer.svelte";
-
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
   import { localCacheableStores } from "$local/localStoresMap";
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { defaultAppMenu } from "$local/local";
@@ -44,19 +30,32 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { LogType } from "$lib/client/components/debug/debug.type";
   import { flux, initFlux } from "$lib/client/components/flux/flux";
-  import { UserSessionType } from "$lib/client/types/account.type";
-  import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
+  import {
+    UserDataMode,
+    UserSessionType
+  } from "$lib/client/types/account.type";
+  import {
+    ClientStorageKey,
+    PersistenceProvider
+  } from "$lib/client/persistence/persistence.type";
+  import { clientStorage } from "$lib/client/persistence/persistence.utils";
+
+  const loadingMessages = {
+    cloneUp:
+      "We are syncing your local data with the cloud. This might take a while.",
+    cloneOrSyncDown:
+      "We are syncing your data from cloud. This might take a while."
+  };
+
+  let loadingMessage: string = "";
 
   onMount(async () => {
-    if (
-      !$context.isSheet &&
-      $context.isEmbed &&
-      $context.protocol.includes(import.meta.env?.VITE_CUSTOM_PROTOCOL)
-    ) {
-      await parseEmbedToken();
-    }
-    appMenuStore.setDefaults(defaultAppMenu);
-    await initializeData($context.isSheet);
+    if ((<any>window).Intercom)
+      (<any>window).Intercom("update", {
+        hide_default_launcher: true
+      });
+    addWindowEventListeners();
+    await initializeUser();
     const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
 
@@ -81,7 +80,8 @@
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
     refreshTimeZone();
-    dataManager.refreshOnAppear();
+    toasts.sync();
+    await flux.syncDown();
     if (isExtensionEnvironment()) return;
     performAppUpdateCheck();
     account.ping();
@@ -106,7 +106,6 @@
           }
         });
       }
-      dataManager.runDboUpdate();
     }
     logger.log(
       {
@@ -131,15 +130,7 @@
   };
   async function appEventHandler(e: IEvent) {
     if (e.event === GlobalEvent.USER_LOGIN && e.value) {
-      dataManager.initialize([...cacheableStores, ...localCacheableStores]);
-      dataManager.refreshClientCache();
-    }
-  }
-
-  async function parseEmbedToken() {
-    const token = $page.url?.searchParams?.get("token");
-    if (token) {
-      await account.embedOAuthSignin(token);
+      await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
     }
   }
   /**
@@ -148,27 +139,70 @@
    * Note: The order of operations is important as later operations rely on earlier ones.
    * @param isLiteMode
    */
-  async function initializeData(isLiteMode: boolean = false) {
-    if (!isLiteMode) {
-      await refreshAppStaticData();
-    }
-    initActions(isLiteMode);
-    if ($account.sessionType === UserSessionType.CLOUD && !isLiteMode) {
-      await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
+  async function initializeUser() {
+    try {
+      const isLiteMode = $context.isSheet;
+      logger.debug({ at: "UserBaseLayer.initializeData", isLiteMode });
+      if (!isLiteMode) {
+        await refreshAppStaticData();
+      }
+      initActions(isLiteMode);
+      const dapId = clientStorage.get(ClientStorageKey.DAP_ID)!;
 
-      // await dataManager.refreshClientCache();
-      // const isDev = import.meta.env.DEV;
-      // if (!isDev) await dataManager.runDboUpdate();
-      // await account.seed();
-      refreshTimeZone();
-      appMenuStore.setDefaults(defaultAppMenu, true);
-      account.setAnalyticsUserIdentity();
-      await account.ping();
-    } else {
-      const guestId = await account.logGuest();
-      await initializeFlux(guestId, true);
+      if ($account.dataMode === UserDataMode.LOCAL) {
+        // loadingMessage = "Initializing...";
+        await account.logGuest(dapId);
+        const initState = await initializeFlux(dapId, true);
+        logger.debug({
+          at: "UserBaseLayer.initializeData - local",
+          initState
+        });
+        if (initState === 0) await flux.kvSeed();
+      } else if ($account.dataMode === UserDataMode.CLOUD) {
+        if (dapId !== $account.userId) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        let initState = await initializeFlux($account.userId);
+        await flux.seed();
+        logger.debug({
+          at: "UserBaseLayer.initializeData - cloud",
+          userInfo: $account.userInfo,
+          initState
+        });
+        if ($account.sessionType === UserSessionType.NEW) {
+          if (initState === 2) {
+            loadingMessage = loadingMessages.cloneUp;
+            await flux.cloneUp();
+          } else {
+            await flux.kvSeed();
+          }
+        } else if ($account.sessionType === UserSessionType.RETURNING) {
+          loadingMessage = loadingMessages.cloneOrSyncDown;
+          if (initState === 1) {
+            await flux.syncDown();
+            await flux.loadKvStores();
+          } else if (initState === 0) {
+            await flux.cloneDown();
+          }
+        }
+      }
+      appMenuStore.setDefaults(defaultAppMenu);
+      if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
+        // await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
+
+        // await dataManager.refreshClientCache();
+        // const isDev = import.meta.env.DEV;
+        // if (!isDev) await dataManager.runDboUpdate();
+        // await account.seed();
+        refreshTimeZone();
+        appMenuStore.setDefaults(defaultAppMenu, true);
+        account.setAnalyticsUserIdentity();
+        await account.ping();
+      }
+    } catch (e) {
+      logger.error(e);
     }
-    if (isLiteMode) return;
 
     function initActions(isSheet?: boolean) {
       const modifiedGlobalActions = globalActions.filter(
@@ -186,11 +220,8 @@
   }
 
   async function initializeFlux(userId: string, isLocalMode: boolean = false) {
-    await initFlux(
-      {
-        ...cacheableStores,
-        ...localCacheableStores
-      },
+    return initFlux(
+      [...cacheableStores, ...localCacheableStores],
       PersistenceProvider.SURREAL_SURREAL,
       userId,
       { isLocalMode }
@@ -198,6 +229,7 @@
   }
 
   /**
+   * TODO - load static data (not from url)
    * Refreshes the app static data from the server.
    */
   async function refreshAppStaticData() {
@@ -212,6 +244,26 @@
       appStore.gotoErrorPage(e);
     }
   }
+
+  function handlePersistAppearance(event: any) {
+    userPreferences.setAppearance(event.detail);
+  }
+
+  function addWindowEventListeners() {
+    window.addEventListener(
+      GlobalEvent.PERSIST_APPEARANCE_USER,
+      handlePersistAppearance
+    );
+  }
+  function removeWindowEventListeners() {
+    window.removeEventListener(
+      GlobalEvent.PERSIST_APPEARANCE_USER,
+      handlePersistAppearance
+    );
+  }
+  onDestroy(() => {
+    removeWindowEventListeners();
+  });
 </script>
 
 {#if $appStore?.appData?.isAnalyticsEnabled}
@@ -219,9 +271,10 @@
 {/if}
 <div class="flex h-screen w-screen">
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
-    <AppLoadingView />
+    <AppLoadingView message={loadingMessage} />
+  {:else}
+    <slot />
   {/if}
-  <slot />
 </div>
 {#if $appStore.isDebugMode}
   <DebugLayer />

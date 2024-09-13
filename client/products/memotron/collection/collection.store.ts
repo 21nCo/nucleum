@@ -23,11 +23,10 @@ import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
-import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { IProperty } from "./properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { generateResourceId } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {

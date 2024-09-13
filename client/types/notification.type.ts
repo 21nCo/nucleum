@@ -31,5 +31,6 @@ export enum AlertType {
   SUCCESS = "SUCCESS",
   ERROR = "ERROR",
   WARNING = "WARNING",
-  INFO = "INFO"
+  INFO = "INFO",
+  SYNC = "SYNC"
 }

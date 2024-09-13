@@ -7,14 +7,7 @@ import { logger } from "$lib/client/components/debug/logger.client";
 
 class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {
-    super(
-      Resource.appMenu,
-      {},
-      {
-        refreshOnAppear: true,
-        isSynchronousCache: true
-      }
-    );
+    super(Resource.appMenu, {});
   }
   setDefaults(data: string[], isPersist: boolean = false) {
     const current = this.get();

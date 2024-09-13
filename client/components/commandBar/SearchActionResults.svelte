@@ -14,8 +14,6 @@
   let selectedIndex: number = 0;
   let isSearchInProgress: boolean = false;
   let results: IResource[] = [];
-  const uiState = flux.uiState.getState;
-
   function resetSearch() {
     results = [];
     selectedIndex = 0;
@@ -25,10 +23,10 @@
     if (!action.searchActionParams?.searchStoreId) return;
     isSearchInProgress = true;
     selectedIndex = 0;
-    const val = ($uiState.results = await flux.search(
+    results = await flux.search(
       action.searchActionParams.searchStoreId,
       search
-    ));
+    );
     isSearchInProgress = false;
   }
   export function select() {

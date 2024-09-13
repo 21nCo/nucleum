@@ -3,7 +3,7 @@
   import { flux } from "$lib/client/components/flux/flux";
   import account from "$lib/client/stores/account.store";
   import { appEvents } from "$lib/client/stores/notification.store";
-  import { UserSessionType } from "$lib/client/types/account.type";
+  import { UserDataMode } from "$lib/client/types/account.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import type { IEvent } from "$lib/client/types/event.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
@@ -30,7 +30,7 @@
     );
   }
   interval = setInterval(() => {
-    if ($account.sessionType !== UserSessionType.CLOUD) return;
+    if ($account.dataMode !== UserDataMode.CLOUD) return;
     if (isValidArrayWithData($mutationQueue)) {
       dataManager.syncPendingMutations();
       // console.log(
@@ -39,7 +39,7 @@
       // );
     }
     //TODO - check if network is available
-    // flux.sync();
+    flux?.sync();
   }, 3500);
   onDestroy(() => {
     clearInterval(interval);

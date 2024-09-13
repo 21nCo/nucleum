@@ -10,10 +10,8 @@
     type TableColumn
   } from "$lib/client/types/table.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import {
-    enumToString,
-    generateResourceId
-  } from "$lib/shared/utils/text.utils";
+  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
   import { PropertyType } from "./property.type";
   import {

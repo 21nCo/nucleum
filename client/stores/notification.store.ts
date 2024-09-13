@@ -120,6 +120,11 @@ function initToastStore() {
       trigger({ title, message, type: AlertType.ERROR, id });
       return id;
     },
+    sync: (message?: string) => {
+      const id = generateSimpleRandomId();
+      trigger({ message: message ?? "Syncing...", type: AlertType.SYNC, id });
+      return id;
+    },
     trigger: trigger
   };
 }

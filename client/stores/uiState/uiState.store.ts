@@ -12,22 +12,10 @@ import context from "../context.store";
 import { Embed } from "$lib/client/types/context.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { toasts } from "../notification.store";
-import type { IFlux } from "$lib/client/components/flux/flux.type";
-import { flux } from "$lib/client/components/flux/flux";
 
-export type UiStateStoreType = InstanceType<typeof UiStateStore>;
 class UiStateStore extends KeyValueStore<IUIStateStore> {
-  constructor(flux: IFlux) {
-    console.trace({ at: "UiStateStore constructor" });
-    super(
-      Resource.uiState,
-      flux,
-      {},
-      {
-        refreshOnAppear: true,
-        isSynchronousCache: true
-      }
-    );
+  constructor() {
+    super(Resource.uiState, {});
   }
   private resolveKey(
     keyParam: string,
@@ -147,6 +135,8 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 }
 
+export const uiState = new UiStateStore();
+
 /**
  *
  * TODO - populate app store derived value for interaction mode on uiState restore from cloud
@@ -162,13 +152,10 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
   }
 
   refreshShortcutHintsState() {
-    const modeOfInteraction = flux.uiState.getState(
-      Action.MODE_OF_INTERACTION,
-      {
-        isProductScoped: true
-      }
-    );
-    const isShortcutHintsEnabled = flux.uiState.getState(
+    const modeOfInteraction = uiState.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
+    const isShortcutHintsEnabled = uiState.getState(
       UIState.SHOW_MORE_SHORTCUT_HINTS,
       {
         isProductScoped: true

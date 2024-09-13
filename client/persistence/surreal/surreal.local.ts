@@ -34,7 +34,7 @@ export class SurrealPersistence implements IPersistence {
   }
 
   async initialize(userId: string, params?: IPersistenceInitParams) {
-    if (this.userId === userId && this.instance) return;
+    if (this.userId === userId && this.instance) return -1;
     this.instance = new Surreal({
       engines: surrealdbWasmEngines({
         strict: false,
@@ -48,22 +48,41 @@ export class SurrealPersistence implements IPersistence {
     this.userId = userId;
     this.isLocalMode = params?.isLocalMode ?? false;
     try {
-      logger.log({ at: "surreal.persistence.initialize", userId });
+      logger.debug({ at: "surreal.persistence.initialize", userId });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
       // await this.logInfo();
       // await this.testQuery();
+      const initLog = await this.select("kv:init");
+      if (initLog) {
+        logger.debug({
+          at: "surreal.persistence.initialize - initLog",
+          initLog
+        });
+        if (initLog.isLocalMode) return 2;
+        else if (initLog.id) return 1;
+      }
+      await this.addInitializationLog();
+      return 0;
     } catch (err) {
       logger.error({ at: "surreal.persistence.initialize", err });
-      throw err;
+      return -1;
     }
+  }
+
+  private async addInitializationLog() {
+    await this.awaiter();
+    const result = await this.instance?.query(
+      `INSERT INTO kv { id: 'init', createdAt: time::now(), isLocalMode: ${this.isLocalMode} };`
+    );
+    this.isProcessingOperation = false;
   }
 
   private async logInfo() {
     await this.awaiter();
     const info = await this.instance?.query("INFO FOR NS; INFO FOR DATABASE;");
-    logger.log({
+    logger.debug({
       at: "surreal.persistence.logInfo",
       userId: this.userId,
       info
@@ -72,8 +91,11 @@ export class SurrealPersistence implements IPersistence {
   }
   private async testQuery() {
     await this.awaiter();
-    const result = await this.instance?.query("select * from mutation;");
-    logger.log({
+    const result = await this.instance?.query(
+      // "select * from mutation; select * from kv; select * from tz;"
+      "select * from node;"
+    );
+    logger.debug({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
       result

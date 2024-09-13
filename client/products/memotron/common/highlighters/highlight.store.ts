@@ -14,9 +14,7 @@ const seedHighlighters: IHighlightStore = {
 
 class HighlightColorsStore extends KeyValueStore<IHighlightStore> {
   constructor() {
-    super(Resource.highlight, seedHighlighters, {
-      refreshOnAppear: true
-    });
+    super(Resource.highlight, seedHighlighters);
   }
   resolveColor(id: string) {
     return this.get().highlighters.find((x) => x.id === id)?.color ?? "#f6e05e";

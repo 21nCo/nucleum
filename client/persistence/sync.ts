@@ -21,7 +21,7 @@ export class SyncDelegate implements ISyncDelegate {
       if (!userInfo) return;
       const userId = JSON.parse(userInfo)?.id;
       const mutationId = generateRandomId();
-      logger.log({
+      logger.debug({
         at: "SyncDelegate.mutation",
         mutationId,
         query,

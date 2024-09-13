@@ -25,21 +25,15 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
-  console.log({ at: "BaseLayer" });
+  import { Persistence } from "$lib/client/persistence/persistence";
+
   let timer: any;
   pingParent();
   bootup();
-  /**
-   * TODO - the need for running performLoginStatusCheck on onMount as it is now only present in visibility change handler.. it was earlier triggered from initializeData() as well.
-   */
-  onMount(() => {
-    view.update(window.innerWidth, window.innerHeight);
-    if ((<any>window).Intercom)
-      (<any>window).Intercom("update", {
-        hide_default_launcher: true
-      });
-    console.log({ at: "BaseLayer onMount" });
 
+  onMount(async () => {
+    view.update(window.innerWidth, window.innerHeight);
+    await refreshAppStaticData();
     return () => {
       clearInterval(timer);
     };
@@ -157,7 +151,7 @@
     }
   }
   function handleCustomNavigation(event: any) {
-    logger.debug({
+    logger.log({
       at: "handleCustomNavigation",
       event,
       path: event.detail?.path
@@ -211,20 +205,12 @@
     }
   }
 
-  // function handlePersistAppearance(event: any) {
-  //   userPreferences.setAppearance(event.detail);
-  // }
-
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
       handleCustomNavigation
     );
     window.addEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
-    // window.addEventListener(
-    //   GlobalEvent.PERSIST_APPEARANCE_USER,
-    //   handlePersistAppearance
-    // );
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
@@ -235,15 +221,27 @@
       handleCustomNavigation
     );
     window.removeEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
-    // window.removeEventListener(
-    //   GlobalEvent.PERSIST_APPEARANCE_USER,
-    //   handlePersistAppearance
-    // );
     window.onpopstate = null;
   }
   onDestroy(() => {
     removeWindowEventListeners();
   });
+
+  /**
+   * Refreshes the app static data from the server.
+   */
+  async function refreshAppStaticData() {
+    try {
+      const appData = await new Persistence().fetchAppData();
+      if (!appData) {
+        throw new Error("App data not found");
+      }
+      appStore.loadAppData(appData);
+    } catch (e) {
+      logger.error(e);
+      appStore.gotoErrorPage(e);
+    }
+  }
 </script>
 
 <div

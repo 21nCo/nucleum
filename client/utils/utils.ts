@@ -213,7 +213,7 @@ export function checkSurrealResponse(
   } else if (response.status === "OK" && response.result) {
     return response.result;
   } else if (response.result) return response.result;
-  else return response.status === "OK";
+  else return response;
 }
 
 /**

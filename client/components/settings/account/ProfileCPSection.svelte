@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import account from "$lib/client/stores/account.store";
-  import { LicenseType, UserSessionType } from "$lib/client/types/account.type";
+  import { LicenseType, UserDataMode } from "$lib/client/types/account.type";
   import { Size } from "$lib/client/types/size.enum";
   import {
     frameEmailFromParts,
@@ -44,7 +44,7 @@
     "w-full": context !== "page"
   })}
 >
-  {#if $account.sessionType === UserSessionType.CLOUD}
+  {#if $account.dataMode === UserDataMode.CLOUD}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
       on:click
@@ -86,7 +86,7 @@
       class="w-full h-full flex flex-col justify-center gap-10 p-2 text-fgs3 items-center"
     >
       <div class="text-b3 text-center">
-        {#if $account.sessionType === UserSessionType.LOCAL}
+        {#if $account.dataMode === UserDataMode.LOCAL}
           Using Offline Mode.
         {:else}
           No Account found.

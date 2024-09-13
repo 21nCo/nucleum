@@ -276,8 +276,8 @@ export class SearchStore {
 }
 
 class Linker implements IStore {
-  id: string = "linker";
-  dataType: StoreDataType = StoreDataType.NA;
+  id: string = Resource.link;
+  dataType: StoreDataType = StoreDataType.IFR;
 
   async link(
     from: IRecordId,

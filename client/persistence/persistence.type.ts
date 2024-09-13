@@ -15,6 +15,9 @@ export enum ClientStorageKey {
    */
   STOKEN = "stoken",
   USER_INFO = "userInfo",
+  /**
+   * @deprecated - use userId instead
+   */
   GUEST = "guest",
   SPACE_IN_CONTEXT = "spaceInContext",
   OFFLINE_SESSION_ID = "offlineSessionId",
@@ -31,7 +34,13 @@ export enum ClientStorageKey {
 }
 
 export interface IPersistence {
-  initialize(userId: string, params?: IPersistenceInitParams): Promise<void>;
+  /**
+   *
+   * @param userId
+   * @param params
+   * @returns 0 if no database is present locally for the given userId, 1 if a database is present for the given id but is not an offline session earlier, 2 if the database is present and was used as offline session earlier. Returns -1 for any errors
+   */
+  initialize(userId: string, params?: IPersistenceInitParams): Promise<number>;
 
   insert<T extends IResource | IMetaResource>(
     records: T[],
@@ -89,4 +98,11 @@ export interface ISyncDelegate {
     query: string,
     resourceId?: IRecordId | Resource
   ): Promise<void> | undefined;
+}
+
+export interface ISyncHandler {
+  sync(mutations: any[]): Promise<void>;
+  syncDown(): Promise<void>;
+  cloneCloudToLocal(resources: string[]): Promise<any>;
+  cloneLocalToCloud(resources: string[]): Promise<any>;
 }

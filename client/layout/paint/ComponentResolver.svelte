@@ -13,7 +13,6 @@
   export let action: IAction | null = null;
   export let path: string = "";
   export let params: any = {};
-  console.log({ at: "ComponentResolver", action, path });
   onMount(() => {
     if (action === null && path !== "") {
       action = appStore.resolveComponentFromPath(path);

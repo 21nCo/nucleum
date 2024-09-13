@@ -6,16 +6,11 @@ import type {
 } from "$lib/client/components/markdown/md.type";
 import {
   ListType,
-  NodeType,
-  type TextContent
+  NodeType
 } from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
-import { generateUID } from "./utils";
-import { generateRandomId } from "./crypto.utils";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { RecordId } from "surrealdb.js";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -28,23 +23,6 @@ export function properCase(str: string) {
 
 export function prefixTable(id: string | number, itemType: Resource) {
   return `${itemType}:${id}`;
-}
-export function generateResourceId(
-  itemType: Resource,
-  params?: {
-    prefix?: string;
-    id?: string;
-    isAsRecordId?: boolean;
-  }
-): IRecordId {
-  const id = params?.id ?? generateRandomId();
-  if (params?.isAsRecordId) {
-    return new RecordId(
-      itemType,
-      params?.prefix ? params?.prefix + "_" : "" + id
-    );
-  }
-  return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 
 export function stripTablePrefix(id: string) {

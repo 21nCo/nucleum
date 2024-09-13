@@ -27,7 +27,7 @@
   >
     <div class="flex flex-col gap-2">
       <div class="text-xl text-fgs3">
-        Hi {$account.userInfo?.nickName}!
+        Hi {$account.userInfo?.nickName ?? "there"}!
       </div>
       <div class="text-b2 text-fgs3">
         Thanks for taking your time to try <b>

@@ -149,7 +149,6 @@ export const seedLocalPreferences: IPointronPreferences = {
 class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
     super(Resource.pointronPreferences, seedLocalPreferences, {
-      refreshOnAppear: true,
       dboDependencies: [
         "fn::pointron::import",
         "fn::pointron::export",

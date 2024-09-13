@@ -98,13 +98,15 @@
         </div>
       {/if}
     </div>
-    <div
-      class="absolute bottom-0 left-0 w-full portrait:mx-4 portrait:w-4/5 h-1 bg-fgs1 rounded-b-md"
-    >
+    {#if !notification.isNonDismissable && notification.type !== AlertType.SYNC}
       <div
-        class="h-full transition-all duration-100 ease-linear bg-fgs3 rounded-bl-md"
-        style="width: {$progress}%;"
-      ></div>
-    </div>
+        class="absolute bottom-0 left-0 w-full portrait:mx-4 portrait:w-4/5 h-1 bg-fgs1 rounded-b-md"
+      >
+        <div
+          class="h-full transition-all duration-100 ease-linear bg-fgs3 rounded-bl-md"
+          style="width: {$progress}%;"
+        ></div>
+      </div>
+    {/if}
   </button>
 {/if}

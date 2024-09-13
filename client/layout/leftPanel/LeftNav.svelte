@@ -17,7 +17,7 @@
   import { player } from "$lib/client/components/modal/modal.store";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   import account from "$lib/client/stores/account.store";
-  import { UserSessionType } from "$lib/client/types/account.type";
+  import { UserDataMode } from "$lib/client/types/account.type";
   let isMinimized: boolean = false;
   let headerHeight: number = 150;
   let isHovered: boolean = false;
@@ -152,7 +152,7 @@
               parentBgIndex={2}
             />
           {/if}
-          {#if $account.sessionType === UserSessionType.LOCAL}
+          {#if $account.dataMode === UserDataMode.LOCAL}
             <button
               class={cn("text-fgs3 bg-bgs3 rounded-md px-2 py-1 my-1", {
                 "text-b4": isInThinMode,

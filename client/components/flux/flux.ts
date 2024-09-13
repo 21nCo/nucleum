@@ -14,10 +14,10 @@ import {
   detectTimeZone,
   detectTimeZoneFallback
 } from "$lib/client/utils/time.utils";
-import type { IFlux, FluxStoreConstructor, FluxStoreType } from "./flux.type";
 import {
   ClientStorageKey,
   type IPersistence,
+  type ISyncHandler,
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
@@ -26,75 +26,36 @@ import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
 
 class Flux {
   static _instance: Flux | null = null;
-  private _stores: { [key: string]: FluxStoreType } = {};
   stores: IStore[] = [];
   provider!: PersistenceProvider;
   persistence!: IPersistence;
-
+  syncer!: ISyncHandler;
+  private isLocalMode: boolean = false;
   private constructor() {}
-  // constructor(provider: PersistenceProvider) {
-  //   this.provider = provider;
-  //   switch (provider) {
-  //     case PersistenceProvider.SURREAL_SURREAL:
-  //       this.persistence = new SurrealPersistence();
-  //       break;
-  //     default:
-  //       this.persistence = new SurrealPersistence();
-  //       break;
-  //   }
-  // }
 
-  static async initializev2(
-    storeConstructors: { [key: string]: FluxStoreConstructor },
+  static initialize(
+    stores: IStore[],
     provider: PersistenceProvider,
     userId: string,
     params?: {
       isLocalMode?: boolean;
     }
-  ): Promise<void> {
-    if (!Flux._instance) {
-      Flux._instance = new Flux();
-
-      for (const [key, StoreClass] of Object.entries(storeConstructors)) {
-        Flux._instance._stores[key] = new StoreClass(Flux._instance);
-      }
-
-      Flux._instance.provider = provider;
-      await Flux._instance.initializePersistence(
-        Object.values(Flux._instance._stores),
-        userId,
-        params
-      );
-      switch (provider) {
-        case PersistenceProvider.SURREAL_SURREAL:
-          Flux._instance.persistence = new SurrealPersistence();
-          break;
-        default:
-          Flux._instance.persistence = new SurrealPersistence();
-          break;
-      }
+  ): Promise<number> {
+    logger.log({ at: "flux.initialize", stores, userId, params });
+    Flux._instance = new Flux();
+    Flux._instance.provider = provider;
+    Flux._instance.isLocalMode = params?.isLocalMode ?? false;
+    switch (provider) {
+      case PersistenceProvider.SURREAL_SURREAL:
+        Flux._instance.persistence = new SurrealPersistence();
+        Flux._instance.syncer = new SurrealSync(Flux._instance.persistence);
+        break;
+      default:
+        Flux._instance.persistence = new SurrealPersistence();
+        break;
     }
-  }
-
-  static get instance(): Flux {
-    if (!Flux._instance) {
-      throw new Error(
-        "Stores have not been initialized. Call Stores.initialize() first."
-      );
-    }
-    return new Proxy(Flux._instance, {
-      get(target, prop: string) {
-        if (prop in target._stores) {
-          return target._stores[prop];
-        }
-        if (prop in target && typeof (target as any)[prop] === "function") {
-          return (target as any)[prop].bind(target);
-        }
-        throw new Error(
-          `Store or method '${prop}' not found. Make sure it's registered and initialized.`
-        );
-      }
-    });
+    logger.debug({ at: "flux.initialized", instance: Flux._instance });
+    return Flux._instance.initializePersistence(stores, userId, params);
   }
 
   /**
@@ -102,17 +63,17 @@ class Flux {
    * @param userId
    * @param params
    */
-  private async initializePersistence(
+  private initializePersistence(
     stores: IStore[],
     userId: string,
     params?: {
       isLocalMode?: boolean;
     }
   ) {
-    logger.log({ at: "dataManagerV2.initialize", stores, userId, params });
+    logger.log({ at: "flux.initializePersistence", stores, userId, params });
     this.stores = stores;
     const dbo = [...resolveDboDependencies()];
-    await this.persistence.initialize(userId, {
+    return this.persistence.initialize(userId, {
       ...params,
       dbo
     });
@@ -127,11 +88,31 @@ class Flux {
     }
   }
 
+  async loadKvStores() {
+    logger.debug({ at: "flux.loadKvStores" });
+    try {
+      let kvStores = this.stores.filter(
+        (x) => x.dataType === StoreDataType.KVO
+      );
+      const data = await this.persistence.selectMany(Resource.kv);
+      data.forEach((record: any) => {
+        const store = kvStores.find(
+          (x) => "kv:" + x.id === record.id.toString()
+        );
+        if (!store || !store.loader) return;
+        store.loader(record);
+      });
+    } catch (e) {
+      logger.error({ at: "flux.loadKvStores", error: e });
+    }
+  }
+
   /**
    * This method will be called on signup and database is bootstrapped.
    * This will persist all kv seed data on cloud.
    */
-  async seed() {
+  async kvSeed() {
+    logger.debug({ at: "flux.seed" });
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -140,10 +121,10 @@ class Flux {
           return { id: k.id, ...k.seed };
         });
       data = [...data, { id: "mutationMap" }];
-      await this.tzSeed();
+      await this.seed();
       return this.persistence.insert(data, Resource.kv);
     } catch (e) {
-      logger.error({ at: "dataManagerV2.bootstrap", error: e });
+      logger.error({ at: "flux.seed", error: e });
     }
   }
 
@@ -153,7 +134,7 @@ class Flux {
    * Note: Any manual logs or imports prior to 1970 should not be allowed as it might cause unexpected errors since aggregate table views and many calculations rely on tz table and timezone offset.
    * @returns
    */
-  async tzSeed() {
+  async seed() {
     let offset = 0;
     let label: string | undefined;
     const timeZone = detectTimeZone();
@@ -179,7 +160,7 @@ class Flux {
     params: IMutationParamsv2<T>
   ) {
     let response;
-    logger.log({ at: "dataManagerV2.mutation", resource, params });
+    logger.log({ at: "flux.mutation", resource, params });
     try {
       switch (params.action) {
         case PersistenceActionType.CUSTOM:
@@ -209,7 +190,7 @@ class Flux {
       }
     } catch (e) {
       logger.error({
-        at: "dataManagerV2.mutation",
+        at: "flux.mutation",
         resource,
         params,
         error: e
@@ -218,7 +199,7 @@ class Flux {
     const dependantStores = this.resolveDependantStores(resource);
     //TODO refresh stores
     logger.log({
-      at: "dataManagerV2.mutation - result",
+      at: "flux.mutation - result",
       resource,
       response,
       params
@@ -228,13 +209,13 @@ class Flux {
 
   async select(resourceId: IRecordId, properties?: string[]) {
     try {
-      logger.log({ at: "dataManagerV2.select", resourceId });
+      logger.log({ at: "flux.select", resourceId });
       const result = await this.persistence.select(resourceId, properties);
-      logger.log({ at: "dataManagerV2.select - result", result });
+      logger.log({ at: "flux.select - result", result });
       return result;
     } catch (e) {
       logger.error({
-        at: "dataManagerV2.select",
+        at: "flux.select",
         resourceId,
         error: e
       });
@@ -243,13 +224,13 @@ class Flux {
 
   async selectMany(resource: Resource, params?: IResourceSelectParams) {
     try {
-      logger.log({ at: "dataManagerV2.selectMany", resource, params });
+      logger.debug({ at: "flux.selectMany", resource, params });
       const result = await this.persistence.selectMany(resource, params);
-      logger.log({ at: "dataManagerV2.selectMany - result", result });
+      logger.log({ at: "flux.selectMany - result", result });
       return result;
     } catch (e) {
       logger.error({
-        at: "dataManagerV2.select",
+        at: "flux.select",
         resource,
         params,
         error: e
@@ -286,9 +267,13 @@ class Flux {
     isShowRefreshingState: boolean = false
   ) {}
 
+  /**
+   * Sync up the local changes and from response - syncs down the changes from cloud.
+   * @returns
+   */
   async sync() {
     const lastSyncedAt = clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
-    logger.log({ at: "DataManagerV2.sync", lastSyncedAt });
+    logger.debug({ at: "flux.sync", lastSyncedAt });
     if (!lastSyncedAt) return;
     const mutations = await this.persistence.selectMany(Resource.mutation, {
       filters: {
@@ -301,13 +286,7 @@ class Flux {
       }
     });
     if (!mutations || mutations.length === 0) return;
-    switch (this.provider) {
-      case PersistenceProvider.SURREAL_SURREAL:
-        await new SurrealSync().sync(mutations);
-        break;
-      default:
-        break;
-    }
+    await this.syncer.sync(mutations);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
@@ -317,19 +296,54 @@ class Flux {
       return store?.search?.(query);
     }
   }
+  /**
+   * Syncs down from cloud to local.
+   */
+  async syncDown() {
+    logger.debug({ at: "flux.syncDown" });
+    await this.syncer.syncDown();
+    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+  }
+
+  /**
+   * Clones down from cloud to local.
+   */
+  async cloneDown() {
+    logger.debug({ at: "flux.cloneDown", stores: this.stores });
+    const resources = this.resolveCloneResources();
+    await this.syncer.cloneCloudToLocal(resources);
+    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+  }
+
+  async cloneUp() {
+    logger.debug({ at: "flux.cloneUp" });
+    const resources = this.resolveCloneResources();
+    await this.syncer.cloneLocalToCloud(resources);
+    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+  }
+
+  private resolveCloneResources() {
+    const resources = [
+      Resource.kv,
+      ...(this.stores
+        .filter((x) => x.dataType === StoreDataType.IFR)
+        .map((x) => x.id) ?? [])
+    ];
+    return resources;
+  }
 }
 
-export const flux: IFlux = Flux._instance as any as IFlux;
+export let flux = Flux._instance as any as Flux;
 
-// export const flux = new DataManagerV2(PersistenceProvider.SURREAL_SURREAL);
-
-export function initFlux(
-  storeConstructors: { [key: string]: FluxStoreConstructor },
+export async function initFlux(
+  stores: IStore[],
   provider: PersistenceProvider,
   userId: string,
   params?: {
     isLocalMode?: boolean;
   }
 ) {
-  return Flux.initializev2(storeConstructors, provider, userId, params);
+  const result = await Flux.initialize(stores, provider, userId, params);
+  flux = Flux._instance as any as Flux;
+  return result;
 }

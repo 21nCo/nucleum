@@ -59,15 +59,18 @@ export interface IStore {
    */
   mutatingResources?: string[];
   /**
+   * @deprecated
    * The cache strategy to use for the store
    */
   cacheStrategy?: CacheStrategy;
   /**
+   * @deprecated
    * Setting this true will refresh the store when the app appears before even performing stale check
    */
   refreshOnAppear?: boolean;
 
   /**
+   * @deprecated
    * When this is turned on, local storage is used to cache the store.
    */
   isSynchronousCache?: boolean;
@@ -91,14 +94,17 @@ export interface IStore {
  */
 export enum StoreDataType {
   /**
+   * @deprecated
    * Finite and infrequently mutated Records
    */
   FIR = "FIR",
   /**
+   *
    * Infinite and frequently mutated Records
    */
   IFR = "IFR",
   /**
+   * @deprecated
    * Finite and Constant system Records
    */
   FCR = "FCR",

@@ -1,120 +1,55 @@
-import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import {
-  type IMutationQueueParams,
   type IObservableStore,
   type IObservableStoreSubject,
   type IStore,
-  PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import {
-  persistLocally,
-  retrieveLocally
-} from "$lib/client/persistence/persistence.utils";
 import { debouncer } from "$lib/client/utils/utils";
 import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import type { IFlux } from "../flux.type";
+import { flux } from "../flux";
 
 export class KeyValueStore<T extends IObservableStoreSubject>
   extends ObservableStore<T>
   implements IObservableStore<T>
 {
   declare id: Resource;
-  private flux: IFlux;
   isSynchronousCache: boolean = false;
   isPreventAutoPersist: boolean = false;
   protected previousValue: string = "";
   seed: T;
-  private isUseV2: boolean = true;
   private _debouncedPersist = debouncer(this.persist, 3000);
   constructor(
     item: Resource,
-    flux: IFlux,
     seed: T,
     params?: Omit<IStore, "id" | "dataType" | "get">
   ) {
     super(item, StoreDataType.KVO, params);
-    logger.debug({ at: "KVO - constructor", item });
     this.id = item;
-    this.flux = flux;
     this.seed = seed;
     this.isSynchronousCache = params?.isSynchronousCache || false;
     this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
-    if (params?.isSynchronousCache) {
-      const localCacheValue = retrieveLocally(this.id);
-      if (localCacheValue) {
-        this._set(localCacheValue);
-        this.previousValue = JSON.stringify(localCacheValue);
-      } else {
-        const seed = {
-          ...deepCopy(this.seed)
-        };
-        this._setAndCache(seed);
-      }
-    } else {
-      dataManager.retrieveCache(this.id).then((x) => {
-        logger.log({
-          context: "fetching from cache",
-          id: this.id,
-          x,
-          seed: this.seed
-        });
-        if (!x) {
-          const seed = {
-            ...deepCopy(this.seed)
-          };
-          this._setAndCache(seed);
-        } else {
-          this._set(x);
-          this.previousValue = JSON.stringify(x);
-        }
-      });
-    }
-  }
-  /**
-   * Caches the data locally
-   */
-  protected async cache() {
-    if (this.isSynchronousCache) {
-      persistLocally(this.id, this.get());
-      return;
-    }
-    dataManager.cache(this);
+    this._set(seed);
   }
   /**
    * Sets the new value of the store and caches it, but doesn't persist it
    * @param x - new value of the store
    */
-  private _setAndCache(x: T) {
+  private __set(x: T) {
     const newValue = { ...x };
     this._set(newValue);
     this.previousValue = JSON.stringify(newValue);
-    this.cache();
   }
   /**
    * Persists the data to the server - uses MERGE action
    * Doesn't cache or update the store itself. Use modify for that
    * @param n
    */
-  protected async persist(
-    n: Partial<T> | undefined = undefined,
-    queueParams?: IMutationQueueParams
-  ) {
+  protected async persist(n: Partial<T> | undefined = undefined) {
     if (!n) n = this.get();
-    if (this.isUseV2) {
-      return this.flux.kvMerge(this.id, n);
-    }
-    return dataManager.performMutation(
-      this.id,
-      {
-        ...n,
-        id: this.id
-      },
-      { action: PersistenceActionType.MERGE, queueParams }
-    );
+    return flux.kvMerge(this.id, n);
   }
   /**
    * This function gets triggered from dataManager when the data is fetched from the server.
@@ -123,7 +58,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   loader(data: T) {
     // console.log({ context: "kv.store loader", id: this.id, data });
     if (!data.id) return;
-    this._setAndCache({ ...data });
+    this.__set({ ...data });
   }
   /**
    * Loads the seed data initialized in the constructor and persists it
@@ -133,7 +68,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     const seed = {
       ...deepCopy(this.seed)
     };
-    this._setAndCache(seed);
+    this.__set(seed);
     return this.persist(seed);
   }
   /**
@@ -153,7 +88,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     //   newValue,
     //   changedProperties
     // });
-    this._setAndCache(newValue);
+    this.__set(newValue);
     if (!objIsEmpty(changedProperties) && !this.isPreventAutoPersist)
       this.persist(changedProperties);
   }
@@ -170,7 +105,6 @@ export class KeyValueStore<T extends IObservableStoreSubject>
       isPersist?: boolean;
       isDebouncedPersist?: boolean;
       isPreventCachingDefault?: boolean;
-      queueParams?: IMutationQueueParams;
     } = {
       isPersist: true
     }
@@ -180,12 +114,8 @@ export class KeyValueStore<T extends IObservableStoreSubject>
       this._set({ ...val, ...n });
       return;
     }
-    this._setAndCache({ ...val, ...n });
+    this.__set({ ...val, ...n });
     if (params?.isDebouncedPersist) return this._debouncedPersist(n);
-    else if (
-      params?.isPersist ||
-      (params?.isPersist != false && params?.queueParams)
-    )
-      return this.persist(n, params?.queueParams);
+    else if (params?.isPersist) return this.persist(n);
   }
 }

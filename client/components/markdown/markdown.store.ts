@@ -16,10 +16,7 @@ import {
   isEmptyArray,
   isValidArrayWithData
 } from "$lib/shared/utils/obj.utils";
-import {
-  generateMarkdownText,
-  generateResourceId
-} from "$lib/shared/utils/text.utils";
+import { generateMarkdownText } from "$lib/shared/utils/text.utils";
 import { get, writable, type Updater } from "svelte/store";
 import { resolveImmediateParent } from "./markdown.utils";
 import {
@@ -34,6 +31,7 @@ import {
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 /**
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used

@@ -35,7 +35,7 @@ import {
   type IKindleBook,
   type IKindleHighlight
 } from "$lib/client/products/memotron/node/node.type";
-import { generateResourceId } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   extractFullTabData,
   extractMinimalTabData,

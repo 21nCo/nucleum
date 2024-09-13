@@ -13,13 +13,7 @@ export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
 class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   constructor() {
-    super(
-      Resource.keyboardShortcuts,
-      {},
-      {
-        refreshOnAppear: true
-      }
-    );
+    super(Resource.keyboardShortcuts, {});
   }
   saveShortcut(action: string, shortcut: IKeyboardShortcut) {
     return this.modify({ [action]: shortcut });

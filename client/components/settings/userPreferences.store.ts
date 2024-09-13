@@ -55,8 +55,6 @@ export const seedUserPreferences: IUserGlobalPreferences = {
 class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
   constructor() {
     super(Resource.globalPreferences, seedUserPreferences, {
-      refreshOnAppear: true,
-      isSynchronousCache: true,
       dboDependencies: [
         "fn::global::resource::delete",
         "fn::global::resource::fetch"

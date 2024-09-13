@@ -10,10 +10,8 @@ import type {
 } from "$lib/client/products/memotron/node/node.type";
 
 import { copyToClipboard } from "$lib/client/utils/utils";
-import {
-  enumToCamelCase,
-  generateResourceId
-} from "$lib/shared/utils/text.utils";
+import { enumToCamelCase } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 export function resolveResourceType(item: ICollection | INode) {
   if (typeof item.id !== "string") return item.id.tb as MemotronResourceType;

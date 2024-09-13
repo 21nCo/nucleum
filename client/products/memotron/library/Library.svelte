@@ -27,6 +27,7 @@
   import LibrarySearchBox from "./LibrarySearchBox.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -246,10 +247,18 @@
                 style={ButtonStyle.OUTLINED}
                 label={selectedResource}
                 isPreventMinWidth={true}
-                on:click={() =>
-                  appStore.runAction(
-                    resourceAction(selectedResource, ResourceActionType.CREATE)
-                  )}
+                on:click={() => {
+                  if (selectedResource === Resource.node) {
+                    appStore.runAction(MemotronAction.CAPTURE);
+                  } else {
+                    appStore.runAction(
+                      resourceAction(
+                        selectedResource,
+                        ResourceActionType.CREATE
+                      )
+                    );
+                  }
+                }}
               />
             {/if}
           </span>

@@ -12,7 +12,7 @@ import {
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { generateResourceId } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
@@ -50,14 +50,7 @@ function generateSeedStore(): ICaptureStore {
 
 class CaptureStore extends KeyValueStore<ICaptureStore> {
   constructor() {
-    super(
-      Resource.capture,
-      { ...generateSeedStore() },
-      {
-        refreshOnAppear: true,
-        isSynchronousCache: true
-      }
-    );
+    super(Resource.capture, { ...generateSeedStore() });
   }
   set(val: ICaptureStore) {
     this.modify(val, { isDebouncedPersist: true });
@@ -230,7 +223,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       return { ...x, from: id };
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
-    await linker.linkMany([...rootLinks, ...(blockLinks ?? [])]);
+    if ((blockLinks && blockLinks.length > 0) || rootLinks?.length > 0) {
+      await linker.linkMany([...rootLinks, ...(blockLinks ?? [])]);
+    }
 
     if (!result) {
       toasts.error("Something went wrong. Please try again later.");

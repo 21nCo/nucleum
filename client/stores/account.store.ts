@@ -1,5 +1,6 @@
 import { get, writable } from "svelte/store";
 import {
+  UserDataMode,
   UserSessionType,
   type UserAccount,
   type UserInformation
@@ -27,9 +28,9 @@ import posthog from "posthog-js";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
-import { flux } from "../persistence/dataManagerv2";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { fileStore } from "../components/files/file.store";
+import { flux } from "../components/flux/flux";
 
 export const isRefreshingToken = writable(false);
 
@@ -40,7 +41,8 @@ class AccountStore extends ObservableStore<
   constructor() {
     super("account", StoreDataType.NA);
     let seed: UserAccount = {
-      sessionType: UserSessionType.NONE
+      dataMode: UserDataMode.NONE,
+      sessionType: UserSessionType.UNDETERMINED
     };
     const token = clientStorage.get(ClientStorageKey.STOKEN);
     const offlineSessionId = clientStorage.get(
@@ -48,9 +50,11 @@ class AccountStore extends ObservableStore<
     );
     if (token) {
       seed.token = token;
-      seed.sessionType = UserSessionType.CLOUD;
+      seed.dataMode = UserDataMode.CLOUD;
+      seed.sessionType = UserSessionType.RETURNING;
     } else if (offlineSessionId) {
-      seed.sessionType = UserSessionType.LOCAL;
+      seed.dataMode = UserDataMode.LOCAL;
+      seed.sessionType = UserSessionType.RETURNING;
     }
     const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
     if (userInfo) {
@@ -84,7 +88,8 @@ class AccountStore extends ObservableStore<
     clientStorage.remove(ClientStorageKey.STOKEN);
     this.update(() => {
       const n = {
-        sessionType: UserSessionType.NONE
+        sessionType: UserSessionType.UNDETERMINED,
+        dataMode: UserDataMode.NONE
       };
       return n;
     });
@@ -110,18 +115,22 @@ class AccountStore extends ObservableStore<
     );
     localStorage.setItem("refresh-token", data.refreshToken ?? "");
     this.postToEmbed(data);
+    const isBootstrapped = data.userInfo.isBootstrapped;
     this.update(() => {
       return {
         token: data.token,
-        sessionType: UserSessionType.CLOUD,
-        userId: data.userInfo.id,
-        userInfo: data.userInfo
+        dataMode: UserDataMode.CLOUD,
+        userId: data.userInfo.id.split("user:")[1],
+        userInfo: data.userInfo,
+        sessionType: isBootstrapped
+          ? UserSessionType.RETURNING
+          : UserSessionType.NEW
       };
     });
-    if (!params.isIgnoreRefresh && data.userInfo.isBootstrapped) {
+    if (!params.isIgnoreRefresh && isBootstrapped) {
       appEvents.publish(GlobalEvent.USER_LOGIN, true);
       appStore.gotoPath("/");
-    } else if (!data.userInfo.isBootstrapped) {
+    } else if (!isBootstrapped) {
       appStore.gotoPath("/bootstrap");
     } else {
       appStore.gotoPath(params.redirectTo ?? "/");
@@ -174,35 +183,27 @@ class AccountStore extends ObservableStore<
     this.postToEmbed();
     return this.persistence.ping();
   }
-  async logGuest() {
-    let id = clientStorage.get(ClientStorageKey.GUEST);
-    if (!id) {
-      id = generateSimpleRandomId();
-      clientStorage.set(ClientStorageKey.GUEST, id);
-    }
+  async logGuest(id: string) {
     try {
-      await this.persistence.runAccountAction("guest", { id });
+      return this.persistence.runAccountAction("guest", { id });
     } catch (e) {
       logger.error({ at: "logGuest", error: e });
     }
-    return id;
   }
 
   async startOfflineSession() {
     this.update((n) => {
-      n.sessionType = UserSessionType.LOCAL;
+      n.dataMode = UserDataMode.LOCAL;
       return n;
     });
     clientStorage.set(
       ClientStorageKey.OFFLINE_SESSION_ID,
       generateSimpleRandomId()
     );
-    await this.seed();
   }
 
   async bootstrap(region: string) {
     await this.bootstrapRemote(region);
-    await this.seed();
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
@@ -228,10 +229,6 @@ class AccountStore extends ObservableStore<
     this.setAnalyticsUserIdentity();
     // await dataManager.bootstrap();
     return true;
-  }
-
-  async seed() {
-    await flux.seed();
   }
 
   getSignedUrl(contentType: string, fileName: string, isTemp: boolean) {
@@ -271,7 +268,7 @@ class AccountStore extends ObservableStore<
       const account = this.get();
       const id = contentType.split("/")[0] + "_" + generateSimpleRandomId();
       logger.debug({ at: "uploadFileV2", id, contentType, fileName });
-      if (account.sessionType === UserSessionType.LOCAL) {
+      if (account.dataMode === UserDataMode.LOCAL) {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         const response = await fileStore.create([
@@ -383,13 +380,13 @@ class AccountStore extends ObservableStore<
     const env = clientStorage.get(ClientStorageKey.ENV);
     const appData = clientStorage.get(ClientStorageKey.APP_DATA);
     const product = clientStorage.get(ClientStorageKey.PRODUCT);
-    const guest = clientStorage.get(ClientStorageKey.GUEST);
+    const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
     clientStorage.clearAll();
     get(dataManager)?.cacheSource?.clearCache();
     if (env) clientStorage.set(ClientStorageKey.ENV, env);
     if (product) clientStorage.set(ClientStorageKey.PRODUCT, product);
     if (appData) clientStorage.set(ClientStorageKey.APP_DATA, appData);
-    if (guest) clientStorage.set(ClientStorageKey.GUEST, guest);
+    if (dapId) clientStorage.set(ClientStorageKey.DAP_ID, dapId);
   }
 
   setAnalyticsUserIdentity() {
