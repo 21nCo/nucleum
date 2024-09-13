@@ -8,15 +8,16 @@
   import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardView from "./boardView/BoardView.svelte";
+  import type { IProperty } from "./properties/property.type";
   export let view: ICollectionView;
   export let data: INodeThumbnail[] = [];
-  export let properties: string[] = [];
+  export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
 </script>
 
 {#if isValidArrayWithData(data)}
   {#if view.layout === CollectionLayout.BOARD}
-    <BoardView {view} {data} propertyIds={properties} {isBoardOverflow} />
+    <BoardView {view} {data} {properties} {isBoardOverflow} />
   {:else}
     <!-- TODO -->
     <ComingSoonView subText="View not built yet. Stay tuned." />

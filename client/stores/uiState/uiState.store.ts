@@ -10,6 +10,8 @@ import { InteractionMode } from "../../components/settings/interactionMode/inter
 import { UIState, type IUIStateStore } from "./uiState.type";
 import context from "../context.store";
 import { Embed } from "$lib/client/types/context.type";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { toasts } from "../notification.store";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -87,24 +89,31 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     logger.log({ context: "uiState.store - setResourceState", key, value });
   }
 
-  addResourceToTopBar(id: string) {
+  addResourceToTopBar(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TOP_BAR, {
       isProductScoped: true
     });
-    if (current?.includes(id)) return;
-    this.setState(ResourceAccessPoint.TOP_BAR, [...(current ?? []), id], {
-      isProductScoped: true
-    });
-  }
-
-  removeResourceFromTopBar(id: string) {
-    const current = this.getState(ResourceAccessPoint.TOP_BAR, {
-      isProductScoped: true
-    });
-    if (!current?.includes(id)) return;
+    if (current?.includes(id.toString())) {
+      toasts.error("Resource already present in top bar");
+      return;
+    }
     this.setState(
       ResourceAccessPoint.TOP_BAR,
-      current.filter((x) => x != id),
+      [...(current ?? []), id.toString()],
+      {
+        isProductScoped: true
+      }
+    );
+  }
+
+  removeResourceFromTopBar(id: IRecordId) {
+    const current = this.getState(ResourceAccessPoint.TOP_BAR, {
+      isProductScoped: true
+    });
+    if (!current?.includes(id.toString())) return;
+    this.setState(
+      ResourceAccessPoint.TOP_BAR,
+      current.filter((x) => x != id.toString()),
       {
         isProductScoped: true
       }

@@ -27,7 +27,7 @@
     }
   }
   onMount(() => {
-    if (!$account.isLoggedIn) return;
+    if (!$account.isCloudUser) return;
     const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
     if (isLoginFromExtensionParam) {
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);

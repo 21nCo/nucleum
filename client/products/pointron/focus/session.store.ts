@@ -42,7 +42,7 @@ import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
 import {
   CacheStrategy,
   DependencySyncType,
-  PersistanceActionType
+  PersistenceActionType
 } from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import {
@@ -1373,7 +1373,7 @@ class PointSessionStore extends ResourceStore<IPointSession> {
       Resource.PointLog,
       { id },
       {
-        action: PersistanceActionType.DELETE,
+        action: PersistenceActionType.DELETE,
         query:
           "delete from PointSession where id is $id; delete from PointLog where sessionId is $id;"
       }

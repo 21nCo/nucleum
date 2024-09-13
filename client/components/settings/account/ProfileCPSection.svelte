@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import account from "$lib/client/stores/account.store";
-  import { LicenseType } from "$lib/client/types/account.type";
+  import { LicenseType, UserSessionType } from "$lib/client/types/account.type";
   import { Size } from "$lib/client/types/size.enum";
   import {
     frameEmailFromParts,
@@ -10,6 +10,10 @@
   import { formatDate } from "$lib/client/utils/time.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import ProfilePicture from "./ProfilePicture.svelte";
+  import { Modes } from "../../calendar/birdView/Birdview.type";
+  import { signout } from "$lib/client/utils/account.utils";
+  import modalEvent from "../../modal/modal.store";
+  import { Action } from "$lib/client/types/action.enum";
   export let context: "page" | "modal" = "page";
   export let parentBackgroundIndex: number = 1;
   function determineLicense() {
@@ -40,7 +44,7 @@
     "w-full": context !== "page"
   })}
 >
-  {#if $account.isLoggedIn}
+  {#if $account.sessionType === UserSessionType.CLOUD}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
       on:click
@@ -82,15 +86,22 @@
       class="w-full h-full flex flex-col justify-center gap-10 p-2 text-fgs3 items-center"
     >
       <div class="text-b3 text-center">
-        No Account found.
+        {#if $account.sessionType === UserSessionType.LOCAL}
+          Using Offline Mode.
+        {:else}
+          No Account found.
+        {/if}
         <div>Please login/signup to enable cloud sync.</div>
       </div>
       <div class="flex gap-4">
         <Button
           label="Go to signup/signin"
-          parentBgIndex={2}
+          parentBgIndex={3}
           size={Size.sm}
-          on:click
+          on:click={() => {
+            signout();
+            modalEvent.hide(Action.SETTINGS);
+          }}
         />
       </div>
     </div>

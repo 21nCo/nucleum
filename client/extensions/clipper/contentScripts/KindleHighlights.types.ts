@@ -3,10 +3,17 @@ export type NextPageState = {
     contentLimitState: string;
   };
 
+  /**
+   * @deprecated - use NodeType instead
+   */
   export enum contentType{
     BookNode='KINDLE_NOTES&HIGHLIGHTS_BOOK',
     HighlightNode='KINDLE_NOTE&HIGHLIGHT'
   }
+
+  /**
+   * @deprecated - use IKindleBookBody instead
+   */
   export type Book = {
     id: string;
     title: string;
@@ -16,11 +23,18 @@ export type NextPageState = {
     imageUrl?: string;
     lastAnnotatedDate?: Date;
   };
+
+  /**
+   * @deprecated - use IKindleBook instead
+   */
   export type BookNode = {
     body:Book;
     contentType:contentType.BookNode;
   };
   
+  /**
+   * @deprecated - use IKindleHighlightBody instead
+   */
   export type Highlight = {
     id: string;
     text: string;
@@ -31,12 +45,18 @@ export type NextPageState = {
     createdDate?: Date;
   };
 
+  /**
+   * @deprecated - use IKindleHighlight instead
+   */
   export type HighlightNode = {
     body:Highlight;
     contentType:contentType.HighlightNode;
     parent:string
   };
 
+  /**
+   * @deprecated - use IKindleBook instead
+   */
   export type SavedBookNode = {
     id:string;  
     body:Book;
@@ -47,6 +67,9 @@ export type NextPageState = {
     isStarred:boolean;
   };
 
+    /**
+   * @deprecated - use SyncStatus instead
+   */
   export enum kindleSyncState{
     Sync="SYNC",
     Syncing="SYNCING",

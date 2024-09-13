@@ -112,6 +112,14 @@
   import Warning from "../icons/Warning.svelte";
   import ArrowTurnDownLeft from "../icons/ArrowTurnDownLeft.svelte";
   import CursorArrowRays from "../icons/CursorArrowRays.svelte";
+  import Document from "../icons/Document.svelte";
+  import MagnifyingGlassPlus from "../icons/MagnifyingGlassPlus.svelte";
+  import MagnifyingGlassMinus from "../icons/MagnifyingGlassMinus.svelte";
+  import Underline from "../icons/Underline.svelte";
+  import Strikethrough from "../icons/Strikethrough.svelte";
+  import Highlight from "../icons/Highlight.svelte";
+  import IconifyIcon from "@iconify/svelte";
+
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -145,7 +153,12 @@
     "grab",
     "capture2.0-mini"
   ];
-  const strokeOnlyIcons = ["link-arrow-left", "link-arrow-down", "capture"];
+  const strokeOnlyIcons = [
+    "link-arrow-left",
+    "link-arrow-down",
+    "capture",
+    "highlight"
+  ];
   $: _classList = resolveClasses(
     classListParam,
     isAccentBgContext,
@@ -508,6 +521,8 @@
         <TableCells {variant} />
       {:else if icon === "globe-alt"}
         <GlobeAlt {variant} />
+      {:else if icon === "document"}
+        <Document {variant} />
       {:else if icon === "document-text"}
         <DocumentText {variant} />
       {:else if icon === "funnel"}
@@ -520,7 +535,17 @@
       {:else if icon === "alt-text"}
         <AltText />
       {:else if icon === "gift"}
-        <Gift />
+        <Gift {variant} />
+      {:else if icon === "magnifying-glass-plus"}
+        <MagnifyingGlassPlus {variant} />
+      {:else if icon === "magnifying-glass-minus"}
+        <MagnifyingGlassMinus {variant} />
+      {:else if icon === "underline"}
+        <Underline {variant} />
+      {:else if icon === "strikethrough"}
+        <Strikethrough {variant} />
+      {:else if icon === "highlight"}
+        <Highlight />
       {:else if icon === "cursor-arrow-rays"}
         <CursorArrowRays {variant} />
       {:else if icon === "link-arrow-left"}
@@ -538,6 +563,13 @@
           fill-rule="evenodd"
           d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z"
           clip-rule="evenodd"
+        />
+      {:else}
+        <IconifyIcon
+          {icon}
+          width={size === Size.md ? "1.25rem" : "1rem"}
+          height={size === Size.md ? "1.25rem" : "1rem"}
+          class={_classList}
         />
       {/if}
     </svg>

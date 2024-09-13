@@ -4,7 +4,7 @@
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import type { IAction } from "$lib/client/types/action.type";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { appMenuStore } from "../../../stores/appMenu/appMenu.store";
   import type { IAppMenuStore } from "$lib/client/stores/appMenu/appMenu.type";
   import Text from "$lib/client/elements/text/Text.svelte";
@@ -64,6 +64,7 @@
     if (layoutContext == LayoutContext.PORTRAIT) {
       toasts.reset();
     }
+    isInEditMode.set(false);
     selected = index;
     appStore.runAction(item.action);
   }
@@ -85,8 +86,8 @@
     {/each}
   </div>
 {:else}
-  <div class="flex flex-col gap-3 justify-center rounded-lg min-w-min w-full">
-    <div class="flex flex-col">
+  <div class="flex flex-col gap-1 justify-center rounded-lg min-w-min w-full">
+    <div class="flex flex-col gap-1">
       {#each defaultPages as item, index}
         <AppMenuSwitcherItem
           {parentBackgroundIndex}
@@ -98,14 +99,14 @@
       {/each}
     </div>
     {#if userPinnedPages.length > 0}
-      <div class="flex flex-col gap-1.5">
+      <div class="flex flex-col gap-1">
         <Divider colorStrength={ColorStrength.Strong} />
-        {#if layoutContext === LayoutContext.DEFAULT}
+        <!-- {#if layoutContext === LayoutContext.DEFAULT}
           <div class="px-1">
-            <Text content="Pinned" style={TextStyle.SECTION_HEADING} />
+            <Text content="Pinned" style={TextStyle.SECTION_HEADING_SMALL} />
           </div>
-        {/if}
-        <div class="flex flex-col">
+        {/if} -->
+        <div class="flex flex-col gap-1">
           {#each userPinnedPages as item, index}
             <AppMenuSwitcherItem
               {parentBackgroundIndex}

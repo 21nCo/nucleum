@@ -7,6 +7,8 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
+  import FileView from "$lib/client/components/files/FileView.svelte";
+  import { FileType } from "$lib/client/components/files/file.type";
   const dispatch = createEventDispatcher();
   export let src: string | undefined = undefined;
   let file: File;
@@ -19,16 +21,17 @@
   async function handleFileChange(event: Event) {
     isUploadInProgress = true;
     file = (event.target as HTMLInputElement).files[0];
+
     let imageLocalURL = new Blob([file], { type: file.type });
-    let s3Response = await account.uploadFile(
+    let response = await account.uploadFileV2(
       file.type,
       file.name,
       imageLocalURL
     );
-    console.log("s3Response - cover photo", s3Response);
-    let s3URL = s3Response?.uploadURL.split("?")[0];
-    if (s3URL) {
-      src = s3URL;
+
+    if (response) {
+      if (!response[0].id) return;
+      src = response[0].id;
       dispatch("change", src);
     }
     isUploadInProgress = false;
@@ -50,7 +53,7 @@
 </script>
 
 <!-- TODO - Cover photo popover with upload, from link, solid colors, graphics and unsplash options -->
-{#if (isValidString(src) && !$isInEditMode) || $isInEditMode}
+{#if (src && !$isInEditMode) || $isInEditMode}
   <button
     class={cn(
       "relative h-72 min-h-[18rem] w-full flex justify-center items-center",
@@ -63,13 +66,23 @@
     on:click={onCoverClick}
   >
     {#if src}
+      {#key src}
+        <FileView
+          id={src}
+          isLazyLoad={false}
+          type={FileType.IMAGE}
+          class={cn("h-full w-full object-cover", {
+            "rounded-xl": isRoundedExperimental
+          })}
+        />
+      {/key}
       <!-- svelte-ignore a11y-missing-attribute -->
-      <img
+      <!-- <img
         {src}
         class={cn("h-full w-full object-cover", {
           "rounded-xl": isRoundedExperimental
         })}
-      />
+      /> -->
       <!-- TODO - if src and isInEditMode - drag to reposition -->
     {:else if $isInEditMode && !isUploadInProgress}
       + Add cover photo

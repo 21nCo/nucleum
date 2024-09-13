@@ -15,8 +15,10 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import BlockItem from "./BlockItem.svelte";
   import { createEventDispatcher } from "svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let variant: "v1" | "v2" = "v2";
+  export let isSingleColumnMode: boolean = false;
   let selectedSection = "";
   let focusedItem: any;
   let config = [
@@ -27,32 +29,36 @@
           label: "Heading 1",
           description: "Heading 1 block",
           type: NodeType.HEADING1,
-          icon: "heading1"
+          // icon: "lucide:heading-1"
+          icon: "hugeicons:heading-01"
         },
         {
           label: "Heading 2",
           description: "Heading 2 block",
           type: NodeType.HEADING2,
-          icon: "heading2"
+          // icon: "lucide:heading-2"
+          icon: "hugeicons:heading-02"
         },
         {
           label: "Heading 3",
           description: "Heading 3 block",
           type: NodeType.HEADING3,
-          icon: "heading3"
+          // icon: "lucide:heading-3"
+          icon: "hugeicons:heading-03"
         },
         {
           label: "Heading 4",
           description: "Heading 4 block",
           type: NodeType.HEADING4,
-          icon: "heading4"
-        },
-        {
-          label: "Heading 5",
-          description: "Heading 5 block",
-          type: NodeType.HEADING5,
-          icon: "heading5"
+          // icon: "lucide:heading-4"
+          icon: "hugeicons:heading-04"
         }
+        // {
+        //   label: "Heading 5",
+        //   description: "Heading 5 block",
+        //   type: NodeType.HEADING5,
+        //   icon: "lucide:heading-5"
+        // }
       ]
     },
     {
@@ -62,13 +68,13 @@
           label: "Paragraph",
           description: "Paragraph block",
           type: NodeType.SIMPLE_TEXT,
-          icon: "text"
+          icon: "hugeicons:paragraph"
         },
         {
           label: "Quote",
           description: "Quote block",
           type: NodeType.QUOTE,
-          icon: "quote"
+          icon: "hugeicons:quote-up"
         },
         {
           label: "Code",
@@ -80,7 +86,7 @@
           label: "Math",
           description: "Math block",
           type: NodeType.MATH,
-          icon: "math"
+          icon: "hugeicons:summation-01"
         },
         {
           label: "Callout",
@@ -92,7 +98,7 @@
           label: "Link",
           description: "Link block",
           type: NodeType.LINK,
-          icon: "link"
+          icon: "hugeicons:link-05"
         }
       ]
     },
@@ -127,21 +133,24 @@
           description: "Unordered List block",
           type: NodeType.LIST,
           sub: ListType.UNORDERED,
-          icon: "unordered-list"
+          // icon: "lucide:list"
+          icon: "hugeicons:left-to-right-list-bullet"
         },
         {
           label: "Ordered List",
           description: "Ordered List block",
           type: NodeType.LIST,
           sub: ListType.ORDERED,
-          icon: "ordered-list"
+          // icon: "lucide:list-ordered"
+          icon: "hugeicons:left-to-right-list-number"
         },
         {
           label: "Checklist",
           description: "Checklist block",
           type: NodeType.LIST,
           sub: ListType.CHECKLIST,
-          icon: "checklist"
+          // icon: "lucide:list-todo"
+          icon: "hugeicons:check-list"
         }
       ]
     },
@@ -152,19 +161,19 @@
           label: "Divider",
           description: "Divider block",
           type: NodeType.DIVIDER,
-          icon: "divider"
+          icon: "hugeicons:solid-line-01"
         },
         {
           label: "Double Divider",
           description: "Divider block",
           type: NodeType.DOUBLE_DIVIDER,
-          icon: "divider"
+          icon: "hugeicons:equal-sign"
         },
         {
           label: "Table",
           description: "Table block",
           type: NodeType.TABLE,
-          icon: "table"
+          icon: "hugeicons:layout-table-02"
         },
         {
           label: "Grid",
@@ -246,7 +255,7 @@
           label: "Embed collection",
           description: "Embed Collection block",
           type: NodeType.COLLECTION_AS_EMBED,
-          icon: "collection"
+          icon: "hugeicons:code"
         },
         {
           label: "Media grid",
@@ -342,11 +351,16 @@
 </script>
 
 <div
-  class="blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[45vh] rounded-md flex flex-col gap-12 overflow-auto styledscroll {searchQueryString
-    ? 'w-72'
-    : 'w-[30rem]'} {variant === 'v1' || searchQueryString ? 'p-4 pb-10' : ''}"
+  class={cn(
+    "blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[45vh] rounded-md flex flex-col gap-12 overflow-auto styledscroll",
+    {
+      "w-72": searchQueryString || isSingleColumnMode,
+      "w-[30rem]": !searchQueryString && !isSingleColumnMode,
+      "p-2 pb-10": variant === "v1" || searchQueryString || isSingleColumnMode
+    }
+  )}
 >
-  {#if variant === "v1" || searchQueryString}
+  {#if variant === "v1" || searchQueryString || isSingleColumnMode}
     {#if isValidArrayWithData(filteredResults)}
       {#each filteredResults as section}
         <div class="flex flex-col items-start gap-4">
@@ -357,7 +371,9 @@
                 {block}
                 on:select
                 isFocused={compareObjects(focusedItem, block)}
-                width={searchQueryString ? "w-full min-w-full" : "w-52"}
+                width={searchQueryString || isSingleColumnMode
+                  ? "w-full min-w-full"
+                  : "w-52"}
               />
             {/each}
           </div>

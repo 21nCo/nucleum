@@ -1,5 +1,9 @@
 import { get, writable } from "svelte/store";
-import type { UserAccount, UserInformation } from "../types/account.type";
+import {
+  UserSessionType,
+  type UserAccount,
+  type UserInformation
+} from "../types/account.type";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import { GlobalEvent } from "../types/event.enum";
 import { Persistence } from "../persistence/persistence";
@@ -18,12 +22,14 @@ import {
   StoreDataType,
   type IObservableStoreSubject
 } from "$lib/client/types/data.type";
-import { generateUID } from "../utils/utils";
 import { dataManager } from "../persistence/dataManager";
 import posthog from "posthog-js";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
 import { logger } from "../components/debug/logger.client";
+import { flux } from "../persistence/dataManagerv2";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+import { fileStore } from "../components/files/file.store";
 
 export const isRefreshingToken = writable(false);
 
@@ -34,13 +40,17 @@ class AccountStore extends ObservableStore<
   constructor() {
     super("account", StoreDataType.NA);
     let seed: UserAccount = {
-      isLoggedIn: false,
-      token: null
+      sessionType: UserSessionType.NONE
     };
     const token = clientStorage.get(ClientStorageKey.STOKEN);
+    const offlineSessionId = clientStorage.get(
+      ClientStorageKey.OFFLINE_SESSION_ID
+    );
     if (token) {
       seed.token = token;
-      seed.isLoggedIn = true;
+      seed.sessionType = UserSessionType.CLOUD;
+    } else if (offlineSessionId) {
+      seed.sessionType = UserSessionType.LOCAL;
     }
     const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
     if (userInfo) {
@@ -73,7 +83,9 @@ class AccountStore extends ObservableStore<
     logger.log({ at: "account.store - Expiring account" });
     clientStorage.remove(ClientStorageKey.STOKEN);
     this.update(() => {
-      const n = { token: null, isLoggedIn: false };
+      const n = {
+        sessionType: UserSessionType.NONE
+      };
       return n;
     });
     appEvents.publish(GlobalEvent.USER_LOGIN, false);
@@ -101,7 +113,7 @@ class AccountStore extends ObservableStore<
     this.update(() => {
       return {
         token: data.token,
-        isLoggedIn: true,
+        sessionType: UserSessionType.CLOUD,
         userId: data.userInfo.id,
         userInfo: data.userInfo
       };
@@ -166,15 +178,39 @@ class AccountStore extends ObservableStore<
     this.postToEmbed();
     return this.persistence.ping();
   }
-  logGuest() {
+  async logGuest() {
     let id = clientStorage.get(ClientStorageKey.GUEST);
     if (!id) {
-      id = generateUID();
+      id = generateSimpleRandomId();
       clientStorage.set(ClientStorageKey.GUEST, id);
     }
-    return this.persistence.runAccountAction("guest", { id });
+    try {
+      await this.persistence.runAccountAction("guest", { id });
+    } catch (e) {
+      logger.error({ at: "logGuest", error: e });
+    }
+    return id;
   }
+
+  async startOfflineSession() {
+    this.update((n) => {
+      n.sessionType = UserSessionType.LOCAL;
+      return n;
+    });
+    clientStorage.set(
+      ClientStorageKey.OFFLINE_SESSION_ID,
+      generateSimpleRandomId()
+    );
+    await this.seed();
+  }
+
   async bootstrap(region: string) {
+    await this.bootstrapRemote(region);
+    await this.seed();
+    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+  }
+
+  async bootstrapRemote(region: string) {
     const id = this.get()?.userInfo?.id?.split("user:")[1];
     if (!id) return;
     const response = await this.persistence.runAccountAction("bootstrap", {
@@ -194,13 +230,21 @@ class AccountStore extends ObservableStore<
     );
     appEvents.publish(GlobalEvent.BOOTSTRAP, true);
     this.setAnalyticsUserIdentity();
-    await dataManager.bootstrap();
-    await userPreferences.initializeTimeZoneForSignup();
+    // await dataManager.bootstrap();
     return true;
   }
+
+  async seed() {
+    await flux.seed();
+    await userPreferences.initializeTimeZoneForSignup();
+  }
+
   async performLoginStatusCheck() {
     const token = clientStorage.get(ClientStorageKey.STOKEN);
-    if (!token) {
+    const offlineSessionId = clientStorage.get(
+      ClientStorageKey.OFFLINE_SESSION_ID
+    );
+    if (!token && !offlineSessionId) {
       console.log("Token not found. Redirecting to signup");
       appStore.gotoPath("/signup");
       return false;
@@ -245,6 +289,57 @@ class AccountStore extends ObservableStore<
     } else return null;
   }
 
+  async uploadFileV2(
+    contentType: string,
+    fileName: string,
+    blob: any,
+    isTemp: boolean = false
+  ) {
+    try {
+      const account = this.get();
+      const id = contentType.split("/")[0] + "_" + generateSimpleRandomId();
+      logger.debug({ at: "uploadFileV2", id, contentType, fileName });
+      if (account.sessionType === UserSessionType.LOCAL) {
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const response = await fileStore.create([
+          {
+            id,
+            label: fileName,
+            type: contentType,
+            data: uint8Array
+          }
+        ]);
+        return response;
+      } else {
+        const signedUrlResponse = await this.getSignedUrl(
+          contentType,
+          fileName,
+          isTemp
+        );
+        if (!signedUrlResponse || !signedUrlResponse.uploadURL) return null;
+
+        await this.persistence.uploadFile(
+          signedUrlResponse.uploadURL,
+          contentType,
+          blob
+        );
+        const url = signedUrlResponse.uploadURL.split("?")[0];
+        const response = await fileStore.create([
+          {
+            id,
+            label: fileName,
+            type: contentType,
+            url
+          }
+        ]);
+        return response;
+      }
+    } catch (e) {
+      logger.error({ at: "uploadFileV2", error: e });
+    }
+  }
+
   /**
    * Used to upload a file to s3 temp bucket
    * @param input the file that needs to be uploaded to the S3 temp bucket
@@ -264,10 +359,17 @@ class AccountStore extends ObservableStore<
 
   async checkIfSessionExpired() {
     const token = clientStorage.get(ClientStorageKey.STOKEN);
-    if (!token) {
+    const offlineSessionId = clientStorage.get(
+      ClientStorageKey.OFFLINE_SESSION_ID
+    );
+    if (!token && !offlineSessionId) {
       this.expire();
       return true;
     }
+    if (offlineSessionId) {
+      return false;
+    }
+    if (!token) return true;
     let decodedToken: any = jwt_decode(token);
     let exp = decodedToken?.exp ?? 0;
     const currentTime = new Date().getTime() / 1000;
@@ -309,11 +411,13 @@ class AccountStore extends ObservableStore<
     const env = clientStorage.get(ClientStorageKey.ENV);
     const appData = clientStorage.get(ClientStorageKey.APP_DATA);
     const product = clientStorage.get(ClientStorageKey.PRODUCT);
+    const guest = clientStorage.get(ClientStorageKey.GUEST);
     clientStorage.clearAll();
     get(dataManager)?.cacheSource?.clearCache();
     if (env) clientStorage.set(ClientStorageKey.ENV, env);
     if (product) clientStorage.set(ClientStorageKey.PRODUCT, product);
     if (appData) clientStorage.set(ClientStorageKey.APP_DATA, appData);
+    if (guest) clientStorage.set(ClientStorageKey.GUEST, guest);
   }
 
   setAnalyticsUserIdentity() {

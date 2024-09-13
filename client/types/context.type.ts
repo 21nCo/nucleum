@@ -1,10 +1,11 @@
-export type Context = {
+export type IAppContext = {
   isEmbed: boolean;
   isSheet: boolean;
   isTouchDevice: boolean;
   protocol: string;
   embed: Embed;
   os: OperatingSystem;
+  dapId: string;
 };
 
 /**

@@ -1,44 +1,39 @@
 <script lang="ts">
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
-  import type { IActiveNodeStore } from "../node.store";
   import { Size } from "$lib/client/types/size.enum";
-  export let node: IActiveNodeStore;
-  let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
-  onMount(() => {
-    node.subscribe(async (x) => {
-      if (x.parent) breadcrumbs = await refreshBreadcrumbs(x.parent);
-    });
+  import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import type { INode } from "../node.type";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  export let node: INode;
+  export let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
+  onMount(async () => {
+    breadcrumbs = await refreshBreadcrumbs(node.parent ?? node.mdParent);
   });
   async function refreshBreadcrumbs(parent: string[]) {
-    console.log("refreshing breadcrumbs", { node: $node });
-    if (!parent) return;
-    const parentItems = await $dataManager.cacheSource.dexie.node
-      .where("id")
-      .anyOfIgnoreCase(parent)
-      .toArray();
-    return parent
+    if (!parent || parent.length === 0) return;
+    const parentItems = await flux.selectMany(Resource.node, {
+      filters: {
+        id: parent
+      }
+    });
+    console.log({ parentItems });
+    return parentItems
       .map((x) => {
-        let item = parentItems.find((y) => y.id === x);
-        if (!item) return;
         return {
-          label: item.label ?? item.body,
-          resourceId: x
+          label: x.label ?? x.body,
+          resourceId: x.id
         };
       })
       .filter((x) => x);
   }
   function onBreadcrumbClick(e: CustomEvent) {
-    console.log("onBreadcrumbClick", e);
     if (!e.detail.item.resourceId) return;
-    node.eventStore.set({
-      event: e.detail.event,
-      id: e.detail.item.resourceId
-    });
+    dispatch("click", e.detail);
   }
-  $: console.log({ node: $node });
 </script>
 
 {#if breadcrumbs && breadcrumbs.length > 0}

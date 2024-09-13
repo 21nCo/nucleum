@@ -21,11 +21,11 @@
 
 <div class="relative flex-grow w-full">
   {#if block.contentType === NodeType.DIVIDER}
-    <div class="h-px bg-brs3 m-4"></div>
+    <div class="h-px bg-brs3 my-4"></div>
   {:else if block.contentType === NodeType.MEDIA_GRID}
     <MediaGrid {block} {mdStore} on:change on:delete />
   {:else if block.contentType === NodeType.DOUBLE_DIVIDER}
-    <div class="flex flex-col my-1 gap-0.5 mx-2">
+    <div class="flex flex-col my-1 gap-0.5">
       <div class="h-px bg-bgs4"></div>
       <div class="h-px bg-bgs4"></div>
     </div>

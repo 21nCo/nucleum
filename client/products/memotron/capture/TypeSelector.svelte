@@ -3,13 +3,15 @@
   import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { activeResourceFilter } from "$lib/client/utils/utils";
+  import { activeResourceFilterV2 } from "$lib/client/utils/utils";
   import { appStore } from "$lib/client/stores/app.store";
   import type { InputLabel } from "$lib/client/types/input.type";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { CollectionType } from "../collection/collection.type";
   export let isCapturePage: boolean = false;
   export let label: InputLabel = { label: "Select Type" };
   export let selected: string;
@@ -28,11 +30,16 @@
   let types: ISelectItem[] = [];
 
   function refreshTypes() {
-    $dataManager.cacheSource.dexie.collection
-      .filter(activeResourceFilter)
-      .filter((x) => x.isCaptureShortcutEnabled === true)
-      .toArray()
+    flux
+      .selectMany(Resource.collection, {
+        filters: {
+          type: CollectionType.TYPED,
+          isCaptureShortcutEnabled: true,
+          ...activeResourceFilterV2
+        }
+      })
       .then((data) => {
+        console.log({ data });
         types = data.map((type) => ({
           value: type.id,
           label: type.label,

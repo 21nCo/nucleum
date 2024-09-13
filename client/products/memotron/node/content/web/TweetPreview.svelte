@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { appStore, userPreferences } from "$lib/client/stores/app.store";
   import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { onMount } from "svelte";
-  import { type IActiveNodeStore } from "../../node.store";
+  import { getContext, onMount } from "svelte";
   import { resolveContentPreview } from "../../node.utils";
-  export let node: IActiveNodeStore;
+  import type { ITweet } from "../../node.type";
+  export let node: ITweet;
+  const nodeContext = getContext<any>("node");
+
   let parent: any;
   let parentUsername: string;
   const contentPreview = resolveContentPreview(
-    $node.body,
-    $node.contentType,
-    $node.metadata
+    node.body,
+    node.contentType,
+    node.metadata
   );
   onMount(async () => {
-    parentUsername = $node.parent?.split("twitterProfile_")[1] ?? "";
+    parentUsername = node.parent?.split("twitterProfile_")[1] ?? "";
     await resolveParent();
     console.log({ parent });
   });
   async function resolveParent() {
-    const dexie = $dataManager.cacheSource.dexie;
-    if ($node.parent) parent = await dexie.node.get($node.parent);
+    if (nodeContext.parent) parent = nodeContext.parent;
   }
 </script>
 
@@ -28,7 +28,7 @@
   <button
     class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs3 rounded-md w-3/4"
     on:click={() => {
-      appStore.openLink($node.body.url);
+      appStore.openLink(node.body.url);
     }}
   >
     {#if parent}
@@ -37,7 +37,7 @@
           <img
             class="w-10 h-10 rounded-full"
             src={parent.body?.profileImageUrl}
-            alt="Profile picture"
+            alt="Profile"
           />
         </div>
         <div class="flex flex-col items-start">
@@ -55,7 +55,7 @@
     </div>
     <div class="text-b3 text-fgs3 text-right">
       Posted:
-      {formatDatetime($userPreferences, $node.body.postedAt)}
+      {formatDatetime($userPreferences, node.body.postedAt)}
     </div>
   </button>
 </div>

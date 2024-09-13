@@ -16,9 +16,10 @@
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import { LinkType } from "$lib/client/products/memotron/node/node.type";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-  import { resolveTypes } from "../memotron.store";
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import type { IProperty } from "../collection/properties/property.type";
+  import { collectionStore } from "../collection/collection.store";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -29,6 +30,7 @@
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
   let avatars: IAvatar[] = [];
+  let propertyConfig: IProperty[] = [];
   function refresh() {
     dataManager.refresh(Resource.capture);
   }
@@ -41,8 +43,10 @@
     )
     ?.map((x) => x.to);
 
-  async function resolveAvatars(types: string[]) {
-    avatars = (await resolveTypes(types)).avatars;
+  async function refreshTypeData(types: string[]) {
+    const data = await collectionStore.resolveTypes(types);
+    avatars = data.avatars;
+    propertyConfig = data.propertyConfig;
   }
 </script>
 
@@ -113,8 +117,8 @@
               <!-- TODO - send only selected type if properties are to be shown upon link click -->
               <PropertiesListView
                 context="capture"
+                {propertyConfig}
                 bind:properties={$captureStore.properties}
-                {types}
                 bind:isCollapsed={isPropertiesCollapsed}
               />
             {/if}

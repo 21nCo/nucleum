@@ -93,7 +93,12 @@
             arrangement === Arrangement.LIST && !isApplyCustomColor
         })}
       >
-        <ContextMenuAction {contextMenu} size={Size.lg} on:action={onAction} />
+        <ContextMenuAction
+          id="resourceThumbnailContextMenu"
+          {contextMenu}
+          size={Size.lg}
+          on:action={onAction}
+        />
       </div>
     </button>
   {/if}

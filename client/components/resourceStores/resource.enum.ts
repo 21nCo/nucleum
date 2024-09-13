@@ -17,6 +17,7 @@ export enum Resource {
   accessLog = "accessLog",
   uiState = "uiState",
   keyboardShortcuts = "keyboardShortcuts",
+  mutation = "mutation",
 
   //Pointron
   pointronPreferences = "pointronPreferences",
@@ -54,7 +55,9 @@ export enum Resource {
   view = "view",
   file = "file",
   highlight = "highlight",
+  link = "link",
 
   //Memotron clipper
-  clipperToolbarState = "clipperToolbarState"
+  clipperToolbarState = "clipperToolbarState",
+  clipperSync = "clipperSync"
 }

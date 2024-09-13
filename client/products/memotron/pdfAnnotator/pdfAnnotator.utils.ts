@@ -1,12 +1,14 @@
+import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
-import type {
-  Coords,
-  LTWH,
-  LTWHP,
-  Page,
-  Scaled,
-  WIDTH_HEIGHT
+import {
+  AnnotationType,
+  type Coords,
+  type LTWH,
+  type LTWHP,
+  type Page,
+  type Scaled,
+  type WIDTH_HEIGHT
 } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
 import { PDFDocument, rgb } from "pdf-lib";
@@ -524,4 +526,29 @@ export function getBoundingRectSE(start: Coords, end: Coords): LTWH {
     width: Math.abs(end.x - start.x),
     height: Math.abs(end.y - start.y)
   };
+}
+
+export function resolveAnnotationModes(): IToggleItem[] {
+  return [
+    {
+      value: AnnotationType.HIGHLIGHT,
+      icon: "highlight"
+    },
+    {
+      value: AnnotationType.UNDERLINE,
+      icon: "underline"
+    },
+    {
+      value: AnnotationType.LINETHROUGH,
+      icon: "strikethrough"
+    },
+    {
+      value: AnnotationType.COMMENT,
+      icon: "chat-bubble-bottom-center"
+    },
+    {
+      value: AnnotationType.TASK,
+      icon: "check-circle"
+    }
+  ];
 }

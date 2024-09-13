@@ -10,22 +10,22 @@ import {
   type ICaptureStore,
   type FileDetails
 } from "$lib/client/products/memotron/capture/capture.type";
-import { generateUID } from "$lib/client/utils/utils";
-import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { prefixTable } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/shared/utils/text.utils";
 import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
 import { resolveResourceType } from "../memotron.utils";
+import { linker } from "../memotron.store";
+import { collectionStore } from "../collection/collection.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
-  const blockId = prefixTable(generateUID(), Resource.node);
+  const blockId = generateResourceId(Resource.node);
   return {
     captureType: CaptureType.MARKDOWN,
     refreshId: new Date().getTime(),
@@ -78,8 +78,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   async onTypeSelect(val: CaptureType | string) {
     logger.log({ context: "onTypeSelect", val });
     if (!val.startsWith(Resource.collection)) return;
-    const dexie = get(dataManager).cacheSource.dexie;
-    const type = await dexie.collection.get(val);
+    const type = await collectionStore.select(val);
     if (!type) return;
     this.update((store: ICaptureStore) => {
       store.links = [
@@ -149,19 +148,15 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     //TODO - extract nodes from markdown blocks and save
     const metadata = await resolveNodeCaptureMetadata();
     console.log("capture store", { val, metadata });
-    const id = prefixTable(generateUID(), Resource.node);
+    // const id = prefixTable(generateRandomId(), Resource.node);
+    const id = generateResourceId(Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",
       properties: val.properties,
       body: "",
       contentType: getContentTypeFromFileDetails(val?.fileDetails!),
-      metadata,
-      links: [
-        ...(val.links ? val.links.filter((x) => x.from === "root") : [])
-      ].map((x) => {
-        return { ...x, from: id };
-      })
+      metadata
     };
     let remainingResources: INodeItemCaptured[] = [];
     if (val.fileDetails) {
@@ -219,16 +214,23 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
           metadata: root.metadata,
-          creationContext: root.id,
-          children: block.children,
-          links: val.links ? val.links.filter((x) => x.from === block.id) : []
+          creationContext: id,
+          children: block.children
         };
       });
     }
     if (root.contentType == NodeType.PDF)
       root = { ...root, url: root.body.url };
 
-    let result: any = await nodeStore.createNode([root, ...remainingResources]);
+    let result: any = await nodeStore.create([root, ...remainingResources]);
+    //TODO - save links
+    const rootLinks = [
+      ...(val.links ? val.links.filter((x) => x.from === "root") : [])
+    ].map((x) => {
+      return { ...x, from: id };
+    });
+    const blockLinks = val.links?.filter((x) => x.from !== "root");
+    await linker.linkMany([...rootLinks, ...(blockLinks ?? [])]);
 
     if (!result) {
       toasts.error("Something went wrong. Please try again later.");

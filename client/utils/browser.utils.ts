@@ -85,6 +85,7 @@ async function _renderPopoverUsingFixedPositioning(
   params: IPopoverRenderParams
 ) {
   let { popRef, placement, isSpanToTriggerWidth, offsetInPx } = params;
+  if (!offsetInPx) offsetInPx = 4;
   popRef.style.display = "block";
   popRef.style.opacity = "0";
   let popRect = popRef.getBoundingClientRect();
@@ -151,13 +152,9 @@ async function _renderPopoverUsingFixedPositioning(
   if (placement === Position.Right) {
     popRef.style.left = `${triggerRect.right + offsetInPx}px`;
     popRef.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
-    // console.log({
-    //   popRectHeight: popRect.height,
-    //   triggerRectTop: triggerRect.top,
-    //   popRefTop: popRef.style.top
-    // });
   } else if (placement === Position.Left) {
     popRef.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
+    popRef.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
   } else if (
     placement === Position.TopCenter ||
     placement === Position.BottomCenter
@@ -193,6 +190,7 @@ function renderPopoverUsingAbsolutePositioning(params: IPopoverRenderParams) {
   let { triggerRef, popRef, placement, isSpanToTriggerWidth, offsetInPx } =
     params;
   if (!popRef) return;
+  if (!offsetInPx) offsetInPx = 4;
   const triggerRect = triggerRef?.getBoundingClientRect();
   popRef.style.display = "block";
   popRef.style.opacity = "0";
@@ -408,50 +406,101 @@ export function trackPosition(node, options = {}) {
   };
 }
 
-/**
- * Lazy loads an image when it is in the viewport.
- * @param image
- * @param src
- * @returns
- */
-export function lazyLoad(image, src) {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        image.src = src;
-        observer.unobserve(image);
-      }
+export async function resolveIframability(url: string): Promise<boolean> {
+  // try {
+  //   const response = await fetch("https://crossorigin.me/" + url);
+  //   console.log({ at: "resolveIframability", response });
+  // } catch (e) {
+  //   return false;
+  // }
+  try {
+    return new Promise((resolve) => {
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
+
+      iframe.onload = (e) => {
+        resolve(true);
+      };
+
+      iframe.onerror = () => {
+        resolve(false);
+      };
+
+      iframe.src = url;
+
+      // Set a timeout to catch X-Frame-Options or CSP blocks
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 5000);
     });
-  });
-
-  observer.observe(image);
-
-  return {
-    destroy() {
-      observer.unobserve(image);
-    }
-  };
+  } catch (e) {
+    return Promise.resolve(false);
+  }
 }
 
-export function resolveIframability(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
+export async function generateFingerprint() {
+  try {
+    const components = [
+      navigator.userAgent,
+      navigator.language,
+      new Date().getTimezoneOffset(),
+      navigator.hardwareConcurrency,
+      navigator.deviceMemory,
+      screen.colorDepth,
+      screen.pixelDepth,
+      screen.width + "x" + screen.height,
+      window.devicePixelRatio,
+      !!window.sessionStorage,
+      !!window.localStorage,
+      !!window.indexedDB,
+      !!window.openDatabase,
+      navigator.cpuClass,
+      navigator.platform,
+      navigator.plugins.length,
+      navigator.mimeTypes.length,
+      !!navigator.bluetooth
+    ];
 
-    iframe.onload = () => {
-      resolve(true);
-    };
+    if (window.CanvasRenderingContext2D) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.textBaseline = "top";
+      ctx.font = "14px Arial";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#f60";
+      ctx.fillRect(125, 1, 62, 20);
+      ctx.fillStyle = "#069";
+      ctx.fillText("Hello, world!", 2, 15);
+      ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+      ctx.fillText("Hello, world!", 4, 17);
+      components.push(canvas.toDataURL());
+    }
 
-    iframe.onerror = () => {
-      resolve(false);
-    };
+    if (window.AudioContext) {
+      const audioContext = new AudioContext();
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+      const analyser = audioContext.createAnalyser();
+      oscillator.connect(analyser);
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+      components.push(dataArray.join(","));
+      await audioContext.close();
+    }
 
-    iframe.src = url;
+    const fingerprint = components.join("###");
+    const encoder = new TextEncoder();
+    const data = encoder.encode(fingerprint);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
-    // Set a timeout to catch X-Frame-Options or CSP blocks
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 5000);
-  });
+    return hashHex;
+  } catch (e) {
+    logger.error({ at: "generateFingerprint", error: e });
+  }
 }

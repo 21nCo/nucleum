@@ -19,13 +19,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
-  import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
-  import { Placement } from "$lib/client/types/placement.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { lazyLoad } from "$lib/client/utils/browser.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
-  import { highlightStore } from "../../common/highlighters/highlight.store";
+  import TextClipPreview from "../content/web/TextClipPreview.svelte";
+  import { lazyLoad } from "$lib/client/actions/lazyload.action";
   export let item: INode;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -37,8 +35,11 @@
   let isGridBottomHovering = false;
   function resolvePreviewImageSrc(item: INode) {
     if (item.contentType === NodeType.IMAGE) return item.body.url;
-    else if (item.contentType === NodeType.WEB_SCREENSHOT_CLIP)
-      return item.body.s3URL;
+    else if (
+      item.contentType === NodeType.WEB_SCREENSHOT_CLIP ||
+      item.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
+    )
+      return item.body.s3Url;
     else if (
       item.contentType === NodeType.WEB_PAGE &&
       (item.metadata?.ogImage || item.metadata?.screenshotUrl)
@@ -80,6 +81,7 @@
     {@const isImagePreview =
       item.contentType === NodeType.IMAGE ||
       item.contentType === NodeType.WEB_SCREENSHOT_CLIP ||
+      item.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP ||
       (item.contentType === NodeType.WEB_PAGE && previewImageSrc) ||
       contentPreview.includes("https://")}
     <ResourceGridThumbnail
@@ -99,20 +101,7 @@
             use:lazyLoad={previewImageSrc ?? contentPreview}
           />
         {:else if "body" in item && item.body}
-          {@const textHightlightColor =
-            item.contentType === NodeType.TEXT_CLIP && item.body.highlighterId
-              ? $highlightStore?.highlighters?.find(
-                  (x) => x.id === item.body.highlighterId
-                )?.color
-              : undefined}
-          <span
-            class="relative text-left text-b2"
-            style="background-color: {textHightlightColor
-              ? textHightlightColor
-              : 'transparent'};"
-          >
-            {contentPreview}
-          </span>
+          <TextClipPreview node={item} {contentPreview} />
         {/if}
         {#if !isImagePreview}
           <span
@@ -131,7 +120,7 @@
           bind:isHovering={isGridBottomHovering}
           class="flex  w-full h-5"
         >
-          {#if isHovering && item.body && "url" in item.body && item.body.url}
+          {#if isHovering && item.body && typeof item.body === "object" && "url" in item.body && item.body.url}
             <a
               href={item.body.url}
               target="_blank"

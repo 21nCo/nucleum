@@ -9,7 +9,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-2 w-full">
+<div class="flex flex-col w-full">
   {#each items as item}
     <LinkSuggestionItem {item} on:click={(e) => onClick(e, item)} />
   {/each}

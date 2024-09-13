@@ -126,7 +126,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       })
       ?.includes(this.resource.id);
     return {
-      value: isAlreadyPinned ? "Unpin from top bar" : "Pin to top bar",
+      value: isAlreadyPinned ? "Remove from top bar" : "Open in top bar",
       icon: "rocket",
       callback: async () => {
         if (isAlreadyPinned) {

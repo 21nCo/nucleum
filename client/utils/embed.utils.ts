@@ -23,7 +23,10 @@ export function postMessageToParent(message: EmbedMessage) {
   });
 }
 export function postToParent(message: any) {
-  logger.log("posting message to parent:" + JSON.stringify(message));
+  logger.log({
+    at: "posting message to parent",
+    message: JSON.stringify(message)
+  });
   try {
     window?.parent?.postMessage(message, "*");
   } catch (error) {

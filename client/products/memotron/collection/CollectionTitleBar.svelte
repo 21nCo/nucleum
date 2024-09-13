@@ -62,6 +62,6 @@
     <Button icon="rectangle-stack" tooltip="flashcards" {...buttonProps} />
     <Button icon="share" tooltip="share" {...buttonProps} />
     <!-- <Button icon="ellipsis-vertical" {...buttonProps} /> -->
-    <ContextMenuAction {contextMenu} />
+    <ContextMenuAction {contextMenu} id="collectionContextMenu" />
   </span>
 </div>

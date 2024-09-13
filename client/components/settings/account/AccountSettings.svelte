@@ -12,7 +12,7 @@
   let emailParts: EmailParts | undefined = undefined;
   onMount(() => {
     account.subscribe((value) => {
-      if (value.isLoggedIn) {
+      if (value.isCloudUser) {
         nickName = value.userInfo?.nickName || "";
         emailParts = value.userInfo?.emailParts || undefined;
       }

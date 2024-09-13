@@ -1,21 +1,16 @@
 <script lang="ts">
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
+  import { flux } from "$lib/client/persistence/dataManagerv2";
   const dispatch = createEventDispatcher();
   export let id: string;
   let item: any;
   let isHovering = false;
   function resolveItem() {
-    const dexie = $dataManager.cacheSource.dexie;
-    if (id.includes("collection")) {
-      return dexie.collection.get(id);
-    } else if (id.includes("node")) {
-      return dexie.node.get(id);
-    }
+    return flux.select(id);
   }
   onMount(async () => {
     item = await resolveItem();

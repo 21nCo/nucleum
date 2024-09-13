@@ -1,6 +1,5 @@
 import { Resource } from "$lib/client/components/resourceStores/resource.enum";
 import {
-  type INodeItemCaptured,
   LinkType,
   type IActiveNode,
   type INodeProperty,
@@ -11,23 +10,23 @@ import {
   ActiveResourceStore,
   ResourceStore
 } from "$lib/client/components/resourceStores/resource.store";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
+import { debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import type { IMutationQueueParams } from "../../../types/data.type";
 import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
-import { linker, resolveTypes } from "../memotron.store";
+import { linker } from "../memotron.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
+import { flux } from "$lib/client/persistence/dataManagerv2";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { collectionStore } from "../collection/collection.store";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export const hierarchyFactorLimit = 5;
 
 class NodeStore extends ResourceStore<INode> {
-  db: ISurrealDatabase;
   constructor() {
     super(Resource.node, {
       refreshOnAppear: true,
@@ -40,29 +39,29 @@ class NodeStore extends ResourceStore<INode> {
         "fn::memotron::pdfAnnotator::saveClip"
       ]
     });
-    this.db = new SurrealDatabase();
-  }
-  async createNode(
-    capture: INodeItemCaptured[],
-    queueParams?: IMutationQueueParams
-  ) {
-    return super.create(capture, {
-      customQuery:
-        "return fn::memotron::node::createMany($resources, $mutatedAt);",
-      queueParams
-    });
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
-    const response = await this.db.executeReadFn(query, {
+    const response = await flux.selectByQuery(query, {
       date: formatDate(date, "iso")
     });
-    return interceptSurrealResponse(response, "fetch timeline");
+    logger.debug({ at: "fetch timeline", response });
+    return response;
   }
-  async fetch(nodeId: string) {
-    const query = `fn::memotron::node::fetch($nodeId)`;
-    const response = await this.db.executeReadFn(query, { nodeId });
-    return interceptSurrealResponse(response, "fetch node");
+
+  /**
+   *
+   *
+   * Note: sending nodeId as param with $nodeId placeholder is not working in case of surreal.js + wasm engine. It is not detecting it as record id. Sending the fn param without single quotes is working.
+   *
+   * @param nodeId
+   * @returns
+   */
+  async fetch(nodeId: IRecordId) {
+    const query = `fn::memotron::node::fetch(${nodeId})`;
+    const response = await flux.selectByQuery(query);
+    logger.debug({ at: "fetch node", response });
+    return response;
   }
 }
 
@@ -93,11 +92,9 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   eventStore: any;
-  db: ISurrealDatabase;
   constructor(node: string) {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
-    this.db = new SurrealDatabase();
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
@@ -121,9 +118,8 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (node) {
       this.set(node);
     }
-    const { types, propertyConfig, avatars } = await resolveTypes(
-      node.collections
-    );
+    const { types, propertyConfig, avatars } =
+      await collectionStore.resolveTypes(node.collections);
     this.update((n) => {
       n.types = types;
       n.propertyConfig = propertyConfig;
@@ -146,27 +142,24 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
     debouncer(id, mutationId, changedProps);
   };
-  createBlock = async (id: string, contentType: any) => {
-    return this.resourceStore.createNode(
-      [
-        {
-          id,
-          body: "",
-          contentType,
-          creationContext: this.id
-        }
-      ],
+  createBlock = async (
+    id: string,
+    contentType: any,
+    params?: { body?: any }
+  ) => {
+    logger.log({ at: "ActiveNodeStore.createBlock", id, contentType, params });
+    return this.resourceStore.create([
       {
-        isUseQueueFirstApproach: true,
-        mutationId: `${id}-create`
+        id,
+        body: "",
+        contentType,
+        creationContext: this.id,
+        ...params
       }
-    );
+    ]);
   };
   deleteBlock = async (id: string) => {
-    return this.resourceStore.trash(id, {
-      isUseQueueFirstApproach: true,
-      mutationId: `${id}-delete`
-    });
+    return this.resourceStore.trash(id);
   };
   mention = async (location: string, id: string) => {
     return linker.link(location, id, LinkType.MENTION);
@@ -202,11 +195,11 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     let $from = array::first(select value <-link.* from node where id is $id);
    return {from: $from, to: $to};
     COMMIT TRANSACTION;`;
-    const response = await this.db.executeReadFn(query, {
+    const response = await flux.selectByQuery(query, {
       id
     });
-    console.log({ response });
-    return interceptSurrealResponse(response);
+    logger.debug({ at: "ActiveNodeStore.resolveLinks", response });
+    return response;
   }
 }
 

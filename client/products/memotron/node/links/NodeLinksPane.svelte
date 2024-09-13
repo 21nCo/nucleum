@@ -15,7 +15,10 @@
   import BulkEditBar from "../../common/BulkEditBar.svelte";
   import InlineTimeoutMessage from "$lib/client/elements/text/InlineTimeoutMessage.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
-  import type { IActiveNodeStore } from "$lib/client/products/memotron/node/node.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "$lib/client/products/memotron/node/node.store";
   import {
     type INode,
     LinkType
@@ -24,6 +27,8 @@
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -69,9 +74,7 @@
       return;
     }
     linker.link($node.focusedBlock ?? node.id, e.detail.item.id);
-    const addedLink = await $dataManager.cacheSource.dexie.node.get(
-      e.detail.item.id
-    );
+    const addedLink = await flux.select(e.detail.item.id);
     if (!addedLink) {
       linkStatus.message = "Something went wrong. Please try again later.";
       linkStatus.type = AlertType.ERROR;
@@ -84,7 +87,6 @@
   }
   async function refresh() {
     const result = await node.fetchLinks();
-    console.log({ result });
     if (!result) {
       links = [];
       filtered = [];
@@ -117,10 +119,11 @@
       .filter((x) => x.linkType === selectedLinkType)
       .map((x) => x.id);
 
-    filtered = await $dataManager.cacheSource.dexie.node
-      .where("id")
-      .anyOfIgnoreCase(linkIds)
-      .toArray();
+    filtered = await nodeStore.selectMany({
+      filters: {
+        id: linkIds
+      }
+    });
   }
   function onClick(e: CustomEvent) {
     const result = multiSelectStore.clickHandler(e.detail.id);

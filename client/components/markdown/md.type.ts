@@ -1,4 +1,7 @@
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type {
   NodeContent,
   ListChild,
@@ -23,7 +26,7 @@ export type IMarkdown = { blocks: IBlock[] };
 export type DbBlock = IResourceBase & IBlock;
 
 export type IBlock<T = NodeContent> = T & {
-  id: string;
+  id: IRecordId;
   childrenHierarchy?: string[];
 };
 export enum InlineType {
@@ -90,3 +93,30 @@ export type IBlockOperationContext = {
   blockType?: NodeType;
   listType?: ListType;
 };
+
+export enum BlockAction {
+  CONVERT = "convert",
+  INSERT = "insert",
+  MENTION = "mention",
+  DELETE = "delete",
+  MOVEUP = "moveup",
+  MOVEDOWN = "movedown",
+  LINK = "link",
+  DUPLICATE = "duplicate",
+  COPY_LINK = "COPY_LINK",
+  INSERT_ABOVE = "INSERT_ABOVE",
+  INSERT_BELOW = "INSERT_BELOW",
+  COPY_BLOCK_TEXT = "COPY_BLOCK_TEXT",
+  FOCUS = "FOCUS",
+  OPEN_AS_SPLIT = "OPEN_AS_SPLIT",
+  OPEN_IN_FULL_SCREEN = "OPEN_IN_FULL_SCREEN",
+  OPEN_IN_TOP_BAR = "OPEN_IN_TOP_BAR",
+  COLOR = "COLOR",
+  CALLOUT_SETTINGS = "CALLOUT_SETTINGS",
+  SHORTCUTS = "SHORTCUTS",
+
+  /**
+   * Content change event
+   */
+  CHANGE = "change"
+}

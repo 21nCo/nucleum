@@ -13,6 +13,9 @@ import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
 import { generateUID } from "./utils";
+import { generateRandomId } from "./crypto.utils";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { RecordId } from "surrealdb.js";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -26,11 +29,21 @@ export function properCase(str: string) {
 export function prefixTable(id: string | number, itemType: Resource) {
   return `${itemType}:${id}`;
 }
-export function generateResourceId(itemType: Resource, params?: {
-  prefix?: string;
-  id?: string;
-}) {
-  const id = params?.id ?? generateUID();
+export function generateResourceId(
+  itemType: Resource,
+  params?: {
+    prefix?: string;
+    id?: string;
+    isAsRecordId?: boolean;
+  }
+): IRecordId {
+  const id = params?.id ?? generateRandomId();
+  if (params?.isAsRecordId) {
+    return new RecordId(
+      itemType,
+      params?.prefix ? params?.prefix + "_" : "" + id
+    );
+  }
   return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 
@@ -140,6 +153,18 @@ export function enumToString(val: any, isProperCase: boolean = true) {
   return isProperCase ? properCase(str) : str;
 }
 
+export function enumToCamelCase(val: any) {
+  let output = "";
+  val
+    .toString()
+    .split("_")
+    .forEach((x, index) => {
+      if (index === 0) output += x.toLowerCase();
+      else output += x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
+    });
+  return output;
+}
+
 export function determineTruncateLength(
   display: Display,
   space: Size.sm | Size.md | Size.lg = Size.md
@@ -148,9 +173,9 @@ export function determineTruncateLength(
     if (display === Display.MO || display === Display.CW) {
       return 20;
     } else if (display === Display.TP || display === Display.DP) {
-      return 30;
-    } else if (display === Display.TK) {
       return 40;
+    } else if (display === Display.TK) {
+      return 60;
     } else {
       return 20;
     }

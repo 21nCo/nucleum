@@ -1,7 +1,9 @@
 import { logger } from "../components/debug/logger.client";
+import { ClientStorageKey } from "../persistence/persistence.type";
+import { clientStorage } from "../persistence/persistence.utils";
 import { GlobalEvent } from "../types/event.enum";
 import { resolveToken, signout } from "./account.utils";
-import { isExtensionEnvironment } from "./browser.utils";
+import { generateFingerprint, isExtensionEnvironment } from "./browser.utils";
 import { detectTimeZone } from "./time.utils";
 
 export function resolveRegionalApiUrl() {
@@ -38,13 +40,17 @@ export async function performApiCall(
       endpoint,
     method,
     headers: {},
-    body: JSON.stringify({ ...body, context: getAppLoadContext() })
+    body: JSON.stringify({ ...body, context: await getAppLoadContext() })
   });
-  function getAppLoadContext() {
+  async function getAppLoadContext() {
+    const deviceFingerprint = await generateFingerprint();
+    const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
     const urlParams = new URLSearchParams(window.location.search);
     return {
       userAgent: navigator.userAgent,
       origin: window.location.origin,
+      dapId,
+      deviceFingerprint,
       host:
         import.meta.env?.VITE_HOST ??
         process.env.PLASMO_PUBLIC_HOST ??

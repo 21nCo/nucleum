@@ -6,6 +6,11 @@ export type IPopoverOptions = IPopoverRenderBaseParams & {
   id?: string;
   isPreventDefaultStyling?: boolean;
   parentBgIndex?: number;
+  /**
+   * If true, only one popover will be shown at a time with the same .
+   */
+  isOnlyOneVisiblePerGroup?: boolean;
+  groupId?: string;
 };
 
 export type IPopoverRenderParams = IPopoverRenderBaseParams & {

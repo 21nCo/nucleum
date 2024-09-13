@@ -23,7 +23,8 @@
             },
             function () {
               console.log("Token is stored to be used later.");
-              $account.isLoggedIn = true;
+              dataManager.runDboUpdate();
+              $account.isCloudUser = true;
             }
           );
         }
@@ -32,7 +33,7 @@
     );
     const token = await resolveToken();
     if (token) {
-      $account.isLoggedIn = true;
+      $account.isCloudUser = true;
     }
     await dataManager.initialize(stores);
     await dataManager.refreshClientCache();

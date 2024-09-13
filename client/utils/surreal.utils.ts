@@ -1,5 +1,5 @@
 import {
-  PersistanceActionType,
+  PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 
@@ -12,14 +12,18 @@ export function surrealUnixTimestamp(date?: string | Date) {
   return +(new Date(date).getTime() / 1000).toFixed();
 }
 
-export function resolveRefreshQuery(id: string, dataType: StoreDataType, params?: {
-  isFetchAll?: boolean;
-}) {
+export function resolveRefreshQuery(
+  id: string,
+  dataType: StoreDataType,
+  params?: {
+    isFetchAll?: boolean;
+  }
+) {
   if (dataType === StoreDataType.KVO)
     return `array::first(select * from kv:${id});`;
   else if (dataType === StoreDataType.FIR) return `select * from ${id};`;
   else if (dataType === StoreDataType.IFR) {
-    return `fn::global::resource::fetch("${id}", $since);`
+    return `fn::global::resource::fetch("${id}", $since);`;
   }
 }
 
@@ -31,29 +35,29 @@ function mutationMapEntry(recordId: string) {
 }
 
 export function resolveMutationQuery(
-  type: PersistanceActionType,
+  type: PersistenceActionType,
   record: string,
   params?: { userId?: string; isPreventMutationMapEntry?: boolean }
 ) {
   let modifiedQuery: string = "";
   switch (type) {
     //TODO - use REMOVE or DELETE for removing the record permanently as trash is separated out and this surreal fn is not used for that
-    case PersistanceActionType.DELETE:
+    case PersistenceActionType.DELETE:
       modifiedQuery = `return fn::global::resource::delete(${record}, ${params?.userId});`;
       break;
-    case PersistanceActionType.INSERT:
+    case PersistenceActionType.INSERT:
       modifiedQuery = `INSERT INTO ${record} $data RETURN id;`;
       break;
-    case PersistanceActionType.REPLACE:
+    case PersistenceActionType.REPLACE:
       modifiedQuery = `UPDATE ${record} CONTENT $data;`;
       break;
-    case PersistanceActionType.CREATE:
+    case PersistenceActionType.CREATE:
       modifiedQuery = `create ${record} content $data return id;`;
       break;
-    case PersistanceActionType.MERGE:
+    case PersistenceActionType.MERGE:
       modifiedQuery = `UPDATE ${record} MERGE $data;`;
       break;
-    case PersistanceActionType.BULK_MERGE:
+    case PersistenceActionType.BULK_MERGE:
       modifiedQuery = `UPDATE ${record} MERGE $data where id in $ids;`;
       break;
   }

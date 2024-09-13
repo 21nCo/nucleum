@@ -1,8 +1,6 @@
 <script lang="ts">
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import {
-    extractFullTabData,
-    extractMinimalTabData,
     extractTweetFromTweeetPage,
     extractTwitterProfile,
     resolveContentTypeForUrl
@@ -14,7 +12,7 @@
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
   import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
-  import { webpage, toolbarState, feedbackPane } from "./store";
+  import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
   import { linker } from "$lib/client/products/memotron/memotron.store";
@@ -22,9 +20,9 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import account from "$lib/client/stores/account.store";
-  import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import { AlertType } from "$lib/client/types/notification.type";
+  import SyncPane from "../syncPane/SyncPane.svelte";
   export let id: string;
   let textClipperRef: any;
   let isSnipActive: boolean = false;
@@ -36,9 +34,7 @@
     const contentTypeStr = enumToString(contentType);
     $feedbackPane.feedback = `Saving ${contentTypeStr}...`;
     $feedbackPane.isShown = true;
-    if (contentType === NodeType.WEB_PAGE) {
-      await saveGenericWebpage();
-    } else if (contentType === NodeType.TWEET) {
+    if (contentType === NodeType.TWEET) {
       const tweetNode = extractTweetFromTweeetPage();
       if (!tweetNode) return;
       await webpage.saveTweet(tweetNode, true);
@@ -46,87 +42,77 @@
       const data = extractTwitterProfile();
       if (!data) return;
       await webpage.saveTwitterProfile(data);
+    } else {
+      await webpage.savePage();
     }
-    $feedbackPane.feedback = `${contentTypeStr} saved!`;
+    $feedbackPane.feedback = {
+      message: `${contentTypeStr} saved!`,
+      type: AlertType.SUCCESS
+    };
   }
 
-  function saveGenericWebpage() {
-    return new Promise(async (resolve, reject) => {
-      const host = window.location.host;
-      console.log({ host });
-      if (
-        commonMetadata.some(
-          (x) => host === x.domain || host.includes("." + x.domain)
-        )
-      ) {
-        console.log("minimal metadata page");
-        const tab = extractMinimalTabData();
-        await webpage.savePage({ ...tab, contentType: NodeType.WEB_PAGE });
-        resolve(true);
-        return;
-      }
-      screenshotWebpage(async (s3Url) => {
-        const tab = extractFullTabData();
-        tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
-        await webpage.savePage(tab);
-        resolve(true);
-      });
-    });
+  async function onClipMutationFromSidePanel(data: any) {
+    let result;
+    if (data.action === "link") {
+      result = await webpage.linkClip(data.clipId, data.linkTo);
+    } else if (data.action === "unlink") {
+      result = await webpage.removeLinkForClip(data.clipId, data.linkTo);
+    } else if (data.action === "notes") {
+      //TODO - result
+      await webpage.persistClipNotes(data.clipId, data.notes);
+      result = { id: data.clipId, type: AlertType.SUCCESS };
+    }
+    if (result.type === AlertType.SUCCESS)
+      return $webpage.clips.find((clip) => clip.id === data.clipId);
+    else return result;
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (
-      message.event === ExtensionEvent.TAB_CHANGE ||
-      message.event === ExtensionEvent.TAB_UPDATE
-    ) {
-      logger.log({
-        at: "onMessage - tab change or update",
-        event: message.event,
-        message
-      });
-      webpage.onContextChange(message.tab);
-      return;
-    } else if (message.event === ExtensionEvent.READ_PAGE_CONTENT) {
-      const data = extractFullTabData();
-      sendResponse(data);
-    } else if (
-      message.event === ClipperExtensionEvent.PAGE_SAVING_STATUS &&
-      message.node
-    ) {
-      webpage.propagatePageStatusFromSidebar({ id: message.node });
-    }
-  });
+    logger.log({
+      at: "onMessage - Content script",
+      event: message.event,
+      message
+    });
 
-  function screenshotWebpage(callback: (data: string) => void) {
-    chrome.runtime.sendMessage(
-      {
-        event: ClipperExtensionEvent.SCREENSHOT
-      },
-      (data) => {
-        processScreenshot(data);
-      }
-    );
+    const handleMessage = async () => {
+      try {
+        switch (message.event) {
+          case ExtensionEvent.TAB_CHANGE:
+          case ExtensionEvent.TAB_UPDATE:
+            webpage.onContextChange(message.tab);
+            return;
 
-    async function processScreenshot(dataURL) {
-      const contentType = "image/png";
-      const s3SignedURL = await account.getSignedUrl(
-        contentType,
-        "screenshot.png",
-        false
-      );
-      chrome.runtime.sendMessage(
-        {
-          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-          data: { s3SignedURL, dataURL, contentType }
-        },
-        (response) => {
-          if (response == 200) {
-            callback(s3SignedURL.uploadURL.split("?")[0]);
-          }
+          case ExtensionEvent.PAGE_STATE:
+            return $webpage;
+
+          case ClipperExtensionEvent.SAVE_WEBPAGE:
+            await onSaveClick();
+            return { success: true };
+
+          case ClipperExtensionEvent.CLIP_MUTATION:
+            const result = await onClipMutationFromSidePanel(message.data);
+            return result;
+
+          case ClipperExtensionEvent.PAGE_SAVING_STATUS:
+            if (message.node) {
+              webpage.propagatePageStatusFromSidebar({ id: message.node });
+              return { success: true };
+            }
+            return { success: false, error: "No node provided" };
+
+          default:
+            return { success: false, error: "Unknown event" };
         }
-      );
-    }
-  }
+      } catch (error) {
+        console.error("Error handling message:", error);
+        return { success: false, error: error.message };
+      }
+    };
+
+    // This keeps the message channel open for asynchronous processing
+    handleMessage().then(sendResponse);
+    return true; // Indicates that the response will be sent asynchronously
+  });
 </script>
 
 <ExtensionBaseLayer
@@ -155,11 +141,13 @@
       on:summarize
       on:collapse={() => toolbarState.toggle(false)}
     />
+    <!-- <div out:fade={{ duration: 150 }}> -->
     {#if $feedbackPane.isShown}
-      <!-- <div out:fade={{ duration: 150 }}> -->
       <FeedbackPane />
-      <!-- </div> -->
+    {:else if $syncStore.isShowSyncPane}
+      <SyncPane />
     {/if}
+    <!-- </div> -->
     <TextClipper bind:this={textClipperRef} />
     {#if isSnipActive}
       <ScreenShot

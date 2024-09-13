@@ -105,7 +105,7 @@
         <Block
           {block}
           {mdStore}
-          on:focus={(e) => {
+          on:nodularize={(e) => {
             propagate("focus", e.detail);
           }}
         />

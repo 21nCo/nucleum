@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WebClipPreview from "$lib/client/products/memotron/node/content/web/WebClipPreview.svelte";
   import type { ITextClip } from "$lib/client/products/memotron/node/node.type";
   export let clip: ITextClip;
   export let id: string = "";
@@ -13,6 +14,5 @@
   on:keydown
   style="cursor: pointer;"
 >
-  <!-- TODO - Use clip thumbnail from memotron lib -->
-  {clip.body.text}
+  <WebClipPreview node={clip} />
 </div>

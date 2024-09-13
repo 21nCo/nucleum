@@ -12,6 +12,7 @@
   import account from "$lib/client/stores/account.store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -40,15 +41,15 @@
     bgColor = `rgba(${compRed},${compGreen},${compBlue},0.6)`;
   });
 
-  async function saveSnip(s3URL: string) {
+  async function saveSnip(s3Url: string) {
     const snip: IClipCapture<IWebScreenshotClip> = {
       contentType: NodeType.WEB_SCREENSHOT_CLIP,
       body: {
-        s3URL: s3URL
+        s3Url
       }
     };
     const response = await webpage.saveClip(snip);
-    dispatch("saved", { s3URL, id: response.id });
+    dispatch("saved", { s3Url, id: response.id });
   }
 
   function processScreenshot(data, area: IArea) {
@@ -98,31 +99,23 @@
           false
         );
 
-        chrome.runtime.sendMessage(
-          {
-            event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-            data: { s3SignedURL, dataURL, contentType }
-          },
-          (response) => {
-            if (response == 200) {
-              saveSnip(s3SignedURL.uploadURL.split("?")[0]);
-            }
-          }
-        );
+        const response = await relayToBackgroundScript({
+          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+          data: { s3SignedURL, dataURL, contentType }
+        });
+        if (response == 200) {
+          saveSnip(s3SignedURL.uploadURL.split("?")[0]);
+        }
       }
     };
   }
   async function snip(area: IArea) {
     await resetComputedValues();
     if (area.width <= 5 || area.height <= 5) return;
-    chrome.runtime.sendMessage(
-      {
-        event: ClipperExtensionEvent.SCREENSHOT
-      },
-      (data) => {
-        processScreenshot(data, area);
-      }
-    );
+    const data = await relayToBackgroundScript({
+      event: ClipperExtensionEvent.SCREENSHOT
+    });
+    processScreenshot(data, area);
   }
 
   function getScreenshotDimensions(

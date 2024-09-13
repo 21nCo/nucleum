@@ -1,5 +1,7 @@
+import type { IRecordId } from "$lib/client/types/data.type";
+
 export interface IResourceBase {
-  id: string;
+  id: IRecordId;
   createdAt: string;
 }
 
@@ -16,6 +18,7 @@ export interface IResource extends IResourceBase {
    * The last time user interacted with the resource
    *
    * This is almost same as modifiedAt but it is used to track the last time user interacted with the resource. For example, if user has opened a resource, interactedAt will be reset.
+   *
    */
   interactedAt: string;
   /**
@@ -26,13 +29,23 @@ export interface IResource extends IResourceBase {
    * Trash information of the resource
    */
   trashInformation?: ITrashInformation;
+
+  [key: string]: unknown;
+}
+
+/**
+ * Meta resource are created by system and are not meant to be created by the user. Ex: mutation, accessLog, etc.
+ */
+export interface IMetaResource extends IResourceBase {
+  modifiedAt?: string;
+  [key: string]: unknown;
 }
 
 export type IUnlabeledResource = Omit<IResource, "label">;
 
 export interface IResourseShareable {
-  createdBy: string;
-  modifiedBy: string;
+  createdBy: IRecordId;
+  modifiedBy: IRecordId;
 }
 
 export interface ITrashInformation {
@@ -42,13 +55,22 @@ export interface ITrashInformation {
 
 export enum ResourceAccessMode {
   INLINE = "inline",
+  /**
+   * Inline split
+   */
   SPLIT = "split",
   /**
-   * Split in focus mode
+   * Split in full screen or pop mode
    */
   FSPLIT = "fsplit",
+  /**
+   * Pop mode
+   */
   POP = "pop",
-  FOCUS = "focus",
+  /**
+   * Full screen mode
+   */
+  FULL = "full",
   TOPBARFOCUS = "tbf"
 }
 
@@ -93,13 +115,17 @@ export enum ResourceAccessPoint {
   NODE_LINKS = "nodelinks"
 }
 
+export type IResourceCapture<T extends IResource> = Omit<
+  T,
+  | "createdAt"
+  | "modifiedAt"
+  | "createdBy"
+  | "modifiedBy"
+  | "interactedAt"
+  | "id"
+>;
 
-export type IResourceCapture<T = IResource> = Omit<
-T,
-| "createdAt"
-| "modifiedAt"
-| "createdBy"
-| "modifiedBy"
-| "interactedAt"
-| "id"
-  >;
+export type IResourceCaptureWithId<T extends IResource> = Omit<
+  T,
+  "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy" | "interactedAt"
+>;

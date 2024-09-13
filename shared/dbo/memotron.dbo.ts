@@ -1,4 +1,4 @@
-import { resolveUrlPartsV2, userDatev4 } from "./dbo";
+import { resolveUrlPartsV2, userDatev4 } from "./global.dbo";
 
 /**
  * Memotron dbo definitions used by the client apps.
@@ -6,20 +6,20 @@ import { resolveUrlPartsV2, userDatev4 } from "./dbo";
 export const memotronDboDefinitions = {
   "fn::memotron::node::fetch": nodeFetch(),
   "fn::memotron::node::create": nodeCreate(),
-  "fn::memotron::node::createMany": nodeCreateMany(),
   "fn::memotron::pdfAnnotator::getAllClips": pdfAnnotatorGetAllClips(),
   "fn::memotron::pdfAnnotator::saveClip": pdfAnnotatorSaveClip(),
-  "fn::memotron::clipper::saveClip": saveClip(),
-  "fn::memotron::clipper::saveWebpage": saveWebpage(),
   "fn::memotron::clipper::fetchPage": clipperFetchPage(),
   "fn::memotron::collection::fetchData": collectionFecthData(),
   "fn::memotron::timeline": timeline(),
-  "fn::memotron::link": link()
+  "fn::memotron::link": link(),
+  "fn::memotron::clipper::saveClip": saveClip(),
+  "fn::memotron::clipper::saveWebpage": saveWebpage(),
+  "fn::memotron::node::createMany": nodeCreateMany()
 };
 
 function nodeFetch() {
   const def = `define function fn::memotron::node::fetch($id: record){
-    return array::first(select *, (select * from node where parent is $id) as clips,
+    return array::first(select *, parent.* as parent, (select * from node where parent is $id) as clips,
     (fn::memotron::node::children($parent.children)) as children, 
     (fn::memotron::node::parent($id)) as mdParent,
     ->link->collection as collections from node where id is $id);
@@ -82,9 +82,15 @@ return select fn::memotron::link(from, to, linkType) from $links; };`;
   return [...link(), def];
 }
 
+/**
+ * @deprecated - use direct insert + linkMany instead
+ *
+ * Using this function via surreal.js + surreal.wasm is causing record links not recognized as Record Ids. Using direct Insert query instead.
+ *
+ * @returns
+ */
 function nodeCreateMany() {
-  const def = `define function fn::memotron::node::createMany($resources: any, $mutatedAt: int){
-    update kv:mutationMap merge {node: $mutatedAt };
+  const def = `define function fn::memotron::node::createMany($resources: any){
     let $created = insert into node $resources;
     select fn::memotron::linkMany(links) from $resources;
     return $created;
@@ -92,6 +98,10 @@ function nodeCreateMany() {
   return [...linkMany(), def];
 }
 
+/**
+ * @deprecated - using direct client query instead
+ * @returns
+ */
 function linkMany() {
   const def = `define function fn::memotron::linkMany($links: option<array>){
     return if type::is::array($links) and array::len($links) > 0 {
@@ -103,6 +113,10 @@ function linkMany() {
   return [...link(), def];
 }
 
+/**
+ * @deprecated - using direct client query instead
+ * @returns
+ */
 function link() {
   const def = `define function fn::memotron::link($from: record, $to: record, $linkType: option<string>){
     relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}

@@ -10,8 +10,9 @@
   import { type IActiveNodeStore } from "../node.store";
   import Breadcrumb from "$lib/client/elements/breadcrumb/Breadcrumb.svelte";
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
+  import { flux } from "$lib/client/persistence/dataManagerv2";
+  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
   export let node: IActiveNodeStore;
   export let isClonesShown: boolean = false;
   export let nodePageVariant: "v1" | "v2" = "v1";
@@ -28,10 +29,11 @@
   async function refreshBreadcrumbs(parent: string[]) {
     console.log("refreshing breadcrumbs", { node: $node });
     if (!parent) return;
-    const parentItems = await $dataManager.cacheSource.dexie.node
-      .where("id")
-      .anyOfIgnoreCase(parent)
-      .toArray();
+    const parentItems = await flux.selectMany(Resource.node, {
+      filters: {
+        id: parent
+      }
+    });
     return parent
       .map((x) => {
         let item = parentItems.find((y) => y.id === x);

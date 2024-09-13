@@ -21,8 +21,8 @@
   export let isStickied: boolean = false;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
-  function onKeydown(event: any) {
-    console.log({ event });
+  function onKeydown(event: any) {}
+  function onKeyup(event: any) {
     refresh();
   }
   function refresh() {
@@ -31,12 +31,13 @@
 </script>
 
 <div class="flex flex-col bg-bgs1 sticky top-0 z-20 shadow--sm">
-  <div class="flex w-full justify-between p-5 py--3 pt-6 leading-none">
+  <div class="flex w-full justify-between p-5 py-4 pt-5 leading-none">
     <input
       class="text-h2 w-full bg-transparent focus:outline-none focus:border-none"
       type="text"
       bind:value={searchQuery}
       on:keydown={onKeydown}
+      on:keyup={onKeyup}
       on:focus={() => (isSearchFocused = true)}
       on:blur={() => (isSearchFocused = false)}
       placeholder={"Search " +
@@ -75,7 +76,7 @@
           label="Sort"
         />
       {/if}
-      {#if variant === "v1"}
+      {#if variant === "v1" || variant === "v3"}
         <Toggle icon="adjustments-vertical" bind:on={isFiltersVisible} />
       {/if}
     </div>

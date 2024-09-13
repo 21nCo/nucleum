@@ -1,7 +1,9 @@
 import type { IAvatar } from "$lib/client/types/avatar.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 import type { Arrangement } from "$lib/client/types/direction.enum";
 import type { IMemotronItemBase } from "../memotron.type";
 import type { INodeThumbnail } from "../node/node.type";
+import type { IProperty } from "./properties/property.type";
 
 export enum CollectionType {
   TYPED = "TYPED",
@@ -23,10 +25,11 @@ export type IActiveCollection = {
   isViewDataRefreshing: boolean;
   isPageLoading: boolean;
   views: ICollectionViewWithData[];
+  properties: IProperty[];
 } & Omit<ICollection, "views">;
 
 export interface ICollection extends IMemotronItemBase {
-  views: string[];
+  views: IRecordId[];
   type: CollectionType;
   cover?: string;
   description?: string;
@@ -35,10 +38,10 @@ export interface ICollection extends IMemotronItemBase {
   /**
    * Type collection to extend - string identifier ex: collection:sometypecollection
    */
-  typeToExtend?: string;
+  typeToExtend?: IRecordId;
   avatar?: IAvatar;
   query?: string;
-  properties?: string[];
+  properties?: IRecordId[];
 }
 
 export type ICollectionViewWithData = ICollectionView & {

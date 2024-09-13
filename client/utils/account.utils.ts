@@ -50,7 +50,7 @@ export function signout(ctx: string = "") {
   logger.log({ at: "signout", context: ctx });
   clientStorage.remove(ClientStorageKey.STOKEN);
   clientStorage.remove(ClientStorageKey.USER_INFO);
-  clientStorage.remove(ClientStorageKey.GUEST);
+  clientStorage.remove(ClientStorageKey.OFFLINE_SESSION_ID);
   postToParent({
     account: JSON.stringify({
       isLoggedIn: false

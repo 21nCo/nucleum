@@ -26,7 +26,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import view from "$lib/client/stores/view.store";
 import {
   DependencySyncType,
-  PersistanceActionType,
+  PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
@@ -257,7 +257,7 @@ class GoalStore extends ResourceFIRStore<IGoal> {
       modifiedAt: new Date().toISOString()
     };
     await dataManager.performMutation(this.id, goalForDB, {
-      action: PersistanceActionType.CREATE
+      action: PersistenceActionType.CREATE
     });
     this.update((store) => {
       store.items.push(goalForDB);

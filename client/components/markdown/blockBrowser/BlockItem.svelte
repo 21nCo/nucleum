@@ -2,8 +2,8 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import type { InlineType } from "$lib/client/components/markdown/md.type";
   import type { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let block: {
     label: string;
     type: NodeType | InlineType;
@@ -20,12 +20,18 @@
 
 <button
   bind:this={ref}
-  class="flex items-center gap-3 text-b2 hover:bg-bgs2 py-1 px-2 rounded-md {width} {isFocused
-    ? 'bg-bgs2'
-    : ''}"
+  class={cn(
+    "flex items-center gap-3 text-b2 hover:bg-bgs2 py-1 px-2 rounded-md",
+    width,
+    {
+      "bg-bgs2": isFocused
+    }
+  )}
   on:click={() => dispatch("select", block)}
 >
-  <div class="bg-bgs2 rounded-md p-1 border border-brs3">
+  <div
+    class="bg-bgs2 rounded-md p-1 border border-brs3 flex justify-center items-center"
+  >
     <Icon icon={block.icon} />
   </div>
   <div>{block.label}</div>
