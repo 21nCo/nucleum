@@ -2,13 +2,8 @@
   import Notifications from "./Notifications.svelte";
   import { onMount } from "svelte";
   import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
-  import account from "$lib/client/stores/account.store";
-  import {
-    appEvents,
-    scheduledNotifications
-  } from "$lib/client/stores/notification.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { appLoadingState } from "$lib/client/stores/app.store";
+  import { scheduledNotifications } from "$lib/client/stores/notification.store";
 
   import { postToParent } from "$lib/client/utils/embed.utils";
   import BackgroundSoundPlayer from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundSoundPlayer.svelte";
@@ -27,14 +22,8 @@
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
-  onMount(async () => {
-    if ($account.isCloudUser) await initializeData();
-    const appEventSub = appEvents.subscribe(async (e) => {
-      if (isLiteMode) return;
-      if (e.event === GlobalEvent.USER_LOGIN) {
-        if (!e.value) sessionStore.loadEmptyState();
-      }
-    });
+  onMount(() => {
+    initializeData();
     const uiStateSub = uiState.subscribe(() => {
       refreshInteractionModeState();
       isHideLeftNavBar = refreshSidebarState();
@@ -42,7 +31,6 @@
     $appLoadingState.isLocalLoaded = true;
     return () => {
       sessionStore.clearIntervals();
-      appEventSub();
       uiStateSub();
     };
   });

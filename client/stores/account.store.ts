@@ -59,6 +59,7 @@ class AccountStore extends ObservableStore<
     const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
     if (userInfo) {
       seed.userInfo = JSON.parse(userInfo ?? "");
+      seed.userId = seed.userInfo?.id.split("user:")[1];
     }
     this.set(seed);
     this.postToEmbed(seed);
@@ -93,7 +94,7 @@ class AccountStore extends ObservableStore<
       };
       return n;
     });
-    appEvents.publish(GlobalEvent.USER_LOGIN, false);
+    flux.terminate();
   }
 
   signIn(
@@ -103,9 +104,8 @@ class AccountStore extends ObservableStore<
       refreshToken?: string;
     },
     params: {
-      isIgnoreRefresh?: boolean;
-      redirectTo?: string;
-    } = { isIgnoreRefresh: false }
+      isNewUser?: boolean;
+    } = { isNewUser: false }
   ) {
     console.log("signing in", { data });
     clientStorage.set(ClientStorageKey.STOKEN, data.token);
@@ -122,18 +122,18 @@ class AccountStore extends ObservableStore<
         dataMode: UserDataMode.CLOUD,
         userId: data.userInfo.id.split("user:")[1],
         userInfo: data.userInfo,
-        sessionType: isBootstrapped
-          ? UserSessionType.RETURNING
-          : UserSessionType.NEW
+        sessionType:
+          isBootstrapped && !params.isNewUser
+            ? UserSessionType.RETURNING
+            : UserSessionType.NEW
       };
     });
-    if (!params.isIgnoreRefresh && isBootstrapped) {
-      appEvents.publish(GlobalEvent.USER_LOGIN, true);
-      appStore.gotoPath("/");
+    if (params.isNewUser && isBootstrapped) {
+      appStore.gotoPath("/onboarding");
     } else if (!isBootstrapped) {
       appStore.gotoPath("/bootstrap");
     } else {
-      appStore.gotoPath(params.redirectTo ?? "/");
+      appStore.gotoPath("/");
     }
   }
 
@@ -146,7 +146,7 @@ class AccountStore extends ObservableStore<
     clientStorage.set(ClientStorageKey.STOKEN, token);
     let response = await this.persistence.getUserInfo(token);
     if (response?.userInfo) {
-      await this.signIn({
+      this.signIn({
         userInfo: response?.userInfo,
         token: token,
         refreshToken: token
@@ -221,13 +221,10 @@ class AccountStore extends ObservableStore<
         token: response.token
       },
       {
-        isIgnoreRefresh: true,
-        redirectTo: "/onboarding"
+        isNewUser: true
       }
     );
-    appEvents.publish(GlobalEvent.BOOTSTRAP, true);
     this.setAnalyticsUserIdentity();
-    // await dataManager.bootstrap();
     return true;
   }
 

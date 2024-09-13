@@ -71,6 +71,7 @@
           label="Complete setup"
           isLoading={isBootstrapInProgress}
           type={ButtonVariant.PRIMARY}
+          icon="rocket"
           on:click={async () => {
             isBootstrapInProgress = true;
             const result = await account.bootstrap(region);

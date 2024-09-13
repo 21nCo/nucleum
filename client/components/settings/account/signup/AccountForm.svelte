@@ -74,7 +74,7 @@
     if (isLoginFromExtension) {
       postTokenToExtension(json);
       appStore.runAction(Action.EXTENSTION_LOGIN);
-    } else await account.signIn(json, { isFromSignup: isSignup });
+    } else await account.signIn(json, { isNewUser: isSignup });
     actionInProgress = false;
   }
   function isValidFormData() {

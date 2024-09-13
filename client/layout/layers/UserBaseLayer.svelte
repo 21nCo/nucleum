@@ -1,14 +1,13 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import type { IEvent } from "$lib/client/types/event.type";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
   import { Persistence } from "$lib/client/persistence/persistence";
   import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { appEvents, toasts } from "$lib/client/stores/notification.store";
+  import { toasts } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
@@ -39,6 +38,7 @@
     PersistenceProvider
   } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
+  import PageError from "$lib/client/components/error/PageError.svelte";
 
   const loadingMessages = {
     cloneUp:
@@ -48,6 +48,7 @@
   };
 
   let loadingMessage: string = "";
+  let error: string | null = null;
 
   onMount(async () => {
     if ((<any>window).Intercom)
@@ -56,12 +57,7 @@
       });
     addWindowEventListeners();
     await initializeUser();
-    const appEventSub = appEvents.subscribe(appEventHandler);
     $appLoadingState.isBaseLoaded = true;
-
-    return () => {
-      appEventSub();
-    };
   });
   /**
    * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
@@ -80,11 +76,14 @@
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
     refreshTimeZone();
-    toasts.sync();
-    await flux.syncDown();
+    const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
+    if (isCloudUser) {
+      toasts.sync();
+      await flux.syncDown();
+      account.ping();
+    }
     if (isExtensionEnvironment()) return;
     performAppUpdateCheck();
-    account.ping();
   };
 
   /**
@@ -128,11 +127,7 @@
     }
     // postMessageToParent(event.data);
   };
-  async function appEventHandler(e: IEvent) {
-    if (e.event === GlobalEvent.USER_LOGIN && e.value) {
-      await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
-    }
-  }
+
   /**
    * Initializes the app with necessary data and runs dbo update. For this, the app should have already mounted and all stores should be available.
    *
@@ -142,7 +137,11 @@
   async function initializeUser() {
     try {
       const isLiteMode = $context.isSheet;
-      logger.debug({ at: "UserBaseLayer.initializeData", isLiteMode });
+      logger.debug({
+        at: "UserBaseLayer.initializeData",
+        isLiteMode,
+        account: $account
+      });
       if (!isLiteMode) {
         await refreshAppStaticData();
       }
@@ -159,15 +158,14 @@
         });
         if (initState === 0) await flux.kvSeed();
       } else if ($account.dataMode === UserDataMode.CLOUD) {
-        if (dapId !== $account.userId) {
-          toasts.error("Something went wrong. Please try again later.");
+        if (!$account.userId) {
+          error = "User id not found. Please try again later.";
           return;
         }
         let initState = await initializeFlux($account.userId);
         await flux.seed();
         logger.debug({
           at: "UserBaseLayer.initializeData - cloud",
-          userInfo: $account.userInfo,
           initState
         });
         if ($account.sessionType === UserSessionType.NEW) {
@@ -272,6 +270,8 @@
 <div class="flex h-screen w-screen">
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded}
     <AppLoadingView message={loadingMessage} />
+  {:else if error}
+    <PageError />
   {:else}
     <slot />
   {/if}

@@ -6,9 +6,18 @@ export type Event = GlobalEvent | PointronEvent | ClipperExtensionEvent;
 export enum GlobalEvent {
   NONE = "NONE",
   SHOW_APPEARANCE_PREVIEW = "SHOW_APPEARANCE_PREVIEW",
+  /**
+   * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
+   */
   USER_LOGIN = "USER_LOGIN",
+  /**
+   * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
+   */
   USER_SIGNUP = "USER_SIGNUP",
   /**
+   *
+   * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
+   *
    * Bootstraps the user account - on singup - with seed data and necessary base data
    */
   BOOTSTRAP = "BOOTSTRAP",

@@ -331,6 +331,11 @@ class Flux {
     ];
     return resources;
   }
+
+  /**
+   * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
+   */
+  terminate() {}
 }
 
 export let flux = Flux._instance as any as Flux;

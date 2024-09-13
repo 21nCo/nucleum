@@ -88,14 +88,17 @@
       <div class="text-b3 text-center">
         {#if $account.dataMode === UserDataMode.LOCAL}
           Using Offline Mode.
+          <div>Please create account to enable cloud sync.</div>
         {:else}
           No Account found.
+          <div>Please login/signup to enable cloud sync.</div>
         {/if}
-        <div>Please login/signup to enable cloud sync.</div>
       </div>
       <div class="flex gap-4">
         <Button
-          label="Go to signup/signin"
+          label={$account.dataMode === UserDataMode.LOCAL
+            ? "Create account"
+            : "Go to signup/signin"}
           parentBgIndex={3}
           size={Size.sm}
           on:click={() => {
