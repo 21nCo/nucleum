@@ -88,13 +88,17 @@ export async function signup(data: any, isOAuth = false) {
   const joinDate = new Date().toISOString();
   let query: string;
   if (isOAuth) {
-    query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5("${email}"); IF count($user) == 0 THEN (CREATE user SET emailhash = crypto::md5("${email}"), emailParts = ${JSON.stringify(
+    query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5("${email}"); IF count($user) == 0 THEN (CREATE user SET emailhash = crypto::md5("${email}"), id = "${
+      context.guest
+    }", emailParts = ${JSON.stringify(
       emailParts
     )}, nickName = "${nickName}", oAuthId = "${sub}", isOAuth = true, profilePictureUrl = "${profilePictureUrl}", joinDate = "${joinDate}", context = ${JSON.stringify(
       context
     )}) ELSE (RETURN {userCount: count($user), user: $user}) END`;
   } else {
-    query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5("${email}"); IF count($user) == 0 THEN (CREATE user SET emailhash = crypto::md5("${email}"), pass = crypto::argon2::generate("${pass}"), passhash = crypto::md5("${pass}"), emailParts = ${JSON.stringify(
+    query = `LET $user = SELECT * FROM user WHERE emailhash = crypto::md5("${email}"); IF count($user) == 0 THEN (CREATE user SET emailhash = crypto::md5("${email}"), id = "${
+      context.guest
+    }",  pass = crypto::argon2::generate("${pass}"), passhash = crypto::md5("${pass}"), emailParts = ${JSON.stringify(
       emailParts
     )}, nickName = "${nickName}", profilePictureUrl = "${profilePictureUrl}", joinDate = "${joinDate}", context = ${JSON.stringify(
       context
@@ -303,7 +307,7 @@ async function _processOAuthRedirect(
       href: "https://" + apiUrl + "/oauth/" + provider,
       state: body.state,
       host: domainPart,
-      guest: "guest:" + guestPart
+      guest: guestPart
     };
     if (provider === "apple" && (body.id_token || body.user)) {
       if (body.user && typeof body.user === "string")
