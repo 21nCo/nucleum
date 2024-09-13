@@ -71,9 +71,10 @@
   {#if $view.isPortrait && !$isProductsPage}
     <DayAndNightToggle class="absolute bottom-12" />
   {:else if heroInputs.btn1 && heroInputs.btn2}
+    {@const type = $view.isPortrait ? "primary" : "secondary"}
     <div class="flex w-[1110px] mo:w-[342px] justify-center gap-16 mt-14">
       <Button
-        type="secondary"
+        {type}
         label={heroInputs.btn1.label}
         QRURL={heroInputs.btn1.iosDownloadUrl}
         iconPosition="end"

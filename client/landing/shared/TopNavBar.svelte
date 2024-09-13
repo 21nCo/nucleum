@@ -3,7 +3,7 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { goto } from "$lib/client/utils/browser.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { addAnimateClass, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import type { ITopNavBar } from "./Landing.types";
   import Button from "./elements/Button.svelte";
@@ -14,6 +14,7 @@
   export let isExpandHamMenu: boolean = false;
   let icon = "ham-burger-menu";
 
+  const id: string = "top-ham-menu";
   function setIcon() {
     if (isExpandHamMenu) {
       icon = "close";
@@ -21,7 +22,8 @@
       icon = "ham-burger-menu";
     }
   }
-  function onHam() {
+  async function onHam() {
+    await addAnimateClass("animate-slide-up", id);
     isExpandHamMenu = !isExpandHamMenu;
     setIcon();
   }
@@ -90,6 +92,7 @@
           on:click={onHam}
         />
         <div
+          {id}
           class={cn(
             "flex dp:gap-8 tp:gap-2",
             !isExpandHamMenu && "mo:hidden",
@@ -124,7 +127,7 @@
             Explore more Blank.coop products
           </button>
           {#if $view.isPortrait}
-            <DayAndNightToggle class="mt-auto mb-10" />
+            <DayAndNightToggle class="hidden mo:block mt-auto mb-10" />
           {/if}
         </div>
       </div>

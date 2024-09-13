@@ -1,14 +1,17 @@
-<script>
-  import { goto } from "$app/navigation";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+<script lang="ts">
+  import { addAnimateClass } from "$lib/client/utils/ui.utils";
   import { PanelName } from "./Landing.types";
   import PanelButton from "./elements/PanelButton.svelte";
+
+  const id: string = "left-panel";
 </script>
 
 <PanelButton
+  {id}
   label={PanelName.BUILT_AT_BLANK_COOP}
   icon="long-arrow-left"
-  on:click={() => (window.location.href = "https://blanklabs.org/")}
+  on:click={async () => {
+    await addAnimateClass("animate-bounce-l", id);
+    window.location.href = "https://blanklabs.org/";
+  }}
 />

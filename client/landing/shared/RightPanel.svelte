@@ -1,7 +1,8 @@
 <script lang="ts">
   import Modal from "$lib/client/components/modal/Modal.svelte";
   import appearance from "$lib/client/stores/appearance.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import view from "$lib/client/stores/view.store";
+  import { addAnimateClass, bounce, cn } from "$lib/client/utils/ui.utils";
   import type { ITileItem } from "./Landing.types";
   import PanelButton from "./elements/PanelButton.svelte";
   import {
@@ -11,6 +12,7 @@
   } from "./store/shared.store";
   import TileItemsPanel from "./tile/TileItemsPanel.svelte";
 
+  const id: string = "right-panel";
   const currentProducts: ITileItem[] = $currentProductsStore;
   const upcomingProducts: ITileItem[] = $upcomingProductsStore;
 </script>
@@ -19,17 +21,30 @@
   <div
     class={cn(
       "fixed w-[100vw] h-[100vh] z-[51]",
-      !$appearance.colorScheme.isDark && "bg-[hsla(0,0%,0%,0.3)]",
-      $appearance.colorScheme.isDark && "bg-[hsla(0,0%,100%,0.3)]"
+      !$appearance.colorScheme.isDark &&
+        !$view.isPortrait &&
+        "bg-[hsla(0,0%,0%,0.3)]",
+      $appearance.colorScheme.isDark &&
+        !$view.isPortrait &&
+        "bg-[hsla(0,0%,100%,0.3)]"
     )}
-    on:click={() => ($isProductsPanelOpen = false)}
+    on:click={async () => {
+      await addAnimateClass("animate-close-right", "products-panel");
+      $isProductsPanelOpen = false;
+    }}
     on:keypress
+    role="button"
+    tabindex="0"
   >
     <TileItemsPanel {currentProducts} {upcomingProducts} />
   </div>
 {/if}
 <PanelButton
+  {id}
   label="Products"
   icon="ham-burger-menu"
-  on:click={() => ($isProductsPanelOpen = true)}
+  on:click={async () => {
+    await addAnimateClass("animate-bounce-r", id);
+    $isProductsPanelOpen = true;
+  }}
 />

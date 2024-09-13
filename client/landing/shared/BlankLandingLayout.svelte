@@ -11,6 +11,7 @@
   import Footer from "./footer/Footer.svelte";
   import { page } from "$app/stores";
 
+  export let id: string = "";
   export let topNavBarValues: ITopNavBar;
   let transformedProducts: IListItem[] = [
     { title: "Products" },
@@ -33,7 +34,7 @@
   {#if $isProductsPage}
     <LeftPanel />
   {/if}
-  <div class="w-full overflow-auto">
+  <div {id} class="w-full overflow-auto">
     <TopNavBar {topNavBarValues} />
     <slot />
     <Footer products={transformedProducts} />

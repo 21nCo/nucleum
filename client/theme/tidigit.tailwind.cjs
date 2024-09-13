@@ -120,28 +120,53 @@ module.exports = {
         "9/10": "90%"
       },
       animation: {
+        "bounce-r": "bounce-r 0.3s ease-in-out",
+        "bounce-l": "bounce-l 0.3s ease-in-out",
         "pulse-subtle":
           "pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "slide-down": "slide-down 0.5s ease-in-out forwards",
         "slide-up": "slide-up 0.5s ease-in-out forwards",
+        "open-left": "open-left 0.3s ease-in-out forwards",
+        "open-right": "open-right 0.3s ease-in-out forwards",
+        "close-right": "close-right 0.3s ease-in-out forwards",
         rotate45: "rotate45 1s forwards",
         fadeIn: "fadeIn 1s forwards",
         fadeOut: "fadeOut 1s forwards"
       },
       keyframes: {
+        "bounce-r": {
+          "40%": { transform: "translateX(10px)" },
+          "60%": { transform: "translateX(5px)" },
+          "100%": { transform: "translateX(0px)" }
+        },
+        "bounce-l": {
+          "40%": { transform: "translateX(-10px)" },
+          "60%": { transform: "translateX(-5px)" },
+          "100%": { transform: "translateX(0px)" }
+        },
         "pulse-subtle": {
           "0%, 100%": { filter: "saturate(80%)" },
           "50%": { filter: "saturate(120%)" }
         },
         "slide-down": {
           "0%": { height: "0", opacity: "0" },
-          "50%": { height: "50%", opacity: "0.5" },
           "100%": { height: "100%", opacity: "1" }
         },
         "slide-up": {
           "0%": { height: "100%", opacity: "1" },
-          "50%": { height: "50%", opacity: "0.5" },
           "100%": { height: "0", opacity: "0" }
+        },
+        "open-left": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0%)", opacity: "1" }
+        },
+        "open-right": {
+          "0%": { transform: "translateX(-100%)", opacity: "0" },
+          "100%": { transform: "translateX(0%)", opacity: "1" }
+        },
+        "close-right": {
+          "0%": { transform: "translateX(0%)", opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" }
         },
         rotate45: {
           "0%": {

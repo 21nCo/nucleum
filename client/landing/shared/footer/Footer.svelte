@@ -67,6 +67,11 @@
     description:
       "Become a part of Blank and join us in shaping a more sustainable and connected future through innovation and collaboration, making a difference by empowering people and preserving our planet."
   };
+
+  let ourStory = {
+    title: "Our Story",
+    href: "https://tally.so/r/wLzN8j"
+  };
   let information = [
     { title: "Information" },
     {
@@ -82,7 +87,13 @@
       href: "https://docs.blanklabs.org/soft"
     }
   ];
-  const combinedLI = [...information, joinUs, ...products];
+  const combinedLI = [
+    { title: "Infomration" },
+    joinUs,
+    ourStory,
+    ...information.slice(1),
+    ...products
+  ];
 </script>
 
 <Section>

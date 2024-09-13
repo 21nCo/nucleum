@@ -30,53 +30,13 @@
     on:click={toggle}
   >
     <div
-      id="DayNightToggle"
       class={cn(
         "h-[28px] w-[28px] border border-fgs1 bg-bgs2 rounded-[48px] absolute transition-transform",
-        isNight && "right-0 bounce-r",
-        !isNight && "left-0 bounce-l"
+        isNight && "right-0 animate-bounce-r",
+        !isNight && "left-0 animate-bounce-l"
       )}
     ></div>
     <SvgIcon icon="sun" size={Size.sm} class="z-10" />
     <SvgIcon icon="moon" size={Size.sm} class="z-10" />
   </button>
 </div>
-
-<style>
-  #DayNightToggle {
-    transition:
-      left 0.3s ease-in-out,
-      right 0.3s ease-in-out;
-  }
-  .bounce-r {
-    animation: bounce-r 0.3s ease-in-out;
-  }
-
-  @keyframes bounce-r {
-    40% {
-      transform: translateX(10px);
-    }
-    60% {
-      transform: translateX(5px);
-    }
-    100% {
-      transform: translate(0px);
-    }
-  }
-  .bounce-l {
-    animation: bounce-l 0.3s ease-in-out;
-    /* animation-delay: 0.1s; */
-  }
-
-  @keyframes bounce-l {
-    40% {
-      transform: translateX(-10px);
-    }
-    60% {
-      transform: translateX(-5px);
-    }
-    100% {
-      transform: translate(0px);
-    }
-  }
-</style>

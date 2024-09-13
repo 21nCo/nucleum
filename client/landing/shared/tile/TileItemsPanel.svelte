@@ -1,19 +1,29 @@
 <script lang="ts">
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import view from "$lib/client/stores/view.store";
+  import { onMount } from "svelte";
   import type { ITileItem } from "../Landing.types";
   import PanelButton from "../elements/PanelButton.svelte";
   import { isProductsPanelOpen } from "../store/shared.store";
   import TileItem from "./TileItem.svelte";
+  import { addAnimateClass } from "$lib/client/utils/ui.utils";
 
   export let currentProducts: ITileItem[];
   export let upcomingProducts: ITileItem[];
+
+  const id: string = "products-panel";
+  onMount(async () => {
+    await addAnimateClass("animate-open-left", id);
+  });
 </script>
 
 <div
-  class="absolute right-0 w-[740px] mo:w-full h-[100vh] flex bg-bgs1"
+  {id}
+  class="absolute right-0 w-[740px] mo:w-full h-[100vh] flex bg-bgs1 cursor-default"
   on:click|stopPropagation
   on:keypress|stopPropagation
+  role="button"
+  tabindex="0"
 >
   <div class="flex flex-col gap-3 w-full p-10 mo:p-6">
     {#if $view.isPortrait}
@@ -22,7 +32,10 @@
         <SvgIcon
           icon="close"
           class="ml-auto"
-          on:click={() => ($isProductsPanelOpen = false)}
+          on:click={async () => {
+            await addAnimateClass("animate-close-right", id);
+            $isProductsPanelOpen = false;
+          }}
         />
       </div>
     {/if}
@@ -56,6 +69,9 @@
   <PanelButton
     label="Close"
     icon="close"
-    on:click={() => ($isProductsPanelOpen = false)}
+    on:click={async () => {
+      await addAnimateClass("animate-close-right", id);
+      $isProductsPanelOpen = false;
+    }}
   />
 </div>

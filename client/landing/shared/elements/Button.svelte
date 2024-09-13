@@ -16,9 +16,9 @@
 
 <button
   class={cn(
-    "flex items-center justify-center gap-3 py-4 px-10 rounded-xl font-medium",
+    "flex items-center justify-center gap-3 py-4 mo:py-[14px] px-10 mo:px-7 rounded-xl font-medium",
     type == "primary" &&
-      "bg-fgs1 hover:bg-fgs2 text-bgs1 text-[24px] leading-[33px]",
+      "bg-fgs1 hover:bg-fgs2 text-bgs1 text-[24px] mo:text-[16px] leading-[33px] mo:leading-[22px]",
     type == "secondary" &&
       "bg-bgs3 hover:bg-bgs4 text-fgs1 text-[20px] leading-7",
     iconPosition == "start" && "flex-row-reverse",
