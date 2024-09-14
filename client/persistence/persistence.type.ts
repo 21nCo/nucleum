@@ -3,7 +3,11 @@ import type {
   IMetaResource,
   IResource
 } from "../components/flux/resourceStores/resource.type";
-import type { IRecordId, IResourceSelectParams } from "../types/data.type";
+import type {
+  IMutationParamsv2,
+  IRecordId,
+  IResourceSelectParams
+} from "../types/data.type";
 
 export enum ClientStorageKey {
   ENV = "env",
@@ -42,20 +46,9 @@ export interface IPersistence {
    */
   initialize(userId: string, params?: IPersistenceInitParams): Promise<number>;
 
-  insert<T extends IResource | IMetaResource>(
-    records: T[],
-    resource: Resource
-  ): Promise<any> | undefined;
-
-  replace<T extends IResource>(record: T): Promise<any> | undefined;
-
-  merge<T extends IResource>(record: Partial<T>): Promise<any> | undefined;
-
-  delete(resourceId: string): Promise<any> | undefined;
-
-  bulkEdit<T extends IResource>(
+  mutation<T extends IResource | IMetaResource>(
     resource: Resource,
-    records: T[]
+    params: IMutationParamsv2<T>
   ): Promise<any> | undefined;
 
   query(query: string, params: any): Promise<any> | undefined;
@@ -84,20 +77,20 @@ export enum PersistenceProvider {
    * Using dexie as indexedDb provider with surreal as remote database provider.
    */
   DEXIE_SURREAL = "DEXIE_SURREAL",
+  SIGNAL_SURREAL = "SIGNAL_SURREAL",
   DEXIE_POSTGRES = "DEXIE_POSTGRES",
   SCYLLA = "scylla"
+}
+
+export enum RemotePersistenceProvider {
+  SURREAL = "SURREAL",
+  POSTGRES = "POSTGRES",
+  SCYLLA = "SCYLLA"
 }
 
 export interface IPersistenceInitParams {
   isLocalMode?: boolean;
   dbo?: string[];
-}
-
-export interface ISyncDelegate {
-  mutation(
-    query: string,
-    resourceId?: IRecordId | Resource
-  ): Promise<void> | undefined;
 }
 
 export interface ISyncHandler {

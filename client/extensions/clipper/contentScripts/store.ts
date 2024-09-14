@@ -13,7 +13,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
 import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { replaceParams } from "$lib/client/utils/surreal.utils";
+import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import { activeResourceFilter, debouncer } from "$lib/client/utils/utils";
 import { removeHighlight } from "./highlightV4";
 import {

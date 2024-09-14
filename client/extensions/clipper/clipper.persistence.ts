@@ -3,12 +3,10 @@ import {
   type TextHighlightContent,
   type VideoTimestampContent
 } from "$lib/client/products/memotron/common/clip.type";
-import { replaceParams } from "$lib/client/utils/surreal.utils";
+import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import { Surreal } from "surrealdb.js";
 import type { TabData } from "$lib/client/types/extension.type";
-import {
-  interceptSurrealResponse,
-} from "$lib/client/utils/extension.utils";
+import { interceptSurrealResponse } from "$lib/client/utils/extension.utils";
 import {
   kindleSyncState,
   type Book,
@@ -97,9 +95,9 @@ export class ClipperPersistence {
 
   /**
    * @deprecated - use clipper store instead
-   * 
-   * @param url 
-   * @returns 
+   *
+   * @param url
+   * @returns
    */
   async fetchPage(url?: string) {
     try {
@@ -228,9 +226,9 @@ export class ClipperPersistence {
         // uploadFileToServer(blob, multimediaSrc, color);
       });
   }
-    /**
+  /**
    * @deprecated - use syncStore instead
-   * @returns 
+   * @returns
    */
   async saveAllBooks(books: BookNode[]) {
     try {
@@ -244,7 +242,7 @@ export class ClipperPersistence {
   }
   /**
    * @deprecated - use syncStore instead
-   * @returns 
+   * @returns
    */
   async deleteAllBooksAndHiglights() {
     try {
@@ -258,9 +256,9 @@ export class ClipperPersistence {
     }
   }
 
-    /**
+  /**
    * @deprecated - use syncStore instead
-   * @returns 
+   * @returns
    */
   async saveHighlightsAndNotes(nodes: HighlightNode[]) {
     try {
@@ -275,7 +273,7 @@ export class ClipperPersistence {
 
   /**
    * @deprecated - use syncStore instead
-   * @returns 
+   * @returns
    */
   async updateKindleSyncState(state: any) {
     try {
@@ -289,7 +287,7 @@ export class ClipperPersistence {
   }
   /**
    * @deprecated - use syncStore instead
-   * @returns 
+   * @returns
    */
   async getKindleSyncState() {
     try {

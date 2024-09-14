@@ -100,7 +100,7 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     //TODO - use flux instead of persistence
     await flux.mutation(Resource.tz, {
       action: PersistenceActionType.INSERT,
-      resources: [
+      records: [
         {
           offset,
           date: new Date().toISOString(),

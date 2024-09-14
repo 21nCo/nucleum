@@ -20,7 +20,7 @@ import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
-import { replaceParams } from "$lib/client/utils/surreal.utils";
+import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 
 export function resolveResource(id: string) {
   return flux.select(id);

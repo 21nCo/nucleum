@@ -1,5 +1,9 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import {
+  PersistenceActionType,
+  type IMutation
+} from "$lib/client/types/data.type";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import {
   ClientStorageKey,
@@ -7,13 +11,13 @@ import {
   type ISyncHandler
 } from "../persistence.type";
 import { clientStorage } from "../persistence.utils";
-import { SurrealDatabase } from "../surrealHelper";
+import { resolveMutationQueryV2 } from "./surreal.utils";
 
 export class SurrealSync implements ISyncHandler {
   remote: ISurrealDatabase;
   local: IPersistence;
-  constructor(local: IPersistence) {
-    this.remote = new SurrealDatabase();
+  constructor(local: IPersistence, remote: ISurrealDatabase) {
+    this.remote = remote;
     this.local = local;
   }
 
@@ -21,10 +25,10 @@ export class SurrealSync implements ISyncHandler {
    * TODO: Checking the mutation run status on cloud - and updating on local record status.
    * @param mutations
    */
-  async sync(mutations: any[]) {
+  async sync(mutations: IMutation[]) {
     const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(mutations)};`;
     const individualMutationsQuery = mutations
-      .map((mutation: any) => mutation.query)
+      .map((mutation: any) => resolveMutationQueryV2(mutation))
       .join("; ");
     const fetchMutationsQuery = this.resolveSyncDownQuery();
     const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchMutationsQuery};`;
@@ -42,17 +46,12 @@ export class SurrealSync implements ISyncHandler {
     }
   }
 
-  /**
-   * TODO
-   * @param mutations
-   */
-  async processSyncDown(mutations: any[]) {
+  async processSyncDown(mutations: IMutation[]) {
     logger.debug({ at: "processSyncDown", mutations });
     if (!mutations || mutations.length === 0) return;
-    const query = mutations.map((m) => m.query).join("; ");
-    logger.debug({ at: "processSyncDown", query });
-    if (!query) return;
-    await this.local.query(query, {});
+    for (let mutation of mutations) {
+      await this.local.mutation(mutation.resource as Resource, mutation.params);
+    }
   }
 
   private resolveSyncDownQuery() {
@@ -93,7 +92,10 @@ export class SurrealSync implements ISyncHandler {
       const resource = resources[i];
       const resourceResponse = result[i];
       if (resourceResponse.result && resourceResponse.result.length > 0) {
-        await this.local.insert(resourceResponse.result, resource as Resource);
+        await this.local.mutation(resource as Resource, {
+          records: resourceResponse.result,
+          action: PersistenceActionType.INSERT
+        });
       }
     }
   }

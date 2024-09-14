@@ -1,8 +1,4 @@
-import type {
-  IPersistence,
-  IPersistenceInitParams,
-  ISyncDelegate
-} from "../persistence.type";
+import type { IPersistence, IPersistenceInitParams } from "../persistence.type";
 import { Surreal } from "surrealdb";
 import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { Surreal } from "surrealdb.js";
@@ -14,24 +10,23 @@ import type {
   IMetaResource,
   IResource
 } from "../../components/flux/resourceStores/resource.type";
-import type {
-  IPrimitiveDbDataType,
-  IRecordId,
-  IResourceSelectParams
+import {
+  PersistenceActionType,
+  type IMutationParamsv2,
+  type IPrimitiveDbDataType,
+  type IRecordId,
+  type IResourceSelectParams
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
-import { SyncDelegate } from "../sync";
+import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
-  syncDelegate: ISyncDelegate;
   userId: string = "";
   private isLocalMode: boolean = false;
   private isProcessingOperation: boolean = false;
 
-  constructor() {
-    this.syncDelegate = new SyncDelegate(this);
-  }
+  constructor() {}
 
   async initialize(userId: string, params?: IPersistenceInitParams) {
     if (this.userId === userId && this.instance) return -1;
@@ -103,21 +98,32 @@ export class SurrealPersistence implements IPersistence {
     this.isProcessingOperation = false;
   }
 
-  async delegateSync(query: string, resourceId?: IRecordId | Resource) {
-    logger.log({
-      at: "SurrealPersistence.delegateSync",
-      query,
-      resourceId,
-      isLocalMode: this.isLocalMode
-    });
-    if (
-      this.isLocalMode ||
-      resourceId === Resource.mutation ||
-      resourceId === Resource.file ||
-      resourceId?.toString()?.includes(Resource.mutation)
-    )
-      return;
-    return this.syncDelegate.mutation(query, resourceId);
+  async mutation<T extends IResource | IMetaResource>(
+    resource: Resource,
+    params: IMutationParamsv2<T>
+  ) {
+    let response;
+    switch (params.action) {
+      case PersistenceActionType.CUSTOM:
+        response = await this.query(params.query, params.data);
+        break;
+      case PersistenceActionType.INSERT:
+        response = await this.insert<T>(params.records, resource);
+        break;
+      case PersistenceActionType.MERGE:
+        response = await this.merge<T>(params.record);
+        break;
+      case PersistenceActionType.REPLACE:
+        response = await this.replace<T>(params.record);
+        break;
+      case PersistenceActionType.DELETE:
+        response = await this.delete(params.recordId);
+        break;
+      case PersistenceActionType.BULK_MERGE:
+        response = await this.bulkEdit<T>(resource, params.records);
+        break;
+    }
+    return response;
   }
 
   /**
@@ -175,15 +181,16 @@ export class SurrealPersistence implements IPersistence {
       result = await this.instance?.insert<T>(resource, records);
       this.isProcessingOperation = false;
     } else {
-      const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+      const query = resolveInsertQuery(resource, records);
       result = await this.instance?.query(query);
       this.isProcessingOperation = false;
-      await this.delegateSync(query, resource);
     }
     return result;
   }
 
-  replace<T extends IResource>(record: T): Promise<any> | undefined {
+  replace<T extends IResource | IMetaResource>(
+    record: T
+  ): Promise<any> | undefined {
     return this.instance?.update(record.id, record);
   }
 
@@ -191,14 +198,15 @@ export class SurrealPersistence implements IPersistence {
    * @param record
    * @returns
    */
-  async merge<T extends IResource>(record: Partial<T>): Promise<any> {
+  async merge<T extends IResource | IMetaResource>(
+    record: Partial<T>
+  ): Promise<any> {
     if (!record.id) return;
     await this.awaiter();
     logger.log({ at: "SurrealPersistence.merge", record });
-    const query = `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`;
+    const query = resolveMergeQuery(record);
     const result = await this.instance?.query(query);
     this.isProcessingOperation = false;
-    await this.delegateSync(query, record.id);
     return result;
   }
 
@@ -211,7 +219,7 @@ export class SurrealPersistence implements IPersistence {
     return this.instance?.delete(resourceId);
   }
 
-  bulkEdit<T extends IResource>(
+  bulkEdit<T extends IResource | IMetaResource>(
     resource: Resource,
     records: T[]
   ): Promise<any> | undefined {

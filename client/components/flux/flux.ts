@@ -21,8 +21,10 @@ import {
   PersistenceProvider
 } from "$lib/client/persistence/persistence.type";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
 import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
+import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -30,12 +32,14 @@ class Flux {
   provider!: PersistenceProvider;
   persistence!: IPersistence;
   syncer!: ISyncHandler;
+  remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
   private constructor() {}
 
   static initialize(
     stores: IStore[],
     provider: PersistenceProvider,
+    persistence: IPersistence,
     userId: string,
     params?: {
       isLocalMode?: boolean;
@@ -45,13 +49,17 @@ class Flux {
     Flux._instance = new Flux();
     Flux._instance.provider = provider;
     Flux._instance.isLocalMode = params?.isLocalMode ?? false;
+    Flux._instance.persistence = persistence;
     switch (provider) {
       case PersistenceProvider.SURREAL_SURREAL:
-        Flux._instance.persistence = new SurrealPersistence();
-        Flux._instance.syncer = new SurrealSync(Flux._instance.persistence);
+      case PersistenceProvider.DEXIE_SURREAL:
+        Flux._instance.remote = new SurrealDatabase();
+        Flux._instance.syncer = new SurrealSync(
+          Flux._instance.persistence,
+          Flux._instance.remote
+        );
         break;
       default:
-        Flux._instance.persistence = new SurrealPersistence();
         break;
     }
     logger.debug({ at: "flux.initialized", instance: Flux._instance });
@@ -122,7 +130,10 @@ class Flux {
         });
       data = [...data, { id: "mutationMap" }];
       await this.seed();
-      return this.persistence.insert(data, Resource.kv);
+      return this.persistence.mutation(Resource.kv, {
+        records: data,
+        action: PersistenceActionType.INSERT
+      });
     } catch (e) {
       logger.error({ at: "flux.seed", error: e });
     }
@@ -143,16 +154,18 @@ class Flux {
       offset = val.offset;
       label = val.label;
     }
-    await this.persistence.insert(
-      [
+    await this.persistence.mutation(Resource.tz, {
+      records: [
         {
           offset,
           date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
-          label: label ?? ""
+          createdAt: new Date().toISOString(),
+          label: label ?? "",
+          id: generateRandomId()
         }
       ],
-      Resource.tz
-    );
+      action: PersistenceActionType.INSERT
+    });
   }
 
   async mutation<T extends IResource>(
@@ -162,31 +175,9 @@ class Flux {
     let response;
     logger.log({ at: "flux.mutation", resource, params });
     try {
-      switch (params.action) {
-        case PersistenceActionType.CUSTOM:
-          response = await this.persistence.query(params.query, params.data);
-          break;
-        case PersistenceActionType.INSERT:
-          response = await this.persistence.insert<T>(
-            params.resources,
-            resource
-          );
-          break;
-        case PersistenceActionType.MERGE:
-          response = await this.persistence.merge<T>(params.resource);
-          break;
-        case PersistenceActionType.REPLACE:
-          response = await this.persistence.replace<T>(params.resource);
-          break;
-        case PersistenceActionType.DELETE:
-          response = await this.persistence.delete(params.resourceId);
-          break;
-        case PersistenceActionType.BULK_MERGE:
-          response = await this.persistence.bulkEdit<T>(
-            resource,
-            params.resources
-          );
-          break;
+      response = await this.persistence.mutation(resource, params);
+      if (!this.isLocalMode) {
+        await this.insertMutation(resource, params);
       }
     } catch (e) {
       logger.error({
@@ -205,6 +196,30 @@ class Flux {
       params
     });
     return response;
+  }
+
+  async insertMutation<T extends IResource>(
+    resource: Resource,
+    params: IMutationParamsv2<T>
+  ) {
+    const mutationId = generateRandomId();
+    const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
+    const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
+    if (!userInfo) return;
+    const userId = JSON.parse(userInfo)?.id;
+    const mutations = {
+      id: mutationId,
+      createdAt: new Date().toISOString(),
+      modifiedAt: new Date().toISOString(),
+      dapId,
+      userId,
+      resource,
+      params
+    };
+    return this.persistence.mutation(Resource.mutation, {
+      records: [mutations],
+      action: PersistenceActionType.INSERT
+    });
   }
 
   async select(resourceId: IRecordId, properties?: string[]) {
@@ -239,14 +254,20 @@ class Flux {
   }
 
   async selectByQuery(query: string, params?: any) {
+    if (this.provider === PersistenceProvider.DEXIE_SURREAL) {
+      return this.remote.query(query, params);
+    }
     return this.persistence.query(query, params);
   }
 
   kvMerge(storeId: string, data: any) {
     logger.log({ at: "kvMerge", storeId, data });
-    return this.persistence.merge({
-      ...data,
-      id: `kv:${storeId}`
+    return this.persistence.mutation(Resource.kv, {
+      record: {
+        ...data,
+        id: `kv:${storeId}`
+      },
+      action: PersistenceActionType.MERGE
     });
   }
 
@@ -343,12 +364,19 @@ export let flux = Flux._instance as any as Flux;
 export async function initFlux(
   stores: IStore[],
   provider: PersistenceProvider,
+  persistence: IPersistence,
   userId: string,
   params?: {
     isLocalMode?: boolean;
   }
 ) {
-  const result = await Flux.initialize(stores, provider, userId, params);
+  const result = await Flux.initialize(
+    stores,
+    provider,
+    persistence,
+    userId,
+    params
+  );
   flux = Flux._instance as any as Flux;
   return result;
 }

@@ -39,6 +39,7 @@
   } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
+  import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
 
   const loadingMessages = {
     cloneUp:
@@ -221,6 +222,7 @@
     return initFlux(
       [...cacheableStores, ...localCacheableStores],
       PersistenceProvider.SURREAL_SURREAL,
+      new SurrealPersistence(),
       userId,
       { isLocalMode }
     );

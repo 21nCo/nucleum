@@ -1,6 +1,7 @@
 import {
   PersistenceActionType,
-  StoreDataType
+  StoreDataType,
+  type IMutation
 } from "$lib/client/types/data.type";
 
 /**
@@ -90,4 +91,27 @@ export function replaceParams(query: string, params: any) {
     query = query.replaceAll(`"$NONE"`, `NONE`);
   }
   return query;
+}
+
+export function resolveInsertQuery(resource: string, records: any[]) {
+  return `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+}
+
+export function resolveMergeQuery(record: any) {
+  return `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`;
+}
+
+export function resolveMutationQueryV2(mutation: IMutation) {
+  switch (mutation.params.action) {
+    case PersistenceActionType.INSERT:
+      return resolveInsertQuery(mutation.resource, mutation.params.records);
+    case PersistenceActionType.DELETE:
+      return `DELETE ${mutation.resource} WHERE id = ${mutation.params.recordId}`;
+    case PersistenceActionType.REPLACE:
+      return `UPDATE ${mutation.resource} SET ${JSON.stringify(mutation.params)} WHERE id = ${mutation.id}`;
+    case PersistenceActionType.MERGE:
+      return resolveMergeQuery(mutation.params.record);
+    case PersistenceActionType.CUSTOM:
+      return replaceParams(mutation.params.query, mutation.params.data);
+  }
 }

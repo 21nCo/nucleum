@@ -220,27 +220,27 @@ export interface IMutationQueueParams {
 
 export type IInsertMutation<T> = {
   action: PersistenceActionType.INSERT;
-  resources: T[];
+  records: T[];
 };
 
 export type IReplaceMutation<T> = {
   action: PersistenceActionType.REPLACE;
-  resource: T;
+  record: T;
 };
 
 export type IMergeMutation<T> = {
   action: PersistenceActionType.MERGE;
-  resource: Partial<T>;
+  record: Partial<T>;
 };
 
 export type IDeleteMutation = {
   action: PersistenceActionType.DELETE;
-  resourceId: string;
+  recordId: string;
 };
 
 export type IBulkEditMutation<T> = {
   action: PersistenceActionType.BULK_MERGE;
-  resources: T[];
+  records: T[];
 };
 
 export type ICustomMutationParams = {
@@ -362,3 +362,13 @@ export type IResourceSelectParams = {
 };
 
 export type IRecordId = RecordId | string;
+
+export type IMutation = {
+  id: string;
+  createdAt: string;
+  modifiedAt: string;
+  dapId: string;
+  userId: string;
+  resource: string;
+  params: IMutationParamsv2<any>;
+};

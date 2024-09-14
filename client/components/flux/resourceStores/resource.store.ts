@@ -210,7 +210,7 @@ export class ResourceStore<T extends IResource> implements IStore {
           }
         };
       } else {
-        data = { action: PersistenceActionType.INSERT, resources };
+        data = { action: PersistenceActionType.INSERT, records: resources };
       }
       return flux.mutation<T>(this.id, data);
     }
@@ -283,7 +283,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     if (this.isUseV2) {
       return flux.mutation<T>(this.id, {
         action: PersistenceActionType.MERGE,
-        resource: data
+        record: data
       });
     }
     return dataManager.performMutationForIFR(this.id, data, {
@@ -304,7 +304,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     if (this.isUseV2) {
       return flux.mutation<T>(this.id, {
         action: PersistenceActionType.BULK_MERGE,
-        resources: ids.map((id) => ({
+        records: ids.map((id) => ({
           id,
           ...data,
           modifiedBy: this.currentUserId,
