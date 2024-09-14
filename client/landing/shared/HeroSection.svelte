@@ -47,7 +47,7 @@
       {@const label = heroInputs.label}
       <p
         class={cn(
-          "text-h2 mo:text-base font-medium leading-9 mo:leading-5 h-[72px] mo:h-[66px] mo:w-[303px] mt-4",
+          "text-h2 mo:text-base font-medium mo:font-normal leading-9 mo:leading-5 h-[72px] mo:h-[66px] mo:w-[303px] mt-4",
           !$isProductsPage && "w-[861px]",
           $isProductsPage && "w-[994px]"
         )}

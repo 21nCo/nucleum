@@ -35,8 +35,8 @@
 
 <div class="flex w-full items-center justify-center sticky top-0 z-50 bg-bgs1">
   <div class="w-[1440px] mo:w-full">
-    <div class="w-full flex pt-7 pr-5 pl-10 h-16 mo:h-20">
-      <div class="flex flex-col">
+    <div class="w-full flex pt-7 pr-5 pl-10 mo:pl-4 h-16 mo:h-20">
+      <div class="flex flex-col justify-end">
         <div class="flex items-end">
           {#if topNavBarValues.icon}
             {@const icon = topNavBarValues.icon}

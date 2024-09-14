@@ -2,17 +2,9 @@
   import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
 
   let topNavBarValues: any = {
-    icon: "pointron",
+    icon: "memotron",
     title: "Memotron",
-    items: [
-      { label: "About", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Contact", href: "/contact" }
-    ],
-    cta: {
-      label: "Sign Up",
-      href: "/signup"
-    }
+    items: [{ label: "Discord", href: "https://discord.gg/blanklabs" }]
   };
 </script>
 
