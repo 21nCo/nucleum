@@ -65,7 +65,9 @@
       </div>
     </div>
     <div class="flex gap-8 h-full tp:p-2 p-4 flex-1">
-      <div class="h-full w-full w--[23rem] flex flex-col gap-4 items-start">
+      <div
+        class="h-full w-full w--[23rem] max-w-[30rem] flex flex-col gap-4 items-start"
+      >
         <div class="flex w-full justify-between">
           <TimelineDate size={Size.lg} />
           <TodayButton />

@@ -33,7 +33,7 @@
       />
     {/if}
   </div>
-  <div class="font-semibold text-h4 dp:text-h2 leading-tight">
+  <div class="font-semibold text-h2 leading-tight">
     {formatSeconds($sessionStore.timeElapsed, TimeFormat.CLOCK)}
   </div>
 </div>
