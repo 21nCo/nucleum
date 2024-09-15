@@ -52,11 +52,11 @@ module.exports = {
       /**
        * Tablet in portrait, or vertical splits on laptop/desktop/tablet in landscape
        */
-      tp: { raw: "(min-width: 600px) and (min-height: 800px)" },
+      tp: { raw: "(min-width: 600px) and (min-height: 500px)" },
       /**
-       * Tablet in landscape, desktop and laptop
+       * Bigger tablets in landscape, desktop and laptop
        */
-      dp: { raw: "(min-width: 1024px) and (min-height: 800px)" },
+      dp: { raw: "(min-width: 1024px) and (min-height: 700px)" },
       /**
        * 2k : 2K monitors and above, TVs etc
        */

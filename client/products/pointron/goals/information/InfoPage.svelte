@@ -67,6 +67,8 @@
       <InlineInfoBanner
         content="This goal is archived. **Unarchive** it to add sub goals, view insights, add while focusing. This goal will still be shown in analytics and journal. Please **delete** the goal to completely remove it everywhere."
       />
+    {:else if $currentGoal.trashInformation}
+      <InlineInfoBanner content="This goal is deleted." />
     {:else}
       <SubGoalList />
       <div class="flex justify-center items-center min-h-32 w-full">

@@ -10,9 +10,9 @@ import { Display, type View } from "../types/view.type";
 function calculateScreen(width: number, height: number): Display {
   if (width <= 600 && height <= 1000) {
     return Display.MO;
-  } else if (width >= 600 && height >= 800) {
+  } else if (width >= 600 && height >= 500) {
     return Display.TP;
-  } else if (width >= 1024 && height >= 800) {
+  } else if (width >= 1024 && height >= 700) {
     return Display.DP;
   } else if (width >= 2000 && height >= 1000) {
     return Display.TK;

@@ -50,7 +50,9 @@
   </div>
 {:else}
   <div class="w-full h-full flex gap-12">
-    <div class="flex flex-col h-full w-[23rem] overflow-auto px-4 py-4">
+    <div
+      class="flex flex-col h-full w-[23rem] min-w-[23rem] overflow-auto px-4 py-4"
+    >
       <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Journal" />
       <div class="h-[45rem] w-full">
         <CalendarHeatMap
@@ -62,8 +64,8 @@
         />
       </div>
     </div>
-    <div class="flex gap-8 h-full py-4">
-      <div class="h-full w-[23rem] flex flex-col gap-4 items-start">
+    <div class="flex gap-8 h-full tp:p-2 p-4 flex-1">
+      <div class="h-full w-full w--[23rem] flex flex-col gap-4 items-start">
         <div class="flex w-full justify-between">
           <TimelineDate size={Size.lg} />
           <TodayButton />
@@ -71,15 +73,14 @@
         <LogsPane date={$selectedTimePeriod} context="journal" />
       </div>
     </div>
-    <div
-      class="flex flex-col bg-bgs2 border-l border-l-brs3 items-start gap-4 justify-start h-full flex-grow p-4"
+    <!-- <div
+      class="flex flex-col bg-bgs2 border-l border-l-brs3 items-start gap-4 justify-start h-full p-4 min-w-0 flex-1"
     >
       <ComingSoonView
         mainText="Coming soon..."
         subText="We are working on something amazing. Stay tuned."
         size={Size.sm}
       />
-      <!-- <TargetGuages size={Size.md} /> -->
-    </div>
+    </div> -->
   </div>
 {/if}

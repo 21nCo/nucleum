@@ -24,8 +24,8 @@
     <SessionStatusLabel size={$view.isPortrait ? Size.sm : Size.md} />
     <div
       class={cn("flex justify-center", {
-        "text-7xl font-bold": size === Size.sm,
-        "text-9xl font-black": size !== Size.sm,
+        "text-5xl dp:text-7xl font-bold": size === Size.sm,
+        "text-7xl dp:text-9xl font-black": size !== Size.sm,
         "text-ars1":
           $sessionStore.timeRemainingToTakeBreak != undefined &&
           $sessionStore.timeRemainingToTakeBreak < 0
@@ -41,12 +41,8 @@
   </div>
   <div
     class={cn(
-      "flex justify-evenly rounded-md py-3 w-full",
-      bg(parentBackgroundIndex),
-      {
-        "text-b3": $view.isPortrait,
-        "text-b1": !$view.isPortrait
-      }
+      "flex justify-evenly rounded-md py-3 w-full mo:text-b3 text-b2 dp:text-base text-wrap",
+      bg(parentBackgroundIndex)
     )}
   >
     <div>

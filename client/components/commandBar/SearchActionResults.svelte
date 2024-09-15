@@ -8,7 +8,6 @@
   import type { IResource } from "../resourceStores/resource.type";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { text } from "@sveltejs/kit";
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let search: string = "";

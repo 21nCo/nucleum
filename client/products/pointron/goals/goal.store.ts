@@ -210,21 +210,26 @@ class GoalStore extends ResourceFIRStore<IGoal> {
     };
   }
   resolveChildren(id: string) {
-    const goals = this.get().items;
-    const goal = goals.find((x) => x.id === id);
-    return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
+    // const goals = this.get().items;
+    // const goal = goals.find((x) => x.id === id);
+    // return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
+    return this.resolveSubGoalsIfNotPresent(id)?.map((x) => x.id) ?? [];
   }
-  async resolveSubGoalsIfNotPresent(goalId: string) {
+  resolveSubGoalsIfNotPresent(goalId: string) {
     const goals = this.get().items;
     const goalInContext = goals.find((x) => x.id === goalId);
     // console.log({ goalInContext });
-    if (!goalInContext) return;
-    if (!isValidArrayWithData(goalInContext?.subGoals)) {
-      const subGoals = goals.filter(
-        (x) => goalInContext?.id === x.parent?.hierarchy.pop()?.id
-      );
-      // console.log({ subGoals });
-    }
+    if (!goalInContext) return [];
+
+    const subGoals = goals
+      .filter(
+        (x) =>
+          goalInContext?.id ===
+          x.parent?.hierarchy[x.parent?.hierarchy.length - 1]?.id
+      )
+      .filter(activeResourceFilter);
+    console.log({ subGoals });
+    return subGoals;
   }
   async refresh(
     filters: {

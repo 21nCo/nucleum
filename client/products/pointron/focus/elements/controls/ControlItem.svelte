@@ -51,12 +51,13 @@
     class={cn(
       "relative rounded-full flex items-center justify-center",
       {
-        "w-20 h-20 mo:w-16 mo:h-16 hover:bg-opacity-80":
+        "dp:w-20 dp:h-20 w-16 h-16 hover:bg-opacity-80":
           context === SessionUIContext.DEFAULT,
-        "w-12 h-12 hover:bg-opacity-80": context === SessionUIContext.PIP
+        "w-10 h-10 dp:w-12 dp:h-12 hover:bg-opacity-80":
+          context === SessionUIContext.PIP
       },
       context === SessionUIContext.FOCUS_PLAYER && {
-        "w-12 h-12 border": true,
+        "w-10 h-10 dp:w-12 dp:h-12 border": true,
         "border-cbg":
           $sessionStore.state == SessionState.FOCUS_RUNNING &&
           !isBreakReminderMode,

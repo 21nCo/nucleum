@@ -84,13 +84,13 @@
         orientation === Orientation.Vertical && size === Size.md,
       "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
         orientation === Orientation.Vertical && size === Size.sm,
-      "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-full vm:h-[90rem]":
+      "w-[80rem] max-w-9/10 2k:w-[110rem] h-[56rem] max-h-full 2k:h-full vm:h-[90rem]":
         orientation === Orientation.Horizontal && size === Size.xxl,
-      "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
+      "w-[70rem] max-w-9/10 2k:w-[100rem] h-[56rem] max-h-full 2k:h-[68rem] vm:h-[80rem]":
         orientation === Orientation.Horizontal && size === Size.xl,
-      "w-[60rem] 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
+      "w-[60rem] max-w-9/10 2k:w-[80rem] h-[50rem] max-h-full 2k:h-[60rem]":
         orientation === Orientation.Horizontal && size === Size.lg,
-      "w-[50rem] 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
+      "w-[50rem] max-w-9/10 2k:w-[60rem] h-[40rem] max-h-full 2k:h-[50rem]":
         orientation === Orientation.Horizontal && size === Size.md
     };
   }

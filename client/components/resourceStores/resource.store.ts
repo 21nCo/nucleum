@@ -401,7 +401,15 @@ export class ResourceFIRStore<
     return this._mutation(PersistanceActionType.MERGE, item as T);
   }
   async delete(id: string) {
-    const result = this._mutation(PersistanceActionType.DELETE, id);
+    const item = {
+      id,
+      trashInformation: {
+        deletedAt: new Date().toISOString(),
+        deletedBy: this.currentUserId
+      }
+    };
+    const result = await this._mutation(PersistanceActionType.MERGE, item as T);
+    // console.log("delete result", result, id);
     this.update((x: S) => {
       x.items = x.items.filter((t) => t.id != id);
       x.filtered = this.defaultFilter ? this.defaultFilter(x.items) : x.items;
