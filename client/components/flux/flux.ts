@@ -25,6 +25,8 @@ import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -34,7 +36,10 @@ class Flux {
   syncer!: ISyncHandler;
   remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
-  private constructor() {}
+  private isExtensionEnvironment: boolean = false;
+  private constructor() {
+    this.isExtensionEnvironment = isExtensionEnvironment();
+  }
 
   static initialize(
     stores: IStore[],
@@ -178,6 +183,11 @@ class Flux {
       response = await this.persistence.mutation(resource, params);
       if (!this.isLocalMode) {
         await this.insertMutation(resource, params);
+        if (this.isExtensionEnvironment) { 
+          setTimeout(async () => {
+            await this.sync();
+          }, 100);
+        }
       }
     } catch (e) {
       logger.error({
@@ -202,11 +212,10 @@ class Flux {
     resource: Resource,
     params: IMutationParamsv2<T>
   ) {
+    logger.debug({ at: "flux.insertMutation", resource, params });
     const mutationId = generateRandomId();
-    const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
-    const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
-    if (!userInfo) return;
-    const userId = JSON.parse(userInfo)?.id;
+    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    const userId = await resolveCurrentUserId();
     const mutations = {
       id: mutationId,
       createdAt: new Date().toISOString(),
@@ -281,7 +290,9 @@ class Flux {
     return stores;
   }
 
-  async refresh(storeId: string, isShowRefreshingState: boolean = false) {}
+  async refresh(storeId: string, isShowRefreshingState: boolean = false) {
+    logger.debug({ at: "flux.refresh", storeId });
+  }
 
   async refreshPage(
     storeIdentifiers: string[],
@@ -293,7 +304,7 @@ class Flux {
    * @returns
    */
   async sync() {
-    const lastSyncedAt = clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
+    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
     logger.debug({ at: "flux.sync", lastSyncedAt });
     if (!lastSyncedAt) return;
     const mutations = await this.persistence.selectMany(Resource.mutation, {
@@ -306,6 +317,7 @@ class Flux {
         }
       }
     });
+    logger.debug({ at: "flux.sync", mutations, lastSyncedAt });
     if (!mutations || mutations.length === 0) return;
     await this.syncer.sync(mutations);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
@@ -356,7 +368,7 @@ class Flux {
   /**
    * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
    */
-  terminate() {}
+  async terminate() {}
 }
 
 export let flux = Flux._instance as any as Flux;
@@ -370,6 +382,7 @@ export async function initFlux(
     isLocalMode?: boolean;
   }
 ) {
+  logger.log({ at: "initFlux", stores, provider, persistence, userId, params });
   const result = await Flux.initialize(
     stores,
     provider,

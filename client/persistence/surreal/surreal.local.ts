@@ -23,7 +23,7 @@ import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
-  private isLocalMode: boolean = false;
+
   private isProcessingOperation: boolean = false;
 
   constructor() {}
@@ -41,7 +41,6 @@ export class SurrealPersistence implements IPersistence {
       })
     });
     this.userId = userId;
-    this.isLocalMode = params?.isLocalMode ?? false;
     try {
       logger.debug({ at: "surreal.persistence.initialize", userId });
       await this.instance.connect("indxdb://blank");
@@ -66,10 +65,10 @@ export class SurrealPersistence implements IPersistence {
     }
   }
 
-  private async addInitializationLog() {
+  private async addInitializationLog(params?: IPersistenceInitParams) {
     await this.awaiter();
     const result = await this.instance?.query(
-      `INSERT INTO kv { id: 'init', createdAt: time::now(), isLocalMode: ${this.isLocalMode} };`
+      `INSERT INTO kv { id: 'init', createdAt: time::now(), isLocalMode: ${params?.isLocalMode ?? false} };`
     );
     this.isProcessingOperation = false;
   }

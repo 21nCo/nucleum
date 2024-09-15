@@ -19,7 +19,11 @@ export enum ExtensionEvent {
      * An event to exchange the state of the page - typically sent from side panel and relayed to conent script or published from content script.
      */
     PAGE_STATE = "PAGE_STATE",
-    UPLOAD_TO_S3_USING_UPLOAD_URL= "UPLOAD_TO_S3_USING_UPLOAD_URL",
+    UPLOAD_TO_S3_USING_UPLOAD_URL = "UPLOAD_TO_S3_USING_UPLOAD_URL",
+    /**
+     * An event to delegate flux to the background script.
+     */
+    FLUX_DELEGATION = "FLUX_DELEGATION"
 }
 
 

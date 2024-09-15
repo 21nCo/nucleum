@@ -30,7 +30,7 @@ export class SurrealDatabaseUsingRest {
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
-    this.token = clientStorage.get(ClientStorageKey.STOKEN) ?? this.token;
+    this.token = await clientStorage.get(ClientStorageKey.STOKEN) ?? this.token;
     await fetch(instance, { method: "POST" });
   }
   /**

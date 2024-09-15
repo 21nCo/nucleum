@@ -10,13 +10,9 @@ import { postToParent } from "./embed.utils";
 
 export async function resolveToken(): Promise<string | null> {
   let token: string | null = null;
-  const space = retrieveLocally(Resource.spaceInContext);
-  if (space?.id) {
-    token = localStorage?.getItem(`token-${space.id}`);
-  } else token = localStorage?.getItem("stoken");
-  if (!token && isExtensionEnvironment()) {
+  if (isExtensionEnvironment()) {
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.get("stoken", function (data) {
+      chrome.storage.local.get(ClientStorageKey.STOKEN, function (data) {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -25,16 +21,19 @@ export async function resolveToken(): Promise<string | null> {
         }
       });
     });
+  } else {
+    const space = retrieveLocally(Resource.spaceInContext);
+    if (space?.id) {
+      token = localStorage?.getItem(`token-${space.id}`);
+    } else token = localStorage?.getItem("stoken");
   }
   return token;
 }
 
 export async function resolveCurrentUserId() {
-  const userInfo = localStorage.getItem("userInfo");
-  if (userInfo) return JSON.parse(userInfo)?.id;
-  else if (isExtensionEnvironment()) {
+   if (isExtensionEnvironment()) {
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.get("userInfo", function (data) {
+      chrome.storage.local.get(ClientStorageKey.USER_INFO, function (data) {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -43,6 +42,9 @@ export async function resolveCurrentUserId() {
         }
       });
     });
+   } else {
+    const userInfo = localStorage.getItem("userInfo");
+     if (userInfo) return JSON.parse(userInfo)?.id;
   }
 }
 

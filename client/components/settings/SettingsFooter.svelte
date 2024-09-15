@@ -16,8 +16,8 @@
         label="Sign out"
         style={ButtonStyle.OUTLINED}
         {parentBgIndex}
-        on:click={() => {
-          account.signOut();
+        on:click={async () => {
+          await account.signOut();
         }}
       />
     </span>

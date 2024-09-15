@@ -6,13 +6,16 @@
     frameEmailFromParts,
     isValidString
   } from "$lib/shared/utils/text.utils";
-  import type { EmailParts } from "$lib/client/types/account.type";
+  import {
+    UserDataMode,
+    type EmailParts
+  } from "$lib/client/types/account.type";
   import { ButtonVariant } from "$lib/client/types/button.type";
   let nickName = "";
   let emailParts: EmailParts | undefined = undefined;
   onMount(() => {
     account.subscribe((value) => {
-      if (value.isCloudUser) {
+      if (value.dataMode === UserDataMode.CLOUD) {
         nickName = value.userInfo?.nickName || "";
         emailParts = value.userInfo?.emailParts || undefined;
       }
@@ -40,16 +43,16 @@
     <Button
       icon="logout"
       label="Sign out"
-      on:click={() => {
-        account.signOut();
+      on:click={async () => {
+        await account.signOut();
       }}
     />
     <Button
       icon="trash"
       label="Delete account"
       type={ButtonVariant.DANGER}
-      on:click={() => {
-        account.delete();
+      on:click={async () => {
+        await account.delete();
       }}
     />
   </div>

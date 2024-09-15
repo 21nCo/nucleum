@@ -19,6 +19,7 @@ import {
 } from "$lib/client/types/data.type";
 import { LocalDexie } from "$local/local";
 import type { Collection, Table } from "dexie";
+import { logger } from "$lib/client/components/debug/logger.client";
 
 type QueryableType = Table | Collection;
 
@@ -38,7 +39,21 @@ export class DexiePersistence implements IPersistence {
     if (this.userId === userId && this.instance) return -1;
     this.instance = new LocalDexie(userId);
     this.userId = userId;
-    return Promise.resolve(0);
+    const initLog = await this.select("kv:init");
+    logger.debug({ at: "DexiePersistence.initialize", initLog });
+    if (initLog) {
+      return 1;
+    }
+    await this.addInitializationLog(params);
+    return 0;
+  }
+
+  private async addInitializationLog(params?: IPersistenceInitParams) {
+    await this.instance?.table(Resource.kv).add({
+      id: "init",
+      createdAt: new Date().toISOString(),
+      isLocalMode: params?.isLocalMode ?? false
+    });
   }
 
   mutation<T extends IResource | IMetaResource>(
@@ -47,7 +62,7 @@ export class DexiePersistence implements IPersistence {
   ) {
     switch (params.action) {
       case PersistenceActionType.INSERT:
-        return this.instance?.table(resource).add(params.records);
+        return this.instance?.table(resource).bulkAdd(params.records);
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:
@@ -200,7 +215,7 @@ export class DexiePersistence implements IPersistence {
     query: QueryableType,
     filters: { [key: string]: any }
   ): Collection {
-    return (query instanceof Collection ? query : query.toCollection()).filter(
+    return (query as Collection).filter(
       (item) => {
         for (const [key, value] of Object.entries(filters)) {
           if (Array.isArray(value)) {
@@ -222,8 +237,7 @@ export class DexiePersistence implements IPersistence {
     query: QueryableType,
     filterGroup: IResourceFilterGroup
   ): Collection {
-    const collection =
-      query instanceof Collection ? query : query.toCollection();
+    const collection = query as Collection;
     const applyCondition =
       filterGroup.condition === FilterCombinationMethod.AND ? "and" : "or";
 

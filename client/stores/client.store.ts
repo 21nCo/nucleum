@@ -7,6 +7,7 @@ import {
   type ResourceDependency
 } from "../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { flux } from "../components/flux/flux";
 
 export class ObservableStore<T extends IObservableStoreSubject>
   implements IObservableStore<T>
@@ -70,7 +71,7 @@ export class ObservableStore<T extends IObservableStoreSubject>
     this.cache();
   }
   refresh(params?: any): Promise<any> {
-    // return dataManager.refresh(this.id, params?.isShowRefreshingState);
+    flux.refresh(this.id, params?.isShowRefreshingState);
     return Promise.resolve(true);
   }
 }

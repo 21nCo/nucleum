@@ -53,7 +53,9 @@ import {
 } from "$lib/client/utils/extension.utils";
 import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
 import account from "$lib/client/stores/account.store";
-import { flux } from "$lib/client/components/flux/flux";
+import { extentionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "$lib/client/components/flux/flux.type";
+
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
@@ -77,6 +79,10 @@ class WebpageStore extends ObservableStore<IWebpage> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
   }
+  /**
+   * @deprecated - use direct refresh() method
+   * @returns 
+   */
   resolveRefreshQuery() {
     let url = this.get().url;
     if (!url) {
@@ -87,6 +93,45 @@ class WebpageStore extends ObservableStore<IWebpage> {
       url
     });
   }
+
+  /**
+   * TODO - save url as top level field - to enable querying via dexie, fetching links
+   */
+  async refresh() {
+    const result = await extentionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: {
+        resource: Resource.node,
+        params: {
+          filters: {
+            contentType: NodeType.WEB_PAGE
+          }
+        }
+      }
+    });
+    logger.debug({ at: "refresh", result });
+    const page = result && result.length > 0 ? result.find((r) => r.body.url === this.get().url) : null;
+
+    logger.debug({ at: "refresh", url: this.get().url, page, result });
+    if (!page) {
+      this.loader({ page: { url: this.get().url, clips: [] } });
+      return;
+    }
+    const clips = await extentionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: {
+        resource: Resource.node,
+        params: {
+          filters: {
+            parent: page.id
+          }
+        }
+      }
+    });
+    logger.debug({ at: "refresh", page, clips });
+    this.loader({ page: { ...page, clips: clips ?? [] } });
+  }
+
   /**
   * when a tab is changed, this method is called to update the store with the new tab data.
 
@@ -195,8 +240,10 @@ class WebpageStore extends ObservableStore<IWebpage> {
       label: undefined
     };
     const response = await nodeStore.create([clip]);
-    if (!response) return;
-    const clipNode = response.resources[0] as IWebScreenshotClip;
+    if (!response || !Array.isArray(response)) return;
+    logger.debug({ at: "saveClip", response });
+    const clipNode = response[0] as IWebScreenshotClip;
+    if (!clipNode) return;
     this.update((n) => {
       n.clips = [...(n.clips ?? []), { ...clipNode, links: [] }];
       return n;
@@ -253,8 +300,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
         creationContext: id
       }
     ]);
-    if (!response) return;
-    const tweet = response.resources[0] as ITweet;
+    if (!response || !Array.isArray(response)) return;
+    const tweet = response[0] as ITweet;
     this.update((n) => {
       n.clips = [...(n.clips ?? []), { ...tweet, links: [] }];
       if (isFromTweetPage) n.id = tweet.id;
@@ -280,8 +327,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const response = await nodeStore.create([
       { ...data, id: twitterProfileId, label: undefined }
     ]);
-    if (!response) return;
-    const node = response.resources[0] as ITwitterProfile;
+      if (!response || !Array.isArray(response)) return;
+    const node = response[0] as ITwitterProfile;
     this.update((n) => {
       n.clips = [...(n.clips ?? []), { ...node, links: [] }];
       n.id = node.id;
@@ -536,8 +583,12 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async refreshSyncState() {
     try {
       const id = this.get().id;
-      const query = `SELECT ${id} FROM kv:clipperSync;`;
-      const result = await flux.selectByQuery(query);
+      const result = await extentionFlux({
+        method: FluxMethod.SELECT,
+        args: {
+          resourceId: "kv:clipperSync",
+        }
+      });
       logger.debug({ at: "syncStore refreshSyncState", result, id });
       if (result) {
         const record = result;
@@ -557,15 +608,39 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async persistSyncStatus(status: SyncStatus) {
     try {
       const id = this.get().id;
+      if (!id) return;
+      //TODO - test merge mutation
       const query = `UPDATE kv:clipperSync SET ${id}={
         status: "${status}",
         updatedAt: time::now()
       };`;
-      const result = await flux.mutation(Resource.clipperSync, {
-        action: PersistenceActionType.CUSTOM,
-        query
+      const result = await extentionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: Resource.clipperSync,
+          params: {
+            action: PersistenceActionType.CUSTOM,
+            query
+          }
+        }
       });
-      console.log({ result });
+      const resultWithMerge = await extentionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: Resource.kv,
+          params: {
+            action: PersistenceActionType.MERGE,
+            record: {
+              id: "kv:clipperSync",
+              [id]: {
+                status,
+                updatedAt: new Date().toISOString()
+              }
+            }
+          }
+        }
+      });
+      console.log({ result, resultWithMerge });
     } catch (e) {
       logger.error(e);
     }

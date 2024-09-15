@@ -29,9 +29,9 @@
 
   let timer: any;
   pingParent();
-  bootup();
 
   onMount(async () => {
+    await bootup();
     view.update(window.innerWidth, window.innerHeight);
     await refreshAppStaticData();
     return () => {
@@ -48,13 +48,13 @@
    *
    * Note: The order of operations is important as later operations rely on earlier ones.
    */
-  function bootup() {
-    setLaunchContext();
+  async function bootup() {
+    await setLaunchContext();
     addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();
-    checkForEnvironmentChange();
+    await checkForEnvironmentChange();
     function runCurrentTime() {
       clearInterval(timer);
       timer = setInterval(() => {
@@ -74,9 +74,9 @@
   /**
    * Sets the launch context of the app. This includes the product, debug mode, embed mode, touch device, protocol, and OS.
    */
-  function setLaunchContext() {
+  async function setLaunchContext() {
     try {
-      let dapId = clientStorage.get(ClientStorageKey.DAP_ID);
+      let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
       if (!dapId) {
         dapId = generateSimpleRandomId();
         clientStorage.set(ClientStorageKey.DAP_ID, dapId);
@@ -84,7 +84,7 @@
       $context.dapId = dapId;
       const appDetails = extractProduct(
         import.meta.env?.VITE_HOST ??
-          process.env.PLASMO_PUBLIC_HOST ??
+          process.env.PLASMO_PUBLIC_APP_URL ??
           window.location.host
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
@@ -129,8 +129,8 @@
   /**
    * Checks if the environment has changed and signs out the user if the environment has changed to avoid issues of using the cached token and 401 errors.
    */
-  function checkForEnvironmentChange() {
-    const envCachedOnMachine = clientStorage.get(ClientStorageKey.ENV);
+  async function checkForEnvironmentChange() {
+    const envCachedOnMachine = await clientStorage.get(ClientStorageKey.ENV);
     console.log("checkForEnvironmentChange", $appStore.env, envCachedOnMachine);
     if (envCachedOnMachine === null) {
       clientStorage.set(ClientStorageKey.ENV, $appStore.env);
@@ -147,7 +147,7 @@
         },
         LogType.INFO
       );
-      account.signOut();
+      await account.signOut();
     }
   }
   function handleCustomNavigation(event: any) {

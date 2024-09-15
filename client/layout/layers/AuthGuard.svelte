@@ -49,8 +49,8 @@
    * TODO - all {@link excludedPathsForRedirectionCheck} should be defined in routes as dynamic route [...route] is guarded by AuthGuard
    */
   async function performLoginStatusCheck() {
-    const token = clientStorage.get(ClientStorageKey.STOKEN);
-    const offlineSessionId = clientStorage.get(
+    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
     if (!token && !offlineSessionId) {
@@ -58,6 +58,7 @@
       appStore.gotoPath("/signup");
       return false;
     }
+    if (!$account) await account.init();
     let isSessionExpiredOrRefreshing = await account.checkIfSessionExpired();
     if (isSessionExpiredOrRefreshing && $isRefreshingToken) {
       while ($isRefreshingToken) {

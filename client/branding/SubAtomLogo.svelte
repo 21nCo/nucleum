@@ -1,16 +1,14 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { ClientStorageKey } from "../persistence/persistence.type";
   import { clientStorage } from "../persistence/persistence.utils";
   import { Size } from "../types/size.enum";
   export let subatom: string | undefined = undefined;
   export let size: Size.sm | Size.md = Size.md;
 
-  $: {
-    if (!subatom) {
-      subatom = clientStorage.get(ClientStorageKey.PRODUCT) ?? "tidigit";
-    }
-    // console.log({ subatom });
-  }
+  onMount(async () => {
+    subatom = (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? "tidigit";
+  });
   $: height = size === Size.md ? 61 : size === Size.sm ? 40 : 61;
 </script>
 

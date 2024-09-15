@@ -445,6 +445,9 @@ export async function resolveIframability(url: string): Promise<boolean> {
 
 export async function generateFingerprint() {
   try {
+    if (isExtensionEnvironment()) {
+      return "extension";
+    }
     const components = [
       navigator.userAgent,
       navigator.language,

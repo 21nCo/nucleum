@@ -545,7 +545,7 @@ async function performMutation(
  */
 async function fetchServerMutationMap() {
   const surrealDb = get(dataManager).db;
-  const appName = clientStorage.get(ClientStorageKey.PRODUCT);
+  const appName = await clientStorage.get(ClientStorageKey.PRODUCT);
   if (!appName) return;
   let serverMutationMap: any = {};
   const response = await surrealDb.executeReadFn(

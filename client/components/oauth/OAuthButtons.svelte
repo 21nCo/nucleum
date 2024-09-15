@@ -32,10 +32,10 @@
         icon={provider.oauth_slug}
         isLoading={progress === provider.oauth_slug}
         label={"Continue with " + properCase(provider.oauth_slug)}
-        on:click={() => {
+        on:click={async () => {
           // if (provider.oauth_slug === "apple") return;
           progress = provider.oauth_slug;
-          appStore.initiateOAuth2Flow(provider.provider);
+          await appStore.initiateOAuth2Flow(provider.provider);
         }}
       />
     {/each}

@@ -353,7 +353,7 @@ function initAppStore(seed: AppStore) {
     }
   };
 
-  const initiateOAuth2Flow = (provider: IdentityProvider) => {
+  const initiateOAuth2Flow = async (provider: IdentityProvider) => {
     const ctx = get(context);
     const oAuthConfig: OAuthProviderConfig[] =
       get(appStore).appData?.oAuthConfig;
@@ -369,7 +369,7 @@ function initAppStore(seed: AppStore) {
       ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
-    const guestPartForState = clientStorage.get(ClientStorageKey.DAP_ID) ?? "";
+    const guestPartForState = await clientStorage.get(ClientStorageKey.DAP_ID) ?? "";
     const domainPartForState =
       (ctx.os === OperatingSystem.MACOS ||
         (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&

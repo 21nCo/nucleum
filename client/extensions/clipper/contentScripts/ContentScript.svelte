@@ -62,8 +62,8 @@
       await webpage.persistClipNotes(data.clipId, data.notes);
       result = { id: data.clipId, type: AlertType.SUCCESS };
     }
-    if (result.type === AlertType.SUCCESS)
-      return $webpage.clips.find((clip) => clip.id === data.clipId);
+    if (result?.type === AlertType.SUCCESS)
+      return $webpage.clips?.find((clip) => clip.id === data.clipId);
     else return result;
   }
 

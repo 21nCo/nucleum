@@ -119,7 +119,7 @@ export class Persistence {
   };
   fetchAppData = async () => {
     try {
-      const product = clientStorage.get(ClientStorageKey.PRODUCT);
+      const product = await clientStorage.get(ClientStorageKey.PRODUCT);
       if (!product) return;
       let response = await performStaticDataOperation(`${product}.json`);
       if (response?.ok) {

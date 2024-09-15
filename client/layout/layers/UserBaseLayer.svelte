@@ -147,12 +147,12 @@
         await refreshAppStaticData();
       }
       initActions(isLiteMode);
-      const dapId = clientStorage.get(ClientStorageKey.DAP_ID)!;
+      const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
 
       if ($account.dataMode === UserDataMode.LOCAL) {
         // loadingMessage = "Initializing...";
-        await account.logGuest(dapId);
-        const initState = await initializeFlux(dapId, true);
+        await account.logGuest(dapId!);
+        const initState = await initializeFlux(dapId!, true);
         logger.debug({
           at: "UserBaseLayer.initializeData - local",
           initState

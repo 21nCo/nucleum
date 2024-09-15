@@ -118,7 +118,7 @@
   import Underline from "../icons/Underline.svelte";
   import Strikethrough from "../icons/Strikethrough.svelte";
   import Highlight from "../icons/Highlight.svelte";
-  import IconifyIcon from "@iconify/svelte";
+  // import IconifyIcon from "@iconify/svelte";
 
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
@@ -565,12 +565,13 @@
           clip-rule="evenodd"
         />
       {:else}
-        <IconifyIcon
+        <!-- TODO - fix import issue on plasmo - disabling for now -->
+        <!-- <IconifyIcon
           {icon}
           width={size === Size.md ? "1.25rem" : "1rem"}
           height={size === Size.md ? "1.25rem" : "1rem"}
           class={_classList}
-        />
+        /> -->
       {/if}
     </svg>
     <!-- TODO: abstract situations like these - remove classList and slot -->

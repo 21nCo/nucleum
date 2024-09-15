@@ -30,6 +30,9 @@ import type {
 } from "./resource.type";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { flux } from "../flux";
+import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import { extentionFlux } from "../fluxExtentionMediator";
+import { FluxMethod } from "../flux.type";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -128,6 +131,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   mutatingResources: string[];
   cacheStrategy?: CacheStrategy;
   dboDependencies?: string[];
+  private isExtensionEnvironment: boolean = false;
   private isUseV2: boolean = true;
   constructor(
     resourceType: Resource,
@@ -145,6 +149,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     this.refreshQuery = params?.refreshQuery;
     this.cacheStrategy = params?.cacheStrategy ?? CacheStrategy.MERGE_RECORDS;
     this.dboDependencies = params?.dboDependencies;
+    this.isExtensionEnvironment = isExtensionEnvironment();
   }
   refresh() {
     return dataManager.refreshForIFR(this.id);
@@ -211,6 +216,16 @@ export class ResourceStore<T extends IResource> implements IStore {
         };
       } else {
         data = { action: PersistenceActionType.INSERT, records: resources };
+      }
+      if (this.isExtensionEnvironment) {
+        const result = await extentionFlux({
+          method: FluxMethod.MUTATION,
+          args: {
+            resource: this.id,
+            params: data
+          }
+        })
+        if (result) return resources;
       }
       return flux.mutation<T>(this.id, data);
     }
@@ -281,6 +296,18 @@ export class ResourceStore<T extends IResource> implements IStore {
       ...modificationProps
     };
     if (this.isUseV2) {
+      if (this.isExtensionEnvironment) {
+        return extentionFlux({
+          method: FluxMethod.MUTATION,
+          args: {
+            resource: this.id,
+            params: {
+              action: PersistenceActionType.MERGE,
+              record: data
+            }
+          }
+        });
+      }
       return flux.mutation<T>(this.id, {
         action: PersistenceActionType.MERGE,
         record: data
@@ -302,6 +329,24 @@ export class ResourceStore<T extends IResource> implements IStore {
   }
   async bulkModify(ids: string[], data: Partial<T>) {
     if (this.isUseV2) {
+      if (this.isExtensionEnvironment) {
+        return extentionFlux({
+          method: FluxMethod.MUTATION,
+          args: {
+            resource: this.id,
+            params: {
+              action: PersistenceActionType.BULK_MERGE,
+              records: ids.map((id) => ({
+                id,
+                ...data,
+                modifiedBy: this.currentUserId,
+                modifiedAt: new Date().toISOString(),
+                interactedAt: new Date().toISOString()
+              }))
+            }
+          }
+        });
+      }
       return flux.mutation<T>(this.id, {
         action: PersistenceActionType.BULK_MERGE,
         records: ids.map((id) => ({
@@ -357,10 +402,28 @@ export class ResourceStore<T extends IResource> implements IStore {
   get() {}
 
   selectMany(params?: IResourceSelectParams) {
+    if (this.isExtensionEnvironment) {
+      return extentionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: this.id,
+          params
+        }
+      });
+    }
     return flux.selectMany(this.id, params);
   }
 
   select(resourceId: IRecordId, properties?: string[]) {
+    if (this.isExtensionEnvironment) {
+      return extentionFlux({
+        method: FluxMethod.SELECT,
+        args: {
+          resourceId,
+          properties
+        }
+      });
+    }
     return flux.select(resourceId, properties);
   }
 }

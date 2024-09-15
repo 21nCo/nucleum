@@ -40,12 +40,15 @@ class AccountStore extends ObservableStore<
   persistence = new Persistence();
   constructor() {
     super("account", StoreDataType.NA);
+  }
+
+  async init() { 
     let seed: UserAccount = {
       dataMode: UserDataMode.NONE,
       sessionType: UserSessionType.UNDETERMINED
     };
-    const token = clientStorage.get(ClientStorageKey.STOKEN);
-    const offlineSessionId = clientStorage.get(
+    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
     if (token) {
@@ -56,7 +59,7 @@ class AccountStore extends ObservableStore<
       seed.dataMode = UserDataMode.LOCAL;
       seed.sessionType = UserSessionType.RETURNING;
     }
-    const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
+    const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
     if (userInfo) {
       seed.userInfo = JSON.parse(userInfo ?? "");
       seed.userId = seed.userInfo?.id.split("user:")[1];
@@ -65,11 +68,11 @@ class AccountStore extends ObservableStore<
     this.postToEmbed(seed);
   }
 
-  postToEmbed(data: any = null) {
+  async postToEmbed(data: any = null) {
     if (!data) {
-      const token = clientStorage.get(ClientStorageKey.STOKEN);
+      const token = await clientStorage.get(ClientStorageKey.STOKEN);
       const userInfo = JSON.parse(
-        clientStorage.get(ClientStorageKey.USER_INFO) ?? ""
+        await clientStorage.get(ClientStorageKey.USER_INFO) ?? ""
       );
       data = { token, userInfo };
     }
@@ -84,18 +87,18 @@ class AccountStore extends ObservableStore<
     });
   }
 
-  expire() {
+  async expire() {
     logger.log({ at: "account.store - Expiring account" });
-    clientStorage.remove(ClientStorageKey.STOKEN);
+    await clientStorage.remove(ClientStorageKey.STOKEN);
     this.update(() => {
       const n = {
         sessionType: UserSessionType.UNDETERMINED,
         dataMode: UserDataMode.NONE
       };
       return n;
-    });
-    flux.terminate();
-  }
+    }); 
+    await flux.terminate();
+  } 
 
   signIn(
     data: {
@@ -137,10 +140,10 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  signOut() {
-    this.expire();
+  async signOut() {
+    await this.expire();
     signout("signOut account.store");
-    this.clearAllCache();
+    await this.clearAllCache();
   }
   async embedOAuthSignin(token: string) {
     clientStorage.set(ClientStorageKey.STOKEN, token);
@@ -156,7 +159,7 @@ class AccountStore extends ObservableStore<
     }
   }
 
-  delete() {
+  async delete() {
     confirmationNotification.notify({
       title: "Account deletion confirmation",
       message: "Are you sure you want to delete your account?",
@@ -164,17 +167,17 @@ class AccountStore extends ObservableStore<
         label: "Delete",
         variant: ButtonVariant.DANGER,
         callback: async () => {
-          return account.confirmDelete();
+          return this.confirmDelete();
         }
       }
     });
   }
 
   async confirmDelete() {
-    let acc = get(account);
+    let acc = this.get();
     await performApiCall("account/n/deleteAccount", "POST", {});
     console.log("deleting account", { acc });
-    account.signOut();
+    await this.signOut();
     appStore.gotoPath("/signup?msg=deleted");
     return true;
   }
@@ -324,8 +327,8 @@ class AccountStore extends ObservableStore<
   }
 
   async checkIfSessionExpired() {
-    const token = clientStorage.get(ClientStorageKey.STOKEN);
-    const offlineSessionId = clientStorage.get(
+    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
     if (!token && !offlineSessionId) {
@@ -373,17 +376,17 @@ class AccountStore extends ObservableStore<
       return true;
     }
   }
-  clearAllCache() {
-    const env = clientStorage.get(ClientStorageKey.ENV);
-    const appData = clientStorage.get(ClientStorageKey.APP_DATA);
-    const product = clientStorage.get(ClientStorageKey.PRODUCT);
-    const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
-    clientStorage.clearAll();
+  async clearAllCache() {
+    const env = await clientStorage.get(ClientStorageKey.ENV);
+    const appData = await clientStorage.get(ClientStorageKey.APP_DATA);
+    const product = await clientStorage.get(ClientStorageKey.PRODUCT);
+    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    await clientStorage.clearAll();
     get(dataManager)?.cacheSource?.clearCache();
-    if (env) clientStorage.set(ClientStorageKey.ENV, env);
-    if (product) clientStorage.set(ClientStorageKey.PRODUCT, product);
-    if (appData) clientStorage.set(ClientStorageKey.APP_DATA, appData);
-    if (dapId) clientStorage.set(ClientStorageKey.DAP_ID, dapId);
+    if (env) await clientStorage.set(ClientStorageKey.ENV, env);
+    if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);
+    if (appData) await clientStorage.set(ClientStorageKey.APP_DATA, appData);
+    if (dapId) await clientStorage.set(ClientStorageKey.DAP_ID, dapId);
   }
 
   setAnalyticsUserIdentity() {

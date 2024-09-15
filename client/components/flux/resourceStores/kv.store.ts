@@ -10,6 +10,9 @@ import type { Resource } from "$lib/client/components/flux/resourceStores/resour
 import { debouncer } from "$lib/client/utils/utils";
 import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
 import { flux } from "../flux";
+import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import { extentionFlux } from "../fluxExtentionMediator";
+import { FluxMethod } from "../flux.type";
 
 export class KeyValueStore<T extends IObservableStoreSubject>
   extends ObservableStore<T>
@@ -21,6 +24,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   protected previousValue: string = "";
   seed: T;
   private _debouncedPersist = debouncer(this.persist, 3000);
+  isExtensionEnvironment: boolean = false;
   constructor(
     item: Resource,
     seed: T,
@@ -31,6 +35,7 @@ export class KeyValueStore<T extends IObservableStoreSubject>
     this.seed = seed;
     this.isSynchronousCache = params?.isSynchronousCache || false;
     this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
+    this.isExtensionEnvironment = isExtensionEnvironment();
     this._set(seed);
   }
   /**
@@ -49,6 +54,15 @@ export class KeyValueStore<T extends IObservableStoreSubject>
    */
   protected async persist(n: Partial<T> | undefined = undefined) {
     if (!n) n = this.get();
+    if (this.isExtensionEnvironment) {
+      return extentionFlux({
+        method: FluxMethod.KV_MERGE,
+        args: {
+          storeId: this.id,
+          data: n
+        }
+      });
+    }
     return flux.kvMerge(this.id, n);
   }
   /**

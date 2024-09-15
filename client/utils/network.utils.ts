@@ -45,21 +45,32 @@ export async function performApiCall(
   async function getAppLoadContext() {
     const deviceFingerprint = await generateFingerprint();
     const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
-    const urlParams = new URLSearchParams(window.location.search);
+    let origin = "";
+    let href = "";
+    let referrer = "";
+    let urlParams = {};
+    let host = "";
+    if (!isExtensionEnvironment()) { 
+      origin = window.location.origin;
+      href = window.location.href;
+      referrer = document.referrer;
+      urlParams = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+      host = window.location.host;
+    }
     return {
       userAgent: navigator.userAgent,
-      origin: window.location.origin,
+      origin,
       dapId,
       deviceFingerprint,
       host:
         import.meta.env?.VITE_HOST ??
-        process.env.PLASMO_PUBLIC_HOST ??
-        window.location.host,
-      href: window.location.href,
+        process.env.PLASMO_PUBLIC_APP_URL ??
+        host,
+      href,
       timezone: detectTimeZone(),
       geo: null,
-      referrer: document.referrer,
-      urlParams: Object.fromEntries(urlParams.entries())
+      referrer,
+      urlParams
     };
   }
 }

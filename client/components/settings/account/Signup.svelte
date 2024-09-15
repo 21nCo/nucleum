@@ -28,15 +28,15 @@
       message = "Your session has expired. Please login again.";
     }
   }
-  onMount(() => {
+  onMount(async () => {
     if ($account.dataMode !== UserDataMode.CLOUD) return;
     const isLoginFromExtensionParam = $page.url.searchParams.get("ext");
     if (isLoginFromExtensionParam) {
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);
     }
     if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
-      const token = clientStorage.get(ClientStorageKey.STOKEN);
-      const userInfo = clientStorage.get(ClientStorageKey.USER_INFO);
+      const token = await clientStorage.get(ClientStorageKey.STOKEN);
+      const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
       postTokenToExtension({ token, userInfo });
       appStore.runAction(Action.EXTENSTION_LOGIN);
     } else appStore.gotoPath("/");

@@ -30,7 +30,7 @@ export class SurrealSync implements ISyncHandler {
     const individualMutationsQuery = mutations
       .map((mutation: any) => resolveMutationQueryV2(mutation))
       .join("; ");
-    const fetchMutationsQuery = this.resolveSyncDownQuery();
+    const fetchMutationsQuery = await this.resolveSyncDownQuery();
     const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchMutationsQuery};`;
     let response = await this.remote.query(masterQuery, {});
     logger.debug({ at: "SurrealSync.sync", response, masterQuery });
@@ -54,14 +54,14 @@ export class SurrealSync implements ISyncHandler {
     }
   }
 
-  private resolveSyncDownQuery() {
-    const dapId = clientStorage.get(ClientStorageKey.DAP_ID);
-    const lastSyncedAt = clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
+  private async resolveSyncDownQuery() {
+    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
     return `SELECT * FROM mutation WHERE createdAt > '${new Date(+(lastSyncedAt ?? new Date().getTime() - 1000 * 60)).toISOString()}' AND dapId IS NOT '${dapId}';`;
   }
 
   async syncDown() {
-    const fetchMutationsQuery = this.resolveSyncDownQuery();
+    const fetchMutationsQuery = await this.resolveSyncDownQuery();
     let response = await this.remote.query(fetchMutationsQuery, {});
     logger.debug({ at: "SurrealSync.syncDown", response });
     if (
