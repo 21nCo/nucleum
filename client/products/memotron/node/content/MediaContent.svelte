@@ -10,7 +10,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import WebNodeContent from "./WebNodeContent.svelte";
   import MediaNodeRightPane from "../rightPanel/MediaNodeRightPane.svelte";
-  import PdfAnnotator from "../../pdfAnnotator/PdfAnnotator.svelte";
+  import PdfAnnotator from "$lib/client/products/memotron/pdfAnnotator/PdfAnnotatorCaseChange.svelte";
   import { setContext } from "svelte";
 
   export let node: IActiveNodeStore;
