@@ -29,6 +29,7 @@
 
   let timer: any;
   pingParent();
+  addWindowEventListeners();
 
   onMount(async () => {
     await bootup();
@@ -50,7 +51,6 @@
    */
   async function bootup() {
     await setLaunchContext();
-    addWindowEventListeners();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);
     initializeServiceWorker();

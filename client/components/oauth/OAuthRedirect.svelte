@@ -57,7 +57,7 @@
       embed: $context.embed,
       userAgent: navigator.userAgent
     });
-    const isExtensionLogin = clientStorage.getForSession(
+    const isExtensionLogin = await clientStorage.getForSession(
       ClientStorageKey.IS_EXTENSION_LOGIN
     );
     if (isExtensionLogin) {
