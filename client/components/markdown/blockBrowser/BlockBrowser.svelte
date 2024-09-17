@@ -191,7 +191,7 @@
           label: "Tabs",
           description: "Tabs block",
           type: NodeType.TABS,
-          icon: "tabs"
+          icon: "ph:tabs-light"
         },
         {
           label: "Media stack",
@@ -226,13 +226,13 @@
           label: "PDF",
           description: "Pdf block",
           type: NodeType.PDF,
-          icon: "document"
+          icon: "ph:file-pdf-light"
         },
         {
           label: "File",
           description: "File block",
           type: NodeType.FILE,
-          icon: "attachment"
+          icon: "ph:file-light"
         }
       ]
     },
@@ -352,7 +352,7 @@
 
 <div
   class={cn(
-    "blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[45vh] rounded-md flex flex-col gap-12 overflow-auto styledscroll",
+    "blockbrowser bg-bgs1 border border-brs2 backdrop-blur h-[30rem] rounded-md flex flex-col gap-12 overflow-auto styledscroll",
     {
       "w-72": searchQueryString || isSingleColumnMode,
       "w-[30rem]": !searchQueryString && !isSingleColumnMode,

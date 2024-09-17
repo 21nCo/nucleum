@@ -21,8 +21,7 @@ function nodeFetch() {
   const def = `define function fn::memotron::node::fetch($id: record){
     return array::first(select *, parent.* as parent, (select * from node where parent is $id) as clips,
     (fn::memotron::node::children($parent.children)) as children, 
-    (fn::memotron::node::parent($id)) as mdParent,
-    ->link->collection as collections from node where id is $id);
+    (fn::memotron::node::parent($id)) as mdParent, ->link.* as outlinks, <-link.* as inlinks, array::concat(->link.*, <-link.*) as links from node where id is $id);
 };`;
   return [...nodeChildren(), ...nodeParent(), def];
 }

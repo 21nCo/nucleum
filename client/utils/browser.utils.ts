@@ -1,6 +1,6 @@
 import { Position } from "$lib/client/types/direction.enum";
 import { OperatingSystem } from "../types/context.type";
-import { GlobalEvent } from "../types/event.enum";
+import { GlobalEvent, type Event } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "../../shared/utils/obj.utils";
 import { logger } from "../components/debug/logger.client";
@@ -309,14 +309,10 @@ export function resolveHoverState(event: MouseEvent | FocusEvent) {
  * @param queryParams
  */
 export function goto(path: string, isReload: boolean = false) {
-  window.dispatchEvent(
-    new CustomEvent(GlobalEvent.CUSTOM_NAVIGATION, {
-      detail: { path, isReload }
-    })
-  );
+  dispatchCustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { path, isReload });
 }
 
-export function dispatchCustomEvent(event: string, data: any) {
+export function dispatchCustomEvent(event: Event, data: any = {}) {
   window.dispatchEvent(new CustomEvent(event, { detail: data }));
 }
 

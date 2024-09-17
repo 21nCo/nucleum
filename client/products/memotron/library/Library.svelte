@@ -28,6 +28,7 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -55,20 +56,20 @@
       ...commonResourceProps,
       label: "Nodes",
       value: Resource.node,
-      icon: "node"
+      icon: "ph:circle-bold"
     },
     {
       ...commonResourceProps,
       label: "Collections",
       value: Resource.collection,
-      icon: "curation",
+      icon: "ph:circles-four",
       isPinned: true
     },
     {
       ...commonResourceProps,
       label: "Combinations",
       value: Resource.combination,
-      icon: "rectangle-group"
+      icon: "ph:cube"
     },
     // {
     //   ...commonResourceProps,
@@ -80,13 +81,13 @@
       ...commonResourceProps,
       label: "Files",
       value: Resource.file,
-      icon: "folder"
+      icon: "ph:file"
     },
     {
       ...commonResourceProps,
       label: "Tasks",
       value: Resource.task,
-      icon: "rocket"
+      icon: "ph:check-circle"
     }
     // {
     //   value: "clips",
@@ -368,6 +369,8 @@
     </BottomFloat>
   {/if}
 </div>
+
+<PageLayer on:syncDown={refresh} />
 
 <style>
   input::placeholder {

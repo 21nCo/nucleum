@@ -3,7 +3,10 @@ import {
   LinkType,
   type IActiveNode,
   type INodeProperty,
-  type INode
+  type INode,
+  NodeType,
+  NodeRightPaneType,
+  type INodeLink
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -23,6 +26,7 @@ import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";
+import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 
 export const hierarchyFactorLimit = 5;
 
@@ -118,12 +122,31 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (node) {
       this.set(node);
     }
+    const rawLinks =
+      node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
+    logger.debug({ at: "ActiveNodeStore.fetch", rawLinks, id: this.id });
+    const links: INodeLink[] = rawLinks
+      .filter((x) => {
+        return (
+          (x.in.toString() === this.id && x.out.tb === Resource.node) ||
+          (x.out.toString() === this.id && x.in.tb === Resource.node)
+        );
+      })
+      .map((x) => {
+        const id = x.in.toString() === this.id ? x.out : x.in;
+        return {
+          id,
+          linkType: x.linkType
+        };
+      });
+    logger.debug({ at: "ActiveNodeStore.fetch", links });
     const { types, propertyConfig, avatars } =
       await collectionStore.resolveTypes(node.collections);
     this.update((n) => {
       n.types = types;
       n.propertyConfig = propertyConfig;
       n.avatars = avatars;
+      n.links = links;
       return n;
     });
   };
@@ -187,6 +210,10 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     });
   }
 
+  /**
+   * @deprecated - fetching directly in node.fetch
+   * @returns
+   */
   async fetchLinks() {
     const node = this.get();
     let id = node.id;
@@ -237,18 +264,26 @@ export function resolveNodeContextMenu(
   accessPoint: ResourceAccessPoint,
   params?: {
     isMediaNode?: boolean;
-    accessPointId?: string;
+    accessPointId?: IRecordId;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
-  if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
+  if (
+    (accessPoint === ResourceAccessPoint.NODE_LINKS ||
+      accessPoint === ResourceAccessPoint.NODE_DEFAULT_RIGHT_PANE) &&
+    params?.accessPointId
+  ) {
+    let baseItems = [resourceActions.pinToTopBar(), resourceActions.copyLink()];
+    if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
+      baseItems.unshift(
+        resourceActions.select(accessPoint, params?.accessPointId)
+      );
+      baseItems.unshift(resourceActions.unlink(params?.accessPointId));
+    }
     return [
       {
         group: "all",
-        items: [
-          resourceActions.unlink(params?.accessPointId),
-          resourceActions.select(accessPoint, params?.accessPointId)
-        ]
+        items: [...baseItems]
       },
       {
         group: "more",
@@ -333,4 +368,56 @@ export function resolveNodeContextMenu(
       items: [resourceActions.archive(), resourceActions.trash()]
     }
   ];
+}
+
+export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
+  if (contentType === NodeType.NODULAR_MARKDOWN) {
+    return [
+      {
+        value: NodeRightPaneType.SIDENOTES,
+        icon: "ph:note-thin",
+        tooltip: "Side notes"
+      },
+      {
+        value: "readMode",
+        icon: "ph:book-open-thin",
+        tooltip: "Toggle read mode"
+      },
+      {
+        value: "forks",
+        icon: "ph:fork-knife-thin",
+        tooltip: "Show forks"
+      }
+    ];
+  }
+  const baseActions: IToggleItem[] = [
+    {
+      value: NodeRightPaneType.SIDENOTES,
+      icon: "ph:note-thin",
+      tooltip: "Side notes"
+    },
+    {
+      value: NodeRightPaneType.LINKS,
+      icon: "ph:arrows-left-right-thin",
+      tooltip: "Show links"
+    },
+    {
+      value: NodeRightPaneType.PROPERTIES,
+      icon: "widget",
+      tooltip: "Show properties"
+    },
+    {
+      value: "bird",
+      icon: "ph:bird-thin",
+      tooltip: "Bird view"
+    }
+  ];
+  if (contentType === NodeType.PDF || contentType === NodeType.WEB_PAGE) {
+    baseActions.unshift({
+      value: NodeRightPaneType.TRACES,
+      icon: "bookmark",
+      tooltip: "Show traces"
+    });
+  }
+  return baseActions;
 }

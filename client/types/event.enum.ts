@@ -1,7 +1,11 @@
 import type { ClipperExtensionEvent } from "../products/memotron/common/clip.type";
 import type { PointronEvent } from "./pointron/pointronEvent.enum";
-
-export type Event = GlobalEvent | PointronEvent | ClipperExtensionEvent;
+import type { MemotronEvent } from "../products/memotron/memotron.type";
+export type Event =
+  | GlobalEvent
+  | PointronEvent
+  | ClipperExtensionEvent
+  | MemotronEvent;
 
 export enum GlobalEvent {
   NONE = "NONE",
@@ -26,7 +30,9 @@ export enum GlobalEvent {
   CUSTOM_ALERT = "custom:alert",
   ACTIVATE_SEARCH_BOX = "ACTIVATE_SEARCH_BOX",
   ENTER = "Enter",
-  ESCAPE = "Escape"
+  ESCAPE = "Escape",
+  HIDE_POPOVER = "hidePopover",
+  SYNC_DOWN = "syncDown"
 }
 
 export enum PlayActionState {

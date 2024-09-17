@@ -13,14 +13,14 @@
   onMount(async () => {
     breadcrumbs = await refreshBreadcrumbs(node.parent ?? node.mdParent);
   });
-  async function refreshBreadcrumbs(parent: string[]) {
+  async function refreshBreadcrumbs(parent: string[] | INode) {
     if (!parent || parent.length === 0) return;
     const parentItems = await flux.selectMany(Resource.node, {
       filters: {
-        id: parent
+        id: "id" in parent ? parent.id.toString() : parent
       }
     });
-    console.log({ parentItems });
+    if (!parentItems || parentItems.length === 0) return [];
     return parentItems
       .map((x) => {
         return {

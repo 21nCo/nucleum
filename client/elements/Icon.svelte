@@ -118,7 +118,8 @@
   import Underline from "../icons/Underline.svelte";
   import Strikethrough from "../icons/Strikethrough.svelte";
   import Highlight from "../icons/Highlight.svelte";
-  // import IconifyIcon from "@iconify/svelte";
+  import IconifyIcon from "@iconify/svelte";
+  import { logger } from "../components/debug/logger.client";
 
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
@@ -159,6 +160,7 @@
     "capture",
     "highlight"
   ];
+
   $: _classList = resolveClasses(
     classListParam,
     isAccentBgContext,
@@ -193,12 +195,21 @@
       const color = classes.split("fill-")[1];
       classes = `stroke-${color}`;
     }
+    classes = classes + appendIconfiyClasses(classes);
     if (classes.includes("stroke-")) {
       classes = classes + " fill-none";
     } else if (classes.includes("fill-")) {
       classes = classes + " stroke-none";
     }
     return classes;
+
+    function appendIconfiyClasses(classes: string) {
+      if (icon?.includes(":")) {
+        const color = classes.split("stroke-")[1] || classes.split("fill-")[1];
+        return ` text-${color}`;
+      }
+      return "";
+    }
   }
   $: variant = resolveVariant(icon, _classList, size);
 
@@ -217,12 +228,28 @@
   }
 </script>
 
-{#if icon}
-  <button
-    class={cn("relative inline-flex items-center justify-center")}
-    tabindex={isTabbable ? 0 : -1}
-    on:click
-  >
+<button
+  class={cn("relative inline-flex items-center justify-center")}
+  tabindex={isTabbable ? 0 : -1}
+  on:click
+>
+  {#if icon?.includes(":")}
+    <!-- TODO - fix import issue on plasmo - disabling for now -->
+    <IconifyIcon
+      {icon}
+      width={size === Size.lg
+        ? "1.5rem"
+        : size === Size.md
+          ? "1.25rem"
+          : "1rem"}
+      height={size === Size.lg
+        ? "1.5rem"
+        : size === Size.md
+          ? "1.25rem"
+          : "1rem"}
+      class={_classList + " iconifysvg"}
+    />
+  {:else if icon}
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
@@ -564,17 +591,15 @@
           d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z"
           clip-rule="evenodd"
         />
-      {:else}
-        <!-- TODO - fix import issue on plasmo - disabling for now -->
-        <!-- <IconifyIcon
-          {icon}
-          width={size === Size.md ? "1.25rem" : "1rem"}
-          height={size === Size.md ? "1.25rem" : "1rem"}
-          class={_classList}
-        /> -->
       {/if}
     </svg>
     <!-- TODO: abstract situations like these - remove classList and slot -->
     <slot />
-  </button>
-{/if}
+  {/if}
+</button>
+
+<style>
+  :global(.iconifysvg *) {
+    stroke-width: initial !important;
+  }
+</style>

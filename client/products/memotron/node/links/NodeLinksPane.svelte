@@ -21,6 +21,7 @@
   } from "$lib/client/products/memotron/node/node.store";
   import {
     type INode,
+    type INodeLink,
     LinkType
   } from "$lib/client/products/memotron/node/node.type";
   import { linker } from "$lib/client/products/memotron/memotron.store";
@@ -29,10 +30,12 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { flux } from "$lib/client/components/flux/flux";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-  let links: { id: string; linkType: LinkType }[] = [];
+  let links: INodeLink[] = [];
   let filtered: INode[] = [];
   let selectedLinkType: LinkType = LinkType.DIRECT;
   let selectedLinkTags: string[] = [];
@@ -86,42 +89,22 @@
     searchQuery = "";
   }
   async function refresh() {
-    const result = await node.fetchLinks();
-    if (!result) {
+    links = $node.links ?? [];
+    if (!links) {
       links = [];
       filtered = [];
       fetchError = "Error fetching links.";
       return;
     }
-    links = [
-      ...result.from
-        .filter((x) => x.in.startsWith("node:"))
-        .map((x) => {
-          return {
-            linkType: x.linkType,
-            id: x.in
-          };
-        }),
-      ...result.to
-        .filter((x) => x.out.startsWith("node:"))
-        .map((x) => {
-          return {
-            linkType: x.linkType,
-            id: x.out
-          };
-        })
-    ];
-    console.log({ links });
     applyFilters();
   }
   async function applyFilters() {
     let linkIds = links
       .filter((x) => x.linkType === selectedLinkType)
       .map((x) => x.id);
-
     filtered = await nodeStore.selectMany({
       filters: {
-        id: linkIds
+        id: linkIds.map((x) => x.toString())
       }
     });
   }
@@ -135,7 +118,7 @@
       );
   }
   function onSelectAll() {
-    $multiSelectStore = filtered?.map((x) => x.id) ?? [];
+    $multiSelectStore = filtered?.map((x) => x.id.toString()) ?? [];
   }
 
   function onAction(e: CustomEvent) {

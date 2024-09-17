@@ -96,6 +96,6 @@
     {/if}
   </main>
   {#if rightPane || webNodeTypeList.includes($node?.contentType)}
-    <MediaNodeRightPane {node} pane={rightPane} {renderingDetails} />
+    <MediaNodeRightPane {node} bind:pane={rightPane} {renderingDetails} />
   {/if}
 </div>

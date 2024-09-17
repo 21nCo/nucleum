@@ -8,43 +8,66 @@
   import { NodeType } from "../node.type";
   import { highlightStore } from "../../common/highlighters/highlight.store";
   import { AnnotationType } from "../../pdfAnnotator/pdfAnnotator.type";
+  import Resources from "../../common/Resources.svelte";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
   $: pdfAnnotations = $node?.pdfAnnotations ?? [];
-  let options =
-    $node?.contentType === NodeType.PDF
-      ? [
-          {
-            value: "Highlights",
-            icon: "bookmark"
-          },
-          {
-            value: "Tasks",
-            icon: "rocket"
-          }
-        ]
-      : [
-          {
-            value: "Bookmarks",
-            icon: "bookmark"
-          },
-          {
-            value: "Comments",
-            icon: "chat-bubble-bottom-center"
-          },
-          {
-            value: "Tasks",
-            icon: "rocket"
-          },
-          {
-            value: "Outgoing mentions",
-            icon: "at-symbol"
-          }
-        ];
+  let options = resolveOptions($node?.contentType);
+  let selectedType: string | undefined = undefined;
+
+  function resolveOptions(contentType: NodeType | undefined) {
+    if (contentType === NodeType.PDF) {
+      return [
+        {
+          value: "Highlights",
+          icon: "bookmark"
+        },
+        {
+          value: "Tasks",
+          icon: "rocket"
+        }
+      ];
+    } else if (contentType === NodeType.WEB_PAGE) {
+      return [
+        {
+          value: "Clips",
+          icon: "bookmark"
+        },
+        {
+          value: "Tasks",
+          icon: "check-circle"
+        }
+      ];
+    } else if (contentType === NodeType.NODULAR_MARKDOWN) {
+      return [
+        {
+          value: "Bookmarks",
+          icon: "bookmark"
+        },
+        {
+          value: "Comments",
+          icon: "chat-bubble-bottom-center"
+        },
+        {
+          value: "Tasks",
+          icon: "check-circle"
+        },
+        {
+          value: "Outgoing mentions",
+          icon: "at-symbol"
+        }
+      ];
+    }
+  }
 </script>
 
-<OptionSelector {options} size={Size.sm} />
+{#if options}
+  <OptionSelector {options} size={Size.sm} bind:selected={selectedType} />
+{/if}
 
 {#if pdfAnnotations.length > 0}
   <div class="h-full w-full flex flex-col gap-2 mt-2 overflow-y-scroll">
@@ -100,6 +123,20 @@
       </button>
     {/each}
   </div>
+{:else if $node?.contentType === NodeType.WEB_PAGE && selectedType === "Clips"}
+  {#if $node.clips?.length > 0}
+    <Resources
+      data={$node.clips}
+      accessPoint={ResourceAccessPoint.OTHER}
+      resource={Resource.node}
+      size={Size.sm}
+    />
+  {:else}
+    <EmptyStatusView
+      mainText="No clips found"
+      subText="This page doesn't have any clips yet"
+    />
+  {/if}
 {:else}
   <ComingSoonView size={Size.sm} />
 {/if}

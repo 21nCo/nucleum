@@ -28,6 +28,8 @@
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
+  import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
+  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -92,7 +94,7 @@
     },
     [BlockAction.DUPLICATE]: {
       value: BlockAction.DUPLICATE,
-      icon: "copy",
+      icon: "ph:copy-light",
       callback: async () => {
         dispatch("action", { action: BlockAction.DUPLICATE });
       }
@@ -148,7 +150,7 @@
     },
     [BlockAction.DELETE]: {
       value: BlockAction.DELETE,
-      icon: "trash",
+      icon: "ph:trash",
       callback: async () => {
         dispatch("action", { action: BlockAction.DELETE });
       }
@@ -293,9 +295,15 @@
   }
 
   onMount(() => {
-    window.addEventListener("blockHover", onOtherBlocksHoverListener);
+    window.addEventListener(
+      MemotronEvent.BLOCK_HOVER,
+      onOtherBlocksHoverListener
+    );
     return () => {
-      window.removeEventListener("blockHover", onOtherBlocksHoverListener);
+      window.removeEventListener(
+        MemotronEvent.BLOCK_HOVER,
+        onOtherBlocksHoverListener
+      );
     };
   });
 
@@ -312,11 +320,7 @@
   )}
   on:hover={() => {
     if (isHovering) {
-      window.dispatchEvent(
-        new CustomEvent("blockHover", {
-          detail: { id: block.id }
-        })
-      );
+      dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
     }
   }}
 >

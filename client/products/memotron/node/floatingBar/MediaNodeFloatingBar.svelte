@@ -12,8 +12,11 @@
   import { Orientation, Position } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
-  import { MemotronAction } from "../../memotronAction.enum";
-  import { resolveNodeContextMenu, type IActiveNodeStore } from "../node.store";
+  import {
+    resolveNodeContextMenu,
+    resolveVisibleActions,
+    type IActiveNodeStore
+  } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
   import { NodeRightPaneType, NodeType } from "../node.type";
   import NodePropertiesOnMainPanel from "../content/NodePropertiesOnMainPanel.svelte";
@@ -47,34 +50,6 @@
       return;
     }
     rightPane = param;
-  }
-
-  function resolveVisibleActions(): IToggleItem[] {
-    const baseActions: IToggleItem[] = [
-      {
-        value: NodeRightPaneType.SIDENOTES,
-        icon: "document-text",
-        tooltip: "Side notes"
-      },
-      {
-        value: NodeRightPaneType.LINKS,
-        icon: "arrow-up-right",
-        tooltip: "Show links"
-      },
-      {
-        value: NodeRightPaneType.PROPERTIES,
-        icon: "widget",
-        tooltip: "Show properties"
-      }
-    ];
-    if ($node.contentType === NodeType.PDF) {
-      baseActions.unshift({
-        value: NodeRightPaneType.TRACES,
-        icon: "bookmark",
-        tooltip: "Show traces"
-      });
-    }
-    return baseActions;
   }
 </script>
 
@@ -124,24 +99,14 @@
         </span>
         <span class="flex gap-5">
           <ToggleGroup
-            items={resolveVisibleActions()}
+            selected={rightPane}
+            items={resolveVisibleActions($node.contentType)}
             class="gap-5"
             on:change={(e) => {
               onPanelAction(e.detail);
             }}
             on:none={() => {
               rightPane = undefined;
-            }}
-          />
-          <!-- <EditToggleButton isReadModeVariant={true} /> -->
-          <Button
-            {...buttonCommonProps}
-            tooltip="Bird view"
-            icon="light-bulb"
-            on:click={() => {
-              appStore.runAction(MemotronAction.SERENDIPITY, {
-                componentParams: { id: $node.id }
-              });
             }}
           />
           <ContextMenuAction {contextMenu} id="mediaNodeContextMenu" />

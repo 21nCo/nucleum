@@ -77,7 +77,7 @@
         />
       {/if}
       {#if variant === "v1" || variant === "v3"}
-        <Toggle icon="adjustments-vertical" bind:on={isFiltersVisible} />
+        <Toggle icon="ph:faders" bind:on={isFiltersVisible} />
       {/if}
     </div>
   </div>

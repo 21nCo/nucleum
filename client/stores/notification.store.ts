@@ -91,12 +91,15 @@ function initToastStore() {
     //     componentParams: { id: event.id }
     //   });
     // } else {
-    timer = setTimeout(() => {
-      update((n: Toast[]) => {
-        n.shift();
-        return n;
-      });
-    }, toastDefaultDuration);
+    timer = setTimeout(
+      () => {
+        update((n: Toast[]) => {
+          n.shift();
+          return n;
+        });
+      },
+      event.type === AlertType.SYNC ? 1000 : toastDefaultDuration
+    );
     // }
   };
   return {

@@ -12,6 +12,7 @@ import type {
 import { copyToClipboard } from "$lib/client/utils/utils";
 import { enumToCamelCase } from "$lib/shared/utils/text.utils";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export function resolveResourceType(item: ICollection | INode) {
   if (typeof item.id !== "string") return item.id.tb as MemotronResourceType;
@@ -37,8 +38,8 @@ function resolveLinkForResource(resource: string) {
   );
 }
 
-export function copyResourceLinkToClipboard(id: string) {
-  const link = resolveLinkForResource(id);
+export function copyResourceLinkToClipboard(id: IRecordId) {
+  const link = resolveLinkForResource(id.toString());
   copyToClipboard(link);
 }
 

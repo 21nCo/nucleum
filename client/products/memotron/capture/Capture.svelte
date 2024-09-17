@@ -67,22 +67,23 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        <header class="flex justify-between w-full dp:px-14">
+        <header class="flex justify-between w-full dp:px-12">
           <div class="flex gap--4 grow">
             <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
             <NodeAvatar {avatars} />
-            <div class="text-h4 font-medium w-full">
+            <div class="text-h2 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
                 style={InputStyle.PLAIN}
                 isExperimentalMdInput={true}
-                placeholder="Title"
+                placeholder="Untitled"
               />
             </div>
           </div>
           <div class="flex gap-1">
             <!-- save, cancel, edit type actions
             TODO: save icon
+            "hugeicons:arrow-move-up-right"
            -->
             {#if !isEmptyState}
               <Button
@@ -90,7 +91,7 @@
                 type={ButtonVariant.PRIMARY}
                 size={Size.sm}
                 isPreventMinWidth={true}
-                icon="bookmark"
+                icon="ph:floppy-disk"
                 on:click={async () => {
                   isSaving = true;
                   const result = await captureStore.save();
@@ -102,7 +103,7 @@
                 style={ButtonStyle.OUTLINED}
                 isPreventMinWidth={true}
                 size={Size.sm}
-                icon="cross"
+                icon="ph:x-light"
                 on:click={() => {
                   captureStore.reset();
                   isEmptyState = true;

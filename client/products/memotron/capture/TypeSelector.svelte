@@ -12,16 +12,40 @@
   import { flux } from "$lib/client/components/flux/flux";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { CollectionType } from "../collection/collection.type";
+  import view from "$lib/client/stores/view.store";
+  import { Display } from "$lib/client/types/view.type";
   export let isCapturePage: boolean = false;
   export let label: InputLabel = { label: "Select Type" };
   export let selected: string;
   refreshTypes();
   const contentTypes: ISelectItem[] = [
     // { label: CaptureType.ANY, icon: "cube" },
-    { label: CaptureType.MARKDOWN, value: CaptureType.MARKDOWN },
-    { label: CaptureType.AUDIO, icon: "microphone", value: CaptureType.AUDIO },
-    { label: CaptureType.CAMERA, icon: "camera", value: CaptureType.CAMERA },
-    { label: CaptureType.UPLOAD, icon: "upload", value: CaptureType.UPLOAD }
+    {
+      label: CaptureType.MARKDOWN,
+      value: CaptureType.MARKDOWN,
+      // icon: "bi:markdown-fill"
+      icon: "ph:markdown-logo-light"
+      // icon: "hugeicons:text-font"
+    },
+    {
+      label: CaptureType.AUDIO,
+      icon: "ph:microphone-light",
+      // icon: "heroicons:microphone",
+      // icon: "lucide:mic",
+      value: CaptureType.AUDIO
+    },
+    {
+      label: CaptureType.CAMERA,
+      // icon: "lucide:camera",
+      icon: "ph:camera-light",
+      value: CaptureType.CAMERA
+    },
+    {
+      label: CaptureType.UPLOAD,
+      // icon: "lucide:upload",
+      icon: "ph:upload-light",
+      value: CaptureType.UPLOAD
+    }
   ];
   const collectionTypes: ISelectItem[] = [
     { label: "Add new", icon: "plus", value: "add" },
@@ -49,11 +73,12 @@
   }
 </script>
 
-<div class="h-full w-full flex flex-col items-center gap-4">
+<div class="h-full w-full flex flex-col items-center gap-4 dp:gap-6 2k:gap-8">
   {#key types}
     <OptionSelector
       labelProps={{ ...label, orientation: Orientation.Vertical }}
       bind:selected
+      size={$view.display === Display.TK ? Size.lg : Size.md}
       options={isCapturePage
         ? [...contentTypes, ...types]
         : [...collectionTypes, ...types]}
@@ -63,7 +88,8 @@
   {#if isCapturePage}
     <Button
       label="edit shortcuts"
-      size={Size.xs}
+      icon="ph:pencil-simple-line-thin"
+      size={Size.sm}
       on:click={() => {
         appStore.runAction(MemotronAction.LIBRARY);
       }}

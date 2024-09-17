@@ -97,7 +97,7 @@
             " - "
           );
         case NodeType.TEXT_CLIP:
-          return "Text clipped from - ";
+          return "Text clip - ";
         case NodeType.WEB_SCREENSHOT_CLIP:
           return "Screenshot - ";
         case NodeType.KINDLE_HIGHLIGHT:

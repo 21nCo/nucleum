@@ -7,6 +7,7 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import Check from "$lib/client/icons/Check.svelte";
   import CheckCircle from "$lib/client/icons/CheckCircle.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -21,7 +22,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isApplyCustomColor: boolean = false;
-  export let accessPointId: string | undefined = undefined;
+  export let accessPointId: IRecordId | undefined = undefined;
   $: multiSelectContext = accessPointId
     ? accessPointId + "-" + accessPoint
     : determineResourceType(item.id) + "-" + accessPoint;
@@ -32,7 +33,7 @@
     const resourceType = resolveResourceType(item);
     if (resourceType === MemotronResourceType.NODE) {
       return resolveNodeContextMenu(item, accessPoint, {
-        accessPointId: accessPointId
+        accessPointId
       });
     } else {
       return resolveCollectionContextMenu(item, accessPoint);

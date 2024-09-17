@@ -1,12 +1,16 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Position } from "$lib/client/types/direction.enum";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   import {
     type IPopoverOptions,
     type IPopoverRenderParams,
     PopoverTriggerMethod
   } from "$lib/client/types/popover.type";
-  import { renderPopover } from "$lib/client/utils/browser.utils";
+  import {
+    dispatchCustomEvent,
+    renderPopover
+  } from "$lib/client/utils/browser.utils";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { createEventDispatcher, onMount } from "svelte";
@@ -51,9 +55,9 @@
   let containerId = generateSimpleRandomId();
 
   onMount(() => {
-    window.addEventListener("hidePopover", hidePopoverListener);
+    window.addEventListener(GlobalEvent.HIDE_POPOVER, hidePopoverListener);
     return () => {
-      window.removeEventListener("hidePopover", hidePopoverListener);
+      window.removeEventListener(GlobalEvent.HIDE_POPOVER, hidePopoverListener);
     };
   });
 
@@ -72,11 +76,10 @@
   }
   export function show() {
     if (options.groupId && options.isOnlyOneVisiblePerGroup) {
-      window.dispatchEvent(
-        new CustomEvent("hidePopover", {
-          detail: { group: options.groupId, source: containerId }
-        })
-      );
+      dispatchCustomEvent(GlobalEvent.HIDE_POPOVER, {
+        group: options.groupId,
+        source: containerId
+      });
     }
     const config: IPopoverRenderParams = {
       ...options,

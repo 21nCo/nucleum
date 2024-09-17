@@ -38,7 +38,7 @@
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <Icon
-          icon="settings"
+          icon="heroicons:cog"
           size={isInThinMode ? Size.lg : Size.md}
           isAccentBgContext={isCpActive}
         />
@@ -52,7 +52,7 @@
           appStore.runAction(Action.HELP);
         }}
       >
-        <Icon icon="help" size={isInThinMode ? Size.lg : Size.md} />
+        <Icon icon="ph:question-thin" size={isInThinMode ? Size.lg : Size.md} />
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}

@@ -112,7 +112,11 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from the node links pane
    */
-  NODE_LINKS = "nodelinks"
+  NODE_LINKS = "nodelinks",
+  /**
+   * The resource is being accessed from the node default right pane
+   */
+  NODE_DEFAULT_RIGHT_PANE = "nodedefaultrightpane"
 }
 
 export type IResourceCapture<T extends IResource> = Omit<

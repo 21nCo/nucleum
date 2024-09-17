@@ -13,11 +13,11 @@
   export let isRightPanelCollapsed = true;
   let pane = NodeRightPaneType.OUTLINE;
   let verticalSwitcherItems: ISelectItem[] = [
-    { value: NodeRightPaneType.LINKS, icon: "arrow-up-right" },
+    { value: NodeRightPaneType.LINKS, icon: "ph:arrows-left-right-thin" },
     { value: NodeRightPaneType.OUTLINE, icon: "bars-center-left" },
     { value: NodeRightPaneType.PROPERTIES, icon: "widget" },
     { value: NodeRightPaneType.TRACES, icon: "bookmark" },
-    { value: NodeRightPaneType.HISTORY, icon: "clock" }
+    { value: NodeRightPaneType.HISTORY, icon: "ph:clock-countdown-thin" }
   ];
 
   pane = isRightPanelCollapsed

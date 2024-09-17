@@ -3,7 +3,11 @@ import { ClientStorageKey } from "../persistence/persistence.type";
 import { clientStorage } from "../persistence/persistence.utils";
 import { GlobalEvent } from "../types/event.enum";
 import { resolveToken, signout } from "./account.utils";
-import { generateFingerprint, isExtensionEnvironment } from "./browser.utils";
+import {
+  dispatchCustomEvent,
+  generateFingerprint,
+  isExtensionEnvironment
+} from "./browser.utils";
 import { detectTimeZone } from "./time.utils";
 
 export function resolveRegionalApiUrl() {
@@ -50,11 +54,13 @@ export async function performApiCall(
     let referrer = "";
     let urlParams = {};
     let host = "";
-    if (!isExtensionEnvironment()) { 
+    if (!isExtensionEnvironment()) {
       origin = window.location.origin;
       href = window.location.href;
       referrer = document.referrer;
-      urlParams = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+      urlParams = Object.fromEntries(
+        new URLSearchParams(window.location.search).entries()
+      );
       host = window.location.host;
     }
     return {
@@ -63,9 +69,7 @@ export async function performApiCall(
       dapId,
       deviceFingerprint,
       host:
-        import.meta.env?.VITE_HOST ??
-        process.env.PLASMO_PUBLIC_APP_URL ??
-        host,
+        import.meta.env?.VITE_HOST ?? process.env.PLASMO_PUBLIC_APP_URL ?? host,
       href,
       timezone: detectTimeZone(),
       geo: null,
@@ -119,11 +123,10 @@ export async function performHttpNetworkOperation(params: {
       logger.error({ at: "Network error", params, errorMessage });
       //TEMP - 401 from /sql endpoint is erroring instead of response.status === 401
       // signout();
-      window.dispatchEvent(
-        new CustomEvent(GlobalEvent.CUSTOM_ALERT, {
-          detail: { error: "networkerror", message: errorMessage }
-        })
-      );
+      dispatchCustomEvent(GlobalEvent.CUSTOM_ALERT, {
+        error: "networkerror",
+        message: errorMessage
+      });
       throw new Error("Network error. Please check your internet connection.");
     } else if (error instanceof Error) {
       logger.error({ at: "API call failed", error: error.message });

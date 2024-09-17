@@ -8,10 +8,12 @@
   }
 </script>
 
-<div class="h-full w-full">
-  <InlineMarkdownTextInput
-    placeholder="Add notes"
-    bind:content={$node.notes}
-    on:change={onChange}
-  />
+<div class="h-full w-full flex items-center justify-center">
+  <div class="bg-bgs2 rounded-md p-2 w-full h-full">
+    <InlineMarkdownTextInput
+      placeholder="Add notes"
+      bind:content={$node.notes}
+      on:change={onChange}
+    />
+  </div>
 </div>

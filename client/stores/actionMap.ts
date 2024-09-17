@@ -372,7 +372,8 @@ export const globalActions: IAction[] = [
   {
     action: "calendar",
     label: "Calendar",
-    icon: "calendar-days",
+    // icon: "calendar-days",
+    icon: "ph:calendar-dots-light",
     type: ActionType.PAGE,
     component: Calendar
   },

@@ -10,8 +10,8 @@
   export let items: IToggleItem[] = [];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let parentBgIndex: number = 1;
+  export let selected: string = "";
   let classList: string = "";
-  let selected: string = "";
   export { classList as class };
 </script>
 

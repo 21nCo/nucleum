@@ -53,10 +53,14 @@
 </script>
 
 <span class="shrink-0">
-  {#if favicon}
-    <img use:lazyLoad={favicon} alt="favicon" class="w-5 h-5 rounded-full" />
+  {#if node.contentType === NodeType.TEXT_CLIP}
+    <Icon icon="ph:highlighter-circle-thin" size={Size.sm} />
+  {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+    <Icon icon="ph:crop-thin" size={Size.sm} />
   {:else if node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <Icon icon="book-open" size={Size.sm} />
+  {:else if favicon}
+    <img use:lazyLoad={favicon} alt="favicon" class="w-5 h-5 rounded-full" />
   {:else}
     <Icon icon="globe-alt" size={Size.sm} />
   {/if}

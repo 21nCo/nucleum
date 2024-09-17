@@ -17,11 +17,16 @@
   } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
   import { MemotronAction } from "../../memotronAction.enum";
-  import { resolveNodeContextMenu, type IActiveNodeStore } from "../node.store";
+  import {
+    resolveNodeContextMenu,
+    resolveVisibleActions,
+    type IActiveNodeStore
+  } from "../node.store";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -57,27 +62,14 @@
     />
   </span>
   <span class="flex items-center gap-3 h-full">
-    <Button {...buttonCommonProps} icon="document-text" tooltip="Side notes" />
-    <Button
-      {...buttonCommonProps}
-      icon="book-open"
-      tooltip="Toggle read mode"
-      on:click={() => isInEditMode.toggle()}
-    />
-    <!-- <EditToggleButton isReadModeVariant={true} /> -->
-    <Button
-      {...buttonCommonProps}
-      icon="square-3-stack-3d"
-      tooltip="Show forks"
-    />
-    <Button
-      {...buttonCommonProps}
-      tooltip="Serendipity"
-      icon="light-bulb"
-      on:click={() => {
-        appStore.runAction(MemotronAction.SERENDIPITY, {
-          componentParams: { id: $node.id }
-        });
+    <ToggleGroup
+      items={resolveVisibleActions($node.contentType)}
+      class="gap-5"
+      on:change={(e) => {
+        // onPanelAction(e.detail);
+      }}
+      on:none={() => {
+        // rightPane = undefined;
       }}
     />
     <ContextMenuAction

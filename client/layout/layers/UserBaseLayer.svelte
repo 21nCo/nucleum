@@ -49,6 +49,7 @@
   };
 
   let loadingMessage: string = "";
+  let isWindowFocused = true;
   let error: string | null = null;
 
   onMount(async () => {
@@ -74,8 +75,22 @@
       return userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
     }
   }
+
+  /**
+   * Disabled visibility change listener for onAppear() - using focus event instead as visibilitychange only get triggered when the tab is switched not the window.
+   * @param event
+   */
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
+    // await onAppear();
+  };
+  $: console.log("isWindowFocused", isWindowFocused);
+  async function onAppear() {
+    logger.debug({
+      at: "onAppear",
+      isWindowFocused,
+      documentHidden: document?.hidden
+    });
     refreshTimeZone();
     const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
     if (isCloudUser) {
@@ -85,7 +100,7 @@
     }
     if (isExtensionEnvironment()) return;
     performAppUpdateCheck();
-  };
+  }
 
   /**
    * Checks if the app version on client is different from the version on server. If the versions are different, it will run the dbo update and prompt user to reload the app if it is a web app.
@@ -288,9 +303,11 @@
   <CacheLayer />
 {/if}
 <Intercom />
+
 <svelte:window
   on:resize={windowResizeListener}
   on:message={messageReceivedListener}
+  on:focus={onAppear}
 />
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />

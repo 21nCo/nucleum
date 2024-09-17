@@ -25,8 +25,12 @@ import { SurrealSync } from "$lib/client/persistence/surreal/surreal.sync";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import {
+  dispatchCustomEvent,
+  isExtensionEnvironment
+} from "$lib/client/utils/browser.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
+import { GlobalEvent } from "$lib/client/types/event.enum";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -183,7 +187,7 @@ class Flux {
       response = await this.persistence.mutation(resource, params);
       if (!this.isLocalMode) {
         await this.insertMutation(resource, params);
-        if (this.isExtensionEnvironment) { 
+        if (this.isExtensionEnvironment) {
           setTimeout(async () => {
             await this.sync();
           }, 100);
@@ -304,8 +308,10 @@ class Flux {
    * @returns
    */
   async sync() {
-    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
-    logger.debug({ at: "flux.sync", lastSyncedAt });
+    const lastSyncedAt = await clientStorage.get(
+      ClientStorageKey.LAST_SYNCED_AT
+    );
+    logger.log({ at: "flux.sync", lastSyncedAt });
     if (!lastSyncedAt) return;
     const mutations = await this.persistence.selectMany(Resource.mutation, {
       filters: {
@@ -317,7 +323,7 @@ class Flux {
         }
       }
     });
-    logger.debug({ at: "flux.sync", mutations, lastSyncedAt });
+    logger.log({ at: "flux.sync", mutations, lastSyncedAt });
     if (!mutations || mutations.length === 0) return;
     await this.syncer.sync(mutations);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
@@ -336,6 +342,7 @@ class Flux {
     logger.debug({ at: "flux.syncDown" });
     await this.syncer.syncDown();
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
   }
 
   /**

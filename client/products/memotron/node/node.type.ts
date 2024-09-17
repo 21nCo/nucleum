@@ -70,6 +70,14 @@ export type IActiveNode = INode & {
   propertyConfig?: IProperty[];
   wordCount?: number;
   pdfAnnotations?: any[];
+  links?: INodeLink[];
+};
+
+export type ILink = {
+  id: IRecordId;
+  in: IRecordId;
+  out: IRecordId;
+  linkType: LinkType;
 };
 
 /**
@@ -368,12 +376,12 @@ export enum NodeRightPaneType {
   SERENDIPITY = "SERENDIPITY"
 }
 
-export type Link = {
-  id: string;
+export type INodeLink = {
+  id: IRecordId;
   linkType: LinkType;
 };
 
-export type LinkThumbnail = Link & {
+export type LinkThumbnail = INodeLink & {
   title: string;
   icon: string;
 };

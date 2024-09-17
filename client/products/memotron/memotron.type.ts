@@ -17,10 +17,14 @@ export interface TrashInformation {
 }
 
 export enum MemotronResourceType {
-  NODE = "NODE",
-  COLLECTION = "COLLECTION",
-  TYPED_COLLECTION = "TYPED_COLLECTION",
+  NODE = "node",
+  COLLECTION = "collection",
+  TYPED_COLLECTION = "typed_collection",
   QUERY_COLLECTION = "QUERY_COLLECTION",
-  COMBINATION = "COMBINATION",
-  TASK = "TASK"
+  COMBINATION = "combination",
+  TASK = "task"
+}
+
+export enum MemotronEvent {
+  BLOCK_HOVER = "blockHover"
 }

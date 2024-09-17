@@ -70,6 +70,11 @@
   } else if (size === Size.lg) {
     sizeClasses = "text-base w-24 gap-2 px-4 py-6";
   }
+
+  $: renderedIcon =
+    isActive && item.icon?.includes(":")
+      ? item.icon?.replace("-thin", "-fill")
+      : item.icon;
 </script>
 
 <div
@@ -107,7 +112,7 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={item.icon.toLowerCase()}
+        icon={renderedIcon}
         {size}
         class={cn({
           "fill-fgs1":

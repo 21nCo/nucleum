@@ -19,6 +19,8 @@
   import FocusRing from "./contextMenu/FocusRing.svelte";
   import { copyToClipboard } from "$lib/client/utils/utils";
   import { toasts } from "$lib/client/stores/notification.store";
+  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
 
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -132,11 +134,7 @@
   data-node={block.id}
   on:pointerenter={() => {
     isHovering = true;
-    window.dispatchEvent(
-      new CustomEvent("blockHover", {
-        detail: { id: block.id }
-      })
-    );
+    dispatchCustomEvent(MemotronEvent.BLOCK_HOVER, { id: block.id });
   }}
   on:pointerleave={() => {
     isHovering = false;

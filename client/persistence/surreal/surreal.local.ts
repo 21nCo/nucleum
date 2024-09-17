@@ -87,7 +87,7 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "select * from node;"
+      "select * from link;"
     );
     logger.debug({
       at: "surreal.persistence.testQuery",
@@ -135,6 +135,7 @@ export class SurrealPersistence implements IPersistence {
     if (!dependencies) return;
     const query = resolveDboUpdateQuery(dependencies);
     const result = await this.instance?.query(query);
+    logger.debug({ at: "surreal.persistence.updateDbo", result });
     this.isProcessingOperation = false;
     return result;
   }

@@ -9,7 +9,42 @@
   import WebClipPreview from "./web/WebClipPreview.svelte";
   import YoutubeVideoPreview from "./web/YoutubeVideoPreview.svelte";
   import KindleBookPreview from "./web/KindleBookPreview.svelte";
+  import { truncateString } from "$lib/shared/utils/text.utils";
+  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import type { IContextMenu } from "$lib/client/types/select.type";
   export let node: IClip | IWebPage;
+  export let isLinkHovering: boolean = false;
+
+  const linkContextMenu: IContextMenu = [
+    {
+      group: "base",
+      items: [
+        {
+          value: "open-link",
+          label: "Open link",
+          icon: "arrow-up-right",
+          callback: async () => {
+            appStore.openLink(node.body.url);
+          }
+        },
+        {
+          value: "copy-link",
+          label: "Copy link",
+          icon: "copy",
+          callback: async () => {
+            navigator.clipboard.writeText(node.body.url);
+          }
+        }
+      ]
+    }
+  ];
+
+  function trimUrl(url: string, isHovering: boolean) {
+    url = url.split("?")[0];
+    url = url.split("#")[0];
+    return truncateString(url, isHovering ? 150 : 50);
+  }
 </script>
 
 <div class="h-full w-full">
@@ -24,16 +59,27 @@
   {:else if node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP}
     <YoutubeVideoPreview {node} />
   {/if}
-  <div class="absolute bottom-0 left-0 m-2 flex gap-2 items-center">
-    <Button
-      icon="arrow-up-right"
-      label={node.body.url?.split("?")[0]}
-      size={Size.xs}
-      type={ButtonVariant.PRIMARY}
-      style={ButtonStyle.OUTLINED}
-      on:click={() => {
-        appStore.openLink(node.body.url);
-      }}
-    />
-  </div>
+  {#if "url" in node.body && node.body.url}
+    <div
+      class="absolute bottom-0 left-0 m-2 flex gap-2 items-center max-w-full"
+    >
+      <ContextMenuAction
+        id="open-link-context-menu"
+        triggerMethod={PopoverTriggerMethod.RIGHT_CLICK}
+        contextMenu={linkContextMenu}
+      >
+        <Button
+          icon="arrow-up-right"
+          label={trimUrl(node.body.url, isLinkHovering)}
+          bind:isHovering={isLinkHovering}
+          size={Size.xs}
+          type={ButtonVariant.PRIMARY}
+          style={ButtonStyle.OUTLINED}
+          on:click={() => {
+            appStore.openLink(node.body.url);
+          }}
+        />
+      </ContextMenuAction>
+    </div>
+  {/if}
 </div>
