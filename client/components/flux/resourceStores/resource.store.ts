@@ -224,7 +224,7 @@ export class ResourceStore<T extends IResource> implements IStore {
             resource: this.id,
             params: data
           }
-        })
+        });
         if (result) return resources;
       }
       return flux.mutation<T>(this.id, data);
@@ -269,11 +269,7 @@ export class ResourceStore<T extends IResource> implements IStore {
    * @param mutatationQueueParams params to be passed to the mutation queue
    * @returns
    */
-  async modify(
-    id: IRecordId,
-    properties: Partial<T>,
-    mutatationQueueParams?: IMutationQueueParams
-  ) {
+  async modify(id: IRecordId, properties: Partial<T>) {
     if (!this.currentUserId || typeof this.currentUserId != "string") {
       this.currentUserId = await resolveCurrentUserId();
     }
@@ -295,28 +291,22 @@ export class ResourceStore<T extends IResource> implements IStore {
       ...properties,
       ...modificationProps
     };
-    if (this.isUseV2) {
-      if (this.isExtensionEnvironment) {
-        return extentionFlux({
-          method: FluxMethod.MUTATION,
-          args: {
-            resource: this.id,
-            params: {
-              action: PersistenceActionType.MERGE,
-              record: data
-            }
+
+    if (this.isExtensionEnvironment) {
+      return extentionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: this.id,
+          params: {
+            action: PersistenceActionType.MERGE,
+            record: data
           }
-        });
-      }
-      return flux.mutation<T>(this.id, {
-        action: PersistenceActionType.MERGE,
-        record: data
+        }
       });
     }
-    return dataManager.performMutationForIFR(this.id, data, {
+    return flux.mutation<T>(this.id, {
       action: PersistenceActionType.MERGE,
-      queueParams: mutatationQueueParams,
-      cacheStrategy: this.cacheStrategy
+      record: data
     });
   }
   async trash(id: IRecordId) {

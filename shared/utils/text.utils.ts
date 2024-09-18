@@ -1,13 +1,7 @@
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
-import type {
-  IBlock,
-  IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import {
-  ListType,
-  NodeType
-} from "$lib/client/products/memotron/node/node.type";
+import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+
 import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
@@ -44,46 +38,6 @@ export function isValidParentDomain(text: string) {
 
 export function frameEmailFromParts(parts: EmailParts) {
   return `${parts.firstFew}...${parts.lastFew ?? ""}@${parts.emailDomain}`;
-}
-
-export function generateMarkdownText(blocks: IBlock[]) {
-  return blocks
-    .map((b) => {
-      switch (b.contentType) {
-        case NodeType.SIMPLE_TEXT:
-          b.body = b.body.replaceAll(/\n/g, "  \n");
-          b.body = b.body.replaceAll("<div><br></div>", "  \n");
-          b.body = b.body.replaceAll(/<br>/g, "  \n");
-          b.body = b.body.replaceAll(
-            /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
-            "`$1`"
-          );
-          b.body = b.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
-          b.body = b.body.replaceAll(/<b>(.*?)<\/b>/g, "**$1**");
-          b.body = b.body.replaceAll(/<span id="[^"]*">(.*?)<\/span>/g, "$1");
-          b.body = b.body.replaceAll(/<span>(.*?)<\/span>/g, "$1");
-          b.body = b.body.replaceAll(/<div>(.*?)<\/div>/g, "\n $1");
-          //todo - add remaining inline style patterns
-          return b.body;
-        case NodeType.HEADING1:
-          return `# ${b.body}`;
-        case NodeType.HEADING2:
-          return `## ${b.body}`;
-        case NodeType.HEADING3:
-          return `### ${b.body}`;
-        case NodeType.HEADING4:
-          return `#### ${b.body}`;
-        case NodeType.HEADING5:
-          return `##### ${b.body}`;
-        // case NodeType.DOUBLE_DIVIDER:
-        //   return `---`;
-        // case NodeType.DIVIDER:
-        //   return `---`;
-        case NodeType.LIST:
-          return `${b.listType === ListType.ORDERED ? "1." : "-"} ${b.body}`;
-      }
-    })
-    .join("\n");
 }
 
 export function isValidMarkdown(md: IMarkdown) {

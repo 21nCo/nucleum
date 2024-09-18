@@ -27,6 +27,7 @@ DEFINE FIELD isArchived on TABLE node DEFAULT false;
 DEFINE FIELD isStarred on TABLE node DEFAULT false;
 DEFINE FIELD creationContext on TABLE node TYPE any;
 DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;
+DEFINE FIELD mdText on TABLE node FLEXIBLE TYPE option<string>;
 `;
   return [def];
 }

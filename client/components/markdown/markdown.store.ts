@@ -16,7 +16,6 @@ import {
   isEmptyArray,
   isValidArrayWithData
 } from "$lib/shared/utils/obj.utils";
-import { generateMarkdownText } from "$lib/shared/utils/text.utils";
 import { get, writable, type Updater } from "svelte/store";
 import { resolveImmediateParent } from "./markdown.utils";
 import {
@@ -434,16 +433,6 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
 
   focusBlock(id: string) {
     this.focus.set({ id });
-  }
-
-  generateMarkdownText() {
-    let text = "";
-    this.update((n) => {
-      const blocks: IBlock[] = deepCopy(n.blocks);
-      text = generateMarkdownText(blocks);
-      return n;
-    });
-    return text;
   }
 
   isFirstBlockAndIsEmpty(id: string) {

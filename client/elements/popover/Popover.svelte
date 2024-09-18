@@ -180,7 +180,8 @@
     options?.placement,
     bg(options?.parentBgIndex ? options?.parentBgIndex - 1 : 0),
     {
-      "shadow-md border border-brs2 rounded-md": !isPreventDefaultStyling
+      "popover shadow-md border border-brs2 rounded-md":
+        !isPreventDefaultStyling
     }
   )}
   bind:this={popOverRef}

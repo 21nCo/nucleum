@@ -49,7 +49,6 @@
   };
 
   let loadingMessage: string = "";
-  let isWindowFocused = true;
   let error: string | null = null;
 
   onMount(async () => {
@@ -84,13 +83,8 @@
     if (document?.hidden) return;
     // await onAppear();
   };
-  $: console.log("isWindowFocused", isWindowFocused);
+
   async function onAppear() {
-    logger.debug({
-      at: "onAppear",
-      isWindowFocused,
-      documentHidden: document?.hidden
-    });
     refreshTimeZone();
     const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
     if (isCloudUser) {
@@ -153,7 +147,7 @@
   async function initializeUser() {
     try {
       const isLiteMode = $context.isSheet;
-      logger.debug({
+      logger.log({
         at: "UserBaseLayer.initializeData",
         isLiteMode,
         account: $account
@@ -168,7 +162,7 @@
         // loadingMessage = "Initializing...";
         await account.logGuest(dapId!);
         const initState = await initializeFlux(dapId!, true);
-        logger.debug({
+        logger.log({
           at: "UserBaseLayer.initializeData - local",
           initState
         });
@@ -180,7 +174,7 @@
         }
         let initState = await initializeFlux($account.userId);
         await flux.seed();
-        logger.debug({
+        logger.log({
           at: "UserBaseLayer.initializeData - cloud",
           initState
         });

@@ -27,6 +27,7 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { collectionStore } from "../collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
+import { generateMarkdownText } from "./node.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -105,11 +106,21 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     id: string,
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
-  ) =>
-    this.resourceStore.modify(id, changedProps, {
-      mutationId,
-      isUseQueueFirstApproach: true
-    });
+  ) => {
+    if (changedProps.children) {
+      const node = this.get();
+      const childrenNodes = node.md.blocks.filter(
+        (x) =>
+          x.id &&
+          changedProps.children
+            ?.map((x) => x.toString())
+            ?.includes(x.id.toString())
+      );
+      const mdText = generateMarkdownText(childrenNodes);
+      return this.resourceStore.modify(id, { ...changedProps, mdText });
+    }
+    this.resourceStore.modify(id, changedProps);
+  };
   resolveDebouncerForBlockPersistance(id: string) {
     if (!this.debouncers.has(id)) {
       this.debouncers.set(id, debouncer(this.updateBlockPropagator, 2000));
@@ -154,9 +165,10 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     this.update((prev) => ({ ...prev, properties }));
     return this.resourceStore.modify(this.id, { properties });
   };
-  updateBlock = (id: string, changedProps: any) => {
+
+  updateBlock = (id: IRecordId, changedProps: any) => {
     const mutationId =
-      `${id}-` +
+      `${id.toString()}-` +
       ("children" in changedProps
         ? "children"
         : "body" in changedProps
@@ -165,6 +177,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
     debouncer(id, mutationId, changedProps);
   };
+
   createBlock = async (
     id: string,
     contentType: any,

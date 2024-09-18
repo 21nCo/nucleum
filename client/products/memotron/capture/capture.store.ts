@@ -13,7 +13,10 @@ import {
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
+import {
+  generateMarkdownText,
+  resolveNodeCaptureMetadata
+} from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -193,19 +196,35 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             }
           }
       }
+      let mdText = "";
+      if (val.rootStructure.length > 0) {
+        const rootBlocks = val.body.blocks.filter((b) =>
+          val.rootStructure.includes(b.id)
+        );
+        mdText = generateMarkdownText(rootBlocks);
+      }
       root = {
         ...root,
-        children: val.rootStructure
+        children: val.rootStructure,
+        mdText
       };
       remainingResources = val.childrenWithStructure.map((block) => {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
         //TODO - links for each block
+        let mdText = "";
+        if (block.children && block.children.length > 0) {
+          const childrenNodes = val.body.blocks.filter((b) =>
+            block.children?.includes(b.id)
+          );
+          mdText = generateMarkdownText(childrenNodes);
+        }
         return {
           id: block.id,
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
+          mdText,
           metadata: root.metadata,
           creationContext: id,
           children: block.children

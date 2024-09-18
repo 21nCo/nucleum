@@ -29,6 +29,7 @@
   let markdownRef: any;
   import { setContext } from "svelte";
   import { BlockAction } from "$lib/client/components/markdown/md.type";
+  import { wordCounter } from "$lib/client/actions/counter.action";
 
   function handleEvent(message: any) {
     logger.log({ at: "node context", message });
@@ -42,7 +43,6 @@
   setContext("content", handleEvent);
 
   onMount(() => {
-    refreshCounts();
     const focusEventSub = node.eventStore.subscribe((x) => {
       logger.log({ at: "Node content - nodeFocusEvent", x, id: $node.id });
       if (!x) return;
@@ -71,35 +71,10 @@
     };
   });
 
-  let wordCount = 0;
-  let charCount = 0;
-  const targetDivId = "mdContent";
-
-  function refreshCounts() {
-    const targetDiv = document.getElementById(targetDivId);
-    if (targetDiv) {
-      const divContent = targetDiv.innerHTML;
-      const strippedContent = stripHtml(divContent);
-      wordCount = countWords(strippedContent);
-      charCount = strippedContent.length;
-    } else {
-      wordCount = 0;
-      charCount = 0;
-    }
-    $node.wordCount = wordCount;
-
-    function countWords(text: string): number {
-      return text
-        .trim()
-        .split(/\s+/)
-        .filter((word) => word.length > 0).length;
-    }
-
-    function stripHtml(html: string): string {
-      const tmp = document.createElement("DIV");
-      tmp.innerHTML = html;
-      return tmp.textContent || tmp.innerText || "";
-    }
+  function refreshCounts(e: any) {
+    if (!e) return;
+    $node.wordCount = e.words;
+    $node.charCount = e.characters;
   }
 
   function retireveNode() {
@@ -107,8 +82,7 @@
     refreshId = Date.now();
   }
   function onMarkdownContentChange(e: CustomEvent) {
-    logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
-    refreshCounts();
+    logger.debug({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;
     if (block.source && "body" in block) {
       node.updateBlock(block.source, { body: block.body });
@@ -116,7 +90,7 @@
   }
 
   function onReStructure(e: CustomEvent) {
-    logger.log({ at: "NodeContent - onReStructure", ...e.detail });
+    logger.debug({ at: "NodeContent - onReStructure", ...e.detail });
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
@@ -160,7 +134,6 @@
     }
     async function onInsert(e: CustomEvent) {
       logger.log({ at: "NodeContent - onInsert", ...e.detail });
-      refreshCounts();
       const detail = e.detail;
       if (!detail?.id) return;
       const result = await node.createBlock(
@@ -199,7 +172,10 @@
 </script>
 
 {#key refreshId}
-  <div class="flex flex-col h--full grow pt-2">
+  <div
+    class="flex flex-col h--full grow pt-2"
+    use:wordCounter={{ onUpdate: refreshCounts }}
+  >
     {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
       <NodularMarkdown
         node={$node}
@@ -218,7 +194,7 @@
           <div class="flex w-full justify-between text-b3 text-fgs3">
             <!-- <div class="text-b3 text-fgs3">End of content.</div> -->
             <div>
-              {wordCount} words
+              {$node.wordCount} words
             </div>
             <div class="min-w-fit whitespace-nowrap">
               Modified: {formatDatetime(

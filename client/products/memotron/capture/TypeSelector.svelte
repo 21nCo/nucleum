@@ -87,7 +87,8 @@
   {/key}
   {#if isCapturePage}
     <Button
-      label="edit shortcuts"
+      label="edit"
+      isPreventMinWidth={true}
       icon="ph:pencil-simple-line-thin"
       size={Size.sm}
       on:click={() => {

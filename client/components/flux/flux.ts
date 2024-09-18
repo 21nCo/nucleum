@@ -216,7 +216,7 @@ class Flux {
     resource: Resource,
     params: IMutationParamsv2<T>
   ) {
-    logger.debug({ at: "flux.insertMutation", resource, params });
+    logger.log({ at: "flux.insertMutation", resource, params });
     const mutationId = generateRandomId();
     const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
     const userId = await resolveCurrentUserId();
@@ -339,7 +339,7 @@ class Flux {
    * Syncs down from cloud to local.
    */
   async syncDown() {
-    logger.debug({ at: "flux.syncDown" });
+    logger.log({ at: "flux.syncDown" });
     await this.syncer.syncDown();
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
     dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
@@ -349,14 +349,14 @@ class Flux {
    * Clones down from cloud to local.
    */
   async cloneDown() {
-    logger.debug({ at: "flux.cloneDown", stores: this.stores });
+    logger.log({ at: "flux.cloneDown", stores: this.stores });
     const resources = this.resolveCloneResources();
     await this.syncer.cloneCloudToLocal(resources);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
   async cloneUp() {
-    logger.debug({ at: "flux.cloneUp" });
+    logger.log({ at: "flux.cloneUp" });
     const resources = this.resolveCloneResources();
     await this.syncer.cloneLocalToCloud(resources);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
