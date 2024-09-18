@@ -8,9 +8,9 @@ import {
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
-import { CollectionType } from "./collection/collection.type";
 import {
   type IRecordId,
+  type IResourceSelectFilters,
   type IResourceSelectOrderBy,
   type IStore,
   PersistenceActionType,
@@ -28,12 +28,11 @@ export function resolveResource(id: string) {
 
 export class SearchStore {
   resource: Resource = Resource.everything;
-  contentType: CollectionType | NodeType | undefined = undefined;
   searchQuery: string = "";
-  isStarFilterSelected: boolean = false;
   limit: number | undefined = undefined;
   offset: number | undefined = undefined;
   orderBy: IResourceSelectOrderBy | undefined = undefined;
+  filters: IResourceSelectFilters = {};
 
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
@@ -80,12 +79,15 @@ export class SearchStore {
         "(fn::memotron::node::parent($parent.id)) as mdParent"
       ],
       filters: {
-        contentType:
-          this.contentType ?? (this.searchQuery ? undefined : rootNodeTypeList),
-        isArchived: this.resource === Resource.archived,
         trashInformation: false,
-        isStarred: this.isStarFilterSelected ? true : undefined,
-        creationContext: isValidString(this.searchQuery) ? undefined : false
+        creationContext: isValidString(this.searchQuery) ? undefined : false,
+        ...this.filters,
+        contentType:
+          "contentType" in this.filters
+            ? this.filters.contentType
+            : this.searchQuery
+              ? undefined
+              : rootNodeTypeList
       },
       search: isValidString(this.searchQuery)
         ? {
@@ -114,10 +116,8 @@ export class SearchStore {
         "*"
       ],
       filters: {
-        isArchived: this.resource === Resource.archived,
         trashInformation: false,
-        isStarred: this.isStarFilterSelected ? true : undefined,
-        type: this.contentType ?? undefined
+        ...this.filters
       },
       search: isValidString(this.searchQuery)
         ? {
@@ -138,30 +138,23 @@ export class SearchStore {
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
-    isStarFilterSelected?: boolean;
     limit?: number;
     offset?: number;
     orderBy?: IResourceSelectOrderBy;
+    filters?: IResourceSelectFilters;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
     this.limit = params.limit ?? this.limit;
     this.offset = params.offset ?? this.offset;
     this.orderBy = params.orderBy ?? this.orderBy;
-    this.isStarFilterSelected =
-      params.isStarFilterSelected != undefined
-        ? params.isStarFilterSelected
-        : this.isStarFilterSelected;
-    // let data: any[] = [];
+    this.filters = params.filters ?? this.filters;
     logger.debug({
       at: "SearchStore.refresh",
       ...this
     });
     let data: any;
-    if (
-      this.resource === Resource.everything ||
-      this.resource === Resource.archived
-    ) {
+    if (this.resource === Resource.everything) {
       const nodes = await this.nodes();
       const collections = await this.collections();
       data = [...(nodes ?? []), ...(collections ?? [])];
@@ -269,10 +262,7 @@ export class SearchStore {
   async recents(resource: Resource) {
     this.resource = resource ?? this.resource;
     let data: any[] = [];
-    if (
-      this.resource === Resource.everything ||
-      this.resource === Resource.archived
-    ) {
+    if (this.resource === Resource.everything) {
       const nodes = await this.recentNodes();
       const collections = await this.recentCollections();
       data = [...nodes, ...(collections ?? [])];

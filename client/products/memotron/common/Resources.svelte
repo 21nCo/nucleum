@@ -37,7 +37,7 @@
     )}
   >
     {#each data as item (item)}
-      {#if resource === Resource.everything || resource === Resource.archived}
+      {#if resource === Resource.everything}
         {#if resolveResourceType(item) === MemotronResourceType.NODE}
           <NodeThumbnail
             {item}

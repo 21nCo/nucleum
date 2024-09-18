@@ -28,8 +28,8 @@
     const result = await performLoginStatusCheck();
     if (
       result &&
-      $account.dataMode === UserDataMode.CLOUD &&
-      !$account.userInfo?.isBootstrapped
+      $account?.dataMode === UserDataMode.CLOUD &&
+      !$account?.userInfo?.isBootstrapped
     ) {
       $account.sessionType = UserSessionType.NEW;
       appStore.gotoPath("/bootstrap");

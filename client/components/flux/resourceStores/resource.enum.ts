@@ -4,7 +4,6 @@ export enum Resource {
    * Meta resource for everything
    */
   everything = "everything",
-  archived = "archived",
   globalPreferences = "globalPreferences",
   TailwindTheme = "TailwindTheme",
   appData = "appData",

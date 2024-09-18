@@ -7,11 +7,14 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { Arrangement, Orientation } from "$lib/client/types/direction.enum";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ResourceSwitcher from "$lib/client/elements/switcher/resourceSwitcher/ResourceSwitcher.svelte";
-  import type { IResourceSwitchItem } from "$lib/client/types/select.type";
+  import type {
+    IResourceSwitchItem,
+    ISelectItem
+  } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
@@ -29,19 +32,30 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import { CollectionType } from "../collection/collection.type";
+  import { NodeType } from "../node/node.type";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
+  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import { resolveNodeIcon, resolveNodeContentLabel } from "../node/node.utils";
+  import {
+    getCollectionTypeIcon,
+    getCollectionTypeLabel
+  } from "../collection/collection.utils";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
   let isStarFilterSelected: boolean = false;
+  let isArchivedFilterSelected: boolean = false;
   let data: any[] = [];
   let searchStore = new SearchStore();
-  let selectedSubType: any = undefined;
+  let selectedSubType: "all" | "recents" | NodeType | CollectionType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let availableResources: Resource[] = [
     Resource.node,
-    Resource.collection,
-    Resource.file,
-    Resource.task
+    Resource.collection
+    // Resource.file,
+    // Resource.task
   ];
   const commonResourceProps = {
     isHidePinAction: true
@@ -69,14 +83,8 @@
       ...commonResourceProps,
       label: "Combinations",
       value: Resource.combination,
-      icon: "ph:cube"
+      icon: "ph:bounding-box-light"
     },
-    // {
-    //   ...commonResourceProps,
-    //   label: "Archived",
-    //   value: Resource.archived,
-    //   icon: "archive"
-    // },
     {
       ...commonResourceProps,
       label: "Files",
@@ -89,10 +97,6 @@
       value: Resource.task,
       icon: "ph:check-circle"
     }
-    // {
-    //   value: "clips",
-    //   icon: "paper-clip"
-    // }
   ];
 
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
@@ -109,10 +113,22 @@
       data = [];
       return;
     }
+    let filters: any = {
+      isStarred: isStarFilterSelected ? true : undefined,
+      isArchived: isArchivedFilterSelected ? true : undefined
+    };
+    if (selectedSubType !== "all" && selectedSubType !== "recents") {
+      if (selectedResource === Resource.node) {
+        filters = { ...filters, contentType: selectedSubType };
+      } else if (selectedResource === Resource.collection) {
+        filters = { ...filters, type: selectedSubType };
+      }
+    }
+
     data = await searchStore.select({
       resource: selectedResource,
       searchQuery,
-      isStarFilterSelected
+      filters
     });
   }
 
@@ -134,7 +150,6 @@
   function resolveResourceLabel(isPlural: boolean = false) {
     let label = "items";
     if (selectedResource === Resource.everything) label = "item";
-    else if (selectedResource === Resource.archived) label = "archived item";
     else label = selectedResource;
     return label + ((data && data.length > 1) || isPlural ? "s" : "");
   }
@@ -191,6 +206,61 @@
     $multiSelectStore = [];
     await refresh();
   }
+
+  function resolveSubItems(resource: Resource) {
+    const items: ISelectItem[] = [
+      {
+        label: "All",
+        value: "all",
+        icon: "ph:asterisk"
+      }
+      //Note: Right now - all is already sorted by recents
+      // {
+      //   label: "Recently opened",
+      //   value: "recents",
+      //   icon: "ph:clock"
+      // }
+    ];
+
+    if (resource === Resource.node) {
+      const nodeTypes = [
+        NodeType.NODULAR_MARKDOWN,
+        NodeType.PDF,
+        NodeType.IMAGE,
+        NodeType.AUDIO,
+        NodeType.VIDEO,
+        NodeType.WEB_PAGE,
+        NodeType.TEXT_CLIP,
+        NodeType.TWEET,
+        NodeType.TWITTER_PROFILE,
+        NodeType.WEB_SCREENSHOT_CLIP,
+        NodeType.YOUTUBE_TIMESTAMP_CLIP,
+        NodeType.KINDLE_BOOK,
+        NodeType.KINDLE_HIGHLIGHT
+      ].map((x) => {
+        return {
+          label: resolveNodeContentLabel(x),
+          value: x,
+          icon: resolveNodeIcon(x)
+        };
+      });
+      items.push(...nodeTypes);
+    } else if (resource === Resource.collection) {
+      const collectionTypes = [
+        CollectionType.UNTYPED,
+        CollectionType.TYPED,
+        CollectionType.QUERY
+      ].map((x) => {
+        return {
+          label: getCollectionTypeLabel(x),
+          value: x,
+          icon: getCollectionTypeIcon(x)
+        };
+      });
+      items.push(...collectionTypes);
+    }
+    return items;
+  }
 </script>
 
 <div class="relative w-full h-full">
@@ -205,7 +275,6 @@
         {isStickied}
         bind:selectedResource
         bind:searchQuery
-        bind:isStarFilterSelected
         on:refresh={refresh}
       />
     {/if}
@@ -227,12 +296,6 @@
       </span>
       {#if selectedResource != Resource.everything}
         <span>
-          <!-- <SwitchInput
-        label={{ label: "Starred", orientation: Orientation.Horizontal }}
-        size={Size.sm}
-        bind:checked={isStarFilterSelected}
-        on:change={refresh}
-      /> -->
           <span class="flex gap-2 items-center">
             {#if availableResources.includes(selectedResource)}
               <!-- <Button icon={resolveIfPinned() ? "unpin" : "pin"} size={Size.lg} /> -->
@@ -275,34 +338,37 @@
         "flex-grow px-5 gap-5": variant === "v2" || variant === "v3"
       })}
     >
-      {#if variant === "v2" || variant === "v3"}
-        <div class="flex w-60 border border-brs2 rounded-md mb-1">
-          <span
-            class="w-full h-full flex justify-center items-center text-b3 text-fgs3"
-          >
-            Filters
+      {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource)}
+        <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
+          <span class="w-full flex items-start flex-1 pr-2">
+            <VerticalSwitcher
+              labelOrientation={Orientation.Horizontal}
+              style={VerticalSwitcherStyle.BG}
+              itemProps={{ isHideLabel: false }}
+              items={resolveSubItems(selectedResource)}
+              bind:selected={selectedSubType}
+              on:switch={refresh}
+            />
           </span>
-          <!-- <VerticalSwitcher
-            items={[
-              {
-                value: "All",
-                icon: "tag"
-              },
-              {
-                value: "Starred",
-                icon: "star"
-              },
-              {
-                value: "Recents",
-                icon: "clock"
-              },
-              {
-                value: "Archived",
-                icon: "archive"
-              }
-            ]}
-            bind:selected={selectedSubType}
-          /> -->
+          <span class="px-2">
+            <Divider />
+          </span>
+          <div class="flex flex-col gap-3 p-4">
+            <SwitchInput
+              label={{ label: "Starred", orientation: Orientation.Horizontal }}
+              size={Size.sm}
+              isExpanded={true}
+              bind:checked={isStarFilterSelected}
+              on:change={refresh}
+            />
+            <SwitchInput
+              label={{ label: "Archived", orientation: Orientation.Horizontal }}
+              size={Size.sm}
+              isExpanded={true}
+              bind:checked={isArchivedFilterSelected}
+              on:change={refresh}
+            />
+          </div>
         </div>
       {/if}
       <div

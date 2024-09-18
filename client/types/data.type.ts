@@ -305,6 +305,12 @@ export type IResourceFilterGroup = {
   condition: FilterCombinationMethod;
 };
 
+export type IResourceSelectFilters =
+  | {
+      [key: string]: IResourceFilterValue;
+    }
+  | IResourceFilterGroup;
+
 export type IResourceSelectParams = {
   /**
    * Properties to be selected.
@@ -317,11 +323,7 @@ export type IResourceSelectParams = {
    * Use `IResourceFilterGroup` to combine multiple filters using AND or OR condition in cases of user facing filters. For rest of the application system cases, basic filters in combination with search can be used.
    *
    */
-  filters?:
-    | {
-        [key: string]: IResourceFilterValue;
-      }
-    | IResourceFilterGroup;
+  filters?: IResourceSelectFilters;
   /**
    * Search to be applied on the resources.
    * Provided properties will be combined using `OR` condition.
