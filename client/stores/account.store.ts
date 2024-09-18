@@ -6,17 +6,12 @@ import {
   type UserInformation
 } from "../types/account.type";
 import { postToParent } from "$lib/client/utils/embed.utils";
-import { GlobalEvent } from "../types/event.enum";
 import { Persistence } from "../persistence/persistence";
 import { ButtonVariant } from "../types/button.type";
 import { performApiCall } from "$lib/client/utils/network.utils";
-import {
-  confirmationNotification,
-  appEvents
-} from "$lib/client/stores/notification.store";
+import { confirmationNotification } from "$lib/client/stores/notification.store";
 import { appStore } from "./app.store";
 import jwt_decode from "jwt-decode";
-import { wait } from "../utils/time.utils";
 import { signout } from "../utils/account.utils";
 import { ObservableStore } from "./client.store";
 import {
@@ -42,7 +37,7 @@ class AccountStore extends ObservableStore<
     super("account", StoreDataType.NA);
   }
 
-  async init() { 
+  async init() {
     let seed: UserAccount = {
       dataMode: UserDataMode.NONE,
       sessionType: UserSessionType.UNDETERMINED
@@ -72,7 +67,7 @@ class AccountStore extends ObservableStore<
     if (!data) {
       const token = await clientStorage.get(ClientStorageKey.STOKEN);
       const userInfo = JSON.parse(
-        await clientStorage.get(ClientStorageKey.USER_INFO) ?? ""
+        (await clientStorage.get(ClientStorageKey.USER_INFO)) ?? ""
       );
       data = { token, userInfo };
     }
@@ -96,9 +91,9 @@ class AccountStore extends ObservableStore<
         dataMode: UserDataMode.NONE
       };
       return n;
-    }); 
+    });
     await flux.terminate();
-  } 
+  }
 
   signIn(
     data: {
@@ -116,7 +111,7 @@ class AccountStore extends ObservableStore<
       ClientStorageKey.USER_INFO,
       JSON.stringify(data.userInfo)
     );
-    localStorage.setItem("refresh-token", data.refreshToken ?? "");
+    // localStorage.setItem("refresh-token", data.refreshToken ?? "");
     this.postToEmbed(data);
     const isBootstrapped = data.userInfo.isBootstrapped;
     this.update(() => {

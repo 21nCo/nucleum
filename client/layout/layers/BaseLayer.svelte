@@ -35,9 +35,9 @@
     await bootup();
     view.update(window.innerWidth, window.innerHeight);
     await refreshAppStaticData();
-    return () => {
-      clearInterval(timer);
-    };
+  });
+  onDestroy(() => {
+    clearInterval(timer);
   });
 
   const visibilityChangeListener = async (event: Event) => {
@@ -50,6 +50,7 @@
    * Note: The order of operations is important as later operations rely on earlier ones.
    */
   async function bootup() {
+    await account.init();
     await setLaunchContext();
     runCurrentTime();
     appStore.setCurrentPath(window.location.pathname);

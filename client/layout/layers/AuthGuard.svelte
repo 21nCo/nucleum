@@ -58,7 +58,6 @@
       appStore.gotoPath("/signup");
       return false;
     }
-    if (!$account) await account.init();
     let isSessionExpiredOrRefreshing = await account.checkIfSessionExpired();
     if (isSessionExpiredOrRefreshing && $isRefreshingToken) {
       while ($isRefreshingToken) {
