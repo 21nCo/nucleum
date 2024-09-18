@@ -2,10 +2,16 @@
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import LinkSuggestionItem from "./LinkSuggestionItem.svelte";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Position } from "$lib/client/types/direction.enum";
   import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
   import { SearchStore } from "../../memotron.store";
-  export let context: "capture" | "nodepage" | "clipper" = "capture";
+  import { onMount } from "svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  export let context:
+    | "capture"
+    | "nodelinkspane"
+    | "clipper"
+    | "nodepageCollectionsLane" = "capture";
   export let resultsPlacement: Position = Position.BottomCenter;
   export let searchQuery: string;
   let popoverOptions: IPopoverOptions;
@@ -14,10 +20,23 @@
     "Start typing to link to a node or add to a curation";
   let icon: string = "";
   let label: InputLabel | undefined = undefined;
-
+  let searchInputRef: any;
   resolveOptions(context);
 
-  function resolveOptions(context: "capture" | "nodepage" | "clipper") {
+  export function focus() {
+    searchInputRef?.focus();
+    searchInputRef?.showDefaultResults();
+  }
+
+  onMount(() => {
+    if (context === "nodepageCollectionsLane") {
+      searchInputRef?.focus();
+    }
+  });
+
+  function resolveOptions(
+    context: "capture" | "nodelinkspane" | "clipper" | "nodepageCollectionsLane"
+  ) {
     switch (context) {
       case "capture":
         popoverOptions = {
@@ -27,7 +46,7 @@
         placeholder = "Start typing to link to a node or add to a collection";
         inputStyle = InputStyle.PLAIN;
         break;
-      case "nodepage":
+      case "nodelinkspane":
         popoverOptions = {
           offsetInPx: 12,
           placement: Position.BottomCenter
@@ -35,7 +54,15 @@
         placeholder = "Start searching to add a direct link";
         icon = "arrow-right-left";
         inputStyle = InputStyle.BORDERED;
-        // label = { label: "Add link", orientation: Orientation.Vertical };
+        break;
+      case "nodepageCollectionsLane":
+        popoverOptions = {
+          offsetInPx: 4,
+          placement: Position.TopCenter
+        };
+        placeholder = "Start searching to add to a collection";
+        // icon = "arrow-right-left";
+        inputStyle = InputStyle.BORDERED;
         break;
       case "clipper":
         popoverOptions = {
@@ -51,16 +78,25 @@
   }
 
   function onsearch(searchQuery: string) {
-    return new SearchStore().searchForLinking(searchQuery);
+    const resource =
+      context === "nodepageCollectionsLane"
+        ? Resource.collection
+        : context === "nodelinkspane"
+          ? Resource.node
+          : undefined;
+    return new SearchStore().searchForLinking(searchQuery, resource);
   }
 </script>
 
 <TextSearchInput
+  bind:this={searchInputRef}
   bind:value={searchQuery}
   style={inputStyle}
   {icon}
   {label}
-  searchResultComponent={LinkSuggestionItem}
+  searchResultComponent={context === "nodepageCollectionsLane"
+    ? undefined
+    : LinkSuggestionItem}
   {popoverOptions}
   on:select
   searchCallback={onsearch}

@@ -29,6 +29,7 @@
     </div>
     <LinkSearch
       context="capture"
+      searchQuery={link}
       on:select={(e) => {
         console.log("select", e.detail);
         captureStore.directLink(e.detail.item);

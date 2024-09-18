@@ -129,3 +129,22 @@ export function generateMarkdownText(blocks: IBlock[]) {
     })
     .join("\n");
 }
+
+export function resolveNodeIcon(contentType: NodeType) {
+  switch (contentType) {
+    case NodeType.IMAGE:
+      return "ph:image-light";
+    case NodeType.WEB_SCREENSHOT_CLIP:
+      return "ph:crop-light";
+    case NodeType.NODULAR_MARKDOWN:
+      return "ph:markdown-light";
+    case NodeType.TEXT_CLIP:
+      return "ph:highlighter-circle-light";
+    case NodeType.WEB_PAGE:
+      return "ph:globe-light";
+    case NodeType.PDF:
+      return "ph:file-pdf-light";
+    default:
+      return "ph:document-light";
+  }
+}

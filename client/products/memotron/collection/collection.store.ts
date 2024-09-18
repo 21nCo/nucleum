@@ -64,7 +64,7 @@ class CollectionStore extends ResourceStore<ICollection> {
    * @param types
    * @returns
    */
-  async resolveTypes(collections: string[]) {
+  async resolveTypes(collections: IRecordId[]) {
     let types: string[] = [];
     let propertyConfig: IProperty[] = [];
     let avatars: IAvatar[] = [];

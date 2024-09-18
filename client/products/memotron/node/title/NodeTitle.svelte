@@ -8,7 +8,8 @@
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeTitleLabelPart from "./NodeTitleLabelPart.svelte";
-  import { webNodeTypeList } from "../node.type";
+  import { NodeType, webNodeTypeList } from "../node.type";
+  import Button from "$lib/client/elements/button/Button.svelte";
   export let node: IActiveNodeStore;
   function onLabelChange(e: any) {
     if ($node.label) node.debouncedModify({ label: $node.label });
@@ -16,17 +17,25 @@
   $: isWebNode = webNodeTypeList.includes($node.contentType);
 </script>
 
-<div class="flex items-center gap-3 grow">
+<div class="flex items-center gap-2">
   {#if !$node.focusedBlock}
-    <NodeAvatar avatars={$node.avatars} node={$node} size={Size.sm} />
+    {#if !isWebNode || $node.contentType === NodeType.WEB_PAGE}
+      <NodeAvatar avatars={$node.avatars} node={$node} size={Size.sm} />
+    {/if}
     {#if $isInEditMode && !isWebNode}
       <TextInput
         size={Size.xl}
         bind:value={$node.label}
-        style={InputStyle.PLAIN}
         placeholder="Node title"
         width="w-full"
         on:input={onLabelChange}
+      />
+      <Button
+        icon="ph:check-circle"
+        size={Size.sm}
+        on:click={() => {
+          isInEditMode.toggle();
+        }}
       />
     {:else}
       <span class={cn("text-h4 font-medium text-start truncate")}>

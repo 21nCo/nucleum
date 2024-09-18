@@ -13,6 +13,7 @@
   export let searchResultComponent: any = undefined;
   export let shortcutTrigger: string | undefined = undefined;
   export let emptyStateLabel: string = "No results found";
+  export let isPreventDefaultResults: boolean = false;
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
@@ -83,10 +84,10 @@
     // dispatch("keyup", { value, event });
   }
   let debouncedSearch = debouncer(search, 100);
-  async function search() {
+  export async function search() {
     isSearchInProgress = true;
     selectedIndex = 0;
-    if (!value) {
+    if (!value && isPreventDefaultResults) {
       results = [];
       hide();
       isSearchInProgress = false;
@@ -115,7 +116,7 @@
   }
 </script>
 
-<div class={cn("flex flex-col justify-between max-h-60 h-60")}>
+<div class={cn("flex flex-col justify-between max-h-60 h-60 w-full")}>
   <div class="flex flex-col flex-grow items-center w-full">
     {#if results && results.length > 0}
       {#each results as item, index ((item.id ?? "") + item.value)}
@@ -134,7 +135,7 @@
               isActive={selectedIndex === index}
             />
           {:else}
-            <span>
+            <span class="truncate">
               {item.label}
             </span>
           {/if}

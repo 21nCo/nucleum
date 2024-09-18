@@ -14,7 +14,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import Resources from "../../common/Resources.svelte";
-  import LinkItems from "../links/LinkItems.svelte";
+  import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
   import { NodeRightPaneType, type INode } from "../node.type";
   import { appStore } from "$lib/client/stores/app.store";
@@ -95,7 +95,7 @@
     </span>
     <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
       {#if $node.links && $node.links.length > 0}
-        <LinkItems
+        <LinkThumbnailItems
           {links}
           accessPointId={node.id}
           on:click={onLinkClick}

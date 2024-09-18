@@ -64,7 +64,7 @@ export type IActiveNode = INode & {
   parent?: IRecordId[] | INode;
   accessMode: ResourceAccessMode;
   focusedBlock?: string;
-  collections?: string[];
+  collections?: IRecordId[];
   types?: string[];
   avatars?: IAvatar[];
   propertyConfig?: IProperty[];

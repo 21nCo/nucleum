@@ -10,6 +10,7 @@
   import Icon from "../Icon.svelte";
   import { Position } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
+  import { mount } from "$lib/client/actions/mount.action";
   const dispatch = createEventDispatcher();
   export let id: string = "";
   export let placeholder: string | undefined = undefined;
@@ -23,6 +24,7 @@
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let emptyStateLabel: string | undefined = undefined;
+  export let isPreventDefaultResults: boolean = false;
   let isFocused: boolean = false;
   let inputClasses: string =
     "text-input w-full bg-transparent focus:outline-none focus:border-none placeholder:font-light placeholder:text-fgs3 placeholder:text-b2";
@@ -51,8 +53,18 @@
   onMount(() => {
     inputClasses = inputClasses + " " + resolveStyles().join(" ");
   });
+
+  export function showDefaultResults() {
+    if (isPreventDefaultResults) return;
+    show();
+    searchResultsPopover?.search();
+  }
+
   function onKeyup(event: any) {
-    if (!value || (!searchCallback && !searchStoreId)) {
+    if (
+      (!value && isPreventDefaultResults) ||
+      (!searchCallback && !searchStoreId)
+    ) {
       hide();
       // return;
     } else show();
@@ -88,6 +100,7 @@
   {/if}
   <input
     {id}
+    use:mount={showDefaultResults}
     class={inputClasses}
     bind:value
     on:change|stopPropagation

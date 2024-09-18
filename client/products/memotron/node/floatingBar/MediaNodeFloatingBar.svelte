@@ -24,7 +24,7 @@
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
-  import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
+  import CollectionsLane from "./CollectionsLane.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -94,8 +94,11 @@
       )}
     >
       <div class="flex gap-3 justify-between items-center w-full">
-        <span class="flex-1 min-w-0">
+        <span class="flex items-center gap-4 flex-1 min-w-0">
           <NodeTitle {node} />
+          <div class="text-b3 text-fgs3">
+            {formatDatetime($userPreferences, $node.createdAt)}
+          </div>
         </span>
         <span class="flex gap-5">
           <ToggleGroup
@@ -148,9 +151,8 @@
         </div>
       {/if}
       <div class="flex w-full justify-between">
-        <div></div>
-        <div class="text-b3 text-fgs3 mt-2">
-          Created {formatDatetime($userPreferences, $node.createdAt)}
+        <div>
+          <CollectionsLane {node} />
         </div>
       </div>
     </div>

@@ -67,7 +67,7 @@
       case NodeType.KINDLE_HIGHLIGHT:
         if (!parent?.label) return defaultLabels[node.contentType];
         return {
-          label: getLabelPrefix(),
+          label: "Clipped from:",
           parent
         };
       case NodeType.TWEET:
@@ -87,24 +87,6 @@
         );
       default:
         return "";
-    }
-
-    function getLabelPrefix() {
-      switch (node.contentType) {
-        case NodeType.YOUTUBE_TIMESTAMP_CLIP:
-          return (
-            resolveVideoTimeStampStr(node.body as IVideoTimestampClipBody) +
-            " - "
-          );
-        case NodeType.TEXT_CLIP:
-          return "Text clip - ";
-        case NodeType.WEB_SCREENSHOT_CLIP:
-          return "Screenshot - ";
-        case NodeType.KINDLE_HIGHLIGHT:
-          return "Kindle highlight - ";
-        default:
-          return "";
-      }
     }
 
     function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {

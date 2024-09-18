@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import LinkItems from "./LinkItems.svelte";
+  import LinkThumbnailItems from "./LinkThumbnailItems.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
@@ -131,7 +131,7 @@
 
 <div class="relative flex flex-col gap-3 pt-1 h-full w-full">
   <div class="flex flex-col w-full">
-    <LinkSearch context="nodepage" on:select={onSelect} bind:searchQuery />
+    <LinkSearch context="nodelinkspane" on:select={onSelect} bind:searchQuery />
     {#if linkStatus.message}
       <div>
         <InlineTimeoutMessage
@@ -176,7 +176,7 @@
     {#if fetchError}
       <ErrorStatusPane error={fetchError} />
     {:else if filtered.length > 0}
-      <LinkItems
+      <LinkThumbnailItems
         links={filtered}
         accessPointId={node.id}
         on:click={onClick}

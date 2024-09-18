@@ -196,31 +196,41 @@ export class SearchStore {
    * @param query
    * @returns
    */
-  async searchForLinking(query: string) {
-    const nodes = await flux.selectMany(Resource.node, {
-      properties: [
-        "*",
-        "parent.* as parent",
-        "(fn::memotron::node::parent($parent.id)) as mdParent"
-      ],
-      filters: {
-        contentType: [...rootNodeTypeList, ...headingNodeTypes],
-        ...activeResourceFilterV2
-      },
-      search: {
-        properties: ["body", "label"],
-        query
-      }
-    });
-    const collections = await flux.selectMany(Resource.collection, {
-      filters: {
-        ...activeResourceFilterV2
-      },
-      search: {
-        properties: ["label"],
-        query
-      }
-    });
+  async searchForLinking(query: string, resource?: Resource) {
+    let nodes = [];
+    if (resource === Resource.node || !resource) {
+      nodes = await flux.selectMany(Resource.node, {
+        properties: [
+          "*",
+          "parent.* as parent",
+          "(fn::memotron::node::parent($parent.id)) as mdParent"
+        ],
+        filters: {
+          contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          ...activeResourceFilterV2
+        },
+        search: isValidString(query)
+          ? {
+              properties: ["body", "label"],
+              query
+            }
+          : undefined
+      });
+    }
+    let collections = [];
+    if (resource === Resource.collection || !resource) {
+      collections = await flux.selectMany(Resource.collection, {
+        filters: {
+          ...activeResourceFilterV2
+        },
+        search: isValidString(query)
+          ? {
+              properties: ["label"],
+              query
+            }
+          : undefined
+      });
+    }
     return [...(nodes ?? []), ...(collections ?? [])];
   }
 

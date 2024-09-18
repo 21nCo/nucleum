@@ -235,6 +235,7 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
+      isPreventDefaultResults={true}
       searchResultComponent={GoalSearchThumbnail}
       searchStoreId={Resource.PointGoal}
       style={InputStyle.BORDERED}

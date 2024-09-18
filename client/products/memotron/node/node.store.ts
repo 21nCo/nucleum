@@ -135,7 +135,6 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     }
     const rawLinks =
       node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
-    logger.debug({ at: "ActiveNodeStore.fetch", rawLinks, id: this.id });
     const links: INodeLink[] = rawLinks
       .filter((x) => {
         return (
@@ -150,14 +149,21 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
           linkType: x.linkType
         };
       });
-    logger.debug({ at: "ActiveNodeStore.fetch", links });
+    const collections: IRecordId[] = rawLinks
+      .filter(
+        (x) =>
+          x.out.tb === Resource.collection || x.in.tb === Resource.collection
+      )
+      .map((x) => (x.out.tb === Resource.collection ? x.out : x.in));
+    logger.log({ at: "ActiveNodeStore.fetch", rawLinks, links, collections });
     const { types, propertyConfig, avatars } =
-      await collectionStore.resolveTypes(node.collections);
+      await collectionStore.resolveTypes(collections);
     this.update((n) => {
       n.types = types;
       n.propertyConfig = propertyConfig;
       n.avatars = avatars;
       n.links = links;
+      n.collections = collections;
       return n;
     });
   };
