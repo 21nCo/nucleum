@@ -58,10 +58,10 @@ export const memotronActions: IAction[] = [
     label: "Create a new collection",
     type: ActionType.MODAL,
     modalParams: {
-      title: "Create collection",
       layout: {
-        size: Size.xl,
-        orientation: Orientation.Vertical
+        size: Size.lg,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
       }
     }
   },
@@ -73,7 +73,7 @@ export const memotronActions: IAction[] = [
     modalParams: {
       title: "Edit properties",
       layout: {
-        size: Size.xl,
+        size: Size.xxl,
         orientation: Orientation.Horizontal,
         primaryAction: {
           label: "Done"

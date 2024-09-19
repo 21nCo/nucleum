@@ -3,7 +3,7 @@ import type { ResourceActionType } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
-  return `${resource}:${action}`;
+  return `${resource}_${action}`;
 }
 
 export function determineResourceType(id: IRecordId) {

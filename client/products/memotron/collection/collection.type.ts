@@ -39,7 +39,7 @@ export interface ICollection extends IMemotronItemBase {
    * Type collection to extend - string identifier ex: collection:sometypecollection
    */
   typeToExtend?: IRecordId;
-  avatar?: IAvatar;
+  avatar?: Pick<IAvatar, "code" & "color" & "isFilled" & "type">;
   query?: string;
   properties?: IRecordId[];
 }

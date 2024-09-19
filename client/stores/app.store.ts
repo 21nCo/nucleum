@@ -369,7 +369,8 @@ function initAppStore(seed: AppStore) {
       ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
-    const guestPartForState = await clientStorage.get(ClientStorageKey.DAP_ID) ?? "";
+    const guestPartForState =
+      (await clientStorage.get(ClientStorageKey.DAP_ID)) ?? "";
     const domainPartForState =
       (ctx.os === OperatingSystem.MACOS ||
         (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&

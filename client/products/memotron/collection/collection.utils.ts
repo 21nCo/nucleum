@@ -1,6 +1,6 @@
 import { CollectionType } from "./collection.type";
 
-export function getCollectionTypeIcon(type: CollectionType) {
+export function resolveCollectionTypeIcon(type: CollectionType) {
   switch (type) {
     case CollectionType.UNTYPED:
       return "ph:brackets-round";
@@ -11,7 +11,7 @@ export function getCollectionTypeIcon(type: CollectionType) {
   }
 }
 
-export function getCollectionTypeLabel(type: CollectionType) {
+export function resolveCollectionTypeLabel(type: CollectionType) {
   switch (type) {
     case CollectionType.UNTYPED:
       return "Simple";

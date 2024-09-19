@@ -39,8 +39,8 @@
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { resolveNodeIcon, resolveNodeContentLabel } from "../node/node.utils";
   import {
-    getCollectionTypeIcon,
-    getCollectionTypeLabel
+    resolveCollectionTypeIcon,
+    resolveCollectionTypeLabel
   } from "../collection/collection.utils";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
@@ -252,9 +252,9 @@
         CollectionType.QUERY
       ].map((x) => {
         return {
-          label: getCollectionTypeLabel(x),
+          label: resolveCollectionTypeLabel(x),
           value: x,
-          icon: getCollectionTypeIcon(x)
+          icon: resolveCollectionTypeIcon(x)
         };
       });
       items.push(...collectionTypes);

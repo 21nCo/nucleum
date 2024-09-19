@@ -1,5 +1,6 @@
 <script lang="ts">
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import {
     TableCellType,
@@ -11,10 +12,13 @@
   import DropDown from "../dropdown/DropDown.svelte";
   import TextInput from "../input/TextInput.svelte";
   import Switch from "../toggle/Switch.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let columns: TableColumn[] = [];
   export let data: any = [];
   export let actions: { action: "remove" | "rearrange"; index: number }[] = [];
   export let isStyled: boolean = false;
+  export let addAction: string | undefined = undefined;
   $: if (actions.length > 0) {
     actions.forEach((action) => {
       columns = [
@@ -129,4 +133,17 @@
       </div>
     {/each}
   </div>
+  {#if addAction}
+    <div class="flex justify-center items-center p-3 w-full">
+      <Button
+        label={addAction}
+        icon="plus"
+        type={ButtonVariant.SECONDARY}
+        style={ButtonStyle.OUTLINED}
+        on:click={() => {
+          dispatch("add");
+        }}
+      />
+    </div>
+  {/if}
 </div>

@@ -43,7 +43,8 @@ class CollectionStore extends ResourceStore<ICollection> {
       ...form,
       id,
       views: [],
-      properties: []
+      properties: [],
+      defaultLayout: undefined
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
       await propertyStore.create(properties);
@@ -314,14 +315,14 @@ export const viewStore = new CollectionViewStore();
 export const collectionLayoutOptions = [
   {
     value: CollectionLayout.BOARD,
-    icon: "rectangle-stack"
+    icon: "lucide:layout-dashboard"
   },
   {
     value: CollectionLayout.TABLE,
-    icon: "table-cells"
+    icon: "ph:table-light"
   },
-  { value: CollectionLayout.CALENDAR, icon: "calendar-days" },
-  { value: CollectionLayout.GEOMAP, icon: "map" }
+  { value: CollectionLayout.CALENDAR, icon: "ph:calendar-dots-light" },
+  { value: CollectionLayout.GEOMAP, icon: "ph:map-trifold-light" }
 ];
 
 export const combinationLayoutOptions = [

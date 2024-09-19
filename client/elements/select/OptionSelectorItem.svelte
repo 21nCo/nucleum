@@ -23,13 +23,17 @@
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE}
   <button
     class={cn("relative rounded-md min-w-fit whitespace-nowrap border", {
+      "w-40": size === Size.lg,
+      "w-36": size === Size.md,
       "flex grow justify-center": style === OptionSelectorStyle.TRAIN,
       "px-12 py-8":
         iconOrientation === Orientation.Horizontal && size === Size.lg,
       "px-8 py-4":
         iconOrientation === Orientation.Horizontal && size === Size.md,
       "px-8 py-6": iconOrientation === Orientation.Vertical && size === Size.lg,
-      "px-6 py-4": iconOrientation === Orientation.Vertical && size === Size.md,
+      "px-6 py-5": iconOrientation === Orientation.Vertical && size === Size.md,
+      "w-20 px-3 py-3":
+        iconOrientation === Orientation.Vertical && size === Size.sm,
       "px-3 py-1 text-b2": size === Size.sm,
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
       "outline-transparent border-brs3":
@@ -42,8 +46,11 @@
   >
     <div
       class={cn("flex", {
-        "flex-col gap-1": iconOrientation === Orientation.Vertical,
-        "gap-2": iconOrientation === Orientation.Horizontal,
+        "flex-col ": iconOrientation === Orientation.Vertical,
+        "gap-3": size !== Size.sm && iconOrientation === Orientation.Vertical,
+        "gap-2":
+          iconOrientation === Orientation.Horizontal ||
+          (size === Size.sm && iconOrientation === Orientation.Vertical),
         "portrait:text-base portrait:font-medium": size === Size.md,
         "text-b2": size === Size.sm,
         "text-base": size === Size.lg,

@@ -1,7 +1,5 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -9,7 +7,6 @@
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
@@ -76,35 +73,27 @@
 </script>
 
 <div class="flex flex-col gap-4 w-full text-b2">
-  {#if isValidArrayWithData($propertyEditorStore)}
-    <Table2
-      actions={[
-        { action: "remove", index: 0 },
-        { action: "rearrange", index: 1 }
-      ]}
-      {columns}
-      bind:data={$propertyEditorStore}
-    />
-  {/if}
-  <div>
-    <Button
-      label="Add property"
-      style={ButtonStyle.OUTLINED}
-      size={Size.sm}
-      icon="plus"
-      on:click={() => {
-        $propertyEditorStore = [
-          ...$propertyEditorStore,
-          {
-            id: generateResourceId(Resource.property),
-            label: "",
-            isShowOnNodePage: false,
-            isShowOnCapture: false,
-            type: PropertyType.TEXT,
-            order: $propertyEditorStore.length
-          }
-        ];
-      }}
-    />
-  </div>
+  <Table2
+    isStyled={true}
+    addAction="add property"
+    actions={[
+      { action: "remove", index: 0 },
+      { action: "rearrange", index: 1 }
+    ]}
+    {columns}
+    bind:data={$propertyEditorStore}
+    on:add={() => {
+      $propertyEditorStore = [
+        ...$propertyEditorStore,
+        {
+          id: generateResourceId(Resource.property),
+          label: "",
+          isShowOnNodePage: false,
+          isShowOnCapture: false,
+          type: PropertyType.TEXT,
+          order: $propertyEditorStore.length
+        }
+      ];
+    }}
+  />
 </div>
