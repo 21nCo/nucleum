@@ -247,7 +247,7 @@
         : size === Size.md
           ? "1.25rem"
           : "1rem"}
-      class={_classList + " iconifysvg"}
+      class={_classList + " iconifysvg " + icon}
     />
   {:else if icon}
     <svg

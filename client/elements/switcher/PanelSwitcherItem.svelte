@@ -40,8 +40,10 @@
     class={cn("flex relative bg-transparent", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
-        barStyle === BarStyle.OVERFLOW,
-      "px-3": size === Size.sm || barStyle != BarStyle.OVERFLOW,
+        barStyle === BarStyle.OVERFLOW &&
+        !item.icon,
+      "px-3": size === Size.sm || (barStyle != BarStyle.OVERFLOW && !item.icon),
+      "px-5": item.icon,
       "px-2": size === Size.xs,
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,
@@ -90,7 +92,9 @@
   </button>
 {:else if style === PanelSwitcherStyle.SNAKE}
   <button
-    class={cn("relative flex items-center gap-1 px-4 py-2", {
+    class={cn("relative flex items-center gap-1 py-2", {
+      "px-6": item.icon,
+      "px-4": !item.icon,
       "border border-brs3 rounded-t-md text-fgs1": isActive,
       "border-ccs1- text-ccs1": isActive && !isInEditMode,
       "border border-transparent text-fgs3": !isActive

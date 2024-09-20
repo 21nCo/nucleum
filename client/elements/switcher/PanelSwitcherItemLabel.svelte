@@ -31,6 +31,11 @@
   } else if (triggerItemEdit && triggerItemEdit !== item.value) {
     labelEditPopoverRef?.hide();
   }
+
+  $: renderedIcon =
+    isActive && item.icon?.includes(":")
+      ? item.icon?.replace("-thin", "-fill")
+      : item.icon;
 </script>
 
 {#if isInEditMode && isAddNewItem}
@@ -82,6 +87,15 @@
       "text-bgs4": isDisabled
     })}
   >
+    {#if item.icon && typeof item.icon === "string"}
+      <Icon
+        icon={renderedIcon}
+        {size}
+        class={cn({
+          "fill-aps1": isActive
+        })}
+      />
+    {/if}
     <TextWithHoverTooltip text={item.label} truncateLength={20} />
     {#if isShowNumberShortcut}
       <span class="text-b4 text-fgs3 w-4 h-4 bg-bgs2 rounded-md">

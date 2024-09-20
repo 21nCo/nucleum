@@ -85,5 +85,6 @@ function collection() {
 
 function collectionIndices() {
   const def = `DEFINE INDEX collectionLabelSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
-  return [def];
+  const typeIndex = `DEFINE INDEX fileTypeSearchIndex ON TABLE file COLUMNS type SEARCH ANALYZER ascii;`;
+  return [def, typeIndex];
 }

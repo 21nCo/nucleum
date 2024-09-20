@@ -25,6 +25,7 @@ import { uiState } from "./uiState/uiState.store";
 import BookACall from "../components/cx/BookACall.svelte";
 import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
 import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
+import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -390,6 +391,17 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       title: "Markdown shortcuts",
+      layout: {
+        size: Size.lg
+      }
+    }
+  },
+  {
+    action: Action.COVER_PICKER,
+    component: CoverPicker,
+    isMeta: true,
+    type: ActionType.MODAL,
+    modalParams: {
       layout: {
         size: Size.lg
       }

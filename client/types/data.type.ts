@@ -324,9 +324,13 @@ export type IResourceSelectParams = {
    *
    */
   filters?: IResourceSelectFilters;
+
   /**
    * Search to be applied on the resources.
    * Provided properties will be combined using `OR` condition.
+   *
+   * Note: This uses search index and search index should have been defined on the database provider.
+   *
    */
   search?: {
     query: string;
