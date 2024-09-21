@@ -24,6 +24,7 @@
   import { Embed } from "$lib/client/types/context.type";
   import { fullScreen } from "$lib/client/components/modal/modal.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import SessionTitle from "./SessionTitle.svelte";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   let interactionMode: InteractionMode;
   let isHideLeftNavBar: boolean = refreshSidebarState();
@@ -98,6 +99,9 @@
       </div>
       <!-- <RightPanel /> -->
     {/if}
+  {/if}
+  {#if $sessionStore?.isSessionRunning}
+    <SessionTitle />
   {/if}
   <Notifications />
   <BackgroundSoundPlayer />
