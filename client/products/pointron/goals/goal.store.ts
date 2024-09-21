@@ -218,7 +218,7 @@ class GoalStore extends ResourceFIRStore<IGoal> {
   resolveSubGoalsIfNotPresent(goalId: string) {
     const goals = this.get().items;
     const goalInContext = goals.find((x) => x.id === goalId);
-    // console.log({ goalInContext });
+
     if (!goalInContext) return [];
 
     const subGoals = goals
@@ -228,7 +228,7 @@ class GoalStore extends ResourceFIRStore<IGoal> {
           x.parent?.hierarchy[x.parent?.hierarchy.length - 1]?.id
       )
       .filter(activeResourceFilter);
-    console.log({ subGoals });
+
     return subGoals;
   }
   async refresh(
@@ -470,6 +470,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
       if (!goal) return;
       if (!goal.analytics) goal.analytics = seedGoal.analytics;
       if (!goal.tags) goal.tags = [];
+      goal.subGoalsRefreshId = generateUID();
       originalValue = deepCopy(goal);
       set({ ...goal });
       goalEditErrorMessage.set("");
@@ -527,8 +528,13 @@ function initCurrentGoalStore(initialValue: IGoal) {
           label: label
         }
       ];
-      set(parent);
-      propagateChangesTemp();
+      // set(parent);
+      await goalStore.refresh(
+        { tag: TagId.ALL, searchText: "", isArchived: false },
+        true
+      );
+      parent.subGoalsRefreshId = generateUID();
+      set({ ...parent });
     }
   };
 }

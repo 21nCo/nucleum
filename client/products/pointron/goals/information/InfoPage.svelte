@@ -70,7 +70,9 @@
     {:else if $currentGoal.trashInformation}
       <InlineInfoBanner content="This goal is deleted." />
     {:else}
-      <SubGoalList />
+      {#key $currentGoal.subGoalsRefreshId}
+        <SubGoalList />
+      {/key}
       <div class="flex justify-center items-center min-h-32 w-full">
         <GoalAnalytics />
       </div>
