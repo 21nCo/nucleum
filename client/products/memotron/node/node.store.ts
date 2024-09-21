@@ -37,8 +37,6 @@ class NodeStore extends ResourceStore<INode> {
       refreshOnAppear: true,
       dboDependencies: [
         "fn::memotron::node::fetch",
-        "fn::memotron::node::createMany",
-        "fn::memotron::node::create",
         "fn::memotron::timeline",
         "fn::memotron::pdfAnnotator::getAllClips",
         "fn::memotron::pdfAnnotator::saveClip"

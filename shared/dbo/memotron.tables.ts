@@ -8,13 +8,12 @@ export const memotronTables = [
 function node() {
   const def = `DEFINE TABLE node SCHEMAFULL;
 DEFINE FIELD label on TABLE node TYPE option<string>;
-DEFINE FIELD body on TABLE node FLEXIBLE TYPE option<object | string>;
-DEFINE FIELD type on TABLE node TYPE option<record<type>>;
+DEFINE FIELD body on TABLE node FLEXIBLE TYPE option<object | string>; 
 DEFINE FIELD parent on TABLE node TYPE option<record<node>>;
 DEFINE FIELD children on TABLE node TYPE option<array<record<node>>>;
 DEFINE FIELD contentType on TABLE node TYPE string;
-DEFINE FIELD contentHash on TABLE node TYPE option<string>;
 DEFINE FIELD url on TABLE node TYPE option<string>;
+DEFINE FIELD file on TABLE node TYPE option<record<file>>;
 DEFINE FIELD properties on TABLE node FLEXIBLE TYPE option<array<object>>;
 DEFINE FIELD metadata on TABLE node FLEXIBLE TYPE option<object>;
 DEFINE FIELD urlParts on TABLE node FLEXIBLE TYPE option<object>;

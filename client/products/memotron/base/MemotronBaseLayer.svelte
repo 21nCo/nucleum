@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { appLoadingState } from "$lib/client/stores/app.store";
+  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { scheduledNotifications } from "$lib/client/stores/notification.store";
   import {
     postMessageToParent,
@@ -17,6 +17,7 @@
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   $: topBarResourceId = $page.url.searchParams.get(
     ResourceAccessMode.TOPBARFOCUS
@@ -44,6 +45,15 @@
         type: "CLEAR_NOTIFICATIONS"
       });
     }
+  }
+
+  function handlePaste(event: ClipboardEvent) {
+    appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
+      componentParams: {
+        event
+      }
+    });
+    event.preventDefault();
   }
 </script>
 
@@ -83,3 +93,4 @@
   <MemotronNotifications />
 </UserBaseLayer>
 <svelte:document on:visibilitychange={handleVisibilityChange} />
+<svelte:window on:paste={handlePaste} />

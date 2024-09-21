@@ -21,13 +21,27 @@
       captureStore.removeMentionLink(data.location, data.id);
     }
   }
-  setContext("node", handleEvent);
+
+  const contentContext = {
+    resolveDynamicParams: () => {
+      return {
+        placeholder: isEmptyState
+          ? "Start typing or paste from clipboard..."
+          : undefined
+      };
+    },
+    publish: handleEvent
+  };
+
+  setContext("content", contentContext);
 
   refreshEmptyState();
   let isShowTOC: boolean = false;
+
   function onFileChanges(event: any) {
     captureStore.setFile(event.detail);
   }
+
   function refreshEmptyState(e?: CustomEvent) {
     isEmptyState =
       $captureStore.captureType === CaptureType.MARKDOWN &&

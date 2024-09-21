@@ -7,5 +7,6 @@ export enum MemotronAction {
   EDIT_COLLECTION_PROPERTIES = "edit-collection-properties",
   CREATE_TYPE = "create-type",
   LIBRARY = "library",
-  SEARCH = "search"
+  SEARCH = "search",
+  PASTE_CONFIRMATION = "paste-confirmation"
 }

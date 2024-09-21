@@ -9,7 +9,7 @@ export interface IResource extends IResourceBase {
   /**
    * The label of the resource
    */
-  label: string;
+  label?: string;
   /**
    * The last time the resource was modified
    */
@@ -119,6 +119,9 @@ export enum ResourceAccessPoint {
   NODE_DEFAULT_RIGHT_PANE = "nodedefaultrightpane"
 }
 
+/**
+ * @deprecated - doesn't help with type inference if nested type intersections. Use {@link OmitForCapture} or {@link OmitFields} instead.
+ */
 export type IResourceCapture<T extends IResource> = Omit<
   T,
   | "createdAt"
@@ -129,7 +132,36 @@ export type IResourceCapture<T extends IResource> = Omit<
   | "id"
 >;
 
+/**
+ * @deprecated - doesn't help with type inference if nested type intersections. Use {@link OmitForCaptureWithId} or {@link OmitFields} instead.
+ */
 export type IResourceCaptureWithId<T extends IResource> = Omit<
   T,
   "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy" | "interactedAt"
 >;
+
+export type CaptureOmittedFields =
+  | "createdAt"
+  | "modifiedAt"
+  | "createdBy"
+  | "modifiedBy"
+  | "interactedAt"
+  | "id";
+
+export type OmitForCapture<T> = {
+  [K in keyof T as Exclude<K, CaptureOmittedFields>]: T[K];
+} & {
+  [K in Extract<keyof T, CaptureOmittedFields>]?: T[K];
+};
+
+export type OmitForCaptureWithId<T> = {
+  [K in keyof T as Exclude<K, CaptureOmittedFields>]: T[K];
+} & {
+  id: IRecordId;
+};
+
+export type OmitFields<T, K extends keyof T> = {
+  [P in keyof T as Exclude<P, K>]: T[P];
+} & {
+  [P in K]?: T[P];
+};

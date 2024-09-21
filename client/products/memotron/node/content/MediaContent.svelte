@@ -12,6 +12,7 @@
   import MediaNodeRightPane from "../rightPanel/MediaNodeRightPane.svelte";
   import PdfAnnotator from "$lib/client/products/memotron/pdfAnnotator/PdfAnnotatorCaseChange.svelte";
   import { setContext } from "svelte";
+  import FileView from "$lib/client/components/files/FileView.svelte";
 
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -65,32 +66,14 @@
       <!-- <audio controls src={$node.body?.url} /> -->
       <!-- TODO - relay refresh event to top instead of refreshing here -->
       <AudioScrubablePreview on:refresh body={$node?.body} nodeId={$node.id} />
-    {:else if $node?.contentType === NodeType.VIDEO && $node && "url" in $node.body}
-      <video controls>
-        <source src={$node.body.url} />
-        <track kind="captions" />
-      </video>
-    {:else if $node?.contentType === NodeType.IMAGE && $node && "url" in $node.body}
-      <!-- <div
-        class="absolute inset-0 bg-cover bg-center filter blur-lg scale-110"
-        style="background-image: url('{$node.body.url}');"
-      ></div>
-      <div class="absolute inset-0 bg-black opacity-30"></div> -->
-      <img
-        bind:this={imgRef}
-        alt="..."
-        class={cn("absolute inset-0 w-full h-full object-contain", {
-          // "object-contain": isPortrait,
-          // "object-cover": !isPortrait
-        })}
-        src={$node.body.url}
-      />
+    {:else if ($node?.contentType === NodeType.IMAGE || $node?.contentType === NodeType.VIDEO) && $node.file}
+      <FileView file={$node.file} />
     {:else if webNodeTypeList.includes($node?.contentType)}
       <WebNodeContent node={$node} />
-    {:else if $node?.contentType === NodeType.PDF && $node && "url" in $node.body}
+    {:else if $node?.contentType === NodeType.PDF && $node.file?.url}
       <PdfAnnotator
         bind:this={pdfContent}
-        url={$node.body.url}
+        url={$node.file.url}
         bind:annots={$node.pdfAnnotations}
       />
     {/if}

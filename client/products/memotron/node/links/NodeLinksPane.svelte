@@ -51,7 +51,7 @@
     await refresh();
     node.subscribe(async (x) => {
       let currentFocus = previousFocus;
-      if (!x.focusedBlock) currentFocus = x.id;
+      if (!x.focusedBlock) currentFocus = x.id.toString();
       else currentFocus = x.focusedBlock;
       if (previousFocus != currentFocus) {
         await refresh();

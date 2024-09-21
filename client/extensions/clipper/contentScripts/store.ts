@@ -42,8 +42,10 @@ import {
   resolveUrl
 } from "../clipper.utils";
 import type {
-  IResourceCapture,
-  IResourceCaptureWithId
+  CaptureOmittedFields,
+  OmitFields,
+  OmitForCapture,
+  OmitForCaptureWithId
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
@@ -55,7 +57,6 @@ import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
 import account from "$lib/client/stores/account.store";
 import { extentionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
-
 
 class WebpageStore extends ObservableStore<IWebpage> {
   previousValue: string = "";
@@ -79,20 +80,6 @@ class WebpageStore extends ObservableStore<IWebpage> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     relayToSidePanel({ event: ExtensionEvent.PAGE_STATE, data: this.get() });
   }
-  /**
-   * @deprecated - use direct refresh() method
-   * @returns 
-   */
-  resolveRefreshQuery() {
-    let url = this.get().url;
-    if (!url) {
-      url = resolveUrl();
-    }
-    logger.log({ at: "resolveRefreshQuery", url, thisgeturl: this.get().url });
-    return replaceParams("return fn::memotron::clipper::fetchPage($url)", {
-      url
-    });
-  }
 
   /**
    * TODO - save url as top level field - to enable querying via dexie, fetching links
@@ -110,7 +97,10 @@ class WebpageStore extends ObservableStore<IWebpage> {
       }
     });
     logger.debug({ at: "refresh", result });
-    const page = result && result.length > 0 ? result.find((r) => r.body.url === this.get().url) : null;
+    const page =
+      result && result.length > 0
+        ? result.find((r) => r.body.url === this.get().url)
+        : null;
 
     logger.debug({ at: "refresh", url: this.get().url, page, result });
     if (!page) {
@@ -153,7 +143,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @returns
    */
   async savePage(creationContext?: IRecordId) {
-    let data: IResourceCapture<IWebPage> = await extractData();
+    let data: OmitForCapture<IWebPage> = await extractData();
     const id = generateResourceId(Resource.node);
     const node = {
       id,
@@ -183,7 +173,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
         return extractMinimalTabData();
       }
       const s3Url = await screenshotWebpage();
-      const tab = extractFullTabData();
+      const tab = await extractFullTabData();
       tab.metadata = { ...tab.metadata, screenshotUrl: s3Url };
       return tab;
 
@@ -222,6 +212,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
   async saveClip(data: IClipCapture) {
     let webpage = this.get();
     logger.debug({ at: "saveClip", webpage, data });
+
     const id = generateResourceId(Resource.node);
     if (!webpage.id) {
       await this.savePage(id);
@@ -259,13 +250,14 @@ class WebpageStore extends ObservableStore<IWebpage> {
     }
   }
   async saveTweet(
-    data: IClipCapture<
+    data: OmitFields<
       ITweet & {
         username: string;
         profileUrl: string;
         authorName: string;
         profileImageUrl: string;
-      }
+      },
+      CaptureOmittedFields | "label"
     >,
     isFromTweetPage: boolean = false
   ) {
@@ -275,16 +267,17 @@ class WebpageStore extends ObservableStore<IWebpage> {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
       id: data.username as string
     });
-    const tweetNode: IClipCapture<ITweet> & { id: IRecordId } = {
+    const tweetNode: OmitForCaptureWithId<ITweet> = {
       id,
+      url: data.url,
       body: data.body,
       metadata: data.metadata,
       parent: twitterProfileId,
       contentType: NodeType.TWEET
     };
-    const twitterProfileNode: IClipCapture<ITwitterProfile> = {
+    const twitterProfileNode: OmitForCapture<ITwitterProfile> = {
+      url: data.profileUrl,
       body: {
-        url: data.profileUrl,
         name: data.authorName,
         profileImageUrl: data.profileImageUrl
       },
@@ -317,7 +310,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * @returns
    */
   async saveTwitterProfile(
-    data: IClipCapture<ITwitterProfile & { username: string }>
+    data: OmitForCapture<ITwitterProfile & { username: string }>
   ) {
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
@@ -327,7 +320,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     const response = await nodeStore.create([
       { ...data, id: twitterProfileId, label: undefined }
     ]);
-      if (!response || !Array.isArray(response)) return;
+    if (!response || !Array.isArray(response)) return;
     const node = response[0] as ITwitterProfile;
     this.update((n) => {
       n.clips = [...(n.clips ?? []), { ...node, links: [] }];
@@ -499,10 +492,7 @@ class ClipperToolbarState extends KeyValueStore<
       { isOpen: true, position: Position.Right },
       {
         refreshOnAppear: true,
-        dboDependencies: [
-          "fn::memotron::clipper::fetchPage",
-          "fn::global::utils::resolveUrlParts::v2"
-        ]
+        dboDependencies: ["fn::global::utils::resolveUrlParts::v2"]
       }
     );
   }
@@ -552,7 +542,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
     });
   }
 
-  async save(items: IResourceCaptureWithId<IKindleBook | IKindleHighlight>[]) {
+  async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.debug({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
     const limitCount = 500;
@@ -586,7 +576,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
       const result = await extentionFlux({
         method: FluxMethod.SELECT,
         args: {
-          resourceId: "kv:clipperSync",
+          resourceId: "kv:clipperSync"
         }
       });
       logger.debug({ at: "syncStore refreshSyncState", result, id });

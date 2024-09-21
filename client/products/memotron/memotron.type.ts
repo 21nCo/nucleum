@@ -4,7 +4,6 @@ import type {
 } from "$lib/client/components/flux/resourceStores/resource.type";
 
 export interface IMemotronItemBase extends IResource, IResourseShareable {
-  label: string;
   isStarred?: boolean;
 }
 

@@ -15,8 +15,11 @@
   import { appStore } from "$lib/client/stores/app.store";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import { createEventDispatcher } from "svelte";
+  import type { INodeThumb } from "../node/node.type";
+  import type { ICollection } from "../collection/collection.type";
+  import type { IFile } from "$lib/client/components/files/file.type";
   const dispatch = createEventDispatcher();
-  export let data: any[] = [];
+  export let data: (INodeThumb | ICollection | IFile)[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;

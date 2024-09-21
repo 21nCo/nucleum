@@ -17,7 +17,7 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { formatDate, formatDatetime } from "$lib/client/utils/time.utils";
+  import { formatDatetime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
@@ -31,16 +31,18 @@
   import { BlockAction } from "$lib/client/components/markdown/md.type";
   import { wordCounter } from "$lib/client/actions/counter.action";
 
-  function handleEvent(message: any) {
-    logger.log({ at: "node context", message });
-    if (!message) return;
-    const detail = message.data;
-    if (message.event === "mention") {
-      if (!detail.id || !detail.location) return;
-      node.mention(detail.location, detail.id);
+  function handleEvent(event: string, data: any) {
+    logger.log({ at: "node context", event, data });
+    if (!event) return;
+    if (event === "mention") {
+      if (!data.id || !data.location) return;
+      node.mention(data.location, data.id);
     }
   }
-  setContext("content", handleEvent);
+  const contentContext = {
+    publish: handleEvent
+  };
+  setContext("content", contentContext);
 
   onMount(() => {
     const focusEventSub = node.eventStore.subscribe((x) => {

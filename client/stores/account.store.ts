@@ -271,7 +271,8 @@ class AccountStore extends ObservableStore<
             id,
             label: fileName,
             type: contentType,
-            data: uint8Array
+            data: uint8Array,
+            size: uint8Array.length
           }
         ]);
         return response;
@@ -294,7 +295,8 @@ class AccountStore extends ObservableStore<
             id,
             label: fileName,
             type: contentType,
-            url
+            url,
+            size: blob.size
           }
         ]);
         return response;

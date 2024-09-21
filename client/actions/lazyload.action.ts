@@ -83,7 +83,8 @@ export function fileLoader(
     try {
       if (node instanceof HTMLImageElement) {
         //TODO - placeholder until loading...
-        node.src = "https://placehold.co/60x40/slateblue/slateblue?text=...";
+        //slateblue
+        node.src = "https://placehold.co/60x40/darkgrey/darkgrey?text=...";
       }
       const sourceValue =
         typeof source === "function" ? await source() : source;

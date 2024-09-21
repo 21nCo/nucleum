@@ -15,7 +15,7 @@
     </div>
   </div>
   <span class="flex items-center gap-1 shrink-0">
-    {#if node.body?.url}
+    {#if node.url}
       <Icon icon="arrow-up-right" class="fill-fgs3" size={Size.xs} />
     {/if}
     {#if node.isStarred}

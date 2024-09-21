@@ -13,10 +13,18 @@ export const screenShotOnlyPages = [
  */
 export const saveOnlyPages = [
   /^https:\/\/(?:www\.)?figma\.com\/(?:design|files)\/.+/,
-  /^https?:\/\/(?:www\.)?(youtube\.com|youtu\.be)\/.*/,
+  /^https?:\/\/(?:www\.)?(youtube\.com|youtu\.be)\/.*/
 ];
 
-export const contentTypeMap = [
+export const contentTypeMap: {
+  contentType:
+    | NodeType.TWEET
+    | NodeType.TWITTER_PROFILE
+    | NodeType.YOUTUBE_VIDEO
+    | NodeType.YOUTUBE_CHANNEL;
+  regex: RegExp[];
+  currentDomain?: string;
+}[] = [
   {
     contentType: NodeType.TWEET,
     regex: [

@@ -23,10 +23,9 @@ import { ObservableStore } from "../../../stores/client.store";
 import { resolveCurrentUserId } from "../../../utils/account.utils";
 import type {
   IResource,
-  IResourceCapture,
-  IResourceCaptureWithId,
   ITrashInformation,
-  ResourceAccessMode
+  OmitForCapture,
+  OmitForCaptureWithId
 } from "./resource.type";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { flux } from "../flux";
@@ -165,10 +164,10 @@ export class ResourceStore<T extends IResource> implements IStore {
    */
   async create(
     input:
-      | IResourceCapture<T>
-      | IResourceCapture<T>[]
-      | IResourceCaptureWithId<T>
-      | IResourceCaptureWithId<T>[],
+      | OmitForCapture<T>
+      | OmitForCapture<T>[]
+      | OmitForCaptureWithId<T>
+      | OmitForCaptureWithId<T>[],
     params?: {
       customQuery?: string;
       queueParams?: IMutationQueueParams;

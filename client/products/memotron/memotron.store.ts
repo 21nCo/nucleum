@@ -74,6 +74,7 @@ export class SearchStore {
       properties: [
         "*",
         "parent.* as parent",
+        "file.* as file",
         "search::highlight('**', '**', 1, false) AS bodySearch",
         "search::highlight('**', '**', 2, false) AS labelSearch",
         "(fn::memotron::node::parent($parent.id)) as mdParent"

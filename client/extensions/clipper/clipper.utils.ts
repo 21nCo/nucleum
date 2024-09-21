@@ -1,7 +1,10 @@
-import type { IResourceCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type {
+  OmitForCapture,
+  OmitFields,
+  CaptureOmittedFields
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import {
   NodeType,
-  type IClipCapture,
   type ITweet,
   type ITwitterProfile,
   type IWebPage
@@ -12,7 +15,10 @@ import { contentTypeMap } from "$lib/client/products/memotron/common/urlMap";
 import { enumToString } from "$lib/shared/utils/text.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/clip.type";
-import { generateHash } from "$lib/shared/utils/crypto.utils";
+import {
+  generateHash,
+  generateSHA256Hash
+} from "$lib/shared/utils/crypto.utils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -151,33 +157,41 @@ export async function resolveCurrentTabData(
  * Note: This function should be called only from the content script.
  * @returns TabData
  */
-export function extractFullTabData(): IResourceCapture<IWebPage> {
-  const title = document.title;
+export async function extractFullTabData(
+  doc?: Document,
+  params?: {
+    url?: string;
+    docText?: string;
+  }
+): Promise<OmitForCapture<IWebPage>> {
+  doc = doc ?? document;
+  const title = doc.title;
   const faviconLink = (
-    document.querySelector("link[rel*='icon']") as HTMLLinkElement
+    doc.querySelector("link[rel*='icon']") as HTMLLinkElement
   )?.href;
   const appIconLinks = Array.from(
-    document.querySelectorAll("link[rel='apple-touch-icon']"),
+    doc.querySelectorAll("link[rel='apple-touch-icon']"),
     (link) => (link as HTMLLinkElement).href
   );
   const description = (
-    document.querySelector("meta[name='description']") as HTMLMetaElement
+    doc.querySelector("meta[name='description']") as HTMLMetaElement
   )?.content;
   const keywords = (
-    document.querySelector("meta[name='keywords']") as HTMLMetaElement
+    doc.querySelector("meta[name='keywords']") as HTMLMetaElement
   )?.content;
   const twitterCard = (
-    document.querySelector("meta[name='twitter:card']") as HTMLMetaElement
+    doc.querySelector("meta[name='twitter:card']") as HTMLMetaElement
   )?.content;
-  const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
-  const hash = generateHash(document.body.innerHTML);
-  const url = resolveUrl();
+  const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData(doc);
+  console.log({ innerHTML: doc.body?.innerHTML, docText: params?.docText });
+  const hash = await generateSHA256Hash(doc.body?.innerHTML ?? params?.docText);
+  const url = params?.url ? resolveUrl(params.url) : resolveUrl();
   const contentType = resolveContentTypeForUrl(url);
   return {
     label: title,
     contentType,
+    url,
     body: {
-      url,
       hash,
       description
     },
@@ -194,7 +208,7 @@ export function extractFullTabData(): IResourceCapture<IWebPage> {
   };
 }
 
-export function extractMinimalTabData(): IResourceCapture<IWebPage> {
+export function extractMinimalTabData(): OmitForCapture<IWebPage> {
   const title = document.title;
   const hash = generateHash(document.body.innerHTML);
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
@@ -205,7 +219,8 @@ export function extractMinimalTabData(): IResourceCapture<IWebPage> {
     metadata: { ogTitle, ogImage, ogDescription, ogUrl },
     label: title,
     contentType,
-    body: { url, hash }
+    url,
+    body: { hash }
   };
 }
 
@@ -217,21 +232,22 @@ export function resolveUrl(url?: string) {
   return url;
 }
 
-function resolveOgData() {
+function resolveOgData(doc?: Document) {
+  doc = doc ?? document;
   const ogTitle = (
-    document.querySelector("meta[property='og:title']") as HTMLMetaElement
+    doc.querySelector("meta[property='og:title']") as HTMLMetaElement
   )?.content;
   const ogImage = (
-    document.querySelector("meta[property='og:image']") as HTMLMetaElement
+    doc.querySelector("meta[property='og:image']") as HTMLMetaElement
   )?.content;
   const ogDescription = (
-    document.querySelector("meta[property='og:description']") as HTMLMetaElement
+    doc.querySelector("meta[property='og:description']") as HTMLMetaElement
   )?.content;
   const ogUrl = (
-    document.querySelector("meta[property='og:url']") as HTMLMetaElement
+    doc.querySelector("meta[property='og:url']") as HTMLMetaElement
   )?.content;
   const ogSiteName = (
-    document.querySelector("meta[property='og:site_name']") as HTMLMetaElement
+    doc.querySelector("meta[property='og:site_name']") as HTMLMetaElement
   )?.content;
   return { ogTitle, ogImage, ogDescription, ogUrl, ogSiteName };
 }
@@ -256,14 +272,9 @@ export function resolveContentTypeForUrl(url: string) {
  * @param tweetArticle
  * @returns
  */
-function parseTweetContent(tweetArticle: Element): IClipCapture<
-  ITweet & {
-    username: string;
-    profileUrl: string;
-    authorName: string;
-    profileImageUrl: string;
-  }
-> {
+function parseTweetContent(
+  tweetArticle: Element
+): OmitFields<ITweet, "parent" | "label" | CaptureOmittedFields> | undefined {
   if (!tweetArticle) return;
   const tweetBody = tweetArticle.querySelector('[data-testid="tweetText"]');
   const linkElements = tweetArticle.querySelectorAll("a");
@@ -297,10 +308,10 @@ function parseTweetContent(tweetArticle: Element): IClipCapture<
     extractInfoFromLinks(tweetLinks);
   return {
     contentType: NodeType.TWEET,
+    url: `https://${domain}/${username}/status/${tweetId}`,
     body: {
-      url: `https://${domain}/${username}/status/${tweetId}`,
-      content: tweetContent,
-      postedAt: tweetTime[0]?.datetime
+      content: tweetContent ?? "",
+      postedAt: tweetTime[0]?.datetime ?? ""
     },
     metadata: {
       tweetId,
@@ -418,7 +429,7 @@ export function extractTweetFromTweeetPage() {
  * This function is triggered from twitter profile page.
  * @returns
  */
-export function extractTwitterProfile(): IClipCapture<
+export function extractTwitterProfile(): OmitForCapture<
   ITwitterProfile & {
     username: string;
   }
@@ -439,8 +450,13 @@ export function extractTwitterProfile(): IClipCapture<
   const bioLink = linkElement?.href;
   const bioLinkText = linkElement?.textContent;
   return {
-    body: { name, bio, url, profileImageUrl },
-    metadata: { ogTitle, bioLink, bioLinkText },
+    url,
+    body: {
+      name: name ?? "",
+      bio: bio ?? "",
+      profileImageUrl: profileImageUrl ?? ""
+    },
+    metadata: { ogTitle, bioLink, bioLinkText: bioLinkText ?? "" },
     username,
     contentType: NodeType.TWITTER_PROFILE
   };
