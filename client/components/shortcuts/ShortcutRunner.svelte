@@ -5,8 +5,11 @@
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { KeyboardKey } from "$lib/client/types/keyboard.type";
-  import { resolveModifiers } from "../settings/shortcuts/shortcut.utils";
+  import { resolveModifiers } from "./shortcut.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { Action } from "$lib/client/types/action.enum";
+  import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
 
   function handleSystemShortcuts(event: KeyboardEvent) {
     if (event.key === KeyboardKey.ESCAPE || event.key === KeyboardKey.ENTER) {
@@ -24,9 +27,7 @@
     logger.log({ event, at: "shortcutListener" });
     const target = event.target || event.srcElement;
     const isTextInputSource = isTextElement(target);
-    let modifiers = [];
-    modifiers = resolveModifiers(event);
-    const shortcut = resolveShortcut(event.key, modifiers);
+    const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
     if (
       isTextInputSource &&
       (event.key === KeyboardKey.ENTER ||
@@ -36,29 +37,18 @@
       return;
     const isSystemShortcut = handleSystemShortcuts(event);
     if (isSystemShortcut || !shortcut) return;
+    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
+    if (
+      interactionMode === InteractionMode.COMMAND_ONLY &&
+      shortcut.action === Action.CMD
+    )
+      return;
     appStore.runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
   };
-
-  /**
-   * Resolves the shortcut for the given key and modifiers.
-   * @param key
-   * @param modifiers
-   */
-  function resolveShortcut(key: string, modifiers: string[]) {
-    const keyMap = keyboardShortcuts.fecthKeyMap();
-    const shortcut = keyMap.find((s: any) => {
-      if (s.key.toLowerCase() !== key.toLowerCase()) return false;
-      if (s.modifiers && s.modifiers.length !== modifiers.length) return false;
-      return (
-        (s.modifiers && s.modifiers.every((m: any) => modifiers.includes(m))) ||
-        (!s.modifiers && modifiers.length === 0)
-      );
-    });
-    logger.log({ key, modifiers, shortcut, keyMap });
-    return shortcut;
-  }
 </script>
 
 <svelte:window on:keydown={shortcutListener} />

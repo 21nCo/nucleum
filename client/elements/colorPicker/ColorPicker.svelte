@@ -5,9 +5,13 @@
   import appearance from "$lib/client/stores/appearance.store";
   import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
   import type { InputLabel } from "$lib/client/types/input.type";
+  import ColorPickerElement from "./ColorPickerElement.svelte";
+
   export let hue = 0;
   export let label: InputLabel | undefined = undefined;
   export let isShowPreview: boolean = true;
+  export let isHexMode: boolean = true;
+  export let hex: string = "#000000";
   let saturation = 50;
   let lightness = 50;
   let fgColorHsl = "";
@@ -17,13 +21,17 @@
 
 <FormControlLabelWrapper props={label}>
   <div class="flex flex-col gap-6 items-center justify-center w-full">
-    <ColorSlider
-      bind:hue
-      bind:saturation
-      bind:fgColorHsl
-      bind:lightness
-      on:change
-    />
+    {#if isHexMode}
+      <ColorSlider
+        bind:hue
+        bind:saturation
+        bind:fgColorHsl
+        bind:lightness
+        on:change
+      />
+    {:else}
+      <ColorPickerElement on:change bind:value={hex} />
+    {/if}
     {#if $appStore.isDebugMode}
       <Button
         label={isDark ? "Dark" : "Light"}
@@ -34,14 +42,25 @@
     {/if}
   </div>
   {#if isShowPreview}
-    <div class="flex w-full justify-center mt-4">
-      <div
-        class="w-1/2 h-8 p-2 flex justify-center items-center rounded-md"
-        style="background-color:hsl({hue}, {saturation}%, {lightness}%); color: {fgColorHsl};"
-      >
-        Preview
+    {#if isHexMode}
+      <div class="flex w-full justify-center mt-4">
+        <div
+          class="w-1/2 h-8 p-2 flex justify-center items-center rounded-md"
+          style="background-color:hsl({hue}, {saturation}%, {lightness}%); color: {fgColorHsl};"
+        >
+          Preview
+        </div>
       </div>
-    </div>
+    {:else}
+      <div class="flex w-full justify-center mt-4">
+        <div
+          class="w-1/2 h-8 p-2 flex justify-center items-center rounded-md"
+          style="background-color: {hex};"
+        >
+          Preview
+        </div>
+      </div>
+    {/if}
   {/if}
 </FormControlLabelWrapper>
 

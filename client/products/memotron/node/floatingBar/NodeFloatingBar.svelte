@@ -2,7 +2,7 @@
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
@@ -17,11 +17,16 @@
   } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
   import { MemotronAction } from "../../memotronAction.enum";
-  import { resolveNodeContextMenu, type IActiveNodeStore } from "../node.store";
+  import {
+    resolveNodeContextMenu,
+    resolveVisibleActions,
+    type IActiveNodeStore
+  } from "../node.store";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
@@ -37,6 +42,7 @@
   };
   let contextMenu = [];
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF);
+  $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
 </script>
 
 <div
@@ -50,66 +56,65 @@
     <PanelSwitcher
       bind:value={selectedView}
       parentBgIndex={bgIndex}
-      items={["Content", "Graph", "Bird view"]}
+      items={["Content", "Bird view"]}
       style={PanelSwitcherStyle.BAR}
       barStyle={BarStyle.DOT}
     />
   </span>
   <span class="flex items-center gap-3 h-full">
-    <Button {...buttonCommonProps} icon="document-text" tooltip="Footnotes" />
-    <Button
-      {...buttonCommonProps}
-      icon="book-open"
-      tooltip="Toggle read mode"
-      on:click={() => isInEditMode.toggle()}
-    />
-    <!-- <EditToggleButton isReadModeVariant={true} /> -->
-    <Button
-      {...buttonCommonProps}
-      icon="square-3-stack-3d"
-      tooltip="Show forks"
-    />
-    <Button
-      {...buttonCommonProps}
-      tooltip="Serendipity"
-      icon="light-bulb"
-      on:click={() => {
-        appStore.runAction(MemotronAction.SERENDIPITY, {
-          componentParams: { id: $node.id }
-        });
+    <ToggleGroup
+      items={resolveVisibleActions($node.contentType)}
+      class="gap-5"
+      on:change={(e) => {
+        // onPanelAction(e.detail);
+      }}
+      on:none={() => {
+        // rightPane = undefined;
       }}
     />
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       {contextMenu}
+      id="nodeContextMenu"
       tooltip="More actions"
     />
     <Divider
       orientation={Orientation.Vertical}
       colorStrength={ColorStrength.Strong}
     />
+    {#if currentMode === ResourceAccessMode.SPLIT || currentMode === ResourceAccessMode.FSPLIT}
+      <Button
+        {...buttonCommonProps}
+        icon="cross-circled"
+        tooltip="Close split view"
+        on:click={() => {
+          appStore.closeResource({ accessMode: currentMode });
+        }}
+      />
+    {:else}
+      <Button
+        {...buttonCommonProps}
+        icon={isWidened ? "unwiden" : "widen"}
+        tooltip={isWidened ? "Collapse" : "Expand"}
+        on:click={() => {
+          isWidened = !isWidened;
+        }}
+      />
+      {#if currentMode !== ResourceAccessMode.FULL}
+        <Button
+          {...buttonCommonProps}
+          icon="split"
+          tooltip="Open in split view"
+          on:click={() => {
+            dispatch("split");
+          }}
+        />
+      {/if}
+    {/if}
     <Button
       {...buttonCommonProps}
-      icon={isWidened ? "unwiden" : "widen"}
-      tooltip={isWidened ? "Collapse" : "Expand"}
-      on:click={() => {
-        isWidened = !isWidened;
-      }}
-    />
-    <Button
-      {...buttonCommonProps}
-      icon="split"
-      tooltip="Open in split view"
-      on:click={() => {
-        dispatch("split");
-      }}
-    />
-    <Button
-      {...buttonCommonProps}
-      icon={accessMode === ResourceAccessMode.FOCUS
-        ? "collapse"
-        : "full-screen"}
-      tooltip={accessMode === ResourceAccessMode.FOCUS
+      icon={accessMode === ResourceAccessMode.FULL ? "collapse" : "full-screen"}
+      tooltip={accessMode === ResourceAccessMode.FULL
         ? "Minimize"
         : "Full screen"}
       on:click={() => {

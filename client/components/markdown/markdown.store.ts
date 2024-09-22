@@ -16,23 +16,21 @@ import {
   isEmptyArray,
   isValidArrayWithData
 } from "$lib/shared/utils/obj.utils";
-import {
-  generateMarkdownText,
-  prefixTable
-} from "$lib/shared/utils/text.utils";
-import { generateUID } from "$lib/client/utils/utils";
 import { get, writable, type Updater } from "svelte/store";
 import { resolveImmediateParent } from "./markdown.utils";
-import type {
-  IBlock,
-  IMarkdownParams,
-  IMarkdownStore,
-  IMarkdown,
-  IListOperation,
-  IBlockOperationContext
+import {
+  type IBlock,
+  type IMarkdownParams,
+  type IMarkdownStore,
+  type IMarkdown,
+  type IListOperation,
+  type IBlockOperationContext,
+  BlockAction
 } from "$lib/client/components/markdown/md.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 /**
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used
@@ -41,7 +39,7 @@ export const isReplaceableMd = writable<boolean>(false);
 export const emptyBlock: IBlock = {
   contentType: NodeType.SIMPLE_TEXT,
   body: "",
-  id: generateUID()
+  id: generateResourceId(Resource.node)
 };
 const seedMdStore: IMarkdownStore = {
   blocks: [],
@@ -67,7 +65,10 @@ export function getMdStore(id: string) {
 }
 
 class MarkdownStore extends ObservableStore<IMarkdownStore> {
-  focus = writable<{ id?: string } | undefined>(undefined);
+  focus = writable<
+    | { id?: IRecordId; params?: { xOffset?: number; isBottom?: boolean } }
+    | undefined
+  >(undefined);
   constructor() {
     super("markdownStore");
     this.set(seedMdStore);
@@ -93,7 +94,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    */
   insert(params: IBlockOperationContext) {
     let newBlock: Partial<IBlock<NodeContent>> = {
-      id: prefixTable(generateUID(), Resource.node),
+      id: generateResourceId(Resource.node),
       body: ""
     };
     if (
@@ -169,7 +170,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    * @param blockType type of structural block to insert
    */
   insertStructualBlock(contextBlockId: string, blockType: StructuralNodeType) {
-    const newBlockId = prefixTable(generateUID(), Resource.node);
+    const newBlockId = generateResourceId(Resource.node);
     this.update((store) => {
       const contextBlockIndex = store.blocks.findIndex(
         (b) => b.id === contextBlockId
@@ -227,7 +228,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
         const contextBlockIndex = blocks.findIndex((b) => b.id === contextId);
         const currentBlock = blocks[contextBlockIndex];
         let newBlock: IBlock<ListContent> = {
-          id: generateUID(),
+          id: generateResourceId(Resource.node),
           contentType: NodeType.LIST,
           listType: ListType.UNORDERED,
           body: "",
@@ -344,7 +345,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     }
   }
 
-  deleteBlock(id: string) {
+  deleteBlock(id: IRecordId) {
     this.update((n) => {
       const deleteIndex = n.blocks.findIndex((b) => b.id === id);
       n.blocks = n.blocks.filter((b) => b.id !== id);
@@ -353,12 +354,64 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     });
   }
 
-  focusPreviousSibling(id: string) {
+  shiftFocus(
+    id: IRecordId,
+    direction: "up" | "down",
+    params?: { xOffset?: number }
+  ) {
     this.update((n) => {
       const contextIndex = n.blocks.findIndex((b) => b.id === id);
-      this.focus.set({ id: n.blocks[contextIndex - 1].id });
+      if (contextIndex === -1) return n;
+      const siblingIndex =
+        direction === "up" ? contextIndex - 1 : contextIndex + 1;
+      if (siblingIndex < 0 || siblingIndex > n.blocks.length - 1) return n;
+      this.focus.set({
+        id: n.blocks[siblingIndex].id,
+        params: {
+          ...params,
+          isBottom: direction === "up"
+        }
+      });
       return n;
     });
+  }
+
+  move(id: IRecordId, direction: BlockAction.MOVEUP | BlockAction.MOVEDOWN) {
+    this.update((n) => {
+      const contextIndex = n.blocks.findIndex((b) => b.id === id);
+      if (contextIndex === -1) return n;
+      const siblingIndex =
+        direction === BlockAction.MOVEUP ? contextIndex - 1 : contextIndex + 1;
+      if (siblingIndex < 0 || siblingIndex > n.blocks.length - 1) return n;
+      const currentBlock = n.blocks[contextIndex];
+      const siblingBlock = n.blocks[siblingIndex];
+      n.blocks[contextIndex] = siblingBlock;
+      n.blocks[siblingIndex] = currentBlock;
+      return n;
+    });
+    this.focus.set({ id });
+  }
+
+  duplicate(id: IRecordId) {
+    let newBlock: IBlock;
+    const md = this.get();
+    const contextIndex = md.blocks.findIndex((b) => b.id === id);
+    if (contextIndex === -1) return;
+    const currentBlock = md.blocks[contextIndex];
+    newBlock = {
+      ...currentBlock,
+      id: generateResourceId(Resource.node)
+    };
+    this.update((n) => {
+      n.blocks = [
+        ...n.blocks.slice(0, contextIndex + 1),
+        newBlock,
+        ...n.blocks.slice(contextIndex + 1)
+      ];
+      return n;
+    });
+    this.focus.set({ id: newBlock.id });
+    return newBlock;
   }
 
   /**
@@ -380,16 +433,6 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
 
   focusBlock(id: string) {
     this.focus.set({ id });
-  }
-
-  generateMarkdownText() {
-    let text = "";
-    this.update((n) => {
-      const blocks: IBlock[] = deepCopy(n.blocks);
-      text = generateMarkdownText(blocks);
-      return n;
-    });
-    return text;
   }
 
   isFirstBlockAndIsEmpty(id: string) {

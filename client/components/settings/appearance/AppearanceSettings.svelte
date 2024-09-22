@@ -1,9 +1,6 @@
 <script lang="ts">
-  import {
-    appConstants,
-    appStore,
-    userPreferences
-  } from "$lib/client/stores/app.store";
+  import { appConstants } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { onMount } from "svelte";
   import { AppSkin, Theme } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";

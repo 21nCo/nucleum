@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { appStore } from "$lib/client/stores/app.store";
   import LinkSuggestionItem from "../../common/linkbox/LinkSuggestionItem.svelte";
   export let items: any[] = [];
@@ -9,7 +9,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-2 w-full">
+<div class="flex flex-col w-full">
   {#each items as item}
     <LinkSuggestionItem {item} on:click={(e) => onClick(e, item)} />
   {/each}

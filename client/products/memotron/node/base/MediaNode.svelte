@@ -3,13 +3,16 @@
   import MediaContent from "../content/MediaContent.svelte";
   import MediaNodeFloatingBar from "../floatingBar/MediaNodeFloatingBar.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { NodeRightPaneType } from "../node.type";
+
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
   let isShowFloatingBar: boolean = true;
   let isHoveringOnFloatingBar: boolean = false;
   let timeoutId: any;
-  let renderingDetails: any;
+  let rightPane: NodeRightPaneType | undefined = undefined;
+
   function onInteraction(event: MouseEvent | TouchEvent | CustomEvent) {
     if (accessMode === ResourceAccessMode.POP) return;
     isShowFloatingBar = true;
@@ -22,19 +25,19 @@
 </script>
 
 {#if $node}
-  <main class="relative flex flex-col w-full h-full">
-    <MediaContent {node} {accessMode} bind:renderingDetails />
+  <div class="relative flex flex-col w-full h-full">
+    <MediaContent {node} {accessMode} bind:rightPane />
     {#if accessMode === ResourceAccessMode.POP || isShowFloatingBar || accessMode === ResourceAccessMode.INLINE}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
-        {renderingDetails}
         {node}
         {accessMode}
         on:fullscreen={() => {
           appStore.toggleFocusAccessMode(accessMode, $node.id);
         }}
+        bind:rightPane
       />
     {/if}
-  </main>
+  </div>
 {/if}
 <svelte:document on:mousemove={onInteraction} on:touchmove={onInteraction} />

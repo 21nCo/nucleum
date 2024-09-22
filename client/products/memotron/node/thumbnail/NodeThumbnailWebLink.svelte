@@ -9,14 +9,14 @@
   }
 </script>
 
-{#if !internalUrlNodeTypeList.includes(item.contentType) && item.body.url}
+{#if !internalUrlNodeTypeList.includes(item.contentType) && item.url}
   <button
     class="flex gap-0.5 items-center underline text-fgs3 text-b4"
     on:click|stopPropagation
   >
     <Icon icon="link-mini" size={Size.sm} />
-    <a href={item.body.url} target="_blank" rel="noopener noreferrer">
-      {extractDomain(item.body.url)}
+    <a href={item.url} target="_blank" rel="noopener noreferrer">
+      {extractDomain(item.url)}
     </a>
   </button>
 {/if}

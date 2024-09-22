@@ -10,15 +10,21 @@
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import { LinkType } from "$lib/client/products/memotron/node/node.type";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-  import { resolveTypes } from "../memotron.store";
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import type { IProperty } from "../collection/properties/property.type";
+  import { collectionStore } from "../collection/collection.store";
+  import { CaptureType } from "./capture.type";
+  import FileUploader from "./FileUploader.svelte";
+  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  export let isWindowDnD = false;
+
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -29,6 +35,7 @@
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
   let avatars: IAvatar[] = [];
+  let propertyConfig: IProperty[] = [];
   function refresh() {
     dataManager.refresh(Resource.capture);
   }
@@ -41,8 +48,10 @@
     )
     ?.map((x) => x.to);
 
-  async function resolveAvatars(types: string[]) {
-    avatars = (await resolveTypes(types)).avatars;
+  async function refreshTypeData(types: string[]) {
+    const data = await collectionStore.resolveTypes(types);
+    avatars = data.avatars;
+    propertyConfig = data.propertyConfig;
   }
 </script>
 
@@ -59,26 +68,29 @@
       <Writer />
     </div>
   </div> -->
+{:else if $captureStore.captureType === CaptureType.UPLOAD}
+  <FileUploader />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        <header class="flex justify-between w-full dp:px-14">
+        <header class="flex justify-between w-full dp:px-12">
           <div class="flex gap--4 grow">
             <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
             <NodeAvatar {avatars} />
-            <div class="text-h4 font-medium w-full">
+            <div class="text-h2 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
                 style={InputStyle.PLAIN}
                 isExperimentalMdInput={true}
-                placeholder="Title"
+                placeholder="Untitled"
               />
             </div>
           </div>
           <div class="flex gap-1">
             <!-- save, cancel, edit type actions
             TODO: save icon
+            "hugeicons:arrow-move-up-right"
            -->
             {#if !isEmptyState}
               <Button
@@ -86,7 +98,7 @@
                 type={ButtonVariant.PRIMARY}
                 size={Size.sm}
                 isPreventMinWidth={true}
-                icon="bookmark"
+                icon="ph:floppy-disk"
                 on:click={async () => {
                   isSaving = true;
                   const result = await captureStore.save();
@@ -98,7 +110,7 @@
                 style={ButtonStyle.OUTLINED}
                 isPreventMinWidth={true}
                 size={Size.sm}
-                icon="cross"
+                icon="ph:x-light"
                 on:click={() => {
                   captureStore.reset();
                   isEmptyState = true;
@@ -113,8 +125,8 @@
               <!-- TODO - send only selected type if properties are to be shown upon link click -->
               <PropertiesListView
                 context="capture"
+                {propertyConfig}
                 bind:properties={$captureStore.properties}
-                {types}
                 bind:isCollapsed={isPropertiesCollapsed}
               />
             {/if}
@@ -151,3 +163,4 @@
   {/key}
 {/if}
 <svelte:document on:visibilitychange={visibilityChangeListener} />
+<PageLayer isDragAndDropPage={!isWindowDnD} />

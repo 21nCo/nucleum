@@ -12,7 +12,7 @@ import type {
 } from "$lib/client/types/pointron/goal.type";
 import { GoalPersistence } from "./goal.persistence";
 import { prefixTable } from "$lib/shared/utils/text.utils";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   deepCopy,
   isValidArray,
@@ -26,14 +26,14 @@ import { toasts } from "$lib/client/stores/notification.store";
 import view from "$lib/client/stores/view.store";
 import {
   DependencySyncType,
-  PersistanceActionType,
+  PersistenceActionType,
   StoreDataType
 } from "$lib/client/types/data.type";
 import { dataManager } from "$lib/client/persistence/dataManager";
 import { TagId } from "$lib/client/types/pointron/tagId.enum";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { Persistence } from "$lib/client/persistence/persistence";
-import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
+import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { AlertType } from "$lib/client/types/notification.type";
 
@@ -140,7 +140,7 @@ function flattenSubGoalsAsGoals(
       : [],
     isArchived: goal.isArchived,
     isPinnedForQuickStart: goal.isPinnedForQuickStart,
-    isFavorite: goal.isStarred,
+    isStarred: goal.isStarred,
     isCompleted: goal.isCompleted,
     color: goal.color,
     createdAt: new Date().toISOString(),
@@ -250,14 +250,14 @@ class GoalStore extends ResourceFIRStore<IGoal> {
         : [],
       isArchived: goal.isArchived,
       isPinnedForQuickStart: goal.isPinnedForQuickStart,
-      isFavorite: goal.isStarred,
+      isStarred: goal.isStarred,
       isCompleted: goal.isCompleted,
       color: goal.color,
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString()
     };
     await dataManager.performMutation(this.id, goalForDB, {
-      action: PersistanceActionType.CREATE
+      action: PersistenceActionType.CREATE
     });
     this.update((store) => {
       store.items.push(goalForDB);

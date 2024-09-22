@@ -2,7 +2,11 @@
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  const product = clientStorage.get(ClientStorageKey.PRODUCT);
+  import { onMount } from "svelte";
+  let product = "";
+  onMount(async () => {
+    product = (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? "";
+  });
 </script>
 
 <svelte:head>

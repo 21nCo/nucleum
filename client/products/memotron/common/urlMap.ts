@@ -1,15 +1,30 @@
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 
 /**
- * Web URLs that only support screen shots. Options like save page, summarize will be disabled for these pages.
+ * Web URLs that only support screen shots. Options like save page, text highlighter, summarize will all be disabled for these pages.
  */
 export const screenShotOnlyPages = [
   /^https:\/\/app\.[^\/]+\/.*/,
-  /^https:\/\/(?:www\.)?figma\.com\/(?:design|files)\/.+/,
   /^https:\/\/(?:twitter\.com|x\.com)\/(?:(i|jobs|explore|home|settings|messages|notifications|search|hashtag|compose)(?:\/(.+))?|([^\/]+)\/lists)?\/?$/
 ];
 
-export const contentTypeMap = [
+/**
+ * Web URLs that only support saving page and screenshot. Options like text highlighter, summarize will be disabled for these pages.
+ */
+export const saveOnlyPages = [
+  /^https:\/\/(?:www\.)?figma\.com\/(?:design|files)\/.+/,
+  /^https?:\/\/(?:www\.)?(youtube\.com|youtu\.be)\/.*/
+];
+
+export const contentTypeMap: {
+  contentType:
+    | NodeType.TWEET
+    | NodeType.TWITTER_PROFILE
+    | NodeType.YOUTUBE_VIDEO
+    | NodeType.YOUTUBE_CHANNEL;
+  regex: RegExp[];
+  currentDomain?: string;
+}[] = [
   {
     contentType: NodeType.TWEET,
     regex: [
@@ -20,6 +35,14 @@ export const contentTypeMap = [
   {
     contentType: NodeType.TWITTER_PROFILE,
     regex: [/^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/?$/]
+  },
+  {
+    contentType: NodeType.YOUTUBE_VIDEO,
+    regex: [/^https:\/\/(?:www\.)?(youtube\.com)\/watch\?v=([a-zA-Z0-9_-]+)/]
+  },
+  {
+    contentType: NodeType.YOUTUBE_CHANNEL,
+    regex: [/^https:\/\/(?:www\.)?(youtube\.com)\/channel\/([a-zA-Z0-9_-]+)/]
   }
 ];
 

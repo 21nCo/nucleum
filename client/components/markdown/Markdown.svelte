@@ -14,6 +14,7 @@
   import { isValidAndUniqueArray } from "$lib/shared/utils/obj.utils";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { setContext } from "svelte";
+  import { generateMarkdownText } from "$lib/client/products/memotron/node/node.utils";
 
   /**
    * Propagates the event to the parent component.
@@ -76,7 +77,7 @@
             size={Size.xs}
             parentBgIndex={parentBackgroundIndex}
             on:click={() => {
-              const markdownAsText = mdStore.generateMarkdownText();
+              const markdownAsText = generateMarkdownText($mdStore.blocks);
               navigator.clipboard.writeText(markdownAsText);
             }}
           />
@@ -105,7 +106,7 @@
         <Block
           {block}
           {mdStore}
-          on:focus={(e) => {
+          on:nodularize={(e) => {
             propagate("focus", e.detail);
           }}
         />

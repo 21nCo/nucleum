@@ -1,5 +1,9 @@
 import { writable } from "svelte/store";
-import { Embed, OperatingSystem, type Context } from "../types/context.type";
+import {
+  Embed,
+  OperatingSystem,
+  type IAppContext
+} from "../types/context.type";
 
 const context = initContextStore({
   isEmbed: false,
@@ -7,11 +11,12 @@ const context = initContextStore({
   protocol: "",
   embed: Embed.NONE,
   os: OperatingSystem.MACOS,
-  isTouchDevice: false
+  isTouchDevice: false,
+  dapId: ""
 });
 
-function initContextStore(val: Context) {
-  const { subscribe, set, update } = writable<Context>(val);
+function initContextStore(val: IAppContext) {
+  const { subscribe, set, update } = writable<IAppContext>(val);
   return {
     subscribe,
     set,

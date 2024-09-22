@@ -1,31 +1,37 @@
 import { get } from "svelte/store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   NodeType,
   LinkType,
-  type INodeItemCaptured
+  type INodeItemCaptured,
+  type IMediaNode
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
   type ICaptureStore,
   type FileDetails
 } from "$lib/client/products/memotron/capture/capture.type";
-import { generateUID } from "$lib/client/utils/utils";
-import { dataManager } from "$lib/client/persistence/dataManager";
 import account from "$lib/client/stores/account.store";
 import { toasts } from "$lib/client/stores/notification.store";
-import { prefixTable } from "$lib/shared/utils/text.utils";
-import { resolveNodeCaptureMetadata } from "$lib/client/products/memotron/node/node.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import {
+  generateMarkdownText,
+  resolveNodeCaptureMetadata
+} from "$lib/client/products/memotron/node/node.utils";
 import { nodeStore } from "../node/node.store";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
 import { resolveResourceType } from "../memotron.utils";
+import { linker } from "../memotron.store";
+import { collectionStore } from "../collection/collection.store";
+import { resolveContentTypeForFile } from "./capture.utils";
+import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
 function generateSeedStore(): ICaptureStore {
-  const blockId = prefixTable(generateUID(), Resource.node);
+  const blockId = generateResourceId(Resource.node);
   return {
     captureType: CaptureType.MARKDOWN,
     refreshId: new Date().getTime(),
@@ -50,14 +56,7 @@ function generateSeedStore(): ICaptureStore {
 
 class CaptureStore extends KeyValueStore<ICaptureStore> {
   constructor() {
-    super(
-      Resource.capture,
-      { ...generateSeedStore() },
-      {
-        refreshOnAppear: true,
-        isSynchronousCache: true
-      }
-    );
+    super(Resource.capture, { ...generateSeedStore() });
   }
   set(val: ICaptureStore) {
     this.modify(val, { isDebouncedPersist: true });
@@ -78,8 +77,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   async onTypeSelect(val: CaptureType | string) {
     logger.log({ context: "onTypeSelect", val });
     if (!val.startsWith(Resource.collection)) return;
-    const dexie = get(dataManager).cacheSource.dexie;
-    const type = await dexie.collection.get(val);
+    const type = await collectionStore.select(val);
     if (!type) return;
     this.update((store: ICaptureStore) => {
       store.links = [
@@ -144,24 +142,62 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
   }
 
+  async saveFile(file: File, contentType?: NodeType) {
+    const response = await account.uploadFileV2(
+      file.type,
+      file.name,
+      new Blob([file], { type: file.type })
+    );
+    if (!response) return;
+    if (!response[0].id) return;
+    const fileId = response[0].id;
+    contentType = contentType ?? resolveContentTypeForFile(file);
+    if (!contentType) return { error: "File type not supported" };
+    const node = {
+      contentType,
+      file: fileId,
+      label: file.name
+    } as IMediaNode;
+    const result = await nodeStore.create([node]);
+    return result?.[0]?.[0];
+  }
+
+  async saveMultipleFiles(files: { file: File; contentType: NodeType }[]) {
+    let nodes: OmitForCapture<IMediaNode>[] = [];
+    for (const item of files) {
+      if (!item.contentType) continue;
+      const response = await account.uploadFileV2(
+        item.file.type,
+        item.file.name,
+        new Blob([item.file], { type: item.file.type })
+      );
+      if (!response) continue;
+      if (!response[0].id) continue;
+      const fileId = response[0].id;
+      const node = {
+        contentType: item.contentType,
+        file: fileId,
+        label: item.file.name
+      } as IMediaNode;
+      nodes.push(node);
+    }
+    return nodeStore.create(nodes);
+  }
+
   async save() {
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
     const metadata = await resolveNodeCaptureMetadata();
     console.log("capture store", { val, metadata });
-    const id = prefixTable(generateUID(), Resource.node);
+    // const id = prefixTable(generateRandomId(), Resource.node);
+    const id = generateResourceId(Resource.node);
     let root: INodeItemCaptured = {
       id,
       label: val.label ?? "",
       properties: val.properties,
       body: "",
       contentType: getContentTypeFromFileDetails(val?.fileDetails!),
-      metadata,
-      links: [
-        ...(val.links ? val.links.filter((x) => x.from === "root") : [])
-      ].map((x) => {
-        return { ...x, from: id };
-      })
+      metadata
     };
     let remainingResources: INodeItemCaptured[] = [];
     if (val.fileDetails) {
@@ -205,30 +241,55 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             }
           }
       }
+      let mdText = "";
+      if (val.rootStructure.length > 0) {
+        const rootBlocks = val.body.blocks.filter((b) =>
+          val.rootStructure.includes(b.id)
+        );
+        mdText = generateMarkdownText(rootBlocks);
+      }
       root = {
         ...root,
-        children: val.rootStructure
+        children: val.rootStructure,
+        mdText
       };
       remainingResources = val.childrenWithStructure.map((block) => {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
         //TODO - links for each block
+        let mdText = "";
+        if (block.children && block.children.length > 0) {
+          const childrenNodes = val.body.blocks.filter((b) =>
+            block.children?.includes(b.id)
+          );
+          mdText = generateMarkdownText(childrenNodes);
+        }
         return {
           id: block.id,
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
+          mdText,
           metadata: root.metadata,
-          creationContext: root.id,
-          children: block.children,
-          links: val.links ? val.links.filter((x) => x.from === block.id) : []
+          creationContext: id,
+          children: block.children
         };
       });
     }
     if (root.contentType == NodeType.PDF)
       root = { ...root, url: root.body.url };
 
-    let result: any = await nodeStore.createNode([root, ...remainingResources]);
+    let result: any = await nodeStore.create([root, ...remainingResources]);
+    //TODO - save links
+    const rootLinks = [
+      ...(val.links ? val.links.filter((x) => x.from === "root") : [])
+    ].map((x) => {
+      return { ...x, from: id };
+    });
+    const blockLinks = val.links?.filter((x) => x.from !== "root");
+    if ((blockLinks && blockLinks.length > 0) || rootLinks?.length > 0) {
+      await linker.linkMany([...rootLinks, ...(blockLinks ?? [])]);
+    }
 
     if (!result) {
       toasts.error("Something went wrong. Please try again later.");

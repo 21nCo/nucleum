@@ -1,27 +1,35 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ClipperPersistence } from "$lib/client/extensions/clipper/clipper.persistence";
-  import {
-    createClipButton,
-    createClipPointer
-  } from "$lib/client/extensions/clipper/clipper.utils";
+  import { createClipPointer } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+  import { webpage } from "./store";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import account from "$lib/client/stores/account.store";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
 
-  async function refreshVideoTimestamps(url: string) {
-    const result = await new ClipperPersistence().fetchPage(url);
-    if (result?.page?.clips && result.page.clips.length > 0) {
-      const timestamps = result.page.clips.filter(
-        (clip) => clip.contentType === NodeType.VIDEO_TIMESTAMP_CLIP
+  let clipCount = 0;
+
+  function refreshTimestamps() {
+    removeAllPointers();
+    clipCount = 0;
+    const clips = $webpage.clips;
+    logger.log({ at: "refreshTimestamps", clips });
+    if (clips && clips.length > 0) {
+      const timestamps = clips.filter(
+        (clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
       );
+      clipCount = timestamps.length;
       for (let i = 0; i < timestamps.length; i++) {
         placePointerOnPlayer(timestamps[i].body.timestamp);
       }
     }
   }
 
-  function clip() {
+  async function clip() {
     if (
       window.location.hostname === "www.youtube.com" &&
       window.location.pathname === "/watch"
@@ -31,9 +39,23 @@
       if (videoPlayer && !isNaN(videoPlayer.currentTime)) {
         const timestamp = Math.floor(videoPlayer.currentTime);
         placePointerOnPlayer(timestamp);
-        captureVideoFrame(videoPlayer);
+        const contentType = "image/png";
+        const dataURL = captureVideoFrame(videoPlayer);
+        let s3Url;
+        const s3SignedURL = await account.getSignedUrl(
+          contentType,
+          "screenshot.png",
+          false
+        );
+        const response = await relayToBackgroundScript({
+          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
+          data: { s3SignedURL, dataURL, contentType }
+        });
+        if (response == 200) {
+          s3Url = s3SignedURL.uploadURL.split("?")[0];
+        }
         const videoUrlWithTimestamp = `https://www.youtube.com/watch?v=${videoId}&t=${timestamp}s`;
-        return { videoUrlWithTimestamp, timestamp };
+        return { videoUrlWithTimestamp, timestamp, s3Url };
       } else {
         console.error(
           "YouTube video player not found or no video is currently playing."
@@ -44,71 +66,20 @@
       console.error("Not on a YouTube video page.");
       return null;
     }
-  }
 
-  /**
-   * TODO - Clip button UI - svelte
-   */
-  function initializeClipButton() {
-    const control = "ytp-time-display.notranslate";
-    const progressbar = "ytp-progress-bar-padding";
-    const controlElement = document.querySelector(`.${control}`);
-    const progressBarElements = document.querySelectorAll(`.${progressbar}`);
-    if (controlElement && controlElement instanceof HTMLElement) {
-      const clipButton = createClipButton(controlElement);
-      clipButton.addEventListener("click", function () {
-        const { videoUrlWithTimestamp, timestamp } = clip();
-        new ClipperPersistence().saveClip({
-          contentType: NodeType.VIDEO_TIMESTAMP_CLIP,
-          body: {
-            timestamp,
-            url: videoUrlWithTimestamp
-          },
-          metadata: {}
-        });
-        // chrome.runtime.sendMessage({
-        //   action: "saveYoutubeClip",
-        //   videoUrlWithTimestamp: videoUrlWithTimestamp,
-        //   videoId: videoId,
-        //   timestamp: timestamp
-        // });
-
-        chrome.runtime.sendMessage({
-          event: ClipperExtensionEvent.CLIPS_CHANGED
-        });
-      });
-
-      if (controlElement.nextSibling) {
-        controlElement.parentNode.insertBefore(
-          clipButton,
-          controlElement.nextSibling
-        );
-      } else {
-        controlElement.parentNode.appendChild(clipButton);
-      }
-    } else {
-      console.log(`Element with class ${control} not found.`);
-    }
-
-    if (progressBarElements) {
-      const newProgressBar = document.createElement("div");
-      newProgressBar.className = "mem-progress-bar";
-      newProgressBar.style.height = "30px";
-
-      progressBarElements.forEach(function (progressBar) {
-        var cloneNewProgressBar = newProgressBar.cloneNode(true);
-        if (progressBar instanceof HTMLElement) {
-          progressBar.style.height = "63px";
-        }
-        progressBar.appendChild(cloneNewProgressBar);
-      });
-    } else {
-      console.log(`Element with class ${progressBarElements} not found.`);
+    function captureVideoFrame(video) {
+      var canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+      var imageURL = canvas.toDataURL("image/png");
+      return imageURL;
     }
   }
 
   /**
-   * TODO - clip pointer
+   * Places pointer at the timestamp location above the progress bar.
    */
   function placePointerOnPlayer(timestamp) {
     const playerControls = document.querySelector(".ytp-chrome-bottom");
@@ -117,6 +88,16 @@
       const duration = document.querySelector("video").duration;
       const position = (timestamp / duration) * playerControls.offsetWidth;
       pointer.style.left = `${position - 5}px`;
+      pointer.addEventListener("click", function () {
+        const player = document.querySelector("video");
+        console.log("Seeking to timestamp: ", {
+          timestamp,
+          player
+        });
+        if (player && timestamp) {
+          player.currentTime = timestamp;
+        }
+      });
       playerControls.appendChild(pointer);
     }
   }
@@ -130,20 +111,12 @@
     }
   }
 
-  function captureVideoFrame(video) {
-    var canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    var imageURL = canvas.toDataURL("image/png");
-    localStorage.setItem("capturedYoutubeFrame", imageURL);
-  }
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.event === ExtensionEvent.TAB_UPDATE) {
-      removeAllPointers();
-      refreshVideoTimestamps(message.tab.url);
-    } else if (message.event === ExtensionEvent.CLICK_SIDEBAR && message.clip) {
+    logger.log({
+      at: "onMessage - Youtube content script",
+      event: message.event
+    });
+    if (message.event === ExtensionEvent.CLICK_FROM_SIDEPANEL && message.clip) {
       const player = document.querySelector("video");
       if (player && message.clip?.body?.timestamp) {
         console.log("Seeking to timestamp: ", message.clip.body.timestamp);
@@ -153,8 +126,64 @@
   });
 
   onMount(() => {
-    initializeClipButton();
+    clipCount = 0;
+    const sub = appEvents.subscribe(async (x) => {
+      if (x.event === ClipperExtensionEvent.REFRESH_CLIPS_RENDERING) {
+        logger.log({
+          at: "onMessage - Youtube content script",
+          event: x.event
+        });
+        setTimeout(() => {
+          refreshTimestamps();
+        }, 1000);
+      }
+    });
+    return () => {
+      sub();
+    };
   });
+
+  async function onClick() {
+    const { videoUrlWithTimestamp, timestamp, s3Url } = await clip();
+
+    await webpage.saveClip({
+      contentType: NodeType.YOUTUBE_TIMESTAMP_CLIP,
+      body: {
+        timestamp,
+        url: videoUrlWithTimestamp,
+        s3Url
+      },
+      metadata: {}
+    });
+    clipCount++;
+    //TODO - show feedback
+    chrome.runtime.sendMessage({
+      event: ClipperExtensionEvent.CLIPS_CHANGED,
+      clips: $webpage.clips
+    });
+  }
+  function resizeEventListener() {
+    refreshTimestamps();
+  }
 </script>
 
-<!-- <div>youtube content</div> -->
+<div class="flex w-full h-full justify-center items-center px-4 py-2">
+  <button
+    class="flex items-center justify-center rounded-md bg-bgs1 h-8"
+    on:click={() => {
+      relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL });
+      refreshTimestamps();
+    }}
+  >
+    <span class="text-b2 shadow-none px-3">
+      {clipCount} clips
+    </span>
+    <button
+      on:click|stopPropagation={onClick}
+      class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
+    >
+      <Icon icon="plus" />
+    </button>
+  </button>
+</div>
+<svelte:window on:resize={resizeEventListener} />

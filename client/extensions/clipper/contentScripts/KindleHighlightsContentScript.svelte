@@ -1,20 +1,24 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import {
-    contentType,
-    kindleSyncState,
     type AmazonAccount,
     type AmazonAccountRegion,
-    type Book,
-    type BookNode,
-    type Highlight,
-    type HighlightNode,
-    type NextPageState,
-    type SavedBookNode
+    type NextPageState
   } from "./KindleHighlights.types";
-  import fletcher16 from "fletcher";
-  import { ClipperPersistence } from "../clipper.persistence";
-  import KindleSyncStatus from "../toolbar/KindleSyncStatus.svelte";
+  import { syncStore } from "./store";
+  import {
+    NodeType,
+    type IKindleBook,
+    type IKindleHighlight,
+    type IKindleHighlightBody
+  } from "$lib/client/products/memotron/node/node.type";
+  import { appEvents } from "$lib/client/stores/notification.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+  import { SyncStatus } from "./types";
+  import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { generateHash } from "$lib/shared/utils/crypto.utils";
+  import { generateSyncedResourceId } from "$lib/client/products/memotron/memotron.utils";
   let region: AmazonAccount;
   const amazonRegions: Record<AmazonAccountRegion, AmazonAccount> = {
     global: {
@@ -67,9 +71,7 @@
     }
   };
 
-  const clipperDB = new ClipperPersistence();
-  let syncState: kindleSyncState;
-  function scrapBooks(): BookNode[] {
+  function scrapBooks(): OmitForCaptureWithId<IKindleBook>[] {
     const booksEl = document.querySelectorAll(".kp-notebook-library-each-book");
 
     return Array.from(booksEl).map((bookEl) => {
@@ -89,33 +91,38 @@
       const scrapedAuthor = scrapedAuthorElement
         ? scrapedAuthorElement.textContent
         : "";
-
+      const id = bookEl.getAttribute("id");
+      const nodeId = generateSyncedResourceId(id, NodeType.KINDLE_BOOK);
       return {
+        url: `https://www.amazon.com/dp/${id}`,
         body: {
-          id: bookEl.getAttribute("id"),
-          title,
-          author: scrapedAuthor.split(": ")[1],
-          url: `https://www.amazon.com/dp/${bookEl.getAttribute("id")}`,
-          imageUrl: bookEl.querySelector(".kp-notebook-cover-image")
+          id: id ?? "",
+          author: scrapedAuthor?.split(": ")[1] ?? "",
+          imageUrl: bookEl?.querySelector(".kp-notebook-cover-image")
             ? bookEl
-                .querySelector(".kp-notebook-cover-image")
-                .getAttribute("src")
+                ?.querySelector(".kp-notebook-cover-image")
+                ?.getAttribute("src")
             : "",
           lastAnnotatedDate: scrapedLastAnnotatedDate
         },
-        contentType: contentType.BookNode
+        label: title,
+        id: nodeId,
+        contentType: NodeType.KINDLE_BOOK
       };
     });
   }
   export const mapTextToColor = (
     highlightClasses: string
-  ): Highlight["color"] => {
+  ): IKindleHighlightBody["color"] => {
     const matches = /kp-notebook-highlight-(.*)/.exec(highlightClasses);
-    return matches ? (matches[1] as Highlight["color"]) : null;
+    return matches ? (matches[1] as IKindleHighlightBody["color"]) : null;
   };
 
-  const highlightsUrl = (book: Book, state?: NextPageState): string => {
-    return `${region.notebookUrl}?asin=${book.id}&contentLimitState=${
+  const highlightsUrl = (
+    kindleBookId: string,
+    state?: NextPageState
+  ): string => {
+    return `${region.notebookUrl}?asin=${kindleBookId}&contentLimitState=${
       state?.contentLimitState ?? ""
     }&token=${state?.token ?? ""}`;
   };
@@ -136,58 +143,63 @@
     return token === "" ? null : { contentLimitState, token };
   };
 
-  const hash = (value: string): string => {
-    return fletcher16(Buffer.from(value.toLowerCase())).toString();
-  };
   const parseHighlights = (
     doc: Document,
     bookNodeId: string
-  ): HighlightNode[] => {
+  ): OmitForCaptureWithId<IKindleHighlight>[] => {
     const highlightsEl = doc.querySelectorAll(".a-row.a-spacing-base");
-    return Array.from(highlightsEl).map((highlightEl): HighlightNode => {
-      const pageMatch = /\d+$/.exec(
-        highlightEl.querySelector("#annotationNoteHeader")?.textContent || ""
-      );
+    return Array.from(highlightsEl).map(
+      (highlightEl): OmitForCaptureWithId<IKindleHighlight> => {
+        const pageMatch = /\d+$/.exec(
+          highlightEl.querySelector("#annotationNoteHeader")?.textContent || ""
+        );
 
-      const highlightClassesElement = highlightEl.querySelector(
-        ".kp-notebook-highlight"
-      );
-      const highlightClasses = highlightClassesElement
-        ? highlightClassesElement.className
-        : "";
-      const color = mapTextToColor(highlightClasses);
+        const highlightClassesElement = highlightEl.querySelector(
+          ".kp-notebook-highlight"
+        );
+        const highlightClasses = highlightClassesElement
+          ? highlightClassesElement.className
+          : "";
+        const color = mapTextToColor(highlightClasses);
 
-      const textElement = highlightEl.querySelector("#highlight");
-      const text = textElement ? textElement.textContent?.trim() : "";
+        const textElement = highlightEl.querySelector("#highlight");
+        const text = textElement ? textElement.textContent?.trim() : "";
 
-      const locationElement = highlightEl.querySelector(
-        "#kp-annotation-location"
-      );
-      const location = locationElement
-        ? (locationElement as HTMLInputElement).value
-        : "";
+        const locationElement = highlightEl.querySelector(
+          "#kp-annotation-location"
+        );
+        const location = locationElement
+          ? (locationElement as HTMLInputElement).value
+          : "";
 
-      const noteElement = highlightEl.querySelector("#note");
-      const note = noteElement
-        ? noteElement.innerHTML.replace(/<br\s*\/?>/gi, "\n")
-        : "";
-
-      return {
-        body: {
-          id: hash(text),
-          text,
-          color,
-          location,
-          page: pageMatch ? pageMatch[0] : null,
-          note
-        },
-        contentType: contentType.HighlightNode,
-        parent: bookNodeId
-      };
-    });
+        const noteElement = highlightEl.querySelector("#note");
+        const note = noteElement
+          ? noteElement.innerHTML.replace(/<br\s*\/?>/gi, "\n")
+          : "";
+        const id = generateHash(text);
+        const nodeId = generateSyncedResourceId(id, NodeType.KINDLE_HIGHLIGHT);
+        return {
+          body: {
+            id,
+            text,
+            color,
+            location,
+            page: pageMatch ? pageMatch[0] : null,
+            note
+          },
+          label: "",
+          id: nodeId,
+          contentType: NodeType.KINDLE_HIGHLIGHT,
+          parent: bookNodeId
+        };
+      }
+    );
   };
 
-  const loadAndScrapeHighlights = async (book: SavedBookNode, url: string) => {
+  const loadAndScrapeHighlights = async (
+    book: OmitForCaptureWithId<IKindleBook>,
+    url: string
+  ) => {
     const response = await fetch(url);
     const bodyText = await response.text();
     const parser = new DOMParser();
@@ -195,17 +207,17 @@
     const nextPageState = parseNextPageState(doc);
     return {
       highlights: parseHighlights(doc, book.id),
-      nextPageUrl: highlightsUrl(book.body, nextPageState),
+      nextPageUrl: highlightsUrl(book.body.id, nextPageState),
       hasNextPage: nextPageState !== null
     };
   };
 
   const scrapeBookHighlights = async (
-    book: SavedBookNode
-  ): Promise<HighlightNode[]> => {
-    let results: HighlightNode[] = [];
+    book: OmitForCaptureWithId<IKindleBook>
+  ): Promise<OmitForCaptureWithId<IKindleHighlight>[]> => {
+    let results: OmitForCaptureWithId<IKindleHighlight>[] = [];
 
-    let url = highlightsUrl(book.body);
+    let url = highlightsUrl(book.body.id);
     let hasNextPage = true;
 
     while (hasNextPage) {
@@ -216,27 +228,26 @@
     }
     return results;
   };
-  async function handleSync() {
+  async function sync() {
     try {
-      if (syncState == kindleSyncState.Synced) {
-        alert("Already Synced");
+      logger.debug({ at: "sync", syncStore: $syncStore });
+      if ($syncStore.status == SyncStatus.SYNCED) {
         return;
       }
-      syncState = await clipperDB.updateKindleSyncState(
-        kindleSyncState.Syncing
-      );
+      syncStore.updateSyncStatus(SyncStatus.SYNCING);
       const books = scrapBooks();
-      const savedBooks = await clipperDB.saveAllBooks(books);
-      const highlightPromises = savedBooks.map(async (book) => {
-        const highlightNode = await scrapeBookHighlights(book);
-        return clipperDB.saveHighlightsAndNotes(highlightNode);
-      });
-
-      await Promise.all(highlightPromises);
-      syncState = await clipperDB.updateKindleSyncState(kindleSyncState.Synced);
+      const bookHighlights = await Promise.all(
+        books.map((book) => scrapeBookHighlights(book))
+      );
+      const savedResponse = await syncStore.save([
+        ...books,
+        ...bookHighlights.flat()
+      ]);
+      logger.debug({ at: "KindleSyncPage save", savedResponse });
+      syncStore.updateSyncStatus(SyncStatus.SYNCED);
     } catch (e) {
-      console.error("error while kindle sync", e);
-      clipperDB.updateKindleSyncState(kindleSyncState.Sync);
+      logger.error(e);
+      syncStore.updateSyncStatus(SyncStatus.ERRORED);
     }
   }
   function matchCurrentUrlWithAmazonRegions(): AmazonAccount | null {
@@ -251,13 +262,13 @@
   }
 
   onMount(async () => {
+    await syncStore.init(NodeType.KINDLE_BOOK);
     region = matchCurrentUrlWithAmazonRegions();
-    syncState = await clipperDB.getKindleSyncState();
-    // await clipperDB.deleteAllBooksAndHiglights();
-    // syncState = await clipperDB.getKindleSyncState();
+    appEvents.subscribe(async (x) => {
+      logger.debug({ at: "appEvent - Kindle Content Script", event: x.event });
+      if (x.event === ClipperExtensionEvent.START_SYNC) {
+        sync();
+      }
+    });
   });
 </script>
-
-<div class="cs_tidigit_light_blue dark:cs_tidigit_dark_blue relative flex">
-  <KindleSyncStatus on:click={handleSync} {syncState} />
-</div>

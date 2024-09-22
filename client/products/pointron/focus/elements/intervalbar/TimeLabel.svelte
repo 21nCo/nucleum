@@ -5,11 +5,8 @@
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import {
-    appStore,
-    currentTime,
-    userPreferences
-  } from "$lib/client/stores/app.store";
+  import { appStore, currentTime } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { resolveHoverState } from "$lib/client/utils/browser.utils";
   import { formatTime } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";

@@ -1,25 +1,21 @@
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { get } from "svelte/store";
-import { ResourceAccessPoint } from "../../components/resourceStores/resource.type";
+import { ResourceAccessPoint } from "../../components/flux/resourceStores/resource.type";
 import { appStore } from "../app.store";
 import { ObservableStore } from "../client.store";
 import { Action } from "../../types/action.enum";
 import { InteractionMode } from "../../components/settings/interactionMode/interactionMode.type";
 import { UIState, type IUIStateStore } from "./uiState.type";
 import context from "../context.store";
+import { Embed } from "$lib/client/types/context.type";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { toasts } from "../notification.store";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
-    super(
-      Resource.uiState,
-      {},
-      {
-        refreshOnAppear: true,
-        isSynchronousCache: true
-      }
-    );
+    super(Resource.uiState, {});
   }
   private resolveKey(
     keyParam: string,
@@ -86,24 +82,31 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     logger.log({ context: "uiState.store - setResourceState", key, value });
   }
 
-  addResourceToTopBar(id: string) {
+  addResourceToTopBar(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TOP_BAR, {
       isProductScoped: true
     });
-    if (current?.includes(id)) return;
-    this.setState(ResourceAccessPoint.TOP_BAR, [...(current ?? []), id], {
-      isProductScoped: true
-    });
-  }
-
-  removeResourceFromTopBar(id: string) {
-    const current = this.getState(ResourceAccessPoint.TOP_BAR, {
-      isProductScoped: true
-    });
-    if (!current?.includes(id)) return;
+    if (current?.includes(id.toString())) {
+      toasts.error("Resource already present in top bar");
+      return;
+    }
     this.setState(
       ResourceAccessPoint.TOP_BAR,
-      current.filter((x) => x != id),
+      [...(current ?? []), id.toString()],
+      {
+        isProductScoped: true
+      }
+    );
+  }
+
+  removeResourceFromTopBar(id: IRecordId) {
+    const current = this.getState(ResourceAccessPoint.TOP_BAR, {
+      isProductScoped: true
+    });
+    if (!current?.includes(id.toString())) return;
+    this.setState(
+      ResourceAccessPoint.TOP_BAR,
+      current.filter((x) => x != id.toString()),
       {
         isProductScoped: true
       }
@@ -111,6 +114,22 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 
   toggleSidebar() {
+    const interactionMode = this.getState(Action.MODE_OF_INTERACTION, {
+      isProductScoped: true
+    });
+    if (interactionMode === InteractionMode.KEYBOARD_CENTRIC) {
+      const isCompletelyHideLeftNavBar = this.getState(
+        UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
+        {
+          isProductScoped: true
+        }
+      );
+      if (isCompletelyHideLeftNavBar) {
+        const currentState = this.getState(UIState.isHideLeftNavBar);
+        this.setState(UIState.isHideLeftNavBar, !currentState);
+        return;
+      }
+    }
     const val = this.getState(UIState.isInThinMode);
     this.setState(UIState.isInThinMode, !val);
   }
@@ -118,6 +137,10 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
 
 export const uiState = new UiStateStore();
 
+/**
+ *
+ * TODO - populate app store derived value for interaction mode on uiState restore from cloud
+ */
 class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
   constructor() {
     super("derived-ui-state");
@@ -138,12 +161,14 @@ class UIDerivedState extends ObservableStore<{ isShowHotKeyHints: boolean }> {
         isProductScoped: true
       }
     );
+    const embed = get(context).embed;
     this.update((x) => {
       return {
         ...x,
         isShowHotKeyHints:
           modeOfInteraction === InteractionMode.KEYBOARD_CENTRIC &&
-          isShortcutHintsEnabled
+          isShortcutHintsEnabled &&
+          embed !== Embed.HANDSET
       };
     });
   }

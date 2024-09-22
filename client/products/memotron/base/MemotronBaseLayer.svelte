@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { appLoadingState } from "$lib/client/stores/app.store";
-  import account from "$lib/client/stores/account.store";
+  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { scheduledNotifications } from "$lib/client/stores/notification.store";
   import {
     postMessageToParent,
@@ -15,21 +14,21 @@
   import MemotronNotifications from "./MemotronNotifications.svelte";
   import PinnedTopBar from "$lib/client/layout/topNav/PinnedTopBar.svelte";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
-  import BaseLayer from "$lib/client/layout/layers/BaseLayer.svelte";
+  import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
+  import modalEvent from "$lib/client/components/modal/modal.store";
+  import { captureStore } from "../capture/capture.store";
+  import { CaptureType } from "../capture/capture.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   $: topBarResourceId = $page.url.searchParams.get(
     ResourceAccessMode.TOPBARFOCUS
   );
   onMount(async () => {
-    if ($account.isLoggedIn) await initializeData();
     $appLoadingState.isLocalLoaded = true;
     postMessageToParent(EmbedMessage.MOUNT);
   });
-  async function initializeData() {
-    if (isLiteMode) return;
-  }
   async function handleVisibilityChange() {
     if (document?.hidden) {
       const registration = await navigator?.serviceWorker?.ready;
@@ -50,39 +49,70 @@
       });
     }
   }
+
+  function handlePaste(event: ClipboardEvent) {
+    appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
+      componentParams: {
+        event
+      }
+    });
+    event.preventDefault();
+  }
+
+  function handleDragEnter(event: DragEvent) {
+    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
+      $captureStore.captureType = CaptureType.UPLOAD;
+      appStore.runAction(MemotronAction.CAPTURE, {
+        componentParams: { isWindowDnD: true }
+      });
+    }
+  }
+
+  function handleDragLeave(event: DragEvent) {
+    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
+      modalEvent.hide(MemotronAction.CAPTURE);
+    }
+  }
 </script>
 
-<BaseLayer>
+<UserBaseLayer>
   {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
     <div class="flex flex-col w-full h-full">
-      {#if !$view.isPortrait}
-        <PinnedTopBar />
-      {/if}
       <div class="flex w-full flex-grow">
-        {#if !topBarResourceId}
-          <MemotronLeftNav />
-        {/if}
+        <!-- {#if !topBarResourceId} -->
+        <MemotronLeftNav />
+        <!-- {/if} -->
         <div
           class="flex flex-col h-full {$view.isPortrait
             ? 'w-full'
             : 'flex-grow'}"
         >
-          <AppSplitView>
-            <slot name="main" slot="main">
-              {#if topBarResourceId}
-                {#key topBarResourceId}
-                  <ResourceResolver id={topBarResourceId} />
-                {/key}
-              {:else}
-                <slot />
-              {/if}
-            </slot>
-          </AppSplitView>
+          {#if !$view.isPortrait}
+            <PinnedTopBar />
+          {/if}
+          <div class="w-full flex-grow">
+            <AppSplitView>
+              <slot name="main" slot="main">
+                {#if topBarResourceId}
+                  {#key topBarResourceId}
+                    <ResourceResolver id={topBarResourceId} />
+                  {/key}
+                {:else}
+                  <slot />
+                {/if}
+              </slot>
+            </AppSplitView>
+          </div>
         </div>
         <!-- <RightPanel /> -->
       </div>
     </div>
   {/if}
   <MemotronNotifications />
-</BaseLayer>
-<svelte:document on:visibilitychange={handleVisibilityChange} />
+</UserBaseLayer>
+<svelte:document
+  on:visibilitychange={handleVisibilityChange}
+  on:dragenter={handleDragEnter}
+  on:dragleave={handleDragLeave}
+/>
+<svelte:window on:paste={handlePaste} />

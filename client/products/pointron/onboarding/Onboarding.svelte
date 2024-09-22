@@ -1,7 +1,8 @@
 <script lang="ts">
   import Header from "./OnboardingHeader.svelte";
   import Footer from "./OnboardingFooter.svelte";
-  import { userPreferences, appStore } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import view from "$lib/client/stores/view.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Position } from "$lib/client/types/direction.enum";
   import type {
     ISelectItem,
     ISelectValue
@@ -11,6 +11,7 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
+  export let labelOrientation: Orientation = Orientation.Vertical;
   export let items: ISelectItem[];
   export let selected: ISelectValue;
   export let isHideBar: boolean = false;
@@ -25,15 +26,17 @@
 </script>
 
 <aside
-  class={cn("flex flex-col h-full justify-center", {
+  class={cn("flex flex-col h-full w-full", {
     "items-start": itemProps.activeStatusPlacement === Position.Left,
     "items-end": itemProps.activeStatusPlacement === Position.Right,
-    "gap-3": style === VerticalSwitcherStyle.DOT
+    "gap-3": style === VerticalSwitcherStyle.DOT,
+    "justify-center": labelOrientation === Orientation.Vertical
   })}
 >
   {#each items as item}
     <VerticalSwitcherItem
       {item}
+      {labelOrientation}
       {...itemProps}
       {style}
       {isHideBar}

@@ -1,15 +1,19 @@
-export const memotronTables = [...nodesByDay()];
+export const memotronTables = [
+  ...nodesByDay(),
+  ...collection(),
+  ...nodeIndices(),
+  ...collectionIndices()
+];
 
 function node() {
   const def = `DEFINE TABLE node SCHEMAFULL;
 DEFINE FIELD label on TABLE node TYPE option<string>;
-DEFINE FIELD body on TABLE node FLEXIBLE TYPE option<object | string>;
-DEFINE FIELD type on TABLE node TYPE option<record<type>>;
+DEFINE FIELD body on TABLE node FLEXIBLE TYPE option<object | string>; 
 DEFINE FIELD parent on TABLE node TYPE option<record<node>>;
 DEFINE FIELD children on TABLE node TYPE option<array<record<node>>>;
 DEFINE FIELD contentType on TABLE node TYPE string;
-DEFINE FIELD contentHash on TABLE node TYPE option<string>;
 DEFINE FIELD url on TABLE node TYPE option<string>;
+DEFINE FIELD file on TABLE node TYPE option<record<file>>;
 DEFINE FIELD properties on TABLE node FLEXIBLE TYPE option<array<object>>;
 DEFINE FIELD metadata on TABLE node FLEXIBLE TYPE option<object>;
 DEFINE FIELD urlParts on TABLE node FLEXIBLE TYPE option<object>;
@@ -21,8 +25,25 @@ DEFINE FIELD modifiedAt on TABLE node TYPE datetime;
 DEFINE FIELD isArchived on TABLE node DEFAULT false;
 DEFINE FIELD isStarred on TABLE node DEFAULT false;
 DEFINE FIELD creationContext on TABLE node TYPE any;
-DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;`;
+DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;
+DEFINE FIELD mdText on TABLE node FLEXIBLE TYPE option<string>;
+`;
   return [def];
+}
+
+/**
+ * 
+ * Note: Combining multiple columns in single Index is not working as expected
+ * ->     "surrealdb": "^1.0.0-beta.21",
+    "surrealdb.js": "^1.0.0-beta.9",
+    "surrealdb.wasm": "^1.0.0-beta.15",
+ * 
+ * @returns 
+ */
+function nodeIndices() {
+  const def = `DEFINE INDEX nodetextSearchIndex ON TABLE node COLUMNS body SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  const label = `DEFINE INDEX nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  return [def, label];
 }
 
 function nodesByTime() {
@@ -36,4 +57,33 @@ function nodesByDay() {
   const def = `DEFINE TABLE nodesByDay SCHEMALESS AS SELECT count() AS entries, time::group(createdAt, 'day') AS createdAt, 
 day, month, year FROM nodesByTime GROUP BY day, month, year PERMISSIONS NONE`;
   return [...nodesByTime(), def];
+}
+
+function collection() {
+  const def = `DEFINE TABLE collection SCHEMAFULL;
+  DEFINE FIELD label on TABLE collection TYPE option<string>;
+  DEFINE FIELD type on TABLE collection TYPE string;
+  DEFINE FIELD cover on TABLE collection TYPE option<string | record<file>>;
+  DEFINE FIELD description on TABLE collection TYPE option<string>;
+  DEFINE FIELD views on TABLE collection TYPE option<array<record<view>>>;
+  DEFINE FIELD isCaptureShortcutEnabled on TABLE collection DEFAULT false;
+  DEFINE FIELD typeToExtend on TABLE collection TYPE option<string>;
+  DEFINE FIELD avatar on TABLE collection TYPE option<object | string>;
+  DEFINE FIELD query on TABLE collection TYPE option<string>;
+  DEFINE FIELD properties on TABLE collection TYPE option<array<record<property>>>;
+  DEFINE FIELD trashInformation on TABLE collection FLEXIBLE TYPE option<object>;
+  DEFINE FIELD createdBy on TABLE collection TYPE option<record<user>>;
+  DEFINE FIELD modifiedBy on TABLE collection TYPE option<record<user>>;
+  DEFINE FIELD createdAt on TABLE collection TYPE datetime;
+  DEFINE FIELD modifiedAt on TABLE collection TYPE datetime;
+  DEFINE FIELD isArchived on TABLE collection DEFAULT false;
+  DEFINE FIELD isStarred on TABLE collection DEFAULT false;
+`;
+  return [def];
+}
+
+function collectionIndices() {
+  const def = `DEFINE INDEX collectionLabelSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  const typeIndex = `DEFINE INDEX fileTypeSearchIndex ON TABLE file COLUMNS type SEARCH ANALYZER ascii;`;
+  return [def, typeIndex];
 }

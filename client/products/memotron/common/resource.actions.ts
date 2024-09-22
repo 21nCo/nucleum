@@ -3,17 +3,18 @@ import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.t
 import {
   resolveMultiSelectStore,
   ResourceStore
-} from "$lib/client/components/resourceStores/resource.store";
+} from "$lib/client/components/flux/resourceStores/resource.store";
 import { copyResourceLinkToClipboard } from "../memotron.utils";
 import {
   ResourceAccessPoint,
   ResourceAccessMode
-} from "$lib/client/components/resourceStores/resource.type";
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
-import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { linker } from "../memotron.store";
 import type { IContextMenuItem } from "$lib/client/types/select.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -71,7 +72,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
    */
   select(
     accessPoint: ResourceAccessPoint,
-    accessPointId?: string
+    accessPointId?: IRecordId
   ): IContextMenuItem {
     let multiSelectContext =
       determineResourceType(this.resource.id) + "-" + accessPoint;
@@ -84,18 +85,18 @@ export class ResourceActions<T extends IMemotronItemBase> {
     //   multiSelectStoreValue: get(multiSelectStore)
     // });
     return {
-      label: get(multiSelectStore)?.includes(this.resource.id)
+      label: get(multiSelectStore)?.includes(this.resource.id.toString())
         ? "Unselect"
         : "Select",
       value: "select",
       icon: "check-circle",
       callback: async () => {
-        if (get(multiSelectStore)?.includes(this.resource.id)) {
+        if (get(multiSelectStore)?.includes(this.resource.id.toString())) {
           multiSelectStore.update((x) =>
             x.filter((y) => y != this.resource.id)
           );
         } else {
-          multiSelectStore.update((x) => [...x, this.resource.id]);
+          multiSelectStore.update((x) => [...x, this.resource.id.toString()]);
         }
       }
     };
@@ -126,7 +127,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       })
       ?.includes(this.resource.id);
     return {
-      value: isAlreadyPinned ? "Unpin from top bar" : "Pin to top bar",
+      value: isAlreadyPinned ? "Remove from top bar" : "Open in top bar",
       icon: "rocket",
       callback: async () => {
         if (isAlreadyPinned) {
@@ -137,7 +138,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
-  unlink(contextId: string): IContextMenuItem {
+  unlink(contextId: IRecordId): IContextMenuItem {
     return {
       label: "Unlink",
       value: "unlink",

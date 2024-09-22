@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import ResourceThumbnailBase from "$lib/client/products/memotron/common/thumbnail/ResourceThumbnailBase.svelte";
   import type { INode } from "$lib/client/products/memotron/node/node.type";
   import NodeThumbnailTitle from "../thumbnail/NodeThumbnailTitle.svelte";
   import NodeThumbnailContentType from "../thumbnail/NodeThumbnailContentType.svelte";
   import NodeThumbnailWebLink from "../thumbnail/NodeThumbnailWebLink.svelte";
-  export let accessPointId: string;
+  import type { IRecordId } from "$lib/client/types/data.type";
+  export let accessPointId: IRecordId;
   export let item: INode;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
   let isHovering = false;
 </script>
 
@@ -16,7 +18,7 @@
   {item}
   {accessPointId}
   bind:isHovering
-  accessPoint={ResourceAccessPoint.NODE_LINKS}
+  {accessPoint}
   on:action
 >
   <button

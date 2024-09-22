@@ -20,13 +20,12 @@
   import GoalPanelResolver from "./GoalPanelResolver.svelte";
   import HeaderV2 from "./HeaderV2.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  export let id: string;
   let selectedTab: GoalTab = GoalTab.Overview;
   let isRefreshing = false;
   let isGoalLoaded = false;
   let isUpdateInProgress = false;
   let defaultTabs: GoalTab[] = [GoalTab.Overview, GoalTab.Analytics];
-
-  $: id = $page.params.route ?? "";
   $: if (id) {
     setGoal();
   }

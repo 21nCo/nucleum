@@ -1,17 +1,24 @@
-import type { IMarkdown } from "$lib/client/components/markdown/md.type";
-import { truncateString } from "$lib/shared/utils/text.utils";
+import type {
+  IBlock,
+  IMarkdown
+} from "$lib/client/components/markdown/md.type";
 import {
-  type ITweetBody,
+  enumToString,
+  properCase,
+  truncateString
+} from "$lib/shared/utils/text.utils";
+import {
   NodeType,
   type INodeMetadata,
-  type ITwitterProfileBody
+  ListType,
+  type INodeBody
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { commonMetadata } from "../common/urlMap";
 
 export function resolveContentPreview(
-  body: IMarkdown | ITweetBody | ITwitterProfileBody,
+  body: INodeBody,
   contentType: NodeType,
   metadata?: any
 ) {
@@ -82,4 +89,102 @@ export async function resolveNodeCaptureMetadata() {
     console.error({ e });
   }
   return metadata;
+}
+
+export function generateMarkdownText(blocks: IBlock[]) {
+  return blocks
+    .map((b) => {
+      switch (b.contentType) {
+        case NodeType.SIMPLE_TEXT:
+          b.body = b.body.replaceAll(/\n/g, "  \n");
+          b.body = b.body.replaceAll("<div><br></div>", "  \n");
+          b.body = b.body.replaceAll(/<br>/g, "  \n");
+          b.body = b.body.replaceAll(
+            /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
+            "`$1`"
+          );
+          b.body = b.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
+          b.body = b.body.replaceAll(/<b>(.*?)<\/b>/g, "**$1**");
+          b.body = b.body.replaceAll(/<span id="[^"]*">(.*?)<\/span>/g, "$1");
+          b.body = b.body.replaceAll(/<span>(.*?)<\/span>/g, "$1");
+          b.body = b.body.replaceAll(/<div>(.*?)<\/div>/g, "\n $1");
+          //todo - add remaining inline style patterns
+          return b.body;
+        case NodeType.HEADING1:
+          return `# ${b.body}`;
+        case NodeType.HEADING2:
+          return `## ${b.body}`;
+        case NodeType.HEADING3:
+          return `### ${b.body}`;
+        case NodeType.HEADING4:
+          return `#### ${b.body}`;
+        case NodeType.HEADING5:
+          return `##### ${b.body}`;
+        case NodeType.DOUBLE_DIVIDER:
+          return `---`;
+        case NodeType.DIVIDER:
+          return `===`;
+        case NodeType.QUOTE:
+          return `> ${b.body}`;
+        case NodeType.LIST:
+          return `${b.listType === ListType.ORDERED ? "1." : "-"} ${b.body}`;
+      }
+    })
+    .join("\n");
+}
+
+export function resolveNodeIcon(contentType: NodeType) {
+  switch (contentType) {
+    case NodeType.IMAGE:
+      return "ph:image-light";
+    case NodeType.WEB_SCREENSHOT_CLIP:
+      return "ph:crop-light";
+    case NodeType.NODULAR_MARKDOWN:
+      return "ph:markdown-logo-light";
+    case NodeType.TEXT_CLIP:
+      return "ph:highlighter-circle-light";
+    case NodeType.WEB_PAGE:
+      return "ph:globe-light";
+    case NodeType.PDF:
+      return "ph:file-pdf-light";
+    case NodeType.AUDIO:
+      return "ph:music-note-light";
+    case NodeType.VIDEO:
+      return "ph:video-light";
+    case NodeType.FILE:
+      return "ph:file-light";
+    case NodeType.YOUTUBE_VIDEO:
+      return "ph:youtube-logo-light";
+    case NodeType.YOUTUBE_CHANNEL:
+      return "ph:youtube-logo-light";
+    case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+      return "ph:youtube-logo-light";
+    case NodeType.TWEET:
+      return "ph:x-logo-light";
+    case NodeType.TWITTER_PROFILE:
+      return "ph:x-logo-light";
+    case NodeType.KINDLE_BOOK:
+      return "ph:amazon-logo-light";
+    case NodeType.KINDLE_HIGHLIGHT:
+      return "ph:bookmark-simple-light";
+    default:
+      return "ph:document-light";
+  }
+}
+
+export function resolveNodeContentLabel(contentType: NodeType) {
+  switch (contentType) {
+    case NodeType.NODULAR_MARKDOWN:
+      return "Markdown";
+    case NodeType.SIMPLE_TEXT:
+      return "Text";
+    case NodeType.TEXT_CLIP:
+      return "Web Text clip";
+    case NodeType.WEB_SCREENSHOT_CLIP:
+      return "Web Screenshot";
+    case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+      return "Youtube Clip";
+    default:
+      return properCase(enumToString(contentType));
+  }
 }

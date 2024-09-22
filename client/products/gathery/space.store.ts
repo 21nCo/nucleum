@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
 import { dataManager } from "$lib/client/persistence/dataManager";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { StoreDataType } from "../../types/data.type";
 import type { Space, SpaceStore } from "../../types/space.type";
 import { performApiCall } from "$lib/client/utils/network.utils";

@@ -11,7 +11,7 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import AddNewSubGoal from "./AddNewSubGoal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   let isArchivedGoalsVisible: boolean = false;
 

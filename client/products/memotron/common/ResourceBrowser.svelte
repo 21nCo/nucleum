@@ -13,17 +13,17 @@
   import { InputStyle } from "$lib/client/types/input.type";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Resources from "./Resources.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { page } from "$app/stores";
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
-  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType,
     ResourceAccessMode
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import BulkEditBar from "./BulkEditBar.svelte";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
@@ -31,7 +31,7 @@
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   export let resource: Resource;
   collectionStore.refresh();
@@ -59,30 +59,9 @@
           icon: "plus",
           variant: ButtonVariant.PRIMARY
         };
-  let starred = liveQuery(() =>
-    //@ts-ignore
-    $dataManager.cacheSource.dexie[resource]
-      .where("id")
-      .notEqual("")
-      .and((item: any) => activeResourceFilter(item))
-      .and((item: any) => item.isStarred === true)
-      .toArray()
-  );
 
   let data: any[] = [];
-  // let data = liveQuery(() =>
-  //   searchStore.refresh({
-  //     searchQuery
-  //   })
-  // );
-  // let data = liveQuery(() =>
-  //   //@ts-ignore
-  //   $dataManager.cacheSource.dexie[resource]
-  //     .where("id")
-  //     .notEqual("")
-  //     .and((item: any) => activeResourceFilter(item))
-  //     .toArray()
-  // );
+  let starred: any[] = [];
   onMount(async () => {
     await refresh();
   });
@@ -104,9 +83,10 @@
     $multiSelectStore = [];
   }
   async function refresh() {
-    data = await searchStore.refresh({
+    data = await searchStore.select({
       searchQuery
     });
+    starred = await searchStore.starred();
   }
 </script>
 
@@ -190,7 +170,7 @@
           <div class="flex flex-col gap-4">
             <Text style={TextStyle.SECTION_HEADING} content="Starred" />
             <Resources
-              data={$starred}
+              data={starred}
               accessPoint={ResourceAccessPoint.BROWSER}
               {resource}
               {arrangement}

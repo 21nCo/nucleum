@@ -1,9 +1,10 @@
 <script lang="ts">
   import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { dataManager } from "$lib/client/persistence/dataManager";
   import {
     NodeType,
+    type INodeThumb,
     type INodeThumbnail
   } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -16,7 +17,7 @@
   import DLinks from "../../common/foreLinks/DirectLinks.svelte";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   // export let id: string;
-  export let node: INodeThumbnail | undefined;
+  export let node: INodeThumb | undefined;
   export let parentBgIndex: number = 0;
   export let variant: "v1" | "v2" = "v2";
 </script>

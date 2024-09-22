@@ -1,68 +1,70 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
-  type INodeItemCaptured,
   LinkType,
   type IActiveNode,
   type INodeProperty,
-  type INode
+  type INode,
+  NodeType,
+  NodeRightPaneType,
+  type INodeLink
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/resourceStores/resource.store";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { interceptSurrealResponse, debouncer } from "$lib/client/utils/utils";
+} from "$lib/client/components/flux/resourceStores/resource.store";
+import { debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import type { IMutationQueueParams } from "../../../types/data.type";
-import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
-import { linker, resolveTypes } from "../memotron.store";
+import { linker } from "../memotron.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
+import { flux } from "$lib/client/components/flux/flux";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { collectionStore } from "../collection/collection.store";
+import type { IRecordId } from "$lib/client/types/data.type";
+import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
+import { generateMarkdownText } from "./node.utils";
 
 export const hierarchyFactorLimit = 5;
 
 class NodeStore extends ResourceStore<INode> {
-  db: ISurrealDatabase;
   constructor() {
     super(Resource.node, {
       refreshOnAppear: true,
       dboDependencies: [
         "fn::memotron::node::fetch",
-        "fn::memotron::node::createMany",
-        "fn::memotron::node::create",
         "fn::memotron::timeline",
         "fn::memotron::pdfAnnotator::getAllClips",
         "fn::memotron::pdfAnnotator::saveClip"
       ]
     });
-    this.db = new SurrealDatabase();
-  }
-  async createNode(
-    capture: INodeItemCaptured[],
-    queueParams?: IMutationQueueParams
-  ) {
-    return super.create(capture, {
-      customQuery:
-        "return fn::memotron::node::createMany($resources, $mutatedAt);",
-      queueParams
-    });
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
-    const response = await this.db.executeReadFn(query, {
+    const response = await flux.selectByQuery(query, {
       date: formatDate(date, "iso")
     });
-    return interceptSurrealResponse(response, "fetch timeline");
+    logger.debug({ at: "fetch timeline", response });
+    return response;
   }
-  async fetch(nodeId: string) {
-    const query = `fn::memotron::node::fetch($nodeId)`;
-    const response = await this.db.executeReadFn(query, { nodeId });
-    return interceptSurrealResponse(response, "fetch node");
+
+  /**
+   *
+   *
+   * Note: sending nodeId as param with $nodeId placeholder is not working in case of surreal.js + wasm engine. It is not detecting it as record id. Sending the fn param without single quotes is working.
+   *
+   * @param nodeId
+   * @returns
+   */
+  async fetch(nodeId: IRecordId) {
+    const query = `fn::memotron::node::fetch(${nodeId})`;
+    const response = await flux.selectByQuery(query);
+    logger.debug({ at: "fetch node", response });
+    return response;
   }
 }
 
@@ -93,22 +95,30 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   eventStore: any;
-  db: ISurrealDatabase;
   constructor(node: string) {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
-    this.db = new SurrealDatabase();
   }
   debouncers = new Map<string, any>();
   updateBlockPropagator = (
     id: string,
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
-  ) =>
-    this.resourceStore.modify(id, changedProps, {
-      mutationId,
-      isUseQueueFirstApproach: true
-    });
+  ) => {
+    if (changedProps.children) {
+      const node = this.get();
+      const childrenNodes = node.md.blocks.filter(
+        (x) =>
+          x.id &&
+          changedProps.children
+            ?.map((x) => x.toString())
+            ?.includes(x.id.toString())
+      );
+      const mdText = generateMarkdownText(childrenNodes);
+      return this.resourceStore.modify(id, { ...changedProps, mdText });
+    }
+    this.resourceStore.modify(id, changedProps);
+  };
   resolveDebouncerForBlockPersistance(id: string) {
     if (!this.debouncers.has(id)) {
       this.debouncers.set(id, debouncer(this.updateBlockPropagator, 2000));
@@ -121,13 +131,37 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (node) {
       this.set(node);
     }
-    const { types, propertyConfig, avatars } = await resolveTypes(
-      node.collections
-    );
+    const rawLinks =
+      node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
+    const links: INodeLink[] = rawLinks
+      .filter((x) => {
+        return (
+          (x.in.toString() === this.id && x.out.tb === Resource.node) ||
+          (x.out.toString() === this.id && x.in.tb === Resource.node)
+        );
+      })
+      .map((x) => {
+        const id = x.in.toString() === this.id ? x.out : x.in;
+        return {
+          id,
+          linkType: x.linkType
+        };
+      });
+    const collections: IRecordId[] = rawLinks
+      .filter(
+        (x) =>
+          x.out.tb === Resource.collection || x.in.tb === Resource.collection
+      )
+      .map((x) => (x.out.tb === Resource.collection ? x.out : x.in));
+    logger.log({ at: "ActiveNodeStore.fetch", rawLinks, links, collections });
+    const { types, propertyConfig, avatars } =
+      await collectionStore.resolveTypes(collections);
     this.update((n) => {
       n.types = types;
       n.propertyConfig = propertyConfig;
       n.avatars = avatars;
+      n.links = links;
+      n.collections = collections;
       return n;
     });
   };
@@ -135,9 +169,10 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     this.update((prev) => ({ ...prev, properties }));
     return this.resourceStore.modify(this.id, { properties });
   };
-  updateBlock = (id: string, changedProps: any) => {
+
+  updateBlock = (id: IRecordId, changedProps: any) => {
     const mutationId =
-      `${id}-` +
+      `${id.toString()}-` +
       ("children" in changedProps
         ? "children"
         : "body" in changedProps
@@ -146,27 +181,25 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
     debouncer(id, mutationId, changedProps);
   };
-  createBlock = async (id: string, contentType: any) => {
-    return this.resourceStore.createNode(
-      [
-        {
-          id,
-          body: "",
-          contentType,
-          creationContext: this.id
-        }
-      ],
+
+  createBlock = async (
+    id: string,
+    contentType: any,
+    params?: { body?: any }
+  ) => {
+    logger.log({ at: "ActiveNodeStore.createBlock", id, contentType, params });
+    return this.resourceStore.create([
       {
-        isUseQueueFirstApproach: true,
-        mutationId: `${id}-create`
+        id,
+        body: "",
+        contentType,
+        creationContext: this.id,
+        ...params
       }
-    );
+    ]);
   };
   deleteBlock = async (id: string) => {
-    return this.resourceStore.trash(id, {
-      isUseQueueFirstApproach: true,
-      mutationId: `${id}-delete`
-    });
+    return this.resourceStore.trash(id);
   };
   mention = async (location: string, id: string) => {
     return linker.link(location, id, LinkType.MENTION);
@@ -194,6 +227,10 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     });
   }
 
+  /**
+   * @deprecated - fetching directly in node.fetch
+   * @returns
+   */
   async fetchLinks() {
     const node = this.get();
     let id = node.id;
@@ -202,11 +239,11 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     let $from = array::first(select value <-link.* from node where id is $id);
    return {from: $from, to: $to};
     COMMIT TRANSACTION;`;
-    const response = await this.db.executeReadFn(query, {
+    const response = await flux.selectByQuery(query, {
       id
     });
-    console.log({ response });
-    return interceptSurrealResponse(response);
+    logger.debug({ at: "ActiveNodeStore.resolveLinks", response });
+    return response;
   }
 }
 
@@ -244,18 +281,26 @@ export function resolveNodeContextMenu(
   accessPoint: ResourceAccessPoint,
   params?: {
     isMediaNode?: boolean;
-    accessPointId?: string;
+    accessPointId?: IRecordId;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
-  if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
+  if (
+    (accessPoint === ResourceAccessPoint.NODE_LINKS ||
+      accessPoint === ResourceAccessPoint.NODE_DEFAULT_RIGHT_PANE) &&
+    params?.accessPointId
+  ) {
+    let baseItems = [resourceActions.pinToTopBar(), resourceActions.copyLink()];
+    if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
+      baseItems.unshift(
+        resourceActions.select(accessPoint, params?.accessPointId)
+      );
+      baseItems.unshift(resourceActions.unlink(params?.accessPointId));
+    }
     return [
       {
         group: "all",
-        items: [
-          resourceActions.unlink(params?.accessPointId),
-          resourceActions.select(accessPoint, params?.accessPointId)
-        ]
+        items: [...baseItems]
       },
       {
         group: "more",
@@ -340,4 +385,56 @@ export function resolveNodeContextMenu(
       items: [resourceActions.archive(), resourceActions.trash()]
     }
   ];
+}
+
+export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
+  if (contentType === NodeType.NODULAR_MARKDOWN) {
+    return [
+      {
+        value: NodeRightPaneType.SIDENOTES,
+        icon: "ph:note-thin",
+        tooltip: "Side notes"
+      },
+      {
+        value: "readMode",
+        icon: "ph:book-open-thin",
+        tooltip: "Toggle read mode"
+      },
+      {
+        value: "forks",
+        icon: "ph:fork-knife-thin",
+        tooltip: "Show forks"
+      }
+    ];
+  }
+  const baseActions: IToggleItem[] = [
+    {
+      value: NodeRightPaneType.SIDENOTES,
+      icon: "ph:note-thin",
+      tooltip: "Side notes"
+    },
+    {
+      value: NodeRightPaneType.LINKS,
+      icon: "ph:arrows-left-right-thin",
+      tooltip: "Show links"
+    },
+    {
+      value: NodeRightPaneType.PROPERTIES,
+      icon: "widget",
+      tooltip: "Show properties"
+    },
+    {
+      value: "bird",
+      icon: "ph:bird-thin",
+      tooltip: "Bird view"
+    }
+  ];
+  if (contentType === NodeType.PDF || contentType === NodeType.WEB_PAGE) {
+    baseActions.unshift({
+      value: NodeRightPaneType.TRACES,
+      icon: "bookmark",
+      tooltip: "Show traces"
+    });
+  }
+  return baseActions;
 }

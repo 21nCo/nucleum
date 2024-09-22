@@ -4,7 +4,6 @@
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import FileCapture from "./FileCapture.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   export let isEmptyState: boolean = true;
   import { setContext } from "svelte";
@@ -21,13 +20,27 @@
       captureStore.removeMentionLink(data.location, data.id);
     }
   }
-  setContext("node", handleEvent);
+
+  const contentContext = {
+    resolveDynamicParams: () => {
+      return {
+        placeholder: isEmptyState
+          ? "Start typing or paste from clipboard..."
+          : undefined
+      };
+    },
+    publish: handleEvent
+  };
+
+  setContext("content", contentContext);
 
   refreshEmptyState();
   let isShowTOC: boolean = false;
+
   function onFileChanges(event: any) {
     captureStore.setFile(event.detail);
   }
+
   function refreshEmptyState(e?: CustomEvent) {
     isEmptyState =
       $captureStore.captureType === CaptureType.MARKDOWN &&
@@ -45,8 +58,6 @@
     <div class="w-full h-full flex items-center justify-center text-fgs4">
       Camera opens here if supported or browse files
     </div>
-  {:else if $captureStore.captureType === CaptureType.UPLOAD}
-    <FileCapture on:change={onFileChanges} />
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">
       <NodularMarkdown

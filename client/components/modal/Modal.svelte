@@ -33,19 +33,34 @@
     dialog.showModal();
     // setTimeout(() => focusTrap?.focus(), 0);
   }
+
+  /**
+   * This is triggered when the overlay is clicked.
+   *
+   *
+   * Note: PointerId check is added since space key input in <InlineMarkdownTextInput> is emitting a PointerEvent and closing the modal which is not intented. However, the pointerId is reliable on macOS and the modal is not getting closed when clicking from macOS app.
+   *
+   * TODO - test resolution for pointerId - macOS scenario
+   *
+   * @param event
+   */
   const overlayClicked = (event: any) => {
-    logger.log({
+    logger.debug({
       at: "overlayClicked",
       id,
       classList: event.target?.classList,
       eventTargetId: event.target?.id,
       pointerId: event.pointerId,
-      eventNodeName: event.target?.nodeName
+      pointerType: event.pointerType,
+      detail: event.detail,
+      eventNodeName: event.target?.nodeName,
+      event: event
     });
     if (
-      (event.target?.classList?.contains("pop-overlay") ||
+      (((event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
-        event.target?.id === id ||
+        event.target?.id === id) &&
+        event.pointerType === "mouse") ||
         event.target.nodeName === "DIALOG") &&
       isDismissable
     ) {
@@ -54,7 +69,7 @@
   };
 
   function close() {
-    logger.log({ at: "close", id });
+    logger.debug({ at: "close", id });
     show = false;
     modalEvent.hide(id, "Modal.svelte");
     confirmationNotification.reset();
@@ -84,9 +99,9 @@
         orientation === Orientation.Vertical && size === Size.md,
       "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
         orientation === Orientation.Vertical && size === Size.sm,
-      "w-[80rem] 2k:w-[110rem] h-[56rem] 2k:h-full vm:h-[90rem]":
+      "w-9/10 2k:w-[110rem] h-full vm:h-[80rem]":
         orientation === Orientation.Horizontal && size === Size.xxl,
-      "w-[70rem] 2k:w-[100rem] h-[56rem] 2k:h-[68rem] vm:h-[80rem]":
+      "w-[70rem] 2k:w-[100rem] h-full 2k:h-[70rem] vm:h-[70rem]":
         orientation === Orientation.Horizontal && size === Size.xl,
       "w-[60rem] 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
         orientation === Orientation.Horizontal && size === Size.lg,
@@ -106,7 +121,7 @@
         isShowOverlay && !isUseDialog
     })}
     {id}
-    data-modal={index}
+    data-blank-modal={index}
     transition:fade={{ duration: 100 }}
     on:click={overlayClicked}
   >
@@ -152,8 +167,9 @@
     {:else}
       <div
         id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full mo:rounded-none rounded-md", {
-          ...resolveSizeClasses()
+        class={cn("bg-bgs1 mo:w-full mo:h-full", {
+          ...resolveSizeClasses(),
+          "mo:rounded-none rounded-md": size !== Size.full
         })}
       >
         <ColorLayer>

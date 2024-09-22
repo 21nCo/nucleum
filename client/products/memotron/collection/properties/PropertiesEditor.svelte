@@ -1,19 +1,16 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
     TableCellType,
     type TableColumn
   } from "$lib/client/types/table.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { enumToString, prefixTable } from "$lib/shared/utils/text.utils";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
-  import { type IProperty, PropertyType } from "./property.type";
+  import { PropertyType } from "./property.type";
   import {
     autoPropertiesGroupLabel,
     metaPropertyOptions,
@@ -73,66 +70,30 @@
         row.type === PropertyType.LOCATION
     }
   ];
-
-  let seedData: IProperty[] = [
-    // {
-    //   id: "property:one",
-    //   label: "Description",
-    //   isShowOnNodePage: true,
-    //   type: PropertyType.RATING,
-    //   order: 0
-    // },
-    {
-      id: "property:two",
-      label: "Status",
-      isShowOnNodePage: false,
-      isShowOnCapture: true,
-      type: PropertyType.SINGLE_SELECT,
-      order: 1
-    },
-    {
-      id: "property:three",
-      label: "Is Archived",
-      isShowOnNodePage: false,
-      isShowOnCapture: false,
-      type: PropertyType.CHECKBOX,
-      order: 2
-    }
-  ];
-  // properties = seedData;
-  // $: console.log({ data });
 </script>
 
 <div class="flex flex-col gap-4 w-full text-b2">
-  {#if isValidArrayWithData($propertyEditorStore)}
-    <Table2
-      actions={[
-        { action: "remove", index: 0 },
-        { action: "rearrange", index: 1 }
-      ]}
-      {columns}
-      bind:data={$propertyEditorStore}
-    />
-  {/if}
-  <div>
-    <Button
-      label="Add property"
-      style={ButtonStyle.OUTLINED}
-      size={Size.sm}
-      icon="plus"
-      on:click={() => {
-        $propertyEditorStore = [
-          ...$propertyEditorStore,
-          {
-            id: prefixTable(generateUID(), Resource.property),
-            label: "",
-            isShowOnNodePage: false,
-            isShowOnCapture: false,
-            type: PropertyType.TEXT,
-            order: $propertyEditorStore.length
-          }
-        ];
-      }}
-    />
-  </div>
+  <Table2
+    isStyled={true}
+    addAction="add property"
+    actions={[
+      { action: "remove", index: 0 },
+      { action: "rearrange", index: 1 }
+    ]}
+    {columns}
+    bind:data={$propertyEditorStore}
+    on:add={() => {
+      $propertyEditorStore = [
+        ...$propertyEditorStore,
+        {
+          id: generateResourceId(Resource.property),
+          label: "",
+          isShowOnNodePage: false,
+          isShowOnCapture: false,
+          type: PropertyType.TEXT,
+          order: $propertyEditorStore.length
+        }
+      ];
+    }}
+  />
 </div>

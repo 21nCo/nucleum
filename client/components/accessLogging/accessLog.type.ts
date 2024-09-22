@@ -1,4 +1,4 @@
-import type { IResourceBase } from "../resourceStores/resource.type";
+import type { IResourceBase } from "../flux/resourceStores/resource.type";
 
 export interface IAccessLog extends IResourceBase {
   action: string;

@@ -10,7 +10,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import LogsPane from "../logs/LogsPane.svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { CalendarHmVariant } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import { focusHeatmapStore } from "./journal.store";
   import TodayButton from "$lib/client/elements/button/TodayButton.svelte";

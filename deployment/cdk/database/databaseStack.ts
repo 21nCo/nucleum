@@ -46,7 +46,7 @@ export class DatabaseLightsailRegionalStack extends NestedStack {
     this.diskName =
       this.env.region + (props.isMasterDb ? "-master-db-disk" : "-db-disk");
     this.availabilityZone = this.env.region + "a";
-    this.instanceName = `${this.domainName}-instance`;
+    this.instanceName = `${this.domainName}-instance-change`;
     console.log(`Creating Lightsail instance: ${this.instanceName}`);
 
     const userDataScript = readFileSync(path.join(__dirname, "init.sh"), "utf8")
@@ -99,6 +99,9 @@ ${userDataScript}
 
 echo "User data script execution completed at $(date)"
 `;
+
+    const bundleId = this.resolveBundleId();
+
     /**
      *
      * aws lightsail get-blueprints
@@ -108,7 +111,7 @@ echo "User data script execution completed at $(date)"
       instanceName: this.instanceName,
       availabilityZone: this.availabilityZone,
       blueprintId: "amazon_linux_2023",
-      bundleId: this.env.region === "ap-south-1" ? "small_3_1" : "small_3_0",
+      bundleId,
       userData: userDataWithLogging,
       hardware: {
         disks: [
@@ -248,5 +251,24 @@ echo "User data script execution completed at $(date)"
     console.log(
       `Completed construction of DatabaseLightsailRegionalStack for region: ${props.environment.region}`
     );
+  }
+  resolveBundleId() {
+    let suffix = this.env.region === "ap-south-1" ? "_3_1" : "_3_0";
+    let bundleSize = "small";
+    switch (this.env.environment) {
+      case "dev":
+        bundleSize = "small";
+        break;
+      case "pre":
+        bundleSize = "small";
+        break;
+      case "live":
+        bundleSize = "medium";
+        break;
+      default:
+        bundleSize = "small";
+        break;
+    }
+    return bundleSize + suffix;
   }
 }

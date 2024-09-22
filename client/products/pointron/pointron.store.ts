@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
 
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
 import {
   SessionCompositionType,
@@ -18,8 +18,8 @@ import type { ITag } from "$lib/client/types/pointron/tag.type";
 import { StoreDataType } from "$lib/client/types/data.type";
 import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
 import { defaultAppMenu } from "$local/local";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { ResourceFIRStore } from "$lib/client/components/resourceStores/resource.store";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { ResourceFIRStore } from "$lib/client/components/flux/resourceStores/resource.store";
 
 export const swipeLabel = writable("");
 export const lastImportTime = writable<number>(Date.now());
@@ -149,7 +149,6 @@ export const seedLocalPreferences: IPointronPreferences = {
 class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
   constructor() {
     super(Resource.pointronPreferences, seedLocalPreferences, {
-      refreshOnAppear: true,
       dboDependencies: [
         "fn::pointron::import",
         "fn::pointron::export",

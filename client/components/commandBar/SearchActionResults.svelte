@@ -5,10 +5,9 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import { createEventDispatcher } from "svelte";
   import ResultItem from "./ResultItem.svelte";
-  import type { IResource } from "../resourceStores/resource.type";
-  import { dataManager } from "$lib/client/persistence/dataManager";
+  import type { IResource } from "../flux/resourceStores/resource.type";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { text } from "@sveltejs/kit";
+  import { flux } from "$lib/client/components/flux/flux";
   const dispatch = createEventDispatcher();
   export let action: IAction;
   export let search: string = "";
@@ -24,7 +23,7 @@
     if (!action.searchActionParams?.searchStoreId) return;
     isSearchInProgress = true;
     selectedIndex = 0;
-    results = await dataManager.search(
+    results = await flux.search(
       action.searchActionParams.searchStoreId,
       search
     );

@@ -1,13 +1,21 @@
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   CollectionType,
   type ICollection
 } from "$lib/client/products/memotron/collection/collection.type";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-import type { INode } from "$lib/client/products/memotron/node/node.type";
+import type {
+  INode,
+  NodeType
+} from "$lib/client/products/memotron/node/node.type";
 
 import { copyToClipboard } from "$lib/client/utils/utils";
+import { enumToCamelCase } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export function resolveResourceType(item: ICollection | INode) {
+  if (typeof item.id !== "string") return item.id.tb as MemotronResourceType;
   if (item.id.startsWith("node:")) return MemotronResourceType.NODE;
   else if (item.id.startsWith("task:")) return MemotronResourceType.TASK;
   else if (item.id.startsWith("combination:"))
@@ -20,14 +28,6 @@ export function resolveResourceType(item: ICollection | INode) {
     else return MemotronResourceType.COLLECTION;
   } else return MemotronResourceType.NODE;
 }
-export function resolveResourceTypeFromId(id: string) {
-  if (id.startsWith("node:")) return MemotronResourceType.NODE;
-  else if (id.startsWith("task:")) return MemotronResourceType.TASK;
-  else if (id.startsWith("combination:"))
-    return MemotronResourceType.COMBINATION;
-  else if (id.startsWith("collection:")) return MemotronResourceType.COLLECTION;
-  else return MemotronResourceType.NODE;
-}
 
 function resolveLinkForResource(resource: string) {
   return (
@@ -38,7 +38,20 @@ function resolveLinkForResource(resource: string) {
   );
 }
 
-export function copyResourceLinkToClipboard(id: string) {
-  const link = resolveLinkForResource(id);
+export function copyResourceLinkToClipboard(id: IRecordId) {
+  const link = resolveLinkForResource(id.toString());
   copyToClipboard(link);
+}
+
+/**
+ * Generates a node id using the externalId and type.
+ * @param externalId
+ * @param type NodeType
+ * @returns
+ */
+export function generateSyncedResourceId(externalId: string, type: NodeType) {
+  return generateResourceId(Resource.node, {
+    prefix: enumToCamelCase(type),
+    id: externalId
+  });
 }

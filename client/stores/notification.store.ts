@@ -9,14 +9,15 @@ import { postMessageToParent } from "$lib/client/utils/embed.utils";
 import { EmbedMessage } from "../types/embedMessage.enum";
 import view from "$lib/client/stores/view.store";
 import { GlobalEvent } from "../types/event.enum";
-import { generateUID } from "$lib/client/utils/utils";
 import type { IEvent } from "../types/event.type";
 import type { Event } from "../types/event.enum";
 import { appStore } from "./app.store";
 import { ObservableStore } from "./client.store";
 import { Action } from "../types/action.enum";
 import { logger } from "../components/debug/logger.client";
+import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
+export const toastDefaultDuration = 3500;
 class AppEventStore extends ObservableStore<IEvent> {
   constructor() {
     super("appEvents");
@@ -90,12 +91,15 @@ function initToastStore() {
     //     componentParams: { id: event.id }
     //   });
     // } else {
-    timer = setTimeout(() => {
-      update((n: Toast[]) => {
-        n.shift();
-        return n;
-      });
-    }, 5000);
+    timer = setTimeout(
+      () => {
+        update((n: Toast[]) => {
+          n.shift();
+          return n;
+        });
+      },
+      event.type === AlertType.SYNC ? 1000 : toastDefaultDuration
+    );
     // }
   };
   return {
@@ -110,13 +114,18 @@ function initToastStore() {
       });
     },
     success: (message: string, title?: string) => {
-      const id = generateUID();
+      const id = generateSimpleRandomId();
       trigger({ title, message, type: AlertType.SUCCESS, id });
       return id;
     },
     error: (message: string, title?: string) => {
-      const id = generateUID();
+      const id = generateSimpleRandomId();
       trigger({ title, message, type: AlertType.ERROR, id });
+      return id;
+    },
+    sync: (message?: string) => {
+      const id = generateSimpleRandomId();
+      trigger({ message: message ?? "Syncing...", type: AlertType.SYNC, id });
       return id;
     },
     trigger: trigger

@@ -3,11 +3,7 @@
 
   import MediaGridOptions from "./MediaGridOptions.svelte";
   import type { Item, Config } from "./mediaGrid.type";
-  import {
-    dragAndDropStore,
-    isInEditMode,
-    userPreferences
-  } from "$lib/client/stores/app.store";
+  import { dragAndDropStore, isInEditMode } from "$lib/client/stores/app.store";
   import { generateUID } from "$lib/client/utils/utils";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
   import DraggableMediaGridElement from "$lib/client/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
@@ -204,6 +200,9 @@
    * Used to upload a file to s#
    * @param input the file that needs to be uploaded to the S3
    * @returns {string} S3Url where the file is available
+   *
+   * TODO - use uploadFileV2 instead
+   *
    */
   async function uploadToS3(input: any) {
     let itemLocalURL = new Blob([input], { type: input.type });

@@ -13,7 +13,8 @@
   import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import ComposeTotalsText from "./ComposeTotalsText.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { deepCopy } from "$lib/shared/utils/obj.utils";

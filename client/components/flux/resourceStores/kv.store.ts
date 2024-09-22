@@ -1,0 +1,135 @@
+import { ObservableStore } from "$lib/client/stores/client.store";
+import { logger } from "$lib/client/components/debug/logger.client";
+import {
+  type IObservableStore,
+  type IObservableStoreSubject,
+  type IStore,
+  StoreDataType
+} from "$lib/client/types/data.type";
+import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { debouncer } from "$lib/client/utils/utils";
+import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
+import { flux } from "../flux";
+import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import { extentionFlux } from "../fluxExtentionMediator";
+import { FluxMethod } from "../flux.type";
+
+export class KeyValueStore<T extends IObservableStoreSubject>
+  extends ObservableStore<T>
+  implements IObservableStore<T>
+{
+  declare id: Resource;
+  isSynchronousCache: boolean = false;
+  isPreventAutoPersist: boolean = false;
+  protected previousValue: string = "";
+  seed: T;
+  private _debouncedPersist = debouncer(this.persist, 3000);
+  isExtensionEnvironment: boolean = false;
+  constructor(
+    item: Resource,
+    seed: T,
+    params?: Omit<IStore, "id" | "dataType" | "get">
+  ) {
+    super(item, StoreDataType.KVO, params);
+    this.id = item;
+    this.seed = seed;
+    this.isSynchronousCache = params?.isSynchronousCache || false;
+    this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
+    this.isExtensionEnvironment = isExtensionEnvironment();
+    this._set(seed);
+  }
+  /**
+   * Sets the new value of the store and caches it, but doesn't persist it
+   * @param x - new value of the store
+   */
+  private __set(x: T) {
+    const newValue = { ...x };
+    this._set(newValue);
+    this.previousValue = JSON.stringify(newValue);
+  }
+  /**
+   * Persists the data to the server - uses MERGE action
+   * Doesn't cache or update the store itself. Use modify for that
+   * @param n
+   */
+  protected async persist(n: Partial<T> | undefined = undefined) {
+    if (!n) n = this.get();
+    if (this.isExtensionEnvironment) {
+      return extentionFlux({
+        method: FluxMethod.KV_MERGE,
+        args: {
+          storeId: this.id,
+          data: n
+        }
+      });
+    }
+    return flux.kvMerge(this.id, n);
+  }
+  /**
+   * This function gets triggered from dataManager when the data is fetched from the server.
+   * @param data
+   */
+  loader(data: T) {
+    // console.log({ context: "kv.store loader", id: this.id, data });
+    if (!data.id) return;
+    this.__set({ ...data });
+  }
+  /**
+   * Loads the seed data initialized in the constructor and persists it
+   * @returns
+   */
+  loadSeedData() {
+    const seed = {
+      ...deepCopy(this.seed)
+    };
+    this.__set(seed);
+    return this.persist(seed);
+  }
+  /**
+   * Svelte store method which gets triggered on direct update of values using $ (dollar) syntax
+   * @param newValue
+   */
+  set(newValue: T) {
+    let changedProperties: any = {};
+    if (this.previousValue) {
+      let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
+      differences.forEach((key: string) => {
+        changedProperties[key] = newValue[key as keyof T];
+      });
+    }
+    // console.log({
+    //   previousValue: this.previousValue ? JSON.parse(this.previousValue) : null,
+    //   newValue,
+    //   changedProperties
+    // });
+    this.__set(newValue);
+    if (!objIsEmpty(changedProperties) && !this.isPreventAutoPersist)
+      this.persist(changedProperties);
+  }
+  /**
+   * Modifies the store, caches and persists the changes. Persist will be debounced if isDebouncedPersist is true and will be avoided if isPersist is false
+   *
+   * both caching and persisting are avoided if isPreventCachingDefault is true
+   * @param n
+   * @returns
+   */
+  protected async modify(
+    n: Partial<T>,
+    params: {
+      isPersist?: boolean;
+      isDebouncedPersist?: boolean;
+      isPreventCachingDefault?: boolean;
+    } = {
+      isPersist: true
+    }
+  ) {
+    const val = this.get();
+    if (params.isPreventCachingDefault) {
+      this._set({ ...val, ...n });
+      return;
+    }
+    this.__set({ ...val, ...n });
+    if (params?.isDebouncedPersist) return this._debouncedPersist(n);
+    else if (params?.isPersist) return this.persist(n);
+  }
+}

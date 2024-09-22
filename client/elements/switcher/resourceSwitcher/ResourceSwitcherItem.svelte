@@ -11,9 +11,9 @@
   import HoverableElement from "../../HoverableElement.svelte";
   import ContextMenuAction from "../../contextMenu/ContextMenuAction.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   export let item: IResourceSwitchItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
@@ -76,12 +76,12 @@
   ];
 </script>
 
-<ContextMenuAction {contextMenu}>
+<ContextMenuAction {contextMenu} id="resourceSwitcherContextMenu">
   <HoverableElement
     type="button"
     bind:isHovering
     class={cn(
-      "relative flex justify-center items-center whitespace-nowrap border hover:bg-bgs2 hover:text-fgs1",
+      "relative flex justify-center items-center whitespace-nowrap border  hover:text-fgs1",
       {
         "min-w-56 h-20":
           iconOrientation === Orientation.Horizontal && size === Size.lg,
@@ -97,27 +97,28 @@
           iconOrientation === Orientation.Vertical && size === Size.sm,
         "rounded-md": size != Size.sm,
         "text-b2 rounded-full": size === Size.sm,
-        "border border-aps1 bg-bgs2": isActive,
-        "outline-transparent border-brs3 text-fgs3": !isActive,
+        "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
+        "outline-transparent border-brs3 text-fgs3 hover:bg-bgs2": !isActive,
         "opacity-80 cursor-not-allowed": item.isDisabled
       }
     )}
     on:click
   >
     <div
-      class="flex {iconOrientation === Orientation.Vertical
-        ? 'flex-col gap-1'
-        : 'gap-2'} {size === Size.md && $view.isPortrait
-        ? 'text-base font-medium'
-        : size === Size.sm
-          ? 'text-b2'
-          : 'text-base'}"
+      class={cn("flex", {
+        "flex-col gap-1": iconOrientation === Orientation.Vertical,
+        "gap-2": iconOrientation === Orientation.Horizontal,
+        "portrait:text-base portrait:font-medium": size === Size.md,
+        "text-b2": size === Size.sm,
+        "text-base": size === Size.lg,
+        "text-aps1": isActive
+      })}
     >
       {#if item.icon && typeof item.icon === "string"}
         <Icon
           icon={item.icon}
           class={cn({
-            "fill-fgs1": isActive && size != Size.sm,
+            "fill-aps1": isActive,
             "stroke-fgs3": !isActive && !isHovering,
             "stroke-fgs1": !isActive && isHovering
           })}

@@ -6,7 +6,7 @@ import type { TimePeriod } from "$lib/client/types/time.type";
 import type {
   IResourceBase,
   ITrashInformation
-} from "../../components/resourceStores/resource.type";
+} from "../../components/flux/resourceStores/resource.type";
 import { TagId } from "./tagId.enum";
 
 export type IGoal = {
@@ -42,7 +42,7 @@ export type IPointGoal = IResourceBase & {
   tags?: string[];
   isArchived?: boolean;
   isPinnedForQuickStart?: boolean;
-  isFavorite?: boolean;
+  isStarred?: boolean;
   isCompleted?: boolean;
   color?: number | null;
 };

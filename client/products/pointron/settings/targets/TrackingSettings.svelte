@@ -1,7 +1,7 @@
 <script lang="ts">
   import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
   import MultiselectDropdown from "$lib/client/elements/dropdown/MultiselectDropdown.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { TimeScale } from "$lib/client/types/time.type";
   import TargetInput from "./TargetInput.svelte";
   import { onMount } from "svelte";

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { swipeLabel } from "$lib/client/products/pointron/pointron.store";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { formatTime } from "$lib/client/utils/time.utils";
@@ -9,7 +9,7 @@
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
   import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
   import { manualLogStore } from "../log.store";
@@ -235,6 +235,7 @@
       on:select={onGoalSelect}
       bind:value={label}
       bind:this={inputRef}
+      isPreventDefaultResults={true}
       searchResultComponent={GoalSearchThumbnail}
       searchStoreId={Resource.PointGoal}
       style={InputStyle.BORDERED}

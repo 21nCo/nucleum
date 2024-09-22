@@ -1,4 +1,4 @@
-import { globalDbo } from "$lib/shared/dbo/dbo";
+import { globalDbo } from "$lib/shared/dbo/global.dbo";
 import { memotronDboDefinitions } from "$lib/shared/dbo/memotron.dbo";
 import { memotronTables } from "$lib/shared/dbo/memotron.tables";
 import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";

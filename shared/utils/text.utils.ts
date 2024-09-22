@@ -1,18 +1,10 @@
-import type { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type { EmailParts } from "$lib/client/types/account.type";
-import type {
-  IBlock,
-  IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import {
-  ListType,
-  NodeType,
-  type TextContent
-} from "$lib/client/products/memotron/node/node.type";
+import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+
 import { isValidArrayWithData } from "./obj.utils";
 import { Display } from "../../client/types/view.type";
 import { Size } from "../../client/types/size.enum";
-import { generateUID } from "./utils";
 
 export function properCase(str: string) {
   if (!str) return str;
@@ -25,13 +17,6 @@ export function properCase(str: string) {
 
 export function prefixTable(id: string | number, itemType: Resource) {
   return `${itemType}:${id}`;
-}
-export function generateResourceId(itemType: Resource, params?: {
-  prefix?: string;
-  id?: string;
-}) {
-  const id = params?.id ?? generateUID();
-  return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;
 }
 
 export function stripTablePrefix(id: string) {
@@ -53,46 +38,6 @@ export function isValidParentDomain(text: string) {
 
 export function frameEmailFromParts(parts: EmailParts) {
   return `${parts.firstFew}...${parts.lastFew ?? ""}@${parts.emailDomain}`;
-}
-
-export function generateMarkdownText(blocks: IBlock[]) {
-  return blocks
-    .map((b) => {
-      switch (b.contentType) {
-        case NodeType.SIMPLE_TEXT:
-          b.body = b.body.replaceAll(/\n/g, "  \n");
-          b.body = b.body.replaceAll("<div><br></div>", "  \n");
-          b.body = b.body.replaceAll(/<br>/g, "  \n");
-          b.body = b.body.replaceAll(
-            /<span class="bg-gray-200 px-1 font-mono">(.*?)<\/span>/g,
-            "`$1`"
-          );
-          b.body = b.body.replaceAll(/<i>(.*?)<\/i>/g, "*$1*");
-          b.body = b.body.replaceAll(/<b>(.*?)<\/b>/g, "**$1**");
-          b.body = b.body.replaceAll(/<span id="[^"]*">(.*?)<\/span>/g, "$1");
-          b.body = b.body.replaceAll(/<span>(.*?)<\/span>/g, "$1");
-          b.body = b.body.replaceAll(/<div>(.*?)<\/div>/g, "\n $1");
-          //todo - add remaining inline style patterns
-          return b.body;
-        case NodeType.HEADING1:
-          return `# ${b.body}`;
-        case NodeType.HEADING2:
-          return `## ${b.body}`;
-        case NodeType.HEADING3:
-          return `### ${b.body}`;
-        case NodeType.HEADING4:
-          return `#### ${b.body}`;
-        case NodeType.HEADING5:
-          return `##### ${b.body}`;
-        // case NodeType.DOUBLE_DIVIDER:
-        //   return `---`;
-        // case NodeType.DIVIDER:
-        //   return `---`;
-        case NodeType.LIST:
-          return `${b.listType === ListType.ORDERED ? "1." : "-"} ${b.body}`;
-      }
-    })
-    .join("\n");
 }
 
 export function isValidMarkdown(md: IMarkdown) {
@@ -140,6 +85,18 @@ export function enumToString(val: any, isProperCase: boolean = true) {
   return isProperCase ? properCase(str) : str;
 }
 
+export function enumToCamelCase(val: any) {
+  let output = "";
+  val
+    .toString()
+    .split("_")
+    .forEach((x, index) => {
+      if (index === 0) output += x.toLowerCase();
+      else output += x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
+    });
+  return output;
+}
+
 export function determineTruncateLength(
   display: Display,
   space: Size.sm | Size.md | Size.lg = Size.md
@@ -148,9 +105,9 @@ export function determineTruncateLength(
     if (display === Display.MO || display === Display.CW) {
       return 20;
     } else if (display === Display.TP || display === Display.DP) {
-      return 30;
-    } else if (display === Display.TK) {
       return 40;
+    } else if (display === Display.TK) {
+      return 60;
     } else {
       return 20;
     }

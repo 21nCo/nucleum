@@ -1,33 +1,41 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { dataManager } from "$lib/client/persistence/dataManager";
-  import LinkItems from "./LinkItems.svelte";
+  import LinkThumbnailItems from "./LinkThumbnailItems.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/resourceStores/resource.type";
+  } from "$lib/client/components/flux/resourceStores/resource.type";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import BulkEditBar from "../../common/BulkEditBar.svelte";
   import InlineTimeoutMessage from "$lib/client/elements/text/InlineTimeoutMessage.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
-  import type { IActiveNodeStore } from "$lib/client/products/memotron/node/node.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "$lib/client/products/memotron/node/node.store";
   import {
     type INode,
+    type INodeLink,
     LinkType
   } from "$lib/client/products/memotron/node/node.type";
   import { linker } from "$lib/client/products/memotron/memotron.store";
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { flux } from "$lib/client/components/flux/flux";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-  let links: { id: string; linkType: LinkType }[] = [];
+  let links: INodeLink[] = [];
   let filtered: INode[] = [];
   let selectedLinkType: LinkType = LinkType.DIRECT;
   let selectedLinkTags: string[] = [];
@@ -43,7 +51,7 @@
     await refresh();
     node.subscribe(async (x) => {
       let currentFocus = previousFocus;
-      if (!x.focusedBlock) currentFocus = x.id;
+      if (!x.focusedBlock) currentFocus = x.id.toString();
       else currentFocus = x.focusedBlock;
       if (previousFocus != currentFocus) {
         await refresh();
@@ -69,9 +77,7 @@
       return;
     }
     linker.link($node.focusedBlock ?? node.id, e.detail.item.id);
-    const addedLink = await $dataManager.cacheSource.dexie.node.get(
-      e.detail.item.id
-    );
+    const addedLink = await flux.select(e.detail.item.id);
     if (!addedLink) {
       linkStatus.message = "Something went wrong. Please try again later.";
       linkStatus.type = AlertType.ERROR;
@@ -83,44 +89,24 @@
     searchQuery = "";
   }
   async function refresh() {
-    const result = await node.fetchLinks();
-    console.log({ result });
-    if (!result) {
+    links = $node.links ?? [];
+    if (!links) {
       links = [];
       filtered = [];
       fetchError = "Error fetching links.";
       return;
     }
-    links = [
-      ...result.from
-        .filter((x) => x.in.startsWith("node:"))
-        .map((x) => {
-          return {
-            linkType: x.linkType,
-            id: x.in
-          };
-        }),
-      ...result.to
-        .filter((x) => x.out.startsWith("node:"))
-        .map((x) => {
-          return {
-            linkType: x.linkType,
-            id: x.out
-          };
-        })
-    ];
-    console.log({ links });
     applyFilters();
   }
   async function applyFilters() {
     let linkIds = links
       .filter((x) => x.linkType === selectedLinkType)
       .map((x) => x.id);
-
-    filtered = await $dataManager.cacheSource.dexie.node
-      .where("id")
-      .anyOfIgnoreCase(linkIds)
-      .toArray();
+    filtered = await nodeStore.selectMany({
+      filters: {
+        id: linkIds.map((x) => x.toString())
+      }
+    });
   }
   function onClick(e: CustomEvent) {
     const result = multiSelectStore.clickHandler(e.detail.id);
@@ -132,7 +118,7 @@
       );
   }
   function onSelectAll() {
-    $multiSelectStore = filtered?.map((x) => x.id) ?? [];
+    $multiSelectStore = filtered?.map((x) => x.id.toString()) ?? [];
   }
 
   function onAction(e: CustomEvent) {
@@ -145,7 +131,7 @@
 
 <div class="relative flex flex-col gap-3 pt-1 h-full w-full">
   <div class="flex flex-col w-full">
-    <LinkSearch context="nodepage" on:select={onSelect} bind:searchQuery />
+    <LinkSearch context="nodelinkspane" on:select={onSelect} bind:searchQuery />
     {#if linkStatus.message}
       <div>
         <InlineTimeoutMessage
@@ -190,7 +176,7 @@
     {#if fetchError}
       <ErrorStatusPane error={fetchError} />
     {:else if filtered.length > 0}
-      <LinkItems
+      <LinkThumbnailItems
         links={filtered}
         accessPointId={node.id}
         on:click={onClick}

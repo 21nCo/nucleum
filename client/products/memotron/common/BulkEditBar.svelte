@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { resolveMultiSelectStore } from "$lib/client/components/resourceStores/resource.store";
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";

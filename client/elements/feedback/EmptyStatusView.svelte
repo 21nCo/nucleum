@@ -25,7 +25,7 @@
 
 <div class="flex flex-col w-full h-full justify-center items-center gap-6 px-2">
   {#if isLoadingState && loadingAnimation === LoadingAnimationType.SPINNER}
-    <div class="text-fgs3 text-b3 flex flex-col gap-2 items-center">
+    <div class="text-fgs3 text-b3 flex flex-col gap-4 items-center">
       <!-- <InlineLoadingAnimation /> -->
       <PageLoadingAnimation variant="panel-refresh" />
       {#if loadingText}

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
   import { tweened } from "svelte/motion";
-  import { toasts } from "../../stores/notification.store";
+  import {
+    toastDefaultDuration,
+    toasts
+  } from "../../stores/notification.store";
   import { AlertType, type Toast } from "../../types/notification.type";
   import Icon from "../Icon.svelte";
   import { linear } from "svelte/easing";
@@ -9,9 +12,9 @@
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   export let notification: Toast;
   export let isShownAsModal = false;
-  const duration = 5000;
+
   const progress = tweened(100, {
-    duration,
+    duration: toastDefaultDuration,
     easing: linear
   });
   function close(event: MouseEvent) {
@@ -41,10 +44,12 @@
 {:else}
   <button
     class={cn(
-      "relative flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 items-center portrait:flex-1 portrait:min-w-0 portrait:mx-4 portrait:w-4/5 w-96 pr-2 rounded-md",
+      "relative flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 items-center portrait:flex-1 portrait:min-w-0 portrait:mx-4 portrait:w-4/5 pr-2 rounded-md",
       {
         "min-h-20 h-20": notification.message && notification.title,
-        "min-h-12 h-12": !notification.message || !notification.title
+        "min-h-12 h-12": !notification.message || !notification.title,
+        "w-96": notification.type !== AlertType.SYNC,
+        "w-32": notification.type === AlertType.SYNC
       }
     )}
     on:click|stopPropagation
@@ -56,7 +61,17 @@
         "bg-ass1": notification.type === AlertType.WARNING
       })}
     />
-    <div class="flex h-full items-center gap-4 min-w-0 flex-1">
+    <div
+      class={cn("flex h-full items-center min-w-0 flex-1", {
+        "gap-4": notification.type !== AlertType.SYNC,
+        "gap-1 justify-center": notification.type === AlertType.SYNC
+      })}
+    >
+      <span class="flex items-center justify-center">
+        {#if notification.type === AlertType.SYNC}
+          <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-bgs1" />
+        {/if}
+      </span>
       <div class="flex flex-col gap-2 items-start truncate">
         {#if notification.title}
           <div
@@ -89,19 +104,21 @@
           {notification.actionText}
         </button>
       {/if}
-      {#if !notification.isNonDismissable}
+      {#if !notification.isNonDismissable && notification.type !== AlertType.SYNC}
         <div class="flex items-center justify-center hover:bg-fgs3 rounded-md">
           <Icon icon="cross" on:click={close} class="stroke-bgs1" />
         </div>
       {/if}
     </div>
-    <div
-      class="absolute bottom-0 left-0 w-full portrait:mx-4 portrait:w-4/5 h-1 bg-fgs1 rounded-b-md"
-    >
+    {#if !notification.isNonDismissable && notification.type !== AlertType.SYNC}
       <div
-        class="h-full transition-all duration-100 ease-linear bg-fgs3 rounded-bl-md"
-        style="width: {$progress}%;"
-      ></div>
-    </div>
+        class="absolute bottom-0 left-0 w-full portrait:mx-4 portrait:w-4/5 h-1 bg-fgs1 rounded-b-md"
+      >
+        <div
+          class="h-full transition-all duration-100 ease-linear bg-fgs3 rounded-bl-md"
+          style="width: {$progress}%;"
+        ></div>
+      </div>
+    {/if}
   </button>
 {/if}

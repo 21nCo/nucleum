@@ -5,7 +5,7 @@
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import InputBaseElement from "../InputBaseElement.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import type { IResource } from "$lib/client/components/resourceStores/resource.type";
+  import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
   export let value: any;
   export let placeholder: string | undefined = undefined;
   export let label: InputLabel | undefined = undefined;

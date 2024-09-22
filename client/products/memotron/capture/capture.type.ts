@@ -1,9 +1,11 @@
 import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import type {
+  IObservableStoreSubject,
+  IRecordId
+} from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type {
-  MediaBody,
   INodeProperty,
   INodeStructure,
   LinkType
@@ -12,10 +14,10 @@ import { MemotronResourceType } from "../memotron.type";
 import { type A2MDBlock } from "./AudioToMarkdown.type";
 
 export enum CaptureType {
-  ANY = "Any",
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
+  SKETCH = "SKETCH",
   UPLOAD = "UPLOAD"
 }
 
@@ -27,7 +29,8 @@ export type ICaptureStore = IObservableStoreSubject & {
    */
   avatar?: IAvatar;
   captureType: CaptureType | string;
-  body: IMarkdown | MediaBody;
+  body?: IMarkdown;
+  file?: IRecordId;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
   fileDetails?: FileDetails;

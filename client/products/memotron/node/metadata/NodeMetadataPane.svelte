@@ -2,20 +2,21 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { formatBytes, properCase } from "$lib/shared/utils/text.utils";
-  import { format } from "maplibre-gl";
+  import { enumToString, formatBytes } from "$lib/shared/utils/text.utils";
   import type { IActiveNodeStore } from "../node.store";
-  import { headingNodeTypes, NodeType } from "../node.type";
+  import { headingNodeTypes, NodeType, webNodeTypeList } from "../node.type";
   import BasicInfoItem from "./BasicInfoItem.svelte";
   import InfoCard from "./InfoCard.svelte";
   import LocationCard from "./LocationCard.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   export let node: IActiveNodeStore;
-  export let isMediaNode: boolean = false;
   export let renderingDetails: any = undefined;
   $: kind = resolveKind($node.contentType);
-
-  $: console.log({ metadata: $node });
+  $: isMediaNode =
+    $node.contentType !== NodeType.NODULAR_MARKDOWN &&
+    $node.contentType !== NodeType.NON_NODULAR_MARKDOWN &&
+    $node.contentType !== NodeType.PDF;
+  $: isWebNode = webNodeTypeList.includes($node.contentType);
 
   function resolveKind(contentType: NodeType) {
     if (
@@ -24,7 +25,7 @@
       contentType === NodeType.NON_NODULAR_MARKDOWN
     )
       return "Markdown";
-    else return properCase(contentType);
+    else return enumToString(contentType);
   }
 
   function calculateReadingTime(wordCount: number | undefined) {
@@ -42,6 +43,7 @@
   }
 
   function resolveFileFormat(fileType: string) {
+    if (!fileType) return "NA";
     if (fileType.includes("image/jpeg")) return "jpeg";
     else if (fileType.includes("image/png")) return "png";
     else if (fileType.includes("image/gif")) return "gif";
@@ -57,26 +59,15 @@
     else if (fileType.includes("audio/webm")) return "webm";
     else return "NA";
   }
+  $: console.log({ kind });
 </script>
 
 <div class="flex flex-col gap-3 w-full flex-grow items-start">
-  {#if !isMediaNode}
-    <Text content="Metadata" style={TextStyle.PANEL_HEADING_SMALL} />
-  {/if}
-  <div
-    class={cn("flex w-full", {
-      "flex-wrap flex-grow gap-12": isMediaNode,
-      "flex-col gap-3": !isMediaNode
-    })}
-  >
-    <div
-      class={cn("flex flex-col gap-3 rounded-md mo:p-2 p-4", {
-        "w-full bg-bgs2": !isMediaNode,
-        "w-2/3 h-full overflow-auto": isMediaNode
-      })}
-    >
+  <Text content="Metadata" style={TextStyle.PANEL_HEADING_SMALL} />
+  <div class={cn("flex w-full flex-col gap-3")}>
+    <div class={cn("flex flex-col gap-3 rounded-md mo:p-2 p-4 w-full bg-bgs2")}>
       <BasicInfoItem label="Kind" value={kind} />
-      {#if isMediaNode && "body" in $node}
+      {#if isMediaNode && !isWebNode && "body" in $node}
         <BasicInfoItem
           label="File format"
           value={resolveFileFormat($node.body.type)}
@@ -112,9 +103,14 @@
           />
         {/if}
       {/if}
-      <BasicInfoItem label="Created at" value={$node.createdAt} />
+      <BasicInfoItem
+        label={isWebNode ? "Clipped at" : "Created at"}
+        value={$node.createdAt}
+      />
       <BasicInfoItem label="Last viewed at" value={$node.interactedAt} />
-      <BasicInfoItem label="Last modified at" value={$node.modifiedAt} />
+      {#if !isWebNode}
+        <BasicInfoItem label="Last modified at" value={$node.modifiedAt} />
+      {/if}
     </div>
     {#if !isMediaNode}
       <div class="flex flex-wrap gap-3">
@@ -125,13 +121,10 @@
         />
       </div>
     {/if}
-    <div
-      class={cn("rounded-md", {
-        "w-full bg-bgs2": !isMediaNode,
-        "grow bg-bgs3 h-full": isMediaNode
-      })}
-    >
-      <LocationCard metadata={$node.metadata} />
-    </div>
+    {#if $node.metadata?.location}
+      <div class={cn("rounded-md w-full bg-bgs2")}>
+        <LocationCard metadata={$node.metadata} />
+      </div>
+    {/if}
   </div>
 </div>

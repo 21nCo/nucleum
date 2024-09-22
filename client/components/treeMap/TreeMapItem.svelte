@@ -3,13 +3,11 @@
   import type { TreeMapContent } from "$lib/client/types/treeMap.type";
   import view from "$lib/client/stores/view.store";
   import { createEventDispatcher } from "svelte";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { appStore } from "$lib/client/stores/app.store";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { determineTruncateLength } from "$lib/shared/utils/text.utils";
-  import { Size } from "$lib/client/types/size.enum";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+  import { page } from "$app/stores";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let contentCallback: (id: string) => TreeMapContent;
@@ -34,8 +32,10 @@
     isCollapsed = !isCollapsed;
     e.stopPropagation();
   }
-  // $: console.log("view current path", $appStore.currentPath);
-  $: isActive = $appStore.currentPath.includes(id);
+  $: currentInlineResource = $page.url.searchParams.get(
+    ResourceAccessMode.INLINE
+  );
+  $: isActive = currentInlineResource === id;
 </script>
 
 {#if content}

@@ -17,7 +17,8 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
-  import { appStore, userPreferences } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { formatTime, isSameDateTime } from "$lib/client/utils/time.utils";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { pointSessionStore } from "../../focus/session.store";

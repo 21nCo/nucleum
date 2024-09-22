@@ -1,120 +1,41 @@
-import { dataManager } from "$lib/client/persistence/dataManager";
+// import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
   LinkType,
+  NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
-import {
-  activeResourceFilter,
-  interceptSurrealResponse
-} from "$lib/client/utils/utils";
-import { get } from "svelte/store";
-import { resolveResourceTypeFromId } from "./memotron.utils";
-import { MemotronResourceType } from "./memotron.type";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { activeResourceFilterV2 } from "$lib/client/utils/utils";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
-import type { IProperty } from "./collection/properties/property.type";
-import { CollectionType } from "./collection/collection.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import { MemotronDexie } from "./memotron.dexie";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { type IStore, StoreDataType } from "$lib/client/types/data.type";
+import {
+  type IRecordId,
+  type IResourceSelectFilters,
+  type IResourceSelectOrderBy,
+  type IStore,
+  PersistenceActionType,
+  StoreDataType
+} from "$lib/client/types/data.type";
+import { flux } from "$lib/client/components/flux/flux";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { isValidArray } from "$lib/shared/utils/obj.utils";
+import { toasts } from "$lib/client/stores/notification.store";
+import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 
-/**
- * @deprecated
- * @param typeId
- * @returns
- */
-export function resolveAssociatedType(typeId: string) {
-  if (!typeId) return null;
-  const tb = get(dataManager).cacheSource.dexie.type;
-  return tb.get(typeId);
-}
-
-export function resolveNodeParent(id: string) {
-  const tb = get(dataManager).cacheSource.dexie.node;
-  //   return tb.where("children").anyOf(id).toArray();
-  return tb
-    .filter((node) => node.children && node.children.includes(id))
-    .first();
-}
-
-export async function resolveNodeParentHierarchy(id: string) {
-  const hierarchy = [];
-  let traverseComplete = true;
-  while (traverseComplete) {
-    const parent = await resolveNodeParent(id);
-    if (parent) {
-      hierarchy.push(parent);
-      id = parent.id;
-    } else {
-      traverseComplete = false;
-    }
-  }
-  return hierarchy.reverse();
-}
-
-export async function searchForLinking(query: string) {
-  const dexie = get(dataManager).cacheSource.dexie;
-  // const nodesPromise = dexie.node
-  //   .where("title")
-  //   .anyOfIgnoreCase(query)
-  //   .toArray()
-  //   .then((nodes) => nodes.map((node) => ({ ...node, label: node.title })));
-  const nodesPromise = dexie.node
-    .filter(activeResourceFilter)
-    .filter(
-      (node) =>
-        (node.label &&
-          node.label.toLowerCase().includes(query.toLowerCase())) ||
-        (headingNodeTypes.includes(node.contentType) &&
-          node.body.toLowerCase().includes(query.toLowerCase())) ||
-        false
-    )
-    .toArray()
-    .then((nodes) =>
-      nodes.map((node) => ({ ...node, label: node.label ?? node.body }))
-    );
-
-  // const collectionsPromise = dexie.curation
-  //   .where("label")
-  //   .anyOfIgnoreCase(query)
-  //   .and((collection) => collection.type === CurationType.COLLECTION)
-  //   .toArray();
-  const collectionsPromise = dexie.collection
-    .filter(activeResourceFilter)
-    .filter((collection) =>
-      collection.label?.toLowerCase().includes(query.toLowerCase())
-    )
-    .toArray();
-  // return nodesPromise;
-  return Promise.all([nodesPromise, collectionsPromise]).then(
-    ([nodes, collections]) => nodes.concat(collections)
-  );
-}
-
-export async function resolveResource(id: string) {
-  const resourceType = resolveResourceTypeFromId(id);
-  const dexie = get(dataManager).cacheSource.dexie;
-  switch (resourceType) {
-    case MemotronResourceType.NODE:
-      return await dexie.node.get(id);
-    case MemotronResourceType.COLLECTION:
-      return await dexie.collection.get(id);
-    default:
-      return null;
-  }
+export function resolveResource(id: string) {
+  return flux.select(id);
 }
 
 export class SearchStore {
   resource: Resource = Resource.everything;
   searchQuery: string = "";
-  isStarFilterSelected: boolean = false;
-  dexie: MemotronDexie;
+  limit: number | undefined = undefined;
+  offset: number | undefined = undefined;
+  orderBy: IResourceSelectOrderBy | undefined = undefined;
+  filters: IResourceSelectFilters = {};
+
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
-    this.dexie = get(dataManager).cacheSource.dexie;
   }
   levenshteinDistance(a: string, b: string): number {
     const matrix = [];
@@ -144,139 +65,209 @@ export class SearchStore {
     return matrix[b.length][a.length];
   }
 
-  async refreshNodes() {
-    let query = this.dexie.node
-      .where("contentType")
-      .anyOfIgnoreCase(
-        this.searchQuery
-          ? [...rootNodeTypeList, ...headingNodeTypes]
-          : rootNodeTypeList
-      );
+  /**
+   * TODO - group by mdParent if searching
+   * @returns
+   */
+  async nodes() {
+    const result = await flux.selectMany(Resource.node, {
+      properties: [
+        "*",
+        "parent.* as parent",
+        "file.* as file",
+        "search::highlight('**', '**', 1, false) AS bodySearch",
+        "search::highlight('**', '**', 2, false) AS labelSearch",
+        "(fn::memotron::node::parent($parent.id)) as mdParent"
+      ],
+      filters: {
+        trashInformation: false,
+        creationContext: isValidString(this.searchQuery) ? undefined : false,
+        ...this.filters,
+        contentType:
+          "contentType" in this.filters
+            ? this.filters.contentType
+            : this.searchQuery
+              ? undefined
+              : rootNodeTypeList
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["body", "label"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        createdAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
 
-    if (!this.searchQuery) {
-      query = query.and((node) => !node.creationContext);
-    }
+    logger.debug({ at: "refreshNodes", result });
 
-    if (this.resource === Resource.archived) {
-      query = query.and((item) => item.isArchived === true);
-    } else {
-      query = query.and((node) => activeResourceFilter(node));
-    }
-
-    if (this.isStarFilterSelected) {
-      query = query.and((item) => item.isStarred === true);
-    }
-    if (this.searchQuery) {
-      query = query.and(
-        (item) =>
-          item.label?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          ("body" in item &&
-            typeof item.body === "string" &&
-            item.body
-              ?.toLowerCase()
-              .includes(this.searchQuery.toLowerCase())) ||
-          ("content" in item.body &&
-            typeof item.body.content === "string" &&
-            item.body.content
-              ?.toLowerCase()
-              .includes(this.searchQuery.toLowerCase()))
-      );
-    }
-    return query.toArray();
+    // const result2 = await flux.selectByQuery("select * from node;");
+    // logger.debug({ at: "all nodes: ", result2 });
+    return result;
   }
 
-  async refreshCollections() {
-    let query = this.dexie.collection.where("id").notEqual("");
-
-    if (this.resource === Resource.archived) {
-      query = query.and((item) => item.isArchived === true);
-    } else {
-      query = query.and((node) => activeResourceFilter(node));
-    }
-
-    if (this.isStarFilterSelected) {
-      query = query.and((item) => item.isStarred === true);
-    }
-
-    if (isValidString(this.searchQuery)) {
-      query = query.filter((collection) => {
-        if (!collection.label) return false;
-        const labelValue = collection.label.toLowerCase();
-        const searchValue = this.searchQuery.toLowerCase();
-        if (labelValue.includes(searchValue)) return true;
-        const levenshteinDistanceValue = this.levenshteinDistance(
-          labelValue,
-          searchValue
-        );
-        console.log({ labelValue, searchValue, levenshteinDistanceValue });
-        return levenshteinDistanceValue <= 2;
-      });
-    }
-    return query.toArray();
+  async collections() {
+    const result = await flux.selectMany(Resource.collection, {
+      properties: [
+        "search::highlight('**', '**', 1, false) AS labelSearch",
+        "*",
+        "cover.* as cover"
+      ],
+      filters: {
+        trashInformation: false,
+        ...this.filters
+      },
+      search: isValidString(this.searchQuery)
+        ? {
+            query: this.searchQuery,
+            properties: ["label"]
+          }
+        : undefined,
+      orderBy: this.orderBy ?? {
+        createdAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.debug({ at: "refreshCollections", result });
+    return result;
   }
 
-  async refresh(params: {
+  async select(params: {
     resource?: Resource;
     searchQuery?: string;
-    isStarFilterSelected?: boolean;
+    limit?: number;
+    offset?: number;
+    orderBy?: IResourceSelectOrderBy;
+    filters?: IResourceSelectFilters;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
-    this.isStarFilterSelected =
-      params.isStarFilterSelected != undefined
-        ? params.isStarFilterSelected
-        : this.isStarFilterSelected;
-    // let data: any[] = [];
+    this.limit = params.limit ?? this.limit;
+    this.offset = params.offset ?? this.offset;
+    this.orderBy = params.orderBy ?? this.orderBy;
+    this.filters = params.filters ?? this.filters;
+    logger.debug({
+      at: "SearchStore.refresh",
+      ...this
+    });
     let data: any;
-    if (
-      this.resource === Resource.everything ||
-      this.resource === Resource.archived
-    ) {
-      const nodes = await this.refreshNodes();
-      const collections = await this.refreshCollections();
-      data = [...nodes, ...(collections ?? [])];
+    if (this.resource === Resource.everything) {
+      const nodes = await this.nodes();
+      const collections = await this.collections();
+      data = [...(nodes ?? []), ...(collections ?? [])];
     } else if (this.resource === Resource.node) {
-      data = await this.refreshNodes();
+      data = (await this.nodes()) ?? [];
     } else if (this.resource === Resource.collection) {
-      data = (await this.refreshCollections()) ?? [];
+      data = (await this.collections()) ?? [];
     }
-    //TODO - use sort from library state settings
-    //.reverse().sortBy("interactedAt");
-    return data.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    if (isValidArray(data)) {
+      return data;
+    } else {
+      toasts.error("Something went wrong. Please try again later.");
+      return [];
+    }
   }
 
-  private recentNodes() {
-    return this.dexie.node
-      .where("contentType")
-      .anyOfIgnoreCase([...rootNodeTypeList, ...headingNodeTypes])
-      .and((item: any) => activeResourceFilter(item))
-      .toArray();
+  starred() {
+    return flux.selectMany(this.resource, {
+      filters: {
+        ...activeResourceFilterV2,
+        isStarred: true
+      },
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      }
+    });
   }
-  private recentCollections() {
-    return this.dexie.collection
-      .where("id")
-      .notEqual("")
-      .and((item: any) => activeResourceFilter(item))
-      .toArray();
+
+  /**
+   *
+   * TODO - test parent and mdParent
+   * @param query
+   * @returns
+   */
+  async searchForLinking(query: string, resource?: Resource) {
+    let nodes = [];
+    if (resource === Resource.node || !resource) {
+      nodes = await flux.selectMany(Resource.node, {
+        properties: [
+          "*",
+          "parent.* as parent",
+          "(fn::memotron::node::parent($parent.id)) as mdParent"
+        ],
+        filters: {
+          contentType: [...rootNodeTypeList, ...headingNodeTypes],
+          ...activeResourceFilterV2
+        },
+        search: isValidString(query)
+          ? {
+              properties: ["body", "label"],
+              query
+            }
+          : undefined
+      });
+    }
+    let collections = [];
+    if (resource === Resource.collection || !resource) {
+      collections = await flux.selectMany(Resource.collection, {
+        filters: {
+          ...activeResourceFilterV2
+        },
+        search: isValidString(query)
+          ? {
+              properties: ["label"],
+              query
+            }
+          : undefined
+      });
+    }
+    return [...(nodes ?? []), ...(collections ?? [])];
+  }
+
+  private async recentNodes() {
+    const result = await flux.selectMany(Resource.node, {
+      properties: ["*", "parent.* as parent"],
+      filters: {
+        contentType: rootNodeTypeList.concat(headingNodeTypes),
+        ...activeResourceFilterV2,
+        creationContext: false
+      },
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.debug({ at: "recentNodes", result });
+    return result;
+  }
+  private async recentCollections() {
+    const result = await flux.selectMany(Resource.collection, {
+      filters: {
+        ...activeResourceFilterV2
+      },
+      orderBy: this.orderBy ?? {
+        modifiedAt: "desc"
+      },
+      limit: this.limit,
+      offset: this.offset
+    });
+    logger.debug({ at: "recentCollections", result });
+    return result;
   }
 
   async recents(resource: Resource) {
     this.resource = resource ?? this.resource;
     let data: any[] = [];
-    if (
-      this.resource === Resource.everything ||
-      this.resource === Resource.archived
-    ) {
+    if (this.resource === Resource.everything) {
       const nodes = await this.recentNodes();
       const collections = await this.recentCollections();
-      // console.log({ nodes, collections });
       data = [...nodes, ...(collections ?? [])];
-      // data = [...nodes, ...(collections ?? [])].sort(
-      //   (a, b) => b.interactedAt - a.interactedAt
-      // );
     } else if (this.resource === Resource.node) {
       data = await this.recentNodes();
     } else if (this.resource === Resource.collection) {
@@ -286,63 +277,60 @@ export class SearchStore {
   }
 }
 
-export async function resolveTypes(collections: string[]) {
-  let types: string[] = [];
-  let propertyConfig: IProperty[] = [];
-  let avatars: IAvatar[] = [];
-  if (!collections) return { types, propertyConfig, avatars };
-  const dexie = get(dataManager).cacheSource.dexie;
-  const typeCollectionLinks = await dexie.collection
-    .where("id")
-    .anyOfIgnoreCase(collections)
-    .and((collection) => collection.type === CollectionType.TYPED)
-    .toArray();
-  if (!typeCollectionLinks || typeCollectionLinks.length == 0)
-    return { types, propertyConfig, avatars };
-  types = typeCollectionLinks.map((type) => type.id);
-  let allProperties: string[] = [];
-  typeCollectionLinks.map((type) => {
-    allProperties = [...allProperties, ...(type.properties ?? [])];
-  });
-  avatars =
-    typeCollectionLinks.map((type) => type.avatar).filter((x) => x) ?? [];
-  propertyConfig = await dexie.property
-    .where("id")
-    .anyOfIgnoreCase(allProperties)
-    .filter(activeResourceFilter)
-    .toArray();
-  return { types, propertyConfig, avatars };
-}
-
 class Linker implements IStore {
-  id: string = "linker";
-  dataType: StoreDataType = StoreDataType.NA;
-  db: ISurrealDatabase;
-  dboDependencies: string[] = ["fn::memotron::link", "fn::memotron::unlink"];
-  constructor() {
-    this.db = new SurrealDatabase();
+  id: string = Resource.link;
+  dataType: StoreDataType = StoreDataType.IFR;
+
+  async link(
+    from: IRecordId,
+    to: IRecordId,
+    linkType: LinkType = LinkType.DIRECT
+  ) {
+    const response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query: this.generateLinkQuery(from, to, linkType)
+    });
+    logger.debug({ at: "link", response });
+    return response;
   }
-  async link(from: string, to: string, linkType: LinkType = LinkType.DIRECT) {
-    let response = await this.db.query(
-      "return fn::memotron::link($from, $to, $linkType);",
+
+  async unlink(from: IRecordId, to: IRecordId) {
+    let response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query:
+        "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
+      data: {
+        from,
+        to
+      }
+    });
+    logger.debug({ at: "unlink", response });
+    return response;
+  }
+
+  async linkMany(links: any[]) {
+    const query = links
+      .map((link) => this.generateLinkQuery(link.from, link.to, link.linkType))
+      .join("; ");
+    let response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query
+    });
+    logger.debug({ at: "linkMany", response });
+    return response;
+  }
+
+  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
+    return replaceParams(
+      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
       {
         from,
         to,
         linkType
       }
     );
-    return interceptSurrealResponse(response, "link");
   }
-  async unlink(from: string, to: string) {
-    let response = await this.db.query(
-      "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
-      {
-        from,
-        to
-      }
-    );
-    return interceptSurrealResponse(response, "unlink");
-  }
+
   get() {}
 }
 

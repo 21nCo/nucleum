@@ -31,22 +31,21 @@
   }
 </script>
 
-<Popover bind:this={ref} triggerClass="flex">
-  <div>
-    {#if avatar && !$isInEditMode}
-      <AvatarView {avatar} {size} />
-    {:else if $isInEditMode}
-      <button
-        class={"w-8 h-8 text-b1 text-bgs4 rounded-md border border-bgs4 border-dotted hover:bg-bgs4 hover:text-fgs2"}
-      >
-        {#if avatar}
-          <AvatarView {avatar} {size} />
-        {:else}
-          +
-        {/if}
-      </button>
-    {/if}
-  </div>
+<Popover bind:this={ref} triggerClass="flex w-full h-full">
+  {#if avatar && !$isInEditMode}
+    <AvatarView {avatar} {size} />
+  {:else if $isInEditMode}
+    <button
+      class={"flex justify-center items-center w-full h-full text-b1 text-fgs3 rounded-md border border-brs3 border-dashed hover:bg-bgs2 hover:text-fgs2"}
+    >
+      {#if avatar}
+        <AvatarView {avatar} {size} />
+      {:else}
+        +
+      {/if}
+    </button>
+  {/if}
+
   <svelte:fragment slot="popover">
     <AvatarPicker
       on:avatarClicked={handleAvatarEmitted}

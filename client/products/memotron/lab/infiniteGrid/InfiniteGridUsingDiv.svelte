@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { each } from "svelte/internal";
   import GridInputElement from "./GridInputElement.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { generateUID } from "$lib/client/utils/utils";
 
   let canvasWidth = window.innerWidth / 1.5;

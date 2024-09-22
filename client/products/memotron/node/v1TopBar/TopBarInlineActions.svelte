@@ -9,7 +9,7 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import type { IActiveNodeStore } from "../node.store";
   import { resolveNodeContextMenu } from "../node.store";
-  import { ResourceAccessPoint } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isClonesShown: boolean = false;
@@ -59,7 +59,7 @@
       }}
     />
   {/if}
-  <ContextMenuAction {contextMenu} />
+  <ContextMenuAction {contextMenu} id="nodeContextMenu" />
   <!--TODO Show close only if launched from modal -->
   <Button
     icon="cross-circled"

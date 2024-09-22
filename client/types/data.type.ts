@@ -1,6 +1,7 @@
 import type { Writable } from "svelte/store";
 import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
+import type { RecordId } from "surrealdb.js";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -41,24 +42,35 @@ export interface IStore {
    * The query to be used to refresh the store
    */
   refreshQuery?: string;
+
   /**
+   * @deprecated - use resourceDependencies instead
    * The resources on which the store depends on
    */
   dependencies?: ResourceDependency[];
+
+  /**
+   * The resources on which the store depends on
+   */
+  resourceDependencies?: string[];
+
   /**
    * The resources which will be mutated by the store
    */
   mutatingResources?: string[];
   /**
+   * @deprecated
    * The cache strategy to use for the store
    */
   cacheStrategy?: CacheStrategy;
   /**
+   * @deprecated
    * Setting this true will refresh the store when the app appears before even performing stale check
    */
   refreshOnAppear?: boolean;
 
   /**
+   * @deprecated
    * When this is turned on, local storage is used to cache the store.
    */
   isSynchronousCache?: boolean;
@@ -82,14 +94,17 @@ export interface IStore {
  */
 export enum StoreDataType {
   /**
+   * @deprecated
    * Finite and infrequently mutated Records
    */
   FIR = "FIR",
   /**
+   *
    * Infinite and frequently mutated Records
    */
   IFR = "IFR",
   /**
+   * @deprecated
    * Finite and Constant system Records
    */
   FCR = "FCR",
@@ -166,7 +181,7 @@ export type ResourceDependency = {
   syncType?: DependencySyncType;
 };
 
-export enum PersistanceActionType {
+export enum PersistenceActionType {
   CREATE = "CREATE",
   INSERT = "INSERT",
   /**
@@ -183,11 +198,12 @@ export enum PersistanceActionType {
    * Note: Use this to completely delete the record. To move to trash, use MERGE with trashInformation property.
    */
   DELETE = "DELETE",
-  BULK_MERGE = "BULK_MERGE"
+  BULK_MERGE = "BULK_MERGE",
+  CUSTOM = "CUSTOM"
 }
 
 export interface IMutationParams {
-  action: PersistanceActionType;
+  action: PersistenceActionType;
   query?: string;
   isMutatingSelfOnly?: boolean;
   queueParams?: IMutationQueueParams;
@@ -201,3 +217,164 @@ export interface IMutationQueueParams {
   isUseQueueFirstApproach: boolean;
   mutationId: string;
 }
+
+export type IInsertMutation<T> = {
+  action: PersistenceActionType.INSERT;
+  records: T[];
+};
+
+export type IReplaceMutation<T> = {
+  action: PersistenceActionType.REPLACE;
+  record: T;
+};
+
+export type IMergeMutation<T> = {
+  action: PersistenceActionType.MERGE;
+  record: Partial<T>;
+};
+
+export type IDeleteMutation = {
+  action: PersistenceActionType.DELETE;
+  recordId: string;
+};
+
+export type IBulkEditMutation<T> = {
+  action: PersistenceActionType.BULK_MERGE;
+  records: T[];
+};
+
+export type ICustomMutationParams = {
+  action: PersistenceActionType.CUSTOM;
+  query: string;
+  data?: any;
+};
+
+export type IMutationParamsv2<T> =
+  | IInsertMutation<T>
+  | IReplaceMutation<T>
+  | IMergeMutation<T>
+  | IDeleteMutation
+  | IBulkEditMutation<T>
+  | ICustomMutationParams;
+
+export type IPrimitiveDbDataType = string | number | boolean;
+
+export type IResourceFilterValue =
+  | IPrimitiveDbDataType
+  | undefined
+  | IPrimitiveDbDataType[]
+  | {
+      from: IPrimitiveDbDataType;
+      to: IPrimitiveDbDataType;
+    };
+
+export type IResourceSelectOrderBy = {
+  [key: string]: "asc" | "desc";
+};
+
+export enum ResourceFilterCondition {
+  EQUALS = "EQUALS",
+  NOT_EQUALS = "NOT_EQUALS",
+  GREATER_THAN = "GREATER_THAN",
+  GREATER_THAN_OR_EQUALS = "GREATER_THAN_OR_EQUALS",
+  LESS_THAN = "LESS_THAN",
+  LESS_THAN_OR_EQUALS = "LESS_THAN_OR_EQUALS",
+  IN = "IN",
+  NOT_IN = "NOT_IN",
+  CONTAINS = "CONTAINS",
+  NOT_CONTAINS = "NOT_CONTAINS",
+  STARTS_WITH = "STARTS_WITH",
+  ENDS_WITH = "ENDS_WITH",
+  IS_NULL = "IS_NULL",
+  IS_NOT_NULL = "IS_NOT_NULL"
+}
+
+export type IResourceFilter = {
+  property: string;
+  value: IResourceFilterValue;
+  condition: ResourceFilterCondition;
+};
+
+export enum FilterCombinationMethod {
+  AND = "AND",
+  OR = "OR"
+}
+
+export type IResourceFilterGroup = {
+  filters: (IResourceFilter | IResourceFilterGroup)[];
+  condition: FilterCombinationMethod;
+};
+
+export type IResourceSelectFilters =
+  | {
+      [key: string]: IResourceFilterValue;
+    }
+  | IResourceFilterGroup;
+
+export type IResourceSelectParams = {
+  /**
+   * Properties to be selected.
+   */
+  properties?: string[];
+  /**
+   * Filters to be applied on the resources.
+   * This will be translated to the where clause in case of Surreal provider.
+   *
+   * Use `IResourceFilterGroup` to combine multiple filters using AND or OR condition in cases of user facing filters. For rest of the application system cases, basic filters in combination with search can be used.
+   *
+   */
+  filters?: IResourceSelectFilters;
+
+  /**
+   * Search to be applied on the resources.
+   * Provided properties will be combined using `OR` condition.
+   *
+   * Note: This uses search index and search index should have been defined on the database provider.
+   *
+   */
+  search?: {
+    query: string;
+    properties?: string[];
+    isCaseSensitive?: boolean;
+  };
+  /**
+   *
+   * Use only if filters doesn't cover the use case.
+   *
+   * The raw `WHERE` clause to be used in case of Surreal provider if filters doesn't cover the use case. This will be appended to the filters if filters are also provided.
+   */
+  whereClause?: string | string[];
+  /**
+   * The number of records to be returned.
+   */
+  limit?: number;
+  /**
+   * The number of records to be skipped.
+   */
+  offset?: number;
+  /**
+   * The fields to be grouped by.
+   */
+  groupBy?: string[];
+  /**
+   * The fields to be ordered by.
+   */
+  orderBy?: IResourceSelectOrderBy;
+  /**
+   * The fields to be omitted.
+   * This will use OMIT clause in case of Surreal provider.
+   */
+  omit?: string[];
+};
+
+export type IRecordId = RecordId | string;
+
+export type IMutation = {
+  id: string;
+  createdAt: string;
+  modifiedAt: string;
+  dapId: string;
+  userId: string;
+  resource: string;
+  params: IMutationParamsv2<any>;
+};

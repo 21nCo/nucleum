@@ -1,16 +1,11 @@
 import { get, writable } from "svelte/store";
-import { AppSkin, Theme } from "$lib/client/types/appearance.type";
+import { AppSkin } from "$lib/client/types/appearance.type";
 import type { AppStore } from "$lib/client/types/appStore.type";
 import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
 import { DragStatus } from "$lib/client/types/dragstatus.enum";
-import {
-  type UserAppearanceSettings,
-  type IUserGlobalPreferences
-} from "$lib/client/types/preferences.type";
 import blankJson from "$lib/client/data/blank.json";
 import colorSchemes from "$lib/client/theme/colorschemes.json";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import { TimeScale } from "../types/time.type";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { shuffleEmojis } from "../data/avatars";
 import { ActionType, type IAction } from "../types/action.type";
 import type {
@@ -18,16 +13,12 @@ import type {
   OAuthProviderConfig
 } from "../types/oauth.type";
 
-import { debouncer, generateUID } from "$lib/client/utils/utils";
+import { debouncer } from "$lib/client/utils/utils";
 import {
   persistLocally,
   retrieveLocally
 } from "$lib/client/persistence/persistence.utils";
-import { detectTimeZone } from "$lib/client/utils/time.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
-
-import { Persistence } from "../persistence/persistence";
-
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
 import context from "$lib/client/stores/context.store";
@@ -40,18 +31,15 @@ import { defaultAppData } from "$local/local";
 import { Embed, OperatingSystem } from "../types/context.type";
 import { goto } from "../utils/browser.utils";
 import { accessLogStore } from "../components/accessLogging/accesslog.store";
-import { KeyValueStore } from "../components/resourceStores/kv.store";
-import {
-  ResourceActionType,
-  ResourceAccessMode
-} from "../components/resourceStores/resource.type";
-import { uiState } from "./uiState/uiState.store";
+import { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
 import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 import { Action } from "../types/action.enum";
 import type { Event } from "../types/event.enum";
 import { logger } from "../components/debug/logger.client";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
+import { Size } from "../types/size.enum";
+import type { IRecordId } from "../types/data.type";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -86,8 +74,6 @@ export const excludedPathsForRedirectionCheck = [
   Action.EXTENSTION_LOGIN,
   "oauth"
 ];
-
-let persistance = new Persistence();
 
 let blankDetails: any = blankJson.find(
   (subatom: any) => subatom.url == "blank.coop"
@@ -149,16 +135,6 @@ const tempColorSchemes = [
   "scheme11"
 ];
 
-//HSL - dark: x, 30, 50   light: x, 60, 70
-const selectableColors = [
-  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
-  { id: generateUID(), darkHex: "#85dde0", lightHex: "#59a3a6" },
-  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
-  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
-  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" },
-  { id: generateUID(), darkHex: "#97f7b1", lightHex: "#65a877" }
-];
-
 const isDebugMode =
   import.meta.env?.DEV && import.meta.env?.VITE_ISDEBUG === "true";
 const isExperimentalMode =
@@ -172,139 +148,6 @@ export const appConstants = {
   tempColorSchemes
 };
 
-// const userPreferencesId = Item.globalPreferences;
-const defaultColorSchemeId = "colorscheme:cleantidylightblue";
-const defaultDarkColorSchemeId = "colorscheme:cleantidydarkblue";
-
-export const seedUserPreferences: IUserGlobalPreferences = {
-  nickName: "",
-  dayStartHour: 0,
-  dayStartMinute: 0,
-  birthday: new Date(),
-  tempColorScheme: "scheme1",
-  accessibilitySizingFactor: 1,
-  timeScales: [TimeScale.DAYS, TimeScale.MONTHS, TimeScale.YEARS],
-  timeFormat: "meridian",
-  timeZoneOffset: new Date().getTimezoneOffset() * 60,
-  timeZoneLabel: detectTimeZone()?.label ?? "UTC",
-  isAnonymousAnalyticsEnabled: true,
-  appearance: {
-    skin: AppSkin.Clean,
-    theme: Theme.LIGHT,
-    isSyncWithSystem: true,
-    lightColorSchemeId: defaultColorSchemeId,
-    darkColorSchemeId: defaultDarkColorSchemeId
-  },
-  avatarPicker: {
-    skinIndex: 0,
-    usedEmojis: [],
-    iconColor: "#C14D8A",
-    filled: false,
-    usedIcons: []
-  },
-  lastUsedTranscriptionModel: "tiny.en",
-  annotations: [],
-  mediaGridTestitems: [],
-  infiniteGrid: {
-    isGridCreated: false,
-    grid: []
-  }
-};
-
-class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
-  constructor() {
-    super(Resource.globalPreferences, seedUserPreferences, {
-      refreshOnAppear: true,
-      isSynchronousCache: true,
-      dboDependencies: [
-        "fn::global::resource::delete",
-        "fn::global::resource::fetch"
-      ]
-    });
-  }
-  loader(data: IUserGlobalPreferences) {
-    if (!data.uiStates) data.uiStates = seedUserPreferences.uiStates;
-    if (!data.avatarPicker)
-      data.avatarPicker = seedUserPreferences.avatarPicker;
-    if (!data.annotations) data.annotations = seedUserPreferences.annotations;
-    if (!data.mediaGridTestitems)
-      data.mediaGridTestitems = seedUserPreferences.mediaGridTestitems;
-    if (data.isAnonymousAnalyticsEnabled === undefined)
-      data.isAnonymousAnalyticsEnabled = true;
-    const val = {
-      ...data
-    };
-    this.modify(val, { isPersist: false });
-  }
-  setAppearance(x: UserAppearanceSettings) {
-    const n = get(this.subject);
-    const appearance = { ...n.appearance, ...x };
-    this.modify({ appearance });
-  }
-  /**
-   * Date().getTimezoneOffset() returns the offset in minutes and calculates offfset by measuring current user's timezone as 0 and relative measure of UTC from that.
-   *
-   * Ex: If user is in UTC+5:30, getTimezoneOffset() will return -330 which is UTC is -330 minutes away from current user's timezone.
-   *
-   * On the database, the offset is stored as an offset of user's zone from UTC, so the offset is stored as +330 for UTC+5:30
-   *
-   */
-  resolveTimezoneFallback() {
-    const offset = -new Date().getTimezoneOffset() * 60;
-    const label = detectTimeZone()?.label ?? "UTC";
-    return { offset, label };
-  }
-  _setTimezone(offset: number, label?: string) {
-    this.modify({ timeZoneOffset: offset, timeZoneLabel: label });
-    return { offset, label };
-  }
-  /**
-   * Sets the timezone offset and label for the user
-   * @param offset
-   * @param label
-   * @returns
-   */
-  async setTimeZone(offset?: number, label?: string) {
-    if (offset === undefined) {
-      const val = this.resolveTimezoneFallback();
-      offset = val.offset;
-      label = val.label;
-    }
-    await persistance.create(
-      { offset, date: new Date().toISOString(), label: label ?? "" },
-      Resource.tz
-    );
-    return this._setTimezone(offset, label);
-  }
-  /**
-   * Adds a timezone record to the database on signup with 1970 as lowest to enable adding manual logs in the past or importing data from the past.
-   *
-   * Note: Any manual logs or imports prior to 1970 should not be allowed as it might cause unexpected errors since aggregate table views and many calculations rely on tz table and timezone offset.
-   * @returns
-   */
-  async initializeTimeZoneForSignup() {
-    let offset = 0;
-    let label: string | undefined;
-    const timeZone = detectTimeZone();
-    if (!timeZone) {
-      const val = this.resolveTimezoneFallback();
-      offset = val.offset;
-      label = val.label;
-    }
-    await persistance.create(
-      {
-        offset,
-        date: new Date(Date.UTC(1970, 0, 1)).toISOString(),
-        label: label ?? ""
-      },
-      Resource.tz
-    );
-    return this._setTimezone(offset, label);
-  }
-}
-
-export const userPreferences = new UserPreferencesStore();
-
 const cachedAppData = retrieveLocally(Resource.appData);
 
 export const appStore = initAppStore({
@@ -315,7 +158,8 @@ export const appStore = initAppStore({
   appData: cachedAppData ?? defaultAppData,
   currentPath: "",
   isMenuHidden: false,
-  actions: []
+  actions: [],
+  interactionMode: InteractionMode.DEFAULT
 });
 
 function initAppStore(seed: AppStore) {
@@ -393,6 +237,13 @@ function initAppStore(seed: AppStore) {
     logger.log({ at: "gotoErrorPage", err });
     gotoPath("/error");
   };
+
+  /**
+   * @deprecated - use openResource instead
+   * @param item
+   * @param id
+   * @param params
+   */
   const gotoResource = async (
     item: Resource,
     id: string,
@@ -431,11 +282,9 @@ function initAppStore(seed: AppStore) {
       gotoPath("404");
       return;
     }
-    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      isProductScoped: true
-    });
+    const store = get(appStore);
     if (action.type === ActionType.LINK) {
-      const url = get(appStore).appData.urls[action.action];
+      const url = store.appData.urls[action.action];
       if (!url) return;
       if (url) return openLink(url);
     } else if (action.type === ActionType.FUNCTION) {
@@ -456,9 +305,16 @@ function initAppStore(seed: AppStore) {
       return action;
     } else if (
       action.type === ActionType.MODAL ||
-      (interactionMode === InteractionMode.COMMAND_ONLY &&
+      (store.interactionMode === InteractionMode.COMMAND_ONLY &&
         get(context).embed !== Embed.HANDSET)
     ) {
+      if (action.type === ActionType.PAGE) {
+        action.modalParams = {
+          layout: {
+            size: Size.full
+          }
+        };
+      }
       modalEvent.notify({
         path: action.action,
         isShow: true,
@@ -497,7 +353,7 @@ function initAppStore(seed: AppStore) {
     }
   };
 
-  const initiateOAuth2Flow = (provider: IdentityProvider) => {
+  const initiateOAuth2Flow = async (provider: IdentityProvider) => {
     const ctx = get(context);
     const oAuthConfig: OAuthProviderConfig[] =
       get(appStore).appData?.oAuthConfig;
@@ -510,10 +366,11 @@ function initAppStore(seed: AppStore) {
         ? import.meta.env?.VITE_HOST
         : window.location.hostname;
     const redirect = ctx.isEmbed
-      ? import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host
+      ? (import.meta.env?.VITE_OAUTH_REDIRECT ?? "https://" + host)
       : window.location.origin;
     // const origin = window.location.origin;
-    const guestPartForState = clientStorage.get(ClientStorageKey.GUEST) ?? "";
+    const guestPartForState =
+      (await clientStorage.get(ClientStorageKey.DAP_ID)) ?? "";
     const domainPartForState =
       (ctx.os === OperatingSystem.MACOS ||
         (ctx.os == OperatingSystem.IOS && ctx.embed === Embed.TABLET)) &&
@@ -583,7 +440,7 @@ function initAppStore(seed: AppStore) {
   const isFSplit = () => {
     return (
       new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FOCUS
+        ResourceAccessMode.FULL
       ) ||
       new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
     );
@@ -597,10 +454,10 @@ function initAppStore(seed: AppStore) {
       return ResourceAccessMode.POP;
     else if (
       new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FOCUS
+        ResourceAccessMode.FULL
       ) === id
     )
-      return ResourceAccessMode.FOCUS;
+      return ResourceAccessMode.FULL;
     else if (
       new URLSearchParams(window.location.search).get(
         ResourceAccessMode.SPLIT
@@ -617,12 +474,13 @@ function initAppStore(seed: AppStore) {
   };
 
   const determineCurrentResourceAccessMode = (
-    id: string
+    id: IRecordId
   ): ResourceAccessMode => {
     const searchParams = new URLSearchParams(window.location.search);
 
     const mode = (Object.values(ResourceAccessMode) as string[]).find(
-      (m) => m !== ResourceAccessMode.INLINE && searchParams.get(m) === id
+      (m) =>
+        m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
     );
 
     return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
@@ -630,7 +488,7 @@ function initAppStore(seed: AppStore) {
 
   const determineClickAccessMode = (event: MouseEvent) => {
     //TODO - shortcuts from user settings
-    if (event.shiftKey) return ResourceAccessMode.FOCUS;
+    if (event.shiftKey) return ResourceAccessMode.FULL;
     else if (event.altKey) {
       const isFromFocusOrPop = isFSplit();
       if (isFromFocusOrPop) return ResourceAccessMode.FSPLIT;
@@ -639,30 +497,41 @@ function initAppStore(seed: AppStore) {
       // TODO - open in new tab?
     }
   };
+
+  const openResource = (
+    id: IRecordId,
+    accessMode: ResourceAccessMode = ResourceAccessMode.INLINE
+  ) => {
+    if (!id) return;
+    // accessLogStore.create(
+    //   {
+    //     resource: id.split(":")[0],
+    //     action: ResourceActionType.OPEN,
+    //     resourceId: id,
+    //     timestamp: new Date().toISOString()
+    //   },
+    //   {
+    //     queueParams: {
+    //       isUseQueueFirstApproach: true,
+    //       mutationId: `${id}-accessLog-create`
+    //     }
+    //   }
+    // );
+
+    toggleSearchParam(accessMode, id.toString());
+  };
+
   const resourceClickHandler = (
     event: MouseEvent,
-    id: string,
+    id: IRecordId,
     defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
     if (!id) return;
-    accessLogStore.create(
-      {
-        resource: id.split(":")[0],
-        action: ResourceActionType.OPEN,
-        resourceId: id,
-        timestamp: new Date().toISOString()
-      },
-      {
-        queueParams: {
-          isUseQueueFirstApproach: true,
-          mutationId: `${id}-accessLog-create`
-        }
-      }
-    );
     toggleSearchParam("view");
-    const accessMode = determineClickAccessMode(event);
-    if (accessMode) toggleSearchParam(accessMode, id);
-    else toggleSearchParam(defaultTo, id);
+    let accessMode;
+    if (event) accessMode = determineClickAccessMode(event);
+    if (accessMode) openResource(id, accessMode);
+    else openResource(id, defaultTo);
     logger.log({
       at: "resourceClickHandler",
       id,
@@ -680,10 +549,16 @@ function initAppStore(seed: AppStore) {
     resourceClickHandler(event, id, currentAccessMode);
   };
   const closeResource = (props?: {
+    id?: IRecordId;
+    accessMode?: ResourceAccessMode;
     isRestrictToModals?: boolean;
     inlineRestoreId?: string;
   }) => {
     const url = new URL(window.location.href);
+    if (props?.accessMode) {
+      toggleSearchParam(props.accessMode);
+      return;
+    }
     if (props?.isRestrictToModals) {
       toggleSearchParam(ResourceAccessMode.FSPLIT);
       debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
@@ -694,7 +569,7 @@ function initAppStore(seed: AppStore) {
       url.searchParams.set(prevMode, props?.inlineRestoreId);
     removeSearchParam("prev");
     removeSearchParam(ResourceAccessMode.SPLIT);
-    removeSearchParam(ResourceAccessMode.FOCUS);
+    removeSearchParam(ResourceAccessMode.FULL);
     removeSearchParam(ResourceAccessMode.POP);
     removeSearchParam(ResourceAccessMode.FSPLIT);
     appStore.gotoPath(url.href);
@@ -711,14 +586,14 @@ function initAppStore(seed: AppStore) {
   ) => {
     const url = new URL(window.location.href);
     removeSearchParam(currentMode);
-    if (currentMode === ResourceAccessMode.FOCUS) {
+    if (currentMode === ResourceAccessMode.FULL) {
       const prevMode = url.searchParams.get("prev");
       logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
       if (prevMode) url.searchParams.set(prevMode, resourceId);
       else url.searchParams.set(ResourceAccessMode.POP, resourceId);
       removeSearchParam("prev");
     } else {
-      url.searchParams.set(ResourceAccessMode.FOCUS, resourceId);
+      url.searchParams.set(ResourceAccessMode.FULL, resourceId);
       url.searchParams.set("prev", currentMode);
     }
     appStore.gotoPath(url.href);
@@ -908,6 +783,7 @@ function initAppStore(seed: AppStore) {
     initiateOAuth2Flow,
     toggleSearchParam,
     resourceClickHandler,
+    openResource,
     toggleFocusAccessMode,
     resourceClickHandlerWithReplace,
     determineCurrentResourceAccessMode,

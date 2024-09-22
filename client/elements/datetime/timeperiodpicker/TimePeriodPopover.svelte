@@ -6,7 +6,6 @@
     type RelativeTimePeriodValue
   } from "$lib/client/types/time.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
   import OptionSelector from "../../select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import RelativeTimeRangeSelector from "./RelativeTimeRangeSelector.svelte";

@@ -1,5 +1,5 @@
 <script>
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import ResourceBrowser from "../common/ResourceBrowser.svelte";
 </script>
 

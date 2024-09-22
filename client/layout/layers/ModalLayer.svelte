@@ -24,12 +24,10 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
   import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
-  import { liveQuery } from "dexie";
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import SplitView from "../SplitView.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import ColorLayer from "./themeLayer/ColorLayer.svelte";
@@ -45,14 +43,9 @@
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let isShowSyncErrorMessage: boolean = false;
-  let mutationQueue = refreshMutationQueueLiveQuery();
+
   let isWindowVisible: boolean = true;
   let isDialogEnabled: boolean = false;
-  function refreshMutationQueueLiveQuery() {
-    return liveQuery(() =>
-      $dataManager.cacheSource.dexie.mutationQueuev2.toArray()
-    );
-  }
 
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
@@ -60,12 +53,6 @@
         isShowAppearancePreview = x.value ?? false;
       } else if (x.event === GlobalEvent.USER_LOGIN) {
         modals = [];
-      }
-      if (
-        x.event === GlobalEvent.USER_SIGNUP ||
-        x.event === GlobalEvent.USER_LOGIN
-      ) {
-        mutationQueue = refreshMutationQueueLiveQuery();
       }
     });
     const pageSub = page.subscribe((value) => {
@@ -77,7 +64,7 @@
         pop = undefined;
       }
       fullscreen =
-        value.url.searchParams.get(ResourceAccessMode.FOCUS) ?? undefined;
+        value.url.searchParams.get(ResourceAccessMode.FULL) ?? undefined;
       // console.log({ pop, fullscreen });
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
@@ -289,7 +276,7 @@
           id={fullscreen}
           componentParams={{
             isModal: true,
-            accessMode: ResourceAccessMode.FOCUS
+            accessMode: ResourceAccessMode.FULL
           }}
         />
       </ModalLayout>

@@ -4,16 +4,13 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import PropertyItem from "./PropertyItem.svelte";
   import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
-  import type { ICollection } from "$lib/client/products/memotron/collection/collection.type";
   import type { IProperty } from "./property.type";
-  import { get } from "svelte/store";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import {
     resolvePropertiesForCapture,
     resolvePropertiesForNodePage
   } from "./property.utils";
   import { onMount } from "svelte";
-  export let types: string[] | undefined = undefined;
+  export let propertyConfig: IProperty[] = [];
   export let properties: INodeProperty[] = [];
   export let nodeId: string | undefined = undefined;
   export let context: "capture" | "nodepage" | "medianode" | "rightpanel" =
@@ -23,54 +20,17 @@
   let isPropertiesPaneContext: boolean =
     context === "rightpanel" || context === "medianode";
   let isCollapserHovered: boolean = false;
-  let propertyConfig: IProperty[] = [];
-  onMount(async () => {
-    if (types) await resolvePropertyConfig(types);
-  });
-  // $: console.log({ types, propertyConfig });
 
-  async function resolvePropertyConfig(types: string[]) {
-    // console.log("resolvePropertyConfig", { types });
-    const dexie = get(dataManager).cacheSource.dexie;
-    const typeWithDetails = await dexie.collection
-      .where("id")
-      .anyOf(types)
-      .toArray();
-    let totalPropertyList: string[] = [];
-    await typeWithDetails.forEach(async (type) => {
-      const props = await resolveTypeProperties(type);
-      // console.log("props", { props });
-      if (totalPropertyList)
-        totalPropertyList = [...totalPropertyList, ...props];
-    });
+  onMount(async () => {
     //TODO - show properties grouped by type if context is right panel
-    if (totalPropertyList.length === 0) return;
-    propertyConfig = await dexie.property
-      .where("id")
-      .anyOf(totalPropertyList)
-      .toArray();
+    if (propertyConfig) await refresh();
+  });
+
+  async function refresh() {
     if (context === "capture")
       properties = resolvePropertiesForCapture(propertyConfig);
     else if (context === "nodepage")
       properties = resolvePropertiesForNodePage(propertyConfig);
-    return propertyConfig;
-
-    async function resolveTypeProperties(type: ICollection) {
-      let totalPropertyList: string[] = [];
-      if (type.properties) {
-        totalPropertyList = type.properties;
-      }
-      if (type.typeToExtend) {
-        const extendedType = await dexie.collection.get(type.typeToExtend);
-        if (extendedType?.properties) {
-          totalPropertyList = [
-            ...extendedType.properties,
-            ...totalPropertyList
-          ];
-        }
-      }
-      return totalPropertyList;
-    }
   }
 </script>
 

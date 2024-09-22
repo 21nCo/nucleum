@@ -1,8 +1,9 @@
 export type UserAccount = {
+  dataMode: UserDataMode;
   userId?: string;
-  token: string | null;
-  isLoggedIn: boolean;
+  token?: string;
   userInfo?: UserInformation;
+  sessionType: UserSessionType;
 };
 
 export type UserInformation = {
@@ -33,4 +34,16 @@ export enum LicenseType {
   YEARLY = "YEARLY",
   MONTHLY = "MONTHLY",
   FREE = "FREE"
+}
+
+export enum UserDataMode {
+  NONE = "NONE",
+  LOCAL = "LOCAL",
+  CLOUD = "CLOUD"
+}
+
+export enum UserSessionType {
+  UNDETERMINED = "UNDETERMINED",
+  NEW = "NEW",
+  RETURNING = "RETURNING"
 }

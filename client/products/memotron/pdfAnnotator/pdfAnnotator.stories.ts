@@ -1,4 +1,4 @@
-import PdfAnnotator from "./pdfAnnotator.svelte";
+import PdfAnnotator from "./PdfAnnotatorCaseChange.svelte";
 export default {
   component: PdfAnnotator,
   parameters: { layout: "centered" }

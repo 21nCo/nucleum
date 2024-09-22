@@ -1,28 +1,21 @@
-import { resolveUrlPartsV2, userDatev4 } from "./dbo";
+import { userDatev4 } from "./global.dbo";
 
 /**
  * Memotron dbo definitions used by the client apps.
  */
 export const memotronDboDefinitions = {
   "fn::memotron::node::fetch": nodeFetch(),
-  "fn::memotron::node::create": nodeCreate(),
-  "fn::memotron::node::createMany": nodeCreateMany(),
   "fn::memotron::pdfAnnotator::getAllClips": pdfAnnotatorGetAllClips(),
   "fn::memotron::pdfAnnotator::saveClip": pdfAnnotatorSaveClip(),
-  "fn::memotron::clipper::saveClip": saveClip(),
-  "fn::memotron::clipper::saveWebpage": saveWebpage(),
-  "fn::memotron::clipper::fetchPage": clipperFetchPage(),
-  "fn::memotron::collection::fetchData": collectionFecthData(),
-  "fn::memotron::timeline": timeline(),
-  "fn::memotron::link": link()
+  "fn::memotron::collection::fetchData": collectionFetchData(),
+  "fn::memotron::timeline": timeline()
 };
 
 function nodeFetch() {
   const def = `define function fn::memotron::node::fetch($id: record){
-    return array::first(select *, (select * from node where parent is $id) as clips,
+    return array::first(select *, parent.* as parent, file.* as file, (select * from node where parent is $id) as clips,
     (fn::memotron::node::children($parent.children)) as children, 
-    (fn::memotron::node::parent($id)) as mdParent,
-    ->link->collection as collections from node where id is $id);
+    (fn::memotron::node::parent($id)) as mdParent, ->link.* as outlinks, <-link.* as inlinks, array::concat(->link.*, <-link.*) as links from node where id is $id);
 };`;
   return [...nodeChildren(), ...nodeParent(), def];
 }
@@ -74,53 +67,6 @@ function pdfAnnotatorSaveClip() {
   return [def];
 }
 
-function nodeCreate() {
-  const def = `define function fn::memotron::node::create($node: any, $links: array, $mutatedAt: int){ 
-update kv:mutationMap merge {node: $mutatedAt }; 
-let $created = insert into node $node; 
-return select fn::memotron::link(from, to, linkType) from $links; };`;
-  return [...link(), def];
-}
-
-function nodeCreateMany() {
-  const def = `define function fn::memotron::node::createMany($resources: any, $mutatedAt: int){
-    update kv:mutationMap merge {node: $mutatedAt };
-    let $created = insert into node $resources;
-    select fn::memotron::linkMany(links) from $resources;
-    return $created;
-};`;
-  return [...linkMany(), def];
-}
-
-function linkMany() {
-  const def = `define function fn::memotron::linkMany($links: option<array>){
-    return if type::is::array($links) and array::len($links) > 0 {
-        return select fn::memotron::link(from, to, linkType) from $links;
-    } else {
-        return NONE;
-    }
-};`;
-  return [...link(), def];
-}
-
-function link() {
-  const def = `define function fn::memotron::link($from: record, $to: record, $linkType: option<string>){
-    relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}
-};`;
-  return [def];
-}
-
-/**
- * @deprecated - using direct client query instead
- * @returns
- */
-function unlink() {
-  const def = `DEFINE FUNCTION fn::memotron::unlink($from: record, $to: record){
-    DELETE $from->link where out=$to;
-};`;
-  return [def];
-}
-
 function timeline() {
   const def = `DEFINE FUNCTION fn::memotron::timeline($day: datetime) {
     let $nodes = select id, contentType, parent, creationContext from node where time::day(fn::user::time::date::v4(createdAt)) is time::day($day);
@@ -133,7 +79,7 @@ function timeline() {
   return [...userDatev4(), ...nodeFetch(), def];
 }
 
-function collectionFecthData() {
+function collectionFetchData() {
   const def = `DEFINE FUNCTION fn::memotron::collection::fetchData($viewId: record, $collectionId: record){
       let $view = select * from $viewId;
       RETURN IF meta::tb($collectionId) is 'node' {
@@ -153,38 +99,9 @@ function collectionFecthData() {
 }
 
 /**
- * @deprecated - using client store and mutation queue instead
+ * @deprecated
  * @returns
  */
-function saveClip() {
-  const def = `DEFINE FUNCTION fn::memotron::clipper::saveClip($id: any, $content: any, $webpagedata: any) {
-      let $existingNode = RETURN IF type::is::record($id) THEN $id ELSE array::first(select value id from node where url is $id) END;
-      let $node = RETURN IF $existingNode is NONE THEN fn::memotron::clipper::saveWebpage($id, $webpagedata).id ELSE $existingNode END;
-      let $record = CREATE node set parent = $node, contentType = $content.contentType, body = $content.body, 
-          metadata = $content.metadata, createdAt = time::now(), modifiedAt = time::now();
-      return array::first($record);
-  };`;
-  return [...saveWebpage(), def];
-}
-
-/**
- * @deprecated - using client store and mutation queue instead
- * @returns
- */
-function saveWebpage() {
-  const def = `DEFINE FUNCTION fn::memotron::clipper::saveWebpage($url: string, $data: any){
-      let $existingNode = select * from node where url is $url;
-      return if array::len($existingNode) is 0 {
-          return array::first(CREATE node set url = $url, label = $data.label, metadata = $data.metadata, 
-          contentType = 'WEBPAGE', contentHash = $data.hash, urlParts = fn::global::utils::resolveUrlParts::v2($url), 
-          createdAt = time::now(), modifiedAt = time::now());
-      } else {
-          return $existingNode[0];
-      }
-  };`;
-  return [...resolveUrlPartsV2(), def];
-}
-
 function clipperFetchPage() {
   const def = `DEFINE FUNCTION fn::memotron::clipper::fetchPage($url: string){
       let $page = array::first(select *, fn::memotron::fetchClips(id) as clips, ->link.out.id as links from node where body.url is $url);

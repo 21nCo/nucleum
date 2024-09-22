@@ -7,7 +7,7 @@ import type {
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type { TimeScale } from "$lib/client/types/time.type";
-import type { IResource } from "$lib/client/components/resourceStores/resource.type";
+import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",
@@ -94,5 +94,5 @@ export type DaySummary = {
 export enum LastActionPerformed {
   START_TIME_CHANGED = "START_TIME_CHANGED",
   END_TIME_CHANGED = "END_TIME_CHANGED",
-  DURATION_CHANGED = "DURATION_CHANGED",
+  DURATION_CHANGED = "DURATION_CHANGED"
 }

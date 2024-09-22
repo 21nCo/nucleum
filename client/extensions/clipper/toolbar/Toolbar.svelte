@@ -1,18 +1,23 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import HightlightColorItem from "../HightlightColorItem.svelte";
+  import HightlightColorItem from "$lib/client/products/memotron/common/highlighters/HightlightColorItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Position, Orientation } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { webpage, toolbarState } from "../contentScripts/store";
+  import { webpage, toolbarState, syncStore } from "../contentScripts/store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { screenShotOnlyPages } from "$lib/client/products/memotron/common/urlMap";
+  import {
+    saveOnlyPages,
+    screenShotOnlyPages
+  } from "$lib/client/products/memotron/common/urlMap";
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import { ExtensionEvent } from "$lib/client/types/extension.type";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   const dispatch = createEventDispatcher();
   export let activeHighlighter: string | null = null;
   export let isSnipActive: boolean = false;
@@ -22,6 +27,8 @@
   $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
     regex.test($webpage.url)
   );
+
+  $: isSaveOnly = saveOnlyPages.some((regex) => regex.test($webpage.url));
 
   if ($toolbarState.position === undefined) {
     toolbarState.changePosition(Position.Right);
@@ -58,7 +65,7 @@
     }
   )}
 >
-  {#if !isScreenShotOnly}
+  {#if !isScreenShotOnly && !$syncStore.id}
     {#if $webpage?.id}
       <button
         class="flex border border-transparent outline-dotted outline-fgs2 hover:outline-aps1 rounded-full"
@@ -81,6 +88,22 @@
         }}
       />
     {/if}
+  {:else if $syncStore.id}
+    <!-- <Button
+      icon="sync"
+      tooltip="Sync"
+      {...buttonParams}
+      on:click={() => {
+        syncStore.togglePane();
+      }}
+    /> -->
+    <Toggle
+      icon="sync"
+      tooltip="Sync"
+      size={Size.sm}
+      bind:on={$syncStore.isShowSyncPane}
+      {tooltipOptions}
+    />
   {/if}
   <Toggle
     icon="cube-transparent"
@@ -89,69 +112,69 @@
     bind:on={isSnipActive}
     {tooltipOptions}
   />
-  {#if !isScreenShotOnly}
-    <Button
+  {#if !isScreenShotOnly && !isSaveOnly}
+    <!-- TODO - enable this when generate summary is implemented -->
+    <!-- <Button
       icon="document-text"
       tooltip="Generate summary"
       {...buttonParams}
       on:click={() => {
         dispatch("summarize");
       }}
-    />
+    /> -->
+    <div
+      class={cn("flex gap-2 items-center", {
+        "flex-col w-full":
+          $toolbarState.position === Position.Right ||
+          $toolbarState.position === Position.Left,
+        "flex-row h-full": $toolbarState.position === Position.Bottom
+      })}
+    >
+      <Divider
+        orientation={$toolbarState.position === Position.Bottom
+          ? Orientation.Vertical
+          : Orientation.Horizontal}
+      />
+      <Button
+        icon="pencil"
+        {...buttonParams}
+        tooltip="Auto Highlight"
+        on:click={toggleAutoHighligher}
+      />
+      {#if isAutoHighlighterExpanded}
+        <div
+          class={cn("flex gap-2 items-center justify-center", {
+            "flex-col w-full":
+              $toolbarState.position === Position.Right ||
+              $toolbarState.position === Position.Left,
+            "flex-row h-full": $toolbarState.position === Position.Bottom
+          })}
+        >
+          {#each $highlightStore.highlighters as highlighter}
+            <HightlightColorItem
+              {highlighter}
+              isActive={highlighter.id === activeHighlighter}
+              on:click={() => {
+                activeHighlighter = highlighter.id;
+                dispatch("color", highlighter);
+              }}
+            />
+          {/each}
+        </div>
+      {/if}
+      <Divider
+        orientation={$toolbarState.position === Position.Bottom
+          ? Orientation.Vertical
+          : Orientation.Horizontal}
+      />
+    </div>
   {/if}
-  <div
-    class={cn("flex gap-2 items-center", {
-      "flex-col w-full":
-        $toolbarState.position === Position.Right ||
-        $toolbarState.position === Position.Left,
-      "flex-row h-full": $toolbarState.position === Position.Bottom
-    })}
-  >
-    <Divider
-      orientation={$toolbarState.position === Position.Bottom
-        ? Orientation.Vertical
-        : Orientation.Horizontal}
-    />
-    <Button
-      icon="pencil"
-      {...buttonParams}
-      tooltip="Auto Highlight"
-      on:click={toggleAutoHighligher}
-    />
-    {#if isAutoHighlighterExpanded}
-      <div
-        class={cn("flex gap-2 items-center justify-center", {
-          "flex-col w-full":
-            $toolbarState.position === Position.Right ||
-            $toolbarState.position === Position.Left,
-          "flex-row h-full": $toolbarState.position === Position.Bottom
-        })}
-      >
-        {#each $highlightStore.highlighters as highlighter}
-          <HightlightColorItem
-            {highlighter}
-            isActive={highlighter.id === activeHighlighter}
-            on:click={() => {
-              activeHighlighter = highlighter.id;
-              dispatch("color", highlighter);
-            }}
-          />
-        {/each}
-      </div>
-    {/if}
-    <Divider
-      orientation={$toolbarState.position === Position.Bottom
-        ? Orientation.Vertical
-        : Orientation.Horizontal}
-    />
-  </div>
   <Button
-    icon="home"
-    tooltip="Open Side bar"
+    icon="sidebar-toggle"
+    tooltip="Open Side panel"
     {...buttonParams}
-    on:click={() => {
-      //Open sidebar
-    }}
+    on:click={() =>
+      relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL })}
   />
   <Button
     icon={$toolbarState.position === Position.Right

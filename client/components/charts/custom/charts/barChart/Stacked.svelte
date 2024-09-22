@@ -16,7 +16,6 @@
     customColor,
     retrieveCurrentColors
   } from "$lib/client/utils/theme.utils";
-  import { userPreferences } from "$lib/client/stores/app.store";
   import { generateUID } from "$lib/client/utils/utils";
   import type { ChartDataPoint } from "$lib/client/types/chartDataPoint.type";
   import { scale } from "svelte/transition";
@@ -723,21 +722,21 @@
       .attr("fill", (d: ChartDataPoint, i: number) => colors[d.group])
       .attr("x", function (d: any, i: any) {
         return orientation === Orientation.Vertical
-          ? xScale(d.key) ?? 0
+          ? (xScale(d.key) ?? 0)
           : MOBILE_AXES_DIMENSION.y +
               CHART_PADDING.left +
               calculateStackedTranslation(d, xScale);
       })
       .attr("y", function (d: any) {
         return orientation === Orientation.Vertical
-          ? containerRef.offsetHeight -
+          ? (containerRef.offsetHeight -
               MOBILE_AXES_DIMENSION.x -
               CHART_PADDING.bottom -
               //@ts-ignore, ignoring because we are sure that the xScale is of type scaleLinear, since we used the same condition above to define the xScale
               calculateStackedTranslation(
                 d,
                 yScaleWithFixedLengthCalculationDeformity
-              ) ?? 0
+              ) ?? 0)
           : yScale(d.key)
             ? //@ts-ignore, handled the case of undefined
               yScale(d.key) + CHART_PADDING.top + SVGWidthAdjustment
@@ -804,13 +803,13 @@
         orientation === Orientation.Vertical
           ? 0
           : //@ts-ignore, ignoring because we are sure that the xScale is of type scaleLinear, since we used the same condition above to define the xScale
-            sanitizeLinearScaleValue(maxValueOnKeyBasedGrouping, xScale) ?? 0
+            (sanitizeLinearScaleValue(maxValueOnKeyBasedGrouping, xScale) ?? 0)
       )
       .attr(
         "y1",
         orientation === Orientation.Vertical
           ? //@ts-ignore, ignoring because we are sure that the xScale is of type scaleLinear, since we used the same condition above to define the xScale
-            0 ?? 0
+            (0 ?? 0)
           : SVGScrollableDimensionLength
       )
       .attr(
@@ -818,12 +817,12 @@
         orientation === Orientation.Vertical
           ? SVGScrollableDimensionLength
           : //@ts-ignore, ignoring because we are sure that the xScale is of type scaleLinear, since we used the same condition above to define the xScale
-            sanitizeLinearScaleValue(maxValueOnKeyBasedGrouping, xScale) ?? 0
+            (sanitizeLinearScaleValue(maxValueOnKeyBasedGrouping, xScale) ?? 0)
       )
       .attr(
         "y2",
         orientation === Orientation.Vertical //@ts-ignore, ignoring because we are sure that the xScale is of type scaleLinear, since we used the same condition above to define the xScale
-          ? 0 ?? 0
+          ? (0 ?? 0)
           : 0
       )
       .attr("stroke", "rgba(var(--colors-fgs1),1)")

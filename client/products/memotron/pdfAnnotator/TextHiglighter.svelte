@@ -1,14 +1,15 @@
 <script lang="ts">
   import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import { createEventDispatcher } from "svelte";
+  import { highlightStore } from "../common/highlighters/highlight.store";
   export let id = "";
-  export let color = "";
+  export let highlighter: string = "";
   export let rects: any = [];
   export let annotType: AnnotationType = AnnotationType.HIGHLIGHT;
+  let color = highlightStore.resolveColor(highlighter);
 
-  let topValue = annotType == "UNDERLINE" ? "100%" : "40%";
+  let topValue = annotType == AnnotationType.UNDERLINE ? "100%" : "40%";
   let dispatchEvent = createEventDispatcher();
-  // console.log("rects text highlighter", rects);
   function calculateStyle(rect: any) {
     let bg = "";
     let { x1: left, x2, y1: top, y2 } = rect;
@@ -20,9 +21,9 @@
     width += scale * 2;
     height -= scale * 2;
     if (
-      annotType === "HIGHLIGHT" ||
-      annotType === "COMMENT" ||
-      annotType === "TASK"
+      annotType === AnnotationType.HIGHLIGHT ||
+      annotType === AnnotationType.COMMENT ||
+      annotType === AnnotationType.TASK
     )
       bg = `background-color:${color};opacity:0.3;`;
     return `position:absolute;left: ${left}px;top: ${top}px;width: ${width}px;height: ${height}px;${bg};-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;`;
@@ -34,6 +35,7 @@
     id={index == 0 ? id : ""}
     class={id}
     data-color={color}
+    data-highlighter={highlighter}
     data-annotType={annotType}
     style={calculateStyle(rect)}
     on:click|stopPropagation={() => {

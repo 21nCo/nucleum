@@ -1,6 +1,6 @@
 <script lang="ts">
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   export let resource: any;

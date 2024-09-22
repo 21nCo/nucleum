@@ -1,18 +1,15 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import {
-    appStore,
-    excludedPathsForRedirectionCheck
-  } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import context from "$lib/client/stores/context.store";
   import type { IAction } from "$lib/client/types/action.type";
   import { onDestroy, onMount } from "svelte";
   import ComponentResolver from "./ComponentResolver.svelte";
-  import account from "$lib/client/stores/account.store";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let prefix: string | undefined = undefined;
   let action: IAction | null = null;
   let pageSub: any;
-  const fileBasedRoutes = ["goal", "cp", "curation"];
+  const fileBasedRoutes = ["cp"];
   function resolvePath() {
     if ($context.isSheet) {
       return $appStore.sheetPath;
@@ -45,10 +42,7 @@
       appStore.gotoPath("/404");
       return;
     }
-    const isProceed = await redirectionChecks(path);
-    if (!isProceed) {
-      return;
-    }
+
     action = appStore.resolveComponentFromPath(path);
     if (!action) {
       if (path === "index.html") appStore.gotoPath("/");
@@ -57,15 +51,6 @@
     }
     $appStore.currentComponent = action;
     $appStore.isMenuHidden = action.isMenuHidden || $context.isSheet;
-  }
-  async function redirectionChecks(path: string) {
-    if (!excludedPathsForRedirectionCheck.includes(path)) {
-      const isProceed = await account.performRedirectionCheck();
-      if (!isProceed) {
-        return;
-      }
-    }
-    return true;
   }
 </script>
 

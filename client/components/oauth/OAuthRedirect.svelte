@@ -57,7 +57,7 @@
       embed: $context.embed,
       userAgent: navigator.userAgent
     });
-    const isExtensionLogin = clientStorage.getForSession(
+    const isExtensionLogin = await clientStorage.getForSession(
       ClientStorageKey.IS_EXTENSION_LOGIN
     );
     if (isExtensionLogin) {
@@ -75,7 +75,7 @@
       handleiOSEmbedRedirection(data.token);
     } else if (data.userInfo) {
       debugMessage = "signing in with oauth";
-      await account.signIn({ ...data, userInfo: data.userInfo });
+      account.signIn({ ...data, userInfo: data.userInfo });
     } else if (data.token) {
       debugMessage = "signing in using embed token";
       await account.embedOAuthSignin(data.token);

@@ -6,7 +6,7 @@
   import view from "$lib/client/stores/view.store";
   import { Persistence } from "$lib/client/persistence/persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";

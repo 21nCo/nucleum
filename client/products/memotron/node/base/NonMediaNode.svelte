@@ -1,7 +1,7 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { type IActiveNodeStore } from "../node.store";
-  import NodeRightPanel from "../rightPanel/NodeRightPanel.svelte";
+  import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
@@ -18,7 +18,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { fade, slide } from "svelte/transition";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   export let node: IActiveNodeStore;
   export let accessMode: ResourceAccessMode;
   export let selectedView: string = "Content";
@@ -72,9 +72,19 @@
               "w-[50rem] overflow-auto": !isWidened
             })}
           >
-            {#if $node.parent && $node.parent.length > 0}
+            {#if $node.mdParent && $node.mdParent.length > 0}
               <header class="flex w-full px-12 py-4">
-                <NodeTitleBreadcrumbs {node} />
+                {#key $node.mdParent}
+                  <NodeTitleBreadcrumbs
+                    node={$node}
+                    on:click={(e) => {
+                      node.eventStore.set({
+                        event: e.detail.event,
+                        id: e.detail.item.resourceId
+                      });
+                    }}
+                  />
+                {/key}
               </header>
             {/if}
             <main
@@ -139,7 +149,7 @@
             </main>
           </div>
         </div>
-        <NodeRightPanel {node} {mdId} bind:isRightPanelCollapsed />
+        <NodeRightPane {node} {mdId} bind:isRightPanelCollapsed />
       </div>
     {:else}
       <ComingSoonView />

@@ -112,6 +112,15 @@
   import Warning from "../icons/Warning.svelte";
   import ArrowTurnDownLeft from "../icons/ArrowTurnDownLeft.svelte";
   import CursorArrowRays from "../icons/CursorArrowRays.svelte";
+  import Document from "../icons/Document.svelte";
+  import MagnifyingGlassPlus from "../icons/MagnifyingGlassPlus.svelte";
+  import MagnifyingGlassMinus from "../icons/MagnifyingGlassMinus.svelte";
+  import Underline from "../icons/Underline.svelte";
+  import Strikethrough from "../icons/Strikethrough.svelte";
+  import Highlight from "../icons/Highlight.svelte";
+  import IconifyIcon from "@iconify/svelte";
+  import { logger } from "../components/debug/logger.client";
+
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   /**
@@ -145,7 +154,13 @@
     "grab",
     "capture2.0-mini"
   ];
-  const strokeOnlyIcons = ["link-arrow-left", "link-arrow-down", "capture"];
+  const strokeOnlyIcons = [
+    "link-arrow-left",
+    "link-arrow-down",
+    "capture",
+    "highlight"
+  ];
+
   $: _classList = resolveClasses(
     classListParam,
     isAccentBgContext,
@@ -180,12 +195,21 @@
       const color = classes.split("fill-")[1];
       classes = `stroke-${color}`;
     }
+    classes = classes + appendIconfiyClasses(classes);
     if (classes.includes("stroke-")) {
       classes = classes + " fill-none";
     } else if (classes.includes("fill-")) {
       classes = classes + " stroke-none";
     }
     return classes;
+
+    function appendIconfiyClasses(classes: string) {
+      if (icon?.includes(":")) {
+        const color = classes.split("stroke-")[1] || classes.split("fill-")[1];
+        return ` text-${color}`;
+      }
+      return "";
+    }
   }
   $: variant = resolveVariant(icon, _classList, size);
 
@@ -204,12 +228,28 @@
   }
 </script>
 
-{#if icon}
-  <button
-    class={cn("relative inline-flex items-center justify-center")}
-    tabindex={isTabbable ? 0 : -1}
-    on:click
-  >
+<button
+  class={cn("relative inline-flex items-center justify-center")}
+  tabindex={isTabbable ? 0 : -1}
+  on:click
+>
+  {#if icon?.includes(":")}
+    <!-- TODO - fix import issue on plasmo - disabling for now -->
+    <IconifyIcon
+      {icon}
+      width={size === Size.lg
+        ? "1.5rem"
+        : size === Size.md
+          ? "1.25rem"
+          : "1rem"}
+      height={size === Size.lg
+        ? "1.5rem"
+        : size === Size.md
+          ? "1.25rem"
+          : "1rem"}
+      class={_classList + " iconifysvg " + icon}
+    />
+  {:else if icon}
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={icon.includes("-mini") && icon !== "capture2.0-mini"
@@ -508,6 +548,8 @@
         <TableCells {variant} />
       {:else if icon === "globe-alt"}
         <GlobeAlt {variant} />
+      {:else if icon === "document"}
+        <Document {variant} />
       {:else if icon === "document-text"}
         <DocumentText {variant} />
       {:else if icon === "funnel"}
@@ -520,7 +562,17 @@
       {:else if icon === "alt-text"}
         <AltText />
       {:else if icon === "gift"}
-        <Gift />
+        <Gift {variant} />
+      {:else if icon === "magnifying-glass-plus"}
+        <MagnifyingGlassPlus {variant} />
+      {:else if icon === "magnifying-glass-minus"}
+        <MagnifyingGlassMinus {variant} />
+      {:else if icon === "underline"}
+        <Underline {variant} />
+      {:else if icon === "strikethrough"}
+        <Strikethrough {variant} />
+      {:else if icon === "highlight"}
+        <Highlight />
       {:else if icon === "cursor-arrow-rays"}
         <CursorArrowRays {variant} />
       {:else if icon === "link-arrow-left"}
@@ -543,5 +595,11 @@
     </svg>
     <!-- TODO: abstract situations like these - remove classList and slot -->
     <slot />
-  </button>
-{/if}
+  {/if}
+</button>
+
+<style>
+  :global(.iconifysvg *) {
+    stroke-width: initial !important;
+  }
+</style>

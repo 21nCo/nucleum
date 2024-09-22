@@ -18,9 +18,9 @@
 </script>
 
 <div
-  class="absolute h-full w-3/12 bg-bgs1 right-0 border border-gray-400 overflow-x-hidden overflow-y-hidden pb-2 text-fgs2"
+  class="absolute h-full w-3/12 bg-bgs1 right-0 overflow-x-hidden overflow-y-hidden pb-2 text-fgs2"
 >
-  <div class="w-full h-8 p-2 bg-bgs2 z-10"><button>All</button></div>
+  <div class="w-full h-8 p-2 bg-bgs2 z-10"><button>Notes</button></div>
   <div class="px-2 h-full mt-8 overflow-y-scroll">
     {#each annots as trace, index}
       <button
@@ -52,7 +52,7 @@
         {:else}
           <div
             class="w-full min-h-fit p-2 bg-bgs2 rounded-md text-xs text-fgs2"
-            style="text-decoration: 2px {trace.annotType.toLowerCase()} {trace.color}; "
+            style="text-decoration: 2px {trace.annotType?.toLowerCase()} {trace.color}; "
           >
             <span
               style={trace.annotType === "HIGHLIGHT"

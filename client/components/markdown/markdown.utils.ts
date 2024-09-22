@@ -7,7 +7,8 @@ import type {
 import type {
   ListChild,
   ListContent,
-  INode
+  INode,
+  IActiveNode
 } from "$lib/client/products/memotron/node/node.type";
 import { deepCopy } from "$lib/shared/utils/obj.utils";
 
@@ -16,8 +17,9 @@ import { deepCopy } from "$lib/shared/utils/obj.utils";
  * @param md Node markdown with children in each node
  * @returns children of the node and all its children
  */
-export function recursivelyExtractAllChildrenIntoArray(md: INode) {
+export function recursivelyExtractAllChildrenIntoArray(md: IActiveNode) {
   let children: IBlock[] = [];
+
   if (md.children && md.children.length > 0) {
     md.children.forEach((child) => {
       children.push(child);
@@ -27,6 +29,11 @@ export function recursivelyExtractAllChildrenIntoArray(md: INode) {
   return children;
 }
 
+/**
+ * @deprecated - no longer used
+ * @param mdStore
+ * @returns
+ */
 export function parseBlocksIntoNestedMd(mdStore: IMarkdownStore) {
   const md = deepCopy(mdStore.node);
   md.children = recursivelyFormParentFromChildren(
@@ -36,6 +43,12 @@ export function parseBlocksIntoNestedMd(mdStore: IMarkdownStore) {
   return md;
 }
 
+/**
+ * @deprecated - no longer used
+ * @param blocks
+ * @param childrenHierarchy
+ * @returns
+ */
 export function recursivelyFormParentFromChildren(
   blocks: IBlock[],
   childrenHierarchy: string[] | undefined

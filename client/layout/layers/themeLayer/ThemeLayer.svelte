@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { userPreferences } from "$lib/client/stores/app.store";
   import view from "$lib/client/stores/view.store";
   import { AppSkin } from "$lib/client/types/appearance.type";
   import { postToParent } from "$lib/client/utils/embed.utils";
@@ -18,9 +17,6 @@
     const appearanceSub = appearance.subscribe(() => {
       refreshTheme();
     });
-    const userPreferencesSub = userPreferences.subscribe(() => {
-      refreshSizing();
-    });
     const darkModeMediaQuery = window.matchMedia(
       "(prefers-color-scheme: dark)"
     );
@@ -30,7 +26,6 @@
     });
     return () => {
       appearanceSub();
-      userPreferencesSub();
     };
   });
 
@@ -47,18 +42,18 @@
    */
   function refreshSizing() {
     if (
-      $userPreferences?.accessibilitySizingFactor === undefined ||
-      $userPreferences?.accessibilitySizingFactor === null
+      $appearance?.accessibilitySizingFactor === undefined ||
+      $appearance?.accessibilitySizingFactor === null
     )
       return;
-    if ($userPreferences.accessibilitySizingFactor == 0) {
+    if ($appearance.accessibilitySizingFactor == 0) {
       if ($view.scale > 0.55) defaultRootFontSize = 14;
       else defaultRootFontSize = 12;
-    } else if ($userPreferences.accessibilitySizingFactor == 1) {
+    } else if ($appearance.accessibilitySizingFactor == 1) {
       if ($view.scale > 0.55) defaultRootFontSize = 16;
       else if ($view.scale > 0.45) defaultRootFontSize = 14;
       else defaultRootFontSize = 13;
-    } else if ($userPreferences.accessibilitySizingFactor == 2) {
+    } else if ($appearance.accessibilitySizingFactor == 2) {
       if ($view.scale > 0.55) defaultRootFontSize = 18;
       else defaultRootFontSize = 16;
     }

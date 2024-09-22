@@ -1,15 +1,37 @@
 <script lang="ts">
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { onMount } from "svelte";
-  import { type INode, NodeType } from "../node.type";
+  import {
+    type INode,
+    type ITextClipBody,
+    NodeType,
+    type IVideoTimestampClipBody,
+    type ITwitterProfileBody,
+    type ITwitterProfile
+  } from "../node.type";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { TimeFormat } from "$lib/client/types/time.type";
   export let node: INode;
-  let dynamicLabel: string | undefined = undefined;
+  export let isNodePageContext: boolean = false;
+  let dynamicLabel:
+    | string
+    | {
+        label: string;
+        parent: {
+          id: string;
+          label: string;
+        };
+      }
+    | undefined = undefined;
   const dynamicLabelNodeTypes = [
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
     NodeType.TEXT_CLIP,
-    NodeType.WEB_SCREENSHOT_CLIP
+    NodeType.WEB_SCREENSHOT_CLIP,
+    NodeType.YOUTUBE_TIMESTAMP_CLIP,
+    NodeType.KINDLE_HIGHLIGHT
   ];
   function resolveEmptyLabel() {
     //TODO - based on resource type
@@ -22,40 +44,85 @@
   });
 
   async function resolveLabel() {
-    const dexie = $dataManager.cacheSource.dexie;
+    if (!node) return "";
+
     let parent;
-    if (node.parent) parent = await dexie.node.get(node.parent);
-    if (node.contentType === NodeType.TEXT_CLIP) {
-      const defaultLabel = "Clipped Text - " + node.body.text;
-      if (!parent || !parent.label) return defaultLabel;
-      return "Text clipped from - " + parent.label;
+    if (node.parent && node.parent.id) parent = await node.parent;
+
+    const defaultLabels = {
+      [NodeType.TEXT_CLIP]:
+        "Clipped Text - " + (node.body as ITextClipBody).text,
+      [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
+        "Video timestamp - " +
+        resolveVideoTimeStampStr(node.body as IVideoTimestampClipBody),
+      [NodeType.WEB_SCREENSHOT_CLIP]: "Web screenshot",
+      [NodeType.TWEET]: "Unknown tweet",
+      [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
+    };
+
+    switch (node.contentType) {
+      case NodeType.TEXT_CLIP:
+      case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+      case NodeType.WEB_SCREENSHOT_CLIP:
+      case NodeType.KINDLE_HIGHLIGHT:
+        if (!parent?.label) return defaultLabels[node.contentType];
+        return {
+          label: "Clipped from:",
+          parent
+        };
+      case NodeType.TWEET:
+        parent = parent as ITwitterProfile;
+        if (!parent?.body?.name) return defaultLabels[NodeType.TWEET];
+        return {
+          label: "Tweet by ",
+          parent: { id: parent.id, label: parent.body.name }
+        };
+      case NodeType.TWITTER_PROFILE:
+        node = node as ITwitterProfile;
+        return (
+          node.metadata?.ogTitle ||
+          ((node.body as ITwitterProfileBody).name
+            ? node.body.name + " X profile"
+            : "Unknown X profile")
+        );
+      default:
+        return "";
     }
-    if (node.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
-      const defaultLabel = "Web screenshot";
-      if (!parent || !parent.label) return defaultLabel;
-      return "Screenshot: " + parent.label;
-    }
-    if (node.contentType === NodeType.TWEET) {
-      const defaultLabel = "Unknown tweet";
-      if (!parent || !("name" in parent.body) || !parent.body?.name)
-        return defaultLabel;
-      return parent.body.name + " on X";
-    } else if (node.contentType === NodeType.TWITTER_PROFILE) {
-      const defaultLabel = "Unknown X profile";
-      if (node.metadata?.ogTitle) return node.metadata.ogTitle;
-      else if (node.body.name) return node.body.name + " X profile";
-      else return defaultLabel;
+
+    function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {
+      return formatSeconds(body.timestamp, TimeFormat.CLOCK);
     }
   }
 </script>
 
 <!-- TODO - if node and has parent, show breadcrumbs -->
 {#if node.label}
-  {node.label}
+  <!-- {node.label} -->
+  {@html renderMdAsHtml(node.labelSearch ?? node.label)}
 {:else if dynamicLabelNodeTypes.includes(node.contentType)}
-  {dynamicLabel}
+  {#if typeof dynamicLabel === "string"}
+    {dynamicLabel}
+  {:else}
+    {dynamicLabel?.label}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <span
+      class={cn({
+        "underline-dotted truncate cursor-pointer hover:underline-dotted-primary":
+          isNodePageContext
+      })}
+      on:click={(e) => {
+        appStore.resourceClickHandlerWithReplace(
+          e,
+          dynamicLabel?.parent.id,
+          node.id
+        );
+      }}
+    >
+      {dynamicLabel?.parent?.label}
+    </span>
+  {/if}
 {:else if node.body && typeof node.body === "string"}
-  <InlineMarkdownTextInput content={node.body} />
+  {@html renderMdAsHtml(node.bodySearch ?? node.body)}
 {:else if node.body && node.body.text && typeof node.body.text === "string"}
   {node.body.text}
 {:else}

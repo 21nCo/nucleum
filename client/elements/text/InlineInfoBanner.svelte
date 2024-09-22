@@ -23,7 +23,7 @@
   })}
 >
   <Icon
-    icon={type === InfoTextType.ERROR ? "help" : type}
+    icon={type === InfoTextType.ERROR ? "help" : `ph:${type}-light`}
     class={cn({
       "stroke-ars1": type === InfoTextType.ERROR,
       "stroke-fgs1": type === InfoTextType.INFO

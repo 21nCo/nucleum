@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   type IActiveSessionStore,
   type ISessionInterval,
@@ -25,7 +25,8 @@ import {
   type SessionComposition,
   BreakCompositionType
 } from "$lib/client/types/pointron/sessionComposition.type";
-import { appStore, userPreferences } from "$lib/client/stores/app.store";
+import { appStore } from "$lib/client/stores/app.store";
+import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import modalEvent, {
   fullScreen,
   player
@@ -38,11 +39,12 @@ import {
 } from "$lib/client/stores/notification.store";
 import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { AlertType } from "$lib/client/types/notification.type";
-import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
+import { prefixTable } from "$lib/shared/utils/text.utils";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   CacheStrategy,
   DependencySyncType,
-  PersistanceActionType
+  PersistenceActionType
 } from "$lib/client/types/data.type";
 import { logger } from "$lib/client/components/debug/logger.client";
 import {
@@ -55,10 +57,10 @@ import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import context from "$lib/client/stores/context.store";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { determineResourceType } from "$lib/client/components/resourceStores/resource.utils";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { goalStore } from "../goals/goal.store";
-import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
 import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
@@ -140,7 +142,6 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       Resource.pointSessionSnapshotv2,
       { ...seedSessionStore },
       {
-        refreshOnAppear: true,
         isPreventAutoPersist: true
       }
     );
@@ -281,8 +282,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder
+          ? (session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder)
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -613,7 +614,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : currentLastBar.duration ?? 0 + params.timeElapsed
+          : (currentLastBar.duration ?? 0 + params.timeElapsed)
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }
@@ -743,13 +744,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         isQuickStartOn: props?.isSessionFinish ? session.isQuickStartOn : false
       },
       {
-        isPersist: props.isPersist,
-        queueParams: props.isPersist
-          ? {
-              isUseQueueFirstApproach: true,
-              mutationId: `${this.id}-update-${Date.now()}`
-            }
-          : undefined
+        isPersist: props.isPersist
       }
     );
   }
@@ -758,12 +753,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     logger.log({ context: "session store close" });
     focusItemsStore.reset(true);
     let session = this.reset();
-    this.modify(session, {
-      queueParams: {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-close`
-      }
-    });
+    this.modify(session);
     // this.propagateMessageToParent(session);
     appEvents.publish(PointronEvent.SESSION_CLOSED);
     return session;
@@ -838,20 +828,12 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       } else {
         this.shallowReset();
         // this.propagateMessageToParent(session);
-        this.modify(
-          {
-            isSessionRunning: false,
-            state: SessionState.FINISHED,
-            currentTask: undefined,
-            isQuickStartOn: false
-          },
-          {
-            queueParams: {
-              isUseQueueFirstApproach: true,
-              mutationId: `${this.id}-finish`
-            }
-          }
-        );
+        this.modify({
+          isSessionRunning: false,
+          state: SessionState.FINISHED,
+          currentTask: undefined,
+          isQuickStartOn: false
+        });
         appEvents.publish(PointronEvent.SESSION_FINISHED);
       }
       fullPageLoadingScreen.hide();
@@ -1019,8 +1001,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       { isPersist: false }
     );
     this._resumeTimer();
-    const mutationId = `${this.id}-startSession`;
-    this.persist(undefined, { isUseQueueFirstApproach: true, mutationId });
+    this.persist(undefined);
     return true;
   }
   /**
@@ -1165,10 +1146,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       Resource.pointSessionFocusItemsv2,
       { ...seedFocusItemsStore },
       {
-        refreshOnAppear: true,
-        dependencies: [
-          { resource: Resource.PointGoal, syncType: DependencySyncType.EAGER }
-        ]
+        resourceDependencies: [Resource.PointGoal]
       }
     );
   }
@@ -1177,11 +1155,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     this.modify(
       { goals: [], tasks: [] },
       {
-        isPersist,
-        queueParams: {
-          isUseQueueFirstApproach: true,
-          mutationId: `${this.id}-reset`
-        }
+        isPersist
       }
     );
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
@@ -1189,27 +1163,19 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async addTask(label: string, goalId: string) {
     let n = this.get();
     let id = generateResourceId(Resource.task);
-    this.modify(
-      {
-        goals: n.goals.map((x: IFocusGoal) => {
-          if (x.id === goalId) x.tasks = [...(x.tasks ?? []), id];
-          return x;
-        }),
-        tasks: [
-          ...(n.tasks ?? []),
-          {
-            label,
-            id
-          }
-        ]
-      },
-      {
-        queueParams: {
-          isUseQueueFirstApproach: true,
-          mutationId: `${this.id}-addTask`
+    this.modify({
+      goals: n.goals.map((x: IFocusGoal) => {
+        if (x.id === goalId) x.tasks = [...(x.tasks ?? []), id];
+        return x;
+      }),
+      tasks: [
+        ...(n.tasks ?? []),
+        {
+          label,
+          id
         }
-      }
-    );
+      ]
+    });
     if (goalId) lastActiveGoalIdForEditing.set(goalId);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
@@ -1217,12 +1183,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     let n = this.get();
     if (n.goals.some((x) => x.id === id)) return;
     n.goals.push({ id, tasks: [], blocks: [] });
-    this.modify(n, {
-      queueParams: {
-        isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-addGoal`
-      }
-    });
+    this.modify(n);
     lastActiveGoalIdForEditing.set(id);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
@@ -1240,7 +1201,6 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   async appendFocusBlock(id: string, block: { start: number; end: number }) {
     let n = this.get();
     const resourceType = determineResourceType(id);
-    const mutationId = `${this.id}-append-${Date.now()}`;
     if (resourceType === Resource.PointGoal) {
       const goals = n.goals.map((g) => {
         if (g.id == id) {
@@ -1249,10 +1209,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
         }
         return g;
       });
-      return this.modify(
-        { goals },
-        { queueParams: { isUseQueueFirstApproach: true, mutationId } }
-      );
+      return this.modify({ goals });
     }
     const tasks = n.tasks.map((t) => {
       if (t.id == id) {
@@ -1261,10 +1218,7 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       }
       return t;
     });
-    return this.modify(
-      { tasks },
-      { queueParams: { isUseQueueFirstApproach: true, mutationId } }
-    );
+    return this.modify({ tasks });
   }
   async updateTask(
     id: string,
@@ -1373,7 +1327,7 @@ class PointSessionStore extends ResourceStore<IPointSession> {
       Resource.PointLog,
       { id },
       {
-        action: PersistanceActionType.DELETE,
+        action: PersistenceActionType.DELETE,
         query:
           "delete from PointSession where id is $id; delete from PointLog where sessionId is $id;"
       }

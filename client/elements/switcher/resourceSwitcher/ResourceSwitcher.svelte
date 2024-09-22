@@ -21,8 +21,7 @@
 <div
   class={cn(classList, {
     "gap-5": size === Size.lg,
-    "gap-3": size === Size.md,
-    "gap-2": size === Size.sm
+    "gap-4": size === Size.md || size === Size.sm
   })}
 >
   {#each options as item, index}

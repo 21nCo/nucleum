@@ -17,6 +17,8 @@
     on = !on;
     dispatch("change", on);
   }
+  $: renderedIcon =
+    on && icon.includes(":") ? icon.replace("-thin", "-fill") : icon;
 </script>
 
 <HoverableElement
@@ -25,14 +27,14 @@
   {tooltip}
   {tooltipOptions}
   class={cn("flex items-center justify-center rounded-md", {
-    "h-8 p-1.5": size === Size.sm,
-    "h-10 px-3 py-2": size === Size.md,
-    "h-12 px-4 py-3": size === Size.lg,
+    "min-h-8 min-w-8": size === Size.sm,
+    "min-h-10 min-w-10": size === Size.md,
+    "min-h-12 min-w-12": size === Size.lg,
     [bg(parentBgIndex)]: isHovering || on
   })}
 >
   <Icon
-    {icon}
+    icon={renderedIcon}
     class={cn({
       "fill-aps1": on,
       "stroke-fgs1": !on

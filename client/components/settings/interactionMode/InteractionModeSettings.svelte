@@ -5,6 +5,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
   import { Action } from "$lib/client/types/action.enum";
@@ -13,7 +14,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { InfoTextType } from "$lib/client/types/text.type";
-  import ShortcutSettings from "../shortcuts/ShortcutSettings.svelte";
+  import ShortcutSettings from "../../shortcuts/settings/ShortcutSettings.svelte";
   import { InteractionMode } from "./interactionMode.type";
   let selectedMode: InteractionMode = uiState.getState(
     Action.MODE_OF_INTERACTION,
@@ -23,6 +24,12 @@
   );
   let isShortcutHintsEnabled = uiState.getState(
     UIState.SHOW_MORE_SHORTCUT_HINTS,
+    {
+      isProductScoped: true
+    }
+  );
+  let isCompletelyHideLeftNavBar = uiState.getState(
+    UIState.COMPLETELY_HIDE_LEFT_NAV_BAR,
     {
       isProductScoped: true
     }
@@ -43,6 +50,7 @@
     uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
       isProductScoped: true
     });
+    $appStore.interactionMode = selectedMode;
   }
 </script>
 
@@ -101,6 +109,12 @@
       }}
     />
     <SwitchInput
+      bind:checked={isCompletelyHideLeftNavBar}
+      on:change={(e) => {
+        uiState.setState(UIState.COMPLETELY_HIDE_LEFT_NAV_BAR, e.detail, {
+          isProductScoped: true
+        });
+      }}
       label={{
         label: "Hide App menu bar on hot key",
         tooltip: {

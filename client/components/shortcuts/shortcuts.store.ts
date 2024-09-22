@@ -1,21 +1,19 @@
-import { KeyValueStore } from "$lib/client/components/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { get } from "svelte/store";
 import type {
   IKeyboardShortcut,
   IKeyboardShortcutsStore
 } from "./shortcut.type";
+import { logger } from "../debug/logger.client";
+import { resolveModifiers } from "./shortcut.utils";
+
+export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
 class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   constructor() {
-    super(
-      Resource.keyboardShortcuts,
-      {},
-      {
-        refreshOnAppear: true
-      }
-    );
+    super(Resource.keyboardShortcuts, {});
   }
   saveShortcut(action: string, shortcut: IKeyboardShortcut) {
     return this.modify({ [action]: shortcut });
@@ -60,6 +58,27 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     return this.fecthKeyMap().filter((x) =>
       configurableShortcuts?.includes(x.action)
     );
+  }
+
+  /**
+   * Resolves the shortcut for the given key and modifiers.
+   * @param key
+   * @param modifiers
+   */
+  resolveShortcut(event: KeyboardEvent) {
+    const key = event.key;
+    const modifiers = resolveModifiers(event);
+    const keyMap = this.fecthKeyMap();
+    const shortcut = keyMap.find((s: any) => {
+      if (s.key.toLowerCase() !== key.toLowerCase()) return false;
+      if (s.modifiers && s.modifiers.length !== modifiers.length) return false;
+      return (
+        (s.modifiers && s.modifiers.every((m: any) => modifiers.includes(m))) ||
+        (!s.modifiers && modifiers.length === 0)
+      );
+    });
+    logger.log({ key, modifiers, shortcut, keyMap });
+    return { shortcut, modifiers };
   }
 }
 

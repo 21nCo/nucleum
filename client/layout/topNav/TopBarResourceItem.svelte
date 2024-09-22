@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { resolveResource } from "$lib/client/products/memotron/memotron.store";
@@ -17,7 +17,7 @@
         {
           value: "remove",
           icon: "cross",
-          callback: () => uiState.removeResourceFromTopBar(item)
+          callback: async () => uiState.removeResourceFromTopBar(item)
         }
       ]
     }
@@ -29,18 +29,22 @@
   });
 </script>
 
-<ContextMenuAction {contextMenu}>
+<ContextMenuAction {contextMenu} id="topBarContextMenu">
   <HoverableElement
     type="button"
     bind:isHovering
     class={cn(
-      "relative flex items-center rounded-full border border-brs3 text-b2 gap-2 px-6 py-1 hover:border-aps1",
-      abg(isActive, 1)
+      "relative flex items-center rounded--full border-x border-r-brs3 border-l-transparent text-b2 gap-2 px-4 py-2 max-w-48 min-w-20",
+      // abg(isActive, 1),
+      {
+        "hover:bg-aps3 hover:text-aps1 hover:border--aps1": !isActive,
+        "bg-bgs1": isActive
+      }
     )}
     on:click
     on:contextmenu
   >
-    <div class="min-w-fit">
+    <div class="truncate text-b3">
       {resource?.label}
     </div>
     <!--TODO: Show remove option on right click instead -->

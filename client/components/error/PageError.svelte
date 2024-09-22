@@ -22,11 +22,13 @@
   <div class="text-b3 text-center text-ars1">
     {$page?.error?.message ?? "Something went wrong."}
   </div>
-  {@html renderMdAsHtml(
-    is404
-      ? `Oops! The page **${erroredPath ?? ""}** you're looking for doesn't exist.`
-      : "We would never want you to see this page. Please chat with us or try again."
-  )}
+  <span>
+    {@html renderMdAsHtml(
+      is404
+        ? `Oops! The page **${erroredPath ?? ""}** you're looking for doesn't exist.`
+        : "We would never want you to see this page. Please chat with us or try again."
+    )}
+  </span>
   <div class="flex gap-2">
     <Button
       size={Size.sm}

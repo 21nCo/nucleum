@@ -24,7 +24,8 @@ import { GlobalEvent } from "../types/event.enum";
 import { uiState } from "./uiState/uiState.store";
 import BookACall from "../components/cx/BookACall.svelte";
 import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
-import GhostEmbed from "../components/cx/ghost/GhostEmbed.svelte";
+import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
+import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -200,16 +201,28 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: "changelog",
-    get label() {
-      return this.modalParams?.title;
-    },
+    action: Action.CHANGELOG,
+    label: "What's new",
     icon: "sparkles",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      appStore.runAction(Action.CHANGELOG + "supahub");
+    }
+  },
+  {
+    action: Action.CHANGELOG + "supahub",
+    label: "What's new",
+    icon: "sparkles",
+    cmdLabel: ["What's new", "Changelog"],
     type: ActionType.MODAL,
-    // component: SupahubEmbed,
-    component: GhostEmbed,
+    component: SupahubEmbed,
     modalParams: {
-      title: "What's new",
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
+      },
       componentParams: {
         context: "Changelog"
       }
@@ -236,7 +249,7 @@ export const globalActions: IAction[] = [
     label: "Roadmap",
     icon: "map",
     isMeta: true,
-    type: ActionType.LINK,
+    type: ActionType.FUNCTION,
     fn: async () => {
       appStore.runAction(Action.ROADMAP + "supahub");
     }
@@ -360,7 +373,8 @@ export const globalActions: IAction[] = [
   {
     action: "calendar",
     label: "Calendar",
-    icon: "calendar-days",
+    // icon: "calendar-days",
+    icon: "ph:calendar-dots-light",
     type: ActionType.PAGE,
     component: Calendar
   },
@@ -369,5 +383,28 @@ export const globalActions: IAction[] = [
     label: "Activate search box",
     isMeta: true,
     type: ActionType.EVENT
+  },
+  {
+    action: Action.MARKDOWN_SHORTCUTS,
+    label: "Markdown shortcuts",
+    component: MdShortcuts,
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Markdown shortcuts",
+      layout: {
+        size: Size.lg
+      }
+    }
+  },
+  {
+    action: Action.COVER_PICKER,
+    component: CoverPicker,
+    isMeta: true,
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.lg
+      }
+    }
   }
 ];

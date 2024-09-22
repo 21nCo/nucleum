@@ -9,20 +9,21 @@ import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadi
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
 import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
 import Library from "$lib/client/products/memotron/library/Library.svelte";
 import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
 import { MemotronAction } from "./memotronAction.enum";
-import { ResourceActionType } from "$lib/client/components/resourceStores/resource.type";
-import { resourceAction } from "$lib/client/components/resourceStores/resource.utils";
+import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import Collection from "./collection/Collection.svelte";
 import { Action } from "$lib/client/types/action.enum";
+import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -32,7 +33,7 @@ export const memotronActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.xl,
+        size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true,
         isShowCantileverClose: true
@@ -58,10 +59,10 @@ export const memotronActions: IAction[] = [
     label: "Create a new collection",
     type: ActionType.MODAL,
     modalParams: {
-      title: "Create collection",
       layout: {
-        size: Size.xl,
-        orientation: Orientation.Vertical
+        size: Size.lg,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true
       }
     }
   },
@@ -73,7 +74,7 @@ export const memotronActions: IAction[] = [
     modalParams: {
       title: "Edit properties",
       layout: {
-        size: Size.xl,
+        size: Size.xxl,
         orientation: Orientation.Horizontal,
         primaryAction: {
           label: "Done"
@@ -191,7 +192,8 @@ export const memotronActions: IAction[] = [
   {
     action: MemotronAction.LIBRARY,
     label: "Library",
-    icon: "globe-alt",
+    // icon: "globe-alt",
+    icon: "ph:globe",
     component: Library,
     type: ActionType.PAGE,
     modalParams: {
@@ -233,5 +235,17 @@ export const memotronActions: IAction[] = [
     type: ActionType.INLINE,
     isMeta: true,
     component: PropertyConfig
+  },
+  {
+    action: MemotronAction.PASTE_CONFIRMATION,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: PasteConfirmationModal,
+    modalParams: {
+      title: "Paste Confirmation",
+      layout: {
+        size: Size.sm
+      }
+    }
   }
 ];

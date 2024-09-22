@@ -4,14 +4,11 @@ import {
   isSameDay,
   toLocalISOString
 } from "$lib/client/utils/time.utils";
-import { currentTime, userPreferences } from "$lib/client/stores/app.store";
+import { currentTime } from "$lib/client/stores/app.store";
+import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 import { get, writable } from "svelte/store";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
-import {
-  CacheStrategy,
-  PersistanceActionType,
-  StoreDataType
-} from "$lib/client/types/data.type";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { CacheStrategy, StoreDataType } from "$lib/client/types/data.type";
 import { generateSessionId, generateUID } from "$lib/client/utils/utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { generateResourceId, prefixTable } from "$lib/shared/utils/text.utils";
@@ -29,11 +26,11 @@ import {
   type IPointSession
 } from "./log.type";
 import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
-import { replaceParams } from "$lib/client/utils/surreal.utils";
+import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
 import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
 import { ObservableStore } from "$lib/client/stores/client.store";
-import { ResourceStore } from "$lib/client/components/resourceStores/resource.store";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import { pointSessionStore } from "../focus/session.store";
 import { BlockType } from "$lib/client/types/pointron/session.type";
 

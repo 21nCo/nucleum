@@ -196,7 +196,7 @@
 <!-- <div class="flex w-8/10"> -->
 
 <div
-  class="absolute w-9/12 h-full border border-black"
+  class="absolute w-full h-full"
   style={styles}
   bind:this={component_container}
 >

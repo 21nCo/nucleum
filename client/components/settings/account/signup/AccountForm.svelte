@@ -19,6 +19,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { performApiCall } from "$lib/client/utils/network.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   export let isSignup = false;
   let email = "";
   let pass = "";
@@ -73,7 +74,7 @@
     if (isLoginFromExtension) {
       postTokenToExtension(json);
       appStore.runAction(Action.EXTENSTION_LOGIN);
-    } else await account.signIn(json, { isFromSignup: isSignup });
+    } else await account.signIn(json, { isNewUser: isSignup });
     actionInProgress = false;
   }
   function isValidFormData() {
@@ -198,4 +199,12 @@
       <OAuthButtons />
     </div>
   {/if}
+  <Button
+    label="Continue offline"
+    style={ButtonStyle.OUTLINED}
+    on:click={async () => {
+      await account.startOfflineSession();
+      appStore.gotoPath("/");
+    }}
+  />
 </div>

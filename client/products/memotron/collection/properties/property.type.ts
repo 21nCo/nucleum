@@ -1,7 +1,7 @@
 import type {
   IResource,
   IResourseShareable
-} from "$lib/client/components/resourceStores/resource.type";
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import type { AvatarWithCode, IconAvatar } from "$lib/client/types/avatar.type";
 
 export interface IProperty extends IResource, IResourseShareable {

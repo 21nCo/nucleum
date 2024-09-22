@@ -6,18 +6,11 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { liveQuery } from "dexie";
   import { resolvePropertyOptions } from "../curation/curation.utils";
-  import { dataManager } from "$lib/client/persistence/dataManager";
+  import type { IProperty } from "./properties/property.type";
 
   export let view: ICollectionView;
-  export let propertyIds: string[] = [];
-  let properties = liveQuery(() =>
-    $dataManager.cacheSource.dexie.property
-      .where("id")
-      .anyOfIgnoreCase(propertyIds)
-      .toArray()
-  );
+  export let properties: IProperty[] = [];
   export let value: ISelectValue | undefined = undefined;
   let tabs: ISelectItem[] = [];
   $: tabs = resolveTabs(view.tabBy);
@@ -29,15 +22,15 @@
         label: "All",
         value: "all"
       },
-      ...resolvePropertyOptions(tabBy, $properties)
+      ...resolvePropertyOptions(tabBy, properties)
     ];
   }
   function resolveLabel(tabBy: string) {
-    if (!view.tabBy || !$properties) return "";
-    const property = $properties.find((p) => p.id === tabBy);
+    if (!view.tabBy || !properties) return "";
+    const property = properties.find((p) => p.id === tabBy);
     return property?.label ?? "";
   }
-  $: console.log("tabs", { tabs, properties: $properties, view });
+  $: console.log("tabs", { tabs, properties, view });
 </script>
 
 {#if label && tabs}
