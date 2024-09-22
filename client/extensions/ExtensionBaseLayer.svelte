@@ -67,7 +67,7 @@
       return;
     }
 
-    logger.debug({
+    logger.log({
       at: "ExtensionBaseLayer.svelte",
       token,
       account: $account
@@ -86,7 +86,7 @@
       PersistenceProvider.DEXIE_SURREAL,
       currentUserId
     );
-    logger.debug({ at: "initFlux", initResult });
+    logger.log({ at: "initFlux", initResult });
     if (initResult === 0) {
       await extentionFlux({ method: FluxMethod.CLONE_DOWN });
     } else {

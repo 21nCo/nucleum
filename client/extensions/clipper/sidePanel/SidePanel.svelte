@@ -40,12 +40,12 @@
       refreshState(message.data);
     } else if (message.event === ClipperExtensionEvent.CLIPS_CHANGED) {
       //TODO testing
-      logger.debug({ at: "onMessage - Clips changed", message });
+      logger.log({ at: "onMessage - Clips changed", message });
       clips = message.data;
     }
   });
   onMount(async () => {
-    logger.debug({ at: "onMount - SidePanel" });
+    logger.log({ at: "onMount - SidePanel" });
     const tab = await chrome.storage.local.get("tab");
     title = tab.tab.title;
     const page = await relayToContentScript({
@@ -56,7 +56,7 @@
 
   //TODO - maintain a store with the data.
   function refreshState(data: any) {
-    logger.debug({ at: "refreshState", data });
+    logger.log({ at: "refreshState", data });
     if (data.id) isPageSaved = true;
     if (data.clips) clips = data.clips;
   }

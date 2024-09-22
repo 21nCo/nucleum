@@ -96,13 +96,13 @@ class WebpageStore extends ObservableStore<IWebpage> {
         }
       }
     });
-    logger.debug({ at: "refresh", result });
+    logger.log({ at: "refresh", result });
     const page =
       result && result.length > 0
         ? result.find((r) => r.body.url === this.get().url)
         : null;
 
-    logger.debug({ at: "refresh", url: this.get().url, page, result });
+    logger.log({ at: "refresh", url: this.get().url, page, result });
     if (!page) {
       this.loader({ page: { url: this.get().url, clips: [] } });
       return;
@@ -118,7 +118,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
         }
       }
     });
-    logger.debug({ at: "refresh", page, clips });
+    logger.log({ at: "refresh", page, clips });
     this.loader({ page: { ...page, clips: clips ?? [] } });
   }
 
@@ -211,7 +211,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
    */
   async saveClip(data: IClipCapture) {
     let webpage = this.get();
-    logger.debug({ at: "saveClip", webpage, data });
+    logger.log({ at: "saveClip", webpage, data });
 
     const id = generateResourceId(Resource.node);
     if (!webpage.id) {
@@ -232,7 +232,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     };
     const response = await nodeStore.create([clip]);
     if (!response || !Array.isArray(response)) return;
-    logger.debug({ at: "saveClip", response });
+    logger.log({ at: "saveClip", response });
     const clipNode = response[0] as IWebScreenshotClip;
     if (!clipNode) return;
     this.update((n) => {
@@ -468,7 +468,7 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
     });
   }
   focus(clip: IClip | null, message: string) {
-    logger.debug({ at: "feedbackPane.focus", clip, message });
+    logger.log({ at: "feedbackPane.focus", clip, message });
     this.update((n) => {
       n.focusedClip = clip;
       n.feedback = message;
@@ -543,7 +543,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
   }
 
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
-    logger.debug({ at: "syncStore save", items });
+    logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
     const limitCount = 500;
     let response;
@@ -579,7 +579,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
           resourceId: "kv:clipperSync"
         }
       });
-      logger.debug({ at: "syncStore refreshSyncState", result, id });
+      logger.log({ at: "syncStore refreshSyncState", result, id });
       if (result) {
         const record = result;
         if (record[id]) {

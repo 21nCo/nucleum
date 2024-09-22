@@ -103,10 +103,10 @@ export class SearchStore {
       offset: this.offset
     });
 
-    logger.debug({ at: "refreshNodes", result });
+    logger.log({ at: "refreshNodes", result });
 
     // const result2 = await flux.selectByQuery("select * from node;");
-    // logger.debug({ at: "all nodes: ", result2 });
+    // logger.log({ at: "all nodes: ", result2 });
     return result;
   }
 
@@ -133,7 +133,7 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.debug({ at: "refreshCollections", result });
+    logger.log({ at: "refreshCollections", result });
     return result;
   }
 
@@ -151,7 +151,7 @@ export class SearchStore {
     this.offset = params.offset ?? this.offset;
     this.orderBy = params.orderBy ?? this.orderBy;
     this.filters = params.filters ?? this.filters;
-    logger.debug({
+    logger.log({
       at: "SearchStore.refresh",
       ...this
     });
@@ -243,7 +243,7 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.debug({ at: "recentNodes", result });
+    logger.log({ at: "recentNodes", result });
     return result;
   }
   private async recentCollections() {
@@ -257,7 +257,7 @@ export class SearchStore {
       limit: this.limit,
       offset: this.offset
     });
-    logger.debug({ at: "recentCollections", result });
+    logger.log({ at: "recentCollections", result });
     return result;
   }
 
@@ -290,7 +290,7 @@ class Linker implements IStore {
       action: PersistenceActionType.CUSTOM,
       query: this.generateLinkQuery(from, to, linkType)
     });
-    logger.debug({ at: "link", response });
+    logger.log({ at: "link", response });
     return response;
   }
 
@@ -304,7 +304,7 @@ class Linker implements IStore {
         to
       }
     });
-    logger.debug({ at: "unlink", response });
+    logger.log({ at: "unlink", response });
     return response;
   }
 
@@ -316,7 +316,7 @@ class Linker implements IStore {
       action: PersistenceActionType.CUSTOM,
       query
     });
-    logger.debug({ at: "linkMany", response });
+    logger.log({ at: "linkMany", response });
     return response;
   }
 

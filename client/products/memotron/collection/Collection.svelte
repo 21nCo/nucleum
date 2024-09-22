@@ -170,7 +170,7 @@
   }
 
   function loadActiveView() {
-    logger.debug({ at: "loadActiveView", selectedViewId });
+    logger.log({ at: "loadActiveView", selectedViewId });
     if (!selectedViewId) return;
     const view = $collection.views.find((x) => x.id === selectedViewId) ?? null;
     if (!view) return;
@@ -186,7 +186,7 @@
   ) {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
-    logger.debug({ at: "refresh", activeView });
+    logger.log({ at: "refresh", activeView });
     if (props.isNewView) await collection.loadViewData(activeView.id);
     else await collection.refreshViewData(activeView.id);
     loadActiveView();

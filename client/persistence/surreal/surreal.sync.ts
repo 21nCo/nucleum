@@ -26,6 +26,7 @@ export class SurrealSync implements ISyncHandler {
    * @param mutations
    */
   async sync(mutations: IMutation[]) {
+    logger.log({ at: "SurrealSync.sync", mutations });
     const insertMutationsQuery = `INSERT INTO mutation ${JSON.stringify(mutations)};`;
     const individualMutationsQuery = mutations
       .map((mutation: any) => resolveMutationQueryV2(mutation))
@@ -33,10 +34,10 @@ export class SurrealSync implements ISyncHandler {
     const fetchMutationsQuery = await this.resolveSyncDownQuery();
     const masterQuery = `${insertMutationsQuery}; ${individualMutationsQuery}; ${fetchMutationsQuery};`;
     let response = await this.remote.query(masterQuery, {});
-    logger.debug({ at: "SurrealSync.sync", response, masterQuery });
+    logger.log({ at: "SurrealSync.sync", response, masterQuery });
     if (response && response.length > 0) {
       const syncDownData = response[response.length - 1];
-      logger.debug({
+      logger.log({
         at: "SurrealSync.sync - syndownData",
         syncDownData
       });
@@ -47,7 +48,7 @@ export class SurrealSync implements ISyncHandler {
   }
 
   async processSyncDown(mutations: IMutation[]) {
-    logger.debug({ at: "processSyncDown", mutations });
+    logger.log({ at: "processSyncDown", mutations });
     if (!mutations || mutations.length === 0) return;
     for (let mutation of mutations) {
       await this.local.mutation(mutation.resource as Resource, mutation.params);
@@ -56,14 +57,16 @@ export class SurrealSync implements ISyncHandler {
 
   private async resolveSyncDownQuery() {
     const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNCED_AT);
+    const lastSyncedAt = await clientStorage.get(
+      ClientStorageKey.LAST_SYNCED_AT
+    );
     return `SELECT * FROM mutation WHERE createdAt > '${new Date(+(lastSyncedAt ?? new Date().getTime() - 1000 * 60)).toISOString()}' AND dapId IS NOT '${dapId}';`;
   }
 
   async syncDown() {
     const fetchMutationsQuery = await this.resolveSyncDownQuery();
     let response = await this.remote.query(fetchMutationsQuery, {});
-    logger.debug({ at: "SurrealSync.syncDown", response });
+    logger.log({ at: "SurrealSync.syncDown", response });
     if (
       response &&
       response.length > 0 &&
@@ -79,7 +82,7 @@ export class SurrealSync implements ISyncHandler {
    * @param resources
    */
   async cloneCloudToLocal(resources: string[]) {
-    logger.debug({ at: "cloneCloudToLocal", resources });
+    logger.log({ at: "cloneCloudToLocal", resources });
     let query = "";
     if (resources?.length > 0) {
       resources.forEach((resource) => {
@@ -87,7 +90,7 @@ export class SurrealSync implements ISyncHandler {
       });
     }
     const result = await this.remote.query(query, {});
-    logger.debug({ at: "cloneCloudToLocal", result });
+    logger.log({ at: "cloneCloudToLocal", result });
     for (let i = 0; i < result.length; i++) {
       const resource = resources[i];
       const resourceResponse = result[i];
@@ -105,7 +108,7 @@ export class SurrealSync implements ISyncHandler {
    * @param resources
    */
   async cloneLocalToCloud(resources: string[]) {
-    logger.debug({ at: "cloneLocalToCloud", resources });
+    logger.log({ at: "cloneLocalToCloud", resources });
     for (let resource of resources) {
       const records = await this.local.selectMany(resource as Resource);
       await this.remote.insert(resource, records);

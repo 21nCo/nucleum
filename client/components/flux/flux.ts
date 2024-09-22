@@ -71,7 +71,7 @@ class Flux {
       default:
         break;
     }
-    logger.debug({ at: "flux.initialized", instance: Flux._instance });
+    logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(stores, userId, params);
   }
 
@@ -106,7 +106,7 @@ class Flux {
   }
 
   async loadKvStores() {
-    logger.debug({ at: "flux.loadKvStores" });
+    logger.log({ at: "flux.loadKvStores" });
     try {
       let kvStores = this.stores.filter(
         (x) => x.dataType === StoreDataType.KVO
@@ -129,7 +129,7 @@ class Flux {
    * This will persist all kv seed data on cloud.
    */
   async kvSeed() {
-    logger.debug({ at: "flux.seed" });
+    logger.log({ at: "flux.seed" });
     try {
       let data = this.stores
         .filter((x) => x.dataType === StoreDataType.KVO)
@@ -252,7 +252,7 @@ class Flux {
 
   async selectMany(resource: Resource, params?: IResourceSelectParams) {
     try {
-      logger.debug({ at: "flux.selectMany", resource, params });
+      logger.log({ at: "flux.selectMany", resource, params });
       const result = await this.persistence.selectMany(resource, params);
       logger.log({ at: "flux.selectMany - result", result });
       return result;
@@ -273,15 +273,28 @@ class Flux {
     return this.persistence.query(query, params);
   }
 
-  kvMerge(storeId: string, data: any) {
+  async kvMerge(storeId: string, data: any) {
     logger.log({ at: "kvMerge", storeId, data });
-    return this.persistence.mutation(Resource.kv, {
-      record: {
-        ...data,
-        id: `kv:${storeId}`
-      },
+    const record = {
+      ...data,
+      id: `kv:${storeId}`
+    };
+    const result = await this.persistence.mutation(Resource.kv, {
+      record,
       action: PersistenceActionType.MERGE
     });
+    if (!this.isLocalMode) {
+      await this.insertMutation(Resource.kv, {
+        record,
+        action: PersistenceActionType.MERGE
+      });
+      if (this.isExtensionEnvironment) {
+        setTimeout(async () => {
+          await this.sync();
+        }, 100);
+      }
+    }
+    return result;
   }
 
   private resolveDependantStores(resource: Resource) {
@@ -295,7 +308,7 @@ class Flux {
   }
 
   async refresh(storeId: string, isShowRefreshingState: boolean = false) {
-    logger.debug({ at: "flux.refresh", storeId });
+    logger.log({ at: "flux.refresh", storeId });
   }
 
   async refreshPage(

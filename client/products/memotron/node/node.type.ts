@@ -353,6 +353,40 @@ export type IMediaNode = INodeInterface<MediaNodeType, any, INodeMetadata> & {
   file: IRecordId;
 };
 
+// ===== Layout node types =====
+
+export type IMediaGridItem = {
+  id: string;
+  file: IRecordId;
+  position: {
+    auto: number;
+    columns: {
+      index: number;
+      columnNo: number;
+    };
+  };
+};
+
+export enum MediaGridType {
+  AUTO = "AUTO",
+  COLUMNS = "COLUMNS"
+}
+
+export type IMediaGridBody = {
+  items: IMediaGridItem[];
+  type: MediaGridType;
+  gap: number;
+  altText: string;
+  noOfColumns: number;
+  isWideLayout: boolean;
+};
+
+export type IMediaGridNode = INodeInterface<
+  NodeType.MEDIA_GRID,
+  IMediaGridBody,
+  INodeMetadata
+>;
+
 // ===== Web node types =====
 
 /**

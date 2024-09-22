@@ -27,13 +27,13 @@ export type ICaptureStore = IObservableStoreSubject & {
    * @deprecated
    * There will no avatar for non type based entries. Use type.avatar instead
    */
-  avatar?: IAvatar;
+  avatar?: IAvatar | null;
   captureType: CaptureType | string;
   body?: IMarkdown;
   file?: IRecordId;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
-  fileDetails?: FileDetails;
+  fileDetails?: FileDetails | null;
   links?: ILink[];
   propertyConfig?: IProperty[];
   properties?: INodeProperty[];

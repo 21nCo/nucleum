@@ -48,7 +48,7 @@ class NodeStore extends ResourceStore<INode> {
     const response = await flux.selectByQuery(query, {
       date: formatDate(date, "iso")
     });
-    logger.debug({ at: "fetch timeline", response });
+    logger.log({ at: "fetch timeline", response });
     return response;
   }
 
@@ -63,7 +63,7 @@ class NodeStore extends ResourceStore<INode> {
   async fetch(nodeId: IRecordId) {
     const query = `fn::memotron::node::fetch(${nodeId})`;
     const response = await flux.selectByQuery(query);
-    logger.debug({ at: "fetch node", response });
+    logger.log({ at: "fetch node", response });
     return response;
   }
 }
@@ -175,9 +175,11 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
       `${id.toString()}-` +
       ("children" in changedProps
         ? "children"
-        : "body" in changedProps
-          ? "body"
-          : "block");
+        : "contentType" in changedProps
+          ? "contentType"
+          : "body" in changedProps
+            ? "body"
+            : "block");
     const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
     debouncer(id, mutationId, changedProps);
   };
@@ -191,10 +193,9 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     return this.resourceStore.create([
       {
         id,
-        body: "",
         contentType,
         creationContext: this.id,
-        ...params
+        body: params?.body
       }
     ]);
   };
@@ -242,7 +243,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     const response = await flux.selectByQuery(query, {
       id
     });
-    logger.debug({ at: "ActiveNodeStore.resolveLinks", response });
+    logger.log({ at: "ActiveNodeStore.resolveLinks", response });
     return response;
   }
 }

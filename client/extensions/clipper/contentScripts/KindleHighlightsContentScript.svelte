@@ -230,7 +230,7 @@
   };
   async function sync() {
     try {
-      logger.debug({ at: "sync", syncStore: $syncStore });
+      logger.log({ at: "sync", syncStore: $syncStore });
       if ($syncStore.status == SyncStatus.SYNCED) {
         return;
       }
@@ -243,7 +243,7 @@
         ...books,
         ...bookHighlights.flat()
       ]);
-      logger.debug({ at: "KindleSyncPage save", savedResponse });
+      logger.log({ at: "KindleSyncPage save", savedResponse });
       syncStore.updateSyncStatus(SyncStatus.SYNCED);
     } catch (e) {
       logger.error(e);
@@ -265,7 +265,7 @@
     await syncStore.init(NodeType.KINDLE_BOOK);
     region = matchCurrentUrlWithAmazonRegions();
     appEvents.subscribe(async (x) => {
-      logger.debug({ at: "appEvent - Kindle Content Script", event: x.event });
+      logger.log({ at: "appEvent - Kindle Content Script", event: x.event });
       if (x.event === ClipperExtensionEvent.START_SYNC) {
         sync();
       }

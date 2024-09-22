@@ -262,7 +262,7 @@ class AccountStore extends ObservableStore<
     try {
       const account = this.get();
       const id = contentType.split("/")[0] + "_" + generateSimpleRandomId();
-      logger.debug({ at: "uploadFileV2", id, contentType, fileName });
+      logger.log({ at: "uploadFileV2", id, contentType, fileName });
       if (account.dataMode === UserDataMode.LOCAL) {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);

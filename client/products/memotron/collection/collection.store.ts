@@ -132,7 +132,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * Initialized the collection with local cached data
    */
   async init() {
-    logger.debug({ at: "ActiveCollectionStore.init", id: this.id });
+    logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
       this.resourceStore.modify(this.id, {
         interactedAt: new Date().toISOString()
@@ -147,7 +147,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
         "(select * from $parent.views) as views",
         "(select * from $parent.properties) as properties"
       ]);
-      logger.debug({ at: "ActiveCollectionStore.init - select", result });
+      logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
       this.set({
@@ -195,7 +195,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
       };
     }
     const createdView = await viewStore.create(partial);
-    logger.debug({ at: "ActiveCollectionStore.createView", createdView });
+    logger.log({ at: "ActiveCollectionStore.createView", createdView });
     if (!createdView || !createdView.id) return;
 
     this.update((val: IActiveCollection) => {
@@ -239,14 +239,14 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * @returns
    */
   async loadViewData(viewId: string) {
-    logger.debug({ at: "ActiveCollectionStore.loadViewData", viewId });
+    logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
     if (!viewId) return;
     this.update((val: IActiveCollection) => {
       val.isViewDataLoading = true;
       return val;
     });
     const response = await viewStore.fetchViewData(viewId, this.get().id);
-    logger.debug({
+    logger.log({
       at: "ActiveCollectionStore.loadViewData - response",
       response
     });

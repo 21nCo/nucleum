@@ -14,7 +14,7 @@
   import { formatDatetime } from "$lib/client/utils/time.utils";
 
   onMount(() => {
-    logger.debug({ at: "SyncPane onMount", syncStore: $syncStore });
+    logger.log({ at: "SyncPane onMount", syncStore: $syncStore });
   });
   function resolveLabel() {
     if ($syncStore.id === NodeType.KINDLE_BOOK) return "Kindle highlights sync";

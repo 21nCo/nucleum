@@ -62,10 +62,15 @@
       }
     )}
   >
-    {#if $node?.contentType === NodeType.AUDIO && $node && "url" in $node.body}
+    {#if $node?.contentType === NodeType.AUDIO && $node.file?.url}
       <!-- <audio controls src={$node.body?.url} /> -->
       <!-- TODO - relay refresh event to top instead of refreshing here -->
-      <AudioScrubablePreview on:refresh body={$node?.body} nodeId={$node.id} />
+      <AudioScrubablePreview
+        on:refresh
+        body={$node?.body}
+        url={$node.file.url}
+        nodeId={$node.id.toString()}
+      />
     {:else if ($node?.contentType === NodeType.IMAGE || $node?.contentType === NodeType.VIDEO) && $node.file}
       <FileView file={$node.file} />
     {:else if webNodeTypeList.includes($node?.contentType)}

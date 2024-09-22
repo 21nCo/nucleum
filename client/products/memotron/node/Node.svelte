@@ -9,6 +9,7 @@
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
   import { setContext } from "svelte";
+  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -62,3 +63,4 @@
     <NodeLoadingPulse />
   </div>
 {/if}
+<PageLayer isDragAndDropPage={true} />

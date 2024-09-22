@@ -1,6 +1,6 @@
 import { prefixTable } from "$lib/shared/utils/text.utils";
 import { generateUID } from "$lib/client/utils/utils";
-import { Resource } from "$lib/client/components/resourceStores/resource.enum";
+
 import { ListType, NodeType } from "../node/node.type";
 import {
   HeadingKeys,
@@ -9,6 +9,7 @@ import {
   type A2MDBlock,
   BlockKeys
 } from "./AudioToMarkdown.type";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 class AudioToMarkdown {
   words: string[] | undefined;
   word: string | undefined;

@@ -98,7 +98,9 @@ export function resolveInsertQuery(resource: string, records: any[]) {
 }
 
 export function resolveMergeQuery(record: any) {
-  return `UPDATE ${record.id} MERGE ${JSON.stringify(record)};`;
+  return `UPDATE ${record.id} MERGE ${JSON.stringify(record, (key, value) =>
+    value === undefined || value === null ? `$NONE` : value
+  )};`.replaceAll(`"$NONE"`, `NONE`);
 }
 
 export function resolveMutationQueryV2(mutation: IMutation) {

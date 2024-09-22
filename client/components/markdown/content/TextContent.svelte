@@ -140,7 +140,7 @@
     hidePopover();
     const focusBlockSub = mdStore.focus.subscribe((x) => {
       if (x?.id === block.id) {
-        // logger.debug({ at: "focus.subscribe", x, block });
+        // logger.log({ at: "focus.subscribe", x, block });
         setTimeout(() => {
           textRef.focus();
         }, 10);
@@ -340,7 +340,7 @@
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return false;
     const position = e.detail.position;
     const position2 = e.detail.position2;
-    // logger.debug({
+    // logger.log({
     //   at: "handleArrowKeys",
     //   position,
     //   position2,

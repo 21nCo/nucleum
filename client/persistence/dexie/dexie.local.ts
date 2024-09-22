@@ -40,7 +40,7 @@ export class DexiePersistence implements IPersistence {
     this.instance = new LocalDexie(userId);
     this.userId = userId;
     const initLog = await this.select("kv:init");
-    logger.debug({ at: "DexiePersistence.initialize", initLog });
+    logger.log({ at: "DexiePersistence.initialize", initLog });
     if (initLog) {
       return 1;
     }
@@ -215,22 +215,20 @@ export class DexiePersistence implements IPersistence {
     query: QueryableType,
     filters: { [key: string]: any }
   ): Collection {
-    return (query as Collection).filter(
-      (item) => {
-        for (const [key, value] of Object.entries(filters)) {
-          if (Array.isArray(value)) {
-            if (!value.includes(item[key])) return false;
-          } else if (typeof value === "object" && value !== null) {
-            if ("from" in value && "to" in value) {
-              if (item[key] < value.from || item[key] > value.to) return false;
-            }
-          } else {
-            if (item[key] !== value) return false;
+    return (query as Collection).filter((item) => {
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          if (!value.includes(item[key])) return false;
+        } else if (typeof value === "object" && value !== null) {
+          if ("from" in value && "to" in value) {
+            if (item[key] < value.from || item[key] > value.to) return false;
           }
+        } else {
+          if (item[key] !== value) return false;
         }
-        return true;
       }
-    );
+      return true;
+    });
   }
 
   private applyFilterGroup(

@@ -42,15 +42,15 @@ export class SurrealPersistence implements IPersistence {
     });
     this.userId = userId;
     try {
-      logger.debug({ at: "surreal.persistence.initialize", userId });
+      logger.log({ at: "surreal.persistence.initialize", userId });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
       // await this.logInfo();
-      // await this.testQuery();
+      await this.testQuery();
       const initLog = await this.select("kv:init");
       if (initLog) {
-        logger.debug({
+        logger.log({
           at: "surreal.persistence.initialize - initLog",
           initLog
         });
@@ -76,7 +76,7 @@ export class SurrealPersistence implements IPersistence {
   private async logInfo() {
     await this.awaiter();
     const info = await this.instance?.query("INFO FOR NS; INFO FOR DATABASE;");
-    logger.debug({
+    logger.log({
       at: "surreal.persistence.logInfo",
       userId: this.userId,
       info
@@ -87,9 +87,9 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "select * from link;"
+      "select * from kv;"
     );
-    logger.debug({
+    logger.log({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
       result
@@ -135,7 +135,7 @@ export class SurrealPersistence implements IPersistence {
     if (!dependencies) return;
     const query = resolveDboUpdateQuery(dependencies);
     const result = await this.instance?.query(query);
-    logger.debug({ at: "surreal.persistence.updateDbo", result });
+    logger.log({ at: "surreal.persistence.updateDbo", query, result });
     this.isProcessingOperation = false;
     return result;
   }
@@ -173,6 +173,7 @@ export class SurrealPersistence implements IPersistence {
     logger.log({
       at: "SurrealPersistence.insert",
       resource,
+      records,
       isProcessingOperation: this.isProcessingOperation
     });
     await this.awaiter();
@@ -185,6 +186,7 @@ export class SurrealPersistence implements IPersistence {
       result = await this.instance?.query(query);
       this.isProcessingOperation = false;
     }
+    logger.log({ at: "SurrealPersistence.insert", result });
     return result;
   }
 
@@ -207,6 +209,7 @@ export class SurrealPersistence implements IPersistence {
     const query = resolveMergeQuery(record);
     const result = await this.instance?.query(query);
     this.isProcessingOperation = false;
+    logger.log({ at: "SurrealPersistence.merge", result });
     return result;
   }
 

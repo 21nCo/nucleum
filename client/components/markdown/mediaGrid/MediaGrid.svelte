@@ -1,21 +1,51 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import {
+    createEventDispatcher,
+    getContext,
+    onDestroy,
+    onMount
+  } from "svelte";
 
   import MediaGridOptions from "./MediaGridOptions.svelte";
-  import type { Item, Config } from "./mediaGrid.type";
+  import type { Config } from "./mediaGrid.type";
   import { dragAndDropStore, isInEditMode } from "$lib/client/stores/app.store";
-  import { generateUID } from "$lib/client/utils/utils";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
   import DraggableMediaGridElement from "$lib/client/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
   import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
   import account from "$lib/client/stores/account.store";
-  import type { IBlock } from "../md.type";
+  import { BlockAction } from "../md.type";
   import { isReplaceableMd, type MdStoreType } from "../markdown.store";
+  import { logger } from "../../debug/logger.client";
+  import {
+    MediaGridType,
+    type IMediaGridItem,
+    type IMediaGridNode
+  } from "$lib/client/products/memotron/node/node.type";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import type { IFile } from "../../files/file.type";
 
   // export let items: Item[] = $userPreferences.mediaGridTestitems;
   // $: $userPreferences.mediaGridTestitems = items;
+  const blockContext = getContext<any>("block");
 
-  export let block: any;
+  /**
+   * Relays an event to the block context.
+   * @param event event name
+   * @param data event data
+   */
+  function relay(event: BlockAction, data?: any) {
+    if (!blockContext.publish) {
+      logger.error({
+        at: "MediaGrid propagate",
+        error: "No block context found",
+        data
+      });
+      return;
+    }
+    blockContext.publish(event, data);
+  }
+
+  export let block: IMediaGridNode;
   export let mdStore: MdStoreType;
 
   if (block.body == "") {
@@ -25,13 +55,15 @@
   if (!block.body.isWideLayout) block.body.isWideLayout = false;
   if (!block.body.gap) block.body.gap = 0;
   if (!block.body.altText) block.body.altText = "media grid";
-  if (!block.body.type) block.body.type = "AUTO";
+  if (!block.body.type) block.body.type = MediaGridType.AUTO;
   if (!block.body.noOfColumns) block.body.noOfColumns = 1;
-  let items: Item[] = block.body.items;
+  let items: IMediaGridItem[] = block.body.items;
+  let files: IFile[] = [];
+
   const dispatch = createEventDispatcher();
   $: {
     block.body.items = items;
-    dispatch("change", { id: block.id, body: block.body });
+    relay(BlockAction.CHANGE, { id: block.id, body: block.body });
   }
   $: if (config) {
     block.body.isWideLayout = config.isWideLayout;
@@ -39,7 +71,7 @@
     block.body.altText = config.altText;
     block.body.type = config.type;
     block.body.noOfColumns = config.noOfColumns;
-    dispatch("change", { id: block.id, body: block.body });
+    relay(BlockAction.CHANGE, { id: block.id, body: block.body });
   }
 
   let config: Config = {
@@ -186,11 +218,11 @@
    * Sorting the items to display them in the proper order when the mode changes.
    * @param type
    */
-  function sortItems(type: "AUTO" | "COLUMNS") {
+  function sortItems(type: MediaGridType.AUTO | MediaGridType.COLUMNS) {
     if (items.length == 0) return;
-    if (type === "AUTO")
+    if (type === MediaGridType.AUTO)
       items?.sort((a, b) => a.position.auto - b.position.auto);
-    else if (type === "COLUMNS")
+    else if (type === MediaGridType.COLUMNS)
       items?.sort(
         (a, b) => a.position.columns.index - b.position.columns.index
       );
@@ -201,20 +233,17 @@
    * @param input the file that needs to be uploaded to the S3
    * @returns {string} S3Url where the file is available
    *
-   * TODO - use uploadFileV2 instead
-   *
    */
   async function uploadToS3(input: any) {
     let itemLocalURL = new Blob([input], { type: input.type });
     let customName = input.name.split(".")[0].trim();
-    let s3Response = await account.uploadFile(
+    let response = await account.uploadFileV2(
       input.type,
       customName,
       itemLocalURL,
       $isReplaceableMd
     );
-    let s3URL = s3Response.uploadURL.split("?")[0];
-    return s3URL;
+    return response[0];
   }
 
   /**
@@ -300,7 +329,7 @@
       if (lastItem == 1 || maxColumn == config.noOfColumns - 1) break;
       updateColumnIndex(maxColumn, lastItem - 1, config.noOfColumns - 1, index);
       columnArray[maxColumn] -= 1;
-      sortItems("COLUMNS");
+      sortItems(MediaGridType.COLUMNS);
     }
   }
   /**
@@ -327,7 +356,7 @@
       let lastItem = columnArray[minColumn];
       // if (lastItem == 1) break;
       updateColumnIndex(config.noOfColumns, index, minColumn, lastItem);
-      sortItems("COLUMNS");
+      sortItems(MediaGridType.COLUMNS);
     }
   }
   function isAnyColumnLesserThanTarget(target: number) {
@@ -407,7 +436,11 @@
   ) {
     preventDefault(e);
     let columnNo: number, index: number;
-    if (column == undefined || column == -1 || config.type == "AUTO") {
+    if (
+      column == undefined ||
+      column == -1 ||
+      config.type == MediaGridType.AUTO
+    ) {
       config.isAutoHighlighted = false;
       [columnNo, index] = getNewItemColumnIndex();
     } else {
@@ -419,8 +452,8 @@
     }
     let dt = e?.dataTransfer;
     let file;
-    let newURL;
-    if (column == -1) newURL = e.URL;
+    let fileRecord: IFile;
+    if (column == -1) fileRecord = e.URL;
     else {
       /**
        * "else return" is in cases where the item is dragged and dropped in an empty space
@@ -428,13 +461,12 @@
       if (dt?.files[0]) file = dt.files[0];
       else if (e?.target?.files[0]) file = e.target.files[0];
       else return;
-      newURL = await uploadToS3(file);
+      fileRecord = await uploadToS3(file);
     }
-    let item = {
-      id: generateUID(),
-      name: file.name,
-      URL: newURL,
-      type: file.type,
+    console.log("fileRecord", fileRecord);
+    let item: IMediaGridItem = {
+      id: generateSimpleRandomId(),
+      file: fileRecord.id,
       position: {
         auto: auto != undefined ? auto : items.length,
         columns: {
@@ -444,19 +476,26 @@
       }
     };
     items = [...items, item];
+    files = [...files, fileRecord];
     autoGridNewItemIndex = item.position.auto;
     /**
      * setTimeout is used to avoid showing duplicate image until the the new image is loaded increase or decrese the timeout based on loading time taken in production.
      */
     setTimeout(() => {
       if (auto != undefined && auto >= 0)
-        onReverseMove("AUTO", items.length, auto, item.id);
-      if (config.type == "COLUMNS") {
+        onReverseMove(MediaGridType.AUTO, items.length, auto, item.id);
+      if (config.type == MediaGridType.COLUMNS) {
         if (columnIndex != undefined && columnIndex >= 0)
-          onReverseMove("COLUMNS", -1, columnIndex, item.id, columnNo);
+          onReverseMove(
+            MediaGridType.COLUMNS,
+            -1,
+            columnIndex,
+            item.id,
+            columnNo
+          );
       }
-      if (config.type == "AUTO") sortItems("AUTO");
-      else sortItems("COLUMNS");
+      if (config.type == MediaGridType.AUTO) sortItems(MediaGridType.AUTO);
+      else sortItems(MediaGridType.COLUMNS);
       updateColumnArray(columnNo);
     }, 3000);
   }
@@ -472,14 +511,14 @@
    * @param dropItemColumn
    */
   function onReverseMove(
-    type: "AUTO" | "COLUMNS",
+    type: MediaGridType.AUTO | MediaGridType.COLUMNS,
     dragItemIndex: number,
     dropItemIndex: number,
     id: string | undefined = undefined,
     dropItemColumn: number | undefined = undefined
   ) {
     items.forEach((item) => {
-      if (type == "COLUMNS") {
+      if (type == MediaGridType.COLUMNS) {
         if (item.position.columns.columnNo == dropItemColumn)
           if (dragItemIndex == -1) {
             if (
@@ -518,14 +557,14 @@
    * @param dropItemColumn
    */
   function onForwardMove(
-    type: "AUTO" | "COLUMNS",
+    type: MediaGridType.AUTO | MediaGridType.COLUMNS,
     dragItemIndex: number,
     dropItemIndex: number,
     id: string | undefined = undefined,
     dropItemColumn: number | undefined = undefined
   ) {
     items.forEach((item) => {
-      if (type == "COLUMNS") {
+      if (type == MediaGridType.COLUMNS) {
         if (item.position.columns.columnNo == dropItemColumn)
           if (dragItemIndex == -1) {
             if (
@@ -599,7 +638,7 @@
       let dropItemId = x.dropItem.id;
       let dragItemId = x.dragItem.id;
       if (dragItemId == dropItemId) return;
-      if (config.type == "COLUMNS") {
+      if (config.type == MediaGridType.COLUMNS) {
         let dragItem = {
           columnNo: x.dragItem.position.columns.columnNo,
           index: x.dragItem.position.columns.index
@@ -615,7 +654,7 @@
         if (dropItem.columnNo == dragItem.columnNo) {
           if (dropItemColumnIndex == 0) {
             onReverseMove(
-              "COLUMNS",
+              MediaGridType.COLUMNS,
               dragItemColumnIndex,
               dropItemColumnIndex,
               undefined,
@@ -625,7 +664,7 @@
           } else {
             if (dragItemColumnIndex < dropItemColumnIndex) {
               onForwardMove(
-                "COLUMNS",
+                MediaGridType.COLUMNS,
                 dragItemColumnIndex,
                 dropItemColumnIndex,
                 undefined,
@@ -634,7 +673,7 @@
               x.dragItem.position.columns.index = dropItemColumnIndex - 1;
             } else {
               onReverseMove(
-                "COLUMNS",
+                MediaGridType.COLUMNS,
                 dragItemColumnIndex,
                 dropItemColumnIndex,
                 undefined,
@@ -650,7 +689,7 @@
            * Since this block is for handling drop in another column we Call updateColumn(where columnArray also gets updated for the dropColumn) and also call downgradeColumn(where columnArray gets updated for the dragColumn) instead of just updating the dragItemfter reverseMove
            */
           onReverseMove(
-            "COLUMNS",
+            MediaGridType.COLUMNS,
             -1,
             dropItemColumnIndex,
             undefined,
@@ -664,7 +703,7 @@
           );
           downgradeColumn(dragItem.columnNo, dragItem.index);
         }
-        sortItems("COLUMNS");
+        sortItems(MediaGridType.COLUMNS);
       } else {
         let dragItemAutoIndex;
         let dropItemAutoIndex;
@@ -673,18 +712,30 @@
           ? x.dropItem.position.auto + 1
           : x.dropItem.position.auto;
         if (dropItemAutoIndex == 0) {
-          onReverseMove("AUTO", dragItemAutoIndex, dropItemAutoIndex);
+          onReverseMove(
+            MediaGridType.AUTO,
+            dragItemAutoIndex,
+            dropItemAutoIndex
+          );
           x.dragItem.position.auto = 0;
         } else {
           if (dragItemAutoIndex < dropItemAutoIndex) {
-            onForwardMove("AUTO", dragItemAutoIndex, dropItemAutoIndex);
+            onForwardMove(
+              MediaGridType.AUTO,
+              dragItemAutoIndex,
+              dropItemAutoIndex
+            );
             x.dragItem.position.auto = dropItemAutoIndex - 1;
           } else {
-            onReverseMove("AUTO", dragItemAutoIndex, dropItemAutoIndex);
+            onReverseMove(
+              MediaGridType.AUTO,
+              dragItemAutoIndex,
+              dropItemAutoIndex
+            );
             x.dragItem.position.auto = dropItemAutoIndex;
           }
         }
-        sortItems("AUTO");
+        sortItems(MediaGridType.AUTO);
         setTimeout(handleNewImageLoad, 1);
       }
       dragAndDropStore.reset();
@@ -695,7 +746,7 @@
     config.gridWidth = config.isWideLayout
       ? config.gridWidth * 1.3
       : config.gridWidth;
-    if (config.type == "AUTO")
+    if (config.type == MediaGridType.AUTO)
       /**
        * setTimeout is to set a delay for all images to load and scrollHeight to form.
        */
@@ -707,8 +758,8 @@
   }
 
   onMount(() => {
-    if (config.type == "AUTO") sortItems("AUTO");
-    else sortItems("COLUMNS");
+    if (config.type == MediaGridType.AUTO) sortItems(MediaGridType.AUTO);
+    else sortItems(MediaGridType.COLUMNS);
     calculateColumnArray();
     unSubdragAndDropStore = dragAndDropStore.subscribe(
       handleDragDropStoreChange
@@ -730,8 +781,8 @@
     ? '370px'
     : 'auto'}"
 >
-  {#if config.type === "AUTO"}
-    <div
+  {#if config.type === MediaGridType.AUTO}
+    <button
       class="relative w-full h-full flex items-center overflow-auto {items.length <
       3
         ? 'justify-center'
@@ -743,12 +794,12 @@
       bind:this={autoGrid}
     >
       {#if config.isAutoHighlighted && items.length == 0}
-        <div
+        <button
           on:drop={handleFileUpload}
           class="absolute text-h1 text-fgs3 w-full h-full bg-opacity-50 bg-bgs2 border border-dashed flex items-center justify-center"
         >
           <span>Drop Here</span>
-        </div>
+        </button>
       {/if}
       {#each items as item, index}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -756,6 +807,7 @@
           {handleFileUpload}
           isDraggable={true}
           {item}
+          file={files.find((f) => f.id === item.file)}
           id={item.id}
           on:load={() => handleNewImageLoad()}
           bind:this={autoItems[index]}
@@ -763,14 +815,14 @@
           bind:gap={config.gap}
         />
       {/each}
-    </div>
-  {:else if config.type === "COLUMNS"}
+    </button>
+  {:else if config.type === MediaGridType.COLUMNS}
     <div
       class="columnContainer w-full h-auto"
       style="display:flex;gap:{config.gap}px;min-height:370px"
     >
       {#each config.columns as _, index}
-        <div
+        <button
           on:dragover={preventDefault}
           on:dragenter={(e) => highlight(e, index)}
           on:dragleave={(e) => unhighlight(e, index)}
@@ -799,12 +851,13 @@
                 {handleFileUpload}
                 isDraggable={true}
                 {item}
+                file={files.find((f) => f.id === item.file)}
                 id={item.id}
                 bind:isDragging
               />
             {/if}
           {/each}
-        </div>
+        </button>
       {/each}
     </div>
   {/if}

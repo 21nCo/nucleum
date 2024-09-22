@@ -1,3 +1,5 @@
+import type { MediaGridType } from "$lib/client/products/memotron/node/node.type";
+
 export interface Position {
   auto: number;
   columns: {
@@ -6,6 +8,9 @@ export interface Position {
   };
 }
 
+/**
+ * @deprecated - use IMediaGridItem instead
+ */
 export interface Item {
   id: string;
   URL: string;
@@ -16,7 +21,7 @@ export interface Config {
   isWideLayout: boolean;
   isHovered: boolean;
   altText: string;
-  type: "AUTO" | "COLUMNS";
+  type: MediaGridType;
   isAutoHighlighted: Boolean;
   isColumnHighlighted: Boolean[];
   isGapSliderEnabled: boolean;

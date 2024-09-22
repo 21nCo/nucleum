@@ -18,9 +18,9 @@ export function resolveDboUpdateQuery(dbo: string[]) {
   }
 
   const tables = new Set([
-    ...globalTables,
-    ...pointronTables,
-    ...memotronTables
+    ...globalTables
+    // ...pointronTables,
+    // ...memotronTables
   ]);
   const functions = {
     ...globalDbo,

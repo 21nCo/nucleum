@@ -45,7 +45,7 @@
    * @param event
    */
   const overlayClicked = (event: any) => {
-    logger.debug({
+    logger.log({
       at: "overlayClicked",
       id,
       classList: event.target?.classList,
@@ -69,7 +69,7 @@
   };
 
   function close() {
-    logger.debug({ at: "close", id });
+    logger.log({ at: "close", id });
     show = false;
     modalEvent.hide(id, "Modal.svelte");
     confirmationNotification.reset();

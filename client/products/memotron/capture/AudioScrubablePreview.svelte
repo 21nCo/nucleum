@@ -22,10 +22,9 @@
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   export let body: any = {};
-  export let url: string = "";
+  export let url: string;
   export let isReplaceable: boolean = false;
   export let nodeId: string = "dummy";
-  url = body?.url ? body.url : url;
   let isDisabled: boolean = body?.initTranscription == true ? true : false;
   let label: string =
     body?.initTranscription == false ? "Re-Transcribe" : "Text";

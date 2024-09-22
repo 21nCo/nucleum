@@ -84,7 +84,7 @@
     refreshId = Date.now();
   }
   function onMarkdownContentChange(e: CustomEvent) {
-    logger.debug({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
+    logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;
     if (block.source && "body" in block) {
       node.updateBlock(block.source, { body: block.body });
@@ -92,7 +92,7 @@
   }
 
   function onReStructure(e: CustomEvent) {
-    logger.debug({ at: "NodeContent - onReStructure", ...e.detail });
+    logger.log({ at: "NodeContent - onReStructure", ...e.detail });
     const differences = shallowDiff(previousRootStructure, e.detail.root);
     console.log("Differences", differences);
     if (isValidArrayWithData(differences)) {
@@ -152,8 +152,14 @@
             contentType: e.detail.toType,
             children: []
           });
-        } else
+        } else if (e.detail.toType === NodeType.MEDIA_GRID) {
+          node.updateBlock(e.detail.source, {
+            contentType: e.detail.toType,
+            body: null
+          });
+        } else {
           node.updateBlock(e.detail.source, { contentType: e.detail.toType });
+        }
       }
     }
 

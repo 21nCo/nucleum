@@ -37,9 +37,9 @@ function generateSeedStore(): ICaptureStore {
     refreshId: new Date().getTime(),
     label: "",
     properties: [],
-    fileDetails: undefined,
+    fileDetails: null,
     links: [],
-    avatar: undefined,
+    avatar: null,
     childrenWithStructure: [],
     rootStructure: [],
     body: {
@@ -63,7 +63,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   }
   reset() {
     const seedStore = generateSeedStore();
-    this.modify({ ...seedStore, refreshId: new Date().getTime() });
+    this.modify({
+      ...seedStore,
+      refreshId: new Date().getTime()
+    });
   }
   loader(data: any) {
     if (!data) return;
@@ -205,7 +208,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       // const blob = new Blob(val.fileDetails.data, {
       //   type: contentType,
       // });
-      const result = await account.uploadFile(
+      const result = await account.uploadFileV2(
         contentType,
         val.fileDetails.name,
         val.fileDetails.data
@@ -216,10 +219,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         root = {
           ...root,
           body: {
-            ...val.fileDetails,
-            ...result,
-            url: result.uploadURL.split("?")[0]
-          }
+            duration: val.fileDetails.duration
+          },
+          file: result[0].id
         };
       }
     } else if ("blocks" in val.body) {
