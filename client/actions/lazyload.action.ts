@@ -60,7 +60,6 @@ export function fileLoader(
   };
 
   async function setupLazyLoad() {
-    console.log({ isLazyLoad, at: "fileLoader.svelte - setupLazyLoad" });
     if (!isLazyLoad) {
       await loadSource();
       return;
@@ -88,7 +87,7 @@ export function fileLoader(
       }
       const sourceValue =
         typeof source === "function" ? await source() : source;
-      console.log({ sourceValue });
+
       if (node instanceof HTMLImageElement) {
         node.src = sourceValue;
       } else if (

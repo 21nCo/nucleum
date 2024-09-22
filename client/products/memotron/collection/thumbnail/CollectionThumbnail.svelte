@@ -2,7 +2,7 @@
   import { Arrangement } from "$lib/client/types/direction.enum";
   import {
     CollectionType,
-    type ICollection
+    type ICollectionThumb
   } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
   import Counts from "./Counts.svelte";
@@ -13,7 +13,7 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import CollectionThumbnailTitle from "./CollectionThumbnailTitle.svelte";
   import ResourceThumbnailContentTypeOverlay from "../../common/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
-  export let item: ICollection;
+  export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;

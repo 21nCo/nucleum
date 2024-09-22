@@ -32,7 +32,7 @@
   });
 
   async function resolveSrc(): Promise<string> {
-    logger.debug({ at: "FileView.svelte - resolveSrc", file });
+    logger.log({ at: "FileView.svelte - resolveSrc", file });
     if (file?.url) return file.url;
     if (blob) return URL.createObjectURL(blob);
     if (!id) return "";

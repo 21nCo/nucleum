@@ -1,3 +1,4 @@
+import type { IFile } from "$lib/client/components/files/file.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { Arrangement } from "$lib/client/types/direction.enum";
@@ -43,6 +44,10 @@ export interface ICollection extends IMemotronItemBase {
   query?: string;
   properties?: IRecordId[];
 }
+
+export type ICollectionThumb = ICollection & {
+  cover?: IFile;
+};
 
 export type ICollectionViewWithData = ICollectionView & {
   data: INodeThumbnail[];

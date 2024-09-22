@@ -14,8 +14,8 @@
   let isIframable: boolean = false;
   let isHovering: boolean = false;
   onMount(async () => {
-    if (!node.body?.url) return;
-    isIframable = await resolveIframability(node.body.url);
+    if (!node.url) return;
+    isIframable = await resolveIframability(node.url);
     isLoading = false;
     logger.log({ isIframable });
   });
@@ -29,7 +29,7 @@
     <div class="text-center text-b3 text-fgs3">Loading...</div>
   {:else if isIframable && isIframeEnabled}
     <iframe
-      src={node.body.url}
+      src={node.url}
       title="Web page preview"
       class="w-full h-full"
       frameborder="0"
