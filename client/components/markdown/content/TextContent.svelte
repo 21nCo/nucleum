@@ -27,11 +27,11 @@
   import { logger } from "../../debug/logger.client";
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
 
-  const nodeContext = getContext<any>("content");
+  const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
 
   function propagateToNode(event: string, data: any) {
-    if (!nodeContext) {
+    if (!nodeContentContext) {
       logger.error({
         at: "TextContent propagateToNode",
         error: "No Node context found",
@@ -39,7 +39,7 @@
       });
       return;
     }
-    nodeContext({ event, data });
+    nodeContentContext.publish(event, data);
   }
 
   /**
@@ -72,9 +72,6 @@
   const isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(block.id);
   let textRef: any;
   let sizing = "";
-  const defaultPlaceholder =
-    $mdStore.params?.placeholder ??
-    ($mdStore.params?.isNodular ? "Type / for all blocks" : "Start typing... ");
   let blockSpecificPlaceholder: string | undefined = undefined;
   let placeholder: string;
   let popoverRef: any;
@@ -154,6 +151,21 @@
       focusBlockSub();
     };
   });
+
+  function resolveDefaultPlaceholder() {
+    let dynamicPlaceholder = undefined;
+    if (nodeContentContext.resolveDynamicParams) {
+      const params = nodeContentContext.resolveDynamicParams();
+      dynamicPlaceholder = params?.placeholder;
+    }
+    return (
+      dynamicPlaceholder ??
+      $mdStore.params?.placeholder ??
+      ($mdStore.params?.isNodular
+        ? "Start typing or type / to browse..."
+        : "Start typing... ")
+    );
+  }
 
   /**
    * Relays the convert event to the parent.
@@ -628,7 +640,7 @@
     }
   }
   function assignPlaceholder() {
-    placeholder = blockSpecificPlaceholder ?? defaultPlaceholder;
+    placeholder = blockSpecificPlaceholder ?? resolveDefaultPlaceholder();
   }
 
   function onBlockSelect(event: CustomEvent) {

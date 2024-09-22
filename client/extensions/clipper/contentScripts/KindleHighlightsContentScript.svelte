@@ -16,7 +16,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { SyncStatus } from "./types";
-  import type { IResourceCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
   import { generateHash } from "$lib/shared/utils/crypto.utils";
   import { generateSyncedResourceId } from "$lib/client/products/memotron/memotron.utils";
   let region: AmazonAccount;
@@ -71,7 +71,7 @@
     }
   };
 
-  function scrapBooks(): IResourceCaptureWithId<IKindleBook>[] {
+  function scrapBooks(): OmitForCaptureWithId<IKindleBook>[] {
     const booksEl = document.querySelectorAll(".kp-notebook-library-each-book");
 
     return Array.from(booksEl).map((bookEl) => {
@@ -94,14 +94,14 @@
       const id = bookEl.getAttribute("id");
       const nodeId = generateSyncedResourceId(id, NodeType.KINDLE_BOOK);
       return {
+        url: `https://www.amazon.com/dp/${id}`,
         body: {
-          id,
-          author: scrapedAuthor.split(": ")[1],
-          url: `https://www.amazon.com/dp/${id}`,
-          imageUrl: bookEl.querySelector(".kp-notebook-cover-image")
+          id: id ?? "",
+          author: scrapedAuthor?.split(": ")[1] ?? "",
+          imageUrl: bookEl?.querySelector(".kp-notebook-cover-image")
             ? bookEl
-                .querySelector(".kp-notebook-cover-image")
-                .getAttribute("src")
+                ?.querySelector(".kp-notebook-cover-image")
+                ?.getAttribute("src")
             : "",
           lastAnnotatedDate: scrapedLastAnnotatedDate
         },
@@ -146,10 +146,10 @@
   const parseHighlights = (
     doc: Document,
     bookNodeId: string
-  ): IResourceCaptureWithId<IKindleHighlight>[] => {
+  ): OmitForCaptureWithId<IKindleHighlight>[] => {
     const highlightsEl = doc.querySelectorAll(".a-row.a-spacing-base");
     return Array.from(highlightsEl).map(
-      (highlightEl): IResourceCaptureWithId<IKindleHighlight> => {
+      (highlightEl): OmitForCaptureWithId<IKindleHighlight> => {
         const pageMatch = /\d+$/.exec(
           highlightEl.querySelector("#annotationNoteHeader")?.textContent || ""
         );
@@ -197,7 +197,7 @@
   };
 
   const loadAndScrapeHighlights = async (
-    book: IResourceCaptureWithId<IKindleBook>,
+    book: OmitForCaptureWithId<IKindleBook>,
     url: string
   ) => {
     const response = await fetch(url);
@@ -213,9 +213,9 @@
   };
 
   const scrapeBookHighlights = async (
-    book: IResourceCaptureWithId<IKindleBook>
-  ): Promise<IResourceCaptureWithId<IKindleHighlight>[]> => {
-    let results: IResourceCaptureWithId<IKindleHighlight>[] = [];
+    book: OmitForCaptureWithId<IKindleBook>
+  ): Promise<OmitForCaptureWithId<IKindleHighlight>[]> => {
+    let results: OmitForCaptureWithId<IKindleHighlight>[] = [];
 
     let url = highlightsUrl(book.body.id);
     let hasNextPage = true;

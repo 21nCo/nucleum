@@ -8,18 +8,17 @@ import {
   truncateString
 } from "$lib/shared/utils/text.utils";
 import {
-  type ITweetBody,
   NodeType,
   type INodeMetadata,
-  type ITwitterProfileBody,
-  ListType
+  ListType,
+  type INodeBody
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { commonMetadata } from "../common/urlMap";
 
 export function resolveContentPreview(
-  body: IMarkdown | ITweetBody | ITwitterProfileBody,
+  body: INodeBody,
   contentType: NodeType,
   metadata?: any
 ) {
@@ -177,6 +176,8 @@ export function resolveNodeContentLabel(contentType: NodeType) {
   switch (contentType) {
     case NodeType.NODULAR_MARKDOWN:
       return "Markdown";
+    case NodeType.SIMPLE_TEXT:
+      return "Text";
     case NodeType.TEXT_CLIP:
       return "Web Text clip";
     case NodeType.WEB_SCREENSHOT_CLIP:

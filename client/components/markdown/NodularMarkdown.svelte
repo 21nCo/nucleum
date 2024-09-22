@@ -7,7 +7,7 @@
   import {
     NodeType,
     headingNodeTypes,
-    type INode,
+    type IActiveNode,
     type INodeHierarchyV1,
     type INodeStructure
   } from "$lib/client/products/memotron/node/node.type";
@@ -17,12 +17,13 @@
   import { hierarchyFactorLimit } from "$lib/client/products/memotron/node/node.store";
   import { isReplaceableMd } from "./markdown.store";
   import { logger } from "../debug/logger.client";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
 
   /**
    * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node
    */
-  export let node: INode | undefined = undefined;
+  export let node: IActiveNode | undefined = undefined;
 
   /**
    * Since node is undefined when NodularMarkdown is created from Writer we use this to decide if the media needs to be stored in temporary s3 storage or not
@@ -89,7 +90,7 @@
    *
    * {@link md} and {@link childrenWithStructure} maintains the root blocks and structure of the markdown. Using this anchorBlock, {@link _md} and {@link focusedBlockChildrenWithStructure} - changes are propagated back to {@link md} and {@link childrenWithStructure}.
    */
-  let anchorBlock: string | undefined = undefined;
+  let anchorBlock: IRecordId | undefined = undefined;
   export let params: IMarkdownParams | undefined = undefined;
   if (node) {
     _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
@@ -323,7 +324,7 @@
       anchorBlockIndex
     };
   }
-  function extractParent(id: string): string[] {
+  function extractParent(id: IRecordId): IRecordId[] {
     const parent = childrenWithStructure.find((x) => x.children?.includes(id));
     if (parent) return [...extractParent(parent.id), parent.id];
     else return node?.id ? [node?.id] : [];
@@ -383,7 +384,6 @@
     id={mdId}
     params={{
       isNodular,
-      placeholder: "Start typing or choose a type to get started...",
       canUseSlashShortcut: true,
       ...params
     }}

@@ -1,9 +1,8 @@
 <script lang="ts">
   import { Arrangement } from "$lib/client/types/direction.enum";
   import {
-    type INode,
-    NodeType,
-    type INodeThumbnail
+    type INodeThumb,
+    NodeType
   } from "$lib/client/products/memotron/node/node.type";
   import NodeThumbnailInList from "./NodeThumbnailInList.svelte";
   import NodeThumbnailInTimeline from "./NodeThumbnailInTimeline.svelte";
@@ -24,7 +23,8 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
   import TextClipPreview from "../content/web/TextClipPreview.svelte";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
-  export let item: INode;
+  import FileView from "$lib/client/components/files/FileView.svelte";
+  export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -33,13 +33,13 @@
   export let parentBgIndex = 1;
   let isHovering: boolean = false;
   let isGridBottomHovering = false;
-  function resolvePreviewImageSrc(item: INode) {
-    if (item.contentType === NodeType.IMAGE) return item.body.url;
+  function resolvePreviewImageSrc(item: INodeThumb) {
+    if (item.contentType === NodeType.IMAGE) return item.file;
     else if (
       item.contentType === NodeType.WEB_SCREENSHOT_CLIP ||
       item.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
     )
-      return item.body.s3Url;
+      return item.body.file;
     else if (
       item.contentType === NodeType.WEB_PAGE &&
       (item.metadata?.ogImage || item.metadata?.screenshotUrl)
@@ -93,13 +93,20 @@
       <div class="relative grow w-full p-4">
         <!-- Preview content -->
         {#if isImagePreview}
-          <img
-            alt="..."
-            class={cn(
-              "absolute inset-0 w-full rounded-t-md object-cover h-full"
-            )}
-            use:lazyLoad={previewImageSrc ?? contentPreview}
-          />
+          {#if previewImageSrc?.id}
+            <FileView
+              file={previewImageSrc}
+              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+            />
+          {:else}
+            <img
+              alt="..."
+              class={cn(
+                "absolute inset-0 w-full rounded-t-md object-cover h-full"
+              )}
+              use:lazyLoad={previewImageSrc ?? contentPreview}
+            />
+          {/if}
         {:else if "body" in item && item.body}
           <TextClipPreview node={item} {contentPreview} />
         {/if}

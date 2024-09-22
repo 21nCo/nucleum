@@ -6,7 +6,7 @@ import {
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IObservableStoreSubject } from "$lib/client/types/data.type";
-import type { IResourceCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 
 class PropertyStore extends ResourceStore<IProperty> {
   constructor() {
@@ -19,7 +19,7 @@ class PropertyStore extends ResourceStore<IProperty> {
 export const propertyStore = new PropertyStore();
 
 export class PropertyEditorStore extends ObservableStore<
-  IResourceCapture<IProperty>[] & IObservableStoreSubject
+  OmitForCapture<IProperty>[] & IObservableStoreSubject
 > {
   constructor() {
     super("propertyEditor");

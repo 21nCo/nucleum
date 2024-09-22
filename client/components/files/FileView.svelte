@@ -7,14 +7,18 @@
   import { fileLoader } from "$lib/client/actions/lazyload.action";
   export let file: IFile | undefined = undefined;
   export let id: IRecordId | undefined = undefined;
+  export let blob: Blob | undefined = undefined;
   export let isLazyLoad: boolean = false;
   export let type: FileType = FileType.UNKNOWN;
   let classList: string = "";
   export { classList as class };
 
   function resolveType() {
-    if (!id && !file) {
+    if (!id && !file && !blob) {
       return FileType.UNKNOWN;
+    }
+    if (blob) {
+      return blob.type.split("/")[0] as FileType;
     }
     const idVal = id ?? file?.id;
     const typePart = idVal?.toString().split(":")[1].split("_")[0];
@@ -30,6 +34,7 @@
   async function resolveSrc(): Promise<string> {
     logger.debug({ at: "FileView.svelte - resolveSrc", file });
     if (file?.url) return file.url;
+    if (blob) return URL.createObjectURL(blob);
     if (!id) return "";
     const response = await fileStore.select(id);
     if (!response) return "";
@@ -48,7 +53,6 @@
       return "";
     }
   }
-  $: console.log({ file, id });
 </script>
 
 {#if type === "image"}
@@ -72,10 +76,4 @@
     use:fileLoader={{ source: resolveSrc, isLazyLoad }}
   >
   </audio>
-{:else}
-  <div>
-    <pre>
-                {JSON.stringify(file, null, 2)}
-            </pre>
-  </div>
 {/if}

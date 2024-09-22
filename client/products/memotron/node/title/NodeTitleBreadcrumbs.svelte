@@ -5,19 +5,20 @@
   import { Size } from "$lib/client/types/size.enum";
   import { flux } from "$lib/client/components/flux/flux";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { INode } from "../node.type";
+  import type { IActiveNode, INode } from "../node.type";
   import { createEventDispatcher } from "svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
-  export let node: INode;
+  export let node: IActiveNode;
   export let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
   onMount(async () => {
     breadcrumbs = await refreshBreadcrumbs(node.parent ?? node.mdParent);
   });
-  async function refreshBreadcrumbs(parent: string[] | INode) {
+  async function refreshBreadcrumbs(parent: IRecordId[] | INode | undefined) {
     if (!parent || parent.length === 0) return;
     const parentItems = await flux.selectMany(Resource.node, {
       filters: {
-        id: "id" in parent ? parent.id.toString() : parent
+        id: "id" in parent ? parent.toString() : parent.map((x) => x.toString())
       }
     });
     if (!parentItems || parentItems.length === 0) return [];

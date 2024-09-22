@@ -5,7 +5,7 @@
   let videoId: string | null = null;
   onMount(async () => {
     console.log("YoutubeVideoPreview - mounted");
-    videoId = new URL(node.body.url).searchParams.get("v");
+    if (node.url) videoId = new URL(node.url).searchParams.get("v");
     console.log({ videoId });
   });
 </script>

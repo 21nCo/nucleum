@@ -16,7 +16,7 @@
     node.metadata
   );
   onMount(async () => {
-    parentUsername = node.parent?.split("twitterProfile_")[1] ?? "";
+    parentUsername = node.parent.toString().split("twitterProfile_")[1] ?? "";
     await resolveParent();
     console.log({ parent });
   });
@@ -29,7 +29,7 @@
   <button
     class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs3 rounded-md w-3/4"
     on:click={() => {
-      appStore.openLink(node.body.url);
+      appStore.openLink(node.url);
     }}
   >
     {#if parent}

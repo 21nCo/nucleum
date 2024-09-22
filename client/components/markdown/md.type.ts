@@ -27,7 +27,7 @@ export type DbBlock = IResourceBase & IBlock;
 
 export type IBlock<T = NodeContent> = T & {
   id: IRecordId;
-  childrenHierarchy?: string[];
+  childrenHierarchy?: IRecordId[];
 };
 export enum InlineType {
   MENTION = "MENTION",

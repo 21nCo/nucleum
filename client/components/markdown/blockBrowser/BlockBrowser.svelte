@@ -62,7 +62,7 @@
       ]
     },
     {
-      section: "text",
+      section: "Text",
       children: [
         {
           label: "Paragraph",
@@ -93,12 +93,6 @@
           description: "Callout block",
           type: NodeType.CALLOUT,
           icon: "bookmark"
-        },
-        {
-          label: "Link",
-          description: "Link block",
-          type: NodeType.LINK,
-          icon: "hugeicons:link-05"
         }
       ]
     },
@@ -155,7 +149,48 @@
       ]
     },
     {
-      section: "structure",
+      section: "media",
+      children: [
+        {
+          label: "Image",
+          description: "Image block",
+          type: NodeType.IMAGE,
+          icon: "image"
+        },
+        {
+          label: "Video",
+          description: "Video block",
+          type: NodeType.VIDEO,
+          icon: "video-camera"
+        },
+        {
+          label: "Audio",
+          description: "Audio block",
+          type: NodeType.AUDIO,
+          icon: "music"
+        },
+        {
+          label: "PDF",
+          description: "Pdf block",
+          type: NodeType.PDF,
+          icon: "ph:file-pdf-light"
+        },
+        {
+          label: "Link",
+          description: "Link block",
+          type: NodeType.LINK,
+          icon: "hugeicons:link-05"
+        },
+        {
+          label: "File",
+          description: "File block",
+          type: NodeType.FILE,
+          icon: "ph:file-light"
+        }
+      ]
+    },
+    {
+      section: "layout",
       children: [
         {
           label: "Divider",
@@ -194,6 +229,12 @@
           icon: "ph:tabs-light"
         },
         {
+          label: "Media grid",
+          description: "Media grid block",
+          type: NodeType.MEDIA_GRID,
+          icon: "rectangle-group"
+        },
+        {
           label: "Media stack",
           description: "Media stack block",
           type: NodeType.MEDIA_STACK,
@@ -202,54 +243,19 @@
       ]
     },
     {
-      section: "media",
+      section: "embed",
       children: [
-        {
-          label: "Image",
-          description: "Image block",
-          type: NodeType.IMAGE,
-          icon: "image"
-        },
-        {
-          label: "Video",
-          description: "Video block",
-          type: NodeType.VIDEO,
-          icon: "video-camera"
-        },
-        {
-          label: "Audio",
-          description: "Audio block",
-          type: NodeType.AUDIO,
-          icon: "music"
-        },
-        {
-          label: "PDF",
-          description: "Pdf block",
-          type: NodeType.PDF,
-          icon: "ph:file-pdf-light"
-        },
-        {
-          label: "File",
-          description: "File block",
-          type: NodeType.FILE,
-          icon: "ph:file-light"
-        }
-      ]
-    },
-    {
-      section: "advanced",
-      children: [
-        {
-          label: "Table of contents",
-          description: "Embed table of contents block",
-          type: NodeType.TOC,
-          icon: "list"
-        },
         {
           label: "Embed",
           description: "Embed block",
           type: NodeType.EMBED,
           icon: "code"
+        },
+        {
+          label: "Embed node",
+          description: "Embed node block",
+          type: NodeType.NODE_AS_EMBED,
+          icon: "ph:circle-light"
         },
         {
           label: "Embed collection",
@@ -258,10 +264,34 @@
           icon: "hugeicons:code"
         },
         {
-          label: "Media grid",
-          description: "Media grid block",
-          type: NodeType.MEDIA_GRID,
-          icon: "rectangle-group"
+          label: "Table of contents",
+          description: "Embed table of contents block",
+          type: NodeType.TOC,
+          icon: "list"
+        },
+        {
+          label: "Youtube video",
+          description: "Embed youtube video block",
+          type: NodeType.YOUTUBE_VIDEO,
+          icon: "ph:youtube-logo-thin"
+        },
+        {
+          label: "Tweet",
+          description: "Embed tweet block",
+          type: NodeType.TWEET,
+          icon: "ph:x-logo-thin"
+        },
+        {
+          label: "Kindle book",
+          description: "Embed kindle book block",
+          type: NodeType.KINDLE_BOOK,
+          icon: "ph:amazon-logo-thin"
+        },
+        {
+          label: "Kindle highlight",
+          description: "Embed kindle highlight block",
+          type: NodeType.KINDLE_HIGHLIGHT,
+          icon: "ph:bookmark-simple-thin"
         }
       ]
     }

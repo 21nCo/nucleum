@@ -6,13 +6,13 @@
   import { webpage } from "./store";
   import {
     NodeType,
-    type IClipCapture,
     type IWebScreenshotClip
   } from "$lib/client/products/memotron/node/node.type";
   import account from "$lib/client/stores/account.store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
+  import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -42,7 +42,7 @@
   });
 
   async function saveSnip(s3Url: string) {
-    const snip: IClipCapture<IWebScreenshotClip> = {
+    const snip: OmitForCapture<IWebScreenshotClip> = {
       contentType: NodeType.WEB_SCREENSHOT_CLIP,
       body: {
         s3Url
@@ -98,7 +98,7 @@
           "screenshot.png",
           false
         );
-
+        //TODO - relay whole upload process to use account.uploadFileV2 on background script and save file: instead of url
         const response = await relayToBackgroundScript({
           event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
           data: { s3SignedURL, dataURL, contentType }

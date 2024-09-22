@@ -72,9 +72,9 @@
               "w-[50rem] overflow-auto": !isWidened
             })}
           >
-            {#if $node.parent && $node.parent.length > 0}
+            {#if $node.mdParent && $node.mdParent.length > 0}
               <header class="flex w-full px-12 py-4">
-                {#key $node.parent}
+                {#key $node.mdParent}
                   <NodeTitleBreadcrumbs
                     node={$node}
                     on:click={(e) => {

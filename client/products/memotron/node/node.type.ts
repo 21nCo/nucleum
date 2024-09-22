@@ -8,29 +8,26 @@ import type {
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import {
   ResourceAccessMode,
-  type IResourceCapture
+  type CaptureOmittedFields,
+  type OmitFields,
+  type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { IFile } from "$lib/client/components/files/file.type";
 
-export type INode = (
-  | INodeInterface<NodeType, NodeContent, INodeMetadata>
-  | IClip
-) & {
-  children?: INode[] | string[];
-  childrenHierarchy?: string[];
-  forelinks?: LinkThumbnail[];
-};
-
-export type INodeItemCaptured = IResourceCapture<INodeInterface> & {
+export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
   id: IRecordId;
 };
 
-export type INodeThumbnail = INodeBase &
+export type INodeThumbnail = INodeBaseV1 &
   NodeContent & {
     links: LinkThumbnail[];
     children?: INodeThumbnail[];
   };
 
-export type INodeBase = IMemotronItemBase & {
+/**
+ * @deprecated - use {@link INodeInterface} instead
+ */
+type INodeBaseV1 = IMemotronItemBase & {
   generatedLabel?: string;
   /**
    * @deprecated - avatar is dynamically resolved from typed collections
@@ -38,13 +35,6 @@ export type INodeBase = IMemotronItemBase & {
   avatar?: IAvatar;
   properties?: INodeProperty[];
   parent?: string;
-  /**
-   * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.
-   * This helps in determining what to show as individual items in library, resource browser or on a timeline and similar scenarios.
-   *
-   * Note: In context of search, all root nodes are shown irrespective of the context.
-   *
-   */
   creationContext?: string;
   notes?: string;
 };
@@ -53,24 +43,23 @@ type INodeInterface<
   TType = NodeType,
   TBody = any,
   TMetadata = any
-> = INodeBase & {
+> = IMemotronItemBase & {
   body: TBody;
   contentType: TType;
   metadata?: TMetadata;
-};
-
-export type IActiveNode = INode & {
-  md: IMarkdown;
-  parent?: IRecordId[] | INode;
-  accessMode: ResourceAccessMode;
-  focusedBlock?: string;
-  collections?: IRecordId[];
-  types?: string[];
-  avatars?: IAvatar[];
-  propertyConfig?: IProperty[];
-  wordCount?: number;
-  pdfAnnotations?: any[];
-  links?: INodeLink[];
+  properties?: INodeProperty[];
+  parent?: IRecordId;
+  /**
+   * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.
+   * This helps in determining what to show as individual items in library, resource browser or on a timeline and similar scenarios.
+   *
+   * Note: In context of search, all root nodes are shown irrespective of the context.
+   *
+   */
+  creationContext?: IRecordId;
+  notes?: string;
+  url?: string;
+  file?: IRecordId;
 };
 
 export type ILink = {
@@ -87,8 +76,6 @@ export type NodeContent =
   | TextContent
   | ListContent
   | LayoutContent
-  | MediaContent
-  | ClipContent
   | NonNodularMarkdownContent
   | StructuralContent
   | OtherContent;
@@ -119,22 +106,9 @@ export type LayoutContent = {
   body: any;
 };
 
-export type MediaContent = {
-  contentType: MediaNodeType;
-  body: MediaBody;
-};
-
 export type NonNodularMarkdownContent = {
   contentType: NodeType.NON_NODULAR_MARKDOWN;
   body: IMarkdown;
-};
-
-/**
- * @deprecated - use {@link IClip} instead
- */
-export type ClipContent = {
-  contentType: ClipType;
-  body: any;
 };
 
 //TODO - temp
@@ -163,13 +137,6 @@ export type StructuralNodeType =
   | NodeType.DOUBLE_DIVIDER
   | NodeType.TOC;
 
-export type MediaNodeType =
-  | NodeType.IMAGE
-  | NodeType.AUDIO
-  | NodeType.VIDEO
-  | NodeType.PDF
-  | NodeType.FILE;
-
 export type OtherNodeType =
   | NodeType.MATH
   | NodeType.CALLOUT
@@ -178,15 +145,6 @@ export type OtherNodeType =
   | NodeType.TABLE
   | NodeType.NODULAR_MARKDOWN
   | NodeType.COLLECTION_AS_EMBED;
-
-export type ClipType =
-  | NodeType.WEB_PAGE
-  | NodeType.TEXT_CLIP
-  | NodeType.IMAGE_CLIP
-  | NodeType.AUDIO_CLIP
-  | NodeType.VIDEO_CLIP
-  | NodeType.PDF_CLIP
-  | NodeType.YOUTUBE_TIMESTAMP_CLIP;
 
 export enum NodeType {
   NODULAR_MARKDOWN = "NODULAR_MARKDOWN",
@@ -213,13 +171,15 @@ export enum NodeType {
   PDF = "PDF",
   FILE = "FILE",
 
+  //EMBED
   EMBED = "EMBED",
-  DIVIDER = "DIVIDER",
-  DOUBLE_DIVIDER = "DOUBLE_DIVIDER",
   TOC = "TOC",
+  NODE_AS_EMBED = "NODE_AS_EMBED",
   COLLECTION_AS_EMBED = "COLLECTION_AS_EMBED",
 
   //LAYOUT
+  DIVIDER = "DIVIDER",
+  DOUBLE_DIVIDER = "DOUBLE_DIVIDER",
   TABLE = "TABLE",
   MEDIA_STACK = "MEDIA_STACK",
   MEDIA_GRID = "MEDIA_GRID",
@@ -258,34 +218,6 @@ export enum NodeType {
   GITLAB_PROJECT = "GITLAB_PROJECT"
 }
 
-/**
- * Web node types with body.url present.
- */
-export const webNodeTypeList = [
-  NodeType.WEB_PAGE,
-  NodeType.TEXT_CLIP,
-  NodeType.IMAGE_CLIP,
-  NodeType.AUDIO_CLIP,
-  NodeType.VIDEO_CLIP,
-  NodeType.PDF_CLIP,
-  NodeType.WEB_SCREENSHOT_CLIP,
-
-  NodeType.YOUTUBE_VIDEO,
-  NodeType.YOUTUBE_CHANNEL,
-  NodeType.YOUTUBE_TIMESTAMP_CLIP,
-  NodeType.TWEET,
-  NodeType.TWITTER_PROFILE,
-  NodeType.KINDLE_BOOK,
-  NodeType.KINDLE_HIGHLIGHT
-];
-
-export const mediaNodeTypeList = [
-  NodeType.IMAGE,
-  NodeType.VIDEO,
-  NodeType.AUDIO,
-  NodeType.PDF
-];
-
 export const headingNodeTypes = [
   NodeType.HEADING1,
   NodeType.HEADING2,
@@ -298,29 +230,6 @@ export const structuralNodeTypes = [
   NodeType.DIVIDER,
   NodeType.DOUBLE_DIVIDER,
   NodeType.TOC
-];
-
-/**
- * List of root node types that are shown in the library, resource browser and similar contexts.
- *
- * In context of search, all root nodes are shown along with heading nodes irrespective of the creationContext. In all other places, root nodes with creationContext i.e. nodes created as sub blocks or as supplement will be ignored.
- *
- * Examples for supplements: Twitter profile being saved as supplement when a tweet is clipped. A web page being saved as supplement when a text clip is clipped. A twitter profile or web page can separately be saved without any creationContext i.e. when saving by clicking on clipper tool bar.
- *
- * Supplements are not shown directly in the library, resource browser or timeline to avoid confusion as these are auto created and user might find it confusing to see them. On the other hand, supplements are shown in search results because these supplements are interactable from creationContext page. If the user can click on link to supplement and interact with it from a text clip page or a tweet page, user would expect to go back anytime to the supplement page.
- *
- * Note: Clips belonging to the same parent might be grouped together in places like Timeline. In this case, the supplement (i.e. the parent) is what's shown.
- *
- */
-export const rootNodeTypeList = [
-  NodeType.NODULAR_MARKDOWN,
-  NodeType.NON_NODULAR_MARKDOWN,
-  NodeType.PDF,
-  NodeType.IMAGE,
-  NodeType.VIDEO,
-  NodeType.AUDIO,
-
-  ...webNodeTypeList
 ];
 
 export const TextNodeTypeList = [
@@ -346,13 +255,6 @@ export type TextNodeType =
   | NodeType.HEADING3
   | NodeType.HEADING4
   | NodeType.HEADING5;
-
-export type MediaBody = {
-  url: string;
-  type: string;
-  size: number;
-  duration?: number;
-};
 
 export enum NodeRightPaneType {
   NONE = "NONE",
@@ -414,18 +316,67 @@ export type INodeHierarchyV1 = {
 };
 
 export type INodeStructure = {
-  id: string;
+  id: IRecordId;
   /**
    * Hierarchy factor to determine the nesting of the blocks in nodular markdown
    * Ex: Heading 1 -> 1
    *    Heading 2 -> 2
    */
   factor: number;
-  children: string[];
+  children: IRecordId[];
 };
 
-type IGenericWebPageBody = {
+type INodeHasUrl = {
   url: string;
+};
+
+type INodeHasParent = {
+  parent: IRecordId;
+};
+
+// ===== Media node types =====
+
+export const mediaNodeTypeList = [
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO,
+  NodeType.PDF
+];
+
+type MediaNodeType =
+  | NodeType.IMAGE
+  | NodeType.VIDEO
+  | NodeType.AUDIO
+  | NodeType.PDF;
+
+export type IMediaNode = INodeInterface<MediaNodeType, any, INodeMetadata> & {
+  file: IRecordId;
+};
+
+// ===== Web node types =====
+
+/**
+ * Web node types with body.url present.
+ */
+export const webNodeTypeList = [
+  NodeType.WEB_PAGE,
+  NodeType.TEXT_CLIP,
+  NodeType.IMAGE_CLIP,
+  NodeType.AUDIO_CLIP,
+  NodeType.VIDEO_CLIP,
+  NodeType.PDF_CLIP,
+  NodeType.WEB_SCREENSHOT_CLIP,
+
+  NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_CHANNEL,
+  NodeType.YOUTUBE_TIMESTAMP_CLIP,
+  NodeType.TWEET,
+  NodeType.TWITTER_PROFILE,
+  NodeType.KINDLE_BOOK,
+  NodeType.KINDLE_HIGHLIGHT
+];
+
+type IGenericWebPageBody = {
   hash: string;
   description?: string;
 };
@@ -433,23 +384,9 @@ export type IGenericWebPage = INodeInterface<
   NodeType.WEB_PAGE,
   IGenericWebPageBody,
   IWebPageMetadata
->;
-
-/**
- * @deprecated - use {@link IGenericWebPage} instead
- */
-export type IWebPageNode = {
-  body: {
-    url: string;
-    hash: string;
-    description?: string;
-  };
-  label: string;
-  metadata: IWebPageMetadata;
-  contentType: NodeType.WEB_PAGE;
-};
-
-export type IWebPageMetadata = {
+> &
+  INodeHasUrl;
+type IWebPageMetadata = {
   favicon?: string;
   faviconLink?: string;
   appIconLinks?: string[];
@@ -468,7 +405,6 @@ export type ITextClipBody = {
   highlighterId: string;
   pre?: string;
   post?: string;
-  url: string;
 };
 type ITextClipMetadata = {
   container: string;
@@ -481,11 +417,12 @@ export type ITextClip = INodeInterface<
   NodeType.TEXT_CLIP,
   ITextClipBody,
   ITextClipMetadata
->;
+> &
+  INodeHasUrl &
+  INodeHasParent;
 
 export type IVideoTimestampClipBody = {
   timestamp: number;
-  url: string;
   /**
    * The thumbnail of the video. - file id
    */
@@ -499,27 +436,25 @@ export type IVideoTimestampClip = INodeInterface<
   NodeType.YOUTUBE_TIMESTAMP_CLIP,
   IVideoTimestampClipBody,
   any
->;
+> &
+  INodeHasParent;
 
 export type IYoutubeChannelBody = {
-  url: string;
   title: string;
   description?: string;
   channelImageUrl?: string;
 };
-
 export type IYoutubeChannelMetadata = IWebPageMetadata & {
   externalLinks?: string[];
 };
-
 export type IYoutubeChannel = INodeInterface<
   NodeType.YOUTUBE_CHANNEL,
   IYoutubeChannelBody,
   IYoutubeChannelMetadata
->;
+> &
+  INodeHasUrl;
 
-export type IYoutubeVideoBody = {
-  url: string;
+type IYoutubeVideoBody = {
   title: string;
   description?: string;
   /**
@@ -531,16 +466,15 @@ export type IYoutubeVideoBody = {
    */
   s3Url?: string;
 };
-
-export type IYoutubeVideoMetadata = IWebPageMetadata & {
+type IYoutubeVideoMetadata = IWebPageMetadata & {
   popularity?: number;
 };
-
 export type IYoutubeVideo = INodeInterface<
   NodeType.YOUTUBE_VIDEO,
   IYoutubeVideoBody,
   IYoutubeVideoMetadata
->;
+> &
+  INodeHasUrl;
 
 type IWebScreenshotClipBody = {
   /**
@@ -567,7 +501,6 @@ type IMultimediaClipBody = {
    * @deprecated - use file instead
    */
   s3Url: string;
-  url: string;
   color: string;
 };
 export type IMultimediaClip = INodeInterface<
@@ -576,8 +509,7 @@ export type IMultimediaClip = INodeInterface<
   any
 >;
 
-export type ITweetBody = {
-  url: string;
+type ITweetBody = {
   content: string;
   postedAt: string;
 };
@@ -586,40 +518,43 @@ type ITweetMetadata = IWebPageMetadata & {
   media?: string[];
   externalLinks?: string[];
 };
-export type ITweet = INodeInterface<NodeType.TWEET, ITweetBody, ITweetMetadata>;
+export type ITweet = INodeInterface<
+  NodeType.TWEET,
+  ITweetBody,
+  ITweetMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent;
 
 export type ITwitterProfileBody = {
-  url: string;
   name: string;
   bio?: string;
   profileImageUrl: string;
 };
-
 export type ITwitterProfileMetadata = IWebPageMetadata & {
   bioLink?: string;
   bioLinkText?: string;
 };
-
 export type ITwitterProfile = INodeInterface<
   NodeType.TWITTER_PROFILE,
   ITwitterProfileBody,
   ITwitterProfileMetadata
->;
+> &
+  INodeHasUrl;
 
 export type IKindleBookBody = {
   id: string;
   author: string;
   asin?: string;
-  url?: string;
   imageUrl?: string;
   lastAnnotatedDate?: Date;
 };
-
 export type IKindleBook = INodeInterface<
   NodeType.KINDLE_BOOK,
   IKindleBookBody,
   IWebPageMetadata
->;
+> &
+  INodeHasUrl;
 
 export type IKindleHighlightBody = {
   id: string;
@@ -630,7 +565,6 @@ export type IKindleHighlightBody = {
   color?: "pink" | "blue" | "yellow" | "orange";
   createdDate?: Date;
 };
-
 export type IKindleHighlight = INodeInterface<
   NodeType.KINDLE_HIGHLIGHT,
   IKindleHighlightBody,
@@ -638,7 +572,6 @@ export type IKindleHighlight = INodeInterface<
 >;
 
 export type IClip =
-  | ITwitterProfile
   | ITweet
   | IMultimediaClip
   | IVideoTimestampClip
@@ -653,8 +586,74 @@ export type IWebPage =
   | ITwitterProfile
   | IKindleBook;
 
-export type IClipCapture<T = IClip> = Omit<IResourceCapture<T>, "label">;
+export type INodeBody =
+  | IMarkdown
+  | ITweetBody
+  | ITwitterProfileBody
+  | IMultimediaClipBody
+  | IVideoTimestampClipBody
+  | ITextClipBody
+  | IWebScreenshotClipBody
+  | IKindleHighlightBody;
+
+export type IClipCapture = OmitFields<IClip, CaptureOmittedFields | "label">;
 
 export enum NodeIdPrefix {
   TWITTER_PROFILE = "twitterProfile"
 }
+
+/**
+ * List of root node types that are shown in the library, resource browser and similar contexts.
+ *
+ * In context of search, all root nodes are shown along with heading nodes irrespective of the creationContext. In all other places, root nodes with creationContext i.e. nodes created as sub blocks or as supplement will be ignored.
+ *
+ * Examples for supplements: Twitter profile being saved as supplement when a tweet is clipped. A web page being saved as supplement when a text clip is clipped. A twitter profile or web page can separately be saved without any creationContext i.e. when saving by clicking on clipper tool bar.
+ *
+ * Supplements are not shown directly in the library, resource browser or timeline to avoid confusion as these are auto created and user might find it confusing to see them. On the other hand, supplements are shown in search results because these supplements are interactable from creationContext page. If the user can click on link to supplement and interact with it from a text clip page or a tweet page, user would expect to go back anytime to the supplement page.
+ *
+ * Note: Clips belonging to the same parent might be grouped together in places like Timeline. In this case, the supplement (i.e. the parent) is what's shown.
+ *
+ */
+export const rootNodeTypeList = [
+  NodeType.NODULAR_MARKDOWN,
+  NodeType.NON_NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO,
+
+  ...webNodeTypeList
+];
+
+export type INode =
+  | INodeInterface<NodeType, NodeContent, INodeMetadata>
+  | IMediaNode
+  | IWebPage
+  | IClip;
+
+export type IActiveNode = INode & {
+  md: IMarkdown;
+  parent?: INode;
+  file?: IFile;
+  mdParent?: IRecordId[];
+  accessMode: ResourceAccessMode;
+  focusedBlock?: string;
+  collections?: IRecordId[];
+  types?: string[];
+  avatars?: IAvatar[];
+  propertyConfig?: IProperty[];
+  wordCount?: number;
+  pdfAnnotations?: any[];
+  links?: INodeLink[];
+  children?: IActiveNode[];
+  childrenHierarchy?: IRecordId[];
+  forelinks?: LinkThumbnail[];
+};
+
+export type INodeThumb = INode & {
+  file?: IFile;
+  parent?: INode;
+  mdParent?: IRecordId[];
+  bodySearch?: string;
+  labelSearch?: string;
+};

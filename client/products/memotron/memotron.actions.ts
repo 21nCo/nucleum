@@ -23,6 +23,7 @@ import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
 import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import Collection from "./collection/Collection.svelte";
 import { Action } from "$lib/client/types/action.enum";
+import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -234,5 +235,17 @@ export const memotronActions: IAction[] = [
     type: ActionType.INLINE,
     isMeta: true,
     component: PropertyConfig
+  },
+  {
+    action: MemotronAction.PASTE_CONFIRMATION,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: PasteConfirmationModal,
+    modalParams: {
+      title: "Paste Confirmation",
+      layout: {
+        size: Size.sm
+      }
+    }
   }
 ];

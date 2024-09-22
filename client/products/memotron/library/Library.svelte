@@ -231,9 +231,10 @@
         NodeType.VIDEO,
         NodeType.WEB_PAGE,
         NodeType.TEXT_CLIP,
+        NodeType.WEB_SCREENSHOT_CLIP,
         NodeType.TWEET,
         NodeType.TWITTER_PROFILE,
-        NodeType.WEB_SCREENSHOT_CLIP,
+        NodeType.YOUTUBE_VIDEO,
         NodeType.YOUTUBE_TIMESTAMP_CLIP,
         NodeType.KINDLE_BOOK,
         NodeType.KINDLE_HIGHLIGHT

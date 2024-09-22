@@ -35,13 +35,9 @@
 
     if (!node.body) return;
 
-    if (
-      !("url" in node.body) ||
-      !node.body.url ||
-      !node.body.url.includes("https://")
-    )
+    if (!("url" in node.body) || !node.url || !node.url.includes("https://"))
       return;
-    const hostPart = new URL(node.body.url).host;
+    const hostPart = new URL(node.url).host;
     let favicon = commonMetadata.find(
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
     )?.faviconUrl;
