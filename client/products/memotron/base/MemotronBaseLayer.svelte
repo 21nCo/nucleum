@@ -18,6 +18,9 @@
   import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+  import modalEvent from "$lib/client/components/modal/modal.store";
+  import { captureStore } from "../capture/capture.store";
+  import { CaptureType } from "../capture/capture.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
   $: topBarResourceId = $page.url.searchParams.get(
     ResourceAccessMode.TOPBARFOCUS
@@ -54,6 +57,21 @@
       }
     });
     event.preventDefault();
+  }
+
+  function handleDragEnter(event: DragEvent) {
+    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
+      $captureStore.captureType = CaptureType.UPLOAD;
+      appStore.runAction(MemotronAction.CAPTURE, {
+        componentParams: { isWindowDnD: true }
+      });
+    }
+  }
+
+  function handleDragLeave(event: DragEvent) {
+    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
+      modalEvent.hide(MemotronAction.CAPTURE);
+    }
   }
 </script>
 
@@ -92,5 +110,9 @@
   {/if}
   <MemotronNotifications />
 </UserBaseLayer>
-<svelte:document on:visibilitychange={handleVisibilityChange} />
+<svelte:document
+  on:visibilitychange={handleVisibilityChange}
+  on:dragenter={handleDragEnter}
+  on:dragleave={handleDragLeave}
+/>
 <svelte:window on:paste={handlePaste} />

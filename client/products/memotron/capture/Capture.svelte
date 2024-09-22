@@ -22,6 +22,9 @@
   import { collectionStore } from "../collection/collection.store";
   import { CaptureType } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
+  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  export let isWindowDnD = false;
+
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -160,3 +163,4 @@
   {/key}
 {/if}
 <svelte:document on:visibilitychange={visibilityChangeListener} />
+<PageLayer isDragAndDropPage={!isWindowDnD} />
