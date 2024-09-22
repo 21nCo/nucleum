@@ -81,6 +81,19 @@ export class UtilsLambdaFunctions extends NestedStack {
       defaults.mockIntegrationOptions
     );
 
+    const runNodeFunction = new Function(this, "runUtilsFunction", {
+      functionName: generateFunctionName("runUtilsFunction", props.environment),
+      handler: "run.handler",
+      ...nodeRuntimeFunctionProps
+    });
+    const runNodeResource = utilsNodeResource.addResource("run");
+    runNodeResource.addMethod("POST", new LambdaIntegration(runNodeFunction));
+    runNodeResource.addMethod(
+      "OPTIONS",
+      new MockIntegration(defaults.mockIntegration),
+      defaults.mockIntegrationOptions
+    );
+
     const saveSubscriptionNodeFunction = new Function(
       this,
       "saveSubscription",
