@@ -29,6 +29,8 @@ export type IUserGlobalPreferences = IObservableStoreSubject & {
     usedIcons: [IAvatar][];
   };
   annotations: any[];
+  lastUsedTranscriptionModel: string;
+
   /**
    * @deprecated
    * Temporary

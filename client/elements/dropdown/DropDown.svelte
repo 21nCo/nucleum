@@ -23,7 +23,7 @@
    */
   export let items: DropdownItem[];
   export let groups: DropdownGroup[] = [];
-  export let value: string | number;
+  export let value: string | number | boolean = items[0].value;
   export let parentBackgroundIndex: number = 1;
   export let label: InputLabel | undefined = undefined;
   export let style: InputStyle = InputStyle.BORDERED;

@@ -30,6 +30,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   timeZoneOffset: new Date().getTimezoneOffset() * 60,
   timeZoneLabel: detectTimeZone()?.label ?? "UTC",
   isAnonymousAnalyticsEnabled: true,
+  lastUsedTranscriptionModel: "tiny.en",
   appearance: {
     skin: AppSkin.Clean,
     theme: Theme.LIGHT,
