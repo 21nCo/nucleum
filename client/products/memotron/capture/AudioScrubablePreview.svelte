@@ -19,7 +19,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { generateUID } from "$lib/client/utils/utils";
-  import { userPreferences } from "$lib/client/stores/app.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
 
   export let body: any = {};
   export let url: string = "";
