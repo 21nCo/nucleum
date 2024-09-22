@@ -20,6 +20,8 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import type { IProperty } from "../collection/properties/property.type";
   import { collectionStore } from "../collection/collection.store";
+  import { CaptureType } from "./capture.type";
+  import FileUploader from "./FileUploader.svelte";
   refresh();
   const visibilityChangeListener = async (event: Event) => {
     if (document?.hidden) return;
@@ -63,6 +65,8 @@
       <Writer />
     </div>
   </div> -->
+{:else if $captureStore.captureType === CaptureType.UPLOAD}
+  <FileUploader />
 {:else}
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">

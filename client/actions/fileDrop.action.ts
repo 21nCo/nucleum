@@ -1,13 +1,17 @@
-export function fileDrop(node, options = {}) {
-  let input;
+export function fileDrop(node: HTMLElement, options = {}) {
+  let input: HTMLInputElement;
   const defaultOptions = {
     accept: "*",
     multiple: false,
     maxSize: Infinity, // in bytes
-    onDrop: () => {},
-    onInvalid: () => {}
+    onDrop: (
+      all: File[],
+      valid: File[],
+      errors: { file: File; type: string }[]
+    ) => {},
+    dragOverClass: ["border-fgs3"]
   };
-  const settings = { ...defaultOptions, ...options };
+  let settings = { ...defaultOptions, ...options };
 
   function setupInput() {
     input = document.createElement("input");
@@ -18,13 +22,14 @@ export function fileDrop(node, options = {}) {
     node.appendChild(input);
   }
 
-  function handleFiles(files) {
+  function handleFiles(files: FileList) {
+    const errors: { file: File; type: string }[] = [];
     const validFiles = Array.from(files).filter((file) => {
       if (file.size > settings.maxSize) {
-        settings.onInvalid(file, "size");
+        errors.push({ file, type: "size" });
         return false;
       }
-      const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+      const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
       const acceptedExtensions = settings.accept
         .split(",")
         .map((ext) => ext.trim().toLowerCase());
@@ -32,29 +37,47 @@ export function fileDrop(node, options = {}) {
         acceptedExtensions[0] !== "*" &&
         !acceptedExtensions.includes(fileExtension)
       ) {
-        settings.onInvalid(file, "type");
+        errors.push({ file, type: "type" });
         return false;
       }
       return true;
     });
 
-    if (validFiles.length > 0) {
-      settings.onDrop(settings.multiple ? validFiles : validFiles[0]);
+    settings.onDrop(Array.from(files), validFiles, errors);
+    // if (validFiles.length > 0) {
+    //   settings.onDrop(settings.multiple ? validFiles : validFiles[0]);
+    // }
+  }
+
+  function addDragOverClasses() {
+    if (Array.isArray(settings.dragOverClass)) {
+      node.classList.add(...settings.dragOverClass);
+    } else {
+      node.classList.add(settings.dragOverClass);
     }
   }
 
-  function handleDragOver(event) {
+  function removeDragOverClasses() {
+    if (Array.isArray(settings.dragOverClass)) {
+      node.classList.remove(...settings.dragOverClass);
+    } else {
+      node.classList.remove(settings.dragOverClass);
+    }
+  }
+
+  function handleDragOver(event: DragEvent) {
     event.preventDefault();
-    node.classList.add("dragover");
+    addDragOverClasses();
   }
 
   function handleDragLeave() {
-    node.classList.remove("dragover");
+    removeDragOverClasses();
   }
 
-  function handleDrop(event) {
+  function handleDrop(event: DragEvent) {
+    if (!event.dataTransfer) return;
     event.preventDefault();
-    node.classList.remove("dragover");
+    removeDragOverClasses();
     handleFiles(event.dataTransfer.files);
   }
 
@@ -63,6 +86,7 @@ export function fileDrop(node, options = {}) {
   }
 
   function handleChange() {
+    if (!input.files) return;
     handleFiles(input.files);
     input.value = ""; // Reset input to allow selecting the same file again
   }

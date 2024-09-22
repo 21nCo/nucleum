@@ -13,10 +13,10 @@ import type {
 import { MemotronResourceType } from "../memotron.type";
 
 export enum CaptureType {
-  ANY = "Any",
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
+  SKETCH = "SKETCH",
   UPLOAD = "UPLOAD"
 }
 

@@ -33,7 +33,7 @@ export const memotronActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.xl,
+        size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true,
         isShowCantileverClose: true

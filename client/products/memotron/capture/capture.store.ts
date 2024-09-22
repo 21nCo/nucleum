@@ -3,7 +3,8 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import {
   NodeType,
   LinkType,
-  type INodeItemCaptured
+  type INodeItemCaptured,
+  type IMediaNode
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -24,6 +25,8 @@ import { MemotronResourceType } from "$lib/client/products/memotron/memotron.typ
 import { resolveResourceType } from "../memotron.utils";
 import { linker } from "../memotron.store";
 import { collectionStore } from "../collection/collection.store";
+import { resolveContentTypeForFile } from "./capture.utils";
+import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -137,6 +140,48 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       else val.fileDetails = undefined;
       return val;
     });
+  }
+
+  async saveFile(file: File, contentType?: NodeType) {
+    const response = await account.uploadFileV2(
+      file.type,
+      file.name,
+      new Blob([file], { type: file.type })
+    );
+    if (!response) return;
+    if (!response[0].id) return;
+    const fileId = response[0].id;
+    contentType = contentType ?? resolveContentTypeForFile(file);
+    if (!contentType) return { error: "File type not supported" };
+    const node = {
+      contentType,
+      file: fileId,
+      label: file.name
+    } as IMediaNode;
+    const result = await nodeStore.create([node]);
+    return result?.[0]?.[0];
+  }
+
+  async saveMultipleFiles(files: { file: File; contentType: NodeType }[]) {
+    let nodes: OmitForCapture<IMediaNode>[] = [];
+    for (const item of files) {
+      if (!item.contentType) continue;
+      const response = await account.uploadFileV2(
+        item.file.type,
+        item.file.name,
+        new Blob([item.file], { type: item.file.type })
+      );
+      if (!response) continue;
+      if (!response[0].id) continue;
+      const fileId = response[0].id;
+      const node = {
+        contentType: item.contentType,
+        file: fileId,
+        label: item.file.name
+      } as IMediaNode;
+      nodes.push(node);
+    }
+    return nodeStore.create(nodes);
   }
 
   async save() {

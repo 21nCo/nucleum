@@ -17,6 +17,7 @@
   export let isCapturePage: boolean = false;
   export let label: InputLabel = { label: "Select Type" };
   export let selected: string;
+  let dev_isEnableEditShortcuts: boolean = false;
   refreshTypes();
   const contentTypes: ISelectItem[] = [
     // { label: CaptureType.ANY, icon: "cube" },
@@ -34,12 +35,12 @@
       // icon: "lucide:mic",
       value: CaptureType.AUDIO
     },
-    {
-      label: CaptureType.CAMERA,
-      // icon: "lucide:camera",
-      icon: "ph:camera-light",
-      value: CaptureType.CAMERA
-    },
+    // {
+    //   label: CaptureType.CAMERA,
+    //   // icon: "lucide:camera",
+    //   icon: "ph:camera-light",
+    //   value: CaptureType.CAMERA
+    // },
     {
       label: CaptureType.UPLOAD,
       // icon: "lucide:upload",
@@ -85,7 +86,7 @@
       on:select
     />
   {/key}
-  {#if isCapturePage}
+  {#if isCapturePage && dev_isEnableEditShortcuts}
     <Button
       label="edit"
       isPreventMinWidth={true}
