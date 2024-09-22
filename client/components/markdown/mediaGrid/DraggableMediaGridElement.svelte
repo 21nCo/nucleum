@@ -9,6 +9,7 @@
   import type { IFile } from "../../files/file.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { fileStore } from "../../files/file.store";
+  import FileView from "../../files/FileView.svelte";
 
   export let isGridItem: boolean = true;
   export let item: IMediaGridItem;
@@ -25,6 +26,7 @@
     param3: any,
     param4: any
   ) => void;
+  let _file: IFile | null = null;
 
   let classList: string = `{isDraggable
       ? 'cursor-move'
@@ -43,16 +45,13 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   $: dragId = dragEnterId = dropId = id;
 
   onMount(async () => {
-    if (!file) await resolveFile(item.file);
+    if (!_file && file) _file = file;
+    else if (item.file) await resolveFile(item.file);
   });
 
-  /**
-   * TODO - fetch all files during node.fetch
-   * @param file
-   */
   async function resolveFile(fileId: IRecordId) {
     const response = await fileStore.select(fileId);
-    if (response.url) file = response;
+    if (response?.url) _file = response;
   }
 
   function removeBorders(element: HTMLElement) {
@@ -190,8 +189,34 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   }
 </script>
 
-<!-- TODO - use File component -->
-{#if file?.type.startsWith("image/")}
+{#if _file}
+  <FileView
+    file={_file}
+    class={classList}
+    {style}
+    {isDraggable}
+    on:load
+    on:dragstart={handleDragStart}
+    on:dragend={handleDragEnd}
+    on:dragover={onDragOver}
+    on:dragenter={handleDragEnter}
+    on:dragleave={handleDragLeave}
+    on:drop={handleDrop}
+    bind:ref
+  />
+{:else if id.includes("DropArea")}
+  <div
+    draggable={false}
+    use:draggable
+    class="absolute w-full h-full bg-transparent bg-opacity-50 bg-bgs2 flex items-center justify-center"
+    style="font-size: 1em;"
+  >
+    {#if isDragOver}
+      Drop @Col:{item.position.columns.columnNo + 1}
+    {/if}
+  </div>
+{/if}
+<!-- {#if file?.type.startsWith("image/")}
   <img
     alt="..."
     class={classList}
@@ -224,8 +249,9 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
     bind:this={ref}
   >
     <source src={file.url} />
-  </audio>
-{:else if file?.type.startsWith("application/pdf")}
+  </audio> -->
+<!-- TODO - FileView component for pdf -->
+{#if file?.type.startsWith("application/pdf")}
   <div
     class="{classList} min-w-[100px] h-full overflow-hidden"
     {style}
@@ -240,74 +266,4 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
       style="pointer-events: none;"
     />
   </div>
-{:else}
-  <div
-    draggable={false}
-    use:draggable
-    class="absolute w-full h-full bg-transparent bg-opacity-50 bg-bgs2 flex items-center justify-center"
-    style="font-size: 1em;"
-  >
-    {#if isDragOver}
-      Drop @Col:{item.position.columns.columnNo + 1}
-    {/if}
-  </div>
 {/if}
-
-<style>
-  .leftThrobbing {
-    animation: leftThrobbing 1s infinite;
-  }
-  .rightThrobbing {
-    animation: rightThrobbing 1s infinite;
-  }
-  .topThrobbing {
-    animation: topThrobbing 1s infinite;
-  }
-  .bottomThrobbing {
-    animation: bottomThrobbing 1s infinite;
-  }
-  @keyframes leftThrobbing {
-    0% {
-      border-left-color: green;
-    }
-    50% {
-      border-left-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-left-color: green;
-    }
-  }
-  @keyframes rightThrobbing {
-    0% {
-      border-right-color: green;
-    }
-    50% {
-      border-right-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-right-color: green;
-    }
-  }
-  @keyframes topThrobbing {
-    0% {
-      border-top-color: green;
-    }
-    50% {
-      border-top-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-top-color: green;
-    }
-  }
-  @keyframes bottomThrobbing {
-    0% {
-      border-bottom-color: green;
-    }
-    50% {
-      border-bottom-color: rgb(14, 153, 247);
-    }
-    100% {
-      border-bottom-color: green;
-    }
-  }
-</style>

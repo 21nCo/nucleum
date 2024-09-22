@@ -23,6 +23,7 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import type { IFile } from "../../files/file.type";
+  import { fileStore } from "../../files/file.store";
 
   // export let items: Item[] = $userPreferences.mediaGridTestitems;
   // $: $userPreferences.mediaGridTestitems = items;
@@ -47,6 +48,7 @@
 
   export let block: IMediaGridNode;
   export let mdStore: MdStoreType;
+  export let files: IFile[] = [];
 
   if (block.body == "") {
     block.body = {};
@@ -58,7 +60,6 @@
   if (!block.body.type) block.body.type = MediaGridType.AUTO;
   if (!block.body.noOfColumns) block.body.noOfColumns = 1;
   let items: IMediaGridItem[] = block.body.items;
-  let files: IFile[] = [];
 
   const dispatch = createEventDispatcher();
   $: {
@@ -125,17 +126,17 @@
           autoItems.length - 1 == autoGridNewItemIndex
             ? autoItems.length - 2
             : autoItems.length - 1;
-        autoItems[autoGridNewItemIndex].ref.style.height =
-          `${autoItems[i].ref.clientHeight}px`;
-        dropHereHeight = autoItems[i].ref.clientHeight;
+        autoItems[autoGridNewItemIndex].style.height =
+          `${autoItems[i]?.clientHeight}px`;
+        dropHereHeight = autoItems[i]?.clientHeight;
       }
       autoItems.forEach((item) => {
-        item.ref.style.height = `360px`;
+        item.style.height = `360px`;
       });
       while (autoGrid.scrollHeight > autoGrid.clientHeight) {
         autoItems.forEach((item) => {
-          item.ref.style.height = `${item.ref.clientHeight - 10}px`;
-          dropHereHeight = item.ref.clientHeight;
+          item.style.height = `${item.clientHeight - 10}px`;
+          dropHereHeight = item.clientHeight;
         });
       }
     } else {
@@ -757,9 +758,10 @@
     dispatch("delete", { id: block.id });
   }
 
-  onMount(() => {
+  onMount(async () => {
     if (config.type == MediaGridType.AUTO) sortItems(MediaGridType.AUTO);
     else sortItems(MediaGridType.COLUMNS);
+    // if (files.length == 0) await fetchAllFiles();
     calculateColumnArray();
     unSubdragAndDropStore = dragAndDropStore.subscribe(
       handleDragDropStoreChange
@@ -769,6 +771,16 @@
   onDestroy(() => {
     unSubdragAndDropStore();
   });
+
+  async function fetchAllFiles() {
+    const fileIds = block.body.items.map((item) => item.file);
+    const filesResult = await fileStore.selectMany({
+      filters: {
+        id: fileIds
+      }
+    });
+    if (filesResult && filesResult.length > 0) files = filesResult;
+  }
 </script>
 
 <!-- <div> -->
@@ -807,10 +819,10 @@
           {handleFileUpload}
           isDraggable={true}
           {item}
-          file={files.find((f) => f.id === item.file)}
+          file={files.find((f) => f.id.toString() === item.file.toString())}
           id={item.id}
           on:load={() => handleNewImageLoad()}
-          bind:this={autoItems[index]}
+          bind:ref={autoItems[index]}
           bind:isDragging
           bind:gap={config.gap}
         />
@@ -861,7 +873,7 @@
       {/each}
     </div>
   {/if}
-  {#if !isDragging && config.isHovered && $isInEditMode}
+  {#if !isDragging && config.isHovered}
     <MediaGridOptions
       {chevDown}
       {chevUp}

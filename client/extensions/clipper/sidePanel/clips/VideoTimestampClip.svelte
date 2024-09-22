@@ -90,6 +90,7 @@
   class="flex flex-col gap-2 border border-brs3 rounded-md p-2 hover:border-aps1"
 >
   <span class="flex gap-4 justify-center items-center">
+    <!-- TODO - use FileView -->
     <img
       class="thumbnail w-32 h-[72px] rounded-md"
       src={clip.body.s3Url ??

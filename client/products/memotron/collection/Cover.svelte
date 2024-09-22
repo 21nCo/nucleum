@@ -76,13 +76,6 @@
           })}
         />
       {/key}
-      <!-- svelte-ignore a11y-missing-attribute -->
-      <!-- <img
-        {src}
-        class={cn("h-full w-full object-cover", {
-          "rounded-xl": isRoundedExperimental
-        })}
-      /> -->
       <!-- TODO - if src and isInEditMode - drag to reposition -->
     {:else if $isInEditMode && !isUploadInProgress}
       + Add cover photo

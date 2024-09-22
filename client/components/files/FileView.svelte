@@ -10,6 +10,9 @@
   export let blob: Blob | undefined = undefined;
   export let isLazyLoad: boolean = false;
   export let type: FileType = FileType.UNKNOWN;
+  export let isDraggable: boolean = false;
+  export let style: string = "";
+  export let ref: HTMLElement | undefined = undefined;
   let classList: string = "";
   export { classList as class };
 
@@ -55,25 +58,112 @@
   }
 </script>
 
-{#if type === "image"}
+{#if type === FileType.IMAGE}
   <img
     alt="file"
+    on:load
     class={classList}
+    draggable={isDraggable}
     use:fileLoader={{ source: resolveSrc, isLazyLoad }}
+    {style}
+    bind:this={ref}
+    on:dragstart
+    on:dragend
+    on:dragover
+    on:dragenter
+    on:dragleave
+    on:drop
   />
-{:else if type === "video"}
+{:else if type === FileType.VIDEO}
   <video
     controls
     class={classList}
+    draggable={isDraggable}
     use:fileLoader={{ source: resolveSrc, isLazyLoad }}
+    {style}
+    bind:this={ref}
+    on:dragstart
+    on:dragend
+    on:dragover
+    on:dragenter
+    on:dragleave
+    on:drop
   >
     <track kind="captions" />
   </video>
-{:else if type === "audio"}
+{:else if type === FileType.AUDIO}
   <audio
     controls
     class={classList}
+    draggable={isDraggable}
     use:fileLoader={{ source: resolveSrc, isLazyLoad }}
+    {style}
+    bind:this={ref}
+    on:dragstart
+    on:dragend
+    on:dragover
+    on:dragenter
+    on:dragleave
+    on:drop
   >
   </audio>
 {/if}
+
+<style>
+  .leftThrobbing {
+    animation: leftThrobbing 1s infinite;
+  }
+  .rightThrobbing {
+    animation: rightThrobbing 1s infinite;
+  }
+  .topThrobbing {
+    animation: topThrobbing 1s infinite;
+  }
+  .bottomThrobbing {
+    animation: bottomThrobbing 1s infinite;
+  }
+  @keyframes leftThrobbing {
+    0% {
+      border-left-color: green;
+    }
+    50% {
+      border-left-color: rgb(14, 153, 247);
+    }
+    100% {
+      border-left-color: green;
+    }
+  }
+  @keyframes rightThrobbing {
+    0% {
+      border-right-color: green;
+    }
+    50% {
+      border-right-color: rgb(14, 153, 247);
+    }
+    100% {
+      border-right-color: green;
+    }
+  }
+  @keyframes topThrobbing {
+    0% {
+      border-top-color: green;
+    }
+    50% {
+      border-top-color: rgb(14, 153, 247);
+    }
+    100% {
+      border-top-color: green;
+    }
+  }
+  @keyframes bottomThrobbing {
+    0% {
+      border-bottom-color: green;
+    }
+    50% {
+      border-bottom-color: rgb(14, 153, 247);
+    }
+    100% {
+      border-bottom-color: green;
+    }
+  }
+</style>

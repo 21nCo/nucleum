@@ -14,6 +14,7 @@
   import { fade } from "svelte/transition";
   import view from "$lib/client/stores/view.store";
   import NodeThumbnailTitle from "../node/thumbnail/NodeThumbnailTitle.svelte";
+  import FileView from "$lib/client/components/files/FileView.svelte";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -90,10 +91,9 @@
             )}
         >
           {#if item.contentType === NodeType.IMAGE}
-            <img
-              alt="Node thumbnail"
+            <FileView
+              file={item.file}
               class="w-full h-auto rounded-md"
-              src={item.file?.url}
               on:load={() =>
                 resizeMasonryItem(
                   gridRef.querySelector(`[data-id="${item.id}"]`)
