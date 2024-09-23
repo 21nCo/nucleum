@@ -11,6 +11,8 @@ stages:
   <<: *submodule_auth
   stage: build
   image: node:latest
+  variables:
+    NODE_OPTIONS: --max_old_space_size=4096
   script:
     - rm -rf node_modules package-lock.json
     - git submodule sync --recursive
