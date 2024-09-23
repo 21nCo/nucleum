@@ -53,8 +53,7 @@
       {
         "dp:w-20 dp:h-20 w-16 h-16 hover:bg-opacity-80":
           context === SessionUIContext.DEFAULT,
-        "w-10 h-10 dp:w-12 dp:h-12 hover:bg-opacity-80":
-          context === SessionUIContext.PIP
+        "w-12 h-12 hover:bg-opacity-80": context === SessionUIContext.PIP
       },
       context === SessionUIContext.FOCUS_PLAYER && {
         "w-10 h-10 dp:w-12 dp:h-12 border": true,
