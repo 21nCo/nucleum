@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 import Button from "./Button.svelte";
 import { Size } from "$lib/client/types/size.enum";
-import { Position } from "$lib/client/types/direction.enum";
+import { Placement } from "$lib/client/types/direction.enum";
 import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
 
 const meta = {
@@ -21,7 +21,12 @@ const meta = {
     },
     tooltipOptions: {
       control: { type: "select" },
-      options: [Position.Top, Position.Bottom, Position.Left, Position.Right]
+      options: [
+        Placement.Top,
+        Placement.Bottom,
+        Placement.Left,
+        Placement.Right
+      ]
     },
     parentBgIndex: {
       control: { type: "number", min: 0, max: 3, step: 1 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { toolbarState } from "../contentScripts/store";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
 
   export let isHovering = false;
@@ -14,8 +14,8 @@
     "fixed w-80 flex flex-col gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
       "right-16 top-1/2 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Position.Right,
-      "bottom-0 right-0 m-6": $toolbarState.position === Position.Bottom
+        $toolbarState.position === Placement.Right,
+      "bottom-0 right-0 m-6": $toolbarState.position === Placement.Bottom
     }
   )}
 >

@@ -72,35 +72,36 @@ export class ActiveResourceStore<
 > {
   id: IRecordId;
   protected subject = writable<T>();
-  protected debouncedPersist: any;
   protected resourceStore: U;
   protected currentUserId?: string;
   subscribe = this.subject.subscribe;
   set = this.subject.set;
   update = this.subject.update;
+  protected debouncers = new Map<string, any>();
   constructor(id: IRecordId, resourceStore: U) {
     this.id = id;
     this.resourceStore = resourceStore;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
-    const updatePropagator = (val: Partial<T>) =>
-      this.resourceStore.modify(this.id, val);
-    this.debouncedPersist = debouncer(updatePropagator, 2000);
   }
   modify(val: Partial<T>, params?: IMutationQueueParams) {
-    return this.resourceStore.modify(this.id, val, params);
+    return this.resourceStore.modify(this.id, val);
   }
-  debouncedModify(val: Partial<T>) {
+
+  resolveDebouncerForPersist(id: string) {
+    if (!this.debouncers.has(id)) {
+      this.debouncers.set(id, debouncer(this.modify.bind(this), 2000));
+    }
+    let val = this.debouncers.get(id);
+    return val!;
+  }
+
+  debouncedModify(val: Partial<T>, key?: string) {
     this.update((prev: T) => ({ ...prev, ...val }));
-    return this.debouncedPersist(val);
+    return this.resolveDebouncerForPersist(key ?? this.id.toString())(val);
   }
-  /**
-   * @deprecated - use {@link debouncedModify} instead
-   */
-  propagateTitleChange(label: string) {
-    return this.debouncedPersist({ label });
-  }
+
   delete() {
     return this.resourceStore.trash(this.id);
   }

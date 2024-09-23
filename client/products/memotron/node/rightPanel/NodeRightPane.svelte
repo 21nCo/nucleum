@@ -1,6 +1,6 @@
 <script lang="ts">
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { NodeRightPaneType } from "$lib/client/products/memotron/node/node.type";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -48,7 +48,7 @@
     <VerticalSwitcher
       items={verticalSwitcherItems}
       itemProps={{
-        activeStatusPlacement: Position.Left,
+        activeStatusPlacement: Placement.Left,
         isHideLabel: true
       }}
       isHideBar={isRightPanelCollapsed}

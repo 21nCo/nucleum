@@ -18,7 +18,7 @@
     IContextMenu,
     IContextMenuItem
   } from "$lib/client/types/select.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import FocusRing from "./FocusRing.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
@@ -333,7 +333,7 @@
     tooltip="More actions"
     heading="Options"
     size={Size.lg}
-    position={Position.Left}
+    position={Placement.Left}
     offsetInPx={8}
     class="flex w-full h-full items-center justify-center"
   >

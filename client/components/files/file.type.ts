@@ -15,3 +15,9 @@ export enum FileType {
   PDF = "pdf",
   UNKNOWN = "unknown"
 }
+
+export type IImageRepositionerOptions = {
+  enabled?: boolean;
+  axis?: "x" | "y";
+  initialPosition?: number;
+};

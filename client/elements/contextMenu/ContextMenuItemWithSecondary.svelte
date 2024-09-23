@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import type { IContextMenuItem } from "$lib/client/types/select.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import ContextMenuItem from "./ContextMenuItem.svelte";
@@ -42,7 +42,7 @@
     }
   )}
   options={{
-    placement: Position.Right,
+    placement: Placement.Right,
     offsetInPx: 12,
     groupId: "contextMenuPopoverSecondaryScreen",
     isOnlyOneVisiblePerGroup: true

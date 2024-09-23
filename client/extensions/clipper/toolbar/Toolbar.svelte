@@ -4,7 +4,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { Position, Orientation } from "$lib/client/types/direction.enum";
+  import { Placement, Orientation } from "$lib/client/types/direction.enum";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { webpage, toolbarState, syncStore } from "../contentScripts/store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
@@ -31,14 +31,14 @@
   $: isSaveOnly = saveOnlyPages.some((regex) => regex.test($webpage.url));
 
   if ($toolbarState.position === undefined) {
-    toolbarState.changePosition(Position.Right);
+    toolbarState.changePosition(Placement.Right);
   }
 
   $: tooltipOptions = {
     placement:
-      $toolbarState.position === Position.Bottom
-        ? Position.TopCenter
-        : Position.Left,
+      $toolbarState.position === Placement.Bottom
+        ? Placement.TopCenter
+        : Placement.Left,
     isUseAbsolutePositioning: true,
     offsetInPx: 8
   };
@@ -59,9 +59,9 @@
     "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
     {
       "right-0 top-1/2 flex-col w-10 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
-        $toolbarState.position === Position.Right,
+        $toolbarState.position === Placement.Right,
       "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-3 mb-4 px-6":
-        $toolbarState.position === Position.Bottom
+        $toolbarState.position === Placement.Bottom
     }
   )}
 >
@@ -125,13 +125,13 @@
     <div
       class={cn("flex gap-2 items-center", {
         "flex-col w-full":
-          $toolbarState.position === Position.Right ||
-          $toolbarState.position === Position.Left,
-        "flex-row h-full": $toolbarState.position === Position.Bottom
+          $toolbarState.position === Placement.Right ||
+          $toolbarState.position === Placement.Left,
+        "flex-row h-full": $toolbarState.position === Placement.Bottom
       })}
     >
       <Divider
-        orientation={$toolbarState.position === Position.Bottom
+        orientation={$toolbarState.position === Placement.Bottom
           ? Orientation.Vertical
           : Orientation.Horizontal}
       />
@@ -145,9 +145,9 @@
         <div
           class={cn("flex gap-2 items-center justify-center", {
             "flex-col w-full":
-              $toolbarState.position === Position.Right ||
-              $toolbarState.position === Position.Left,
-            "flex-row h-full": $toolbarState.position === Position.Bottom
+              $toolbarState.position === Placement.Right ||
+              $toolbarState.position === Placement.Left,
+            "flex-row h-full": $toolbarState.position === Placement.Bottom
           })}
         >
           {#each $highlightStore.highlighters as highlighter}
@@ -163,7 +163,7 @@
         </div>
       {/if}
       <Divider
-        orientation={$toolbarState.position === Position.Bottom
+        orientation={$toolbarState.position === Placement.Bottom
           ? Orientation.Vertical
           : Orientation.Horizontal}
       />
@@ -177,19 +177,19 @@
       relayToBackgroundScript({ event: ExtensionEvent.TOGGLE_SIDEPANEL })}
   />
   <Button
-    icon={$toolbarState.position === Position.Right
+    icon={$toolbarState.position === Placement.Right
       ? "arrow-down-left"
       : "arrow-up-right"}
-    tooltip={$toolbarState.position === Position.Right
+    tooltip={$toolbarState.position === Placement.Right
       ? "Move to bottom"
       : "Move to right"}
     {...buttonParams}
     on:click={() => {
       let val;
-      if ($toolbarState.position === Position.Right) {
-        val = Position.Bottom;
-      } else if ($toolbarState.position === Position.Bottom) {
-        val = Position.Right;
+      if ($toolbarState.position === Placement.Right) {
+        val = Placement.Bottom;
+      } else if ($toolbarState.position === Placement.Bottom) {
+        val = Placement.Right;
       }
       toolbarState.changePosition(val);
     }}

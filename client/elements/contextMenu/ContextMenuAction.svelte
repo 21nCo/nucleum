@@ -2,7 +2,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import {
     type IPopoverRenderBaseParams,
     PopoverTriggerMethod
@@ -19,7 +19,7 @@
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
   export let triggerMethod: PopoverTriggerMethod | undefined = undefined;
-  export let position: Position | undefined = undefined;
+  export let position: Placement | undefined = undefined;
   export let offsetInPx: number | undefined = undefined;
   export let heading: string | undefined = undefined;
   /**
@@ -57,7 +57,7 @@
   options={{
     placement:
       position ??
-      ($$slots.default ? Position.BottomCenter : Position.BottomRight),
+      ($$slots.default ? Placement.BottomCenter : Placement.BottomRight),
     offsetInPx,
     groupId: "contextMenuPopover-" + id,
     isOnlyOneVisiblePerGroup: true

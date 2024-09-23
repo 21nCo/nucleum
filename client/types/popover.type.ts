@@ -1,4 +1,4 @@
-import type { Position } from "./direction.enum";
+import type { Placement } from "./direction.enum";
 
 export type IPopoverOptions = IPopoverRenderBaseParams & {
   element?: "div" | "button";
@@ -19,7 +19,7 @@ export type IPopoverRenderParams = IPopoverRenderBaseParams & {
 };
 
 export type IPopoverRenderBaseParams = {
-  placement?: Position;
+  placement?: Placement;
   isSpanToTriggerWidth?: boolean;
   offsetInPx?: number;
   isUseAbsolutePositioning?: boolean;

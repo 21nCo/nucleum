@@ -3,7 +3,7 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Arrangement, Position } from "$lib/client/types/direction.enum";
+  import { Arrangement, Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { liveQuery } from "dexie";
@@ -119,7 +119,7 @@
           icon="adjustments-vertical"
           tooltip="Settings & refine"
           tooltipOptions={{
-            placement: Position.Right
+            placement: Placement.Right
           }}
           size={Size.md}
           on:click={() => (isRefineShown = !isRefineShown)}

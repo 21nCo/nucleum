@@ -21,7 +21,7 @@
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
   //TODO - user setting - columns, gap
-  export let columns = Math.floor(($view.width / 500) * 2);
+  export let columns = Math.floor(($view.width / 500) * 1.5);
 
   export let gap = 12; // Gap size in pixels
   let gridRef: any;

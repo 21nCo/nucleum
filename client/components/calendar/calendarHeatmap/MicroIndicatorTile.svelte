@@ -1,6 +1,6 @@
 <script lang="ts">
   import { selectedTimePeriod } from "$lib/client/stores/app.store";
-  import { Position, Orientation } from "$lib/client/types/direction.enum";
+  import { Placement, Orientation } from "$lib/client/types/direction.enum";
   import { formatDate } from "$lib/client/utils/time.utils";
   import {
     TileAppearance,
@@ -83,7 +83,7 @@
     type="button"
     {tooltip}
     tooltipOptions={{
-      placement: Position.Right,
+      placement: Placement.Right,
       offsetInPx: 4
     }}
     class={cn("tile text-b5 w-3 h-3 rounded-sm", {

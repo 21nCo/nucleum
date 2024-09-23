@@ -1,10 +1,21 @@
 <script lang="ts">
   import type { IRecordId } from "$lib/client/types/data.type";
-  import { FileType, type IFile } from "./file.type";
+  import {
+    FileType,
+    type IFile,
+    type IImageRepositionerOptions
+  } from "./file.type";
   import { fileStore } from "./file.store";
   import { logger } from "../debug/logger.client";
   import { onMount } from "svelte";
-  import { fileLoader } from "$lib/client/actions/lazyload.action";
+  import {
+    fileLoader,
+    fileLoaderv2
+  } from "$lib/client/actions/lazyload.action";
+  import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+
   export let file: IFile | undefined = undefined;
   export let id: IRecordId | undefined = undefined;
   export let blob: Blob | undefined = undefined;
@@ -13,8 +24,12 @@
   export let isDraggable: boolean = false;
   export let style: string = "";
   export let ref: HTMLElement | undefined = undefined;
+  export let repositionParams: IImageRepositionerOptions | undefined =
+    undefined;
   let classList: string = "";
   export { classList as class };
+
+  $: _id = id ?? file?.id;
 
   function resolveType() {
     if (!id && !file && !blob) {
@@ -24,7 +39,7 @@
       return blob.type.split("/")[0] as FileType;
     }
     const idVal = id ?? file?.id;
-    const typePart = idVal?.toString().split(":")[1].split("_")[0];
+    const typePart = idVal?.toString()?.split(":")[1]?.split("_")[0];
     if (!typePart) return FileType.UNKNOWN;
     return typePart as FileType;
   }
@@ -35,8 +50,7 @@
   });
 
   async function resolveSrc(): Promise<string> {
-    logger.log({ at: "FileView.svelte - resolveSrc", file });
-    if (file?.url) return file.url;
+    if (file?.url && _id === file?.id) return file.url;
     if (blob) return URL.createObjectURL(blob);
     if (!id) return "";
     const response = await fileStore.select(id);
@@ -56,6 +70,10 @@
       return "";
     }
   }
+
+  function handlePositionChange(newPosition: number) {
+    dispatch("reposition", newPosition);
+  }
 </script>
 
 {#if type === FileType.IMAGE}
@@ -64,7 +82,13 @@
     on:load
     class={classList}
     draggable={isDraggable}
-    use:fileLoader={{ source: resolveSrc, isLazyLoad }}
+    use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
+    use:imageRepositioner={{
+      onPositionChange: handlePositionChange,
+      ...(repositionParams ?? {
+        enabled: false
+      })
+    }}
     {style}
     bind:this={ref}
     on:dragstart

@@ -99,7 +99,6 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
   }
-  debouncers = new Map<string, any>();
   updateBlockPropagator = (
     id: string,
     mutationId: string,

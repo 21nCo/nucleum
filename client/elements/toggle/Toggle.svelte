@@ -35,6 +35,7 @@
 >
   <Icon
     icon={renderedIcon}
+    {size}
     class={cn({
       "fill-aps1": on,
       "stroke-fgs1": !on

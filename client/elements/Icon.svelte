@@ -6,7 +6,7 @@
   import Stack from "../icons/Stack.svelte";
   import { ChatIconVariant, IconVariant } from "../types/icon.type";
   import ChevronDouble from "../icons/ChevronDouble.svelte";
-  import { Position, Orientation } from "../types/direction.enum";
+  import { Placement, Orientation } from "../types/direction.enum";
   import { Size } from "../types/size.enum";
   import Command from "../icons/Command.svelte";
   import Chevron from "../icons/Chevron.svelte";
@@ -387,43 +387,43 @@
       {:else if icon === "academic-cap"}
         <AcademicCap {variant} />
       {:else if icon === "chevleft"}
-        <Chevron direction={Position.Left} />
+        <Chevron direction={Placement.Left} />
       {:else if icon === "chevright"}
-        <Chevron direction={Position.Right} />
+        <Chevron direction={Placement.Right} />
       {:else if icon === "chevdown"}
-        <Chevron direction={Position.Bottom} />
+        <Chevron direction={Placement.Bottom} />
       {:else if icon === "chevup"}
-        <Chevron direction={Position.Top} />
+        <Chevron direction={Placement.Top} />
       {:else if icon === "download"}
         <Download {variant} />
       {:else if icon === "arrow-left"}
-        <Arrow direction={Position.Left} />
+        <Arrow direction={Placement.Left} />
       {:else if icon === "arrow-right"}
-        <Arrow direction={Position.Right} />
+        <Arrow direction={Placement.Right} />
       {:else if icon === "arrow-up"}
-        <Arrow direction={Position.Top} />
+        <Arrow direction={Placement.Top} />
       {:else if icon === "arrow-down"}
-        <Arrow direction={Position.Bottom} />
+        <Arrow direction={Placement.Bottom} />
       {:else if icon === "arrow-down-right"}
-        <Arrow direction={Position.BottomRight} />
+        <Arrow direction={Placement.BottomRight} />
       {:else if icon === "arrow-down-left"}
-        <Arrow direction={Position.BottomLeft} />
+        <Arrow direction={Placement.BottomLeft} />
       {:else if icon === "arrow-up-right"}
-        <Arrow direction={Position.TopRight} {variant} />
+        <Arrow direction={Placement.TopRight} {variant} />
       {:else if icon === "arrow-up-right-mini"}
-        <Arrow direction={Position.TopRight} variant={IconVariant.Mini} />
+        <Arrow direction={Placement.TopRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-down-right-mini"}
-        <Arrow direction={Position.BottomRight} variant={IconVariant.Mini} />
+        <Arrow direction={Placement.BottomRight} variant={IconVariant.Mini} />
       {:else if icon === "arrow-right-circled"}
-        <Arrow direction={Position.Right} isCircled={true} {variant} />
+        <Arrow direction={Placement.Right} isCircled={true} {variant} />
       {:else if icon === "arrow-right-circled-mini"}
         <Arrow
-          direction={Position.Right}
+          direction={Placement.Right}
           isCircled={true}
           variant={IconVariant.Mini}
         />
       {:else if icon === "arrow-right-mini"}
-        <Arrow direction={Position.Right} variant={IconVariant.Mini} />
+        <Arrow direction={Placement.Right} variant={IconVariant.Mini} />
       {:else if icon === "full-screen"}
         <ArrowsPointingOut {variant} />
       {:else if icon === "collapse"}
@@ -443,9 +443,9 @@
       {:else if icon === "collapse"}
         <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}
-        <ChevronDouble direction={Position.Left} />
+        <ChevronDouble direction={Placement.Left} />
       {:else if icon === "chevdoubleright"}
-        <ChevronDouble direction={Position.Right} />
+        <ChevronDouble direction={Placement.Right} />
       {:else if icon === "search" && size != Size.xs}
         <Search {variant} />
       {:else if icon === "search" && size === Size.xs}
@@ -578,7 +578,7 @@
       {:else if icon === "link-arrow-left"}
         <LinkArrow2 />
       {:else if icon === "link-arrow-down"}
-        <LinkArrow2 direction={Position.Bottom} />
+        <LinkArrow2 direction={Placement.Bottom} />
       {:else if icon === "login"}
         <path
           stroke-linecap="round"

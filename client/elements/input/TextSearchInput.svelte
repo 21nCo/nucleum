@@ -8,7 +8,7 @@
     type PopoverInputOptions
   } from "$lib/client/types/input.type";
   import Icon from "../Icon.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { mount } from "$lib/client/actions/mount.action";
   const dispatch = createEventDispatcher();
@@ -86,7 +86,7 @@
     class: "flex flex-col justify-between gap-1 items-start",
     isSpanToTriggerWidth: true,
     isPreventDefault: true,
-    placement: Position.BottomCenter,
+    placement: Placement.BottomCenter,
     isUseAbsolutePositioning: true,
     ...popoverOptions
   }}

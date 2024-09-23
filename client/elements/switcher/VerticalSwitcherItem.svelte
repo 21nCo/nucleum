@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
@@ -10,7 +10,7 @@
   export let item: ISelectItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let labelOrientation: Orientation = Orientation.Vertical;
-  export let activeStatusPlacement: Position = Position.Left;
+  export let activeStatusPlacement: Placement = Placement.Left;
   export let isHideLabel: boolean = false;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
@@ -24,32 +24,32 @@
       ? properCase(item.label ?? item.value?.toString())
       : undefined,
     tooltipOptions: {
-      placement: Position.Left
+      placement: Placement.Left
     }
   };
   $: if (
     style === VerticalSwitcherStyle.GRADIENT &&
-    activeStatusPlacement === Position.Left
+    activeStatusPlacement === Placement.Left
   ) {
     activeClasses =
       "border-l-2 border-l-bgs2 bg-gradient-to-l from-transparent to-bgs2";
     inactiveClasses = "border-l-2 border-l-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.GRADIENT &&
-    activeStatusPlacement === Position.Right
+    activeStatusPlacement === Placement.Right
   ) {
     activeClasses =
       "border-r-2 border-r-bgs2 bg-gradient-to-r from-transparent to-bgs2";
     inactiveClasses = "border-r-2 border-r-bgs2 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
-    activeStatusPlacement === Position.Right
+    activeStatusPlacement === Placement.Right
   ) {
     activeClasses = "border-r-4 border-rounded-md";
     inactiveClasses = "border-r-4 border-r-bgs1 text-fgs3";
   } else if (
     style === VerticalSwitcherStyle.BAR_V2 &&
-    activeStatusPlacement === Position.Left
+    activeStatusPlacement === Placement.Left
   ) {
     activeClasses = "border-l-4 border-rounded-md";
     inactiveClasses = "border-l-4 border-l-bgs1 text-fgs3";
@@ -83,10 +83,10 @@
     class={cn("relative flex flex-col items-center", sizeClasses, {
       "border-ccs1 border-rounded-md": isActive,
       "text-fgs3": !isActive,
-      "border-l-bgs2": !isActive && activeStatusPlacement === Position.Left,
-      "border-r-bgs2": !isActive && activeStatusPlacement === Position.Right,
-      "border-l-4": !isHideBar && activeStatusPlacement === Position.Left,
-      "border-r-4": !isHideBar && activeStatusPlacement === Position.Right
+      "border-l-bgs2": !isActive && activeStatusPlacement === Placement.Left,
+      "border-r-bgs2": !isActive && activeStatusPlacement === Placement.Right,
+      "border-l-4": !isHideBar && activeStatusPlacement === Placement.Left,
+      "border-r-4": !isHideBar && activeStatusPlacement === Placement.Right
     })}
     {...commonVerticalLabelOptions}
     on:click
@@ -144,10 +144,10 @@
     class={cn({
       "border-l-2 border-l-bgs3":
         style === VerticalSwitcherStyle.BAR_V2 &&
-        activeStatusPlacement === Position.Left,
+        activeStatusPlacement === Placement.Left,
       "border-r-2 border-r-bgs3":
         style === VerticalSwitcherStyle.BAR_V2 &&
-        activeStatusPlacement === Position.Right
+        activeStatusPlacement === Placement.Right
     })}
   >
     <HoverableElement

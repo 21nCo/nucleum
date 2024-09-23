@@ -3,7 +3,7 @@
   import Icon from "../Icon.svelte";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
   import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   import HoverableElement from "../HoverableElement.svelte";
@@ -26,7 +26,7 @@
   export let tooltip: string | undefined = undefined;
   export let isPreventMinWidth: boolean = false;
   export let tooltipOptions: IPopoverRenderBaseParams = {
-    placement: Position.BottomCenter,
+    placement: Placement.BottomCenter,
     offsetInPx: 4,
     isSpanToTriggerWidth: false,
     isUseAbsolutePositioning: false
@@ -70,7 +70,7 @@
         "min-w-fit": size === Size.xs
       },
     style != ButtonStyle.PLAIN &&
-      (label || $$slots.default) && {
+      !isIconOnlyButton && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,
         "h-10 py-3 px-5": size === Size.md,

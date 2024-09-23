@@ -9,7 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   import {
@@ -33,7 +33,7 @@
   let contextMenu = [];
   let buttonCommonProps = {
     tooltipOptions: {
-      placement: Position.TopCenter,
+      placement: Placement.TopCenter,
       offsetInPx: 6
     }
   };

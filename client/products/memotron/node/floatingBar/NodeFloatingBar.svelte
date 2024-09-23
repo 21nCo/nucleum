@@ -10,7 +10,7 @@
   import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation, Position } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import {
     BarStyle,
     PanelSwitcherStyle
@@ -36,7 +36,7 @@
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
     tooltipOptions: {
-      placement: Position.TopCenter,
+      placement: Placement.TopCenter,
       offsetInPx: 6
     }
   };

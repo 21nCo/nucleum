@@ -8,7 +8,7 @@ import {
   type IObservableStoreSubject,
   type IRecordId
 } from "$lib/client/types/data.type";
-import { Position } from "$lib/client/types/direction.enum";
+import { Placement } from "$lib/client/types/direction.enum";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
 import { AlertType } from "$lib/client/types/notification.type";
@@ -483,13 +483,13 @@ export const feedbackPane = new FeedbackPaneStore();
 class ClipperToolbarState extends KeyValueStore<
   {
     isOpen: boolean;
-    position: Position.Right | Position.Left | Position.Bottom;
+    position: Placement.Right | Placement.Left | Placement.Bottom;
   } & IObservableStoreSubject
 > {
   constructor() {
     super(
       Resource.clipperToolbarState,
-      { isOpen: true, position: Position.Right },
+      { isOpen: true, position: Placement.Right },
       {
         refreshOnAppear: true,
         dboDependencies: ["fn::global::utils::resolveUrlParts::v2"]
@@ -507,7 +507,9 @@ class ClipperToolbarState extends KeyValueStore<
       }, 100);
     }
   }
-  changePosition(position: Position.Right | Position.Left | Position.Bottom) {
+  changePosition(
+    position: Placement.Right | Placement.Left | Placement.Bottom
+  ) {
     this.modify({ position });
   }
 }

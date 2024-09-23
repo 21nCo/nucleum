@@ -4,7 +4,7 @@
   import { SessionType } from "$lib/client/products/pointron/logs/log.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -21,7 +21,7 @@
     parentBgIndex,
     size: $view.display === Display.MO ? Size.md : Size.lg,
     tooltipOptions: {
-      placement: Position.TopCenter,
+      placement: Placement.TopCenter,
       offsetInPx: 4,
       isUseAbsolutePositioning: true
     }

@@ -165,6 +165,11 @@ module.exports = {
         "bg-ccs4",
         "bg-ccs5",
         "styledscroll",
+        "cursor-col-resize",
+        "cursor-row-resize",
+        {
+          pattern: /(from|via|to)-(.+)/
+        },
         /^theme_/,
         /^cs_.*$/,
         /^bg-/,

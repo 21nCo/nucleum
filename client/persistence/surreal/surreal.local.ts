@@ -209,7 +209,7 @@ export class SurrealPersistence implements IPersistence {
     const query = resolveMergeQuery(record);
     const result = await this.instance?.query(query);
     this.isProcessingOperation = false;
-    logger.log({ at: "SurrealPersistence.merge", result });
+    logger.debug({ at: "SurrealPersistence.merge", record, query, result });
     return result;
   }
 

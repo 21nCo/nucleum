@@ -1,7 +1,7 @@
 import type { IFile } from "$lib/client/components/files/file.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import type { Arrangement } from "$lib/client/types/direction.enum";
+import type { Arrangement, Placement } from "$lib/client/types/direction.enum";
 import type { IMemotronItemBase } from "../memotron.type";
 import type { INodeThumbnail } from "../node/node.type";
 import type { IProperty } from "./properties/property.type";
@@ -19,7 +19,7 @@ export enum CollectionLayout {
   GEOMAP = "GEOMAP"
 }
 
-export type IActiveCollection = {
+export type IActiveCollection = ICollection & {
   type: CollectionType;
   refreshError?: string;
   isViewDataLoading: boolean;
@@ -27,12 +27,25 @@ export type IActiveCollection = {
   isPageLoading: boolean;
   views: ICollectionViewWithData[];
   properties: IProperty[];
-} & Omit<ICollection, "views">;
+};
+
+export type ICoverLayout = {
+  placement?: Placement.Left | Placement.Top | Placement.Right;
+  position?: {
+    x?: number;
+    y?: number;
+  };
+  size?: {
+    width?: number;
+    height?: number;
+  };
+};
 
 export interface ICollection extends IMemotronItemBase {
   views: IRecordId[];
   type: CollectionType;
   cover?: string;
+  coverLayout?: ICoverLayout;
   description?: string;
   isStarred?: boolean;
   isCaptureShortcutEnabled?: boolean;

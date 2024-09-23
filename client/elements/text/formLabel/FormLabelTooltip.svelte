@@ -7,7 +7,7 @@
   } from "$lib/client/utils/browser.utils";
   import { onMount } from "svelte";
   import Icon from "../../Icon.svelte";
-  import { Position } from "$lib/client/types/direction.enum";
+  import { Placement } from "$lib/client/types/direction.enum";
   import Tooltip from "../Tooltip.svelte";
   export let info: FormLabelInfoTooltip;
   let isHovered: boolean = false;
@@ -27,7 +27,7 @@
     renderPopover({
       triggerRef: buttonRef,
       popRef: toolTipRef,
-      placement: Position.Right
+      placement: Placement.Right
     });
   }
   function handlePositionChange(event: CustomEvent) {

@@ -35,9 +35,14 @@
   import { metaPropertyOptions } from "./properties/property.store";
   import type { ICollectionViewWithData } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
-  import { Arrangement } from "$lib/client/types/direction.enum";
+  import {
+    Arrangement,
+    Orientation,
+    Placement
+  } from "$lib/client/types/direction.enum";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -46,7 +51,7 @@
   let filteredViewData: INodeThumbnail[] = [];
   let selectedViewId: string;
   let selectedTab: ISelectValue | undefined = undefined;
-  let isRoundedExperimental = false;
+  let dev_isRoundedCover = false;
   let isStickied = false;
   let triggerItemEdit = "";
   let viewRightButtonOptions: {
@@ -63,6 +68,7 @@
   let isReady = false;
   let isNotInlineAccess: boolean = false;
   let selectedArrangement: Arrangement = Arrangement.LIST;
+  let isCoverPickerOpen = false;
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -205,14 +211,62 @@
     }
   }
   async function onTabSwitch(e: CustomEvent) {
-    console.log("onTabSwitch", selectedTab);
+    // console.log("onTabSwitch", selectedTab);
     await refresh();
   }
   function onCoverChange(e: CustomEvent) {
-    console.log("onCoverChange", e.detail);
-    collection.modify({ cover: e.detail });
+    collection.debouncedModify({ cover: e.detail }, "cover");
   }
-  $: console.log({ activeView, collection: $collection, properties });
+  function onPlacementChange(e: CustomEvent) {
+    collection.debouncedModify(
+      {
+        coverLayout: {
+          ...$collection.coverLayout,
+          placement: e.detail
+        }
+      },
+      "coverPlacement"
+    );
+  }
+  function onCoverReposition(e: CustomEvent) {
+    const isY =
+      $collection.coverLayout?.placement === Placement.Top ||
+      !$collection.coverLayout?.placement;
+    collection.debouncedModify(
+      {
+        coverLayout: {
+          ...$collection.coverLayout,
+          position: isY
+            ? { y: e.detail, x: $collection.coverLayout?.position?.x }
+            : { x: e.detail, y: $collection.coverLayout?.position?.y }
+        }
+      },
+      "coverPosition"
+    );
+  }
+
+  function onCoverResize(e: CustomEvent) {
+    const isY =
+      $collection.coverLayout?.placement === Placement.Top ||
+      !$collection.coverLayout?.placement;
+    collection.debouncedModify(
+      {
+        coverLayout: {
+          ...$collection.coverLayout,
+          size: isY
+            ? {
+                height: e.detail.height,
+                width: $collection.coverLayout?.size?.width
+              }
+            : {
+                width: e.detail.width,
+                height: $collection.coverLayout?.size?.height
+              }
+        }
+      },
+      "coverSize"
+    );
+  }
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
@@ -221,50 +275,91 @@
   </div>
 {:else if $collection}
   <div
-    class="relative flex flex-col w-full h-full overflow-auto"
+    class={cn("relative flex w-full h-full", {
+      "flex-col overflow-auto":
+        $collection.coverLayout?.placement === Placement.Top ||
+        !$collection.coverLayout?.placement
+    })}
     on:scroll={onScroll}
   >
-    <Cover
-      bind:src={$collection.cover}
-      {isRoundedExperimental}
-      on:change={onCoverChange}
-    />
-    <div class={cn("flex flex-col gap-6 pt-4 grow w-full")}>
-      <div class="px-4">
-        <CollectionTitleBar on:back {collection} />
-      </div>
-      <header
-        class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
-          "pt-4": isStickied
+    {#if $collection.coverLayout?.placement !== Placement.Right}
+      <Cover
+        cover={$collection.cover}
+        isInEditMode={$isInEditMode}
+        placement={$collection.coverLayout?.placement}
+        position={$collection.coverLayout?.position}
+        size={$collection.coverLayout?.size}
+        {dev_isRoundedCover}
+        bind:isCoverPickerOpen
+        on:change={onCoverChange}
+        on:placement={onPlacementChange}
+        on:reposition={onCoverReposition}
+        on:resize={onCoverResize}
+      />
+    {/if}
+    {#if isCoverPickerOpen}
+      <div
+        class={cn("flex-1 overflow-auto", {
+          "w-full":
+            $collection.coverLayout?.placement === Placement.Top ||
+            !$collection.coverLayout?.placement,
+          "h-full": $collection.coverLayout?.placement === Placement.Right
         })}
       >
-        <PanelSwitcher
-          items={viewsForSwitcher}
-          isEnableAnimationForTitle={true}
-          style={PanelSwitcherStyle.BAR}
-          title={isStickied ? $collection.label : ""}
-          isExpandToFullWidth={true}
-          barStyle={BarStyle.EXACT}
-          isInEditMode={$isInEditMode}
-          bind:triggerItemEdit
-          on:remove={onViewRemove}
-          on:add={onViewAdd}
-          bind:value={selectedViewId}
-          on:switch={onViewSwitch}
-          on:change={onViewLabelChange}
+        <CoverPicker
+          value={$collection.cover}
+          on:select={onCoverChange}
+          orientation={$collection.coverLayout?.placement === Placement.Top ||
+          !$collection.coverLayout?.placement
+            ? Orientation.Horizontal
+            : Orientation.Vertical}
+          on:close={() => (isCoverPickerOpen = false)}
+        />
+      </div>
+    {:else}
+      <div
+        class={cn("flex flex-col gap-6 pt-4 flex-1", {
+          "h-full overflow-auto":
+            $collection.coverLayout?.placement === Placement.Left ||
+            $collection.coverLayout?.placement === Placement.Right,
+          "w-full": $collection.coverLayout?.placement === Placement.Top
+        })}
+      >
+        <div class="px-4">
+          <CollectionTitleBar on:back {collection} />
+        </div>
+        <header
+          class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
+            "pt-4": isStickied
+          })}
         >
-          <span class="flex gap-2" slot="right">
-            <Button
-              icon="adjustments-horizontal"
-              label="filters"
-              {...viewRightButtonOptions}
-            />
-            <Button
-              icon="bars-center-left"
-              label="sort"
-              {...viewRightButtonOptions}
-            />
-            <!-- <Button
+          <PanelSwitcher
+            items={viewsForSwitcher}
+            isEnableAnimationForTitle={true}
+            style={PanelSwitcherStyle.BAR}
+            title={isStickied ? $collection.label : ""}
+            isExpandToFullWidth={true}
+            barStyle={BarStyle.EXACT}
+            isInEditMode={$isInEditMode}
+            bind:triggerItemEdit
+            on:remove={onViewRemove}
+            on:add={onViewAdd}
+            bind:value={selectedViewId}
+            on:switch={onViewSwitch}
+            on:change={onViewLabelChange}
+          >
+            <span class="flex gap-2" slot="right">
+              <Button
+                icon="adjustments-horizontal"
+                label="filters"
+                {...viewRightButtonOptions}
+              />
+              <Button
+                icon="bars-center-left"
+                label="sort"
+                {...viewRightButtonOptions}
+              />
+              <!-- <Button
               icon={activeView?.arrangement === Arrangement.GRID
                 ? "widget"
                 : "list"}
@@ -274,63 +369,77 @@
               {...viewRightButtonOptions}
               on:click={onArrangementChange}
             /> -->
-            <DropDown
-              items={[
-                { value: Arrangement.LIST, label: "List" },
-                { value: Arrangement.GRID, label: "Grid" },
-                {
-                  value: Arrangement.MASONRY,
-                  label: "Masonry"
-                }
-              ]}
-              bind:value={selectedArrangement}
-              on:select={onArrangementChange}
-              isDisableSearch={true}
-              size={Size.sm}
+              <DropDown
+                items={[
+                  { value: Arrangement.LIST, label: "List" },
+                  { value: Arrangement.GRID, label: "Grid" },
+                  {
+                    value: Arrangement.MASONRY,
+                    label: "Masonry"
+                  }
+                ]}
+                bind:value={selectedArrangement}
+                on:select={onArrangementChange}
+                isDisableSearch={true}
+                size={Size.sm}
+              />
+            </span>
+          </PanelSwitcher>
+          {#if activeView && ($isInEditMode || isValidString(activeView.tabBy))}
+            <div class="px-4 pb-4 flex flex-col gap-6">
+              {#if $isInEditMode}
+                <ViewSettingsBar
+                  bind:view={activeView}
+                  {properties}
+                  on:select={onViewSettingsChange}
+                />
+              {/if}
+              {#if activeView.tabBy}
+                <ViewTabSwitcher
+                  view={activeView}
+                  bind:value={selectedTab}
+                  properties={$collection?.properties}
+                  on:select={onTabSwitch}
+                />
+              {/if}
+            </div>
+          {/if}
+        </header>
+        <main
+          class={cn(
+            "w-full grow flex flex-col gap-2 justify-center items-center px-4",
+            {}
+          )}
+        >
+          <ResourceStatusBanner resource={collection} />
+          {#if $collection.isViewDataLoading}
+            <PageLoadingPulse />
+          {:else if !$collection.isViewDataLoading && activeView}
+            <View
+              view={activeView}
+              data={filteredViewData}
+              isBoardOverflow={isStickied}
+              properties={$collection?.properties}
             />
-          </span>
-        </PanelSwitcher>
-        {#if activeView && ($isInEditMode || isValidString(activeView.tabBy))}
-          <div class="px-4 pb-4 flex flex-col gap-6">
-            {#if $isInEditMode}
-              <ViewSettingsBar
-                bind:view={activeView}
-                {properties}
-                on:select={onViewSettingsChange}
-              />
-            {/if}
-            {#if activeView.tabBy}
-              <ViewTabSwitcher
-                view={activeView}
-                bind:value={selectedTab}
-                properties={$collection?.properties}
-                on:select={onTabSwitch}
-              />
-            {/if}
-          </div>
-        {/if}
-      </header>
-      <main
-        class={cn(
-          "w-full grow flex flex-col gap-2 justify-center items-center px-4",
-          {}
-        )}
-      >
-        <ResourceStatusBanner resource={collection} />
-        {#if $collection.isViewDataLoading}
-          <PageLoadingPulse />
-        {:else if !$collection.isViewDataLoading && activeView}
-          <View
-            view={activeView}
-            data={filteredViewData}
-            isBoardOverflow={isStickied}
-            properties={$collection?.properties}
-          />
-        {:else}
-          content
-        {/if}
-      </main>
-    </div>
+          {:else}
+            content
+          {/if}
+        </main>
+      </div>
+    {/if}
+    {#if $collection.coverLayout?.placement === Placement.Right}
+      <Cover
+        cover={$collection.cover}
+        isInEditMode={$isInEditMode}
+        placement={$collection.coverLayout?.placement}
+        position={$collection.coverLayout?.position}
+        {dev_isRoundedCover}
+        bind:isCoverPickerOpen
+        on:change={onCoverChange}
+        on:placement={onPlacementChange}
+        on:reposition={onCoverReposition}
+      />
+    {/if}
     {#if isNotInlineAccess}
       <ModalCloseButton path="collection" />
     {/if}

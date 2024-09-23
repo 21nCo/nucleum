@@ -30,7 +30,6 @@
     const property = properties.find((p) => p.id === tabBy);
     return property?.label ?? "";
   }
-  $: console.log("tabs", { tabs, properties, view });
 </script>
 
 {#if label && tabs}

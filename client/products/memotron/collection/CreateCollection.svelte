@@ -37,11 +37,8 @@
   } from "./collection.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { gradientsList } from "$lib/client/elements/colorPicker/gradients/gradients";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { FileType } from "$lib/client/components/files/file.type";
   import { hoverable } from "$lib/client/actions/hover.action";
+  import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
 
   let title: string;
   let isStarred: boolean = false;
@@ -109,28 +106,7 @@
   >
     {#if coverPhoto}
       {#key coverPhoto}
-        {#if typeof coverPhoto === "string" && coverPhoto.includes("hex_")}
-          <div
-            class="w-full h-full rounded-l-md"
-            style="background-color: {coverPhoto.replace('hex_', '')};"
-          ></div>
-        {:else if typeof coverPhoto === "string" && coverPhoto.includes("gradient_")}
-          <div
-            class={cn(
-              "w-full h-full rounded-l-md",
-              gradientsList.find(
-                (gradient) => gradient.id == coverPhoto.replace("gradient_", "")
-              )?.gradient
-            )}
-          ></div>
-        {:else}
-          <FileView
-            id={coverPhoto}
-            isLazyLoad={false}
-            type={FileType.IMAGE}
-            class={cn("h-full w-full rounded-l-md object-cover", {})}
-          />
-        {/if}
+        <CoverRenderer cover={coverPhoto} class="rounded-l-md" />
         {#if isCoverPickerHovered && !isShowCoverPicker}
           <div
             class="absolute top-0 left-0 w-full h-full flex flex-col gap-6 items-center justify-center bg-bgs2 bg-opacity-70 rounded-l-md"
