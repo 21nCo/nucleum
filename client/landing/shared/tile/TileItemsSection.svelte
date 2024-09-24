@@ -45,14 +45,14 @@
   <Title {title} />
   <div
     bind:this={container}
-    class="flex gap-3 tp:grid tp:gap-6 tp:grid-cols-2 pb-5 overflow-x-scroll tp:px-12 w-full snap-mandatory snap-x"
+    class="no-scrollbar flex gap-3 tp:grid tp:gap-6 tp:grid-cols-2 overflow-x-scroll tp:px-12 w-full snap-mandatory snap-x -mt-6"
   >
     {#each items as item}
       <TileItem {item} class="snap-always snap-start" />
     {/each}
   </div>
   {#if $view.isPortrait}
-    <div class="flex gap-2 pb-10">
+    <div class="flex gap-2 pb-10 -mt-[38px]">
       {#each items as item, index}
         {#if index === currentIndex}
           <Indicator class="bg-fgs4" />
@@ -70,6 +70,7 @@
   <Button
     label="More Products"
     icon="long-arrow-right"
+    class="mo:-mt-14"
     on:click={() => ($isProductsPanelOpen = true)}
   />
 </Section>

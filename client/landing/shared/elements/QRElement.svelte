@@ -7,7 +7,7 @@
   export let width: number = 122;
 
   let canvas: HTMLCanvasElement;
-  let isHovering: boolean = false;
+  export let isHovering: boolean = false;
 
   function handleHover() {
     if (!enableHover) return;
@@ -27,7 +27,7 @@
   bind:this={canvas}
   on:mouseenter={handleHover}
   on:mouseleave={handleLeave}
-  class:scale-[1.4]={isHovering}
+  class:scale-[1.8]={isHovering}
   class:scale-[1]={!isHovering}
   class="border-2 transition-transform duration-300 ease-in-out origin-bottom-left"
 />

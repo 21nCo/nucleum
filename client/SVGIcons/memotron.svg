@@ -1,8 +1,8 @@
 <svg width="100%" height="100%" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="6" y="19.7151" width="0.999998" height="16.4449" rx="0.408321" transform="rotate(-90 6 19.7151)" fill="currentColor"/>
-<path d="M11.0352 19.2907C11.0352 13.9209 15.3884 9.56787 20.7583 9.56787" stroke="currentColor" stroke-width="2.5928"/>
-<path d="M20.7583 29.0132C15.3884 29.0132 11.0352 24.6601 11.0352 19.2904" stroke="currentColor" stroke-width="2.5928"/>
-<path d="M30.483 19.2894C30.483 24.6591 26.1298 29.0122 20.7599 29.0122" stroke="currentColor" stroke-width="2.5928"/>
-<path d="M20.7599 9.56689C26.1298 9.56689 30.483 13.92 30.483 19.2897" stroke="currentColor" stroke-width="2.5928"/>
+<!-- <rect width="38" height="38" rx="0.351852" fill="white"/> -->
+<rect x="7" y="19.3442" width="0.823916" height="13.5491" rx="0.33642" transform="rotate(-90 7 19.3442)" fill="currentColor"/>
+<path d="M10.5771 18.9991C10.5771 13.7807 14.8076 9.55029 20.0261 9.55029" stroke="currentColor" stroke-width="2.51971"/>
+<path d="M20.0261 28.449C14.8076 28.449 10.5771 24.2186 10.5772 19.0002" stroke="currentColor" stroke-width="2.51971"/>
+<path d="M29.4766 18.9984C29.4766 24.2169 25.2461 28.4473 20.0276 28.4473" stroke="currentColor" stroke-width="2.51971"/>
+<path d="M20.0266 9.55053C25.2451 9.55054 29.4756 13.7809 29.4756 18.9994" stroke="currentColor" stroke-width="2.51971"/>
 </svg>
-

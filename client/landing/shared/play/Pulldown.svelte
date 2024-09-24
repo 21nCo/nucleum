@@ -13,13 +13,13 @@
 
 <style>
   @keyframes moveDownAndDisappear {
-    0% {
-      top: 9px;
-      opacity: 1;
-    }
     100% {
-      top: 38px;
+      top: 9px;
       opacity: 0;
+    }
+    0% {
+      top: 38px;
+      opacity: 1;
     }
   }
   .moveMe {

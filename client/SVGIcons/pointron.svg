@@ -1,6 +1,7 @@
-<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12.1831 4.62598C16.3579 4.62598 19.7422 8.01028 19.7422 12.185" stroke="currentColor" stroke-width="2"/>
-<path d="M4.625 12.184C4.625 8.0093 8.0093 4.625 12.184 4.625" stroke="currentColor" stroke-width="2"/>
-<path d="M12.186 19.7412C8.01125 19.7412 4.62695 16.3569 4.62695 12.1822" stroke="currentColor" stroke-width="2"/>
-<path d="M19.7441 12.1822C19.7441 16.3569 16.3598 19.7412 12.1851 19.7412" stroke="currentColor" stroke-width="2"/>
+<svg width="100%" height="100%" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- <rect width="38" height="38" rx="0.351852" fill="white"/> -->
+<path d="M19.0004 9.55322C24.2188 9.55322 28.4492 13.7836 28.4492 19.002" stroke="currentColor" stroke-width="2.51968"/>
+<path d="M9.55078 19.002C9.55078 13.7836 13.7812 9.55322 18.9996 9.55322" stroke="currentColor" stroke-width="2.51968"/>
+<path d="M19.0006 28.449C13.7821 28.449 9.55176 24.2186 9.55176 19.0002" stroke="currentColor" stroke-width="2.51968"/>
+<path d="M28.4492 19.0002C28.4492 24.2186 24.2188 28.449 19.0004 28.449" stroke="currentColor" stroke-width="2.51968"/>
 </svg>

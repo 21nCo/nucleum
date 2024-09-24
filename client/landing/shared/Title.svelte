@@ -7,7 +7,6 @@
 
 <p
   class={cn(
-    "h-[200px] mo:h-[80px]",
     !$isProductsPage &&
       "w-[800px] mo:w-[342px] text-center text-[72px] mo:text-[29px] font-black leading-[98px] mo:leading-10",
     $isProductsPage &&

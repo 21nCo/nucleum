@@ -16,9 +16,9 @@
     {id}
     class={cn(
       "w-[115px] h-full hover:text-aps1 flex flex-col items-center justify-center p-4 text-center text-fgs3 text-base leading-5",
-      label == PanelName.PRODUCTS && "border-l border-brs2 hover:border-brs3",
+      label == PanelName.PRODUCTS && "border-l border-brs3 hover:border-brs4",
       label == PanelName.BUILT_AT_BLANK_COOP &&
-        "border-r border-brs2 hover:border-brs3",
+        "border-r border-brs3 hover:border-brs4",
       className
     )}
     on:click

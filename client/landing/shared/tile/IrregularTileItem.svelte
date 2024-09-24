@@ -28,7 +28,7 @@
 
 <button
   class={cn(
-    "relative flex flex-col items-start justify-start gap-3 min-w-[320px] max-w-[512px] mo:h-[400px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
+    "relative flex flex-col items-start justify-start gap-4 min-w-[320px] max-w-[512px] mo:h-[400px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
     className
   )}
   on:mouseenter={onMouseEnter}

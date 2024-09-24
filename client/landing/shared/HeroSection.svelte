@@ -57,14 +57,14 @@
     {/if}
     {#if $view.isPortrait && !$isProductsPage}
       <div
-        class="flex items-center justify-end w-[138px] h-[36px] border-b pb-0 mt-6"
+        class="flex items-center justify-end w-[145px] h-[36px] border-b border-fgs3 border-dashed pb-0 mt-6"
         role="button"
         tabindex="0"
         on:click={() => ($isProductsPanelOpen = true)}
         on:keypress
       >
         <p class="text-[16px] leading-9 text-center">See our products</p>
-        <SvgIcon icon="long-arrow-right" size={Size.sm} class="ml-1" />
+        <SvgIcon icon="long-arrow-right" size={Size.sm} class="ml-2" />
       </div>
     {/if}
   </div>

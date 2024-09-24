@@ -32,7 +32,7 @@
     !isPanelView &&
       "relative flex flex-col items-start justify-start gap-3 min-w-[320px] w-[598px] h-[471px] mo:h-[292px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
     isPanelView &&
-      "relative min-w-[161px] max-w-[260px] rounded-xl px-2 pt-4 flex flex-col items-start justify-start gap-2",
+      "relative min-w-[161px] max-w-[260px] rounded-xl px-[14px] tp:px-5 pt-[14px] tp:pt-5 flex flex-col items-start justify-start gap-2",
     isPanelView &&
       isEnableBackground &&
       "bg-bgs2 hover:bg-bgs3 h-[256px] mo:h-[197px]",
@@ -106,7 +106,7 @@
     <img
       src={`/images/${image}.png`}
       alt={item.title}
-      class={cn("absolute h-[45%] mo:h-[39%] object-contain bottom-1 right-1")}
+      class={cn("absolute h-[43%] mo:h-[35%] object-contain bottom-1 right-1")}
     />
   {/if}
 </button>

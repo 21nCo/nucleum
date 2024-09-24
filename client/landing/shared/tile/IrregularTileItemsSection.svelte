@@ -16,7 +16,7 @@
 <Section>
   <Title {title} />
   <div
-    class="flex mo:flex-col mo:items-center justify-center gap-3 tp:gap-7 pb-10 tp:px-12 w-full"
+    class="flex mo:flex-col mo:items-center justify-center gap-3 tp:gap-7 tp:px-12 w-full"
   >
     <div class="flex flex-col gap-7">
       {#each list1 as item, index}

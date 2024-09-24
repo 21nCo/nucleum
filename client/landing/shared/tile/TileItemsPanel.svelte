@@ -25,10 +25,13 @@
   role="button"
   tabindex="0"
 >
-  <div class="flex flex-col gap-3 w-full p-10 mo:p-6">
-    {#if $view.isPortrait}
-      <div class="flex pb-4">
-        <p class="text-[17px] leading-6 font-extrabold">Products</p>
+  <div class="flex flex-col gap-5 w-full pt-10 px-10 mo:px-6">
+    <!-- {#if $view.isPortrait} -->
+    <div class="flex pb-4">
+      <p class="text-[17px] tp:text-[28px] leading-6 font-extrabold">
+        Products
+      </p>
+      {#if $view.isPortrait}
         <SvgIcon
           icon="close"
           class="ml-auto"
@@ -37,13 +40,14 @@
             $isProductsPanelOpen = false;
           }}
         />
-      </div>
-    {/if}
-    <div class="flex flex-col gap-3 overflow-y-scroll">
+      {/if}
+    </div>
+    <!-- {/if} -->
+    <div class="flex flex-col gap-6 overflow-y-scroll">
       <p
         class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
       >
-        Current Products
+        Current
       </p>
       <div class="grid grid-cols-2 gap-6">
         {#each currentProducts as product}
@@ -55,9 +59,9 @@
         {/each}
       </div>
       <p
-        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium mt-6"
+        class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium mt-3"
       >
-        Upcoming Products
+        Upcoming
       </p>
       <div class="grid grid-cols-2 gap-3">
         {#each upcomingProducts as product}

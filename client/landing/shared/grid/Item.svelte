@@ -21,14 +21,14 @@
 </script>
 
 <button
-  class="flex flex-col items-start justify-center gap-3 w-[480px] mo:w-[342px]"
+  class="flex flex-col items-start justify-center gap-[14px] w-[480px] mo:w-[342px]"
   on:click={onClick}
   on:mouseenter={onMouseEnter}
   on:mouseleave={onMouseLeave}
 >
   <div
     class={cn(
-      "inline-flex flex-col rounded-2xl gap-3",
+      "inline-flex flex-col rounded-2xl gap-5",
       isHovered && "text-aps1"
     )}
   >

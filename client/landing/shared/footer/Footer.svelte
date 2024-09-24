@@ -125,6 +125,8 @@
             <Button
               type="secondary"
               label="Our story"
+              class=""
+              isShort={true}
               on:click={() => {
                 window.location.href = "https://docs.blanklabs.org/soft";
               }}
@@ -141,6 +143,7 @@
           </p>
           <Button
             label={joinUs.title}
+            isShort={true}
             class="text-[20px]"
             on:click={() => (window.location.href = joinUs.href)}
           />
