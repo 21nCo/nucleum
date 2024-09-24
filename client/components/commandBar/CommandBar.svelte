@@ -137,7 +137,7 @@
   </div>
   <div class="flex-grow">
     {#if isPerformingSearchAction}
-      {#if value}
+      {#if value && value !== ""}
         <SearchActionResults
           search={value}
           bind:this={resultsRef}

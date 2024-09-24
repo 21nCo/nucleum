@@ -14,7 +14,7 @@
         ($sessionStore.plannedDuration - $sessionStore.totalExtended)
       : 0;
   $: labelClasses =
-    `${size === Size.md ? "font-medium p-3 text-h3" : "text-b2"} ` +
+    `${size === Size.md ? "font-medium p-3 text-h5 dp:text-h3" : "text-b2"} ` +
     (!isDefaultColor
       ? $sessionStore.state === SessionState.FOCUS_RUNNING
         ? "text-aps1"

@@ -19,7 +19,7 @@
   $: if (id) {
     content = contentCallback(id);
   }
-  $: if (!isCollapsed && id) {
+  $: if (id) {
     children = childrenCallback(id);
   }
   function onclick(e: MouseEvent) {
@@ -56,7 +56,7 @@
               "stroke-fgs1": !isActive
             })}
           />
-        {:else if content.childrenCount > 0}
+        {:else if children.length > 0}
           <Icon
             icon={isCollapsed ? "chevright" : "chevdown"}
             class={cn({
@@ -69,7 +69,7 @@
         <TextWithHoverTooltip text={content.label} class="truncate" />
       </span>
       <span class="shrink-0">
-        {#if content.icon && content.childrenCount > 0}
+        {#if content.icon && children.length > 0}
           <Icon
             icon={isCollapsed ? "chevright" : "chevdown"}
             class={cn({
@@ -77,15 +77,15 @@
               "stroke-fgs1": !isActive
             })}
           />
-        {:else if content.childrenCount > 0}
+        {:else if children.length > 0}
           <span class="text-b4 text-fgs2 bg-bgs2 rounded-md px-2 py-0.5">
-            {content.childrenCount}
+            {children.length}
           </span>
         {/if}
       </span>
     </CustomColorPropagator>
     <div class="w-full">
-      {#if content.childrenCount > 0 && !isCollapsed && children}
+      {#if children.length > 0 && !isCollapsed && children}
         {#each children as child}
           <svelte:self
             id={child}

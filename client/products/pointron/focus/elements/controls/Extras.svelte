@@ -19,7 +19,10 @@
     tooltipOptions: IPopoverRenderBaseParams;
   } = {
     parentBgIndex,
-    size: $view.display === Display.MO ? Size.md : Size.lg,
+    size:
+      $view.display === Display.MO || $view.display === Display.TP
+        ? Size.md
+        : Size.lg,
     tooltipOptions: {
       placement: Placement.TopCenter,
       offsetInPx: 4,
@@ -36,7 +39,7 @@
 </script>
 
 <div
-  class="flex gap-4 rounded-full border border-brs3 mo:px-2 mo:py-1 p-2 w-full justify-around"
+  class="flex gap-2 dp:gap-4 rounded-full border border-brs3 mo:px-2 py-1 dp:p-2 w-full justify-around"
 >
   <!-- <Button
     icon="music"

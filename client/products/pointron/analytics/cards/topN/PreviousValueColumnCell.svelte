@@ -1,6 +1,5 @@
 <script lang="ts">
   import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -9,10 +8,7 @@
 </script>
 
 <span
-  class={cn("text-fgs3 flex h-full w-full items-center", {
-    "text-b4": $view.isPortrait,
-    "text-b3": !$view.isPortrait
-  })}
+  class="text-fgs3 flex h-full w-full items-center text-b4 dp:text-b3 2k:text-b2"
 >
   <span class="flex items-center gap-1">
     <Icon

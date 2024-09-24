@@ -1,18 +1,23 @@
 <script>
+  import Button from "$lib/client/elements/button/Button.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import account from "$lib/client/stores/account.store";
   import { currentTime } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import view from "$lib/client/stores/view.store";
   import { Action } from "$lib/client/types/action.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
+  import { ButtonVariant } from "$lib/client/types/button.type";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { Size } from "$lib/client/types/size.enum";
   import { Display } from "$lib/client/types/view.type";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import { renderMdAsHtml } from "../markdown/markdown.utils";
   import { player } from "../modal/modal.store";
   import ProfilePicture from "../settings/account/ProfilePicture.svelte";
+  import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
   import CommandBar from "./CommandBar.svelte";
 </script>
 
@@ -42,18 +47,35 @@
       />
     {/if}
     <div
-      class="h-96 w-[40rem] dp:h-full dp:w-1/2 flex justify-center items-center"
+      class="h-96 w-[40rem] dp:h-[40rem] dp:w-1/2 flex justify-center items-center"
     >
       <div class="h-full w-full dp:h-2/3 dp:w-full flex items-center">
         <CommandBar isFullPageContext={true} />
       </div>
     </div>
   </div>
-  <footer class="w-full flex justify-center h-1/12 text-fgs2 text-b2">
+  <footer
+    class="w-full flex flex-col gap-2 justify-center items-center h-1/6 text-fgs2 text-b2"
+  >
     <span>
       {@html renderMdAsHtml(
         "Command only mode is in **beta**. Please report any issues you encounter using *Chat with us* command."
       )}
+    </span>
+    <span>
+      <Button
+        label="Exit Command Mode"
+        size={Size.sm}
+        on:click={() => {
+          uiState.setState(
+            Action.MODE_OF_INTERACTION,
+            InteractionMode.DEFAULT,
+            {
+              isProductScoped: true
+            }
+          );
+        }}
+      />
     </span>
   </footer>
 </div>

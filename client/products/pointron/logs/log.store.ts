@@ -177,7 +177,7 @@ class ManualLogStore extends ObservableStore<IPointLogStore> {
     pointSessionStore.create(sessionEntries, {
       queueParams: {
         isUseQueueFirstApproach: true,
-        mutationId: `${this.id}-saveManualLogs`
+        mutationId: `${this.id}-saveManualSessionLogs`
       }
     });
     this.reset();

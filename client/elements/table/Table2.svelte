@@ -70,7 +70,9 @@
   })}
 >
   <div
-    class="grid gap-8 text-fgs3 text-left text-b2 bg--bgs2 rounded-md p-3 bg-bgs2"
+    class={cn("grid gap-8 text-fgs3 text-left text-b2 rounded-md p-3 ", {
+      "bg-bgs2": isStyled
+    })}
     style="grid-template-columns: {columns
       .map((column) => `${resolveWidth(column)}fr`)
       .join(' ')}"

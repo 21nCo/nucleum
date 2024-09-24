@@ -210,21 +210,26 @@ class GoalStore extends ResourceFIRStore<IGoal> {
     };
   }
   resolveChildren(id: string) {
-    const goals = this.get().items;
-    const goal = goals.find((x) => x.id === id);
-    return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
+    // const goals = this.get().items;
+    // const goal = goals.find((x) => x.id === id);
+    // return goal?.subGoals.filter(activeResourceFilter).map((x) => x.id) ?? [];
+    return this.resolveSubGoalsIfNotPresent(id)?.map((x) => x.id) ?? [];
   }
-  async resolveSubGoalsIfNotPresent(goalId: string) {
+  resolveSubGoalsIfNotPresent(goalId: string) {
     const goals = this.get().items;
     const goalInContext = goals.find((x) => x.id === goalId);
-    // console.log({ goalInContext });
-    if (!goalInContext) return;
-    if (!isValidArrayWithData(goalInContext?.subGoals)) {
-      const subGoals = goals.filter(
-        (x) => goalInContext?.id === x.parent?.hierarchy.pop()?.id
-      );
-      // console.log({ subGoals });
-    }
+
+    if (!goalInContext) return [];
+
+    const subGoals = goals
+      .filter(
+        (x) =>
+          goalInContext?.id ===
+          x.parent?.hierarchy[x.parent?.hierarchy.length - 1]?.id
+      )
+      .filter(activeResourceFilter);
+
+    return subGoals;
   }
   async refresh(
     filters: {
@@ -465,6 +470,7 @@ function initCurrentGoalStore(initialValue: IGoal) {
       if (!goal) return;
       if (!goal.analytics) goal.analytics = seedGoal.analytics;
       if (!goal.tags) goal.tags = [];
+      goal.subGoalsRefreshId = generateUID();
       originalValue = deepCopy(goal);
       set({ ...goal });
       goalEditErrorMessage.set("");
@@ -522,8 +528,13 @@ function initCurrentGoalStore(initialValue: IGoal) {
           label: label
         }
       ];
-      set(parent);
-      propagateChangesTemp();
+      // set(parent);
+      await goalStore.refresh(
+        { tag: TagId.ALL, searchText: "", isArchived: false },
+        true
+      );
+      parent.subGoalsRefreshId = generateUID();
+      set({ ...parent });
     }
   };
 }
