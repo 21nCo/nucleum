@@ -129,9 +129,9 @@ module.exports = {
         "open-left": "open-left 0.3s ease-in-out forwards",
         "open-right": "open-right 0.3s ease-in-out forwards",
         "close-right": "close-right 0.3s ease-in-out forwards",
-        rotate45: "rotate45 1s forwards",
+        rotate45: "rotate45 0.2s forwards",
         fadeIn: "fadeIn 1s forwards",
-        fadeOut: "fadeOut 1s forwards"
+        fadeOut: "fadeOut 0.2s forwards"
       },
       keyframes: {
         "bounce-r": {
