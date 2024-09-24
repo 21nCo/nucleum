@@ -15,7 +15,7 @@
   import AddNewSubGoal from "./AddNewSubGoal.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessMode } from "$lib/client/components/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   let isArchivedGoalsVisible: boolean = false;
 
