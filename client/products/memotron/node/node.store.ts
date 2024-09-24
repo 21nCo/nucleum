@@ -290,7 +290,7 @@ export function resolveNodeContextMenu(
       accessPoint === ResourceAccessPoint.NODE_DEFAULT_RIGHT_PANE) &&
     params?.accessPointId
   ) {
-    let baseItems = [resourceActions.pinToTopBar(), resourceActions.copyLink()];
+    let baseItems = [resourceActions.openAsTab(), resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       baseItems.unshift(
         resourceActions.select(accessPoint, params?.accessPointId)
@@ -315,7 +315,7 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           resourceActions.select(accessPoint),
-          resourceActions.pinToTopBar(),
+          resourceActions.openAsTab(),
           resourceActions.copyLink()
         ]
       },
@@ -331,7 +331,7 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          resourceActions.pinToTopBar(),
+          resourceActions.openAsTab(),
           resourceActions.copyLink(),
           {
             value: "download",
@@ -357,7 +357,7 @@ export function resolveNodeContextMenu(
       items: [
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.pinToTopBar(),
+        resourceActions.openAsTab(),
         resourceActions.copyLink(),
         {
           value: "export",

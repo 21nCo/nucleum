@@ -283,7 +283,7 @@
               selectedType,
               typeToExtend
             });
-            const result = await collectionStore.create({
+            const result = await collectionStore.save({
               label: title,
               type: selectedType,
               defaultLayout: selectedView,

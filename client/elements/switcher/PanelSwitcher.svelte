@@ -14,6 +14,7 @@
   import Text from "../text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { fade, fly, slide } from "svelte/transition";
+  import { moveItemInArray } from "$lib/shared/utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
@@ -68,6 +69,7 @@
     }
     return emptyTranstition();
   }
+  $: console.log({ isInEditMode, _items });
 </script>
 
 {#key isInEditMode}
@@ -127,7 +129,7 @@
           {item}
           {size}
           {style}
-          {isInEditMode}
+          isInEditMode={_items.length > 2 && isInEditMode}
           {barStyle}
           {isInversePlacement}
           {parentBgIndex}
@@ -139,6 +141,15 @@
           on:click={() => {
             value = item.value;
             dispatch("switch", item.value);
+          }}
+          on:rearrange={(e) => {
+            _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
+          }}
+          on:rearranged={(e) => {
+            dispatch(
+              "rearrange",
+              _items.map((x) => x.value)
+            );
           }}
           on:change
           on:add

@@ -38,12 +38,12 @@
       : item.icon;
 </script>
 
-{#if isInEditMode && isAddNewItem}
+{#if isAddNewItem}
   <AddNewButton {size} />
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
     <!-- TODO - rearrange - disabling until this feature is complete -->
-    <!-- <Icon icon="grab" {size} /> -->
+    <Icon icon="ph:dots-six-vertical-bold" class="text-fgs2" {size} />
     <Popover
       bind:this={labelEditPopoverRef}
       isPreventDefault={!isActive}

@@ -77,7 +77,6 @@ export class ActiveResourceStore<
   subscribe = this.subject.subscribe;
   set = this.subject.set;
   update = this.subject.update;
-  protected debouncers = new Map<string, any>();
   constructor(id: IRecordId, resourceStore: U) {
     this.id = id;
     this.resourceStore = resourceStore;
@@ -85,21 +84,12 @@ export class ActiveResourceStore<
       this.currentUserId = x;
     });
   }
-  modify(val: Partial<T>, params?: IMutationQueueParams) {
-    return this.resourceStore.modify(this.id, val);
-  }
-
-  resolveDebouncerForPersist(id: string) {
-    if (!this.debouncers.has(id)) {
-      this.debouncers.set(id, debouncer(this.modify.bind(this), 2000));
-    }
-    let val = this.debouncers.get(id);
-    return val!;
-  }
 
   debouncedModify(val: Partial<T>, key?: string) {
-    this.update((prev: T) => ({ ...prev, ...val }));
-    return this.resolveDebouncerForPersist(key ?? this.id.toString())(val);
+    return this.resourceStore.modify(this.id, val, {
+      isDebounced: true,
+      debounceKey: key
+    });
   }
 
   delete() {
@@ -131,6 +121,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   mutatingResources: string[];
   cacheStrategy?: CacheStrategy;
   dboDependencies?: string[];
+  protected debouncers = new Map<string, any>();
   private isExtensionEnvironment: boolean = false;
   private isUseV2: boolean = true;
   constructor(
@@ -157,6 +148,7 @@ export class ResourceStore<T extends IResource> implements IStore {
   resolveRefreshQuery() {
     return this.refreshQuery ?? "";
   }
+
   /**
    * Creates a resource or a list of resources. If the input param is a list, it will be inserted into the database.
    * @param input resource(s) to be created
@@ -174,7 +166,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       queueParams?: IMutationQueueParams;
       customQueryAdditionalParams?: { [key: string]: any };
     }
-  ) {
+  ): Promise<T[] | undefined> {
     let data;
     let action = PersistenceActionType.CREATE;
     let commonProps = {
@@ -262,36 +254,8 @@ export class ResourceStore<T extends IResource> implements IStore {
     });
     return data;
   }
-  /**
-   * Modifies the resource with given id - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.
-   * @param id id of the resource to be updated
-   * @param properties properties to be updated
-   * @param mutatationQueueParams params to be passed to the mutation queue
-   * @returns
-   */
-  async modify(id: IRecordId, properties: Partial<T>) {
-    if (!this.currentUserId || typeof this.currentUserId != "string") {
-      this.currentUserId = await resolveCurrentUserId();
-    }
-    const modificationProps = {
-      modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
-    };
-    const activeResource = activeResources.get(id.toString());
-    if (activeResource) {
-      activeResource.update((prev: T) => ({
-        ...prev,
-        ...properties,
-        ...modificationProps
-      }));
-    }
-    const data: Partial<T> = {
-      id,
-      ...properties,
-      ...modificationProps
-    };
 
+  private persistModification(data: Partial<T>) {
     if (this.isExtensionEnvironment) {
       return extentionFlux({
         method: FluxMethod.MUTATION,
@@ -309,6 +273,64 @@ export class ResourceStore<T extends IResource> implements IStore {
       record: data
     });
   }
+
+  private resolveDebouncerForPersist(id: string) {
+    if (!this.debouncers.has(id)) {
+      this.debouncers.set(
+        id,
+        debouncer(this.persistModification.bind(this), 2000)
+      );
+    }
+    let val = this.debouncers.get(id);
+    return val!;
+  }
+
+  /**
+   * Modifies the resource with given id - with the properties passed and persists the change. If an active resource is present, it will be updated with the new properties.
+   * @param id id of the resource to be updated
+   * @param properties properties to be updated
+   * @param mutatationQueueParams params to be passed to the mutation queue
+   * @returns
+   */
+  async modify(
+    id: IRecordId,
+    properties: Partial<T>,
+    additionalParams?: {
+      isPreventBackPropagation?: boolean;
+      isDebounced?: boolean;
+      debounceKey?: string;
+    }
+  ) {
+    if (!this.currentUserId || typeof this.currentUserId != "string") {
+      this.currentUserId = await resolveCurrentUserId();
+    }
+    const modificationProps = {
+      modifiedBy: this.currentUserId,
+      modifiedAt: new Date().toISOString(),
+      interactedAt: new Date().toISOString()
+    };
+    const activeResource = activeResources.get(id.toString());
+    if (activeResource && !additionalParams?.isPreventBackPropagation) {
+      activeResource.update((prev: T) => ({
+        ...prev,
+        ...properties,
+        ...modificationProps
+      }));
+    }
+    const data: Partial<T> = {
+      id,
+      ...properties,
+      ...modificationProps
+    };
+
+    if (additionalParams?.isDebounced) {
+      return this.resolveDebouncerForPersist(
+        additionalParams.debounceKey ?? id.toString()
+      )(data);
+    }
+    return this.persistModification(data);
+  }
+
   async trash(id: IRecordId) {
     return this.modify(id, {
       trashInformation: {
@@ -317,6 +339,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       }
     } as Partial<T>);
   }
+
   async bulkModify(ids: string[], data: Partial<T>) {
     if (this.isUseV2) {
       if (this.isExtensionEnvironment) {

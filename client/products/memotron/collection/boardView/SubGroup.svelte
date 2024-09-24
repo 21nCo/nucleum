@@ -7,6 +7,8 @@
   export let subGroup: any;
   export let data: any;
   export let arrangement: NodeThumbnailVariant | undefined;
+  export let isInEditMode = false;
+
   let isCollapsed = data.length > 0 ? false : true;
 </script>
 
@@ -25,7 +27,7 @@
     </span>
     <Button icon={!isCollapsed ? "chevdown" : "chevup"} size={Size.sm} />
   </button>
-  {#if !isCollapsed}
+  {#if !isCollapsed && !isInEditMode}
     <div class="w-full flex flex-col gap-4">
       <NodeItems nodes={data} {arrangement} />
     </div>

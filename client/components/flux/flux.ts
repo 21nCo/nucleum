@@ -203,7 +203,7 @@ class Flux {
     }
     const dependantStores = this.resolveDependantStores(resource);
     //TODO refresh stores
-    logger.log({
+    logger.debug({
       at: "flux.mutation - result",
       resource,
       response,

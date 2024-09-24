@@ -103,10 +103,11 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     const current = this.getState(ResourceAccessPoint.TOP_BAR, {
       isProductScoped: true
     });
-    if (!current?.includes(id.toString())) return;
+    console.log({ at: "removeResourceFromTopBar", current, id });
+    if (!current?.map((x) => x.toString()).includes(id.toString())) return;
     this.setState(
       ResourceAccessPoint.TOP_BAR,
-      current.filter((x) => x != id.toString()),
+      current.filter((x) => x.toString() != id.toString()),
       {
         isProductScoped: true
       }

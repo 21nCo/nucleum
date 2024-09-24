@@ -162,7 +162,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       label: file.name
     } as IMediaNode;
     const result = await nodeStore.create([node]);
-    return result?.[0]?.[0];
+    return result?.[0];
   }
 
   async saveMultipleFiles(files: { file: File; contentType: NodeType }[]) {
@@ -282,6 +282,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       root = { ...root, url: root.body.url };
 
     let result: any = await nodeStore.create([root, ...remainingResources]);
+    logger.log({ at: "CaptureStore.save", result });
     //TODO - save links
     const rootLinks = [
       ...(val.links ? val.links.filter((x) => x.from === "root") : [])

@@ -18,6 +18,9 @@ export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
   id: IRecordId;
 };
 
+/**
+ * @deprecated - use {@link INodeThumb} instead
+ */
 export type INodeThumbnail = INodeBaseV1 &
   NodeContent & {
     links: LinkThumbnail[];

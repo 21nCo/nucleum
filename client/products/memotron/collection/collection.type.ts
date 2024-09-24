@@ -3,7 +3,7 @@ import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { Arrangement, Placement } from "$lib/client/types/direction.enum";
 import type { IMemotronItemBase } from "../memotron.type";
-import type { INodeThumbnail } from "../node/node.type";
+import type { INodeThumb } from "../node/node.type";
 import type { IProperty } from "./properties/property.type";
 
 export enum CollectionType {
@@ -19,15 +19,26 @@ export enum CollectionLayout {
   GEOMAP = "GEOMAP"
 }
 
-export type IActiveCollection = ICollection & {
+interface ICollectionBase extends IMemotronItemBase {
   type: CollectionType;
+  cover?: string;
+  coverLayout?: ICoverLayout;
+  description?: string;
+  isStarred?: boolean;
+  isCaptureShortcutEnabled?: boolean;
+  query?: string;
+  avatar?: Pick<IAvatar, "code" & "color" & "isFilled" & "type">;
+}
+
+export interface IActiveCollection extends ICollectionBase {
   refreshError?: string;
   isViewDataLoading: boolean;
   isViewDataRefreshing: boolean;
   isPageLoading: boolean;
   views: ICollectionViewWithData[];
   properties: IProperty[];
-};
+  typeToExtend?: IActiveCollection;
+}
 
 export type ICoverLayout = {
   placement?: Placement.Left | Placement.Top | Placement.Right;
@@ -41,20 +52,12 @@ export type ICoverLayout = {
   };
 };
 
-export interface ICollection extends IMemotronItemBase {
+export interface ICollection extends ICollectionBase {
   views: IRecordId[];
-  type: CollectionType;
-  cover?: string;
-  coverLayout?: ICoverLayout;
-  description?: string;
-  isStarred?: boolean;
-  isCaptureShortcutEnabled?: boolean;
   /**
    * Type collection to extend - string identifier ex: collection:sometypecollection
    */
   typeToExtend?: IRecordId;
-  avatar?: Pick<IAvatar, "code" & "color" & "isFilled" & "type">;
-  query?: string;
   properties?: IRecordId[];
 }
 
@@ -63,7 +66,7 @@ export type ICollectionThumb = ICollection & {
 };
 
 export type ICollectionViewWithData = ICollectionView & {
-  data: INodeThumbnail[];
+  data: INodeThumb[];
 };
 export interface ICollectionView extends IMemotronItemBase {
   layout: CollectionLayout;

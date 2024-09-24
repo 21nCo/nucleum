@@ -32,7 +32,8 @@ export enum GlobalEvent {
   ENTER = "Enter",
   ESCAPE = "Escape",
   HIDE_POPOVER = "hidePopover",
-  SYNC_DOWN = "syncDown"
+  SYNC_DOWN = "syncDown",
+  APP_MENU_SWITCHED = "APP_MENU_SWITCHED"
 }
 
 export enum PlayActionState {

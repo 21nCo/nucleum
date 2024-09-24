@@ -5,19 +5,20 @@
     CollectionLayout,
     type ICollectionView
   } from "$lib/client/products/memotron/collection/collection.type";
-  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
+  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardView from "./boardView/BoardView.svelte";
   import type { IProperty } from "./properties/property.type";
   export let view: ICollectionView;
-  export let data: INodeThumbnail[] = [];
+  export let data: INodeThumb[] = [];
   export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
+  export let isInEditMode = false;
 </script>
 
 {#if isValidArrayWithData(data)}
   {#if view.layout === CollectionLayout.BOARD}
-    <BoardView {view} {data} {properties} {isBoardOverflow} />
+    <BoardView {view} {data} {isInEditMode} {properties} {isBoardOverflow} />
   {:else}
     <!-- TODO -->
     <ComingSoonView subText="View not built yet. Stay tuned." />

@@ -32,7 +32,7 @@
 <div
   class="flex flex-col gap-3 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6"
 >
-  <Text content="View settings" style={TextStyle.SECTION_HEADING_SMALL} />
+  <Text content="Layout" style={TextStyle.SECTION_HEADING_SMALL} />
   <div class="flex flex-wrap gap-6 w-full">
     <DropDown
       label={{ ...dropdownLabelConfig, label: "Layout" }}
@@ -72,5 +72,24 @@
         on:select
       />
     {/if}
+    <DropDown
+      label={{ ...dropdownLabelConfig, label: "Arrangement" }}
+      {...dropdownSettings}
+      items={properties}
+      bind:value={view.subGroupBy}
+      on:select
+    />
   </div>
+</div>
+
+<div
+  class="flex flex-col gap-3 h-40 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6"
+>
+  <Text content="Filters" style={TextStyle.SECTION_HEADING_SMALL} />
+</div>
+
+<div
+  class="flex flex-col gap-3 h-40 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6"
+>
+  <Text content="Sorting" style={TextStyle.SECTION_HEADING_SMALL} />
 </div>

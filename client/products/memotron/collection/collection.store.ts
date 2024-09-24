@@ -19,7 +19,10 @@ import {
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
 import { CombinationViewType } from "../curation/curation.type";
-import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessPoint,
+  type OmitForCapture
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
@@ -34,17 +37,16 @@ class CollectionStore extends ResourceStore<ICollection> {
       refreshOnAppear: true
     });
   }
-  async create(
-    form: Partial<ICollection> & { defaultLayout: CollectionLayout }
-  ) {
+  async save(form: Partial<ICollection> & { defaultLayout: CollectionLayout }) {
     const id = generateResourceId(Resource.collection);
     const properties = propertyEditorStore.get();
-    const resource: Partial<ICollection> = {
+    const resource: OmitForCapture<ICollection> = {
       ...form,
       id,
       views: [],
       properties: [],
-      defaultLayout: undefined
+      defaultLayout: undefined,
+      type: form.type ?? CollectionType.UNTYPED
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
       await propertyStore.create(properties);
@@ -54,7 +56,10 @@ class CollectionStore extends ResourceStore<ICollection> {
     await viewStore.create({
       id: viewId,
       layout: form.defaultLayout,
-      label: "Default"
+      label: "Default",
+      tabBy: "none",
+      groupBy: "none",
+      subGroupBy: "none"
     });
     resource.views = [viewId];
     return super.create(resource);
@@ -119,11 +124,6 @@ class ActiveCollectionStore extends ActiveResourceStore<
   IActiveCollection,
   CollectionStore
 > {
-  debouncedPersistView = debouncer((id: string, view: ICollectionView) => {
-    console.log("debouncedPersistView", { id, view });
-    viewStore.modify(id, view);
-  }, 2000);
-
   constructor(collectionId: IRecordId) {
     super(collectionId, collectionStore);
   }
@@ -167,25 +167,17 @@ class ActiveCollectionStore extends ActiveResourceStore<
     }
   }
 
-  async createView(viewToDuplicate?: string) {
+  async createView(viewToDuplicate?: IRecordId) {
     let viewToBeDuplicated: ICollectionView | undefined;
-    let partial: Omit<
-      ICollectionView,
-      | "id"
-      | "createdAt"
-      | "modifiedAt"
-      | "createdBy"
-      | "modifiedBy"
-      | "interactedAt"
-    >;
+    let view: OmitForCapture<ICollectionView> | undefined;
     if (viewToDuplicate) {
-      this.update((val: IActiveCollection) => {
-        viewToBeDuplicated = val.views.find((v) => v.id === viewToDuplicate);
-        return val;
-      });
-      partial = viewToBeDuplicated as ICollectionView;
+      const collection = this.get();
+      viewToBeDuplicated = collection.views.find(
+        (v) => v.id == viewToDuplicate
+      );
+      view = viewToBeDuplicated as ICollectionView;
     } else {
-      partial = {
+      view = {
         label: "New view",
         layout: CollectionLayout.BOARD,
         tabBy: "none",
@@ -194,8 +186,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
         arrangement: Arrangement.LIST
       };
     }
-    const createdView = await viewStore.create(partial);
-    logger.log({ at: "ActiveCollectionStore.createView", createdView });
+    const response = await viewStore.create(view);
+    logger.log({ at: "ActiveCollectionStore.createView", response });
+    if (!response || !Array.isArray(response)) return;
+    const createdView = response[0];
     if (!createdView || !createdView.id) return;
 
     this.update((val: IActiveCollection) => {
@@ -203,9 +197,15 @@ class ActiveCollectionStore extends ActiveResourceStore<
       return val;
     });
 
-    this.resourceStore.modify(this.id, {
-      views: [...(this.get().views.map((x) => x.id) ?? []), createdView.id]
-    });
+    this.resourceStore.modify(
+      this.id,
+      {
+        views: [...(this.get().views.map((x) => x.id) ?? [])]
+      },
+      {
+        isPreventBackPropagation: true
+      }
+    );
     return createdView.id;
   }
 
@@ -222,7 +222,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
     return viewStore.trash(id);
   }
 
-  updateView(id: string, view: Partial<ICollectionView>) {
+  updateView(id: IRecordId, view: Partial<ICollectionView>, key?: string) {
     this.update((val: IActiveCollection) => {
       val.views = val.views.map((v) => {
         if (v.id == id) return { ...v, ...view };
@@ -230,7 +230,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
       });
       return val;
     });
-    this.debouncedPersistView(id, view);
+    viewStore.modify(id, view, {
+      isDebounced: true,
+      debounceKey: key ?? id.toString()
+    });
   }
 
   /**
@@ -238,7 +241,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * @param viewId
    * @returns
    */
-  async loadViewData(viewId: string) {
+  async loadViewData(viewId: IRecordId) {
     logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
     if (!viewId) return;
     this.update((val: IActiveCollection) => {
@@ -270,7 +273,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
    * @param viewId
    * @returns
    */
-  async refreshViewData(viewId: string) {
+  async refreshViewData(viewId: IRecordId) {
     console.log({ context: "refreshViewData", viewId });
     this.update((val: IActiveCollection) => {
       val.isViewDataRefreshing = true;
@@ -344,7 +347,7 @@ export function resolveCollectionContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          resourceActions.pinToTopBar(),
+          resourceActions.openAsTab(),
           resourceActions.select(accessPoint),
           resourceActions.copyLink()
         ]
@@ -361,6 +364,14 @@ export function resolveCollectionContextMenu(
       items: [
         resourceActions.star(),
         resourceActions.edit(accessPoint),
+        resourceActions.openAsTab(),
+        resourceActions.openAsSplit(),
+        {
+          value: "share",
+          icon: "ph:share-light",
+          label: "Share",
+          callback: async () => {}
+        },
         resourceActions.copyLink()
       ]
     },

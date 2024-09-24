@@ -19,6 +19,7 @@ import {
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
+import { LogType } from "$lib/client/components/debug/debug.type";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
@@ -47,7 +48,7 @@ export class SurrealPersistence implements IPersistence {
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
       // await this.logInfo();
-      await this.testQuery();
+      // await this.testQuery();
       const initLog = await this.select("kv:init");
       if (initLog) {
         logger.log({
@@ -87,7 +88,7 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "select * from kv;"
+      "update collection:0fa455f78af27051e0c8e878bcdf2013 set views = ['view:ade2f91256f0ac65bb96c2ea7d0023a2'];"
     );
     logger.log({
       at: "surreal.persistence.testQuery",
@@ -169,7 +170,7 @@ export class SurrealPersistence implements IPersistence {
   async insert<T extends IResource | IMetaResource>(
     records: T[],
     resource: string
-  ): Promise<any> {
+  ): Promise<T[] | null> {
     logger.log({
       at: "SurrealPersistence.insert",
       resource,
@@ -187,7 +188,9 @@ export class SurrealPersistence implements IPersistence {
       this.isProcessingOperation = false;
     }
     logger.log({ at: "SurrealPersistence.insert", result });
-    return result;
+    if (Array.isArray(result) && result[0] && Array.isArray(result[0]))
+      return result[0];
+    else return null;
   }
 
   replace<T extends IResource | IMetaResource>(
@@ -209,7 +212,7 @@ export class SurrealPersistence implements IPersistence {
     const query = resolveMergeQuery(record);
     const result = await this.instance?.query(query);
     this.isProcessingOperation = false;
-    logger.debug({ at: "SurrealPersistence.merge", record, query, result });
+    logger.log({ at: "SurrealPersistence.merge", record, query, result });
     return result;
   }
 

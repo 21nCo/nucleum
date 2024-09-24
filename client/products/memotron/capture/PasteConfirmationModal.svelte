@@ -121,7 +121,7 @@
         }
       }
       const result = await nodeStore.create([node]);
-      postSave(result?.[0]?.[0] ?? null);
+      postSave(result?.[0] ?? null);
     } catch (error) {
       postSave(null);
     } finally {

@@ -47,7 +47,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   archive(): IContextMenuItem {
     return {
       value: this.resource.isArchived ? "unarchive" : "archive",
-      icon: "archive",
+      icon: "ph:archive-light",
       callback: async () => {
         this.resource.isArchived
           ? this.store.unarchive(this.resource.id)
@@ -58,7 +58,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   trash(): IContextMenuItem {
     return {
       value: this.resource.trashInformation ? "restore" : "delete",
-      icon: "trash",
+      icon: "ph:trash-light",
       callback: async () => {
         this.resource.trashInformation
           ? this.store.restore(this.resource.id)
@@ -105,7 +105,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       label: "Edit",
       value: "edit",
-      icon: "pencil-square",
+      icon: "ph:pencil-simple-line-light",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
           appStore.resourceClickHandler(
@@ -120,15 +120,16 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
-  pinToTopBar(): IContextMenuItem {
+  openAsTab(): IContextMenuItem {
     const isAlreadyPinned = uiState
       .getState(ResourceAccessPoint.TOP_BAR, {
         isProductScoped: true
       })
       ?.includes(this.resource.id);
     return {
-      value: isAlreadyPinned ? "Remove from top bar" : "Open in top bar",
-      icon: "rocket",
+      value: isAlreadyPinned ? "Remove from tabs" : "Open as tab",
+      icon: "ph:tabs-light",
+      badge: "New",
       callback: async () => {
         if (isAlreadyPinned) {
           uiState.removeResourceFromTopBar(this.resource.id);
@@ -136,6 +137,13 @@ export class ResourceActions<T extends IMemotronItemBase> {
           uiState.addResourceToTopBar(this.resource.id);
         }
       }
+    };
+  }
+  openAsSplit(): IContextMenuItem {
+    return {
+      value: "open-as-split",
+      icon: "ph:square-split-horizontal-light",
+      callback: async () => {}
     };
   }
   unlink(contextId: IRecordId): IContextMenuItem {

@@ -9,9 +9,10 @@
   import type { IAppMenuStore } from "$lib/client/stores/appMenu/appMenu.type";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import { appEvents, toasts } from "$lib/client/stores/notification.store";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
+  import { GlobalEvent } from "$lib/client/types/event.enum";
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
@@ -65,8 +66,11 @@
       toasts.reset();
     }
     isInEditMode.set(false);
+    if (selected !== index) {
+      appStore.runAction(item.action);
+    }
     selected = index;
-    appStore.runAction(item.action);
+    appEvents.publish(GlobalEvent.APP_MENU_SWITCHED, item.action);
   }
 </script>
 

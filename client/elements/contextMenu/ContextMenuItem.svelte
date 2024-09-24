@@ -4,6 +4,7 @@
   import Icon from "../Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import type { IContextMenuItem } from "$lib/client/types/select.type";
+  import Badge from "../text/Badge.svelte";
   export let item: IContextMenuItem;
   function isRedAccent(item: IContextMenuItem) {
     return item.value.toString().toLowerCase() === "delete";
@@ -28,4 +29,7 @@
 </span>
 {#if item.secondStepComponent || item.action}
   <Icon icon="chevright" size={Size.sm} />
+{/if}
+{#if item.badge && !item.action && !item.secondStepComponent}
+  <Badge text={item.badge} />
 {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
-  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
+  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardPane from "./BoardPane.svelte";
@@ -8,9 +8,10 @@
   import NodeItems from "../NodeItems.svelte";
   import type { IProperty } from "../properties/property.type";
   export let view: ICollectionView;
-  export let data: INodeThumbnail[] = [];
+  export let data: INodeThumb[] = [];
   export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
+  export let isInEditMode = false;
 
   $: groups = resolveBoards(view.groupBy, properties);
 
@@ -19,7 +20,7 @@
     return resolvePropertyOptions(id, properties);
   }
   function filterGroupData(group: ISelectValue) {
-    return data?.filter((node: INodeThumbnail) => {
+    return data?.filter((node: INodeThumb) => {
       return (
         node.properties?.find((p) => p.id === view.groupBy)?.value === group
       );
@@ -33,6 +34,7 @@
     {#each groups as group}
       <BoardPane
         {view}
+        {isInEditMode}
         {group}
         {isBoardOverflow}
         {properties}
@@ -40,6 +42,6 @@
       />
     {/each}
   </div>
-{:else}
+{:else if !isInEditMode}
   <NodeItems nodes={data} arrangement={view.arrangement} />
 {/if}

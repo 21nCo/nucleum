@@ -92,7 +92,7 @@
         "w-16 min-w-[4rem]": isInThinMode,
         "w-56 min-w-[14rem]": !isInThinMode,
         "ml-2": isRounded,
-        "border-r border-r-brs2": !isRounded
+        "border--r border-r-brs2": !isRounded
       })}
       on:mouseenter={() => (isHovered = true)}
       on:mouseleave={() => (isHovered = false)}

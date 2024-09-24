@@ -176,6 +176,7 @@ const resizable: Action<HTMLElement, ResizableOptions> = (
       if (newOptions.maxWidth !== undefined) maxWidth = newOptions.maxWidth;
       if (newOptions.minHeight !== undefined) minHeight = newOptions.minHeight;
       if (newOptions.maxHeight !== undefined) maxHeight = newOptions.maxHeight;
+      if (newOptions.onResize !== undefined) onResize = newOptions.onResize;
       updateHandles();
     },
     destroy() {

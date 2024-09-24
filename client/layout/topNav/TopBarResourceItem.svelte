@@ -5,9 +5,10 @@
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { resolveResource } from "$lib/client/products/memotron/memotron.store";
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
-  export let item: string;
+  export let item: IRecordId;
   let resource: any;
   let isHovering: boolean = false;
   let contextMenu = [

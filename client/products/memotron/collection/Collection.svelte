@@ -6,7 +6,7 @@
   import Cover from "./Cover.svelte";
   import CollectionTitleBar from "./CollectionTitleBar.svelte";
   import View from "./View.svelte";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -19,7 +19,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
+  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
@@ -43,12 +43,15 @@
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
+  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import { InputStyle } from "$lib/client/types/input.type";
+  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
   ) as IActiveCollectionStore;
   let activeView: ICollectionViewWithData | null = null;
-  let filteredViewData: INodeThumbnail[] = [];
+  let filteredViewData: INodeThumb[] = [];
   let selectedViewId: string;
   let selectedTab: ISelectValue | undefined = undefined;
   let dev_isRoundedCover = false;
@@ -59,7 +62,7 @@
     style: ButtonStyle;
     isPreventMinWidth: boolean;
   } = {
-    style: ButtonStyle.OUTLINED,
+    style: ButtonStyle.PLAIN,
     size: Size.sm,
     isPreventMinWidth: true
   };
@@ -69,6 +72,9 @@
   let isNotInlineAccess: boolean = false;
   let selectedArrangement: Arrangement = Arrangement.LIST;
   let isCoverPickerOpen = false;
+  let isInEditMode = false;
+  let isShowMetaViews = false;
+  let isNonViewLaneMode = true;
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -92,10 +98,10 @@
       activeView = $collection?.views
         ? $collection.views.filter(activeResourceFilter)?.[0]
         : null;
-      selectedViewId = activeView?.id ?? "";
+      selectedViewId = activeView?.id?.toString() ?? "";
     }
     properties = await resolvePropertyList();
-    refreshViewsOnSwitcher();
+    refreshViewsLane();
     isReady = true;
     await refresh({ isNewView: true });
   });
@@ -112,7 +118,7 @@
           noneOption,
           ...($collection?.properties
             ? $collection?.properties.map((x: IProperty) => {
-                return { label: x.label, value: x.id };
+                return { label: x.label, value: x.id?.toString() };
               })
             : []),
           ...metaPropertyOptions
@@ -122,63 +128,74 @@
 
   function onViewRemove(e: CustomEvent) {
     if (e.detail) collection.deleteView(e.detail);
-    refreshViewsOnSwitcher();
+    refreshViewsLane();
   }
 
   async function onViewAdd(e: CustomEvent) {
     const id = await collection.createView();
     if (!id) return;
-    selectedViewId = id;
-    refreshViewsOnSwitcher();
+    selectedViewId = id.toString();
+    refreshViewsLane();
     onViewSwitch();
-    triggerItemEdit = id;
+    triggerItemEdit = id.toString();
   }
 
   function onViewSettingsChange() {
-    if (activeView) collection.updateView(activeView.id, activeView);
+    if (activeView)
+      collection.updateView(activeView.id, activeView, "settings");
   }
 
   function onArrangementChange(e: CustomEvent) {
     // console.log("onArrangementChange", e.detail);
     if (!activeView) return;
     activeView.arrangement = e.detail;
-    collection.updateView(activeView.id, {
-      arrangement: activeView.arrangement
-    });
+    collection.updateView(
+      activeView.id,
+      {
+        arrangement: activeView.arrangement
+      },
+      "arrangement"
+    );
   }
 
   function onScroll() {
-    var elementTarget = document.querySelector(".sticky");
+    console.log("onScroll");
+    var elementTarget = document.querySelector(".stickyheader");
     var positionFromTop = elementTarget?.getBoundingClientRect().top;
     isStickied = positionFromTop ? positionFromTop <= 0 : false;
   }
 
   async function onViewSwitch() {
+    logger.log({ at: "onViewSwitch", selectedViewId });
     const view = loadActiveView();
     if (!view) return;
-    appStore.toggleSearchParam("view", view.id);
+    appStore.toggleSearchParam("view", view.id?.toString());
     await refresh({ isNewView: true });
   }
 
   function onViewLabelChange(e: CustomEvent) {
-    console.log("onViewLabelChange", e.detail, activeView);
-    if (!activeView) return;
-    activeView.label = e.detail.label;
-    collection.updateView(activeView.id, { label: activeView.label });
+    if (!e.detail.value || !e.detail.label) return;
+    collection.updateView(e.detail.value, { label: e.detail.label }, "label");
   }
 
-  function refreshViewsOnSwitcher() {
+  function onViewRearrange(e: CustomEvent) {
+    console.log("onViewRearrange", e);
+  }
+
+  function refreshViewsLane() {
     viewsForSwitcher = $collection?.views
       ? $collection.views.filter(activeResourceFilter).map((x) => {
-          return { label: x.label ?? "Default", value: x.id };
+          return { label: x.label ?? "Default", value: x.id?.toString() };
         })
       : [];
+    isNonViewLaneMode = $collection?.views?.length === 1;
   }
 
   function loadActiveView() {
     logger.log({ at: "loadActiveView", selectedViewId });
     if (!selectedViewId) return;
-    const view = $collection.views.find((x) => x.id === selectedViewId) ?? null;
+    const view =
+      $collection.views.find((x) => x.id.toString() === selectedViewId) ?? null;
     if (!view) return;
     activeView = view;
     selectedArrangement = view.arrangement ?? selectedArrangement;
@@ -218,6 +235,7 @@
     collection.debouncedModify({ cover: e.detail }, "cover");
   }
   function onPlacementChange(e: CustomEvent) {
+    logger.log({ at: "onPlacementChange", e });
     collection.debouncedModify(
       {
         coverLayout: {
@@ -229,6 +247,7 @@
     );
   }
   function onCoverReposition(e: CustomEvent) {
+    logger.log({ at: "onCoverReposition", e });
     const isY =
       $collection.coverLayout?.placement === Placement.Top ||
       !$collection.coverLayout?.placement;
@@ -246,6 +265,7 @@
   }
 
   function onCoverResize(e: CustomEvent) {
+    logger.log({ at: "onCoverResize", e });
     const isY =
       $collection.coverLayout?.placement === Placement.Top ||
       !$collection.coverLayout?.placement;
@@ -285,7 +305,7 @@
     {#if $collection.coverLayout?.placement !== Placement.Right}
       <Cover
         cover={$collection.cover}
-        isInEditMode={$isInEditMode}
+        {isInEditMode}
         placement={$collection.coverLayout?.placement}
         position={$collection.coverLayout?.position}
         size={$collection.coverLayout?.size}
@@ -318,48 +338,88 @@
       </div>
     {:else}
       <div
-        class={cn("flex flex-col gap-6 pt-4 flex-1", {
+        class={cn("flex flex-col gap-8 flex-1", {
           "h-full overflow-auto":
             $collection.coverLayout?.placement === Placement.Left ||
             $collection.coverLayout?.placement === Placement.Right,
           "w-full": $collection.coverLayout?.placement === Placement.Top
         })}
+        on:scroll={onScroll}
       >
-        <div class="px-4">
-          <CollectionTitleBar on:back {collection} />
+        <div class="px-4 pt-6 stickyheader">
+          <CollectionTitleBar
+            on:back
+            {collection}
+            bind:isInEditMode
+            bind:isShowMetaViews
+          />
         </div>
-        <header
-          class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
-            "pt-4": isStickied
-          })}
-        >
-          <PanelSwitcher
-            items={viewsForSwitcher}
-            isEnableAnimationForTitle={true}
-            style={PanelSwitcherStyle.BAR}
-            title={isStickied ? $collection.label : ""}
-            isExpandToFullWidth={true}
-            barStyle={BarStyle.EXACT}
-            isInEditMode={$isInEditMode}
-            bind:triggerItemEdit
-            on:remove={onViewRemove}
-            on:add={onViewAdd}
-            bind:value={selectedViewId}
-            on:switch={onViewSwitch}
-            on:change={onViewLabelChange}
+        {#if isShowMetaViews}
+          <div class="px-4">
+            <OptionSelector
+              size={Size.sm}
+              selected={""}
+              options={[
+                {
+                  value: "birdView",
+                  icon: "ph:bird-light",
+                  label: "Bird view"
+                },
+                {
+                  value: "flashcards",
+                  icon: "ph:cards-three-light",
+                  label: "Run Flashcards"
+                },
+                {
+                  value: "slideshow",
+                  icon: "ph:slideshow-light",
+                  label: "Start slideshow"
+                },
+                {
+                  value: "timemachine",
+                  icon: "ph:clock-counter-clockwise-light",
+                  label: "Time machine"
+                }
+              ]}
+            />
+          </div>
+        {/if}
+        {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isNonViewLaneMode}
+          <header
+            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
+              "pt-4": isStickied
+            })}
           >
-            <span class="flex gap-2" slot="right">
-              <Button
-                icon="adjustments-horizontal"
-                label="filters"
-                {...viewRightButtonOptions}
-              />
-              <Button
-                icon="bars-center-left"
-                label="sort"
-                {...viewRightButtonOptions}
-              />
-              <!-- <Button
+            {#if !isNonViewLaneMode || isInEditMode}
+              <PanelSwitcher
+                items={viewsForSwitcher}
+                isEnableAnimationForTitle={true}
+                style={PanelSwitcherStyle.BAR}
+                title={isStickied ? $collection.label : ""}
+                isExpandToFullWidth={true}
+                barStyle={BarStyle.EXACT}
+                {isInEditMode}
+                bind:triggerItemEdit
+                on:remove={onViewRemove}
+                on:add={onViewAdd}
+                bind:value={selectedViewId}
+                on:switch={onViewSwitch}
+                on:change={onViewLabelChange}
+                on:rearrange={onViewRearrange}
+              >
+                <span class="flex gap-6" slot="right">
+                  {#if !isInEditMode}
+                    <Button
+                      icon="adjustments-horizontal"
+                      label="filters"
+                      {...viewRightButtonOptions}
+                    />
+                    <Button
+                      icon="bars-center-left"
+                      label="sort"
+                      {...viewRightButtonOptions}
+                    />
+                    <!-- <Button
               icon={activeView?.arrangement === Arrangement.GRID
                 ? "widget"
                 : "list"}
@@ -369,46 +429,52 @@
               {...viewRightButtonOptions}
               on:click={onArrangementChange}
             /> -->
-              <DropDown
-                items={[
-                  { value: Arrangement.LIST, label: "List" },
-                  { value: Arrangement.GRID, label: "Grid" },
-                  {
-                    value: Arrangement.MASONRY,
-                    label: "Masonry"
-                  }
-                ]}
-                bind:value={selectedArrangement}
-                on:select={onArrangementChange}
-                isDisableSearch={true}
-                size={Size.sm}
-              />
-            </span>
-          </PanelSwitcher>
-          {#if activeView && ($isInEditMode || isValidString(activeView.tabBy))}
-            <div class="px-4 pb-4 flex flex-col gap-6">
-              {#if $isInEditMode}
-                <ViewSettingsBar
-                  bind:view={activeView}
-                  {properties}
-                  on:select={onViewSettingsChange}
-                />
-              {/if}
-              {#if activeView.tabBy}
-                <ViewTabSwitcher
-                  view={activeView}
-                  bind:value={selectedTab}
-                  properties={$collection?.properties}
-                  on:select={onTabSwitch}
-                />
-              {/if}
-            </div>
-          {/if}
-        </header>
+                    <DropDown
+                      items={[
+                        { value: Arrangement.LIST, label: "List" },
+                        { value: Arrangement.GRID, label: "Grid" },
+                        {
+                          value: Arrangement.MASONRY,
+                          label: "Masonry"
+                        }
+                      ]}
+                      bind:value={selectedArrangement}
+                      on:select={onArrangementChange}
+                      style={InputStyle.PLAIN}
+                      isDisableSearch={true}
+                      size={Size.sm}
+                    />
+                  {/if}
+                </span>
+              </PanelSwitcher>
+            {/if}
+            {#if activeView && (isInEditMode || isValidString(activeView.tabBy))}
+              <div class="px-4 pb-4 flex flex-col gap-6">
+                {#if isInEditMode}
+                  <ViewSettingsBar
+                    bind:view={activeView}
+                    {properties}
+                    on:select={onViewSettingsChange}
+                  />
+                {/if}
+                {#if activeView.tabBy}
+                  <ViewTabSwitcher
+                    view={activeView}
+                    bind:value={selectedTab}
+                    properties={$collection?.properties}
+                    on:select={onTabSwitch}
+                  />
+                {/if}
+              </div>
+            {/if}
+          </header>
+        {/if}
         <main
           class={cn(
             "w-full grow flex flex-col gap-2 justify-center items-center px-4",
-            {}
+            {
+              "overflow-auto": isNonViewLaneMode
+            }
           )}
         >
           <ResourceStatusBanner resource={collection} />
@@ -417,6 +483,7 @@
           {:else if !$collection.isViewDataLoading && activeView}
             <View
               view={activeView}
+              {isInEditMode}
               data={filteredViewData}
               isBoardOverflow={isStickied}
               properties={$collection?.properties}
@@ -430,14 +497,16 @@
     {#if $collection.coverLayout?.placement === Placement.Right}
       <Cover
         cover={$collection.cover}
-        isInEditMode={$isInEditMode}
+        {isInEditMode}
         placement={$collection.coverLayout?.placement}
         position={$collection.coverLayout?.position}
+        size={$collection.coverLayout?.size}
         {dev_isRoundedCover}
         bind:isCoverPickerOpen
         on:change={onCoverChange}
         on:placement={onPlacementChange}
         on:reposition={onCoverReposition}
+        on:resize={onCoverResize}
       />
     {/if}
     {#if isNotInlineAccess}
@@ -445,3 +514,4 @@
     {/if}
   </div>
 {/if}
+<PageLayer isDragAndDropPage={true} />

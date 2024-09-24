@@ -164,3 +164,32 @@ export function pick<T extends object, K extends keyof T>(
   });
   return result;
 }
+
+/**
+ * Moves an item in an array to the right or left.
+ * @param {Array} array - The original array
+ * @param {number} index - The index of the item to move
+ * @param {number} direction - 1 for right, -1 for left
+ * @returns {Array} A new array with the item moved
+ */
+export function moveItemInArray(
+  array: any[],
+  index: number,
+  direction: number
+) {
+  if (index < 0 || index >= array.length) {
+    throw new Error("Index out of bounds");
+  }
+
+  const newArray = [...array];
+  const newIndex = index + direction;
+
+  if (newIndex < 0 || newIndex >= array.length) {
+    return newArray; // No change if move is out of bounds
+  }
+
+  // Swap the elements
+  [newArray[index], newArray[newIndex]] = [newArray[newIndex], newArray[index]];
+
+  return newArray;
+}

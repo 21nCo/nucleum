@@ -78,7 +78,7 @@
   }
 
   function resolveResizeParams(placement: Placement, isInEditMode: boolean) {
-    if (!isInEditMode)
+    if (!isInEditMode || !cover)
       return {
         enabled: false
       };
@@ -116,9 +116,9 @@
         placement === Placement.Left || placement === Placement.Right,
       "cursor-move": isPositionable
     })}
-    style={placement === Placement.Top
-      ? `height: ${size?.height ?? 300}px;`
-      : `width: ${size?.width ?? 300}px;`}
+    style={placement === Placement.Top || !placement
+      ? `min-height: ${size?.height ?? 300}px; max-height: ${size?.height ?? 300}px;`
+      : `min-width: ${size?.width ?? 300}px; max-width: ${size?.width ?? 300}px;`}
     on:click={onClick}
     use:hoverable
     on:hover={onHover}
@@ -139,11 +139,11 @@
     {#if isInEditMode && cover}
       {#if isPositionable}
         <span
-          class="absolute flex gap-1 items-center text-fgs3 bg-bgs2 bg-opacity-50 py-1 px-2 rounded-md"
+          class="absolute flex gap-1 items-center text-fgs1 bg-bgs2 bg-opacity-60 dark:bg-opacity-50 py-1 px-2 rounded-md backdrop-blur-sm dark:backdrop-blur-none"
         >
           <Icon
             icon="ph:arrows-out-cardinal-light"
-            class="stroke-fgs3"
+            class="stroke-fgs1"
             size={Size.sm}
           />
           Pan to reposition</span

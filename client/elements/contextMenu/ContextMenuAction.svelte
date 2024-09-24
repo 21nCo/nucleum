@@ -11,6 +11,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Button from "../button/Button.svelte";
   import Popover from "../popover/Popover.svelte";
+  import Toggle from "../toggle/Toggle.svelte";
   import ContextMenu from "./ContextMenu.svelte";
 
   export let id: string;
@@ -65,12 +66,7 @@
   triggerClass={classList}
 >
   <slot>
-    <Button
-      icon="ellipsis-vertical"
-      {tooltip}
-      {tooltipOptions}
-      style={ButtonStyle.PLAIN}
-    />
+    <Toggle icon="ph:dots-three-vertical" {tooltip} />
   </slot>
   <slot name="popover" slot="popover">
     <ContextMenu

@@ -4,7 +4,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import type { ICollectionView } from "$lib/client/products/memotron/collection/collection.type";
-  import type { INodeThumbnail } from "$lib/client/products/memotron/node/node.type";
+  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -20,6 +20,7 @@
   export let data: any;
   export let properties: IProperty[] | null = null;
   export let isBoardOverflow = false;
+  export let isInEditMode = false;
   let isRenderColors = false;
   $: subGroups = resolveBoards(view.subGroupBy);
   function resolveBoards(id: string) {
@@ -27,7 +28,7 @@
     return resolvePropertyOptions(id, properties);
   }
   function filterSubGroupData(val: ISelectValue) {
-    return data?.filter((node: INodeThumbnail) => {
+    return data?.filter((node: INodeThumb) => {
       return (
         node.properties?.find((p) => p.id === view.subGroupBy)?.value === val
       );
@@ -64,11 +65,12 @@
         {#each subGroups as subGroup}
           <SubGroup
             {subGroup}
+            {isInEditMode}
             data={filterSubGroupData(subGroup.value)}
             arrangement={view.arrangement}
           />
         {/each}
-      {:else if isValidArrayWithData(data)}
+      {:else if isValidArrayWithData(data) && !isInEditMode}
         <NodeItems
           nodes={data}
           arrangement={view.arrangement}

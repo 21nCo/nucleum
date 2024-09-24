@@ -27,7 +27,7 @@ class Logger {
     if (type === LogType.TRACE) type = LogType.DEBUG;
     // if (type === LogType.DEBUG) type = LogType.TRACE;
     const logTypeName = LogType[type].toLowerCase();
-    console[logTypeName]({ t: new Date().toISOString(), ...message });
+    console[logTypeName]({ ...message, t: new Date().toISOString() });
   }
   private _log(message: any, type: LogType) {
     if (type <= this.level) {

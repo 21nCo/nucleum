@@ -22,7 +22,7 @@ import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 
-export function resolveResource(id: string) {
+export function resolveResource(id: IRecordId) {
   return flux.select(id);
 }
 

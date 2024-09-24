@@ -5,6 +5,7 @@ export type ISelectItem = {
   label?: string;
   icon?: string | IAvatar;
   isDisabled?: boolean;
+  badge?: string;
 };
 
 export enum OptionSelectorStyle {
