@@ -6,10 +6,11 @@
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
   } from "$lib/client/types/switcher.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
+  import { rearrange } from "$lib/client/actions/rearrange.action";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
@@ -26,24 +27,6 @@
   export let isShowNumberShortcut: boolean = false;
   export let index: number = 0;
 
-  let itemRef: HTMLButtonElement | null = null;
-  let reArrangeThreshold = 30;
-  let isDragging: boolean = false;
-  let startX: number | null = null;
-  let prevTranslateX = 0;
-  let translateX = 0;
-  let rafId: number | null = null;
-  let lastMouseX: number | null = null;
-  let isFloatingToDestinationMode = false;
-  let displacement = 0;
-  let offsetX = 0;
-  let prevMoveDirection: "forward" | "backward" | null = null;
-  let moveDirection: "forward" | "backward" | null = null;
-
-  onMount(() => {
-    console.log("PanelSwitcherItem onMount", item.label);
-  });
-
   function onClick() {
     if (item.value === "$add") {
       dispatch("add");
@@ -52,84 +35,19 @@
     }
   }
 
-  function onMouseDown(e: MouseEvent) {
-    console.log("onMouseDown", e);
-    isDragging = true;
-    isFloatingToDestinationMode = false;
-    startX = e.clientX;
-    lastMouseX = startX;
-    const left = itemRef?.getBoundingClientRect().left ?? 0;
-    offsetX = e.clientX - left;
-    // mouseOffset = e.
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(updatePosition);
+  function handleRearrange(displacement: number) {
+    dispatch("rearrange", displacement);
   }
 
-  function handleMouseMove(event: MouseEvent) {
-    lastMouseX = event.clientX;
-  }
-
-  function updatePosition() {
-    if (isDragging && startX !== null && lastMouseX !== null) {
-      translateX = lastMouseX - startX;
-
-      if (!isFloatingToDestinationMode) {
-        displacement = translateX;
-      }
-      if (
-        Math.abs(displacement) > reArrangeThreshold &&
-        !isFloatingToDestinationMode
-      ) {
-        dispatch("rearrange", displacement);
-        isFloatingToDestinationMode = true;
-        setTimeout(() => {
-          const left = itemRef?.getBoundingClientRect().left ?? 0;
-          console.log({ left });
-          startX = left + offsetX;
-          prevTranslateX = lastMouseX - startX;
-        }, 1);
-      }
-      if (prevTranslateX < translateX) {
-        moveDirection = "forward";
-      } else if (prevTranslateX > translateX) {
-        moveDirection = "backward";
-      }
-      if (
-        prevTranslateX * translateX < 0 ||
-        prevMoveDirection !== moveDirection
-      ) {
-        isFloatingToDestinationMode = false;
-      }
-      prevTranslateX = translateX;
-      prevMoveDirection = moveDirection;
-      // console.log({
-      //   translateX,
-      //   startX,
-      //   lastMouseX,
-      //   displacement,
-      //   moveDirection
-      // });
-      rafId = requestAnimationFrame(updatePosition);
-    }
-  }
-
-  function handleMouseUp() {
-    isDragging = false;
+  function handleRearranged(displacement: number) {
     dispatch("rearranged", displacement);
-    isFloatingToDestinationMode = false;
-    translateX = 0;
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-    if (rafId) cancelAnimationFrame(rafId);
   }
 </script>
 
 <!-- TODO - svelte 5 snippets for PanelSwitcherItemLabel multiple references -->
 {#if style === PanelSwitcherStyle.BAR}
   <button
-    class={cn("flex relative bg-transparent", {
+    class={cn("relative flex bg-transparent", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -140,14 +58,16 @@
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,
       "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,
-      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW,
-      "absolute z-10": isDragging
+      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW
     })}
-    style="transform: translateX({translateX}px);"
     on:click={onClick}
     disabled={isDisabled}
-    bind:this={itemRef}
-    on:mousedown={onMouseDown}
+    use:rearrange={{
+      enabled: isInEditMode,
+      onRearrange: handleRearrange,
+      onRearranged: handleRearranged,
+      threshold: 30
+    }}
   >
     <div
       class={cn("flex items-center min-w-fit", {
@@ -197,6 +117,12 @@
     })}
     disabled={isDisabled}
     on:click={onClick}
+    use:rearrange={{
+      enabled: isInEditMode,
+      onRearrange: handleRearrange,
+      onRearranged: handleRearranged,
+      threshold: 30
+    }}
   >
     <PanelSwitcherItemLabel
       {item}

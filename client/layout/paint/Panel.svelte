@@ -30,7 +30,6 @@
   let isCollapsed = false;
 
   $: isShowCollapseButton = $view.display !== Display.TK;
-  $: console.log({ isShowCollapseButton, display: $view.display });
 </script>
 
 <div class="flex w-full h-full">
@@ -39,7 +38,8 @@
       class={cn("relative flex flex-col h-full", {
         "w-full": $view.isPortrait,
         "w-[20rem] min-w-[20rem]": !$view.isPortrait && panelSize === Size.sm,
-        "w-[24rem] min-w-[24rem]": !$view.isPortrait && panelSize === Size.md,
+        "w-[24rem] min-w-[24rem] 2k:w-[28rem] 2k:min-w-[28rem]":
+          !$view.isPortrait && panelSize === Size.md,
         "w-[28rem] min-w-[28rem]": !$view.isPortrait && panelSize === Size.lg
       })}
     >

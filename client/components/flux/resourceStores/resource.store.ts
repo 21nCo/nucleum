@@ -85,6 +85,10 @@ export class ActiveResourceStore<
     });
   }
 
+  modify(val: Partial<T>, params?: { isPreventBackPropagation?: boolean }) {
+    return this.resourceStore.modify(this.id, val, params);
+  }
+
   debouncedModify(val: Partial<T>, key?: string) {
     return this.resourceStore.modify(this.id, val, {
       isDebounced: true,

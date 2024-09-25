@@ -46,6 +46,7 @@
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -179,7 +180,12 @@
   }
 
   function onViewRearrange(e: CustomEvent) {
-    console.log("onViewRearrange", e);
+    if (e.detail && isValidArrayWithData(e.detail)) {
+      collection.modify(
+        { views: e.detail },
+        { isPreventBackPropagation: true }
+      );
+    }
   }
 
   function refreshViewsLane() {
