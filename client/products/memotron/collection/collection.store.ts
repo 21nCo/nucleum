@@ -33,9 +33,7 @@ import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
-    super(Resource.collection, {
-      refreshOnAppear: true
-    });
+    super(Resource.collection);
   }
   async save(form: Partial<ICollection> & { defaultLayout: CollectionLayout }) {
     const id = generateResourceId(Resource.collection);
@@ -300,7 +298,6 @@ class ActiveCollectionStore extends ActiveResourceStore<
 class CollectionViewStore extends ResourceStore<ICollectionView> {
   constructor() {
     super(Resource.view, {
-      refreshOnAppear: true,
       dboDependencies: ["fn::memotron::collection::fetchData"]
     });
   }

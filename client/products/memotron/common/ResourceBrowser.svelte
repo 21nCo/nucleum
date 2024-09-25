@@ -5,9 +5,6 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Arrangement, Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { liveQuery } from "dexie";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { appStore } from "$lib/client/stores/app.store";
   import { collectionStore } from "../collection/collection.store";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -33,8 +30,9 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   export let resource: Resource;
-  collectionStore.refresh();
+
   let searchQuery: string = "";
   let isRefineShown = false;
   let id: string | null = null;
@@ -222,3 +220,10 @@
     {/key}
   </slot>
 </Panel>
+
+<ComponentBaseLayer
+  subscribeTo={[resource]}
+  syncDownOnMount={true}
+  on:syncDown={refresh}
+  on:change={refresh}
+/>

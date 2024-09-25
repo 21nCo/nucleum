@@ -12,7 +12,7 @@ import {
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { linker } from "../memotron.store";
+import { linker } from "$lib/client/products/memotron/linking/link.store";
 import type { IContextMenuItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { tabs } from "$lib/client/layout/tabs/tabs.store";

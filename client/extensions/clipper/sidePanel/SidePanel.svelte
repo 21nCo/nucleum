@@ -19,7 +19,7 @@
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import { webpage } from "../contentScripts/store";
-  import { linker } from "$lib/client/products/memotron/memotron.store";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
   let mode: "clips" | "capture" = "clips";
   let title = "";
   let isPageSaved = false;

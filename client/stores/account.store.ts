@@ -18,7 +18,6 @@ import {
   StoreDataType,
   type IObservableStoreSubject
 } from "$lib/client/types/data.type";
-import { dataManager } from "../persistence/dataManager";
 import posthog from "posthog-js";
 import { clientStorage } from "../persistence/persistence.utils";
 import { ClientStorageKey } from "../persistence/persistence.type";
@@ -379,7 +378,6 @@ class AccountStore extends ObservableStore<
     const product = await clientStorage.get(ClientStorageKey.PRODUCT);
     const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
     await clientStorage.clearAll();
-    get(dataManager)?.cacheSource?.clearCache();
     if (env) await clientStorage.set(ClientStorageKey.ENV, env);
     if (product) await clientStorage.set(ClientStorageKey.PRODUCT, product);
     if (appData) await clientStorage.set(ClientStorageKey.APP_DATA, appData);

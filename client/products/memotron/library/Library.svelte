@@ -31,7 +31,7 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { MemotronAction } from "../memotronAction.enum";
-  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { CollectionType } from "../collection/collection.type";
   import { NodeType } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
@@ -437,7 +437,12 @@
   {/if}
 </div>
 
-<PageLayer on:syncDown={refresh} />
+<ComponentBaseLayer
+  syncDownOnMount={true}
+  subscribeTo={availableResources}
+  on:syncDown={refresh}
+  on:change={refresh}
+/>
 
 <style>
   input::placeholder {

@@ -1,11 +1,9 @@
 <script lang="ts">
   import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import {
     NodeType,
-    type INodeThumb,
-    type INodeThumbnail
+    type INodeThumb
   } from "$lib/client/products/memotron/node/node.type";
   import { Size } from "$lib/client/types/size.enum";
   import {

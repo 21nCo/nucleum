@@ -10,9 +10,7 @@ import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/
 
 class PropertyStore extends ResourceStore<IProperty> {
   constructor() {
-    super(Resource.property, {
-      refreshOnAppear: true
-    });
+    super(Resource.property);
   }
 }
 

@@ -53,6 +53,7 @@ export class SurrealSync implements ISyncHandler {
     for (let mutation of mutations) {
       await this.local.mutation(mutation.resource as Resource, mutation.params);
     }
+    return mutations;
   }
 
   private async resolveSyncDownQuery() {
@@ -73,7 +74,7 @@ export class SurrealSync implements ISyncHandler {
       response[0].result &&
       response[0].result.length > 0
     ) {
-      await this.processSyncDown(response[0].result);
+      return this.processSyncDown(response[0].result);
     }
   }
 

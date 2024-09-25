@@ -33,12 +33,17 @@ export interface IStore {
    * The type of data the store holds
    */
   dataType: StoreDataType;
+
+  isInMemory?: boolean;
+
   /**
    * The data in the store
    * @returns the data in the store
    */
   get: () => any;
+
   /**
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
    * The query to be used to refresh the store
    */
   refreshQuery?: string;
@@ -50,11 +55,13 @@ export interface IStore {
   dependencies?: ResourceDependency[];
 
   /**
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
    * The resources on which the store depends on
    */
   resourceDependencies?: string[];
 
   /**
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
    * The resources which will be mutated by the store
    */
   mutatingResources?: string[];
@@ -84,8 +91,23 @@ export interface IStore {
   dboDependencies?: string[];
   loader?: (data: any) => void;
   search?: (query: string) => Promise<any>;
+  /**
+   *
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
+   *
+   */
   resolveRefreshQuery?: () => string;
+  /**
+   *
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
+   *
+   */
   refresh?: (params?: any) => Promise<any>;
+  /**
+   *
+   * @deprecated - use ComponentLayer to listen to syncDown and change events
+   *
+   */
   propagateDependencyChanges?: (params: any) => void;
 }
 
@@ -94,7 +116,7 @@ export interface IStore {
  */
 export enum StoreDataType {
   /**
-   * @deprecated
+   * @deprecated - use ResourceStore with inMemory: true
    * Finite and infrequently mutated Records
    */
   FIR = "FIR",

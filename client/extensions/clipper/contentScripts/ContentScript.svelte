@@ -15,7 +15,7 @@
   import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
-  import { linker } from "$lib/client/products/memotron/memotron.store";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { enumToString } from "$lib/shared/utils/text.utils";

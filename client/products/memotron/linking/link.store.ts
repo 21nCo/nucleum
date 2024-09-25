@@ -1,0 +1,100 @@
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import type { ILinkTag } from "./link.type";
+import {
+  type IRecordId,
+  type IStore,
+  PersistenceActionType,
+  StoreDataType
+} from "$lib/client/types/data.type";
+import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
+import { LinkType } from "$lib/client/products/memotron/node/node.type";
+import { flux } from "$lib/client/components/flux/flux";
+import { logger } from "$lib/client/components/debug/logger.client";
+
+class Linker implements IStore {
+  id: string = Resource.link;
+  dataType: StoreDataType = StoreDataType.IFR;
+
+  async link(
+    from: IRecordId,
+    to: IRecordId,
+    linkType: LinkType = LinkType.DIRECT
+  ) {
+    const response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query: this.generateLinkQuery(from, to, linkType)
+    });
+    logger.log({ at: "link", response });
+    return response;
+  }
+
+  async unlink(from: IRecordId, to: IRecordId) {
+    let response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query:
+        "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
+      data: {
+        from,
+        to
+      }
+    });
+    logger.log({ at: "unlink", response });
+    return response;
+  }
+
+  async linkMany(links: any[]) {
+    const query = links
+      .map((link) => this.generateLinkQuery(link.from, link.to, link.linkType))
+      .join("; ");
+    let response = await flux.mutation(Resource.link, {
+      action: PersistenceActionType.CUSTOM,
+      query
+    });
+    logger.log({ at: "linkMany", response });
+    return response;
+  }
+
+  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
+    return replaceParams(
+      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
+      {
+        from,
+        to,
+        linkType
+      }
+    );
+  }
+
+  get() {}
+}
+
+export const linker = new Linker();
+
+class LinkTagStore extends ResourceStore<ILinkTag> {
+  constructor() {
+    super(Resource.linkTag, {
+      isInMemory: true
+    });
+  }
+
+  transform(data: ILinkTag[]) {
+    const groupsArray = data.reduce(
+      (acc, item) => {
+        const prefix = item.prefix ?? "";
+        if (!acc[prefix]) {
+          acc[prefix] = [];
+        }
+        acc[prefix].push(item);
+        return acc;
+      },
+      {} as Record<string, ILinkTag[]>
+    );
+    return Object.entries(groupsArray).map(([prefix, items]) => ({
+      prefix,
+      items
+    }));
+  }
+}
+
+export const linkTagStore = new LinkTagStore();

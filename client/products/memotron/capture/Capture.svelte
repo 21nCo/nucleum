@@ -9,7 +9,6 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
@@ -22,7 +21,7 @@
   import { collectionStore } from "../collection/collection.store";
   import { CaptureType } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
-  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { onDestroy, onMount } from "svelte";
   import { page } from "$app/stores";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -30,20 +29,13 @@
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
 
-  refresh();
-  const visibilityChangeListener = async (event: Event) => {
-    if (document?.hidden) return;
-    refresh();
-  };
   let isSaving: boolean = false;
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
   let avatars: IAvatar[] = [];
   let propertyConfig: IProperty[] = [];
-  function refresh() {
-    dataManager.refresh(Resource.capture);
-  }
+
   $: types = $captureStore.links
     ?.filter(
       (x) =>
@@ -191,5 +183,5 @@
     </div>
   {/key}
 {/if}
-<svelte:document on:visibilitychange={visibilityChangeListener} />
-<PageLayer isDragAndDropPage={!isWindowDnD} />
+
+<ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />

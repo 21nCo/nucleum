@@ -24,9 +24,10 @@ import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import Collection from "./collection/Collection.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
-import { linker } from "./memotron.store";
+import { linker } from "./linking/link.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "$lib/client/components/debug/logger.client";
+import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -277,6 +278,20 @@ export const memotronActions: IAction[] = [
           return;
         }
         toasts.success(`**${label}** added to collection`);
+      }
+    }
+  },
+  {
+    action: resourceAction(Resource.linkTag, ResourceActionType.BROWSE),
+    type: ActionType.MODAL,
+    label: "Link Tags",
+    icon: "ph:tag",
+    component: LinkTagsControlPanel,
+    modalParams: {
+      title: "Link Tags",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Horizontal
       }
     }
   }

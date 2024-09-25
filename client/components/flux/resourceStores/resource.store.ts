@@ -18,7 +18,7 @@ import {
 } from "../../../types/data.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { prefixTable } from "../../../../shared/utils/text.utils";
-import { dataManager } from "../../../persistence/dataManager";
+import { dataManager } from "$lib/client/persistence/dataManager";
 import { ObservableStore } from "../../../stores/client.store";
 import { resolveCurrentUserId } from "../../../utils/account.utils";
 import type {
@@ -119,38 +119,30 @@ export class ActiveResourceStore<
 export class ResourceStore<T extends IResource> implements IStore {
   id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
-  refreshOnAppear: boolean = false;
-  refreshQuery?: string;
   currentUserId?: string;
-  mutatingResources: string[];
-  cacheStrategy?: CacheStrategy;
   dboDependencies?: string[];
+  isInMemory?: boolean = false;
+  /**
+   * Can be subscribed only if the store is inMemory. Otherwise, data will be always empty.
+   */
+  protected items = writable<T[]>();
+  subscribe = this.items.subscribe;
+  update = this.items.update;
+  protected _setInMemoryItems = this.items.set;
   protected debouncers = new Map<string, any>();
   private isExtensionEnvironment: boolean = false;
-  private isUseV2: boolean = true;
+
   constructor(
     resourceType: Resource,
-    params?: Pick<
-      IStore,
-      "refreshOnAppear" | "refreshQuery" | "cacheStrategy" | "dboDependencies"
-    >
+    params?: Pick<IStore, "dboDependencies" | "isInMemory">
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
-    this.mutatingResources = [resourceType];
-    this.refreshOnAppear = params?.refreshOnAppear || false;
-    this.refreshQuery = params?.refreshQuery;
-    this.cacheStrategy = params?.cacheStrategy ?? CacheStrategy.MERGE_RECORDS;
     this.dboDependencies = params?.dboDependencies;
+    this.isInMemory = params?.isInMemory;
     this.isExtensionEnvironment = isExtensionEnvironment();
-  }
-  refresh() {
-    return dataManager.refreshForIFR(this.id);
-  }
-  resolveRefreshQuery() {
-    return this.refreshQuery ?? "";
   }
 
   /**
@@ -171,8 +163,6 @@ export class ResourceStore<T extends IResource> implements IStore {
       customQueryAdditionalParams?: { [key: string]: any };
     }
   ): Promise<T[] | undefined> {
-    let data;
-    let action = PersistenceActionType.CREATE;
     let commonProps = {
       createdAt: new Date(),
       modifiedAt: new Date(),
@@ -181,82 +171,48 @@ export class ResourceStore<T extends IResource> implements IStore {
       modifiedBy: this.currentUserId
     };
 
-    if (this.isUseV2) {
-      let data: IMutationParamsv2<T>;
-      let resources: T[] = [];
-      if (Array.isArray(input)) {
-        resources = input?.map((r) => ({
-          ...r,
-          id: "id" in r && r.id ? r.id : generateRandomId(),
-          ...commonProps
-        }));
-      } else {
-        resources = [
-          {
-            ...input,
-            id: "id" in input && input.id ? input.id : generateRandomId(),
-            ...commonProps
-          }
-        ];
-      }
-
-      if (params?.customQuery) {
-        //TODO - use $resource in query
-        data = {
-          action: PersistenceActionType.CUSTOM,
-          query: params.customQuery,
-          data: {
-            resources,
-            ...params?.customQueryAdditionalParams
-          }
-        };
-      } else {
-        data = { action: PersistenceActionType.INSERT, records: resources };
-      }
-      if (this.isExtensionEnvironment) {
-        const result = await extentionFlux({
-          method: FluxMethod.MUTATION,
-          args: {
-            resource: this.id,
-            params: data
-          }
-        });
-        if (result) return resources;
-      }
-      return flux.mutation<T>(this.id, data);
-    }
-
+    let data: IMutationParamsv2<T>;
+    let resources: T[] = [];
     if (Array.isArray(input)) {
-      input = input?.map((r) => ({
+      resources = input?.map((r) => ({
         ...r,
-        id: r.id ?? prefixTable(generateUID(), this.id),
+        id: "id" in r && r.id ? r.id : generateRandomId(),
         ...commonProps
       }));
-      if (params?.customQuery) {
-        data = { resources: input, ...params?.customQueryAdditionalParams };
-      } else {
-        data = [...input];
-        action = PersistenceActionType.INSERT;
-      }
     } else {
-      input = {
-        ...input,
-        id: input.id ?? prefixTable(generateUID(), this.id),
-        ...commonProps
-      };
-      if (params?.customQuery) {
-        data = { resource: input };
-      } else {
-        data = input;
-      }
+      resources = [
+        {
+          ...input,
+          id: "id" in input && input.id ? input.id : generateRandomId(),
+          ...commonProps
+        }
+      ];
     }
-    await dataManager.performMutationForIFR(this.id, data, {
-      action,
-      query: params?.customQuery,
-      queueParams: params?.queueParams,
-      cacheStrategy: this.cacheStrategy
-    });
-    return data;
+
+    if (params?.customQuery) {
+      //TODO - use $resource in query
+      data = {
+        action: PersistenceActionType.CUSTOM,
+        query: params.customQuery,
+        data: {
+          resources,
+          ...params?.customQueryAdditionalParams
+        }
+      };
+    } else {
+      data = { action: PersistenceActionType.INSERT, records: resources };
+    }
+    if (this.isExtensionEnvironment) {
+      const result = await extentionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: this.id,
+          params: data
+        }
+      });
+      if (result) return resources;
+    }
+    return flux.mutation<T>(this.id, data);
   }
 
   private persistModification(data: Partial<T>) {
@@ -345,52 +301,34 @@ export class ResourceStore<T extends IResource> implements IStore {
   }
 
   async bulkModify(ids: string[], data: Partial<T>) {
-    if (this.isUseV2) {
-      if (this.isExtensionEnvironment) {
-        return extentionFlux({
-          method: FluxMethod.MUTATION,
-          args: {
-            resource: this.id,
-            params: {
-              action: PersistenceActionType.BULK_MERGE,
-              records: ids.map((id) => ({
-                id,
-                ...data,
-                modifiedBy: this.currentUserId,
-                modifiedAt: new Date().toISOString(),
-                interactedAt: new Date().toISOString()
-              }))
-            }
+    if (this.isExtensionEnvironment) {
+      return extentionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: this.id,
+          params: {
+            action: PersistenceActionType.BULK_MERGE,
+            records: ids.map((id) => ({
+              id,
+              ...data,
+              modifiedBy: this.currentUserId,
+              modifiedAt: new Date().toISOString(),
+              interactedAt: new Date().toISOString()
+            }))
           }
-        });
-      }
-      return flux.mutation<T>(this.id, {
-        action: PersistenceActionType.BULK_MERGE,
-        records: ids.map((id) => ({
-          id,
-          ...data,
-          modifiedBy: this.currentUserId,
-          modifiedAt: new Date().toISOString(),
-          interactedAt: new Date().toISOString()
-        }))
+        }
       });
     }
-    return dataManager.performMutationForIFR(
-      this.id,
-      {
-        ids,
-        data: {
-          ...data,
-          modifiedBy: this.currentUserId,
-          modifiedAt: new Date().toISOString(),
-          interactedAt: new Date().toISOString()
-        }
-      } as any,
-      {
-        action: PersistenceActionType.BULK_MERGE,
-        cacheStrategy: this.cacheStrategy
-      }
-    );
+    return flux.mutation<T>(this.id, {
+      action: PersistenceActionType.BULK_MERGE,
+      records: ids.map((id) => ({
+        id,
+        ...data,
+        modifiedBy: this.currentUserId,
+        modifiedAt: new Date().toISOString(),
+        interactedAt: new Date().toISOString()
+      }))
+    });
   }
   async bulkTrash(ids: string[]) {
     return this.bulkModify(ids, {
@@ -443,10 +381,20 @@ export class ResourceStore<T extends IResource> implements IStore {
     }
     return flux.select(resourceId, properties);
   }
+
+  /**
+   * This gets triggered from flux to load or reload items if the store is set to inMemory
+   * @param data
+   * @returns
+   */
+  loader(data: T[]) {
+    if (!this.isInMemory) return;
+    this._setInMemoryItems(data);
+  }
 }
 
 /**
- * @deprecated - use ResourceStore instead
+ * @deprecated - use ResourceStore with inMemory set to true
  * Extensible FIR resource store.
  */
 export class ResourceFIRStore<

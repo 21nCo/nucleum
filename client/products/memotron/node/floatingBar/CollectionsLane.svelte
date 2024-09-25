@@ -13,7 +13,7 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import LinkItems from "../../common/linkbox/LinkItems.svelte";
   import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
-  import { linker } from "../../memotron.store";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
   import type { IActiveNodeStore } from "../node.store";
   import { resolveNodeIcon } from "../node.utils";
   export let node: IActiveNodeStore;

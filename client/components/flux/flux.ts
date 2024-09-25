@@ -41,6 +41,7 @@ class Flux {
   remote!: ISurrealDatabase;
   private isLocalMode: boolean = false;
   private isExtensionEnvironment: boolean = false;
+  private isSyncDownPending: boolean = false;
   private constructor() {
     this.isExtensionEnvironment = isExtensionEnvironment();
   }
@@ -105,8 +106,8 @@ class Flux {
     }
   }
 
-  async loadKvStores() {
-    logger.log({ at: "flux.loadKvStores" });
+  async loadInMemoryStores() {
+    logger.log({ at: "flux.loadInMemoryStores" });
     try {
       let kvStores = this.stores.filter(
         (x) => x.dataType === StoreDataType.KVO
@@ -116,11 +117,32 @@ class Flux {
         const store = kvStores.find(
           (x) => "kv:" + x.id === record.id.toString()
         );
-        if (!store || !store.loader) return;
+        if (!store?.loader) return;
         store.loader(record);
       });
+      let inMemoryResouceStores = this.stores.filter((x) => x.isInMemory);
+      if (!inMemoryResouceStores) return;
+      for (const store of inMemoryResouceStores) {
+        const data = await this.persistence.selectMany(store.id as Resource);
+        if (data && Array.isArray(data) && store?.loader) {
+          logger.debug({
+            at: "flux.loadInMemoryStores - loading resource store",
+            id: store.id,
+            data
+          });
+          store.loader(data);
+        }
+      }
     } catch (e) {
-      logger.error({ at: "flux.loadKvStores", error: e });
+      logger.error({ at: "flux.loadInMemoryStores", error: e });
+    }
+  }
+
+  private async loadInMemoryResourceStore(resource: Resource) {
+    const store = this.stores.find((x) => x.id === resource);
+    if (store?.loader) {
+      const data = await this.persistence.selectMany(resource);
+      store.loader(data);
     }
   }
 
@@ -192,6 +214,10 @@ class Flux {
             await this.sync();
           }, 100);
         }
+      }
+      const correspondingStore = this.stores.find((x) => x.id === resource);
+      if (correspondingStore?.isInMemory) {
+        await this.loadInMemoryResourceStore(resource);
       }
     } catch (e) {
       logger.error({
@@ -352,10 +378,26 @@ class Flux {
    * Syncs down from cloud to local.
    */
   async syncDown() {
-    logger.log({ at: "flux.syncDown" });
-    await this.syncer.syncDown();
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
-    dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+    logger.debug({ at: "flux.syncDown" });
+    try {
+      if (this.isSyncDownPending) return;
+      this.isSyncDownPending = true;
+      const result = await this.syncer.syncDown();
+      this.isSyncDownPending = false;
+      if (result) {
+        logger.debug({
+          at: "flux.syncDown - loading in memory stores",
+          result
+        });
+        await this.loadInMemoryStores();
+      }
+      clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+    } catch (e) {
+      logger.error({ at: "flux.syncDown", error: e });
+    } finally {
+      this.isSyncDownPending = false;
+    }
   }
 
   /**

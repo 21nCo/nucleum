@@ -189,7 +189,7 @@
           loadingMessage = loadingMessages.cloneOrSyncDown;
           if (initState === 1) {
             await flux.syncDown();
-            await flux.loadKvStores();
+            await flux.loadInMemoryStores();
           } else if (initState === 0) {
             await flux.cloneDown();
           }

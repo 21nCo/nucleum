@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import LinkThumbnailItems from "./LinkThumbnailItems.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -24,7 +23,7 @@
     type INodeLink,
     LinkType
   } from "$lib/client/products/memotron/node/node.type";
-  import { linker } from "$lib/client/products/memotron/memotron.store";
+  import { linker } from "$lib/client/products/memotron/linking/link.store";
   import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";

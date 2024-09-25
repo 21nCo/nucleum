@@ -23,7 +23,7 @@ import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.sto
 import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
 import { resolveResourceType } from "../memotron.utils";
-import { linker } from "../memotron.store";
+import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "../collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";

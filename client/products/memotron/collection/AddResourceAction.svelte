@@ -12,7 +12,7 @@
   const options = [
     {
       label: "Add existing",
-      icon: "ph:arrow-right-thin",
+      icon: "ph:arrow-arc-left-thin",
       value: "addExisting"
     },
     {

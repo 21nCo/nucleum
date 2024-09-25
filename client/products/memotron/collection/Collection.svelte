@@ -43,12 +43,13 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ArrangementSelector from "./ArrangementSelector.svelte";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -590,4 +591,7 @@
     {/if}
   </div>
 {/if}
-<PageLayer isDragAndDropPage={true} />
+<ComponentBaseLayer
+  hasDragAndDrop={true}
+  on:syncDown={() => refresh({ isNewView: true })}
+/>

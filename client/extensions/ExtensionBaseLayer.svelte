@@ -1,18 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import CacheLayer from "../layout/layers/CacheLayer.svelte";
-  import { dataManager } from "../persistence/dataManager";
   import type { IStore } from "../types/data.type";
   import { resolveCurrentUserId, resolveToken } from "../utils/account.utils";
   import account from "../stores/account.store";
   import ExtensionThemeBase from "./ExtensionThemeBase.svelte";
-  import { UserDataMode } from "../types/account.type";
-  import { flux, initFlux } from "../components/flux/flux";
-  import { DexiePersistence } from "../persistence/dexie/dexie.local";
   import {
     ClientStorageKey,
-    PersistenceProvider,
-    RemotePersistenceProvider
+    PersistenceProvider
   } from "../persistence/persistence.type";
   import { logger } from "../components/debug/logger.client";
   import {

@@ -28,12 +28,14 @@ export class KeyValueStore<T extends IObservableStoreSubject>
   constructor(
     item: Resource,
     seed: T,
-    params?: Omit<IStore, "id" | "dataType" | "get">
+    params?: {
+      dboDependencies?: string[];
+      isPreventAutoPersist?: boolean;
+    }
   ) {
     super(item, StoreDataType.KVO, params);
     this.id = item;
     this.seed = seed;
-    this.isSynchronousCache = params?.isSynchronousCache || false;
     this.isPreventAutoPersist = params?.isPreventAutoPersist || false;
     this.isExtensionEnvironment = isExtensionEnvironment();
     this._set(seed);

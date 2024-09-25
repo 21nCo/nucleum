@@ -3,11 +3,11 @@
   import { createEventDispatcher } from "svelte";
   import SearchResultItem from "./SearchResultItem.svelte";
   import Button from "../button/Button.svelte";
-  import { dataManager } from "$lib/client/persistence/dataManager";
   import { debouncer } from "$lib/client/utils/utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { flux } from "$lib/client/components/flux/flux";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -102,7 +102,7 @@
       }
       return;
     }
-    if (searchStoreId) results = await dataManager.search(searchStoreId, value);
+    if (searchStoreId) results = await flux.search(searchStoreId, value);
     isSearchInProgress = false;
     if (results.length > 0) {
       show();

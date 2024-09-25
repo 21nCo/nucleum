@@ -60,6 +60,7 @@
     </div>
   {:else if "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">
+      <!-- TODO - check if on syncdown the kv:capture is reloaded in the background - whether this is automatically updated - if not subscribe to syncDown from ComponentBaseLayer and refresh -->
       <NodularMarkdown
         isNodular={true}
         mdId={$captureStore.id}

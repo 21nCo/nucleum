@@ -1,8 +1,5 @@
-// import { dataManager } from "$lib/client/persistence/dataManager";
 import {
   headingNodeTypes,
-  LinkType,
-  NodeType,
   rootNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { activeResourceFilterV2 } from "$lib/client/utils/utils";
@@ -11,16 +8,12 @@ import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   type IRecordId,
   type IResourceSelectFilters,
-  type IResourceSelectOrderBy,
-  type IStore,
-  PersistenceActionType,
-  StoreDataType
+  type IResourceSelectOrderBy
 } from "$lib/client/types/data.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
-import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
@@ -276,62 +269,3 @@ export class SearchStore {
     return data;
   }
 }
-
-class Linker implements IStore {
-  id: string = Resource.link;
-  dataType: StoreDataType = StoreDataType.IFR;
-
-  async link(
-    from: IRecordId,
-    to: IRecordId,
-    linkType: LinkType = LinkType.DIRECT
-  ) {
-    const response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query: this.generateLinkQuery(from, to, linkType)
-    });
-    logger.log({ at: "link", response });
-    return response;
-  }
-
-  async unlink(from: IRecordId, to: IRecordId) {
-    let response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query:
-        "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
-      data: {
-        from,
-        to
-      }
-    });
-    logger.log({ at: "unlink", response });
-    return response;
-  }
-
-  async linkMany(links: any[]) {
-    const query = links
-      .map((link) => this.generateLinkQuery(link.from, link.to, link.linkType))
-      .join("; ");
-    let response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query
-    });
-    logger.log({ at: "linkMany", response });
-    return response;
-  }
-
-  private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
-    return replaceParams(
-      `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
-      {
-        from,
-        to,
-        linkType
-      }
-    );
-  }
-
-  get() {}
-}
-
-export const linker = new Linker();

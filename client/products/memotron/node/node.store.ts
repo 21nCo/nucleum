@@ -20,7 +20,8 @@ import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
-import { linker, SearchStore } from "../memotron.store";
+import { SearchStore } from "../memotron.store";
+import { linker } from "$lib/client/products/memotron/linking/link.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -36,7 +37,6 @@ class NodeStore extends ResourceStore<INode> {
   searchStore: SearchStore;
   constructor() {
     super(Resource.node, {
-      refreshOnAppear: true,
       dboDependencies: [
         "fn::memotron::node::fetch",
         "fn::memotron::timeline",

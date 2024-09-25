@@ -22,7 +22,7 @@ import {
   type ISyncStore,
   type IWebpage
 } from "./types";
-import { linker } from "$lib/client/products/memotron/memotron.store";
+import { linker } from "$lib/client/products/memotron/linking/link.store";
 import {
   NodeIdPrefix,
   NodeType,
@@ -491,7 +491,6 @@ class ClipperToolbarState extends KeyValueStore<
       Resource.clipperToolbarState,
       { isOpen: true, position: Placement.Right },
       {
-        refreshOnAppear: true,
         dboDependencies: ["fn::global::utils::resolveUrlParts::v2"]
       }
     );

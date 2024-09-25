@@ -16,6 +16,7 @@ export type IButtonParams = {
   style?: ButtonStyle;
   parentBgIndex?: number;
   shortcut?: string;
+  isPreventMinWidth?: boolean;
 };
 
 export enum ButtonVariant {
