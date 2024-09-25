@@ -31,11 +31,6 @@
   } else if (triggerItemEdit && triggerItemEdit !== item.value) {
     labelEditPopoverRef?.hide();
   }
-
-  $: renderedIcon =
-    isActive && item.icon?.includes(":")
-      ? item.icon?.replace("-thin", "-fill")
-      : item.icon;
 </script>
 
 {#if isAddNewItem}
@@ -89,8 +84,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         {size}
+        isFilled={isActive}
         class={cn({
           "fill-aps1": isActive
         })}

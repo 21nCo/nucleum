@@ -4,7 +4,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { ISelectItem } from "$lib/client/types/select.type";
   import HoverableElement from "../HoverableElement.svelte";
   export let item: ISelectItem;
@@ -15,6 +15,8 @@
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isActive: boolean = false;
   export let isHideBar: boolean = false;
+  export let parentBgIndex: number = 1;
+
   // $: console.log({ isActive, item });
   let activeClasses: string;
   let inactiveClasses: string;
@@ -70,11 +72,6 @@
       sizeClasses = "text-base w-24 gap-2 px-4 py-6";
     }
   }
-
-  $: renderedIcon =
-    isActive && item.icon?.includes(":")
-      ? item.icon?.replace("-thin", "-fill")
-      : item.icon;
 </script>
 
 {#if style === VerticalSwitcherStyle.BAR && labelOrientation === Orientation.Vertical}
@@ -93,8 +90,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         {size}
+        isFilled={isActive}
         class={cn({
           "fill-fgs1": isActive,
           "stroke-fgs3": !isActive
@@ -117,8 +115,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         {size}
+        isFilled={isActive}
         class={cn({
           "fill-aps1": isActive,
           "stroke-fgs3": !isActive
@@ -164,8 +163,9 @@
     >
       {#if item.icon && typeof item.icon === "string"}
         <Icon
-          icon={renderedIcon}
+          icon={item.icon}
           {size}
+          isFilled={isActive}
           class={cn({
             "fill-fgs1": isActive && style === VerticalSwitcherStyle.GRADIENT,
             "fill-aps1": isActive && style === VerticalSwitcherStyle.BG,
@@ -185,7 +185,7 @@
   <HoverableElement
     type="button"
     class={cn("relative flex gap-2 items-center rounded-md p-2 px-2 w-full", {
-      "bg-bgs3": isActive,
+      [bg(parentBgIndex)]: isActive,
       "text-fgs3": !isActive
     })}
     {...commonVerticalLabelOptions}
@@ -193,8 +193,9 @@
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
-        icon={renderedIcon}
+        icon={item.icon}
         size={Size.sm}
+        isFilled={isActive}
         class={cn({
           "fill-fgs1": isActive,
           "stroke-fgs3": !isActive

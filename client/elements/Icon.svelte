@@ -138,6 +138,14 @@
    * Whether the icon is tabbable or not. Default is false as icons are used in buttons and other elements that are tabbable by default.
    */
   export let isTabbable: boolean = false;
+
+  /**
+   * Used for iconify icons to determine if the icon should be filled or not.
+   */
+  export let isFilled: boolean = false;
+
+  $: renderedIconifyIcon = resolveRenderedIconForIconify(icon, isFilled);
+
   let classListParam = "";
   export { classListParam as class };
   let _classList = "";
@@ -226,6 +234,21 @@
         : IconVariant.Solid;
     }
   }
+
+  function resolveRenderedIconForIconify(
+    icon: string | undefined,
+    isFilled: boolean
+  ) {
+    if (!icon || !icon.includes(":")) {
+      return undefined;
+    }
+    if (icon.includes("-light")) {
+      return isFilled ? icon.replace("-light", "-fill") : icon;
+    } else if (icon.includes("-thin")) {
+      return isFilled ? icon.replace("-thin", "-fill") : icon;
+    }
+    return isFilled ? `${icon}-fill` : icon;
+  }
 </script>
 
 <button
@@ -233,10 +256,10 @@
   tabindex={isTabbable ? 0 : -1}
   on:click
 >
-  {#if icon?.includes(":")}
+  {#if icon?.includes(":") && renderedIconifyIcon}
     <!-- TODO - fix import issue on plasmo - disabling for now -->
     <IconifyIcon
-      {icon}
+      icon={renderedIconifyIcon}
       width={size === Size.lg
         ? "1.5rem"
         : size === Size.md
@@ -247,7 +270,7 @@
         : size === Size.md
           ? "1.25rem"
           : "1rem"}
-      class={_classList + " iconifysvg " + icon}
+      class={_classList + " iconifysvg " + renderedIconifyIcon}
     />
   {:else if icon}
     <svg

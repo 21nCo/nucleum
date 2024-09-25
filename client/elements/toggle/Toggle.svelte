@@ -17,8 +17,6 @@
     on = !on;
     dispatch("change", on);
   }
-  $: renderedIcon =
-    on && icon.includes(":") ? icon.replace("-thin", "-fill") : icon;
 </script>
 
 <HoverableElement
@@ -34,8 +32,9 @@
   })}
 >
   <Icon
-    icon={renderedIcon}
+    {icon}
     {size}
+    isFilled={on}
     class={cn({
       "fill-aps1": on,
       "stroke-fgs1": !on

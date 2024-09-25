@@ -43,5 +43,9 @@
     {/each}
   </div>
 {:else if !isInEditMode}
-  <NodeItems nodes={data} arrangement={view.arrangement} />
+  <NodeItems
+    nodes={data}
+    arrangement={view.arrangement}
+    density={view.density}
+  />
 {/if}

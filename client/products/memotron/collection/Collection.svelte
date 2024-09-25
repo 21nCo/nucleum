@@ -40,13 +40,13 @@
     Orientation,
     Placement
   } from "$lib/client/types/direction.enum";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import ArrangementSelector from "./ArrangementSelector.svelte";
+  import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
@@ -76,6 +76,7 @@
   let isInEditMode = false;
   let isShowMetaViews = false;
   let isNonViewLaneMode = true;
+  let arrangementDensity = 1;
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -147,7 +148,6 @@
   }
 
   function onArrangementChange(e: CustomEvent) {
-    // console.log("onArrangementChange", e.detail);
     if (!activeView) return;
     activeView.arrangement = e.detail;
     collection.updateView(
@@ -159,8 +159,19 @@
     );
   }
 
+  function onDensityChange(e: CustomEvent) {
+    if (!activeView) return;
+    activeView.density = e.detail;
+    collection.updateView(
+      activeView.id,
+      {
+        density: activeView.density
+      },
+      "density"
+    );
+  }
+
   function onScroll() {
-    console.log("onScroll");
     var elementTarget = document.querySelector(".stickyheader");
     var positionFromTop = elementTarget?.getBoundingClientRect().top;
     isStickied = positionFromTop ? positionFromTop <= 0 : false;
@@ -205,6 +216,7 @@
     if (!view) return;
     activeView = view;
     selectedArrangement = view.arrangement ?? selectedArrangement;
+    arrangementDensity = view.density ?? arrangementDensity;
     return view;
   }
 
@@ -413,9 +425,9 @@
                 on:change={onViewLabelChange}
                 on:rearrange={onViewRearrange}
               >
-                <span class="flex gap-6" slot="right">
+                <span class="flex items-center gap-6" slot="right">
                   {#if !isInEditMode}
-                    <Button
+                    <!-- <Button
                       icon="adjustments-horizontal"
                       label="filters"
                       {...viewRightButtonOptions}
@@ -424,31 +436,24 @@
                       icon="bars-center-left"
                       label="sort"
                       {...viewRightButtonOptions}
-                    />
-                    <!-- <Button
-              icon={activeView?.arrangement === Arrangement.GRID
-                ? "widget"
-                : "list"}
-              label={activeView?.arrangement === Arrangement.GRID
-                ? "Grid"
-                : "List"}
-              {...viewRightButtonOptions}
-              on:click={onArrangementChange}
-            /> -->
-                    <DropDown
+                    /> -->
+                    <ToggleGroup
                       items={[
-                        { value: Arrangement.LIST, label: "List" },
-                        { value: Arrangement.GRID, label: "Grid" },
                         {
-                          value: Arrangement.MASONRY,
-                          label: "Masonry"
+                          value: "filter",
+                          icon: "ph:funnel-thin"
+                        },
+                        {
+                          value: "sort",
+                          icon: "ph:funnel-simple-thin"
                         }
                       ]}
-                      bind:value={selectedArrangement}
-                      on:select={onArrangementChange}
-                      style={InputStyle.PLAIN}
-                      isDisableSearch={true}
-                      size={Size.sm}
+                    />
+                    <ArrangementSelector
+                      bind:arrangement={selectedArrangement}
+                      bind:density={arrangementDensity}
+                      on:switch={onArrangementChange}
+                      on:densityChange={onDensityChange}
                     />
                   {/if}
                 </span>

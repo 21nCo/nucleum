@@ -15,6 +15,7 @@
   export let items: ISelectItem[];
   export let selected: ISelectValue;
   export let isHideBar: boolean = false;
+  export let parentBgIndex: number = 1;
   export let itemProps: {
     size?: Size.sm | Size.md | Size.lg;
     activeStatusPlacement?: Placement;
@@ -36,6 +37,7 @@
   {#each items as item}
     <VerticalSwitcherItem
       {item}
+      {parentBgIndex}
       {labelOrientation}
       {...itemProps}
       {style}

@@ -68,12 +68,14 @@
             {isInEditMode}
             data={filterSubGroupData(subGroup.value)}
             arrangement={view.arrangement}
+            density={view.density}
           />
         {/each}
       {:else if isValidArrayWithData(data) && !isInEditMode}
         <NodeItems
           nodes={data}
           arrangement={view.arrangement}
+          density={view.density}
           isApplyCustomColor={isRenderColors}
         />
       {:else}

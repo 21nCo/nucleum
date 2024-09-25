@@ -71,6 +71,7 @@ export type ICollectionViewWithData = ICollectionView & {
 export interface ICollectionView extends IMemotronItemBase {
   layout: CollectionLayout;
   arrangement?: Arrangement;
+  density?: number;
   /**
    * Property id to show as tabs.
    * "none" for no tabs.

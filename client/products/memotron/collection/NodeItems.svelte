@@ -18,10 +18,11 @@
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
+  export let density = 1;
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
-  //TODO - user setting - columns, gap
-  export let columns = Math.floor(($view.width / 500) * 1.5);
+
+  $: columns = Math.floor(($view.width / 500) * density);
 
   export let gap = 12; // Gap size in pixels
   let gridRef: any;

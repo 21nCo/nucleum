@@ -7,6 +7,7 @@
   export let subGroup: any;
   export let data: any;
   export let arrangement: NodeThumbnailVariant | undefined;
+  export let density: number | undefined;
   export let isInEditMode = false;
 
   let isCollapsed = data.length > 0 ? false : true;
@@ -29,7 +30,7 @@
   </button>
   {#if !isCollapsed && !isInEditMode}
     <div class="w-full flex flex-col gap-4">
-      <NodeItems nodes={data} {arrangement} />
+      <NodeItems nodes={data} {arrangement} {density} />
     </div>
   {/if}
 </div>
