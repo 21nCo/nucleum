@@ -194,7 +194,7 @@
     {#if item.icon && typeof item.icon === "string"}
       <Icon
         icon={item.icon}
-        size={Size.sm}
+        {size}
         isFilled={isActive}
         class={cn({
           "fill-fgs1": isActive,

@@ -59,7 +59,7 @@
     refresh();
   });
   function onGoalClick(event: CustomEvent<string>) {
-    appStore.toggleSearchParam(ResourceAccessMode.INLINE, event.detail);
+    appStore.toggleSearchParam({ [ResourceAccessMode.INLINE]: event.detail });
   }
 </script>
 

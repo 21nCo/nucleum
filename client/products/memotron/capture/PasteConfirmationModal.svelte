@@ -185,8 +185,8 @@
 
   function onInsertIntoMarkdown() {
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
+    appStore.toggleSearchParam({ clipboard: true });
     appStore.runAction(MemotronAction.CAPTURE);
-    appStore.toggleSearchParam("clipboard", true);
   }
 
   function resolveInsertIntoMdLabel() {

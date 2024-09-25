@@ -15,6 +15,7 @@ import { determineResourceType } from "$lib/client/components/flux/resourceStore
 import { linker } from "../memotron.store";
 import type { IContextMenuItem } from "$lib/client/types/select.type";
 import type { IRecordId } from "$lib/client/types/data.type";
+import { tabs } from "$lib/client/layout/tabs/tabs.store";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   constructor(
@@ -122,7 +123,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   openAsTab(): IContextMenuItem {
     const isAlreadyPinned = uiState
-      .getState(ResourceAccessPoint.TOP_BAR, {
+      .getState(ResourceAccessPoint.TABS, {
         isProductScoped: true
       })
       ?.includes(this.resource.id);
@@ -132,9 +133,9 @@ export class ResourceActions<T extends IMemotronItemBase> {
       badge: "New",
       callback: async () => {
         if (isAlreadyPinned) {
-          uiState.removeResourceFromTopBar(this.resource.id);
+          tabs.remove(this.resource.id);
         } else {
-          uiState.addResourceToTopBar(this.resource.id);
+          tabs.open(this.resource.id);
         }
       }
     };

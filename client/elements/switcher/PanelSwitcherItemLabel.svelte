@@ -24,11 +24,13 @@
   $: isAddNewItem = item.value === "$add";
   let labelEditPopoverRef: any;
   let inputRef: any;
-  $: if (triggerItemEdit && triggerItemEdit === item.value) {
-    console.log({ triggerItemEdit });
-    labelEditPopoverRef?.show();
-    inputRef?.focus();
-  } else if (triggerItemEdit && triggerItemEdit !== item.value) {
+  $: if (triggerItemEdit && triggerItemEdit === item.value.toString()) {
+    console.log({ triggerItemEdit, labelEditPopoverRef });
+    setTimeout(() => {
+      labelEditPopoverRef?.show();
+      inputRef?.focus();
+    }, 100);
+  } else if (triggerItemEdit && triggerItemEdit !== item.value.toString()) {
     labelEditPopoverRef?.hide();
   }
 </script>

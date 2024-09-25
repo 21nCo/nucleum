@@ -12,6 +12,7 @@
   export let parentBgIndex: number = 1;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IToolTipOptions | undefined = undefined;
+  export let isPreventFillOnActive: boolean = false;
   let isHovering: boolean = false;
   function onclick() {
     on = !on;
@@ -34,7 +35,7 @@
   <Icon
     {icon}
     {size}
-    isFilled={on}
+    isFilled={on && !isPreventFillOnActive}
     class={cn({
       "fill-aps1": on,
       "stroke-fgs1": !on

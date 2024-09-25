@@ -261,7 +261,7 @@ export class SearchStore {
     return result;
   }
 
-  async recents(resource: Resource) {
+  async recents(resource?: Resource) {
     this.resource = resource ?? this.resource;
     let data: any[] = [];
     if (this.resource === Resource.everything) {

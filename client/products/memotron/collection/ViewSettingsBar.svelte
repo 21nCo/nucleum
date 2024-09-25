@@ -72,13 +72,6 @@
         on:select
       />
     {/if}
-    <DropDown
-      label={{ ...dropdownLabelConfig, label: "Arrangement" }}
-      {...dropdownSettings}
-      items={properties}
-      bind:value={view.subGroupBy}
-      on:select
-    />
   </div>
 </div>
 

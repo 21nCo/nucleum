@@ -3,13 +3,11 @@
   import { onMount } from "svelte";
   import TopBarResourceItem from "./TopBarResourceItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import {
-    ResourceAccessMode,
-    ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Size } from "$lib/client/types/size.enum";
   import { Action } from "$lib/client/types/action.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import { tabs } from "./tabs.store";
   let pinnedItems = refreshPinnedItems();
   onMount(() => {
     uiState.subscribe((x) => {
@@ -17,7 +15,7 @@
     });
   });
   function refreshPinnedItems() {
-    return uiState.getState(ResourceAccessPoint.TOP_BAR, {
+    return uiState.getState(ResourceAccessPoint.TABS, {
       isProductScoped: true
     });
   }
@@ -32,11 +30,7 @@
         <TopBarResourceItem
           {item}
           on:click={(e) => {
-            appStore.resourceClickHandler(
-              e,
-              item,
-              ResourceAccessMode.TOPBARFOCUS
-            );
+            tabs.activate(item);
           }}
         />
       {/each}

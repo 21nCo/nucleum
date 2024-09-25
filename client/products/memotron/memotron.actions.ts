@@ -24,6 +24,9 @@ import ResourceSearchModal from "./library/search/ResourceSearchModal.svelte";
 import Collection from "./collection/Collection.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
+import { linker } from "./memotron.store";
+import { toasts } from "$lib/client/stores/notification.store";
+import { logger } from "$lib/client/components/debug/logger.client";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.CAPTURE,
@@ -245,6 +248,35 @@ export const memotronActions: IAction[] = [
       title: "Paste Confirmation",
       layout: {
         size: Size.sm
+      }
+    }
+  },
+  {
+    action: MemotronAction.ADD_NODE_TO_COLLECTION,
+    type: ActionType.SEARCH_CMD,
+    cmdLabel: "Add node to collection",
+    isMeta: true,
+    searchActionParams: {
+      searchStoreId: Resource.node,
+      itemLabel: "node",
+      callback: async (id: string, label?: string, componentParams?: any) => {
+        if (!componentParams?.id) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        const result = await linker.link(id, componentParams.id);
+        logger.debug({
+          at: "addNodeToCollection",
+          id,
+          label,
+          componentParams,
+          result
+        });
+        if (!result) {
+          toasts.error("Something went wrong. Please try again later.");
+          return;
+        }
+        toasts.success(`**${label}** added to collection`);
       }
     }
   }

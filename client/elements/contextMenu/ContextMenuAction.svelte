@@ -1,7 +1,6 @@
 <script lang="ts">
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
-  import { ButtonStyle } from "$lib/client/types/button.type";
   import { Placement } from "$lib/client/types/direction.enum";
   import {
     type IPopoverRenderBaseParams,
@@ -9,7 +8,6 @@
   } from "$lib/client/types/popover.type";
   import type { IContextMenu } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import Button from "../button/Button.svelte";
   import Popover from "../popover/Popover.svelte";
   import Toggle from "../toggle/Toggle.svelte";
   import ContextMenu from "./ContextMenu.svelte";
@@ -66,7 +64,11 @@
   triggerClass={classList}
 >
   <slot>
-    <Toggle icon="ph:dots-three-vertical" {tooltip} />
+    <Toggle
+      icon="ph:dots-three-vertical"
+      {tooltip}
+      isPreventFillOnActive={true}
+    />
   </slot>
   <slot name="popover" slot="popover">
     <ContextMenu

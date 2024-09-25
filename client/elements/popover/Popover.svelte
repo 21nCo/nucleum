@@ -88,6 +88,7 @@
       placement: options.placement ?? placement ?? Placement.BottomCenter
     };
     renderPopover(config);
+    if (!isPopoverVisible) isPopoverVisible = true;
   }
   export function hide() {
     // logger.log({ at: "Popover - hide", id: options.id });

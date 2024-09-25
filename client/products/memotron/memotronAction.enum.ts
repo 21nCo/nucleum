@@ -8,5 +8,6 @@ export enum MemotronAction {
   CREATE_TYPE = "create-type",
   LIBRARY = "library",
   SEARCH = "search",
-  PASTE_CONFIRMATION = "paste-confirmation"
+  PASTE_CONFIRMATION = "paste-confirmation",
+  ADD_NODE_TO_COLLECTION = "add-node-to-collection"
 }

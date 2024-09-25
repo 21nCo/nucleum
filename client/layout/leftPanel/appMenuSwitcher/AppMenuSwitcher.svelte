@@ -66,7 +66,7 @@
       toasts.reset();
     }
     isInEditMode.set(false);
-    if (selected !== index) {
+    if (selected !== index || window.location.pathname.includes("/tab")) {
       appStore.runAction(item.action);
     }
     selected = index;

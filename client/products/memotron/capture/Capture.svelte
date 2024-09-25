@@ -3,7 +3,7 @@
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import LinkboxOnCapture from "../common/linkbox/LinkboxOnCapture.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -23,7 +23,12 @@
   import { CaptureType } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
   import PageLayer from "$lib/client/layout/layers/PageLayer.svelte";
+  import { onDestroy, onMount } from "svelte";
+  import { page } from "$app/stores";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let isWindowDnD = false;
+  let bulkQueryParam: string | null = null;
+  let linkQueryParam: string | null = null;
 
   refresh();
   const visibilityChangeListener = async (event: Event) => {
@@ -53,6 +58,26 @@
     avatars = data.avatars;
     propertyConfig = data.propertyConfig;
   }
+
+  onMount(() => {
+    linkQueryParam = $page.url.searchParams.get("link");
+    bulkQueryParam = $page.url.searchParams.get("bulk");
+    const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
+    logger.log({
+      at: "Capture.svelte",
+      linkQueryParam,
+      bulkQueryParam,
+      clipBoardQueryParam
+    });
+    if (linkQueryParam) {
+      captureStore.directLink({ id: linkQueryParam });
+      isEmptyState = false;
+    }
+  });
+
+  onDestroy(() => {
+    appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
+  });
 </script>
 
 {#if isSaving}
@@ -102,6 +127,10 @@
                 on:click={async () => {
                   isSaving = true;
                   const result = await captureStore.save();
+                  if (bulkQueryParam === "true" && linkQueryParam) {
+                    captureStore.directLink({ id: linkQueryParam });
+                    isEmptyState = false;
+                  }
                   isSaving = false;
                 }}
               />

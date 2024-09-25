@@ -18,13 +18,13 @@
         {
           value: "remove",
           icon: "cross",
-          callback: async () => uiState.removeResourceFromTopBar(item)
+          callback: async () => uiState.removeResourceFromTabs(item)
         }
       ]
     }
   ];
   $: isActive =
-    item === $page.url.searchParams.get(ResourceAccessMode.TOPBARFOCUS);
+    item.toString() === $page.url.searchParams.get(ResourceAccessMode.TAB);
   onMount(async () => {
     resource = await resolveResource(item);
   });

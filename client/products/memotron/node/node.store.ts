@@ -20,7 +20,7 @@ import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
 import { writable } from "svelte/store";
-import { linker } from "../memotron.store";
+import { linker, SearchStore } from "../memotron.store";
 import type { IContextMenu } from "$lib/client/types/select.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -28,10 +28,12 @@ import { collectionStore } from "../collection/collection.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText } from "./node.utils";
+import { isValidString } from "$lib/shared/utils/text.utils";
 
 export const hierarchyFactorLimit = 5;
 
 class NodeStore extends ResourceStore<INode> {
+  searchStore: SearchStore;
   constructor() {
     super(Resource.node, {
       refreshOnAppear: true,
@@ -42,6 +44,7 @@ class NodeStore extends ResourceStore<INode> {
         "fn::memotron::pdfAnnotator::saveClip"
       ]
     });
+    this.searchStore = new SearchStore(Resource.node);
   }
   async fetchTimeline(date: Date) {
     const query = `fn::memotron::timeline($date)`;
@@ -65,6 +68,15 @@ class NodeStore extends ResourceStore<INode> {
     const response = await flux.selectByQuery(query);
     logger.log({ at: "fetch node", response });
     return response;
+  }
+
+  async search(query: string) {
+    if (isValidString(query)) {
+      this.searchStore.searchQuery = query;
+      return this.searchStore.nodes();
+    } else {
+      return this.searchStore.recents();
+    }
   }
 }
 
@@ -95,6 +107,7 @@ export function resolveActiveNodeStore(id: string, context: string = "") {
 
 class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   eventStore: any;
+  debouncers = new Map<string, any>();
   constructor(node: string) {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
@@ -119,7 +132,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     this.resourceStore.modify(id, changedProps);
   };
   resolveDebouncerForBlockPersistance(id: string) {
-    if (!this.debouncers.has(id)) {
+    if (!this.debouncers?.has(id)) {
       this.debouncers.set(id, debouncer(this.updateBlockPropagator, 2000));
     }
     let val = this.debouncers.get(id);

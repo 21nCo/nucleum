@@ -167,7 +167,7 @@
       />
       {#if icon}
         <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
-          <Icon {icon} size={Size.sm} />
+          <Icon {icon} size={Size.sm} class="stroke-fgs3" />
         </div>
       {/if}
     {/if}

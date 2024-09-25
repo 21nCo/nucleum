@@ -37,7 +37,9 @@
         {#each subGoals.filter((item) => !item.isArchived && item) as item}
           <SubGoalListItem
             on:click={() =>
-              appStore.toggleSearchParam(ResourceAccessMode.INLINE, item.id)}
+              appStore.toggleSearchParam({
+                [ResourceAccessMode.INLINE]: item.id
+              })}
             >{item.label}
           </SubGoalListItem>
         {/each}
@@ -52,7 +54,9 @@
           {#each archivedSubgoals as item}
             <SubGoalListItem
               on:click={() =>
-                appStore.toggleSearchParam(ResourceAccessMode.INLINE, item.id)}
+                appStore.toggleSearchParam({
+                  [ResourceAccessMode.INLINE]: item.id
+                })}
               >{item.label}
             </SubGoalListItem>
           {/each}

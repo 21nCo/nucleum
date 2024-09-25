@@ -47,12 +47,15 @@
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ArrangementSelector from "./ArrangementSelector.svelte";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
+  import AddResourceAction from "./AddResourceAction.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
     id
   ) as IActiveCollectionStore;
   let activeView: ICollectionViewWithData | null = null;
-  let filteredViewData: INodeThumb[] = [];
+  let viewData: INodeThumb[] = [];
+  let _filtered: INodeThumb[] = [];
   let selectedViewId: string;
   let selectedTab: ISelectValue | undefined = undefined;
   let dev_isRoundedCover = false;
@@ -75,8 +78,9 @@
   let isCoverPickerOpen = false;
   let isInEditMode = false;
   let isShowMetaViews = false;
-  let isNonViewLaneMode = true;
+  let isSingleViewMode = true;
   let arrangementDensity = 1;
+  let searchQuery: string = "";
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -181,7 +185,7 @@
     logger.log({ at: "onViewSwitch", selectedViewId });
     const view = loadActiveView();
     if (!view) return;
-    appStore.toggleSearchParam("view", view.id?.toString());
+    appStore.toggleSearchParam({ view: view.id?.toString() });
     await refresh({ isNewView: true });
   }
 
@@ -205,7 +209,7 @@
           return { label: x.label ?? "Default", value: x.id?.toString() };
         })
       : [];
-    isNonViewLaneMode = $collection?.views?.length === 1;
+    isSingleViewMode = viewsForSwitcher?.length === 1;
   }
 
   function loadActiveView() {
@@ -227,24 +231,39 @@
   ) {
     if (!activeView) return;
     const tabBy = activeView.tabBy;
-    logger.log({ at: "refresh", activeView });
     if (props.isNewView) await collection.loadViewData(activeView.id);
     else await collection.refreshViewData(activeView.id);
     loadActiveView();
     if (!activeView) return;
+    logger.debug({ at: "refresh", activeView, searchQuery });
     if (!tabBy || (tabBy && selectedTab === "all")) {
-      filteredViewData = activeView.data ?? [];
+      viewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {
-      filteredViewData =
+      viewData =
         activeView.data?.filter((x) => {
           return (
             x.properties?.find((p) => p.id === tabBy)?.value === selectedTab
           );
         }) ?? [];
     } else {
-      filteredViewData = activeView.data ?? [];
+      viewData = activeView.data ?? [];
+    }
+    _filtered = viewData;
+  }
+
+  async function onSearch() {
+    if (searchQuery) {
+      _filtered = viewData.filter((x) => {
+        return (
+          x.label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          x.body?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      });
+    } else {
+      _filtered = viewData;
     }
   }
+
   async function onTabSwitch(e: CustomEvent) {
     // console.log("onTabSwitch", selectedTab);
     await refresh();
@@ -305,6 +324,29 @@
       "coverSize"
     );
   }
+
+  function onAddResource(e: CustomEvent) {
+    if (e.detail === "addExisting") {
+      appStore.runAction(MemotronAction.ADD_NODE_TO_COLLECTION, {
+        componentParams: {
+          label: `Add to &nbsp; **${$collection.label}**`,
+          id: $collection.id
+        }
+      });
+    } else if (e.detail === "createNew" || e.detail === "createMultiple") {
+      if (e.detail === "createMultiple") {
+        appStore.toggleSearchParam({
+          link: $collection.id.toString(),
+          bulk: "true"
+        });
+      } else {
+        appStore.toggleSearchParam({ link: $collection.id.toString() });
+      }
+      setTimeout(() => {
+        appStore.runAction(MemotronAction.CAPTURE);
+      }, 10);
+    }
+  }
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
@@ -356,7 +398,8 @@
       </div>
     {:else}
       <div
-        class={cn("flex flex-col gap-8 flex-1", {
+        class={cn("flex flex-col flex-1", {
+          "gap-8": !isSingleViewMode || isShowMetaViews,
           "h-full overflow-auto":
             $collection.coverLayout?.placement === Placement.Left ||
             $collection.coverLayout?.placement === Placement.Right,
@@ -364,13 +407,33 @@
         })}
         on:scroll={onScroll}
       >
-        <div class="px-4 pt-6 stickyheader">
+        <div
+          class={cn("px-4 pt-6 stickyheader", {
+            "sticky top-0 z-10 bg-bgs1": isSingleViewMode,
+            "pb-8": isSingleViewMode && !isShowMetaViews
+          })}
+        >
           <CollectionTitleBar
             on:back
             {collection}
+            {isSingleViewMode}
+            bind:searchQuery
             bind:isInEditMode
             bind:isShowMetaViews
-          />
+            on:search={onSearch}
+            on:add={onAddResource}
+          >
+            <span slot="additional" class="flex items-center gap-2">
+              {#if isSingleViewMode && !isInEditMode}
+                <ArrangementSelector
+                  bind:arrangement={selectedArrangement}
+                  bind:density={arrangementDensity}
+                  on:switch={onArrangementChange}
+                  on:densityChange={onDensityChange}
+                />
+              {/if}
+            </span>
+          </CollectionTitleBar>
         </div>
         {#if isShowMetaViews}
           <div class="px-4">
@@ -402,13 +465,13 @@
             />
           </div>
         {/if}
-        {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isNonViewLaneMode}
+        {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
           <header
             class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
               "pt-4": isStickied
             })}
           >
-            {#if !isNonViewLaneMode || isInEditMode}
+            {#if !isSingleViewMode || isInEditMode}
               <PanelSwitcher
                 items={viewsForSwitcher}
                 isEnableAnimationForTitle={true}
@@ -425,7 +488,7 @@
                 on:change={onViewLabelChange}
                 on:rearrange={onViewRearrange}
               >
-                <span class="flex items-center gap-6" slot="right">
+                <span class="flex items-center gap-4 pr-4" slot="right">
                   {#if !isInEditMode}
                     <!-- <Button
                       icon="adjustments-horizontal"
@@ -438,6 +501,7 @@
                       {...viewRightButtonOptions}
                     /> -->
                     <ToggleGroup
+                      class="gap-3"
                       items={[
                         {
                           value: "filter",
@@ -445,7 +509,7 @@
                         },
                         {
                           value: "sort",
-                          icon: "ph:funnel-simple-thin"
+                          icon: "ph:arrows-down-up-thin"
                         }
                       ]}
                     />
@@ -455,6 +519,7 @@
                       on:switch={onArrangementChange}
                       on:densityChange={onDensityChange}
                     />
+                    <AddResourceAction on:add={onAddResource} />
                   {/if}
                 </span>
               </PanelSwitcher>
@@ -484,7 +549,7 @@
           class={cn(
             "w-full grow flex flex-col gap-2 justify-center items-center px-4",
             {
-              "overflow-auto": isNonViewLaneMode
+              "overflow-auto": isSingleViewMode
             }
           )}
         >
@@ -495,7 +560,7 @@
             <View
               view={activeView}
               {isInEditMode}
-              data={filteredViewData}
+              data={_filtered}
               isBoardOverflow={isStickied}
               properties={$collection?.properties}
             />

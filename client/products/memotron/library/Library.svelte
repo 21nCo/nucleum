@@ -345,7 +345,7 @@
             <VerticalSwitcher
               labelOrientation={Orientation.Horizontal}
               style={VerticalSwitcherStyle.BG}
-              itemProps={{ isHideLabel: false }}
+              itemProps={{ isHideLabel: false, size: Size.sm }}
               items={resolveSubItems(selectedResource)}
               bind:selected={selectedSubType}
               on:switch={refresh}

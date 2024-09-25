@@ -12,19 +12,14 @@
   import view from "$lib/client/stores/view.store";
   import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
   import MemotronNotifications from "./MemotronNotifications.svelte";
-  import PinnedTopBar from "$lib/client/layout/topNav/PinnedTopBar.svelte";
-  import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
+  import Tabs from "$lib/client/layout/tabs/Tabs.svelte";
   import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
   import { MemotronAction } from "../memotronAction.enum";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { captureStore } from "../capture/capture.store";
   import { CaptureType } from "../capture/capture.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
-  $: topBarResourceId = $page.url.searchParams.get(
-    ResourceAccessMode.TOPBARFOCUS
-  );
+
   onMount(async () => {
     $appLoadingState.isLocalLoaded = true;
     postMessageToParent(EmbedMessage.MOUNT);
@@ -88,18 +83,12 @@
             : 'flex-grow'}"
         >
           {#if !$view.isPortrait}
-            <PinnedTopBar />
+            <Tabs />
           {/if}
           <div class="w-full flex-grow">
             <AppSplitView>
               <slot name="main" slot="main">
-                {#if topBarResourceId}
-                  {#key topBarResourceId}
-                    <ResourceResolver id={topBarResourceId} />
-                  {/key}
-                {:else}
-                  <slot />
-                {/if}
+                <slot />
               </slot>
             </AppSplitView>
           </div>

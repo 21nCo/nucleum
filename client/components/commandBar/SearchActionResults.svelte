@@ -11,6 +11,7 @@
   import GoalSearchThumbnail from "$lib/client/products/pointron/goals/thumbnails/GoalSearchThumbnail.svelte";
   const dispatch = createEventDispatcher();
   export let action: IAction;
+  export let componentParams: any = undefined;
   export let search: string = "";
   let selectedIndex: number = 0;
   let isSearchInProgress: boolean = false;
@@ -19,7 +20,7 @@
     results = [];
     selectedIndex = 0;
   }
-  $: if (search) searchResources();
+  $: if (search || search === "") searchResources();
   async function searchResources() {
     if (!action.searchActionParams?.searchStoreId) return;
     isSearchInProgress = true;
@@ -35,7 +36,8 @@
     if (!selectedItem.id) return;
     action.searchActionParams?.callback(
       selectedItem.id.toString(),
-      selectedItem.label
+      selectedItem.label,
+      componentParams
     );
     dispatch("close");
   }

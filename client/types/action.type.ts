@@ -82,7 +82,7 @@ export type IAction = {
   searchActionParams?: {
     searchStoreId: string;
     itemLabel: string;
-    callback: (id: string, label?: string) => void;
+    callback: (id: string, label?: string, componentParams?: any) => void;
   };
   /**
    * Contexts in which the action will be hidden.

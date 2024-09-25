@@ -116,6 +116,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
   }
   directLink(item: any) {
+    const store = this.get();
+    if (store.links?.some((link) => link.to === item.id)) return;
     const toType = resolveResourceType(item);
     console.log("directLink", { item, toType });
     this.update((val) => {

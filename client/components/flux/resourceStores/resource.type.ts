@@ -71,7 +71,11 @@ export enum ResourceAccessMode {
    * Full screen mode
    */
   FULL = "full",
-  TOPBARFOCUS = "tbf"
+  TAB = "tab",
+  /**
+   * The resource is being accessed from the tabs.
+   */
+  TABS = "tabs"
 }
 
 export enum ResourceActionType {
@@ -103,7 +107,7 @@ export enum ResourceAccessPoint {
   /**
    * The resource is being accessed from the top bar by pinning it.
    */
-  TOP_BAR = "topbar",
+  TABS = "tabs",
   /**
    * The resource is being accessed from the resource page.
    */

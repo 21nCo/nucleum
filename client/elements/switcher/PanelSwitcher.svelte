@@ -108,7 +108,7 @@
           {item}
           {size}
           {style}
-          isInEditMode={_items.length > 2 && isInEditMode}
+          isInEditMode={_items.length > 1 && isInEditMode}
           {barStyle}
           {isInversePlacement}
           {parentBgIndex}

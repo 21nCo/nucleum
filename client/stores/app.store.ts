@@ -294,7 +294,8 @@ function initAppStore(seed: AppStore) {
       appStore.runAction(Action.CMD, {
         componentParams: {
           command: action.action,
-          commandType: action.type
+          commandType: action.type,
+          componentParams: params?.componentParams
         }
       });
     } else if (action.type === ActionType.EVENT) {
@@ -422,19 +423,29 @@ function initAppStore(seed: AppStore) {
     window?.location?.reload();
   }
 
+  /**
+   * Sets or deletes search params
+   * @param params Send an object to set params, array of strings to delete
+   * @returns
+   */
   const toggleSearchParam = (
-    param: string,
-    value?: string | boolean | number
+    params: Record<string, string | boolean | number> | string[]
   ) => {
-    if (value !== undefined) {
+    if (!params) return;
+    if (Array.isArray(params)) {
       const url = new URL(window.location.href);
-      url.searchParams.set(param, value.toString());
+      params.forEach((p) => {
+        if (!url.searchParams.get(p)) return;
+        url.searchParams.delete(p);
+      });
       appStore.gotoPath(url.href);
       return;
     }
+    if (typeof params !== "object") return;
     const url = new URL(window.location.href);
-    if (!url.searchParams.get(param)) return;
-    url.searchParams.delete(param);
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value.toString());
+    });
     appStore.gotoPath(url.href);
   };
   const isFSplit = () => {
@@ -518,7 +529,7 @@ function initAppStore(seed: AppStore) {
     //   }
     // );
 
-    toggleSearchParam(accessMode, id.toString());
+    toggleSearchParam({ [accessMode]: id.toString() });
   };
 
   const resourceClickHandler = (
@@ -527,7 +538,7 @@ function initAppStore(seed: AppStore) {
     defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
     if (!id) return;
-    toggleSearchParam("view");
+    toggleSearchParam(["view"]);
     let accessMode;
     if (event) accessMode = determineClickAccessMode(event);
     if (accessMode) openResource(id, accessMode);
@@ -556,12 +567,11 @@ function initAppStore(seed: AppStore) {
   }) => {
     const url = new URL(window.location.href);
     if (props?.accessMode) {
-      toggleSearchParam(props.accessMode);
+      toggleSearchParam([props.accessMode]);
       return;
     }
     if (props?.isRestrictToModals) {
-      toggleSearchParam(ResourceAccessMode.FSPLIT);
-      debouncer(toggleSearchParam, 100)(ResourceAccessMode.POP);
+      toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP]);
       return;
     }
     const prevMode = url.searchParams.get("prev");
@@ -683,7 +693,7 @@ function initAppStore(seed: AppStore) {
         n.player = undefined;
         return n;
       });
-      toggleSearchParam("fsp", path);
+      toggleSearchParam({ fsp: path });
     },
     /**
      * @deprecated - use player store instead
@@ -700,7 +710,7 @@ function initAppStore(seed: AppStore) {
         // n.fullScreenComponentPath = undefined;
         return n;
       });
-      toggleSearchParam("fsp");
+      toggleSearchParam(["fsp"]);
     },
     /**
      * @deprecated - use player store instead

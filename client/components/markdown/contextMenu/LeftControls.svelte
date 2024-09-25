@@ -30,6 +30,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+  import { tabs } from "$lib/client/layout/tabs/tabs.store";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let mdStore: MdStoreType;
@@ -177,13 +178,11 @@
         appStore.openResource(block.id, ResourceAccessMode.FULL);
       }
     },
-    [BlockAction.OPEN_IN_TOP_BAR]: {
-      value: BlockAction.OPEN_IN_TOP_BAR,
-      icon: "rocket",
+    [BlockAction.OPEN_AS_TAB]: {
+      value: BlockAction.OPEN_AS_TAB,
+      icon: "ph:tabs-light",
       callback: async () => {
-        appStore.closeResource({ isRestrictToModals: true });
-        uiState.addResourceToTopBar(block.id);
-        appStore.openResource(block.id, ResourceAccessMode.TOPBARFOCUS);
+        tabs.open(block.id);
       }
     },
     [BlockAction.COLOR]: {
@@ -241,7 +240,7 @@
             actions[BlockAction.COPY_BLOCK_TEXT],
             // actions[BlockAction.OPEN_AS_SPLIT],
             actions[BlockAction.OPEN_IN_FULL_SCREEN],
-            actions[BlockAction.OPEN_IN_TOP_BAR],
+            actions[BlockAction.OPEN_AS_TAB],
             actions[BlockAction.SHORTCUTS],
             actions[BlockAction.DELETE]
           ]

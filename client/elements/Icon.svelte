@@ -258,20 +258,30 @@
 >
   {#if icon?.includes(":") && renderedIconifyIcon}
     <!-- TODO - fix import issue on plasmo - disabling for now -->
-    <IconifyIcon
-      icon={renderedIconifyIcon}
-      width={size === Size.lg
-        ? "1.5rem"
-        : size === Size.md
-          ? "1.25rem"
-          : "1rem"}
-      height={size === Size.lg
-        ? "1.5rem"
-        : size === Size.md
-          ? "1.25rem"
-          : "1rem"}
-      class={_classList + " iconifysvg " + renderedIconifyIcon}
-    />
+    <div
+      class={cn({
+        "w-8 h-8": size === Size.xl,
+        "w-6 h-6": size === Size.lg,
+        "w-[1.25rem] h-[1.25rem]": size === Size.md,
+        "w-4 h-4": size === Size.sm,
+        "w-3 h-3": size === Size.xs
+      })}
+    >
+      <IconifyIcon
+        icon={renderedIconifyIcon}
+        width={size === Size.lg
+          ? "1.5rem"
+          : size === Size.md
+            ? "1.25rem"
+            : "1rem"}
+        height={size === Size.lg
+          ? "1.5rem"
+          : size === Size.md
+            ? "1.25rem"
+            : "1rem"}
+        class={_classList + " iconifysvg " + renderedIconifyIcon}
+      />
+    </div>
   {:else if icon}
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -10,11 +10,14 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import AddResourceAction from "./AddResourceAction.svelte";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
   export let isInEditMode: boolean = false;
   export let isShowMetaViews: boolean = false;
+  export let isSingleViewMode: boolean = false;
+
   let contextMenu = [];
   let isSearchFocused: boolean = false;
   $: contextMenu = resolveCollectionContextMenu(
@@ -25,6 +28,9 @@
     console.log("collection - onLabelChange", e);
     if ($collection.label)
       collection.debouncedModify({ label: $collection.label });
+  }
+  function onSearchQueryChange(e: any) {
+    dispatch("search", e);
   }
 </script>
 
@@ -66,10 +72,14 @@
       </div>
     {/if}
     {#if !isInEditMode}
+      {#if isSingleViewMode}
+        <AddResourceAction on:add isMinimalVariant={true} />
+      {/if}
       <div
         class={cn("flex flex-1 rounded-full border px-3 py-2", {
           "border-aps1": isSearchFocused,
-          "border-brs2": !isSearchFocused
+          "border-brs3": !isSearchFocused,
+          "ml-2": isSingleViewMode
         })}
       >
         <TextInput
@@ -79,12 +89,14 @@
           placeholder="Search this collection"
           on:focus={() => (isSearchFocused = true)}
           on:blur={() => (isSearchFocused = false)}
+          on:input={onSearchQueryChange}
         />
       </div>
     {:else}
       <span class="text-fgs3 text-b3"> Edit mode is on </span>
     {/if}
     {#if !isSearchFocused}
+      <slot name="additional"></slot>
       {#if !isInEditMode}
         <Toggle
           icon="ph:dots-nine"

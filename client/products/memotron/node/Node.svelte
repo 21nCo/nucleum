@@ -1,11 +1,8 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { resolveActiveNodeStore, type IActiveNodeStore } from "./node.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { prefixTable } from "$lib/shared/utils/text.utils";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { mediaNodeTypeList, NodeType, webNodeTypeList } from "./node.type";
+  import { mediaNodeTypeList, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
   import { setContext } from "svelte";
@@ -25,17 +22,7 @@
   $: if (id && (isFromSplitView || !isRenderSplitView)) {
     fetchNode();
   }
-  $: if (isRenderSplitView) {
-    appStore.toggleSearchParam(
-      appStore.isFSplit()
-        ? ResourceAccessMode.FSPLIT
-        : ResourceAccessMode.SPLIT,
-      prefixTable(id, Resource.nodelinks)
-    );
-    setTimeout(() => {
-      appStore.toggleSearchParam("blr", true);
-    }, 100);
-  }
+
   async function fetchNode() {
     isLoading = true;
     await node.fetch();
