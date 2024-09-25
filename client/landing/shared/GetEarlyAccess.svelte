@@ -15,7 +15,7 @@
   </div>
   <Button
     label="Get early access"
-    class="mo:w-full pt-1 pb-1 pl-8 pr-8"
+    class="pt-[5px] pb-[5px] pl-8 pr-8"
     on:click={onSubscribe}
   />
 </div>

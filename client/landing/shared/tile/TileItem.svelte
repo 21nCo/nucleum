@@ -106,7 +106,11 @@
     <img
       src={`/images/${image}.png`}
       alt={item.title}
-      class={cn("absolute h-[43%] mo:h-[35%] object-contain bottom-1 right-1")}
+      class={cn(
+        "absolute mo:h-[35%] object-contain bottom-1 right-1",
+        isPanelView && "h-[43%]",
+        !isPanelView && "h-[55%]"
+      )}
     />
   {/if}
 </button>

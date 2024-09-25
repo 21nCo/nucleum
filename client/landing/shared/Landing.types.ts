@@ -32,9 +32,11 @@ export type IGridItem = {
 };
 
 export type ITileItem = {
+  icon?: string;
   image?: string;
   title: string;
-  description: string;
+  label?: string;
+  description?: string;
   href?: string;
 };
 

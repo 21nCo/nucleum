@@ -70,7 +70,7 @@
                   (window.location.href = "https://blanklabs.org")}
               >
                 Blank.coop
-                <Divider />
+                <div class="h-px bg-dividerHorizontal" />
               </button>
             {/if}
             {#if topNavBarValues.title}

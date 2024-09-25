@@ -1,7 +1,6 @@
 <script lang="ts">
-  import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
-
-  let topNavBarValues: any = {
+  import BlankLandingLayout from "../shared/BlankLandingLayout.svelte";
+  let topNavBarValues = {
     icon: "memotron",
     title: "Memotron",
     items: [{ label: "Discord", href: "https://discord.gg/blanklabs" }]

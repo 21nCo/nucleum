@@ -13,8 +13,21 @@
   import TileItemsPanel from "./tile/TileItemsPanel.svelte";
 
   const id: string = "right-panel";
-  const currentProducts: ITileItem[] = $currentProductsStore;
-  const upcomingProducts: ITileItem[] = $upcomingProductsStore;
+  const currentProducts: ITileItem[] = $currentProductsStore.map((x) => {
+    return {
+      title: x.title,
+      image: x.image,
+      description: x.label,
+      href: x?.href
+    };
+  });
+  const upcomingProducts: ITileItem[] = $upcomingProductsStore.map((x) => {
+    return {
+      title: x.title,
+      description: x.label,
+      href: x?.href
+    };
+  });
 </script>
 
 {#if $isProductsPanelOpen}

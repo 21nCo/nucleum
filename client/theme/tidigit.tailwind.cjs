@@ -79,6 +79,10 @@ module.exports = {
       vm: { raw: "(min-height: 1500px)" }
     },
     extend: {
+      backgroundImage: {
+        dividerHorizontal:
+          "linear-gradient(90deg, rgba(209, 208, 208, 0.18) 0%, #D1D0D0 50.5%, rgba(209, 208, 208, 0.16) 100%)"
+      },
       fontSize: {
         title: "5rem",
         "2xl": "2.6rem",

@@ -25,9 +25,9 @@
 <Section class={cn("relative justify-center", className)}>
   <div
     class={cn(
-      "flex flex-col items-center text-center",
+      "flex flex-col items-center text-center mo:min-h-[90vh]",
       !$isProductsPage && "justify-center -mt-32",
-      $isProductsPage && "mt-16"
+      $isProductsPage && "mt-16 mo:mt-0"
     )}
   >
     {#if heroInputs.title}
@@ -72,7 +72,7 @@
     <DayAndNightToggle class="absolute bottom-12" />
   {:else if heroInputs.btn1 && heroInputs.btn2}
     {@const type = $view.isPortrait ? "primary" : "secondary"}
-    <div class="flex w-[1110px] mo:w-[342px] justify-center gap-16 mt-14">
+    <div class="flex w-[1110px] mo:w-[342px] justify-center gap-16">
       <Button
         {type}
         label={heroInputs.btn1.label}
@@ -104,13 +104,13 @@
   {/if}
   {#if $isProductsPage}
     <div
-      class="relative w-[1046px] mo:w-[343px] h-[590px] mo:h-[194px] mt-[178px] mo:mt-[102px] rounded-xl"
+      class="relative w-[1046px] mo:w-[343px] h-[590px] mo:h-[194px] mt-[40px] rounded-xl"
     >
       {#if !isVideoPlaying}
         <img
           src="https://img.youtube.com/vi/tktyAa_bWiY/maxresdefault.jpg"
           alt="Video Thumbnail"
-          class="w-full h-full object-cover cursor-pointer"
+          class="w-full h-full object-cover cursor-pointer rounded-xl"
         />
         <div class="absolute inset-0 flex items-center justify-center">
           <Button

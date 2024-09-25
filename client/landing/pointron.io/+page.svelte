@@ -1,10 +1,6 @@
 <script lang="ts">
   import HeroSection from "../shared/HeroSection.svelte";
   import type { IHeroInputs, ITileItem } from "../shared/Landing.types";
-  import {
-    currentProductsStore,
-    upcomingProductsStore
-  } from "../shared/store/shared.store";
   import IrregularTileItemsSection from "../shared/tile/IrregularTileItemsSection.svelte";
   let heroInputs: IHeroInputs = {
     title: "The one focus time tracker that you will ever need",

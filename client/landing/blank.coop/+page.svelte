@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Image from "$lib/client/icons/Image.svelte";
   import Footer from "../shared/footer/Footer.svelte";
   import GridItemsSection from "../shared/grid/GridItemsSection.svelte";
   import HeroSection from "../shared/HeroSection.svelte";
@@ -66,8 +67,21 @@
   ];
 
   let products: ITileItem[] = [
-    ...$currentProductsStore.slice(0, 2),
-    ...$upcomingProductsStore.slice(0, 2)
+    ...$currentProductsStore.slice(0, 2).map((x) => {
+      return {
+        title: x.title,
+        image: x.image,
+        description: x.label,
+        href: x?.href
+      };
+    }),
+    ...$upcomingProductsStore.slice(0, 2).map((x) => {
+      return {
+        title: x.title,
+        description: x.label,
+        href: x?.href
+      };
+    })
   ];
 </script>
 

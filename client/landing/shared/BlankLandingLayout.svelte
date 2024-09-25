@@ -13,6 +13,7 @@
 
   export let id: string = "";
   export let topNavBarValues: ITopNavBar;
+  export let isComingSoon: boolean = false;
   let transformedProducts: IListItem[] = [
     { title: "Products" },
     ...$currentProductsStore?.map((product) => ({
@@ -37,7 +38,9 @@
   <div {id} class="w-full overflow-auto">
     <TopNavBar {topNavBarValues} />
     <slot />
-    <Footer products={transformedProducts} />
+    {#if !isComingSoon}
+      <Footer products={transformedProducts} />
+    {/if}
   </div>
   <RightPanel />
 </LandingBaseLayer>
