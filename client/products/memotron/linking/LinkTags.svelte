@@ -10,16 +10,14 @@
   export let link: INodeLinkThumb;
   $: _tags = $linkTagStore
     .filter((x) =>
-      link.linkTags?.map((y) => y.toString()).includes(x.id.toString())
+      link.tags?.map((y) => y.toString()).includes(x.id.toString())
     )
     .map(linkTagLabelMapper);
 
   async function onRemove(tagId: IRecordId) {
-    link.linkTags = link.linkTags?.filter(
-      (x) => x.toString() !== tagId.toString()
-    );
-    await linker.modify(link.linkId, {
-      tags: link.linkTags
+    link.tags = link.tags?.filter((x) => x.toString() !== tagId.toString());
+    await linker.modify(link.id, {
+      tags: link.tags
     });
   }
   function onTagClick(tagId: IRecordId, e: MouseEvent) {

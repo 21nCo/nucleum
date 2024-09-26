@@ -18,9 +18,9 @@
   }
 
   async function processSelect(id: IRecordId) {
-    link.linkTags = [...(link.linkTags || []), id];
-    const result = await linker.modify(link.linkId, {
-      tags: link.linkTags
+    link.tags = [...(link.tags || []), id];
+    const result = await linker.modify(link.id, {
+      tags: link.tags
     });
     logger.log({ at: "processSelect", result });
     dispatch("tag", id);

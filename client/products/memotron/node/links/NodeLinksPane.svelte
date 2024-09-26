@@ -37,7 +37,7 @@
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-  let links: INodeLinkThumb[] = [];
+  let _links: INodeLinkThumb[] = [];
   let all: { link: INodeLinkThumb; node: INode }[] = [];
   let filtered: { link: INodeLinkThumb; node: INode }[] = [];
 
@@ -98,12 +98,12 @@
     }
     linkStatus.message = "Link added successfully.";
     linkStatus.type = AlertType.SUCCESS;
-    const link = {
-      id: e.detail.item.id,
+    const link: INodeLinkThumb = {
+      linkedTo: e.detail.item.id,
       linkType: LinkType.DIRECT,
-      linkId: result[0]?.id ?? ""
+      id: result[0]?.id ?? ""
     };
-    links.push(link);
+    _links.push(link);
     filtered = [
       ...(filtered ?? []),
       {
@@ -114,17 +114,16 @@
     searchQuery = "";
   }
   async function refresh() {
-    links = $node.links ?? [];
-    if (!links) {
-      links = [];
+    if (!$node.links) {
+      _links = [];
       filtered = [];
       fetchError = "Error fetching links.";
       return;
     }
-    let linkedNodes = links.map((x) => x.id);
+    _links = $node.links;
     const result = await nodeStore.selectMany({
       filters: {
-        id: linkedNodes.map((x) => x.toString())
+        id: _links.map((x) => x.linkedTo.toString())
       }
     });
     if (!result || result.length == 0) {
@@ -132,7 +131,7 @@
       return;
     }
     all = result.map((x: INode) => ({
-      link: links.find((y) => y.id.toString() == x.id.toString()),
+      link: _links.find((y) => y.linkedTo.toString() == x.id.toString()),
       node: x
     }));
     applyFilters();
@@ -141,7 +140,7 @@
     filtered = all.filter((x) => x.link.linkType === selectedLinkType);
     if (selectedLinkTags.length > 0) {
       filtered = filtered.filter((x) =>
-        x.link.linkTags?.some((y) => selectedLinkTags.includes(y.toString()))
+        x.link.tags?.some((y) => selectedLinkTags.includes(y.toString()))
       );
     }
   }
@@ -172,6 +171,8 @@
     isShowLinkTagFilters = true;
     applyFilters();
   }
+
+  $: console.log({ all, _links, filtered });
 </script>
 
 <div class="relative flex flex-col gap-3 pt-1 h-full w-full">
@@ -227,7 +228,7 @@
     </div>
     {#if isShowLinkTagFilters}
       <LinkTagFilter
-        {links}
+        links={_links}
         bind:selected={selectedLinkTags}
         on:change={applyFilters}
       />

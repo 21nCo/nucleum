@@ -3,9 +3,7 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import type { ILinkTag } from "./link.type";
 import {
   type IRecordId,
-  type IStore,
-  PersistenceActionType,
-  StoreDataType
+  PersistenceActionType
 } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import {
@@ -71,6 +69,21 @@ class Linker extends ResourceStore<INodeLink> {
         linkType
       }
     );
+  }
+
+  /**
+   * Queries links along with other node properties for a list of nodes.
+   * @param nodes
+   * @returns
+   */
+  async getLinksForNodes(nodes: IRecordId[]) {
+    const result = await flux.selectMany(Resource.node, {
+      properties: ["*", "array::concat(->link.*, <-link.*) as links"],
+      filters: {
+        id: nodes.map((x) => x.toString())
+      }
+    });
+    return result;
   }
 
   get() {}

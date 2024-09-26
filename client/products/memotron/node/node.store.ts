@@ -6,6 +6,7 @@ import {
   type INode,
   NodeType,
   NodeRightPaneType,
+  type INodeLinkThumb,
   type INodeLink
 } from "$lib/client/products/memotron/node/node.type";
 import {
@@ -145,29 +146,29 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     }
     const rawLinks =
       node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
-    const links: INodeLink[] = rawLinks
-      .filter((x) => {
+    const links: INodeLinkThumb[] = rawLinks
+      .filter((x: INodeLink) => {
         return (
           (x.in.toString() === this.id && x.out.tb === Resource.node) ||
           (x.out.toString() === this.id && x.in.tb === Resource.node)
         );
       })
-      .map((x) => {
+      .map((x: INodeLink) => {
         const id = x.in.toString() === this.id ? x.out : x.in;
         return {
-          id,
+          linkedTo: id,
           linkType: x.linkType,
-          linkId: x.id,
-          linkTags: x.tags
-        };
+          id: x.id,
+          tags: x.tags
+        } as INodeLinkThumb;
       });
     const collections: IRecordId[] = rawLinks
       .filter(
-        (x) =>
+        (x: INodeLink) =>
           x.out.tb === Resource.collection || x.in.tb === Resource.collection
       )
-      .map((x) => (x.out.tb === Resource.collection ? x.out : x.in));
-    logger.log({ at: "ActiveNodeStore.fetch", rawLinks, links, collections });
+      .map((x: INodeLink) => (x.out.tb === Resource.collection ? x.out : x.in));
+    logger.debug({ at: "ActiveNodeStore.fetch", rawLinks, links, collections });
     const { types, propertyConfig, avatars } =
       await collectionStore.resolveTypes(collections);
     this.update((n) => {

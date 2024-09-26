@@ -52,7 +52,7 @@
         <NodeThumbnailWebLink {item} />
       {/if}
     </div> -->
-  {#if link.linkTags && link.linkTags.length > 0}
+  {#if link.tags && link.tags.length > 0}
     <LinkTags bind:link on:tagClick />
   {/if}
   {#if isShowLinkTagger}

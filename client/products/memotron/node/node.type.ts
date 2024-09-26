@@ -283,14 +283,18 @@ export enum NodeRightPaneType {
 
 type INodeLinkBase = {
   linkType: LinkType;
-  linkId: IRecordId;
-  linkTags?: IRecordId[];
+  tags?: IRecordId[];
 };
 
-export type INodeLink = IMemotronItemBase & INodeLinkBase;
+export type INodeLink = IMemotronItemBase &
+  INodeLinkBase & {
+    in: IRecordId;
+    out: IRecordId;
+  };
 
 export type INodeLinkThumb = INodeLinkBase & {
   id: IRecordId;
+  linkedTo: IRecordId;
 };
 
 export type LinkThumbnail = INodeLink & {
@@ -688,7 +692,7 @@ export type IActiveNode = INode & {
   propertyConfig?: IProperty[];
   wordCount?: number;
   pdfAnnotations?: any[];
-  links?: INodeLink[];
+  links?: INodeLinkThumb[];
   children?: IActiveNode[];
   childrenHierarchy?: IRecordId[];
   forelinks?: LinkThumbnail[];

@@ -16,11 +16,15 @@
   import Resources from "../../common/Resources.svelte";
   import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
-  import { NodeRightPaneType, type INode } from "../node.type";
+  import {
+    NodeRightPaneType,
+    type INode,
+    type INodeLinkThumb
+  } from "../node.type";
   import { appStore } from "$lib/client/stores/app.store";
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
-  let links: INode[] = [];
+  let links: { link: INodeLinkThumb; node: INode }[] = [];
   function onChange(e: any) {
     if ($node.notes) node.debouncedModify({ notes: $node.notes });
   }
@@ -33,11 +37,17 @@
     if (!$node.links) return;
     const result = await nodeStore.selectMany({
       filters: {
-        id: $node.links.map((x) => x.id.toString())
+        id: $node.links.map((x) => x.linkedTo.toString())
       }
     });
-    if (result && result.length > 0) links = result.slice(0, 2);
-    else links = [];
+    if (!result || result.length == 0) {
+      links = [];
+      return;
+    }
+    links = result.slice(0, 2).map((x: INode) => ({
+      link: $node.links?.find((y) => y.linkedTo.toString() == x.id.toString()),
+      node: x
+    }));
   }
 
   function onLinkClick(e: CustomEvent) {

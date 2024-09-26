@@ -1,7 +1,5 @@
 <script lang="ts">
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
   import Tag from "$lib/client/elements/text/Tag.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { linkTagStore } from "../../linking/link.store";
   import { linkTagLabelMapper } from "../../linking/link.utils";
@@ -14,15 +12,14 @@
   $: tags = $linkTagStore
     .filter((x) =>
       links.some((y) =>
-        y.linkTags?.map((z) => z.toString()).includes(x.id.toString())
+        y.tags?.map((z) => z.toString()).includes(x.id.toString())
       )
     )
     .map(linkTagLabelMapper);
 
   function resolveCount(tagId: string) {
-    return links.filter((x) =>
-      x.linkTags?.map((y) => y.toString()).includes(tagId)
-    ).length;
+    return links.filter((x) => x.tags?.map((y) => y.toString()).includes(tagId))
+      .length;
   }
 </script>
 
