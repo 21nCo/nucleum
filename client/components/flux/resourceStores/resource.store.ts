@@ -300,7 +300,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     } as Partial<T>);
   }
 
-  async bulkModify(ids: string[], data: Partial<T>) {
+  async bulkModify(ids: IRecordId[], data: Partial<T>) {
     if (this.isExtensionEnvironment) {
       return extentionFlux({
         method: FluxMethod.MUTATION,
@@ -330,7 +330,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       }))
     });
   }
-  async bulkTrash(ids: string[]) {
+  async bulkTrash(ids: IRecordId[]) {
     return this.bulkModify(ids, {
       trashInformation: {
         deletedBy: this.currentUserId,

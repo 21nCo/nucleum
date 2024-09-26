@@ -11,6 +11,7 @@ import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import { LinkType } from "$lib/client/products/memotron/node/node.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { activeResourceFilter } from "$lib/client/utils/utils";
 
 class Linker implements IStore {
   id: string = Resource.link;
@@ -78,22 +79,32 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
     });
   }
 
+  save(tag: string, group?: string) {
+    const result = this.create({
+      label: tag,
+      group: group?.toLowerCase() ?? ""
+    });
+    return result;
+  }
+
   transform(data: ILinkTag[]) {
     const groupsArray = data.reduce(
       (acc, item) => {
-        const prefix = item.prefix ?? "";
-        if (!acc[prefix]) {
-          acc[prefix] = [];
+        const group = item.group ?? "";
+        if (!acc[group]) {
+          acc[group] = [];
         }
-        acc[prefix].push(item);
+        acc[group].push(item);
         return acc;
       },
       {} as Record<string, ILinkTag[]>
     );
-    return Object.entries(groupsArray).map(([prefix, items]) => ({
-      prefix,
-      items
+    const groups = Object.entries(groupsArray).map(([group, items]) => ({
+      group,
+      items: items.filter(activeResourceFilter)
     }));
+    const withoutGroup = groups.find((x) => x.group === "");
+    return [withoutGroup, ...groups.filter((x) => x.group !== "")];
   }
 }
 

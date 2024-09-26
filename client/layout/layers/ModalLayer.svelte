@@ -34,6 +34,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -255,7 +256,9 @@
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <div class="text-b1">{$confirmationNotification?.message}</div>
+          <div class="text-b1">
+            {@html renderMdAsHtml($confirmationNotification?.message)}
+          </div>
         </div>
       </div>
     </ModalLayout>

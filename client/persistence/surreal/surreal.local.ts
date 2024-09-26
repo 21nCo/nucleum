@@ -120,7 +120,8 @@ export class SurrealPersistence implements IPersistence {
         response = await this.delete(params.recordId);
         break;
       case PersistenceActionType.BULK_MERGE:
-        response = await this.bulkEdit<T>(resource, params.records);
+        // response = await this.bulkEdit<T>(resource, params.records);
+        response = await this.bulkEditTemp<T>(resource, params.records);
         break;
     }
     return response;
@@ -225,6 +226,11 @@ export class SurrealPersistence implements IPersistence {
     return this.instance?.delete(resourceId);
   }
 
+  /**
+   * Bulk merge or update is only available since Surreal 2.0.0.
+   *
+   * Until the wasm binary is updated, this method won't work. Use bulkEditTemp workaround for now.
+   */
   bulkEdit<T extends IResource | IMetaResource>(
     resource: Resource,
     records: T[]
@@ -232,6 +238,27 @@ export class SurrealPersistence implements IPersistence {
     return this.instance?.query(`UPDATE ${resource} MERGE $resources;`, {
       resources: records
     });
+  }
+
+  bulkEditTemp<T extends IResource | IMetaResource>(
+    resource: Resource,
+    records: T[]
+  ): Promise<any> | undefined {
+    const changedProperties = { ...records[0] };
+    delete changedProperties.id;
+    logger.debug({
+      at: "SurrealPersistence.bulkEditTemp",
+      resource,
+      changedProperties,
+      records
+    });
+    return this.instance?.query(
+      `UPDATE ${resource} MERGE $properties where id in $ids;`,
+      {
+        properties: changedProperties,
+        ids: records.map((x) => x.id)
+      }
+    );
   }
 
   async query(query: string, params: any): Promise<any> {
