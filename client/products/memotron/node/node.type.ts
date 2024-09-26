@@ -281,9 +281,16 @@ export enum NodeRightPaneType {
   SERENDIPITY = "SERENDIPITY"
 }
 
-export type INodeLink = {
-  id: IRecordId;
+type INodeLinkBase = {
   linkType: LinkType;
+  linkId: IRecordId;
+  linkTags?: IRecordId[];
+};
+
+export type INodeLink = IMemotronItemBase & INodeLinkBase;
+
+export type INodeLinkThumb = INodeLinkBase & {
+  id: IRecordId;
 };
 
 export type LinkThumbnail = INodeLink & {

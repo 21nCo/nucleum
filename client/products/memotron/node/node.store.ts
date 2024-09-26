@@ -156,7 +156,9 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
         const id = x.in.toString() === this.id ? x.out : x.in;
         return {
           id,
-          linkType: x.linkType
+          linkType: x.linkType,
+          linkId: x.id,
+          linkTags: x.tags
         };
       });
     const collections: IRecordId[] = rawLinks

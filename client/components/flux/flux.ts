@@ -139,6 +139,7 @@ class Flux {
   }
 
   private async loadInMemoryResourceStore(resource: Resource) {
+    logger.log({ at: "flux.loadInMemoryResourceStore", resource });
     const store = this.stores.find((x) => x.id === resource);
     if (store?.loader) {
       const data = await this.persistence.selectMany(resource);

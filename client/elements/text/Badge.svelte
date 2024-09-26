@@ -13,7 +13,8 @@
       bg(parentBgIndex),
       {
         "w-5 h-5 text-b3": size === Size.md,
-        "w-4 h-4 text-b4": size === Size.sm
+        "w-4 h-4 text-b4": size === Size.sm,
+        "w-3 h-3 text-b5": size === Size.xs
       }
     )}
   >

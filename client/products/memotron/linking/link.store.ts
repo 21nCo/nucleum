@@ -8,14 +8,20 @@ import {
   StoreDataType
 } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
-import { LinkType } from "$lib/client/products/memotron/node/node.type";
+import {
+  LinkType,
+  type INodeLink
+} from "$lib/client/products/memotron/node/node.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { activeResourceFilter } from "$lib/client/utils/utils";
+import { get } from "svelte/store";
+import { linkTagLabelMapper } from "./link.utils";
 
-class Linker implements IStore {
-  id: string = Resource.link;
-  dataType: StoreDataType = StoreDataType.IFR;
+class Linker extends ResourceStore<INodeLink> {
+  constructor() {
+    super(Resource.link);
+  }
 
   async link(
     from: IRecordId,
@@ -80,6 +86,10 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
   }
 
   save(tag: string, group?: string) {
+    if (!group && tag.includes(":")) {
+      group = tag.split(":")[0];
+      tag = tag.split(":")[1];
+    }
     const result = this.create({
       label: tag,
       group: group?.toLowerCase() ?? ""
@@ -105,6 +115,12 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
     }));
     const withoutGroup = groups.find((x) => x.group === "");
     return [withoutGroup, ...groups.filter((x) => x.group !== "")];
+  }
+
+  search(query: string) {
+    return get(this.items)
+      .map(linkTagLabelMapper)
+      .filter((x) => x.label?.toLowerCase().includes(query.toLowerCase()));
   }
 }
 

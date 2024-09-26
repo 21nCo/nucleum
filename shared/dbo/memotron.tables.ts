@@ -1,8 +1,10 @@
 export const memotronTables = [
   ...nodesByDay(),
   ...collection(),
+  ...linkTag(),
   ...nodeIndices(),
-  ...collectionIndices()
+  ...collectionIndices(),
+  ...linkTagIndices()
 ];
 
 function node() {
@@ -87,4 +89,20 @@ function collectionIndices() {
   const def = `DEFINE INDEX collectionLabelSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const typeIndex = `DEFINE INDEX fileTypeSearchIndex ON TABLE file COLUMNS type SEARCH ANALYZER ascii;`;
   return [def, typeIndex];
+}
+
+function linkTag() {
+  const def = `DEFINE TABLE linkTag SCHEMAFULL;
+  DEFINE FIELD label on TABLE linkTag TYPE string;
+  DEFINE FIELD group on TABLE linkTag TYPE option<string>;
+  DEFINE FIELD createdBy on TABLE linkTag TYPE option<record<user>>;
+  DEFINE FIELD modifiedBy on TABLE linkTag TYPE option<record<user>>;
+  DEFINE FIELD createdAt on TABLE linkTag TYPE datetime;
+  DEFINE FIELD modifiedAt on TABLE linkTag TYPE datetime;`;
+  return [def];
+}
+
+function linkTagIndices() {
+  const def = `DEFINE INDEX linkTagLabelSearchIndex ON TABLE linkTag COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  return [def];
 }

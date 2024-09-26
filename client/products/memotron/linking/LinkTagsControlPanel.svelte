@@ -12,24 +12,15 @@
   let inputValue: string = "";
 
   async function save(params?: { group: string; label: string }) {
-    let group = params?.group;
-    let label = params?.label;
-    if (!params) {
-      if (inputValue.includes(":")) {
-        group = inputValue.split(":")[0];
-        label = inputValue.split(":")[1];
-      } else {
-        label = inputValue;
-      }
+    let result;
+    if (params) {
+      result = await linkTagStore.save(params.label, params.group);
+    } else {
+      result = await linkTagStore.save(inputValue);
     }
-    if (!label) {
-      toasts.error("No label provided");
-      return;
-    }
-    let result = await linkTagStore.save(label, group);
     logger.debug({ at: "LinkTagsControlPanel save", result });
     if (result) {
-      toasts.success(`**${label}** added to link tags`);
+      toasts.success(`**${result[0]?.label}** added to link tags`);
     }
     inputValue = "";
   }

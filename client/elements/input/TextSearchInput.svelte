@@ -11,6 +11,8 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { mount } from "$lib/client/actions/mount.action";
+  import Tag from "../text/Tag.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let id: string = "";
   export let placeholder: string | undefined = undefined;
@@ -25,9 +27,9 @@
   export let searchResultComponent: any = undefined;
   export let emptyStateLabel: string | undefined = undefined;
   export let isPreventDefaultResults: boolean = false;
+  export let isChipsMode: boolean = false;
   let isFocused: boolean = false;
-  let inputClasses: string =
-    "text-input w-full bg-transparent focus:outline-none focus:border-none placeholder:font-light placeholder:text-fgs3 placeholder:text-b2";
+  let chips: any[] = [];
   let inputRef: any;
   let popoverRef: any;
   let searchResultsPopover: any;
@@ -43,16 +45,6 @@
   function hide() {
     popoverRef?.hidePopover();
   }
-  function resolveStyles() {
-    let styles: string[] = [];
-    // if (icon) {
-    //   styles.push("pl-8");
-    // }
-    return styles;
-  }
-  onMount(() => {
-    inputClasses = inputClasses + " " + resolveStyles().join(" ");
-  });
 
   export function showDefaultResults() {
     if (isPreventDefaultResults) return;
@@ -78,6 +70,14 @@
     value = "";
     hide();
   }
+
+  function onSelect(e: CustomEvent) {
+    if (!isChipsMode) {
+      dispatch("select", e.detail);
+    }
+    chips = [...chips, e.detail.item];
+    value = "";
+  }
 </script>
 
 <InputBaseElement
@@ -87,21 +87,42 @@
     isSpanToTriggerWidth: true,
     isPreventDefault: true,
     placement: Placement.BottomCenter,
-    isUseAbsolutePositioning: true,
+    isUseAbsolutePositioning: false,
     ...popoverOptions
   }}
   {label}
   {style}
   {isFocused}
-  class="w-full flex gap-2"
+  class={cn("w-full flex gap-2", {
+    "flex-wrap": isChipsMode
+  })}
 >
   {#if icon}
     <Icon {icon} class="stroke-fgs3" size={Size.sm} />
   {/if}
+  {#if isChipsMode && chips.length > 0}
+    <div class="flex gap-2 flex-wrap">
+      {#each chips as chip}
+        <Tag
+          label={chip.label}
+          size={Size.sm}
+          on:remove={() => {
+            chips = chips.filter((c) => c.id !== chip.id);
+          }}
+        />
+      {/each}
+    </div>
+  {/if}
   <input
     {id}
     use:mount={showDefaultResults}
-    class={inputClasses}
+    class={cn(
+      "text-input bg-transparent focus:outline-none focus:border-none placeholder:font-light placeholder:text-fgs3 placeholder:text-b2",
+      {
+        "w-full": !isChipsMode,
+        "min-w-10 flex-1": isChipsMode
+      }
+    )}
     bind:value
     on:change|stopPropagation
     on:keydown
@@ -131,7 +152,7 @@
       {searchCallback}
       {emptyStateLabel}
       {searchResultComponent}
-      on:select
+      on:select={onSelect}
       on:empty-enter
       on:reset={onReset}
     />

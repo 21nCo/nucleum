@@ -88,7 +88,7 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "update collection:0fa455f78af27051e0c8e878bcdf2013 set views = ['view:ade2f91256f0ac65bb96c2ea7d0023a2'];"
+      "select * from linkTag;"
     );
     logger.log({
       at: "surreal.persistence.testQuery",
@@ -316,7 +316,11 @@ export class SurrealPersistence implements IPersistence {
     // await this.logInfo();
     // await this.testQuery();
     const result = await this.instance?.query_raw(query, params);
-    logger.log({ at: "SurrealPersistence.selectMany - result", result });
+    logger.log({
+      at: "SurrealPersistence.selectMany - result",
+      result,
+      resource
+    });
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
   }
