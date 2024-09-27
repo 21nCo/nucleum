@@ -70,7 +70,7 @@ function collection() {
   DEFINE FIELD description on TABLE collection TYPE option<string>;
   DEFINE FIELD views on TABLE collection TYPE option<array<record<view>>>;
   DEFINE FIELD isCaptureShortcutEnabled on TABLE collection DEFAULT false;
-  DEFINE FIELD typeToExtend on TABLE collection TYPE option<string>;
+  DEFINE FIELD typeToExtend on TABLE collection TYPE option<record<collection>>;
   DEFINE FIELD avatar on TABLE collection FLEXIBLE TYPE option<object | string>;
   DEFINE FIELD query on TABLE collection TYPE option<string>;
   DEFINE FIELD properties on TABLE collection TYPE option<array<record<property>>>;

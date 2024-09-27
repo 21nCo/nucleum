@@ -242,7 +242,9 @@
     if (!icon || !icon.includes(":")) {
       return undefined;
     }
-    if (icon.includes("-light")) {
+    if (icon.includes("fa6-brands") || icon.includes("lets-icons")) {
+      return icon;
+    } else if (icon.includes("-light")) {
       return isFilled ? icon.replace("-light", "-fill") : icon;
     } else if (icon.includes("-thin")) {
       return isFilled ? icon.replace("-thin", "-fill") : icon;
@@ -259,7 +261,7 @@
   {#if icon?.includes(":") && renderedIconifyIcon}
     <!-- TODO - fix import issue on plasmo - disabling for now -->
     <div
-      class={cn({
+      class={cn(renderedIconifyIcon, {
         "w-8 h-8": size === Size.xl,
         "w-6 h-6": size === Size.lg,
         "w-[1.25rem] h-[1.25rem]": size === Size.md,
@@ -279,7 +281,7 @@
           : size === Size.md
             ? "1.25rem"
             : "1rem"}
-        class={_classList + " iconifysvg " + renderedIconifyIcon}
+        class={_classList + " iconifysvg "}
       />
     </div>
   {:else if icon}

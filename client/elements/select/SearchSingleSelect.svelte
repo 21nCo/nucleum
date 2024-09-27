@@ -40,7 +40,6 @@
       on:blur
       bind:this={inputRef}
       on:select={(e) => {
-        console.log("select", e.detail);
         selected = e?.detail?.item;
         value = "";
         dispatch("select", selected);

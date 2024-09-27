@@ -7,7 +7,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Badge from "./Badge.svelte";
   import type { IAvatar } from "$lib/client/types/avatar.type";
-  import AvatarView from "../avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   const dispatch = createEventDispatcher();
   export let label: string;
   export let parentBgIndex: number = 1;
@@ -36,7 +36,7 @@
   {#if icon && typeof icon === "string"}
     <Icon {icon} size={Size.sm} />
   {:else if icon && typeof icon === "object"}
-    <AvatarView avatar={icon} size={Size.sm} />
+    <AvatarRenderer avatar={icon} size={Size.sm} />
   {/if}
   {label ? truncateString(label, 24) : ""}
   {#if count !== undefined}

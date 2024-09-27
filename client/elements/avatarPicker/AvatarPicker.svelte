@@ -23,7 +23,7 @@
   import { PanelSwitcherStyle } from "../../types/switcher.enum";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "../../types/text.enum";
-  import AvatarView from "./AvatarView.svelte";
+  import AvatarRenderer from "./AvatarRenderer.svelte";
   import { emojis, materialSymbols } from "$lib/client/data/avatars";
   import SwitchInput from "../toggle/SwitchInput.svelte";
   import account from "$lib/client/stores/account.store";
@@ -368,9 +368,14 @@
           class="w-full h-full p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
         />
       </div>
-      <Button icon="clock" on:click={ShufflePick} />
+      <Button
+        icon="ph:dice-three-light"
+        tooltip="Randomize"
+        on:click={ShufflePick}
+      />
       <Button
         icon="trash"
+        tooltip="Delete"
         on:click={() => {
           eventDispatcher("delete");
           eventDispatcher("close");
@@ -486,7 +491,7 @@
                     }}
                     class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2"
                   >
-                    <AvatarView
+                    <AvatarRenderer
                       avatar={{
                         code:
                           "code" in emote[0]

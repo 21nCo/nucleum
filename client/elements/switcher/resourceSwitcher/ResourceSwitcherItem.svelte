@@ -6,7 +6,7 @@
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
   import { abg, cn } from "$lib/client/utils/ui.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
   import HoverableElement from "../../HoverableElement.svelte";
   import ContextMenuAction from "../../contextMenu/ContextMenuAction.svelte";
@@ -125,7 +125,7 @@
           {size}
         />
       {:else if item.icon && typeof item.icon === "object"}
-        <AvatarView avatar={item.icon} {size} />
+        <AvatarRenderer avatar={item.icon} {size} />
       {/if}
       <TextWithHoverTooltip
         text={properCase(item.label ?? item.value.toString())}

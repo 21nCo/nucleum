@@ -79,10 +79,7 @@ export const memotronActions: IAction[] = [
       title: "Edit properties",
       layout: {
         size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        primaryAction: {
-          label: "Done"
-        }
+        orientation: Orientation.Horizontal
       }
     }
   },

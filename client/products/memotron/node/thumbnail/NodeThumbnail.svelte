@@ -4,7 +4,6 @@
     type INodeThumb,
     NodeType
   } from "$lib/client/products/memotron/node/node.type";
-  import NodeThumbnailInList from "./NodeThumbnailInList.svelte";
   import NodeThumbnailInTimeline from "./NodeThumbnailInTimeline.svelte";
   import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
   import {
@@ -59,8 +58,6 @@
   {arrangement}
   bind:isHovering
 >
-  <!-- {#if variant === Arrangement.LIST && collectionContext}
-    <NodeThumbnailInList node={item} {parentBgIndex} on:click /> -->
   {#if arrangement === Arrangement.LIST}
     <button
       class={cn("flex w-full p-3 border rounded-md truncate", {

@@ -20,7 +20,7 @@
   import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
-  import Memocon from "../common/Memocon.svelte";
+  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import { propertyEditorStore } from "./properties/property.store";
@@ -39,13 +39,13 @@
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
+  import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
 
   let title: string;
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.UNTYPED;
   let selectedView: CollectionLayout;
   let typeToExtend: ICollection | undefined = undefined;
-  let isTypeExtension: boolean = false;
   let isCaptureShortcutEnabled: boolean = true;
   let properties: IProperty[] = [];
   let avatar: any;
@@ -184,75 +184,16 @@
           <div class="flex gap-2">
             {#if selectedType === CollectionType.TYPED}
               <span class="w-12 h-full">
-                <Memocon bind:avatar />
+                <Avatar bind:avatar isInEditMode={true} />
               </span>
             {/if}
             <TextInput bind:value={title} width="grow" />
           </div>
         </div>
         {#if selectedType === CollectionType.TYPED}
-          <div class="flex flex-col items-start w-full gap-2">
-            <FormControlLabel props={{ label: "Properties" }} />
-            <button
-              class="flex justify-center items-center w-full border border-brs3 rounded-md h-11 text-base"
-              on:click={() => {
-                appStore.runAction(MemotronAction.EDIT_COLLECTION_PROPERTIES);
-              }}
-            >
-              <span class="flex gap-2 text-fgs2 text-b2">
-                <Icon
-                  icon={$propertyEditorStore.length > 0
-                    ? "ph:pencil-simple-line-light"
-                    : "ph:plus-light"}
-                  size={Size.sm}
-                />
-                {$propertyEditorStore.length > 0
-                  ? `Edit properties (${$propertyEditorStore.length})`
-                  : "Add properties"}
-              </span>
-            </button>
-          </div>
-          <div class="flex flex-col items-start w-full gap-3">
-            <SwitchInput
-              label={{
-                ...formLabelConfig,
-                label: "Extend an existing Type collection",
-                orientation: Orientation.Horizontal,
-                tooltip: {
-                  body: "You can extend an existing type by adding additional properties on top. Editing the properties on base type will reflect in all extended types.",
-                  actionText: "Learn more about advanced filter query",
-                  action: "/kb/advanced-filter-query"
-                }
-              }}
-              isExpanded={true}
-              bind:checked={isTypeExtension}
-            />
-            {#if isTypeExtension}
-              <div class="flex flex-col items-start w-full gap-2">
-                <SearchSingleSelect
-                  bind:selected={typeToExtend}
-                  searchStoreId={Resource.collection}
-                  placeholder="Search for a collection to extend"
-                />
-                <div class="text-b2 text-fgs3">
-                  Inherited properties: {typeToExtend?.properties?.length ?? 0}
-                </div>
-              </div>
-            {/if}
-          </div>
-          <SwitchInput
-            label={{
-              ...formLabelConfig,
-              label: "Create a capture shortcut",
-              orientation: Orientation.Horizontal,
-              tooltip: {
-                body: "Enabling this will create a shortcut on capture page to seamlessly capture a new node entry and add it to the collection.",
-                actionText: "Learn more",
-                action: "/kb/type-collections"
-              }
-            }}
-            bind:checked={isCaptureShortcutEnabled}
-            isExpanded={true}
+          <TypeExtensionAndPropertiesEditor
+            bind:typeToExtend
+            bind:isCaptureShortcutEnabled
           />
         {/if}
         <OptionSelector

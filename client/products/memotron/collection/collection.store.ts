@@ -157,9 +157,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
       const result = await flux.select(this.id, [
         "*",
         "(select * from $parent.views) as views",
-        "(select * from $parent.properties) as properties"
+        "(select * from $parent.properties) as properties",
+        "typeToExtend.* as typeToExtend"
       ]);
-      logger.log({ at: "ActiveCollectionStore.init - select", result });
+      logger.debug({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
       this.set({
@@ -171,6 +172,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
           return { ...x, data: [] };
         })
       });
+      propertyEditorStore.set(record.properties ?? []);
     } catch (e) {
       console.error("error in init collection store", {
         id: this.id,
@@ -306,6 +308,21 @@ class ActiveCollectionStore extends ActiveResourceStore<
       return val;
     });
     return true;
+  }
+
+  async updateProperties() {
+    const properties = propertyEditorStore.get();
+    if (!properties) return;
+    for (const property of properties) {
+      await propertyStore.modify(property.id, property);
+    }
+    return this.resourceStore.modify(
+      this.id,
+      { properties: properties.map((p) => p.id) },
+      {
+        isPreventBackPropagation: true
+      }
+    );
   }
 }
 

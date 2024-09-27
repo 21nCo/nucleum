@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -17,7 +17,7 @@
 <div class="flex justify-between w-full">
   <span class="flex gap-2 grow items-center">
     {#if type === MemotronResourceType.TYPED_COLLECTION && item.avatar}
-      <AvatarView avatar={item.avatar} size={Size.sm} />
+      <AvatarRenderer avatar={item.avatar} size={Size.sm} />
     {:else if type === MemotronResourceType.QUERY_COLLECTION}
       <Icon icon="at-symbol" size={Size.sm} />
     {/if}

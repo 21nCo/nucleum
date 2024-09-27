@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import type {
     AvatarWithCode,
     IconAvatar
@@ -28,7 +28,7 @@
         }}
         class="flex items-center h-full"
       >
-        <AvatarView
+        <AvatarRenderer
           avatar={{ ...avatar, isFilled: +item + 1 <= value }}
           {size}
         />

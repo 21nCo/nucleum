@@ -51,7 +51,7 @@
       {/if}
     </button>
   {/if}
-  {#if isHovering || true}
+  {#if isHovering}
     <button
       class={cn("absolute top-0 right-0 flex gap-2 p--1", {
         "m-3 border rounded-md": arrangement !== Arrangement.LIST,
