@@ -8,6 +8,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
   export let renderingDetails: any = undefined;
   export let isMediaNode: boolean = false;
@@ -16,9 +17,8 @@
     $node.properties
   );
   async function propagateChanges(e: CustomEvent) {
-    console.log({ e, nodeProperties });
     const remainingProperties = $node.properties?.filter(
-      (x) => !nodeProperties.some((y) => y.id === x.id)
+      (x) => !nodeProperties.some((y) => isSameResource(y.id, x.id))
     );
     await node.updateProperties([
       ...(remainingProperties ?? []),

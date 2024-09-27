@@ -34,6 +34,10 @@
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import LinkTagFilter from "./LinkTagFilter.svelte";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import {
+    isPresentInList,
+    isSameResource
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
   $: multiSelectContext = $node.id + "-" + ResourceAccessPoint.NODE_LINKS;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
@@ -42,7 +46,7 @@
   let filtered: { link: INodeLinkThumb; node: INode }[] = [];
 
   let selectedLinkType: LinkType = LinkType.DIRECT;
-  let selectedLinkTags: string[] = [];
+  let selectedLinkTags: IRecordId[] = [];
   let fetchError: string | undefined = undefined;
   let linkStatus: { message: string; type: AlertType } = {
     message: "",
@@ -52,6 +56,7 @@
   let searchQuery: string = "";
   let isShowLinkTagFilters = false;
   let isShowLinkSuggestions = false;
+  let dev_linkTagFilter: "and" | "or" = "and";
 
   onMount(async () => {
     //TODO - refresh on focus
@@ -78,9 +83,7 @@
       linkStatus.type = AlertType.ERROR;
       return;
     }
-    if (
-      filtered.some((x) => x.node.id.toString() == e.detail.item.id.toString())
-    ) {
+    if (filtered.some((x) => isSameResource(x.node, e.detail.item))) {
       linkStatus.message = "Link already exists.";
       linkStatus.type = AlertType.ERROR;
       return;
@@ -139,9 +142,15 @@
   async function applyFilters() {
     filtered = all.filter((x) => x.link.linkType === selectedLinkType);
     if (selectedLinkTags.length > 0) {
-      filtered = filtered.filter((x) =>
-        x.link.tags?.some((y) => selectedLinkTags.includes(y.toString()))
-      );
+      if (dev_linkTagFilter === "or") {
+        filtered = filtered.filter((x) =>
+          x.link.tags?.some((y) => selectedLinkTags.some(isPresentInList(y)))
+        );
+      } else {
+        filtered = filtered.filter((x) =>
+          selectedLinkTags.every((y) => x.link.tags?.some(isPresentInList(y)))
+        );
+      }
     }
   }
   function onClick(e: CustomEvent) {
@@ -166,8 +175,8 @@
 
   function onTagClick(e: CustomEvent) {
     if (!e.detail) return;
-    if (selectedLinkTags.includes(e.detail.toString())) return;
-    selectedLinkTags = [...selectedLinkTags, e.detail.toString()];
+    if (selectedLinkTags.some(isPresentInList(e.detail))) return;
+    selectedLinkTags = [...selectedLinkTags, e.detail];
     isShowLinkTagFilters = true;
     applyFilters();
   }

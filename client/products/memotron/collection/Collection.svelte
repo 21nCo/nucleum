@@ -236,7 +236,7 @@
     else await collection.refreshViewData(activeView.id);
     loadActiveView();
     if (!activeView) return;
-    logger.debug({ at: "refresh", activeView, searchQuery });
+    logger.log({ at: "refresh", activeView, searchQuery });
     if (!tabBy || (tabBy && selectedTab === "all")) {
       viewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {

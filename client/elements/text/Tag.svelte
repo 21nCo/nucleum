@@ -6,10 +6,12 @@
   import { createEventDispatcher } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
   import Badge from "./Badge.svelte";
+  import type { IAvatar } from "$lib/client/types/avatar.type";
+  import AvatarView from "../avatarPicker/AvatarView.svelte";
   const dispatch = createEventDispatcher();
   export let label: string;
   export let parentBgIndex: number = 1;
-  export let icon: string | undefined = undefined;
+  export let icon: string | IAvatar | undefined = undefined;
   export let size: Size.sm | Size.md = Size.md;
   export let isRemovable = true;
   export let isActive = false;
@@ -31,8 +33,10 @@
   use:hoverable
   on:hover={(e) => (isHovering = e.detail)}
 >
-  {#if icon}
+  {#if icon && typeof icon === "string"}
     <Icon {icon} size={Size.sm} />
+  {:else if icon && typeof icon === "object"}
+    <AvatarView avatar={icon} size={Size.sm} />
   {/if}
   {label ? truncateString(label, 24) : ""}
   {#if count !== undefined}

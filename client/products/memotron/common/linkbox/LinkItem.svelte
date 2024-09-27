@@ -17,5 +17,11 @@
 </script>
 
 {#if item?.label}
-  <Tag label={item?.label} {parentBgIndex} on:click on:remove />
+  <Tag
+    label={item?.label}
+    {parentBgIndex}
+    icon={item.avatar ? item.avatar : undefined}
+    on:click
+    on:remove
+  />
 {/if}

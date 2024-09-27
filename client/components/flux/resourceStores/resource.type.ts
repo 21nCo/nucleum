@@ -15,12 +15,13 @@ export interface IResource extends IResourceBase {
    */
   modifiedAt: string;
   /**
+   * @deprecated - use accessLog instead
    * The last time user interacted with the resource
    *
    * This is almost same as modifiedAt but it is used to track the last time user interacted with the resource. For example, if user has opened a resource, interactedAt will be reset.
    *
    */
-  interactedAt: string;
+  interactedAt?: string;
   /**
    * Whether the resource is archived or not
    */
@@ -39,6 +40,10 @@ export interface IResource extends IResourceBase {
 export interface IMetaResource extends IResourceBase {
   modifiedAt?: string;
   [key: string]: unknown;
+}
+
+export interface IActiveResource extends IResource {
+  accessMode: ResourceAccessMode;
 }
 
 export type IUnlabeledResource = Omit<IResource, "label">;

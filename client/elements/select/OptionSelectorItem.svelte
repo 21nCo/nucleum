@@ -45,7 +45,7 @@
     on:click
   >
     <div
-      class={cn("flex", {
+      class={cn("flex items-center", {
         "flex-col ": iconOrientation === Orientation.Vertical,
         "gap-3": size !== Size.sm && iconOrientation === Orientation.Vertical,
         "gap-2":

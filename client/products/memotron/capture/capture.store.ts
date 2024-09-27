@@ -27,6 +27,7 @@ import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "../collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -77,9 +78,9 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     this.modify(val, { isPersist: false });
   }
-  async onTypeSelect(val: CaptureType | string) {
+  async onTypeSelect(val: CaptureType | IRecordId) {
     logger.log({ context: "onTypeSelect", val });
-    if (!val.startsWith(Resource.collection)) return;
+    if (!val.toString().startsWith(Resource.collection)) return;
     const type = await collectionStore.select(val);
     if (!type) return;
     this.update((store: ICaptureStore) => {
@@ -201,7 +202,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       label: val.label ?? "",
       properties: val.properties,
       body: "",
-      contentType: getContentTypeFromFileDetails(val?.fileDetails!),
+      contentType: getContentTypeFromFileDetails(),
       metadata
     };
     let remainingResources: INodeItemCaptured[] = [];
@@ -322,15 +323,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     toasts.success("Node saved successfully!");
     return result;
 
-    function getContentTypeFromFileDetails(fileDetails: FileDetails) {
-      if (val.captureType === CaptureType.UPLOAD) {
-        const contentType = fileDetails.type;
-        if (contentType.includes("image")) return NodeType.IMAGE;
-        else if (contentType.includes("audio")) return NodeType.AUDIO;
-        else if (contentType.includes("video")) return NodeType.VIDEO;
-        else if (contentType.includes("pdf")) return NodeType.PDF;
-        else return NodeType.FILE;
-      } else if (val.captureType.includes("collection:")) {
+    function getContentTypeFromFileDetails() {
+      if (val.captureType.toString().includes("collection:")) {
         //TODO - based on content template
         return NodeType.NODULAR_MARKDOWN;
       }

@@ -19,7 +19,7 @@
   let allPages: IAction[] = [];
   let defaultPages: IAction[] = [];
   let userPinnedPages: IAction[] = [];
-  let selected: number;
+  let current: string;
   refresh(appMenuStore.get());
   onMount(() => {
     appMenuStore.subscribe((x: IAppMenuStore) => {
@@ -58,25 +58,26 @@
     let currentPage = allPages.find((item) =>
       currentPath.includes(item.path ?? item.action)
     );
-    selected = currentPage ? allPages.indexOf(currentPage) : 0;
+    current = currentPage ? currentPage.action : "";
   }
 
-  function onClick(index: number, item: IAction) {
+  function onClick(item: IAction) {
     if (layoutContext == LayoutContext.PORTRAIT) {
       toasts.reset();
     }
     isInEditMode.set(false);
-    if (selected !== index || window.location.pathname.includes("/tab")) {
+    console.log({ item, selected: current });
+    if (current !== item.action || window.location.pathname.includes("/tab")) {
       appStore.runAction(item.action);
     }
-    selected = index;
+    current = item.action;
     appEvents.publish(GlobalEvent.APP_MENU_SWITCHED, item.action);
   }
 </script>
 
 {#if layoutContext == LayoutContext.PORTRAIT}
   <div class="flex justify-around items-center px-2 min-w-min w-full">
-    {#each allPages as item, index}
+    {#each allPages as item, index (item.action)}
       {#if index == Math.floor(allPages.length / 2) && $appStore.appData?.isShowCaptureOnMobile}
         <CaptureComponent />
       {/if}
@@ -84,7 +85,7 @@
         {parentBackgroundIndex}
         {layoutContext}
         isShowLabel={true}
-        on:click={() => onClick(index, item)}
+        on:click={() => onClick(item)}
         {item}
       />
     {/each}
@@ -92,12 +93,12 @@
 {:else}
   <div class="flex flex-col gap-1 justify-center rounded-lg min-w-min w-full">
     <div class="flex flex-col gap-1">
-      {#each defaultPages as item, index}
+      {#each defaultPages as item (item.action)}
         <AppMenuSwitcherItem
           {parentBackgroundIndex}
           {layoutContext}
           isShowLabel={layoutContext == LayoutContext.DEFAULT}
-          on:click={() => onClick(index, item)}
+          on:click={() => onClick(item)}
           {item}
         />
       {/each}
@@ -111,12 +112,12 @@
           </div>
         {/if} -->
         <div class="flex flex-col gap-1">
-          {#each userPinnedPages as item, index}
+          {#each userPinnedPages as item (item.action)}
             <AppMenuSwitcherItem
               {parentBackgroundIndex}
               {layoutContext}
               isShowLabel={layoutContext == LayoutContext.DEFAULT}
-              on:click={() => onClick(index, item)}
+              on:click={() => onClick(item)}
               {item}
             />
           {/each}

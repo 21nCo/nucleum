@@ -9,8 +9,16 @@
   import InfoCard from "./InfoCard.svelte";
   import LocationCard from "./LocationCard.svelte";
   import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { onMount } from "svelte";
+  import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IAccessLog } from "$lib/client/components/accessLogging/accessLog.type";
+  import { page } from "$app/stores";
+  import { logger } from "$lib/client/components/debug/logger.client";
   export let node: IActiveNodeStore;
   export let renderingDetails: any = undefined;
+  let lastAccessLog: IAccessLog | undefined = undefined;
+  let viewLogs: IAccessLog[] | undefined = undefined;
   $: kind = resolveKind($node.contentType);
   $: isMediaNode =
     $node.contentType !== NodeType.NODULAR_MARKDOWN &&
@@ -59,7 +67,39 @@
     else if (fileType.includes("audio/webm")) return "webm";
     else return "NA";
   }
-  $: console.log({ kind });
+
+  onMount(async () => {
+    await initAccessLogs();
+  });
+
+  async function initAccessLogs() {
+    try {
+      const currentAccess = $node.accessMode + "At";
+      const currentAccessId = $page.url.searchParams.get(currentAccess);
+      const accessLogs = await accessLogStore.fetch($node.id);
+      logger.log({
+        at: "NodeMetadataPane.svelte:initAccessLogs",
+        accessLogs
+      });
+      if (accessLogs && accessLogs.length > 0) {
+        viewLogs = accessLogs
+          .filter((x) => x.action === ResourceActionType.OPEN)
+          .sort((a, b) => b.createdAt - a.createdAt);
+        if (viewLogs.length === 0) return;
+        if (
+          currentAccessId &&
+          new Date(viewLogs[0].timestamp).getTime() ===
+            parseInt(currentAccessId)
+        ) {
+          lastAccessLog = viewLogs[1];
+        } else {
+          lastAccessLog = viewLogs[0];
+        }
+      }
+    } catch (e) {
+      logger.error({ at: "NodeMetadataPane.svelte:initAccessLogs", error: e });
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-3 w-full flex-grow items-start">
@@ -107,20 +147,28 @@
         label={isWebNode ? "Clipped at" : "Created at"}
         value={$node.createdAt}
       />
-      <BasicInfoItem label="Last viewed at" value={$node.interactedAt} />
+      {#if lastAccessLog}
+        <BasicInfoItem
+          label="Last viewed at"
+          value={lastAccessLog?.createdAt}
+        />
+      {/if}
       {#if !isWebNode}
         <BasicInfoItem label="Last modified at" value={$node.modifiedAt} />
       {/if}
     </div>
-    {#if !isMediaNode}
-      <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap gap-3">
+      {#if viewLogs && viewLogs.length > 0}
+        <InfoCard label="Total view count" value={viewLogs.length} />
+      {/if}
+      {#if !isMediaNode}
         <InfoCard label="Word count" value={$node.wordCount} />
         <InfoCard
           label="Reading length"
           value={calculateReadingTime($node.wordCount)}
         />
-      </div>
-    {/if}
+      {/if}
+    </div>
     {#if $node.metadata?.location}
       <div class={cn("rounded-md w-full bg-bgs2")}>
         <LocationCard metadata={$node.metadata} />

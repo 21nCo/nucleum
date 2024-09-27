@@ -9,6 +9,7 @@ import type {
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
+  type IActiveResource,
   type OmitFields,
   type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -311,7 +312,7 @@ export enum LinkType {
 export type INodeMetadata = { location?: any };
 
 export type INodeProperty = {
-  id: string;
+  id: IRecordId;
   value: IPropertyValue | null;
 };
 
@@ -679,24 +680,25 @@ export type INode =
   | IWebPage
   | IClip;
 
-export type IActiveNode = INode & {
-  md: IMarkdown;
-  parent?: INode;
-  file?: IFile;
-  mdParent?: IRecordId[];
-  accessMode: ResourceAccessMode;
-  focusedBlock?: string;
-  collections?: IRecordId[];
-  types?: string[];
-  avatars?: IAvatar[];
-  propertyConfig?: IProperty[];
-  wordCount?: number;
-  pdfAnnotations?: any[];
-  links?: INodeLinkThumb[];
-  children?: IActiveNode[];
-  childrenHierarchy?: IRecordId[];
-  forelinks?: LinkThumbnail[];
-};
+export type IActiveNode = INode &
+  IActiveResource & {
+    md: IMarkdown;
+    parent?: INode;
+    file?: IFile;
+    mdParent?: IRecordId[];
+    accessMode: ResourceAccessMode;
+    focusedBlock?: string;
+    collections?: IRecordId[];
+    types?: string[];
+    avatars?: IAvatar[];
+    propertyConfig?: IProperty[];
+    wordCount?: number;
+    pdfAnnotations?: any[];
+    links?: INodeLinkThumb[];
+    children?: IActiveNode[];
+    childrenHierarchy?: IRecordId[];
+    forelinks?: LinkThumbnail[];
+  };
 
 export type INodeThumb = INode & {
   file?: IFile;

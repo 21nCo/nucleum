@@ -27,7 +27,6 @@
   import CollectionsLane from "./CollectionsLane.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
   export let isHovering: boolean = false;
   export let rightPane: NodeRightPaneType | undefined = undefined;
   let contextMenu = [];
@@ -56,29 +55,29 @@
 <!-- Using transition here caused modal freeze issue -->
 <div
   class={cn("flex flex-col w-full justify-center items-center", {
-    "mb-6 absolute z-10 bottom-0": accessMode === ResourceAccessMode.FULL,
+    "mb-6 absolute z-10 bottom-0": $node.accessMode === ResourceAccessMode.FULL,
     relative:
-      accessMode === ResourceAccessMode.POP ||
-      accessMode === ResourceAccessMode.INLINE
+      $node.accessMode === ResourceAccessMode.POP ||
+      $node.accessMode === ResourceAccessMode.INLINE
   })}
 >
   <HoverableElement
     bind:isHovering
     class={cn("flex flex-col gap-3 justify-center items-center", {
       "w-full":
-        accessMode === ResourceAccessMode.POP ||
-        accessMode === ResourceAccessMode.INLINE,
+        $node.accessMode === ResourceAccessMode.POP ||
+        $node.accessMode === ResourceAccessMode.INLINE,
       "mo:w-full tp:w-4/5 dp:w-3/5 2k:w-[50rem] rounded-md":
-        accessMode === ResourceAccessMode.FULL
+        $node.accessMode === ResourceAccessMode.FULL
     })}
   >
     {#if $node.isArchived || $node.trashInformation}
       <div
         class={cn("bg-bgs2 rounded-md p-4 border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
-            accessMode === ResourceAccessMode.POP ||
-            accessMode === ResourceAccessMode.INLINE,
-          "w-full": accessMode === ResourceAccessMode.FULL
+            $node.accessMode === ResourceAccessMode.POP ||
+            $node.accessMode === ResourceAccessMode.INLINE,
+          "w-full": $node.accessMode === ResourceAccessMode.FULL
         })}
       >
         <ResourceStatusBanner resource={node} />
@@ -88,8 +87,8 @@
       class={cn(
         "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-3",
         {
-          "w-full": accessMode === ResourceAccessMode.POP,
-          "rounded-md": accessMode === ResourceAccessMode.FULL
+          "w-full": $node.accessMode === ResourceAccessMode.POP,
+          "rounded-md": $node.accessMode === ResourceAccessMode.FULL
         }
       )}
     >
@@ -129,7 +128,7 @@
               }}
             />
           {/if}
-          {#if accessMode === ResourceAccessMode.FULL}
+          {#if $node.accessMode === ResourceAccessMode.FULL}
             <Button
               {...buttonCommonProps}
               icon="cross-circled"

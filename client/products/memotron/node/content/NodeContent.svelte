@@ -79,10 +79,6 @@
     $node.charCount = e.characters;
   }
 
-  function retireveNode() {
-    node.fetch();
-    refreshId = Date.now();
-  }
   function onMarkdownContentChange(e: CustomEvent) {
     logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
     const block = e.detail.block;

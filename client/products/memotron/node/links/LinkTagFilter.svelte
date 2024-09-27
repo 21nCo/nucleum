@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Tag from "$lib/client/elements/text/Tag.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   import { Size } from "$lib/client/types/size.enum";
   import { linkTagStore } from "../../linking/link.store";
   import { linkTagLabelMapper } from "../../linking/link.utils";
@@ -7,19 +9,14 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let links: INodeLinkThumb[] = [];
-  export let selected: string[] = [];
+  export let selected: IRecordId[] = [];
 
   $: tags = $linkTagStore
-    .filter((x) =>
-      links.some((y) =>
-        y.tags?.map((z) => z.toString()).includes(x.id.toString())
-      )
-    )
+    .filter((x) => links.some((y) => y.tags?.some(isPresentInList(x))))
     .map(linkTagLabelMapper);
 
-  function resolveCount(tagId: string) {
-    return links.filter((x) => x.tags?.map((y) => y.toString()).includes(tagId))
-      .length;
+  function resolveCount(tagId: IRecordId) {
+    return links.filter((x) => x.tags?.some(isPresentInList(tagId))).length;
   }
 </script>
 
@@ -28,15 +25,15 @@
     <div class="flex gap-2">
       <Tag
         label={tag.label}
-        count={resolveCount(tag.id.toString())}
+        count={resolveCount(tag.id)}
         size={Size.md}
-        isActive={selected.includes(tag.id.toString())}
+        isActive={selected.some(isPresentInList(tag.id))}
         isRemovable={false}
         on:click={(e) => {
-          if (selected.includes(tag.id.toString())) {
-            selected = selected.filter((x) => x !== tag.id.toString());
+          if (selected.some(isPresentInList(tag.id))) {
+            selected = selected.filter((x) => !isPresentInList(tag.id)(x));
           } else {
-            selected = [...selected, tag.id.toString()];
+            selected = [...selected, tag.id];
           }
           dispatch("change");
         }}

@@ -25,7 +25,7 @@
 
   async function fetchNode() {
     isLoading = true;
-    await node.fetch();
+    await node.init(accessMode);
     nodeContext.parent = $node.parent;
     isLoading = false;
   }
@@ -41,9 +41,9 @@
 
 {#if $node && !isLoading}
   {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
-    <MediaNode {node} {accessMode} />
+    <MediaNode {node} />
   {:else}
-    <NonMediaNode {node} {accessMode} />
+    <NonMediaNode {node} />
   {/if}
 {:else}
   <div class="w-full h-full pt-4 px-20">

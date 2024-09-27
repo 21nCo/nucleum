@@ -48,7 +48,7 @@ export class SurrealPersistence implements IPersistence {
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
       // await this.logInfo();
-      // await this.testQuery();
+      //await this.testQuery();
       const initLog = await this.select("kv:init");
       if (initLog) {
         logger.log({
@@ -88,9 +88,9 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "select * from linkTag;"
+      "select * from mutation;"
     );
-    logger.log({
+    logger.debug({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
       result

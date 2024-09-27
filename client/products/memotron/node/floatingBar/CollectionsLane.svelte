@@ -15,7 +15,8 @@
   import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
   import type { IActiveNodeStore } from "../node.store";
-  import { resolveNodeIcon } from "../node.utils";
+  import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
+  import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
   let searchQuery = "";
   let popoverRef: any;
@@ -34,7 +35,7 @@
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
-    if ($node.collections?.some((x) => x.toString() === id.toString())) {
+    if ($node.collections?.some(isPresentInList(id))) {
       toasts.error("Collection already exists.");
       return;
     }
@@ -57,7 +58,7 @@
 
 <div class="flex gap-2 items-center justify-center h-full">
   <button
-    class="flex items-center gap-1 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
+    class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
     on:click={() => {
       appStore.closeResource();
       appStore.gotoPath("library", {
@@ -73,7 +74,7 @@
       size={Size.sm}
       class="fill-fgs1"
     />
-    {enumToString($node.contentType)}
+    {resolveNodeContentLabel($node.contentType)}
   </button>
   <span class="h-full flex items-center justify-center">
     <Divider

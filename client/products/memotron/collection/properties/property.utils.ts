@@ -1,3 +1,4 @@
+import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { type IProperty, PropertyType } from "./property.type";
@@ -33,7 +34,9 @@ export function mapPropertyValues(
 ) {
   if (!properties) return [];
   return properties.map((property) => {
-    const nodeProperty = nodeProperties?.find((v) => v.id === property.id);
+    const nodeProperty = nodeProperties?.find((v) =>
+      isSameResource(v, property)
+    );
     return {
       id: property.id,
       value: nodeProperty?.value ?? resolvePropertyDefaultValue(property)

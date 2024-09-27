@@ -39,7 +39,7 @@
     <TextInput
       {style}
       bind:value={property.value}
-      label={label.label}
+      {label}
       placeholder="Enter text"
       on:change
     />

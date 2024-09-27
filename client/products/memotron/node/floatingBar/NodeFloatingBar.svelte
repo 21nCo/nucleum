@@ -29,7 +29,6 @@
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
   export let selectedView: string = "Content";
   export let isWidened: boolean = false;
   let bgIndex = 1;
@@ -113,15 +112,17 @@
     {/if}
     <Button
       {...buttonCommonProps}
-      icon={accessMode === ResourceAccessMode.FULL ? "collapse" : "full-screen"}
-      tooltip={accessMode === ResourceAccessMode.FULL
+      icon={$node.accessMode === ResourceAccessMode.FULL
+        ? "collapse"
+        : "full-screen"}
+      tooltip={$node.accessMode === ResourceAccessMode.FULL
         ? "Minimize"
         : "Full screen"}
       on:click={() => {
-        appStore.toggleFocusAccessMode(accessMode, $node.id);
+        appStore.toggleFocusAccessMode($node.accessMode, $node.id);
       }}
     />
-    {#if accessMode != ResourceAccessMode.INLINE}
+    {#if $node.accessMode != ResourceAccessMode.INLINE}
       <!-- <Button
         {...buttonCommonProps}
         label="Close node"

@@ -65,7 +65,7 @@ class CollectionStore extends ResourceStore<ICollection> {
 
   /**
    * TODO - testing extended properties
-   * @param types
+   * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
   async resolveTypes(collections: IRecordId[]) {
@@ -73,8 +73,25 @@ class CollectionStore extends ResourceStore<ICollection> {
     let propertyConfig: IProperty[] = [];
     let avatars: IAvatar[] = [];
     if (!collections) return { types, propertyConfig, avatars };
-    const query = `return select properties.* as properties, typeToExtend.properties.* as extendProperties from collection where id in $types;`;
-    const result = await flux.selectByQuery(query, { types });
+    const result = await flux.selectMany(Resource.collection, {
+      properties: [
+        "type",
+        "(select * from $parent.properties) as properties",
+        "(select * from $parent.typeToExtend.properties) as extendProperties"
+      ],
+      filters: {
+        id: collections.map((x) => x.toString())
+      }
+    });
+    logger.log({ at: "resolveTypes", result });
+    if (!result || !Array.isArray(result))
+      return { types, propertyConfig, avatars };
+    types = result
+      .filter((x) => x.type === CollectionType.TYPED)
+      .map((x) => x.id);
+    propertyConfig = result
+      .flatMap((x) => [...(x.properties ?? []), ...(x.extendProperties ?? [])])
+      .filter((x) => x);
     return { types, propertyConfig, avatars };
   }
 }
@@ -132,9 +149,6 @@ class ActiveCollectionStore extends ActiveResourceStore<
   async init() {
     logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
-      this.resourceStore.modify(this.id, {
-        interactedAt: new Date().toISOString()
-      });
       this.update((val: IActiveCollection) => {
         if (val) val.isPageLoading = true;
         else val = { isPageLoading: true };

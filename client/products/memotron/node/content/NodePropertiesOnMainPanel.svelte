@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import PropertiesListView from "../../collection/properties/PropertiesListView.svelte";
   import type { IProperty } from "../../collection/properties/property.type";
   import { mapPropertyValues } from "../../collection/properties/property.utils";
@@ -14,7 +15,7 @@
 
   async function propagateChanges(e: CustomEvent) {
     const remainingProperties = $node.properties?.filter(
-      (x) => !nodeProperties.some((y) => y.id === x.id)
+      (x) => !nodeProperties.some((y) => isSameResource(y, x))
     );
     await node.updateProperties([
       ...(remainingProperties ?? []),
@@ -29,5 +30,6 @@
     propertyConfig={$node?.propertyConfig}
     on:change={propagateChanges}
     context={isMediaNode ? "medianode" : "nodepage"}
+    on:showAll
   />
 {/if}

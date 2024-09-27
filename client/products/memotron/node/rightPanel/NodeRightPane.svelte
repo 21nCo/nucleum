@@ -11,7 +11,7 @@
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
   export let isRightPanelCollapsed = true;
-  let pane = NodeRightPaneType.OUTLINE;
+  export let pane = NodeRightPaneType.OUTLINE;
   let verticalSwitcherItems: ISelectItem[] = [
     { value: NodeRightPaneType.LINKS, icon: "ph:arrows-left-right-thin" },
     { value: NodeRightPaneType.OUTLINE, icon: "bars-center-left" },

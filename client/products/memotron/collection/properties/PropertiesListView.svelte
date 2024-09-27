@@ -10,6 +10,12 @@
     resolvePropertiesForNodePage
   } from "./property.utils";
   import { onMount } from "svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { Size } from "$lib/client/types/size.enum";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let propertyConfig: IProperty[] = [];
   export let properties: INodeProperty[] = [];
   export let nodeId: string | undefined = undefined;
@@ -55,25 +61,36 @@
           on:click={() => {
             isCollapsed = !isCollapsed;
           }}
-          on:mouseenter={() => {
-            isCollapserHovered = true;
-          }}
-          on:mouseleave={() => {
-            isCollapserHovered = false;
-          }}
+          use:hoverable
+          on:hover={(e) => (isCollapserHovered = e.detail)}
         >
-          <span>
-            <span class="text-base text-fgs3"> Properties </span>
+          <span class="flex items-center gap-2">
+            <!-- <Icon icon="widget" size={Size.sm} /> -->
+            <span class="text-b2 text-fgs3"> Properties </span>
             {#if isCollapsed}
-              <span class="bg-bgs2 text-b3 text-fgs2 rounded-md px-1 py-0.5"
-                >{properties.length}</span
-              >
+              <Badge text={properties.length} />
             {/if}
           </span>
-          <Button
-            icon={isCollapsed ? "chevdown" : "chevup"}
-            tooltip={isCollapsed ? "Expand" : "Collapse"}
-          />
+          <span class="h-3 flex gap-3 items-center">
+            {#if isCollapserHovered}
+              {#if context === "nodepage"}
+                <Button
+                  label="See all"
+                  icon="ph:arrow-right-thin"
+                  size={Size.sm}
+                  style={ButtonStyle.PLAIN}
+                  on:click={(e) => {
+                    dispatch("showAll");
+                    if (e.detail) e.detail.stopPropagation();
+                  }}
+                />
+              {/if}
+              <Button
+                icon={isCollapsed ? "chevdown" : "chevup"}
+                tooltip={isCollapsed ? "Expand" : "Collapse"}
+              />
+            {/if}
+          </span>
         </button>
       {/if}
       {#if !isCollapsed || isPropertiesPaneContext}

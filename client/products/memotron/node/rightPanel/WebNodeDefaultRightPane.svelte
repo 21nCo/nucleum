@@ -22,6 +22,7 @@
     type INodeLinkThumb
   } from "../node.type";
   import { appStore } from "$lib/client/stores/app.store";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   let links: { link: INodeLinkThumb; node: INode }[] = [];
@@ -45,7 +46,7 @@
       return;
     }
     links = result.slice(0, 2).map((x: INode) => ({
-      link: $node.links?.find((y) => y.linkedTo.toString() == x.id.toString()),
+      link: $node.links?.find((y) => isSameResource(y.linkedTo, x.id)),
       node: x
     }));
   }

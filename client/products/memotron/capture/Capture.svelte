@@ -25,6 +25,7 @@
   import { onDestroy, onMount } from "svelte";
   import { page } from "$app/stores";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -33,19 +34,23 @@
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
+  let types: IRecordId[] = [];
   let avatars: IAvatar[] = [];
   let propertyConfig: IProperty[] = [];
 
-  $: types = $captureStore.links
-    ?.filter(
-      (x) =>
-        x.toType === MemotronResourceType.TYPED_COLLECTION &&
-        x.linkType === LinkType.DIRECT &&
-        x.from === "root"
-    )
-    ?.map((x) => x.to);
+  // $: console.log({ types, $captureStore, propertyConfig });
 
-  async function refreshTypeData(types: string[]) {
+  async function refreshTypeData() {
+    types =
+      $captureStore.links
+        ?.filter(
+          (x) =>
+            x.toType === MemotronResourceType.TYPED_COLLECTION &&
+            x.linkType === LinkType.DIRECT &&
+            x.from === "root"
+        )
+        ?.map((x) => x.to) ?? [];
+    if (types.length === 0) return;
     const data = await collectionStore.resolveTypes(types);
     avatars = data.avatars;
     propertyConfig = data.propertyConfig;
@@ -70,6 +75,12 @@
   onDestroy(() => {
     appStore.toggleSearchParam(["link", "bulk", "clipboard"]);
   });
+
+  async function onTypeSelect(e: CustomEvent) {
+    isEmptyState = false;
+    await captureStore.onTypeSelect(e.detail);
+    await refreshTypeData();
+  }
 </script>
 
 {#if isSaving}
@@ -141,17 +152,15 @@
           </div>
         </header>
         <main class="flex flex-col gap-6 w-full flex-grow">
-          {#key types?.length}
-            {#if types && types.length > 0}
-              <!-- TODO - send only selected type if properties are to be shown upon link click -->
-              <PropertiesListView
-                context="capture"
-                {propertyConfig}
-                bind:properties={$captureStore.properties}
-                bind:isCollapsed={isPropertiesCollapsed}
-              />
-            {/if}
-          {/key}
+          {#if propertyConfig && propertyConfig.length > 0}
+            <!-- TODO - send only selected type if properties are to be shown upon link click -->
+            <PropertiesListView
+              context="capture"
+              {propertyConfig}
+              bind:properties={$captureStore.properties}
+              bind:isCollapsed={isPropertiesCollapsed}
+            />
+          {/if}
           <div
             class={cn("w-full", {
               "h-48": isEmptyState,
@@ -166,10 +175,7 @@
                 bind:selected={$captureStore.captureType}
                 label={{ label: "Select a type" }}
                 isCapturePage={true}
-                on:select={(e) => {
-                  isEmptyState = false;
-                  captureStore.onTypeSelect(e.detail);
-                }}
+                on:select={onTypeSelect}
               />
             </div>
           {/if}

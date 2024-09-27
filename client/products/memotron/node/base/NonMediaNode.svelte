@@ -18,9 +18,10 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeAvatar from "../avatar/NodeAvatar.svelte";
   import { fade, slide } from "svelte/transition";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
+  import { NodeRightPaneType } from "../node.type";
+
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
   export let selectedView: string = "Content";
   let lastScrollTop = 0;
   let scrollDirection = "none";
@@ -29,6 +30,7 @@
   let isShowFloatingBar = true;
   let isWidened = false;
   let isRightPanelCollapsed: boolean = true;
+  let rightPane = NodeRightPaneType.OUTLINE;
   $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
     (x) => x.isShowOnNodePage
   );
@@ -125,10 +127,21 @@
                 </span>
               {/if}
               <ResourceStatusBanner resource={node} />
+              <div class="w-full flex px-12">
+                <CollectionsLane {node} />
+              </div>
               {#if $node.types && $node.types.length > 0 && propertiesOnMainPanel && propertiesOnMainPanel.length > 0 && !$node.focusedBlock}
                 <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
                 <div class="px-2">
-                  <NodePropertiesOnMainPanel {node} {propertiesOnMainPanel} />
+                  <NodePropertiesOnMainPanel
+                    {node}
+                    {propertiesOnMainPanel}
+                    on:showAll={() => {
+                      console.log("showAll");
+                      rightPane = NodeRightPaneType.PROPERTIES;
+                      isRightPanelCollapsed = false;
+                    }}
+                  />
                 </div>
               {/if}
               {#if !$isInEditMode}
@@ -149,7 +162,12 @@
             </main>
           </div>
         </div>
-        <NodeRightPane {node} {mdId} bind:isRightPanelCollapsed />
+        <NodeRightPane
+          {node}
+          {mdId}
+          bind:isRightPanelCollapsed
+          bind:pane={rightPane}
+        />
       </div>
     {:else}
       <ComingSoonView />
@@ -157,12 +175,7 @@
     {#if isShowFloatingBar}
       <div transition:fade={{ duration: 200 }}>
         <BottomFloat>
-          <NodeFloatingBar
-            {node}
-            {accessMode}
-            bind:selectedView
-            bind:isWidened
-          />
+          <NodeFloatingBar {node} bind:selectedView bind:isWidened />
         </BottomFloat>
       </div>
     {/if}

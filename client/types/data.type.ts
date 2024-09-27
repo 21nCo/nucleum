@@ -2,6 +2,7 @@ import type { Writable } from "svelte/store";
 import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
 import type { RecordId } from "surrealdb.js";
+import type { ResourceActionType } from "../components/flux/resourceStores/resource.type";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -90,7 +91,7 @@ export interface IStore {
    */
   dboDependencies?: string[];
   loader?: (data: any) => void;
-  search?: (query: string) => Promise<any>;
+  search?: (query: string) => any;
   /**
    *
    * @deprecated - use ComponentLayer to listen to syncDown and change events
@@ -398,5 +399,7 @@ export type IMutation = {
   dapId: string;
   userId: string;
   resource: string;
+  resourceId?: IRecordId;
+  action: ResourceActionType;
   params: IMutationParamsv2<any>;
 };

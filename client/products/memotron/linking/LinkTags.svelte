@@ -6,12 +6,11 @@
   import { linker, linkTagStore } from "./link.store";
   import { createEventDispatcher } from "svelte";
   import { linkTagLabelMapper } from "./link.utils";
+  import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let link: INodeLinkThumb;
   $: _tags = $linkTagStore
-    .filter((x) =>
-      link.tags?.map((y) => y.toString()).includes(x.id.toString())
-    )
+    .filter((x) => link.tags?.some(isPresentInList(x)))
     .map(linkTagLabelMapper);
 
   async function onRemove(tagId: IRecordId) {

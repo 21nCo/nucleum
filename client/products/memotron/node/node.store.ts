@@ -16,7 +16,10 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import { debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessMode,
+  ResourceAccessPoint
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
@@ -31,6 +34,7 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
+import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -121,11 +125,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (changedProps.children) {
       const node = this.get();
       const childrenNodes = node.md.blocks.filter(
-        (x) =>
-          x.id &&
-          changedProps.children
-            ?.map((x) => x.toString())
-            ?.includes(x.id.toString())
+        (x) => x.id && changedProps.children?.some(isPresentInList(x.id))
       );
       const mdText = generateMarkdownText(childrenNodes);
       return this.resourceStore.modify(id, { ...changedProps, mdText });
@@ -139,10 +139,10 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     let val = this.debouncers.get(id);
     return val!;
   }
-  fetch = async () => {
+  init = async (accessMode: ResourceAccessMode) => {
     const node = await this.resourceStore.fetch(this.id);
     if (node) {
-      this.set(node);
+      this.set({ ...node, accessMode });
     }
     const rawLinks =
       node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
@@ -168,7 +168,13 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
           x.out.tb === Resource.collection || x.in.tb === Resource.collection
       )
       .map((x: INodeLink) => (x.out.tb === Resource.collection ? x.out : x.in));
-    logger.debug({ at: "ActiveNodeStore.fetch", rawLinks, links, collections });
+    logger.log({
+      at: "ActiveNodeStore.fetch",
+      node,
+      rawLinks,
+      links,
+      collections
+    });
     const { types, propertyConfig, avatars } =
       await collectionStore.resolveTypes(collections);
     this.update((n) => {
@@ -418,7 +424,7 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
       },
       {
         value: "forks",
-        icon: "ph:fork-knife-thin",
+        icon: "ph:git-fork-thin",
         tooltip: "Show forks"
       }
     ];

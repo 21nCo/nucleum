@@ -64,7 +64,6 @@
         }
       })
       .then((data) => {
-        console.log({ data });
         types = data.map((type) => ({
           value: type.id,
           label: type.label,

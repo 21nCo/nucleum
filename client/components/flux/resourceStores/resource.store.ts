@@ -166,7 +166,6 @@ export class ResourceStore<T extends IResource> implements IStore {
     let commonProps = {
       createdAt: new Date(),
       modifiedAt: new Date(),
-      interactedAt: new Date(),
       createdBy: this.currentUserId,
       modifiedBy: this.currentUserId
     };
@@ -266,8 +265,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     }
     const modificationProps = {
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString()
     };
     const activeResource = activeResources.get(id.toString());
     if (activeResource && !additionalParams?.isPreventBackPropagation) {
@@ -312,8 +310,7 @@ export class ResourceStore<T extends IResource> implements IStore {
               id,
               ...data,
               modifiedBy: this.currentUserId,
-              modifiedAt: new Date().toISOString(),
-              interactedAt: new Date().toISOString()
+              modifiedAt: new Date().toISOString()
             }))
           }
         }
@@ -325,8 +322,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         id,
         ...data,
         modifiedBy: this.currentUserId,
-        modifiedAt: new Date().toISOString(),
-        interactedAt: new Date().toISOString()
+        modifiedAt: new Date().toISOString()
       }))
     });
   }
@@ -532,8 +528,7 @@ export class ResourceFIRStore<
         deletedBy: this.currentUserId
       },
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString()
     };
     this._mutation(PersistenceActionType.MERGE, { ...item, id });
     this.update((x: S) => {

@@ -29,6 +29,7 @@
   import account from "$lib/client/stores/account.store";
   import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
+
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
@@ -88,7 +89,7 @@
   ];
   let skinIndex: number = $userPreferences.avatarPicker.skinIndex; //change to user preference store this also in db
   $: $userPreferences.avatarPicker.skinIndex = skinIndex;
-  let colorPalate = ["#000000", "#C2AB4E", "#C14D8A"];
+  let colorPalate = ["bw", "#FFC107", "#FF6F61", "#00B7EB", "#63c99c"];
   let iconColor = $userPreferences.avatarPicker.iconColor;
   $: $userPreferences.avatarPicker.iconColor = iconColor;
   let searchRef: HTMLInputElement;
@@ -382,7 +383,7 @@
       <div
         class="relative w-3/10 min-w-[30%] h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
       >
-        <div class="px-2">
+        <div class="px-2 text-left">
           <Text content="Category" style={TextStyle.SECTION_HEADING_SMALL} />
         </div>
         <div class="flex flex-col gap-1">
@@ -421,17 +422,30 @@
           {#each colorPalate as color}
             <span
               id={"colPalate" + color}
-              class="inline-flex justify-center items-center rounded-full w-7 h-7"
-              style="padding: 0rem;{iconColor == color
-                ? `border:1px solid ${color}`
-                : ''}"
+              class={cn(
+                "inline-flex justify-center items-center rounded-full w-7 h-7",
+                {
+                  border: iconColor == color,
+                  "border-fgs2": color === "bw"
+                }
+              )}
+              style={`padding: 0rem; border-color: ${color !== "bw" ? color : ""}`}
             >
               <button
                 id={"colPalateButton" + color}
                 on:click={() => (iconColor = color)}
-                class="rounded-full w-5 h-5"
-                style="background-color:{color}"
-              ></button></span
+                class={cn("rounded-full w-5 h-5", {
+                  "bg-fgs2": color === "bw"
+                })}
+                style="background-color:{color !== 'bw' ? color : ''}"
+              >
+                {#if color === "bw"}
+                  <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="50" class="fill-bgs1" />
+                    <path d="M50 0A50 50 0 0 1 50 100V0Z" class="fill-fgs1" />
+                  </svg>
+                {/if}
+              </button></span
             >
           {/each}
         {:else}
@@ -459,7 +473,7 @@
         {#each avatarKeys as key, index}
           {#if avatars[key] !== undefined && avatars[key].length > 0}
             <div id={"AVT" + index} class="AVT flex flex-col p-2">
-              <p class="text-b4 text-fgs3 px-2">{key}</p>
+              <p class="text-b4 text-fgs3 px-2 text-left">{key}</p>
               <div class="flex flex-wrap">
                 {#each avatars[key] as emote, index (index)}
                   <button

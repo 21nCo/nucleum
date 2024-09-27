@@ -11,6 +11,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
+  import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
@@ -39,13 +40,16 @@
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
   <span
     class={cn(
-      "font-medium text-h1 whitespace-nowrap min-w-fit flex-1 border rounded-md",
+      "flex items-center gap-2 font-medium text-h1 whitespace-nowrap min-w-fit flex-1 border rounded-md text-left",
       {
         "border-transparent": !isInEditMode,
         "border-brs3": isInEditMode
       }
     )}
   >
+    {#if $collection.avatar}
+      <AvatarView avatar={$collection.avatar} size={Size.lg} />
+    {/if}
     {#if isInEditMode}
       <TextInput
         size={Size.lg}
@@ -99,7 +103,7 @@
       <slot name="additional"></slot>
       {#if !isInEditMode}
         <Toggle
-          icon="ph:dots-nine"
+          icon="ph:monitor-play-thin"
           tooltip="More actions"
           bind:on={isShowMetaViews}
         />

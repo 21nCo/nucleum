@@ -8,15 +8,27 @@
   } from "../../collection/properties/property.type";
   import LocationCard from "../../node/metadata/LocationCard.svelte";
   import { resolveActiveNodeStore } from "../../node/node.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
   export let config: IProperty;
-  export let nodeId: string;
-  const node = resolveActiveNodeStore(nodeId);
+  export let nodeId: IRecordId;
+  const node = resolveActiveNodeStore(nodeId.toString());
+
+  function resolveFallbackLabel() {
+    if (config.type === PropertyType.CREATED_TIME) {
+      return "Created";
+    } else if (config.type === PropertyType.MODIFIED_TIME) {
+      return "Modified";
+    } else if (config.type === PropertyType.LOCATION) {
+      return "Location";
+    }
+    return "Unknown";
+  }
 </script>
 
 <div class="flex flex-col w-full items-start">
   <FormControlLabel
     props={{
-      label: config.label
+      label: config.label ? config.label : resolveFallbackLabel()
     }}
   />
   {#if config.type === PropertyType.CREATED_TIME}
