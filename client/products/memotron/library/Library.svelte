@@ -33,7 +33,7 @@
   import { MemotronAction } from "../memotronAction.enum";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { CollectionType } from "../collection/collection.type";
-  import { NodeType } from "../node/node.type";
+  import { NodeType, SearchType } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
@@ -42,6 +42,9 @@
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "../collection/collection.utils";
+  import { debouncer } from "$lib/client/utils/utils";
+  import type { IResourceSelectOrderBy } from "$lib/client/types/data.type";
+
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -113,6 +116,14 @@
       data = [];
       return;
     }
+    let orderBy: IResourceSelectOrderBy | undefined;
+    if (searchStore.searchType == SearchType.SEMANTIC) {
+      orderBy = {
+        dist: "desc",
+        createdAt: "desc"
+      };
+    }
+
     let filters: any = {
       isStarred: isStarFilterSelected ? true : undefined,
       isArchived: isArchivedFilterSelected ? true : undefined
@@ -128,9 +139,11 @@
     data = await searchStore.select({
       resource: selectedResource,
       searchQuery,
-      filters
+      filters,
+      orderBy
     });
   }
+  const debouncedSearch = debouncer(refresh, 500);
 
   function onScroll() {
     var elementTarget = document.querySelector(".resource-switcher");
@@ -276,7 +289,14 @@
         {isStickied}
         bind:selectedResource
         bind:searchQuery
-        on:refresh={refresh}
+        on:refresh={debouncedSearch}
+        on:semanticSearch={(e) => {
+          if (e.detail) {
+            searchStore.searchType = SearchType.SEMANTIC;
+          } else {
+            searchStore.searchType = SearchType.FULL_TEXT;
+          }
+        }}
       />
     {/if}
     <div

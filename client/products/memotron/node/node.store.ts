@@ -82,6 +82,8 @@ class NodeStore extends ResourceStore<INode> {
 
 export const nodeStore = new NodeStore();
 
+export const vectorResourceStore = new ResourceStore(Resource.vector);
+
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 /**

@@ -18,7 +18,7 @@ import {
   generateMarkdownText,
   resolveNodeCaptureMetadata
 } from "$lib/client/products/memotron/node/node.utils";
-import { nodeStore } from "../node/node.store";
+import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
@@ -27,6 +27,7 @@ import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "../collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -251,34 +252,73 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
+        const vector = await generateVectorEmbeddings(mdText);
+        let vresult = await vectorResourceStore.create({
+          id: generateResourceId(Resource.vector),
+          vector: vector,
+          node: id
+        });
       }
       root = {
         ...root,
         children: val.rootStructure,
         mdText
       };
-      remainingResources = val.childrenWithStructure.map((block) => {
+
+      for (let block of val.childrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
         //TODO - links for each block
         let mdText = "";
+        // let vector = new Array(768).fill(0.00000000000000000001);
+        console.log("filled vector2", vector);
         if (block.children && block.children.length > 0) {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
+          // vector = await generateVectorEmbeddings(mdText);
+          // console.log("vector2", vector);
         }
-        return {
+        remainingResources.push({
           id: block.id,
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
           mdText,
+          // vector,
           metadata: root.metadata,
           creationContext: id,
           children: block.children
-        };
-      });
+        });
+      }
+
+      // remainingResources = val.childrenWithStructure.map((block) => {
+      //   const correspondingContent = val.body.blocks.find(
+      //     (b) => b.id === block.id
+      //   );
+      //   //TODO - links for each block
+      //   let mdText = "";
+      //   let vector: any = null;
+      //   if (block.children && block.children.length > 0) {
+      //     const childrenNodes = val.body.blocks.filter((b) =>
+      //       block.children?.includes(b.id)
+      //     );
+      //     mdText = generateMarkdownText(childrenNodes);
+      //     // vector = await extract(mdText);
+      //     // console.log("vector2", vector);
+      //   }
+      //   return {
+      //     id: block.id,
+      //     contentType: correspondingContent.contentType,
+      //     body: correspondingContent.body,
+      //     mdText,
+      //     // vector,
+      //     metadata: root.metadata,
+      //     creationContext: id,
+      //     children: block.children
+      //   };
+      // });
     }
     if (root.contentType == NodeType.PDF)
       root = { ...root, url: root.body.url };

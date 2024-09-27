@@ -43,7 +43,8 @@ DEFINE FIELD mdText on TABLE node FLEXIBLE TYPE option<string>;
 function nodeIndices() {
   const def = `DEFINE INDEX nodetextSearchIndex ON TABLE node COLUMNS body SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const label = `DEFINE INDEX nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
-  return [def, label];
+  // const def2 = `DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS vector MTREE DIMENSION 768 DIST COSINE TYPE F32;`;
+  return [def, label]; //, def2];
 }
 
 function nodesByTime() {

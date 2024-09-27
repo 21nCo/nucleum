@@ -2,6 +2,7 @@ import type { Writable } from "svelte/store";
 import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
 import type { RecordId } from "surrealdb.js";
+import type { SearchType } from "../products/memotron/node/node.type";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -335,7 +336,12 @@ export type IResourceSelectFilters =
 
 export type IResourceSelectParams = {
   /**
-   * Properties to be selected.
+   * Should the searh be semantic or full text.
+   */
+  searchType?: SearchType;
+  /**
+   * Properties to be selected, that is items to be present in select statement.
+   * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
    */
   properties?: string[];
   /**

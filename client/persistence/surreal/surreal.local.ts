@@ -20,11 +20,13 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
+import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
+import { SearchType } from "$lib/client/products/memotron/node/node.type";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
-
+  queryVector: Float32Array[] | null = null;
   private isProcessingOperation: boolean = false;
 
   constructor() {}
@@ -269,6 +271,12 @@ export class SurrealPersistence implements IPersistence {
   ): Promise<any> {
     await this.awaiter();
     const properties = params?.properties ?? [];
+    if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
+      this.queryVector = await generateVectorEmbeddings(params.search.query);
+      properties.push(
+        `vector::similarity::cosine(vector,[${this.queryVector}]) AS dist`
+      );
+    }
     const filters = params?.filters ?? {};
     const whereClause = this.generateWhereClause(params);
     const selectClause =
@@ -320,6 +328,9 @@ export class SurrealPersistence implements IPersistence {
     return `(${conditions.join(" OR ")})`;
   }
 
+  private generateSemanticSearchClause(searchQuery: string) {
+    return `vector <|5,COSINE|> [${this.queryVector}]`;
+  }
   private generateWhereClause(params?: IResourceSelectParams): string {
     const conditions: string[] = [];
 
@@ -330,7 +341,9 @@ export class SurrealPersistence implements IPersistence {
       conditions.push(whereClause.join(" AND "));
     }
 
-    if (params?.search) {
+    if (params?.searchType === SearchType.SEMANTIC && params?.search) {
+      conditions.push(this.generateSemanticSearchClause(params.search.query));
+    } else if (params?.searchType === SearchType.FULL_TEXT && params?.search) {
       conditions.push(this.generateSearchClause(params.search));
     }
 

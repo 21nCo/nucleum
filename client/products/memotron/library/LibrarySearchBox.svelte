@@ -9,6 +9,8 @@
   import type { IResourceSwitchItem } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];
@@ -47,6 +49,12 @@
         />
       {/if}
       {#if isFiltersVisible}
+        <SwitchInput
+          label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+          size={Size.sm}
+          on:change={(e) => dispatch("semanticSearch", e.detail)}
+        />
+
         <Button
           icon="funnel"
           style={ButtonStyle.OUTLINED}

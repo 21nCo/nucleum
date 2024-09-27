@@ -43,6 +43,7 @@ export enum Resource {
   task = "task",
 
   //Memotron
+  vector = "vector",
   node = "node",
   curation = "curation",
   type = "type",
