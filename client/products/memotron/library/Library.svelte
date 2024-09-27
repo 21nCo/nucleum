@@ -290,12 +290,14 @@
         bind:selectedResource
         bind:searchQuery
         on:refresh={debouncedSearch}
+        {searchStore}
         on:semanticSearch={(e) => {
           if (e.detail) {
             searchStore.searchType = SearchType.SEMANTIC;
           } else {
             searchStore.searchType = SearchType.FULL_TEXT;
           }
+          refresh();
         }}
       />
     {/if}

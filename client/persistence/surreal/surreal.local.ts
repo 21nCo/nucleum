@@ -26,7 +26,7 @@ import { SearchType } from "$lib/client/products/memotron/node/node.type";
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
-  queryVector: Float32Array[] | null = null;
+  queryEmbedding: Float32Array[] | null = null;
   private isProcessingOperation: boolean = false;
 
   constructor() {}
@@ -272,9 +272,9 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const properties = params?.properties ?? [];
     if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
-      this.queryVector = await generateVectorEmbeddings(params.search.query);
+      this.queryEmbedding = await generateVectorEmbeddings(params.search.query);
       properties.push(
-        `vector::similarity::cosine(vector,[${this.queryVector}]) AS dist`
+        `vector::similarity::cosine(embedding,[${this.queryEmbedding}]) AS dist`
       );
     }
     const filters = params?.filters ?? {};
@@ -327,9 +327,13 @@ export class SurrealPersistence implements IPersistence {
     });
     return `(${conditions.join(" OR ")})`;
   }
-
+  /**
+   * USe <|10|,COSINE> for brute force search where you don't want keep rerunning indexes on every new item addition
+   * @param searchQuery
+   * @returns
+   */
   private generateSemanticSearchClause(searchQuery: string) {
-    return `vector <|5,COSINE|> [${this.queryVector}]`;
+    return `embedding <|10|> [${this.queryEmbedding}]`;
   }
   private generateWhereClause(params?: IResourceSelectParams): string {
     const conditions: string[] = [];

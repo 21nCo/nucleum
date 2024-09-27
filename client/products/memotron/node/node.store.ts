@@ -30,6 +30,7 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
+import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -99,7 +100,7 @@ const activeNodeStores = new Map<string, IActiveNodeStore>();
  */
 export function resolveActiveNodeStore(id: string, context: string = "") {
   if (!activeResources.has(id)) {
-    //console.log("init node store from: " + context + " id: " + id);
+    console.log("init node store from: " + context + " id: " + id);
     // activeNodeStores.set(id, initActiveNodeStore(id));
     activeResources.set(id, new ActiveNodeStore(id));
   }
@@ -114,13 +115,15 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node);
   }
-  updateBlockPropagator = (
+  updateBlockPropagator = async (
     id: string,
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
   ) => {
+    console.log("updateBlockPropagator", id, changedProps);
     if (changedProps.children) {
       const node = this.get();
+      console.log("updateBlockPropagator node", id, node, node.id);
       const childrenNodes = node.md.blocks.filter(
         (x) =>
           x.id &&
@@ -129,6 +132,17 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
             ?.includes(x.id.toString())
       );
       const mdText = generateMarkdownText(childrenNodes);
+      const embedding = await generateVectorEmbeddings(mdText);
+      let params = {
+        whereClause: `node.id=${node.id}`
+      };
+      let vectorResult = await vectorResourceStore.selectMany(params);
+      const vectorUpdateresult = await vectorResourceStore.modify(
+        vectorResult[0].id,
+        {
+          embedding: embedding
+        }
+      );
       return this.resourceStore.modify(id, { ...changedProps, mdText });
     }
     this.resourceStore.modify(id, changedProps);

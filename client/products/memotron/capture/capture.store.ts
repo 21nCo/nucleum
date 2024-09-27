@@ -247,22 +247,25 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           }
       }
       let mdText = "";
+      let vectorInsertionresult: any;
       if (val.rootStructure.length > 0) {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
-        const vector = await generateVectorEmbeddings(mdText);
-        let vresult = await vectorResourceStore.create({
+        const embedding = await generateVectorEmbeddings(mdText);
+        vectorInsertionresult = await vectorResourceStore.create({
           id: generateResourceId(Resource.vector),
-          vector: vector,
+          embedding: embedding,
           node: id
         });
+        console.log("vector result", vectorInsertionresult);
       }
       root = {
         ...root,
         children: val.rootStructure,
-        mdText
+        mdText,
+        vector: vectorInsertionresult[0]?.id
       };
 
       for (let block of val.childrenWithStructure) {
@@ -271,14 +274,18 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
         );
         //TODO - links for each block
         let mdText = "";
-        // let vector = new Array(768).fill(0.00000000000000000001);
-        console.log("filled vector2", vector);
+        let vectorInsertionresult: any;
         if (block.children && block.children.length > 0) {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
-          // vector = await generateVectorEmbeddings(mdText);
+          const embedding = await generateVectorEmbeddings(mdText);
+          vectorInsertionresult = await vectorResourceStore.create({
+            id: generateResourceId(Resource.vector),
+            embedding: embedding,
+            node: block.id
+          });
           // console.log("vector2", vector);
         }
         remainingResources.push({
@@ -286,7 +293,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
           mdText,
-          // vector,
+          vector:
+            vectorInsertionresult?.length > 0
+              ? vectorInsertionresult[0]?.id
+              : null,
           metadata: root.metadata,
           creationContext: id,
           children: block.children

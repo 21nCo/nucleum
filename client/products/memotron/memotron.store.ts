@@ -99,17 +99,22 @@ export class SearchStore {
                 "search::highlight('**', '**', 2, false) AS labelSearch",
                 "(fn::memotron::node::parent($parent.id)) as mdParent"
               ],
-        filters: {
-          trashInformation: false,
-          creationContext: isValidString(this.searchQuery) ? undefined : false,
-          ...this.filters,
-          contentType:
-            "contentType" in this.filters
-              ? this.filters.contentType
-              : this.searchQuery
-                ? undefined
-                : rootNodeTypeList
-        },
+        filters:
+          this.searchType == SearchType.SEMANTIC && this.searchQuery
+            ? {}
+            : {
+                trashInformation: false,
+                creationContext: isValidString(this.searchQuery)
+                  ? undefined
+                  : false,
+                ...this.filters,
+                contentType:
+                  "contentType" in this.filters
+                    ? this.filters.contentType
+                    : this.searchQuery
+                      ? undefined
+                      : rootNodeTypeList
+              },
         search: isValidString(this.searchQuery)
           ? {
               query: this.searchQuery,

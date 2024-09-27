@@ -11,12 +11,14 @@
   import { createEventDispatcher } from "svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
+  import { SearchType } from "../node/node.type";
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];
   export let variant: "v1" | "v2" | "v3";
   export let searchQuery: string = "";
   export let isStickied: boolean = false;
+  export let searchStore;
   let isFiltersVisible: boolean = false;
   let isSearchFocused: boolean = false;
   function onKeydown(event: any) {}
@@ -53,6 +55,7 @@
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}
           size={Size.sm}
           on:change={(e) => dispatch("semanticSearch", e.detail)}
+          checked={searchStore.searchType === SearchType.SEMANTIC}
         />
 
         <Button
