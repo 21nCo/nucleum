@@ -11,7 +11,7 @@
   import Footer from "./footer/Footer.svelte";
   import { page } from "$app/stores";
 
-  export let id: string = "";
+  let id: string = "centre-panel";
   export let topNavBarValues: ITopNavBar;
   export let isComingSoon: boolean = false;
   let transformedProducts: IListItem[] = [
