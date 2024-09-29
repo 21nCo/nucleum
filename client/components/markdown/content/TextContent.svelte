@@ -30,10 +30,10 @@
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");
 
-  function propagateToNode(event: string, data: any) {
+  function propagateToNodeContent(event: string, data: any) {
     if (!nodeContentContext) {
       logger.error({
-        at: "TextContent propagateToNode",
+        at: "TextContent propagateToNodeContent",
         error: "No Node context found",
         data
       });
@@ -495,7 +495,7 @@
     let match;
     while ((match = mentionPattern.exec(removed)) !== null) {
       const id = match[1];
-      propagateToNode("unmention", { location: block.id, id });
+      propagateToNodeContent("unmention", { location: block.id, id });
     }
     previousVal = deepCopy(block.body);
     relay(BlockAction.CHANGE, { body: block.body });
@@ -668,9 +668,9 @@
     const item = event.detail.item;
     textRef.addMention(item);
     hidePopover("mentionSearch");
-    propagateToNode("mention", {
+    propagateToNodeContent("mention", {
       location: block.id,
-      id: item.id
+      item
     });
   }
 

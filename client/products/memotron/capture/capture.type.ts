@@ -11,9 +11,9 @@ import type {
   LinkType,
   NodeType
 } from "$lib/client/products/memotron/node/node.type";
-import { MemotronResourceType } from "../memotron.type";
 import { type A2MDBlock } from "./AudioToMarkdown.type";
 import type { CollectionType } from "../collection/collection.type";
+import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export enum CaptureType {
   MARKDOWN = "MARKDOWN",
@@ -36,7 +36,7 @@ export type ICaptureStore = IObservableStoreSubject & {
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
   fileDetails?: FileDetails | null;
-  links?: ILink[];
+  links?: ICaptureLink[];
   propertyConfig?: IProperty[];
   properties?: INodePropertyValue[];
   /**
@@ -58,10 +58,10 @@ export type FileDetails = {
   pdfAnnotations?: any[];
 };
 
-export type ILink = {
-  from: string;
-  to: string;
+type ICaptureLink = {
+  from: IRecordId | "root";
+  to: IRecordId;
   linkType: LinkType;
-  toType: MemotronResourceType;
+  toType: Resource.node | Resource.collection;
   toSubType?: CollectionType | NodeType;
 };

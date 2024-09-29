@@ -3,6 +3,7 @@
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { onMount } from "svelte";
   import type { ICollectionExpanded } from "../../collection/collection.type";
   import { type INode, webNodeTypeList } from "../node.type";
   import NodeFavicon from "./NodeFavicon.svelte";
@@ -11,8 +12,12 @@
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let avatars: IAvatar[] | undefined = undefined;
 
+  onMount(async () => {
+    if (types && types.length > 0) await resolveAvatars();
+  });
+
   async function resolveAvatars() {
-    avatars = types?.flatMap((x) => [x.avatar]).filter((a) => a);
+    avatars = types?.flatMap((x) => [x.avatar]).filter((a) => a) as IAvatar[];
   }
 </script>
 

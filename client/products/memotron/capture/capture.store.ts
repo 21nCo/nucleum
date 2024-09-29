@@ -4,7 +4,8 @@ import {
   NodeType,
   LinkType,
   type INodeItemCaptured,
-  type IMediaNode
+  type IMediaNode,
+  type INodeThumb
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -21,14 +22,21 @@ import {
 import { nodeStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-import { resolveResourceType } from "../memotron.utils";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "../collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { CollectionType } from "../collection/collection.type";
+import {
+  CollectionType,
+  type ICollection,
+  type ICollectionThumb
+} from "../collection/collection.type";
+import {
+  determineResourceType,
+  isSameResource
+} from "$lib/client/components/flux/resourceStores/resource.utils";
+import { resolveResource } from "../memotron.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -82,7 +90,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
   async onTypeSelect(val: CaptureType | IRecordId) {
     logger.log({ context: "onTypeSelect", val });
     if (!val.toString().startsWith(Resource.collection)) return;
-    const type = await collectionStore.select(val);
+    const type: ICollection = await collectionStore.select(val);
     if (!type) return;
     this.update((store: ICaptureStore) => {
       store.links = [
@@ -91,56 +99,62 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           from: "root",
           to: type.id,
           linkType: LinkType.DIRECT,
-          toType: MemotronResourceType.COLLECTION,
+          toType: Resource.collection,
           toSubType: CollectionType.TYPED
         }
       ];
       return store;
     });
   }
-  addMentionLink(from: string, to: string) {
-    const toType = resolveResourceType({ id: to });
-    this.update((val) => {
-      val.links = val.links ?? [];
-      val.links.push({
-        from,
-        to,
-        linkType: LinkType.MENTION,
-        toType
-      });
-      return val;
-    });
+  addMentionLink(from: IRecordId, to: INodeThumb | ICollectionThumb) {
+    return this._addLink(from, to, LinkType.MENTION);
   }
-  removeMentionLink(from: string, to: string) {
+  removeMentionLink(from: IRecordId, to: IRecordId) {
     this.update((val) => {
       val.links = val.links?.filter(
-        (link) => link.from !== from || link.to !== to
+        (link) =>
+          !(isSameResource(link.from, from) && isSameResource(link.to, to))
       );
       return val;
     });
   }
-  directLink(item: any) {
+  async directLink(item: IRecordId | INodeThumb | ICollectionThumb) {
+    if (typeof item === "string" || "tb" in item) {
+      const resource = await resolveResource(item as IRecordId);
+      return this._addLink("root", resource, LinkType.DIRECT);
+    } else if (typeof item !== "string") {
+      return this._addLink("root", item, LinkType.DIRECT);
+    }
+  }
+
+  private _addLink(
+    from: IRecordId | "root",
+    to: INodeThumb | ICollectionThumb,
+    linkType: LinkType
+  ) {
     const store = this.get();
-    if (store.links?.some((link) => link.to === item.id)) return;
-    const toType = resolveResourceType(item);
+    if (store.links?.some((link) => isSameResource(link.to, to.id))) return;
+    const toType = determineResourceType(to.id);
     this.update((val) => {
       val.links = [
         ...(val.links ?? []),
         {
-          from: "root",
-          to: item.id,
-          linkType: LinkType.DIRECT,
-          toType,
-          toSubType: item.type
+          from,
+          to: to.id,
+          linkType,
+          toType: toType as Resource.node | Resource.collection,
+          toSubType: ("contentType" in to ? to.contentType : to.type) as
+            | NodeType
+            | CollectionType
         }
       ];
       return val;
     });
-    return item;
   }
-  removeDLink(id: string) {
+
+  removeDLink(id: IRecordId) {
     this.update((val) => {
-      val.links = val.links?.filter((link) => link.to !== id);
+      val.links = val.links?.filter((link) => !isSameResource(link.to, id));
       return val;
     });
   }

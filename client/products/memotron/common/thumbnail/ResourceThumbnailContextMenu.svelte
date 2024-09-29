@@ -3,11 +3,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher } from "svelte";
   import { resolveCollectionContextMenu } from "../../collection/collection.store";
-  import { MemotronResourceType } from "../../memotron.type";
-  import { resolveResourceType } from "../../memotron.utils";
   import { resolveNodeContextMenu } from "../../node/node.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -19,13 +19,15 @@
     dispatch("action", { action: e.detail, id: item.id });
   }
   function resolveContextMenu(item: any, accessPoint: ResourceAccessPoint) {
-    const resourceType = resolveResourceType(item);
-    if (resourceType === MemotronResourceType.NODE) {
+    const resourceType = determineResourceType(item.id);
+    if (resourceType === Resource.node) {
       return resolveNodeContextMenu(item, accessPoint, {
         accessPointId
       });
-    } else {
+    } else if (resourceType === Resource.collection) {
       return resolveCollectionContextMenu(item, accessPoint);
+    } else {
+      return [];
     }
   }
 </script>

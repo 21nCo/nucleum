@@ -48,7 +48,7 @@ export class SurrealPersistence implements IPersistence {
       await this.instance.use({ namespace: "user", database: this.userId });
       await this.updateDbo(params);
       // await this.logInfo();
-      //await this.testQuery();
+      // await this.testQuery();
       const initLog = await this.select("kv:init");
       if (initLog) {
         logger.log({
@@ -88,7 +88,7 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "select * from mutation;"
+      "select * from collection;"
     );
     logger.debug({
       at: "surreal.persistence.testQuery",
@@ -307,19 +307,13 @@ export class SurrealPersistence implements IPersistence {
       query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
     if (params?.limit) query += ` LIMIT ${params.limit}`;
     if (params?.offset) query += ` START ${params.offset}`;
-    logger.log({
-      at: "SurrealPersistence.selectMany",
-      query,
-      params,
-      userId: this.userId
-    });
-    // await this.logInfo();
-    // await this.testQuery();
     const result = await this.instance?.query_raw(query, params);
     logger.log({
       at: "SurrealPersistence.selectMany - result",
       result,
-      resource
+      resource,
+      query,
+      params
     });
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);

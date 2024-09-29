@@ -1,7 +1,6 @@
 <script lang="ts">
   import { captureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
-  import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -13,8 +12,8 @@
     if (!message) return;
     const data = message.data;
     if (message.event === "mention") {
-      if (!data?.id || !data?.location) return;
-      captureStore.addMentionLink(data.location, data.id);
+      if (!data?.item || !data?.location) return;
+      captureStore.addMentionLink(data.location, data.item);
     } else if (message.event === "unmention") {
       if (!data?.id || !data?.location) return;
       captureStore.removeMentionLink(data.location, data.id);
@@ -34,18 +33,10 @@
 
   setContext("content", contentContext);
 
-  refreshEmptyState();
   let isShowTOC: boolean = false;
 
   function onFileChanges(event: any) {
     captureStore.setFile(event.detail);
-  }
-
-  function refreshEmptyState(e?: CustomEvent) {
-    isEmptyState =
-      $captureStore.captureType === CaptureType.MARKDOWN &&
-      "blocks" in $captureStore.body &&
-      isEmptyMd(e?.detail || $captureStore.body);
   }
 </script>
 
@@ -67,7 +58,7 @@
         bind:md={$captureStore.body}
         bind:childrenWithStructure={$captureStore.childrenWithStructure}
         bind:rootStructure={$captureStore.rootStructure}
-        on:change={refreshEmptyState}
+        on:change
       />
     </div>
     <!-- TODO - add condition for if headings present or if mentions present -->

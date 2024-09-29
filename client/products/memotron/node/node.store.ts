@@ -217,7 +217,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   };
 
   createBlock = async (
-    id: string,
+    id: IRecordId,
     contentType: any,
     params?: { body?: any }
   ) => {

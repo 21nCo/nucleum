@@ -1,5 +1,6 @@
 export enum Resource {
   ALL = "ALL",
+  unknown = "unknown",
   /**
    * Meta resource for everything
    */

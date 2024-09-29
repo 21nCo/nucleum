@@ -18,7 +18,6 @@
       <LinkItems
         links={$captureStore.links?.map((x) => x.to) ?? []}
         on:unlink={(e) => {
-          console.log("unlink", e);
           captureStore.removeDLink(e.detail);
           dispatch("unlinked", e.detail);
         }}

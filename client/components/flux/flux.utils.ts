@@ -8,11 +8,11 @@ export function generateResourceId(
   params?: {
     prefix?: string;
     id?: string;
-    isAsRecordId?: boolean;
+    isAsString?: boolean;
   }
 ): IRecordId {
   const id = params?.id ?? generateRandomId();
-  if (params?.isAsRecordId) {
+  if (!params?.isAsString) {
     return new RecordId(
       itemType,
       params?.prefix ? params?.prefix + "_" : "" + id

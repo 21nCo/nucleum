@@ -1,9 +1,7 @@
 <script lang="ts">
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import CollectionThumbnail from "../collection/thumbnail/CollectionThumbnail.svelte";
-  import { resolveResourceType } from "../memotron.utils";
   import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
@@ -18,6 +16,7 @@
   import type { INodeThumb } from "../node/node.type";
   import type { ICollection } from "../collection/collection.type";
   import type { IFile } from "$lib/client/components/files/file.type";
+  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let data: (INodeThumb | ICollection | IFile)[] = [];
   export let resource: Resource = Resource.node;
@@ -49,7 +48,8 @@
   >
     {#each data as item (item)}
       {#if resource === Resource.everything}
-        {#if resolveResourceType(item) === MemotronResourceType.NODE}
+        {@const resourceType = determineResourceType(item.id)}
+        {#if resourceType === Resource.node}
           <NodeThumbnail
             {item}
             {accessPoint}
@@ -57,7 +57,7 @@
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />
-        {:else if item.id.startsWith("collection:")}
+        {:else if resourceType === Resource.collection}
           <CollectionThumbnail
             {item}
             {size}

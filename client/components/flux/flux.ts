@@ -277,7 +277,7 @@ class Flux {
         params.action === PersistenceActionType.BULK_MERGE) &&
       params.records.length > 1
     ) {
-      return this.multiResourceMutationAccessLog(resource, params);
+      await this.multiResourceMutationAccessLog(resource, params);
     }
     return this.persistence.mutation(Resource.mutation, {
       records: [mutation],

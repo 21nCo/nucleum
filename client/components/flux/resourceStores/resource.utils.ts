@@ -1,4 +1,4 @@
-import type { Resource } from "./resource.enum";
+import { Resource } from "./resource.enum";
 import type { ResourceActionType } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 
@@ -6,11 +6,11 @@ export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
 }
 
-export function determineResourceType(id: IRecordId) {
+export function determineResourceType(id: IRecordId): Resource {
   if (typeof id !== "string") return id.tb as Resource;
   const parts = id.split(":");
   if (parts.length > 1) return parts[0] as Resource;
-  return id;
+  return Resource.unknown;
 }
 
 /**
@@ -34,7 +34,7 @@ export function isSameResource(
       return item1.id.toString() === item2.id.toString();
     }
   }
-  return item1 === item2;
+  return item1.toString() === item2.toString();
 }
 
 /**

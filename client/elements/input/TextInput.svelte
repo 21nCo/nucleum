@@ -96,6 +96,7 @@
       on:keyup
       on:focus
       on:blur
+      on:change
     />
   </div>
 {:else}

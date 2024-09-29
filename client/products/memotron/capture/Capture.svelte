@@ -13,7 +13,6 @@
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import { LinkType } from "$lib/client/products/memotron/node/node.type";
-  import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { collectionStore } from "../collection/collection.store";
   import { CaptureType } from "./capture.type";
@@ -27,6 +26,8 @@
     type ICollectionExpanded
   } from "../collection/collection.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -56,7 +57,7 @@
     types = await collectionStore.resolveTypes(typeIds);
   }
 
-  onMount(() => {
+  onMount(async () => {
     linkQueryParam = $page.url.searchParams.get("link");
     bulkQueryParam = $page.url.searchParams.get("bulk");
     const clipBoardQueryParam = $page.url.searchParams.get("clipboard");
@@ -67,7 +68,8 @@
       clipBoardQueryParam
     });
     if (linkQueryParam) {
-      captureStore.directLink({ id: linkQueryParam });
+      await captureStore.directLink(linkQueryParam);
+      await refreshTypeData();
       isEmptyState = false;
     }
   });
@@ -91,6 +93,22 @@
     if (e.detail && types.some((x) => isSameResource(x, e.detail))) {
       await refreshTypeData();
     }
+  }
+
+  function refreshEmptyState(e?: CustomEvent) {
+    if (isValidString($captureStore.label)) {
+      isEmptyState = false;
+      return;
+    }
+    if (
+      $captureStore.captureType === CaptureType.MARKDOWN &&
+      "blocks" in $captureStore.body &&
+      !isEmptyMd($captureStore.body)
+    ) {
+      isEmptyState = false;
+      return;
+    }
+    isEmptyState = true;
   }
 </script>
 
@@ -123,6 +141,8 @@
                 style={InputStyle.PLAIN}
                 isExperimentalMdInput={true}
                 placeholder="Untitled"
+                on:change={refreshEmptyState}
+                on:keyup={refreshEmptyState}
               />
             </div>
           </div>
@@ -142,7 +162,7 @@
                   isSaving = true;
                   const result = await captureStore.save();
                   if (bulkQueryParam === "true" && linkQueryParam) {
-                    captureStore.directLink({ id: linkQueryParam });
+                    await captureStore.directLink(linkQueryParam);
                     isEmptyState = false;
                   }
                   isSaving = false;
@@ -180,7 +200,7 @@
               "h-full": !isEmptyState
             })}
           >
-            <Writer bind:isEmptyState />
+            <Writer bind:isEmptyState on:change={refreshEmptyState} />
           </div>
           {#if isEmptyState}
             <div class="w-full dp:px-10 dp:my-10">

@@ -27,7 +27,7 @@ interface ICollectionBase extends IMemotronItemBase {
   isStarred?: boolean;
   isCaptureShortcutEnabled?: boolean;
   query?: string;
-  avatar?: Pick<IAvatar, "code" & "color" & "isFilled" & "type">;
+  avatar?: IAvatar;
 }
 
 export interface IActiveCollection extends ICollectionExpanded {
