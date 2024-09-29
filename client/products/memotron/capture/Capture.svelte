@@ -9,15 +9,12 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import TypeSelector from "./TypeSelector.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import PropertiesListView from "../collection/properties/PropertiesListView.svelte";
   import NodeAvatar from "../node/avatar/NodeAvatar.svelte";
   import { LinkType } from "$lib/client/products/memotron/node/node.type";
   import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-  import type { IAvatar } from "$lib/client/types/avatar.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import type { IProperty } from "../collection/properties/property.type";
   import { collectionStore } from "../collection/collection.store";
   import { CaptureType } from "./capture.type";
   import FileUploader from "./FileUploader.svelte";
@@ -25,7 +22,11 @@
   import { onDestroy, onMount } from "svelte";
   import { page } from "$app/stores";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import {
+    CollectionType,
+    type ICollectionExpanded
+  } from "../collection/collection.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -34,26 +35,25 @@
   let isEmptyState: boolean = true;
   isInEditMode.set(true);
   let isPropertiesCollapsed: boolean = false;
-  let types: IRecordId[] = [];
-  let avatars: IAvatar[] = [];
-  let propertyConfig: IProperty[] = [];
+  let types: ICollectionExpanded[] = [];
 
   // $: console.log({ types, $captureStore, propertyConfig });
 
   async function refreshTypeData() {
-    types =
+    const typeIds =
       $captureStore.links
         ?.filter(
           (x) =>
-            x.toType === MemotronResourceType.TYPED_COLLECTION &&
+            x.toSubType === CollectionType.TYPED &&
             x.linkType === LinkType.DIRECT &&
             x.from === "root"
         )
         ?.map((x) => x.to) ?? [];
-    if (types.length === 0) return;
-    const data = await collectionStore.resolveTypes(types);
-    avatars = data.avatars;
-    propertyConfig = data.propertyConfig;
+    if (typeIds.length === 0) {
+      types = [];
+      return;
+    }
+    types = await collectionStore.resolveTypes(typeIds);
   }
 
   onMount(() => {
@@ -81,6 +81,17 @@
     await captureStore.onTypeSelect(e.detail);
     await refreshTypeData();
   }
+
+  async function onLink(e: CustomEvent) {
+    if (e.detail.id && e.detail.type === CollectionType.TYPED) {
+      await refreshTypeData();
+    }
+  }
+  async function onUnlink(e: CustomEvent) {
+    if (e.detail && types.some((x) => isSameResource(x, e.detail))) {
+      await refreshTypeData();
+    }
+  }
 </script>
 
 {#if isSaving}
@@ -105,7 +116,7 @@
         <header class="flex justify-between w-full dp:px-12">
           <div class="flex gap--4 grow">
             <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
-            <NodeAvatar {avatars} />
+            <NodeAvatar {types} />
             <div class="text-h2 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
@@ -152,14 +163,16 @@
           </div>
         </header>
         <main class="flex flex-col gap-6 w-full flex-grow">
-          {#if propertyConfig && propertyConfig.length > 0}
+          {#if types && types.length > 0}
             <!-- TODO - send only selected type if properties are to be shown upon link click -->
-            <PropertiesListView
-              context="capture"
-              {propertyConfig}
-              bind:properties={$captureStore.properties}
-              bind:isCollapsed={isPropertiesCollapsed}
-            />
+            {#key types.map((x) => x.id).join(",")}
+              <PropertiesListView
+                context="capture"
+                {types}
+                bind:values={$captureStore.properties}
+                bind:isCollapsed={isPropertiesCollapsed}
+              />
+            {/key}
           {/if}
           <div
             class={cn("w-full", {
@@ -182,7 +195,7 @@
         </main>
         {#if !isEmptyState}
           <footer class="w-full dp:px-10 min-h-[10rem]">
-            <LinkboxOnCapture />
+            <LinkboxOnCapture on:linked={onLink} on:unlinked={onUnlink} />
           </footer>
         {/if}
       </div>

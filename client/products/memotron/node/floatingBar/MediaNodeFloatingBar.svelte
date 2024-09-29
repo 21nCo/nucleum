@@ -19,16 +19,17 @@
   } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
   import { NodeRightPaneType, NodeType } from "../node.type";
-  import NodePropertiesOnMainPanel from "../content/NodePropertiesOnMainPanel.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import CollectionsLane from "./CollectionsLane.svelte";
+  import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
   export let rightPane: NodeRightPaneType | undefined = undefined;
+  let dev_isShowMainProperties: boolean = false;
   let contextMenu = [];
   let buttonCommonProps = {
     tooltipOptions: {
@@ -36,9 +37,7 @@
       offsetInPx: 6
     }
   };
-  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
-    (x) => x.isShowOnNodePage
-  );
+
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
     isMediaNode: true
   });
@@ -111,7 +110,15 @@
               rightPane = undefined;
             }}
           />
-          <ContextMenuAction {contextMenu} id="mediaNodeContextMenu" />
+          <ContextMenuAction
+            {contextMenu}
+            id="mediaNodeContextMenu"
+            on:action={(e) => {
+              if (e.detail === NodeRightPaneType.METADATA) {
+                rightPane = e.detail;
+              }
+            }}
+          />
           <div class="h-8">
             <Divider
               orientation={Orientation.Vertical}
@@ -140,13 +147,9 @@
           {/if}
         </span>
       </div>
-      {#if propertiesOnMainPanel && propertiesOnMainPanel.length > 0}
+      {#if dev_isShowMainProperties}
         <div class="w-full">
-          <NodePropertiesOnMainPanel
-            {node}
-            {propertiesOnMainPanel}
-            isMediaNode={true}
-          />
+          <NodePropertiesPane {node} isVisibleProps={true} />
         </div>
       {/if}
       <div class="flex w-full justify-between">

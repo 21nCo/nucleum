@@ -6,12 +6,14 @@ import type {
 } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type {
-  INodeProperty,
+  INodePropertyValue,
   INodeStructure,
-  LinkType
+  LinkType,
+  NodeType
 } from "$lib/client/products/memotron/node/node.type";
 import { MemotronResourceType } from "../memotron.type";
 import { type A2MDBlock } from "./AudioToMarkdown.type";
+import type { CollectionType } from "../collection/collection.type";
 
 export enum CaptureType {
   MARKDOWN = "MARKDOWN",
@@ -36,7 +38,7 @@ export type ICaptureStore = IObservableStoreSubject & {
   fileDetails?: FileDetails | null;
   links?: ILink[];
   propertyConfig?: IProperty[];
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
    * as change of body object in markdown is not detected by svelte
@@ -61,4 +63,5 @@ export type ILink = {
   to: string;
   linkType: LinkType;
   toType: MemotronResourceType;
+  toSubType?: CollectionType | NodeType;
 };

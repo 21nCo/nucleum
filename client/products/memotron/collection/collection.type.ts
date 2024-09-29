@@ -30,14 +30,18 @@ interface ICollectionBase extends IMemotronItemBase {
   avatar?: Pick<IAvatar, "code" & "color" & "isFilled" & "type">;
 }
 
-export interface IActiveCollection extends ICollectionBase {
+export interface IActiveCollection extends ICollectionExpanded {
   refreshError?: string;
   isViewDataLoading: boolean;
   isViewDataRefreshing: boolean;
   isPageLoading: boolean;
   views: ICollectionViewWithData[];
+}
+
+export interface ICollectionExpanded extends ICollectionBase {
   properties: IProperty[];
-  typeToExtend?: IActiveCollection;
+  typeToExtend?: ICollection;
+  extendProperties?: IProperty[];
 }
 
 export type ICoverLayout = {

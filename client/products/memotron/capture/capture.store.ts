@@ -28,6 +28,7 @@ import { collectionStore } from "../collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
+import { CollectionType } from "../collection/collection.type";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -90,20 +91,22 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           from: "root",
           to: type.id,
           linkType: LinkType.DIRECT,
-          toType: MemotronResourceType.TYPED_COLLECTION
+          toType: MemotronResourceType.COLLECTION,
+          toSubType: CollectionType.TYPED
         }
       ];
       return store;
     });
   }
   addMentionLink(from: string, to: string) {
+    const toType = resolveResourceType({ id: to });
     this.update((val) => {
       val.links = val.links ?? [];
       val.links.push({
         from,
         to,
         linkType: LinkType.MENTION,
-        toType: undefined
+        toType
       });
       return val;
     });
@@ -120,7 +123,6 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     const store = this.get();
     if (store.links?.some((link) => link.to === item.id)) return;
     const toType = resolveResourceType(item);
-    console.log("directLink", { item, toType });
     this.update((val) => {
       val.links = [
         ...(val.links ?? []),
@@ -128,11 +130,13 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           from: "root",
           to: item.id,
           linkType: LinkType.DIRECT,
-          toType
+          toType,
+          toSubType: item.type
         }
       ];
       return val;
     });
+    return item;
   }
   removeDLink(id: string) {
     this.update((val) => {

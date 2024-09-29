@@ -74,7 +74,7 @@
       size={Size.sm}
       class="fill-fgs1"
     />
-    {resolveNodeContentLabel($node.contentType)}
+    <!-- {resolveNodeContentLabel($node.contentType)} -->
   </button>
   <span class="h-full flex items-center justify-center">
     <Divider

@@ -3,11 +3,11 @@
   import view from "$lib/client/stores/view.store";
   import { cn } from "$lib/client/utils/ui.utils";
   import PropertyItem from "./PropertyItem.svelte";
-  import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
-  import type { IProperty } from "./property.type";
+  import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
   import {
     resolvePropertiesForCapture,
-    resolvePropertiesForNodePage
+    resolvePropertiesForNodePage,
+    resolvePropertyDefaultValue
   } from "./property.utils";
   import { onMount } from "svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -15,36 +15,62 @@
   import Badge from "$lib/client/elements/text/Badge.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";
+  import type { ICollectionExpanded } from "../collection.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { IProperty } from "./property.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
-  export let propertyConfig: IProperty[] = [];
-  export let properties: INodeProperty[] = [];
-  export let nodeId: string | undefined = undefined;
-  export let context: "capture" | "nodepage" | "medianode" | "rightpanel" =
+  export let types: ICollectionExpanded[] | undefined = undefined;
+  export let isIncludeExtendedProperties: boolean = true;
+  export let values: INodePropertyValue[] = [];
+  export let nodeId: IRecordId | undefined = undefined;
+  export let context: "capture" | "clip" | "mainpanel" | "rightpanel" =
     "capture";
   export let isReadMode: boolean = false;
   export let isCollapsed: boolean = false;
-  let isPropertiesPaneContext: boolean =
-    context === "rightpanel" || context === "medianode";
+  let properties: IProperty[] = [];
+  /**
+   * Renders properties as column
+   */
+  let isRenderAsColumn: boolean =
+    context === "rightpanel" || context === "clip";
   let isCollapserHovered: boolean = false;
 
   onMount(async () => {
-    //TODO - show properties grouped by type if context is right panel
-    if (propertyConfig) await refresh();
+    if (types) await refresh();
   });
 
   async function refresh() {
-    if (context === "capture")
+    if (!types) return;
+    let propertyConfig = types
+      .map((x) => x.properties)
+      .flat()
+      .filter((x) => x);
+    if (propertyConfig.length === 0) return;
+    if (isIncludeExtendedProperties) {
+      propertyConfig = propertyConfig.concat(
+        types
+          .map((x) => x.extendProperties)
+          .flat()
+          .filter((x) => x) as IProperty[]
+      );
+      propertyConfig = propertyConfig.filter(
+        (x, i) => propertyConfig.findIndex((y) => isSameResource(x, y)) === i
+      );
+    }
+    if (context === "capture" || context === "clip")
       properties = resolvePropertiesForCapture(propertyConfig);
-    else if (context === "nodepage")
+    else if (context === "mainpanel")
       properties = resolvePropertiesForNodePage(propertyConfig);
+    else if (context === "rightpanel") properties = propertyConfig;
   }
 </script>
 
 {#if properties && properties.length > 0}
   <div
     class={cn("w-full", {
-      "xl:px-6": !isPropertiesPaneContext && !isCollapsed,
-      "xl:px-10": !isPropertiesPaneContext && isCollapsed
+      "xl:px-6": !isRenderAsColumn && !isCollapsed,
+      "xl:px-10": !isRenderAsColumn && isCollapsed
     })}
   >
     <div
@@ -52,7 +78,7 @@
         "border-brs3": isCollapsed || isCollapserHovered
       })}
     >
-      {#if !isPropertiesPaneContext}
+      {#if !isRenderAsColumn}
         <button
           class={cn("flex justify-between items-center w-full rounded-md", {
             "px-4 py-2": isCollapsed,
@@ -68,12 +94,12 @@
             <!-- <Icon icon="widget" size={Size.sm} /> -->
             <span class="text-b2 text-fgs3"> Properties </span>
             {#if isCollapsed}
-              <Badge text={properties.length} />
+              <Badge text={values.length} />
             {/if}
           </span>
           <span class="h-3 flex gap-3 items-center">
             {#if isCollapserHovered}
-              {#if context === "nodepage"}
+              {#if context === "mainpanel"}
                 <Button
                   label="See all"
                   icon="ph:arrow-right-thin"
@@ -93,27 +119,31 @@
           </span>
         </button>
       {/if}
-      {#if !isCollapsed || isPropertiesPaneContext}
+      {#if !isCollapsed || isRenderAsColumn}
         <div
           class={cn("flex w-full flex-wrap gap-8", {
-            "px-4 pb-4": !isPropertiesPaneContext,
+            "px-4 pb-4": !isRenderAsColumn,
             "flex-col":
               $view.isPortrait ||
-              (isPropertiesPaneContext && context === "rightpanel") ||
-              (isReadMode && context === "nodepage")
+              (isRenderAsColumn && context === "rightpanel") ||
+              (isReadMode && context === "mainpanel")
           })}
         >
-          {#each properties as property, index (property.id)}
-            {#if propertyConfig.some((x) => x.id === property.id)}
-              <PropertyItem
-                {property}
-                config={propertyConfig.find((x) => x.id === property.id)}
-                {nodeId}
-                {isPropertiesPaneContext}
-                {isReadMode}
-                on:change
-              />
-            {/if}
+          {#each properties as property (property.id)}
+            <PropertyItem
+              value={values.find((x) => isSameResource(x, property))?.value ??
+                resolvePropertyDefaultValue(property)}
+              {property}
+              {nodeId}
+              isPropertiesPaneContext={isRenderAsColumn}
+              {isReadMode}
+              on:change={(e) => {
+                dispatch("change", {
+                  id: property.id,
+                  value: e.detail
+                });
+              }}
+            />
           {/each}
         </div>
       {/if}

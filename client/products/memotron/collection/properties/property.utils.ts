@@ -1,5 +1,5 @@
 import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
+import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { type IProperty, PropertyType } from "./property.type";
 
@@ -30,7 +30,7 @@ export function resolvePropertyDefaultValue(property: IProperty) {
 
 export function mapPropertyValues(
   properties: IProperty[] | undefined,
-  nodeProperties: INodeProperty[] | undefined
+  nodeProperties: INodePropertyValue[] | undefined
 ) {
   if (!properties) return [];
   return properties.map((property) => {
@@ -59,13 +59,9 @@ export function lookupAddressFromLatLong(lat: number, long: number) {
  */
 export function resolvePropertiesForCapture(properties: IProperty[]) {
   if (!isValidArrayWithData(properties)) return [];
-  return properties
-    .filter((item: IProperty) => {
-      return item.isShowOnCapture;
-    })
-    .map((y) => {
-      return { id: y.id, value: resolvePropertyDefaultValue(y) };
-    });
+  return properties.filter((item: IProperty) => {
+    return item.isShowOnCapture;
+  });
 }
 
 /**
@@ -75,11 +71,7 @@ export function resolvePropertiesForCapture(properties: IProperty[]) {
  */
 export function resolvePropertiesForNodePage(properties: IProperty[]) {
   if (!isValidArrayWithData(properties)) return [];
-  return properties
-    .filter((item: IProperty) => {
-      return item.isShowOnNodePage;
-    })
-    .map((y) => {
-      return { id: y.id, value: resolvePropertyDefaultValue(y) };
-    });
+  return properties.filter((item: IProperty) => {
+    return item.isShowOnNodePage;
+  });
 }

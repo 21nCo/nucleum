@@ -27,11 +27,13 @@
   import { Size } from "$lib/client/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
+  import { NodeRightPaneType } from "../node.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
   export let isWidened: boolean = false;
   let bgIndex = 1;
+  let selectedToggleAction: string | undefined = undefined;
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
     tooltipOptions: {
@@ -62,20 +64,23 @@
   </span>
   <span class="flex items-center gap-3 h-full">
     <ToggleGroup
+      selected={selectedToggleAction}
       items={resolveVisibleActions($node.contentType)}
       class="gap-5"
       on:change={(e) => {
-        // onPanelAction(e.detail);
+        if (e.detail === NodeRightPaneType.SIDENOTES) {
+          dispatch("panel", e.detail);
+        }
       }}
-      on:none={() => {
-        // rightPane = undefined;
-      }}
+      on:none
     />
     <ContextMenuAction
       tooltipOptions={buttonCommonProps.tooltipOptions}
       {contextMenu}
+      size={Size.lg}
       id="nodeContextMenu"
       tooltip="More actions"
+      on:action
     />
     <Divider
       orientation={Orientation.Vertical}

@@ -1,6 +1,5 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { debouncer } from "$lib/client/utils/utils";
 import {
   activeResources,
   ActiveResourceStore,
@@ -11,7 +10,8 @@ import {
   type IActiveCollection,
   type ICollectionView,
   CollectionType,
-  type ICollection
+  type ICollection,
+  type ICollectionExpanded
 } from "$lib/client/products/memotron/collection/collection.type";
 import {
   propertyEditorStore,
@@ -26,8 +26,6 @@ import {
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
-import type { IProperty } from "./properties/property.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
@@ -69,13 +67,12 @@ class CollectionStore extends ResourceStore<ICollection> {
    * @returns
    */
   async resolveTypes(collections: IRecordId[]) {
-    let types: string[] = [];
-    let propertyConfig: IProperty[] = [];
-    let avatars: IAvatar[] = [];
-    if (!collections) return { types, propertyConfig, avatars };
+    let types: ICollectionExpanded[] = [];
+    if (!collections) return types;
     const result = await flux.selectMany(Resource.collection, {
       properties: [
-        "type",
+        "*",
+        "typeToExtend.* as typeToExtend",
         "(select * from $parent.properties) as properties",
         "(select * from $parent.typeToExtend.properties) as extendProperties"
       ],
@@ -84,15 +81,9 @@ class CollectionStore extends ResourceStore<ICollection> {
       }
     });
     logger.log({ at: "resolveTypes", result });
-    if (!result || !Array.isArray(result))
-      return { types, propertyConfig, avatars };
-    types = result
-      .filter((x) => x.type === CollectionType.TYPED)
-      .map((x) => x.id);
-    propertyConfig = result
-      .flatMap((x) => [...(x.properties ?? []), ...(x.extendProperties ?? [])])
-      .filter((x) => x);
-    return { types, propertyConfig, avatars };
+    if (!result || !Array.isArray(result)) return types;
+    types = result.filter((x) => x.type === CollectionType.TYPED);
+    return types;
   }
 }
 

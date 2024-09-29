@@ -3,11 +3,17 @@
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import type { ICollectionExpanded } from "../../collection/collection.type";
   import { type INode, webNodeTypeList } from "../node.type";
   import NodeFavicon from "./NodeFavicon.svelte";
-  export let avatars: IAvatar[] | undefined = undefined;
+  export let types: ICollectionExpanded[] | undefined = undefined;
   export let node: INode | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  let avatars: IAvatar[] | undefined = undefined;
+
+  async function resolveAvatars() {
+    avatars = types?.flatMap((x) => [x.avatar]).filter((a) => a);
+  }
 </script>
 
 {#if avatars && avatars.length > 0}

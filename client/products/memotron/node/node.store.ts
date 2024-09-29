@@ -2,7 +2,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import {
   LinkType,
   type IActiveNode,
-  type INodeProperty,
+  type INodePropertyValue,
   type INode,
   NodeType,
   NodeRightPaneType,
@@ -34,7 +34,10 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
-import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import {
+  isPresentInList,
+  isSameResource
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -175,20 +178,28 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
       links,
       collections
     });
-    const { types, propertyConfig, avatars } =
-      await collectionStore.resolveTypes(collections);
+    const types = await collectionStore.resolveTypes(collections);
     this.update((n) => {
       n.types = types;
-      n.propertyConfig = propertyConfig;
-      n.avatars = avatars;
       n.links = links;
       n.collections = collections;
       return n;
     });
   };
-  updateProperties = async (properties: INodeProperty[]) => {
-    this.update((prev) => ({ ...prev, properties }));
-    return this.resourceStore.modify(this.id, { properties });
+  updateProperty = async (property: INodePropertyValue) => {
+    let properties = this.get().properties ?? [];
+    properties = properties.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
+    return this.resourceStore.modify(
+      this.id,
+      {
+        properties: [...properties, property]
+      },
+      {
+        isDebounced: true,
+        debounceKey: "property" + property.id.toString()
+      }
+    );
   };
 
   updateBlock = (id: IRecordId, changedProps: any) => {
@@ -354,6 +365,10 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           resourceActions.openAsTab(),
+          {
+            value: NodeRightPaneType.METADATA,
+            icon: "ph:file-thin"
+          },
           resourceActions.copyLink(),
           {
             value: "download",
@@ -380,6 +395,20 @@ export function resolveNodeContextMenu(
         resourceActions.star(),
         resourceActions.edit(accessPoint),
         resourceActions.openAsTab(),
+        {
+          value: NodeRightPaneType.METADATA,
+          icon: "ph:file-thin"
+        },
+        {
+          value: NodeRightPaneType.HISTORY,
+          icon: "ph:clock-countdown-thin",
+          label: "Show history"
+        }
+      ]
+    },
+    {
+      group: "shareAndExport",
+      items: [
         resourceActions.copyLink(),
         {
           value: "export",
@@ -394,11 +423,6 @@ export function resolveNodeContextMenu(
               componentParams: { id: node.id }
             });
           }
-        },
-        {
-          value: "history",
-          icon: "history",
-          callback: async () => {}
         }
       ]
     },

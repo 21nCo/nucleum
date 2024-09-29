@@ -76,7 +76,6 @@ export const memotronActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
-      title: "Edit properties",
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal

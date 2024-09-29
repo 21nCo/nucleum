@@ -41,7 +41,7 @@
 </script>
 
 <div
-  class="w-full flex gap-2 justify-between items-center sticky- top--0 py--6"
+  class="w-full flex gap-1 justify-between items-center sticky- top--0 py--6"
 >
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
@@ -92,7 +92,7 @@
         on:click={() => (isInEditMode = true)}
       >
         <span class="flex gap-2 items-center px-2 py-0.5">
-          <Icon icon="ph:cube-light" size={Size.sm} />
+          <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
           {$collection.properties.length}
           {$collection.properties.length === 1 ? "property" : "properties"}
         </span>

@@ -52,7 +52,7 @@
     on:click={() => {
       appStore.runAction(MemotronAction.EDIT_COLLECTION_PROPERTIES, {
         componentParams: {
-          collection
+          id: collection?.id
         }
       });
     }}

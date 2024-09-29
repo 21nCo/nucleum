@@ -11,7 +11,6 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeContent from "../content/NodeContent.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import NodePropertiesOnMainPanel from "../content/NodePropertiesOnMainPanel.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -20,6 +19,7 @@
   import { fade, slide } from "svelte/transition";
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
   import { NodeRightPaneType } from "../node.type";
+  import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
 
   export let node: IActiveNodeStore;
   export let selectedView: string = "Content";
@@ -31,10 +31,6 @@
   let isWidened = false;
   let isRightPanelCollapsed: boolean = true;
   let rightPane = NodeRightPaneType.OUTLINE;
-  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
-    (x) => x.isShowOnNodePage
-  );
-
   function onScroll(e: any) {
     // console.log("onScroll", e);
     const st = event?.target?.scrollTop;
@@ -54,6 +50,16 @@
   function onLabelChange(e: any) {
     // console.log("onLabelChange", e);
     if ($node.label) node.debouncedModify({ label: $node.label });
+  }
+
+  function closeRightPane() {
+    rightPane = NodeRightPaneType.NONE;
+    isRightPanelCollapsed = true;
+  }
+
+  function openRightPane(e: CustomEvent<NodeRightPaneType>) {
+    rightPane = e.detail;
+    isRightPanelCollapsed = false;
   }
 </script>
 
@@ -95,9 +101,9 @@
             >
               <div class="min-h-20" />
               {#if !$node.focusedBlock}
-                {#if $node.avatars}
+                {#if $node.types}
                   <span class="flex mx-12 -mb-8">
-                    <NodeAvatar avatars={$node.avatars} size={Size.lg} />
+                    <NodeAvatar types={$node.types} size={Size.lg} />
                   </span>
                 {/if}
                 <span
@@ -109,8 +115,8 @@
                     }
                   )}
                 >
-                  {#if isStickied && $node.avatars}
-                    <NodeAvatar avatars={$node.avatars} size={Size.sm} />
+                  {#if isStickied && $node.types}
+                    <NodeAvatar types={$node.types} size={Size.sm} />
                   {/if}
                   {#if $isInEditMode}
                     <TextInput
@@ -130,12 +136,12 @@
               <div class="w-full flex px-12">
                 <CollectionsLane {node} />
               </div>
-              {#if $node.types && $node.types.length > 0 && propertiesOnMainPanel && propertiesOnMainPanel.length > 0 && !$node.focusedBlock}
+              {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
                 <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
                 <div class="px-2">
-                  <NodePropertiesOnMainPanel
+                  <NodePropertiesPane
                     {node}
-                    {propertiesOnMainPanel}
+                    isVisibleProps={true}
                     on:showAll={() => {
                       console.log("showAll");
                       rightPane = NodeRightPaneType.PROPERTIES;
@@ -167,6 +173,7 @@
           {mdId}
           bind:isRightPanelCollapsed
           bind:pane={rightPane}
+          on:close={closeRightPane}
         />
       </div>
     {:else}
@@ -175,7 +182,25 @@
     {#if isShowFloatingBar}
       <div transition:fade={{ duration: 200 }}>
         <BottomFloat>
-          <NodeFloatingBar {node} bind:selectedView bind:isWidened />
+          <NodeFloatingBar
+            {node}
+            bind:selectedView
+            bind:isWidened
+            on:action={(e) => {
+              if (
+                e.detail === NodeRightPaneType.METADATA ||
+                e.detail === NodeRightPaneType.HISTORY
+              ) {
+                openRightPane(e);
+              }
+            }}
+            on:panel={openRightPane}
+            on:none={(e) => {
+              if (e.detail === rightPane) {
+                closeRightPane();
+              }
+            }}
+          />
         </BottomFloat>
       </div>
     {/if}

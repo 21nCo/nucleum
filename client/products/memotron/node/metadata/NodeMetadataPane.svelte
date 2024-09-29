@@ -103,7 +103,6 @@
 </script>
 
 <div class="flex flex-col gap-3 w-full flex-grow items-start">
-  <Text content="Metadata" style={TextStyle.PANEL_HEADING_SMALL} />
   <div class={cn("flex w-full flex-col gap-3")}>
     <div class={cn("flex flex-col gap-3 rounded-md mo:p-2 p-4 w-full bg-bgs2")}>
       <BasicInfoItem label="Kind" value={kind} />

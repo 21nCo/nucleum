@@ -18,12 +18,21 @@
     propertyOptions,
     propertyStore
   } from "./property.store";
-  import type { IActiveCollectionStore } from "../collection.store";
+  import {
+    resolveActiveCollectionStore,
+    type IActiveCollectionStore
+  } from "../collection.store";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { MemotronAction } from "../../memotronAction.enum";
   import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
-
-  export let collection: IActiveCollectionStore | undefined = undefined;
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { onMount } from "svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  export let id: IRecordId | undefined = undefined;
+  let collection: IActiveCollectionStore | undefined = id
+    ? (resolveActiveCollectionStore(id) as IActiveCollectionStore)
+    : undefined;
 
   let columns: TableColumn[] = [
     {
@@ -92,21 +101,34 @@
       await propertyStore.create([newProperty]);
     }
   }
+  onMount(async () => {
+    if (collection && (!$collection || $collection.label)) {
+      await collection.init();
+    }
+  });
+
+  function resolveTitle() {
+    return collection
+      ? ($collection?.label ?? "Untitled") + " - edit properties"
+      : "Edit properties";
+  }
 </script>
 
 <div class="flex flex-col justify-between gap-4 w-full h-full text-b2">
-  <Table2
-    isStyled={true}
-    addAction="add property"
-    actions={[
-      { action: "remove", index: 0 },
-      { action: "rearrange", index: 1 }
-    ]}
-    {columns}
-    bind:data={$propertyEditorStore}
-    on:add={onAdd}
-  />
-
+  <div class="flex flex-col gap-4">
+    <Text content={resolveTitle()} style={TextStyle.PANEL_HEADING} />
+    <Table2
+      isStyled={true}
+      addAction="add property"
+      actions={[
+        { action: "remove", index: 0 },
+        { action: "rearrange", index: 1 }
+      ]}
+      {columns}
+      bind:data={$propertyEditorStore}
+      on:add={onAdd}
+    />
+  </div>
   <ModalFooter
     action={MemotronAction.EDIT_COLLECTION_PROPERTIES}
     primaryAction={collection
