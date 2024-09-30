@@ -15,6 +15,8 @@
   import view from "$lib/client/stores/view.store";
   import NodeThumbnailTitle from "../node/thumbnail/NodeThumbnailTitle.svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -26,7 +28,7 @@
 
   export let gap = 12; // Gap size in pixels
   let gridRef: any;
-  let hoveredMasonryItem: string | undefined = undefined;
+  let hoveredMasonryItem: IRecordId | undefined = undefined;
 
   $: if (arrangement === Arrangement.MASONRY && gridRef) {
     resizeAllMasonryItems();
@@ -80,8 +82,12 @@
           class="item-content w-full border rounded-md border-brs2 hover:border-aps2"
           type="button"
           on:hover={(e) => {
-            if (e.detail) hoveredMasonryItem = item.id.toString();
-            else if (e.detail === false && hoveredMasonryItem === item.id)
+            if (e.detail) hoveredMasonryItem = item.id;
+            else if (
+              e.detail === false &&
+              hoveredMasonryItem &&
+              isSameResource(hoveredMasonryItem, item.id)
+            )
               hoveredMasonryItem = undefined;
           }}
           on:click={(e) =>
@@ -108,7 +114,7 @@
             </span> -->
             <NodeThumbnail {item} {parentBgIndex} {arrangement} />
           {/if}
-          {#if hoveredMasonryItem === item.id.toString() && item.contentType === NodeType.IMAGE}
+          {#if hoveredMasonryItem && isSameResource(hoveredMasonryItem, item.id) && item.contentType === NodeType.IMAGE}
             <div
               class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-12 p-2 truncate text-b2 border-b border-x border-aps2"
               transition:fade={{ duration: 200 }}

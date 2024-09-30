@@ -25,7 +25,7 @@
       tooltip={item.tooltip ?? enumToString(item.value)}
       on:change={(e) => {
         if (e.detail === false) {
-          dispatch("none");
+          dispatch("none", item.value);
           return;
         }
         selected = item.value;

@@ -23,12 +23,13 @@
   import { PanelSwitcherStyle } from "../../types/switcher.enum";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "../../types/text.enum";
-  import AvatarView from "./AvatarView.svelte";
+  import AvatarRenderer from "./AvatarRenderer.svelte";
   import { emojis, materialSymbols } from "$lib/client/data/avatars";
   import SwitchInput from "../toggle/SwitchInput.svelte";
   import account from "$lib/client/stores/account.store";
   import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
   import { abg, cn } from "$lib/client/utils/ui.utils";
+
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   let activeCategory: string = "";
@@ -75,7 +76,7 @@
     avatarsParentContainer?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   let avatarKeys: string[] = Object.keys(avatars);
   $: avatarKeys = Object.keys(avatars);
-  $: console.log({ avatarKeys, avatars });
+
   let checked: boolean = $userPreferences.avatarPicker.filled;
   $: $userPreferences.avatarPicker.filled = checked;
   let skinTones = [
@@ -88,7 +89,7 @@
   ];
   let skinIndex: number = $userPreferences.avatarPicker.skinIndex; //change to user preference store this also in db
   $: $userPreferences.avatarPicker.skinIndex = skinIndex;
-  let colorPalate = ["#000000", "#C2AB4E", "#C14D8A"];
+  let colorPalate = ["bw", "#FFC107", "#FF6F61", "#00B7EB", "#63c99c"];
   let iconColor = $userPreferences.avatarPicker.iconColor;
   $: $userPreferences.avatarPicker.iconColor = iconColor;
   let searchRef: HTMLInputElement;
@@ -367,9 +368,14 @@
           class="w-full h-full p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
         />
       </div>
-      <Button icon="clock" on:click={ShufflePick} />
+      <Button
+        icon="ph:dice-three-light"
+        tooltip="Randomize"
+        on:click={ShufflePick}
+      />
       <Button
         icon="trash"
+        tooltip="Delete"
         on:click={() => {
           eventDispatcher("delete");
           eventDispatcher("close");
@@ -382,7 +388,7 @@
       <div
         class="relative w-3/10 min-w-[30%] h-full flex flex-col gap-2 px-2 py-2 border-r border-r-brs2"
       >
-        <div class="px-2">
+        <div class="px-2 text-left">
           <Text content="Category" style={TextStyle.SECTION_HEADING_SMALL} />
         </div>
         <div class="flex flex-col gap-1">
@@ -421,17 +427,30 @@
           {#each colorPalate as color}
             <span
               id={"colPalate" + color}
-              class="inline-flex justify-center items-center rounded-full w-7 h-7"
-              style="padding: 0rem;{iconColor == color
-                ? `border:1px solid ${color}`
-                : ''}"
+              class={cn(
+                "inline-flex justify-center items-center rounded-full w-7 h-7",
+                {
+                  border: iconColor == color,
+                  "border-fgs2": color === "bw"
+                }
+              )}
+              style={`padding: 0rem; border-color: ${color !== "bw" ? color : ""}`}
             >
               <button
                 id={"colPalateButton" + color}
                 on:click={() => (iconColor = color)}
-                class="rounded-full w-5 h-5"
-                style="background-color:{color}"
-              ></button></span
+                class={cn("rounded-full w-5 h-5", {
+                  "bg-fgs2": color === "bw"
+                })}
+                style="background-color:{color !== 'bw' ? color : ''}"
+              >
+                {#if color === "bw"}
+                  <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="50" class="fill-bgs1" />
+                    <path d="M50 0A50 50 0 0 1 50 100V0Z" class="fill-fgs1" />
+                  </svg>
+                {/if}
+              </button></span
             >
           {/each}
         {:else}
@@ -459,7 +478,7 @@
         {#each avatarKeys as key, index}
           {#if avatars[key] !== undefined && avatars[key].length > 0}
             <div id={"AVT" + index} class="AVT flex flex-col p-2">
-              <p class="text-b4 text-fgs3 px-2">{key}</p>
+              <p class="text-b4 text-fgs3 px-2 text-left">{key}</p>
               <div class="flex flex-wrap">
                 {#each avatars[key] as emote, index (index)}
                   <button
@@ -472,7 +491,7 @@
                     }}
                     class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2"
                   >
-                    <AvatarView
+                    <AvatarRenderer
                       avatar={{
                         code:
                           "code" in emote[0]

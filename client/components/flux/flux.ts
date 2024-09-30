@@ -1,6 +1,9 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceActionType,
+  type IResource
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import {
   type IStore,
   PersistenceActionType,
@@ -8,7 +11,8 @@ import {
   StoreDataType,
   type IObservableStore,
   type IResourceSelectParams,
-  type IRecordId
+  type IRecordId,
+  type IMutation
 } from "$lib/client/types/data.type";
 import {
   detectTimeZone,
@@ -31,6 +35,7 @@ import {
 } from "$lib/client/utils/browser.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import type { IAccessLog } from "../accessLogging/accessLog.type";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -139,6 +144,7 @@ class Flux {
   }
 
   private async loadInMemoryResourceStore(resource: Resource) {
+    logger.log({ at: "flux.loadInMemoryResourceStore", resource });
     const store = this.stores.find((x) => x.id === resource);
     if (store?.loader) {
       const data = await this.persistence.selectMany(resource);
@@ -238,7 +244,16 @@ class Flux {
     return response;
   }
 
-  async insertMutation<T extends IResource>(
+  /**
+   * Inserts a mutation record into the mutation table. This is used for syncing to cloud and also for resource versioning.
+   *
+   * Note: if multiple resources are involved in the mutation like INSERT operation or BULK MERGE operation, then accessLog table is logged with the information for resource versioning.
+   *
+   * @param resource
+   * @param params
+   * @returns
+   */
+  private async insertMutation<T extends IResource>(
     resource: Resource,
     params: IMutationParamsv2<T>
   ) {
@@ -246,19 +261,89 @@ class Flux {
     const mutationId = generateRandomId();
     const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
     const userId = await resolveCurrentUserId();
-    const mutations = {
+    const mutation: IMutation = {
       id: mutationId,
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
-      dapId,
+      dapId: dapId ?? "",
       userId,
       resource,
-      params
+      params,
+      resourceId: this.resolveResourceId(params),
+      action: this.resolveAction(params?.action)
     };
+    if (
+      (params.action === PersistenceActionType.INSERT ||
+        params.action === PersistenceActionType.BULK_MERGE) &&
+      params.records.length > 1
+    ) {
+      await this.multiResourceMutationAccessLog(resource, params);
+    }
     return this.persistence.mutation(Resource.mutation, {
-      records: [mutations],
+      records: [mutation],
       action: PersistenceActionType.INSERT
     });
+  }
+
+  /**
+   *
+   * Used as fallback for resource versioning along with mutation table in cases of mutation having mutiple resources.
+   *
+   */
+  private async multiResourceMutationAccessLog<T extends IResource>(
+    resource: Resource,
+    params: IMutationParamsv2<T>
+  ) {
+    logger.log({ at: "flux.multiResourceMutationAccessLog", resource, params });
+    if (
+      !(
+        params.action === PersistenceActionType.INSERT ||
+        params.action === PersistenceActionType.BULK_MERGE
+      ) ||
+      params.records.length < 2
+    ) {
+      return;
+    }
+    const accessLogs: IAccessLog[] = params.records.map((record) => ({
+      id: generateRandomId(),
+      timestamp: new Date().toISOString(),
+      action: this.resolveAction(params?.action),
+      resource,
+      resourceId: record.id,
+      createdAt: new Date().toISOString()
+    }));
+    return this.persistence.mutation(Resource.accessLog, {
+      records: accessLogs,
+      action: PersistenceActionType.INSERT
+    });
+  }
+
+  private resolveResourceId<T extends IResource>(params: IMutationParamsv2<T>) {
+    switch (params?.action) {
+      case PersistenceActionType.INSERT:
+        return params?.records[0]?.id;
+      case PersistenceActionType.REPLACE:
+      case PersistenceActionType.MERGE:
+        return params?.record?.id;
+      case PersistenceActionType.DELETE:
+        return params?.recordId;
+      default:
+        return undefined;
+    }
+  }
+
+  private resolveAction(action: PersistenceActionType) {
+    switch (action) {
+      case PersistenceActionType.INSERT:
+        return ResourceActionType.CREATE;
+      case PersistenceActionType.REPLACE:
+      case PersistenceActionType.MERGE:
+        return ResourceActionType.EDIT;
+      case PersistenceActionType.DELETE:
+        return ResourceActionType.DELETE;
+      default:
+        return ResourceActionType.EDIT;
+    }
   }
 
   async select(resourceId: IRecordId, properties?: string[]) {
@@ -431,6 +516,15 @@ class Flux {
    * Invalidates the stores and persistance connection - used during events like User logout or switching spaces.
    */
   async terminate() {}
+
+  /**
+   * Exports the local database as a backup json or csv based on user selection.
+   */
+  async export(method: "json" | "csv") {}
+  /**
+   * Imports a backup json or csv file into the local database.
+   */
+  async import() {}
 }
 
 export let flux = Flux._instance as any as Flux;

@@ -1,10 +1,10 @@
 import type { IMemotronItemBase } from "../memotron.type";
 
 export interface ILinkTag extends IMemotronItemBase {
-  prefix?: string;
+  group?: string;
 }
 
 export interface ILinkTagGroup {
-  prefix: string;
+  group: string;
   items: ILinkTag[];
 }

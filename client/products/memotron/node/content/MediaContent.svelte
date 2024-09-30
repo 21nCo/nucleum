@@ -15,12 +15,10 @@
   import FileView from "$lib/client/components/files/FileView.svelte";
 
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
   export let rightPane: NodeRightPaneType | undefined =
     $node?.contentType === NodeType.PDF ? NodeRightPaneType.TRACES : undefined;
   let pdfContent: any;
   let renderingDetails: any;
-  let refreshId = Date.now();
   let imgRef: HTMLImageElement;
   let isPortrait = true;
 
@@ -43,11 +41,6 @@
     publish: contextEventListener
   };
   setContext("content", contentContext);
-
-  function retireveNode() {
-    node.fetch();
-    refreshId = Date.now();
-  }
 </script>
 
 <div class="flex w-full flex-grow">
@@ -55,10 +48,10 @@
     class={cn(
       "relative flex w-full justify-center flex-1 border-r border-brs3",
       {
-        "h-full": accessMode === ResourceAccessMode.FULL,
+        "h-full": $node.accessMode === ResourceAccessMode.FULL,
         grow:
-          accessMode === ResourceAccessMode.POP ||
-          accessMode === ResourceAccessMode.INLINE
+          $node.accessMode === ResourceAccessMode.POP ||
+          $node.accessMode === ResourceAccessMode.INLINE
       }
     )}
   >

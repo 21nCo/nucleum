@@ -6,10 +6,14 @@
   import NodeHistoryPane from "../../common/history/NodeHistoryPane.svelte";
   import NodeLinksPane from "../links/NodeLinksPane.svelte";
   import type { IActiveNodeStore } from "../node.store";
-  import { NodeRightPaneType } from "../node.type";
+  import { NodeRightPaneType, NodeType } from "../node.type";
   import NodeTracesPane from "../traces/NodeTracesPane.svelte";
   import NodeSidenotesPane from "./NodeSidenotesPane.svelte";
   import NodePropertiesPane from "./NodePropertiesPane.svelte";
+  import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let pane: NodeRightPaneType;
   export let node: IActiveNodeStore;
   export let mdId: string | undefined = undefined;
@@ -17,18 +21,31 @@
 </script>
 
 <div class="flex flex-col h-full w-full overflow-y-auto items-start gap-3 p-4">
-  <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
+  <div class="w-full flex items-center justify-between gap-2">
+    <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
+    {#if pane === NodeRightPaneType.METADATA || ($node.contentType === NodeType.NODULAR_MARKDOWN && pane === NodeRightPaneType.HISTORY)}
+      <Button
+        icon="ph:x-circle-thin"
+        tooltip="Close"
+        on:click={() => {
+          dispatch("close", pane);
+        }}
+      />
+    {/if}
+  </div>
   {#if pane === NodeRightPaneType.OUTLINE && mdId}
     <TableOfContents {mdId} />
   {:else if pane === NodeRightPaneType.LINKS}
     <NodeLinksPane {node} />
   {:else if pane === NodeRightPaneType.PROPERTIES}
-    <NodePropertiesPane {node} {renderingDetails} />
+    <NodePropertiesPane {node} />
   {:else if pane === NodeRightPaneType.TRACES}
     <NodeTracesPane {node} />
   {:else if pane === NodeRightPaneType.HISTORY}
     <NodeHistoryPane />
   {:else if pane === NodeRightPaneType.SIDENOTES}
     <NodeSidenotesPane {node} />
+  {:else if pane === NodeRightPaneType.METADATA}
+    <NodeMetadataPane {node} {renderingDetails} />
   {/if}
 </div>

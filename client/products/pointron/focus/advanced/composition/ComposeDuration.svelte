@@ -150,6 +150,7 @@
         <PomodoroUnitView bind:composition on:change />
         {#if composition.additional && composition.additional.length > 0}
           {#each composition.additional as item}
+            <!-- TODO - testing - on:change doesn't emit present in detail -->
             <PomodoroUnitView
               composition={item}
               on:remove={removeAdditionalHandler}

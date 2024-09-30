@@ -10,13 +10,29 @@
   import { enumToString } from "$lib/shared/utils/text.utils";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
-  import { PropertyType } from "./property.type";
+  import { PropertyType, type IProperty } from "./property.type";
   import {
     autoPropertiesGroupLabel,
     metaPropertyOptions,
     propertyEditorStore,
-    propertyOptions
+    propertyOptions,
+    propertyStore
   } from "./property.store";
+  import {
+    ActiveCollectionStore,
+    type IActiveCollectionStore
+  } from "../collection.store";
+  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
+  import { MemotronAction } from "../../memotronAction.enum";
+  import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { onMount } from "svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  export let id: IRecordId | undefined = undefined;
+  let collection: IActiveCollectionStore | undefined = id
+    ? ActiveCollectionStore.resolve(id)
+    : undefined;
 
   let columns: TableColumn[] = [
     {
@@ -70,30 +86,66 @@
         row.type === PropertyType.LOCATION
     }
   ];
+
+  async function onAdd() {
+    const newProperty: OmitForCaptureWithId<IProperty> = {
+      id: generateResourceId(Resource.property),
+      label: "",
+      isShowOnNodePage: false,
+      isShowOnCapture: false,
+      type: PropertyType.TEXT,
+      order: $propertyEditorStore.length
+    };
+    $propertyEditorStore = [...$propertyEditorStore, newProperty];
+    if (collection) {
+      await propertyStore.create([newProperty]);
+    }
+  }
+  onMount(async () => {
+    if (collection && (!$collection || $collection.label)) {
+      await collection.init();
+    }
+  });
+
+  function resolveTitle(collection: IActiveCollectionStore | undefined) {
+    return collection
+      ? ($collection?.label ?? "Untitled") + " - edit properties"
+      : "Edit properties";
+  }
 </script>
 
-<div class="flex flex-col gap-4 w-full text-b2">
-  <Table2
-    isStyled={true}
-    addAction="add property"
-    actions={[
-      { action: "remove", index: 0 },
-      { action: "rearrange", index: 1 }
-    ]}
-    {columns}
-    bind:data={$propertyEditorStore}
-    on:add={() => {
-      $propertyEditorStore = [
-        ...$propertyEditorStore,
-        {
-          id: generateResourceId(Resource.property),
-          label: "",
-          isShowOnNodePage: false,
-          isShowOnCapture: false,
-          type: PropertyType.TEXT,
-          order: $propertyEditorStore.length
+<div class="flex flex-col justify-between gap-4 w-full h-full text-b2">
+  <div class="flex flex-col gap-4">
+    <Text content={resolveTitle(collection)} style={TextStyle.PANEL_HEADING} />
+    <Table2
+      isStyled={true}
+      addAction="add property"
+      actions={[
+        { action: "remove", index: 0 },
+        { action: "rearrange", index: 1 }
+      ]}
+      {columns}
+      bind:data={$propertyEditorStore}
+      on:add={onAdd}
+    />
+  </div>
+  <ModalFooter
+    action={MemotronAction.EDIT_COLLECTION_PROPERTIES}
+    primaryAction={collection
+      ? {
+          label: "Save",
+          callback: async () => {
+            const result = await collection.updateProperties();
+            return true;
+          }
         }
-      ];
-    }}
+      : {
+          label: "Done"
+        }}
+    secondaryAction={collection
+      ? {
+          label: "Cancel"
+        }
+      : undefined}
   />
 </div>

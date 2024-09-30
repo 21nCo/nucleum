@@ -111,6 +111,22 @@ export class ActiveResourceStore<
   get() {
     return get(this.subject);
   }
+
+  static resolve<T extends ActiveResourceStore<any, any>>(
+    this: new (id: IRecordId) => T,
+    id: IRecordId
+  ): T {
+    const idStr = id.toString();
+    if (!activeResources.has(idStr)) {
+      activeResources.set(idStr, new this(id));
+    }
+    let val = activeResources.get(idStr);
+    return val! as T;
+  }
+
+  static destroy(id: IRecordId) {
+    activeResources.delete(id.toString());
+  }
 }
 
 /**
@@ -166,7 +182,6 @@ export class ResourceStore<T extends IResource> implements IStore {
     let commonProps = {
       createdAt: new Date(),
       modifiedAt: new Date(),
-      interactedAt: new Date(),
       createdBy: this.currentUserId,
       modifiedBy: this.currentUserId
     };
@@ -266,8 +281,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     }
     const modificationProps = {
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString()
     };
     const activeResource = activeResources.get(id.toString());
     if (activeResource && !additionalParams?.isPreventBackPropagation) {
@@ -300,7 +314,7 @@ export class ResourceStore<T extends IResource> implements IStore {
     } as Partial<T>);
   }
 
-  async bulkModify(ids: string[], data: Partial<T>) {
+  async bulkModify(ids: IRecordId[], data: Partial<T>) {
     if (this.isExtensionEnvironment) {
       return extentionFlux({
         method: FluxMethod.MUTATION,
@@ -312,8 +326,7 @@ export class ResourceStore<T extends IResource> implements IStore {
               id,
               ...data,
               modifiedBy: this.currentUserId,
-              modifiedAt: new Date().toISOString(),
-              interactedAt: new Date().toISOString()
+              modifiedAt: new Date().toISOString()
             }))
           }
         }
@@ -325,12 +338,11 @@ export class ResourceStore<T extends IResource> implements IStore {
         id,
         ...data,
         modifiedBy: this.currentUserId,
-        modifiedAt: new Date().toISOString(),
-        interactedAt: new Date().toISOString()
+        modifiedAt: new Date().toISOString()
       }))
     });
   }
-  async bulkTrash(ids: string[]) {
+  async bulkTrash(ids: IRecordId[]) {
     return this.bulkModify(ids, {
       trashInformation: {
         deletedBy: this.currentUserId,
@@ -532,8 +544,7 @@ export class ResourceFIRStore<
         deletedBy: this.currentUserId
       },
       modifiedBy: this.currentUserId,
-      modifiedAt: new Date().toISOString(),
-      interactedAt: new Date().toISOString()
+      modifiedAt: new Date().toISOString()
     };
     this._mutation(PersistenceActionType.MERGE, { ...item, id });
     this.update((x: S) => {

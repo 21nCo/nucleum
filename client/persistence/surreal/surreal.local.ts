@@ -90,9 +90,9 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const result = await this.instance?.query(
       // "select * from mutation; select * from kv; select * from tz;"
-      "update collection:0fa455f78af27051e0c8e878bcdf2013 set views = ['view:ade2f91256f0ac65bb96c2ea7d0023a2'];"
+      "select * from collection;"
     );
-    logger.log({
+    logger.debug({
       at: "surreal.persistence.testQuery",
       userId: this.userId,
       result
@@ -122,7 +122,8 @@ export class SurrealPersistence implements IPersistence {
         response = await this.delete(params.recordId);
         break;
       case PersistenceActionType.BULK_MERGE:
-        response = await this.bulkEdit<T>(resource, params.records);
+        // response = await this.bulkEdit<T>(resource, params.records);
+        response = await this.bulkEditTemp<T>(resource, params.records);
         break;
     }
     return response;
@@ -227,6 +228,11 @@ export class SurrealPersistence implements IPersistence {
     return this.instance?.delete(resourceId);
   }
 
+  /**
+   * Bulk merge or update is only available since Surreal 2.0.0.
+   *
+   * Until the wasm binary is updated, this method won't work. Use bulkEditTemp workaround for now.
+   */
   bulkEdit<T extends IResource | IMetaResource>(
     resource: Resource,
     records: T[]
@@ -234,6 +240,27 @@ export class SurrealPersistence implements IPersistence {
     return this.instance?.query(`UPDATE ${resource} MERGE $resources;`, {
       resources: records
     });
+  }
+
+  bulkEditTemp<T extends IResource | IMetaResource>(
+    resource: Resource,
+    records: T[]
+  ): Promise<any> | undefined {
+    const changedProperties = { ...records[0] };
+    delete changedProperties.id;
+    logger.debug({
+      at: "SurrealPersistence.bulkEditTemp",
+      resource,
+      changedProperties,
+      records
+    });
+    return this.instance?.query(
+      `UPDATE ${resource} MERGE $properties where id in $ids;`,
+      {
+        properties: changedProperties,
+        ids: records.map((x) => x.id)
+      }
+    );
   }
 
   async query(query: string, params: any): Promise<any> {
@@ -288,16 +315,14 @@ export class SurrealPersistence implements IPersistence {
       query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
     if (params?.limit) query += ` LIMIT ${params.limit}`;
     if (params?.offset) query += ` START ${params.offset}`;
-    logger.log({
-      at: "SurrealPersistence.selectMany",
-      query,
-      params,
-      userId: this.userId
-    });
-    // await this.logInfo();
-    // await this.testQuery();
     const result = await this.instance?.query_raw(query, params);
-    logger.log({ at: "SurrealPersistence.selectMany - result", result });
+    logger.log({
+      at: "SurrealPersistence.selectMany - result",
+      result,
+      resource,
+      query,
+      params
+    });
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
   }

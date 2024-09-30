@@ -7,6 +7,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import LinkItems from "./LinkItems.svelte";
   import LinkSearch from "./LinkSearch.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   let link: string;
 </script>
 
@@ -14,10 +16,10 @@
   <div class="h-8">
     {#if isValidArrayWithData($captureStore.links)}
       <LinkItems
-        links={$captureStore.links?.map((x) => x.to)}
+        links={$captureStore.links?.map((x) => x.to) ?? []}
         on:unlink={(e) => {
-          console.log("unlink", e);
           captureStore.removeDLink(e.detail);
+          dispatch("unlinked", e.detail);
         }}
       />
     {/if}
@@ -30,10 +32,11 @@
     <LinkSearch
       context="capture"
       searchQuery={link}
-      on:select={(e) => {
-        console.log("select", e.detail);
-        captureStore.directLink(e.detail.item);
+      on:select={async (e) => {
+        if (!e.detail.item) return;
+        await captureStore.directLink(e.detail.item);
         link = "";
+        dispatch("linked", e.detail.item);
       }}
     />
   </div>

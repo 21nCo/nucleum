@@ -20,7 +20,7 @@
 <div class="flex items-center gap-2">
   {#if !$node.focusedBlock}
     {#if !isWebNode || $node.contentType === NodeType.WEB_PAGE}
-      <NodeAvatar avatars={$node.avatars} node={$node} size={Size.sm} />
+      <NodeAvatar node={$node} size={Size.sm} />
     {/if}
     {#if $isInEditMode && !isWebNode}
       <TextInput

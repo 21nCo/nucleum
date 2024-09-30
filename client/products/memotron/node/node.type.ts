@@ -9,10 +9,15 @@ import type {
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
+  type IActiveResource,
   type OmitFields,
   type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { IFile } from "$lib/client/components/files/file.type";
+import type {
+  IActiveCollection,
+  ICollectionExpanded
+} from "../collection/collection.type";
 
 export type INodeItemCaptured = OmitForCapture<INodeInterface> & {
   id: IRecordId;
@@ -36,7 +41,7 @@ type INodeBaseV1 = IMemotronItemBase & {
    * @deprecated - avatar is dynamically resolved from typed collections
    */
   avatar?: IAvatar;
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   parent?: string;
   creationContext?: string;
   notes?: string;
@@ -50,7 +55,7 @@ type INodeInterface<
   body: TBody;
   contentType: TType;
   metadata?: TMetadata;
-  properties?: INodeProperty[];
+  properties?: INodePropertyValue[];
   parent?: IRecordId;
   /**
    * The context in which the node was created i.e. whether nodes like AUDIO or IMAGE or PDF created independantly or from within a markdown as block. Also, for clips, whether the parent is created independently or as a supplementary when a text clip or tweet is created.
@@ -270,9 +275,6 @@ export enum NodeRightPaneType {
   PROPERTIES = "PROPERTIES",
   TRACES = "TRACES",
   SIDENOTES = "SIDENOTES",
-  /**
-   * @deprecated - merged into properties
-   */
   METADATA = "METADATA",
   LINKS = "LINKS",
   /**
@@ -286,9 +288,20 @@ export enum NodeRightPaneType {
   SERENDIPITY = "SERENDIPITY"
 }
 
-export type INodeLink = {
-  id: IRecordId;
+type INodeLinkBase = {
   linkType: LinkType;
+  tags?: IRecordId[];
+};
+
+export type INodeLink = IMemotronItemBase &
+  INodeLinkBase & {
+    in: IRecordId;
+    out: IRecordId;
+  };
+
+export type INodeLinkThumb = INodeLinkBase & {
+  id: IRecordId;
+  linkedTo: IRecordId;
 };
 
 export type LinkThumbnail = INodeLink & {
@@ -304,8 +317,8 @@ export enum LinkType {
 
 export type INodeMetadata = { location?: any };
 
-export type INodeProperty = {
-  id: string;
+export type INodePropertyValue = {
+  id: IRecordId;
   value: IPropertyValue | null;
 };
 
@@ -673,24 +686,23 @@ export type INode =
   | IWebPage
   | IClip;
 
-export type IActiveNode = INode & {
-  md: IMarkdown;
-  parent?: INode;
-  file?: IFile;
-  mdParent?: IRecordId[];
-  accessMode: ResourceAccessMode;
-  focusedBlock?: string;
-  collections?: IRecordId[];
-  types?: string[];
-  avatars?: IAvatar[];
-  propertyConfig?: IProperty[];
-  wordCount?: number;
-  pdfAnnotations?: any[];
-  links?: INodeLink[];
-  children?: IActiveNode[];
-  childrenHierarchy?: IRecordId[];
-  forelinks?: LinkThumbnail[];
-};
+export type IActiveNode = INode &
+  IActiveResource & {
+    md: IMarkdown;
+    parent?: INode;
+    file?: IFile;
+    mdParent?: IRecordId[];
+    accessMode: ResourceAccessMode;
+    focusedBlock?: string;
+    collections?: IRecordId[];
+    types?: ICollectionExpanded[];
+    wordCount?: number;
+    pdfAnnotations?: any[];
+    links?: INodeLinkThumb[];
+    children?: IActiveNode[];
+    childrenHierarchy?: IRecordId[];
+    forelinks?: LinkThumbnail[];
+  };
 
 export type INodeThumb = INode & {
   file?: IFile;

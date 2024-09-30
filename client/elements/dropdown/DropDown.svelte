@@ -16,7 +16,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import AvatarView from "../avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   const dispatch = createEventDispatcher();
   /**
    * items to be displayed in the dropdown
@@ -106,7 +106,7 @@
     {#if selected?.icon && typeof selected?.icon === "string"}
       <Icon icon={selected.icon} size={Size.sm} />
     {:else if selected?.icon && typeof selected?.icon === "object"}
-      <AvatarView avatar={selected.icon} size={Size.sm} />
+      <AvatarRenderer avatar={selected.icon} size={Size.sm} />
     {/if}
     <span class="min-w-fit">
       {selected?.label ?? properCase(selected?.value.toString())}

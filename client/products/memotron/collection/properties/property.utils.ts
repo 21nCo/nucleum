@@ -1,6 +1,8 @@
-import type { INodeProperty } from "$lib/client/products/memotron/node/node.type";
+import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { type IProperty, PropertyType } from "./property.type";
+import type { ISelectItem } from "$lib/client/types/select.type";
 
 export function resolvePropertyDefaultValue(property: IProperty) {
   let fallback;
@@ -29,11 +31,11 @@ export function resolvePropertyDefaultValue(property: IProperty) {
 
 export function mapPropertyValues(
   properties: IProperty[] | undefined,
-  nodeProperties: INodeProperty[] | undefined
+  nodeProperties: INodePropertyValue[] | undefined
 ) {
   if (!properties) return [];
   return properties.map((property) => {
-    const nodeProperty = nodeProperties?.find((v) => v.id === property.id);
+    const nodeProperty = nodeProperties?.find(resourceInList(property));
     return {
       id: property.id,
       value: nodeProperty?.value ?? resolvePropertyDefaultValue(property)
@@ -56,13 +58,9 @@ export function lookupAddressFromLatLong(lat: number, long: number) {
  */
 export function resolvePropertiesForCapture(properties: IProperty[]) {
   if (!isValidArrayWithData(properties)) return [];
-  return properties
-    .filter((item: IProperty) => {
-      return item.isShowOnCapture;
-    })
-    .map((y) => {
-      return { id: y.id, value: resolvePropertyDefaultValue(y) };
-    });
+  return properties.filter((item: IProperty) => {
+    return item.isShowOnCapture;
+  });
 }
 
 /**
@@ -72,11 +70,44 @@ export function resolvePropertiesForCapture(properties: IProperty[]) {
  */
 export function resolvePropertiesForNodePage(properties: IProperty[]) {
   if (!isValidArrayWithData(properties)) return [];
-  return properties
-    .filter((item: IProperty) => {
-      return item.isShowOnNodePage;
-    })
-    .map((y) => {
-      return { id: y.id, value: resolvePropertyDefaultValue(y) };
-    });
+  return properties.filter((item: IProperty) => {
+    return item.isShowOnNodePage;
+  });
+}
+
+export function resolvePropertyOptions(
+  id: string,
+  properties: IProperty[] | null
+): ISelectItem[] {
+  if (!id || !properties) return [];
+  const property = properties.find((p) => p.id === id);
+  if (!property) return [];
+  if (
+    property.type === PropertyType.SINGLE_SELECT ||
+    property.type === PropertyType.MULTI_SELECT
+  ) {
+    if (!property?.config?.options) return [];
+    return property.config.options.map((option) => ({
+      value: option.id,
+      label: option.label,
+      color: option.color
+    }));
+  } else if (property.type === PropertyType.RATING) {
+    return [1, 2, 3, 4, 5].map((value) => ({
+      value,
+      label: value.toString()
+    }));
+  } else if (property.type === PropertyType.CHECKBOX) {
+    return [
+      {
+        value: true,
+        label: "True"
+      },
+      {
+        value: false,
+        label: "False"
+      }
+    ];
+  }
+  return [];
 }

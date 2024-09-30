@@ -7,23 +7,35 @@
     PropertyType
   } from "../../collection/properties/property.type";
   import LocationCard from "../../node/metadata/LocationCard.svelte";
-  import { resolveActiveNodeStore } from "../../node/node.store";
-  export let config: IProperty;
-  export let nodeId: string;
-  const node = resolveActiveNodeStore(nodeId);
+  import { ActiveNodeStore } from "../../node/node.store";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  export let property: IProperty;
+  export let nodeId: IRecordId;
+  const node = ActiveNodeStore.resolve(nodeId);
+
+  function resolveFallbackLabel() {
+    if (property.type === PropertyType.CREATED_TIME) {
+      return "Created";
+    } else if (property.type === PropertyType.MODIFIED_TIME) {
+      return "Modified";
+    } else if (property.type === PropertyType.LOCATION) {
+      return "Location";
+    }
+    return "Unknown";
+  }
 </script>
 
 <div class="flex flex-col w-full items-start">
   <FormControlLabel
     props={{
-      label: config.label
+      label: property.label ? property.label : resolveFallbackLabel()
     }}
   />
-  {#if config.type === PropertyType.CREATED_TIME}
+  {#if property.type === PropertyType.CREATED_TIME}
     {formatDatetime($userPreferences, new Date($node?.createdAt))}
-  {:else if config.type === PropertyType.MODIFIED_TIME}
+  {:else if property.type === PropertyType.MODIFIED_TIME}
     {formatDatetime($userPreferences, new Date($node?.modifiedAt))}
-  {:else if config.type === PropertyType.LOCATION}
+  {:else if property.type === PropertyType.LOCATION}
     <LocationCard metadata={$node?.metadata} />
   {/if}
 </div>

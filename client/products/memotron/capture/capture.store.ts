@@ -4,7 +4,9 @@ import {
   NodeType,
   LinkType,
   type INodeItemCaptured,
-  type IMediaNode
+  type IMediaNode,
+  type INodeThumb,
+  type INodePropertyValue
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -21,12 +23,21 @@ import {
 import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { MemotronResourceType } from "$lib/client/products/memotron/memotron.type";
-import { resolveResourceType } from "../memotron.utils";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { collectionStore } from "../collection/collection.store";
 import { resolveContentTypeForFile } from "./capture.utils";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "$lib/client/types/data.type";
+import {
+  CollectionType,
+  type ICollection,
+  type ICollectionThumb
+} from "../collection/collection.type";
+import {
+  determineResourceType,
+  isSameResource
+} from "$lib/client/components/flux/resourceStores/resource.utils";
+import { resolveResource } from "../memotron.store";
 import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
@@ -78,10 +89,10 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     };
     this.modify(val, { isPersist: false });
   }
-  async onTypeSelect(val: CaptureType | string) {
+  async onTypeSelect(val: CaptureType | IRecordId) {
     logger.log({ context: "onTypeSelect", val });
-    if (!val.startsWith(Resource.collection)) return;
-    const type = await collectionStore.select(val);
+    if (!val.toString().startsWith(Resource.collection)) return;
+    const type: ICollection = await collectionStore.select(val);
     if (!type) return;
     this.update((store: ICaptureStore) => {
       store.links = [
@@ -90,53 +101,62 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           from: "root",
           to: type.id,
           linkType: LinkType.DIRECT,
-          toType: MemotronResourceType.TYPED_COLLECTION
+          toType: Resource.collection,
+          toSubType: CollectionType.TYPED
         }
       ];
       return store;
     });
   }
-  addMentionLink(from: string, to: string) {
-    this.update((val) => {
-      val.links = val.links ?? [];
-      val.links.push({
-        from,
-        to,
-        linkType: LinkType.MENTION,
-        toType: undefined
-      });
-      return val;
-    });
+  addMentionLink(from: IRecordId, to: INodeThumb | ICollectionThumb) {
+    return this._addLink(from, to, LinkType.MENTION);
   }
-  removeMentionLink(from: string, to: string) {
+  removeMentionLink(from: IRecordId, to: IRecordId) {
     this.update((val) => {
       val.links = val.links?.filter(
-        (link) => link.from !== from || link.to !== to
+        (link) =>
+          !(isSameResource(link.from, from) && isSameResource(link.to, to))
       );
       return val;
     });
   }
-  directLink(item: any) {
+  async directLink(item: IRecordId | INodeThumb | ICollectionThumb) {
+    if (typeof item === "string" || "tb" in item) {
+      const resource = await resolveResource(item as IRecordId);
+      return this._addLink("root", resource, LinkType.DIRECT);
+    } else if (typeof item !== "string") {
+      return this._addLink("root", item, LinkType.DIRECT);
+    }
+  }
+
+  private _addLink(
+    from: IRecordId | "root",
+    to: INodeThumb | ICollectionThumb,
+    linkType: LinkType
+  ) {
     const store = this.get();
-    if (store.links?.some((link) => link.to === item.id)) return;
-    const toType = resolveResourceType(item);
-    console.log("directLink", { item, toType });
+    if (store.links?.some((link) => isSameResource(link.to, to.id))) return;
+    const toType = determineResourceType(to.id);
     this.update((val) => {
       val.links = [
         ...(val.links ?? []),
         {
-          from: "root",
-          to: item.id,
-          linkType: LinkType.DIRECT,
-          toType
+          from,
+          to: to.id,
+          linkType,
+          toType: toType as Resource.node | Resource.collection,
+          toSubType: ("contentType" in to ? to.contentType : to.type) as
+            | NodeType
+            | CollectionType
         }
       ];
       return val;
     });
   }
-  removeDLink(id: string) {
+
+  removeDLink(id: IRecordId) {
     this.update((val) => {
-      val.links = val.links?.filter((link) => link.to !== id);
+      val.links = val.links?.filter((link) => !isSameResource(link.to, id));
       return val;
     });
   }
@@ -190,6 +210,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return nodeStore.create(nodes);
   }
 
+  updateProperty = async (property: INodePropertyValue) => {
+    let properties = this.get().properties ?? [];
+    properties = properties.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
+  };
+
   async save() {
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
@@ -202,7 +228,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
       label: val.label ?? "",
       properties: val.properties,
       body: "",
-      contentType: getContentTypeFromFileDetails(val?.fileDetails!),
+      contentType: getContentTypeFromFileDetails(),
       metadata
     };
     let remainingResources: INodeItemCaptured[] = [];
@@ -372,15 +398,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     toasts.success("Node saved successfully!");
     return result;
 
-    function getContentTypeFromFileDetails(fileDetails: FileDetails) {
-      if (val.captureType === CaptureType.UPLOAD) {
-        const contentType = fileDetails.type;
-        if (contentType.includes("image")) return NodeType.IMAGE;
-        else if (contentType.includes("audio")) return NodeType.AUDIO;
-        else if (contentType.includes("video")) return NodeType.VIDEO;
-        else if (contentType.includes("pdf")) return NodeType.PDF;
-        else return NodeType.FILE;
-      } else if (val.captureType.includes("collection:")) {
+    function getContentTypeFromFileDetails() {
+      if (val.captureType.toString().includes("collection:")) {
         //TODO - based on content template
         return NodeType.NODULAR_MARKDOWN;
       }

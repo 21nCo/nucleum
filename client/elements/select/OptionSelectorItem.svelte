@@ -11,7 +11,7 @@
     type ISelectItem
   } from "$lib/client/types/select.type";
   import { cn } from "$lib/client/utils/ui.utils";
-  import AvatarView from "../avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
   import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
   export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;
@@ -45,7 +45,7 @@
     on:click
   >
     <div
-      class={cn("flex", {
+      class={cn("flex items-center", {
         "flex-col ": iconOrientation === Orientation.Vertical,
         "gap-3": size !== Size.sm && iconOrientation === Orientation.Vertical,
         "gap-2":
@@ -67,7 +67,7 @@
           {size}
         />
       {:else if item.icon && typeof item.icon === "object"}
-        <AvatarView avatar={item.icon} {size} />
+        <AvatarRenderer avatar={item.icon} {size} />
       {/if}
       <TextWithHoverTooltip
         text={properCase(item.label ?? item.value.toString())}

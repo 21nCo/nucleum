@@ -19,17 +19,17 @@
   } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
   import { NodeRightPaneType, NodeType } from "../node.type";
-  import NodePropertiesOnMainPanel from "../content/NodePropertiesOnMainPanel.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import CollectionsLane from "./CollectionsLane.svelte";
+  import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
-  export let accessMode: ResourceAccessMode;
   export let isHovering: boolean = false;
   export let rightPane: NodeRightPaneType | undefined = undefined;
+  let dev_isShowMainProperties: boolean = false;
   let contextMenu = [];
   let buttonCommonProps = {
     tooltipOptions: {
@@ -37,9 +37,7 @@
       offsetInPx: 6
     }
   };
-  $: propertiesOnMainPanel = $node?.propertyConfig?.filter(
-    (x) => x.isShowOnNodePage
-  );
+
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
     isMediaNode: true
   });
@@ -56,29 +54,29 @@
 <!-- Using transition here caused modal freeze issue -->
 <div
   class={cn("flex flex-col w-full justify-center items-center", {
-    "mb-6 absolute z-10 bottom-0": accessMode === ResourceAccessMode.FULL,
+    "mb-6 absolute z-10 bottom-0": $node.accessMode === ResourceAccessMode.FULL,
     relative:
-      accessMode === ResourceAccessMode.POP ||
-      accessMode === ResourceAccessMode.INLINE
+      $node.accessMode === ResourceAccessMode.POP ||
+      $node.accessMode === ResourceAccessMode.INLINE
   })}
 >
   <HoverableElement
     bind:isHovering
     class={cn("flex flex-col gap-3 justify-center items-center", {
       "w-full":
-        accessMode === ResourceAccessMode.POP ||
-        accessMode === ResourceAccessMode.INLINE,
+        $node.accessMode === ResourceAccessMode.POP ||
+        $node.accessMode === ResourceAccessMode.INLINE,
       "mo:w-full tp:w-4/5 dp:w-3/5 2k:w-[50rem] rounded-md":
-        accessMode === ResourceAccessMode.FULL
+        $node.accessMode === ResourceAccessMode.FULL
     })}
   >
     {#if $node.isArchived || $node.trashInformation}
       <div
         class={cn("bg-bgs2 rounded-md p-4 border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
-            accessMode === ResourceAccessMode.POP ||
-            accessMode === ResourceAccessMode.INLINE,
-          "w-full": accessMode === ResourceAccessMode.FULL
+            $node.accessMode === ResourceAccessMode.POP ||
+            $node.accessMode === ResourceAccessMode.INLINE,
+          "w-full": $node.accessMode === ResourceAccessMode.FULL
         })}
       >
         <ResourceStatusBanner resource={node} />
@@ -88,8 +86,8 @@
       class={cn(
         "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-3",
         {
-          "w-full": accessMode === ResourceAccessMode.POP,
-          "rounded-md": accessMode === ResourceAccessMode.FULL
+          "w-full": $node.accessMode === ResourceAccessMode.POP,
+          "rounded-md": $node.accessMode === ResourceAccessMode.FULL
         }
       )}
     >
@@ -112,7 +110,15 @@
               rightPane = undefined;
             }}
           />
-          <ContextMenuAction {contextMenu} id="mediaNodeContextMenu" />
+          <ContextMenuAction
+            {contextMenu}
+            id="mediaNodeContextMenu"
+            on:action={(e) => {
+              if (e.detail === NodeRightPaneType.METADATA) {
+                rightPane = e.detail;
+              }
+            }}
+          />
           <div class="h-8">
             <Divider
               orientation={Orientation.Vertical}
@@ -129,7 +135,7 @@
               }}
             />
           {/if}
-          {#if accessMode === ResourceAccessMode.FULL}
+          {#if $node.accessMode === ResourceAccessMode.FULL}
             <Button
               {...buttonCommonProps}
               icon="cross-circled"
@@ -141,13 +147,9 @@
           {/if}
         </span>
       </div>
-      {#if propertiesOnMainPanel && propertiesOnMainPanel.length > 0}
+      {#if dev_isShowMainProperties}
         <div class="w-full">
-          <NodePropertiesOnMainPanel
-            {node}
-            {propertiesOnMainPanel}
-            isMediaNode={true}
-          />
+          <NodePropertiesPane {node} isVisibleProps={true} />
         </div>
       {/if}
       <div class="flex w-full justify-between">

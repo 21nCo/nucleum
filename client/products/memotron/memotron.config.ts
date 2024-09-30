@@ -9,6 +9,7 @@ import { propertyStore } from "./collection/properties/property.store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import { fileStore } from "$lib/client/components/files/file.store";
 import { linkTagStore } from "$lib/client/products/memotron/linking/link.store";
+import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 
 export const memotronCacheableStores: IStore[] = [
   nodeStore,
@@ -18,5 +19,6 @@ export const memotronCacheableStores: IStore[] = [
   captureStore,
   fileStore,
   linker,
-  linkTagStore
+  linkTagStore,
+  accessLogStore
 ];

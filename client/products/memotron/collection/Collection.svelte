@@ -17,7 +17,6 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
@@ -33,7 +32,10 @@
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
-  import type { ICollectionViewWithData } from "$lib/client/products/memotron/collection/collection.type";
+  import {
+    CollectionType,
+    type ICollectionViewWithData
+  } from "$lib/client/products/memotron/collection/collection.type";
   import ResourceStatusBanner from "../common/ResourceStatusBanner.svelte";
   import {
     Arrangement,
@@ -49,6 +51,9 @@
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+  import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -236,7 +241,7 @@
     else await collection.refreshViewData(activeView.id);
     loadActiveView();
     if (!activeView) return;
-    logger.debug({ at: "refresh", activeView, searchQuery });
+    logger.log({ at: "refresh", activeView, searchQuery });
     if (!tabBy || (tabBy && selectedTab === "all")) {
       viewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {
@@ -348,6 +353,21 @@
       }, 10);
     }
   }
+
+  function onCaptureShortcutChange(e: CustomEvent) {
+    collection.modify({ isCaptureShortcutEnabled: e.detail });
+  }
+
+  function onTypeExtensionChange(e: CustomEvent) {
+    if (e.detail.id) {
+      collection.modify(
+        { typeToExtend: e.detail.id },
+        { isPreventBackPropagation: true }
+      );
+    } else if (e.detail === false) {
+      collection.modify({ typeToExtend: undefined });
+    }
+  }
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
@@ -436,6 +456,27 @@
             </span>
           </CollectionTitleBar>
         </div>
+        {#if isInEditMode && $collection.type === CollectionType.TYPED}
+          <div class="flex justify-center w-full py-4">
+            <div
+              class="flex flex-col items-center gap-6 px-4 py-6 flex-1 max-w-2xl p-4 rounded-md border border-brs3"
+            >
+              <div class="flex justify-start w-full">
+                <Text
+                  content="Type settings"
+                  style={TextStyle.SECTION_HEADING_SMALL}
+                />
+              </div>
+              <TypeExtensionAndPropertiesEditor
+                bind:typeToExtend={$collection.typeToExtend}
+                bind:isCaptureShortcutEnabled={$collection.isCaptureShortcutEnabled}
+                {collection}
+                on:shortcutChange={onCaptureShortcutChange}
+                on:typeExtensionChange={onTypeExtensionChange}
+              />
+            </div>
+          </div>
+        {/if}
         {#if isShowMetaViews}
           <div class="px-4">
             <OptionSelector
@@ -468,8 +509,9 @@
         {/if}
         {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
           <header
-            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
-              "pt-4": isStickied
+            class={cn("sticky top-0 flex flex-col gap-6 bg-bgs1 w-full", {
+              "pt-4": isStickied,
+              "z-10": !isInEditMode
             })}
           >
             {#if !isSingleViewMode || isInEditMode}

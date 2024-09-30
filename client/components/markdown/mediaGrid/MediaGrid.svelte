@@ -24,6 +24,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import type { IFile } from "../../files/file.type";
   import { fileStore } from "../../files/file.store";
+  import { isSameResource } from "../../flux/resourceStores/resource.utils";
 
   // export let items: Item[] = $userPreferences.mediaGridTestitems;
   // $: $userPreferences.mediaGridTestitems = items;
@@ -819,7 +820,7 @@
           {handleFileUpload}
           isDraggable={true}
           {item}
-          file={files.find((f) => f.id.toString() === item.file.toString())}
+          file={files.find((f) => isSameResource(f, item.file))}
           id={item.id}
           on:load={() => handleNewImageLoad()}
           bind:ref={autoItems[index]}

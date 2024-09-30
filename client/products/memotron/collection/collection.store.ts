@@ -1,6 +1,5 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { debouncer } from "$lib/client/utils/utils";
 import {
   activeResources,
   ActiveResourceStore,
@@ -11,14 +10,14 @@ import {
   type IActiveCollection,
   type ICollectionView,
   CollectionType,
-  type ICollection
+  type ICollection,
+  type ICollectionExpanded
 } from "$lib/client/products/memotron/collection/collection.type";
 import {
   propertyEditorStore,
   propertyStore
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
-import { CombinationViewType } from "../curation/curation.type";
 import {
   ResourceAccessPoint,
   type OmitForCapture
@@ -26,8 +25,6 @@ import {
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
-import type { IProperty } from "./properties/property.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
@@ -65,17 +62,27 @@ class CollectionStore extends ResourceStore<ICollection> {
 
   /**
    * TODO - testing extended properties
-   * @param types
+   * @param collections - ids of collections - can be any type of collection.
    * @returns
    */
   async resolveTypes(collections: IRecordId[]) {
-    let types: string[] = [];
-    let propertyConfig: IProperty[] = [];
-    let avatars: IAvatar[] = [];
-    if (!collections) return { types, propertyConfig, avatars };
-    const query = `return select properties.* as properties, typeToExtend.properties.* as extendProperties from collection where id in $types;`;
-    const result = await flux.selectByQuery(query, { types });
-    return { types, propertyConfig, avatars };
+    let types: ICollectionExpanded[] = [];
+    if (!collections) return types;
+    const result = await flux.selectMany(Resource.collection, {
+      properties: [
+        "*",
+        "typeToExtend.* as typeToExtend",
+        "(select * from $parent.properties) as properties",
+        "(select * from $parent.typeToExtend.properties) as extendProperties"
+      ],
+      filters: {
+        id: collections.map((x) => x.toString())
+      }
+    });
+    logger.log({ at: "resolveTypes", result });
+    if (!result || !Array.isArray(result)) return types;
+    types = result.filter((x) => x.type === CollectionType.TYPED);
+    return types;
   }
 }
 
@@ -84,11 +91,9 @@ export const collectionStore = new CollectionStore();
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 /**
- * Curation stores map for holding the state of active i.e. currently open curations in the UI
- */
-const activeCollectionStoreMap = new Map<string, IActiveCollectionStore>();
-
-/**
+ *
+ * @deprecated - use ActiveCollectionStore.resolve instead
+ *
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the curation
  * @param context - The context from which the store is being accessed. This is used for debugging purposes.
@@ -106,19 +111,7 @@ export function resolveActiveCollectionStore(
   return val!;
 }
 
-// export function determineCurationType(id: string) {
-//   let type;
-//   if (id.startsWith(Resource.nodelinks)) {
-//     type = CurationType.NODELINKS;
-//   } else if (id.startsWith(Resource.collection)) {
-//     type = CurationType.COLLECTION;
-//   } else {
-//     type = CurationType.COMBINATION;
-//   }
-//   return type;
-// }
-
-class ActiveCollectionStore extends ActiveResourceStore<
+export class ActiveCollectionStore extends ActiveResourceStore<
   IActiveCollection,
   CollectionStore
 > {
@@ -132,9 +125,6 @@ class ActiveCollectionStore extends ActiveResourceStore<
   async init() {
     logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
-      this.resourceStore.modify(this.id, {
-        interactedAt: new Date().toISOString()
-      });
       this.update((val: IActiveCollection) => {
         if (val) val.isPageLoading = true;
         else val = { isPageLoading: true };
@@ -143,9 +133,10 @@ class ActiveCollectionStore extends ActiveResourceStore<
       const result = await flux.select(this.id, [
         "*",
         "(select * from $parent.views) as views",
-        "(select * from $parent.properties) as properties"
+        "(select * from $parent.properties) as properties",
+        "typeToExtend.* as typeToExtend"
       ]);
-      logger.log({ at: "ActiveCollectionStore.init - select", result });
+      logger.debug({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
       this.set({
@@ -157,6 +148,7 @@ class ActiveCollectionStore extends ActiveResourceStore<
           return { ...x, data: [] };
         })
       });
+      propertyEditorStore.set(record.properties ?? []);
     } catch (e) {
       console.error("error in init collection store", {
         id: this.id,
@@ -293,6 +285,21 @@ class ActiveCollectionStore extends ActiveResourceStore<
     });
     return true;
   }
+
+  async updateProperties() {
+    const properties = propertyEditorStore.get();
+    if (!properties) return;
+    for (const property of properties) {
+      await propertyStore.modify(property.id, property);
+    }
+    return this.resourceStore.modify(
+      this.id,
+      { properties: properties.map((p) => p.id) },
+      {
+        isPreventBackPropagation: true
+      }
+    );
+  }
 }
 
 class CollectionViewStore extends ResourceStore<ICollectionView> {
@@ -323,13 +330,6 @@ export const collectionLayoutOptions = [
   },
   { value: CollectionLayout.CALENDAR, icon: "ph:calendar-dots-light" },
   { value: CollectionLayout.GEOMAP, icon: "ph:map-trifold-light" }
-];
-
-export const combinationLayoutOptions = [
-  { value: CombinationViewType.TREE, icon: "rectangle-stack" },
-  { value: CombinationViewType.GRAPH, icon: "graph" },
-  { value: CombinationViewType.WHITEBOARD, icon: "whiteboard" },
-  { value: CombinationViewType.INFIGRID, icon: "infigrid" }
 ];
 
 export function resolveCollectionContextMenu(

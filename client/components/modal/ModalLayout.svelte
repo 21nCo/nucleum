@@ -110,11 +110,14 @@
       />
     {/if}
     <div
-      class={cn("flex flex-col gap-4 w-full flex-grow", {
-        "p-2 lg:p-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-        "px-3 tp:px-8 lg:px-12":
-          !params.layout?.ignoreSafeArea && size !== Size.xs
-      })}
+      class={cn(
+        "flex flex-col gap-4 w-full flex-grow overflow-hidden rounded-md",
+        {
+          "p-2 lg:p-4": !params.layout?.ignoreSafeArea && size === Size.xs,
+          "px-3 tp:px-8 lg:px-12":
+            !params.layout?.ignoreSafeArea && size !== Size.xs
+        }
+      )}
     >
       <slot />
     </div>

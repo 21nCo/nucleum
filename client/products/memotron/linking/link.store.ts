@@ -3,18 +3,23 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import type { ILinkTag } from "./link.type";
 import {
   type IRecordId,
-  type IStore,
-  PersistenceActionType,
-  StoreDataType
+  PersistenceActionType
 } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
-import { LinkType } from "$lib/client/products/memotron/node/node.type";
+import {
+  LinkType,
+  type INodeLink
+} from "$lib/client/products/memotron/node/node.type";
 import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
+import { activeResourceFilter } from "$lib/client/utils/utils";
+import { get } from "svelte/store";
+import { linkTagLabelMapper } from "./link.utils";
 
-class Linker implements IStore {
-  id: string = Resource.link;
-  dataType: StoreDataType = StoreDataType.IFR;
+class Linker extends ResourceStore<INodeLink> {
+  constructor() {
+    super(Resource.link);
+  }
 
   async link(
     from: IRecordId,
@@ -39,7 +44,7 @@ class Linker implements IStore {
         to
       }
     });
-    logger.log({ at: "unlink", response });
+    logger.log({ at: "unlink", from, to, response });
     return response;
   }
 
@@ -66,6 +71,21 @@ class Linker implements IStore {
     );
   }
 
+  /**
+   * Queries links along with other node properties for a list of nodes.
+   * @param nodes
+   * @returns
+   */
+  async getLinksForNodes(nodes: IRecordId[]) {
+    const result = await flux.selectMany(Resource.node, {
+      properties: ["*", "array::concat(->link.*, <-link.*) as links"],
+      filters: {
+        id: nodes.map((x) => x.toString())
+      }
+    });
+    return result;
+  }
+
   get() {}
 }
 
@@ -78,22 +98,42 @@ class LinkTagStore extends ResourceStore<ILinkTag> {
     });
   }
 
+  save(tag: string, group?: string) {
+    if (!group && tag.includes(":")) {
+      group = tag.split(":")[0];
+      tag = tag.split(":")[1];
+    }
+    const result = this.create({
+      label: tag,
+      group: group?.toLowerCase() ?? ""
+    });
+    return result;
+  }
+
   transform(data: ILinkTag[]) {
     const groupsArray = data.reduce(
       (acc, item) => {
-        const prefix = item.prefix ?? "";
-        if (!acc[prefix]) {
-          acc[prefix] = [];
+        const group = item.group ?? "";
+        if (!acc[group]) {
+          acc[group] = [];
         }
-        acc[prefix].push(item);
+        acc[group].push(item);
         return acc;
       },
       {} as Record<string, ILinkTag[]>
     );
-    return Object.entries(groupsArray).map(([prefix, items]) => ({
-      prefix,
-      items
+    const groups = Object.entries(groupsArray).map(([group, items]) => ({
+      group,
+      items: items.filter(activeResourceFilter)
     }));
+    const withoutGroup = groups.find((x) => x.group === "");
+    return [withoutGroup, ...groups.filter((x) => x.group !== "")];
+  }
+
+  search(query: string) {
+    return get(this.items)
+      .map(linkTagLabelMapper)
+      .filter((x) => x.label?.toLowerCase().includes(query.toLowerCase()));
   }
 }
 

@@ -68,6 +68,7 @@
       icon="ph:dots-three-vertical"
       {tooltip}
       isPreventFillOnActive={true}
+      on={isPopoverVisible}
     />
   </slot>
   <slot name="popover" slot="popover">

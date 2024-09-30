@@ -4,9 +4,9 @@
   import type { ISelectValue } from "$lib/client/types/select.type";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardPane from "./BoardPane.svelte";
-  import { resolvePropertyOptions } from "../../curation/curation.utils";
   import NodeItems from "../NodeItems.svelte";
   import type { IProperty } from "../properties/property.type";
+  import { resolvePropertyOptions } from "../properties/property.utils";
   export let view: ICollectionView;
   export let data: INodeThumb[] = [];
   export let properties: IProperty[] = [];

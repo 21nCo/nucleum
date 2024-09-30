@@ -1,11 +1,11 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import { resolveActiveNodeStore, type IActiveNodeStore } from "./node.store";
+  import { ActiveNodeStore, type IActiveNodeStore } from "./node.store";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { mediaNodeTypeList, webNodeTypeList } from "./node.type";
   import MediaNode from "./base/MediaNode.svelte";
   import NonMediaNode from "./base/NonMediaNode.svelte";
-  import { setContext } from "svelte";
+  import { onDestroy, setContext } from "svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
 
   export let id: string;
@@ -17,15 +17,16 @@
   // $: isRenderSplitView =
   //   !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
   let node: IActiveNodeStore;
-  $: if (id) node = resolveActiveNodeStore(id);
+  // $: if (id) node = resolveActiveNodeStore(id);
+  $: if (id) node = ActiveNodeStore.resolve(id);
   let isLoading = false;
   $: if (id && (isFromSplitView || !isRenderSplitView)) {
-    fetchNode();
+    initialize();
   }
 
-  async function fetchNode() {
+  async function initialize() {
     isLoading = true;
-    await node.fetch();
+    await node.init(accessMode);
     nodeContext.parent = $node.parent;
     isLoading = false;
   }
@@ -37,13 +38,17 @@
   };
 
   setContext("node", nodeContext);
+
+  onDestroy(() => {
+    ActiveNodeStore.destroy(id);
+  });
 </script>
 
 {#if $node && !isLoading}
   {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
-    <MediaNode {node} {accessMode} />
+    <MediaNode {node} />
   {:else}
-    <NonMediaNode {node} {accessMode} />
+    <NonMediaNode {node} />
   {/if}
 {:else}
   <div class="w-full h-full pt-4 px-20">

@@ -76,13 +76,13 @@
 </div>
 
 <div
-  class="flex flex-col gap-3 h-40 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6"
+  class="flex flex-col gap-3 h-40 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6 text-left"
 >
   <Text content="Filters" style={TextStyle.SECTION_HEADING_SMALL} />
 </div>
 
 <div
-  class="flex flex-col gap-3 h-40 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6"
+  class="flex flex-col gap-3 h-40 bg-bgs2 border border-brs3 rounded-md px-4 pt-3 pb-6 text-left"
 >
   <Text content="Sorting" style={TextStyle.SECTION_HEADING_SMALL} />
 </div>

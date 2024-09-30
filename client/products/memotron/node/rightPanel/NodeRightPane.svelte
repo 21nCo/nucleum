@@ -11,13 +11,13 @@
   export let mdId: string;
   export let nodePageVariant: "v1" | "v2" = "v2";
   export let isRightPanelCollapsed = true;
-  let pane = NodeRightPaneType.OUTLINE;
+  export let pane = NodeRightPaneType.OUTLINE;
   let verticalSwitcherItems: ISelectItem[] = [
-    { value: NodeRightPaneType.LINKS, icon: "ph:arrows-left-right-thin" },
     { value: NodeRightPaneType.OUTLINE, icon: "bars-center-left" },
+    { value: NodeRightPaneType.LINKS, icon: "ph:arrows-left-right-thin" },
     { value: NodeRightPaneType.PROPERTIES, icon: "widget" },
-    { value: NodeRightPaneType.TRACES, icon: "bookmark" },
-    { value: NodeRightPaneType.HISTORY, icon: "ph:clock-countdown-thin" }
+    { value: NodeRightPaneType.TRACES, icon: "bookmark" }
+    // { value: NodeRightPaneType.HISTORY, icon: "ph:clock-countdown-thin" }
   ];
 
   pane = isRightPanelCollapsed
@@ -58,6 +58,6 @@
     />
   </div>
   {#if !isRightPanelCollapsed}
-    <NodeRightPanelContent {node} {mdId} {pane} />
+    <NodeRightPanelContent {node} {mdId} {pane} on:close />
   {/if}
 </aside>

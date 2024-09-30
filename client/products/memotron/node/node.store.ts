@@ -2,10 +2,11 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import {
   LinkType,
   type IActiveNode,
-  type INodeProperty,
+  type INodePropertyValue,
   type INode,
   NodeType,
   NodeRightPaneType,
+  type INodeLinkThumb,
   type INodeLink
 } from "$lib/client/products/memotron/node/node.type";
 import {
@@ -15,7 +16,10 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.store";
 import { debouncer } from "$lib/client/utils/utils";
 import { formatDate } from "$lib/client/utils/time.utils";
-import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessMode,
+  ResourceAccessPoint
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { MemotronAction } from "../memotronAction.enum";
 import { appStore } from "$lib/client/stores/app.store";
@@ -30,6 +34,10 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
+import {
+  resourceInList,
+  isSameResource
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
 
 export const hierarchyFactorLimit = 5;
@@ -88,32 +96,32 @@ export const vectorResourceStore = new ResourceStore(Resource.vector);
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 /**
- * Node store map for individual nodes that are open in the UI.
- */
-const activeNodeStores = new Map<string, IActiveNodeStore>();
-
-/**
+ *
+ * @deprecated - use ActiveNodeStore.resolve instead
+ *
  * Resolves the active node store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the node
  * @param context - The context from which the store is being accessed. This is used for debugging purposes.
  * @returns The active node store
  */
-export function resolveActiveNodeStore(id: string, context: string = "") {
-  if (!activeResources.has(id)) {
-    console.log("init node store from: " + context + " id: " + id);
-    // activeNodeStores.set(id, initActiveNodeStore(id));
-    activeResources.set(id, new ActiveNodeStore(id));
+export function resolveActiveNodeStore(id: IRecordId, context: string = "") {
+  const idStr = id.toString();
+  if (!activeResources.has(idStr)) {
+    activeResources.set(idStr, new ActiveNodeStore(id));
   }
-  let val = activeResources.get(id);
+  let val = activeResources.get(idStr);
   return val!;
 }
 
-class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
+export class ActiveNodeStore extends ActiveResourceStore<
+  IActiveNode,
+  NodeStore
+> {
   eventStore: any;
   debouncers = new Map<string, any>();
-  constructor(node: string) {
+  constructor(node: IRecordId) {
     super(node, nodeStore);
-    this.eventStore = resolveActiveNodeEventStore(node);
+    this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
   updateBlockPropagator = async (
     id: string,
@@ -125,11 +133,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
       const node = this.get();
       console.log("updateBlockPropagator node", id, node, node.id);
       const childrenNodes = node.md.blocks.filter(
-        (x) =>
-          x.id &&
-          changedProps.children
-            ?.map((x) => x.toString())
-            ?.includes(x.id.toString())
+        (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
       const mdText = generateMarkdownText(childrenNodes);
       const embedding = await generateVectorEmbeddings(mdText);
@@ -154,48 +158,64 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     let val = this.debouncers.get(id);
     return val!;
   }
-  fetch = async () => {
+  init = async (accessMode: ResourceAccessMode) => {
     const node = await this.resourceStore.fetch(this.id);
     if (node) {
-      this.set(node);
+      this.set({ ...node, accessMode });
     }
     const rawLinks =
       node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
-    const links: INodeLink[] = rawLinks
-      .filter((x) => {
+    const links: INodeLinkThumb[] = rawLinks
+      .filter((x: INodeLink) => {
         return (
           (x.in.toString() === this.id && x.out.tb === Resource.node) ||
           (x.out.toString() === this.id && x.in.tb === Resource.node)
         );
       })
-      .map((x) => {
+      .map((x: INodeLink) => {
         const id = x.in.toString() === this.id ? x.out : x.in;
         return {
-          id,
-          linkType: x.linkType
-        };
+          linkedTo: id,
+          linkType: x.linkType,
+          id: x.id,
+          tags: x.tags
+        } as INodeLinkThumb;
       });
     const collections: IRecordId[] = rawLinks
       .filter(
-        (x) =>
+        (x: INodeLink) =>
           x.out.tb === Resource.collection || x.in.tb === Resource.collection
       )
-      .map((x) => (x.out.tb === Resource.collection ? x.out : x.in));
-    logger.log({ at: "ActiveNodeStore.fetch", rawLinks, links, collections });
-    const { types, propertyConfig, avatars } =
-      await collectionStore.resolveTypes(collections);
+      .map((x: INodeLink) => (x.out.tb === Resource.collection ? x.out : x.in));
+    logger.log({
+      at: "ActiveNodeStore.fetch",
+      node,
+      rawLinks,
+      links,
+      collections
+    });
+    const types = await collectionStore.resolveTypes(collections);
     this.update((n) => {
       n.types = types;
-      n.propertyConfig = propertyConfig;
-      n.avatars = avatars;
       n.links = links;
       n.collections = collections;
       return n;
     });
   };
-  updateProperties = async (properties: INodeProperty[]) => {
-    this.update((prev) => ({ ...prev, properties }));
-    return this.resourceStore.modify(this.id, { properties });
+  updateProperty = async (property: INodePropertyValue) => {
+    let properties = this.get().properties ?? [];
+    properties = properties.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
+    return this.resourceStore.modify(
+      this.id,
+      {
+        properties: [...properties, property]
+      },
+      {
+        isDebounced: true,
+        debounceKey: "property" + property.id.toString()
+      }
+    );
   };
 
   updateBlock = (id: IRecordId, changedProps: any) => {
@@ -213,7 +233,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   };
 
   createBlock = async (
-    id: string,
+    id: IRecordId,
     contentType: any,
     params?: { body?: any }
   ) => {
@@ -233,6 +253,39 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   mention = async (location: string, id: string) => {
     return linker.link(location, id, LinkType.MENTION);
   };
+
+  private async refreshTypes() {
+    const collections = this.get().collections;
+    if (!collections || collections.length === 0) {
+      this.update((n) => ({ ...n, types: [] }));
+      return;
+    }
+    const types = await collectionStore.resolveTypes(collections);
+    this.update((n) => ({ ...n, types }));
+  }
+
+  async linkCollection(id: IRecordId) {
+    const result = await linker.link(this.id, id);
+    if (result) {
+      this.update((n) => ({
+        ...n,
+        collections: [...(n.collections ?? []), id]
+      }));
+      await this.refreshTypes();
+    }
+    return result;
+  }
+
+  async unlinkCollection(id: IRecordId) {
+    const node = this.get();
+    await linker.unlink(node.id, id);
+    this.update((n) => ({
+      ...n,
+      collections: n.collections?.filter((x) => !isSameResource(x, id))
+    }));
+    await this.refreshTypes();
+  }
+
   /**
    * Sets the focused block and parent for the focused block.
    *
@@ -361,6 +414,10 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           resourceActions.openAsTab(),
+          {
+            value: NodeRightPaneType.METADATA,
+            icon: "ph:file-thin"
+          },
           resourceActions.copyLink(),
           {
             value: "download",
@@ -387,6 +444,20 @@ export function resolveNodeContextMenu(
         resourceActions.star(),
         resourceActions.edit(accessPoint),
         resourceActions.openAsTab(),
+        {
+          value: NodeRightPaneType.METADATA,
+          icon: "ph:file-thin"
+        },
+        {
+          value: NodeRightPaneType.HISTORY,
+          icon: "ph:clock-countdown-thin",
+          label: "Show history"
+        }
+      ]
+    },
+    {
+      group: "shareAndExport",
+      items: [
         resourceActions.copyLink(),
         {
           value: "export",
@@ -401,11 +472,6 @@ export function resolveNodeContextMenu(
               componentParams: { id: node.id }
             });
           }
-        },
-        {
-          value: "history",
-          icon: "history",
-          callback: async () => {}
         }
       ]
     },
@@ -431,7 +497,7 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
       },
       {
         value: "forks",
-        icon: "ph:fork-knife-thin",
+        icon: "ph:git-fork-thin",
         tooltip: "Show forks"
       }
     ];

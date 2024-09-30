@@ -20,6 +20,7 @@
     | undefined = undefined;
   export let isExperimentalMdInput: boolean = false;
   export let icon: string | undefined = undefined;
+  export let isShowRightControls: boolean = false;
   let isShowSaveFeedback: boolean = false;
   let isFocused: boolean = false;
   export function focus() {
@@ -54,7 +55,7 @@
   }
   function onChange() {
     dispatch("input", { value });
-    dispatch("change", { value });
+    dispatch("change", value);
     isShowSaveFeedback = false;
     resetChangeTimer();
   }
@@ -95,6 +96,7 @@
       on:keyup
       on:focus
       on:blur
+      on:change
     />
   </div>
 {:else}
@@ -168,6 +170,24 @@
       {#if icon}
         <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
           <Icon {icon} size={Size.sm} class="stroke-fgs3" />
+        </div>
+      {/if}
+      {#if isShowRightControls}
+        <div
+          class="absolute right-0 top-0 bottom-0 flex gap-2 items-center px-3"
+        >
+          <Icon
+            icon="ph:check"
+            size={Size.sm}
+            class="stroke-fgs3"
+            on:click={() => dispatch("save", { value })}
+          />
+          <Icon
+            icon="ph:x"
+            size={Size.sm}
+            class="stroke-fgs3"
+            on:click={() => dispatch("cancel")}
+          />
         </div>
       {/if}
     {/if}

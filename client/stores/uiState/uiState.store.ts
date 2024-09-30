@@ -12,6 +12,10 @@ import context from "../context.store";
 import { Embed } from "$lib/client/types/context.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { toasts } from "../notification.store";
+import {
+  resourceInList,
+  isSameResource
+} from "$lib/client/components/flux/resourceStores/resource.utils";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -104,10 +108,10 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       isProductScoped: true
     });
     console.log({ at: "removeResourceFromTopBar", current, id });
-    if (!current?.map((x) => x.toString()).includes(id.toString())) return;
+    if (!current?.some(resourceInList(id))) return;
     this.setState(
       ResourceAccessPoint.TABS,
-      current.filter((x) => x.toString() != id.toString()),
+      current.filter((x: IRecordId) => !isSameResource(x, id)),
       {
         isProductScoped: true
       }

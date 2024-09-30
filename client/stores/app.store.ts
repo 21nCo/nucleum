@@ -31,7 +31,10 @@ import { defaultAppData } from "$local/local";
 import { Embed, OperatingSystem } from "../types/context.type";
 import { goto } from "../utils/browser.utils";
 import { accessLogStore } from "../components/accessLogging/accesslog.store";
-import { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessMode,
+  ResourceActionType
+} from "../components/flux/resourceStores/resource.type";
 import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
 import { Action } from "../types/action.enum";
 import type { Event } from "../types/event.enum";
@@ -514,22 +517,18 @@ function initAppStore(seed: AppStore) {
     accessMode: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
     if (!id) return;
-    // accessLogStore.create(
-    //   {
-    //     resource: id.split(":")[0],
-    //     action: ResourceActionType.OPEN,
-    //     resourceId: id,
-    //     timestamp: new Date().toISOString()
-    //   },
-    //   {
-    //     queueParams: {
-    //       isUseQueueFirstApproach: true,
-    //       mutationId: `${id}-accessLog-create`
-    //     }
-    //   }
-    // );
+    const timestamp = new Date();
+    accessLogStore.create({
+      resource: id.tb,
+      action: ResourceActionType.OPEN,
+      resourceId: id,
+      timestamp: timestamp.toISOString()
+    });
 
-    toggleSearchParam({ [accessMode]: id.toString() });
+    toggleSearchParam({
+      [accessMode]: id.toString(),
+      [accessMode + "At"]: timestamp.getTime()
+    });
   };
 
   const resourceClickHandler = (
@@ -563,7 +562,7 @@ function initAppStore(seed: AppStore) {
     id?: IRecordId;
     accessMode?: ResourceAccessMode;
     isRestrictToModals?: boolean;
-    inlineRestoreId?: string;
+    inlineRestoreId?: IRecordId;
   }) => {
     const url = new URL(window.location.href);
     if (props?.accessMode) {
@@ -576,7 +575,7 @@ function initAppStore(seed: AppStore) {
     }
     const prevMode = url.searchParams.get("prev");
     if (prevMode === ResourceAccessMode.INLINE && props?.inlineRestoreId)
-      url.searchParams.set(prevMode, props?.inlineRestoreId);
+      url.searchParams.set(prevMode, props?.inlineRestoreId.toString());
     removeSearchParam("prev");
     removeSearchParam(ResourceAccessMode.SPLIT);
     removeSearchParam(ResourceAccessMode.FULL);
@@ -592,18 +591,18 @@ function initAppStore(seed: AppStore) {
 
   const toggleFocusAccessMode = (
     currentMode: ResourceAccessMode,
-    resourceId: string
+    resourceId: IRecordId
   ) => {
     const url = new URL(window.location.href);
     removeSearchParam(currentMode);
     if (currentMode === ResourceAccessMode.FULL) {
       const prevMode = url.searchParams.get("prev");
       logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
-      if (prevMode) url.searchParams.set(prevMode, resourceId);
-      else url.searchParams.set(ResourceAccessMode.POP, resourceId);
+      if (prevMode) url.searchParams.set(prevMode, resourceId.toString());
+      else url.searchParams.set(ResourceAccessMode.POP, resourceId.toString());
       removeSearchParam("prev");
     } else {
-      url.searchParams.set(ResourceAccessMode.FULL, resourceId);
+      url.searchParams.set(ResourceAccessMode.FULL, resourceId.toString());
       url.searchParams.set("prev", currentMode);
     }
     appStore.gotoPath(url.href);

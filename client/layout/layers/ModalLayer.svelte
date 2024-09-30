@@ -34,6 +34,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -210,57 +211,6 @@
     {/each}
   </div>
 {/if}
-
-{#each modals as modal, index (modal.path)}
-  <Modal
-    show={modal.isShow}
-    id={modal.path}
-    {index}
-    isDismissable={modal.isDismissable ?? true}
-    isShowOverlay={modal.isShowOverlay ?? true}
-    isUseDialog={modal.layout?.size != Size.full &&
-      $context.embed != Embed.HANDSET &&
-      isDialogEnabled}
-    size={modal.layout?.size ?? Size.md}
-    orientation={modal.layout?.orientation ?? Orientation.Vertical}
-  >
-    <ModalLayout path={modal.path} bind:params={modal}>
-      <ComponentResolver
-        path={modal.path}
-        params={{ ...modal.componentParams, isModal: true }}
-      />
-    </ModalLayout>
-  </Modal>
-{/each}
-
-{#if $confirmationNotification}
-  <Modal
-    show={true}
-    id={Action.CONFIRMATION}
-    isDismissable={true}
-    size={Size.xs}
-  >
-    <ModalLayout
-      path={Action.CONFIRMATION}
-      params={{
-        title: $confirmationNotification.title,
-        layout: {
-          size: Size.xs,
-          primaryAction: $confirmationNotification.confirmAction,
-          secondaryAction: $confirmationNotification.cancelAction ?? {
-            label: "Cancel"
-          }
-        }
-      }}
-    >
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <div class="text-b1">{$confirmationNotification?.message}</div>
-        </div>
-      </div>
-    </ModalLayout>
-  </Modal>
-{/if}
 {#key fullscreen}
   {#if fullscreen}
     <Modal
@@ -315,5 +265,57 @@
     </Modal>
   {/if}
 {/key}
+{#each modals as modal, index (modal.path)}
+  <Modal
+    show={modal.isShow}
+    id={modal.path}
+    {index}
+    isDismissable={modal.isDismissable ?? true}
+    isShowOverlay={modal.isShowOverlay ?? true}
+    isUseDialog={modal.layout?.size != Size.full &&
+      $context.embed != Embed.HANDSET &&
+      isDialogEnabled}
+    size={modal.layout?.size ?? Size.md}
+    orientation={modal.layout?.orientation ?? Orientation.Vertical}
+  >
+    <ModalLayout path={modal.path} bind:params={modal}>
+      <ComponentResolver
+        path={modal.path}
+        params={{ ...modal.componentParams, isModal: true }}
+      />
+    </ModalLayout>
+  </Modal>
+{/each}
+
+{#if $confirmationNotification}
+  <Modal
+    show={true}
+    id={Action.CONFIRMATION}
+    isDismissable={true}
+    size={Size.xs}
+  >
+    <ModalLayout
+      path={Action.CONFIRMATION}
+      params={{
+        title: $confirmationNotification.title,
+        layout: {
+          size: Size.xs,
+          primaryAction: $confirmationNotification.confirmAction,
+          secondaryAction: $confirmationNotification.cancelAction ?? {
+            label: "Cancel"
+          }
+        }
+      }}
+    >
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <div class="text-b1">
+            {@html renderMdAsHtml($confirmationNotification?.message)}
+          </div>
+        </div>
+      </div>
+    </ModalLayout>
+  </Modal>
+{/if}
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />

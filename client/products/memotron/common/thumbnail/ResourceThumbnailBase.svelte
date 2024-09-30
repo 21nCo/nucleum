@@ -2,21 +2,13 @@
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import Check from "$lib/client/icons/Check.svelte";
-  import CheckCircle from "$lib/client/icons/CheckCircle.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveCollectionContextMenu } from "../../collection/collection.store";
-  import { MemotronResourceType } from "../../memotron.type";
-  import { resolveResourceType } from "../../memotron.utils";
-  import { resolveNodeContextMenu } from "../../node/node.store";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  import ResourceThumbnailContextMenu from "./ResourceThumbnailContextMenu.svelte";
+
   export let isHovering = false;
   export let item: any;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -27,22 +19,8 @@
     ? accessPointId + "-" + accessPoint
     : determineResourceType(item.id) + "-" + accessPoint;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
-  $: contextMenu = resolveContextMenu(item, accessPoint);
+
   $: isSelected = $multiSelectStore.includes(item.id);
-  function resolveContextMenu(item: any, accessPoint: ResourceAccessPoint) {
-    const resourceType = resolveResourceType(item);
-    if (resourceType === MemotronResourceType.NODE) {
-      return resolveNodeContextMenu(item, accessPoint, {
-        accessPointId
-      });
-    } else {
-      return resolveCollectionContextMenu(item, accessPoint);
-    }
-  }
-  function onAction(e: CustomEvent<string>) {
-    if (e.detail === "star") item.isStarred = !item.isStarred;
-    dispatch("action", { action: e.detail, id: item.id });
-  }
 </script>
 
 <!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
@@ -85,21 +63,19 @@
       })}
       on:click|stopPropagation
     >
-      <div
-        class={cn({
-          "mx-2 h-8 border rounded-md": arrangement === Arrangement.LIST,
-          "bg-ccs4 border-ccs2":
-            arrangement === Arrangement.LIST && isApplyCustomColor,
-          "bg-bgs2 border-brs3":
-            arrangement === Arrangement.LIST && !isApplyCustomColor
-        })}
-      >
-        <ContextMenuAction
-          id="resourceThumbnailContextMenu"
-          {contextMenu}
-          size={Size.lg}
-          on:action={onAction}
-        />
+      <div class="flex">
+        <slot name="right" />
+        <div
+          class={cn({
+            "mx-2 h-8 border rounded-md": arrangement === Arrangement.LIST,
+            "bg-ccs4 border-ccs2":
+              arrangement === Arrangement.LIST && isApplyCustomColor,
+            "bg-bgs2 border-brs3":
+              arrangement === Arrangement.LIST && !isApplyCustomColor
+          })}
+        >
+          <ResourceThumbnailContextMenu {item} {accessPoint} {accessPointId} />
+        </div>
       </div>
     </button>
   {/if}

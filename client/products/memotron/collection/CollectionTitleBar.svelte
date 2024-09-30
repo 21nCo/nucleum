@@ -11,6 +11,9 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import AddResourceAction from "./AddResourceAction.svelte";
+  import { CollectionType } from "./collection.type";
+  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
+  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
@@ -25,27 +28,61 @@
     ResourceAccessPoint.SELF
   );
   function onLabelChange(e: any) {
-    console.log("collection - onLabelChange", e);
     if ($collection.label)
       collection.debouncedModify({ label: $collection.label });
   }
+
+  function onAvatarChange() {
+    collection.debouncedModify({ avatar: $collection.avatar });
+  }
+
   function onSearchQueryChange(e: any) {
     dispatch("search", e);
   }
 </script>
 
-<div class="w-full flex justify-between items-center sticky- top--0 py--6">
+<div
+  class="w-full flex gap-1 justify-between items-center sticky- top--0 py--6"
+>
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present -->
   <!-- TODO - back button to previous resource - if launched from a mention or links -->
+  {#if $collection.type === CollectionType.TYPED}
+    <span
+      class={cn("flex h-12 items-center justify-center", {
+        "w-12": isInEditMode,
+        "w-8": $collection.avatar && !isInEditMode
+      })}
+    >
+      {#if isInEditMode}
+        <Avatar
+          bind:avatar={$collection.avatar}
+          isInEditMode={true}
+          on:change={onAvatarChange}
+          size={Size.lg}
+        />
+      {:else}
+        <Avatar
+          avatar={!$collection.avatar || objIsEmpty($collection.avatar)
+            ? $collection.typeToExtend?.avatar
+            : $collection.avatar}
+          isInEditMode={false}
+          size={Size.lg}
+        />
+      {/if}
+    </span>
+  {/if}
   <span
     class={cn(
-      "font-medium text-h1 whitespace-nowrap min-w-fit flex-1 border rounded-md",
+      "flex items-center gap-4 font-medium text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left mr-6",
       {
         "border-transparent": !isInEditMode,
-        "border-brs3": isInEditMode
+        "border-brs3 px-2": isInEditMode
       }
     )}
   >
+    <!-- {#if $collection.avatar}
+      <AvatarView avatar={$collection.avatar} size={Size.lg} />
+    {/if} -->
     {#if isInEditMode}
       <TextInput
         size={Size.lg}
@@ -56,7 +93,26 @@
         on:input={onLabelChange}
       />
     {:else}
-      {$collection.label}
+      <div class="truncate">
+        {$collection.label}
+      </div>
+    {/if}
+    {#if !isInEditMode && $collection.type === CollectionType.TYPED}
+      <button
+        class="flex text-b3 text-fgs3 rounded-md border border-brs3"
+        on:click={() => (isInEditMode = true)}
+      >
+        <span class="flex gap-2 items-center px-2 py-0.5">
+          <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
+          {$collection.properties.length}
+          {$collection.properties.length === 1 ? "property" : "properties"}
+        </span>
+        {#if $collection.typeToExtend}
+          <span class="flex rounded-r-md bg-bgs2 px-2 py-0.5">
+            + {$collection.typeToExtend.properties.length}
+          </span>
+        {/if}
+      </button>
     {/if}
   </span>
 
@@ -99,7 +155,7 @@
       <slot name="additional"></slot>
       {#if !isInEditMode}
         <Toggle
-          icon="ph:dots-nine"
+          icon="ph:monitor-play-thin"
           tooltip="More actions"
           bind:on={isShowMetaViews}
         />

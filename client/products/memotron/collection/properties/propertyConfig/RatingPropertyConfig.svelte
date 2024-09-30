@@ -3,7 +3,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import AvatarPicker from "$lib/client/elements/avatarPicker/AvatarPicker.svelte";
-  import AvatarView from "$lib/client/elements/avatarPicker/AvatarView.svelte";
+  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import {
@@ -41,7 +41,7 @@
       triggerClass="flex items-center w-1/5 h-full gap-2"
       options={popoverOptions}
     >
-      <AvatarView avatar={property.config?.ratingAvatar} size={Size.md} />
+      <AvatarRenderer avatar={property.config?.ratingAvatar} size={Size.md} />
       <Icon icon="chevdown" />
       <svelte:fragment slot="popover">
         <!-- TODO - only show icons that can be fillable -->

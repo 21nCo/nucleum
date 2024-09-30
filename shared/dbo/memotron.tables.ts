@@ -1,8 +1,10 @@
 export const memotronTables = [
   ...nodesByDay(),
   ...collection(),
+  ...linkTag(),
   ...nodeIndices(),
   ...collectionIndices(),
+  ...linkTagIndices(),
   ...vector()
 ];
 
@@ -85,8 +87,8 @@ function collection() {
   DEFINE FIELD description on TABLE collection TYPE option<string>;
   DEFINE FIELD views on TABLE collection TYPE option<array<record<view>>>;
   DEFINE FIELD isCaptureShortcutEnabled on TABLE collection DEFAULT false;
-  DEFINE FIELD typeToExtend on TABLE collection TYPE option<string>;
-  DEFINE FIELD avatar on TABLE collection TYPE option<object | string>;
+  DEFINE FIELD typeToExtend on TABLE collection TYPE option<record<collection>>;
+  DEFINE FIELD avatar on TABLE collection FLEXIBLE TYPE option<object | string>;
   DEFINE FIELD query on TABLE collection TYPE option<string>;
   DEFINE FIELD properties on TABLE collection TYPE option<array<record<property>>>;
   DEFINE FIELD trashInformation on TABLE collection FLEXIBLE TYPE option<object>;
@@ -104,4 +106,20 @@ function collectionIndices() {
   const def = `DEFINE INDEX collectionLabelSearchIndex ON TABLE collection COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const typeIndex = `DEFINE INDEX fileTypeSearchIndex ON TABLE file COLUMNS type SEARCH ANALYZER ascii;`;
   return [def, typeIndex];
+}
+
+function linkTag() {
+  const def = `DEFINE TABLE linkTag SCHEMAFULL;
+  DEFINE FIELD label on TABLE linkTag TYPE string;
+  DEFINE FIELD group on TABLE linkTag TYPE option<string>;
+  DEFINE FIELD createdBy on TABLE linkTag TYPE option<record<user>>;
+  DEFINE FIELD modifiedBy on TABLE linkTag TYPE option<record<user>>;
+  DEFINE FIELD createdAt on TABLE linkTag TYPE datetime;
+  DEFINE FIELD modifiedAt on TABLE linkTag TYPE datetime;`;
+  return [def];
+}
+
+function linkTagIndices() {
+  const def = `DEFINE INDEX linkTagLabelSearchIndex ON TABLE linkTag COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
+  return [def];
 }

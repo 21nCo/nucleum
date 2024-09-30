@@ -4,10 +4,10 @@
   import type { INodeMetadata } from "../node.type";
   import maplibregl from "maplibre-gl";
   import "maplibre-gl/dist/maplibre-gl.css";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   export let metadata: INodeMetadata;
   let address: string;
-  let mapContainerId: string = generateUID();
+  let mapContainerId: string = generateSimpleRandomId();
 
   onMount(() => {
     if (!metadata?.location?.latitude || !metadata?.location?.longitude) return;
@@ -15,7 +15,6 @@
       metadata.location.latitude,
       metadata.location.longitude
     ).then((res) => {
-      console.log({ res });
       if (res?.results?.length > 0) {
         address = res.results.find((x: any) =>
           x.types.includes("locality")

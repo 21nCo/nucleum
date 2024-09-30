@@ -12,7 +12,14 @@
   class="flex flex-col h-full gap-4 justify-center items-center w-3/10 w--80 2k:w--96"
 >
   {#if pane}
-    <NodeRightPaneContent {node} {pane} {renderingDetails} />
+    <NodeRightPaneContent
+      {node}
+      {pane}
+      {renderingDetails}
+      on:close={() => {
+        pane = undefined;
+      }}
+    />
   {:else}
     <WebpageNodeDefaultRightPane {node} bind:pane />
   {/if}

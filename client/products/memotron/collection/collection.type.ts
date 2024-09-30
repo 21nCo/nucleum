@@ -27,17 +27,21 @@ interface ICollectionBase extends IMemotronItemBase {
   isStarred?: boolean;
   isCaptureShortcutEnabled?: boolean;
   query?: string;
-  avatar?: Pick<IAvatar, "code" & "color" & "isFilled" & "type">;
+  avatar?: IAvatar;
 }
 
-export interface IActiveCollection extends ICollectionBase {
+export interface IActiveCollection extends ICollectionExpanded {
   refreshError?: string;
   isViewDataLoading: boolean;
   isViewDataRefreshing: boolean;
   isPageLoading: boolean;
   views: ICollectionViewWithData[];
+}
+
+export interface ICollectionExpanded extends ICollectionBase {
   properties: IProperty[];
-  typeToExtend?: IActiveCollection;
+  typeToExtend?: ICollection;
+  extendProperties?: IProperty[];
 }
 
 export type ICoverLayout = {
@@ -61,8 +65,9 @@ export interface ICollection extends ICollectionBase {
   properties?: IRecordId[];
 }
 
-export type ICollectionThumb = ICollection & {
-  cover?: IFile;
+export type ICollectionThumb = ICollectionBase & {
+  typeToExtend?: ICollection;
+  properties?: IRecordId[];
 };
 
 export type ICollectionViewWithData = ICollectionView & {

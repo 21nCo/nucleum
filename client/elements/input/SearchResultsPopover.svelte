@@ -104,7 +104,7 @@
     }
     if (searchStoreId) results = await flux.search(searchStoreId, value);
     isSearchInProgress = false;
-    if (results.length > 0) {
+    if (results?.length > 0) {
       show();
     }
   }
@@ -145,7 +145,7 @@
       <div class="flex w-full justify-center p-2 text-b3 text-fgs3">
         {#if isSearchInProgress}
           Searching...
-        {:else if results.length === 0}
+        {:else if results?.length === 0}
           <span>
             {@html renderMdAsHtml(emptyStateLabel)}
           </span>

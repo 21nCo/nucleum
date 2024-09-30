@@ -13,7 +13,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
 
   import SubGroup from "./SubGroup.svelte";
-  import { resolvePropertyOptions } from "../../curation/curation.utils";
+  import { resolvePropertyOptions } from "../properties/property.utils";
   import NodeItems from "../NodeItems.svelte";
   export let view: ICollectionView;
   export let group: any;
