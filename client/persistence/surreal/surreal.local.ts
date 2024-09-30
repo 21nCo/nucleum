@@ -21,7 +21,7 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
-import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
+import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
@@ -299,7 +299,9 @@ export class SurrealPersistence implements IPersistence {
     await this.awaiter();
     const properties = params?.properties ?? [];
     if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
-      this.queryEmbedding = await generateVectorEmbeddings(params.search.query);
+      this.queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
+        params.search.query
+      );
       properties.push(
         `vector::similarity::cosine(embedding,[${this.queryEmbedding}]) AS dist`
       );

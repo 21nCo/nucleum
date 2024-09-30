@@ -38,7 +38,7 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
+import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -136,7 +136,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
       const mdText = generateMarkdownText(childrenNodes);
-      const embedding = await generateVectorEmbeddings(mdText);
+      const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
       let params = { filters: { node: node.id.toString() } };
       // {
       //   whereClause: `node.id=${node.id}`

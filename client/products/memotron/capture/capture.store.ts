@@ -38,7 +38,7 @@ import {
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "../memotron.store";
-import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
+import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -279,7 +279,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
-        const embedding = await generateVectorEmbeddings(mdText);
+        const embedding =
+          await FeatureExtractor.generateVectorEmbeddings(mdText);
         vectorInsertionresult = await vectorResourceStore.create({
           id: generateResourceId(Resource.vector),
           embedding: embedding,
@@ -306,7 +307,8 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
-          const embedding = await generateVectorEmbeddings(mdText);
+          const embedding =
+            await FeatureExtractor.generateVectorEmbeddings(mdText);
           vectorInsertionresult = await vectorResourceStore.create({
             id: generateResourceId(Resource.vector),
             embedding: embedding,
