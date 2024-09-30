@@ -108,7 +108,7 @@ export class SearchStore {
       properties: [
         "search::highlight('**', '**', 1, false) AS labelSearch",
         "*",
-        "cover.* as cover"
+        "typeToExtend.* as typeToExtend"
       ],
       filters: {
         trashInformation: false,

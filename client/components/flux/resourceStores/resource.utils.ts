@@ -42,8 +42,16 @@ export function isSameResource(
  * @param toCheck - The resource to check for.
  * @returns A function that takes an item and returns true if it is the same resource as the given id.
  */
-export function isPresentInList(toCheck: IRecordId | { id: IRecordId }) {
+export function resourceInList(toCheck: IRecordId | { id: IRecordId }) {
   return (item: { id: IRecordId } | IRecordId) => {
     return isSameResource(item, toCheck);
   };
 }
+
+export const removeDuplicatesFilter = (
+  item: any,
+  index: number,
+  self: any[]
+) => {
+  return self.findIndex((t) => isSameResource(t, item)) === index;
+};

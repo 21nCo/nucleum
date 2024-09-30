@@ -13,6 +13,7 @@
   import AddResourceAction from "./AddResourceAction.svelte";
   import { CollectionType } from "./collection.type";
   import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
+  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
@@ -52,12 +53,22 @@
         "w-8": $collection.avatar && !isInEditMode
       })}
     >
-      <Avatar
-        bind:avatar={$collection.avatar}
-        {isInEditMode}
-        on:change={onAvatarChange}
-        size={Size.lg}
-      />
+      {#if isInEditMode}
+        <Avatar
+          bind:avatar={$collection.avatar}
+          isInEditMode={true}
+          on:change={onAvatarChange}
+          size={Size.lg}
+        />
+      {:else}
+        <Avatar
+          avatar={!$collection.avatar || objIsEmpty($collection.avatar)
+            ? $collection.typeToExtend?.avatar
+            : $collection.avatar}
+          isInEditMode={false}
+          size={Size.lg}
+        />
+      {/if}
     </span>
   {/if}
   <span

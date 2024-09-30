@@ -44,7 +44,7 @@ class Linker extends ResourceStore<INodeLink> {
         to
       }
     });
-    logger.log({ at: "unlink", response });
+    logger.log({ at: "unlink", from, to, response });
     return response;
   }
 

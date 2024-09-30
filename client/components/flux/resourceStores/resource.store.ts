@@ -111,6 +111,22 @@ export class ActiveResourceStore<
   get() {
     return get(this.subject);
   }
+
+  static resolve<T extends ActiveResourceStore<any, any>>(
+    this: new (id: IRecordId) => T,
+    id: IRecordId
+  ): T {
+    const idStr = id.toString();
+    if (!activeResources.has(idStr)) {
+      activeResources.set(idStr, new this(id));
+    }
+    let val = activeResources.get(idStr);
+    return val! as T;
+  }
+
+  static destroy(id: IRecordId) {
+    activeResources.delete(id.toString());
+  }
 }
 
 /**

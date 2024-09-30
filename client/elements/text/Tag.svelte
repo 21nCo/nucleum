@@ -8,6 +8,7 @@
   import Badge from "./Badge.svelte";
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
   export let label: string;
   export let parentBgIndex: number = 1;
@@ -16,6 +17,7 @@
   export let isRemovable = true;
   export let isActive = false;
   export let count: number | undefined = undefined;
+  export let id: IRecordId | undefined = undefined;
   let isHovering = false;
 </script>
 
@@ -29,6 +31,7 @@
       "border-aps1": isActive
     }
   )}
+  id={id?.toString()}
   on:click
   use:hoverable
   on:hover={(e) => (isHovering = e.detail)}

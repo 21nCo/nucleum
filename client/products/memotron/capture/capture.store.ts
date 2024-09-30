@@ -5,7 +5,8 @@ import {
   LinkType,
   type INodeItemCaptured,
   type IMediaNode,
-  type INodeThumb
+  type INodeThumb,
+  type INodePropertyValue
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -207,6 +208,12 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     }
     return nodeStore.create(nodes);
   }
+
+  updateProperty = async (property: INodePropertyValue) => {
+    let properties = this.get().properties ?? [];
+    properties = properties.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
+  };
 
   async save() {
     const val = this.get();

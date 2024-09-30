@@ -25,7 +25,7 @@
     CollectionType,
     type ICollectionExpanded
   } from "../collection/collection.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
   export let isWindowDnD = false;
@@ -68,9 +68,9 @@
       clipBoardQueryParam
     });
     if (linkQueryParam) {
-      await captureStore.directLink(linkQueryParam);
-      await refreshTypeData();
-      isEmptyState = false;
+      await setTypeFromLinkParam(linkQueryParam);
+    } else {
+      refreshEmptyState();
     }
   });
 
@@ -90,7 +90,7 @@
     }
   }
   async function onUnlink(e: CustomEvent) {
-    if (e.detail && types.some((x) => isSameResource(x, e.detail))) {
+    if (e.detail && types.some(resourceInList(e.detail))) {
       await refreshTypeData();
     }
   }
@@ -100,15 +100,31 @@
       isEmptyState = false;
       return;
     }
-    if (
-      $captureStore.captureType === CaptureType.MARKDOWN &&
-      "blocks" in $captureStore.body &&
-      !isEmptyMd($captureStore.body)
-    ) {
+    if ("blocks" in $captureStore.body && !isEmptyMd($captureStore.body)) {
       isEmptyState = false;
       return;
     }
     isEmptyState = true;
+  }
+
+  async function propagatePropertyChanges(e: CustomEvent) {
+    if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
+    captureStore.updateProperty({
+      id: e.detail.id,
+      value: e.detail.value
+    });
+  }
+
+  function reset() {
+    captureStore.reset();
+    isEmptyState = true;
+    types = [];
+  }
+
+  async function setTypeFromLinkParam(linkQueryParam: string) {
+    await captureStore.directLink(linkQueryParam);
+    await refreshTypeData();
+    isEmptyState = false;
   }
 </script>
 
@@ -134,7 +150,7 @@
         <header class="flex justify-between w-full dp:px-12">
           <div class="flex gap--4 grow">
             <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
-            <NodeAvatar {types} />
+            <!-- <NodeAvatar {types} /> -->
             <div class="text-h2 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
@@ -162,8 +178,10 @@
                   isSaving = true;
                   const result = await captureStore.save();
                   if (bulkQueryParam === "true" && linkQueryParam) {
-                    await captureStore.directLink(linkQueryParam);
-                    isEmptyState = false;
+                    await setTypeFromLinkParam(linkQueryParam);
+                  } else {
+                    types = [];
+                    isEmptyState = true;
                   }
                   isSaving = false;
                 }}
@@ -174,10 +192,7 @@
                 isPreventMinWidth={true}
                 size={Size.sm}
                 icon="ph:x-light"
-                on:click={() => {
-                  captureStore.reset();
-                  isEmptyState = true;
-                }}
+                on:click={reset}
               />
             {/if}
           </div>
@@ -189,8 +204,9 @@
               <PropertiesListView
                 context="capture"
                 {types}
-                bind:values={$captureStore.properties}
+                values={$captureStore.properties}
                 bind:isCollapsed={isPropertiesCollapsed}
+                on:change={propagatePropertyChanges}
               />
             {/key}
           {/if}

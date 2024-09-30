@@ -3,27 +3,38 @@
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { onMount } from "svelte";
   import type { ICollectionExpanded } from "../../collection/collection.type";
   import { type INode, webNodeTypeList } from "../node.type";
   import NodeFavicon from "./NodeFavicon.svelte";
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let node: INode | undefined = undefined;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let size: Size.sm | Size.md | Size.lg | number = Size.md;
   let avatars: IAvatar[] | undefined = undefined;
+  let baseAvatars: IAvatar[] | undefined = undefined;
+  let _avatars: IAvatar[] | undefined = undefined;
 
-  onMount(async () => {
-    if (types && types.length > 0) await resolveAvatars();
-  });
+  $: if (types && types.length > 0) {
+    resolveAvatars();
+  } else if (types?.length === 0) {
+    _avatars = [];
+  }
 
   async function resolveAvatars() {
     avatars = types?.flatMap((x) => [x.avatar]).filter((a) => a) as IAvatar[];
+    baseAvatars = types
+      ?.flatMap((x) => [x.typeToExtend?.avatar])
+      .filter((a) => a) as IAvatar[];
+    if (baseAvatars.length > 0) {
+      _avatars = baseAvatars;
+    } else {
+      _avatars = avatars;
+    }
   }
 </script>
 
-{#if avatars && avatars.length > 0}
-  <span class="flex">
-    {#each avatars as avatar, index (avatar)}
+{#if _avatars && _avatars.length > 0}
+  <span class="flex items-center">
+    {#each _avatars as avatar, index (avatar)}
       <div
         class={cn({
           "-ml-1": index !== 0

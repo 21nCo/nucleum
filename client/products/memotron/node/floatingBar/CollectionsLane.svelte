@@ -10,22 +10,18 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { enumToString } from "$lib/shared/utils/text.utils";
   import LinkItems from "../../common/linkbox/LinkItems.svelte";
   import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
   import type { IActiveNodeStore } from "../node.store";
-  import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
-  import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { resolveNodeIcon } from "../node.utils";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+
   export let node: IActiveNodeStore;
   let searchQuery = "";
   let popoverRef: any;
   let searchInputRef: any;
   async function onUnlink(e: CustomEvent) {
-    await linker.unlink($node.id, e.detail);
-    $node.collections = $node.collections?.filter(
-      (x) => x.toString() !== e.detail.toString()
-    );
+    await node.unlinkCollection(e.detail);
   }
   async function onSelect(e: CustomEvent) {
     popoverRef.hide();
@@ -35,16 +31,15 @@
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
-    if ($node.collections?.some(isPresentInList(id))) {
+    if ($node.collections?.some(resourceInList(id))) {
       toasts.error("Collection already exists.");
       return;
     }
-    const result = await linker.link($node.id, id);
+    const result = await node.linkCollection(id);
     if (!result) {
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
-    $node.collections = [...($node.collections ?? []), id];
   }
 
   function onClick(e: CustomEvent) {

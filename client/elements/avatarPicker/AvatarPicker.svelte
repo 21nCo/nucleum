@@ -76,7 +76,7 @@
     avatarsParentContainer?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   let avatarKeys: string[] = Object.keys(avatars);
   $: avatarKeys = Object.keys(avatars);
-  $: console.log({ avatarKeys, avatars });
+
   let checked: boolean = $userPreferences.avatarPicker.filled;
   $: $userPreferences.avatarPicker.filled = checked;
   let skinTones = [

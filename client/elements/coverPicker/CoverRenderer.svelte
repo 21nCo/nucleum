@@ -10,6 +10,7 @@
   let classList: string = "";
   export { classList as class };
   export let repositionParams: IImageRepositionerOptions = {};
+  export let isLazyLoad: boolean = false;
 </script>
 
 {#if typeof cover === "string" && cover.includes("hex_")}
@@ -31,7 +32,7 @@
   <FileView
     id={cover}
     {repositionParams}
-    isLazyLoad={false}
+    {isLazyLoad}
     type={FileType.IMAGE}
     class={cn("h-full w-full object-cover", classList)}
     on:reposition

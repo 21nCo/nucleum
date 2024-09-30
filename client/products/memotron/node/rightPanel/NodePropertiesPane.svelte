@@ -5,7 +5,7 @@
   import type { IActiveNodeStore } from "$lib/client/products/memotron/node/node.store";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { ICollectionExpanded } from "../../collection/collection.type";
   import { onMount } from "svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
@@ -15,7 +15,7 @@
   export let node: IActiveNodeStore;
   export let isVisibleProps: boolean = false;
   let _types: ICollectionExpanded[] | null = null;
-  let types: ICollectionExpanded[] = [];
+  let multipleTypesList: ICollectionExpanded[] = [];
   let refreshId: number = new Date().getTime();
 
   async function propagateChanges(e: CustomEvent) {
@@ -57,7 +57,7 @@
         type.extendProperties &&
         type.extendProperties?.length > 0
       ) {
-        types = [
+        multipleTypesList = [
           type,
           {
             ...type.typeToExtend,
@@ -80,35 +80,41 @@
           return x;
         })
         .filter((x) => x) as ICollectionExpanded[];
-      types = [...(allTypes ?? []), ...(extendedTypes ?? [])];
-      types = types.filter(
-        (x, i) => types.findIndex((y) => isSameResource(x, y)) === i
-      );
+      multipleTypesList = [...(allTypes ?? []), ...(extendedTypes ?? [])];
+      multipleTypesList = multipleTypesList.filter(removeDuplicatesFilter);
     }
-    if (types.length > 0) {
-      _types = [types[0]];
+    if (multipleTypesList.length > 0) {
+      _types = [multipleTypesList[0]];
     }
   }
 
   function handleTypeChange(e: CustomEvent) {
-    const type = types.find((x) => x.id.toString() === e.detail);
+    const type = multipleTypesList.find((x) => x.id.toString() === e.detail);
     if (type) {
       _types = [type];
       refreshId = new Date().getTime();
     }
   }
+
+  function onEditProperties() {
+    appStore.runAction(MemotronAction.EDIT_COLLECTION_PROPERTIES, {
+      componentParams: {
+        id: _types?.[0]?.id ?? $node.types?.[0]?.id ?? ""
+      }
+    });
+  }
 </script>
 
 <div class="flex flex-col gap-12 w-full h-full">
-  {#if !isVisibleProps && types.length > 0}
+  {#if !isVisibleProps && multipleTypesList.length > 0}
     <OptionSelector
-      options={types.map((x) => ({
+      options={multipleTypesList.map((x) => ({
         label: x.label,
         value: x.id.toString(),
         icon: x.avatar
       }))}
       size={Size.sm}
-      selected={types[0].id.toString()}
+      selected={multipleTypesList[0].id.toString()}
       on:select={handleTypeChange}
     />
   {/if}
@@ -134,23 +140,22 @@
               size={Size.xs}
               icon="ph:pencil-simple-line-light"
               isPreventMinWidth={true}
-              on:click={() => {
-                appStore.runAction(MemotronAction.EDIT_COLLECTION_PROPERTIES, {
-                  componentParams: {
-                    id: _types?.[0]?.id ?? ""
-                  }
-                });
-              }}
+              on:click={onEditProperties}
             />
           </div>
         {/if}
       {/key}
     {:else if !isVisibleProps}
+      {@const typesPresent = $node.types && $node.types.length > 0}
       <div class="flex w-full h-full items-center justify-center">
         <EmptyStatusView
           size={Size.sm}
           mainText="No properties found."
-          subText="Add this node to a typed collection to see properties."
+          subText={typesPresent
+            ? "Please edit properties to see them here."
+            : "Add this node to a typed collection to see properties."}
+          actionText={typesPresent ? "Edit properties" : undefined}
+          on:click={onEditProperties}
         />
       </div>
     {/if}

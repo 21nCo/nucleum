@@ -13,7 +13,7 @@ import { Embed } from "$lib/client/types/context.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { toasts } from "../notification.store";
 import {
-  isPresentInList,
+  resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 
@@ -108,7 +108,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       isProductScoped: true
     });
     console.log({ at: "removeResourceFromTopBar", current, id });
-    if (!current?.some(isPresentInList(id))) return;
+    if (!current?.some(resourceInList(id))) return;
     this.setState(
       ResourceAccessPoint.TABS,
       current.filter((x: IRecordId) => !isSameResource(x, id)),

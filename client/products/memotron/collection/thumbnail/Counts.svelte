@@ -1,8 +1,8 @@
 <script lang="ts">
   import CountBadge from "./CountBadge.svelte";
   import { CollectionType } from "$lib/client/products/memotron/collection/collection.type";
-  import type { ICollection } from "../collection.type";
-  export let item: ICollection;
+  import type { ICollectionThumb } from "../collection.type";
+  export let item: ICollectionThumb;
 </script>
 
 {#if item.properties && item.properties?.length > 0}

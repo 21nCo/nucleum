@@ -2,20 +2,22 @@
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { CollectionType, type ICollection } from "../collection.type";
-  export let item: ICollection;
+  import { CollectionType, type ICollectionThumb } from "../collection.type";
+  export let item: ICollectionThumb;
 
   function resolveEmptyLabel() {
     //TODO - based on resource type
     return "Untitled";
   }
-  // $: console.log({ item });
 </script>
 
 <div class="flex justify-between w-full">
   <span class="flex gap-2 grow items-center">
-    {#if item.type === CollectionType.TYPED && item.avatar}
-      <AvatarRenderer avatar={item.avatar} size={Size.sm} />
+    {#if item.type === CollectionType.TYPED && (item.avatar || item.typeToExtend?.avatar)}
+      <AvatarRenderer
+        avatar={item.avatar ?? item.typeToExtend?.avatar}
+        size={Size.sm}
+      />
     {:else if item.type === CollectionType.QUERY}
       <Icon icon="at-symbol" size={Size.sm} />
     {/if}

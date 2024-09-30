@@ -8,7 +8,6 @@ import JournalModalViewer from "$lib/client/products/memotron/journal/JournalMod
 import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import ProductFeatureWheel from "$lib/client/components/blank/ProductFeatureWheel.svelte";
-import Curation from "$lib/client/products/memotron/curation/Curation.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import PropertyConfig from "$lib/client/products/memotron/collection/properties/propertyConfig/PropertyConfig.svelte";
 import Library from "$lib/client/products/memotron/library/Library.svelte";
@@ -134,7 +133,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: CollectionBrowser,
     label: "Collections",
-    icon: "curation",
+    icon: "ph:circles-four-light",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
   },
@@ -145,18 +144,6 @@ export const memotronActions: IAction[] = [
     icon: "node",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse
-  },
-  {
-    action: Resource.nodelinks,
-    type: ActionType.MODAL,
-    component: Curation,
-    modalParams: {
-      layout: {
-        size: Size.xl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      }
-    }
   },
   {
     action: Resource.collection,
@@ -173,7 +160,7 @@ export const memotronActions: IAction[] = [
   {
     action: Resource.combination,
     type: ActionType.MODAL,
-    component: Curation
+    component: ComingSoonView
   },
   {
     action: "journal",

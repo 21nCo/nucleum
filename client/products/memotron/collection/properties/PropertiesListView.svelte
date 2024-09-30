@@ -18,7 +18,10 @@
   import type { ICollectionExpanded } from "../collection.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { IProperty } from "./property.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    removeDuplicatesFilter,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let isIncludeExtendedProperties: boolean = true;
@@ -46,18 +49,15 @@
       .map((x) => x.properties)
       .flat()
       .filter((x) => x);
-    if (propertyConfig.length === 0) return;
     if (isIncludeExtendedProperties) {
-      propertyConfig = propertyConfig.concat(
-        types
-          .map((x) => x.extendProperties)
-          .flat()
-          .filter((x) => x) as IProperty[]
-      );
-      propertyConfig = propertyConfig.filter(
-        (x, i) => propertyConfig.findIndex((y) => isSameResource(x, y)) === i
-      );
+      const extendedProps = types
+        .map((x) => x.extendProperties)
+        .flat()
+        .filter((x) => x) as IProperty[];
+      propertyConfig = propertyConfig.concat(extendedProps);
+      propertyConfig = propertyConfig.filter(removeDuplicatesFilter);
     }
+    if (propertyConfig.length === 0) return;
     if (context === "capture" || context === "clip")
       properties = resolvePropertiesForCapture(propertyConfig);
     else if (context === "mainpanel")
@@ -131,7 +131,7 @@
         >
           {#each properties as property (property.id)}
             <PropertyItem
-              value={values.find((x) => isSameResource(x, property))?.value ??
+              value={values.find(resourceInList(property))?.value ??
                 resolvePropertyDefaultValue(property)}
               {property}
               {nodeId}

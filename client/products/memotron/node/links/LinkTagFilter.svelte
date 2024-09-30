@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isPresentInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import Tag from "$lib/client/elements/text/Tag.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Size } from "$lib/client/types/size.enum";
@@ -12,11 +12,11 @@
   export let selected: IRecordId[] = [];
 
   $: tags = $linkTagStore
-    .filter((x) => links.some((y) => y.tags?.some(isPresentInList(x))))
+    .filter((x) => links.some((y) => y.tags?.some(resourceInList(x))))
     .map(linkTagLabelMapper);
 
   function resolveCount(tagId: IRecordId) {
-    return links.filter((x) => x.tags?.some(isPresentInList(tagId))).length;
+    return links.filter((x) => x.tags?.some(resourceInList(tagId))).length;
   }
 </script>
 
@@ -27,11 +27,11 @@
         label={tag.label}
         count={resolveCount(tag.id)}
         size={Size.md}
-        isActive={selected.some(isPresentInList(tag.id))}
+        isActive={selected.some(resourceInList(tag.id))}
         isRemovable={false}
         on:click={(e) => {
-          if (selected.some(isPresentInList(tag.id))) {
-            selected = selected.filter((x) => !isPresentInList(tag.id)(x));
+          if (selected.some(resourceInList(tag.id))) {
+            selected = selected.filter((x) => !resourceInList(tag.id)(x));
           } else {
             selected = [...selected, tag.id];
           }

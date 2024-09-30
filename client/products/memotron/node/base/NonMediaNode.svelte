@@ -103,7 +103,7 @@
               {#if !$node.focusedBlock}
                 {#if $node.types}
                   <span class="flex mx-12 -mb-8">
-                    <NodeAvatar types={$node.types} size={Size.lg} />
+                    <NodeAvatar types={$node.types} size={40} />
                   </span>
                 {/if}
                 <span
@@ -132,10 +132,10 @@
                   {/if}
                 </span>
               {/if}
-              <ResourceStatusBanner resource={node} />
-              <div class="w-full flex px-12">
+              <div class="w-full flex px-12 -mt-4">
                 <CollectionsLane {node} />
               </div>
+              <ResourceStatusBanner resource={node} />
               {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
                 <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
                 <div class="px-2">

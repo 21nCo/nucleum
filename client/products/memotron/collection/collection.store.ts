@@ -18,7 +18,6 @@ import {
   propertyStore
 } from "./properties/property.store";
 import { Arrangement } from "$lib/client/types/direction.enum";
-import { CombinationViewType } from "../curation/curation.type";
 import {
   ResourceAccessPoint,
   type OmitForCapture
@@ -92,11 +91,9 @@ export const collectionStore = new CollectionStore();
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 /**
- * Curation stores map for holding the state of active i.e. currently open curations in the UI
- */
-const activeCollectionStoreMap = new Map<string, IActiveCollectionStore>();
-
-/**
+ *
+ * @deprecated - use ActiveCollectionStore.resolve instead
+ *
  * Resolves the active curation store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the curation
  * @param context - The context from which the store is being accessed. This is used for debugging purposes.
@@ -114,19 +111,7 @@ export function resolveActiveCollectionStore(
   return val!;
 }
 
-// export function determineCurationType(id: string) {
-//   let type;
-//   if (id.startsWith(Resource.nodelinks)) {
-//     type = CurationType.NODELINKS;
-//   } else if (id.startsWith(Resource.collection)) {
-//     type = CurationType.COLLECTION;
-//   } else {
-//     type = CurationType.COMBINATION;
-//   }
-//   return type;
-// }
-
-class ActiveCollectionStore extends ActiveResourceStore<
+export class ActiveCollectionStore extends ActiveResourceStore<
   IActiveCollection,
   CollectionStore
 > {
@@ -345,13 +330,6 @@ export const collectionLayoutOptions = [
   },
   { value: CollectionLayout.CALENDAR, icon: "ph:calendar-dots-light" },
   { value: CollectionLayout.GEOMAP, icon: "ph:map-trifold-light" }
-];
-
-export const combinationLayoutOptions = [
-  { value: CombinationViewType.TREE, icon: "rectangle-stack" },
-  { value: CombinationViewType.GRAPH, icon: "graph" },
-  { value: CombinationViewType.WHITEBOARD, icon: "whiteboard" },
-  { value: CombinationViewType.INFIGRID, icon: "infigrid" }
 ];
 
 export function resolveCollectionContextMenu(

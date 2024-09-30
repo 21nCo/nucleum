@@ -19,7 +19,7 @@
     propertyStore
   } from "./property.store";
   import {
-    resolveActiveCollectionStore,
+    ActiveCollectionStore,
     type IActiveCollectionStore
   } from "../collection.store";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -31,7 +31,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
-    ? (resolveActiveCollectionStore(id) as IActiveCollectionStore)
+    ? ActiveCollectionStore.resolve(id)
     : undefined;
 
   let columns: TableColumn[] = [
@@ -107,7 +107,7 @@
     }
   });
 
-  function resolveTitle() {
+  function resolveTitle(collection: IActiveCollectionStore | undefined) {
     return collection
       ? ($collection?.label ?? "Untitled") + " - edit properties"
       : "Edit properties";
@@ -116,7 +116,7 @@
 
 <div class="flex flex-col justify-between gap-4 w-full h-full text-b2">
   <div class="flex flex-col gap-4">
-    <Text content={resolveTitle()} style={TextStyle.PANEL_HEADING} />
+    <Text content={resolveTitle(collection)} style={TextStyle.PANEL_HEADING} />
     <Table2
       isStyled={true}
       addAction="add property"

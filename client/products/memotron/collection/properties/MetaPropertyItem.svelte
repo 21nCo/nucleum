@@ -7,11 +7,11 @@
     PropertyType
   } from "../../collection/properties/property.type";
   import LocationCard from "../../node/metadata/LocationCard.svelte";
-  import { resolveActiveNodeStore } from "../../node/node.store";
+  import { ActiveNodeStore } from "../../node/node.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   export let property: IProperty;
   export let nodeId: IRecordId;
-  const node = resolveActiveNodeStore(nodeId.toString());
+  const node = ActiveNodeStore.resolve(nodeId);
 
   function resolveFallbackLabel() {
     if (property.type === PropertyType.CREATED_TIME) {

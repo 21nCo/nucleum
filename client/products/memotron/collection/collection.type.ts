@@ -65,8 +65,9 @@ export interface ICollection extends ICollectionBase {
   properties?: IRecordId[];
 }
 
-export type ICollectionThumb = ICollection & {
-  cover?: IFile;
+export type ICollectionThumb = ICollectionBase & {
+  typeToExtend?: ICollection;
+  properties?: IRecordId[];
 };
 
 export type ICollectionViewWithData = ICollectionView & {

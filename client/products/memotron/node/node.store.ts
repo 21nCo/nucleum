@@ -35,7 +35,7 @@ import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
 import { generateMarkdownText } from "./node.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
-  isPresentInList,
+  resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 
@@ -93,32 +93,32 @@ export const nodeStore = new NodeStore();
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 /**
- * Node store map for individual nodes that are open in the UI.
- */
-const activeNodeStores = new Map<string, IActiveNodeStore>();
-
-/**
+ *
+ * @deprecated - use ActiveNodeStore.resolve instead
+ *
  * Resolves the active node store for the given id. If the store does not exist, it will be initialized.
  * @param id - The id of the node
  * @param context - The context from which the store is being accessed. This is used for debugging purposes.
  * @returns The active node store
  */
-export function resolveActiveNodeStore(id: string, context: string = "") {
-  if (!activeResources.has(id)) {
-    //console.log("init node store from: " + context + " id: " + id);
-    // activeNodeStores.set(id, initActiveNodeStore(id));
-    activeResources.set(id, new ActiveNodeStore(id));
+export function resolveActiveNodeStore(id: IRecordId, context: string = "") {
+  const idStr = id.toString();
+  if (!activeResources.has(idStr)) {
+    activeResources.set(idStr, new ActiveNodeStore(id));
   }
-  let val = activeResources.get(id);
+  let val = activeResources.get(idStr);
   return val!;
 }
 
-class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
+export class ActiveNodeStore extends ActiveResourceStore<
+  IActiveNode,
+  NodeStore
+> {
   eventStore: any;
   debouncers = new Map<string, any>();
-  constructor(node: string) {
+  constructor(node: IRecordId) {
     super(node, nodeStore);
-    this.eventStore = resolveActiveNodeEventStore(node);
+    this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
   updateBlockPropagator = (
     id: string,
@@ -128,7 +128,7 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
     if (changedProps.children) {
       const node = this.get();
       const childrenNodes = node.md.blocks.filter(
-        (x) => x.id && changedProps.children?.some(isPresentInList(x.id))
+        (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
       const mdText = generateMarkdownText(childrenNodes);
       return this.resourceStore.modify(id, { ...changedProps, mdText });
@@ -237,6 +237,39 @@ class ActiveNodeStore extends ActiveResourceStore<IActiveNode, NodeStore> {
   mention = async (location: string, id: string) => {
     return linker.link(location, id, LinkType.MENTION);
   };
+
+  private async refreshTypes() {
+    const collections = this.get().collections;
+    if (!collections || collections.length === 0) {
+      this.update((n) => ({ ...n, types: [] }));
+      return;
+    }
+    const types = await collectionStore.resolveTypes(collections);
+    this.update((n) => ({ ...n, types }));
+  }
+
+  async linkCollection(id: IRecordId) {
+    const result = await linker.link(this.id, id);
+    if (result) {
+      this.update((n) => ({
+        ...n,
+        collections: [...(n.collections ?? []), id]
+      }));
+      await this.refreshTypes();
+    }
+    return result;
+  }
+
+  async unlinkCollection(id: IRecordId) {
+    const node = this.get();
+    await linker.unlink(node.id, id);
+    this.update((n) => ({
+      ...n,
+      collections: n.collections?.filter((x) => !isSameResource(x, id))
+    }));
+    await this.refreshTypes();
+  }
+
   /**
    * Sets the focused block and parent for the focused block.
    *

@@ -6,8 +6,8 @@
     ISelectValue
   } from "$lib/client/types/select.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { resolvePropertyOptions } from "../curation/curation.utils";
   import type { IProperty } from "./properties/property.type";
+  import { resolvePropertyOptions } from "./properties/property.utils";
 
   export let view: ICollectionView;
   export let properties: IProperty[] = [];

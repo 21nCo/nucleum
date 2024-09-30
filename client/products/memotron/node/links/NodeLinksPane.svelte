@@ -35,7 +35,7 @@
   import LinkTagFilter from "./LinkTagFilter.svelte";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import {
-    isPresentInList,
+    resourceInList,
     isSameResource
   } from "$lib/client/components/flux/resourceStores/resource.utils";
   export let node: IActiveNodeStore;
@@ -144,11 +144,11 @@
     if (selectedLinkTags.length > 0) {
       if (dev_linkTagFilter === "or") {
         filtered = filtered.filter((x) =>
-          x.link.tags?.some((y) => selectedLinkTags.some(isPresentInList(y)))
+          x.link.tags?.some((y) => selectedLinkTags.some(resourceInList(y)))
         );
       } else {
         filtered = filtered.filter((x) =>
-          selectedLinkTags.every((y) => x.link.tags?.some(isPresentInList(y)))
+          selectedLinkTags.every((y) => x.link.tags?.some(resourceInList(y)))
         );
       }
     }
@@ -175,7 +175,7 @@
 
   function onTagClick(e: CustomEvent) {
     if (!e.detail) return;
-    if (selectedLinkTags.some(isPresentInList(e.detail))) return;
+    if (selectedLinkTags.some(resourceInList(e.detail))) return;
     selectedLinkTags = [...selectedLinkTags, e.detail];
     isShowLinkTagFilters = true;
     applyFilters();

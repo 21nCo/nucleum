@@ -82,7 +82,8 @@ function timeline() {
 function collectionFetchData() {
   const def = `DEFINE FUNCTION fn::memotron::collection::fetchData($viewId: record, $collectionId: record){
       let $view = select * from $viewId;
-      RETURN IF meta::tb($collectionId) is 'collection' and $curation.query is none {
+      let $collection = select * from $collectionId;
+      RETURN IF meta::tb($collectionId) is 'collection' {
           let $entryIds = array::first(RETURN SELECT VALUE <-link<-node.id from $collectionId);
           let $entries = select value fn::memotron::node::fetch(id) from $entryIds;
           return $entries;
