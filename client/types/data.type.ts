@@ -3,7 +3,6 @@ import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
 import type { RecordId } from "surrealdb.js";
 import type { ResourceActionType } from "../components/flux/resourceStores/resource.type";
-import type { SearchType } from "../products/memotron/node/node.type";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -334,6 +333,11 @@ export type IResourceSelectFilters =
       [key: string]: IResourceFilterValue;
     }
   | IResourceFilterGroup;
+
+export enum SearchType {
+  FULL_TEXT = "FULL_TEXT",
+  SEMANTIC = "SEMANTIC"
+}
 
 export type IResourceSelectParams = {
   /**

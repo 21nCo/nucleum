@@ -11,7 +11,7 @@
   import { createEventDispatcher } from "svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { SearchType } from "../node/node.type";
+  import { SearchType } from "$lib/client/types/data.type";
   const dispatch = createEventDispatcher();
   export let selectedResource: Resource;
   export let resources: IResourceSwitchItem[];

@@ -42,7 +42,6 @@ DEFINE FIELD createdBy on TABLE vector TYPE option<record<user>>;
 DEFINE FIELD modifiedBy on TABLE vector TYPE option<record<user>>;
 DEFINE FIELD createdAt on TABLE vector TYPE datetime;
 DEFINE FIELD modifiedAt on TABLE vector TYPE datetime;
-DEFINE FIELD interactedAt on TABLE vector TYPE datetime;
 DEFINE FIELD embedding on TABLE vector TYPE array<float>;
 DEFINE FIELD node on TABLE vector TYPE option<record<node>>;
 DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS embedding MTREE DIMENSION 768 DIST COSINE TYPE F32;

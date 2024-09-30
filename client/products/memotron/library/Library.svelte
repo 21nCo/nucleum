@@ -33,7 +33,7 @@
   import { MemotronAction } from "../memotronAction.enum";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { CollectionType } from "../collection/collection.type";
-  import { NodeType, SearchType } from "../node/node.type";
+  import { NodeType } from "../node/node.type";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
   import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
@@ -43,7 +43,10 @@
     resolveCollectionTypeLabel
   } from "../collection/collection.utils";
   import { debouncer } from "$lib/client/utils/utils";
-  import type { IResourceSelectOrderBy } from "$lib/client/types/data.type";
+  import {
+    SearchType,
+    type IResourceSelectOrderBy
+  } from "$lib/client/types/data.type";
 
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;

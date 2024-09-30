@@ -12,6 +12,7 @@ import type {
 } from "../../components/flux/resourceStores/resource.type";
 import {
   PersistenceActionType,
+  SearchType,
   type IMutationParamsv2,
   type IPrimitiveDbDataType,
   type IRecordId,
@@ -21,7 +22,6 @@ import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { generateVectorEmbeddings } from "$lib/client/utils/Ai.utils";
-import { SearchType } from "$lib/client/products/memotron/node/node.type";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;

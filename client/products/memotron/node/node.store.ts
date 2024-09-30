@@ -137,9 +137,10 @@ export class ActiveNodeStore extends ActiveResourceStore<
       );
       const mdText = generateMarkdownText(childrenNodes);
       const embedding = await generateVectorEmbeddings(mdText);
-      let params = {
-        whereClause: `node.id=${node.id}`
-      };
+      let params = { filters: { node: node.id.toString() } };
+      // {
+      //   whereClause: `node.id=${node.id}`
+      // };
       let vectorResult = await vectorResourceStore.selectMany(params);
       const vectorUpdateresult = await vectorResourceStore.modify(
         vectorResult[0].id,

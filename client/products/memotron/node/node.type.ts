@@ -154,11 +154,6 @@ export type OtherNodeType =
   | NodeType.NODULAR_MARKDOWN
   | NodeType.COLLECTION_AS_EMBED;
 
-export enum SearchType {
-  FULL_TEXT = "FULL_TEXT",
-  SEMANTIC = "SEMANTIC"
-}
-
 export enum NodeType {
   NODULAR_MARKDOWN = "NODULAR_MARKDOWN",
   NON_NODULAR_MARKDOWN = "NON_NODULAR_MARKDOWN",
