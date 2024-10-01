@@ -159,8 +159,8 @@
         />
       </div>
     {/if}
+    {#if !isVisibleProps}
+      <ScrollViewBottomSpacer />
+    {/if}
   </div>
-  {#if !isVisibleProps}
-    <ScrollViewBottomSpacer />
-  {/if}
 </div>

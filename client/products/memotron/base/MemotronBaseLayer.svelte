@@ -46,12 +46,14 @@
   }
 
   function handlePaste(event: ClipboardEvent) {
-    appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
-      componentParams: {
-        event
-      }
-    });
-    event.preventDefault();
+    if (!$appStore.isDnDPageActive) {
+      appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
+        componentParams: {
+          event
+        }
+      });
+      event.preventDefault();
+    }
   }
 
   function handleDragEnter(event: DragEvent) {

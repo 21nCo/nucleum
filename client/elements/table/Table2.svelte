@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dragDropList } from "$lib/client/actions/draggable.action";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -19,6 +20,7 @@
   export let actions: { action: "remove" | "rearrange"; index: number }[] = [];
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
+  export let id: string = "table";
   $: if (actions.length > 0) {
     actions.forEach((action) => {
       columns = [
@@ -78,19 +80,34 @@
       .join(' ')}"
   >
     {#each columns as column (column.key)}
-      <div>{"label" in column ? column.label : ""}</div>
+      <div
+        class={cn({
+          "flex w-8": column.type === TableCellType.ACTION
+        })}
+      >
+        {"label" in column ? column.label : ""}
+      </div>
     {/each}
   </div>
   {#if isStyled}
     <Divider />
   {/if}
-  <div class="flex flex-col px-3">
+  <div
+    class="flex flex-col px-3"
+    use:dragDropList={{
+      listId: id,
+      draggedOverClass: "!border-t-aps1"
+    }}
+    on:rearrange
+  >
     {#each data as row, i (row.id)}
       <div
-        class="grid gap-8 py-2 text-left"
+        class="grid gap-8 py-2 text-left border-t-4 border-t-transparent"
         style="grid-template-columns: {columns
           .map((column) => `${resolveWidth(column)}fr`)
           .join(' ')}"
+        draggable="true"
+        data-index={i}
       >
         {#each columns as column}
           {#if column.type === TableCellType.TEXT_INPUT}

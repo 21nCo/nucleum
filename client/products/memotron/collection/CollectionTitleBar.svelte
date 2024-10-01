@@ -109,7 +109,7 @@
         </span>
         {#if $collection.typeToExtend}
           <span class="flex rounded-r-md bg-bgs2 px-2 py-0.5">
-            + {$collection.typeToExtend.properties.length}
+            + {$collection.typeToExtend.properties?.length ?? 0}
           </span>
         {/if}
       </button>
@@ -128,9 +128,6 @@
       </div>
     {/if}
     {#if !isInEditMode}
-      {#if isSingleViewMode}
-        <AddResourceAction on:add isMinimalVariant={true} />
-      {/if}
       <div
         class={cn("flex flex-1 rounded-full border px-3 py-2", {
           "border-aps1": isSearchFocused,
@@ -168,6 +165,9 @@
         bind:on={isInEditMode}
       />
       <ContextMenuAction {contextMenu} id="collectionContextMenu" />
+      {#if isSingleViewMode}
+        <AddResourceAction on:add isMinimalVariant={true} />
+      {/if}
     {/if}
   </span>
 </div>

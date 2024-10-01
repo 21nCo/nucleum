@@ -182,16 +182,18 @@ export class SurrealPersistence implements IPersistence {
     let result;
     if (resource === "file") {
       result = await this.instance?.insert<T>(resource, records);
+      logger.log({ at: "SurrealPersistence.insert", resource, result });
       this.isProcessingOperation = false;
+      return result ?? null;
     } else {
       const query = resolveInsertQuery(resource, records);
       result = await this.instance?.query(query);
+      logger.log({ at: "SurrealPersistence.insert", resource, query, result });
       this.isProcessingOperation = false;
+      if (Array.isArray(result) && result[0] && Array.isArray(result[0]))
+        return result[0];
+      else return null;
     }
-    logger.log({ at: "SurrealPersistence.insert", result });
-    if (Array.isArray(result) && result[0] && Array.isArray(result[0]))
-      return result[0];
-    else return null;
   }
 
   replace<T extends IResource | IMetaResource>(

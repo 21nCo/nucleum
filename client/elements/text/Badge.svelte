@@ -24,8 +24,9 @@
   <div
     class={cn("flex justify-center items-center min-w-fit rounded-md", {
       "bg-aps3 text-aps1 border border-aps2": text.toLowerCase() === "new",
-      "bg-ass3 text-ass1 border border-ass1": text.toLowerCase() === "soon",
-      "text-fgs2 border border-brs3": !["new", "soon"].includes(
+      "bg-ass3 text-ass1 border border-ass1":
+        text.toLowerCase() === "soon" || text.toLowerCase() === "planned",
+      "text-fgs2 border border-brs3": !["new", "soon", "planned"].includes(
         text.toLowerCase()
       ),
       "px-1.5 py-0.25 text-b4": size === Size.md,

@@ -29,11 +29,13 @@
   import { onMount } from "svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import { logger } from "$lib/client/components/debug/logger.client";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)
     : undefined;
-
+  let tableId = "properties-table";
   let columns: TableColumn[] = [
     {
       label: "Type",
@@ -70,15 +72,15 @@
       component: "propertyConfig"
     },
     {
-      label: "Show on Node",
+      label: "Always visible",
       key: "isShowOnNodePage",
-      width: 0.6,
+      width: 0.5,
       type: TableCellType.TOGGLE
     },
     {
-      label: "Show on Capture",
+      label: "Capture",
       key: "isShowOnCapture",
-      width: 0.6,
+      width: 0.4,
       type: TableCellType.TOGGLE,
       disabledCriteria: (row: any) =>
         row.type === PropertyType.CREATED_TIME ||
@@ -112,12 +114,24 @@
       ? ($collection?.label ?? "Untitled") + " - edit properties"
       : "Edit properties";
   }
+
+  function onRearrange(
+    event: CustomEvent<{ from: number; to: number; listId: string }>
+  ) {
+    logger.log({ at: "PropertiesEditor.onReorder", event });
+    const { from, to, listId } = event.detail;
+    if (!from || !to || !listId || listId !== tableId) return;
+    const [movedItem] = $propertyEditorStore.splice(from, 1);
+    $propertyEditorStore.splice(to, 0, movedItem);
+    $propertyEditorStore = $propertyEditorStore;
+  }
 </script>
 
 <div class="flex flex-col justify-between gap-4 w-full h-full text-b2">
   <div class="flex flex-col gap-4">
     <Text content={resolveTitle(collection)} style={TextStyle.PANEL_HEADING} />
     <Table2
+      id={tableId}
       isStyled={true}
       addAction="add property"
       actions={[
@@ -127,6 +141,7 @@
       {columns}
       bind:data={$propertyEditorStore}
       on:add={onAdd}
+      on:rearrange={onRearrange}
     />
   </div>
   <ModalFooter
@@ -149,3 +164,5 @@
       : undefined}
   />
 </div>
+
+<ComponentBaseLayer hasDragAndDrop={true} />

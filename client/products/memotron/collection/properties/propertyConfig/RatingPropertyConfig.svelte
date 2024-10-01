@@ -24,7 +24,7 @@
         name: "star_outline",
         frequency: 0,
         isFilled: false,
-        color: "#C14D8A"
+        color: "bg"
       }
     };
   }
