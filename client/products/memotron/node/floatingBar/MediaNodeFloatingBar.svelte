@@ -94,7 +94,7 @@
       <div class="flex gap-3 justify-between items-center w-full">
         <span class="flex items-center gap-4 flex-1 min-w-0">
           <NodeTitle {node} />
-          <div class="text-b3 text-fgs3">
+          <div class="text-b3 text-fgs3 whitespace-nowrap">
             {formatDatetime($userPreferences, $node.createdAt)}
           </div>
         </span>

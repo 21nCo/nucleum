@@ -7,6 +7,7 @@
   import NodeItems from "../NodeItems.svelte";
   import type { IProperty } from "../properties/property.type";
   import { resolvePropertyOptions } from "../properties/property.utils";
+
   export let view: ICollectionView;
   export let data: INodeThumb[] = [];
   export let properties: IProperty[] = [];
@@ -26,7 +27,6 @@
       );
     });
   }
-  // $: console.log({ groups, properties: $properties, view });
 </script>
 
 {#if isValidArrayWithData(groups)}
@@ -42,7 +42,7 @@
       />
     {/each}
   </div>
-{:else if !isInEditMode}
+{:else}
   <NodeItems
     nodes={data}
     arrangement={view.arrangement}

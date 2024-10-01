@@ -326,10 +326,22 @@ export const collectionLayoutOptions = [
   },
   {
     value: CollectionLayout.TABLE,
-    icon: "ph:table-light"
+    icon: "ph:table-light",
+    badge: "Planned",
+    isDisabled: true
   },
-  { value: CollectionLayout.CALENDAR, icon: "ph:calendar-dots-light" },
-  { value: CollectionLayout.GEOMAP, icon: "ph:map-trifold-light" }
+  {
+    value: CollectionLayout.CALENDAR,
+    icon: "ph:calendar-dots-light",
+    badge: "Planned",
+    isDisabled: true
+  },
+  {
+    value: CollectionLayout.MAP,
+    icon: "ph:map-trifold-light",
+    badge: "Planned",
+    isDisabled: true
+  }
 ];
 
 export function resolveCollectionContextMenu(

@@ -54,6 +54,7 @@
   import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -160,10 +161,12 @@
   function onArrangementChange(e: CustomEvent) {
     if (!activeView) return;
     activeView.arrangement = e.detail;
+    activeView.density = activeView.density ? activeView.density : 1;
     collection.updateView(
       activeView.id,
       {
-        arrangement: activeView.arrangement
+        arrangement: activeView.arrangement,
+        density: activeView.density
       },
       "arrangement"
     );
@@ -242,6 +245,7 @@
     loadActiveView();
     if (!activeView) return;
     logger.log({ at: "refresh", activeView, searchQuery });
+    activeView.data = activeView.data.filter(activeResourceFilter);
     if (!tabBy || (tabBy && selectedTab === "all")) {
       viewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {
@@ -509,9 +513,9 @@
         {/if}
         {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
           <header
-            class={cn("sticky top-0 flex flex-col gap-6 bg-bgs1 w-full", {
-              "pt-4": isStickied,
-              "z-10": !isInEditMode
+            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
+              "pt-4": isStickied
+              // "z-10": !isInEditMode
             })}
           >
             {#if !isSingleViewMode || isInEditMode}
@@ -532,36 +536,26 @@
                 on:rearrange={onViewRearrange}
               >
                 <span class="flex items-center gap-4 pr-4" slot="right">
+                  <ToggleGroup
+                    class="gap-3"
+                    items={[
+                      {
+                        value: "filter",
+                        icon: "ph:funnel-thin"
+                      },
+                      {
+                        value: "sort",
+                        icon: "ph:arrows-down-up-thin"
+                      }
+                    ]}
+                  />
+                  <ArrangementSelector
+                    bind:arrangement={selectedArrangement}
+                    bind:density={arrangementDensity}
+                    on:switch={onArrangementChange}
+                    on:densityChange={onDensityChange}
+                  />
                   {#if !isInEditMode}
-                    <!-- <Button
-                      icon="adjustments-horizontal"
-                      label="filters"
-                      {...viewRightButtonOptions}
-                    />
-                    <Button
-                      icon="bars-center-left"
-                      label="sort"
-                      {...viewRightButtonOptions}
-                    /> -->
-                    <ToggleGroup
-                      class="gap-3"
-                      items={[
-                        {
-                          value: "filter",
-                          icon: "ph:funnel-thin"
-                        },
-                        {
-                          value: "sort",
-                          icon: "ph:arrows-down-up-thin"
-                        }
-                      ]}
-                    />
-                    <ArrangementSelector
-                      bind:arrangement={selectedArrangement}
-                      bind:density={arrangementDensity}
-                      on:switch={onArrangementChange}
-                      on:densityChange={onDensityChange}
-                    />
                     <AddResourceAction on:add={onAddResource} />
                   {/if}
                 </span>
@@ -610,6 +604,7 @@
           {:else}
             content
           {/if}
+          <ScrollViewBottomSpacer />
         </main>
       </div>
     {/if}
@@ -633,7 +628,4 @@
     {/if}
   </div>
 {/if}
-<ComponentBaseLayer
-  hasDragAndDrop={true}
-  on:syncDown={() => refresh({ isNewView: true })}
-/>
+<!-- <ComponentBaseLayer hasDragAndDrop={true} on:syncDown={() => refresh()} /> -->

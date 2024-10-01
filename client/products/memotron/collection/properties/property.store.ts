@@ -100,18 +100,21 @@ export const propertyOptions = [
     label: "Multi select",
     icon: "ph:list-bullets-light",
     value: PropertyType.MULTI_SELECT,
-    badge: "Planned"
+    badge: "Planned",
+    isDisabled: true
   },
   {
     label: "Link list",
     icon: "ph:tree-view-light",
     value: PropertyType.LINK_LIST,
-    badge: "Planned"
+    badge: "Planned",
+    isDisabled: true
   },
   {
     label: "Attachement(s)",
     icon: "upload",
     value: PropertyType.FILE,
-    badge: "Planned"
+    badge: "Planned",
+    isDisabled: true
   }
 ];

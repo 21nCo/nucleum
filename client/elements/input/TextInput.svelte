@@ -172,7 +172,11 @@
             }}
           >
             {#if isValidLink}
-              <Icon icon="ph:link" size={Size.sm} class="stroke-fgs3" />
+              <Icon
+                icon={type === "email" ? "ph:at" : "ph:link"}
+                size={Size.sm}
+                class="stroke-fgs3"
+              />
               <button
                 class="min-w-0 w-3/4 max-w-fit truncate flex justify-start"
                 on:click={(e) => e.stopPropagation()}
