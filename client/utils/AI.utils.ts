@@ -53,3 +53,81 @@ export class FeatureExtractor {
     }
   }
 }
+
+export class QuestionAnswerer {
+  static built = false;
+  static qa: any;
+  static async init() {
+    if (!QuestionAnswerer.built) {
+      QuestionAnswerer.qa = await pipeline(
+        "question-answering",
+        "Fuzail22/onnx-roberta-base-squad2",
+        {
+          quantized: false,
+          progress_callback: (progress: any) => {
+            console.log("Question Answerer Initialization progress", progress);
+          }
+        }
+      );
+      QuestionAnswerer.built = true;
+    }
+  }
+
+  static async getAnswer(question: string, context: string) {
+    try {
+      const startTime = Date.now();
+      if (!QuestionAnswerer.built) await QuestionAnswerer.init();
+      const output = await QuestionAnswerer.qa(question, context, {
+        top_k: 1,
+        top_p: 0.9,
+        max_seq_length: 512,
+        temperature: 0.5,
+        do_sample: true,
+        num_return_sequences: 1,
+        return_full_text: true
+      });
+      const endTime = Date.now();
+      console.log("answering time in seconds:", (endTime - startTime) / 1000);
+      console.log("output FOR qa", output);
+      return output.answer;
+    } catch (error) {
+      console.error("Error during extraction:", error);
+      throw error;
+    }
+  }
+}
+
+export class Text2textGenerator {
+  static built = false;
+  static generator: any;
+  static async init() {
+    if (!Text2textGenerator.built) {
+      Text2textGenerator.generator = await pipeline(
+        "text2text-generation",
+        "Xenova/LaMini-Flan-T5-783M",
+        {
+          quantized: true
+        }
+      );
+      Text2textGenerator.built = true;
+    }
+  }
+  static async generateText(text: string) {
+    try {
+      console.log("extracting text:", text.split(" ").length, text);
+      if (!Text2textGenerator.built) await Text2textGenerator.init();
+      const output = await Text2textGenerator.generator(text, {
+        max_length: 100,
+        temperature: 0.5,
+        do_sample: true,
+        num_return_sequences: 1,
+        return_full_text: true
+      });
+      console.log("output FOR T2T", output.generated_text);
+      return output.generated_text;
+    } catch (error) {
+      console.error("Error during extraction:", error);
+      throw error;
+    }
+  }
+}

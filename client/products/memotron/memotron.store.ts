@@ -28,7 +28,7 @@ export class SearchStore {
   orderBy: IResourceSelectOrderBy | undefined = undefined;
   filters: IResourceSelectFilters = {};
   searchType: SearchType = SearchType.FULL_TEXT;
-
+  semanticSearchTopK: number | undefined;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
   }
@@ -70,6 +70,7 @@ export class SearchStore {
         ? Resource.vector
         : Resource.node,
       {
+        semanticSearchTopK: this.semanticSearchTopK,
         searchType: this.searchType,
         properties:
           this.searchType === SearchType.SEMANTIC && this.searchQuery
@@ -166,11 +167,12 @@ export class SearchStore {
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
-    limit?: number;
+    limit?: number | undefined;
     offset?: number;
     orderBy?: IResourceSelectOrderBy | undefined;
     filters?: IResourceSelectFilters;
     searchType?: SearchType;
+    semanticSearchTopK?: number | undefined;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
@@ -179,6 +181,8 @@ export class SearchStore {
     this.orderBy = params.orderBy ?? this.orderBy;
     this.filters = params.filters ?? this.filters;
     this.searchType = params.searchType ?? this.searchType;
+    this.semanticSearchTopK =
+      params.semanticSearchTopK ?? this.semanticSearchTopK;
     logger.log({
       at: "SearchStore.refresh",
       ...this

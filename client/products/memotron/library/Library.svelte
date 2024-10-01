@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import Resources from "../common/Resources.svelte";
@@ -47,7 +48,6 @@
     SearchType,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
-
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -55,6 +55,8 @@
   let isArchivedFilterSelected: boolean = false;
   let data: any[] = [];
   let searchStore = new SearchStore();
+  let QAsearchStore = new SearchStore();
+  QAsearchStore.searchType = SearchType.SEMANTIC;
   let selectedSubType: "all" | "recents" | NodeType | CollectionType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let availableResources: Resource[] = [
@@ -111,6 +113,7 @@
   onMount(async () => {
     await refresh();
   });
+
   async function refresh() {
     if (
       !availableResources.includes(selectedResource) &&
@@ -120,6 +123,7 @@
       return;
     }
     let orderBy: IResourceSelectOrderBy | undefined;
+    let semanticSearchTopK: number | undefined;
     if (searchStore.searchType == SearchType.SEMANTIC) {
       orderBy = {
         dist: "desc",
@@ -143,7 +147,8 @@
       resource: selectedResource,
       searchQuery,
       filters,
-      orderBy
+      orderBy,
+      semanticSearchTopK
     });
   }
   const debouncedSearch = debouncer(refresh, 500);
@@ -285,6 +290,16 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
+    <FloatingButton
+      class="justify-end"
+      params={{
+        callback: () => {
+          appStore.runAction(MemotronAction.OPEN_CHAT);
+        },
+        icon: "ph:chat",
+        variant: ButtonVariant.PRIMARY
+      }}
+    />
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
         {variant}

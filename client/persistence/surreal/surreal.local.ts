@@ -359,8 +359,8 @@ export class SurrealPersistence implements IPersistence {
    * @param searchQuery
    * @returns
    */
-  private generateSemanticSearchClause(searchQuery: string) {
-    return `embedding <|10|> [${this.queryEmbedding}]`;
+  private generateSemanticSearchClause(k: number = 3) {
+    return `embedding <|${k}|> [${this.queryEmbedding}]`;
   }
   private generateWhereClause(params?: IResourceSelectParams): string {
     const conditions: string[] = [];
@@ -373,7 +373,9 @@ export class SurrealPersistence implements IPersistence {
     }
 
     if (params?.searchType === SearchType.SEMANTIC && params?.search) {
-      conditions.push(this.generateSemanticSearchClause(params.search.query));
+      conditions.push(
+        this.generateSemanticSearchClause(params.semanticSearchTopK)
+      );
     } else if (params?.searchType === SearchType.FULL_TEXT && params?.search) {
       conditions.push(this.generateSearchClause(params.search));
     }

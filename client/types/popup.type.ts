@@ -22,6 +22,7 @@ export type ModalParams = {
   title?: string;
   componentParams?: any;
   layout?: ModalLayoutParams;
+  isOnRight?: boolean;
 };
 
 export type ModalLayoutParams = {

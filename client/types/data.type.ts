@@ -345,6 +345,11 @@ export type IResourceSelectParams = {
    */
   searchType?: SearchType;
   /**
+   * Number of top matches to be retireved for semantic search.
+   */
+  semanticSearchTopK?: number;
+
+  /**
    * Properties to be selected, that is items to be present in select statement.
    * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
    */
