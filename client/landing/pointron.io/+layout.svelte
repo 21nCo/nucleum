@@ -16,12 +16,8 @@
       href: "https://app.pointron.io"
     }
   };
-  const id = "pointron-page";
-  onMount(async () => {
-    await addAnimateClass("animate-open-left", id);
-  });
 </script>
 
-<BlankLandingLayout {id} {topNavBarValues}>
+<BlankLandingLayout {topNavBarValues}>
   <slot />
 </BlankLandingLayout>

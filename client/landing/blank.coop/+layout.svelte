@@ -8,12 +8,8 @@
     icon: "blank-coop",
     items: [{ label: "Dicord", href: "https://discord.gg/kBdqn5hD" }]
   };
-  const id = "blank-coop-page";
-  onMount(async () => {
-    await addAnimateClass("animate-open-right", id);
-  });
 </script>
 
-<BlankLandingLayout {id} {topNavBarValues}>
+<BlankLandingLayout {topNavBarValues}>
   <slot />
 </BlankLandingLayout>

@@ -18,7 +18,6 @@
     title: $upcomingProductsStore[i].title,
     items: [{ label: "Discord", href: "https://discord.gg/blanklabs" }]
   };
-  console.log("commingSoonSectionInputs", commingSoonSectionInputs);
 </script>
 
 <BlankLandingLayout {topNavBarValues} isComingSoon={true}>

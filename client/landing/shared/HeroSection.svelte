@@ -4,6 +4,7 @@
   import view from "$lib/client/stores/view.store";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import ButtonAsLink from "./ButtonAsLink.svelte";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
   import type { IHeroInputs } from "./Landing.types";
   import Section from "./Section.svelte";
@@ -22,12 +23,12 @@
   }
 </script>
 
-<Section class={cn("relative justify-center", className)}>
+<Section class={cn("relative justify-center mo:min-h-[92vh]", className)}>
   <div
     class={cn(
-      "flex flex-col items-center text-center mo:min-h-[90vh]",
+      "flex flex-col items-center text-center",
       !$isProductsPage && "justify-center -mt-32",
-      $isProductsPage && "mt-16 mo:mt-0"
+      $isProductsPage && "mt-16"
     )}
   >
     {#if heroInputs.title}
@@ -56,16 +57,10 @@
       </p>
     {/if}
     {#if $view.isPortrait && !$isProductsPage}
-      <div
-        class="flex items-center justify-end w-[145px] h-[36px] border-b border-fgs3 border-dashed pb-0 mt-6"
-        role="button"
-        tabindex="0"
+      <ButtonAsLink
+        label="See our products"
         on:click={() => ($isProductsPanelOpen = true)}
-        on:keypress
-      >
-        <p class="text-[16px] leading-9 text-center">See our products</p>
-        <SvgIcon icon="long-arrow-right" size={Size.sm} class="ml-2" />
-      </div>
+      />
     {/if}
   </div>
   {#if $view.isPortrait && !$isProductsPage}

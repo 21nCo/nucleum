@@ -10,6 +10,7 @@
   import { isProductsPage, isProductsPanelOpen } from "./store/shared.store";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
+  import ButtonAsLink from "./ButtonAsLink.svelte";
 
   export let topNavBarValues: ITopNavBar;
   export let isExpandHamMenu: boolean = false;
@@ -126,14 +127,11 @@
               on:click={() => goto(topNavBarValues?.cta?.href ?? "")}
             />
           {/if}
-
-          <button
-            class="hidden mo:block text-h4 leading-9 font-normal underline underline-offset-4 mt-9"
+          <ButtonAsLink
+            class="hidden mo:block"
+            label="Explore more Blank.coop products"
             on:click={() => ($isProductsPanelOpen = true)}
-            on:keypress
-          >
-            Explore more Blank.coop products
-          </button>
+          />
           {#if $view.isPortrait}
             <DayAndNightToggle class="hidden mo:block mt-auto mb-10" />
           {/if}
