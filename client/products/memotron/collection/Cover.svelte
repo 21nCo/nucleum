@@ -11,7 +11,7 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { hoverable } from "$lib/client/actions/hover.action";
   import type { IImageRepositionerOptions } from "$lib/client/components/files/file.type";
-  import resizable from "$lib/client/actions/resize.action";
+  import { resizable } from "$lib/client/actions/resize.action";
 
   const dispatch = createEventDispatcher();
   export let cover: string | undefined = undefined;

@@ -54,9 +54,9 @@
 
   function resolveStyles() {
     let styles: string[] = [];
-    if (icon) {
-      styles.push("pl-8");
-    }
+    // if (icon) {
+    //   styles.push("pl-4");
+    // }
     if (style != InputStyle.PLAIN) {
       styles.push("text-fgs2");
     }
@@ -193,6 +193,9 @@
           </button>
         </div>
       {:else}
+        {#if icon}
+          <Icon {icon} size={Size.sm} class="stroke-fgs3" />
+        {/if}
         <input
           {id}
           class={inputClasses}
@@ -214,11 +217,11 @@
           {...type ? { type } : {}}
         />
       {/if}
-      {#if icon}
+      <!-- {#if icon}
         <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
           <Icon {icon} size={Size.sm} class="stroke-fgs3" />
         </div>
-      {/if}
+      {/if} -->
       {#if isShowRightControls}
         <div
           class="absolute right-0 top-0 bottom-0 flex gap-2 items-center px-3"

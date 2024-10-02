@@ -13,10 +13,11 @@
 
   export let arrangement: Arrangement;
   export let density = 1;
+  export let isBoardContext = false;
 
   let isPopoverVisible = false;
 
-  const allArrangements = [
+  let allArrangements = [
     {
       value: Arrangement.LIST,
       label: "List",
@@ -26,13 +27,22 @@
       value: Arrangement.GRID,
       label: "Grid",
       icon: "ph:squares-four-thin"
-    },
-    {
+    }
+  ];
+  $: if (
+    !isBoardContext &&
+    !allArrangements.find((a) => a.value === Arrangement.MASONRY)
+  ) {
+    allArrangements.push({
       value: Arrangement.MASONRY,
       label: "Masonry",
       icon: "ph:gradient-thin"
-    }
-  ];
+    });
+  } else {
+    allArrangements = allArrangements.filter(
+      (a) => a.value !== Arrangement.MASONRY
+    );
+  }
 
   function resolveIcon(arrangement: Arrangement) {
     return allArrangements.find((a) => a.value === arrangement)?.icon ?? "";

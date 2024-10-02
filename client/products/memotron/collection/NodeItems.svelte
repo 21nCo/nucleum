@@ -24,6 +24,7 @@
   export let density = 1;
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
+  export let isDraggable: boolean = false;
 
   $: columns = Math.floor(($view.width / 500) * density);
 
@@ -89,6 +90,7 @@
         class="relative grid-item w-full"
         data-id={item.id}
         data-type={item.contentType}
+        draggable={isDraggable}
       >
         <button
           class="item-content w-full border rounded-md border-brs2 hover:border-aps2"
@@ -154,6 +156,7 @@
           {item}
           {parentBgIndex}
           {arrangement}
+          {isDraggable}
           collectionContext={"board"}
           {isApplyCustomColor}
           on:click={(e) =>

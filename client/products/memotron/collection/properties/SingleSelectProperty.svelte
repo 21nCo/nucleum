@@ -2,7 +2,7 @@
   import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
   import { createEventDispatcher } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import type { IPopoverOptions } from "$lib/client/types/popover.type";
   import Popover from "$lib/client/elements/popover/Popover.svelte";
   import InputBaseElement from "$lib/client/elements/InputBaseElement.svelte";
@@ -11,7 +11,14 @@
   import SelectPropertyItemList from "./SelectPropertyItemList.svelte";
   import SelectPropertyItem from "./SelectPropertyItem.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
-  import type { IProperty, PropertyConfigOption } from "./property.type";
+  import type {
+    IProperty,
+    PropertyConfig,
+    PropertyConfigOption
+  } from "./property.type";
+  import SelectOptionsEditor from "./propertyConfig/selectProperty/SelectOptionsEditor.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
   const dispatch = createEventDispatcher();
   export let property: IProperty;
   export let style: InputStyle = InputStyle.FILLED;
@@ -22,12 +29,13 @@
   let searchInputRef: any;
   let popoverRef: any;
   let isOptionsVisible: boolean = false;
+  let originalConfig: PropertyConfig | undefined;
   let options: PropertyConfigOption[] = property.config?.options ?? [];
   let classList = "relative flex flex-col items-start gap-1 w-full";
+  let isEditing: boolean = false;
   let popoverOptions: IPopoverOptions = {
     element: "div",
-    class:
-      "max-h-80 overflow-y-auto flex flex-col gap-4 items-start search-results py-4",
+    class: "max-h-96 h-96",
     parentBgIndex: parentBackgroundIndex,
     isSpanToTriggerWidth: true
   };
@@ -41,8 +49,39 @@
     dispatch("change", value);
     popoverRef.hide();
   }
-  function onenter() {
-    //TODO: create new option if the text is not in the option list
+  function onenter(e: any) {
+    if (options.length === 0 && e.detail) {
+      dispatch("newOption", {
+        id: property.id,
+        label: e.detail.value
+      });
+      search = "";
+      popoverRef?.hide();
+    }
+  }
+  function onSave() {
+    propagateConfigChange();
+    isEditing = false;
+  }
+  function onReorderOptions(
+    e: CustomEvent<{ from: number; to: number; listId: string }>
+  ) {
+    const { from, to, listId } = e.detail;
+    if (!listId || listId !== "options") return;
+    const [movedItem] = property.config?.options?.splice(from, 1) ?? [];
+    property.config?.options?.splice(to, 0, movedItem);
+    property.config = property.config;
+  }
+
+  function propagateConfigChange() {
+    logger.debug({
+      at: "propagateConfigChange",
+      config: property.config
+    });
+    dispatch("configChange", {
+      id: property.id,
+      config: property.config
+    });
   }
 </script>
 
@@ -68,31 +107,86 @@
     />
     <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
   </InputBaseElement>
-  <svelte:fragment slot="popover">
-    <div class="flex gap-2 px-3 w-full text-b2">
-      <TextInput
-        bind:this={searchInputRef}
-        bind:value={search}
-        on:enter={onenter}
-        icon="search"
-        placeholder="Search or type to create new"
-      />
-      <!-- TODO - render config settings in popover -->
-      <Button icon="settings" />
-    </div>
-    {#key search}
-      {#if property.config?.groups && isValidArrayWithData(property.config?.groups)}
-        {#each property.config?.groups as group}
-          <SelectPropertyItemList
-            groupId={group.id}
-            groupLabel={group.label}
-            {options}
-            on:select={onselect}
+  <div class="flex flex-col h-full w-full" slot="popover">
+    {#if isEditing && property.config}
+      <div class="flex w-full flex-grow">
+        <SelectOptionsEditor
+          bind:config={property.config}
+          on:reorder={onReorderOptions}
+        />
+      </div>
+    {:else}
+      <div class="flex gap-2 px-3 w-full text-b2 py-2">
+        <TextInput
+          bind:this={searchInputRef}
+          bind:value={search}
+          on:enter={onenter}
+          icon="ph:magnifying-glass"
+          placeholder="Search or type to create new"
+        />
+        <!-- TODO - render config settings in popover -->
+      </div>
+      <div class="flex w-full flex-grow styledscroll">
+        {#key search}
+          {#if property.config?.groups && isValidArrayWithData(property.config?.groups)}
+            {#each property.config?.groups as group}
+              <SelectPropertyItemList
+                groupId={group.id}
+                groupLabel={group.label}
+                {options}
+                on:select={onselect}
+              />
+            {/each}
+          {:else}
+            <SelectPropertyItemList {options} on:select={onselect} />
+          {/if}
+          {#if search && !options.length}
+            <div class="text-b2 text-fgs3 px-3 py-2">
+              No results found. Press Enter to create new
+            </div>
+          {/if}
+        {/key}
+      </div>
+    {/if}
+    <button
+      class="flex justify-center items-center h-12 min-h-12 bg--bgs2 w-full"
+      on:click={(e) => {
+        e.stopPropagation();
+      }}
+    >
+      {#if isEditing}
+        <div class="flex gap-3 items-center justify-between w-full px-4">
+          <Button
+            label="Cancel"
+            icon="ph:x"
+            style={ButtonStyle.PLAIN}
+            size={Size.xs}
+            on:click={() => {
+              property.config = originalConfig;
+              isEditing = false;
+            }}
           />
-        {/each}
+          <Button
+            label="Save"
+            icon="ph:check"
+            type={ButtonVariant.PRIMARY}
+            style={ButtonStyle.DEFAULT}
+            size={Size.xs}
+            on:click={onSave}
+          />
+        </div>
       {:else}
-        <SelectPropertyItemList {options} on:select={onselect} />
+        <Button
+          label="Edit options"
+          isUnderlined={true}
+          style={ButtonStyle.PLAIN}
+          size={Size.xs}
+          on:click={() => {
+            originalConfig = deepCopy(property.config);
+            isEditing = true;
+          }}
+        />
       {/if}
-    {/key}
-  </svelte:fragment>
+    </button>
+  </div>
 </Popover>

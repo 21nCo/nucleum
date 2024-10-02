@@ -64,7 +64,15 @@
       on:change
     />
   {:else if property.type === PropertyType.SINGLE_SELECT && property.config?.options && typeof value === "string"}
-    <SingleSelectProperty {style} {label} {property} bind:value on:change />
+    <SingleSelectProperty
+      {style}
+      {label}
+      {property}
+      bind:value
+      on:change
+      on:newOption
+      on:configChange
+    />
   {:else if property.type === PropertyType.DATE && value && value instanceof Date}
     <DatePicker bind:date={value} {label} {style} on:change />
   {:else if nodeId}

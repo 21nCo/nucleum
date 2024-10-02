@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dragDropList } from "$lib/client/actions/draggable.action";
+  import { reorderList } from "$lib/client/actions/rearrange.action";
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
@@ -31,23 +31,16 @@
     });
   }
   function resolveDefaultAction(action: string) {
-    if (action === "rearrange") {
+    if (action === "reorder") {
       return {
-        key: "bars",
-        type: TableCellType.ACTION,
-        action: (row: any) => {
-          /**
-           * TODO - Rearrange action implementation
-           */
-          console.log("rearrange clicked", row);
-        }
+        key: "ph:dots-six-bold",
+        type: TableCellType.ACTION
       };
     } else if (action === "remove") {
       return {
         key: "cross",
         type: TableCellType.ACTION,
         action: (row: any) => {
-          console.log("remove clicked", row);
           data = data.filter((d) => d.id !== row.id);
         }
       };
@@ -94,15 +87,15 @@
   {/if}
   <div
     class="flex flex-col px-3"
-    use:dragDropList={{
+    use:reorderList={{
       listId: id,
-      draggedOverClass: "!border-t-aps1"
+      draggedOverClass: "!outline-aps1"
     }}
-    on:rearrange
+    on:reorder
   >
     {#each data as row, i (row.id)}
       <div
-        class="grid gap-8 py-2 text-left border-t-4 border-t-transparent"
+        class="grid gap-8 py-2 text-left outline outline-transparent"
         style="grid-template-columns: {columns
           .map((column) => `${resolveWidth(column)}fr`)
           .join(' ')}"

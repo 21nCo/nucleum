@@ -4,13 +4,14 @@
   export let size: Size = Size.md;
   export let text: string | number;
   export let parentBgIndex: number = 1;
+  export let isApplyCustomColor = false;
 </script>
 
 {#if typeof text === "number"}
   <div
     class={cn(
       "flex justify-center items-center rounded-full text-fgs2 border border-brs3",
-      bg(parentBgIndex),
+      isApplyCustomColor ? "bg-ccs2" : bg(parentBgIndex),
       {
         "w-5 h-5 text-b3": size === Size.md,
         "w-4 h-4 text-b4": size === Size.sm,

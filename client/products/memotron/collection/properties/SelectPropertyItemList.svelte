@@ -20,7 +20,7 @@
         {groupLabel}
       </div>
     {/if}
-    {#each filtered as item}
+    {#each filtered as item (item.id)}
       <SelectPropertyItem
         {item}
         on:click={() => {

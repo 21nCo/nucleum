@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { hoverable } from "$lib/client/actions/hover.action";
   import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -11,6 +12,7 @@
 
   export let isHovering = false;
   export let item: any;
+  export let isDraggable: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isApplyCustomColor: boolean = false;
@@ -25,7 +27,14 @@
 
 <!-- TODO - position of right click context menu at cursor instead of bottom of the thumbnail -->
 <!-- <ContextMenuAction {contextMenu}> -->
-<HoverableElement class="relative flex w-full" bind:isHovering>
+<div
+  class="relative flex w-full resource"
+  id={item.id.toString()}
+  draggable={isDraggable}
+  use:hoverable={{
+    onHover: (e) => (isHovering = e)
+  }}
+>
   <slot />
   {#if isSelected || $multiSelectStore.length > 0}
     <button
@@ -79,5 +88,5 @@
       </div>
     </button>
   {/if}
-</HoverableElement>
+</div>
 <!-- </ContextMenuAction> -->

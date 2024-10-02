@@ -66,7 +66,11 @@
   }
 
   function handleDragLeave(event: DragEvent) {
-    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
+    if (
+      !event.relatedTarget &&
+      !$appStore.isDnDPageActive &&
+      !window.location.pathname.includes("/tab")
+    ) {
       modalEvent.hide(MemotronAction.CAPTURE);
     }
   }

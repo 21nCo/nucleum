@@ -10,7 +10,7 @@
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ViewTabSwitcher from "./ViewTabSwitcher.svelte";
+  import ViewTabSwitcher from "./tabSwitcher/ViewTabSwitcher.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
@@ -33,6 +33,7 @@
 
   import { metaPropertyOptions } from "./properties/property.store";
   import {
+    CollectionLayout,
     CollectionType,
     type ICollectionViewWithData
   } from "$lib/client/products/memotron/collection/collection.type";
@@ -55,6 +56,11 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import {
+    isNoneResource,
+    resourceInList,
+    stringToRecordId
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -88,6 +94,10 @@
   let isSingleViewMode = true;
   let arrangementDensity = 1;
   let searchQuery: string = "";
+
+  $: isBoardContext =
+    activeView?.layout === CollectionLayout.BOARD &&
+    !isNoneResource(activeView?.groupBy);
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -123,7 +133,7 @@
     //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
     const noneOption = {
       label: "None",
-      value: "none",
+      value: "property:none",
       icon: "none"
     };
     return $collection?.properties
@@ -153,9 +163,23 @@
     triggerItemEdit = id.toString();
   }
 
-  function onViewSettingsChange() {
-    if (activeView)
-      collection.updateView(activeView.id, activeView, "settings");
+  function onViewSettingsChange(e: CustomEvent) {
+    logger.log({ at: "onViewSettingsChange", activeView, e });
+    if (!activeView) return;
+    const key = e.detail.key;
+    let value = e.detail.value;
+    if (!key) return;
+    if (key === "tabBy" || key === "groupBy" || key === "subGroupBy") {
+      value = stringToRecordId(value);
+    }
+    activeView[key] = value;
+    collection.updateView(
+      activeView.id,
+      {
+        [key]: value
+      },
+      "settings"
+    );
   }
 
   function onArrangementChange(e: CustomEvent) {
@@ -252,7 +276,7 @@
       viewData =
         activeView.data?.filter((x) => {
           return (
-            x.properties?.find((p) => p.id === tabBy)?.value === selectedTab
+            x.properties?.find(resourceInList(tabBy))?.value === selectedTab
           );
         }) ?? [];
     } else {
@@ -451,6 +475,7 @@
             <span slot="additional" class="flex items-center gap-2">
               {#if isSingleViewMode && !isInEditMode}
                 <ArrangementSelector
+                  {isBoardContext}
                   bind:arrangement={selectedArrangement}
                   bind:density={arrangementDensity}
                   on:switch={onArrangementChange}
@@ -550,6 +575,7 @@
                     ]}
                   />
                   <ArrangementSelector
+                    {isBoardContext}
                     bind:arrangement={selectedArrangement}
                     bind:density={arrangementDensity}
                     on:switch={onArrangementChange}
@@ -561,13 +587,13 @@
                 </span>
               </PanelSwitcher>
             {/if}
-            {#if activeView && (isInEditMode || isValidString(activeView.tabBy))}
+            {#if activeView && (isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
                 {#if isInEditMode}
                   <ViewSettingsBar
                     bind:view={activeView}
                     {properties}
-                    on:select={onViewSettingsChange}
+                    on:change={onViewSettingsChange}
                   />
                 {/if}
                 {#if activeView.tabBy}
@@ -604,7 +630,6 @@
           {:else}
             content
           {/if}
-          <ScrollViewBottomSpacer />
         </main>
       </div>
     {/if}
@@ -628,4 +653,4 @@
     {/if}
   </div>
 {/if}
-<!-- <ComponentBaseLayer hasDragAndDrop={true} on:syncDown={() => refresh()} /> -->
+<ComponentBaseLayer hasDragAndDrop={true} on:syncDown={() => refresh()} />

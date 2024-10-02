@@ -1,6 +1,7 @@
 import { Resource } from "./resource.enum";
 import type { ResourceActionType } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
+import { RecordId } from "surrealdb.js";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -55,3 +56,13 @@ export const removeDuplicatesFilter = (
 ) => {
   return self.findIndex((t) => isSameResource(t, item)) === index;
 };
+
+export function stringToRecordId(id: string): IRecordId {
+  const parts = id.split(":");
+  return new RecordId(parts[0], parts[1]);
+}
+
+export function isNoneResource(id: IRecordId | string | undefined) {
+  if (!id) return false;
+  return id.toString()?.split(":")?.pop() === "none";
+}

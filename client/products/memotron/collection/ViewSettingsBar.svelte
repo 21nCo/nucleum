@@ -9,6 +9,9 @@
   } from "$lib/client/products/memotron/collection/collection.type";
   import { Size } from "$lib/client/types/size.enum";
   import { collectionLayoutOptions } from "./collection.store";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+
   export let view: ICollectionView;
   export let properties: DropdownItem[];
   const dropdownSettings: {
@@ -25,6 +28,12 @@
     isShrink: true,
     orientation: Orientation.Vertical
   };
+  function onSelect(key: string, e: CustomEvent) {
+    dispatch("change", {
+      key,
+      value: e.detail
+    });
+  }
 </script>
 
 <div
@@ -36,7 +45,7 @@
       {...dropdownSettings}
       items={collectionLayoutOptions}
       bind:value={view.layout}
-      on:select
+      on:select={(e) => onSelect("layout", e)}
     />
     <!-- TODO - properties selector - multi select -->
     <DropDown
@@ -44,29 +53,29 @@
       {...dropdownSettings}
       items={properties}
       bind:value={view.layout}
-      on:select
+      on:select={(e) => onSelect("properties", e)}
     />
     <DropDown
       label={{ ...dropdownLabelConfig, label: "Tabs" }}
       {...dropdownSettings}
       items={properties}
-      bind:value={view.tabBy}
-      on:select
+      value={view.tabBy.toString()}
+      on:select={(e) => onSelect("tabBy", e)}
     />
     {#if view.layout === CollectionLayout.BOARD}
       <DropDown
         label={{ ...dropdownLabelConfig, label: "Group by" }}
         {...dropdownSettings}
         items={properties}
-        bind:value={view.groupBy}
-        on:select
+        value={view.groupBy.toString()}
+        on:select={(e) => onSelect("groupBy", e)}
       />
       <DropDown
         label={{ ...dropdownLabelConfig, label: "Sub group by" }}
         {...dropdownSettings}
         items={properties}
-        bind:value={view.subGroupBy}
-        on:select
+        value={view.subGroupBy.toString()}
+        on:select={(e) => onSelect("subGroupBy", e)}
       />
     {/if}
   </div>

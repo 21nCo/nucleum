@@ -40,7 +40,7 @@
     options={popoverOptions}
     isPreventDefaultStyling={popoverOptions?.isPreventDefaultStyling}
     bind:isPopoverVisible={isOptionsVisible}
-    triggerClass={cn("flex items-center rounded-md", classList, {
+    triggerClass={cn("flex items-center gap-1 rounded-md", classList, {
       "w-full":
         (label?.orientation === Orientation.Vertical && !label?.isShrink) ||
         !label?.label,

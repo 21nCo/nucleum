@@ -6,6 +6,7 @@ interface HoverableParams {
   tooltip?: string;
   tooltipOptions?: IToolTipOptions;
   isDisabled?: boolean;
+  onHover?: (isHovered: boolean) => void;
 }
 
 export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
@@ -37,6 +38,10 @@ export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
     if (newIsHovered !== isHovered) {
       isHovered = newIsHovered;
       node.dispatchEvent(new CustomEvent("hover", { detail: isHovered }));
+
+      if (params.onHover) {
+        params.onHover(isHovered);
+      }
     }
 
     if (isHovered && params.tooltip) {

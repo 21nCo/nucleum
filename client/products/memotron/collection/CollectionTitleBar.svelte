@@ -14,6 +14,8 @@
   import { CollectionType } from "./collection.type";
   import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { resizeListener } from "$lib/client/actions/resize.action";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
@@ -23,6 +25,8 @@
 
   let contextMenu = [];
   let isSearchFocused: boolean = false;
+  let searchBoxRef: TextInput;
+  let isMiniSearch = false;
   $: contextMenu = resolveCollectionContextMenu(
     $collection,
     ResourceAccessPoint.SELF
@@ -54,9 +58,10 @@
       })}
     >
       {#if isInEditMode}
+        <!-- TODO - setting isInEditMode to false as AvatarPicker is causing freezing issue -->
         <Avatar
           bind:avatar={$collection.avatar}
-          isInEditMode={true}
+          isInEditMode={false}
           on:change={onAvatarChange}
           size={Size.lg}
         />
@@ -122,28 +127,46 @@
       "w-1/3": isInEditMode
     })}
   >
-    {#if $collection.isViewDataRefreshing}
+    <!-- {#if $collection.isViewDataRefreshing}
       <div>
-        <Icon icon="sync" size={Size.sm} />
+        <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
       </div>
-    {/if}
+    {/if} -->
     {#if !isInEditMode}
       <div
-        class={cn("flex flex-1 rounded-full border px-3 py-2", {
+        class={cn("flex rounded-full", {
           "border-aps1": isSearchFocused,
           "border-brs3": !isSearchFocused,
-          "ml-2": isSingleViewMode
+          // "ml-2": isSingleViewMode && !isMiniSearch,
+          "flex-1 border px-3 py-2": !isMiniSearch || isSearchFocused
         })}
+        use:resizeListener={(e) => {
+          isMiniSearch = e.width < 120;
+        }}
       >
-        <TextInput
-          style={InputStyle.PLAIN}
-          bind:value={searchQuery}
-          icon="ph:magnifying-glass"
-          placeholder="Search this collection"
-          on:focus={() => (isSearchFocused = true)}
-          on:blur={() => (isSearchFocused = false)}
-          on:input={onSearchQueryChange}
-        />
+        {#if isMiniSearch && !isSearchFocused}
+          <Button
+            icon="ph:magnifying-glass"
+            tooltip="Search this collection"
+            on:click={() => {
+              isSearchFocused = true;
+              setTimeout(() => {
+                searchBoxRef?.focus();
+              }, 10);
+            }}
+          />
+        {:else}
+          <TextInput
+            style={InputStyle.PLAIN}
+            bind:value={searchQuery}
+            bind:this={searchBoxRef}
+            icon="ph:magnifying-glass"
+            placeholder="Search this collection"
+            on:focus={() => (isSearchFocused = true)}
+            on:blur={() => (isSearchFocused = false)}
+            on:input={onSearchQueryChange}
+          />
+        {/if}
       </div>
     {:else}
       <span class="text-fgs3 text-b3"> Edit mode is on </span>

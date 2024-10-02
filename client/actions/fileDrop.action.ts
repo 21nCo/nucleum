@@ -1,3 +1,12 @@
+/**
+ * Use this action to enable file dropping on a node.
+ *
+ * use onDrop callback to handle the files
+ *
+ * @param node
+ * @param options
+ * @returns
+ */
 export function fileDrop(node: HTMLElement, options = {}) {
   let input: HTMLInputElement;
   const defaultOptions = {

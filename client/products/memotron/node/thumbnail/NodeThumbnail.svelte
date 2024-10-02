@@ -30,6 +30,7 @@
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
+  export let isDraggable: boolean = false;
   let isHovering: boolean = false;
   let isGridBottomHovering = false;
   function resolvePreviewImageSrc(item: INodeThumb) {
@@ -54,6 +55,7 @@
 <ResourceThumbnailBase
   {item}
   {accessPoint}
+  {isDraggable}
   {isApplyCustomColor}
   {arrangement}
   bind:isHovering
@@ -110,7 +112,13 @@
         {/if}
         {#if !isImagePreview}
           <span
-            class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-bgs1/5 to-bgs1"
+            class={cn(
+              "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
+              {
+                "via-bgs1/5 to-bgs1": !isApplyCustomColor,
+                "via-ccs5 to-ccs5": isApplyCustomColor
+              }
+            )}
             style=""
           >
           </span>

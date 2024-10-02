@@ -3,6 +3,9 @@ import type { INodePropertyValue } from "$lib/client/products/memotron/node/node
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { type IProperty, PropertyType } from "./property.type";
 import type { ISelectItem } from "$lib/client/types/select.type";
+import type { IRecordId } from "$lib/client/types/data.type";
+import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
+import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
 
 export function resolvePropertyDefaultValue(property: IProperty) {
   let fallback;
@@ -76,11 +79,14 @@ export function resolvePropertiesForNodePage(properties: IProperty[]) {
 }
 
 export function resolvePropertyOptions(
-  id: string,
-  properties: IProperty[] | null
+  id: IRecordId,
+  properties: IProperty[] | null,
+  params?: {
+    isBoardView?: boolean;
+  }
 ): ISelectItem[] {
   if (!id || !properties) return [];
-  const property = properties.find((p) => p.id === id);
+  const property = properties.find(resourceInList(id));
   if (!property) return [];
   if (
     property.type === PropertyType.SINGLE_SELECT ||
@@ -95,19 +101,32 @@ export function resolvePropertyOptions(
   } else if (property.type === PropertyType.RATING) {
     return [1, 2, 3, 4, 5].map((value) => ({
       value,
-      label: value.toString()
+      label: params?.isBoardView
+        ? property.label + ": " + value.toString()
+        : value.toString()
     }));
   } else if (property.type === PropertyType.CHECKBOX) {
     return [
       {
         value: true,
-        label: "True"
+        label: params?.isBoardView ? property.label + ": True" : "True"
       },
       {
         value: false,
-        label: "False"
+        label: params?.isBoardView ? property.label + ": False" : "False"
       }
     ];
   }
   return [];
 }
+
+export const assignDefaultLabelAsFallback = (
+  property: OmitForCaptureWithId<IProperty>
+) => {
+  return {
+    ...property,
+    label: isValidString(property.label)
+      ? property.label
+      : enumToString(property.type)
+  };
+};

@@ -115,12 +115,12 @@
       : "Edit properties";
   }
 
-  function onRearrange(
+  function onReorder(
     event: CustomEvent<{ from: number; to: number; listId: string }>
   ) {
     logger.log({ at: "PropertiesEditor.onReorder", event });
     const { from, to, listId } = event.detail;
-    if (!from || !to || !listId || listId !== tableId) return;
+    if (!listId || listId !== tableId) return;
     const [movedItem] = $propertyEditorStore.splice(from, 1);
     $propertyEditorStore.splice(to, 0, movedItem);
     $propertyEditorStore = $propertyEditorStore;
@@ -136,12 +136,12 @@
       addAction="add property"
       actions={[
         { action: "remove", index: 0 },
-        { action: "rearrange", index: 1 }
+        { action: "reorder", index: 1 }
       ]}
       {columns}
       bind:data={$propertyEditorStore}
       on:add={onAdd}
-      on:rearrange={onRearrange}
+      on:reorder={onReorder}
     />
   </div>
   <ModalFooter

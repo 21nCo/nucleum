@@ -11,16 +11,21 @@
   import { createEventDispatcher, onMount } from "svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import type { PropertyConfigOption } from "../../property.type";
+  import { hoverable } from "$lib/client/actions/hover.action";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
   export let option: PropertyConfigOption;
+  export let index: number;
   export let isFocusing: boolean = false;
   export let isHovering: boolean = false;
   let textInputRef: any;
+  let isColorPickerOpen: boolean = false;
+  let colorPickerPopoverRef: any;
   if (isFocusing) textInputRef?.focus();
   onMount(() => {
     if (isFocusing) textInputRef?.focus();
   });
-  if (!option.color) option.color = Math.random() * 360;
+  if (option && !option.color) option.color = Math.random() * 360;
 </script>
 
 <div
@@ -31,18 +36,21 @@
       "border-brs3": !isFocusing
     }
   )}
-  on:pointerenter={() => {
-    isHovering = true;
-  }}
-  on:pointerleave={() => {
-    isHovering = false;
+  data-index={index}
+  draggable={!isColorPickerOpen}
+  use:hoverable={{
+    onHover: (e) => (isHovering = e)
   }}
 >
-  <Icon icon="bars" />
+  <span class="cursor-move h-full flex flex-col items-center justify-center">
+    <Icon icon="ph:dots-six-vertical-bold" class="stroke-fgs3" />
+  </span>
   <Popover
     triggerClass="flex items-center w-6 h-full"
+    bind:isPopoverVisible={isColorPickerOpen}
+    bind:this={colorPickerPopoverRef}
     options={{
-      class: "w-80 h-48 p-4",
+      class: "w-80 min-h-fit p-4",
       id: "colorpickerforoption"
     }}
   >
@@ -54,12 +62,21 @@
         class="absolute top-0.5 left-0.5 rounded-full h-4 w-4 border-[1.5px] border-brs2 bg-ccs1"
       />
     </CustomColorPropagator>
-    <svelte:fragment slot="popover">
+    <div slot="popover" class="flex flex-col items-center justify-center gap-8">
       <ColorPicker
         bind:hue={option.color}
+        isShowPreview={false}
         label={{ label: "Choose color", orientation: Orientation.Vertical }}
       />
-    </svelte:fragment>
+      <Button
+        label="Done"
+        style={ButtonStyle.OUTLINED}
+        size={Size.sm}
+        on:click={() => {
+          colorPickerPopoverRef?.hide();
+        }}
+      />
+    </div>
   </Popover>
   <TextInput
     bind:this={textInputRef}
@@ -72,6 +89,7 @@
     }}
     on:focus={() => {
       isFocusing = true;
+      colorPickerPopoverRef?.hide();
     }}
     on:blur={() => {
       isFocusing = false;
@@ -86,7 +104,7 @@
           tooltip={"Set as default"}
           on:click={(e) => {
             dispatch("default", option.id);
-            e.stopPropagation();
+            e.detail?.stopPropagation();
           }}
         />
       {/if}
@@ -96,7 +114,7 @@
         tooltip={"Remove"}
         on:click={(e) => {
           dispatch("remove", option.id);
-          e.stopPropagation();
+          e.detail?.stopPropagation();
         }}
       />
     </div>

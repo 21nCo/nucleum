@@ -20,13 +20,16 @@ import {
 import { Arrangement } from "$lib/client/types/direction.enum";
 import {
   ResourceAccessPoint,
-  type OmitForCapture
+  type OmitForCapture,
+  type OmitForCaptureWithId
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "../common/resource.actions";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux } from "$lib/client/components/flux/flux";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { assignDefaultLabelAsFallback } from "./properties/property.utils";
+import type { IProperty } from "./properties/property.type";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -34,7 +37,8 @@ class CollectionStore extends ResourceStore<ICollection> {
   }
   async save(form: Partial<ICollection> & { defaultLayout: CollectionLayout }) {
     const id = generateResourceId(Resource.collection);
-    const properties = propertyEditorStore.get();
+    let properties: OmitForCaptureWithId<IProperty>[] =
+      propertyEditorStore.get();
     const resource: OmitForCapture<ICollection> = {
       ...form,
       id,
@@ -44,6 +48,7 @@ class CollectionStore extends ResourceStore<ICollection> {
       type: form.type ?? CollectionType.UNTYPED
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
+      properties = properties.map(assignDefaultLabelAsFallback);
       await propertyStore.create(properties);
       resource.properties = properties.map((p) => p.id);
     }
@@ -287,7 +292,8 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   }
 
   async updateProperties() {
-    const properties = propertyEditorStore.get();
+    let properties = propertyEditorStore.get();
+    properties = properties.map(assignDefaultLabelAsFallback);
     if (!properties) return;
     for (const property of properties) {
       await propertyStore.modify(property.id, property);
