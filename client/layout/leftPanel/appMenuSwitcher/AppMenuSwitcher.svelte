@@ -2,7 +2,7 @@
   import { LayoutContext } from "$lib/client/types/layout.type";
   import { onMount } from "svelte";
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
-  import type { IAction } from "$lib/client/types/action.type";
+  import { ActionType, type IAction } from "$lib/client/types/action.type";
   import CaptureComponent from "$lib/client/components/CaptureComponent.svelte";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
   import { appMenuStore } from "../../../stores/appMenu/appMenu.store";
@@ -67,7 +67,11 @@
     }
     isInEditMode.set(false);
     console.log({ item, selected: current });
-    if (current !== item.action || window.location.pathname.includes("/tab")) {
+    if (
+      current !== item.action ||
+      window.location.pathname.includes("/tab") ||
+      item.type !== ActionType.PAGE
+    ) {
       appStore.runAction(item.action);
     }
     current = item.action;

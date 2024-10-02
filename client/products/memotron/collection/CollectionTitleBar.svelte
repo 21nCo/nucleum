@@ -26,7 +26,7 @@
   let contextMenu = [];
   let isSearchFocused: boolean = false;
   let searchBoxRef: TextInput;
-  let isMiniSearch = false;
+  let rightPartWidth = 0;
   $: contextMenu = resolveCollectionContextMenu(
     $collection,
     ResourceAccessPoint.SELF
@@ -126,6 +126,9 @@
       "w-1/2": !isInEditMode,
       "w-1/3": isInEditMode
     })}
+    use:resizeListener={(e) => {
+      rightPartWidth = e.width;
+    }}
   >
     <!-- {#if $collection.isViewDataRefreshing}
       <div>
@@ -133,6 +136,7 @@
       </div>
     {/if} -->
     {#if !isInEditMode}
+      {@const isMiniSearch = rightPartWidth < 530}
       <div
         class={cn("flex rounded-full", {
           "border-aps1": isSearchFocused,
@@ -140,9 +144,6 @@
           // "ml-2": isSingleViewMode && !isMiniSearch,
           "flex-1 border px-3 py-2": !isMiniSearch || isSearchFocused
         })}
-        use:resizeListener={(e) => {
-          isMiniSearch = e.width < 120;
-        }}
       >
         {#if isMiniSearch && !isSearchFocused}
           <Button
@@ -168,8 +169,8 @@
           />
         {/if}
       </div>
-    {:else}
-      <span class="text-fgs3 text-b3"> Edit mode is on </span>
+    {:else if rightPartWidth > 300}
+      <span class="text-fgs3 text-b3 whitespace-nowrap"> Edit mode is on </span>
     {/if}
     {#if !isSearchFocused}
       <slot name="additional"></slot>
@@ -187,7 +188,11 @@
         tooltip={isInEditMode ? "Exit edit mode" : "Enter edit mode"}
         bind:on={isInEditMode}
       />
-      <ContextMenuAction {contextMenu} id="collectionContextMenu" />
+      <ContextMenuAction
+        {contextMenu}
+        id="collectionContextMenu"
+        size={Size.lg}
+      />
       {#if isSingleViewMode}
         <AddResourceAction on:add isMinimalVariant={true} />
       {/if}

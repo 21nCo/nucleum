@@ -8,13 +8,14 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import LinkItems from "../../common/linkbox/LinkItems.svelte";
   import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
   import type { IActiveNodeStore } from "../node.store";
-  import { resolveNodeIcon } from "../node.utils";
+  import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { tooltip } from "$lib/client/actions/popover.action";
 
   export let node: IActiveNodeStore;
   let searchQuery = "";
@@ -56,12 +57,16 @@
     class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
     on:click={() => {
       appStore.closeResource();
-      appStore.gotoPath("library", {
+      appStore.gotoPath("/library", {
         queryParams: {
           resource: Resource.node,
           type: $node.contentType.toLowerCase()
         }
       });
+    }}
+    use:tooltip={{
+      text: `See all ${resolveNodeContentLabel($node.contentType)} nodes`,
+      direction: Placement.Bottom
     }}
   >
     <Icon

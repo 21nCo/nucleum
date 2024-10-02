@@ -251,7 +251,11 @@
         resource={pop.resource}
         params={{
           ...pop?.params,
-          layout: { ...pop.params?.layout, isShowCantileverClose: true }
+          layout: {
+            ...pop.params?.layout,
+            isShowCantileverClose: true,
+            isShowBackButton: true
+          }
         }}
       >
         <SplitView

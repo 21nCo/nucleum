@@ -42,6 +42,7 @@
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "../collection/collection.utils";
+  import { page } from "$app/stores";
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -103,6 +104,14 @@
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   onMount(async () => {
+    const resourceParam = $page.url.searchParams.get("resource");
+    if (resourceParam) {
+      selectedResource = resourceParam as Resource;
+    }
+    const typeParam = $page.url.searchParams.get("type");
+    if (typeParam) {
+      selectedSubType = typeParam.toUpperCase() as NodeType;
+    }
     await refresh();
   });
   async function refresh() {
@@ -291,7 +300,13 @@
         <ResourceSwitcher
           options={resources}
           bind:selected={selectedResource}
-          on:select={refresh}
+          on:select={() => {
+            appStore.toggleSearchParam({
+              resource: selectedResource
+            });
+            selectedSubType = "all";
+            refresh();
+          }}
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>

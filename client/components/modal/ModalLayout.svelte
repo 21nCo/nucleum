@@ -20,6 +20,9 @@
   import { logger } from "../debug/logger.client";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import { tooltip } from "$lib/client/actions/popover.action";
+  import { Placement } from "$lib/client/types/direction.enum";
+
   export let path: string;
   export let resource: string | undefined = undefined;
   export let params: ModalParams;
@@ -136,8 +139,28 @@
       <button
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
         on:click={() => handleClose()}
+        use:tooltip={{ text: "Close", direction: Placement.Left }}
       >
-        <Icon icon="cross" size={Size.lg} class="stroke-abg" />
+        <Icon icon="ph:x-light" size={Size.lg} class="stroke-abg" />
+      </button>
+    {/if}
+    {#if params.layout?.isShowBackButton}
+      <button
+        class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
+        on:click={() => {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            console.log("No previous page in history");
+          }
+        }}
+        use:tooltip={{ text: "Go back", direction: Placement.Left }}
+      >
+        <Icon
+          icon="ph:arrow-bend-down-left-light"
+          size={Size.lg}
+          class="stroke-abg"
+        />
       </button>
     {/if}
   </div>

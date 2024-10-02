@@ -201,6 +201,11 @@ export function resizeListener(
   return {
     destroy() {
       resizeObserver.disconnect();
+    },
+    update(
+      newCallback: (dimensions: { width: number; height: number }) => void
+    ) {
+      callback = newCallback;
     }
   };
 }
