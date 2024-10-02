@@ -8,7 +8,9 @@
 </script>
 
 <Section>
-  <div class={"flex flex-col items-center text-center mt-16 -mb-12 mo:-mb-10"}>
+  <div
+    class={"flex flex-col items-center text-center mt-[75px] -mb-12 mo:-mb-10"}
+  >
     {#if commingSoonSectionInputs.label}
       {@const label = commingSoonSectionInputs.label}
       <div
@@ -20,7 +22,7 @@
     {#if commingSoonSectionInputs.description}
       {@const description = commingSoonSectionInputs.description}
       <p
-        class={"text-h2 mo:text-base font-medium mo:font-normal leading-9 mo:leading-5 mo:w-[303px] mt-4 w-[994px]"}
+        class={"text-h2 mo:text-base font-medium mo:font-normal leading-9 mo:leading-5 mo:w-[303px] mt-3 w-[994px]"}
       >
         {description}
       </p>

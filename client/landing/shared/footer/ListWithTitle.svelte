@@ -16,14 +16,16 @@
     {#if item.title && item.href}
       <a
         class={cn(
-          "block text-fgs1 text-[20px] font-medium leading-[28px] hover:text-aps1",
+          "block text-fgs1 text-[16px] tp:text-[20px] font-medium leading-[28px] hover:text-aps1",
           currentPath.includes(item.title.toLowerCase()) &&
             "pointer-events-none opacity-30"
         )}
         href={item.href}>{item.title}</a
       >
     {:else}
-      <p class="text-fgs3 text-base underline font-normal leading-[22px] mt-4">
+      <p
+        class="text-fgs3 mo:text-[14px] tp:text-base underline font-normal leading-[22px] mt-4"
+      >
         {item.title}
       </p>
     {/if}

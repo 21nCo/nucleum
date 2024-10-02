@@ -41,7 +41,7 @@
   {#if $isProductsPage}
     <LeftPanel />
   {/if}
-  <div {id} class="w-full overflow-auto">
+  <div {id} class="w-full overflow-y-auto">
     <TopNavBar {topNavBarValues} />
     <slot />
     {#if !isComingSoon}

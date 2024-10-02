@@ -9,7 +9,6 @@
   import Button from "./elements/Button.svelte";
   import { isProductsPage, isProductsPanelOpen } from "./store/shared.store";
   import DayAndNightToggle from "./DayAndNightToggle.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
   import ButtonAsLink from "./ButtonAsLink.svelte";
 
   export let topNavBarValues: ITopNavBar;
@@ -36,12 +35,12 @@
 </script>
 
 <div
-  class="flex w-full items-center justify-center sticky top-0 z-50 bg-bgs1 pb-4"
+  class="flex w-full items-center justify-center sticky top-0 z-50 pb-4 box-content bg-bgs1 tp:pt-[11px]"
 >
   <div class="w-[1440px] mo:w-full">
-    <div class="w-full flex pt-7 pr-5 pl-10 mo:pl-4 h-16 mo:h-20">
+    <div class="w-full flex pt-7 pr-5 pl-5 mo:px-5 h-16 mo:h-20">
       <div class="flex flex-col justify-end">
-        <div class="flex items-end">
+        <div class="flex items-end gap-2">
           {#if topNavBarValues.icon}
             {@const icon = topNavBarValues.icon}
             {@const size = $view.isPortrait
@@ -71,7 +70,7 @@
                   (window.location.href = "https://blanklabs.org")}
               >
                 Blank.coop
-                <div class="h-px bg-dividerHorizontal" />
+                <div class="h-px bg-dividerHorizontal mt-[2px]" />
               </button>
             {/if}
             {#if topNavBarValues.title}
@@ -79,7 +78,7 @@
               <p
                 class={cn(
                   "font-extrabold leading-10",
-                  $isProductsPage && "text-h2 mo:text-h4 mt-2 mo:leading-5",
+                  $isProductsPage && "text-h2 mo:text-h4 mt-2 mo:leading-6",
                   !$isProductsPage && "text-h1 mo:text-h3 mo:leading-10"
                 )}
               >
@@ -105,21 +104,20 @@
             "flex dp:gap-8 tp:gap-2",
             !isExpandHamMenu && "mo:hidden",
             isExpandHamMenu &&
-              "animate-slide-down mo:flex mo:flex-col mo:fixed mo:w-screen mo:h-full bg-bgs1 left-0 top-20 mo:items-center mo:py-14 mo:gap-7 flex-shrink flex-grow"
+              "animate-slide-down mo:flex mo:flex-col mo:fixed mo:w-screen mo:h-full bg-bgs1 left-0 top-20 mo:items-center mo:py-14 mo:gap-7 flex-shrink mo:flex-grow"
           )}
         >
           {#each topNavBarValues.items as item}
             <a
               class={cn(
                 "block text-fgs1 text-[20px] font-medium leading-[28px] hover:text-aps1",
-                topNavBarValues.items.length > 1 && "tp:text-[16px]",
-                isExpandHamMenu && "mo:text-[20px]"
+                $isProductsPage && "text-[18px]"
               )}
               href={item.href}>{item.label}</a
             >
           {/each}
           {#if topNavBarValues.cta}
-            {@const className = "-mt-3 mo:text-[20px] tp:text-[16px] w-fit"}
+            {@const className = "-mt-3 mo:text-[18px] tp:text-[18px] w-fit"}
             <Button
               label={topNavBarValues.cta.label}
               isShort={true}

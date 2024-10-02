@@ -8,15 +8,16 @@
 </script>
 
 <div
-  class={cn(
-    "flex items-center justify-end min-w-[145px] h-[36px] border-b border-fgs3 border-dashed pb-0 mt-6",
-    className
-  )}
+  class={cn("h-[36px] mt-6 max-w-fit p-0", className)}
   role="button"
   tabindex="0"
   on:click
   on:keypress
 >
-  <p class="text-[16px] leading-9 text-center">{label}</p>
-  <SvgIcon icon="long-arrow-right" size={Size.sm} class="ml-2" />
+  <p
+    class="text-[16px] tp:text-[20px] font-medium leading-[20px] text-center border-b border-fgs3 border-dashed"
+  >
+    {label}
+  </p>
+  <!-- <SvgIcon icon="long-arrow-right" size={Size.sm} class="ml-2" /> -->
 </div>

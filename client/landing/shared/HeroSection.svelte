@@ -1,7 +1,9 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
+  import { Theme } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import ButtonAsLink from "./ButtonAsLink.svelte";
@@ -24,11 +26,21 @@
 </script>
 
 <Section class={cn("relative justify-center mo:min-h-[92vh]", className)}>
+  <!-- {#if $appearance.theme === Theme.DARK && !$view.isPortrait}
+    <div
+      style="background: radial-gradient(circle at 50% 50%, rgba(39,61,38,00.5) 0%, rgba(39,61,38,0) 50%);"
+      class="absolute w-[800px] h-[800px] -top-[180px] -left-[170px] z-0 pointer-events-none rounded-full"
+    ></div>
+    <div
+      style="background: radial-gradient(circle at 50% 50%, rgba(39,61,38,0.5) 0%, rgba(39,61,38,0) 40%);"
+      class="absolute w-[800px] h-[800px] -top-[100px] -right-[120px] z-0 pointer-events-none"
+    ></div>
+  {/if} -->
   <div
     class={cn(
       "flex flex-col items-center text-center",
       !$isProductsPage && "justify-center -mt-32",
-      $isProductsPage && "mt-16"
+      $isProductsPage && "mt-8"
     )}
   >
     {#if heroInputs.title}
@@ -75,8 +87,9 @@
         iconPosition="end"
         on:click={() => {
           const url = heroInputs?.btn1?.iosDownloadUrl;
+          console.log(url);
           if (url) {
-            goto(url);
+            window.location.href = url;
           }
         }}
       />
@@ -88,7 +101,7 @@
           on:click={() => {
             const url = heroInputs?.btn2?.macDownloadUrl;
             if (url) {
-              goto(url);
+              window.location.href = url;
             }
           }}
         />

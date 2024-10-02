@@ -10,12 +10,13 @@
 <div
   class="flex items-center justify-center gap-8 mo:gap-4 h-[57px] mo:flex-col w-full mt-8 tp:mt-17"
 >
-  <div class="tp:w-[524px] w-full">
-    <TextInput value={email} placeholder="Enter your email address" />
+  <div class="tp:w-[524px] w-full h-full">
+    <input
+      type="email"
+      bind:value={email}
+      placeholder="Enter your email address"
+      class="w-full h-full bg-bgs1 text-fgs1 border border-brs4 p-4 rounded-lg text-[15px]"
+    />
   </div>
-  <Button
-    label="Get early access"
-    class="pt-[5px] pb-[5px] pl-8 pr-8"
-    on:click={onSubscribe}
-  />
+  <Button isShort={true} label="Get early access" on:click={onSubscribe} />
 </div>

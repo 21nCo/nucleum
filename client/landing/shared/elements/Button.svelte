@@ -31,11 +31,13 @@
   class={cn(
     "box-border flex items-center justify-center gap-3 rounded-xl font-medium",
     type == "primary" &&
-      "bg-fgs1 hover:bg-fgs2 text-bgs1 text-[24px] mo:text-[16px] leading-[33px] mo:leading-[22px]",
+      "bg-fgs1 hover:bg-fgs2 text-bgs1 mo:text-[16px] leading-[33px] mo:leading-[22px]",
     type == "secondary" &&
       "bg-bgs3 hover:bg-bgs4 text-fgs1 text-[20px] leading-7",
-    isShort && "py-[12px] px-5",
-    !isShort && "py-4 px-[60px]",
+    isShort && "py-[12px] px-6",
+    type == "primary" && isShort && "text-[20px]",
+    type == "primary" && !isShort && "text-[24px]",
+    !isShort && "py-5 px-[60px]",
     type == "secondary" && !isShort && "w-[360px]",
     iconPosition == "start" && "flex-row-reverse",
     className

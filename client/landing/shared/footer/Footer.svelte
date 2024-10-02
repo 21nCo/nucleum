@@ -14,7 +14,8 @@
   import view from "$lib/client/stores/view.store";
   import { Theme } from "$lib/client/types/appearance.type";
   import QrElement from "../elements/QRElement.svelte";
-  import { isProductsPage } from "../store/shared.store";
+  import { isProductsPage, isProductsPanelOpen } from "../store/shared.store";
+  import ButtonAsLink from "../ButtonAsLink.svelte";
   export let products: IListItem[];
   export let url: string = "https://blanklabs.org";
 
@@ -27,12 +28,10 @@
     fgLight: "hsla(0, 0%, 20%, 1)"
   };
   function handleHover(index: number) {
-    console.log(index);
     socials[index].isHovered = true;
   }
 
   function handleLeave(index: number) {
-    console.log(index);
     socials[index].isHovered = false;
   }
   let socials = [
@@ -101,6 +100,11 @@
     {#if $view.isPortrait}
       <Box>
         <ListWithTitle items={combinedLI} />
+        <ButtonAsLink
+          class="mt-[16px] ml-[0px]"
+          label="See all products"
+          on:click={() => ($isProductsPanelOpen = true)}
+        />
       </Box>
     {:else}
       <div class="w-full flex justify-between">
@@ -117,6 +121,11 @@
         </Box>
         <Box>
           <ListWithTitle items={products} />
+          <ButtonAsLink
+            class="mt-[16px] ml-[0px]"
+            label="See all products"
+            on:click={() => ($isProductsPanelOpen = true)}
+          />
         </Box>
       </div>
       <div class="w-full flex gap-x-7">
