@@ -11,6 +11,16 @@
   import { onMount } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import {
+    SearchType,
+    type IResourceSelectOrderBy
+  } from "$lib/client/types/data.type";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { debouncer } from "$lib/client/utils/utils";
+
   let resource: Resource = Resource.everything;
   let isFiltersVisible: boolean = false;
   let data: any[] = [];
@@ -42,9 +52,19 @@
   });
   async function refresh() {
     if (isValidString(searchQuery)) {
+      let orderBy: IResourceSelectOrderBy | undefined;
+      let semanticSearchTopK: number | undefined;
+      if (searchStore.searchType == SearchType.SEMANTIC) {
+        orderBy = {
+          dist: "desc",
+          createdAt: "desc"
+        };
+      }
       data = await searchStore.select({
         resource,
         searchQuery,
+        orderBy,
+        semanticSearchTopK,
         isStarFilterSelected
       });
     } else {
@@ -52,28 +72,59 @@
       recents = await searchStore.recents(resource);
     }
   }
+  const debouncedSearch = debouncer(refresh, 500);
 </script>
 
 <div class="flex flex-col gap-4 w-full h-full">
   <header class="flex flex-col w-full">
-    <div class="flex justify-between p-4">
+    <div class="flex p-4">
       <span>
         <input
           bind:this={inputRef}
           bind:value={searchQuery}
-          on:keyup={refresh}
+          on:keyup={debouncedSearch}
           type="text"
           placeholder="Search resources"
           class="text-h3 w-full bg-transparent focus:outline-none focus:border-none"
         />
       </span>
-      <span class="flex gap-2 items-center">
-        <Toggle
-          icon="adjustments-vertical"
-          size={Size.sm}
-          bind:on={isFiltersVisible}
-        />
-      </span>
+      <div class="flex gap-2 ml-auto">
+        {#if isFiltersVisible}
+          <SwitchInput
+            label={{ label: "Semantic", orientation: Orientation.Horizontal }}
+            size={Size.sm}
+            on:change={(e) => {
+              if (e.detail) {
+                searchStore.searchType = SearchType.SEMANTIC;
+              } else {
+                searchStore.searchType = SearchType.FULL_TEXT;
+              }
+              refresh();
+            }}
+            checked={searchStore.searchType === SearchType.SEMANTIC}
+          />
+
+          <Button
+            icon="funnel"
+            style={ButtonStyle.OUTLINED}
+            size={Size.sm}
+            label="Filters"
+          />
+          <Button
+            icon="bars-center-left"
+            style={ButtonStyle.OUTLINED}
+            size={Size.sm}
+            label="Sort"
+          />
+        {/if}
+        <span class="flex gap-2 items-center">
+          <Toggle
+            icon="adjustments-vertical"
+            size={Size.sm}
+            bind:on={isFiltersVisible}
+          />
+        </span>
+      </div>
     </div>
     <PanelSwitcher
       items={switchItems}
