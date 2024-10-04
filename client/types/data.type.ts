@@ -287,8 +287,10 @@ export type IResourceFilterValue =
   | undefined
   | IPrimitiveDbDataType[]
   | {
-      from: IPrimitiveDbDataType;
-      to: IPrimitiveDbDataType;
+      greaterThan?: IPrimitiveDbDataType;
+      lessThan?: IPrimitiveDbDataType;
+      greaterThanOrEqual?: IPrimitiveDbDataType;
+      lessThanOrEqual?: IPrimitiveDbDataType;
     };
 
 export type IResourceSelectOrderBy = {
@@ -396,10 +398,11 @@ export type IMutation = {
   id: string;
   createdAt: string;
   modifiedAt: string;
+  timestamp: number;
   dapId: string;
   userId: string;
   resource: string;
-  resourceId?: IRecordId;
+  resourceId?: IRecordId | IRecordId[];
   action: ResourceActionType;
   params: IMutationParamsv2<any>;
 };

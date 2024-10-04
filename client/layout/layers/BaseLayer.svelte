@@ -26,6 +26,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
   import { Persistence } from "$lib/client/persistence/persistence";
+  import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
 
   let timer: any;
   pingParent();
@@ -259,4 +260,7 @@
     <slot />
   </ThemeLayer>
 </div>
+{#if $context.isEmbed}
+  <EmbedTelemetry />
+{/if}
 <svelte:document on:visibilitychange={visibilityChangeListener} />

@@ -40,7 +40,9 @@
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
   let fullscreen: string | undefined;
-  let pop: { path: string; resource: string; params: ModalParams } | undefined;
+  let pop:
+    | { path: string; resource: string; modalParams: ModalParams }
+    | undefined;
   $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let isShowSyncErrorMessage: boolean = false;
@@ -119,18 +121,17 @@
     }
   });
   function resolvePop(resourceId: string) {
-    if (resourceId && resourceId.split(":").length > 1) {
-      const slug = resourceId.split(":")[0];
-      const action = appStore.resolveAction(slug);
-      if (!action) return;
-      pop = {
-        path: slug,
-        resource: resourceId,
-        params: {
-          ...action.modalParams
-        }
-      };
-    }
+    if (!resourceId) return;
+    const slug = resourceId.split(":")[0];
+    const action = appStore.resolveAction(slug);
+    if (!action) return;
+    pop = {
+      path: slug,
+      resource: resourceId,
+      modalParams: {
+        ...action.modalParams
+      }
+    };
   }
 
   const visibilityChangeListener = () => {
@@ -237,24 +238,26 @@
   {#if pop}
     <Modal
       show={pop != undefined}
-      id={pop.path + "-pop"}
-      isDismissable={pop.params?.isDismissable ?? true}
-      isShowOverlay={pop.params?.isShowOverlay ?? true}
-      isUseDialog={pop.params?.layout?.size != Size.full &&
+      id={pop.path + "-resource"}
+      isDismissable={pop.modalParams?.isDismissable ?? true}
+      isShowOverlay={pop.modalParams?.isShowOverlay ?? true}
+      isUseDialog={pop.modalParams?.layout?.size != Size.full &&
         $context.embed != Embed.HANDSET &&
         isDialogEnabled}
-      size={pop.params?.layout?.size ?? Size.md}
-      orientation={pop.params?.layout?.orientation ?? Orientation.Horizontal}
+      size={pop.modalParams?.layout?.size ?? Size.md}
+      orientation={pop.modalParams?.layout?.orientation ??
+        Orientation.Horizontal}
     >
       <ModalLayout
         path={pop.path}
         resource={pop.resource}
         params={{
-          ...pop?.params,
+          ...pop?.modalParams,
           layout: {
-            ...pop.params?.layout,
-            isShowCantileverClose: true,
-            isShowBackButton: true
+            ...pop.modalParams?.layout,
+            isShowCantileverClose:
+              pop.modalParams?.layout?.isShowCantileverClose,
+            isShowBackButton: pop.modalParams?.layout?.isShowBackButton
           }
         }}
       >

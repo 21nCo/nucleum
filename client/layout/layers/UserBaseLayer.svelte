@@ -50,6 +50,7 @@
 
   let loadingMessage: string = "";
   let error: string | null = null;
+  let dev_isDisableSyncOnAppear = false;
 
   onMount(async () => {
     if ((<any>window).Intercom)
@@ -87,8 +88,8 @@
   async function onAppear() {
     refreshTimeZone();
     const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
-    if (isCloudUser) {
-      toasts.sync();
+    if (isCloudUser && !dev_isDisableSyncOnAppear) {
+      // toasts.sync();
       await flux.syncDown();
       account.ping();
     }
@@ -233,7 +234,7 @@
       PersistenceProvider.SURREAL_SURREAL,
       new SurrealPersistence(),
       userId,
-      { isLocalMode }
+      { isLocalMode, appVersion: $appStore.appData?.version }
     );
   }
 

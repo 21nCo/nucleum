@@ -11,6 +11,8 @@
   import ColorLayer from "$lib/client/layout/layers/themeLayer/ColorLayer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import { logger } from "../debug/logger.client";
+  import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   export let index: number = 0;
   export let show = true;
   export let title: string = "";
@@ -69,11 +71,15 @@
   };
 
   function close() {
-    logger.log({ at: "close", id });
+    const frontModal = resolveModalOnFront();
+    logger.log({ at: "Modal.svelte close", id, frontModal });
+    confirmationNotification.reset();
+    if (frontModal?.id?.includes("-resource")) {
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+    }
+    if (!frontModal || id != frontModal?.id) return;
     show = false;
     modalEvent.hide(id, "Modal.svelte");
-    confirmationNotification.reset();
-    appStore.closeResource({ isRestrictToModals: true });
   }
 
   /**
@@ -99,13 +105,13 @@
         orientation === Orientation.Vertical && size === Size.md,
       "w-[30rem] 2k:w-[35rem] h-[30rem] 2k:h-[40rem]":
         orientation === Orientation.Vertical && size === Size.sm,
-      "w-[80rem] max-w-9/10 2k:w-[110rem] h-[56rem] max-h-full 2k:h-full vm:h-[80rem]":
+      "w-[80rem] max-w-9/10 2k:w-[110rem] h-[56rem] 2k:h-full vm:h-[80rem]":
         orientation === Orientation.Horizontal && size === Size.xxl,
-      "w-[70rem] max-w-9/10 2k:w-[100rem] h-[56rem] max-h-full 2k:h-[70rem] vm:h-[70rem]":
+      "w-[70rem] max-w-9/10 2k:w-[100rem] h-[56rem] 2k:h-[70rem] vm:h-[70rem]":
         orientation === Orientation.Horizontal && size === Size.xl,
-      "w-[60rem] max-w-9/10 2k:w-[80rem] h-[50rem] max-h-full 2k:h-[60rem]":
+      "w-[60rem] max-w-9/10 2k:w-[80rem] h-[50rem] 2k:h-[60rem]":
         orientation === Orientation.Horizontal && size === Size.lg,
-      "w-[50rem] max-w-9/10 2k:w-[60rem] h-[40rem] max-h-full 2k:h-[50rem]":
+      "w-[50rem] max-w-9/10 2k:w-[60rem] h-[40rem] 2k:h-[50rem]":
         orientation === Orientation.Horizontal && size === Size.md
     };
   }
@@ -149,7 +155,7 @@
         id={id + "-modal"}
         on:close|preventDefault={handleClose}
         class={cn(
-          "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full",
+          "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full max-h-full",
           {
             "bg-bgs1 overlay": isShowOverlay,
             "overlay-light": isShowOverlay && !$appearance.colorScheme.isDark,
@@ -167,7 +173,7 @@
     {:else}
       <div
         id={id + "-modal"}
-        class={cn("bg-bgs1 mo:w-full mo:h-full", {
+        class={cn("bg-bgs1 mo:w-full mo:h-full max-h-full", {
           ...resolveSizeClasses(),
           "mo:rounded-none rounded-md": size !== Size.full
         })}

@@ -91,6 +91,7 @@ export enum RemotePersistenceProvider {
 export interface IPersistenceInitParams {
   isLocalMode?: boolean;
   dbo?: string[];
+  appVersion?: string;
 }
 
 export interface ISyncHandler {

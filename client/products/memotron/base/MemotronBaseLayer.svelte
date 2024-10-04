@@ -18,6 +18,7 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { captureStore } from "../capture/capture.store";
   import { CaptureType } from "../capture/capture.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
 
   onMount(async () => {
@@ -59,9 +60,7 @@
   function handleDragEnter(event: DragEvent) {
     if (!event.relatedTarget && !$appStore.isDnDPageActive) {
       $captureStore.captureType = CaptureType.UPLOAD;
-      appStore.runAction(MemotronAction.CAPTURE, {
-        componentParams: { isWindowDnD: true }
-      });
+      appStore.runAction(MemotronAction.CAPTURE_DND);
     }
   }
 
@@ -71,7 +70,10 @@
       !$appStore.isDnDPageActive &&
       !window.location.pathname.includes("/tab")
     ) {
-      modalEvent.hide(MemotronAction.CAPTURE);
+      appStore.closeResource({
+        id: MemotronAction.CAPTURE_DND,
+        accessMode: ResourceAccessMode.POP
+      });
     }
   }
 </script>

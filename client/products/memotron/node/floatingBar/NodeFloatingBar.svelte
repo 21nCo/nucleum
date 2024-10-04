@@ -80,6 +80,7 @@
       size={Size.lg}
       id="nodeContextMenu"
       tooltip="More actions"
+      position={Placement.TopCenter}
       on:action
     />
     <Divider

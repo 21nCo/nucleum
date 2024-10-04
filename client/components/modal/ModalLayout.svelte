@@ -22,6 +22,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { Placement } from "$lib/client/types/direction.enum";
+  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
 
   export let path: string;
   export let resource: string | undefined = undefined;
@@ -50,9 +51,13 @@
   export function close() {
     footerRef.close();
   }
-  function handleClose() {
+  function handleClose(accessMode?: ResourceAccessMode) {
     if (path === Action.CONFIRMATION) confirmationNotification.reset();
-    else if (resource) appStore.closeResource({ inlineRestoreId: resource });
+    else if (resource)
+      appStore.closeResource({
+        inlineRestoreId: resource,
+        accessMode: accessMode
+      });
     else modalEvent.hide(path, "ModalLayout.svelte");
   }
 </script>
@@ -138,7 +143,7 @@
     {#if params.layout?.isShowCantileverClose}
       <button
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
-        on:click={() => handleClose()}
+        on:click={() => handleClose(ResourceAccessMode.POP)}
         use:tooltip={{ text: "Close", direction: Placement.Left }}
       >
         <Icon icon="ph:x-light" size={Size.lg} class="stroke-abg" />
@@ -147,19 +152,13 @@
     {#if params.layout?.isShowBackButton}
       <button
         class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:bg-opacity-80"
-        on:click={() => {
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            console.log("No previous page in history");
-          }
-        }}
+        on:click={() => appStore.goBack(resource)}
         use:tooltip={{ text: "Go back", direction: Placement.Left }}
       >
         <Icon
           icon="ph:arrow-bend-down-left-light"
           size={Size.lg}
-          class="stroke-abg"
+          class="stroke-fgs1"
         />
       </button>
     {/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { popover } from "$lib/client/actions/popover.action";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
   import { Placement } from "$lib/client/types/direction.enum";
@@ -46,7 +47,7 @@
   }
 </script>
 
-<Popover
+<!-- <Popover
   bind:this={contextMenuPopoverRef}
   bind:isPopoverVisible
   triggerMethod={triggerMethod ??
@@ -82,4 +83,30 @@
       }}
     />
   </slot>
-</Popover>
+</Popover> -->
+
+<button
+  use:popover={{
+    placement: position,
+    isSpanToTriggerWidth: false,
+    offsetInPx,
+    content: ContextMenu,
+    triggerMethod: triggerMethod ?? PopoverTriggerMethod.CLICK,
+    componentProps: { size, heading, menu: contextMenu },
+    groupId: "contextMenuPopover-" + id,
+    id
+  }}
+  class={classList}
+  on:change={(e) => {
+    isPopoverVisible = e.detail?.open;
+  }}
+>
+  <slot>
+    <Toggle
+      icon="ph:dots-three-vertical"
+      {tooltip}
+      isPreventFillOnActive={true}
+      bind:on={isPopoverVisible}
+    />
+  </slot>
+</button>

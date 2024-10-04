@@ -35,7 +35,10 @@
       return;
     }
     const result = multiSelectStore.clickHandler(item.id);
-    if (!result) appStore.resourceClickHandler(e, item.id, defaultAccessMode);
+    if (!result)
+      appStore.resourceClickHandler(e, item.id, {
+        defaultTo: defaultAccessMode
+      });
   }
 </script>
 

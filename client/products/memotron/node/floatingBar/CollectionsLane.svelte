@@ -44,11 +44,7 @@
   }
 
   function onClick(e: CustomEvent) {
-    appStore.resourceClickHandler(
-      e.detail.event,
-      e.detail.item,
-      ResourceAccessMode.POP
-    );
+    appStore.resourceClickHandler(e.detail.event, e.detail.item);
   }
 </script>
 

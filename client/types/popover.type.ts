@@ -29,5 +29,6 @@ export type IPopoverRenderBaseParams = {
 export enum PopoverTriggerMethod {
   CLICK = "click",
   RIGHT_CLICK = "right-click",
+  HOVER = "hover",
   NONE = "none"
 }

@@ -76,7 +76,7 @@
       const clickedAccessMode = appStore.determineClickAccessMode(x.event);
       console.log({ currentAccessMode, clickedAccessMode });
       if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
-        appStore.resourceClickHandler(x.event, x.id, currentAccessMode);
+        appStore.openResource(x.id, currentAccessMode);
         node.eventStore.set(undefined);
         return;
       }
@@ -86,7 +86,7 @@
       } else if (result.status === 0) {
         node.unFocus();
       } else if (result.status === -1) {
-        appStore.resourceClickHandler(x.event, x.id, currentAccessMode);
+        appStore.openResource(x.id, currentAccessMode);
       }
       node.eventStore.set(undefined);
     });
@@ -159,10 +159,10 @@
       logger.log({ at: "NodeContent - onInsert", ...e.detail });
       const detail = e.detail;
       if (!detail?.id) return;
-      const result = await node.createBlock(
-        detail.id,
-        detail.blockType ?? NodeType.SIMPLE_TEXT
-      );
+      const blockType = detail.blockType ?? NodeType.SIMPLE_TEXT;
+      const result = await node.createBlock(detail.id, blockType, {
+        body: blockType === NodeType.SIMPLE_TEXT ? "" : null
+      });
     }
 
     function onConvert(e: CustomEvent) {

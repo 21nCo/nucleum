@@ -105,21 +105,19 @@
   {:else}
     {dynamicLabel?.label}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <span
+    <button
       class={cn({
         "underline-dotted truncate cursor-pointer hover:underline-dotted-primary":
           isNodePageContext
       })}
       on:click={(e) => {
-        appStore.resourceClickHandlerWithReplace(
-          e,
-          dynamicLabel?.parent.id,
-          node.id
-        );
+        appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
+          replaceId: node.id
+        });
       }}
     >
       {dynamicLabel?.parent?.label}
-    </span>
+    </button>
   {/if}
 {:else if node.body && typeof node.body === "string"}
   {@html renderMdAsHtml(node.bodySearch ?? node.body)}

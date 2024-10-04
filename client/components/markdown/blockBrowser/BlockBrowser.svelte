@@ -19,6 +19,8 @@
   const dispatch = createEventDispatcher();
   export let variant: "v1" | "v2" = "v2";
   export let isSingleColumnMode: boolean = false;
+  export let selectCallback: (e: any) => void = () => {};
+
   let selectedSection = "";
   let focusedItem: any;
   let config = [
@@ -345,8 +347,7 @@
         focusedItem = blocks[index + 1];
       }
     } else if (key === "Enter") {
-      console.log("enter");
-      dispatch("select", focusedItem);
+      onSelect();
     }
     if (selectedSection != focusedItem.section) {
       selectedSection = focusedItem.section;
@@ -378,6 +379,11 @@
     } else {
     }
   }
+  function onSelect(e?: CustomEvent) {
+    const item = e?.detail || focusedItem;
+    dispatch("select", item);
+    selectCallback(item);
+  }
 </script>
 
 <div
@@ -399,7 +405,7 @@
             {#each section.children as block}
               <BlockItem
                 {block}
-                on:select
+                on:select={onSelect}
                 isFocused={compareObjects(focusedItem, block)}
                 width={searchQueryString || isSingleColumnMode
                   ? "w-full min-w-full"
@@ -443,7 +449,7 @@
             {#each section.children as block}
               <BlockItem
                 {block}
-                on:select
+                on:select={onSelect}
                 isFocused={compareObjects(focusedItem, block)}
               />
             {/each}

@@ -105,12 +105,7 @@
             )
               hoveredMasonryItem = undefined;
           }}
-          on:click={(e) =>
-            appStore.resourceClickHandler(
-              e.detail,
-              item.id,
-              ResourceAccessMode.POP
-            )}
+          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         >
           {#if item.contentType === NodeType.IMAGE}
             <FileView
@@ -159,8 +154,7 @@
           {isDraggable}
           collectionContext={"board"}
           {isApplyCustomColor}
-          on:click={(e) =>
-            appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         />
       {/each}
     </div>

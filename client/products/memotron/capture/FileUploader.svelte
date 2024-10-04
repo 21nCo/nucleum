@@ -93,7 +93,14 @@
       appStore.openResource(result.id, ResourceAccessMode.POP);
     }
     captureStore.reset();
-    modalEvent.hide(MemotronAction.CAPTURE);
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE,
+      accessMode: ResourceAccessMode.POP
+    });
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE_DND,
+      accessMode: ResourceAccessMode.POP
+    });
   }
 
   function onInvalid(errors: { file: File; type: string }[]) {

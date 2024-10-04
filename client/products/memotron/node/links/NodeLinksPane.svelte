@@ -155,12 +155,7 @@
   }
   function onClick(e: CustomEvent) {
     const result = multiSelectStore.clickHandler(e.detail.id);
-    if (!result)
-      appStore.resourceClickHandler(
-        e.detail.event,
-        e.detail.id,
-        ResourceAccessMode.POP
-      );
+    if (!result) appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
   function onSelectAll() {
     $multiSelectStore = filtered?.map((x) => x.node.id.toString()) ?? [];

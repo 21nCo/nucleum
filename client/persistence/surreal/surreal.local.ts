@@ -20,6 +20,7 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
+import { compareVersions } from "$lib/shared/utils/utils";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
@@ -46,30 +47,48 @@ export class SurrealPersistence implements IPersistence {
       logger.log({ at: "surreal.persistence.initialize", userId });
       await this.instance.connect("indxdb://blank");
       await this.instance.use({ namespace: "user", database: this.userId });
-      await this.updateDbo(params);
+
       // await this.logInfo();
       // await this.testQuery();
-      const initLog = await this.select("kv:init");
-      if (initLog) {
-        logger.log({
-          at: "surreal.persistence.initialize - initLog",
-          initLog
-        });
-        if (initLog.isLocalMode) return 2;
-        else if (initLog.id) return 1;
+      const localLog = await this.select("kv:local");
+      logger.debug({
+        at: "surreal.persistence.initialize - localLog",
+        localLog
+      });
+
+      if (!localLog?.id) {
+        await this.addLocalLog(params);
+        await this.updateDbo(params);
+        return 0;
       }
-      await this.addInitializationLog();
-      return 0;
+
+      if (localLog.version && params?.appVersion) {
+        const comparer = compareVersions(localLog.version, params?.appVersion);
+        if (comparer !== 0) {
+          await this.updateAppVersion(params?.appVersion);
+          await this.updateDbo(params);
+        }
+      }
+      if (localLog.isLocalMode) return 2;
+      return 1;
     } catch (err) {
       logger.error({ at: "surreal.persistence.initialize", err });
       return -1;
     }
   }
 
-  private async addInitializationLog(params?: IPersistenceInitParams) {
+  private async addLocalLog(params?: IPersistenceInitParams) {
     await this.awaiter();
     const result = await this.instance?.query(
-      `INSERT INTO kv { id: 'init', createdAt: time::now(), isLocalMode: ${params?.isLocalMode ?? false} };`
+      `INSERT INTO kv { id: 'local', createdAt: time::now(), version: "${params?.appVersion}", isLocalMode: ${params?.isLocalMode ?? false} };`
+    );
+    this.isProcessingOperation = false;
+  }
+
+  private async updateAppVersion(version: string) {
+    await this.awaiter();
+    const result = await this.instance?.query(
+      `UPDATE kv:local SET version = "${version}";`
     );
     this.isProcessingOperation = false;
   }
@@ -131,7 +150,7 @@ export class SurrealPersistence implements IPersistence {
    * Updates the database with dbo definitions.
    */
   async updateDbo(params?: IPersistenceInitParams) {
-    logger.log({ at: "surreal.persistence.updateDbo" });
+    logger.debug({ at: "surreal.persistence.updateDbo" });
     await this.awaiter();
     const dependencies = params?.dbo;
     if (!dependencies) return;
@@ -142,6 +161,10 @@ export class SurrealPersistence implements IPersistence {
     return result;
   }
 
+  /**
+   * Using this to prevent multiple operations on the database at the same time which is causing errors.
+   * @returns
+   */
   private awaiter() {
     return new Promise((resolve, reject) => {
       const interval = setInterval(() => {
@@ -188,7 +211,12 @@ export class SurrealPersistence implements IPersistence {
     } else {
       const query = resolveInsertQuery(resource, records);
       result = await this.instance?.query(query);
-      logger.log({ at: "SurrealPersistence.insert", resource, query, result });
+      logger.log({
+        at: "SurrealPersistence.insert",
+        resource,
+        query,
+        result
+      });
       this.isProcessingOperation = false;
       if (Array.isArray(result) && result[0] && Array.isArray(result[0]))
         return result[0];
@@ -364,15 +392,19 @@ export class SurrealPersistence implements IPersistence {
     for (const [key, value] of Object.entries(params?.filters ?? {})) {
       if (Array.isArray(value)) {
         conditions.push(`${key} IN [${value.map(formatValue).join(", ")}]`);
-      } else if (
-        typeof value === "object" &&
-        "from" in value &&
-        "to" in value
-      ) {
-        //TODO - ranges
-        conditions.push(
-          `${key} >= ${formatValue(value.from)} AND ${key} <= ${formatValue(value.to)}`
-        );
+      } else if (typeof value === "object") {
+        if ("greaterThan" in value) {
+          conditions.push(`${key} > ${formatValue(value.greaterThan)}`);
+        }
+        if ("lessThan" in value) {
+          conditions.push(`${key} < ${formatValue(value.lessThan)}`);
+        }
+        if ("greaterThanOrEqual" in value) {
+          conditions.push(`${key} >= ${formatValue(value.greaterThanOrEqual)}`);
+        }
+        if ("lessThanOrEqual" in value) {
+          conditions.push(`${key} <= ${formatValue(value.lessThanOrEqual)}`);
+        }
       } else if (typeof value === "boolean") {
         if (value === true) {
           conditions.push(`${key} IS true`);

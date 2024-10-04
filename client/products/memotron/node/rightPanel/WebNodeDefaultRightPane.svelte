@@ -52,11 +52,7 @@
   }
 
   function onLinkClick(e: CustomEvent) {
-    appStore.resourceClickHandler(
-      e.detail.event,
-      e.detail.id,
-      ResourceAccessMode.POP
-    );
+    appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
 </script>
 

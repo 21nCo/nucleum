@@ -27,7 +27,7 @@
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
-  import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
 
@@ -649,7 +649,7 @@
       />
     {/if}
     {#if isNotInlineAccess}
-      <ModalCloseButton path="collection" />
+      <FullScreenCloseButton />
     {/if}
   </div>
 {/if}

@@ -24,7 +24,7 @@
 >
   {#if heading}
     <span
-      class={cn("w-full px-2", {
+      class={cn("w-full px-2 text-left", {
         "px-1.5": size === Size.sm,
         "px-2": size === Size.md,
         "px-3": size === Size.lg
