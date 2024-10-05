@@ -4,6 +4,9 @@
   import { Size } from "../types/size.enum";
   import { isValidEmail } from "$lib/shared/utils/text.utils";
   import { performApiCall } from "$lib/client/utils/network.utils";
+  import GetEarlyAccess from "../landing/shared/GetEarlyAccess.svelte";
+
+  export let version: "V1" | "V2" = "V1";
   let email = "";
   let message = "";
   let error: string | null = null;
@@ -38,23 +41,27 @@
 </script>
 
 <div class="relative flex flex-col w-full items-center">
-  <div class="flex gap-4 flex-wrap justify-center items-center">
-    <div class="w-full tp:w-96">
-      <TextInput
-        size={Size.sm}
-        placeholder="Your email address"
-        bind:value={email}
-      />
+  {#if version === "V1"}
+    <div class="flex gap-4 flex-wrap justify-center items-center">
+      <div class="w-full tp:w-96">
+        <TextInput
+          size={Size.sm}
+          placeholder="Your email address"
+          bind:value={email}
+        />
+      </div>
+      <div>
+        <Button
+          size={Size.sm}
+          on:click={onSubscribe}
+          label="Get Early Access"
+          type="primary"
+        />
+      </div>
     </div>
-    <div>
-      <Button
-        size={Size.sm}
-        on:click={onSubscribe}
-        label="Get Early Access"
-        type="primary"
-      />
-    </div>
-  </div>
+  {:else if version === "V2"}
+    <GetEarlyAccess bind:email {onSubscribe} />
+  {/if}
   <div class="absolute text-b2 top-full">
     {#if message}
       <div class="text-fgs2">{message}</div>
