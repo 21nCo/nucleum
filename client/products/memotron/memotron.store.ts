@@ -105,13 +105,14 @@ export class SearchStore {
             ? {}
             : {
                 trashInformation: false,
-                creationContext: isValidString(this.searchQuery)
-                  ? undefined
-                  : false,
+                creationContext:
+                  isValidString(this.searchQuery) || this.filters.contentType
+                    ? undefined
+                    : false,
                 ...this.filters,
                 contentType:
                   "contentType" in this.filters
-                    ? this.filters.contentType
+                    ? this.filters.contentType?.toUpperCase()
                     : this.searchQuery
                       ? undefined
                       : rootNodeTypeList

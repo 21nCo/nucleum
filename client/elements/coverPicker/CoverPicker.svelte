@@ -103,7 +103,6 @@
       }
     });
   }
-  $: console.log({ selectedMethod, _value });
 </script>
 
 <div class="flex flex-col gap-6 w-full h-full p-6">

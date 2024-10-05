@@ -109,8 +109,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon: "ph:pencil-simple-line-light",
       callback: async () => {
         if (context != ResourceAccessPoint.SELF) {
-          appStore.resourceClickHandler(
-            {} as MouseEvent,
+          appStore.openResource(
             this.resource.id,
             context === ResourceAccessPoint.BROWSER
               ? ResourceAccessMode.INLINE

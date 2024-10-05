@@ -1,20 +1,24 @@
 <script lang="ts">
+  import { reorderList } from "$lib/client/actions/rearrange.action";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
-  import { generateUID } from "$lib/client/utils/utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import type { PropertyConfig } from "../../property.type";
   import SelectOptionListView from "./SelectOptionListView.svelte";
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
   export let config: PropertyConfig;
   let isGrouping = false;
   let focusedOptionId: string | null = null;
+  let dev_isEnableGrouping = false;
   function generateNewOption() {
     return {
       label: "",
       order: config.options?.length ?? 0,
-      id: generateUID()
+      id: generateSimpleRandomId()
     };
   }
   function onremove(e: CustomEvent<string>) {
@@ -22,6 +26,7 @@
     const id = e.detail;
     config.options = config.options?.filter((option) => option.id !== id);
     focusedOptionId = null;
+    propagateChange();
   }
   function ondefault(e: CustomEvent<string>) {
     console.log("default", e.detail);
@@ -30,18 +35,30 @@
     console.log("enter", e.detail);
     focusedOptionId = null;
   }
+  function propagateChange() {
+    dispatch("change");
+  }
 </script>
 
 <div class="flex flex-col h-full w-full">
-  <span class="flex justify-between w-full p-3 border-b border-b-brs2">
-    <Text content="Options" style={TextStyle.SECTION_HEADING} />
-    <SwitchInput
-      bind:checked={isGrouping}
-      label={{ label: "Grouping" }}
-      size={Size.sm}
-    />
-  </span>
-  <div class="flex flex-col gap-3 flex-grow p-3">
+  {#if dev_isEnableGrouping}
+    <span class="flex justify-between w-full p-3 border-b border-b-brs2">
+      <Text content="Options" style={TextStyle.SECTION_HEADING} />
+      <SwitchInput
+        bind:checked={isGrouping}
+        label={{ label: "Grouping" }}
+        size={Size.sm}
+      />
+    </span>
+  {/if}
+  <div
+    class="flex flex-col gap-3 flex-grow p-3"
+    use:reorderList={{
+      listId: "options",
+      draggedOverClass: "outline outline-aps1"
+    }}
+    on:reorder
+  >
     {#if isGrouping && config.groups}
       {#each config.groups as group}
         <!-- content here -->

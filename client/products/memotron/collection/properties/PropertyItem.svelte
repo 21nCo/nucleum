@@ -41,6 +41,15 @@
 >
   {#if property.type === PropertyType.TEXT}
     <TextInput {style} bind:value {label} placeholder="Enter text" on:change />
+  {:else if property.type === PropertyType.NUMBER || property.type === PropertyType.EMAIL || property.type === PropertyType.URL}
+    <TextInput
+      {style}
+      bind:value
+      {label}
+      placeholder={`Enter ${property.type}`}
+      on:change
+      type={property.type}
+    />
   {:else if property.type === PropertyType.CHECKBOX && typeof value === "boolean"}
     <!-- <CheckboxInput bind:checked={property.value} label={details.label} /> -->
     <SwitchInput bind:checked={value} {label} {style} on:change />
@@ -55,7 +64,15 @@
       on:change
     />
   {:else if property.type === PropertyType.SINGLE_SELECT && property.config?.options && typeof value === "string"}
-    <SingleSelectProperty {style} {label} {property} bind:value on:change />
+    <SingleSelectProperty
+      {style}
+      {label}
+      {property}
+      bind:value
+      on:change
+      on:newOption
+      on:configChange
+    />
   {:else if property.type === PropertyType.DATE && value && value instanceof Date}
     <DatePicker bind:date={value} {label} {style} on:change />
   {:else if nodeId}

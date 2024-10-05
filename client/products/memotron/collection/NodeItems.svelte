@@ -17,12 +17,14 @@
   import FileView from "$lib/client/components/files/FileView.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { hoverable } from "$lib/client/actions/hover.action";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;
   export let density = 1;
   export let parentBgIndex = 1;
   export let isApplyCustomColor: boolean = false;
+  export let isDraggable: boolean = false;
 
   $: columns = Math.floor(($view.width / 500) * density);
 
@@ -59,6 +61,13 @@
     const rowSpan = Math.ceil((contentHeight + gap) / (rowHeight + gap));
     item.style.gridRowEnd = `span ${rowSpan}`;
     item.style.height = `calc(${rowSpan} * (${rowHeight}px + ${gap}px) - ${gap}px)`;
+    if (item.getAttribute("data-type") !== NodeType.IMAGE) {
+      const child = item.querySelector(".item-content");
+      if (child && child instanceof HTMLElement) {
+        child.style.height = "100%";
+        child.style.minHeight = "100px";
+      }
+    }
   }
 
   function resizeAllMasonryItems() {
@@ -77,10 +86,16 @@
     style="grid-template-columns: repeat({columns}, minmax(0, 1fr)); grid-auto-rows: {gap}px; gap: {gap}px;"
   >
     {#each nodes as item (item.id)}
-      <div class="relative grid-item w-full" data-id={item.id}>
-        <HoverableElement
+      <div
+        class="relative grid-item w-full"
+        data-id={item.id}
+        data-type={item.contentType}
+        draggable={isDraggable}
+      >
+        <button
           class="item-content w-full border rounded-md border-brs2 hover:border-aps2"
           type="button"
+          use:hoverable
           on:hover={(e) => {
             if (e.detail) hoveredMasonryItem = item.id;
             else if (
@@ -90,12 +105,7 @@
             )
               hoveredMasonryItem = undefined;
           }}
-          on:click={(e) =>
-            appStore.resourceClickHandler(
-              e.detail,
-              item.id,
-              ResourceAccessMode.POP
-            )}
+          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         >
           {#if item.contentType === NodeType.IMAGE}
             <FileView
@@ -106,17 +116,14 @@
                   gridRef.querySelector(`[data-id="${item.id}"]`)
                 )}
             />
-          {:else if item.label}
-            <!-- <span
-              class="block text-left text-b2 p-4 bg-bgs2 rounded-lg shadow-md"
-            >
-              {item.label}
-            </span> -->
+          {:else if item}
             <NodeThumbnail {item} {parentBgIndex} {arrangement} />
+          {:else}
+            <span class="text-b2 text-fgs3"> Unknown </span>
           {/if}
-          {#if hoveredMasonryItem && isSameResource(hoveredMasonryItem, item.id) && item.contentType === NodeType.IMAGE}
+          {#if hoveredMasonryItem && isSameResource(hoveredMasonryItem, item.id)}
             <div
-              class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-12 p-2 truncate text-b2 border-b border-x border-aps2"
+              class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-10 p-2 truncate text-b2 border-b border-x border-aps2"
               transition:fade={{ duration: 200 }}
             >
               <!-- TODO - hover content -->
@@ -124,7 +131,7 @@
               <NodeThumbnailTitle node={item} />
             </div>
           {/if}
-        </HoverableElement>
+        </button>
       </div>
     {/each}
   </div>
@@ -144,10 +151,10 @@
           {item}
           {parentBgIndex}
           {arrangement}
+          {isDraggable}
           collectionContext={"board"}
           {isApplyCustomColor}
-          on:click={(e) =>
-            appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP)}
+          on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         />
       {/each}
     </div>

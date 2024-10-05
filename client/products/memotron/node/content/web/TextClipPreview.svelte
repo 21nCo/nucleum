@@ -38,7 +38,7 @@
 </script>
 
 <div
-  class={cn("rounded-md", {
+  class={cn("rounded-md h-full overflow-clip", {
     "p-4 bg-bgs2": isNodePageContext
   })}
 >

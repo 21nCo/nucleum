@@ -10,11 +10,7 @@
   import TextClipPreview from "./TextClipPreview.svelte";
   export let node: ITextClip | IWebScreenshotClip | IKindleHighlight;
 
-  const contentPreview = resolveContentPreview(
-    node.body,
-    node.contentType,
-    node.metadata
-  );
+  const contentPreview = resolveContentPreview(node);
 </script>
 
 <div class="w-full h-full flex justify-center items-center">

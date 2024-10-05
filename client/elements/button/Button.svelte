@@ -120,11 +120,14 @@
         size={size === Size.xs ? Size.sm : size}
         class={cn({
           "stroke-aps1":
-            style === ButtonStyle.OUTLINED && type === ButtonVariant.PRIMARY,
+            (style === ButtonStyle.OUTLINED &&
+              type === ButtonVariant.PRIMARY) ||
+            (isHovering &&
+              style === ButtonStyle.PLAIN &&
+              type === ButtonVariant.SECONDARY),
           "stroke-ars1":
             style === ButtonStyle.OUTLINED && type === ButtonVariant.DANGER,
-          "stroke-fgs2":
-            style === ButtonStyle.OUTLINED && type === ButtonVariant.SECONDARY,
+          "stroke-fgs2": type === ButtonVariant.SECONDARY,
           "stroke-abg":
             style === ButtonStyle.DEFAULT &&
             (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER),

@@ -17,11 +17,13 @@
   import { createEventDispatcher } from "svelte";
   import type { ICollectionExpanded } from "../collection.type";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import type { IProperty } from "./property.type";
+  import type { IProperty, PropertyConfigOption } from "./property.type";
   import {
     removeDuplicatesFilter,
     resourceInList
   } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { propertyStore } from "./property.store";
   const dispatch = createEventDispatcher();
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let isIncludeExtendedProperties: boolean = true;
@@ -63,6 +65,34 @@
     else if (context === "mainpanel")
       properties = resolvePropertiesForNodePage(propertyConfig);
     else if (context === "rightpanel") properties = propertyConfig;
+  }
+
+  async function onNewOption(e: CustomEvent) {
+    const property = properties.find(resourceInList(e.detail.id));
+    if (!property) return;
+    const newOption: PropertyConfigOption = {
+      id: generateSimpleRandomId(),
+      label: e.detail.label,
+      order: property.config?.options?.length ?? 0,
+      color: Math.random() * 360
+    };
+    property.config?.options?.push(newOption);
+    const result = await propertyStore.modify(property.id, {
+      config: property.config
+    });
+    dispatch("change", {
+      id: property.id,
+      value: newOption.id
+    });
+  }
+
+  async function onConfigChange(e: CustomEvent) {
+    const property = properties.find(resourceInList(e.detail.id));
+    if (!property) return;
+    const result = await propertyStore.modify(property.id, {
+      config: e.detail.config
+    });
+    property.config = e.detail.config;
   }
 </script>
 
@@ -143,6 +173,8 @@
                   value: e.detail
                 });
               }}
+              on:newOption={onNewOption}
+              on:configChange={onConfigChange}
             />
           {/each}
         </div>

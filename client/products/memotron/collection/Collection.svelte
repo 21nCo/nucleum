@@ -10,7 +10,7 @@
   import ViewSettingsBar from "./ViewSettingsBar.svelte";
   import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ViewTabSwitcher from "./ViewTabSwitcher.svelte";
+  import ViewTabSwitcher from "./tabSwitcher/ViewTabSwitcher.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
@@ -27,12 +27,13 @@
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
-  import ModalCloseButton from "$lib/client/elements/button/ModalCloseButton.svelte";
+  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isValidString } from "$lib/shared/utils/text.utils";
 
   import { metaPropertyOptions } from "./properties/property.store";
   import {
+    CollectionLayout,
     CollectionType,
     type ICollectionViewWithData
   } from "$lib/client/products/memotron/collection/collection.type";
@@ -54,6 +55,12 @@
   import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import {
+    isNoneResource,
+    resourceInList,
+    stringToRecordId
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
 
   export let id: string = "";
   let collection: IActiveCollectionStore = resolveActiveCollectionStore(
@@ -87,6 +94,10 @@
   let isSingleViewMode = true;
   let arrangementDensity = 1;
   let searchQuery: string = "";
+
+  $: isBoardContext =
+    activeView?.layout === CollectionLayout.BOARD &&
+    !isNoneResource(activeView?.groupBy);
 
   onMount(async () => {
     // console.log("onMount - collection", { id });
@@ -122,7 +133,7 @@
     //TODO -  map type.properties to dropdown items - mapping corresponding icons from propertyOptions
     const noneOption = {
       label: "None",
-      value: "none",
+      value: "property:none",
       icon: "none"
     };
     return $collection?.properties
@@ -152,18 +163,34 @@
     triggerItemEdit = id.toString();
   }
 
-  function onViewSettingsChange() {
-    if (activeView)
-      collection.updateView(activeView.id, activeView, "settings");
+  function onViewSettingsChange(e: CustomEvent) {
+    logger.log({ at: "onViewSettingsChange", activeView, e });
+    if (!activeView) return;
+    const key = e.detail.key;
+    let value = e.detail.value;
+    if (!key) return;
+    if (key === "tabBy" || key === "groupBy" || key === "subGroupBy") {
+      value = stringToRecordId(value);
+    }
+    activeView[key] = value;
+    collection.updateView(
+      activeView.id,
+      {
+        [key]: value
+      },
+      "settings"
+    );
   }
 
   function onArrangementChange(e: CustomEvent) {
     if (!activeView) return;
     activeView.arrangement = e.detail;
+    activeView.density = activeView.density ? activeView.density : 1;
     collection.updateView(
       activeView.id,
       {
-        arrangement: activeView.arrangement
+        arrangement: activeView.arrangement,
+        density: activeView.density
       },
       "arrangement"
     );
@@ -242,13 +269,14 @@
     loadActiveView();
     if (!activeView) return;
     logger.log({ at: "refresh", activeView, searchQuery });
+    activeView.data = activeView.data.filter(activeResourceFilter);
     if (!tabBy || (tabBy && selectedTab === "all")) {
       viewData = activeView.data ?? [];
     } else if (tabBy && selectedTab !== undefined) {
       viewData =
         activeView.data?.filter((x) => {
           return (
-            x.properties?.find((p) => p.id === tabBy)?.value === selectedTab
+            x.properties?.find(resourceInList(tabBy))?.value === selectedTab
           );
         }) ?? [];
     } else {
@@ -447,6 +475,7 @@
             <span slot="additional" class="flex items-center gap-2">
               {#if isSingleViewMode && !isInEditMode}
                 <ArrangementSelector
+                  {isBoardContext}
                   bind:arrangement={selectedArrangement}
                   bind:density={arrangementDensity}
                   on:switch={onArrangementChange}
@@ -509,9 +538,9 @@
         {/if}
         {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
           <header
-            class={cn("sticky top-0 flex flex-col gap-6 bg-bgs1 w-full", {
-              "pt-4": isStickied,
-              "z-10": !isInEditMode
+            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
+              "pt-4": isStickied
+              // "z-10": !isInEditMode
             })}
           >
             {#if !isSingleViewMode || isInEditMode}
@@ -532,48 +561,39 @@
                 on:rearrange={onViewRearrange}
               >
                 <span class="flex items-center gap-4 pr-4" slot="right">
+                  <ToggleGroup
+                    class="gap-3"
+                    items={[
+                      {
+                        value: "filter",
+                        icon: "ph:funnel-thin"
+                      },
+                      {
+                        value: "sort",
+                        icon: "ph:arrows-down-up-thin"
+                      }
+                    ]}
+                  />
+                  <ArrangementSelector
+                    {isBoardContext}
+                    bind:arrangement={selectedArrangement}
+                    bind:density={arrangementDensity}
+                    on:switch={onArrangementChange}
+                    on:densityChange={onDensityChange}
+                  />
                   {#if !isInEditMode}
-                    <!-- <Button
-                      icon="adjustments-horizontal"
-                      label="filters"
-                      {...viewRightButtonOptions}
-                    />
-                    <Button
-                      icon="bars-center-left"
-                      label="sort"
-                      {...viewRightButtonOptions}
-                    /> -->
-                    <ToggleGroup
-                      class="gap-3"
-                      items={[
-                        {
-                          value: "filter",
-                          icon: "ph:funnel-thin"
-                        },
-                        {
-                          value: "sort",
-                          icon: "ph:arrows-down-up-thin"
-                        }
-                      ]}
-                    />
-                    <ArrangementSelector
-                      bind:arrangement={selectedArrangement}
-                      bind:density={arrangementDensity}
-                      on:switch={onArrangementChange}
-                      on:densityChange={onDensityChange}
-                    />
                     <AddResourceAction on:add={onAddResource} />
                   {/if}
                 </span>
               </PanelSwitcher>
             {/if}
-            {#if activeView && (isInEditMode || isValidString(activeView.tabBy))}
+            {#if activeView && (isInEditMode || !isNoneResource(activeView.tabBy))}
               <div class="px-4 pb-4 flex flex-col gap-6">
                 {#if isInEditMode}
                   <ViewSettingsBar
                     bind:view={activeView}
                     {properties}
-                    on:select={onViewSettingsChange}
+                    on:change={onViewSettingsChange}
                   />
                 {/if}
                 {#if activeView.tabBy}
@@ -629,11 +649,8 @@
       />
     {/if}
     {#if isNotInlineAccess}
-      <ModalCloseButton path="collection" />
+      <FullScreenCloseButton />
     {/if}
   </div>
 {/if}
-<ComponentBaseLayer
-  hasDragAndDrop={true}
-  on:syncDown={() => refresh({ isNewView: true })}
-/>
+<ComponentBaseLayer hasDragAndDrop={true} on:syncDown={() => refresh()} />

@@ -4,7 +4,6 @@
     type INodeThumb,
     NodeType
   } from "$lib/client/products/memotron/node/node.type";
-  import NodeThumbnailInTimeline from "./NodeThumbnailInTimeline.svelte";
   import { resolveContentPreview } from "$lib/client/products/memotron/node/node.utils";
   import {
     formatDate,
@@ -23,6 +22,7 @@
   import TextClipPreview from "../content/web/TextClipPreview.svelte";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
   import FileView from "$lib/client/components/files/FileView.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -30,6 +30,7 @@
   export let collectionContext: "board" | "default" | undefined = undefined;
   export let isApplyCustomColor: boolean = false;
   export let parentBgIndex = 1;
+  export let isDraggable: boolean = false;
   let isHovering: boolean = false;
   let isGridBottomHovering = false;
   function resolvePreviewImageSrc(item: INodeThumb) {
@@ -54,6 +55,7 @@
 <ResourceThumbnailBase
   {item}
   {accessPoint}
+  {isDraggable}
   {isApplyCustomColor}
   {arrangement}
   bind:isHovering
@@ -69,11 +71,7 @@
       <NodeThumbnailTitle node={item} />
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
-    {@const contentPreview = resolveContentPreview(
-      item.body,
-      item.contentType,
-      item.metadata
-    )}
+    {@const contentPreview = resolveContentPreview(item)}
     {@const previewImageSrc = resolvePreviewImageSrc(item)}
     {@const isImagePreview =
       item.contentType === NodeType.IMAGE ||
@@ -83,11 +81,12 @@
       contentPreview.includes("https://")}
     <ResourceGridThumbnail
       {item}
+      isMasonry={arrangement === Arrangement.MASONRY}
       on:click
       {isApplyCustomColor}
       size={accessPoint === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
     >
-      <div class="relative grow w-full p-4">
+      <div class="relative flex-1 min-h-0 w-full pt-3 px-3">
         <!-- Preview content -->
         {#if isImagePreview}
           {#if previewImageSrc?.id}
@@ -104,12 +103,22 @@
               use:lazyLoad={previewImageSrc ?? contentPreview}
             />
           {/if}
-        {:else if "body" in item && item.body}
+        {:else if contentPreview && (item.contentType === NodeType.TEXT_CLIP || item.contentType === NodeType.KINDLE_HIGHLIGHT)}
           <TextClipPreview node={item} {contentPreview} />
+        {:else if contentPreview}
+          <div class="h-full overflow-clip">
+            {contentPreview}
+          </div>
         {/if}
         {#if !isImagePreview}
           <span
-            class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-bgs1/5 to-bgs1"
+            class={cn(
+              "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
+              {
+                "via-bgs1/5 to-bgs1": !isApplyCustomColor,
+                "via-ccs5 to-ccs5": isApplyCustomColor
+              }
+            )}
             style=""
           >
           </span>
@@ -119,44 +128,43 @@
           placement={Placement.BOTTOM_RIGHT}
         /> -->
       </div>
-      <slot slot="bottom" name="bottom">
-        <HoverableElement
-          bind:isHovering={isGridBottomHovering}
-          class="flex  w-full h-5"
-        >
-          {#if isHovering && item.body && typeof item.body === "object" && "url" in item.body && item.body.url}
-            <a
-              href={item.body.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-1 text-b3 text-fgs3 w-full hover:text-aps1"
-              on:click={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <Icon
-                icon="arrow-up-right"
-                size={Size.xs}
-                class={cn({
-                  "fill-fgs3": !isGridBottomHovering,
-                  "fill-aps1": isGridBottomHovering
-                })}
-              />
-              <span class="truncate w-full text-left">
-                {item.body.url}
-              </span>
-            </a>
-          {:else}
-            <NodeThumbnailTitle node={item} />
-          {/if}
-        </HoverableElement>
 
-        <!-- <span class="text-b3 text-fgs3">
+      <div
+        slot="bottom"
+        class="flex w-full h-5"
+        use:hoverable
+        on:hover={(e) => (isGridBottomHovering = e.detail)}
+      >
+        {#if isHovering && item.body && typeof item.body === "object" && "url" in item.body && item.body.url}
+          <a
+            href={item.body.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 text-b3 text-fgs3 w-full hover:text-aps1"
+            on:click={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <Icon
+              icon="arrow-up-right"
+              size={Size.xs}
+              class={cn({
+                "fill-fgs3": !isGridBottomHovering,
+                "fill-aps1": isGridBottomHovering
+              })}
+            />
+            <span class="truncate w-full text-left">
+              {item.body.url}
+            </span>
+          </a>
+        {:else}
+          <NodeThumbnailTitle node={item} />
+        {/if}
+      </div>
+
+      <!-- <span class="text-b3 text-fgs3">
       {formatDatetime($userPreferences, new Date(node.createdAt))}
       </span> -->
-      </slot>
     </ResourceGridThumbnail>
-  {:else if arrangement === Arrangement.TIMELINE}
-    <NodeThumbnailInTimeline node={item} on:click {parentBgIndex} />
   {/if}
 </ResourceThumbnailBase>

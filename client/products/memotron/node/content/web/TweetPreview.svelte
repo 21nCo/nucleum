@@ -10,11 +10,7 @@
 
   let parent: any;
   let parentUsername: string;
-  const contentPreview = resolveContentPreview(
-    node.body,
-    node.contentType,
-    node.metadata
-  );
+  const contentPreview = resolveContentPreview(node);
   onMount(async () => {
     parentUsername = node.parent.toString().split("twitterProfile_")[1] ?? "";
     await resolveParent();

@@ -6,6 +6,7 @@
     type ICollectionView
   } from "$lib/client/products/memotron/collection/collection.type";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
+  import { Arrangement } from "$lib/client/types/direction.enum";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import BoardView from "./boardView/BoardView.svelte";
   import type { IProperty } from "./properties/property.type";
@@ -14,6 +15,10 @@
   export let properties: IProperty[] = [];
   export let isBoardOverflow = false;
   export let isInEditMode = false;
+
+  $: if (!view.arrangement) {
+    view.arrangement = Arrangement.LIST;
+  }
 </script>
 
 {#if isValidArrayWithData(data)}

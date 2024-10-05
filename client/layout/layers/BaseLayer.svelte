@@ -26,6 +26,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
   import { Persistence } from "$lib/client/persistence/persistence";
+  import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
 
   let timer: any;
   pingParent();
@@ -171,8 +172,10 @@
     if (
       event.detail.path &&
       ((event.detail.path.includes("http") &&
-        event.detail.path.includes(host)) ||
-        !event.detail.path.includes("http"))
+        event.detail.path.includes(host) &&
+        !event.detail.path.includes("/oauth/")) ||
+        !event.detail.path.includes("http")) &&
+      !event.detail.path.includes("mailto:")
     )
       goto(event.detail.path);
     else if (event.detail.path) window.location = event.detail.path;
@@ -257,4 +260,7 @@
     <slot />
   </ThemeLayer>
 </div>
+{#if $context.isEmbed}
+  <EmbedTelemetry />
+{/if}
 <svelte:document on:visibilitychange={visibilityChangeListener} />

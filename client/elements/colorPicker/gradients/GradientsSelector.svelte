@@ -3,6 +3,7 @@
   import { createEventDispatcher } from "svelte";
   import { gradientsList } from "./gradients";
   import Icon from "../../Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let value: string;
   function handleGradientClick(id: string) {
@@ -19,9 +20,13 @@
     >
       {#if gradient.id === value}
         <div
-          class="absolute top-0 left-0 w-full h-full flex items-center justify-center"
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
         >
-          <Icon icon="ph:check-circle-fill" class="text-fgs1" />
+          <Icon
+            icon="ph:check-circle-fill"
+            size={Size.lg}
+            class="text-fgs1 shadow-md rounded-full border border-fgs1"
+          />
         </div>
       {/if}
     </button>

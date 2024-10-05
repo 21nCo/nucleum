@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { appStore } from "$lib/client/stores/app.store";
   import LinkSuggestionItem from "../../common/linkbox/LinkSuggestionItem.svelte";
   export let items: any[] = [];
   $: console.log({ items });
   function onClick(e: MouseEvent, item: any) {
-    appStore.resourceClickHandler(e, item.id, ResourceAccessMode.POP);
+    appStore.resourceClickHandler(e, item.id);
   }
 </script>
 

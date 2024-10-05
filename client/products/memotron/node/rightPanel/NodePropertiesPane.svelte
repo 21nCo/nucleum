@@ -134,7 +134,7 @@
         {#if !isVisibleProps && _types.length === 1}
           <div class="flex justify-center mt-6">
             <Button
-              label="Edit type"
+              label="Edit"
               style={ButtonStyle.OUTLINED}
               type={ButtonVariant.SECONDARY}
               size={Size.xs}
@@ -159,8 +159,8 @@
         />
       </div>
     {/if}
+    {#if !isVisibleProps}
+      <ScrollViewBottomSpacer />
+    {/if}
   </div>
-  {#if !isVisibleProps}
-    <ScrollViewBottomSpacer />
-  {/if}
 </div>

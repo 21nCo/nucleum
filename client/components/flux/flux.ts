@@ -35,7 +35,6 @@ import {
 } from "$lib/client/utils/browser.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
-import type { IAccessLog } from "../accessLogging/accessLog.type";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -58,6 +57,7 @@ class Flux {
     userId: string,
     params?: {
       isLocalMode?: boolean;
+      appVersion?: string;
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", stores, userId, params });
@@ -239,7 +239,9 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       response,
-      params
+      action: params.action,
+      records: params.records,
+      record: params.record ?? params.records?.[0]
     });
     return response;
   }
@@ -265,6 +267,7 @@ class Flux {
       id: mutationId,
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
+      timestamp: new Date().getTime(),
       dapId: dapId ?? "",
       userId,
       resource,
@@ -272,48 +275,8 @@ class Flux {
       resourceId: this.resolveResourceId(params),
       action: this.resolveAction(params?.action)
     };
-    if (
-      (params.action === PersistenceActionType.INSERT ||
-        params.action === PersistenceActionType.BULK_MERGE) &&
-      params.records.length > 1
-    ) {
-      await this.multiResourceMutationAccessLog(resource, params);
-    }
     return this.persistence.mutation(Resource.mutation, {
       records: [mutation],
-      action: PersistenceActionType.INSERT
-    });
-  }
-
-  /**
-   *
-   * Used as fallback for resource versioning along with mutation table in cases of mutation having mutiple resources.
-   *
-   */
-  private async multiResourceMutationAccessLog<T extends IResource>(
-    resource: Resource,
-    params: IMutationParamsv2<T>
-  ) {
-    logger.log({ at: "flux.multiResourceMutationAccessLog", resource, params });
-    if (
-      !(
-        params.action === PersistenceActionType.INSERT ||
-        params.action === PersistenceActionType.BULK_MERGE
-      ) ||
-      params.records.length < 2
-    ) {
-      return;
-    }
-    const accessLogs: IAccessLog[] = params.records.map((record) => ({
-      id: generateRandomId(),
-      timestamp: new Date().toISOString(),
-      action: this.resolveAction(params?.action),
-      resource,
-      resourceId: record.id,
-      createdAt: new Date().toISOString()
-    }));
-    return this.persistence.mutation(Resource.accessLog, {
-      records: accessLogs,
       action: PersistenceActionType.INSERT
     });
   }
@@ -321,7 +284,8 @@ class Flux {
   private resolveResourceId<T extends IResource>(params: IMutationParamsv2<T>) {
     switch (params?.action) {
       case PersistenceActionType.INSERT:
-        return params?.records[0]?.id;
+      case PersistenceActionType.BULK_MERGE:
+        return params?.records.map((x) => x.id);
       case PersistenceActionType.REPLACE:
       case PersistenceActionType.MERGE:
         return params?.record?.id;
@@ -439,18 +403,21 @@ class Flux {
     if (!lastSyncedAt) return;
     const mutations = await this.persistence.selectMany(Resource.mutation, {
       filters: {
-        createdAt: {
-          from: lastSyncedAt
-            ? new Date(+lastSyncedAt).toISOString()
-            : new Date().toISOString(),
-          to: new Date().toISOString()
+        timestamp: {
+          greaterThan: +lastSyncedAt
         }
+      },
+      orderBy: {
+        timestamp: "asc"
       }
     });
     logger.log({ at: "flux.sync", mutations, lastSyncedAt });
     if (!mutations || mutations.length === 0) return;
     await this.syncer.sync(mutations);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    clientStorage.set(
+      ClientStorageKey.LAST_SYNCED_AT,
+      mutations[mutations.length - 1].timestamp
+    );
   }
 
   async search(storeId: string, query: string) {
@@ -489,14 +456,14 @@ class Flux {
    * Clones down from cloud to local.
    */
   async cloneDown() {
-    logger.log({ at: "flux.cloneDown", stores: this.stores });
+    logger.debug({ at: "flux.cloneDown", stores: this.stores });
     const resources = this.resolveCloneResources();
     await this.syncer.cloneCloudToLocal(resources);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
   async cloneUp() {
-    logger.log({ at: "flux.cloneUp" });
+    logger.debug({ at: "flux.cloneUp" });
     const resources = this.resolveCloneResources();
     await this.syncer.cloneLocalToCloud(resources);
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
@@ -536,6 +503,7 @@ export async function initFlux(
   userId: string,
   params?: {
     isLocalMode?: boolean;
+    appVersion?: string;
   }
 ) {
   logger.log({ at: "initFlux", stores, provider, persistence, userId, params });

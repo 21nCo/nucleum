@@ -26,6 +26,7 @@ import BookACall from "../components/cx/BookACall.svelte";
 import SupahubEmbed from "../components/cx/supahub/SupahubEmbed.svelte";
 import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
 import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
+import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -404,6 +405,18 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.lg
+      }
+    }
+  },
+  {
+    action: "surreal-local",
+    component: SurrealLocalViewer,
+    isMeta: true,
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal
       }
     }
   }

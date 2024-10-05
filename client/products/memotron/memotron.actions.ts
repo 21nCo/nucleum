@@ -15,7 +15,10 @@ import TestHome from "$local/TestHome.svelte";
 import CreateCollection from "$lib/client/products/memotron/collection/CreateCollection.svelte";
 import PropertiesEditor from "$lib/client/products/memotron/collection/properties/PropertiesEditor.svelte";
 import { MemotronAction } from "./memotronAction.enum";
-import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import {
+  ResourceAccessMode,
+  ResourceActionType
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
 import CollectionBrowser from "$lib/client/products/memotron/collection/CollectionBrowser.svelte";
 import NodeBrowser from "$lib/client/products/memotron/node/NodeBrowser.svelte";
@@ -28,6 +31,7 @@ import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import Chat from "$lib/client/components/chat/Chat.svelte";
+import CaptureDnD from "./capture/CaptureDnD.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -49,13 +53,31 @@ export const memotronActions: IAction[] = [
     component: Capture,
     label: "Capture",
     icon: "capture",
-    type: ActionType.MODAL,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
     modalParams: {
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true,
-        isShowCantileverClose: true
+        isShowCantileverClose: true,
+        isShowBackButton: false
+      }
+    }
+  },
+  {
+    action: MemotronAction.CAPTURE_DND,
+    component: CaptureDnD,
+    isMeta: true,
+    type: ActionType.RESOURCE,
+    accessMode: ResourceAccessMode.POP,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: false
       }
     }
   },
@@ -141,7 +163,9 @@ export const memotronActions: IAction[] = [
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
       }
     }
   },
@@ -169,7 +193,9 @@ export const memotronActions: IAction[] = [
       layout: {
         size: Size.xxl,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
       }
     }
   },

@@ -16,6 +16,6 @@
         "border-fgs3": !isFocusing
       }
     )}
-    on:click
+    on:click|stopPropagation
   />
 {/if}

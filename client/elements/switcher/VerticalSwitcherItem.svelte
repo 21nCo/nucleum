@@ -21,6 +21,7 @@
   let activeClasses: string;
   let inactiveClasses: string;
   let sizeClasses: string;
+  let isHovered: boolean = false;
   $: commonVerticalLabelOptions = {
     tooltip: isHideLabel
       ? properCase(item.label ?? item.value?.toString())
@@ -184,8 +185,9 @@
 {:else if style === VerticalSwitcherStyle.BG && labelOrientation === Orientation.Horizontal}
   <HoverableElement
     type="button"
+    bind:isHovering={isHovered}
     class={cn("relative flex gap-2 items-center rounded-md p-2 px-2 w-full", {
-      [bg(parentBgIndex)]: isActive,
+      [bg(parentBgIndex)]: isActive || isHovered,
       "text-fgs3": !isActive
     })}
     {...commonVerticalLabelOptions}

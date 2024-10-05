@@ -33,6 +33,7 @@ export type ModalLayoutParams = {
   ignoreSafeArea?: boolean;
   isShowClose?: boolean;
   isShowCantileverClose?: boolean;
+  isShowBackButton?: boolean;
 };
 
 export type IPlayer = IObservableStoreSubject & {

@@ -16,7 +16,7 @@ export enum CollectionLayout {
   BOARD = "BOARD",
   TABLE = "TABLE",
   CALENDAR = "CALENDAR",
-  GEOMAP = "GEOMAP"
+  MAP = "MAP"
 }
 
 interface ICollectionBase extends IMemotronItemBase {

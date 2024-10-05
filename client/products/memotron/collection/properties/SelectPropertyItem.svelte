@@ -13,9 +13,9 @@
   on:click
 >
   <CustomColorPropagator
-    color={item.color}
-    class={cn("px-4 rounded-md min-w-fit bg-ccs1")}
+    color={item?.color}
+    class={cn("px-4 py-0.5 rounded-md w-fit bg-ccs3")}
   >
-    {item.label}
+    {item?.label}
   </CustomColorPropagator>
 </button>

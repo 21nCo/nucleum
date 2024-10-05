@@ -307,6 +307,8 @@ function initAppStore(seed: AppStore) {
       confirmationNotification.notify(action.confirmation);
     } else if (params.isReturnIfComponent) {
       return action;
+    } else if (action.type === ActionType.RESOURCE) {
+      openResource(action.action, action.accessMode ?? ResourceAccessMode.POP);
     } else if (
       action.type === ActionType.MODAL ||
       (store.interactionMode === InteractionMode.COMMAND_ONLY &&
@@ -432,24 +434,29 @@ function initAppStore(seed: AppStore) {
    * @returns
    */
   const toggleSearchParam = (
-    params: Record<string, string | boolean | number> | string[]
+    params: Record<string, string | boolean | number> | string[],
+    additional?: {
+      isPreventRefresh?: boolean;
+      url?: URL;
+    }
   ) => {
     if (!params) return;
+    logger.log({ at: "toggleSearchParam", params, additional });
+    const url = additional?.url ?? new URL(window.location.href);
     if (Array.isArray(params)) {
-      const url = new URL(window.location.href);
       params.forEach((p) => {
         if (!url.searchParams.get(p)) return;
         url.searchParams.delete(p);
       });
-      appStore.gotoPath(url.href);
-      return;
+      if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
+      return url;
     }
     if (typeof params !== "object") return;
-    const url = new URL(window.location.href);
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.set(key, value.toString());
     });
-    appStore.gotoPath(url.href);
+    if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
+    return url;
   };
   const isFSplit = () => {
     return (
@@ -517,6 +524,13 @@ function initAppStore(seed: AppStore) {
     accessMode: ResourceAccessMode = ResourceAccessMode.INLINE
   ) => {
     if (!id) return;
+    let url = new URL(window.location.href);
+    if (accessMode === ResourceAccessMode.FULL) {
+      url =
+        toggleSearchParam([ResourceAccessMode.POP, ResourceAccessMode.FSPLIT], {
+          isPreventRefresh: true
+        }) ?? url;
+    }
     const timestamp = new Date();
     accessLogStore.create({
       resource: id.tb,
@@ -525,21 +539,51 @@ function initAppStore(seed: AppStore) {
       timestamp: timestamp.toISOString()
     });
 
-    toggleSearchParam({
-      [accessMode]: id.toString(),
-      [accessMode + "At"]: timestamp.getTime()
-    });
+    toggleSearchParam(
+      {
+        [accessMode]: id.toString(),
+        [accessMode + "At"]: timestamp.getTime()
+      },
+      {
+        url: url
+      }
+    );
   };
 
+  const goBack = (resource?: IRecordId) => {
+    if (window.history.length > 1) {
+      window.history.back();
+    }
+  };
+  /**
+   * Handles resource click.
+   *
+   * Sending replaceId will use current access mode of the replaceId resource as defaultTo.
+   *
+   * @param event - mouse event
+   * @param id - resource id
+   * @param defaultTo - default access mode
+   * @param params - additional params
+   * @returns
+   */
   const resourceClickHandler = (
     event: MouseEvent,
     id: IRecordId,
-    defaultTo: ResourceAccessMode = ResourceAccessMode.INLINE
+    params?: {
+      defaultTo?: ResourceAccessMode;
+      replaceId?: IRecordId;
+    }
   ) => {
     if (!id) return;
     toggleSearchParam(["view"]);
     let accessMode;
+    const defaultTo =
+      params?.defaultTo ??
+      (params?.replaceId
+        ? determineCurrentResourceAccessMode(params.replaceId)
+        : ResourceAccessMode.POP);
     if (event) accessMode = determineClickAccessMode(event);
+    logger.log({ at: "resourceClickHandler", accessMode, defaultTo });
     if (accessMode) openResource(id, accessMode);
     else openResource(id, defaultTo);
     logger.log({
@@ -549,14 +593,6 @@ function initAppStore(seed: AppStore) {
       accessMode,
       event
     });
-  };
-  const resourceClickHandlerWithReplace = (
-    event: MouseEvent,
-    id: string,
-    replaceId: string
-  ) => {
-    const currentAccessMode = determineCurrentResourceAccessMode(replaceId);
-    resourceClickHandler(event, id, currentAccessMode);
   };
   const closeResource = (props?: {
     id?: IRecordId;
@@ -794,11 +830,11 @@ function initAppStore(seed: AppStore) {
     resourceClickHandler,
     openResource,
     toggleFocusAccessMode,
-    resourceClickHandlerWithReplace,
     determineCurrentResourceAccessMode,
     determineClickAccessMode,
     isFSplit,
-    closeResource
+    closeResource,
+    goBack
   };
 }
 

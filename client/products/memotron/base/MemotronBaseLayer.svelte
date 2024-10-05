@@ -18,6 +18,7 @@
   import modalEvent from "$lib/client/components/modal/modal.store";
   import { captureStore } from "../capture/capture.store";
   import { CaptureType } from "../capture/capture.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   let isLiteMode = $context.isEmbed && $context.isSheet;
 
   onMount(async () => {
@@ -46,26 +47,33 @@
   }
 
   function handlePaste(event: ClipboardEvent) {
-    appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
-      componentParams: {
-        event
-      }
-    });
-    event.preventDefault();
+    if (!$appStore.isDnDPageActive) {
+      appStore.runAction(MemotronAction.PASTE_CONFIRMATION, {
+        componentParams: {
+          event
+        }
+      });
+      event.preventDefault();
+    }
   }
 
   function handleDragEnter(event: DragEvent) {
     if (!event.relatedTarget && !$appStore.isDnDPageActive) {
       $captureStore.captureType = CaptureType.UPLOAD;
-      appStore.runAction(MemotronAction.CAPTURE, {
-        componentParams: { isWindowDnD: true }
-      });
+      appStore.runAction(MemotronAction.CAPTURE_DND);
     }
   }
 
   function handleDragLeave(event: DragEvent) {
-    if (!event.relatedTarget && !$appStore.isDnDPageActive) {
-      modalEvent.hide(MemotronAction.CAPTURE);
+    if (
+      !event.relatedTarget &&
+      !$appStore.isDnDPageActive &&
+      !window.location.pathname.includes("/tab")
+    ) {
+      appStore.closeResource({
+        id: MemotronAction.CAPTURE_DND,
+        accessMode: ResourceAccessMode.POP
+      });
     }
   }
 </script>

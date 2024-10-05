@@ -7,6 +7,7 @@
   import { createEventDispatcher } from "svelte";
 
   export let isMinimalVariant = false;
+  let dev_isIconOnly = false;
 
   const dispatch = createEventDispatcher();
   const options = [
@@ -29,7 +30,7 @@
 </script>
 
 <Popover>
-  {#if isMinimalVariant}
+  {#if isMinimalVariant && dev_isIconOnly}
     <button
       class="flex rounded-full p-1 hover:bg-aps2 hover:border-aps1 bg-aps3 text-aps1 border border-aps2"
     >
@@ -41,7 +42,7 @@
       label="Add"
       size={Size.sm}
       type={ButtonVariant.PRIMARY}
-      style={ButtonStyle.DEFAULT}
+      style={isMinimalVariant ? ButtonStyle.OUTLINED : ButtonStyle.DEFAULT}
       isPreventMinWidth={true}
     />
   {/if}

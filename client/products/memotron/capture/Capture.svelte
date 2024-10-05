@@ -28,6 +28,7 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import { isEmptyMd } from "$lib/client/components/markdown/markdown.utils";
+  import Icon from "$lib/client/elements/Icon.svelte";
   export let isWindowDnD = false;
   let bulkQueryParam: string | null = null;
   let linkQueryParam: string | null = null;
@@ -147,11 +148,11 @@
   {#key $captureStore.refreshId}
     <div class="w-full h-full flex justify-center">
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
-        <header class="flex justify-between w-full dp:px-12">
+        <header class="flex justify-between gap-4 items-center w-full dp:px-12">
           <div class="flex gap--4 grow">
             <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
             <!-- <NodeAvatar {types} /> -->
-            <div class="text-h2 font-medium w-full">
+            <div class="text-h3 font-medium w-full">
               <TextInput
                 bind:value={$captureStore.label}
                 style={InputStyle.PLAIN}
@@ -162,12 +163,20 @@
               />
             </div>
           </div>
-          <div class="flex gap-1">
-            <!-- save, cancel, edit type actions
-            TODO: save icon
-            "hugeicons:arrow-move-up-right"
-           -->
+          <div class="flex gap-3 items-center">
             {#if !isEmptyState}
+              <div class="flex items-center gap-1">
+                <Icon
+                  icon={$captureStore.isRefreshing
+                    ? "svg-spinners:90-ring-with-bg"
+                    : "ph:check-circle-fill"}
+                  size={Size.sm}
+                  class="stroke-fgs3"
+                />
+                <span class="text-fgs3 whitespace-nowrap text-b3">
+                  {$captureStore.isRefreshing ? "saving..." : "draft saved"}
+                </span>
+              </div>
               <Button
                 label="save"
                 type={ButtonVariant.PRIMARY}

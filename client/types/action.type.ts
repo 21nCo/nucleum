@@ -1,3 +1,4 @@
+import type { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
 import { Embed, OperatingSystem } from "./context.type";
 import type { ConfirmationNotification } from "./notification.type";
 import type { ModalParams } from "./popup.type";
@@ -90,6 +91,11 @@ export type IAction = {
    * Ex: Useful to hide certain settings on mobile devices.
    */
   hideContext?: (Embed | OperatingSystem)[];
+
+  /**
+   * Used in conjunction with {@link ActionType.RESOURCE} to specify the access mode of the resource.
+   */
+  accessMode?: ResourceAccessMode;
 };
 
 export enum ActionType {
@@ -113,7 +119,11 @@ export enum ActionType {
   /**
    * Triggers an event - subscribers will take care of the action.
    */
-  EVENT = "EVENT"
+  EVENT = "EVENT",
+  /**
+   * Action will be opened as a resource.
+   */
+  RESOURCE = "RESOURCE"
 }
 
 /**

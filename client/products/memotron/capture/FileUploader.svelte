@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
+  import { logger } from "$lib/client/components/debug/logger.client";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import modalEvent from "$lib/client/components/modal/modal.store";
   import Button from "$lib/client/elements/button/Button.svelte";
@@ -57,6 +58,7 @@
         }
       }
     } catch (e) {
+      logger.error(e);
       error = "Something went wrong";
     } finally {
       isSaveInProgress = false;
@@ -76,6 +78,7 @@
   function postSave(result: any) {
     isSaveInProgress = false;
     if (!result || result.error) {
+      logger.error(result);
       error = result?.error ?? "Something went wrong";
       return;
     }
@@ -90,7 +93,14 @@
       appStore.openResource(result.id, ResourceAccessMode.POP);
     }
     captureStore.reset();
-    modalEvent.hide(MemotronAction.CAPTURE);
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE,
+      accessMode: ResourceAccessMode.POP
+    });
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE_DND,
+      accessMode: ResourceAccessMode.POP
+    });
   }
 
   function onInvalid(errors: { file: File; type: string }[]) {

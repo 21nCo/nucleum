@@ -67,11 +67,23 @@ function generateSeedStore(): ICaptureStore {
 }
 
 class CaptureStore extends KeyValueStore<ICaptureStore> {
+  private saveFeedbackTimeout: NodeJS.Timeout | null = null;
   constructor() {
     super(Resource.capture, { ...generateSeedStore() });
   }
   set(val: ICaptureStore) {
+    this.update((store) => {
+      store.isRefreshing = true;
+      return store;
+    });
     this.modify(val, { isDebouncedPersist: true });
+    if (this.saveFeedbackTimeout) clearTimeout(this.saveFeedbackTimeout);
+    this.saveFeedbackTimeout = setTimeout(() => {
+      this.update((store) => {
+        store.isRefreshing = false;
+        return store;
+      });
+    }, 1500);
   }
   reset() {
     const seedStore = generateSeedStore();

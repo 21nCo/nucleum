@@ -12,7 +12,7 @@ interface ResizableOptions {
   maxHeight?: number;
 }
 
-const resizable: Action<HTMLElement, ResizableOptions> = (
+export const resizable: Action<HTMLElement, ResizableOptions> = (
   node,
   options = {}
 ) => {
@@ -185,4 +185,27 @@ const resizable: Action<HTMLElement, ResizableOptions> = (
   };
 };
 
-export default resizable;
+export function resizeListener(
+  node: HTMLElement,
+  callback: (dimensions: { width: number; height: number }) => void
+) {
+  const resizeObserver = new ResizeObserver((entries) => {
+    for (let entry of entries) {
+      const { width, height } = entry.contentRect;
+      callback({ width: Math.round(width), height: Math.round(height) });
+    }
+  });
+
+  resizeObserver.observe(node);
+
+  return {
+    destroy() {
+      resizeObserver.disconnect();
+    },
+    update(
+      newCallback: (dimensions: { width: number; height: number }) => void
+    ) {
+      callback = newCallback;
+    }
+  };
+}

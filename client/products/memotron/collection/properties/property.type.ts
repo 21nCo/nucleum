@@ -37,6 +37,9 @@ export type PropertyConfigOptionGroup = {
 export enum PropertyType {
   TEXT = "text",
   NUMBER = "number",
+  EMAIL = "email",
+  URL = "url",
+  LINK_LIST = "link-list",
   CHECKBOX = "checkbox",
   RATING = "rating",
   DATE = "date",

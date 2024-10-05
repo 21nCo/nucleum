@@ -48,6 +48,8 @@
     SearchType,
     type IResourceSelectOrderBy
   } from "$lib/client/types/data.type";
+  import { page } from "$app/stores";
+
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -57,7 +59,8 @@
   let searchStore = new SearchStore();
   let QAsearchStore = new SearchStore();
   QAsearchStore.searchType = SearchType.SEMANTIC;
-  let selectedSubType: "all" | "recents" | NodeType | CollectionType = "all";
+  type SubType = "all" | "recents" | NodeType | CollectionType;
+  let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let availableResources: Resource[] = [
     Resource.node,
@@ -110,8 +113,24 @@
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
-  onMount(async () => {
-    await refresh();
+  onMount(() => {
+    const pageSub = page.subscribe(async (p) => {
+      console.log({ p });
+      const resourceParam = p.url.searchParams.get("resource");
+      const subResourceParam = p.url.searchParams.get("type");
+      if (
+        (resourceParam && resourceParam !== selectedResource) ||
+        (subResourceParam && subResourceParam !== selectedSubType)
+      ) {
+        selectedResource = resourceParam as Resource;
+        selectedSubType = (subResourceParam as SubType) ?? "all";
+        await refresh();
+      }
+    });
+    refresh();
+    return () => {
+      pageSub();
+    };
   });
 
   async function refresh() {
@@ -262,7 +281,7 @@
       ].map((x) => {
         return {
           label: resolveNodeContentLabel(x),
-          value: x,
+          value: x.toLowerCase(),
           icon: resolveNodeIcon(x)
         };
       });
@@ -275,7 +294,7 @@
       ].map((x) => {
         return {
           label: resolveCollectionTypeLabel(x),
-          value: x,
+          value: x.toLowerCase(),
           icon: resolveCollectionTypeIcon(x)
         };
       });
@@ -330,8 +349,13 @@
       >
         <ResourceSwitcher
           options={resources}
-          bind:selected={selectedResource}
-          on:select={refresh}
+          selected={selectedResource}
+          on:select={(e) => {
+            appStore.toggleSearchParam({
+              resource: e.detail,
+              type: "all"
+            });
+          }}
           size={variant === "v2" ? Size.md : Size.sm}
         />
       </span>
@@ -387,8 +411,13 @@
               style={VerticalSwitcherStyle.BG}
               itemProps={{ isHideLabel: false, size: Size.sm }}
               items={resolveSubItems(selectedResource)}
-              bind:selected={selectedSubType}
-              on:switch={refresh}
+              selected={selectedSubType}
+              on:switch={(e) => {
+                if (!e?.detail) return;
+                appStore.toggleSearchParam({
+                  type: e.detail.toLowerCase()
+                });
+              }}
             />
           </span>
           <span class="px-2">
@@ -424,7 +453,6 @@
             {resources}
             bind:selectedResource
             bind:searchQuery
-            bind:isStarFilterSelected
             on:keydown={refresh}
           />
         {/if}

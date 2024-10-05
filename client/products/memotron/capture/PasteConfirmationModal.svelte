@@ -18,6 +18,7 @@
   import { UserDataMode } from "$lib/client/types/account.type";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { performApiCall } from "$lib/client/utils/network.utils";
+  import { retrieveUrlData } from "$lib/client/utils/utils";
   import { MemotronAction } from "../memotronAction.enum";
   import { nodeStore } from "../node/node.store";
   import { NodeType, type IMediaNode, type IWebPage } from "../node/node.type";
@@ -101,13 +102,9 @@
         }
       };
       if ($account.dataMode === UserDataMode.CLOUD) {
-        const response = await performApiCall("utils/n/run", "POST", {
-          url: text,
-          action: "get-webpage"
-        });
-        const data = await response.json();
-        if (data?.text) {
-          const parsedData = await parseHtml(data.text);
+        const data = await retrieveUrlData(text);
+        if (data?.parsedData) {
+          const parsedData = data.parsedData;
           console.log("parsed html", parsedData);
           node.label = parsedData.label ?? node.label;
           node.url = parsedData.url ?? node.url;
@@ -126,15 +123,6 @@
       postSave(null);
     } finally {
       isSaveInProgress = false;
-    }
-
-    function parseHtml(html: string) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      return extractFullTabData(doc, {
-        docText: html,
-        url: text
-      });
     }
   }
 
