@@ -43,6 +43,7 @@
     resolveCollectionTypeLabel
   } from "../collection/collection.utils";
   import { page } from "$app/stores";
+
   let searchQuery: string = "";
   let selectedResource: Resource = Resource.node;
   let isStickied: boolean = false;
@@ -50,7 +51,8 @@
   let isArchivedFilterSelected: boolean = false;
   let data: any[] = [];
   let searchStore = new SearchStore();
-  let selectedSubType: "all" | "recents" | NodeType | CollectionType = "all";
+  type SubType = "all" | "recents" | NodeType | CollectionType;
+  let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
   let availableResources: Resource[] = [
     Resource.node,
@@ -103,16 +105,24 @@
   $: multiSelectContext = selectedResource + "-" + ResourceAccessPoint.LIBRARY;
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
-  onMount(async () => {
-    const resourceParam = $page.url.searchParams.get("resource");
-    if (resourceParam) {
-      selectedResource = resourceParam as Resource;
-    }
-    const typeParam = $page.url.searchParams.get("type");
-    if (typeParam) {
-      selectedSubType = typeParam.toUpperCase() as NodeType;
-    }
-    await refresh();
+  onMount(() => {
+    const pageSub = page.subscribe(async (p) => {
+      console.log({ p });
+      const resourceParam = p.url.searchParams.get("resource");
+      const subResourceParam = p.url.searchParams.get("type");
+      if (
+        (resourceParam && resourceParam !== selectedResource) ||
+        (subResourceParam && subResourceParam !== selectedSubType)
+      ) {
+        selectedResource = resourceParam as Resource;
+        selectedSubType = (subResourceParam as SubType) ?? "all";
+        await refresh();
+      }
+    });
+    refresh();
+    return () => {
+      pageSub();
+    };
   });
   async function refresh() {
     if (
@@ -250,7 +260,7 @@
       ].map((x) => {
         return {
           label: resolveNodeContentLabel(x),
-          value: x,
+          value: x.toLowerCase(),
           icon: resolveNodeIcon(x)
         };
       });
@@ -263,7 +273,7 @@
       ].map((x) => {
         return {
           label: resolveCollectionTypeLabel(x),
-          value: x,
+          value: x.toLowerCase(),
           icon: resolveCollectionTypeIcon(x)
         };
       });
@@ -299,13 +309,12 @@
       >
         <ResourceSwitcher
           options={resources}
-          bind:selected={selectedResource}
-          on:select={() => {
+          selected={selectedResource}
+          on:select={(e) => {
             appStore.toggleSearchParam({
-              resource: selectedResource
+              resource: e.detail,
+              type: "all"
             });
-            selectedSubType = "all";
-            refresh();
           }}
           size={variant === "v2" ? Size.md : Size.sm}
         />
@@ -362,8 +371,13 @@
               style={VerticalSwitcherStyle.BG}
               itemProps={{ isHideLabel: false, size: Size.sm }}
               items={resolveSubItems(selectedResource)}
-              bind:selected={selectedSubType}
-              on:switch={refresh}
+              selected={selectedSubType}
+              on:switch={(e) => {
+                if (!e?.detail) return;
+                appStore.toggleSearchParam({
+                  type: e.detail.toLowerCase()
+                });
+              }}
             />
           </span>
           <span class="px-2">
@@ -399,7 +413,6 @@
             {resources}
             bind:selectedResource
             bind:searchQuery
-            bind:isStarFilterSelected
             on:keydown={refresh}
           />
         {/if}

@@ -80,7 +80,8 @@ export enum ResourceAccessMode {
   /**
    * The resource is being accessed from the tabs.
    */
-  TABS = "tabs"
+  TABS = "tabs",
+  SLIDESHOW = "slideshow"
 }
 
 export enum ResourceActionType {

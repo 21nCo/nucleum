@@ -19,12 +19,12 @@
   } from "../node.store";
   import NodeTitle from "../title/NodeTitle.svelte";
   import { NodeRightPaneType, NodeType } from "../node.type";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import ResourceStatusBanner from "../../common/ResourceStatusBanner.svelte";
   import { formatDatetime } from "$lib/client/utils/time.utils";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import CollectionsLane from "./CollectionsLane.svelte";
   import NodePropertiesPane from "../rightPanel/NodePropertiesPane.svelte";
+  import { hoverable } from "$lib/client/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -54,20 +54,21 @@
 <!-- Using transition here caused modal freeze issue -->
 <div
   class={cn("flex flex-col w-full justify-center items-center", {
-    "mb-6 absolute z-10 bottom-0": $node.accessMode === ResourceAccessMode.FULL,
-    relative:
-      $node.accessMode === ResourceAccessMode.POP ||
-      $node.accessMode === ResourceAccessMode.INLINE
+    "mb-6 absolute z-10 bottom-0":
+      $node.accessMode === ResourceAccessMode.SLIDESHOW,
+    relative: $node.accessMode !== ResourceAccessMode.SLIDESHOW
   })}
 >
-  <HoverableElement
-    bind:isHovering
+  <div
+    use:hoverable={{
+      onHover: (e) => {
+        isHovering = e;
+      }
+    }}
     class={cn("flex flex-col gap-3 justify-center items-center", {
-      "w-full":
-        $node.accessMode === ResourceAccessMode.POP ||
-        $node.accessMode === ResourceAccessMode.INLINE,
-      "mo:w-full tp:w-4/5 dp:w-3/5 2k:w-[50rem] rounded-md":
-        $node.accessMode === ResourceAccessMode.FULL
+      "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
+      "mo:w-full w-9/10 max-w-9/10 2k:w-[80rem] rounded-md":
+        $node.accessMode === ResourceAccessMode.SLIDESHOW
     })}
   >
     {#if $node.isArchived || $node.trashInformation}
@@ -84,10 +85,11 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md rounded-b-md border border-brs2 p-3",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 shadow-md border border-brs2 p-3",
         {
-          "w-full": $node.accessMode === ResourceAccessMode.POP,
-          "rounded-md": $node.accessMode === ResourceAccessMode.FULL
+          "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
+          "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
+          "rounded-md": $node.accessMode === ResourceAccessMode.SLIDESHOW
         }
       )}
     >
@@ -113,6 +115,7 @@
           <ContextMenuAction
             {contextMenu}
             id="mediaNodeContextMenu"
+            position={Placement.TopCenter}
             on:action={(e) => {
               if (e.detail === NodeRightPaneType.METADATA) {
                 rightPane = e.detail;
@@ -135,7 +138,7 @@
               }}
             />
           {/if}
-          {#if $node.accessMode === ResourceAccessMode.FULL}
+          {#if $node.accessMode === ResourceAccessMode.FULL || $node.accessMode === ResourceAccessMode.SLIDESHOW}
             <Button
               {...buttonCommonProps}
               icon="cross-circled"
@@ -158,5 +161,5 @@
         </div>
       </div>
     </div>
-  </HoverableElement>
+  </div>
 </div>

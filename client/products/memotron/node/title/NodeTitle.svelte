@@ -17,7 +17,7 @@
   $: isWebNode = webNodeTypeList.includes($node.contentType);
 </script>
 
-<div class="flex items-center flex-1 min-w-0 gap-2">
+<div class="flex items-center flex-1 min-w-0 max-w-fit gap-2">
   {#if !$node.focusedBlock}
     {#if !isWebNode || $node.contentType === NodeType.WEB_PAGE}
       <NodeAvatar node={$node} size={Size.sm} />

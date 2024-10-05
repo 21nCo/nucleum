@@ -43,7 +43,6 @@
       (event.target as HTMLElement).innerText;
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
       value = value.split(shortcutTrigger)[1].split(" ")[0];
-      console.log("shortcutTrigger", { value });
     }
     // console.log("keyup - search results popover", { event, value });
     if (event.key === "Escape") {
@@ -70,9 +69,11 @@
         }
       }
       debouncedSearch();
-    } else if (event.key === "Enter" && value) {
-      if (results && results.length > 0) {
+    } else if (event.key === "Enter") {
+      if (value && results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
+      } else if (results?.length > 0) {
+        onSearchResultSelection(results[0]);
       } else {
         //save();
         dispatch("empty-enter", value);

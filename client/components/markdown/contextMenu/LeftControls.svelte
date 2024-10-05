@@ -333,7 +333,14 @@
       placement: Placement.Left,
       content: ContextMenu,
       triggerMethod: PopoverTriggerMethod.CLICK,
-      componentProps: { menu: contextMenu, size: Size.lg, heading: "Options" },
+      componentProps: {
+        menu: contextMenu,
+        size: Size.lg,
+        heading: "Options",
+        onSelect: (e) => {
+          contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+        }
+      },
       id: "leftControls",
       groupId: "leftControlsGroup",
       offsetInPx: 8

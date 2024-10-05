@@ -14,7 +14,7 @@
   let rightPane: NodeRightPaneType | undefined = undefined;
 
   function onInteraction(event: MouseEvent | TouchEvent | CustomEvent) {
-    if ($node.accessMode === ResourceAccessMode.POP) return;
+    if ($node.accessMode !== ResourceAccessMode.SLIDESHOW) return;
     isShowFloatingBar = true;
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
@@ -27,7 +27,7 @@
 {#if $node}
   <div class="relative flex flex-col w-full h-full">
     <MediaContent {node} bind:rightPane />
-    {#if $node.accessMode === ResourceAccessMode.POP || isShowFloatingBar || $node.accessMode === ResourceAccessMode.INLINE}
+    {#if $node.accessMode !== ResourceAccessMode.SLIDESHOW || isShowFloatingBar}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
         {node}

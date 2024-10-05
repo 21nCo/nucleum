@@ -247,7 +247,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   let popoverElement: HTMLElement | null = null;
   let component: ConstructorOfATypedSvelteComponent | null = null;
   let {
-    placement = Placement.BottomLeft,
+    placement = Placement.BottomCenter,
     isSpanToTriggerWidth = false,
     offsetInPx = 4,
     content,
