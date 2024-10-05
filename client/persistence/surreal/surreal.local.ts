@@ -21,7 +21,7 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
-import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
+import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 import { compareVersions } from "$lib/shared/utils/utils";
 
 export class SurrealPersistence implements IPersistence {

@@ -38,7 +38,7 @@ import {
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "../memotron.store";
-import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
+import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 

@@ -4,7 +4,7 @@
   import { SearchStore } from "$lib/client/products/memotron/memotron.store";
   import { SearchType } from "$lib/client/types/data.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { QuestionAnswerer } from "$lib/client/utils/Ai.utils";
+  import { QuestionAnswerer } from "$lib/client/utils/taco.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { onMount, onDestroy } from "svelte";
 

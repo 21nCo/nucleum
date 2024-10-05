@@ -38,7 +38,7 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
+import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 
 export const hierarchyFactorLimit = 5;
 
