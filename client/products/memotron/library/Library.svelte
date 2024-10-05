@@ -115,14 +115,14 @@
 
   onMount(() => {
     const pageSub = page.subscribe(async (p) => {
-      console.log({ p });
       const resourceParam = p.url.searchParams.get("resource");
       const subResourceParam = p.url.searchParams.get("type");
       if (
         (resourceParam && resourceParam !== selectedResource) ||
         (subResourceParam && subResourceParam !== selectedSubType)
       ) {
-        selectedResource = resourceParam as Resource;
+        selectedResource =
+          (resourceParam as Resource) ?? selectedResource ?? Resource.node;
         selectedSubType = (subResourceParam as SubType) ?? "all";
         await refresh();
       }

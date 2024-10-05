@@ -54,15 +54,17 @@
         "portrait:text-base portrait:font-medium": size === Size.md,
         "text-b2": size === Size.sm,
         "text-base": size === Size.lg,
-        "text-aps1": isActive
+        "text-aps1": isActive,
+        "text-fgs3": item.isDisabled
       })}
     >
       {#if item.icon && typeof item.icon === "string"}
         <Icon
           icon={item.icon}
           class={cn({
-            "fill-aps1": isActive,
-            "stroke-fgs1": !isActive
+            "fill-aps1": isActive && !item.isDisabled,
+            "stroke-fgs1": !isActive && !item.isDisabled,
+            "stroke-fgs3": item.isDisabled
           })}
           {size}
         />

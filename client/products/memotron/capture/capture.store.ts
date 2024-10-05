@@ -291,20 +291,21 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
-        const embedding =
-          await FeatureExtractor.generateVectorEmbeddings(mdText);
-        vectorInsertionresult = await vectorResourceStore.create({
-          id: generateResourceId(Resource.vector),
-          embedding: embedding,
-          node: id
-        });
-        console.log("vector result", vectorInsertionresult);
+        //TODO - AI enabling setting - local AI
+        // const embedding =
+        //   await FeatureExtractor.generateVectorEmbeddings(mdText);
+        // vectorInsertionresult = await vectorResourceStore.create({
+        //   id: generateResourceId(Resource.vector),
+        //   embedding: embedding,
+        //   node: id
+        // });
+        // console.log("vector result", vectorInsertionresult);
       }
       root = {
         ...root,
         children: val.rootStructure,
         mdText,
-        vector: vectorInsertionresult[0]?.id
+        vector: vectorInsertionresult?.[0]?.id
       };
 
       for (let block of val.childrenWithStructure) {

@@ -7,17 +7,18 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import type { IWebPage } from "../../node.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { UserDataMode } from "$lib/client/types/account.type";
+  import account from "$lib/client/stores/account.store";
   export let node: IWebPage;
   let isLoading: boolean = true;
   let isIframeEnabled: boolean = false;
   let isIframable: boolean = false;
   let isHovering: boolean = false;
   onMount(async () => {
-    if (!node.url) return;
-    isIframable = await resolveIframability(node.url);
+    if ($account.dataMode === UserDataMode.CLOUD) {
+      isIframable = await resolveIframability(node.url);
+    }
     isLoading = false;
-    logger.log({ isIframable });
   });
 </script>
 

@@ -85,13 +85,14 @@ export class SurrealSync implements ISyncHandler {
   async cloneCloudToLocal(resources: string[]) {
     logger.log({ at: "cloneCloudToLocal", resources });
     let query = "";
+    // resources = ["collection", "node", "file", "property", "view", "kv"];
     if (resources?.length > 0) {
       resources.forEach((resource) => {
-        query += `select * from ${resource};`;
+        query += `select *, meta::id(id) as id from ${resource};`;
       });
     }
     const result = await this.remote.query(query, {});
-    logger.log({ at: "cloneCloudToLocal", result });
+    logger.debug({ at: "cloneCloudToLocal", result });
     for (let i = 0; i < result.length; i++) {
       const resource = resources[i];
       const resourceResponse = result[i];

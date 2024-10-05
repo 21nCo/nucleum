@@ -349,11 +349,11 @@ class Flux {
   }
 
   async kvMerge(storeId: string, data: any) {
-    logger.log({ at: "kvMerge", storeId, data });
     const record = {
       ...data,
       id: `kv:${storeId}`
     };
+    logger.log({ at: "kvMerge", storeId, data, record });
     const result = await this.persistence.mutation(Resource.kv, {
       record,
       action: PersistenceActionType.MERGE

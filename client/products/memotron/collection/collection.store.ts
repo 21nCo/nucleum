@@ -30,6 +30,10 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { assignDefaultLabelAsFallback } from "./properties/property.utils";
 import type { IProperty } from "./properties/property.type";
+import {
+  ContextMenuType,
+  type IContextMenu
+} from "$lib/client/types/select.type";
 
 class CollectionStore extends ResourceStore<ICollection> {
   constructor() {
@@ -37,14 +41,17 @@ class CollectionStore extends ResourceStore<ICollection> {
   }
   async save(form: Partial<ICollection> & { defaultLayout: CollectionLayout }) {
     const id = generateResourceId(Resource.collection);
+    const propertyEditor = propertyEditorStore.get();
+    logger.log({ at: "CollectionStore.save", propertyEditor, form });
     let properties: OmitForCaptureWithId<IProperty>[] =
-      propertyEditorStore.get();
+      propertyEditor.properties;
     const resource: OmitForCapture<ICollection> = {
       ...form,
       id,
       views: [],
       properties: [],
       defaultLayout: undefined,
+      typeToExtend: propertyEditor.typeToExtend?.id ?? undefined,
       type: form.type ?? CollectionType.UNTYPED
     };
     if (form.type === CollectionType.TYPED && properties?.length > 0) {
@@ -88,6 +95,14 @@ class CollectionStore extends ResourceStore<ICollection> {
     if (!result || !Array.isArray(result)) return types;
     types = result.filter((x) => x.type === CollectionType.TYPED);
     return types;
+  }
+
+  async fetchDerivedCollections(collectionId: IRecordId) {
+    return this.selectMany({
+      filters: {
+        typeToExtend: collectionId.toString()
+      }
+    });
   }
 }
 
@@ -153,7 +168,10 @@ export class ActiveCollectionStore extends ActiveResourceStore<
           return { ...x, data: [] };
         })
       });
-      propertyEditorStore.set(record.properties ?? []);
+      propertyEditorStore.set({
+        properties: record.properties ?? [],
+        typeToExtend: record.typeToExtend
+      });
     } catch (e) {
       console.error("error in init collection store", {
         id: this.id,
@@ -292,7 +310,8 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   }
 
   async updateProperties() {
-    let properties = propertyEditorStore.get();
+    const propertiesEditor = propertyEditorStore.get();
+    let properties = propertiesEditor.properties;
     properties = properties.map(assignDefaultLabelAsFallback);
     if (!properties) return;
     for (const property of properties) {
@@ -300,7 +319,10 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     }
     return this.resourceStore.modify(
       this.id,
-      { properties: properties.map((p) => p.id) },
+      {
+        properties: properties.map((p) => p.id),
+        typeToExtend: propertiesEditor.typeToExtend?.id ?? undefined
+      },
       {
         isPreventBackPropagation: true
       }
@@ -353,7 +375,7 @@ export const collectionLayoutOptions = [
 export function resolveCollectionContextMenu(
   collection: ICollection,
   accessPoint: ResourceAccessPoint
-) {
+): IContextMenu {
   const resourceActions = new ResourceActions(collection, collectionStore);
   if (accessPoint != ResourceAccessPoint.SELF) {
     return [
@@ -387,7 +409,20 @@ export function resolveCollectionContextMenu(
           label: "Share",
           callback: async () => {}
         },
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        {
+          value: "captureshortcut",
+          icon: "ph:arrow-up-right-light",
+          label: "Capture shortcut",
+          type: ContextMenuType.SWITCH,
+          initialValue: collection.isCaptureShortcutEnabled,
+          callback: async (checked) => {
+            console.log({ checked });
+            return collectionStore.modify(collection.id, {
+              isCaptureShortcutEnabled: checked
+            });
+          }
+        }
       ]
     },
     {

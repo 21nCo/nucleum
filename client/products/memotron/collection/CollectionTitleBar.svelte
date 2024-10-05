@@ -16,6 +16,10 @@
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { resizeListener } from "$lib/client/actions/resize.action";
+  import { Placement } from "$lib/client/types/direction.enum";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { MemotronAction } from "../memotronAction.enum";
+  import { tooltip } from "$lib/client/actions/popover.action";
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
   export let collection: IActiveCollectionStore;
@@ -42,6 +46,14 @@
 
   function onSearchQueryChange(e: any) {
     dispatch("search", e);
+  }
+
+  function openPropertiesEditor() {
+    appStore.runAction(MemotronAction.EDIT_COLLECTION_PROPERTIES, {
+      componentParams: {
+        id: collection?.id
+      }
+    });
   }
 </script>
 
@@ -102,10 +114,28 @@
         {$collection.label}
       </div>
     {/if}
+    {#if $collection.isStarred}
+      <button
+        use:tooltip={{
+          text: "Unstar collection"
+        }}
+      >
+        <Icon
+          icon="star"
+          class="fill-yellow-400"
+          on:click={() => {
+            collection.debouncedModify({ isStarred: false });
+          }}
+        />
+      </button>
+    {/if}
     {#if !isInEditMode && $collection.type === CollectionType.TYPED}
       <button
         class="flex text-b3 text-fgs3 rounded-md border border-brs3"
-        on:click={() => (isInEditMode = true)}
+        on:click={openPropertiesEditor}
+        use:tooltip={{
+          text: "Edit properties"
+        }}
       >
         <span class="flex gap-2 items-center px-2 py-0.5">
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
@@ -117,6 +147,14 @@
             + {$collection.typeToExtend.properties?.length ?? 0}
           </span>
         {/if}
+      </button>
+    {:else if isInEditMode && $collection.type === CollectionType.TYPED}
+      <button
+        class="flex text-b3 text-fgs3 rounded-md border border-brs3 px-2 py-0.5 items-center gap-1 hover:bg-bgs2"
+        on:click={openPropertiesEditor}
+      >
+        <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
+        edit properties ({$collection.properties.length})
       </button>
     {/if}
   </span>
@@ -190,6 +228,7 @@
       />
       <ContextMenuAction
         {contextMenu}
+        position={Placement.Left}
         id="collectionContextMenu"
         size={Size.lg}
       />

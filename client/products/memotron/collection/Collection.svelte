@@ -485,27 +485,6 @@
             </span>
           </CollectionTitleBar>
         </div>
-        {#if isInEditMode && $collection.type === CollectionType.TYPED}
-          <div class="flex justify-center w-full py-4">
-            <div
-              class="flex flex-col items-center gap-6 px-4 py-6 flex-1 max-w-2xl p-4 rounded-md border border-brs3"
-            >
-              <div class="flex justify-start w-full">
-                <Text
-                  content="Type settings"
-                  style={TextStyle.SECTION_HEADING_SMALL}
-                />
-              </div>
-              <TypeExtensionAndPropertiesEditor
-                bind:typeToExtend={$collection.typeToExtend}
-                bind:isCaptureShortcutEnabled={$collection.isCaptureShortcutEnabled}
-                {collection}
-                on:shortcutChange={onCaptureShortcutChange}
-                on:typeExtensionChange={onTypeExtensionChange}
-              />
-            </div>
-          </div>
-        {/if}
         {#if isShowMetaViews}
           <div class="px-4">
             <OptionSelector
@@ -538,9 +517,9 @@
         {/if}
         {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
           <header
-            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
-              "pt-4": isStickied
-              // "z-10": !isInEditMode
+            class={cn("sticky top-0 z--10 flex flex-col gap-6 bg-bgs1 w-full", {
+              "pt-4": isStickied,
+              "z-10": !isInEditMode
             })}
           >
             {#if !isSingleViewMode || isInEditMode}

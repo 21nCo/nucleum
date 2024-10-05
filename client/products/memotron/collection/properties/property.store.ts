@@ -2,6 +2,7 @@ import { ResourceStore } from "$lib/client/components/flux/resourceStores/resour
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   type IProperty,
+  type IPropertyEditorStore,
   PropertyType
 } from "$lib/client/products/memotron/collection/properties/property.type";
 import { ObservableStore } from "$lib/client/stores/client.store";
@@ -16,18 +17,16 @@ class PropertyStore extends ResourceStore<IProperty> {
 
 export const propertyStore = new PropertyStore();
 
-export class PropertyEditorStore extends ObservableStore<
-  OmitForCaptureWithId<IProperty>[] & IObservableStoreSubject
-> {
+export class PropertyEditorStore extends ObservableStore<IPropertyEditorStore> {
   constructor() {
     super("propertyEditor");
-    this.set([]);
+    this.set({ properties: [] });
   }
   load(data: IProperty[]) {
-    this.set(data);
+    this.set({ properties: data });
   }
   reset() {
-    this.set([]);
+    this.set({ properties: [] });
   }
 }
 

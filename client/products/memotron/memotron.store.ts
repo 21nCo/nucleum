@@ -147,7 +147,11 @@ export class SearchStore {
       ],
       filters: {
         trashInformation: false,
-        ...this.filters
+        ...this.filters,
+        type:
+          "type" in this.filters && this.filters.type
+            ? this.filters.type?.toUpperCase()
+            : undefined
       },
       search: isValidString(this.searchQuery)
         ? {

@@ -136,18 +136,18 @@ export class ActiveNodeStore extends ActiveResourceStore<
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
       const mdText = generateMarkdownText(childrenNodes);
-      const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
+      // const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
       let params = { filters: { node: node.id.toString() } };
       // {
       //   whereClause: `node.id=${node.id}`
       // };
-      let vectorResult = await vectorResourceStore.selectMany(params);
-      const vectorUpdateresult = await vectorResourceStore.modify(
-        vectorResult[0].id,
-        {
-          embedding: embedding
-        }
-      );
+      // let vectorResult = await vectorResourceStore.selectMany(params);
+      // const vectorUpdateresult = await vectorResourceStore.modify(
+      //   vectorResult?.[0].id,
+      //   {
+      //     embedding: embedding
+      //   }
+      // );
       return this.resourceStore.modify(id, { ...changedProps, mdText });
     }
     this.resourceStore.modify(id, changedProps);

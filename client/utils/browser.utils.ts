@@ -4,6 +4,7 @@ import { GlobalEvent, type Event } from "../types/event.enum";
 import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "../../shared/utils/obj.utils";
 import { logger } from "../components/debug/logger.client";
+import { retrieveUrlData } from "./utils";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -411,32 +412,15 @@ export function trackPosition(node, options = {}) {
 }
 
 export async function resolveIframability(url: string): Promise<boolean> {
-  // try {
-  //   const response = await fetch("https://crossorigin.me/" + url);
-  //   console.log({ at: "resolveIframability", response });
-  // } catch (e) {
-  //   return false;
-  // }
   try {
-    return new Promise((resolve) => {
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      document.body.appendChild(iframe);
-
-      iframe.onload = (e) => {
-        resolve(true);
-      };
-
-      iframe.onerror = () => {
+    return new Promise(async (resolve) => {
+      if (!url) {
         resolve(false);
-      };
-
-      iframe.src = url;
-
-      // Set a timeout to catch X-Frame-Options or CSP blocks
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 5000);
+        return;
+      }
+      const urlData = await retrieveUrlData(url);
+      console.log({ at: "resolveIframability", urlData });
+      resolve(urlData?.parsedData?.isIframeable ?? false);
     });
   } catch (e) {
     return Promise.resolve(false);

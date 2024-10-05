@@ -1,8 +1,11 @@
 import type {
   IResource,
-  IResourseShareable
+  IResourseShareable,
+  OmitForCaptureWithId
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import type { AvatarWithCode, IconAvatar } from "$lib/client/types/avatar.type";
+import type { IObservableStoreSubject } from "$lib/client/types/data.type";
+import type { ICollection } from "../collection.type";
 
 export interface IProperty extends IResource, IResourseShareable {
   label: string;
@@ -61,3 +64,8 @@ export type IPropertyValue =
   | Date
   | boolean
   | { start: Date; end: Date };
+
+export type IPropertyEditorStore = IObservableStoreSubject & {
+  properties: OmitForCaptureWithId<IProperty>[];
+  typeToExtend?: ICollection;
+};

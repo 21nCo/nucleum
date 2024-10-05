@@ -93,14 +93,43 @@ export function replaceParams(query: string, params: any) {
   return query;
 }
 
+/**
+ * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
+ */
 export function resolveInsertQuery(resource: string, records: any[]) {
-  return `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+  records = records.map((x) => {
+    if (!x.id?.id) return x;
+    return {
+      ...x,
+      id: x.id.id
+    };
+  });
+  const firstRecord = records[0];
+  records = [...records.slice(1), firstRecord];
+  const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
+  const regex = /"([\w-]+:[\w-]+)"/g;
+  const result = query.replace(regex, (match, p1) => p1);
+  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
+  const finalResult = result.replace(dateRegex, (match, p1) => `d'${p1}'`);
+  return finalResult;
 }
 
+/**
+ * Removing the id from the record before merging as it is throwing an exception when using Surreal local sdk
+ * @param record
+ * @returns
+ */
 export function resolveMergeQuery(record: any) {
-  return `UPDATE ${record.id} MERGE ${JSON.stringify(record, (key, value) =>
+  const recordCopy = { ...record };
+  const recordId = recordCopy.id;
+  delete recordCopy.id;
+  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
+  return `UPDATE ${recordId} MERGE ${JSON.stringify(recordCopy, (key, value) =>
     value === undefined || value === null ? `$NONE` : value
-  )};`.replaceAll(`"$NONE"`, `NONE`);
+  )};`
+    .replaceAll(`"$NONE"`, `NONE`)
+    .replace(dateRegex, (match, p1) => `d'${p1}'`)
+    .replace(/"([\w-]+:[\w-]+)"/g, (match, p1) => p1);
 }
 
 export function resolveMutationQueryV2(mutation: IMutation) {

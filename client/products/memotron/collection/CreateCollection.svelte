@@ -9,20 +9,15 @@
   import { collectionLayoutOptions, collectionStore } from "./collection.store";
   import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
   import {
     CollectionLayout,
-    CollectionType,
-    type ICollection
+    CollectionType
   } from "$lib/client/products/memotron/collection/collection.type";
-  import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { IProperty } from "$lib/client/products/memotron/collection/properties/property.type";
   import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import { propertyEditorStore } from "./properties/property.store";
   import { onMount } from "svelte";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
@@ -35,7 +30,6 @@
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "./collection.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
@@ -45,7 +39,6 @@
   let isStarred: boolean = false;
   let selectedType: CollectionType = CollectionType.UNTYPED;
   let selectedView: CollectionLayout;
-  let typeToExtend: ICollection | undefined = undefined;
   let isCaptureShortcutEnabled: boolean = true;
   let properties: IProperty[] = [];
   let avatar: any;
@@ -96,9 +89,10 @@
 <div class="flex w-full h-full items-start">
   <button
     class="relative flex flex-col items-center justify-center w-48 h-full"
-    use:hoverable
-    on:hover={(e) => {
-      isCoverPickerHovered = e.detail;
+    use:hoverable={{
+      onHover: (e) => {
+        isCoverPickerHovered = e;
+      }
     }}
     on:click={() => {
       isShowCoverPicker = true;
@@ -144,7 +138,9 @@
       />
     </div>
   {:else}
-    <div class="flex flex-col h-full gap-4 flex-1 items-center overflow-auto">
+    <div
+      class="flex flex-col h-full gap-4 flex-1 items-center justify-between overflow-auto"
+    >
       <div class="flex flex-col gap-11 p-10 w-full overflow-auto">
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
@@ -159,7 +155,8 @@
             ].map((type) => ({
               label: resolveCollectionTypeLabel(type),
               value: type,
-              icon: resolveCollectionTypeIcon(type)
+              icon: resolveCollectionTypeIcon(type),
+              isDisabled: type === CollectionType.QUERY
             }))}
             style={OptionSelectorStyle.TRAIN}
             labelProps={{
@@ -191,10 +188,7 @@
           </div>
         </div>
         {#if selectedType === CollectionType.TYPED}
-          <TypeExtensionAndPropertiesEditor
-            bind:typeToExtend
-            bind:isCaptureShortcutEnabled
-          />
+          <TypeExtensionAndPropertiesEditor bind:isCaptureShortcutEnabled />
         {/if}
         <OptionSelector
           options={collectionLayoutOptions}
@@ -221,15 +215,13 @@
             logger.log({
               at: "create collection",
               title,
-              selectedType,
-              typeToExtend
+              selectedType
             });
             const result = await collectionStore.save({
               label: title,
               type: selectedType,
               defaultLayout: selectedView,
               isStarred,
-              typeToExtend: typeToExtend?.id ?? undefined,
               cover: coverPhoto,
               isCaptureShortcutEnabled:
                 selectedType === CollectionType.TYPED

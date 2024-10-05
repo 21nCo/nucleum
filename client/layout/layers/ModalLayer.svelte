@@ -35,6 +35,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { cn } from "$lib/client/utils/ui.utils";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { AlertType } from "$lib/client/types/notification.type";
 
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
@@ -308,10 +309,20 @@
         title: $confirmationNotification.title,
         layout: {
           size: Size.xs,
-          primaryAction: $confirmationNotification.confirmAction,
-          secondaryAction: $confirmationNotification.cancelAction ?? {
-            label: "Cancel"
-          }
+          primaryAction:
+            $confirmationNotification.confirmAction ??
+            ($confirmationNotification.type === AlertType.ERROR
+              ? {
+                  label: "OK"
+                }
+              : undefined),
+          secondaryAction:
+            $confirmationNotification.cancelAction ??
+            ($confirmationNotification.type !== AlertType.ERROR
+              ? {
+                  label: "Cancel"
+                }
+              : undefined)
         }
       }}
     >

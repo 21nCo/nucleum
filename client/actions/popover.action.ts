@@ -35,7 +35,7 @@ export function tooltip(
   let {
     text,
     classList = "",
-    direction = "top",
+    direction = Placement.Bottom,
     offsetInPx = 10,
     delay = 300
   } = params;
@@ -402,7 +402,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   }
 
   function hidePopover(e?: any): void {
-    console.log("hidePopover", e);
+    // console.log("hidePopover", e);
     if (popoverElement) {
       node.parentNode?.removeChild(popoverElement);
       popoverElement = null;
@@ -480,6 +480,21 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   actionMap.set(node, { show: showPopover, hide: hidePopover });
 
   return {
+    update(newParams: PopoverParams): void {
+      ({
+        placement = Placement.BottomCenter,
+        isSpanToTriggerWidth = false,
+        offsetInPx = 4,
+        content,
+        triggerMethod = PopoverTriggerMethod.CLICK,
+        componentProps = {},
+        groupId = "popover",
+        id = "popover"
+      } = newParams);
+      if (popoverElement) {
+        positionPopover();
+      }
+    },
     destroy(): void {
       removeEventListeners();
       hidePopover("destroy");

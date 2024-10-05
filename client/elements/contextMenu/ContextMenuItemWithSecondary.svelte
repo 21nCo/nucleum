@@ -4,7 +4,7 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import ContextMenuItem from "./ContextMenuItem.svelte";
+  import ContextMenuItemBase from "./ContextMenuItemBase.svelte";
   import Popover from "../popover/Popover.svelte";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
   import { popover } from "$lib/client/actions/popover.action";
@@ -86,5 +86,5 @@
     }
   )}
 >
-  <ContextMenuItem {item} />
+  <ContextMenuItemBase {item} />
 </button>

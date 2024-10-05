@@ -17,7 +17,7 @@
   const dispatch = createEventDispatcher();
   export let columns: TableColumn[] = [];
   export let data: any = [];
-  export let actions: { action: "remove" | "rearrange"; index: number }[] = [];
+  export let actions: { action: "remove" | "reorder"; index: number }[] = [];
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
   export let id: string = "table";
