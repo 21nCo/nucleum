@@ -13,5 +13,6 @@ export enum MemotronAction {
   LIBRARY = "library",
   SEARCH = "search",
   PASTE_CONFIRMATION = "paste-confirmation",
-  ADD_NODE_TO_COLLECTION = "add-node-to-collection"
+  ADD_NODE_TO_COLLECTION = "add-node-to-collection",
+  OPEN_CHAT = "open-chat"
 }

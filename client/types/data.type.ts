@@ -336,9 +336,24 @@ export type IResourceSelectFilters =
     }
   | IResourceFilterGroup;
 
+export enum SearchType {
+  FULL_TEXT = "FULL_TEXT",
+  SEMANTIC = "SEMANTIC"
+}
+
 export type IResourceSelectParams = {
   /**
-   * Properties to be selected.
+   * Should the searh be semantic or full text.
+   */
+  searchType?: SearchType;
+  /**
+   * Number of top matches to be retireved for semantic search.
+   */
+  semanticSearchTopK?: number;
+
+  /**
+   * Properties to be selected, that is items to be present in select statement.
+   * Eg: SELECT properties[0], properties[1], properties[2] FROM table;
    */
   properties?: string[];
   /**

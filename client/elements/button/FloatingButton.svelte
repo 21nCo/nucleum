@@ -3,9 +3,11 @@
   import type { IButtonParams } from "$lib/client/types/button.type";
   import BottomFloat from "../BottomFloat.svelte";
   export let params: IButtonParams;
+  let classList: string = "";
+  export { classList as class };
 </script>
 
-<BottomFloat>
+<BottomFloat class={classList}>
   <Button
     {...params}
     parentBgIndex={params.parentBgIndex}

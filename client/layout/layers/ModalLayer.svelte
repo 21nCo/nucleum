@@ -284,6 +284,7 @@
       isDialogEnabled}
     size={modal.layout?.size ?? Size.md}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
+    isOnRight={modal?.isOnRight}
   >
     <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver

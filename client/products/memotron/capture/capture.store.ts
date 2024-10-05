@@ -20,7 +20,7 @@ import {
   generateMarkdownText,
   resolveNodeCaptureMetadata
 } from "$lib/client/products/memotron/node/node.utils";
-import { nodeStore } from "../node/node.store";
+import { nodeStore, vectorResourceStore } from "../node/node.store";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
@@ -38,6 +38,7 @@ import {
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "../memotron.store";
+import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -284,39 +285,90 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
           }
       }
       let mdText = "";
+      let vectorInsertionresult: any;
       if (val.rootStructure.length > 0) {
         const rootBlocks = val.body.blocks.filter((b) =>
           val.rootStructure.includes(b.id)
         );
         mdText = generateMarkdownText(rootBlocks);
+        const embedding =
+          await FeatureExtractor.generateVectorEmbeddings(mdText);
+        vectorInsertionresult = await vectorResourceStore.create({
+          id: generateResourceId(Resource.vector),
+          embedding: embedding,
+          node: id
+        });
+        console.log("vector result", vectorInsertionresult);
       }
       root = {
         ...root,
         children: val.rootStructure,
-        mdText
+        mdText,
+        vector: vectorInsertionresult[0]?.id
       };
-      remainingResources = val.childrenWithStructure.map((block) => {
+
+      for (let block of val.childrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
         //TODO - links for each block
         let mdText = "";
+        let vectorInsertionresult: any;
         if (block.children && block.children.length > 0) {
           const childrenNodes = val.body.blocks.filter((b) =>
             block.children?.includes(b.id)
           );
           mdText = generateMarkdownText(childrenNodes);
+          const embedding =
+            await FeatureExtractor.generateVectorEmbeddings(mdText);
+          vectorInsertionresult = await vectorResourceStore.create({
+            id: generateResourceId(Resource.vector),
+            embedding: embedding,
+            node: block.id
+          });
+          // console.log("vector2", vector);
         }
-        return {
+        remainingResources.push({
           id: block.id,
           contentType: correspondingContent.contentType,
           body: correspondingContent.body,
           mdText,
+          vector:
+            vectorInsertionresult?.length > 0
+              ? vectorInsertionresult[0]?.id
+              : null,
           metadata: root.metadata,
           creationContext: id,
           children: block.children
-        };
-      });
+        });
+      }
+
+      // remainingResources = val.childrenWithStructure.map((block) => {
+      //   const correspondingContent = val.body.blocks.find(
+      //     (b) => b.id === block.id
+      //   );
+      //   //TODO - links for each block
+      //   let mdText = "";
+      //   let vector: any = null;
+      //   if (block.children && block.children.length > 0) {
+      //     const childrenNodes = val.body.blocks.filter((b) =>
+      //       block.children?.includes(b.id)
+      //     );
+      //     mdText = generateMarkdownText(childrenNodes);
+      //     // vector = await extract(mdText);
+      //     // console.log("vector2", vector);
+      //   }
+      //   return {
+      //     id: block.id,
+      //     contentType: correspondingContent.contentType,
+      //     body: correspondingContent.body,
+      //     mdText,
+      //     // vector,
+      //     metadata: root.metadata,
+      //     creationContext: id,
+      //     children: block.children
+      //   };
+      // });
     }
     if (root.contentType == NodeType.PDF)
       root = { ...root, url: root.body.url };

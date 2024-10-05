@@ -30,8 +30,24 @@ import { linker } from "./linking/link.store";
 import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "$lib/client/components/debug/logger.client";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
+import Chat from "$lib/client/components/chat/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
 export const memotronActions: IAction[] = [
+  {
+    action: MemotronAction.OPEN_CHAT,
+    component: Chat,
+    type: ActionType.MODAL,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowClose: true
+      },
+      isOnRight: true,
+      title: "Taco"
+    }
+  },
   {
     action: MemotronAction.CAPTURE,
     component: Capture,

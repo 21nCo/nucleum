@@ -6,6 +6,7 @@ import { activeResourceFilterV2 } from "$lib/client/utils/utils";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { isValidString } from "$lib/shared/utils/text.utils";
 import {
+  SearchType,
   type IRecordId,
   type IResourceSelectFilters,
   type IResourceSelectOrderBy
@@ -26,7 +27,8 @@ export class SearchStore {
   offset: number | undefined = undefined;
   orderBy: IResourceSelectOrderBy | undefined = undefined;
   filters: IResourceSelectFilters = {};
-
+  searchType: SearchType = SearchType.FULL_TEXT;
+  semanticSearchTopK: number | undefined;
   constructor(resource: Resource = Resource.everything) {
     this.resource = resource;
   }
@@ -63,41 +65,71 @@ export class SearchStore {
    * @returns
    */
   async nodes() {
-    const result = await flux.selectMany(Resource.node, {
-      properties: [
-        "*",
-        "parent.* as parent",
-        "file.* as file",
-        "search::highlight('**', '**', 1, false) AS bodySearch",
-        "search::highlight('**', '**', 2, false) AS labelSearch",
-        "(fn::memotron::node::parent($parent.id)) as mdParent"
-      ],
-      filters: {
-        trashInformation: false,
-        creationContext:
-          isValidString(this.searchQuery) || this.filters.contentType
-            ? undefined
-            : false,
-        ...this.filters,
-        contentType:
-          "contentType" in this.filters
-            ? this.filters.contentType?.toUpperCase()
-            : this.searchQuery
-              ? undefined
-              : rootNodeTypeList
-      },
-      search: isValidString(this.searchQuery)
-        ? {
-            query: this.searchQuery,
-            properties: ["body", "label"]
-          }
-        : undefined,
-      orderBy: this.orderBy ?? {
-        createdAt: "desc"
-      },
-      limit: this.limit,
-      offset: this.offset
-    });
+    const result = await flux.selectMany(
+      this.searchType == SearchType.SEMANTIC && this.searchQuery
+        ? Resource.vector
+        : Resource.node,
+      {
+        semanticSearchTopK: this.semanticSearchTopK,
+        searchType: this.searchType,
+        properties:
+          this.searchType === SearchType.SEMANTIC && this.searchQuery
+            ? [
+                "node.body as body",
+                "node.children as children",
+                "node.contentType as contenType",
+                "node.createdAt as createdAt",
+                "node.createdBy as createdBy",
+                "node.id as id",
+                "node.isArchived as isArchived",
+                "node.isStarred as isStarred",
+                "node.label as label",
+                "node.mdText as mdText",
+                "node.metadata as metadata",
+                "node.modifiedAt as modifiedAt",
+                "node.modifiedBy as modifiedBy",
+                "node.properties as properties",
+                "node.parent.* as parent",
+                "node.file.* as file"
+              ]
+            : [
+                "*",
+                "parent.* as parent",
+                "file.* as file",
+                "search::highlight('**', '**', 1, false) AS bodySearch",
+                "search::highlight('**', '**', 2, false) AS labelSearch",
+                "(fn::memotron::node::parent($parent.id)) as mdParent"
+              ],
+        filters:
+          this.searchType == SearchType.SEMANTIC && this.searchQuery
+            ? {}
+            : {
+                trashInformation: false,
+                creationContext:
+                  isValidString(this.searchQuery) || this.filters.contentType
+                    ? undefined
+                    : false,
+                ...this.filters,
+                contentType:
+                  "contentType" in this.filters
+                    ? this.filters.contentType?.toUpperCase()
+                    : this.searchQuery
+                      ? undefined
+                      : rootNodeTypeList
+              },
+        search: isValidString(this.searchQuery)
+          ? {
+              query: this.searchQuery,
+              properties: ["body", "label"]
+            }
+          : undefined,
+        orderBy: this.orderBy ?? {
+          createdAt: "desc"
+        },
+        limit: this.limit,
+        offset: this.offset
+      }
+    );
 
     logger.log({ at: "refreshNodes", result });
 
@@ -136,10 +168,12 @@ export class SearchStore {
   async select(params: {
     resource?: Resource;
     searchQuery?: string;
-    limit?: number;
+    limit?: number | undefined;
     offset?: number;
-    orderBy?: IResourceSelectOrderBy;
+    orderBy?: IResourceSelectOrderBy | undefined;
     filters?: IResourceSelectFilters;
+    searchType?: SearchType;
+    semanticSearchTopK?: number | undefined;
   }) {
     this.resource = params.resource ?? this.resource;
     this.searchQuery = params.searchQuery ?? this.searchQuery;
@@ -147,6 +181,9 @@ export class SearchStore {
     this.offset = params.offset ?? this.offset;
     this.orderBy = params.orderBy ?? this.orderBy;
     this.filters = params.filters ?? this.filters;
+    this.searchType = params.searchType ?? this.searchType;
+    this.semanticSearchTopK =
+      params.semanticSearchTopK ?? this.semanticSearchTopK;
     logger.log({
       at: "SearchStore.refresh",
       ...this

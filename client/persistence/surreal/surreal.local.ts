@@ -12,6 +12,7 @@ import type {
 } from "../../components/flux/resourceStores/resource.type";
 import {
   PersistenceActionType,
+  SearchType,
   type IMutationParamsv2,
   type IPrimitiveDbDataType,
   type IRecordId,
@@ -20,12 +21,13 @@ import {
 import { interceptSurrealResponse } from "../../utils/utils";
 import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
+import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
 import { compareVersions } from "$lib/shared/utils/utils";
 
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
-
+  queryEmbedding: Float32Array[] | null = null;
   private isProcessingOperation: boolean = false;
 
   constructor() {}
@@ -326,6 +328,14 @@ export class SurrealPersistence implements IPersistence {
   ): Promise<any> {
     await this.awaiter();
     const properties = params?.properties ?? [];
+    if (params?.searchType === SearchType.SEMANTIC && params?.search?.query) {
+      this.queryEmbedding = await FeatureExtractor.generateVectorEmbeddings(
+        params.search.query
+      );
+      properties.push(
+        `vector::similarity::cosine(embedding,[${this.queryEmbedding}]) AS dist`
+      );
+    }
     const filters = params?.filters ?? {};
     const whereClause = this.generateWhereClause(params);
     const selectClause =
@@ -374,7 +384,14 @@ export class SurrealPersistence implements IPersistence {
     });
     return `(${conditions.join(" OR ")})`;
   }
-
+  /**
+   * USe <|10|,COSINE> for brute force search where you don't want keep rerunning indexes on every new item addition
+   * @param searchQuery
+   * @returns
+   */
+  private generateSemanticSearchClause(k: number = 3) {
+    return `embedding <|${k}|> [${this.queryEmbedding}]`;
+  }
   private generateWhereClause(params?: IResourceSelectParams): string {
     const conditions: string[] = [];
 
@@ -385,7 +402,11 @@ export class SurrealPersistence implements IPersistence {
       conditions.push(whereClause.join(" AND "));
     }
 
-    if (params?.search) {
+    if (params?.searchType === SearchType.SEMANTIC && params?.search) {
+      conditions.push(
+        this.generateSemanticSearchClause(params.semanticSearchTopK)
+      );
+    } else if (params?.searchType === SearchType.FULL_TEXT && params?.search) {
       conditions.push(this.generateSearchClause(params.search));
     }
 

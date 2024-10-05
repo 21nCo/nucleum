@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
   import Resources from "../common/Resources.svelte";
@@ -42,6 +43,11 @@
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
   } from "../collection/collection.utils";
+  import { debouncer } from "$lib/client/utils/utils";
+  import {
+    SearchType,
+    type IResourceSelectOrderBy
+  } from "$lib/client/types/data.type";
   import { page } from "$app/stores";
 
   let searchQuery: string = "";
@@ -51,6 +57,8 @@
   let isArchivedFilterSelected: boolean = false;
   let data: any[] = [];
   let searchStore = new SearchStore();
+  let QAsearchStore = new SearchStore();
+  QAsearchStore.searchType = SearchType.SEMANTIC;
   type SubType = "all" | "recents" | NodeType | CollectionType;
   let selectedSubType: SubType = "all";
   export let variant: "v1" | "v2" | "v3" = "v3";
@@ -124,6 +132,7 @@
       pageSub();
     };
   });
+
   async function refresh() {
     if (
       !availableResources.includes(selectedResource) &&
@@ -132,6 +141,15 @@
       data = [];
       return;
     }
+    let orderBy: IResourceSelectOrderBy | undefined;
+    let semanticSearchTopK: number | undefined;
+    if (searchStore.searchType == SearchType.SEMANTIC) {
+      orderBy = {
+        dist: "desc",
+        createdAt: "desc"
+      };
+    }
+
     let filters: any = {
       isStarred: isStarFilterSelected ? true : undefined,
       isArchived: isArchivedFilterSelected ? true : undefined
@@ -147,9 +165,12 @@
     data = await searchStore.select({
       resource: selectedResource,
       searchQuery,
-      filters
+      filters,
+      orderBy,
+      semanticSearchTopK
     });
   }
+  const debouncedSearch = debouncer(refresh, 500);
 
   function onScroll() {
     var elementTarget = document.querySelector(".resource-switcher");
@@ -288,6 +309,16 @@
     class={cn("relative w-full h-full flex flex-col overflow-auto", {})}
     on:scroll={onScroll}
   >
+    <FloatingButton
+      class="justify-end"
+      params={{
+        callback: () => {
+          appStore.runAction(MemotronAction.OPEN_CHAT);
+        },
+        icon: "ph:chat",
+        variant: ButtonVariant.PRIMARY
+      }}
+    />
     {#if variant === "v1" || variant === "v3"}
       <LibrarySearchBox
         {variant}
@@ -295,7 +326,16 @@
         {isStickied}
         bind:selectedResource
         bind:searchQuery
-        on:refresh={refresh}
+        on:refresh={debouncedSearch}
+        {searchStore}
+        on:semanticSearch={(e) => {
+          if (e.detail) {
+            searchStore.searchType = SearchType.SEMANTIC;
+          } else {
+            searchStore.searchType = SearchType.FULL_TEXT;
+          }
+          refresh();
+        }}
       />
     {/if}
     <div

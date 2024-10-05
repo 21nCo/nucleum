@@ -38,6 +38,7 @@ import {
   resourceInList,
   isSameResource
 } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { FeatureExtractor } from "$lib/client/utils/Ai.utils";
 
 export const hierarchyFactorLimit = 5;
 
@@ -90,6 +91,8 @@ class NodeStore extends ResourceStore<INode> {
 
 export const nodeStore = new NodeStore();
 
+export const vectorResourceStore = new ResourceStore(Resource.vector);
+
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 /**
@@ -120,17 +123,31 @@ export class ActiveNodeStore extends ActiveResourceStore<
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
-  updateBlockPropagator = (
+  updateBlockPropagator = async (
     id: string,
     mutationId: string,
     changedProps: { body?: string; children?: string[] }
   ) => {
+    console.log("updateBlockPropagator", id, changedProps);
     if (changedProps.children) {
       const node = this.get();
+      console.log("updateBlockPropagator node", id, node, node.id);
       const childrenNodes = node.md.blocks.filter(
         (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
       const mdText = generateMarkdownText(childrenNodes);
+      const embedding = await FeatureExtractor.generateVectorEmbeddings(mdText);
+      let params = { filters: { node: node.id.toString() } };
+      // {
+      //   whereClause: `node.id=${node.id}`
+      // };
+      let vectorResult = await vectorResourceStore.selectMany(params);
+      const vectorUpdateresult = await vectorResourceStore.modify(
+        vectorResult[0].id,
+        {
+          embedding: embedding
+        }
+      );
       return this.resourceStore.modify(id, { ...changedProps, mdText });
     }
     this.resourceStore.modify(id, changedProps);

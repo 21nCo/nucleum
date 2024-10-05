@@ -4,7 +4,8 @@ export const memotronTables = [
   ...linkTag(),
   ...nodeIndices(),
   ...collectionIndices(),
-  ...linkTagIndices()
+  ...linkTagIndices(),
+  ...vector()
 ];
 
 function node() {
@@ -29,10 +30,24 @@ DEFINE FIELD isStarred on TABLE node DEFAULT false;
 DEFINE FIELD creationContext on TABLE node TYPE any;
 DEFINE FIELD notes on TABLE node FLEXIBLE TYPE option<object | string>;
 DEFINE FIELD mdText on TABLE node FLEXIBLE TYPE option<string>;
+DEFINE FIELD vector on TABLE node TYPE option<record<vector> | null>;
 `;
   return [def];
 }
 
+//TODO- while deleting a node make sure to delete its vector as well important* lese retrieved data can be pointing to undefined or null causing issues in node display and casuing stopdown
+function vector() {
+  const def = `DEFINE TABLE vector SCHEMAFULL;
+DEFINE FIELD createdBy on TABLE vector TYPE option<record<user>>;
+DEFINE FIELD modifiedBy on TABLE vector TYPE option<record<user>>;
+DEFINE FIELD createdAt on TABLE vector TYPE datetime;
+DEFINE FIELD modifiedAt on TABLE vector TYPE datetime;
+DEFINE FIELD embedding on TABLE vector TYPE array<float>;
+DEFINE FIELD node on TABLE vector TYPE option<record<node>>;
+DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS embedding MTREE DIMENSION 768 DIST COSINE TYPE F32;
+`;
+  return [def];
+}
 /**
  * 
  * Note: Combining multiple columns in single Index is not working as expected
@@ -45,7 +60,8 @@ DEFINE FIELD mdText on TABLE node FLEXIBLE TYPE option<string>;
 function nodeIndices() {
   const def = `DEFINE INDEX nodetextSearchIndex ON TABLE node COLUMNS body SEARCH ANALYZER ascii HIGHLIGHTS;`;
   const label = `DEFINE INDEX nodetextSearchIndexLabel ON TABLE node COLUMNS label SEARCH ANALYZER ascii HIGHLIGHTS;`;
-  return [def, label];
+  // const def2 = `DEFINE INDEX nodeSemanticSearchIndex ON TABLE vector FIELDS vector MTREE DIMENSION 768 DIST COSINE TYPE F32;`;
+  return [def, label]; //, def2];
 }
 
 function nodesByTime() {
