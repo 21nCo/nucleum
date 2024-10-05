@@ -1,7 +1,7 @@
 import { Resource } from "./resource.enum";
 import type { ResourceActionType } from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { RecordId } from "surrealdb.js";
+import { RecordId } from "surrealdb";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;

@@ -1,6 +1,6 @@
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
-import { RecordId } from "surrealdb.js";
+import { RecordId } from "surrealdb";
 import type { Resource } from "./resourceStores/resource.enum";
 
 export function generateResourceId(

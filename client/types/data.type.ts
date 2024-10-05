@@ -1,7 +1,7 @@
 import type { Writable } from "svelte/store";
 import type { LocalDexie } from "$local/local";
 import type { ISurrealDatabase } from "./db.type";
-import type { RecordId } from "surrealdb.js";
+import type { RecordId } from "surrealdb";
 import type { ResourceActionType } from "../components/flux/resourceStores/resource.type";
 
 /**
