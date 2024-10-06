@@ -8,7 +8,7 @@
   import { appStoreShuffleEmojis } from "../../stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { Size } from "../../types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onMount, tick } from "svelte";
   import { debouncer } from "$lib/client/utils/utils";
   import {
     AvatarType,
@@ -219,13 +219,19 @@
    * @summary To scroll to the corresponding panel item category
    * @param event
    */
-  function PanelItemClickHandler(event: any) {
+  async function panelItemClickHandler(event: any) {
     let currentElement = document.getElementById(event.target.id.toUpperCase());
-    avatarsParentContainer.scrollTo({
-      top: currentElement?.offsetTop,
-      left: 0,
-      behavior: "smooth"
-    });
+    if (!currentElement) {
+      lazyLoadAvatars();
+      await tick();
+      panelItemClickHandler(event);
+    } else {
+      avatarsParentContainer.scrollTo({
+        top: currentElement?.offsetTop,
+        left: 0,
+        behavior: "smooth"
+      });
+    }
   }
   /**
    * When the search input is changed this function is invoked. It filters the avatars based on the search input and displays the same.It Considers even removinng the entire string typed or resseting as trigger.
@@ -409,7 +415,7 @@
 </script>
 
 <div
-  class="h-[28rem] {context === AvatarPickerContext.DEFAULT
+  class="h-[30.5rem] {context === AvatarPickerContext.DEFAULT
     ? 'w-[35rem]'
     : 'w-[24rem]'}"
 >
@@ -461,8 +467,8 @@
           <Text content="Category" style={TextStyle.SECTION_HEADING_SMALL} />
         </div>
         <div class="flex flex-col gap-1">
-          {#each avatarKeys as key, index (index)}
-            {#if avatars[key] !== undefined && avatars[key].length > 0}
+          {#each storeAvatarsKey as key, index (index)}
+            {#if storeAvatars[key] !== undefined && storeAvatars[key].length > 0}
               <button
                 id={"avt" + index}
                 class={cn(
@@ -472,7 +478,7 @@
                     "hover:bg-bgs2": activeCategory != "AVT" + index
                   }
                 )}
-                on:click={PanelItemClickHandler}
+                on:click={panelItemClickHandler}
               >
                 {key}
               </button>
@@ -483,7 +489,7 @@
           <Divider colorStrength={ColorStrength.Strong} thickness={2} />
           <SwitchInput label={{ label: "Fill" }} bind:checked size={Size.sm} />
         {/if}
-        <div class="absolute bottom-3 -right-2 pb-1 w-9/10">
+        <div class="absolute bottom-3 -right-2 w-9/10">
           <UploadButton size={Size.sm} on:input={customUploadHandler} />
         </div>
       </div>

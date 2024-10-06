@@ -14,7 +14,7 @@
 </script>
 
 <input
-  style="visibility:hidden;height:0px;width:0px;"
+  style="display:none;"
   type="file"
   bind:this={inputElement}
   name="filename"
