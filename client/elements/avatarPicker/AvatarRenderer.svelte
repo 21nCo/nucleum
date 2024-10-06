@@ -1,5 +1,7 @@
 <script lang="ts">
+  import context from "$lib/client/stores/context.store";
   import { AvatarType, type IAvatar } from "$lib/client/types/avatar.type";
+  import { OperatingSystem } from "$lib/client/types/context.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   export let avatar: IAvatar;
@@ -60,7 +62,7 @@
   {:else if avatar.type === AvatarType.EMOJI}
     <span
       class={cn(
-        "noto-color-emoji--mod",
+        $context.os !== OperatingSystem.IOS && "noto-color-emoji-mod",
         isHoverEnabled && "hover:scale-[2] transition-transform"
       )}
       style="font-size: {fontSize};"
