@@ -20,7 +20,7 @@ import {
   SyncStatus,
   type IFeedbackPaneStore,
   type ISyncStore,
-  type IWebpage
+  type IWebpageStore
 } from "./types";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 import {
@@ -33,7 +33,9 @@ import {
   type IWebScreenshotClip,
   type IWebPage,
   type IKindleBook,
-  type IKindleHighlight
+  type IKindleHighlight,
+  type ITextClip,
+  type IVideoTimestampClip
 } from "$lib/client/products/memotron/node/node.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
@@ -54,18 +56,20 @@ import {
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
 import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
-import account from "$lib/client/stores/account.store";
-import { extentionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 
-class WebpageStore extends ObservableStore<IWebpage> {
+class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
   constructor() {
-    super("clipperContentScriptStore", StoreDataType.NA, {
-      refreshOnAppear: false
-    });
+    super("clipperContentScriptStore");
     this.set({ url: "", clips: [] });
   }
+
+  reset() {
+    this.set({ url: "", clips: [] });
+  }
+
   async loader(data: any) {
     logger.log({ at: "webpage loader", data });
     const page = data.page;
@@ -85,21 +89,22 @@ class WebpageStore extends ObservableStore<IWebpage> {
    * TODO - save url as top level field - to enable querying via dexie, fetching links
    */
   async refresh() {
-    const result = await extentionFlux({
+    const result = await extensionFlux({
       method: FluxMethod.SELECT_MANY,
       args: {
         resource: Resource.node,
         params: {
-          filters: {
-            contentType: NodeType.WEB_PAGE
+          search: {
+            properties: ["url"],
+            query: this.get().url
           }
         }
       }
     });
-    logger.log({ at: "refresh", result });
+    logger.debug({ at: "refresh", result });
     const page =
-      result && result.length > 0
-        ? result.find((r) => r.body.url === this.get().url)
+      result && Array.isArray(result) && result.length > 0
+        ? result.find((r: IWebPage) => r.url === this.get().url)
         : null;
 
     logger.log({ at: "refresh", url: this.get().url, page, result });
@@ -107,7 +112,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       this.loader({ page: { url: this.get().url, clips: [] } });
       return;
     }
-    const clips = await extentionFlux({
+    const clips = await extensionFlux({
       method: FluxMethod.SELECT_MANY,
       args: {
         resource: Resource.node,
@@ -118,8 +123,23 @@ class WebpageStore extends ObservableStore<IWebpage> {
         }
       }
     });
-    logger.log({ at: "refresh", page, clips });
-    this.loader({ page: { ...page, clips: clips ?? [] } });
+    const linksResult = await extensionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: {
+        resource: Resource.link,
+        params: {
+          filters: {
+            in: page.id
+          }
+        }
+      }
+    });
+    let links: IRecordId[] = [];
+    if(linksResult && Array.isArray(linksResult)) {
+      links = linksResult.map((l) => l.out);
+    }
+    logger.debug({ at: "refresh", page, clips, links, linksResult });
+    this.loader({ page: { ...page, clips: clips ?? [], links } });
   }
 
   /**
@@ -131,8 +151,9 @@ class WebpageStore extends ObservableStore<IWebpage> {
   */
   onContextChange(tab: chrome.tabs.Tab) {
     const url = resolveUrl(tab.url);
-    logger.log({ at: "onContextChange", url });
-    if (url === this.get().url) return;
+    const webpage = this.get();
+    logger.log({ at: "onContextChange", url, webpage });
+    if (url === webpage.url) return;
     this.set({ url, clips: [] });
     feedbackPane.reset();
     this.refresh();
@@ -178,26 +199,15 @@ class WebpageStore extends ObservableStore<IWebpage> {
       return tab;
 
       async function screenshotWebpage() {
-        const data = await relayToBackgroundScript({
-          event: ClipperExtensionEvent.SCREENSHOT
-        });
-        return processScreenshot(data);
-
-        async function processScreenshot(dataURL) {
-          const contentType = "image/png";
-          const s3SignedURL = await account.getSignedUrl(
-            contentType,
-            "screenshot.png",
-            false
-          );
-          const response = await relayToBackgroundScript({
-            event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-            data: { s3SignedURL, dataURL, contentType }
-          });
-          if (response == 200) {
-            return s3SignedURL.uploadURL.split("?")[0];
+        const result = await relayToBackgroundScript({
+          event: ClipperExtensionEvent.SCREENSHOT,
+          data: {
+            isUpload: true,
+            isReturnUrl: true
           }
-        }
+        });
+        console.log({ at: "screenshotWebpage", result });
+        return result;
       }
     }
   }
@@ -218,12 +228,12 @@ class WebpageStore extends ObservableStore<IWebpage> {
       await this.savePage(id);
     }
     webpage = this.get();
-    const clipUrl = resolveClipUrl(data.body);
-    const clip = {
+    const clipUrl = resolveClipUrl(data);
+    const clip: OmitForCapture<IWebScreenshotClip | ITextClip | IVideoTimestampClip> = {
       id,
+      url: clipUrl,
       body: {
         ...data.body,
-        url: clipUrl
       },
       metadata: data.metadata,
       parent: webpage.id,
@@ -244,8 +254,8 @@ class WebpageStore extends ObservableStore<IWebpage> {
     }
     return clip;
 
-    function resolveClipUrl(body: any) {
-      if ("url" in body && body.url) return body.url;
+    function resolveClipUrl(data: any) {
+      if ("url" in data && data.url) return data.url;
       else return (webpage.url ?? window.location.href) + "#" + id;
     }
   }
@@ -356,7 +366,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     });
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
-  async linkClip(from: string, to: string) {
+  async linkClip(from: IRecordId, to: IRecordId) {
     const webpage = this.get();
     const clip = webpage?.clips?.find((c) => c.id === from);
     if (!clip) return;
@@ -377,7 +387,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
-  async removeLinkForClip(from: string, to: string) {
+  async removeLinkForClip(from: IRecordId, to: IRecordId) {
     const response = await linker.unlink(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
@@ -423,12 +433,12 @@ class WebpageStore extends ObservableStore<IWebpage> {
     return await nodeStore.modify(id, { notes });
   };
   private _debouncedPersistNotes = debouncer(this._persistNotes, 2000);
-  set(newValue: IWebpage) {
+  set(newValue: IWebpageStore) {
     let changedProperties: any = {};
     if (this.previousValue) {
       let differences = shallowDiff(newValue, JSON.parse(this.previousValue));
       differences.forEach((key: string) => {
-        changedProperties[key] = newValue[key as keyof IWebpage];
+        changedProperties[key] = newValue[key as keyof IWebpageStore];
       });
     }
     // console.log({
@@ -442,7 +452,7 @@ class WebpageStore extends ObservableStore<IWebpage> {
       this._debouncedPersistNotes(newValue.id, newValue.notes);
     }
   }
-  async persistClipNotes(id: string, notes: string) {
+  async persistClipNotes(id: IRecordId, notes: string) {
     return new Promise((resolve) => {
       const result = this._debouncedPersistNotes(id, notes);
       resolve(result);
@@ -574,7 +584,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async refreshSyncState() {
     try {
       const id = this.get().id;
-      const result = await extentionFlux({
+      const result = await extensionFlux({
         method: FluxMethod.SELECT,
         args: {
           resourceId: "kv:clipperSync"
@@ -605,7 +615,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
         status: "${status}",
         updatedAt: time::now()
       };`;
-      const result = await extentionFlux({
+      const result = await extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: Resource.clipperSync,
@@ -615,7 +625,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
           }
         }
       });
-      const resultWithMerge = await extentionFlux({
+      const resultWithMerge = await extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: Resource.kv,

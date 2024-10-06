@@ -534,7 +534,7 @@ type IWebScreenshotClipBody = {
   /**
    * @deprecated - use file instead
    */
-  s3Url: string;
+  s3Url?: string;
 };
 export type IWebScreenshotClip = INodeInterface<
   NodeType.WEB_SCREENSHOT_CLIP,
@@ -646,7 +646,7 @@ export type INodeBody =
   | IWebScreenshotClipBody
   | IKindleHighlightBody;
 
-export type IClipCapture = OmitFields<IClip, CaptureOmittedFields | "label">;
+export type IClipCapture = OmitFields<IClip, CaptureOmittedFields | "label" | "url" | "parent">;
 
 export enum NodeIdPrefix {
   TWITTER_PROFILE = "twitterProfile"

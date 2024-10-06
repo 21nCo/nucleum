@@ -13,7 +13,7 @@
   class={cn(
     "fixed w-80 flex flex-col gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
-      "right-16 top-1/2 transform -translate-y-1/2 space-y-1.5":
+      "right-16 2k:right-20 top-1/2 transform -translate-y-1/2 space-y-1.5":
         $toolbarState.position === Placement.Right,
       "bottom-0 right-0 m-6": $toolbarState.position === Placement.Bottom
     }

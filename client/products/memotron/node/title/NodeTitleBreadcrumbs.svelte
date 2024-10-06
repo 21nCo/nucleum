@@ -3,11 +3,10 @@
   import type { BreadcrumbItem } from "$lib/client/types/breadcrumbItem.type";
   import { onMount } from "svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import type { IActiveNode, INode } from "../node.type";
   import { createEventDispatcher } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
+  import { nodeStore } from "../node.store";
   const dispatch = createEventDispatcher();
   export let node: IActiveNode;
   export let breadcrumbs: BreadcrumbItem[] | undefined = undefined;
@@ -16,9 +15,13 @@
   });
   async function refreshBreadcrumbs(parent: IRecordId[] | INode | undefined) {
     if (!parent || parent.length === 0) return;
-    const parentItems = await flux.selectMany(Resource.node, {
+    console.log({ parent });
+    const parentItems = await nodeStore.selectMany({
       filters: {
-        id: "id" in parent ? parent.toString() : parent.map((x) => x.toString())
+        id:
+          typeof parent === "object" && "id" in parent
+            ? parent.toString()
+            : parent?.map((x) => x.toString())
       }
     });
     if (!parentItems || parentItems.length === 0) return [];

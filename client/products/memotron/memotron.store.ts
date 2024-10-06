@@ -15,6 +15,8 @@ import { flux } from "$lib/client/components/flux/flux";
 import { logger } from "$lib/client/components/debug/logger.client";
 import { isValidArray } from "$lib/shared/utils/obj.utils";
 import { toasts } from "$lib/client/stores/notification.store";
+import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "$lib/client/components/flux/flux.type";
 
 export function resolveResource(id: IRecordId) {
   return flux.select(id);
@@ -261,6 +263,46 @@ export class SearchStore {
               query
             }
           : undefined
+      });
+    }
+    return [...(nodes ?? []), ...(collections ?? [])];
+  }
+
+  async searchForLinkingOnExtension(query: string, resource?: Resource) {
+    let nodes = [];
+    if (resource === Resource.node || !resource) {
+
+      nodes = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.node,
+          params: {
+            search: isValidString(query)
+              ? {
+                properties: ["body", "label"],
+                query
+              }
+              : undefined
+          }
+        }
+      })
+    }
+    let collections = [];
+    if (resource === Resource.collection || !resource) {
+
+      collections = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.collection,
+          params: {
+            search: isValidString(query)
+              ? {
+                properties: ["label"],
+                query
+              }
+              : undefined
+          }
+        }
       });
     }
     return [...(nodes ?? []), ...(collections ?? [])];

@@ -243,7 +243,9 @@
       input.type,
       customName,
       itemLocalURL,
-      $isReplaceableMd
+      {
+        isTemp: $isReplaceableMd
+      }
     );
     return response[0];
   }

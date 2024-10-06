@@ -36,9 +36,11 @@ export async function resolveCurrentUserId() {
       chrome.storage.local.get(ClientStorageKey.USER_INFO, function (data) {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
-        } else {
+        } else if (data.userInfo) {
           const id = JSON.parse(data.userInfo)?.id;
           resolve(id);
+        } else {
+          resolve(null);
         }
       });
     });

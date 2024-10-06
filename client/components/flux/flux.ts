@@ -444,7 +444,9 @@ class Flux {
         await this.loadInMemoryStores();
       }
       clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
-      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+      if (!this.isExtensionEnvironment) {
+        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+      }
     } catch (e) {
       logger.error({ at: "flux.syncDown", error: e });
     } finally {

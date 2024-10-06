@@ -20,6 +20,8 @@
   import { collectionStore } from "$lib/client/products/memotron/collection/collection.store";
   import { webpage } from "../contentScripts/store";
   import { linker } from "$lib/client/products/memotron/linking/link.store";
+  import account from "$lib/client/stores/account.store";
+  import { resolveToken } from "$lib/client/utils/account.utils";
   let mode: "clips" | "capture" = "clips";
   let title = "";
   let isPageSaved = false;
@@ -55,10 +57,14 @@
   });
 
   //TODO - maintain a store with the data.
-  function refreshState(data: any) {
+  async function refreshState(data: any) {
     logger.log({ at: "refreshState", data });
     if (data.id) isPageSaved = true;
     if (data.clips) clips = data.clips;
+    const token = await resolveToken();
+    if (token) {
+      account.init();
+    }
   }
 </script>
 
@@ -101,7 +107,7 @@
         <!-- TODO -->
       {/if}
       <footer
-        class="h-12 border-t border-t-brs3 flex justify-center items-center"
+        class="h-12 border-t border-t-brs3 flex justify-between items-center px-3"
       >
         <Button
           label="Go to app"
@@ -109,6 +115,27 @@
           style={ButtonStyle.PLAIN}
           on:click={() => openAppPath("")}
         />
+        {#if $account?.userInfo}
+          <span class="flex items-center gap-2">
+            <span>
+              {$account?.userInfo?.nickName ?? "Unknown user"}
+            </span>
+            <Button
+              label="logout"
+              size={Size.sm}
+              isUnderlined={true}
+              style={ButtonStyle.PLAIN}
+              on:click={() => {
+                account.signOut();
+                clips = [];
+                isPageSaved = false;
+                relayToContentScript({
+                  event: ExtensionEvent.LOGOUT
+                });
+              }}
+            />
+          </span>
+        {/if}
       </footer>
     </div>
   </div>

@@ -7,6 +7,7 @@
   import { SearchStore } from "../../memotron.store";
   import { onMount } from "svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   export let context:
     | "capture"
     | "nodelinkspane"
@@ -84,6 +85,12 @@
         : context === "nodelinkspane"
           ? Resource.node
           : undefined;
+    if (isExtensionEnvironment()) {
+      return new SearchStore().searchForLinkingOnExtension(
+        searchQuery,
+        resource
+      );
+    }
     return new SearchStore().searchForLinking(searchQuery, resource);
   }
 </script>

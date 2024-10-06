@@ -7,7 +7,7 @@ import type {
   INodePropertyValue
 } from "$lib/client/products/memotron/node/node.type";
 import type { AlertType } from "$lib/client/types/notification.type";
-export interface IWebpage extends IObservableStoreSubject {
+export interface IWebpageStore extends IObservableStoreSubject {
   url: string;
   id?: IRecordId;
   clips?: (IClip & { links: any[] })[];

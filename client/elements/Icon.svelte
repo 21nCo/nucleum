@@ -120,6 +120,13 @@
   import Highlight from "../icons/Highlight.svelte";
   import IconifyIcon from "@iconify/svelte";
   import { logger } from "../components/debug/logger.client";
+  import { isExtensionEnvironment } from "../utils/browser.utils";
+  import Crop from "../icons/Crop.svelte";
+  import PencilSimpleLine from "../icons/PencilSimpleLine.svelte";
+  import Highlighter from "../icons/Highlighter.svelte";
+  import PhCrossCircled from "../icons/PhCrossCircled.svelte";
+  import PhBookmarks from "../icons/PhBookmarks.svelte";
+  import PhArrowElbow from "../icons/PhArrowElbow.svelte";
 
   export let icon: string | undefined = undefined;
   export let size: Size.xs | Size.sm | Size.md | Size.lg | Size.xl = Size.md;
@@ -147,6 +154,7 @@
   $: renderedIconifyIcon = resolveRenderedIconForIconify(icon, isFilled);
 
   let classListParam = "";
+  let dev_useIconifyTailwind = false;
   export { classListParam as class };
   let _classList = "";
   let variant: IconVariant = IconVariant.Outline;
@@ -242,14 +250,18 @@
     if (!icon || !icon.includes(":")) {
       return undefined;
     }
+    let renderedIcon = icon;
     if (icon.includes("fa6-brands") || icon.includes("lets-icons")) {
-      return icon;
+      renderedIcon = icon;
     } else if (icon.includes("-light")) {
-      return isFilled ? icon.replace("-light", "-fill") : icon;
+      renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
     } else if (icon.includes("-thin")) {
-      return isFilled ? icon.replace("-thin", "-fill") : icon;
+      renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
     }
-    return isFilled ? `${icon}-fill` : icon;
+    if (dev_useIconifyTailwind) {
+      renderedIcon = renderedIcon.replace(":", "--");
+    }
+    return renderedIcon;
   }
 </script>
 
@@ -258,32 +270,36 @@
   tabindex={isTabbable ? 0 : -1}
   on:click
 >
-  {#if icon?.includes(":") && renderedIconifyIcon}
-    <!-- TODO - fix import issue on plasmo - disabling for now -->
-    <div
-      class={cn(renderedIconifyIcon, {
-        "w-8 h-8": size === Size.xl,
-        "w-6 h-6": size === Size.lg,
-        "w-[1.25rem] h-[1.25rem]": size === Size.md,
-        "w-4 h-4": size === Size.sm,
-        "w-3 h-3": size === Size.xs
-      })}
-    >
-      <IconifyIcon
-        icon={renderedIconifyIcon}
-        width={size === Size.lg
-          ? "1.5rem"
-          : size === Size.md
-            ? "1.25rem"
-            : "1rem"}
-        height={size === Size.lg
-          ? "1.5rem"
-          : size === Size.md
-            ? "1.25rem"
-            : "1rem"}
-        class={_classList + " iconifysvg "}
-      />
-    </div>
+  {#if icon?.includes(":") && renderedIconifyIcon && !isExtensionEnvironment()}
+    {#if !dev_useIconifyTailwind}
+      <!-- TODO - fix import issue on plasmo - disabling for now -->
+      <div
+        class={cn(renderedIconifyIcon, {
+          "w-8 h-8": size === Size.xl,
+          "w-6 h-6": size === Size.lg,
+          "w-[1.25rem] h-[1.25rem]": size === Size.md,
+          "w-4 h-4": size === Size.sm,
+          "w-3 h-3": size === Size.xs
+        })}
+      >
+        <IconifyIcon
+          icon={renderedIconifyIcon}
+          width={size === Size.lg
+            ? "1.5rem"
+            : size === Size.md
+              ? "1.25rem"
+              : "1rem"}
+          height={size === Size.lg
+            ? "1.5rem"
+            : size === Size.md
+              ? "1.25rem"
+              : "1rem"}
+          class={_classList + " iconifysvg "}
+        />
+      </div>
+    {:else if dev_useIconifyTailwind}
+      <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
+    {/if}
   {:else if icon}
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -598,6 +614,20 @@
         <AltText />
       {:else if icon === "gift"}
         <Gift {variant} />
+      {:else if icon === "ph:crop"}
+        <Crop {variant} />
+      {:else if icon === "ph:pencil-simple-line"}
+        <PencilSimpleLine {variant} />
+      {:else if icon === "ph:highlighter"}
+        <Highlighter {variant} />
+      {:else if icon === "ph:x-circle"}
+        <PhCrossCircled {variant} />
+      {:else if icon === "ph:bookmarks"}
+        <PhBookmarks {variant} />
+      {:else if icon === "ph:arrow-elbow-down-left"}
+        <PhArrowElbow variant="down-left" />
+      {:else if icon === "ph:arrow-elbow-right-up"}
+        <PhArrowElbow variant="right-up" />
       {:else if icon === "magnifying-glass-plus"}
         <MagnifyingGlassPlus {variant} />
       {:else if icon === "magnifying-glass-minus"}

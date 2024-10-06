@@ -8,7 +8,6 @@
     NodeType,
     type IWebScreenshotClip
   } from "$lib/client/products/memotron/node/node.type";
-  import account from "$lib/client/stores/account.store";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
@@ -41,15 +40,16 @@
     bgColor = `rgba(${compRed},${compGreen},${compBlue},0.6)`;
   });
 
-  async function saveSnip(s3Url: string) {
+  async function saveSnip(uploadResponse: any) {
+    if (!uploadResponse || !uploadResponse.id) return;
     const snip: OmitForCapture<IWebScreenshotClip> = {
       contentType: NodeType.WEB_SCREENSHOT_CLIP,
       body: {
-        s3Url
+        file: uploadResponse.id
       }
     };
     const response = await webpage.saveClip(snip);
-    dispatch("saved", { s3Url, id: response.id });
+    dispatch("saved", { id: response?.id });
   }
 
   function processScreenshot(data, area: IArea) {
@@ -92,20 +92,14 @@
           scaledArea.height
         );
         const contentType = "image/png";
-        const dataURL = canvas.toDataURL(contentType);
-        const s3SignedURL = await account.getSignedUrl(
-          contentType,
-          "screenshot.png",
-          false
-        );
-        //TODO - relay whole upload process to use account.uploadFileV2 on background script and save file: instead of url
+        const dataUrl = canvas.toDataURL(contentType);
+
         const response = await relayToBackgroundScript({
-          event: ExtensionEvent.UPLOAD_TO_S3_USING_UPLOAD_URL,
-          data: { s3SignedURL, dataURL, contentType }
+          event: ExtensionEvent.UPLOAD_FILE,
+          data: { dataUrl, contentType }
         });
-        if (response == 200) {
-          saveSnip(s3SignedURL.uploadURL.split("?")[0]);
-        }
+        console.log({ at: "snip - processScreenshot", response });
+        saveSnip(response);
       }
     };
   }

@@ -1,17 +1,20 @@
 import type { Table } from "dexie";
-import type { INode } from "$lib/client/products/memotron/node/node.type";
+import type { ILink, INode } from "$lib/client/products/memotron/node/node.type";
 import { AppDexie } from "$lib/client/persistence/dexie";
 import type {
   ICollection,
   ICollectionView
 } from "$lib/client/products/memotron/collection/collection.type";
 import type { IProperty } from "./collection/properties/property.type";
+import type { IFile } from "$lib/client/components/files/file.type";
 
 export class MemotronDexie extends AppDexie {
   node!: Table<INode>;
   collection!: Table<ICollection>;
   view!: Table<ICollectionView>;
   property!: Table<IProperty>;
+  file!: Table<IFile>;
+  link!: Table<ILink>;
 
   constructor(scope: string) {
     super(scope);
@@ -21,7 +24,9 @@ export class MemotronDexie extends AppDexie {
         collection:
           "id, type, label, isStarred, isCaptureShortcutEnabled, createdAt, modifiedAt, interactedAt",
         property: "id, label, createdAt, modifiedAt, interactedAt",
-        view: "id, label, createdAt, modifiedAt, interactedAt"
+        view: "id, label, createdAt, modifiedAt, interactedAt",
+        file: "id, label, type, size, createdAt",
+        link: "id, in, out, linkType"
       })
       .upgrade((tx) => {
         //Handle version upgrades here - in case of change of table schema on db

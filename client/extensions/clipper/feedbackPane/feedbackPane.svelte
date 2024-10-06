@@ -12,6 +12,7 @@
   import { resolveContentTypeString } from "../clipper.utils";
   import { truncateString } from "$lib/shared/utils/text.utils";
   import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
+  import FileView from "$lib/client/components/files/FileView.svelte";
   let notes: string = "";
   let autoCloseDuration = 30;
   let closeTimer: any;
@@ -123,7 +124,7 @@
     </div>
     <LinkBoxOnClipper on:link={onLink} />
     <LinkItems
-      links={$webpage.links}
+      links={$webpage.links ?? []}
       on:click={onLinkClick}
       on:unlink={onUnlink}
     />
@@ -138,11 +139,12 @@
     />
   </div>
   {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <img
+    <!-- <img
       src={$feedbackPane.focusedClip.body.s3Url}
       alt="Screenshot"
       class="w-full"
-    />
+    /> -->
+    <FileView id={$feedbackPane.focusedClip.body?.file} />
   {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
     <span class="text-b3">
       {truncateString($feedbackPane.focusedClip.body.content, 200)}

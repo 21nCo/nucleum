@@ -5,6 +5,7 @@ import {
   type IMutation
 } from "$lib/client/types/data.type";
 import type { ISurrealDatabase } from "$lib/client/types/db.type";
+import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import {
   ClientStorageKey,
   type IPersistence,
@@ -86,10 +87,17 @@ export class SurrealSync implements ISyncHandler {
     logger.log({ at: "cloneCloudToLocal", resources });
     let query = "";
     // resources = ["collection", "node", "file", "property", "view", "kv"];
+
     if (resources?.length > 0) {
-      resources.forEach((resource) => {
-        query += `select *, meta::id(id) as id from ${resource};`;
-      });
+      if (!isExtensionEnvironment()) {
+        resources.forEach((resource) => {
+          query += `select *, meta::id(id) as id from ${resource};`;
+        });
+      } else {
+        resources.forEach((resource) => {
+          query += `select * from ${resource};`;
+        });
+      }
     }
     const result = await this.remote.query(query, {});
     logger.debug({ at: "cloneCloudToLocal", result });

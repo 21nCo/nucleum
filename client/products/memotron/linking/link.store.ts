@@ -2,6 +2,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import type { ILinkTag } from "./link.type";
 import {
+  type ICustomMutationParams,
   type IRecordId,
   PersistenceActionType
 } from "$lib/client/types/data.type";
@@ -15,6 +16,10 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { linkTagLabelMapper } from "./link.utils";
+import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
+import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 class Linker extends ResourceStore<INodeLink> {
   constructor() {
@@ -26,16 +31,48 @@ class Linker extends ResourceStore<INodeLink> {
     to: IRecordId,
     linkType: LinkType = LinkType.DIRECT
   ) {
-    const response = await flux.mutation(Resource.link, {
+    console.log({ from, to, linkType });
+    const mutationParams: ICustomMutationParams = {
       action: PersistenceActionType.CUSTOM,
       query: this.generateLinkQuery(from, to, linkType)
-    });
+    }
+    if (isExtensionEnvironment()) {
+      // const response = await extensionFlux({
+      //   method: FluxMethod.MUTATION,
+      //   args: {
+      //     resource: Resource.link,
+      //     params: mutationParams
+      //   }
+      // });
+      const linkRecordResponse = await extensionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: Resource.link,
+          params: {
+            action: PersistenceActionType.INSERT,
+            records: [
+              {
+                id: generateResourceId(Resource.link),
+                in: from,
+                out: to,
+                linkType: linkType,
+                createdAt: new Date().toISOString()
+              }
+            ]
+          }
+        }
+      });
+      logger.debug({ at: "link - extension", linkRecordResponse });
+      return linkRecordResponse;
+    }
+
+    const response = await flux.mutation(Resource.link, mutationParams);
     logger.log({ at: "link", response });
     return response;
   }
 
   async unlink(from: IRecordId, to: IRecordId) {
-    let response = await flux.mutation(Resource.link, {
+    const mutationParams: ICustomMutationParams = {
       action: PersistenceActionType.CUSTOM,
       query:
         "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
@@ -43,7 +80,20 @@ class Linker extends ResourceStore<INodeLink> {
         from,
         to
       }
-    });
+    }
+    if (isExtensionEnvironment()) {
+      const response = await extensionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: Resource.link,
+          params: mutationParams
+        }
+      });
+      logger.debug({ at: "unlink - extension", response });
+      return response;
+    }
+
+    let response = await flux.mutation(Resource.link, mutationParams);
     logger.log({ at: "unlink", from, to, response });
     return response;
   }

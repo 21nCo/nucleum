@@ -238,10 +238,13 @@ module.exports = {
         {
           pattern: /(from|via|to)-(.+)/
         },
-        /^theme_/,
-        /^cs_.*$/,
-        /^bg-/,
-        /^text-/
+        // {
+        //   pattern: /ph--.*/
+        // },
+        // /^theme_/,
+        // /^cs_.*$/,
+        // /^bg-/,
+        // /^text-/
       ]
     }
   },
@@ -266,6 +269,10 @@ module.exports = {
         // ...darkThemes,
         ...colorSchemesBranding
       ]
-    })
+    }),
+    require("@iconify/tailwind").addIconSelectors({
+      prefixes: ["ph"]
+    }
+    )
   ]
 };

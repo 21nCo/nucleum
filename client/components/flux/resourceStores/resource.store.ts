@@ -30,7 +30,7 @@ import type {
 import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { flux } from "../flux";
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-import { extentionFlux } from "../fluxExtentionMediator";
+import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
 // import { appStore } from "$lib/client/stores/app.store";
 
@@ -218,7 +218,7 @@ export class ResourceStore<T extends IResource> implements IStore {
       data = { action: PersistenceActionType.INSERT, records: resources };
     }
     if (this.isExtensionEnvironment) {
-      const result = await extentionFlux({
+      const result = await extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
@@ -232,7 +232,7 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   private persistModification(data: Partial<T>) {
     if (this.isExtensionEnvironment) {
-      return extentionFlux({
+      return extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
@@ -316,7 +316,7 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   async bulkModify(ids: IRecordId[], data: Partial<T>) {
     if (this.isExtensionEnvironment) {
-      return extentionFlux({
+      return extensionFlux({
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
@@ -370,7 +370,7 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   selectMany(params?: IResourceSelectParams) {
     if (this.isExtensionEnvironment) {
-      return extentionFlux({
+      return extensionFlux({
         method: FluxMethod.SELECT_MANY,
         args: {
           resource: this.id,
@@ -383,7 +383,7 @@ export class ResourceStore<T extends IResource> implements IStore {
 
   select(resourceId: IRecordId, properties?: string[]) {
     if (this.isExtensionEnvironment) {
-      return extentionFlux({
+      return extensionFlux({
         method: FluxMethod.SELECT,
         args: {
           resourceId,

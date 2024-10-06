@@ -9,6 +9,7 @@
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import {
     NodeType,
+    type IClipCapture,
     type ITextClip
   } from "$lib/client/products/memotron/node/node.type";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
@@ -109,7 +110,7 @@
     const anchorOffset = selection.anchorOffset;
     const focusOffset = selection.focusOffset;
     try {
-      return webpage.saveClip({
+      const data: IClipCapture = {
         contentType: NodeType.TEXT_CLIP,
         body: {
           text: selectedText,
@@ -122,7 +123,8 @@
           focusNode: getQuery(selection.focusNode),
           focusOffset: focusOffset
         }
-      });
+      };
+      return webpage.saveClip(data);
     } catch (e) {
       console.error("ERROR", e);
     }

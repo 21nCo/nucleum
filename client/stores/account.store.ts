@@ -25,6 +25,8 @@ import { logger } from "../components/debug/logger.client";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { fileStore } from "../components/files/file.store";
 import { flux } from "../components/flux/flux";
+import { generateResourceId } from "../components/flux/flux.utils";
+import { Resource } from "../components/flux/resourceStores/resource.enum";
 
 export const isRefreshingToken = writable(false);
 
@@ -256,11 +258,15 @@ class AccountStore extends ObservableStore<
     contentType: string,
     fileName: string,
     blob: any,
-    isTemp: boolean = false
+    params: {
+      isTemp?: boolean;
+      isReturnUrl?: boolean;
+      isExtensionEnv?: boolean;
+    } = {}
   ) {
     try {
       const account = this.get();
-      const id = contentType.split("/")[0] + "_" + generateSimpleRandomId();
+      const id = generateResourceId(Resource.file, { id: contentType.split("/")[0] + "_" + generateSimpleRandomId() });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       if (account.dataMode === UserDataMode.LOCAL) {
         const arrayBuffer = await blob.arrayBuffer();
@@ -279,7 +285,7 @@ class AccountStore extends ObservableStore<
         const signedUrlResponse = await this.getSignedUrl(
           contentType,
           fileName,
-          isTemp
+          params.isTemp ?? false
         );
         if (!signedUrlResponse || !signedUrlResponse.uploadURL) return null;
 
@@ -289,14 +295,20 @@ class AccountStore extends ObservableStore<
           blob
         );
         const url = signedUrlResponse.uploadURL.split("?")[0];
+        const file = {
+          id,
+          label: fileName,
+          type: contentType,
+          url,
+          size: blob.size
+        }
+        if (params.isReturnUrl) {
+          return url;
+        } else if (params.isExtensionEnv) {
+          return file;
+        }
         const response = await fileStore.create([
-          {
-            id,
-            label: fileName,
-            type: contentType,
-            url,
-            size: blob.size
-          }
+          file
         ]);
         return response;
       }

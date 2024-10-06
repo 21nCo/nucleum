@@ -46,10 +46,20 @@
     tooltipOptions
   };
   function toggleAutoHighligher() {
-    isAutoHighlighterExpanded = !isAutoHighlighterExpanded;
     if (!isAutoHighlighterExpanded) {
       activeHighlighter = null;
       dispatch("color", 0);
+    } else {
+      resetAll("highlighter");
+    }
+  }
+
+  function resetAll(except: string) {
+    if (except !== "highlighter") {
+      isAutoHighlighterExpanded = false;
+    }
+    if (except !== "snip") {
+      isSnipActive = false;
     }
   }
 </script>
@@ -58,9 +68,9 @@
   class={cn(
     "fixed bg-bgs1 border border-brs3 rounded-full min-h-fit flex gap-3  justify-center items-center shadow-md",
     {
-      "right-0 top-1/2 flex-col w-10 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
+      "right-0 top-1/2 flex-col w-11 2k:w-12 mr-4 2k:mr-6 py-3 transform -translate-y-1/2 space-y-1.5":
         $toolbarState.position === Placement.Right,
-      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-3 mb-4 px-6":
+      "bottom-0 right-1/2 transform translate-x-1/2 flex-row py-2 mb-4 px-6":
         $toolbarState.position === Placement.Bottom
     }
   )}
@@ -106,11 +116,12 @@
     />
   {/if}
   <Toggle
-    icon="cube-transparent"
+    icon="ph:crop"
     tooltip="Snip"
-    size={Size.sm}
+    size={Size.md}
     bind:on={isSnipActive}
     {tooltipOptions}
+    on:change={() => resetAll("snip")}
   />
   {#if !isScreenShotOnly && !isSaveOnly}
     <!-- TODO - enable this when generate summary is implemented -->
@@ -135,11 +146,13 @@
           ? Orientation.Vertical
           : Orientation.Horizontal}
       />
-      <Button
-        icon="pencil"
-        {...buttonParams}
-        tooltip="Auto Highlight"
-        on:click={toggleAutoHighligher}
+      <Toggle
+        icon="ph:highlighter"
+        tooltip="Highlighter"
+        size={Size.md}
+        bind:on={isAutoHighlighterExpanded}
+        {tooltipOptions}
+        on:change={toggleAutoHighligher}
       />
       {#if isAutoHighlighterExpanded}
         <div
@@ -170,7 +183,7 @@
     </div>
   {/if}
   <Button
-    icon="sidebar-toggle"
+    icon="ph:bookmarks"
     tooltip="Open Side panel"
     {...buttonParams}
     on:click={() =>
@@ -178,8 +191,8 @@
   />
   <Button
     icon={$toolbarState.position === Placement.Right
-      ? "arrow-down-left"
-      : "arrow-up-right"}
+      ? "ph:arrow-elbow-down-left"
+      : "ph:arrow-elbow-right-up"}
     tooltip={$toolbarState.position === Placement.Right
       ? "Move to bottom"
       : "Move to right"}
@@ -195,7 +208,7 @@
     }}
   />
   <Button
-    icon="cross-circled"
+    icon="ph:x-circle"
     tooltip="Collapse"
     {...buttonParams}
     on:click={() => {

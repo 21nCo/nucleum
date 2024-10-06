@@ -19,7 +19,7 @@ import {
   type IResourceSelectParams
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
-import { resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
+import { commonQueryReplacements, resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 import { compareVersions } from "$lib/shared/utils/utils";
@@ -297,6 +297,7 @@ export class SurrealPersistence implements IPersistence {
   async query(query: string, params: any): Promise<any> {
     // return this.instance?.query(query, params);
     await this.awaiter();
+    query = commonQueryReplacements(query);
     const result = await this.instance?.query_raw(query, params);
     logger.log({ at: "SurrealPersistence.query", query, params, result });
     this.isProcessingOperation = false;

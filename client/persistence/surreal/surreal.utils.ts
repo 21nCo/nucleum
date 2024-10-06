@@ -107,11 +107,7 @@ export function resolveInsertQuery(resource: string, records: any[]) {
   const firstRecord = records[0];
   records = [...records.slice(1), firstRecord];
   const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
-  const regex = /"([\w-]+:[\w-]+)"/g;
-  const result = query.replace(regex, (match, p1) => p1);
-  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
-  const finalResult = result.replace(dateRegex, (match, p1) => `d'${p1}'`);
-  return finalResult;
+  return commonQueryReplacements(query);
 }
 
 /**
@@ -123,14 +119,22 @@ export function resolveMergeQuery(record: any) {
   const recordCopy = { ...record };
   const recordId = recordCopy.id;
   delete recordCopy.id;
-  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
-  return `UPDATE ${recordId} MERGE ${JSON.stringify(recordCopy, (key, value) =>
+  const query = `UPDATE ${recordId} MERGE ${JSON.stringify(recordCopy, (key, value) =>
     value === undefined || value === null ? `$NONE` : value
   )};`
     .replaceAll(`"$NONE"`, `NONE`)
-    .replace(dateRegex, (match, p1) => `d'${p1}'`)
-    .replace(/"([\w-]+:[\w-]+)"/g, (match, p1) => p1);
+  return commonQueryReplacements(query);
 }
+
+
+export function commonQueryReplacements(query: string) {
+  const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
+  const recordLinkRegex = /"([\w-]+:[\w-]+)"/g;
+  return query
+    .replace(dateRegex, (match, p1) => `d'${p1}'`)
+    .replace(recordLinkRegex, (match, p1) => p1);
+}
+
 
 export function resolveMutationQueryV2(mutation: IMutation) {
   switch (mutation.params.action) {

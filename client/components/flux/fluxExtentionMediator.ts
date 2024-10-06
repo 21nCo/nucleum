@@ -38,6 +38,8 @@ export async function delegateToFlux(method: IFluxMethod) {
         return flux?.select(method.args.resourceId, method.args.properties);
       case FluxMethod.MUTATION:
         return flux?.mutation(method.args.resource, method.args.params);
+      case FluxMethod.KV_MERGE:
+        return flux?.kvMerge(method.args.storeId, method.args.data);
       default:
         return null;
     }
@@ -71,7 +73,7 @@ export function initExtensionFlux(
   });
 }
 
-export function extentionFlux(method: IFluxMethod) {
+export function extensionFlux(method: IFluxMethod) {
   return relayToBackgroundScript({
     event: ExtensionEvent.FLUX_DELEGATION,
     data: {
