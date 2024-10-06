@@ -19,7 +19,6 @@
     type EmojiAvatar,
     AvatarPickerContext
   } from "../../types/avatar.type";
-  import { IconVariant } from "../../types/icon.type";
   import { PanelSwitcherStyle } from "../../types/switcher.enum";
   import Text from "../text/Text.svelte";
   import { TextStyle } from "../../types/text.enum";
@@ -59,19 +58,29 @@
       ? materialSymbolsWithCategories
       : emojisWithCategories;
 
-  $: if (mode === AvatarType.ICON) {
-    storeAvatars = materialSymbolsWithCategories;
-    avatars = storeAvatars;
-  } else {
-    storeAvatars = emojisWithCategories;
-    avatars = storeAvatars;
-  }
+  let storeAvatarsKey = Object.keys(storeAvatars);
+  let storeAvatarsKV = Object.entries(storeAvatars);
+
   /**
-   * A copy of the store avatars based on the mode. Whose items will be modified based on the search input.
+   * To add the next set of emojis based on the previously added emojis
+   */
+  let previousKVIndex = -1;
+  /**
+   * To add the next set of icons based on the previously added icons
+   */
+  let previousIconIndex = 0;
+
+  /**
+   * To store the avatars based on the mode. And load the additional avatars when scrolls happens.
+   */
+  let lazyLoadedAvatars: any = {};
+  /**
+   * Initially maintains the copy of lazyLoadedAvatars based on the mode. The primary utility of this variable is to diplay the avatars passed to it.
    * @summary Mutable Store Avatar for Search purpose.
    */
-  let avatars = storeAvatars;
+  let avatars: any = {};
   let avatarsParentContainer: HTMLDivElement;
+
   $: if (mode && avatarsParentContainer)
     avatarsParentContainer?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   let avatarKeys: string[] = Object.keys(avatars);
@@ -96,29 +105,68 @@
   let eventDispatcher = createEventDispatcher();
   let shuffleEmojis = $appStoreShuffleEmojis;
 
+  function updateUsedAndCustomAvatars(prefs: any) {
+    storeAvatars["Frequently Used"] = (
+      mode == AvatarType.ICON
+        ? prefs.avatarPicker.usedIcons
+        : prefs.avatarPicker.usedEmojis
+    )
+      ?.slice(0, 50)
+      .filter((emote: any) => emote[0]?.frequency > 2);
+    storeAvatars["Custom"] = (
+      mode == AvatarType.ICON
+        ? prefs.avatarPicker.usedIcons
+        : prefs.avatarPicker.usedEmojis
+    )?.filter((emote: any) => "URL" in emote[0] && emote[0].URL);
+    lazyLoadedAvatars["Frequently Used"] = storeAvatars["Frequently Used"];
+    lazyLoadedAvatars["Custom"] = storeAvatars["Custom"];
+    avatars = lazyLoadedAvatars;
+  }
+
   onMount(() => {
+    lazyLoadAvatars();
     let userPrefSub: any;
     if (context === AvatarPickerContext.DEFAULT) {
       userPrefSub = userPreferences.subscribe((prefs) => {
-        storeAvatars["Frequently Used"] = (
-          mode == AvatarType.ICON
-            ? prefs.avatarPicker.usedIcons
-            : prefs.avatarPicker.usedEmojis
-        )
-          ?.slice(0, 50)
-          .filter((emote) => emote[0]?.frequency > 2);
-        storeAvatars["Custom"] = (
-          mode == AvatarType.ICON
-            ? prefs.avatarPicker.usedIcons
-            : prefs.avatarPicker.usedEmojis
-        )?.filter((emote) => "URL" in emote[0] && emote[0].URL);
-        avatars = storeAvatars;
+        updateUsedAndCustomAvatars(prefs);
       });
     }
     return () => {
       if (userPrefSub) userPrefSub();
     };
   });
+
+  function lazyLoadAvatars() {
+    if (mode == AvatarType.ICON) {
+      if (previousIconIndex == 0) {
+        lazyLoadedAvatars[storeAvatarsKV[0][0]] = storeAvatarsKV[0][1];
+        lazyLoadedAvatars[storeAvatarsKV[1][0]] = storeAvatarsKV[1][1];
+      }
+      let i = previousIconIndex;
+      if (lazyLoadedAvatars[storeAvatarsKV[2][0]] == undefined) {
+        lazyLoadedAvatars[storeAvatarsKV[2][0]] = [];
+      }
+      for (
+        ;
+        i < storeAvatarsKV[2][1].length && i < previousIconIndex + 100;
+        i++
+      ) {
+        lazyLoadedAvatars[storeAvatarsKV[2][0]].push(storeAvatarsKV[2][1][i]);
+      }
+      avatars = lazyLoadedAvatars;
+      previousIconIndex = i;
+    } else if (mode == AvatarType.EMOJI) {
+      previousKVIndex++;
+      if (previousKVIndex < storeAvatarsKV.length) {
+        lazyLoadedAvatars[storeAvatarsKV[previousKVIndex][0]] =
+          storeAvatarsKV[previousKVIndex][1];
+        avatars = lazyLoadedAvatars;
+        if (previousKVIndex == 0 || previousKVIndex == 1) {
+          lazyLoadAvatars();
+        }
+      }
+    }
+  }
 
   /**
    * Invoked when the shuffle button is clicked.Depending on the mode It picks a random emoji from $appStoreShuffleEmojis or random icon from the used list and emits the avatar clicked. Finally closes the avatar picker.
@@ -145,6 +193,10 @@
    * @desc AVT - Avatar Category Containers Class
    */
   function handleScroll() {
+    let scrollBottom =
+      avatarsParentContainer.scrollTop + avatarsParentContainer.clientHeight;
+    if (scrollBottom + 100 >= avatarsParentContainer.scrollHeight)
+      lazyLoadAvatars();
     let scrollTop = avatarsParentContainer.scrollTop;
     let avtContainers = document.querySelectorAll(".AVT");
     avtContainers.forEach((avtContainer: any) => {
@@ -182,11 +234,11 @@
   function onSearchInputHandler() {
     let searchValue = searchRef.value.trim();
     if (searchValue == "") {
-      avatars = storeAvatars;
+      avatars = lazyLoadedAvatars;
       return;
     }
     let tempAvatars: any = {};
-    for (let key of avatarKeys) {
+    for (let key of storeAvatarsKey) {
       for (let emote of storeAvatars[key as keyof typeof storeAvatars]) {
         let searchIndex = emote.length == 1 ? 0 : skinIndex;
         let emoteName = emote[searchIndex]?.name?.toLowerCase();
@@ -337,6 +389,23 @@
       ];
     }
   }
+
+  async function handleModeSwitch(e: any) {
+    mode = e.detail.toUpperCase();
+    lazyLoadedAvatars = {};
+    avatarsParentContainer.scrollTop = 0;
+    if (mode === AvatarType.ICON) {
+      previousIconIndex = 0;
+      storeAvatars = materialSymbolsWithCategories;
+    } else {
+      previousKVIndex = -1;
+      storeAvatars = emojisWithCategories;
+    }
+    updateUsedAndCustomAvatars($userPreferences);
+    storeAvatarsKV = Object.entries(storeAvatars);
+    storeAvatarsKey = Object.keys(storeAvatars);
+    lazyLoadAvatars();
+  }
 </script>
 
 <div
@@ -352,7 +421,7 @@
           size={Size.xs}
           style={PanelSwitcherStyle.TRAIN}
           value={mode == AvatarType.ICON ? "Icon" : "Emoji"}
-          on:switch={(event) => (mode = event.detail.toUpperCase())}
+          on:switch={handleModeSwitch}
         />
       </div>
     {/if}
@@ -492,6 +561,7 @@
                     class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2"
                   >
                     <AvatarRenderer
+                      isHoverEnabled={true}
                       avatar={{
                         code:
                           "code" in emote[0]
