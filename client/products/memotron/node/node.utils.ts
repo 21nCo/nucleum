@@ -30,7 +30,7 @@ export function resolveContentPreview(node: INode) {
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;
   }
-  return "";
+  return undefined;
 }
 
 export async function resolveNodeCaptureMetadata() {
@@ -146,4 +146,29 @@ export function resolveNodeContentLabel(contentType: NodeType) {
     default:
       return properCase(enumToString(contentType));
   }
+}
+
+export function resolveFilePreview(node: INode) {
+  const { contentType, body, file } = node;
+  if (contentType === NodeType.IMAGE) {
+    return file;
+  } else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) {
+    return body.file;
+  } else if (contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) {
+    return body.thumbnail;
+  }
+  return undefined;
+}
+
+export function resolveUrlPreview(node: INode) {
+  const { contentType, body, metadata } = node;
+  if (
+    contentType === NodeType.WEB_PAGE ||
+    contentType === NodeType.YOUTUBE_VIDEO
+  ) {
+    return metadata?.ogImage ?? metadata?.screenshotUrl;
+  } else if (contentType === NodeType.TWITTER_PROFILE) {
+    return body?.profileImageUrl;
+  }
+  return undefined;
 }

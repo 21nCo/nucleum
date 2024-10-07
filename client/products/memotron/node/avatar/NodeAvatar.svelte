@@ -1,10 +1,12 @@
 <script lang="ts">
   import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "$lib/client/elements/Icon.svelte";
   import type { IAvatar } from "$lib/client/types/avatar.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ICollectionExpanded } from "../../collection/collection.type";
   import { type INode, webNodeTypeList } from "../node.type";
+  import { resolveNodeIcon } from "../node.utils";
   import NodeFavicon from "./NodeFavicon.svelte";
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let node: INode | undefined = undefined;
@@ -46,5 +48,7 @@
   </span>
 {/if}
 {#if node && webNodeTypeList.includes(node.contentType)}
-  <NodeFavicon {node} />
+  <NodeFavicon {node} {size} />
+{:else if node}
+  <Icon icon={resolveNodeIcon(node.contentType)} {size} />
 {/if}

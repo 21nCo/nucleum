@@ -237,7 +237,7 @@ module.exports = {
         "cursor-row-resize",
         {
           pattern: /(from|via|to)-(.+)/
-        },
+        }
         // {
         //   pattern: /ph--.*/
         // },
@@ -269,10 +269,10 @@ module.exports = {
         // ...darkThemes,
         ...colorSchemesBranding
       ]
-    }),
-    require("@iconify/tailwind").addIconSelectors({
-      prefixes: ["ph"]
-    }
-    )
+    })
+    // require("@iconify/tailwind").addIconSelectors({
+    //   prefixes: ["ph"]
+    // }
+    // )
   ]
 };

@@ -43,7 +43,8 @@
     const nodeId = e.detail.item;
     if (!nodeId) return;
     const node = await nodeStore.select(nodeId);
-    let nodePropertyValues: INodePropertyValue[] = [...node.properties];
+    if (!node) return;
+    let nodePropertyValues: INodePropertyValue[] = [...(node.properties || [])];
     let isGroupChanged = false;
     let isSubGroupChanged = false;
     const currentGroupValue = nodePropertyValues.find(

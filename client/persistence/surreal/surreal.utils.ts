@@ -93,9 +93,6 @@ export function replaceParams(query: string, params: any) {
   return query;
 }
 
-/**
- * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
- */
 export function resolveInsertQuery(resource: string, records: any[]) {
   records = records.map((x) => {
     if (!x.id?.id) return x;
@@ -104,8 +101,8 @@ export function resolveInsertQuery(resource: string, records: any[]) {
       id: x.id.id
     };
   });
-  const firstRecord = records[0];
-  records = [...records.slice(1), firstRecord];
+  // const firstRecord = records[0];
+  // records = [...records.slice(1), firstRecord];
   const query = `INSERT INTO ${resource} ${JSON.stringify(records)};`;
   return commonQueryReplacements(query);
 }
@@ -119,22 +116,25 @@ export function resolveMergeQuery(record: any) {
   const recordCopy = { ...record };
   const recordId = recordCopy.id;
   delete recordCopy.id;
-  const query = `UPDATE ${recordId} MERGE ${JSON.stringify(recordCopy, (key, value) =>
-    value === undefined || value === null ? `$NONE` : value
-  )};`
-    .replaceAll(`"$NONE"`, `NONE`)
+  const query = `UPDATE ${recordId} MERGE ${JSON.stringify(
+    recordCopy,
+    (key, value) => (value === undefined || value === null ? `$NONE` : value)
+  )};`.replaceAll(`"$NONE"`, `NONE`);
   return commonQueryReplacements(query);
 }
 
-
+/**
+ * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
+ */
 export function commonQueryReplacements(query: string) {
   const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
   const recordLinkRegex = /"([\w-]+:[\w-]+)"/g;
+  const recordLinkRegexSingleQuotes = /'([\w-]+:[\w-]+)'/g;
   return query
     .replace(dateRegex, (match, p1) => `d'${p1}'`)
-    .replace(recordLinkRegex, (match, p1) => p1);
+    .replace(recordLinkRegex, (match, p1) => p1)
+    .replace(recordLinkRegexSingleQuotes, (match, p1) => p1);
 }
-
 
 export function resolveMutationQueryV2(mutation: IMutation) {
   switch (mutation.params.action) {

@@ -16,6 +16,7 @@
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import { NodeType } from "../node.type";
 
   export let node: IActiveNodeStore;
   let searchQuery = "";
@@ -62,7 +63,10 @@
     }}
     use:tooltip={{
       text: `See all ${resolveNodeContentLabel($node.contentType)} nodes`,
-      direction: Placement.Bottom
+      direction:
+        $node.contentType === NodeType.NODULAR_MARKDOWN
+          ? Placement.Bottom
+          : Placement.Top
     }}
   >
     <Icon
@@ -70,7 +74,7 @@
       size={Size.sm}
       class="fill-fgs1"
     />
-    <!-- {resolveNodeContentLabel($node.contentType)} -->
+    {resolveNodeContentLabel($node.contentType)}
   </button>
   <span class="h-full flex items-center justify-center">
     <Divider

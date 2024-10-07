@@ -13,6 +13,9 @@
   const contentPreview = resolveContentPreview(node);
   onMount(async () => {
     parentUsername = node.parent.toString().split("twitterProfile_")[1] ?? "";
+    if (!parentUsername) {
+      parentUsername = node.parent?.url?.split("x.com/")[1] ?? "";
+    }
     await resolveParent();
     console.log({ parent });
   });
@@ -23,7 +26,7 @@
 
 <div class="w-full h-full flex justify-center items-center">
   <button
-    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs3 rounded-md w-3/4"
+    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md w-3/4"
     on:click={() => {
       appStore.openLink(node.url);
     }}

@@ -124,9 +124,14 @@ export enum ResourceAccessPoint {
    */
   NODE_LINKS = "nodelinks",
   /**
-   * The resource is being accessed from the node default right pane
+   * The resource is being accessed from the node clips pane
    */
-  NODE_DEFAULT_RIGHT_PANE = "nodedefaultrightpane"
+  NODE_TRACES = "nodetraces",
+  /**
+   * The resource is being accessed from the node page
+   */
+  COLLECTION = "collection",
+  SEARCH_RESULT = "searchresult"
 }
 
 /**

@@ -27,7 +27,7 @@
     {
       "text-b3 px-2 py-0.5 rounded-md": size === Size.sm,
       "text-b2 px-3 py-1 rounded-full": size === Size.md,
-      "border-brs3": !isActive,
+      "border-brs3 hover:border-fgs4": !isActive,
       "border-aps1": isActive
     }
   )}

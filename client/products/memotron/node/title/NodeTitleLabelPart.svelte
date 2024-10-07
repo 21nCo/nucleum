@@ -13,8 +13,10 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { TimeFormat } from "$lib/client/types/time.type";
+  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   export let node: INode;
   export let isNodePageContext: boolean = false;
+  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   let dynamicLabel:
     | string
     | {
@@ -96,28 +98,32 @@
 </script>
 
 <!-- TODO - if node and has parent, show breadcrumbs -->
-{#if node.label}
-  <!-- {node.label} -->
+{#if node.label && node.label.includes(".")}
+  {node.label}
+{:else if node.label}
   {@html renderMdAsHtml(node.labelSearch ?? node.label)}
-{:else if dynamicLabelNodeTypes.includes(node.contentType)}
+{:else if dynamicLabelNodeTypes.includes(node.contentType) && dynamicLabel}
   {#if typeof dynamicLabel === "string"}
     {dynamicLabel}
-  {:else}
-    {dynamicLabel?.label}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <button
-      class={cn({
-        "underline-dotted truncate cursor-pointer hover:underline-dotted-primary":
-          isNodePageContext
-      })}
-      on:click={(e) => {
-        appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
-          replaceId: node.id
-        });
-      }}
-    >
-      {dynamicLabel?.parent?.label}
-    </button>
+  {:else if typeof dynamicLabel === "object" && "parent" in dynamicLabel}
+    <span class="flex w-full gap-1 items-center">
+      <span>
+        {dynamicLabel?.label}
+      </span>
+      <button
+        class={cn("truncate flex-1 min-w-0 text-left", {
+          "underline-dotted cursor-pointer hover:underline-dotted-primary":
+            isNodePageContext
+        })}
+        on:click={(e) => {
+          appStore.resourceClickHandler(e, dynamicLabel?.parent.id, {
+            replaceId: node.id
+          });
+        }}
+      >
+        {dynamicLabel?.parent?.label}
+      </button>
+    </span>
   {/if}
 {:else if node.body && typeof node.body === "string"}
   {@html renderMdAsHtml(node.bodySearch ?? node.body)}

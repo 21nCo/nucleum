@@ -70,8 +70,8 @@
       </span>
       <div class="flex flex-col gap-4 overflow-auto">
         <Resources
-          data={$node.clips.slice(0, 3)}
-          accessPoint={ResourceAccessPoint.OTHER}
+          data={$node.clips.slice(0, 2)}
+          accessPoint={ResourceAccessPoint.NODE_TRACES}
           resource={Resource.node}
           size={Size.sm}
         />
@@ -88,44 +88,45 @@
         {/if}
       </div>
     </div>
-  {/if}
-  <div
-    class={cn("flex flex-col gap-2 items-start w-full min-h-0", {
-      "h-1/3": links.length > 0
-    })}
-  >
-    <span class="flex flex-row justify-between items-center w-full">
-      <span class="flex flex-row gap-1 items-center">
-        <Text content="Links" style={TextStyle.SECTION_HEADING} />
-        <Badge text={$node.links?.length || 0} />
-      </span>
-    </span>
-    <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
-      {#if $node.links && $node.links.length > 0}
-        <LinkThumbnailItems
-          {links}
-          accessPointId={node.id}
-          on:click={onLinkClick}
-          accessPoint={ResourceAccessPoint.NODE_DEFAULT_RIGHT_PANE}
-        />
-      {:else}
-        <span
-          class="flex w-full justify-center items-center text-fgs3 text-b3 h-1/2"
-        >
-          No links found
+  {:else}
+    <div
+      class={cn("flex flex-col gap-2 items-start w-full min-h-0", {
+        "h-1/3": links.length > 0
+      })}
+    >
+      <span class="flex flex-row justify-between items-center w-full">
+        <span class="flex flex-row gap-1 items-center">
+          <Text content="Links" style={TextStyle.SECTION_HEADING} />
+          <Badge text={$node.links?.length || 0} />
         </span>
-      {/if}
-      <span class="w-full flex justify-center">
-        <Button
-          size={Size.sm}
-          label="Go to links"
-          isUnderlined={true}
-          style={ButtonStyle.PLAIN}
-          on:click={() => (pane = NodeRightPaneType.LINKS)}
-        />
       </span>
+      <div class="w-full min-h-32 flex flex-col gap-3 overflow-auto">
+        {#if $node.links && $node.links.length > 0}
+          <LinkThumbnailItems
+            {links}
+            accessPointId={node.id}
+            on:click={onLinkClick}
+            accessPoint={ResourceAccessPoint.NODE_LINKS}
+          />
+        {:else}
+          <span
+            class="flex w-full justify-center items-center text-fgs3 text-b3 h-1/2"
+          >
+            No links found
+          </span>
+        {/if}
+        <span class="w-full flex justify-center">
+          <Button
+            size={Size.sm}
+            label="Go to links"
+            isUnderlined={true}
+            style={ButtonStyle.PLAIN}
+            on:click={() => (pane = NodeRightPaneType.LINKS)}
+          />
+        </span>
+      </div>
     </div>
-  </div>
+  {/if}
   <div class="flex flex-col gap-2 items-start w-full flex-1">
     <span class="flex flex-row justify-between items-center w-full">
       <span class="flex flex-row gap-1 items-center">

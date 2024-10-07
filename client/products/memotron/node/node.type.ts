@@ -155,6 +155,7 @@ export type OtherNodeType =
   | NodeType.COLLECTION_AS_EMBED;
 
 export enum NodeType {
+  UNKNOWN = "UNKNOWN",
   NODULAR_MARKDOWN = "NODULAR_MARKDOWN",
   NON_NODULAR_MARKDOWN = "NON_NODULAR_MARKDOWN",
 
@@ -232,6 +233,15 @@ export const headingNodeTypes = [
   NodeType.HEADING3,
   NodeType.HEADING4,
   NodeType.HEADING5
+];
+
+export const canHaveTraces = [
+  NodeType.NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.WEB_PAGE,
+  NodeType.TWITTER_PROFILE,
+  NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_CHANNEL
 ];
 
 export const structuralNodeTypes = [
@@ -646,7 +656,10 @@ export type INodeBody =
   | IWebScreenshotClipBody
   | IKindleHighlightBody;
 
-export type IClipCapture = OmitFields<IClip, CaptureOmittedFields | "label" | "url" | "parent">;
+export type IClipCapture = OmitFields<
+  IClip,
+  CaptureOmittedFields | "label" | "url" | "parent"
+>;
 
 export enum NodeIdPrefix {
   TWITTER_PROFILE = "twitterProfile"

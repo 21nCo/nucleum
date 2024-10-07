@@ -13,7 +13,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
 </script>
 
-<div class="flex flex-col gap-2 w-full">
+<div class="flex flex-col gap-3 w-full">
   {#each links as item}
     <LinkItem
       link={item.link}

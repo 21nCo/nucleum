@@ -1,3 +1,4 @@
+import { isValidString } from "$lib/shared/utils/text.utils";
 import { logger } from "../components/debug/logger.client";
 
 /**
@@ -124,13 +125,17 @@ export function fileLoaderv2(
   async function loadSource() {
     try {
       if (node instanceof HTMLImageElement) {
-        node.src = "https://placehold.co/60x40/darkgrey/darkgrey?text=...";
+        node.src =
+          "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        node.classList.add("bg-bgs3");
       }
       const sourceValue =
         typeof source === "function" ? await source() : source;
-
       if (node instanceof HTMLImageElement) {
-        node.src = sourceValue;
+        if (isValidString(sourceValue)) {
+          node.src = sourceValue;
+          node.classList.remove("bg-bgs3");
+        }
       } else if (
         node instanceof HTMLAudioElement ||
         node instanceof HTMLVideoElement

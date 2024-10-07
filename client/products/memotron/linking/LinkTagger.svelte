@@ -40,12 +40,11 @@
   <TextSearchInput
     bind:this={searchInputRef}
     bind:value={searchQuery}
-    style={InputStyle.BORDERED}
+    style={InputStyle.PLAIN}
     searchStoreId={Resource.linkTag}
     on:select={onselect}
     on:empty-enter={onEmptyEnter}
     emptyStateLabel="No tags found. Press enter to create a new tag"
-    icon="ph:tag-light"
-    placeholder="Start searching to add link tags"
+    placeholder="Start typing to add link tags"
   />
 </button>

@@ -15,7 +15,7 @@
   });
   async function refreshBreadcrumbs(parent: IRecordId[] | INode | undefined) {
     if (!parent || parent.length === 0) return;
-    console.log({ parent });
+    // console.log({ parent });
     const parentItems = await nodeStore.selectMany({
       filters: {
         id:

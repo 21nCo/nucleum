@@ -13,6 +13,7 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import type { IContextMenu } from "$lib/client/types/select.type";
+  import TwitterProfilePreview from "./web/TwitterProfilePreview.svelte";
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
 
@@ -54,6 +55,8 @@
     <WebClipPreview {node} />
   {:else if node.contentType === NodeType.TWEET}
     <TweetPreview {node} />
+  {:else if node.contentType === NodeType.TWITTER_PROFILE}
+    <TwitterProfilePreview {node} />
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
   {:else if node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP}

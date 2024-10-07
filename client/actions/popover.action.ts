@@ -1,6 +1,7 @@
 import { tick } from "svelte";
 import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
+import { deepCopy } from "$lib/shared/utils/obj.utils";
 
 interface TooltipParams {
   text: string;
@@ -40,7 +41,7 @@ export function tooltip(
     delay = 300
   } = params;
   const baseClassList =
-    "fixed px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200";
+    "fixed z-100 px-3 bg-fgs2 text-bgs1 py-1 text-b3 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200";
   function createTooltip(): void {
     tooltipElement = document.createElement("div");
     tooltipElement.textContent = text;
@@ -298,7 +299,6 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
     let popRect = popoverElement.getBoundingClientRect();
     const { documentWidth, documentHeight } = documentDimensions();
-
     if (triggerRect.top < popRect.height) {
       if (placement === Placement.TopLeft) placement = Placement.BottomLeft;
       else if (placement === Placement.TopRight)
@@ -306,12 +306,20 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       else if (placement === Placement.TopCenter)
         placement = Placement.BottomCenter;
     }
+    if (triggerRect.top < popRect.height / 2) {
+      if (placement === Placement.Left) placement = Placement.BottomRight;
+      else if (placement === Placement.Right) placement = Placement.BottomLeft;
+    }
     if (documentHeight - triggerRect.bottom < popRect.height) {
       if (placement === Placement.BottomCenter) placement = Placement.TopCenter;
       else if (placement === Placement.BottomLeft)
         placement = Placement.TopLeft;
       else if (placement === Placement.BottomRight)
         placement = Placement.TopRight;
+    }
+    if (documentHeight - triggerRect.bottom < popRect.height / 2) {
+      if (placement === Placement.Left) placement = Placement.TopRight;
+      else if (placement === Placement.Right) placement = Placement.TopLeft;
     }
     if (
       triggerRect.top < popRect.height &&
@@ -334,40 +342,39 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       }
     }
 
-    switch (placement) {
-      case Placement.BottomLeft:
-      case Placement.TopLeft:
-        popoverElement.style.left = `${triggerRect.left}px`;
-        popoverElement.style.right = "";
-        break;
-      case Placement.BottomRight:
-      case Placement.TopRight:
-        popoverElement.style.right = `${documentWidth - triggerRect.right}px`;
-        popoverElement.style.left = "";
-        break;
-      case Placement.TopLeft:
-      case Placement.TopRight:
-      case Placement.TopCenter:
-        popoverElement.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
-        popoverElement.style.top = "";
-        break;
-      case Placement.BottomLeft:
-      case Placement.BottomRight:
-      case Placement.BottomCenter:
-        popoverElement.style.top = `${triggerRect.bottom + offsetInPx}px`;
-        popoverElement.style.bottom = "";
-        break;
-      case Placement.Right:
-        popoverElement.style.left = `${triggerRect.right + offsetInPx}px`;
-        popoverElement.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
-        break;
-      case Placement.Left:
-        popoverElement.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
-        popoverElement.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
-        break;
+    if (placement === Placement.BottomLeft || placement === Placement.TopLeft) {
+      popoverElement.style.left = `${triggerRect.left}px`;
+      popoverElement.style.right = "";
+    } else if (
+      placement === Placement.BottomRight ||
+      placement === Placement.TopRight
+    ) {
+      popoverElement.style.right = `${documentWidth - triggerRect.right}px`;
+      popoverElement.style.left = "";
+    }
+    if (
+      placement === Placement.TopLeft ||
+      placement === Placement.TopRight ||
+      placement === Placement.TopCenter
+    ) {
+      popoverElement.style.bottom = `${documentHeight - triggerRect.top + offsetInPx}px`;
+      popoverElement.style.top = "";
+    } else if (
+      placement === Placement.BottomLeft ||
+      placement === Placement.BottomRight ||
+      placement === Placement.BottomCenter
+    ) {
+      popoverElement.style.top = `${triggerRect.bottom + offsetInPx}px`;
+      popoverElement.style.bottom = "";
     }
 
-    if (
+    if (placement === Placement.Right) {
+      popoverElement.style.left = `${triggerRect.right + offsetInPx}px`;
+      popoverElement.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
+    } else if (placement === Placement.Left) {
+      popoverElement.style.right = `${documentWidth - triggerRect.left + offsetInPx}px`;
+      popoverElement.style.top = `${triggerRect.top + triggerRect.height / 2 - popRect.height / 2}px`;
+    } else if (
       placement === Placement.TopCenter ||
       placement === Placement.BottomCenter
     ) {

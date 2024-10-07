@@ -1,7 +1,6 @@
 <script lang="ts">
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import {
     NodeType,
@@ -9,12 +8,10 @@
   } from "$lib/client/products/memotron/node/node.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
   import { afterUpdate, onMount } from "svelte";
   import { fade } from "svelte/transition";
   import view from "$lib/client/stores/view.store";
   import NodeThumbnailTitle from "../node/thumbnail/NodeThumbnailTitle.svelte";
-  import FileView from "$lib/client/components/files/FileView.svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { hoverable } from "$lib/client/actions/hover.action";
@@ -61,7 +58,14 @@
     const rowSpan = Math.ceil((contentHeight + gap) / (rowHeight + gap));
     item.style.gridRowEnd = `span ${rowSpan}`;
     item.style.height = `calc(${rowSpan} * (${rowHeight}px + ${gap}px) - ${gap}px)`;
-    if (item.getAttribute("data-type") !== NodeType.IMAGE) {
+    if (
+      ![
+        NodeType.IMAGE,
+        NodeType.WEB_SCREENSHOT_CLIP,
+        NodeType.YOUTUBE_TIMESTAMP_CLIP,
+        NodeType.WEB_PAGE
+      ].includes(item.getAttribute("data-type") as NodeType)
+    ) {
       const child = item.querySelector(".item-content");
       if (child && child instanceof HTMLElement) {
         child.style.height = "100%";
@@ -95,32 +99,28 @@
         <button
           class="item-content w-full border rounded-md border-brs2 hover:border-aps2"
           type="button"
-          use:hoverable
-          on:hover={(e) => {
-            if (e.detail) hoveredMasonryItem = item.id;
-            else if (
-              e.detail === false &&
-              hoveredMasonryItem &&
-              isSameResource(hoveredMasonryItem, item.id)
-            )
-              hoveredMasonryItem = undefined;
+          use:hoverable={{
+            onHover: (e) => {
+              if (e) hoveredMasonryItem = item.id;
+              else if (
+                e === false &&
+                hoveredMasonryItem &&
+                isSameResource(hoveredMasonryItem, item.id)
+              )
+                hoveredMasonryItem = undefined;
+            }
           }}
           on:click={(e) => appStore.resourceClickHandler(e, item.id)}
         >
-          {#if item.contentType === NodeType.IMAGE}
-            <FileView
-              file={item.file}
-              class="w-full h-auto rounded-md"
-              on:load={() =>
-                resizeMasonryItem(
-                  gridRef.querySelector(`[data-id="${item.id}"]`)
-                )}
-            />
-          {:else if item}
-            <NodeThumbnail {item} {parentBgIndex} {arrangement} />
-          {:else}
-            <span class="text-b2 text-fgs3"> Unknown </span>
-          {/if}
+          <NodeThumbnail
+            {item}
+            {parentBgIndex}
+            {arrangement}
+            on:load={() =>
+              resizeMasonryItem(
+                gridRef.querySelector(`[data-id="${item.id}"]`)
+              )}
+          />
           {#if hoveredMasonryItem && isSameResource(hoveredMasonryItem, item.id)}
             <div
               class="absolute bottom-0 left-0 w-full bg-bgs3 rounded-b-md h-10 p-2 truncate text-b2 border-b border-x border-aps2"

@@ -19,7 +19,11 @@ import {
   type IResourceSelectParams
 } from "../../types/data.type";
 import { interceptSurrealResponse } from "../../utils/utils";
-import { commonQueryReplacements, resolveInsertQuery, resolveMergeQuery } from "./surreal.utils";
+import {
+  commonQueryReplacements,
+  resolveInsertQuery,
+  resolveMergeQuery
+} from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { FeatureExtractor } from "$lib/client/utils/taco.utils";
 import { compareVersions } from "$lib/shared/utils/utils";
@@ -205,7 +209,7 @@ export class SurrealPersistence implements IPersistence {
     });
     await this.awaiter();
     let result;
-    if (resource === "file") {
+    if (resource === "file" && records[0].data) {
       result = await this.instance?.insert<T>(resource, records);
       logger.log({ at: "SurrealPersistence.insert", resource, result });
       this.isProcessingOperation = false;
@@ -408,7 +412,7 @@ export class SurrealPersistence implements IPersistence {
       conditions.push(
         this.generateSemanticSearchClause(params.semanticSearchTopK)
       );
-    } else if (params?.searchType === SearchType.FULL_TEXT && params?.search) {
+    } else if (params?.search) {
       conditions.push(this.generateSearchClause(params.search));
     }
 
@@ -441,7 +445,10 @@ export class SurrealPersistence implements IPersistence {
       }
     }
 
-    return conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    // return conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const clause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return commonQueryReplacements(clause);
 
     function formatValue(value: IPrimitiveDbDataType): string {
       if (typeof value === "string") {

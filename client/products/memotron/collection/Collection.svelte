@@ -458,7 +458,7 @@
       >
         <div
           class={cn("px-4 pt-6 stickyheader", {
-            "sticky top-0 z-10 bg-bgs1": isSingleViewMode,
+            "sticky top-0 z-20 bg-bgs1": isSingleViewMode,
             "pb-8": isSingleViewMode && !isShowMetaViews
           })}
         >
@@ -517,9 +517,8 @@
         {/if}
         {#if (activeView && isValidString(activeView.tabBy)) || isInEditMode || !isSingleViewMode}
           <header
-            class={cn("sticky top-0 z--10 flex flex-col gap-6 bg-bgs1 w-full", {
-              "pt-4": isStickied,
-              "z-10": !isInEditMode
+            class={cn("sticky top-0 z-10 flex flex-col gap-6 bg-bgs1 w-full", {
+              "pt-4": isStickied
             })}
           >
             {#if !isSingleViewMode || isInEditMode}

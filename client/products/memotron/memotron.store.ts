@@ -271,7 +271,6 @@ export class SearchStore {
   async searchForLinkingOnExtension(query: string, resource?: Resource) {
     let nodes = [];
     if (resource === Resource.node || !resource) {
-
       nodes = await extensionFlux({
         method: FluxMethod.SELECT_MANY,
         args: {
@@ -279,17 +278,16 @@ export class SearchStore {
           params: {
             search: isValidString(query)
               ? {
-                properties: ["body", "label"],
-                query
-              }
+                  properties: ["body", "label"],
+                  query
+                }
               : undefined
           }
         }
-      })
+      });
     }
     let collections = [];
     if (resource === Resource.collection || !resource) {
-
       collections = await extensionFlux({
         method: FluxMethod.SELECT_MANY,
         args: {
@@ -297,9 +295,9 @@ export class SearchStore {
           params: {
             search: isValidString(query)
               ? {
-                properties: ["label"],
-                query
-              }
+                  properties: ["label"],
+                  query
+                }
               : undefined
           }
         }

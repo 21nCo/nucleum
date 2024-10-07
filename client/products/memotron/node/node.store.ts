@@ -7,7 +7,8 @@ import {
   NodeType,
   NodeRightPaneType,
   type INodeLinkThumb,
-  type INodeLink
+  type INodeLink,
+  canHaveTraces
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResources,
@@ -368,11 +369,7 @@ export function resolveNodeContextMenu(
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore);
-  if (
-    (accessPoint === ResourceAccessPoint.NODE_LINKS ||
-      accessPoint === ResourceAccessPoint.NODE_DEFAULT_RIGHT_PANE) &&
-    params?.accessPointId
-  ) {
+  if (accessPoint === ResourceAccessPoint.NODE_LINKS && params?.accessPointId) {
     let baseItems = [resourceActions.openAsTab(), resourceActions.copyLink()];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       baseItems.unshift(
@@ -525,7 +522,7 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
       tooltip: "Bird view"
     }
   ];
-  if (contentType === NodeType.PDF || contentType === NodeType.WEB_PAGE) {
+  if (canHaveTraces.includes(contentType)) {
     baseActions.unshift({
       value: NodeRightPaneType.TRACES,
       icon: "bookmark",

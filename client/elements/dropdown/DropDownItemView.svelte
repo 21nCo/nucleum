@@ -11,7 +11,7 @@
 <button
   on:click
   class={cn("text-left px-3 py-2 hover:bg-bgs2 w-full", {
-    "text-fgs3": item.isDisabled
+    "text-fgs3 cursor-not-allowed": item.isDisabled
   })}
 >
   <div class="flex items-center justify-between gap-2">

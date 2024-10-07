@@ -38,12 +38,12 @@
 </script>
 
 <div
-  class={cn("rounded-md h-full overflow-clip", {
-    "p-4 bg-bgs2": isNodePageContext
+  class={cn("rounded-md text-wrap", {
+    "m-4 p-4 bg-bgs2": isNodePageContext
   })}
 >
   <span
-    class="relative text-left text-b2"
+    class="relative text-left text-b2 text-white"
     style="background-color: {textHightlightColor
       ? textHightlightColor
       : 'transparent'};"

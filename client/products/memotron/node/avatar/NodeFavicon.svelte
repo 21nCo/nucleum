@@ -5,7 +5,9 @@
   import { type INode, NodeType } from "../../node/node.type";
   import { commonMetadata } from "../../common/urlMap";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let node: INode;
+  export let size: Size.sm | Size.md | Size.lg = Size.md;
   let favicon: string | undefined = undefined;
   onMount(async () => {
     favicon = await resolveFavicon();
@@ -33,10 +35,7 @@
       //   return parent.metadata.faviconLink;
     }
 
-    if (!node.body) return;
-
-    if (!("url" in node.body) || !node.url || !node.url.includes("https://"))
-      return;
+    if (!("url" in node) || !node.url || !node.url.includes("https://")) return;
     const hostPart = new URL(node.url).host;
     let favicon = commonMetadata.find(
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
@@ -48,16 +47,24 @@
   }
 </script>
 
-<span class="shrink-0">
+<span class="shrink-0 flex items-center justify-center">
   {#if node.contentType === NodeType.TEXT_CLIP}
-    <Icon icon="ph:highlighter-circle-thin" size={Size.sm} />
+    <Icon icon="ph:highlighter-circle-thin" {size} />
   {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP}
-    <Icon icon="ph:crop-thin" size={Size.sm} />
+    <Icon icon="ph:crop-thin" {size} />
   {:else if node.contentType === NodeType.KINDLE_HIGHLIGHT}
-    <Icon icon="book-open" size={Size.sm} />
+    <Icon icon="book-open" {size} />
   {:else if favicon}
-    <img use:lazyLoad={favicon} alt="favicon" class="w-5 h-5 rounded-full" />
+    <img
+      use:lazyLoad={favicon}
+      alt="favicon"
+      class={cn("rounded-full", {
+        "w-4 h-4": size === Size.sm,
+        "w-5 h-5": size === Size.md,
+        "w-6 h-6": size === Size.lg
+      })}
+    />
   {:else}
-    <Icon icon="globe-alt" size={Size.sm} />
+    <Icon icon="globe-alt" {size} />
   {/if}
 </span>

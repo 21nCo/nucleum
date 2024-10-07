@@ -76,7 +76,7 @@
         <slot name="right" />
         <div
           class={cn({
-            "mx-2 h-8 border rounded-md": arrangement === Arrangement.LIST,
+            "mx-2 border rounded-md": arrangement === Arrangement.LIST,
             "bg-ccs4 border-ccs2":
               arrangement === Arrangement.LIST && isApplyCustomColor,
             "bg-bgs2 border-brs3":
