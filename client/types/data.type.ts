@@ -258,7 +258,7 @@ export type IMergeMutation<T> = {
 
 export type IDeleteMutation = {
   action: PersistenceActionType.DELETE;
-  recordId: string;
+  recordId: IRecordId;
 };
 
 export type IBulkEditMutation<T> = {

@@ -27,11 +27,11 @@ import type {
   OmitForCapture,
   OmitForCaptureWithId
 } from "./resource.type";
-import { generateRandomId } from "$lib/shared/utils/crypto.utils";
 import { flux } from "../flux";
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
+import { generateResourceId } from "../flux.utils";
 // import { appStore } from "$lib/client/stores/app.store";
 
 export const activeResources = new Map<string, ActiveResourceStore<any, any>>();
@@ -191,14 +191,15 @@ export class ResourceStore<T extends IResource> implements IStore {
     if (Array.isArray(input)) {
       resources = input?.map((r) => ({
         ...r,
-        id: "id" in r && r.id ? r.id : generateRandomId(),
+        id: "id" in r && r.id ? r.id : generateResourceId(this.id),
         ...commonProps
       }));
     } else {
       resources = [
         {
           ...input,
-          id: "id" in input && input.id ? input.id : generateRandomId(),
+          id:
+            "id" in input && input.id ? input.id : generateResourceId(this.id),
           ...commonProps
         }
       ];
@@ -365,6 +366,30 @@ export class ResourceStore<T extends IResource> implements IStore {
     return this.modify(id, {
       trashInformation: undefined
     } as Partial<T>);
+  }
+
+  /**
+   * Delete the resource permanently.
+   * @param id
+   * @returns
+   */
+  delete(id: IRecordId) {
+    if (this.isExtensionEnvironment) {
+      return extensionFlux({
+        method: FluxMethod.MUTATION,
+        args: {
+          resource: this.id,
+          params: {
+            action: PersistenceActionType.DELETE,
+            recordId: id
+          }
+        }
+      });
+    }
+    return flux.mutation(this.id, {
+      action: PersistenceActionType.DELETE,
+      recordId: id
+    });
   }
 
   get() {}

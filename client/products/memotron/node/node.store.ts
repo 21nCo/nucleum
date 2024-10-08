@@ -163,8 +163,16 @@ export class ActiveNodeStore extends ActiveResourceStore<
   init = async (accessMode: ResourceAccessMode) => {
     const node = await this.resourceStore.fetch(this.id);
     if (node) {
+      if (
+        node.contentType === NodeType.YOUTUBE_VIDEO &&
+        node.clips &&
+        Array.isArray(node.clips)
+      ) {
+        node.clips.sort((a, b) => a.body.timestamp - b.body.timestamp);
+      }
       this.set({ ...node, accessMode });
     }
+
     const rawLinks =
       node.links.length > 0 ? node.links : [...node.outlinks, ...node.inlinks];
     const links: INodeLinkThumb[] = rawLinks

@@ -64,12 +64,18 @@
 
     switch (node.contentType) {
       case NodeType.TEXT_CLIP:
-      case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       case NodeType.WEB_SCREENSHOT_CLIP:
       case NodeType.KINDLE_HIGHLIGHT:
         if (!parent?.label) return defaultLabels[node.contentType];
         return {
           label: "Clipped from:",
+          parent
+        };
+      case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+        const timestamp = formatSeconds(node.body.timestamp, TimeFormat.CLOCK);
+        if (!parent?.label) return `At - ${timestamp}`;
+        return {
+          label: `${timestamp} - `,
           parent
         };
       case NodeType.TWEET:

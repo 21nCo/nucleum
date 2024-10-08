@@ -12,12 +12,13 @@
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { onMount } from "svelte";
+  import { getContext, onMount } from "svelte";
   import Resources from "../../common/Resources.svelte";
   import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
   import { nodeStore, type IActiveNodeStore } from "../node.store";
   import {
     NodeRightPaneType,
+    NodeType,
     type INode,
     type INodeLinkThumb
   } from "../node.type";
@@ -26,6 +27,7 @@
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   let links: { link: INodeLinkThumb; node: INode }[] = [];
+  const contentContext = getContext<any>("content");
   function onChange(e: any) {
     if ($node.notes) node.debouncedModify({ notes: $node.notes });
   }
@@ -68,12 +70,20 @@
           <Badge text={$node.clips?.length || 0} />
         </span>
       </span>
-      <div class="flex flex-col gap-4 overflow-auto">
+      <div class="flex flex-col w-full gap-4 overflow-auto">
         <Resources
           data={$node.clips.slice(0, 2)}
           accessPoint={ResourceAccessPoint.NODE_TRACES}
           resource={Resource.node}
           size={Size.sm}
+          isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+          on:click={(e) => {
+            if ($node.contentType !== NodeType.YOUTUBE_VIDEO) return;
+            contentContext.publish("yt-trace-click", {
+              id: e.detail.id,
+              timestamp: e.detail.body.timestamp
+            });
+          }}
         />
         {#if $node.clips?.length > 3}
           <span class="w-full flex justify-center">

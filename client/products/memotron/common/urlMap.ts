@@ -75,17 +75,19 @@ export const minimalMetadataPages = [
   "soundcloud.com"
 ];
 
-export const commonMetadata = [
+export const urlMap = [
   {
     domain: "x.com",
     faviconUrl:
       "https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png",
     ogImage:
-      "https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png"
+      "https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png",
+    isIframeable: false
   },
   {
     domain: "wikipedia.org",
-    faviconUrl: "https://en.wikipedia.org/static/apple-touch/wikipedia.png"
+    faviconUrl: "https://en.wikipedia.org/static/apple-touch/wikipedia.png",
+    isIframeable: true
   },
   {
     domain: "youtube.com",

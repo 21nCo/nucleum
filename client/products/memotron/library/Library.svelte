@@ -168,6 +168,7 @@
       filters,
       orderBy,
       semanticSearchTopK
+      // limit: 100
     });
   }
   const debouncedSearch = debouncer(refresh, 500);
@@ -462,8 +463,9 @@
               "px--5": variant === "v2"
             })}
           >
+          <!-- TODO - pagination -->
             <Resources
-              {data}
+              data={data.slice(0, 50)}
               accessPoint={ResourceAccessPoint.LIBRARY}
               resource={selectedResource}
               arrangement={Arrangement.GRID}

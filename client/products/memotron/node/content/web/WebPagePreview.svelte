@@ -9,6 +9,7 @@
   import type { IWebPage } from "../../node.type";
   import { UserDataMode } from "$lib/client/types/account.type";
   import account from "$lib/client/stores/account.store";
+
   export let node: IWebPage;
   let isLoading: boolean = true;
   let isIframeEnabled: boolean = false;
@@ -47,8 +48,12 @@
     />
   {:else}
     <div class="text-center text-b3 text-fgs3">
-      No preview available for this page. Please use the link below to view the
-      page.
+      {#if isIframable}
+        Click to preview site.
+      {:else}
+        No preview available for this page. Please use the link below to view
+        the page.
+      {/if}
     </div>
   {/if}
   {#if isIframeEnabled}

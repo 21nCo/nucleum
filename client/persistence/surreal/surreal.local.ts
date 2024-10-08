@@ -1,5 +1,5 @@
 import type { IPersistence, IPersistenceInitParams } from "../persistence.type";
-import { Surreal } from "surrealdb";
+import { ResponseError, Surreal } from "surrealdb";
 import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { Surreal } from "surrealdb.js";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
@@ -22,7 +22,8 @@ import { interceptSurrealResponse } from "../../utils/utils";
 import {
   commonQueryReplacements,
   resolveInsertQuery,
-  resolveMergeQuery
+  resolveMergeQuery,
+  resolveUpsertQuery
 } from "./surreal.utils";
 import { LogType } from "$lib/client/components/debug/debug.type";
 import { FeatureExtractor } from "$lib/client/utils/taco.utils";
@@ -201,33 +202,102 @@ export class SurrealPersistence implements IPersistence {
     records: T[],
     resource: string
   ): Promise<T[] | null> {
-    logger.log({
+    logger.debug({
       at: "SurrealPersistence.insert",
       resource,
       records,
       isProcessingOperation: this.isProcessingOperation
     });
-    await this.awaiter();
-    let result;
-    if (resource === "file" && records[0].data) {
-      result = await this.instance?.insert<T>(resource, records);
-      logger.log({ at: "SurrealPersistence.insert", resource, result });
-      this.isProcessingOperation = false;
-      return result ?? null;
-    } else {
-      const query = resolveInsertQuery(resource, records);
-      result = await this.instance?.query(query);
-      logger.log({
+    try {
+      await this.awaiter();
+      let result;
+      if (resource === Resource.file && records[0].data) {
+        result = await this.instance?.insert<T>(resource, records);
+        logger.log({ at: "SurrealPersistence.insert", resource, result });
+        this.isProcessingOperation = false;
+        return result ?? null;
+      } else if (resource === Resource.link) {
+        result = await this.bulkInsert(resource, records, { isRelation: true });
+      } else {
+        // result = await this.bulkInsert(resource, records);
+        result = await this.upsertRecordsFallback(resource, records);
+      }
+      logger.debug({
         at: "SurrealPersistence.insert",
         resource,
-        query,
+        records,
         result
       });
       this.isProcessingOperation = false;
       if (Array.isArray(result) && result[0] && Array.isArray(result[0]))
         return result[0];
       else return null;
+    } catch (e) {
+      logger.error({ at: "SurrealPersistence.insert", e });
+    } finally {
+      this.isProcessingOperation = false;
     }
+    return null;
+  }
+
+  /**
+   * Using UPSERT is still throwing error for Surreal wasm engine. hence this fallback.
+   *
+   * "@surrealdb/wasm": "^1.0.1"
+   * "surrealdb": "^1.0.6"
+   *
+   * TODO - watch - unexpected cases because of use of this.isProcessingOperation inside this operation.
+   *
+   * @param resource
+   * @param records
+   * @returns
+   */
+  async upsertRecordsFallback(resource: string, records: any[]) {
+    let result;
+    try {
+      for (const record of records) {
+        let recordId;
+        try {
+          this.isProcessingOperation = true;
+          const { query, id } = resolveUpsertQuery(resource, record);
+          recordId = id;
+          result = await this.instance?.query(query);
+        } catch (e) {
+          logger.debug({
+            at: `SurrealPersistence.upsertRecordsFallback - failed upsert for record`,
+            record,
+            e,
+            recordId
+          });
+          if (e instanceof ResponseError) {
+            this.isProcessingOperation = false;
+            result = await this.merge({ ...record, id: recordId });
+          }
+        }
+      }
+    } catch (e) {
+      logger.error({ at: "SurrealPersistence.upsertRecordsFallback", e });
+    } finally {
+      this.isProcessingOperation = false;
+    }
+    return result;
+  }
+
+  async bulkInsert(
+    resource: string,
+    records: any[],
+    params: { isUpsert?: boolean; isRelation?: boolean }
+  ) {
+    try {
+      const query = resolveInsertQuery(resource, records, params);
+      const result = await this.instance?.query(query);
+      return result;
+    } catch (e) {
+      logger.error({ at: "SurrealPersistence.bulkInsert", e });
+    } finally {
+      this.isProcessingOperation = false;
+    }
+    return null;
   }
 
   replace<T extends IResource | IMetaResource>(
@@ -353,14 +423,24 @@ export class SurrealPersistence implements IPersistence {
       query += ` ORDER BY ${this.generateOrderByClause(params.orderBy)}`;
     if (params?.limit) query += ` LIMIT ${params.limit}`;
     if (params?.offset) query += ` START ${params.offset}`;
+    if (resource !== Resource.mutation) {
+      logger.log({
+        at: "SurrealPersistence.selectMany",
+        resource,
+        query,
+        params
+      });
+      console.time("SurrealPersistence.selectMany");
+    }
     const result = await this.instance?.query_raw(query, params);
-    logger.log({
-      at: "SurrealPersistence.selectMany - result",
-      result,
-      resource,
-      query,
-      params
-    });
+    if (resource !== Resource.mutation) {
+      console.timeEnd("SurrealPersistence.selectMany");
+      logger.log({
+        at: "SurrealPersistence.selectMany - result",
+        result,
+        resource
+      });
+    }
     this.isProcessingOperation = false;
     return interceptSurrealResponse(result);
   }

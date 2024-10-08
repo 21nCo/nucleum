@@ -5,6 +5,7 @@ import type { IPopoverRenderParams } from "../types/popover.type";
 import { deepCopy } from "../../shared/utils/obj.utils";
 import { logger } from "../components/debug/logger.client";
 import { retrieveUrlData } from "./utils";
+import { urlMap } from "../products/memotron/common/urlMap";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;
@@ -416,6 +417,14 @@ export async function resolveIframability(url: string): Promise<boolean> {
     return new Promise(async (resolve) => {
       if (!url) {
         resolve(false);
+        return;
+      }
+      const host = new URL(url).host;
+      const fromUrlMap = urlMap.find(
+        (x) => x.domain === host || host.includes("." + x.domain)
+      );
+      if (fromUrlMap?.isIframeable) {
+        resolve(true);
         return;
       }
       const urlData = await retrieveUrlData(url);

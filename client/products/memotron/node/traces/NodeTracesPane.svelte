@@ -68,6 +68,18 @@
           icon: "check-circle"
         }
       ];
+    } else if (contentType === NodeType.KINDLE_BOOK) {
+      return [
+        {
+          value: "clips",
+          label: "Highlights",
+          icon: "bookmark"
+        },
+        {
+          value: "tasks",
+          icon: "rocket"
+        }
+      ];
     } else if (contentType === NodeType.NODULAR_MARKDOWN) {
       return [
         {
@@ -154,6 +166,14 @@
       accessPoint={ResourceAccessPoint.NODE_TRACES}
       resource={Resource.node}
       size={Size.sm}
+      isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+      on:click={(e) => {
+        if (!e?.detail) return;
+        contentContext.publish("yt-trace-click", {
+          id: e.detail.id,
+          timestamp: e.detail.body.timestamp
+        });
+      }}
     />
   {:else}
     <EmptyStatusView

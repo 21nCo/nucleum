@@ -55,7 +55,7 @@ import {
   relayToBackgroundScript,
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
-import { commonMetadata } from "$lib/client/products/memotron/common/urlMap";
+import { urlMap } from "$lib/client/products/memotron/common/urlMap";
 import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 
@@ -187,9 +187,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     async function extractData() {
       const host = window.location.host;
       if (
-        commonMetadata.some(
-          (x) => host === x.domain || host.includes("." + x.domain)
-        )
+        urlMap.some((x) => host === x.domain || host.includes("." + x.domain))
       ) {
         logger.log({
           at: "extractData",
@@ -235,11 +233,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
     webpage = this.get();
     const clipUrl = resolveClipUrl(data);
-    const clip: OmitForCapture<IWebScreenshotClip | ITextClip | IVideoTimestampClip> = {
+    const clip: OmitForCapture<
+      IWebScreenshotClip | ITextClip | IVideoTimestampClip
+    > = {
       id,
       url: clipUrl,
       body: {
-        ...data.body,
+        ...data.body
       },
       metadata: data.metadata,
       parent: webpage.id,

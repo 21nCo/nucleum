@@ -7,6 +7,7 @@
   import {
     resolveContentPreview,
     resolveFilePreview,
+    resolveIfImageShouldContain,
     resolveUrlPreview
   } from "$lib/client/products/memotron/node/node.utils";
   import ResourceGridThumbnail from "../../common/thumbnail/ResourceGridThumbnail.svelte";
@@ -18,11 +19,12 @@
   import TextClipPreview from "../content/web/TextClipPreview.svelte";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
   import FileView from "$lib/client/components/files/FileView.svelte";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import { formatDatetime, formatSeconds } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import NodeThumbnailTweetPreview from "./NodeThumbnailTweetPreview.svelte";
   import NodeThumbnailAudioPreview from "./NodeThumbnailAudioPreview.svelte";
   import NodeThumbnailPdfPreview from "./NodeThumbnailPdfPreview.svelte";
+  import { TimeFormat } from "$lib/client/types/time.type";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;
@@ -43,6 +45,7 @@
     isClip ||
     item.contentType === NodeType.TWEET ||
     accessPoint === ResourceAccessPoint.NODE_TRACES;
+  $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
 </script>
 
 <ResourceThumbnailBase
@@ -55,7 +58,7 @@
 >
   {#if arrangement === Arrangement.LIST}
     <div
-      class={cn("flex flex-col w-full border rounded-md truncate", {
+      class={cn("relative flex flex-col w-full border rounded-md truncate", {
         "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
         "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor,
         "p-2": accessPoint === ResourceAccessPoint.NODE_LINKS
@@ -131,6 +134,16 @@
           </div>
         {/if}
       </button>
+      {#if item.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && accessPoint === ResourceAccessPoint.NODE_TRACES}
+        <span
+          class={cn(
+            "absolute bottom-3 left-3 bg-bgs2 rounded-md px-1 py-0.5 text-b2"
+          )}
+          style=""
+        >
+          {formatSeconds(item.body.timestamp, TimeFormat.CLOCK)}
+        </span>
+      {/if}
       <slot name="bottom" />
     </div>
   {:else if arrangement === Arrangement.GRID}
@@ -150,9 +163,10 @@
         {:else if urlPreview}
           <img
             alt="..."
-            class={cn(
-              "absolute inset-0 w-full rounded-t-md object-cover h-full"
-            )}
+            class={cn("absolute inset-0 w-full  h-full", {
+              "object-contain": isShouldContainImage,
+              "rounded-t-md object-cover": !isShouldContainImage
+            })}
             use:lazyLoad={urlPreview}
           />
         {:else if item.contentType === NodeType.PDF}
@@ -198,7 +212,7 @@
     {:else if urlPreview}
       <img
         alt="..."
-        class="rounded-md h-auto"
+        class="rounded-md w-full h-auto"
         on:load
         use:lazyLoad={urlPreview}
       />

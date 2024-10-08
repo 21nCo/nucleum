@@ -3,7 +3,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { onMount } from "svelte";
   import { type INode, NodeType } from "../../node/node.type";
-  import { commonMetadata } from "../../common/urlMap";
+  import { urlMap } from "../../common/urlMap";
   import { lazyLoad } from "$lib/client/actions/lazyload.action";
   import { cn } from "$lib/client/utils/ui.utils";
   export let node: INode;
@@ -37,7 +37,7 @@
 
     if (!("url" in node) || !node.url || !node.url.includes("https://")) return;
     const hostPart = new URL(node.url).host;
-    let favicon = commonMetadata.find(
+    let favicon = urlMap.find(
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
     )?.faviconUrl;
     if (favicon) return favicon;

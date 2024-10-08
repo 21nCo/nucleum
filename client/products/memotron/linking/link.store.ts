@@ -1,11 +1,7 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
 import type { ILinkTag } from "./link.type";
-import {
-  type ICustomMutationParams,
-  type IRecordId,
-  PersistenceActionType
-} from "$lib/client/types/data.type";
+import { type IRecordId } from "$lib/client/types/data.type";
 import { replaceParams } from "$lib/client/persistence/surreal/surreal.utils";
 import {
   LinkType,
@@ -16,10 +12,6 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import { activeResourceFilter } from "$lib/client/utils/utils";
 import { get } from "svelte/store";
 import { linkTagLabelMapper } from "./link.utils";
-import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
-import { FluxMethod } from "$lib/client/components/flux/flux.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 
 class Linker extends ResourceStore<INodeLink> {
   constructor() {
@@ -31,85 +23,43 @@ class Linker extends ResourceStore<INodeLink> {
     to: IRecordId,
     linkType: LinkType = LinkType.DIRECT
   ) {
-    console.log({ from, to, linkType });
-    const mutationParams: ICustomMutationParams = {
-      action: PersistenceActionType.CUSTOM,
-      query: this.generateLinkQuery(from, to, linkType)
-    }
-    if (isExtensionEnvironment()) {
-      // const response = await extensionFlux({
-      //   method: FluxMethod.MUTATION,
-      //   args: {
-      //     resource: Resource.link,
-      //     params: mutationParams
-      //   }
-      // });
-      const linkRecordResponse = await extensionFlux({
-        method: FluxMethod.MUTATION,
-        args: {
-          resource: Resource.link,
-          params: {
-            action: PersistenceActionType.INSERT,
-            records: [
-              {
-                id: generateResourceId(Resource.link),
-                in: from,
-                out: to,
-                linkType: linkType,
-                createdAt: new Date().toISOString()
-              }
-            ]
-          }
-        }
-      });
-      logger.debug({ at: "link - extension", linkRecordResponse });
-      return linkRecordResponse;
-    }
-
-    const response = await flux.mutation(Resource.link, mutationParams);
+    const response = await this.create({
+      in: from,
+      out: to,
+      linkType: linkType
+    });
     logger.log({ at: "link", response });
     return response;
   }
 
   async unlink(from: IRecordId, to: IRecordId) {
-    const mutationParams: ICustomMutationParams = {
-      action: PersistenceActionType.CUSTOM,
-      query:
-        "DELETE $from->link where out=$to; DELETE $to->link where out=$from;",
-      data: {
-        from,
-        to
+    logger.log({ at: "unlink", from, to });
+    const links = await this.selectMany({
+      filters: {
+        in: from.toString(),
+        out: to.toString()
       }
-    }
-    if (isExtensionEnvironment()) {
-      const response = await extensionFlux({
-        method: FluxMethod.MUTATION,
-        args: {
-          resource: Resource.link,
-          params: mutationParams
-        }
-      });
-      logger.debug({ at: "unlink - extension", response });
-      return response;
-    }
-
-    let response = await flux.mutation(Resource.link, mutationParams);
-    logger.log({ at: "unlink", from, to, response });
+    });
+    const linkId = links[0].id as IRecordId;
+    if (!linkId) return;
+    const response = await this.delete(linkId);
+    logger.debug({ at: "unlink", response });
     return response;
   }
 
   async linkMany(links: any[]) {
-    const query = links
-      .map((link) => this.generateLinkQuery(link.from, link.to, link.linkType))
-      .join("; ");
-    let response = await flux.mutation(Resource.link, {
-      action: PersistenceActionType.CUSTOM,
-      query
-    });
+    const response = await this.create(links);
     logger.log({ at: "linkMany", response });
     return response;
   }
 
+  /**
+   * @deprecated - using direct insert instead
+   * @param from
+   * @param to
+   * @param linkType
+   * @returns
+   */
   private generateLinkQuery(from: IRecordId, to: IRecordId, linkType: string) {
     return replaceParams(
       `relate $from->link->$to content {toType: meta::tb($to), linkType: $linkType, createdAt: time::now()}`,
