@@ -99,8 +99,9 @@ export class SearchStore {
                 "parent.* as parent",
                 "file.* as file",
                 "search::highlight('**', '**', 1, false) AS bodySearch",
-                "search::highlight('**', '**', 2, false) AS labelSearch",
-                "(fn::memotron::node::parent($parent.id)) as mdParent"
+                "search::highlight('**', '**', 2, false) AS labelSearch"
+                //TODO - this is causing extreme slowness for select query if there are 1000s of records on the table
+                // "(fn::memotron::node::parent($parent.id)) as mdParent"
               ],
         filters:
           this.searchType == SearchType.SEMANTIC && this.searchQuery

@@ -8,7 +8,7 @@ import {
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { commonMetadata } from "../common/urlMap";
+import { urlMap } from "../common/urlMap";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
@@ -21,7 +21,7 @@ export function resolveContentPreview(node: INode) {
     if ("bio" in body && body.bio) return body.bio;
     if (!node.url) return "";
     const hostPart = new URL(node.url).host;
-    const ogImageUrl = commonMetadata.find(
+    const ogImageUrl = urlMap.find(
       (x) => hostPart === x.domain || hostPart.includes("." + x.domain)
     )?.ogImage;
     return ogImageUrl ?? "";
@@ -29,6 +29,8 @@ export function resolveContentPreview(node: INode) {
     return body.text;
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;
+  } else if (contentType === NodeType.KINDLE_HIGHLIGHT && "text" in body) {
+    return body.text;
   }
   return undefined;
 }
@@ -169,6 +171,15 @@ export function resolveUrlPreview(node: INode) {
     return metadata?.ogImage ?? metadata?.screenshotUrl;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     return body?.profileImageUrl;
+  } else if (contentType === NodeType.KINDLE_BOOK) {
+    return body?.imageUrl;
   }
   return undefined;
+}
+
+/**
+ * If the image preview should contain instead of cover - cases like kindle books which are blurred if cover
+ */
+export function resolveIfImageShouldContain(contentType: NodeType) {
+  return contentType === NodeType.KINDLE_BOOK;
 }

@@ -21,6 +21,7 @@
   let renderingDetails: any;
   let imgRef: HTMLImageElement;
   let isPortrait = true;
+  let webContentRef: any;
 
   $: if (imgRef) {
     isPortrait = imgRef.naturalHeight > imgRef.naturalWidth;
@@ -35,6 +36,8 @@
   function contextEventListener(event: string, data: any) {
     if (event === "pdf-trace-click") {
       pdfContent.scrollToAnnot(data.id, data.pageNumber);
+    } else if (event === "yt-trace-click") {
+      webContentRef.onTrace(data);
     }
   }
   const contentContext = {
@@ -67,7 +70,7 @@
     {:else if ($node?.contentType === NodeType.IMAGE || $node?.contentType === NodeType.VIDEO) && $node.file}
       <FileView file={$node.file} />
     {:else if webNodeTypeList.includes($node?.contentType)}
-      <WebNodeContent node={$node} />
+      <WebNodeContent node={$node} bind:this={webContentRef} />
     {:else if $node?.contentType === NodeType.PDF && $node.file?.url}
       <PdfAnnotator
         bind:this={pdfContent}

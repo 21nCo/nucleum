@@ -13,7 +13,7 @@
       />
       <div class="flex flex-col gap-2 items-start justify-between">
         <div class="flex flex-col gap-2 items-start">
-          <div class="font-medium text-h3">
+          <div class="font-medium text-h3 text-left">
             {node.label}
           </div>
           <div class="text-b2 text-fgs2">

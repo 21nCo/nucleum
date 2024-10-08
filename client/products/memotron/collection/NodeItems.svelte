@@ -63,7 +63,10 @@
         NodeType.IMAGE,
         NodeType.WEB_SCREENSHOT_CLIP,
         NodeType.YOUTUBE_TIMESTAMP_CLIP,
-        NodeType.WEB_PAGE
+        NodeType.WEB_PAGE,
+        NodeType.KINDLE_BOOK,
+        NodeType.YOUTUBE_VIDEO,
+        NodeType.TWITTER_PROFILE
       ].includes(item.getAttribute("data-type") as NodeType)
     ) {
       const child = item.querySelector(".item-content");

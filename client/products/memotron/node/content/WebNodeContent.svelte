@@ -16,6 +16,11 @@
   import TwitterProfilePreview from "./web/TwitterProfilePreview.svelte";
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
+  let youtubeVideoRef: any;
+
+  export function onTrace(e: any) {
+    youtubeVideoRef.onTrace(e);
+  }
 
   const linkContextMenu: IContextMenu = [
     {
@@ -60,9 +65,9 @@
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
   {:else if node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP}
-    <YoutubeVideoPreview {node} />
+    <YoutubeVideoPreview {node} bind:this={youtubeVideoRef} />
   {/if}
-  {#if "url" in node.body && node.body.url}
+  {#if "url" in node && node.url}
     <div
       class="absolute bottom-0 left-0 m-2 flex gap-2 items-center max-w-full"
     >
@@ -73,13 +78,14 @@
       >
         <Button
           icon="arrow-up-right"
-          label={trimUrl(node.body.url, isLinkHovering)}
+          label={trimUrl(node.url, isLinkHovering)}
           bind:isHovering={isLinkHovering}
           size={Size.xs}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           on:click={() => {
-            appStore.openLink(node.body.url);
+            if (!node.url) return;
+            appStore.openLink(node.url);
           }}
         />
       </ContextMenuAction>

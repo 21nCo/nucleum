@@ -70,7 +70,7 @@ type INodeInterface<
   file?: IRecordId;
 };
 
-export type ILink = {
+export type ILink = IMemotronItemBase & {
   id: IRecordId;
   in: IRecordId;
   out: IRecordId;
@@ -241,7 +241,8 @@ export const canHaveTraces = [
   NodeType.WEB_PAGE,
   NodeType.TWITTER_PROFILE,
   NodeType.YOUTUBE_VIDEO,
-  NodeType.YOUTUBE_CHANNEL
+  NodeType.YOUTUBE_CHANNEL,
+  NodeType.KINDLE_BOOK
 ];
 
 export const structuralNodeTypes = [
