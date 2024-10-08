@@ -15,7 +15,7 @@ export function generateResourceId(
   if (!params?.isAsString) {
     return new RecordId(
       itemType,
-      params?.prefix ? params?.prefix + "_" : "" + id
+      (params?.prefix ? params?.prefix + "_" : "") + id
     );
   }
   return `${itemType}:${params?.prefix ? params.prefix + "_" : ""}${id}`;

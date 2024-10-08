@@ -62,7 +62,7 @@ export class DexiePersistence implements IPersistence {
   ) {
     switch (params.action) {
       case PersistenceActionType.INSERT:
-        return this.instance?.table(resource).bulkAdd(params.records);
+        return this.instance?.table(resource).bulkPut(params.records);
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:

@@ -226,6 +226,7 @@ export class ResourceStore<T extends IResource> implements IStore {
         }
       });
       if (result) return resources;
+      return result;
     }
     return flux.mutation<T>(this.id, data);
   }

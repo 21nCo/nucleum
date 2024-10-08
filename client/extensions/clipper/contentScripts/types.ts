@@ -40,6 +40,7 @@ export interface ISyncStore extends IObservableStoreSubject {
   status?: SyncStatus;
   isShowSyncPane?: boolean;
   lastSyncedAt?: string;
+  progress?: number;
 }
 
 export enum SyncStatus {

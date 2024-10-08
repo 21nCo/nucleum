@@ -65,20 +65,23 @@ class Flux {
     Flux._instance.provider = provider;
     Flux._instance.isLocalMode = params?.isLocalMode ?? false;
     Flux._instance.persistence = persistence;
+    Flux._instance.stores = stores;
+    const resources = Flux._instance.resolveSyncResources();
     switch (provider) {
       case PersistenceProvider.SURREAL_SURREAL:
       case PersistenceProvider.DEXIE_SURREAL:
         Flux._instance.remote = new SurrealDatabase();
         Flux._instance.syncer = new SurrealSync(
           Flux._instance.persistence,
-          Flux._instance.remote
+          Flux._instance.remote,
+          resources
         );
         break;
       default:
         break;
     }
     logger.log({ at: "flux.initialized", instance: Flux._instance });
-    return Flux._instance.initializePersistence(stores, userId, params);
+    return Flux._instance.initializePersistence(userId, params);
   }
 
   /**
@@ -87,28 +90,23 @@ class Flux {
    * @param params
    */
   private initializePersistence(
-    stores: IStore[],
     userId: string,
     params?: {
       isLocalMode?: boolean;
     }
   ) {
-    logger.log({ at: "flux.initializePersistence", stores, userId, params });
-    this.stores = stores;
-    const dbo = [...resolveDboDependencies()];
+    logger.log({ at: "flux.initializePersistence", userId, params });
+    const dboDependencies = new Set(
+      this.stores
+        .map((x) => x.dboDependencies)
+        .filter((x) => x !== undefined)
+        .flat()
+    );
+    const dbo = [...dboDependencies];
     return this.persistence.initialize(userId, {
       ...params,
       dbo
     });
-
-    function resolveDboDependencies(): Set<string> {
-      return new Set(
-        stores
-          .map((x) => x.dboDependencies)
-          .filter((x) => x !== undefined)
-          .flat()
-      );
-    }
   }
 
   async loadInMemoryStores() {
@@ -459,25 +457,23 @@ class Flux {
    */
   async cloneDown() {
     logger.debug({ at: "flux.cloneDown", stores: this.stores });
-    const resources = this.resolveCloneResources();
-    await this.syncer.cloneCloudToLocal(resources);
+    await this.syncer.cloneCloudToLocal();
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
   async cloneUp() {
     logger.debug({ at: "flux.cloneUp" });
-    const resources = this.resolveCloneResources();
-    await this.syncer.cloneLocalToCloud(resources);
+    await this.syncer.cloneLocalToCloud();
     clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
-  private resolveCloneResources() {
+  private resolveSyncResources(): Resource[] {
     const resources = [
       Resource.kv,
       ...(this.stores
         .filter((x) => x.dataType === StoreDataType.IFR)
         .map((x) => x.id) ?? [])
-    ];
+    ] as Resource[];
     return resources;
   }
 
