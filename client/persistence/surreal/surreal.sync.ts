@@ -17,9 +17,15 @@ import { resolveMutationQueryV2 } from "./surreal.utils";
 export class SurrealSync implements ISyncHandler {
   remote: ISurrealDatabase;
   local: IPersistence;
-  constructor(local: IPersistence, remote: ISurrealDatabase) {
+  resources: Resource[];
+  constructor(
+    local: IPersistence,
+    remote: ISurrealDatabase,
+    resources: Resource[]
+  ) {
     this.remote = remote;
     this.local = local;
+    this.resources = resources;
   }
 
   /**
@@ -65,7 +71,7 @@ export class SurrealSync implements ISyncHandler {
     );
     logger.log({ at: "resolveSyncDownQuery", lastSyncDown });
     let timestamp = lastSyncDown ?? 0;
-    return `SELECT * FROM mutation WHERE timestamp > ${timestamp} AND dapId IS NOT '${dapIdVal}' ORDER BY timestamp ASC;`;
+    return `SELECT * FROM mutation WHERE timestamp > ${timestamp} AND dapId IS NOT '${dapIdVal}' AND resource IN [${this.resources.map((x) => `'${x}'`).join(",")}] ORDER BY timestamp ASC;`;
   }
 
   async syncDown() {
@@ -87,18 +93,18 @@ export class SurrealSync implements ISyncHandler {
    * TODO - high volume data scenario, graph links scenario
    * @param resources
    */
-  async cloneCloudToLocal(resources: string[]) {
-    logger.log({ at: "cloneCloudToLocal", resources });
+  async cloneCloudToLocal() {
+    logger.log({ at: "cloneCloudToLocal", resources: this.resources });
     let query = "";
     // resources = ["collection", "node", "file", "property", "view", "kv"];
 
-    if (resources?.length > 0) {
+    if (this.resources?.length > 0) {
       if (!isExtensionEnvironment()) {
-        resources.forEach((resource) => {
+        this.resources.forEach((resource) => {
           query += `select *, meta::id(id) as id from ${resource};`;
         });
       } else {
-        resources.forEach((resource) => {
+        this.resources.forEach((resource) => {
           query += `select * from ${resource};`;
         });
       }
@@ -106,7 +112,7 @@ export class SurrealSync implements ISyncHandler {
     const result = await this.remote.query(query, {});
     logger.log({ at: "cloneCloudToLocal", result });
     for (let i = 0; i < result.length; i++) {
-      const resource = resources[i];
+      const resource = this.resources[i];
       const resourceResponse = result[i];
       if (resourceResponse.result && resourceResponse.result.length > 0) {
         await this.local.mutation(resource as Resource, {
@@ -121,9 +127,9 @@ export class SurrealSync implements ISyncHandler {
    * TODO - high volume data scenario
    * @param resources
    */
-  async cloneLocalToCloud(resources: string[]) {
-    logger.log({ at: "cloneLocalToCloud", resources });
-    for (let resource of resources) {
+  async cloneLocalToCloud() {
+    logger.log({ at: "cloneLocalToCloud", resources: this.resources });
+    for (let resource of this.resources) {
       const records = await this.local.selectMany(resource as Resource);
       await this.remote.insert(resource, records);
     }

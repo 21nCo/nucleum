@@ -12,6 +12,7 @@
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import InlineFeedbackText from "../../InlineFeedbackText.svelte";
   import { onMount, createEventDispatcher } from "svelte";
+  import FileView from "$lib/client/components/files/FileView.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -90,12 +91,9 @@
   class="flex flex-col gap-2 border border-brs3 rounded-md p-2 hover:border-aps1"
 >
   <span class="flex gap-4 justify-center items-center">
-    <!-- TODO - use FileView -->
-    <img
+    <FileView
+      id={clip.body.thumbnail}
       class="thumbnail w-32 h-[72px] rounded-md"
-      src={clip.body.s3Url ??
-        "https://placehold.co/60x40?text=Preview+not+available"}
-      alt="Video Thumbnail"
     />
     <div class="flex flex-col gap-1 items-start justify-between">
       <div class="font-medium text-h5">

@@ -231,7 +231,7 @@
   async function sync() {
     try {
       logger.log({ at: "sync", syncStore: $syncStore });
-      if ($syncStore.status == SyncStatus.SYNCED) {
+      if ($syncStore.status == SyncStatus.SYNCING) {
         return;
       }
       syncStore.updateSyncStatus(SyncStatus.SYNCING);
@@ -265,7 +265,7 @@
     await syncStore.init(NodeType.KINDLE_BOOK);
     region = matchCurrentUrlWithAmazonRegions();
     appEvents.subscribe(async (x) => {
-      logger.log({ at: "appEvent - Kindle Content Script", event: x.event });
+      logger.debug({ at: "appEvent - Kindle Content Script", event: x.event });
       if (x.event === ClipperExtensionEvent.START_SYNC) {
         sync();
       }

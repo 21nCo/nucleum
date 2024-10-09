@@ -18,11 +18,12 @@
   let isNotesOpened = false;
   let clip: any;
   let notes: string = "";
-  $: if (id) refreshClip(id);
-  function refreshClip(id: string) {
-    clip = $webpage.clips.find((clip) => clip.id === id);
+  $: if (id) refreshClip(id, $webpage.clips);
+  function refreshClip(id: string, clips: any[]) {
+    clip = clips?.find((x) => x.id == id);
     notes = clip?.notes ?? "";
   }
+
   async function onNotesChange(e: CustomEvent) {
     feedback = "Saving...";
     logger.log({ at: "onNotesChange", id, notes });

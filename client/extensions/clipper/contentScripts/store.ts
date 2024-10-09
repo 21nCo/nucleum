@@ -129,17 +129,22 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         resource: Resource.link,
         params: {
           filters: {
-            in: page.id
+            in: [page.id, ...(clips?.map((c) => c.id) ?? [])]
           }
         }
       }
     });
-    let links: IRecordId[] = [];
+    let rootLinks: IRecordId[] = [];
     if (linksResult && Array.isArray(linksResult)) {
-      links = linksResult.map((l) => l.out);
+      rootLinks = linksResult.filter((l) => l.in === page.id).map((l) => l.out);
+      if (clips && Array.isArray(clips)) {
+        clips.forEach((c) => {
+          c.links = linksResult.filter((l) => l.in === c.id).map((l) => l.out);
+        });
+      }
     }
-    logger.log({ at: "refresh", page, clips, links, linksResult });
-    this.loader({ page: { ...page, clips: clips ?? [], links } });
+    logger.debug({ at: "refresh", page, clips, links: rootLinks, linksResult });
+    this.loader({ page: { ...page, clips: clips ?? [], links: rootLinks } });
   }
 
   /**
@@ -209,6 +214,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       }
     }
   }
+
   /**
    * Saves the clip to the database. If the webpage is not saved, it will be saved first by parsing the DOM for web page metadata.
    *
@@ -250,7 +256,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       return n;
     });
     if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
-      feedbackPane.focus(clipNode, "Clip saved!");
+      feedbackPane.focus(clipNode, {
+        message: "Clip saved!",
+        type: AlertType.SUCCESS
+      });
     }
     return clip;
 
@@ -259,6 +268,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       else return (webpage.url ?? window.location.href) + "#" + id;
     }
   }
+
   async saveTweet(
     data: OmitFields<
       ITweet & {
@@ -271,7 +281,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     >,
     isFromTweetPage: boolean = false
   ) {
-    logger.log({ at: "saveTweet", data });
+    logger.debug({ at: "saveTweet", data });
     const id = generateResourceId(Resource.node);
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
@@ -310,7 +320,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       if (isFromTweetPage) n.id = tweet.id;
       return n;
     });
-    feedbackPane.focus(tweet, "Tweet saved!");
+    feedbackPane.focus(tweet, {
+      message: "Tweet saved!",
+      type: AlertType.SUCCESS
+    });
     return tweetNode;
   }
 
@@ -337,9 +350,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.id = node.id;
       return n;
     });
-    feedbackPane.focus(node, "Twitter profile saved!");
+    feedbackPane.focus(node, {
+      message: "Twitter profile saved!",
+      type: AlertType.SUCCESS
+    });
     return node;
   }
+
   async linkPage(to: string) {
     const webpage = this.get();
     const isAlreadyLinked = webpage.links?.some((l) => l === to);
@@ -354,6 +371,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
+
   async removeLinkForPage(to: string) {
     const webpage = this.get();
     if (!webpage.id) return;
@@ -366,6 +384,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
+
   async linkClip(from: IRecordId, to: IRecordId) {
     const webpage = this.get();
     const clip = webpage?.clips?.find((c) => c.id === from);
@@ -387,6 +406,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Linked!", type: AlertType.SUCCESS };
   }
+
   async removeLinkForClip(from: IRecordId, to: IRecordId) {
     const response = await linker.unlink(from, to);
     if (!response)
@@ -403,6 +423,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     return { message: "Unlinked!", type: AlertType.SUCCESS };
   }
+
   async removeClip(id: string) {
     const response = await nodeStore.trash(id);
     console.log({ response });
@@ -477,7 +498,10 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
       return n;
     });
   }
-  focus(clip: IClip | null, message: string) {
+  focus(
+    clip: IClip | null,
+    message: string | { message: string; type: AlertType }
+  ) {
     logger.log({ at: "feedbackPane.focus", clip, message });
     this.update((n) => {
       n.focusedClip = clip;
@@ -556,20 +580,42 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
-    const limitCount = 500;
+    const limitCount = 10;
     let response;
+    this.update((n) => {
+      n.progress = 0;
+      return n;
+    });
     if (items.length > limitCount) {
-      response = await Promise.all(resolveChunks());
+      // response = await Promise.all(resolveChunks());
+      const chunks = resolveChunks();
+      for (const chunk of chunks) {
+        response = await chunk();
+        this.update((n) => {
+          n.progress = (chunks.indexOf(chunk) / chunks.length) * 100;
+          return n;
+        });
+      }
     } else {
       response = await nodeStore.create(items);
     }
-
-    function resolveChunks() {
-      const promises = [];
+    this.update((n) => {
+      n.progress = 100;
+      return n;
+    });
+    // function resolveChunks() {
+    //   const promises = [];
+    //   for (let i = 0; i < items.length; i += limitCount) {
+    //     promises.push(nodeStore.create(items.slice(i, i + limitCount)));
+    //   }
+    //   return promises;
+    // }
+    function resolveChunks(): (() => Promise<any>)[] {
+      const chunks: (() => Promise<any>)[] = [];
       for (let i = 0; i < items.length; i += limitCount) {
-        promises.push(nodeStore.create(items.slice(i, i + limitCount)));
+        chunks.push(() => nodeStore.create(items.slice(i, i + limitCount)));
       }
-      return promises;
+      return chunks;
     }
   }
 

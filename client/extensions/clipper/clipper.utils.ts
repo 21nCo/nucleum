@@ -329,7 +329,6 @@ function parseTweetContent(
     let authorName = "";
     let tweetId = "";
     const currentUrl = window.location.pathname;
-
     const urlMatch = currentUrl.match(/\/(\w+)\/status\/(\d+)/);
     if (urlMatch) {
       username = urlMatch[1];

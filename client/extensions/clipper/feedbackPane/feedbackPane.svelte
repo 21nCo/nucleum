@@ -10,9 +10,11 @@
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { resolveContentTypeString } from "../clipper.utils";
-  import { truncateString } from "$lib/shared/utils/text.utils";
   import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
+  import type { IRecordId } from "$lib/client/types/data.type";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
   let notes: string = "";
   let autoCloseDuration = 30;
   let closeTimer: any;
@@ -23,7 +25,17 @@
     $feedbackPane.focusedClip?.contentType
   );
 
+  $: linkItems = resolveLinkItems($webpage.links, $feedbackPane.focusedClip);
+
   let notesTimeout: any;
+
+  function resolveLinkItems(links: IRecordId[], focusedClip: IRecordId) {
+    if (!focusedClip) return links;
+    let clipLinks = $webpage.clips?.find(resourceInList(focusedClip))?.links;
+    if (!clipLinks) return [];
+    return [...clipLinks];
+  }
+
   async function onNotesChange(e: CustomEvent) {
     $feedbackPane.feedback = "Saving...";
     if ($feedbackPane.focusedClip) {
@@ -98,7 +110,7 @@
 </script>
 
 <FeedbackPaneBase bind:isHovering on:hover={onHover}>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col w-full gap-2">
     <div class="flex w-full justify-between items-center">
       <!-- <span class="text-fgs3 text-b2"> Link this page </span> -->
       <FormControlLabel
@@ -124,9 +136,10 @@
     </div>
     <LinkBoxOnClipper on:link={onLink} />
     <LinkItems
-      links={$webpage.links ?? []}
+      links={linkItems}
       on:click={onLinkClick}
       on:unlink={onUnlink}
+      isWrapItems={true}
     />
   </div>
   <div class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1">
@@ -146,8 +159,10 @@
     /> -->
     <FileView id={$feedbackPane.focusedClip.body?.file} />
   {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
-    <span class="text-b3">
-      {truncateString($feedbackPane.focusedClip.body.content, 200)}
+    <span class="text-b2 p-1 border border-brs2 rounded-md">
+      <NodeThumbnailTweetPreview
+        text={$feedbackPane.focusedClip.body.content}
+      />
     </span>
   {/if}
   <InlineFeedbackText bind:feedback={$feedbackPane.feedback} />

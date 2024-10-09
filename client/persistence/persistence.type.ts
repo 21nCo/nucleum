@@ -100,6 +100,6 @@ export interface IPersistenceInitParams {
 export interface ISyncHandler {
   sync(mutations: any[]): Promise<void>;
   syncDown(): Promise<any>;
-  cloneCloudToLocal(resources: string[]): Promise<any>;
-  cloneLocalToCloud(resources: string[]): Promise<any>;
+  cloneCloudToLocal(): Promise<any>;
+  cloneLocalToCloud(): Promise<any>;
 }
