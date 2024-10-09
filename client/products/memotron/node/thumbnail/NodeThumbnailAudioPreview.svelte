@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { INode } from "../node.type";
   import WaveSurfer from "wavesurfer.js";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import appearance from "$lib/client/stores/appearance.store";
 
-  export let node: INode;
+  export let url: string;
   const currentColors: any = retrieveCurrentColors($appearance);
   const generator = randomLowercaseStringGenerator(15);
   const id = generator.next().value + "audioPreview";
@@ -14,14 +13,14 @@
   });
 
   function renderAudioPreview() {
-    if (!node.file?.url) return;
+    if (!url) return;
     try {
       const wavesurfer = WaveSurfer.create({
         container: `#${id}`,
         waveColor: currentColors["aps1"],
         progressColor: currentColors["aps1"],
         cursorColor: currentColors["aps1"],
-        url: node.file?.url
+        url
       });
     } catch (error) {
       console.error(error);

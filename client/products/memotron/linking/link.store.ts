@@ -43,13 +43,13 @@ class Linker extends ResourceStore<INodeLink> {
     const linkId = links[0].id as IRecordId;
     if (!linkId) return;
     const response = await this.delete(linkId);
-    logger.debug({ at: "unlink", response });
+    logger.log({ at: "unlink", response });
     return response;
   }
 
   async linkMany(links: any[]) {
     const response = await this.create(links);
-    logger.log({ at: "linkMany", response });
+    logger.log({ at: "linkMany", links, response });
     return response;
   }
 

@@ -203,7 +203,7 @@ class AccountStore extends ObservableStore<
 
   async bootstrap(region: string) {
     await this.bootstrapRemote(region);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    clientStorage.set(ClientStorageKey.LAST_SYNC_UP, new Date().getTime());
   }
 
   async bootstrapRemote(region: string) {
@@ -266,7 +266,9 @@ class AccountStore extends ObservableStore<
   ) {
     try {
       const account = this.get();
-      const id = generateResourceId(Resource.file, { id: contentType.split("/")[0] + "_" + generateSimpleRandomId() });
+      const id = generateResourceId(Resource.file, {
+        id: contentType.split("/")[0] + "_" + generateSimpleRandomId()
+      });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       if (account.dataMode === UserDataMode.LOCAL) {
         const arrayBuffer = await blob.arrayBuffer();
@@ -301,15 +303,13 @@ class AccountStore extends ObservableStore<
           type: contentType,
           url,
           size: blob.size
-        }
+        };
         if (params.isReturnUrl) {
           return url;
         } else if (params.isExtensionEnv) {
           return file;
         }
-        const response = await fileStore.create([
-          file
-        ]);
+        const response = await fileStore.create([file]);
         return response;
       }
     } catch (e) {

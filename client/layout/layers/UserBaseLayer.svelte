@@ -7,7 +7,10 @@
   import account from "$lib/client/stores/account.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import {
+    confirmationNotification,
+    toasts
+  } from "$lib/client/stores/notification.store";
   import context from "$lib/client/stores/context.store";
   import DebugLayer from "./debug/DebugLayer.svelte";
   import ModalLayer from "./ModalLayer.svelte";
@@ -168,6 +171,7 @@
           initState
         });
         if (initState === 0) await flux.kvSeed();
+        else await flux.loadInMemoryStores();
       } else if ($account.dataMode === UserDataMode.CLOUD) {
         if (!$account.userId) {
           error = "User id not found. Please try again later.";
@@ -251,7 +255,6 @@
       appStore.loadAppData(appData);
     } catch (e) {
       logger.error(e);
-      appStore.gotoErrorPage(e);
     }
   }
 
@@ -271,12 +274,30 @@
       handlePersistAppearance
     );
   }
+  function handleBeforeUnload(event: any) {
+    if ($context.isInOfflineMode || $account.dataMode === UserDataMode.LOCAL) {
+      event.preventDefault();
+      event.returnValue = "";
+      // confirmationNotification.notify({
+      //   title: "You are offline.",
+      //   message:
+      //     "Reloading the page may not load the app again if you are not connected to the internet",
+      //   type: AlertType.WARNING,
+      //   confirmAction: {
+      //     label: "Reload",
+      //     callback: async () => {
+      //       window.location.reload();
+      //     }
+      //   }
+      // });
+    }
+  }
   onDestroy(() => {
     removeWindowEventListeners();
   });
 </script>
 
-{#if $appStore?.appData?.isAnalyticsEnabled}
+{#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
 <div class="flex h-screen w-screen">
@@ -303,6 +324,8 @@
   on:resize={windowResizeListener}
   on:message={messageReceivedListener}
   on:focus={onAppear}
+  on:beforeunload={handleBeforeUnload}
+  on:unload={handleBeforeUnload}
 />
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />

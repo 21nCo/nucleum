@@ -51,6 +51,8 @@
 
   async function resolveSrc(): Promise<string> {
     if (file?.url && _id === file?.id) return file.url;
+    else if (file?.data && _id === file?.id)
+      blob = new Blob([file.data], { type: file.type });
     if (blob) return URL.createObjectURL(blob);
     if (!id) return "";
     const response = await fileStore.select(id);

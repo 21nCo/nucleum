@@ -156,7 +156,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         "(select * from $parent.properties) as properties",
         "typeToExtend.* as typeToExtend"
       ]);
-      logger.debug({ at: "ActiveCollectionStore.init - select", result });
+      logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
       this.set({

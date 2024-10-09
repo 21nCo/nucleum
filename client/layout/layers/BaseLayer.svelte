@@ -123,6 +123,16 @@
       $context.os = detectSystemOS();
       $context.isTouchDevice = detectTouchDevice();
       $context.protocol = window.location.protocol;
+      const isInOfflineMode = await clientStorage.get(
+        ClientStorageKey.OFFLINE_MODE
+      );
+      if (isInOfflineMode)
+        $context.isInOfflineMode = isInOfflineMode === "true";
+      const isInLowDataMode = await clientStorage.get(
+        ClientStorageKey.LOW_DATA_MODE
+      );
+      if (isInLowDataMode)
+        $context.isInLowDataMode = isInLowDataMode === "true";
     } catch (e) {
       postToParent({ type: "ERROR", message: e });
     }
@@ -209,6 +219,10 @@
     }
   }
 
+  function updateOnlineStatus() {
+    $context.isInOfflineMode = !navigator.onLine;
+  }
+
   function addWindowEventListeners() {
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
@@ -218,6 +232,8 @@
     window.onpopstate = () => {
       appStore.setCurrentPath(document.location.pathname);
     };
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -226,6 +242,8 @@
     );
     window.removeEventListener(GlobalEvent.CUSTOM_ALERT, handleCustomAlert);
     window.onpopstate = null;
+    window.removeEventListener("online", updateOnlineStatus);
+    window.removeEventListener("offline", updateOnlineStatus);
   }
   onDestroy(() => {
     removeWindowEventListeners();
@@ -243,7 +261,6 @@
       appStore.loadAppData(appData);
     } catch (e) {
       logger.error(e);
-      appStore.gotoErrorPage(e);
     }
   }
 </script>

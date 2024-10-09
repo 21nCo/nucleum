@@ -18,7 +18,7 @@
     } else {
       result = await linkTagStore.save(inputValue);
     }
-    logger.debug({ at: "LinkTagsControlPanel save", result });
+    logger.log({ at: "LinkTagsControlPanel save", result });
     if (result) {
       toasts.success(`**${result[0]?.label}** added to link tags`);
     }
@@ -26,19 +26,19 @@
   }
 
   function onRemove(e: CustomEvent<IRecordId>) {
-    logger.debug({ at: "LinkTagsControlPanel onRemove", id: e.detail });
+    logger.log({ at: "LinkTagsControlPanel onRemove", id: e.detail });
     linkTagStore.trash(e.detail);
   }
 
   function onUpdate(e: CustomEvent<ILinkTag>) {
-    logger.debug({ at: "LinkTagsControlPanel onUpdate", ...e.detail });
+    logger.log({ at: "LinkTagsControlPanel onUpdate", ...e.detail });
     linkTagStore.modify(e.detail.id, e.detail);
   }
 
   function onUpdategroup(e: CustomEvent) {
     const { group, newgroup } = e.detail;
     const tags = groups.find((x) => x.group === group)?.items.map((x) => x.id);
-    logger.debug({
+    logger.log({
       at: "LinkTagsControlPanel onUpdategroup",
       group,
       newgroup,
@@ -50,7 +50,7 @@
   async function onBulkDelete(e: CustomEvent) {
     const group = e.detail;
     const tags = groups.find((x) => x.group === group)?.items.map((x) => x.id);
-    logger.debug({ at: "LinkTagsControlPanel onBulkDelete", group, tags });
+    logger.log({ at: "LinkTagsControlPanel onBulkDelete", group, tags });
     if (tags) await linkTagStore.bulkTrash(tags);
     else toasts.error("No tags to delete");
   }

@@ -22,6 +22,15 @@
   let imgRef: HTMLImageElement;
   let isPortrait = true;
   let webContentRef: any;
+  let _url: string;
+
+  $: if ($node.file) {
+    _url =
+      $node.file.url ??
+      URL.createObjectURL(
+        new Blob([$node.file.data], { type: $node.file.type })
+      );
+  }
 
   $: if (imgRef) {
     isPortrait = imgRef.naturalHeight > imgRef.naturalWidth;
@@ -58,23 +67,23 @@
       }
     )}
   >
-    {#if $node?.contentType === NodeType.AUDIO && $node.file?.url}
+    {#if $node?.contentType === NodeType.AUDIO && _url}
       <!-- <audio controls src={$node.body?.url} /> -->
       <!-- TODO - relay refresh event to top instead of refreshing here -->
       <AudioScrubablePreview
         on:refresh
         body={$node?.body}
-        url={$node.file.url}
+        url={_url}
         nodeId={$node.id.toString()}
       />
     {:else if ($node?.contentType === NodeType.IMAGE || $node?.contentType === NodeType.VIDEO) && $node.file}
       <FileView file={$node.file} />
     {:else if webNodeTypeList.includes($node?.contentType)}
       <WebNodeContent node={$node} bind:this={webContentRef} />
-    {:else if $node?.contentType === NodeType.PDF && $node.file?.url}
+    {:else if $node?.contentType === NodeType.PDF && _url}
       <PdfAnnotator
         bind:this={pdfContent}
-        url={$node.file.url}
+        url={_url}
         bind:annots={$node.pdfAnnotations}
       />
     {/if}

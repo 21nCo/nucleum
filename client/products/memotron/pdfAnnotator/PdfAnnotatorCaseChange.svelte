@@ -38,8 +38,7 @@
   import type { IHighlighter } from "../common/highlighters/highlight.type";
   import { highlightStore } from "../common/highlighters/highlight.store";
 
-  export let url: string = "/Liu_Deep_Supervised_Hashing_CVPR_2016_paper.pdf";
-  $: console.log({ url });
+  export let url: string;
   export let isReplaceable: boolean = false;
   export let annots: any[];
   /**

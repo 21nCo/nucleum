@@ -1,5 +1,5 @@
 import { logger } from "$lib/client/components/debug/logger.client";
-import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   PersistenceActionType,
   type IMutation
@@ -58,15 +58,19 @@ export class SurrealSync implements ISyncHandler {
   }
 
   private async resolveSyncDownQuery() {
-    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-    const lastSyncedAt = await clientStorage.get(
-      ClientStorageKey.LAST_SYNCED_AT
+    const dapIdVal = await clientStorage.get(ClientStorageKey.DAP_ID);
+    if (!dapIdVal) return;
+    const lastSyncDown = await clientStorage.get(
+      ClientStorageKey.LAST_SYNC_DOWN
     );
-    return `SELECT * FROM mutation WHERE createdAt > '${new Date(+(lastSyncedAt ?? new Date().getTime() - 1000 * 60)).toISOString()}' AND dapId IS NOT '${dapId}';`;
+    logger.log({ at: "resolveSyncDownQuery", lastSyncDown });
+    let timestamp = lastSyncDown ?? 0;
+    return `SELECT * FROM mutation WHERE timestamp > ${timestamp} AND dapId IS NOT '${dapIdVal}' ORDER BY timestamp ASC;`;
   }
 
   async syncDown() {
     const fetchMutationsQuery = await this.resolveSyncDownQuery();
+    if (!fetchMutationsQuery) return;
     let response = await this.remote.query(fetchMutationsQuery, {});
     logger.log({ at: "SurrealSync.syncDown", response });
     if (
@@ -100,7 +104,7 @@ export class SurrealSync implements ISyncHandler {
       }
     }
     const result = await this.remote.query(query, {});
-    logger.debug({ at: "cloneCloudToLocal", result });
+    logger.log({ at: "cloneCloudToLocal", result });
     for (let i = 0; i < result.length; i++) {
       const resource = resources[i];
       const resourceResponse = result[i];

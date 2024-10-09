@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { INode } from "../node.type";
-  export let node: INode;
+  export let url: string;
 </script>
 
 <button
@@ -8,7 +7,7 @@
   on:click
 >
   <object
-    data={node.file?.url + "#toolbar=0&navpanes=0&scrollbar=0&page=1"}
+    data={url + "#toolbar=0&navpanes=0&scrollbar=0&page=1"}
     type="application/pdf"
     width="100%"
     height="100%"

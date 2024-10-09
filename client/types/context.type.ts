@@ -6,6 +6,8 @@ export type IAppContext = {
   embed: Embed;
   os: OperatingSystem;
   dapId: string;
+  isInOfflineMode?: boolean;
+  isInLowDataMode?: boolean;
 };
 
 /**

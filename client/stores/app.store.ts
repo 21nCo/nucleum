@@ -230,9 +230,6 @@ function initAppStore(seed: AppStore) {
       const queryString = new URLSearchParams(props.queryParams).toString();
       path += "?" + queryString;
     }
-    // if (!navigator.onLine) {
-    //   path = "/offline";
-    // }
     goto(path);
   };
   const gotoErrorPage = (err: any) => {

@@ -291,7 +291,7 @@ export const memotronActions: IAction[] = [
           return;
         }
         const result = await linker.link(id, componentParams.id);
-        logger.debug({
+        logger.log({
           at: "addNodeToCollection",
           id,
           label,

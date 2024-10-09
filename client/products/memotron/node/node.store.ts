@@ -197,7 +197,7 @@ export class ActiveNodeStore extends ActiveResourceStore<
           x.out.tb === Resource.collection || x.in.tb === Resource.collection
       )
       .map((x: INodeLink) => (x.out.tb === Resource.collection ? x.out : x.in));
-    logger.debug({
+    logger.log({
       at: "ActiveNodeStore.fetch",
       node,
       rawLinks,

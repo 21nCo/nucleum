@@ -291,6 +291,7 @@ export type IResourceFilterValue =
       lessThan?: IPrimitiveDbDataType;
       greaterThanOrEqual?: IPrimitiveDbDataType;
       lessThanOrEqual?: IPrimitiveDbDataType;
+      notIn?: IPrimitiveDbDataType[];
     };
 
 export type IResourceSelectOrderBy = {

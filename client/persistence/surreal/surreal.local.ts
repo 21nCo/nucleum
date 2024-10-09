@@ -58,7 +58,7 @@ export class SurrealPersistence implements IPersistence {
       // await this.logInfo();
       // await this.testQuery();
       const localLog = await this.select("kv:local");
-      logger.debug({
+      logger.log({
         at: "surreal.persistence.initialize - localLog",
         localLog
       });
@@ -116,11 +116,14 @@ export class SurrealPersistence implements IPersistence {
       // "select * from mutation; select * from kv; select * from tz;"
       "select * from collection;"
     );
-    logger.debug({
-      at: "surreal.persistence.testQuery",
-      userId: this.userId,
-      result
-    });
+    logger.log(
+      {
+        at: "surreal.persistence.testQuery",
+        userId: this.userId,
+        result
+      },
+      LogType.DEBUG
+    );
     this.isProcessingOperation = false;
   }
 
@@ -157,7 +160,7 @@ export class SurrealPersistence implements IPersistence {
    * Updates the database with dbo definitions.
    */
   async updateDbo(params?: IPersistenceInitParams) {
-    logger.debug({ at: "surreal.persistence.updateDbo" });
+    logger.log({ at: "surreal.persistence.updateDbo" });
     await this.awaiter();
     const dependencies = params?.dbo;
     if (!dependencies) return;
@@ -202,7 +205,7 @@ export class SurrealPersistence implements IPersistence {
     records: T[],
     resource: string
   ): Promise<T[] | null> {
-    logger.debug({
+    logger.log({
       at: "SurrealPersistence.insert",
       resource,
       records,
@@ -222,7 +225,7 @@ export class SurrealPersistence implements IPersistence {
         // result = await this.bulkInsert(resource, records);
         result = await this.upsertRecordsFallback(resource, records);
       }
-      logger.debug({
+      logger.log({
         at: "SurrealPersistence.insert",
         resource,
         records,
@@ -263,7 +266,7 @@ export class SurrealPersistence implements IPersistence {
           recordId = id;
           result = await this.instance?.query(query);
         } catch (e) {
-          logger.debug({
+          logger.log({
             at: `SurrealPersistence.upsertRecordsFallback - failed upsert for record`,
             record,
             e,
@@ -315,7 +318,6 @@ export class SurrealPersistence implements IPersistence {
   ): Promise<any> {
     if (!record.id) return;
     await this.awaiter();
-    logger.log({ at: "SurrealPersistence.merge", record });
     const query = resolveMergeQuery(record);
     logger.log({ at: "SurrealPersistence.merge", record, query });
     const result = await this.instance?.query(query);
@@ -353,7 +355,7 @@ export class SurrealPersistence implements IPersistence {
   ): Promise<any> | undefined {
     const changedProperties = { ...records[0] };
     delete changedProperties.id;
-    logger.debug({
+    logger.log({
       at: "SurrealPersistence.bulkEditTemp",
       resource,
       changedProperties,
@@ -511,6 +513,11 @@ export class SurrealPersistence implements IPersistence {
         }
         if ("lessThanOrEqual" in value) {
           conditions.push(`${key} <= ${formatValue(value.lessThanOrEqual)}`);
+        }
+        if ("notIn" in value) {
+          conditions.push(
+            `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
+          );
         }
       } else if (typeof value === "boolean") {
         if (value === true) {

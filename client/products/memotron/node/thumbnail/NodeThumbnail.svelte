@@ -34,8 +34,9 @@
   export let parentBgIndex = 1;
   export let isDraggable: boolean = false;
   let isHovering: boolean = false;
+  let _url: string;
   $: filePreview = resolveFilePreview(item);
-  $: hasFullFileDetails = filePreview?.url;
+  $: hasFullFileDetails = filePreview?.url || filePreview?.data;
   $: urlPreview = resolveUrlPreview(item);
   $: contentPreview = resolveContentPreview(item);
   $: isClip =
@@ -46,6 +47,12 @@
     item.contentType === NodeType.TWEET ||
     accessPoint === ResourceAccessPoint.NODE_TRACES;
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
+
+  $: if (item?.file) {
+    _url =
+      item.file.url ??
+      URL.createObjectURL(new Blob([item.file.data], { type: item.file.type }));
+  }
 </script>
 
 <ResourceThumbnailBase
@@ -103,11 +110,11 @@
             />
           {:else if item.contentType === NodeType.AUDIO}
             <span class="w-full h-full overflow-clip">
-              <NodeThumbnailAudioPreview node={item} />
+              <NodeThumbnailAudioPreview url={_url} />
             </span>
           {:else if item.contentType === NodeType.PDF}
             <span class="w-full h-full overflow-clip relative z-0">
-              <NodeThumbnailPdfPreview node={item} />
+              <NodeThumbnailPdfPreview url={_url} />
             </span>
           {:else}
             <div
@@ -170,13 +177,13 @@
             use:lazyLoad={urlPreview}
           />
         {:else if item.contentType === NodeType.PDF}
-          <NodeThumbnailPdfPreview node={item} />
+          <NodeThumbnailPdfPreview url={_url} />
         {:else}
           <div class="h-full overflow-clip">
             {#if isClip && contentPreview}
               <TextClipPreview node={item} {contentPreview} />
             {:else if item.contentType === NodeType.AUDIO}
-              <NodeThumbnailAudioPreview node={item} />
+              <NodeThumbnailAudioPreview url={_url} />
             {:else if contentPreview}
               {contentPreview}
             {/if}
@@ -218,11 +225,11 @@
       />
     {:else if item.contentType === NodeType.AUDIO}
       <span class="w-full h-full overflow-clip relative z-0">
-        <NodeThumbnailAudioPreview node={item} />
+        <NodeThumbnailAudioPreview url={_url} />
       </span>
     {:else if item.contentType === NodeType.PDF}
       <span class="w-full h-80 overflow-clip relative z-0">
-        <NodeThumbnailPdfPreview node={item} />
+        <NodeThumbnailPdfPreview url={_url} />
       </span>
     {:else}
       <div class="h-auto p-2 overflow-clip text-wrap">

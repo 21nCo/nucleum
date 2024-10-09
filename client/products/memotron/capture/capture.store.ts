@@ -384,7 +384,16 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     });
     const blockLinks = val.links?.filter((x) => x.from !== "root");
     if ((blockLinks && blockLinks.length > 0) || rootLinks?.length > 0) {
-      await linker.linkMany([...rootLinks, ...(blockLinks ?? [])]);
+      const links = [...rootLinks, ...(blockLinks ?? [])].map((x) => {
+        return {
+          in: x.from,
+          out: x.to,
+          linkType: x.linkType,
+          toType: x.toType
+        };
+      });
+      logger.log({ at: "CaptureStore.save", rootLinks, blockLinks, links });
+      await linker.linkMany(links);
     }
 
     if (!result) {

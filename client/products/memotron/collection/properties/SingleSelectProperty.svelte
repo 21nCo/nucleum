@@ -74,7 +74,7 @@
   }
 
   function propagateConfigChange() {
-    logger.debug({
+    logger.log({
       at: "propagateConfigChange",
       config: property.config
     });

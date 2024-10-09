@@ -34,7 +34,10 @@ class Logger {
       this._console(message, type);
     }
   }
-  log(message: any, type: LogType.INFO | LogType.TRACE = LogType.TRACE) {
+  log(
+    message: any,
+    type: LogType.INFO | LogType.TRACE | LogType.DEBUG = LogType.TRACE
+  ) {
     this._log(message, type);
   }
   error(message: any) {

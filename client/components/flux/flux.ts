@@ -35,6 +35,7 @@ import {
 } from "$lib/client/utils/browser.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
+import { determineIfOffline } from "$lib/client/utils/network.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -130,7 +131,7 @@ class Flux {
       for (const store of inMemoryResouceStores) {
         const data = await this.persistence.selectMany(store.id as Resource);
         if (data && Array.isArray(data) && store?.loader) {
-          logger.debug({
+          logger.log({
             at: "flux.loadInMemoryStores - loading resource store",
             id: store.id,
             data
@@ -235,7 +236,7 @@ class Flux {
     }
     const dependantStores = this.resolveDependantStores(resource);
     //TODO refresh stores
-    logger.debug({
+    logger.log({
       at: "flux.mutation - result",
       resource,
       response,
@@ -396,11 +397,22 @@ class Flux {
    * @returns
    */
   async sync() {
-    const lastSyncedAt = await clientStorage.get(
-      ClientStorageKey.LAST_SYNCED_AT
+    const isOffline = await determineIfOffline();
+    if (isOffline) return;
+    const { mutations, lastSyncedAt } = await this.resolveItemsForSyncUp();
+    logger.log({ at: "flux.sync", mutations, lastSyncedAt });
+    if (!mutations || mutations.length === 0) return;
+    await this.syncer.sync(mutations);
+    clientStorage.set(
+      ClientStorageKey.LAST_SYNC_UP,
+      mutations[mutations.length - 1].timestamp
     );
-    logger.log({ at: "flux.sync", lastSyncedAt });
-    if (!lastSyncedAt) return;
+  }
+
+  async resolveItemsForSyncUp() {
+    const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNC_UP);
+    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncedAt });
+    if (!lastSyncedAt) return { mutations: [], lastSyncedAt };
     const mutations = await this.persistence.selectMany(Resource.mutation, {
       filters: {
         timestamp: {
@@ -411,13 +423,8 @@ class Flux {
         timestamp: "asc"
       }
     });
-    logger.log({ at: "flux.sync", mutations, lastSyncedAt });
-    if (!mutations || mutations.length === 0) return;
-    await this.syncer.sync(mutations);
-    clientStorage.set(
-      ClientStorageKey.LAST_SYNCED_AT,
-      mutations[mutations.length - 1].timestamp
-    );
+    logger.log({ at: "flux.resolveItemsForSyncUp", lastSyncedAt, mutations });
+    return { mutations, lastSyncedAt };
   }
 
   async search(storeId: string, query: string) {
@@ -430,20 +437,24 @@ class Flux {
    * Syncs down from cloud to local.
    */
   async syncDown() {
-    logger.debug({ at: "flux.syncDown" });
+    logger.log({ at: "flux.syncDown" });
     try {
+      if (await determineIfOffline()) return;
       if (this.isSyncDownPending) return;
       this.isSyncDownPending = true;
       const result = await this.syncer.syncDown();
       this.isSyncDownPending = false;
       if (result) {
-        logger.debug({
+        logger.log({
           at: "flux.syncDown - loading in memory stores",
           result
         });
         await this.loadInMemoryStores();
+        await clientStorage.set(
+          ClientStorageKey.LAST_SYNC_DOWN,
+          result[result.length - 1].timestamp
+        );
       }
-      clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
       if (!this.isExtensionEnvironment) {
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
       }
@@ -458,17 +469,30 @@ class Flux {
    * Clones down from cloud to local.
    */
   async cloneDown() {
-    logger.debug({ at: "flux.cloneDown", stores: this.stores });
+    logger.log({ at: "flux.cloneDown", stores: this.stores });
+    if (await determineIfOffline()) return;
     const resources = this.resolveCloneResources();
     await this.syncer.cloneCloudToLocal(resources);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
+    await this.loadInMemoryStores();
+    await clientStorage.set(
+      ClientStorageKey.LAST_SYNC_DOWN,
+      new Date().getTime()
+    );
+    await clientStorage.set(
+      ClientStorageKey.LAST_SYNC_UP,
+      new Date().getTime()
+    );
   }
 
+  /**
+   * TODO - files upload to s3
+   * @returns
+   */
   async cloneUp() {
-    logger.debug({ at: "flux.cloneUp" });
+    logger.log({ at: "flux.cloneUp" });
+    if (await determineIfOffline()) return;
     const resources = this.resolveCloneResources();
     await this.syncer.cloneLocalToCloud(resources);
-    clientStorage.set(ClientStorageKey.LAST_SYNCED_AT, new Date().getTime());
   }
 
   private resolveCloneResources() {

@@ -13,6 +13,7 @@
   export let checked: boolean = false;
   export let size: Size = Size.md;
   export let isExpanded: boolean = false;
+  export let isDisabled: boolean = false;
   if (!label.orientation) {
     label = {
       ...label,
@@ -33,11 +34,11 @@
       dispatch("change", checked);
     }}
   >
-    <Switch bind:on={checked} {size} on:change />
+    <Switch bind:on={checked} {size} on:change {isDisabled} />
     <FormControlLabel props={label} isCursorPointer={true} />
   </button>
 {:else}
   <InputBaseElement {style} {label}>
-    <Switch bind:on={checked} {size} on:change />
+    <Switch bind:on={checked} {size} on:change {isDisabled} />
   </InputBaseElement>
 {/if}

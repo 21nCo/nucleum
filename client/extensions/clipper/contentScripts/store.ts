@@ -101,7 +101,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         }
       }
     });
-    logger.debug({ at: "refresh", result });
+    logger.log({ at: "refresh", result });
     const page =
       result && Array.isArray(result) && result.length > 0
         ? result.find((r: IWebPage) => r.url === this.get().url)
@@ -138,7 +138,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (linksResult && Array.isArray(linksResult)) {
       links = linksResult.map((l) => l.out);
     }
-    logger.debug({ at: "refresh", page, clips, links, linksResult });
+    logger.log({ at: "refresh", page, clips, links, linksResult });
     this.loader({ page: { ...page, clips: clips ?? [], links } });
   }
 
