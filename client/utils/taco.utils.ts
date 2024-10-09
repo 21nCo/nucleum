@@ -1,4 +1,5 @@
 import { AutoTokenizer, env, pipeline } from "@xenova/transformers";
+import type { TranscriptionModel } from "../types/taco.types";
 
 env.allowLocalModels = false;
 
@@ -9,7 +10,7 @@ env.allowLocalModels = false;
 // console.log("Input sequence length:", inputSequenceLength);
 
 /**
- * Using Class for restricting initializing the pipline only once, which was required to avoid range out of bounds error propbably causes due to more initializations of the pipeline.
+ * Using Class for initializing the pipline only once, which was required to avoid range out of bounds error propbably causes due to more initializations of the pipeline.
  */
 export class FeatureExtractor {
   static built = false;
@@ -87,8 +88,8 @@ export class QuestionAnswerer {
         return_full_text: true
       });
       const endTime = Date.now();
-      console.log("answering time in seconds:", (endTime - startTime) / 1000);
-      console.log("output FOR qa", output);
+      // console.log("answering time in seconds:", (endTime - startTime) / 1000);
+      // console.log("output FOR qa", output);
       return output.answer;
     } catch (error) {
       console.error("Error during extraction:", error);
@@ -125,6 +126,55 @@ export class Text2textGenerator {
       });
       console.log("output FOR T2T", output.generated_text);
       return output.generated_text;
+    } catch (error) {
+      console.error("Error during extraction:", error);
+      throw error;
+    }
+  }
+}
+
+export class Transcriber {
+  static built = false;
+  static transcriber: any;
+  static models = [
+    "Xenova/whisper-tiny.en",
+    "Xenova/whisper-small.en",
+    "Xenova/whisper-base.en",
+    "Xenova/whisper-medium.en"
+  ];
+  static model = this.models[0];
+  static async init() {
+    if (!Transcriber.built) {
+      Transcriber.transcriber = await pipeline(
+        "automatic-speech-recognition",
+        this.models[0],
+        {
+          progress_callback: (progress: any) => {
+            console.log("Transcriber Initialization progress", progress);
+          }
+        }
+      );
+      Transcriber.built = true;
+    }
+  }
+
+  static async transcribe(audioUrl: string, model: TranscriptionModel) {
+    try {
+      if (this.model != model && this.built) {
+        const index = this.models.findIndex((model) => model.includes(model));
+        if (index >= 0) {
+          this.model = this.models[index];
+          this.built = false;
+          delete Transcriber.transcriber;
+        }
+      }
+      if (!Transcriber.built) await Transcriber.init();
+      const output = await Transcriber.transcriber(
+        audioUrl
+        // {return_timestamps: true }
+      );
+      // console.log("output FOR transcriber", output);
+      return output.text;
     } catch (error) {
       console.error("Error during extraction:", error);
       throw error;

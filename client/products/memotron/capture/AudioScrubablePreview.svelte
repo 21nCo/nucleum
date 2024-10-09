@@ -20,6 +20,9 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { Transcriber } from "$lib/client/utils/taco.utils";
+  import { TranscriptionModel } from "$lib/client/types/taco.types";
+  import { nodeStore } from "../node/node.store";
 
   export let body: any = {};
   export let url: string;
@@ -51,35 +54,24 @@
   ];
   let accuracy: DropdownItem[] = [
     {
-      value: "tiny.en",
-      label: "Moderate"
+      value: TranscriptionModel.TINy_EN,
+      label: "Moderate - Lightning Fast Response"
     },
     {
-      value: "base.en",
-      label: "Optimal"
+      value: TranscriptionModel.BASE_EN,
+      label: "Optimal - Fast Response"
     },
     {
-      value: "small.en",
-      label: "High"
+      value: TranscriptionModel.SMALL_EN,
+      label: "High - Quick Response"
+    },
+    {
+      value: TranscriptionModel.MEDIUM_EN,
+      label: "Precise - Normal"
     }
   ];
 
-  let speed: DropdownItem[] = [
-    {
-      value: "tiny.en",
-      label: "Fast"
-    },
-    {
-      value: "base.en",
-      label: "Optimal"
-    },
-    {
-      value: "small.en",
-      label: "Moderate"
-    }
-  ];
-
-  let model: string = $userPreferences.lastUsedTranscriptionModel;
+  let model: TranscriptionModel = $userPreferences.lastUsedTranscriptionModel;
 
   /**
    * To Transcribe the audio, shows necessary feedback on transcription start, end and also on error.
@@ -96,31 +88,43 @@
       return "restranscribing using the Same model will provide the same output";
     }
     isDisabled = true;
-    const region = $account.userInfo?.region;
-    let body = {
-      s3Url: url,
-      userId: userId,
-      nodeId: nodeId,
-      region: region,
-      model: model
-    };
-    let jsonBody = JSON.stringify(body);
     let result: string | null = null;
+    // const region = $account.userInfo?.region;
+    // let body = {
+    //   s3Url: url,
+    //   userId: userId,
+    //   nodeId: nodeId,
+    //   region: region,
+    //   model: model
+    // };
+    // let jsonBody = JSON.stringify(body);
     try {
-      const response = await fetch(import.meta.env.VITE_AUDIOTRANS_F_URL, {
-        method: "POST",
-        body: jsonBody,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-      isDisabled = false;
-      result = (await response.json()).result;
-      if (isReplaceable || $captureStore?.fileDetails?.data) {
+      // const response = await fetch(import.meta.env.VITE_AUDIOTRANS_F_URL, {
+      //   method: "POST",
+      //   body: jsonBody,
+      //   headers: {
+      //     "Content-Type": "application/json"
+      //   }
+      // });
+      // isDisabled = false;
+      // result = (await response.json()).result;
+
+      const result = await Transcriber.transcribe(url, model);
+
+      if (
+        $captureStore.fileDetails &&
+        (isReplaceable || $captureStore?.fileDetails?.data)
+      ) {
         $captureStore.fileDetails.transcription = result;
         $captureStore.fileDetails.initTranscription = false;
         label = "Re-Transcribe";
-      } else dispatch("refresh");
+      } else {
+        const resp = await nodeStore.modify(nodeId, {
+          transcription: result,
+          initTranscription: false
+        });
+        dispatch("refresh");
+      }
     } catch (error) {
       console.error("Network or JSON parsing error:", error);
       isError = true;
@@ -133,7 +137,7 @@
       });
     } finally {
       isDisabled = false;
-      $captureStore.fileDetails.mdBlocks = [];
+      if ($captureStore.fileDetails) $captureStore.fileDetails.mdBlocks = [];
       $userPreferences.lastUsedTranscriptionModel = model;
       if (isConvertToMarkdown && result) {
         return result;
@@ -158,18 +162,12 @@
     )
       transcript = body.transcription;
     else transcript = await onTranscribe();
-    //last few test cases:
-    // transcript =
-    //   "Heading five, just checking how well it can handle edge cases, like stop. divider Edge cases in the sense whenever that is a sub child or sub sub child creator, only if that is a parent for it, like that parent for it. If it is a sub child, it means a child as parent, if it is a child, it means an ordered list or not a list as the parent respectively. So if in case the user forgets who mistakenly adds something, say something by mistake, which doesn't have a parent, in that case, how well is going to handle the test. Starting with double divider ordered list, this is my first pointer. quote If this doesn't work, take the next one, OL, this as my first pointer. And then I'm going to go directly to the sub child instead of having the child. OL sub child, this is going to be my sub child, but hopefully this taken as a child, since that wasn't a parent's side to this. And yeah, let's test";
-    //"Heading five, just checking how well it can handle edge cases, like stop. Edge cases in the sense whenever that is a sub child or sub sub child creator, only if that is a parent for it, like that parent for it. If it is a sub child, it means a child as parent, if it is a child, it means an ordered list or not a list as the parent respectively. So if in case the user forgets who mistakenly adds something, say something by mistake, which doesn't have a parent, in that case, how well is going to handle the test. Starting with ordered list, this is my first pointer. If this doesn't work, take the next one, OL, this as my first pointer. And then I'm going to go directly to the sub child instead of having the child. OL sub child, this is going to be my sub child, but hopefully this taken as a child, since that wasn't a parent's side to this. And yeah, let's test";
-    // H1, just checking how well it can handle edge cases, like stop. Edge cases in the sense whenever that is a sub child or sub sub child creator, only if that is a parent for it, like that parent for it. If it is a sub child, it means a child as parent, if it is a child, it means an ordered list or not a list as the parent respectively. So if in case the user forgets who mistakenly adds something, say something by mistake, which doesn't have a parent, in that case, how well is going to handle the test. Starting with ordered list, this is my first pointer. If this doesn't work, take the next one, OL, this as my first pointer. And then I'm going to go directly to the sub child instead of having the child. OL sub child, this is going to be my sub child, but hopefully this taken as a child, since that wasn't a parent's side to this. And yeah, let's test
-    // "H1, this is going to be the super cool form of italic writing a markdown italic. ul, there's going to be my bold first bold stop point in the first. One was the inductor, this will be the second point. ul, so this will be my another point. ul child, this is going to be my subchild of my previous point. ul sub-child this is example for Sc ul sub child 2nd exmaple for sc ul sub sub child example for ssc ul child, this is going to be my second subchild of my previous point. And let's check.";
-    // "H1, this is going to be the super cool form of writing a markdown. ul, there's going to be my first point in the first. One was the inductor, this will be the second point. ul, so this will be my another point. ul child, this is going to be my subchild of my previous point. ul child, this is going to be my second subchild of my previous point. And let's check.";
     isConvertToMarkdown = false;
     if (typeof transcript !== "string") return "transcript is not a string";
     $userPreferences.lastUsedTranscriptionModel = model;
-    $captureStore.fileDetails.mdBlocks =
-      Audio2MD.convertAudioToMarkdown(transcript);
+    if ($captureStore.fileDetails)
+      $captureStore.fileDetails.mdBlocks =
+        Audio2MD.convertAudioToMarkdown(transcript);
   }
   /**
    * @description Creates wavesurfer instance for preview and uses timeline plugin to add timeline to the interactive visualization.
@@ -223,17 +221,6 @@
         isDisableSearch={true}
         label={{
           label: "Accuracy",
-          orientation: Orientation.Vertical,
-          isShrink: true
-        }}
-        value={model}
-        on:select={(e) => (model = e.detail)}
-      />
-      <DropDown
-        items={speed}
-        isDisableSearch={true}
-        label={{
-          label: "Speed",
           orientation: Orientation.Vertical,
           isShrink: true
         }}
