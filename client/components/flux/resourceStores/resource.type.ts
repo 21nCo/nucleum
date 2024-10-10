@@ -44,6 +44,8 @@ export interface IMetaResource extends IResourceBase {
 
 export interface IActiveResource extends IResource {
   accessMode: ResourceAccessMode;
+  isInEditMode?: boolean;
+  isInReadMode?: boolean;
 }
 
 export type IUnlabeledResource = Omit<IResource, "label">;

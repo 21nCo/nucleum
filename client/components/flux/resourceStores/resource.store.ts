@@ -429,6 +429,23 @@ export class ResourceStore<T extends IResource> implements IStore {
     if (!this.isInMemory) return;
     this._setInMemoryItems(data);
   }
+
+  toggleEditMode(id: IRecordId, isInEditMode: boolean) {
+    const activeResource = activeResources.get(id.toString());
+    if (!activeResource) return;
+    activeResource.update((prev: T) => ({
+      ...prev,
+      isInEditMode
+    }));
+  }
+  toggleReadMode(id: IRecordId, isInReadMode: boolean) {
+    const activeResource = activeResources.get(id.toString());
+    if (!activeResource) return;
+    activeResource.update((prev: T) => ({
+      ...prev,
+      isInReadMode
+    }));
+  }
 }
 
 /**

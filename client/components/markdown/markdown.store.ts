@@ -31,6 +31,7 @@ import { Resource } from "$lib/client/components/flux/resourceStores/resource.en
 import { ObservableStore } from "$lib/client/stores/client.store";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { isSameResource } from "../flux/resourceStores/resource.utils";
 
 /**
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used
@@ -435,21 +436,21 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
     this.focus.set({ id });
   }
 
-  isFirstBlockAndIsEmpty(id: string) {
+  isFirstBlockAndIsEmpty(id: IRecordId) {
     let isFirstBlock = false;
     let isEmpty = false;
-    this.update((n) => {
-      const firstBlock = n.blocks[0];
-      isFirstBlock = firstBlock.id === id;
-      if (isFirstBlock) {
-        if (firstBlock.contentType === NodeType.SIMPLE_TEXT) {
-          isEmpty = !firstBlock.body;
-        } else if (firstBlock.contentType === NodeType.LIST) {
-          isEmpty = !firstBlock.children || !firstBlock.children.length;
-        }
+    const md = this.get();
+    const firstBlock = md.blocks[0];
+    isFirstBlock = isSameResource(firstBlock, id);
+    if (isFirstBlock) {
+      if (md.blocks.length > 1) {
+        isEmpty = false;
+      } else if (firstBlock.contentType === NodeType.SIMPLE_TEXT) {
+        isEmpty = !firstBlock.body;
+      } else if (firstBlock.contentType === NodeType.LIST) {
+        isEmpty = !firstBlock.children || !firstBlock.children.length;
       }
-      return n;
-    });
+    }
     return isFirstBlock && isEmpty;
   }
 }

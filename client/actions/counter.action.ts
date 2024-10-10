@@ -15,7 +15,12 @@ export function wordCounter(
       if (child.nodeType === Node.ELEMENT_NODE) {
         const el = child as HTMLElement;
         const style = window.getComputedStyle(el);
-        if (style.display !== "none" && !el.classList.contains("popover")) {
+        if (
+          style.display !== "none" &&
+          !el.classList.contains("popover") &&
+          !el.classList.contains("exclude-from-count") &&
+          !el.classList.contains("tooltip")
+        ) {
           content += getVisibleContent(el);
         }
       } else if (child.nodeType === Node.TEXT_NODE) {

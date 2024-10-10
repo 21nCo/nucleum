@@ -1,6 +1,6 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import { type IActiveNodeStore } from "../node.store";
+  import { nodeStore, type IActiveNodeStore } from "../node.store";
   import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { appStore, isInEditMode } from "$lib/client/stores/app.store";
@@ -31,6 +31,7 @@
   let isWidened = false;
   let isRightPanelCollapsed: boolean = true;
   let rightPane = NodeRightPaneType.OUTLINE;
+  let floatingBarRef: NodeFloatingBar | undefined = undefined;
   function onScroll(e: any) {
     // console.log("onScroll", e);
     const st = event?.target?.scrollTop;
@@ -68,7 +69,8 @@
     {#if selectedView === "Content"}
       <div
         class={cn("h-full w-full gap-4", {
-          "grid grid-cols-[1fr_auto_1fr] gap-2": !isWidened,
+          "flex px-4 justify-center dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
+            !isWidened,
           "flex px-4": isWidened
         })}
       >
@@ -76,7 +78,7 @@
         <div
           class={cn("flex flex-col justify-center items-center h-full", {
             "flex-grow": isWidened,
-            "w-[50rem] overflow-auto": !isWidened
+            "flex-grow max-w-[50rem] dp:min-w-[50rem] overflow-auto": !isWidened
           })}
         >
           {#if $node.mdParent && $node.mdParent.length > 0}
@@ -149,7 +151,7 @@
                 />
               </div>
             {/if}
-            {#if !$isInEditMode}
+            {#if $node.isInReadMode}
               <div
                 class="flex justify-center gap-2 bg-bgs2 border-2 border-dotted border-brs3 rounded-md p-2 text-b2 mx-12"
               >
@@ -158,7 +160,8 @@
                 <button
                   class="text-b4 font-medium underline"
                   on:click={() => {
-                    $isInEditMode = true;
+                    nodeStore.toggleReadMode($node.id, false);
+                    floatingBarRef?.resetToggle();
                   }}>turn off</button
                 >
               </div>
@@ -185,6 +188,7 @@
             {node}
             bind:selectedView
             bind:isWidened
+            bind:this={floatingBarRef}
             on:action={(e) => {
               if (
                 e.detail === NodeRightPaneType.METADATA ||
@@ -197,6 +201,8 @@
             on:none={(e) => {
               if (e.detail === rightPane) {
                 closeRightPane();
+              } else if (e.detail === "readMode") {
+                nodeStore.toggleReadMode($node.id, false);
               }
             }}
           />

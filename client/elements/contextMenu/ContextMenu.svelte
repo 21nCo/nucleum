@@ -10,6 +10,7 @@
   export let menu: { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let heading: string | undefined = undefined;
+  export let onSelect: (item: IContextMenuItem) => void = () => {};
 </script>
 
 <div
@@ -33,7 +34,7 @@
   {#each menu as group, index}
     <div class="flex flex-col">
       {#each group.items as item}
-        <ContextMenuItem {item} {size} on:select />
+        <ContextMenuItem {item} {size} on:select={() => onSelect(item)} />
       {/each}
     </div>
     {#if index !== menu.length - 1}

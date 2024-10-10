@@ -96,12 +96,12 @@
       value: Resource.combination,
       icon: "ph:bounding-box-light"
     },
-    {
-      ...commonResourceProps,
-      label: "Files",
-      value: Resource.file,
-      icon: "ph:file"
-    },
+    // {
+    //   ...commonResourceProps,
+    //   label: "Files",
+    //   value: Resource.file,
+    //   icon: "ph:file"
+    // },
     {
       ...commonResourceProps,
       label: "Tasks",
@@ -406,7 +406,7 @@
     >
       {#if (variant === "v2" || variant === "v3") && availableResources.includes(selectedResource)}
         <div class="flex flex-col w-60 border-r border-r-brs2 mb-1">
-          <span class="w-full flex items-start flex-1 pr-2">
+          <span class="w-full flex items-start flex-1 pr-2 overflow-y-auto">
             <VerticalSwitcher
               labelOrientation={Orientation.Horizontal}
               style={VerticalSwitcherStyle.BG}
@@ -455,6 +455,7 @@
             bind:selectedResource
             bind:searchQuery
             on:keydown={refresh}
+            {searchStore}
           />
         {/if}
         {#if data && data.length > 0}
@@ -463,7 +464,7 @@
               "px--5": variant === "v2"
             })}
           >
-          <!-- TODO - pagination -->
+            <!-- TODO - pagination -->
             <Resources
               data={data.slice(0, 50)}
               accessPoint={ResourceAccessPoint.LIBRARY}

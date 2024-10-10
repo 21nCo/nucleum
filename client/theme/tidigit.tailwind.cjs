@@ -54,9 +54,13 @@ module.exports = {
        */
       tp: { raw: "(min-width: 600px) and (min-height: 500px)" },
       /**
-       * Bigger tablets in landscape, desktop and laptop
+       * Bigger tablets in landscape, entry laptops
        */
-      dp: { raw: "(min-width: 1024px) and (min-height: 700px)" },
+      lp: { raw: "(min-width: 1024px) and (min-height: 700px)" },
+      /**
+       * Desktop and bigger laptops
+       */
+      dp: { raw: "(min-width: 1500px) and (min-height: 700px)" },
       /**
        * 2k : 2K monitors and above, TVs etc
        */

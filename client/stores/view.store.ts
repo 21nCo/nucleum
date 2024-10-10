@@ -16,6 +16,9 @@ function calculateScreen(width: number, height: number): Display {
     display = Display.TP;
   }
   if (width >= 1024 && height >= 700) {
+    display = Display.LP;
+  }
+  if (width >= 1500 && height >= 700) {
     display = Display.DP;
   }
   if (width >= 2000 && height >= 1000) {

@@ -16,8 +16,8 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
-  import { MemotronAction } from "../../memotronAction.enum";
   import {
+    nodeStore,
     resolveNodeContextMenu,
     resolveVisibleActions,
     type IActiveNodeStore
@@ -33,6 +33,7 @@
   export let selectedView: string = "Content";
   export let isWidened: boolean = false;
   let bgIndex = 1;
+  let toggleGroupRef: ToggleGroup;
   let selectedToggleAction: string | undefined = undefined;
   let buttonCommonProps = {
     parentBgIndex: bgIndex,
@@ -44,11 +45,15 @@
   let contextMenu = [];
   $: contextMenu = resolveNodeContextMenu($node, ResourceAccessPoint.SELF);
   $: currentMode = appStore.determineCurrentResourceAccessMode($node.id);
+
+  export function resetToggle() {
+    toggleGroupRef?.reset();
+  }
 </script>
 
 <div
   class={cn(
-    "flex justify-between items-center mo:w-full tp:w-4/5 dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
+    "flex justify-between items-center mo:w-full tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-14 shadow-md border border-brs2 rounded-md px-4",
     bg(bgIndex - 1)
   )}
 >
@@ -64,12 +69,15 @@
   </span>
   <span class="flex items-center gap-3 h-full">
     <ToggleGroup
+      bind:this={toggleGroupRef}
       selected={selectedToggleAction}
       items={resolveVisibleActions($node.contentType)}
       class="gap-5"
       on:change={(e) => {
         if (e.detail === NodeRightPaneType.SIDENOTES) {
           dispatch("panel", e.detail);
+        } else if (e.detail === "readMode") {
+          nodeStore.toggleReadMode($node.id, true);
         }
       }}
       on:none

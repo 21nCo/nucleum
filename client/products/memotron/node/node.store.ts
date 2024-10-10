@@ -402,7 +402,7 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          resourceActions.select(accessPoint),
+          // resourceActions.select(accessPoint),
           resourceActions.openAsTab(),
           resourceActions.copyLink()
         ]
@@ -424,17 +424,17 @@ export function resolveNodeContextMenu(
             value: NodeRightPaneType.METADATA,
             icon: "ph:file-thin"
           },
-          resourceActions.copyLink(),
-          {
-            value: "download",
-            icon: "download",
-            callback: async () => {}
-          },
-          {
-            value: "share",
-            icon: "share",
-            callback: async () => {}
-          }
+          resourceActions.copyLink()
+          // {
+          //   value: "download",
+          //   icon: "download",
+          //   callback: async () => {}
+          // },
+          // {
+          //   value: "share",
+          //   icon: "share",
+          //   callback: async () => {}
+          // }
         ]
       },
       {
@@ -448,7 +448,7 @@ export function resolveNodeContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        resourceActions.edit(accessPoint),
+        // resourceActions.edit(accessPoint),
         resourceActions.openAsTab(),
         {
           value: NodeRightPaneType.METADATA,
@@ -464,21 +464,21 @@ export function resolveNodeContextMenu(
     {
       group: "shareAndExport",
       items: [
-        resourceActions.copyLink(),
-        {
-          value: "export",
-          icon: "share",
-          callback: async () => {}
-        },
-        {
-          value: "share",
-          icon: "share",
-          callback: async () => {
-            appStore.runAction(MemotronAction.PUBLISH, {
-              componentParams: { id: node.id }
-            });
-          }
-        }
+        resourceActions.copyLink()
+        // {
+        //   value: "export",
+        //   icon: "share",
+        //   callback: async () => {}
+        // },
+        // {
+        //   value: "share",
+        //   icon: "share",
+        //   callback: async () => {
+        //     appStore.runAction(MemotronAction.PUBLISH, {
+        //       componentParams: { id: node.id }
+        //     });
+        //   }
+        // }
       ]
     },
     {
@@ -523,12 +523,12 @@ export function resolveVisibleActions(contentType: NodeType): IToggleItem[] {
       value: NodeRightPaneType.PROPERTIES,
       icon: "widget",
       tooltip: "Show properties"
-    },
-    {
-      value: "bird",
-      icon: "ph:bird-thin",
-      tooltip: "Bird view"
     }
+    // {
+    //   value: "bird",
+    //   icon: "ph:bird-thin",
+    //   tooltip: "Bird view"
+    // }
   ];
   if (canHaveTraces.includes(contentType)) {
     baseActions.unshift({
