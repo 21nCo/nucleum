@@ -43,7 +43,6 @@
         isSaveInProgress = true;
         let file = all[0];
         const result = await captureStore.saveFile(file);
-        postSave(result);
       } else if (all.length > 1) {
         multipleFilesData = resolveMultipleFilesData(all, MAX_FILE_SIZE_MB);
         if (
@@ -69,38 +68,8 @@
     if (e.detail) e.detail.stopPropagation();
     if (!multipleFilesData) return;
     isSaveInProgress = true;
-    const result = await captureStore.saveMultipleFiles(
-      multipleFilesData.files
-    );
-    postSave(result);
-  }
-
-  function postSave(result: any) {
+    await captureStore.saveMultipleFiles(multipleFilesData.files);
     isSaveInProgress = false;
-    if (!result || result.error) {
-      logger.error(result);
-      error = result?.error ?? "Something went wrong";
-      return;
-    }
-    if (multipleFilesData?.files && multipleFilesData.files.length > 1) {
-      toasts.success(
-        `${multipleFilesData.files.length} nodes saved successfully!`
-      );
-    } else {
-      toasts.success("Node saved successfully!");
-    }
-    if (result.id) {
-      appStore.openResource(result.id, ResourceAccessMode.POP);
-    }
-    captureStore.reset();
-    appStore.closeResource({
-      id: MemotronAction.CAPTURE,
-      accessMode: ResourceAccessMode.POP
-    });
-    appStore.closeResource({
-      id: MemotronAction.CAPTURE_DND,
-      accessMode: ResourceAccessMode.POP
-    });
   }
 
   function onInvalid(errors: { file: File; type: string }[]) {

@@ -5,14 +5,14 @@
     webNodeTypeList
   } from "$lib/client/products/memotron/node/node.type";
   import { type IActiveNodeStore } from "../node.store";
-  import AudioScrubablePreview from "../../capture/AudioScrubablePreview.svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import WebNodeContent from "./WebNodeContent.svelte";
   import MediaNodeRightPane from "../rightPanel/MediaNodeRightPane.svelte";
-  import PdfAnnotator from "$lib/client/products/memotron/pdfAnnotator/PdfAnnotatorCaseChange.svelte";
+  import PdfAnnotator from "$lib/client/products/memotron/pdfAnnotator/PdfAnnotator.svelte";
   import { setContext } from "svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
+  import AudioContent from "../../audio/AudioContent.svelte";
 
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined =
@@ -70,7 +70,7 @@
     {#if $node?.contentType === NodeType.AUDIO && _url}
       <!-- <audio controls src={$node.body?.url} /> -->
       <!-- TODO - relay refresh event to top instead of refreshing here -->
-      <AudioScrubablePreview
+      <AudioContent
         on:refresh
         body={$node?.body}
         url={_url}

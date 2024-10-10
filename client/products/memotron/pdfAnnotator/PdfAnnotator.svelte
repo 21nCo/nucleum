@@ -19,7 +19,7 @@
     surrealPDF,
     viewportToScaled
   } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
-  import { debouncer, generateUID } from "$lib/client/utils/utils";
+  import { debouncer } from "$lib/client/utils/utils";
   import { onMount } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
@@ -27,11 +27,9 @@
   import Comment from "./comment/Comment.svelte";
   import InlineEditToolBar from "./toolbar/InlineEditToolBar.svelte";
   import CommentEditor from "./comment/CommentEditor.svelte";
-  import TracesPanel from "./TracesPanel.svelte";
   import ToolBar from "./toolbar/ToolBar.svelte";
   import { FindState } from "pdfjs-dist/web/pdf_viewer.mjs";
   import { Size } from "$lib/client/types/size.enum";
-  import { captureStore } from "../capture/capture.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
@@ -39,7 +37,6 @@
   import { highlightStore } from "../common/highlighters/highlight.store";
 
   export let url: string;
-  export let isReplaceable: boolean = false;
   export let annots: any[];
   /**
    * varibales for drawing shapes adding shapes or click annotations
@@ -218,19 +215,9 @@
       annotation.comment = editorValues.comment;
       if (event.detail.DueDate) annotation.DueDate = editorValues.DueDate;
     }
-    if (isReplaceable) annotation.id = "annot" + generateUID();
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations = [
-        annotation,
-        ...($captureStore?.fileDetails?.pdfAnnotations || [])
-      ];
-    else
-      console.log(
-        "pdf clip save response",
-        await surrealPDF.saveClip(url, annotation)
-      );
+    await surrealPDF.saveClip(url, annotation);
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -278,9 +265,7 @@
     if (!textLayer) {
       return "LayerCannotBeCreated";
     }
-    if (isReplaceable && $captureStore.fileDetails)
-      annots = $captureStore.fileDetails.pdfAnnotations!;
-    else annots = await surrealPDF.fetchAllClips(url);
+    annots = await surrealPDF.fetchAllClips(url);
 
     mainRects = annots?.filter(
       (highlight) =>
@@ -433,12 +418,7 @@
     let deleteAnnot;
     if (id) deleteAnnot = id;
     else deleteAnnot = annotClickedId;
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations =
-        $captureStore?.fileDetails?.pdfAnnotations?.filter(
-          (highlight) => highlight.id !== deleteAnnot
-        );
-    else await surrealPDF.deleteClip(deleteAnnot);
+    await surrealPDF.deleteClip(deleteAnnot);
     annotClickedComment = "";
     renderHighlightLayers();
     isInlineEditBarVisible = false;
@@ -449,15 +429,7 @@
    * @param highlighter
    */
   async function handleColorChange(highlighter: IHighlighter) {
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations =
-        $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
-          if (highlight.id === annotClickedId) {
-            highlight.color = highlighter.id;
-          }
-          return highlight;
-        });
-    else await surrealPDF.updateClip(annotClickedId, { color: highlighter.id });
+    await surrealPDF.updateClip(annotClickedId, { color: highlighter.id });
     selectedColor = highlighter.id;
     renderHighlightLayers();
     isInlineEditBarVisible = false;
@@ -468,16 +440,7 @@
    * @param comment
    */
   async function handleUpdateComment(comment: string) {
-    if (isReplaceable && $captureStore.fileDetails)
-      $captureStore.fileDetails.pdfAnnotations =
-        $captureStore?.fileDetails?.pdfAnnotations?.map((highlight) => {
-          if (highlight.id === annotClickedId) {
-            highlight.comment = comment;
-            // console.log("comment changed", highlight.comment);
-          }
-          return highlight;
-        });
-    else await surrealPDF.updateClip(annotClickedId, { comment: comment });
+    await surrealPDF.updateClip(annotClickedId, { comment: comment });
     annotClickedComment = "";
     renderHighlightLayers();
   }
@@ -821,9 +784,7 @@
    * mousedown for on spot annotations(Task and Comment)
    */
   onMount(async () => {
-    if (isReplaceable && $captureStore?.fileDetails?.pdfAnnotations)
-      annots = $captureStore?.fileDetails?.pdfAnnotations;
-    else annots = await surrealPDF.fetchAllClips(url);
+    annots = await surrealPDF.fetchAllClips(url);
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("selectionchange", debouncedSelectionHandler);
     document.addEventListener("keydown", handleKeyDown);

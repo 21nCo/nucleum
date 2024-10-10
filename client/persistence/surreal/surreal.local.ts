@@ -256,7 +256,6 @@ export class SurrealPersistence implements IPersistence {
    * @returns
    */
   async upsertRecordsFallback(resource: string, records: any[]) {
-    let result;
     try {
       for (const record of records) {
         let recordId;
@@ -264,7 +263,7 @@ export class SurrealPersistence implements IPersistence {
           this.isProcessingOperation = true;
           const { query, id } = resolveUpsertQuery(resource, record);
           recordId = id;
-          result = await this.instance?.query(query);
+          await this.instance?.query(query);
         } catch (e) {
           logger.log({
             at: `SurrealPersistence.upsertRecordsFallback - failed upsert for record`,
@@ -274,16 +273,16 @@ export class SurrealPersistence implements IPersistence {
           });
           if (e instanceof ResponseError) {
             this.isProcessingOperation = false;
-            result = await this.merge({ ...record, id: recordId });
+            await this.merge({ ...record, id: recordId });
           }
         }
       }
+      return [records];
     } catch (e) {
       logger.error({ at: "SurrealPersistence.upsertRecordsFallback", e });
     } finally {
       this.isProcessingOperation = false;
     }
-    return result;
   }
 
   async bulkInsert(

@@ -11,7 +11,6 @@ import type {
   LinkType,
   NodeType
 } from "$lib/client/products/memotron/node/node.type";
-import { type A2MDBlock } from "./AudioToMarkdown.type";
 import type { CollectionType } from "../collection/collection.type";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
@@ -35,7 +34,6 @@ export type ICaptureStore = IObservableStoreSubject & {
   file?: IRecordId;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
-  fileDetails?: FileDetails | null;
   links?: ICaptureLink[];
   propertyConfig?: IProperty[];
   properties?: INodePropertyValue[];
@@ -44,18 +42,6 @@ export type ICaptureStore = IObservableStoreSubject & {
    * as change of body object in markdown is not detected by svelte
    */
   refreshId: number;
-};
-
-export type FileDetails = {
-  name: string;
-  data: Blob;
-  url: any;
-  type: string;
-  duration?: number;
-  transcription?: string;
-  initTranscription?: boolean;
-  mdBlocks?: A2MDBlock[];
-  pdfAnnotations?: any[];
 };
 
 type ICaptureLink = {

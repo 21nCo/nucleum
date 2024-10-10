@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from "$lib/client/components/debug/logger.client";
   import FileView from "$lib/client/components/files/FileView.svelte";
   import {
     ResourceAccessMode,
@@ -92,74 +93,36 @@
     try {
       if (!text) return;
       isSaveInProgress = true;
-      let node: OmitForCapture<IWebPage> = {
-        contentType: NodeType.WEB_PAGE,
-        label: text.split("://").pop(),
-        url: text,
-        body: {
-          hash: "",
-          description: ""
-        }
-      };
-      if ($account.dataMode === UserDataMode.CLOUD) {
-        const data = await retrieveUrlData(text);
-        if (data?.parsedData) {
-          const parsedData = data.parsedData;
-          console.log("parsed html", parsedData);
-          node.label = parsedData.label ?? node.label;
-          node.url = parsedData.url ?? node.url;
-          node.contentType = parsedData.contentType ?? node.contentType;
-          node.body.description =
-            parsedData.body.description ?? node.body.description;
-          node.body.hash = parsedData.body.hash ?? node.body.hash;
-          node.metadata = {
-            ...parsedData.metadata
-          };
-        }
-      }
-      const result = await nodeStore.create([node]);
-      postSave(result?.[0] ?? null);
+      await captureStore.saveWebpage(text, {
+        isPreventOpenOnSave: !isOpenOnSave
+      });
+      postSave();
     } catch (error) {
-      postSave(null);
+      logger.error(error);
     } finally {
       isSaveInProgress = false;
     }
   }
 
-  function postSave(result: any) {
+  function postSave() {
     isSaveInProgress = false;
-    if (!result || result.error) {
-      if (result?.error) toasts.error(result.error);
-      else toasts.error("Something went wrong. Please try again later.");
-      return;
-    }
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
-    if (multipleFilesData) {
-      toasts.success(
-        `${multipleFilesData.files.length} nodes saved successfully!`
-      );
-    } else {
-      toasts.success("Node saved successfully!");
-    }
-    if (isOpenOnSave && result) {
-      appStore.openResource(result.id, ResourceAccessMode.POP);
-    }
   }
 
   async function saveFile() {
     if (!file) return;
     isSaveInProgress = true;
-    const result = await captureStore.saveFile(file, nodeType);
-    postSave(result);
+    await captureStore.saveFile(file, nodeType, {
+      isPreventOpenOnSave: !isOpenOnSave
+    });
+    postSave();
   }
 
   async function saveFiles() {
     if (!multipleFilesData?.files) return;
     isSaveInProgress = true;
-    const result = await captureStore.saveMultipleFiles(
-      multipleFilesData.files
-    );
-    postSave(result);
+    await captureStore.saveMultipleFiles(multipleFilesData.files);
+    postSave();
   }
 
   function resolvePasteResolutionMessage() {

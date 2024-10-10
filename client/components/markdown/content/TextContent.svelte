@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
   import {
-    type IMarkdownStore,
     type IBlock,
     BlockAction
   } from "$lib/client/components/markdown/md.type";
@@ -13,7 +12,6 @@
     ListType,
     NodeType,
     type ListContent,
-    type StructuralNodeType,
     type TextContent,
     type TextNodeType
   } from "$lib/client/products/memotron/node/node.type";
@@ -142,7 +140,7 @@
       if (x?.id === block.id) {
         // logger.log({ at: "focus.subscribe", x, block });
         setTimeout(() => {
-          textRef.focus();
+          textRef?.focus();
         }, 10);
         assignPlaceholder();
       }
