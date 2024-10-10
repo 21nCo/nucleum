@@ -10,6 +10,7 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { fileStore } from "../../files/file.store";
   import FileView from "../../files/FileView.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   export let isGridItem: boolean = true;
   export let item: IMediaGridItem;
@@ -208,12 +209,15 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
   <div
     draggable={false}
     use:draggable
-    class="absolute w-full h-full bg-transparent bg-opacity-50 bg-bgs2 flex items-center justify-center"
-    style="font-size: 1em;"
+    class={cn(
+      "absolute w-full h-full bg-opacity-50 rounded-md flex items-center justify-center text-b2 text-fgs2",
+      {
+        "bg-bgs3": isDragOver,
+        "bg-bgs2": !isDragOver
+      }
+    )}
   >
-    {#if isDragOver}
-      Drop @Col:{item.position.columns.columnNo + 1}
-    {/if}
+    Column: {item.position.columns.columnNo + 1}
   </div>
 {/if}
 <!-- {#if file?.type.startsWith("image/")}

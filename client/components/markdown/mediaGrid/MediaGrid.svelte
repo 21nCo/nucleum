@@ -8,7 +8,7 @@
 
   import MediaGridOptions from "./MediaGridOptions.svelte";
   import type { Config } from "./mediaGrid.type";
-  import { dragAndDropStore, isInEditMode } from "$lib/client/stores/app.store";
+  import { dragAndDropStore } from "$lib/client/stores/app.store";
   import { DragStatus } from "$lib/client/types/dragstatus.enum";
   import DraggableMediaGridElement from "$lib/client/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
   import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
@@ -25,6 +25,7 @@
   import type { IFile } from "../../files/file.type";
   import { fileStore } from "../../files/file.store";
   import { isSameResource } from "../../flux/resourceStores/resource.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
 
   // export let items: Item[] = $userPreferences.mediaGridTestitems;
   // $: $userPreferences.mediaGridTestitems = items;
@@ -50,6 +51,7 @@
   export let block: IMediaGridNode;
   export let mdStore: MdStoreType;
   export let files: IFile[] = [];
+  export let isReadMode: boolean = false;
 
   if (block.body == "") {
     block.body = {};
@@ -791,29 +793,31 @@
   on:mouseenter={() => (config.isHovered = true)}
   on:mouseleave={() => (config.isHovered = false)}
   on:keydown={handleKeyDown}
-  class={"relative m-2 p-1 border border-bgs2"}
-  style="width:{config.gridWidth}px;height:{config.type == 'AUTO'
+  class={"relative p-1 border border-brs3 rounded-md flex flex-col gap-1 w-full max-w-full"}
+  style="width-:{config.gridWidth}px; height:{config.type == 'AUTO'
     ? '370px'
     : 'auto'}"
 >
   {#if config.type === MediaGridType.AUTO}
     <button
-      class="relative w-full h-full flex items-center overflow-auto {items.length <
-      3
-        ? 'justify-center'
-        : ''} flex-wrap"
+      class={cn(
+        "relative w-full flex min-h-[280px] flex-1 items-center overflow-auto flex-wrap",
+        {
+          "justify-center": items.length < 3
+        }
+      )}
       on:dragover={preventDefault}
       on:drop={preventDefault}
       on:dragenter={highlight}
       on:dragleave={unhighlight}
       bind:this={autoGrid}
     >
-      {#if config.isAutoHighlighted && items.length == 0}
+      {#if items.length == 0}
         <button
           on:drop={handleFileUpload}
-          class="absolute text-h1 text-fgs3 w-full h-full bg-opacity-50 bg-bgs2 border border-dashed flex items-center justify-center"
+          class="absolute text-fgs3 w-full h-full bg-opacity-50 bg-bgs2 border border-dashed flex items-center justify-center rounded-md"
         >
-          <span>Drop Here</span>
+          <span>Drop and drop media files here</span>
         </button>
       {/if}
       {#each items as item, index}
@@ -876,7 +880,7 @@
       {/each}
     </div>
   {/if}
-  {#if !isDragging && config.isHovered}
+  {#if !isReadMode}
     <MediaGridOptions
       {chevDown}
       {chevUp}
@@ -886,18 +890,6 @@
       bind:config
       {columnArray}
       on:delete={onDelete}
-    />{/if}
+    />
+  {/if}
 </button>
-<!-- <div class="viewer m-2">
-      <img src={currentImage} alt="..." />
-    </div> -->
-<!-- </div> -->
-
-<!-- <style>
-  
-    .viewer img {
-      max-width: 100%;
-      max-height: 400px;
-      object-fit: contain;
-    }
-  </style> -->

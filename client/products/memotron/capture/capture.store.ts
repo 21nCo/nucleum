@@ -6,7 +6,8 @@ import {
   type INodeItemCaptured,
   type IMediaNode,
   type INodeThumb,
-  type INodePropertyValue
+  type INodePropertyValue,
+  type IMediaGridItem
 } from "$lib/client/products/memotron/node/node.type";
 import {
   CaptureType,
@@ -35,10 +36,12 @@ import {
 } from "../collection/collection.type";
 import {
   determineResourceType,
-  isSameResource
+  isSameResource,
+  resourceInList
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "../memotron.store";
 import { FeatureExtractor } from "$lib/client/utils/taco.utils";
+import { fileStore } from "$lib/client/components/files/file.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 
@@ -273,16 +276,23 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
        * When media grid is used in capture page we store the media in temp s3 storage , here before saving the capture to db we are sotring the medias in persistent s3 storage
        */
       for (let block of val.body.blocks) {
-        if (block.contentType === NodeType.MEDIA_GRID)
+        if (block.contentType === NodeType.MEDIA_GRID) {
+          let files = await fileStore.selectMany({
+            filters: { id: block.body.items.map((item) => item.file) }
+          });
           for (let item of block.body.items) {
-            data = await fetch(item.URL).then((r) => r.blob());
-            contentType = item.type;
-            name = item.name;
-            const result = await account.uploadFile(contentType, name, data);
+            item = item as IMediaGridItem;
+            const file = files.find(resourceInList(item.file));
+            if (!file) continue;
+            data = await fetch(file.url).then((r) => r.blob());
+            contentType = file.type;
+            name = file.name;
+            const result = await account.uploadFileV2(contentType, name, data);
             if (result) {
-              item.URL = result.uploadURL.split("?")[0];
+              item.file = result[0].id;
             }
           }
+        }
       }
       let mdText = "";
       let vectorInsertionresult: any;
@@ -423,6 +433,7 @@ class CaptureStore extends KeyValueStore<ICaptureStore> {
     return result;
 
     function getContentTypeFromFileDetails() {
+      if (!val?.captureType) return NodeType.NODULAR_MARKDOWN;
       if (val.captureType.toString().includes("collection:")) {
         //TODO - based on content template
         return NodeType.NODULAR_MARKDOWN;
