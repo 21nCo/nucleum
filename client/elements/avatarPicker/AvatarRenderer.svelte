@@ -42,14 +42,14 @@
   <img
     src={avatar.URL}
     alt={avatar.name}
-    class={cn(isHoverEnabled && "hover:scale-[4] transition-transform")}
+    class={cn(isHoverEnabled && "hover:scale-[1.2] transition-transform")}
   />
 {:else if "code" in avatar}
   {#if avatar.type === AvatarType.ICON}
     <span
       class={cn(
         "material-symbols-rounded",
-        isHoverEnabled && "hover:scale-[2] transition-transform",
+        isHoverEnabled && "hover:scale-[1.2] transition-transform",
         avatar.color === "bw" && "text-fgs2"
       )}
       style="font-variation-settings: 'FILL' {avatar?.isFilled ? 1 : 0}, 'wght'
@@ -62,8 +62,10 @@
   {:else if avatar.type === AvatarType.EMOJI}
     <span
       class={cn(
-        $context.os !== OperatingSystem.IOS && "noto-color-emoji-mod",
-        isHoverEnabled && "hover:scale-[2] transition-transform"
+        $context.os !== OperatingSystem.IOS &&
+          $context.os !== OperatingSystem.MACOS &&
+          "noto-color-emoji-mod",
+        isHoverEnabled && "hover:scale-[1.2] transition-transform"
       )}
       style="font-size: {fontSize};"
     >
