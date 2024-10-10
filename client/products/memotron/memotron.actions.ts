@@ -32,6 +32,7 @@ import { logger } from "$lib/client/components/debug/logger.client";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import Chat from "$lib/client/components/chat/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
+import MemotronHome from "./home/MemotronHome.svelte";
 export const memotronActions: IAction[] = [
   {
     action: MemotronAction.OPEN_CHAT,
@@ -157,6 +158,7 @@ export const memotronActions: IAction[] = [
     action: Resource.node,
     component: Node,
     label: "Node",
+    isMeta: true,
     type: ActionType.MODAL,
     loadingComponent: NodeLoadingPulse,
     modalParams: {
@@ -212,13 +214,6 @@ export const memotronActions: IAction[] = [
     component: Journal
   },
   {
-    action: "nodes",
-    type: ActionType.PAGE,
-    label: "Nodes",
-    icon: "node",
-    component: TestHome
-  },
-  {
     action: MemotronAction.LIBRARY,
     label: "Library",
     // icon: "globe-alt",
@@ -251,6 +246,7 @@ export const memotronActions: IAction[] = [
     label: "Feature Wheel",
     type: ActionType.PAGE,
     isMenuHidden: true,
+    isMeta: true,
     component: ProductFeatureWheel,
     modalParams: {
       layout: {
@@ -319,5 +315,19 @@ export const memotronActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
+  },
+  {
+    action: "home",
+    type: ActionType.PAGE,
+    label: "Home",
+    icon: "ph:house",
+    component: MemotronHome
+  },
+  {
+    action: "graph",
+    type: ActionType.PAGE,
+    label: "Graph",
+    icon: "ph:graph",
+    component: ComingSoonView
   }
 ];

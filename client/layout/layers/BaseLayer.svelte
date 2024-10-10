@@ -25,8 +25,8 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
-  import { Persistence } from "$lib/client/persistence/persistence";
   import EmbedTelemetry from "./analytics/EmbedTelemetry.svelte";
+  import productData from "$lib/product.json";
 
   let timer: any;
   pingParent();
@@ -35,7 +35,6 @@
   onMount(async () => {
     await bootup();
     view.update(window.innerWidth, window.innerHeight);
-    await refreshAppStaticData();
   });
   onDestroy(() => {
     clearInterval(timer);
@@ -90,6 +89,10 @@
           window.location.host
       );
       if (appDetails) appStore.initializeProductInformation(appDetails);
+      const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
+      appStore.loadAppData(cachedAppData ?? productData, {
+        isDefaultData: true
+      });
       clientStorage.set(
         ClientStorageKey.PRODUCT,
         appDetails?.product ?? "tidigit"
@@ -248,21 +251,6 @@
   onDestroy(() => {
     removeWindowEventListeners();
   });
-
-  /**
-   * Refreshes the app static data from the server.
-   */
-  async function refreshAppStaticData() {
-    try {
-      const appData = await new Persistence().fetchAppData();
-      if (!appData) {
-        throw new Error("App data not found");
-      }
-      appStore.loadAppData(appData);
-    } catch (e) {
-      logger.error(e);
-    }
-  }
 </script>
 
 <div

@@ -250,7 +250,7 @@
         Orientation.Horizontal}
     >
       <ModalLayout
-        path={pop.path}
+        path={pop.path + "-resource"}
         resource={pop.resource}
         params={{
           ...pop?.modalParams,

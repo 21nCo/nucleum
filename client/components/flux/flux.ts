@@ -357,6 +357,7 @@ class Flux {
       record,
       action: PersistenceActionType.MERGE
     });
+    logger.log({ at: "kvMerge - result", storeId, record, result });
     if (!this.isLocalMode) {
       await this.insertMutation(Resource.kv, {
         record,

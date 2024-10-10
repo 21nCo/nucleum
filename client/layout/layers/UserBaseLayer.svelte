@@ -24,7 +24,6 @@
   import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import { getSettingsAsModal, getSettingsAsPages } from "../settingsActionMap";
   import { appMenuStore } from "../../stores/appMenu/appMenu.store";
-  import { defaultAppMenu } from "$local/local";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
   import AppLoadingView from "../paint/AppLoadingView.svelte";
@@ -96,7 +95,7 @@
       await flux.syncDown();
       account.ping();
     }
-    if (isExtensionEnvironment()) return;
+    if (isExtensionEnvironment() || import.meta.env?.DEV) return;
     performAppUpdateCheck();
   }
 
@@ -156,7 +155,7 @@
         isLiteMode,
         account: $account
       });
-      if (!isLiteMode) {
+      if (!isLiteMode && !import.meta.env?.DEV) {
         await refreshAppStaticData();
       }
       initActions(isLiteMode);
@@ -200,18 +199,14 @@
           }
         }
       }
-      appMenuStore.setDefaults(defaultAppMenu);
+      const defaultAppMenu = $appStore.appData?.appMenu ?? [];
       if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
-        // await initializeFlux($account.userId ?? $account.userInfo?.id ?? "");
-
-        // await dataManager.refreshClientCache();
-        // const isDev = import.meta.env.DEV;
-        // if (!isDev) await dataManager.runDboUpdate();
-        // await account.seed();
         refreshTimeZone();
         appMenuStore.setDefaults(defaultAppMenu, true);
         account.setAnalyticsUserIdentity();
         await account.ping();
+      } else {
+        appMenuStore.setDefaults(defaultAppMenu);
       }
     } catch (e) {
       logger.error(e);

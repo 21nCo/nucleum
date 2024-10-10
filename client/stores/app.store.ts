@@ -13,11 +13,7 @@ import type {
   OAuthProviderConfig
 } from "../types/oauth.type";
 
-import { debouncer } from "$lib/client/utils/utils";
-import {
-  persistLocally,
-  retrieveLocally
-} from "$lib/client/persistence/persistence.utils";
+import { persistLocally } from "$lib/client/persistence/persistence.utils";
 import { postToParent } from "$lib/client/utils/embed.utils";
 import modalEvent from "../components/modal/modal.store";
 import view from "$lib/client/stores/view.store";
@@ -26,8 +22,6 @@ import {
   appEvents,
   confirmationNotification
 } from "$lib/client/stores/notification.store";
-
-import { defaultAppData } from "$local/local";
 import { Embed, OperatingSystem } from "../types/context.type";
 import { goto } from "../utils/browser.utils";
 import { accessLogStore } from "../components/accessLogging/accesslog.store";
@@ -151,14 +145,12 @@ export const appConstants = {
   tempColorSchemes
 };
 
-const cachedAppData = retrieveLocally(Resource.appData);
-
 export const appStore = initAppStore({
   product: "tidy",
   env: "dev",
   isDebugMode,
   isExperimentalMode,
-  appData: cachedAppData ?? defaultAppData,
+  appData: {},
   currentPath: "",
   isMenuHidden: false,
   actions: [],
@@ -662,7 +654,7 @@ function initAppStore(seed: AppStore) {
         return n;
       });
     },
-    loadAppData(data: any) {
+    loadAppData(data: any, params?: { isDefaultData: boolean }) {
       update((n: AppStore) => {
         const env = n.env;
         if (data.env && data.env[env]) {
@@ -670,7 +662,9 @@ function initAppStore(seed: AppStore) {
         } else {
           n.appData = data;
         }
-        persistLocally(Resource.appData, data);
+        if (!params?.isDefaultData) {
+          persistLocally(Resource.appData, data);
+        }
         return n;
       });
     },
