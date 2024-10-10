@@ -43,6 +43,11 @@ import type { IRecordId } from "../types/data.type";
 //   env: "dev"
 // });
 // export const appEvents = initEventStore({ event: AppEvent.NONE, value: false });
+
+export const tacoWorker = new Worker(
+  new URL("$lib/client/utils/taco.utils.worker.ts", import.meta.url),
+  { type: "module" }
+);
 export const currentTime = writable<Date>(new Date());
 export const appLoadingState = writable<{
   isBaseLoaded: boolean;

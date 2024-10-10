@@ -50,6 +50,11 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   infiniteGrid: {
     isGridCreated: false,
     grid: []
+  },
+  LocalAI: {
+    semanticSearch: false,
+    audioTranscription: false,
+    markdownQAChat: false
   }
 };
 

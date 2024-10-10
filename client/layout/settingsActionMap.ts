@@ -15,6 +15,7 @@ import { Action } from "../types/action.enum";
 import InteractionModeSettings from "../components/settings/interactionMode/InteractionModeSettings.svelte";
 import { Embed } from "../types/context.type";
 import SyncSettings from "../components/settings/sync/SyncSettings.svelte";
+import TacoSettings from "../components/settings/taco/TacoSettings.svelte";
 
 const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
   {
@@ -22,6 +23,25 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "Account Settings",
     path: "cp/account",
     component: AccountSettings
+  },
+  {
+    action: Action.LOCAL_AI_SETTINGS,
+    cmdLabel: [
+      "Local AI Settings",
+      "Enable Local AI",
+      "Enable Semantic Search",
+      "Enable Audio Transcription",
+      "Enable Markdown QA Chat"
+    ],
+    label: "Local AI Settings",
+    component: TacoSettings,
+    modalParams: {
+      title: "Local AI Settings",
+      layout: {
+        size: Size.md
+      },
+      isDismissable: false
+    }
   },
   {
     action: Action.MODE_OF_INTERACTION,
