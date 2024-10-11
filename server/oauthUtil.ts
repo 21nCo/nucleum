@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { OAuthUserData } from "./types/oauth.type";
 async function retrieveAccessToken(config, code, redirectUri) {
-  console.log("retrieveAccessToken", { config, code });
+  // console.log("retrieveAccessToken", { config, code });
   if (config.method_for_token === "GET") {
     const url =
       config.token_url +
@@ -50,7 +50,6 @@ function generateClientSecret(config, privateKey: string) {
     subject: config.client_id,
     keyid: config.key_id
   });
-  console.log("client secret generated", token);
   return token;
 }
 
@@ -75,11 +74,9 @@ export async function fetchOAuthUserData(
     config.client_secret = resolveClientSecret(config);
   }
   let response = await retrieveAccessToken(config, code, redirectUri);
-  console.log("accessTokenResponse", { response });
   let accessToken;
   let parsedAccessToken = await response.json();
   try {
-    console.log({ parsedAccessToken });
     //let parsedJson = await JSON.parse(parsedAccessToken);
     accessToken = parsedAccessToken.access_token;
   } catch (e) {
@@ -109,7 +106,6 @@ export async function fetchOAuthUserData(
     // const responseForUserDetails = await userDetailsResponse.text();
     // console.log({ responseForUserDetails });
     userDetails = await userDetailsResponse.json();
-    console.log("userDetails", userDetails);
   }
   return userDetails;
 }

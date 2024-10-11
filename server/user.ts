@@ -80,10 +80,21 @@ export async function generateToken(
   }
 }
 
+const betaProducts = ["app.memotron.io", "pre.memotron.io", "tidigit.com"];
+
 export async function signup(data: any, isOAuth = false) {
   console.log("signup", { data, isOAuth });
   const { email, pass, nickName, profilePictureUrl, isTrusted, sub, context } =
     data;
+  if (betaProducts.includes(context.app)) {
+    const query = `SELECT * from betaList where email is "${email}" and product is "${context.app}"`;
+    const response = await performQueryOnMasterDb(query);
+    const val = response?.[0]?.result;
+    console.log({ at: "beta list response", response, val });
+    if (!val || val?.length === 0) {
+      return { error: "You are not in the beta list for this product" };
+    }
+  }
   const emailParts = getEmailParts(email);
   const joinDate = new Date().toISOString();
   let query: string;
@@ -105,10 +116,6 @@ export async function signup(data: any, isOAuth = false) {
     )}) ELSE (RETURN {userCount: count($user), user: $user}) END`;
   }
   const response = await performQueryOnMasterDb(query);
-  console.log("signup resp:", {
-    response,
-    responseone: JSON.stringify(response[1])
-  });
   if (response?.[1]?.result && response[1].result.userCount === undefined) {
     console.log("new user created, logging in");
     const userInfo = response[1].result[0];
@@ -222,7 +229,6 @@ export async function oauth(body: any) {
       return { error: "code, app and slug are required" };
     let config;
     let appDataJson = await retrieveAppConfig(app);
-    console.log({ appDataJson });
     config = appDataJson?.oAuthConfig?.find((c) => c.oauth_slug === slug);
     if (!config) {
       return { error: "Unknown provider" };
@@ -231,7 +237,6 @@ export async function oauth(body: any) {
     if (!code) return { error: "code is required" };
     if (!redirectUri) return { error: "Unable to resolve Redirect URL" };
     const oAuthUserData = await fetchOAuthUserData(config, code, redirectUri);
-    console.log({ oAuthUserData });
     if (
       config.oauth_slug === "google" ||
       (config.oauth_slug === "apple" && oAuthUserData)
@@ -256,7 +261,6 @@ export async function oauthRedirect(
   provider: string,
   endpoint: string
 ) {
-  console.log("oauthRedirect", { body, provider });
   const result = await _processOAuthRedirect(body, provider, endpoint);
   let domain = "";
   const domainPart = body.state.split(":")[1];
@@ -268,7 +272,7 @@ export async function oauthRedirect(
     }
   }
   console.log({ result, domainPart, domain, body });
-  let redirectUrl = (domain ?? "http://bla.ink") + "/error?error=oautherror";
+  let redirectUrl = domain ?? "http://bla.ink";
   if (result?.token && domain) {
     redirectUrl =
       domain +
@@ -278,6 +282,8 @@ export async function oauthRedirect(
       provider +
       "&signup=" +
       result.isSignup;
+  } else if (result?.error) {
+    redirectUrl = domain + "/error?error=" + result.error;
   }
   return {
     statusCode: 302,
@@ -307,13 +313,13 @@ async function _processOAuthRedirect(
       href: "https://" + apiUrl + "/oauth/" + provider,
       state: body.state,
       host: domainPart,
-      guest: guestPart
+      guest: guestPart,
+      app
     };
     if (provider === "apple" && (body.id_token || body.user)) {
       if (body.user && typeof body.user === "string")
         body.user = JSON.parse(body.user);
       const oAuthUserData = parseOAuthUserDataForApple(body);
-      console.log("parsed OAuth user data - Apple", { oAuthUserData });
       if (!oAuthUserData?.email)
         return {
           provider,
