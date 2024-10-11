@@ -27,7 +27,7 @@
 <div class={className}>
   <button
     class="relative flex items-center justify-around w-[60px] h-[28px] rounded-[48px] border border-fgs1"
-    on:click={toggle}
+    on:click|stopPropagation={toggle}
   >
     <div
       class={cn(

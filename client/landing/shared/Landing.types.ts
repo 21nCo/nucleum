@@ -1,5 +1,5 @@
 export type ITopNavBar = {
-  title: string;
+  title?: string;
   icon: string;
   items: { label: string; href: string }[];
   cta?: { label: string; href: string };
@@ -19,7 +19,7 @@ export type IHeroBtn2 = {
 };
 export type IHeroInputs = {
   title: string;
-  label: string;
+  label?: string;
   btn1?: IHeroBtn1;
   btn2?: IHeroBtn2;
 };
@@ -47,5 +47,5 @@ export type IListItem = {
 
 export enum PanelName {
   PRODUCTS = "Products",
-  BUILT_AT_BLANK_COOP = "Built at Blank.coop"
+  BUILT_AT_BLANK_COOP = "Built at 21n"
 }

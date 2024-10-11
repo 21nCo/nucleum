@@ -47,7 +47,7 @@
       <p
         class="text-fgs2 text-[21px] mo:text-[15px] leading-[28px] mo:leading-5 font-medium"
       >
-        Current
+        Apps
       </p>
       <div class="grid grid-cols-2 gap-6">
         {#each currentProducts as product}
@@ -73,6 +73,7 @@
   <PanelButton
     label="Close"
     icon="close"
+    isRightPanel={true}
     on:click={async () => {
       await addAnimateClass("animate-close-right", id);
       $isProductsPanelOpen = false;

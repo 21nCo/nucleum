@@ -29,10 +29,11 @@
 
 <button
   class={cn(
+    "relative flex flex-col items-start justify-start",
     !isPanelView &&
-      "relative flex flex-col items-start justify-start gap-3 min-w-[320px] w-[598px] h-[471px] mo:h-[292px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
+      "relative gap-3 portrait:min-w-[340px] tp:!min-w-[380px] w--[498px] h-[471px] mo:h-[292px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
     isPanelView &&
-      "relative min-w-[161px] max-w-[260px] rounded-xl px-[14px] tp:px-5 pt-[14px] tp:pt-5 flex flex-col items-start justify-start gap-2",
+      "relative min-w-[161px] max-w-[260px] rounded-xl px-[14px] tp:px-5 pt-[14px] tp:pt-5 gap-2",
     isPanelView &&
       isEnableBackground &&
       "bg-bgs2 hover:bg-bgs3 h-[256px] mo:h-[197px]",
@@ -64,7 +65,7 @@
             class={cn(
               "text-[20px] font-normal leading-[28px] p-2 opacity-0 underline underline-offset-4",
               isHovered && "animate-fadeIn"
-            )}>{item.href?.split("app.")[1]}</span
+            )}>{item.href?.split("://")[1]}</span
           >
           <div class="inline-flex relative">
             <i class={cn("inline-flex ", isHovered && "animate-rotate45")}>

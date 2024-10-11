@@ -7,13 +7,13 @@
   import type { IListItem, ITopNavBar } from "./Landing.types";
   import { onMount } from "svelte";
   import view from "$lib/client/stores/view.store";
-  import { currentProductsStore, isProductsPage } from "./store/shared.store";
+  import { currentProductsStore, isProductPage } from "./store/shared.store";
   import Footer from "./footer/Footer.svelte";
-  import { page } from "$app/stores";
 
   let id: string = "centre-panel";
   export let topNavBarValues: ITopNavBar;
   export let isComingSoon: boolean = false;
+  export let isProduct: boolean = false;
   let transformedProducts: IListItem[] = [
     { title: "Products" },
     ...$currentProductsStore?.map((product) => ({
@@ -23,13 +23,12 @@
   ];
 
   function addEntryAnimation(id: string) {
-    if ($isProductsPage) addAnimateClass("animate-open-left", id);
+    if (isProduct) addAnimateClass("animate-open-left", id);
     else addAnimateClass("animate-open-right", id);
   }
   onMount(async () => {
+    isProductPage.set(isProduct);
     view.update(window.innerWidth, window.innerHeight);
-    if ($page.url.href.includes("blank")) $isProductsPage = false;
-    else $isProductsPage = true;
     addEntryAnimation(id);
   });
   const windowResizeListener = (event: Event) => {
@@ -38,9 +37,7 @@
 </script>
 
 <LandingBaseLayer>
-  {#if $isProductsPage}
-    <LeftPanel />
-  {/if}
+  <LeftPanel {isProduct} />
   <div {id} class="w-full overflow-y-auto">
     <TopNavBar {topNavBarValues} />
     <slot />

@@ -54,6 +54,7 @@
 {/if}
 <PanelButton
   {id}
+  isRightPanel={true}
   label="Products"
   icon="ham-burger-menu"
   on:click={async () => {
