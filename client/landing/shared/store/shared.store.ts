@@ -9,7 +9,7 @@ export const currentProductsStore = readable<ITileItem[]>([
     href: "https://pointron.io"
   },
   {
-    image: "pointron-product-image",
+    image: "memotron-product-image",
     title: "Memotron",
     label: "Personal knowledge management redefined",
     href: "https://memotron.io"

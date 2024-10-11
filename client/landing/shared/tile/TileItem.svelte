@@ -110,7 +110,7 @@
       class={cn(
         "absolute mo:h-[35%] object-contain bottom-1 right-1",
         isPanelView && "h-[43%]",
-        !isPanelView && "h-[55%]"
+        !isPanelView && "h-[65%]"
       )}
     />
   {/if}
