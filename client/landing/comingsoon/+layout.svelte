@@ -20,6 +20,6 @@
   };
 </script>
 
-<BlankLandingLayout {topNavBarValues} isComingSoon={true}>
+<BlankLandingLayout {topNavBarValues} isComingSoon={true} isProduct={true}>
   <CommingSoonSection {commingSoonSectionInputs} />
 </BlankLandingLayout>

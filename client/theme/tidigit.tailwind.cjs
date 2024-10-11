@@ -45,6 +45,7 @@ module.exports = {
       xl: "1280px",
 
       portrait: { raw: "(orientation: portrait)" },
+      landscape: { raw: "(orientation: landscape)" },
       /**
        * Mobile devices
        */

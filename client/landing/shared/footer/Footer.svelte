@@ -14,7 +14,7 @@
   import view from "$lib/client/stores/view.store";
   import { Theme } from "$lib/client/types/appearance.type";
   import QrElement from "../elements/QRElement.svelte";
-  import { isProductsPage, isProductsPanelOpen } from "../store/shared.store";
+  import { isProductPage, isProductsPanelOpen } from "../store/shared.store";
   import ButtonAsLink from "../ButtonAsLink.svelte";
   export let products: IListItem[];
   export let url: string = "https://blanklabs.org";
@@ -96,18 +96,18 @@
 </script>
 
 <Section>
-  <div class="flex flex-col items-center gap-7 w-full tp:px-12">
+  <div class="flex flex-col items-center gap-7 w-full">
     {#if $view.isPortrait}
-      <Box>
+      <div class="flex flex-col bg-bgs2 w-full rounded-[20px] p-7">
         <ListWithTitle items={combinedLI} />
         <ButtonAsLink
           class="mt-[16px] ml-[0px]"
           label="See all products"
           on:click={() => ($isProductsPanelOpen = true)}
         />
-      </Box>
+      </div>
     {:else}
-      <div class="w-full flex justify-between">
+      <div class="w-full flex gap-6 justify-between">
         <Box>
           <div class="flex h-full flex-col items-center justify-center gap-9">
             <QrElement {url} enableHover={false} />
@@ -160,14 +160,14 @@
       </div>
     {/if}
     <div
-      class="w-full mo:max-w-[390px] rounded-[20px] flex mo:flex-col mo:gap-y-4 items-center bg-bgs2 px-7 py-4 mo:px-0 mo:py-4"
+      class="w-full mo:max-w-[390px] tp:max-w-full rounded-[20px] flex mo:flex-col mo:gap-y-4 items-center bg-bgs2 px-7 py-4 mo:px-0 mo:py-4"
     >
       {#if !$view.isPortrait}
         <p>
-          {#if $isProductsPage}
+          {#if $isProductPage}
             <span>Built at</span>
           {/if}
-          Blank.coop
+          21n
         </p>
       {/if}
       <div class="mx-auto flex gap-5 mo:gap-3">
